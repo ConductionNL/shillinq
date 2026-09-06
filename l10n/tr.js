@@ -1553,7 +1553,26 @@ OC.L10N.register(
         "Margin per month": "Aylık marj",
         "Cashflow": "Nakit akışı",
         "Billable hours": "Faturalanabilir saatler",
-        "_%n invoice outstanding_::_%n invoices outstanding_": ["1 fatura bekliyor","%n fatura bekliyor"]
+        "_%n invoice outstanding_::_%n invoices outstanding_": ["1 fatura bekliyor","%n fatura bekliyor"],
+        "Reports": "Raporlar",
+        "Pick a report to open it.": "Açmak için bir rapor seçin.",
+        "Due": "Bitiş",
+        "Assignee": "Atanan",
+        "Iv3 returns": "Iv3 beyanları",
+        "SiSa returns": "SiSa beyanları",
+        "EMU return": "EMU beyanı",
+        "Consolidated statements": "Konsolide tablolar",
+        "Budget variance": "Bütçe sapması",
+        "Generated reports": "Oluşturulan raporlar",
+        "The quarterly Iv3 returns, and how far each one got.": "Üç aylık Iv3 beyanları ve her birinin ne kadar ilerlediği.",
+        "Single information, single audit returns per scheme.": "Şema başına single information, single audit beyanları.",
+        "The EMU balance return.": "EMU bakiye beyanı.",
+        "The group figures, consolidated across participations.": "Grup rakamları, iştirakler genelinde konsolide.",
+        "Where the books sit against budget, and by how much.": "Defterlerin bütçeye göre nerede durduğu ve ne kadar.",
+        "Everything Reporting & Compliance has already produced.": "Raporlama ve uyumun şimdiye kadar ürettiği her şey.",
+        "What retention destroyed, and when.": "Saklamanın neyi ne zaman imha ettiği.",
+        "Store": "Mağaza",
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Diğer kuruluşların yayımladığı kayıtları, şemaları ve akışları yükleyin."
     },
     "nplurals=2; plural=(n != 1);"
 )

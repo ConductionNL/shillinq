@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "retainer-billing-engine",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "T2 — monthly retainer-billing engine per client/project. Declares four schemas: RetainerPool (monthly allocation with effective-period + rollover policy + operator-driven lifecycle draft→active→closed→archived per REQ-RETN-001), RetainerDrawdown (immutable per-time-entry consumption tracking per REQ-RETN-002, status enum pending|materialized|reversed|adjusted), RetainerRollover (immutable carryover-or-reset between consecutive periods per REQ-RETN-004, with carryoverCapApplied audit flag), and RetainerTrueUp (period-end reconciliation per REQ-RETN-006 with operator-driven generated→pending-approval→approved→invoiced→settled→reversed lifecycle and approver attribution per REQ-RETN-011). Amounts (poolAmount, drawdownAmount, carryoverAmount, actualDrawdown, overageAmount, overageInvoiceAmount) are MonetaryAmount-typed numbers persisted with multipleOf 0.01 (2-decimal Euro precision); rates (retainerRate, drawdownRate, overageRate) use multipleOf 0.01. Aggregations declared via x-openregister-aggregations: RetainerPool exposes drawdownsByPool (sum of RetainerDrawdown.drawdownAmount + rollover carryover for available-balance queries per REQ-RETN-003) and trueUpByPool (count of materialized RetainerTrueUp records); RetainerTrueUp exposes drawdownsForPeriod (actualDrawdown = sum of in-period RetainerDrawdown for true-up generation per REQ-RETN-006). Non-overlapping (clientId, projectId, period) validation per REQ-RETN-001 enforced through x-openregister-uniqueness preconditions. Approvals (REQ-RETN-011) wire to ADR-023 mandate-delegation via x-openregister-rbac roles retainer-administrator/bookkeeper/approver/auditor. Seeds load two example pools (Gemeente Amsterdam Jan-2026 with overspend, TechStartup BV Jan-2026 partial-spend with reset policy), four matching drawdowns, two true-ups (Gemeente Jan with €375 overage @ €85/h standard rate = €425 billable; TechStartup Jan partial-spend with no overage, settled), and two rollovers (Gemeente Feb opening with carryover=0 after overspend, TechStartup Feb opening with reset). Reuses existing RateCardTemplate / RateCardVersion / RateSchedule from rate-card-engine for overage-rate lookup per REQ-RETN-005 (no rate model is duplicated)."
+    "description": "T2: monthly retainer-billing engine per client/project. Declares four schemas: RetainerPool (monthly allocation with effective-period + rollover policy + operator-driven lifecycle draft→active→closed→archived per), RetainerDrawdown (immutable per-time-entry consumption tracking, status enum pending|materialized|reversed|adjusted), RetainerRollover (immutable carryover-or-reset between consecutive periods, with carryoverCapApplied audit flag), and RetainerTrueUp (period-end reconciliation with operator-driven generated→pending-approval→approved→invoiced→settled→reversed lifecycle and approver attribution per). Amounts (poolAmount, drawdownAmount, carryoverAmount, actualDrawdown, overageAmount, overageInvoiceAmount) are MonetaryAmount-typed numbers persisted with multipleOf 0.01 (2-decimal Euro precision); rates (retainerRate, drawdownRate, overageRate) use multipleOf 0.01. Aggregations declared via x-openregister-aggregations: RetainerPool exposes drawdownsByPool (sum of RetainerDrawdown.drawdownAmount + rollover carryover for available-balance queries per) and trueUpByPool (count of materialized RetainerTrueUp records); RetainerTrueUp exposes drawdownsForPeriod (actualDrawdown = sum of in-period RetainerDrawdown for true-up generation per). Non-overlapping (clientId, projectId, period) validation enforced through x-openregister-uniqueness preconditions. Approvals wire to ADR-023 mandate-delegation via x-openregister-rbac roles retainer-administrator/bookkeeper/approver/auditor. Seeds load two example pools (Gemeente Amsterdam Jan-2026 with overspend, TechStartup BV Jan-2026 partial-spend with reset policy), four matching drawdowns, two true-ups (Gemeente Jan with €375 overage @ €85/h standard rate = €425 billable; TechStartup Jan partial-spend with no overage, settled), and two rollovers (Gemeente Feb opening with carryover=0 after overspend, TechStartup Feb opening with reset). Reuses existing RateCardTemplate / RateCardVersion / RateSchedule from rate-card-engine for overage-rate lookup (no rate model is duplicated)."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "WalletOutline",
         "version": "0.1.0",
         "title": "Retainer Pool",
-        "description": "A monthly retainer allocation per client (and optional project) with an effective-period window, a fixed pool amount in the pool currency, a per-hour or per-day retainer rate used to convert time-entry hours into drawdown amount, and a rollover policy (carryover cap in amount or hours, or reset-balance for monthly reset). One pool per (clientId, projectId, period) combination; overlapping periods for the same (client, project) pair MUST be rejected (REQ-RETN-001). Operator-driven lifecycle draft → active → closed → archived; once closed, pool amount/rate/policy are immutable so the true-up calculation remains deterministic (Design D6).",
+        "description": "A monthly retainer allocation per client (and optional project) with an effective-period window, a fixed pool amount in the pool currency, a per-hour or per-day retainer rate used to convert time-entry hours into drawdown amount, and a rollover policy (carryover cap in amount or hours, or reset-balance for monthly reset). One pool per (clientId, projectId, period) combination; overlapping periods for the same (client, project) pair MUST be rejected. Operator-driven lifecycle draft → active → closed → archived; once closed, pool amount/rate/policy are immutable so the true-up calculation remains deterministic (Design D6).",
         "x-schema-org": "schema:MonetaryGrant",
         "x-spec": "openspec/changes/retainer-billing-engine/specs/retainer-billing-management/spec.md",
         "type": "object",
@@ -32,7 +32,7 @@
         "properties": {
           "poolId": {
             "type": "string",
-            "description": "Unique pool identifier (e.g. RETN-2026-01-001) (REQ-RETN-001).",
+            "description": "Unique pool identifier (e.g. RETN-2026-01-001).",
             "example": "RETN-2026-01-001",
             "title": "Pool ID"
           },
@@ -52,14 +52,14 @@
           "periodStart": {
             "type": "string",
             "format": "date",
-            "description": "Effective-period start date (inclusive) (REQ-RETN-001).",
+            "description": "Effective-period start date (inclusive).",
             "example": "2026-01-01",
             "title": "Period Start"
           },
           "periodEnd": {
             "type": "string",
             "format": "date",
-            "description": "Effective-period end date (inclusive) (REQ-RETN-001).",
+            "description": "Effective-period end date (inclusive).",
             "example": "2026-01-31",
             "title": "Period End"
           },
@@ -67,7 +67,7 @@
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
-            "description": "Allocated retainer amount for the period in the pool currency (REQ-RETN-001).",
+            "description": "Allocated retainer amount for the period in the pool currency.",
             "example": 3000.0,
             "title": "Pool Amount"
           },
@@ -82,7 +82,7 @@
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
-            "description": "Rate (per hour or per day, see retainerRateUnit) used to convert time-entry hours into drawdownAmount for this pool (REQ-RETN-002, Design D2). NOT the standard billing rate — that is resolved per RateCard for overage (REQ-RETN-005).",
+            "description": "Rate (per hour or per day, see retainerRateUnit) used to convert time-entry hours into drawdownAmount for this pool (Design D2). NOT the standard billing rate: that is resolved per RateCard for overage.",
             "example": 75.0,
             "title": "Retainer Rate"
           },
@@ -100,7 +100,7 @@
           },
           "rolloverPolicy": {
             "type": "object",
-            "description": "Per-pool rollover policy (REQ-RETN-004, Design D3). carryoverMaxAmount and carryoverMaxHours are mutually-exclusive caps; resetBalance=true forces carryover=0 regardless of caps.",
+            "description": "Per-pool rollover policy (Design D3). carryoverMaxAmount and carryoverMaxHours are mutually-exclusive caps; resetBalance=true forces carryover=0 regardless of caps.",
             "required": [
               "resetBalance"
             ],
@@ -108,7 +108,7 @@
               "resetBalance": {
                 "type": "boolean",
                 "default": false,
-                "description": "If true, unused balance is discarded at period-end (no carryover) (REQ-RETN-004).",
+                "description": "If true, unused balance is discarded at period-end (no carryover).",
                 "title": "Reset Balance"
               },
               "carryoverMaxAmount": {
@@ -116,7 +116,7 @@
                 "multipleOf": 0.01,
                 "minimum": 0,
                 "nullable": true,
-                "description": "Maximum unused balance carried forward in the pool currency (REQ-RETN-004). Null = unlimited.",
+                "description": "Maximum unused balance carried forward in the pool currency. Null = unlimited.",
                 "title": "Carryover Max Amount"
               },
               "carryoverMaxHours": {
@@ -124,7 +124,7 @@
                 "multipleOf": 0.01,
                 "minimum": 0,
                 "nullable": true,
-                "description": "Maximum unused balance carried forward in hours (converted at retainerRate) (REQ-RETN-004). Null = unlimited.",
+                "description": "Maximum unused balance carried forward in hours (converted at retainerRate). Null = unlimited.",
                 "title": "Carryover Max Hours"
               },
               "carryoverCapUnit": {
@@ -160,13 +160,13 @@
               "archived"
             ],
             "default": "draft",
-            "description": "Pool lifecycle state. draft = editable; active = drawdowns accepted; closed = period elapsed and true-up generated (REQ-RETN-006); archived = read-only audit trail.",
+            "description": "Pool lifecycle state. draft = editable; active = drawdowns accepted; closed = period elapsed and true-up generated; archived = read-only audit trail.",
             "title": "Status"
           },
           "sourcePoolId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the prior-period pool when this pool was auto-created via rollover (REQ-RETN-009).",
+            "description": "FK to the prior-period pool when this pool was auto-created via rollover.",
             "title": "Source Pool ID"
           },
           "description": {
@@ -207,25 +207,25 @@
               "from": "draft",
               "to": "active",
               "label": "Activeren",
-              "description": "Activate the pool so drawdowns can be recorded (REQ-RETN-001)."
+              "description": "Activate the pool so drawdowns can be recorded."
             },
             "close": {
               "from": "active",
               "to": "closed",
               "label": "Afsluiten",
-              "description": "Close the pool for the elapsed period; triggers true-up generation per REQ-RETN-006."
+              "description": "Close the pool for the elapsed period; triggers true-up generation."
             },
             "archive": {
               "from": "closed",
               "to": "archived",
               "label": "Archiveren",
-              "description": "Move pool to read-only audit state after settlement (REQ-RETN-010)."
+              "description": "Move pool to read-only audit state after settlement."
             }
           }
         },
         "x-openregister-aggregations": {
           "drawdownsByPool": {
-            "description": "Declarative shape of the drawdown-balance aggregation (REQ-RETN-003). Sums RetainerDrawdown.drawdownAmount for this pool where drawdownDate <= as-of-date and status in (materialized, adjusted). The available-balance UI computes poolAmount - drawnAmount + sum(RetainerRollover.carryoverAmount where targetPeriodPoolId=@self.id).",
+            "description": "Declarative shape of the drawdown-balance aggregation. Sums RetainerDrawdown.drawdownAmount for this pool where drawdownDate <= as-of-date and status in (materialized, adjusted). The available-balance UI computes poolAmount - drawnAmount + sum(RetainerRollover.carryoverAmount where targetPeriodPoolId=@self.id).",
             "filter": {
               "status": "materialized"
             },
@@ -251,7 +251,7 @@
             ]
           },
           "trueUpsByPool": {
-            "description": "Declarative count of period-end true-ups attached to this pool (REQ-RETN-006). Used by the detail view to prevent duplicate true-up creation per REQ-RETN-007.",
+            "description": "Declarative count of period-end true-ups attached to this pool. Used by the detail view to prevent duplicate true-up creation.",
             "filter": {},
             "from": "RetainerTrueUp",
             "groupBy": [
@@ -267,7 +267,7 @@
         },
         "x-openregister-uniqueness": {
           "nonOverlappingPeriod": {
-            "description": "Per REQ-RETN-001, two active/closed RetainerPool records for the same (clientId, projectId) pair MUST NOT have overlapping [periodStart, periodEnd] windows. The precondition validates on transition draft→active. Error message: 'Retainer pool exists for {client} in period {start}..{end}; overlapping periods not allowed'.",
+            "description": "Per, two active/closed RetainerPool records for the same (clientId, projectId) pair MUST NOT have overlapping [periodStart, periodEnd] windows. The precondition validates on transition draft→active. Error message: 'Retainer pool exists for {client} in period {start}.{end}; overlapping periods not allowed'.",
             "keys": [
               "clientId",
               "projectId"
@@ -321,7 +321,7 @@
         "icon": "ArrowDownBoldOutline",
         "version": "0.1.0",
         "title": "Retainer Drawdown",
-        "description": "Immutable per-time-entry consumption record against a RetainerPool. Created automatically by the TimeEntry create lifecycle hook (REQ-RETN-002, Design D2). drawdownAmount = hoursOrAmount × drawdownRate where drawdownRate is the pool's retainerRate at materialization time — NOT the timesheet's billable rate (Design D2 + REQ-RETN-002). Once status=materialized, the record is read-only; reversal/adjustment creates a new record linking back via reversalOfDrawdownId.",
+        "description": "Immutable per-time-entry consumption record against a RetainerPool. Created automatically by the TimeEntry create lifecycle hook (Design D2). DrawdownAmount = hoursOrAmount × drawdownRate where drawdownRate is the pool's retainerRate at materialization time: NOT the timesheet's billable rate (Design D2 +). Once status=materialized, the record is read-only; reversal/adjustment creates a new record linking back via reversalOfDrawdownId.",
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/retainer-billing-engine/specs/retainer-billing-management/spec.md",
         "type": "object",
@@ -345,7 +345,7 @@
           },
           "poolId": {
             "type": "string",
-            "description": "FK to the RetainerPool being consumed (REQ-RETN-002).",
+            "description": "FK to the RetainerPool being consumed.",
             "example": "RETN-2026-01-001",
             "title": "Pool ID"
           },
@@ -358,7 +358,7 @@
           "drawdownDate": {
             "type": "string",
             "format": "date",
-            "description": "Date of the underlying time entry; used by the available-balance aggregation filter (REQ-RETN-003).",
+            "description": "Date of the underlying time entry; used by the available-balance aggregation filter.",
             "example": "2026-01-10",
             "title": "Drawdown Date"
           },
@@ -382,7 +382,7 @@
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
-            "description": "Computed drawdown amount in pool currency = hoursOrAmount × drawdownRate (REQ-RETN-002).",
+            "description": "Computed drawdown amount in pool currency = hoursOrAmount × drawdownRate.",
             "example": 750.0,
             "title": "Drawdown Amount"
           },
@@ -407,7 +407,7 @@
           "reversalOfDrawdownId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the prior drawdown this record reverses or adjusts (REQ-RETN-002, immutable audit). Null for original drawdowns.",
+            "description": "FK to the prior drawdown this record reverses or adjusts (immutable audit). Null for original drawdowns.",
             "title": "Reversal Of Drawdown ID"
           },
           "reversalReason": {
@@ -457,7 +457,7 @@
         "icon": "ArrowRightBoldOutline",
         "version": "0.1.0",
         "title": "Retainer Rollover",
-        "description": "Immutable carryover record between consecutive RetainerPools for the same (clientId, projectId) pair (REQ-RETN-004, REQ-RETN-009). On pool close (lifecycle.close), a RetainerRollover is created capturing the unused balance, the cap that was applied (if any), and whether reset-balance forced carryover to zero. Adjustments MUST create a new record (status=adjusted) referencing the original via adjustsRolloverId; original record is never mutated (Design D6).",
+        "description": "Immutable carryover record between consecutive RetainerPools for the same (clientId, projectId) pair. On pool close (lifecycle.close), a RetainerRollover is created capturing the unused balance, the cap that was applied (if any), and whether reset-balance forced carryover to zero. Adjustments MUST create a new record (status=adjusted) referencing the original via adjustsRolloverId; original record is never mutated (Design D6).",
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/retainer-billing-engine/specs/retainer-billing-management/spec.md",
         "type": "object",
@@ -478,21 +478,21 @@
           },
           "sourcePeriodPoolId": {
             "type": "string",
-            "description": "FK to the closing RetainerPool (REQ-RETN-004).",
+            "description": "FK to the closing RetainerPool.",
             "example": "RETN-2026-01-001",
             "title": "Source Period Pool ID"
           },
           "targetPeriodPoolId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the next-period RetainerPool that received the carryover (REQ-RETN-009). Null until the next pool is created.",
+            "description": "FK to the next-period RetainerPool that received the carryover. Null until the next pool is created.",
             "title": "Target Period Pool ID"
           },
           "carryoverAmount": {
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
-            "description": "Amount carried forward in pool currency (REQ-RETN-004). Zero when resetBalance=true or pool overspent.",
+            "description": "Amount carried forward in pool currency. Zero when resetBalance=true or pool overspent.",
             "example": 0.0,
             "title": "Carryover Amount"
           },
@@ -508,7 +508,7 @@
           "carryoverCapApplied": {
             "type": "boolean",
             "default": false,
-            "description": "True when the unused balance exceeded the policy cap and was trimmed (REQ-RETN-004 audit).",
+            "description": "True when the unused balance exceeded the policy cap and was trimmed (audit).",
             "title": "Carryover Cap Applied"
           },
           "capValueApplied": {
@@ -522,7 +522,7 @@
           "resetBalance": {
             "type": "boolean",
             "default": false,
-            "description": "Mirrors the policy at execution time; true forces carryoverAmount=0 (REQ-RETN-004).",
+            "description": "Mirrors the policy at execution time; true forces carryoverAmount=0.",
             "title": "Reset Balance"
           },
           "administrationId": {
@@ -552,7 +552,7 @@
           "adjustmentReason": {
             "type": "string",
             "nullable": true,
-            "description": "Free-text reason for adjustment (REQ-RETN-010 audit).",
+            "description": "Free-text reason for adjustment (audit).",
             "title": "Adjustment Reason"
           }
         },
@@ -590,7 +590,7 @@
         "icon": "ScaleBalance",
         "version": "0.1.0",
         "title": "Retainer True-Up",
-        "description": "Period-end reconciliation record per RetainerPool (REQ-RETN-006, Design D5). Auto-created by the period-close lifecycle hook (RetainerPool.transitions.close) or by manual operator trigger (REQ-RETN-007). Captures actualDrawdown vs. poolAmount, the resolved overage rate via rate-card-engine (REQ-RETN-005), and the resulting overageInvoiceAmount destined for adjustment-invoice generation (REQ-RETN-008). Operator-driven lifecycle generated → pending-approval → approved → invoiced → settled, with reversed as an out-of-band correction state (REQ-RETN-007). Approvals require the retainer:approve-true-up permission per ADR-023 (REQ-RETN-011).",
+        "description": "Period-end reconciliation record per RetainerPool (Design D5). Auto-created by the period-close lifecycle hook (RetainerPool.transitions.close) or by manual operator trigger. Captures actualDrawdown vs. poolAmount, the resolved overage rate via rate-card-engine, and the resulting overageInvoiceAmount destined for adjustment-invoice generation. Operator-driven lifecycle generated → pending-approval → approved → invoiced → settled, with reversed as an out-of-band correction state. Approvals require the retainer:approve-true-up permission per ADR-023.",
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/retainer-billing-engine/specs/retainer-billing-management/spec.md",
         "type": "object",
@@ -613,7 +613,7 @@
           },
           "poolId": {
             "type": "string",
-            "description": "FK to the closing RetainerPool (REQ-RETN-006).",
+            "description": "FK to the closing RetainerPool.",
             "example": "RETN-2026-01-001",
             "title": "Pool ID"
           },
@@ -621,7 +621,7 @@
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
-            "description": "Sum of RetainerDrawdown.drawdownAmount across the pool period (REQ-RETN-006).",
+            "description": "Sum of RetainerDrawdown.drawdownAmount across the pool period.",
             "example": 3375.0,
             "title": "Actual Drawdown"
           },
@@ -637,7 +637,7 @@
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
-            "description": "max(0, actualDrawdown - poolAmount), in pool currency (REQ-RETN-005).",
+            "description": "max(0, actualDrawdown - poolAmount), in pool currency.",
             "example": 375.0,
             "title": "Overage Amount"
           },
@@ -646,7 +646,7 @@
             "multipleOf": 0.01,
             "minimum": 0,
             "nullable": true,
-            "description": "Standard rate resolved from rate-card-engine (REQ-RETN-005). Null if no overage.",
+            "description": "Standard rate resolved from rate-card-engine. Null if no overage.",
             "example": 85.0,
             "title": "Overage Rate"
           },
@@ -654,7 +654,7 @@
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
-            "description": "Overage converted from retainer-rate hours into standard-rate billing amount: overageAmount / retainerRate × overageRate (REQ-RETN-005). Zero when overageAmount=0.",
+            "description": "Overage converted from retainer-rate hours into standard-rate billing amount: overageAmount / retainerRate × overageRate. Zero when overageAmount=0.",
             "example": 425.0,
             "title": "Overage Invoice Amount"
           },
@@ -662,7 +662,7 @@
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
-            "description": "max(0, poolAmount - actualDrawdown), in pool currency. Reported for credit-note workflows (REQ-RETN-008).",
+            "description": "max(0, poolAmount - actualDrawdown), in pool currency. Reported for credit-note workflows.",
             "example": 0.0,
             "title": "Under Utilisation Amount"
           },
@@ -683,45 +683,45 @@
               "reversed"
             ],
             "default": "generated",
-            "description": "True-up lifecycle (REQ-RETN-006).",
+            "description": "True-up lifecycle.",
             "title": "Status"
           },
           "generatedAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Timestamp at true-up creation (REQ-RETN-006 audit).",
+            "description": "Timestamp at true-up creation (audit).",
             "example": "2026-02-01T10:00:00Z",
             "title": "Generated At"
           },
           "generatedBy": {
             "type": "string",
             "nullable": true,
-            "description": "Operator UID that triggered the true-up (or 'system' for auto-close). Audit log (REQ-RETN-007).",
+            "description": "Operator UID that triggered the true-up (or 'system' for auto-close). Audit log.",
             "title": "Generated By"
           },
           "approvedBy": {
             "type": "string",
             "nullable": true,
-            "description": "UID of the approver who advanced generated → approved (ADR-023, REQ-RETN-011).",
+            "description": "UID of the approver who advanced generated → approved (ADR-023).",
             "title": "Approved By"
           },
           "approvalDate": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Timestamp at approval (REQ-RETN-011 audit).",
+            "description": "Timestamp at approval (audit).",
             "title": "Approval Date"
           },
           "invoiceId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the generated adjustment Invoice once status=invoiced (REQ-RETN-008).",
+            "description": "FK to the generated adjustment Invoice once status=invoiced.",
             "title": "Invoice ID"
           },
           "reversalOfTrueUpId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to a prior true-up this record reverses/adjusts (REQ-RETN-007 audit chain). Null for first-time true-ups.",
+            "description": "FK to a prior true-up this record reverses/adjusts (audit chain). Null for first-time true-ups.",
             "title": "Reversal Of True Up ID"
           },
           "reversalReason": {
@@ -733,7 +733,7 @@
           "manualTriggerReason": {
             "type": "string",
             "nullable": true,
-            "description": "Free-text reason when triggered manually after a missed auto-close (REQ-RETN-007).",
+            "description": "Free-text reason when triggered manually after a missed auto-close.",
             "title": "Manual Trigger Reason"
           }
         },
@@ -756,19 +756,19 @@
             },
             "approved": {
               "label": "Goedgekeurd",
-              "description": "Approved by an authorised approver (REQ-RETN-011); awaiting invoice generation."
+              "description": "Approved by an authorised approver; awaiting invoice generation."
             },
             "invoiced": {
               "label": "Gefactureerd",
-              "description": "Adjustment invoice created and linked via invoiceId (REQ-RETN-008)."
+              "description": "Adjustment invoice created and linked via invoiceId."
             },
             "settled": {
               "label": "Afgehandeld",
-              "description": "Invoice paid or under-utilisation absorbed; rollover-to-next-period allowed (REQ-RETN-009)."
+              "description": "Invoice paid or under-utilisation absorbed; rollover-to-next-period allowed."
             },
             "reversed": {
               "label": "Teruggedraaid",
-              "description": "Out-of-band correction; preserves audit chain via reversalOfTrueUpId (REQ-RETN-007)."
+              "description": "Out-of-band correction; preserves audit chain via reversalOfTrueUpId."
             }
           },
           "transitions": {
@@ -776,20 +776,20 @@
               "from": "generated",
               "to": "pending-approval",
               "label": "Indienen ter goedkeuring",
-              "description": "Submit true-up to approver (REQ-RETN-011)."
+              "description": "Submit true-up to approver."
             },
             "approve": {
               "from": "pending-approval",
               "to": "approved",
               "label": "Goedkeuren",
-              "description": "Approver advances true-up; sets approvedBy + approvalDate (REQ-RETN-011).",
+              "description": "Approver advances true-up; sets approvedBy + approvalDate.",
               "permission": "retainer:approve-true-up"
             },
             "invoice": {
               "from": "approved",
               "to": "invoiced",
               "label": "Factureren",
-              "description": "Generate adjustment invoice if overageAmount > 0; sets invoiceId (REQ-RETN-008)."
+              "description": "Generate adjustment invoice if overageAmount > 0; sets invoiceId."
             },
             "settle": {
               "from": "invoiced",
@@ -801,14 +801,14 @@
               "from": "approved",
               "to": "reversed",
               "label": "Terugdraaien",
-              "description": "Reverse an approved true-up out-of-band (REQ-RETN-007); creates a new generated true-up linked via reversalOfTrueUpId.",
+              "description": "Reverse an approved true-up out-of-band; creates a new generated true-up linked via reversalOfTrueUpId.",
               "permission": "retainer:approve-true-up"
             }
           }
         },
         "x-openregister-aggregations": {
           "drawdownsForPeriod": {
-            "description": "Declarative shape of the actualDrawdown derivation (REQ-RETN-006). Sums RetainerDrawdown.drawdownAmount where poolId=@self.poolId AND drawdownDate BETWEEN pool.periodStart AND pool.periodEnd AND status='materialized'.",
+            "description": "Declarative shape of the actualDrawdown derivation. Sums RetainerDrawdown.drawdownAmount where poolId=@self.poolId AND drawdownDate BETWEEN pool.periodStart AND pool.periodEnd AND status='materialized'.",
             "filter": {
               "status": "materialized"
             },
@@ -904,7 +904,7 @@
         },
         "administrationId": "adm-smb-1",
         "status": "closed",
-        "description": "TechStartup BV platform-migratie retainer januari 2026 — reset-balance policy."
+        "description": "TechStartup BV platform-migratie retainer januari 2026: reset-balance policy."
       },
       {
         "@self": {
@@ -929,7 +929,7 @@
         "administrationId": "adm-smb-1",
         "status": "active",
         "sourcePoolId": "RETN-2026-01-001",
-        "description": "Gemeente Amsterdam consulting retainer februari 2026 — rollover van januari (overspend, geen carryover)."
+        "description": "Gemeente Amsterdam consulting retainer februari 2026: rollover van januari (overspend, geen carryover)."
       },
       {
         "@self": {
@@ -946,7 +946,7 @@
         "drawdownAmount": 750.0,
         "administrationId": "adm-smb-1",
         "status": "materialized",
-        "description": "Adviesgesprek gemeente — 10 uur"
+        "description": "Adviesgesprek gemeente: 10 uur"
       },
       {
         "@self": {
@@ -963,7 +963,7 @@
         "drawdownAmount": 1125.0,
         "administrationId": "adm-smb-1",
         "status": "materialized",
-        "description": "Workshop dataplatform — 15 uur"
+        "description": "Workshop dataplatform: 15 uur"
       },
       {
         "@self": {
@@ -980,7 +980,7 @@
         "drawdownAmount": 1500.0,
         "administrationId": "adm-smb-1",
         "status": "materialized",
-        "description": "Implementatie roadmap — 20 uur (pool overschreden)"
+        "description": "Implementatie roadmap: 20 uur (pool overschreden)"
       },
       {
         "@self": {
@@ -997,7 +997,7 @@
         "drawdownAmount": 2500.0,
         "administrationId": "adm-smb-1",
         "status": "materialized",
-        "description": "Platform-migratie sprint 1 — 25 uur"
+        "description": "Platform-migratie sprint 1: 25 uur"
       },
       {
         "@self": {

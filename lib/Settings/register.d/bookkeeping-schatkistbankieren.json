@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-schatkistbankieren",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json; ADR-031 declarative-first; ADR-022 consume OR audit-trail / RBAC; ADR-024 register-not-table.",
-    "description": "T2 schatkistbankieren (treasury banking compliance) — declarative TreasuryAccount + BankingRule + ComplianceReport registers with x-openregister-lifecycle (TreasuryAccount draft→configured→active→monitored→compliant with suspended/archived), x-openregister-calculations (ComplianceReport.complianceScore + criteriaResults weighted-rule-match), x-openregister-aggregations (by administration+period, by ruleType, aging buckets), and x-openregister-audit-trail per ADR-022. Seeds three baseline BankingRule records (rule-iban-format, rule-segregation, rule-approval-required) loaded idempotently by ConfigurationService::importFromApp. Multi-criteria compliance precondition on TreasuryAccount.activate is declared in x-openregister-lifecycle.transitions.activate.preconditions; if OR's engine cannot evaluate multi-criteria preconditions declaratively, the ADR-031 exception path is OCA\\Shillinq\\Lifecycle\\ComplianceValidator::isCompliant (single-method, registered out-of-band — not authored by this spec by default). No PHP ComplianceService, ComplianceReportService, ComplianceScoringService, ComplianceAggregationService is shipped — per REQ-SCHATKIST-006 / REQ-SCHATKIST-007 scoring and aggregation are calculation/aggregation extensions."
+    "description": "T2 schatkistbankieren (treasury banking compliance): declarative TreasuryAccount + BankingRule + ComplianceReport registers with x-openregister-lifecycle (TreasuryAccount draft→configured→active→monitored→compliant with suspended/archived), x-openregister-calculations (ComplianceReport.complianceScore + criteriaResults weighted-rule-match), x-openregister-aggregations (by administration+period, by ruleType, aging buckets), and x-openregister-audit-trail per ADR-022. Seeds three baseline BankingRule records (rule-iban-format, rule-segregation, rule-approval-required) loaded idempotently by ConfigurationService:importFromApp. Multi-criteria compliance precondition on TreasuryAccount.activate is declared in x-openregister-lifecycle.transitions.activate.preconditions; if OR's engine cannot evaluate multi-criteria preconditions declaratively, the ADR-031 exception path is OCA\\Shillinq\\Lifecycle\\ComplianceValidator:isCompliant (single-method, registered out-of-band. Not authored by this spec by default). No PHP ComplianceService, ComplianceReportService, ComplianceScoringService, ComplianceAggregationService is shipped. Scoring and aggregation are calculation/aggregation extensions."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "BankOutline",
         "version": "0.1.0",
         "title": "Treasury Account",
-        "description": "Treasury-managed bank account governed under Dutch schatkistbankieren regulations (REQ-SCHATKIST-002). Carries IBAN, compliance classification, master-list status, optional GL linkage and lifecycle state (draft → configured → active → monitored → compliant; plus suspended / archived). Activation enforces multi-criteria compliance preconditions against the active BankingRule register per REQ-SCHATKIST-005. Lifecycle transitions materialise audit-trail events per ADR-022 + T2 bookkeeping-audit-trail (REQ-SCHATKIST-008).",
+        "description": "Treasury-managed bank account governed under Dutch schatkistbankieren regulations. Carries IBAN, compliance classification, master-list status, optional GL linkage and lifecycle state (draft → configured → active → monitored → compliant; plus suspended / archived). Activation enforces multi-criteria compliance preconditions against the active BankingRule register. Lifecycle transitions materialise audit-trail events per ADR-022 + T2 bookkeeping-audit-trail.",
         "x-schema-org": "schema:BankAccount",
         "x-spec": "openspec/changes/bookkeeping-schatkistbankieren/specs/bookkeeping-schatkistbankieren/spec.md",
         "type": "object",
@@ -29,13 +29,13 @@
         "properties": {
           "accountNumber": {
             "type": "string",
-            "description": "Stable identifier per administration (REQ-SCHATKIST-002).",
+            "description": "Stable identifier per administration.",
             "example": "TR-NL-001",
             "title": "Account Number"
           },
           "iban": {
             "type": "string",
-            "description": "Full Dutch IBAN (REQ-SCHATKIST-002). Validated against the Dutch IBAN pattern by BankingRule.rule-iban-format on activation per REQ-SCHATKIST-005.",
+            "description": "Full Dutch IBAN. Validated against the Dutch IBAN pattern by BankingRule.rule-iban-format on activation.",
             "pattern": "^NL[0-9]{2}[A-Z]{4}[0-9]{10}$",
             "example": "NL91ABNA0417164300",
             "title": "IBAN"
@@ -56,7 +56,7 @@
           },
           "accountName": {
             "type": "string",
-            "description": "Treasury account label (REQ-SCHATKIST-002).",
+            "description": "Treasury account label.",
             "example": "Schatkistrekening 2026",
             "title": "Account Name"
           },
@@ -69,7 +69,7 @@
           },
           "complianceClassification": {
             "type": "string",
-            "description": "Treasury compliance classification (REQ-SCHATKIST-002).",
+            "description": "Treasury compliance classification.",
             "enum": [
               "master-list",
               "subsidiary",
@@ -81,7 +81,7 @@
           },
           "masterListStatus": {
             "type": "string",
-            "description": "Master-list lifecycle status (REQ-SCHATKIST-002).",
+            "description": "Master-list lifecycle status.",
             "enum": [
               "active",
               "pending-review",
@@ -93,7 +93,7 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to the owning administration (REQ-SCHATKIST-002).",
+            "description": "FK to the owning administration.",
             "example": "adm-1",
             "title": "Administration ID"
           },
@@ -106,14 +106,14 @@
           },
           "requiresApproval": {
             "type": "boolean",
-            "description": "Whether activation requires CFO/treasurer approval (REQ-SCHATKIST-002).",
+            "description": "Whether activation requires CFO/treasurer approval.",
             "default": true,
             "example": true,
             "title": "Requires Approval"
           },
           "approvalStatus": {
             "type": "string",
-            "description": "Approval state (REQ-SCHATKIST-002).",
+            "description": "Approval state.",
             "enum": [
               "not-required",
               "pending",
@@ -126,7 +126,7 @@
           },
           "lifecycleState": {
             "type": "string",
-            "description": "Treasury-account lifecycle state (REQ-SCHATKIST-004).",
+            "description": "Treasury-account lifecycle state.",
             "enum": [
               "draft",
               "configured",
@@ -142,7 +142,7 @@
           },
           "lastCompliantDate": {
             "type": "string",
-            "description": "Last datetime a compliance check confirmed all active rules pass. Used by the aging aggregation (REQ-SCHATKIST-007).",
+            "description": "Last datetime a compliance check confirmed all active rules pass. Used by the aging aggregation.",
             "format": "date-time",
             "nullable": true,
             "example": "2026-04-15T08:00:00+02:00",
@@ -155,7 +155,7 @@
           "states": {
             "draft": {
               "label": "Draft",
-              "description": "Treasury account created but not yet configured (REQ-SCHATKIST-004)."
+              "description": "Treasury account created but not yet configured."
             },
             "configured": {
               "label": "Configured",
@@ -163,7 +163,7 @@
             },
             "active": {
               "label": "Active",
-              "description": "Activation passed multi-criteria compliance check per REQ-SCHATKIST-005."
+              "description": "Activation passed multi-criteria compliance check."
             },
             "monitored": {
               "label": "Monitored",
@@ -187,17 +187,17 @@
               "from": "draft",
               "to": "configured",
               "label": "Configure",
-              "description": "Operator configures IBAN, classification, administration scoping (REQ-SCHATKIST-004)."
+              "description": "Operator configures IBAN, classification, administration scoping."
             },
             "activate": {
               "from": "configured",
               "to": "active",
               "label": "Activate",
-              "description": "Multi-criteria compliance check evaluates all active BankingRule criteria scoped to the account's administration (REQ-SCHATKIST-005). All rules must pass; any failure blocks the transition and is recorded as a compliance audit event per REQ-SCHATKIST-008.",
+              "description": "Multi-criteria compliance check evaluates all active BankingRule criteria scoped to the account's administration. All rules must pass; any failure blocks the transition and is recorded as a compliance audit event.",
               "preconditions": [
                 {
                   "id": "all-active-banking-rules-pass",
-                  "description": "Multi-criteria compliance precondition (REQ-SCHATKIST-005): every BankingRule where isActive=true AND administrationId=@self.administrationId MUST evaluate to PASS for this account. Engine MUST evaluate every applicable rule (no short-circuit) and persist per-rule results onto the resulting ComplianceReport.criteriaResults; if ANY rule fails the transition is blocked.",
+                  "description": "Multi-criteria compliance precondition: every BankingRule where isActive=true AND administrationId=@self.administrationId MUST evaluate to PASS for this account. Engine MUST evaluate every applicable rule (no short-circuit) and persist per-rule results onto the resulting ComplianceReport.criteriaResults; if ANY rule fails the transition is blocked.",
                   "rules": [
                     {
                       "ruleType": "iban-format",
@@ -227,7 +227,7 @@
               "from": "active",
               "to": "monitored",
               "label": "Begin Monitoring",
-              "description": "Scheduled monitoring job or operator trigger; all active BankingRule criteria must continue to pass (REQ-SCHATKIST-004).",
+              "description": "Scheduled monitoring job or operator trigger; all active BankingRule criteria must continue to pass.",
               "preconditions": [
                 {
                   "id": "all-active-banking-rules-still-pass",
@@ -239,13 +239,13 @@
               "from": "monitored",
               "to": "compliant",
               "label": "Sign Off Compliant",
-              "description": "Compliance officer signs off on monitoring results (REQ-SCHATKIST-004). Audit trail records actor + transition per REQ-SCHATKIST-008."
+              "description": "Compliance officer signs off on monitoring results. Audit trail records actor + transition."
             },
             "suspend": {
               "from": "active",
               "to": "suspended",
               "label": "Suspend",
-              "description": "Compliance failure or policy change. The blocking reason MUST be recorded on the audit-trail event per REQ-SCHATKIST-008."
+              "description": "Compliance failure or policy change. The blocking reason MUST be recorded on the audit-trail event."
             },
             "suspendFromMonitored": {
               "from": "monitored",
@@ -257,7 +257,7 @@
               "from": "suspended",
               "to": "active",
               "label": "Re-activate",
-              "description": "Operator remediated the failure; all active BankingRule criteria must pass again (REQ-SCHATKIST-004).",
+              "description": "Operator remediated the failure; all active BankingRule criteria must pass again.",
               "preconditions": [
                 {
                   "id": "all-active-banking-rules-pass-on-reactivate",
@@ -269,19 +269,19 @@
               "from": "configured",
               "to": "archived",
               "label": "Archive",
-              "description": "Operator archives the configured-but-not-yet-active account (REQ-SCHATKIST-004)."
+              "description": "Operator archives the configured-but-not-yet-active account."
             },
             "archiveFromActive": {
               "from": "active",
               "to": "archived",
               "label": "Archive",
-              "description": "Operator archives an active account (REQ-SCHATKIST-004)."
+              "description": "Operator archives an active account."
             }
           }
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on TreasuryAccount with actor (IUserSession), timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-SCHATKIST-008. Compliance-rule-evaluation results are recorded on the transition to active/monitored; blocking reasons are recorded on suspend transitions. Retention is governed by OR per the T2 bookkeeping-audit-trail spec."
+          "description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on TreasuryAccount with actor (IUserSession), timestamp, action, before/after snapshot, and hash chain per ADR-022 +. Compliance-rule-evaluation results are recorded on the transition to active/monitored; blocking reasons are recorded on suspend transitions. Retention is governed by OR per the T2 bookkeeping-audit-trail spec."
         }
       },
       "BankingRule": {
@@ -289,7 +289,7 @@
         "icon": "ShieldCheckOutline",
         "version": "0.1.0",
         "title": "Banking Rule",
-        "description": "Configurable compliance criterion enforced during treasury-account lifecycle transitions (REQ-SCHATKIST-003). Operators configure rules per administration; the evaluation criteria payload varies by ruleType (iban-format → pattern, segregation → checkDuplicates, approval-required → requiresTreasurerApproval, transaction-limit → maxAmount, reporting-period → cadence). Severity drives whether a rule blocks the transition or is recorded as a warning/informational note on the resulting ComplianceReport.",
+        "description": "Configurable compliance criterion enforced during treasury-account lifecycle transitions. Operators configure rules per administration; the evaluation criteria payload varies by ruleType (iban-format → pattern, segregation → checkDuplicates, approval-required → requiresTreasurerApproval, transaction-limit → maxAmount, reporting-period → cadence). Severity drives whether a rule blocks the transition or is recorded as a warning/informational note on the resulting ComplianceReport.",
         "x-schema-org": "schatkist:BankingRule",
         "x-spec": "openspec/changes/bookkeeping-schatkistbankieren/specs/bookkeeping-schatkistbankieren/spec.md",
         "type": "object",
@@ -305,13 +305,13 @@
         "properties": {
           "ruleNumber": {
             "type": "string",
-            "description": "Stable identifier (REQ-SCHATKIST-003).",
+            "description": "Stable identifier.",
             "example": "rule-iban-format",
             "title": "Rule Number"
           },
           "name": {
             "type": "string",
-            "description": "Human-readable rule name (REQ-SCHATKIST-003).",
+            "description": "Human-readable rule name.",
             "example": "Dutch IBAN Format",
             "title": "Name"
           },
@@ -324,7 +324,7 @@
           },
           "ruleType": {
             "type": "string",
-            "description": "Compliance criterion type (REQ-SCHATKIST-003).",
+            "description": "Compliance criterion type.",
             "enum": [
               "iban-format",
               "segregation",
@@ -337,7 +337,7 @@
           },
           "evaluationCriteria": {
             "type": "object",
-            "description": "Criteria payload — shape varies by ruleType (REQ-SCHATKIST-003). iban-format: { pattern: string }. segregation: { checkDuplicates: boolean }. approval-required: { requiresTreasurerApproval: boolean }. transaction-limit: { maxAmount: number, currency: string }. reporting-period: { cadence: enum }.",
+            "description": "Criteria payload: shape varies by ruleType. Iban-format: { pattern: string }. Segregation: { checkDuplicates: boolean }. Approval-required: { requiresTreasurerApproval: boolean }. Transaction-limit: { maxAmount: number, currency: string }. Reporting-period: { cadence: enum }.",
             "example": {
               "pattern": "^NL[0-9]{2}[A-Z]{4}[0-9]{10}$"
             },
@@ -345,7 +345,7 @@
           },
           "severity": {
             "type": "string",
-            "description": "Rule severity (REQ-SCHATKIST-003). blocking = activation/monitoring fails; warning = transition allowed but flagged; informational = recorded only.",
+            "description": "Rule severity. blocking = activation/monitoring fails; warning = transition allowed but flagged; informational = recorded only.",
             "enum": [
               "informational",
               "warning",
@@ -356,14 +356,14 @@
           },
           "isActive": {
             "type": "boolean",
-            "description": "Whether this rule is enforced in the administration (REQ-SCHATKIST-003).",
+            "description": "Whether this rule is enforced in the administration.",
             "default": true,
             "example": true,
             "title": "Is Active"
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to administration enabling per-org rule customization (REQ-SCHATKIST-003).",
+            "description": "FK to administration enabling per-org rule customization.",
             "example": "adm-1",
             "title": "Administration ID"
           }
@@ -378,7 +378,7 @@
         "icon": "FileChartOutline",
         "version": "0.1.0",
         "title": "Compliance Report",
-        "description": "Periodic compliance snapshot for schatkistbankieren reporting (REQ-SCHATKIST-006). complianceScore + criteriaResults are declarative calculations (x-openregister-calculations) — weighted rule-match aggregation against the BankingRule register. status follows draft → reviewed → approved-for-export → exported. Optional regulatoryExportFormat + regulatoryExportUri capture the docudesk handover. NO ComplianceReportService.php / ComplianceScoringService.php / ReportGeneratorService.php is shipped — scoring is a calculation, not a service.",
+        "description": "Periodic compliance snapshot for schatkistbankieren reporting. ComplianceScore + criteriaResults are declarative calculations (x-openregister-calculations): weighted rule-match aggregation against the BankingRule register. Status follows draft → reviewed → approved-for-export → exported. Optional regulatoryExportFormat + regulatoryExportUri capture the docudesk handover. NO ComplianceReportService.php / ComplianceScoringService.php / ReportGeneratorService.php is shipped. Scoring is a calculation, not a service.",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-schatkistbankieren/specs/bookkeeping-schatkistbankieren/spec.md",
         "type": "object",
@@ -396,33 +396,33 @@
         "properties": {
           "reportNumber": {
             "type": "string",
-            "description": "Sequential identifier per administration (REQ-SCHATKIST-006).",
+            "description": "Sequential identifier per administration.",
             "example": "CR-adm-1-2026-Q1-0001",
             "title": "Report Number"
           },
           "reportPeriod": {
             "type": "string",
-            "description": "Period identifier (REQ-SCHATKIST-006).",
+            "description": "Period identifier.",
             "example": "2026-Q1",
             "title": "Report Period"
           },
           "generatedAt": {
             "type": "string",
-            "description": "Report generation timestamp (REQ-SCHATKIST-006).",
+            "description": "Report generation timestamp.",
             "format": "date-time",
             "example": "2026-04-01T09:00:00+02:00",
             "title": "Generated At"
           },
           "treasuryAccountId": {
             "type": "string",
-            "description": "FK to TreasuryAccount when this is a single-account report; null when the report aggregates the whole administration (REQ-SCHATKIST-006).",
+            "description": "FK to TreasuryAccount when this is a single-account report; null when the report aggregates the whole administration.",
             "nullable": true,
             "example": "TR-NL-001",
             "title": "Treasury Account ID"
           },
           "complianceScore": {
             "type": "number",
-            "description": "Automated score (0-100) from weighted BankingRule criteria match — declarative x-openregister-calculations output (REQ-SCHATKIST-006).",
+            "description": "Automated score (0-100) from weighted BankingRule criteria match: declarative x-openregister-calculations output.",
             "minimum": 0,
             "maximum": 100,
             "example": 80,
@@ -430,7 +430,7 @@
           },
           "criteriaResults": {
             "type": "array",
-            "description": "Per-rule evaluation result (REQ-SCHATKIST-006). Each entry: { ruleNumber, ruleType, severity, status: pass|fail, evaluatedAt }. Declarative x-openregister-calculations output.",
+            "description": "Per-rule evaluation result. Each entry: { ruleNumber, ruleType, severity, status: pass|fail, evaluatedAt }. Declarative x-openregister-calculations output.",
             "items": {
               "type": "object"
             },
@@ -461,7 +461,7 @@
           },
           "status": {
             "type": "string",
-            "description": "Compliance-report status (REQ-SCHATKIST-006).",
+            "description": "Compliance-report status.",
             "enum": [
               "draft",
               "reviewed",
@@ -474,7 +474,7 @@
           },
           "regulatoryExportFormat": {
             "type": "string",
-            "description": "Regulatory export format (REQ-SCHATKIST-006).",
+            "description": "Regulatory export format.",
             "enum": [
               "csv-master-list",
               "xml-regulatory",
@@ -486,21 +486,21 @@
           },
           "regulatoryExportUri": {
             "type": "string",
-            "description": "Storage URI of the exported compliance report (docudesk FK contract; REQ-SCHATKIST-006).",
+            "description": "Storage URI of the exported compliance report (docudesk FK contract).",
             "nullable": true,
             "example": "docudesk://reports/compliance/2026-Q1-adm-1.csv",
             "title": "Regulatory Export URI"
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to administration (REQ-SCHATKIST-006).",
+            "description": "FK to administration.",
             "example": "adm-1",
             "title": "Administration ID"
           }
         },
         "x-openregister-calculations": {
           "complianceScore": {
-            "description": "Weighted rule-match aggregation per REQ-SCHATKIST-006 — sums the per-rule weight contribution of every PASSING BankingRule (where isActive=true AND administrationId=@self.administrationId), scaled to 0-100. With N active rules each rule contributes 100/N points on pass and 0 on fail (uniform weighting baseline). Operator-configurable per-rule weight overrides are out of scope for the T2 baseline.",
+            "description": "Weighted rule-match aggregation: sums the per-rule weight contribution of every PASSING BankingRule (where isActive=true AND administrationId=@self.administrationId), scaled to 0-100. With N active rules each rule contributes 100/N points on pass and 0 on fail (uniform weighting baseline). Operator-configurable per-rule weight overrides are out of scope for the T2 baseline.",
             "target": "complianceScore",
             "source": "BankingRule",
             "filter": {
@@ -511,7 +511,7 @@
             "expression": "100 * (count(rules where status=pass) / count(rules where isActive=true))"
           },
           "criteriaResults": {
-            "description": "Per-rule evaluation status array per REQ-SCHATKIST-006 — one entry per active BankingRule with { ruleNumber, ruleType, severity, status: pass|fail, evaluatedAt }. Evaluator: each ruleType maps to the rule's evaluationCriteria payload applied to the associated TreasuryAccount(s) for the period.",
+            "description": "Per-rule evaluation status array: one entry per active BankingRule with { ruleNumber, ruleType, severity, status: pass|fail, evaluatedAt }. Evaluator: each ruleType maps to the rule's evaluationCriteria payload applied to the associated TreasuryAccount(s) for the period.",
             "target": "criteriaResults",
             "source": "BankingRule",
             "filter": {
@@ -530,7 +530,7 @@
         },
         "x-openregister-aggregations": {
           "complianceByAdministrationAndPeriod": {
-            "description": "Period-based compliance metric (REQ-SCHATKIST-007). GROUP BY (administrationId, reportPeriod) over ComplianceReport, computing totalAccounts (count distinct treasuryAccountId), compliantCount (count where complianceScore >= 100), nonCompliantCount, averageComplianceScore, and compliancePercentage = 100 * compliantCount / totalAccounts.",
+            "description": "Period-based compliance metric. GROUP BY (administrationId, reportPeriod) over ComplianceReport, computing totalAccounts (count distinct treasuryAccountId), compliantCount (count where complianceScore >= 100), nonCompliantCount, averageComplianceScore, and compliancePercentage = 100 * compliantCount / totalAccounts.",
             "source": "ComplianceReport",
             "groupBy": [
               "administrationId",
@@ -563,7 +563,7 @@
             ]
           },
           "complianceByRuleType": {
-            "description": "Per-rule-type pass/fail metric (REQ-SCHATKIST-007). GROUP BY criteriaResults[].ruleType across ComplianceReport.criteriaResults flattened, counting pass vs fail to identify systematically failing rules that need operator attention.",
+            "description": "Per-rule-type pass/fail metric. GROUP BY criteriaResults[].ruleType across ComplianceReport.criteriaResults flattened, counting pass vs fail to identify systematically failing rules that need operator attention.",
             "source": "ComplianceReport.criteriaResults",
             "groupBy": [
               "ruleType"
@@ -585,7 +585,7 @@
             ]
           },
           "agingByLastCompliantDate": {
-            "description": "Aging-by-compliance metric (REQ-SCHATKIST-007). GROUP BY TreasuryAccount.lastCompliantDate bucketed into 0-30d / 31-60d / 60+d to surface accounts that need revalidation. NO PHP aggregation service — the engine handles bucketing.",
+            "description": "Aging-by-compliance metric. GROUP BY TreasuryAccount.lastCompliantDate bucketed into 0-30d / 31-60d / 60+d to surface accounts that need revalidation. NO PHP aggregation service: the engine handles bucketing.",
             "source": "TreasuryAccount",
             "bucket": {
               "field": "lastCompliantDate",
@@ -632,7 +632,7 @@
         },
         "ruleNumber": "rule-iban-format",
         "name": "Dutch IBAN Format",
-        "description": "Validates that the treasury account IBAN follows the Dutch IBAN structure (NL country code + 2 check digits + 4-letter bank code + 10-digit account number) per REQ-SCHATKIST-010.",
+        "description": "Validates that the treasury account IBAN follows the Dutch IBAN structure (NL country code + 2 check digits + 4-letter bank code + 10-digit account number).",
         "ruleType": "iban-format",
         "evaluationCriteria": {
           "pattern": "^NL[0-9]{2}[A-Z]{4}[0-9]{10}$"
@@ -649,7 +649,7 @@
         },
         "ruleNumber": "rule-segregation",
         "name": "Treasury IBAN Segregation",
-        "description": "Enforces IBAN uniqueness per administration — prevents two treasury accounts within the same administration from sharing an IBAN per REQ-SCHATKIST-010.",
+        "description": "Enforces IBAN uniqueness per administration: prevents two treasury accounts within the same administration from sharing an IBAN.",
         "ruleType": "segregation",
         "evaluationCriteria": {
           "checkDuplicates": true
@@ -666,7 +666,7 @@
         },
         "ruleNumber": "rule-approval-required",
         "name": "Treasurer Approval Required",
-        "description": "Requires treasurer/CFO approval before activation of a treasury account per REQ-SCHATKIST-010.",
+        "description": "Requires treasurer/CFO approval before activation of a treasury account.",
         "ruleType": "approval-required",
         "evaluationCriteria": {
           "requiresTreasurerApproval": true

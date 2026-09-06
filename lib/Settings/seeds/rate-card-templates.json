@@ -3,7 +3,7 @@
     "spdx-license": "EUPL-1.2",
     "spdx-copyright": "2026 Conduction B.V.",
     "source": "Conduction internal default rate-card structure",
-    "description": "Default rate-card templates (junior / medior / senior / partner) for Dutch consultancy administrations. Operator overrides per administration — these are starting-point defaults only. Rates are indicative; actual market rates vary by sector and administration.",
+    "description": "Default rate-card templates (junior / medior / senior / partner) for Dutch consultancy administrations. Operator overrides per administration: these are starting-point defaults only. Rates are indicative; actual market rates vary by sector and administration.",
     "imported": "2026-06-01T00:00:00Z",
     "note": "effectiveTo: null means currently-valid (no expiry). Operator must set administrationId when seeding."
   },

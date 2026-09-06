@@ -9,7 +9,7 @@
         "icon": "CalendarCheckOutline",
         "version": "0.4.0",
         "title": "Booking Order",
-        "description": "Base order/agreement primitive. Concrete kinds (booking, sales, purchase, grant, engagement, quote, blanket) discriminate via `orderType` and extend with their own tail; payments (deposits, disbursements) and lines are related objects (Payment / OrderLine), not fields. Booking orders (orderType=booking) keep the completed → invoiced lifecycle: on completion a final Invoice is materialised and linked via invoiceId; on cancellation after invoicing a reversing CreditNote is materialised (REQ-DI-001/002).",
+        "description": "Base order/agreement primitive. Concrete kinds (booking, sales, purchase, grant, engagement, quote, blanket) discriminate via `orderType` and extend with their own tail; payments (deposits, disbursements) and lines are related objects (Payment / OrderLine), not fields. Booking orders (orderType=booking) keep the completed → invoiced lifecycle: on completion a final Invoice is materialised and linked via invoiceId; on cancellation after invoicing a reversing CreditNote is materialised.",
         "x-schema-org": "schema:Order",
         "x-openregister-purpose": "fact",
         "type": "object",
@@ -131,7 +131,7 @@
           },
           "taxRate": {
             "type": "integer",
-            "description": "VAT percentage applied to the service line (21 standard, 9 reduced, 0 exempt) per REQ-DI-004.",
+            "description": "VAT percentage applied to the service line (21 standard, 9 reduced, 0 exempt).",
             "default": 21,
             "example": 21,
             "title": "Tax Rate"
@@ -145,7 +145,7 @@
           },
           "depositRequired": {
             "type": "boolean",
-            "description": "Whether a deposit rule applies to this order. When false, the final invoice carries no credit line (REQ-DI-008).",
+            "description": "Whether a deposit rule applies to this order. When false, the final invoice carries no credit line.",
             "default": false,
             "example": true,
             "title": "Deposit Required"
@@ -153,7 +153,7 @@
           "depositAmount": {
             "type": "integer",
             "nullable": true,
-            "description": "Authorised deposit amount in minor units (EUR cents), credited on the final invoice (REQ-DI-003).",
+            "description": "Authorised deposit amount in minor units (EUR cents), credited on the final invoice.",
             "example": 7500,
             "title": "Deposit Amount"
           },
@@ -166,7 +166,7 @@
           },
           "paymentTermsDays": {
             "type": "integer",
-            "description": "Net payment terms in days used to compute the final invoice due date (REQ-DI-005).",
+            "description": "Net payment terms in days used to compute the final invoice due date.",
             "default": 14,
             "example": 14,
             "title": "Payment Terms Days"
@@ -174,7 +174,7 @@
           "invoiceId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the final Invoice created on completion. Null until completed; set by the complete transition action (REQ-DI-001/002).",
+            "description": "FK to the final Invoice created on completion. Null until completed; set by the complete transition action.",
             "example": "inv-final-2001",
             "title": "Invoice ID"
           },
@@ -182,7 +182,7 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Timestamp the booking was fulfilled/completed. Must be set before invoicing (REQ-DI-002).",
+            "description": "Timestamp the booking was fulfilled/completed. Must be set before invoicing.",
             "example": "2026-06-15T16:30:00Z",
             "title": "Completed At"
           },
@@ -219,11 +219,11 @@
             },
             "completed": {
               "label": "Completed",
-              "description": "Fulfilled/checked out. A final Invoice has been materialised in Shillinq and linked via invoiceId (REQ-DI-002)."
+              "description": "Fulfilled/checked out. A final Invoice has been materialised in Shillinq and linked via invoiceId."
             },
             "cancelled": {
               "label": "Cancelled",
-              "description": "Cancelled. If a final Invoice was already issued, a reversing CreditNote was materialised (REQ-DI-006). Remains queryable for audit."
+              "description": "Cancelled. If a final Invoice was already issued, a reversing CreditNote was materialised. Remains queryable for audit."
             }
           },
           "transitions": {
@@ -243,13 +243,13 @@
               "from": "confirmed",
               "to": "completed",
               "label": "Complete order",
-              "description": "Operator confirms fulfilment/checkout. Gated by InvoiceFromBookingGuard (completedAt set, deposit authorised, not already invoiced) then materialises exactly one final Invoice with service + deposit-credit lines, linking Order.invoiceId back (REQ-DI-002, idempotent per REQ-DI-002).",
+              "description": "Operator confirms fulfilment/checkout. Gated by InvoiceFromBookingGuard (completedAt set, deposit authorised, not already invoiced) then materialises exactly one final Invoice with service + deposit-credit lines, linking Order.invoiceId back (idempotent per).",
               "requires": "OCA\\Shillinq\\Lifecycle\\InvoiceFromBookingGuard::canComplete",
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "materialise-final-invoice",
-                  "description": "Materialise exactly one final Invoice (with InvoiceLine children: a service line at the order tax rate and, when a deposit is authorised, a negative 0%-VAT deposit-credit line) and set Order.invoiceId. Declarative outcome per REQ-DI-002/003/004 — line amounts and the deposit credit are computed by InvoiceFromBookingGuard before persistence.",
+                  "description": "Materialise exactly one final Invoice (with InvoiceLine children: a service line at the order tax rate and, when a deposit is authorised, a negative 0%-VAT deposit-credit line) and set Order.invoiceId. Declarative outcome: line amounts and the deposit credit are computed by InvoiceFromBookingGuard before persistence.",
                   "actionParameters": {
                     "register": "shillinq",
                     "schema": "Invoice",
@@ -270,13 +270,13 @@
               "from": "completed",
               "to": "cancelled",
               "label": "Cancel invoiced order",
-              "description": "Cancel after a final Invoice was issued. Gated by BookingCancellationGuard and materialises exactly one reversing CreditNote against the linked Invoice (REQ-DI-006, idempotent).",
+              "description": "Cancel after a final Invoice was issued. Gated by BookingCancellationGuard and materialises exactly one reversing CreditNote against the linked Invoice (idempotent).",
               "requires": "OCA\\Shillinq\\Lifecycle\\BookingCancellationGuard::canCancel",
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "materialise-reversing-credit-note",
-                  "description": "Materialise exactly one CreditNote reversing the linked Invoice for the full invoice gross. Declarative outcome per REQ-DI-006; amounts computed by BookingCancellationGuard. The original Invoice is preserved.",
+                  "description": "Materialise exactly one CreditNote reversing the linked Invoice for the full invoice gross. Declarative outcome; amounts computed by BookingCancellationGuard. The original Invoice is preserved.",
                   "actionParameters": {
                     "register": "shillinq",
                     "schema": "CreditNote",
@@ -323,7 +323,7 @@
         "icon": "CashLock",
         "version": "0.1.0",
         "title": "Deposit Payment",
-        "description": "An authorised booking deposit (owned by bookings-deposits T1). Declared here as a dimension so deposit-to-invoice can resolve the authorised amount for the credit line (REQ-DI-003) and so cancellation can transition it to refunded (REQ-DI-006). The full collection/state machine lives in bookings-deposits.",
+        "description": "An authorised booking deposit (owned by bookings-deposits T1). Declared here as a dimension so deposit-to-invoice can resolve the authorised amount for the credit line and so cancellation can transition it to refunded. The full collection/state machine lives in bookings-deposits.",
         "x-schema-org": "schema:PaymentChargeSpecification",
         "x-openregister-purpose": "dimension",
         "type": "object",
@@ -402,10 +402,10 @@
       },
       "Invoice": {
         "slug": "Invoice",
-        "icon": "FileDocumentOutline",
+        "icon": "ReceiptTextOutline",
         "version": "0.1.0",
         "title": "Invoice",
-        "description": "A final customer invoice materialised in Shillinq when a booking order completes. Carries a service line and, when a deposit was authorised, a negative deposit-credit line. Bidirectionally linked to its Order via sourceDocumentUri and to the credited DepositPayment via depositPaymentId (REQ-DI-001). Integrates into Shillinq AR aging with no special handling (REQ-DI-009).",
+        "description": "A final customer invoice materialised in Shillinq when a booking order completes. Carries a service line and, when a deposit was authorised, a negative deposit-credit line. Bidirectionally linked to its Order via sourceDocumentUri and to the credited DepositPayment via depositPaymentId. Integrates into Shillinq AR aging with no special handling.",
         "x-schema-org": "schema:Invoice",
         "x-openregister-purpose": "fact",
         "type": "object",
@@ -464,20 +464,20 @@
           "dueDate": {
             "type": "string",
             "format": "date",
-            "description": "Payment due date = invoiceDate + paymentTermsDays (REQ-DI-005).",
+            "description": "Payment due date = invoiceDate + paymentTermsDays.",
             "example": "2026-06-29",
             "title": "Due Date"
           },
           "sourceDocumentUri": {
             "type": "string",
-            "description": "Reference to the originating Order: urn:nextcloud:booking:order:{orderId} (REQ-DI-001). Also serves as the idempotency key for invoice materialisation (REQ-DI-002).",
+            "description": "Reference to the originating Order: urn:nextcloud:booking:order:{orderId}. Also serves as the idempotency key for invoice materialisation.",
             "example": "urn:nextcloud:booking:order:ord-1001",
             "title": "Source Document URI"
           },
           "depositPaymentId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the DepositPayment credited on this invoice (REQ-DI-001).",
+            "description": "FK to the DepositPayment credited on this invoice.",
             "example": "dp-5001",
             "title": "Deposit Payment ID"
           },
@@ -489,13 +489,13 @@
           },
           "vatAmount": {
             "type": "integer",
-            "description": "Total VAT in minor units. Charged on the service line only; the deposit credit carries 0% VAT (REQ-DI-004).",
+            "description": "Total VAT in minor units. Charged on the service line only; the deposit credit carries 0% VAT.",
             "example": 3150,
             "title": "VAT Amount"
           },
           "grossAmount": {
             "type": "integer",
-            "description": "Total amount due after the deposit credit is applied, in minor units (REQ-DI-003).",
+            "description": "Total amount due after the deposit credit is applied, in minor units.",
             "example": 10650,
             "title": "Gross Amount"
           },
@@ -553,7 +553,7 @@
           "countByState": {
             "field": "state",
             "metric": "count",
-            "description": "Number of invoices per state for AR aging dashboards (REQ-DI-009).",
+            "description": "Number of invoices per state for AR aging dashboards.",
             "groupBy": ["state"]
           },
           "outstandingGross": {
@@ -569,7 +569,7 @@
         "icon": "FormatListBulletedType",
         "version": "0.1.0",
         "title": "Invoice Line",
-        "description": "A single line on a final Invoice: either a positive service line (taxed at the order rate) or a negative deposit-credit line (0% VAT, because the deposit was already taxed at collection) per REQ-DI-003/004.",
+        "description": "A single line on a final Invoice: either a positive service line (taxed at the order rate) or a negative deposit-credit line (0% VAT, because the deposit was already taxed at collection).",
         "x-schema-org": "schema:TradeLineItem",
         "x-openregister-purpose": "fact",
         "type": "object",
@@ -638,7 +638,7 @@
           },
           "taxRate": {
             "type": "integer",
-            "description": "VAT percentage applied to this line. 0 for the deposit credit line (REQ-DI-004).",
+            "description": "VAT percentage applied to this line. 0 for the deposit credit line.",
             "default": 21,
             "example": 21,
             "title": "Tax Rate"
@@ -662,7 +662,7 @@
         "icon": "FileDocumentMinusOutline",
         "version": "0.1.0",
         "title": "Credit Note",
-        "description": "A reversing credit note materialised in Shillinq when a booking is cancelled after its final Invoice was issued. Reverses the full invoice gross while preserving the original invoice for audit (REQ-DI-006). Does not create negative VAT entries.",
+        "description": "A reversing credit note materialised in Shillinq when a booking is cancelled after its final Invoice was issued. Reverses the full invoice gross while preserving the original invoice for audit. Does not create negative VAT entries.",
         "x-schema-org": "schema:Invoice",
         "x-openregister-purpose": "fact",
         "type": "object",
@@ -697,7 +697,7 @@
           },
           "linkedInvoiceId": {
             "type": "string",
-            "description": "FK to the Invoice being reversed. Also the idempotency key (one CreditNote per invoice) per REQ-DI-006.",
+            "description": "FK to the Invoice being reversed. Also the idempotency key (one CreditNote per invoice).",
             "example": "inv-final-2001",
             "title": "Linked Invoice ID"
           },
@@ -723,7 +723,7 @@
           },
           "grossAmount": {
             "type": "integer",
-            "description": "Credit gross in minor units; the full reversal of the linked invoice gross (REQ-DI-006).",
+            "description": "Credit gross in minor units; the full reversal of the linked invoice gross.",
             "example": 10650,
             "title": "Gross Amount"
           },

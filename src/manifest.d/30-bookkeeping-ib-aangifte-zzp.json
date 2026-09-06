@@ -132,7 +132,7 @@
 						{
 							"id": "documents",
 							"label": "Documents",
-							"icon": "FileDocumentOutline",
+							"icon": "FileDocumentMultipleOutline",
 							"order": 80,
 							"widgets": [
 								{ "type": "data", "componentName": "openregister-file-references", "props": { "register": "shillinq", "schema": "IBAangifte", "objectId": ":id" } }

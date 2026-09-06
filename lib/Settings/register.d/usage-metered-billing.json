@@ -4,20 +4,20 @@
         "spdx-copyright": "2026 Conduction B.V.",
         "change": "ar-billing-completeness",
         "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-        "description": "Declares the two schemas for consumption-based (usage) billing: UsageRatePlan (the flat or graduated-tier price book) and MeterReading (a metered quantity over a period). OCA\\Shillinq\\Service\\UsageRatingCalculator rates a reading against its plan, and OCA\\Shillinq\\Service\\InvoiceGenerationService drives the new 'usage' billing model through the EXISTING draftInvoice/postInvoice pipeline (BillingModelEngine::calculateUsage) — no fork of invoicing. Extends shillinq's flat recurring + retainer billing to metered/usage billing (REQ-UMB-001..004)."
+        "description": "Declares the two schemas for consumption-based (usage) billing: UsageRatePlan (the flat or graduated-tier price book) and MeterReading (a metered quantity over a period). OCA\\Shillinq\\Service\\UsageRatingCalculator rates a reading against its plan, and OCA\\Shillinq\\Service\\InvoiceGenerationService drives the new 'usage' billing model through the EXISTING draftInvoice/postInvoice pipeline (BillingModelEngine:calculateUsage). No fork of invoicing. Extends shillinq's flat recurring + retainer billing to metered/usage billing."
     },
     "components": {
         "schemas": {
             "UsageRatePlan": {
                 "x-openregister-audit-trail": {
                     "enabled": true,
-                    "description": "Every create, update and delete of a Usage Rate Plan is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+                    "description": "Every create, update and delete of a Usage Rate Plan is written to OpenRegister's immutable audit trail with actor and timestamp."
                 },
                 "slug": "UsageRatePlan",
                 "icon": "Gauge",
                 "version": "0.1.0",
                 "title": "Usage Rate Plan",
-                "description": "Price book for consumption-based billing (REQ-UMB-001). A plan rates a metered resource either `flat` (quantity x unitPriceCents) or `graduated` (the quantity is split across ascending tiers, each slice priced at its tier unitPriceCents; the final tier's upTo is null and catches all remaining volume). Declares the VAT rate and revenue account so a rated line flows straight into the existing invoice pipeline.",
+                "description": "Price book for consumption-based billing. A plan rates a metered resource either `flat` (quantity x unitPriceCents) or `graduated` (the quantity is split across ascending tiers, each slice priced at its tier unitPriceCents; the final tier's upTo is null and catches all remaining volume). Declares the VAT rate and revenue account so a rated line flows straight into the existing invoice pipeline.",
                 "x-schema-org": "schema:PriceSpecification",
                 "x-openregister-purpose": "config",
                 "x-spec": "openspec/changes/ar-billing-completeness/specs/usage-metered-billing/spec.md",
@@ -32,7 +32,7 @@
                 "properties": {
                     "administrationId": {
                         "type": "string",
-                        "description": "Administration the plan belongs to (REQ-UMB-001).",
+                        "description": "Administration the plan belongs to.",
                         "example": "adm-holding-nl",
                         "title": "Administration ID"
                     },
@@ -132,13 +132,13 @@
             "MeterReading": {
                 "x-openregister-audit-trail": {
                     "enabled": true,
-                    "description": "Every create, update and delete of a Meter Reading is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+                    "description": "Every create, update and delete of a Meter Reading is written to OpenRegister's immutable audit trail with actor and timestamp."
                 },
                 "slug": "MeterReading",
                 "icon": "Counter",
-                "version": "0.1.0",
+                "version": "0.2.0",
                 "title": "Meter Reading",
-                "description": "A metered quantity of a resource consumed by a customer over a billing period (REQ-UMB-002). Rated by UsageRatingCalculator against its UsageRatePlan into a BillableInvoiceLine through the existing invoice pipeline. Lifecycle: unrated -> rated -> invoiced (REQ-UMB-004) so a reading is never double-billed.",
+                "description": "A metered quantity of a resource consumed by a customer over a billing period. Rated by UsageRatingCalculator against its UsageRatePlan into a BillableInvoiceLine through the existing invoice pipeline. Lifecycle: unrated -> rated -> invoiced so a reading is never double-billed.",
                 "x-schema-org": "schema:QuantitativeValue",
                 "x-spec": "openspec/changes/ar-billing-completeness/specs/usage-metered-billing/spec.md",
                 "type": "object",
@@ -153,7 +153,7 @@
                 "properties": {
                     "administrationId": {
                         "type": "string",
-                        "description": "Administration the reading belongs to (REQ-UMB-002).",
+                        "description": "Administration the reading belongs to.",
                         "example": "adm-holding-nl",
                         "title": "Administration ID"
                     },
@@ -224,6 +224,18 @@
                         "description": "FK to the BillableInvoice this reading was billed on (set on transition to invoiced).",
                         "example": "bil-2026-0042",
                         "title": "Invoice ID"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "unrated",
+                            "rated",
+                            "invoiced"
+                        ],
+                        "default": "unrated",
+                        "description": "How far the reading has moved from captured to billed.",
+                        "example": "unrated",
+                        "title": "Status"
                     }
                 },
                 "x-openregister-lifecycle": {
@@ -240,7 +252,7 @@
                         },
                         "invoiced": {
                             "label": "Invoiced",
-                            "description": "Billed onto a BillableInvoice; invoiceId set (REQ-UMB-004)."
+                            "description": "Billed onto a BillableInvoice; invoiceId set."
                         }
                     },
                     "transitions": {
@@ -307,7 +319,7 @@
             "ratePlanId": "urp-api-standard",
             "periodStart": "2026-03-01",
             "periodEnd": "2026-03-31",
-            "description": "API calls — March 2026",
+            "description": "API calls: March 2026",
             "status": "unrated"
         }
     ]

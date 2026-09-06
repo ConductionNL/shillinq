@@ -1554,7 +1554,26 @@ OC.L10N.register(
         "Cashflow": "Flujo de caja",
         "Billable hours": "Horas facturables",
         "_%n invoice outstanding_::_%n invoices outstanding_": ["1 factura pendiente","%n facturas pendientes"],
-        "Manual Journals": "Diarios manuales"
+        "Manual Journals": "Diarios manuales",
+        "Reports": "Informes",
+        "Pick a report to open it.": "Elija un informe para abrirlo.",
+        "Due": "Vence",
+        "Assignee": "Asignado a",
+        "Iv3 returns": "Declaraciones Iv3",
+        "SiSa returns": "Declaraciones SiSa",
+        "EMU return": "Declaración EMU",
+        "Consolidated statements": "Estados consolidados",
+        "Budget variance": "Desviación presupuestaria",
+        "Generated reports": "Informes generados",
+        "The quarterly Iv3 returns, and how far each one got.": "Las declaraciones Iv3 trimestrales y hasta dónde llegó cada una.",
+        "Single information, single audit returns per scheme.": "Declaraciones single information, single audit por régimen.",
+        "The EMU balance return.": "La declaración del saldo EMU.",
+        "The group figures, consolidated across participations.": "Las cifras del grupo, consolidadas entre las participaciones.",
+        "Where the books sit against budget, and by how much.": "Dónde están las cuentas frente al presupuesto, y por cuánto.",
+        "Everything Reporting & Compliance has already produced.": "Todo lo que Informes y cumplimiento ya ha producido.",
+        "What retention destroyed, and when.": "Qué destruyó la retención, y cuándo.",
+        "Store": "Tienda",
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Instale registros, esquemas y flujos publicados por otras organizaciones."
     },
     "nplurals=2; plural=(n != 1);"
 )

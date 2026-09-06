@@ -1,6 +1,6 @@
 {
 	"_meta": {
-		"description": "InventoryStock seed for Amsterdam Warehouse (head office distribution centre). Five products covering the inventory-product-catalog demo SKUs with mixed reservation / in-transit states so the operator UI demonstrates all four quantity dimensions (on-hand, reserved, in-transit, available). Idempotent: SettingsService::seedInventoryStockExamples() deduplicates on (administrationId, productSku, locationCode) per REQ-IST-002 + REQ-IST-009.",
+		"description": "InventoryStock seed for Amsterdam Warehouse (head office distribution centre). Five products covering the inventory-product-catalog demo SKUs with mixed reservation / in-transit states so the operator UI demonstrates all four quantity dimensions (on-hand, reserved, in-transit, available). Idempotent: SettingsService:seedInventoryStockExamples deduplicates on (administrationId, productSku, locationCode) +.",
 		"spec": "openspec/changes/inventory-stock-tracking/specs/inventory-stock-tracking/spec.md",
 		"req": "REQ-IST-009",
 		"source": "Nextcloud Inventory",

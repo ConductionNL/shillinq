@@ -48,7 +48,7 @@
           },
           "duration": {
             "type": "integer",
-            "description": "Service duration in minutes. Appointment endTime - startTime must match this (within tolerance) per REQ-BCA-003.",
+            "description": "Service duration in minutes. Appointment endTime - startTime must match this (within tolerance).",
             "example": 30,
             "title": "Duration"
           },
@@ -116,14 +116,14 @@
           "openingTime": {
             "type": "string",
             "nullable": true,
-            "description": "Daily operational start time as HH:MM in UTC. Appointments before this are rejected per REQ-BCA-004. Null means no operational-hours restriction.",
+            "description": "Daily operational start time as HH:MM in UTC. Appointments before this are rejected. Null means no operational-hours restriction.",
             "example": "09:00",
             "title": "Opening Time"
           },
           "closingTime": {
             "type": "string",
             "nullable": true,
-            "description": "Daily operational end time as HH:MM in UTC. Appointments after this are rejected per REQ-BCA-004. Null means no operational-hours restriction.",
+            "description": "Daily operational end time as HH:MM in UTC. Appointments after this are rejected. Null means no operational-hours restriction.",
             "example": "17:00",
             "title": "Closing Time"
           },
@@ -152,7 +152,7 @@
         "icon": "CalendarClockOutline",
         "version": "0.1.0",
         "title": "Appointment",
-        "description": "A booked appointment linking a customer contact to a Service and Resource at a specific UTC time window. The single source of truth for the bookings create flow (admin, customer self-service, API) per bookings-create-appointment. Validation (duration match, double-booking, operational hours, customer eligibility) runs in the AppointmentGuard save precondition (ADR-031 exception path) per REQ-BCA-003/004/006.",
+        "description": "A booked appointment linking a customer contact to a Service and Resource at a specific UTC time window. The single source of truth for the bookings create flow (admin, customer self-service, API) per bookings-create-appointment. Validation (duration match, double-booking, operational hours, customer eligibility) runs in the AppointmentGuard save precondition (ADR-031 exception path).",
         "x-schema-org": "schema:Reservation",
         "x-openregister-purpose": "transaction",
         "type": "object",
@@ -189,7 +189,7 @@
           "endTime": {
             "type": "string",
             "format": "date-time",
-            "description": "Appointment end time as ISO 8601 UTC. endTime - startTime must match Service.duration within tolerance per REQ-BCA-003.",
+            "description": "Appointment end time as ISO 8601 UTC. endTime - startTime must match Service.duration within tolerance.",
             "example": "2026-05-22T10:30:00Z",
             "title": "End Time"
           },
@@ -213,7 +213,7 @@
           },
           "status": {
             "type": "string",
-            "description": "Appointment lifecycle status. Admin bookings create as confirmed; customer self-service bookings create as pending_confirmation per REQ-BCA-005.",
+            "description": "Appointment lifecycle status. Admin bookings create as confirmed; customer self-service bookings create as pending_confirmation.",
             "enum": [
               "pending_confirmation",
               "confirmed",

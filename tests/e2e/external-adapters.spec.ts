@@ -1,3 +1,5 @@
+import type { ConsoleMessage, Page } from '@playwright/test'
+
 /*
  * SPDX-FileCopyrightText: 2026 Conduction B.V.
  * SPDX-License-Identifier: EUPL-1.2
@@ -33,7 +35,7 @@
  *
  * @spec openspec/changes/integration-config-to-openconnector/specs/integration-config-to-openconnector/spec.md
  */
-import { test, expect, type Page, type ConsoleMessage } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 

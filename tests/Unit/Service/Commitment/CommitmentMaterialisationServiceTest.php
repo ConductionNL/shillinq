@@ -307,7 +307,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 				'Commitment' => [],
 				'CommitmentLine' => [],
 				'CommitmentBudget' => [$this->budget()],
-				'Mandate' => [
+				'SpendingMandate' => [
 					[
 						'administrationId' => 'adm-1',
 						'mandateCode' => 'M-INKOOP-50K',
@@ -357,7 +357,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 			[
 				'Commitment' => [$existing],
 				'CommitmentBudget' => [$this->budget()],
-				'Mandate' => [],
+				'SpendingMandate' => [],
 				'PurchaseOrderLine' => [$this->purchaseOrderLine()],
 			]
 		);
@@ -385,7 +385,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 			[
 				'Commitment' => [],
 				'CommitmentBudget' => [$tightBudget],
-				'Mandate' => [
+				'SpendingMandate' => [
 					[
 						'administrationId' => 'adm-1',
 						'mandateCode' => 'M-DIRECTEUR-250K',
@@ -432,7 +432,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 				'CommitmentLine' => [],
 				'Rechtmatigheidsbevinding' => [],
 				'CommitmentBudget' => [$tightBudget],
-				'Mandate' => [
+				'SpendingMandate' => [
 					[
 						'administrationId' => 'adm-1',
 						'mandateCode' => 'M-CFO-OVERRIDE',
@@ -474,7 +474,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 				'Commitment' => [],
 				'CommitmentLine' => [],
 				'CommitmentBudget' => [],
-				'Mandate' => [],
+				'SpendingMandate' => [],
 				'PurchaseOrderLine' => [$this->purchaseOrderLine()],
 			]
 		);
@@ -511,7 +511,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 				'Commitment' => [],
 				'CommitmentLine' => [],
 				'CommitmentBudget' => [$budget2026, $budget2027],
-				'Mandate' => [$mandate],
+				'SpendingMandate' => [$mandate],
 				'PurchaseOrderLine' => [
 					$this->purchaseOrderLine(['lineNumber' => 1, 'expectedDeliveryDate' => '2026-03-01', 'lineTotal' => 10000000]),
 					$this->purchaseOrderLine(['lineNumber' => 2, 'expectedDeliveryDate' => '2027-03-01', 'lineTotal' => 10000000]),
@@ -545,7 +545,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 			[
 				'Commitment' => [],
 				'CommitmentBudget' => [$tightBudget],
-				'Mandate' => [
+				'SpendingMandate' => [
 					[
 						'administrationId' => 'adm-1',
 						'mandateCode' => 'M-DIRECTEUR-250K',
@@ -604,7 +604,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 				'Commitment' => [],
 				'CommitmentLine' => [],
 				'CommitmentBudget' => [$budget2026, $budget2027],
-				'Mandate' => [$mandate],
+				'SpendingMandate' => [$mandate],
 			]
 		);
 

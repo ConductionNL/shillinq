@@ -201,19 +201,19 @@
           "capitalisedDevelopmentCosts": {
             "type": "number",
             "nullable": true,
-            "description": "RJ 210 — the unamortised carrying amount of capitalised development costs. When positive a legal reserve of at least this amount must be maintained within equity.",
+            "description": "RJ 210: the unamortised carrying amount of capitalised development costs. When positive a legal reserve of at least this amount must be maintained within equity.",
             "title": "Capitalised Development Costs"
           },
           "developmentLegalReserve": {
             "type": "number",
             "nullable": true,
-            "description": "RJ 210 — the non-distributable legal reserve (wettelijke reserve) held within equity for capitalised development costs.",
+            "description": "RJ 210: the non-distributable legal reserve (wettelijke reserve) held within equity for capitalised development costs.",
             "title": "Development Legal Reserve"
           },
           "intangibleAmortisationYears": {
             "type": "number",
             "nullable": true,
-            "description": "RJ 210 — the estimated useful life over which an intangible fixed asset is amortised; shall not exceed twenty years.",
+            "description": "RJ 210: the estimated useful life over which an intangible fixed asset is amortised; shall not exceed twenty years.",
             "title": "Intangible Amortisation Years"
           },
           "sbrFiled": {
@@ -394,46 +394,46 @@
           "confidentialFiling": {
             "type": "boolean",
             "nullable": true,
-            "description": "FR — true when the small/micro company has requested that its filed accounts remain confidential and not be made public.",
+            "description": "FR: true when the small/micro company has requested that its filed accounts remain confidential and not be made public.",
             "title": "Confidential Filing"
           },
           "fecExportAvailable": {
             "type": "boolean",
             "nullable": true,
-            "description": "FR — true when the entity (keeping computerised accounts) can produce the FEC (Fichier des Écritures Comptables) on a tax audit.",
+            "description": "FR: true when the entity (keeping computerised accounts) can produce the FEC (Fichier des Écritures Comptables) on a tax audit.",
             "title": "Fec Export Available"
           },
           "fecStructuredEntries": {
             "type": "array",
             "nullable": true,
-            "description": "FR FEC entries presented with the full prescribed per-entry structural fields (JournalCode, EcritureNum, EcritureDate, CompteNum, PieceRef, Debit, Credit) — the field-complete view used to evaluate fec-field-structure, distinct from the balance-only fecEntries.",
+            "description": "FR FEC entries presented with the full prescribed per-entry structural fields (JournalCode, EcritureNum, EcritureDate, CompteNum, PieceRef, Debit, Credit): the field-complete view used to evaluate fec-field-structure, distinct from the balance-only fecEntries.",
             "items": {
               "type": "object",
               "properties": {
                 "entryNum": {
                   "type": "string",
-                  "description": "EcritureNum — sequential entry number.",
+                  "description": "EcritureNum: sequential entry number.",
                   "title": "Entry Num"
                 },
                 "journalCode": {
                   "type": "string",
-                  "description": "JournalCode — the journal the entry belongs to.",
+                  "description": "JournalCode: the journal the entry belongs to.",
                   "title": "Journal Code"
                 },
                 "ecritureDate": {
                   "type": "string",
                   "format": "date",
-                  "description": "EcritureDate — the accounting date of the entry.",
+                  "description": "EcritureDate: the accounting date of the entry.",
                   "title": "Ecriture Date"
                 },
                 "compteNum": {
                   "type": "string",
-                  "description": "CompteNum — the ledger account number.",
+                  "description": "CompteNum: the ledger account number.",
                   "title": "Compte Num"
                 },
                 "pieceRef": {
                   "type": "string",
-                  "description": "PieceRef — the source-document reference.",
+                  "description": "PieceRef: the source-document reference.",
                   "title": "Piece Ref"
                 },
                 "debit": {
@@ -453,19 +453,19 @@
           "notesBlockTagged": {
             "type": "boolean",
             "nullable": true,
-            "description": "EU ESEF — true when the notes to the IFRS consolidated statements are block-tagged at section level. Required for listed issuers.",
+            "description": "EU ESEF: true when the notes to the IFRS consolidated statements are block-tagged at section level. Required for listed issuers.",
             "title": "Notes Block Tagged"
           },
           "taxonomyExtensionsUsed": {
             "type": "boolean",
             "nullable": true,
-            "description": "EU ESEF — true when the issuer uses extension (custom) taxonomy elements for disclosures with no matching core element.",
+            "description": "EU ESEF: true when the issuer uses extension (custom) taxonomy elements for disclosures with no matching core element.",
             "title": "Taxonomy Extensions Used"
           },
           "extensionsAnchored": {
             "type": "boolean",
             "nullable": true,
-            "description": "EU ESEF — true when every extension element is anchored to the closest standard taxonomy element(s). Required whenever extensions are used.",
+            "description": "EU ESEF: true when every extension element is anchored to the closest standard taxonomy element(s). Required whenever extensions are used.",
             "title": "Extensions Anchored"
           }
         }

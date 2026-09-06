@@ -24,7 +24,7 @@
  * @spec openspec/changes/bookings-resource-calendar/tasks.md#task-5
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import CalendarView from '../../src/views/bookings/CalendarView.vue'
 
 const { fetchBookings, bookingId, isConflict } = CalendarView.methods

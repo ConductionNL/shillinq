@@ -83,10 +83,10 @@
 					},
 					{ "key": "renderedSubjectPreview", "label": "Subject preview (sample data)", "type": "calculated" },
 					{ "key": "renderedBodyPreview", "label": "Body preview (sample data)", "type": "calculated" },
-					{ "key": "subjectLineLength", "label": "Rendered subject length", "type": "calculated", "help": "Warns when ≥78 (NFR-BET-002)." },
-					{ "key": "totalBodySizeBytes", "label": "Body size (bytes)", "type": "calculated", "help": "Combined HTML + plain-text ≤102 KB (NFR-BET-003)." },
+					{ "key": "subjectLineLength", "label": "Rendered subject length", "type": "calculated", "help": "Warns at 78 characters or more." },
+					{ "key": "totalBodySizeBytes", "label": "Body size (bytes)", "type": "calculated", "help": "Combined HTML and plain text, up to 102 KB." },
 					{ "key": "htmlBodySafe", "label": "HTML whitelist valid", "type": "calculated" },
-					{ "key": "logoUri", "label": "Logo URL", "type": "string", "help": "CDN or document-store URI. Inline base64 not supported (NFR-BET-004)." },
+					{ "key": "logoUri", "label": "Logo URL", "type": "string", "help": "CDN or document-store URI. Inline base64 is not supported." },
 					{ "key": "accentColor", "label": "Accent colour", "type": "string", "help": "Six-digit hex code (e.g. #0066cc)." },
 					{ "key": "footerText", "label": "Footer text", "type": "string" },
 					{ "key": "senderName", "label": "Sender name", "type": "string" },
@@ -211,7 +211,7 @@
 						"key": "cancellationReasonRequired",
 						"label": "Include cancellation reason",
 						"type": "boolean",
-						"help": "When on, {{cancellationReason}} is included in the variable map at dispatch (REQ-BET-009)."
+						"help": "When on, {{cancellationReason}} is included in the variable map at dispatch."
 					},
 					{ "key": "renderedSubjectPreview", "label": "Subject preview (sample data)", "type": "calculated" },
 					{ "key": "renderedBodyPreview", "label": "Body preview (sample data)", "type": "calculated" },

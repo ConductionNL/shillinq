@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "prestatieverklaring-service-receipt",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Member 12 of the bookkeeping-purchase-order-3way chain. Declares SvcReceipt + SvcReceiptLine — the service-entry-sheet (prestatieverklaring) third leg for service PurchaseOrderLines, symmetric to member 01's GoodsReceiptNote/GoodsReceiptLine pair for goods. SvcReceipt carries an x-openregister-lifecycle state machine (ADR-031): draft -> confirmed -> accepted / rejected (no quality-check step; services have nothing to physically inspect). Slugs are abbreviated (SvcReceipt/SvcReceiptLine rather than ServiceReceipt/ServiceReceiptLine) to stay at or under the fleet's existing 40-character magic-table-name high-water mark (oc_openregister_shillinq_supplierinvoice)."
+    "description": "Member 12 of the bookkeeping-purchase-order-3way chain. Declares SvcReceipt + SvcReceiptLine: the service-entry-sheet (prestatieverklaring) third leg for service PurchaseOrderLines, symmetric to member 01's GoodsReceiptNote/GoodsReceiptLine pair for goods. SvcReceipt carries an x-openregister-lifecycle state machine (ADR-031): draft -> confirmed -> accepted / rejected (no quality-check step; services have nothing to physically inspect). Slugs are abbreviated (SvcReceipt/SvcReceiptLine rather than ServiceReceipt/ServiceReceiptLine) to stay at or under the fleet's existing 40-character magic-table-name high-water mark (oc_openregister_shillinq_supplierinvoice)."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "ClipboardCheckOutline",
         "version": "0.1.0",
         "title": "Service Receipt (Prestatieverklaring)",
-        "description": "Service-entry-sheet confirming delivery of a contracted service against one or more purchase orders (REQ-PO3W-011). Symmetric to GoodsReceiptNote for the goods case. Lifecycle draft -> confirmed -> accepted / rejected; no quality-check step (services have nothing to physically inspect). Supports partial/periodic confirmation via periodStart/periodEnd (e.g. one SvcReceipt per month for a 12-month contract). cost_center + project_code propagate from the originating PO(s).",
+        "description": "Service-entry-sheet confirming delivery of a contracted service against one or more purchase orders. Symmetric to GoodsReceiptNote for the goods case. Lifecycle draft -> confirmed -> accepted / rejected; no quality-check step (services have nothing to physically inspect). Supports partial/periodic confirmation via periodStart/periodEnd (e.g. one SvcReceipt per month for a 12-month contract). cost_center + project_code propagate from the originating PO(s).",
         "x-schema-org": "schema:ConfirmAction",
         "x-spec": "openspec/changes/prestatieverklaring-service-receipt/specs/bookkeeping-purchase-order-3way/spec.md",
         "type": "object",
@@ -103,7 +103,7 @@
               "accepted",
               "rejected"
             ],
-            "description": "Lifecycle state per x-openregister-lifecycle (REQ-PO3W-011).",
+            "description": "Lifecycle state per x-openregister-lifecycle.",
             "example": "draft",
             "title": "Status Code"
           },
@@ -162,7 +162,7 @@
         "icon": "FormatListNumbered",
         "version": "0.1.0",
         "title": "Service Receipt Line",
-        "description": "Per-PO-line confirmation detail of a SvcReceipt (REQ-PO3W-011). Confirmation may be expressed as a percentage complete, a confirmed quantity, or a confirmed euro amount; exactly one of the three drives the server-derived quantityAccepted/quantityReceived pair the 3-way matching engine reads (same field names as GoodsReceiptLine, by design, so the matching engine needs no type-specific branching).",
+        "description": "Per-PO-line confirmation detail of a SvcReceipt. Confirmation may be expressed as a percentage complete, a confirmed quantity, or a confirmed euro amount; exactly one of the three drives the server-derived quantityAccepted/quantityReceived pair the 3-way matching engine reads (same field names as GoodsReceiptLine, by design, so the matching engine needs no type-specific branching).",
         "x-schema-org": "schema:OrderItem",
         "x-spec": "openspec/changes/prestatieverklaring-service-receipt/specs/bookkeeping-purchase-order-3way/spec.md",
         "type": "object",

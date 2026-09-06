@@ -3,7 +3,7 @@
 	"_meta": {
 		"source": "shillinq-default",
 		"variant": "headcount",
-		"description": "Example overhead allocation rule that spreads overhead accounts 1000-1099 across three cost centers weighted by headcount. Shipped in lifecycleState: paused — activate after operator review per design Seed Data section."
+		"description": "Example overhead allocation rule that spreads overhead accounts 1000-1099 across three cost centers weighted by headcount. Shipped in lifecycleState: paused. Activate after operator review per design Seed Data section."
 	},
 	"register": "shillinq",
 	"schema": "AllocationRule",

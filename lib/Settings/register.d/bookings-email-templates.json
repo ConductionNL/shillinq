@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookings-email-templates",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "kind: config — declarative booking email template registry. Adds three schemas (BookingConfirmationTemplate, BookingReminderTemplate, BookingCancellationTemplate) each with draft → published → archived lifecycle per ADR-031, declarative variable substitution and validation via x-openregister-calculations, branding customization (logo, accent, footer), and OR notification-engine dispatch wiring per ADR-022. Includes 6 seed templates (Dutch + English locales for each of the three template types). No PHP template service class — rendering and validation are declarative."
+    "description": "kind: config. Declarative booking email template registry. Adds three schemas (BookingConfirmationTemplate, BookingReminderTemplate, BookingCancellationTemplate) each with draft → published → archived lifecycle per ADR-031, declarative variable substitution and validation via x-openregister-calculations, branding customization (logo, accent, footer), and OR notification-engine dispatch wiring per ADR-022. Includes 6 seed templates (Dutch + English locales for each of the three template types). No PHP template service class. Rendering and validation are declarative."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "EmailCheckOutline",
         "version": "0.1.0",
         "title": "Boekingsbevestigingssjabloon",
-        "description": "Branded email template dispatched immediately on booking confirmation (REQ-BET-001/010). Carries subject and body fields with {{variables}} substituted at dispatch time by OR's notification engine, plain-text fallback for non-HTML clients (REQ-BET-006), branding fields (logo URI, accent colour, footer) for per-template customization (REQ-BET-007), and a draft → published → archived lifecycle (REQ-BET-002/003/008). Variable substitution, subject length, and body size validation are declarative calculations (ADR-031); dispatch is consumed from OR's notification engine on booking.confirmed (ADR-022).",
+        "description": "Branded email template dispatched immediately on booking confirmation. Carries subject and body fields with {{variables}} substituted at dispatch time by OR's notification engine, plain-text fallback for non-HTML clients, branding fields (logo URI, accent colour, footer) for per-template customization, and a draft → published → archived lifecycle. Variable substitution, subject length, and body size validation are declarative calculations (ADR-031); dispatch is consumed from OR's notification engine on booking.confirmed (ADR-022).",
         "x-schema-org": "schema:EmailMessage",
         "type": "object",
         "required": [
@@ -28,7 +28,7 @@
           "name": {
             "type": "string",
             "maxLength": 120,
-            "description": "Human-readable template name shown in the admin list (REQ-BET-001).",
+            "description": "Human-readable template name shown in the admin list.",
             "example": "Default Booking Confirmation",
             "title": "Name"
           },
@@ -40,7 +40,7 @@
               "archived"
             ],
             "default": "draft",
-            "description": "Lifecycle state (REQ-BET-002/003/008). draft = editable, not dispatched; published = active and dispatched on booking.confirmed; archived = retired, no new dispatches but kept for audit/history.",
+            "description": "Lifecycle state. draft = editable, not dispatched; published = active and dispatched on booking.confirmed; archived = retired, no new dispatches but kept for audit/history.",
             "title": "Status"
           },
           "locale": {
@@ -56,21 +56,21 @@
           "subjectLine": {
             "type": "string",
             "maxLength": 78,
-            "description": "Email subject (NFR-BET-002). Limited to 78 characters for cross-client compatibility; supports {{variables}} substituted at dispatch.",
+            "description": "Email subject. Limited to 78 characters for cross-client compatibility; supports {{variables}} substituted at dispatch.",
             "example": "Boeking bevestigd: {{bookingRef}}",
             "title": "Subject Line"
           },
           "htmlBody": {
             "type": "string",
             "maxLength": 102400,
-            "description": "HTML email body (NFR-BET-001/003). Inline styles only — no external CSS, no JavaScript. Allowed elements limited to div, p, h1-h6, a, img, table, tr, td, ul, ol, li, br, span, strong, em. Combined html + plain-text size capped at 102 KB.",
+            "description": "HTML email body. Inline styles only: no external CSS, no JavaScript. Allowed elements limited to div, p, h1-h6, a, img, table, tr, td, ul, ol, li, br, span, strong, em. Combined html + plain-text size capped at 102 KB.",
             "example": "<html><body><h1>Hallo {{customerName}}</h1><p>Uw boeking is bevestigd.</p></body></html>",
             "title": "Html Body"
           },
           "plainTextBody": {
             "type": "string",
             "maxLength": 102400,
-            "description": "Plain-text fallback (REQ-BET-006). Required for email clients without HTML rendering; supports {{variables}}.",
+            "description": "Plain-text fallback. Required for email clients without HTML rendering; supports {{variables}}.",
             "example": "Hallo {{customerName}},\nUw boeking is bevestigd.\nReferentie: {{bookingRef}}",
             "title": "Plain Text Body"
           },
@@ -78,7 +78,7 @@
             "type": "string",
             "format": "uri",
             "nullable": true,
-            "description": "URL of the organization logo image (NFR-BET-004). Loaded from CDN or document-store URI — never inline base64 (keeps email size small and supports updates without resending).",
+            "description": "URL of the organization logo image. Loaded from CDN or document-store URI: never inline base64 (keeps email size small and supports updates without resending).",
             "example": "https://cdn.example.org/logo.png",
             "title": "Logo URI"
           },
@@ -86,7 +86,7 @@
             "type": "string",
             "nullable": true,
             "pattern": "^#[0-9A-Fa-f]{6}$",
-            "description": "Hex colour code for branding accents (REQ-BET-007). Six-digit hex.",
+            "description": "Hex colour code for branding accents. Six-digit hex.",
             "example": "#0066cc",
             "title": "Accent Color"
           },
@@ -94,7 +94,7 @@
             "type": "string",
             "nullable": true,
             "maxLength": 500,
-            "description": "Custom footer text — typically address, contact information, legal notices.",
+            "description": "Custom footer text: typically address, contact information, legal notices.",
             "example": "© 2026 Example BV, Postbus 123, 1000 AA Amsterdam",
             "title": "Footer Text"
           },
@@ -116,7 +116,7 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Timestamp when the template was first published (REQ-BET-002). Set on the first draft → published transition.",
+            "description": "Timestamp when the template was first published. Set on the first draft → published transition.",
             "title": "Activated At"
           }
         },
@@ -142,7 +142,7 @@
               "from": "draft",
               "to": "published",
               "label": "Publiceren",
-              "description": "Activate the template for dispatch. Stamps activatedAt on first publish (REQ-BET-002)."
+              "description": "Activate the template for dispatch. Stamps activatedAt on first publish."
             },
             "archiveDraft": {
               "from": "draft",
@@ -154,7 +154,7 @@
               "from": "published",
               "to": "archived",
               "label": "Archiveren",
-              "description": "Retire an active template (REQ-BET-003). No new dispatches after archive."
+              "description": "Retire an active template. No new dispatches after archive."
             }
           }
         },
@@ -162,27 +162,27 @@
           "renderedSubjectPreview": {
             "expression": "renderTemplate(@self.subjectLine, {customerName: 'Femke Jansen', bookingRef: 'BK20260521042', bookingDate: '22 mei 2026', bookingTime: '10:00', bookingLocation: 'Kantoor Amsterdam, Kamer 3', organizationName: 'Example BV'})",
             "type": "string",
-            "description": "Subject rendered with sample booking variables for operator validation (REQ-BET-004, T16). Variables are substituted via {{variable}} syntax; undefined variables render as empty string (T14)."
+            "description": "Subject rendered with sample booking variables for operator validation (T16). Variables are substituted via {{variable}} syntax; undefined variables render as empty string (T14)."
           },
           "renderedBodyPreview": {
             "expression": "renderTemplate(@self.plainTextBody, {customerName: 'Femke Jansen', bookingRef: 'BK20260521042', bookingDate: '22 mei 2026', bookingTime: '10:00', bookingLocation: 'Kantoor Amsterdam, Kamer 3', organizationName: 'Example BV'})",
             "type": "string",
-            "description": "Plain-text body rendered with sample variables (REQ-BET-004). Used by the admin preview surface; HTML preview is rendered identically by the manifest preview action."
+            "description": "Plain-text body rendered with sample variables. Used by the admin preview surface; HTML preview is rendered identically by the manifest preview action."
           },
           "subjectLineLength": {
             "expression": "strlen(@self.renderedSubjectPreview)",
             "type": "integer",
-            "description": "Character count of the rendered subject (NFR-BET-002, T12). Used by the admin UI to warn when substituted variables could push the subject past 78 characters."
+            "description": "Character count of the rendered subject (T12). Used by the admin UI to warn when substituted variables could push the subject past 78 characters."
           },
           "totalBodySizeBytes": {
             "expression": "strlen(@self.htmlBody) + strlen(@self.plainTextBody)",
             "type": "integer",
-            "description": "Combined HTML + plain-text body size in bytes (NFR-BET-003, T13). Warns when approaching the 102 KB SMTP-safe ceiling."
+            "description": "Combined HTML + plain-text body size in bytes (T13). Warns when approaching the 102 KB SMTP-safe ceiling."
           },
           "htmlBodySafe": {
             "expression": "validateHtmlWhitelist(@self.htmlBody, ['div','p','h1','h2','h3','h4','h5','h6','a','img','table','tr','td','th','tbody','thead','ul','ol','li','br','span','strong','em','b','i','hr'])",
             "type": "boolean",
-            "description": "Whether the HTML body contains only whitelisted elements with inline styles (NFR-BET-001, T11). External CSS (<link>, <style>), JavaScript (<script>), and unsupported tags fail validation."
+            "description": "Whether the HTML body contains only whitelisted elements with inline styles (T11). External CSS (<link>, <style>), JavaScript (<script>), and unsupported tags fail validation."
           }
         },
         "x-openregister-notifications": {
@@ -208,7 +208,7 @@
               "field": "plainTextBody",
               "description": "On render failure or missing HTML body fall back to plain-text dispatch; log error for operator review (T21)."
             },
-            "description": "Declarative email dispatch consumed from OR's notification engine (ADR-022, REQ-BET-010). When booking.confirmed fires, the engine selects a published template matching the recipient locale, renders subject + html + plain-text with booking variables, and dispatches through the configured email provider — no direct SMTP from app code. Render failure falls back to plain-text (T21) and is logged for operator review."
+            "description": "Declarative email dispatch consumed from OR's notification engine (ADR-022). When booking.confirmed fires, the engine selects a published template matching the recipient locale, renders subject + html + plain-text with booking variables, and dispatches through the configured email provider: no direct SMTP from app code. Render failure falls back to plain-text (T21) and is logged for operator review."
           }
         },
         "x-openregister-rbac": {
@@ -248,7 +248,7 @@
         "icon": "EmailOutline",
         "version": "0.1.0",
         "title": "Boekingsherinneringssjabloon",
-        "description": "Branded email template dispatched a configurable number of hours before booking start (REQ-BET-005/010). Carries hoursBeforeBooking timing, subject/body with {{variables}}, plain-text fallback, branding, and the same draft → published → archived lifecycle as the confirmation template. Multiple reminder templates can coexist (e.g. 24h and 2h) — the notification engine schedules one dispatch per published reminder per booking.",
+        "description": "Branded email template dispatched a configurable number of hours before booking start. Carries hoursBeforeBooking timing, subject/body with {{variables}}, plain-text fallback, branding, and the same draft → published → archived lifecycle as the confirmation template. Multiple reminder templates can coexist (e.g. 24h and 2h): the notification engine schedules one dispatch per published reminder per booking.",
         "x-schema-org": "schema:EmailMessage",
         "type": "object",
         "required": [
@@ -286,14 +286,14 @@
               "en"
             ],
             "default": "nl",
-            "description": "Template language (NFR-BET-005).",
+            "description": "Template language.",
             "title": "Locale"
           },
           "hoursBeforeBooking": {
             "type": "integer",
             "minimum": 1,
             "maximum": 720,
-            "description": "Hours before booking start to dispatch the reminder (REQ-BET-005). Common values: 1, 2, 24, 48, 72. OR's notification engine schedules dispatch at bookingStart − hoursBeforeBooking hours with a ±15 min tolerance; missed windows dispatch immediately (REQ-BET-005).",
+            "description": "Hours before booking start to dispatch the reminder. Common values: 1, 2, 24, 48, 72. OR's notification engine schedules dispatch at bookingStart − hoursBeforeBooking hours with a ±15 min tolerance; missed windows dispatch immediately.",
             "example": 24,
             "title": "Hours Before Booking"
           },
@@ -313,14 +313,14 @@
           "plainTextBody": {
             "type": "string",
             "maxLength": 102400,
-            "description": "Plain-text fallback (REQ-BET-006).",
+            "description": "Plain-text fallback.",
             "title": "Plain Text Body"
           },
           "logoUri": {
             "type": "string",
             "format": "uri",
             "nullable": true,
-            "description": "Organization logo URI; loaded from CDN/doc-store; never inline base64 (NFR-BET-004).",
+            "description": "Organization logo URI; loaded from CDN/doc-store; never inline base64.",
             "title": "Logo URI"
           },
           "accentColor": {
@@ -401,7 +401,7 @@
           "renderedSubjectPreview": {
             "expression": "renderTemplate(@self.subjectLine, {customerName: 'Femke Jansen', bookingRef: 'BK20260521042', bookingDate: '22 mei 2026', bookingTime: '10:00', bookingLocation: 'Kantoor Amsterdam, Kamer 3', organizationName: 'Example BV', hoursUntilBooking: @self.hoursBeforeBooking})",
             "type": "string",
-            "description": "Subject rendered with sample variables including hoursUntilBooking (REQ-BET-004)."
+            "description": "Subject rendered with sample variables including hoursUntilBooking."
           },
           "renderedBodyPreview": {
             "expression": "renderTemplate(@self.plainTextBody, {customerName: 'Femke Jansen', bookingRef: 'BK20260521042', bookingDate: '22 mei 2026', bookingTime: '10:00', bookingLocation: 'Kantoor Amsterdam, Kamer 3', organizationName: 'Example BV', hoursUntilBooking: @self.hoursBeforeBooking})",
@@ -411,17 +411,17 @@
           "subjectLineLength": {
             "expression": "strlen(@self.renderedSubjectPreview)",
             "type": "integer",
-            "description": "Rendered subject character count (NFR-BET-002)."
+            "description": "Rendered subject character count."
           },
           "totalBodySizeBytes": {
             "expression": "strlen(@self.htmlBody) + strlen(@self.plainTextBody)",
             "type": "integer",
-            "description": "Combined body byte count (NFR-BET-003)."
+            "description": "Combined body byte count."
           },
           "htmlBodySafe": {
             "expression": "validateHtmlWhitelist(@self.htmlBody, ['div','p','h1','h2','h3','h4','h5','h6','a','img','table','tr','td','th','tbody','thead','ul','ol','li','br','span','strong','em','b','i','hr'])",
             "type": "boolean",
-            "description": "Whitelist validity (NFR-BET-001)."
+            "description": "Whitelist validity."
           }
         },
         "x-openregister-notifications": {
@@ -447,7 +447,7 @@
               "mode": "plain-text",
               "field": "plainTextBody"
             },
-            "description": "Reminder dispatch consumed from OR's notification engine (REQ-BET-005/010). The engine derives the dispatch time as bookingStart − scheduleOffsetHours; missed windows (e.g. activation after the scheduled time) dispatch immediately. Render failure falls back to plain-text and is logged for operator review (T21)."
+            "description": "Reminder dispatch consumed from OR's notification engine. The engine derives the dispatch time as bookingStart − scheduleOffsetHours; missed windows (e.g. activation after the scheduled time) dispatch immediately. Render failure falls back to plain-text and is logged for operator review (T21)."
           }
         },
         "x-openregister-rbac": {
@@ -487,7 +487,7 @@
         "icon": "EmailRemoveOutline",
         "version": "0.1.0",
         "title": "Boekingsannuleringssjabloon",
-        "description": "Branded email template dispatched when a booking is cancelled (REQ-BET-009/010). Carries the standard subject/body/branding fields plus a cancellationReasonRequired flag that exposes {{cancellationReason}} as an available template variable; otherwise identical to the confirmation template shape. Lifecycle is draft → published → archived.",
+        "description": "Branded email template dispatched when a booking is cancelled. Carries the standard subject/body/branding fields plus a cancellationReasonRequired flag that exposes {{cancellationReason}} as an available template variable; otherwise identical to the confirmation template shape. Lifecycle is draft → published → archived.",
         "x-schema-org": "schema:EmailMessage",
         "type": "object",
         "required": [
@@ -524,7 +524,7 @@
               "en"
             ],
             "default": "nl",
-            "description": "Template language (NFR-BET-005).",
+            "description": "Template language.",
             "title": "Locale"
           },
           "subjectLine": {
@@ -570,7 +570,7 @@
           "cancellationReasonRequired": {
             "type": "boolean",
             "default": false,
-            "description": "When true, {{cancellationReason}} is included in the template variable map at dispatch (REQ-BET-009). When false, the variable resolves to empty string per the standard substitution rule (T14).",
+            "description": "When true, {{cancellationReason}} is included in the template variable map at dispatch. When false, the variable resolves to empty string per the standard substitution rule (T14).",
             "title": "Cancellation Reason Required"
           },
           "senderName": {
@@ -637,7 +637,7 @@
           "renderedSubjectPreview": {
             "expression": "renderTemplate(@self.subjectLine, {customerName: 'Femke Jansen', bookingRef: 'BK20260521042', bookingDate: '22 mei 2026', bookingTime: '10:00', bookingLocation: 'Kantoor Amsterdam, Kamer 3', organizationName: 'Example BV', cancellationReason: 'Customer requested cancellation'})",
             "type": "string",
-            "description": "Subject rendered with sample variables including cancellationReason (REQ-BET-004/009)."
+            "description": "Subject rendered with sample variables including cancellationReason."
           },
           "renderedBodyPreview": {
             "expression": "renderTemplate(@self.plainTextBody, {customerName: 'Femke Jansen', bookingRef: 'BK20260521042', bookingDate: '22 mei 2026', bookingTime: '10:00', bookingLocation: 'Kantoor Amsterdam, Kamer 3', organizationName: 'Example BV', cancellationReason: 'Customer requested cancellation'})",
@@ -647,17 +647,17 @@
           "subjectLineLength": {
             "expression": "strlen(@self.renderedSubjectPreview)",
             "type": "integer",
-            "description": "Rendered subject character count (NFR-BET-002)."
+            "description": "Rendered subject character count."
           },
           "totalBodySizeBytes": {
             "expression": "strlen(@self.htmlBody) + strlen(@self.plainTextBody)",
             "type": "integer",
-            "description": "Combined body byte count (NFR-BET-003)."
+            "description": "Combined body byte count."
           },
           "htmlBodySafe": {
             "expression": "validateHtmlWhitelist(@self.htmlBody, ['div','p','h1','h2','h3','h4','h5','h6','a','img','table','tr','td','th','tbody','thead','ul','ol','li','br','span','strong','em','b','i','hr'])",
             "type": "boolean",
-            "description": "Whitelist validity (NFR-BET-001)."
+            "description": "Whitelist validity."
           }
         },
         "x-openregister-notifications": {
@@ -682,7 +682,7 @@
               "mode": "plain-text",
               "field": "plainTextBody"
             },
-            "description": "Cancellation dispatch consumed from OR's notification engine (REQ-BET-009/010). When cancellationReasonRequired is true the engine injects the booking's cancellation reason into the variable map; otherwise {{cancellationReason}} resolves to empty string per the standard undefined-variable rule (T14)."
+            "description": "Cancellation dispatch consumed from OR's notification engine. When cancellationReasonRequired is true the engine injects the booking's cancellation reason into the variable map; otherwise {{cancellationReason}} resolves to empty string per the standard undefined-variable rule (T14)."
           }
         },
         "x-openregister-rbac": {

@@ -10,11 +10,11 @@
 
 import { test } from '@playwright/test'
 import {
-	gotoPage,
 	assertIndexSurface,
 	assertNoShillinqFailures,
+	gotoPage,
 	recordShillinqErrors,
-} from './_helpers'
+} from './_helpers.ts'
 
 const PAGES: Array<{ route: string; title: string; titleRe?: RegExp }> = [
 	// ⚠️ These two currently FAIL, and that is the spec working — see #860.

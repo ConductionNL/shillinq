@@ -471,6 +471,33 @@ final class RacingDefaultObjectServiceDecorator implements ObjectServiceInterfac
 	}//end saveObjects()
 
 	/**
+	 * Hand the raw append to the wrapped store.
+	 *
+	 * @param array      $objects  Rows to append, as plain arrays.
+	 * @param string|int $register Register id, uuid or slug.
+	 * @param string|int $schema   Schema id, uuid or slug.
+	 *
+	 * @return int The number of rows written.
+	 */
+	public function appendObjectsRaw(array $objects, string|int $register, string|int $schema): int {
+		return $this->inner->appendObjectsRaw($objects, $register, $schema);
+
+	}//end appendObjectsRaw()
+
+	/**
+	 * Hand the expiry sweep to the wrapped store.
+	 *
+	 * @param string|int $register Register id, uuid or slug.
+	 * @param string|int $schema   Schema id, uuid or slug.
+	 *
+	 * @return int The number of rows removed.
+	 */
+	public function purgeExpiredObjectsRaw(string|int $register, string|int $schema): int {
+		return $this->inner->purgeExpiredObjectsRaw($register, $schema);
+
+	}//end purgeExpiredObjectsRaw()
+
+	/**
 	 * @param string|int $identifier The object id or UUID.
 	 * @param bool $advisory Take an advisory lock.
 	 *

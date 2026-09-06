@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-icp-opgaaf",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json; ADR-031 declarative-first (schemas + lifecycle + calculations + aggregations); ADR-022 OpenRegister approval-workflow (no app-local submission table)",
-    "description": "Tier 3 — intra-community supplies (ICP) filing. Adds four new schemas that union additively onto the monolith: ViesValidation (immutable VIES verification evidence per Implementing Regulation 282/2011 Art. 18), IcpSupply (the first-class, invoice-derived supply record), IcpOpgaaf (the recapitulative statement / ICP-opgaaf with draft → finalized → submitted → accepted/rejected/corrected lifecycle), and PeriodicitySwitch (the quarterly↔monthly transition log per Art. 263 §1bis Directive 2006/112/EC). IcpOpgaaf carries an x-openregister-lifecycle (reconciliation + SBR-schema gate on finalize, approval-workflow on submit) and x-openregister-calculations for SBR/Digipoort XBRL composition. IcpSupply carries the x-openregister-aggregations shape that groups supplies by (buyerVatId, supplyType) — the ICP ledger. The engine-side fallback (prior-period opening carry, cross-schema reconciliation join, periodicity threshold) is OCA\\Shillinq\\Service\\IcpService + IcpCalculator using the real OpenRegister ObjectService API (find/findAll/saveObject). Also seeds three zero-rated RGS chart-of-accounts Account objects (8190 Omzet ICP goederen, 8195 Omzet ICP diensten, 8196 Omzet ICP driehoekstransacties) and worked ViesValidation / IcpSupply / IcpOpgaaf / PeriodicitySwitch example objects per design.md Seed Data. The pre-existing minimal IcpStatement schema (period metadata only, from add-shillinq-bookkeeping-operations) is left untouched; IcpOpgaaf is the richer line-bearing filing register the T3 spec (REQ-ICP-001..REQ-ICP-010) requires. Tasks 9-10: ARInvoice.icpContext and CustomerMaster.vatId* extension fields are now landed as deep-merge property additions on the AR-core schemas (ADR-037 — properties unioned by key, monolith untouched); ARInvoice gets the icpContext sub-object (treatAsIcp, supplyType, viesValidationId, triangulation) for REQ-ICP-001/006/007, CustomerMaster gets canonical vatId + vatIdValidatedAt + vatIdValidUntil + vatIdValidationStatus for REQ-ICP-001/009."
+    "description": "Tier 3: intra-community supplies (ICP) filing. Adds four new schemas that union additively onto the monolith: ViesValidation (immutable VIES verification evidence per Implementing Regulation 282/2011 Art. 18), IcpSupply (the first-class, invoice-derived supply record), IcpOpgaaf (the recapitulative statement / ICP-opgaaf with draft → finalized → submitted → accepted/rejected/corrected lifecycle), and PeriodicitySwitch (the quarterly↔monthly transition log per Art. 263 §1bis Directive 2006/112/EC). IcpOpgaaf carries an x-openregister-lifecycle (reconciliation + SBR-schema gate on finalize, approval-workflow on submit) and x-openregister-calculations for SBR/Digipoort XBRL composition. IcpSupply carries the x-openregister-aggregations shape that groups supplies by (buyerVatId, supplyType). The ICP ledger. The engine-side fallback (prior-period opening carry, cross-schema reconciliation join, periodicity threshold) is OCA\\Shillinq\\Service\\IcpService + IcpCalculator using the real OpenRegister ObjectService API (find/findAll/saveObject). Also seeds three zero-rated RGS chart-of-accounts Account objects (8190 Omzet ICP goederen, 8195 Omzet ICP diensten, 8196 Omzet ICP driehoekstransacties) and worked ViesValidation / IcpSupply / IcpOpgaaf / PeriodicitySwitch example objects per design.md Seed Data. The pre-existing minimal IcpStatement schema (period metadata only, from add-shillinq-bookkeeping-operations) is left untouched; IcpOpgaaf is the richer line-bearing filing register the T3 spec requires. Tasks 9-10: ARInvoice.icpContext and CustomerMaster.vatId* extension fields are now landed as deep-merge property additions on the AR-core schemas (ADR-037. Properties unioned by key, monolith untouched); ARInvoice gets the icpContext sub-object (treatAsIcp, supplyType, viesValidationId, triangulation) for, CustomerMaster gets canonical vatId + vatIdValidatedAt + vatIdValidUntil + vatIdValidationStatus for."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "ShieldCheckOutline",
         "version": "0.1.0",
         "title": "VIES Validation",
-        "description": "Immutable record of one VIES VAT-ID verification (REQ-ICP-001, REQ-ICP-009). Captures the requestId returned by VIES as Belastingdienst audit proof (Implementing Regulation 282/2011 Art. 18), the validity result, the disclosed name/address, and an outage flag distinguishing a transient VIES outage from a definitive rejection. Validation timestamps are never updated retroactively (good-faith evidence).",
+        "description": "Immutable record of one VIES VAT-ID verification. Captures the requestId returned by VIES as Belastingdienst audit proof (Implementing Regulation 282/2011 Art. 18), the validity result, the disclosed name/address, and an outage flag distinguishing a transient VIES outage from a definitive rejection. Validation timestamps are never updated retroactively (good-faith evidence).",
         "x-schema-org": "schema:VerificationEvent",
         "x-spec": "openspec/changes/bookkeeping-icp-opgaaf/specs/bookkeeping-icp-opgaaf/spec.md",
         "x-openregister": {
@@ -29,7 +29,7 @@
         "properties": {
           "vatId": {
             "type": "string",
-            "description": "Canonical VAT-ID validated (country code + national number, no spaces). REQ-ICP-001.",
+            "description": "Canonical VAT-ID validated (country code + national number, no spaces).",
             "example": "BE0123456789",
             "title": "VAT ID"
           },
@@ -50,7 +50,7 @@
           },
           "valid": {
             "type": "boolean",
-            "description": "True when VIES returned a valid VAT-ID; false is a definitive rejection (REQ-ICP-009).",
+            "description": "True when VIES returned a valid VAT-ID; false is a definitive rejection.",
             "example": true,
             "title": "Valid"
           },
@@ -70,28 +70,28 @@
           },
           "requestId": {
             "type": "string",
-            "description": "VIES consultation number — Belastingdienst audit proof per Implementing Regulation 282/2011 Art. 18 (REQ-ICP-001).",
+            "description": "VIES consultation number: Belastingdienst audit proof per Implementing Regulation 282/2011 Art. 18.",
             "nullable": true,
             "example": "BE-2026-06-15-001",
             "title": "Request ID"
           },
           "outage": {
             "type": "boolean",
-            "description": "True when this record was created during a transient VIES outage (HTTP 5xx / SOAP MS_UNAVAILABLE) rather than a definitive answer (REQ-ICP-009).",
+            "description": "True when this record was created during a transient VIES outage (HTTP 5xx / SOAP MS_UNAVAILABLE) rather than a definitive answer.",
             "default": false,
             "example": false,
             "title": "Outage"
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to the administration; reads are scoped to the requesting user's administration (REQ-ICP-001).",
+            "description": "FK to the administration; reads are scoped to the requesting user's administration.",
             "example": "adm-smb-1",
             "title": "Administration ID"
           }
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a VIES Validation is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a VIES Validation is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "IcpSupply": {
@@ -99,7 +99,7 @@
         "icon": "EarthArrowRight",
         "version": "0.1.0",
         "title": "ICP Supply",
-        "description": "One intra-community supply, the first-class derived record (design.md D1). Each supply links to its source invoice line, the buyer VAT-ID, the supply type (L goods / S services / T triangulation), the amount excluding VAT (negative for credit notes, REQ-ICP-003), the time of supply (Art. 64), and the ViesValidation evidence (REQ-ICP-001, REQ-ICP-006). reportedInOpgaafId is set once the supply is rolled into a submitted IcpOpgaaf.",
+        "description": "One intra-community supply, the first-class derived record (design.md D1). Each supply links to its source invoice line, the buyer VAT-ID, the supply type (L goods / S services / T triangulation), the amount excluding VAT (negative for credit notes), the time of supply (Art. 64), and the ViesValidation evidence. reportedInOpgaafId is set once the supply is rolled into a submitted IcpOpgaaf.",
         "x-schema-org": "schema:Transaction",
         "x-spec": "openspec/changes/bookkeeping-icp-opgaaf/specs/bookkeeping-icp-opgaaf/spec.md",
         "type": "object",
@@ -129,13 +129,13 @@
           "supplyDate": {
             "type": "string",
             "format": "date",
-            "description": "Time of supply per Art. 64 — determines the filing period (REQ-ICP-003).",
+            "description": "Time of supply per Art. 64: determines the filing period.",
             "example": "2026-06-15",
             "title": "Supply Date"
           },
           "buyerVatId": {
             "type": "string",
-            "description": "Canonical buyer VAT-ID (the C-party for triangulation, REQ-ICP-006).",
+            "description": "Canonical buyer VAT-ID (the C-party for triangulation).",
             "example": "BE0123456789",
             "title": "Buyer VAT ID"
           },
@@ -147,7 +147,7 @@
           },
           "supplyType": {
             "type": "string",
-            "description": "L = goods, S = services, T = triangulation (ABC-levering). Triangulation is reported on a separate line (REQ-ICP-006).",
+            "description": "L = goods, S = services, T = triangulation (ABC-levering). Triangulation is reported on a separate line.",
             "enum": [
               "L",
               "S",
@@ -158,7 +158,7 @@
           },
           "amountExclVat": {
             "type": "number",
-            "description": "Amount excluding VAT in EUR, two decimals, half-even. Negative for credit notes (REQ-ICP-003).",
+            "description": "Amount excluding VAT in EUR, two decimals, half-even. Negative for credit notes.",
             "example": 25000.0,
             "title": "Amount Excl VAT"
           },
@@ -171,28 +171,28 @@
           },
           "viesValidationId": {
             "type": "string",
-            "description": "FK to the ViesValidation evidence for this supply's buyer VAT-ID (REQ-ICP-001).",
+            "description": "FK to the ViesValidation evidence for this supply's buyer VAT-ID.",
             "nullable": true,
             "example": "vies-be-0123456789-2026q2",
             "title": "Vies Validation ID"
           },
           "reportedInReturnId": {
             "type": "string",
-            "description": "FK to the IcpOpgaaf that reported this supply; null while unreported (REQ-ICP-003).",
+            "description": "FK to the IcpOpgaaf that reported this supply; null while unreported.",
             "nullable": true,
             "example": null,
             "title": "Reported In Opgaaf ID"
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to the administration; reads scoped to the requesting user's administration (REQ-ICP-001).",
+            "description": "FK to the administration; reads scoped to the requesting user's administration.",
             "example": "adm-smb-1",
             "title": "Administration ID"
           }
         },
         "x-openregister-aggregations": {
           "icpLedgerByBuyerSupplyType": {
-            "description": "The ICP ledger (REQ-ICP-003): group all qualifying IcpSupply records for a period+administration by (buyerVatId, supplyType), SUM amountExclVat with sign preserved (credit notes are negative), sort by buyerVatId ascending. Triangulation (T) lines are never merged with L or S even when the buyerVatId matches (REQ-ICP-006). When the OpenRegister aggregation engine cannot express the period-window selection, IcpService computes the same result in PHP via the real ObjectService API.",
+            "description": "The ICP ledger: group all qualifying IcpSupply records for a period+administration by (buyerVatId, supplyType), SUM amountExclVat with sign preserved (credit notes are negative), sort by buyerVatId ascending. Triangulation (T) lines are never merged with L or S even when the buyerVatId matches. When the OpenRegister aggregation engine cannot express the period-window selection, IcpService computes the same result in PHP via the real ObjectService API.",
             "source": "IcpSupply",
             "filter": {},
             "groupBy": [
@@ -216,7 +216,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a ICP Supply is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a ICP Supply is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "IcpOpgaaf": {
@@ -224,7 +224,7 @@
         "icon": "FileDocumentMultipleOutline",
         "version": "0.1.0",
         "title": "ICP-opgaaf (Recapitulative Statement)",
-        "description": "An intra-community supplies recapitulative statement (REQ-ICP-003..REQ-ICP-010). Aggregates qualifying IcpSupply records by (buyerVatId, supplyType) into lines, carries the period totals (goods/services/triangulation), the SBR/Digipoort XBRL payload archived for the 10-year bewaarplicht, and the Belastingdienst kenmerk. Corrections are separate filings of type=correction referencing correctsPeriod (REQ-ICP-008). The richer, line-bearing companion of the pre-existing minimal IcpStatement schema.",
+        "description": "An intra-community supplies recapitulative statement. Aggregates qualifying IcpSupply records by (buyerVatId, supplyType) into lines, carries the period totals (goods/services/triangulation), the SBR/Digipoort XBRL payload archived for the 10-year bewaarplicht, and the Belastingdienst kenmerk. Corrections are separate filings of type=correction referencing correctsPeriod. The richer, line-bearing companion of the pre-existing minimal IcpStatement schema.",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-icp-opgaaf/specs/bookkeeping-icp-opgaaf/spec.md",
         "type": "object",
@@ -244,7 +244,7 @@
           },
           "periodicity": {
             "type": "string",
-            "description": "Filing frequency (REQ-ICP-002).",
+            "description": "Filing frequency.",
             "enum": [
               "quarterly",
               "monthly"
@@ -254,7 +254,7 @@
           },
           "status": {
             "type": "string",
-            "description": "Lifecycle state (REQ-ICP-004, REQ-ICP-005). draft → finalized → submitted → accepted/rejected/corrected.",
+            "description": "Lifecycle state. draft → finalized → submitted → accepted/rejected/corrected.",
             "enum": [
               "draft",
               "finalized",
@@ -269,7 +269,7 @@
           },
           "type": {
             "type": "string",
-            "description": "initial filing or a correction filing (REQ-ICP-008).",
+            "description": "initial filing or a correction filing.",
             "enum": [
               "initial",
               "correction"
@@ -280,21 +280,21 @@
           },
           "correctsPeriod": {
             "type": "string",
-            "description": "For type=correction, the original period being corrected (REQ-ICP-008).",
+            "description": "For type=correction, the original period being corrected.",
             "nullable": true,
             "example": null,
             "title": "Corrects Period"
           },
           "correctionReason": {
             "type": "string",
-            "description": "Free-text reason for the correction (REQ-ICP-008).",
+            "description": "Free-text reason for the correction.",
             "nullable": true,
             "example": null,
             "title": "Correction Reason"
           },
           "lines": {
             "type": "array",
-            "description": "Aggregated lines, one per (buyerVatId, supplyType), sorted by buyerVatId (REQ-ICP-003).",
+            "description": "Aggregated lines, one per (buyerVatId, supplyType), sorted by buyerVatId.",
             "items": {
               "type": "object",
               "properties": {
@@ -324,14 +324,14 @@
           },
           "total": {
             "type": "number",
-            "description": "Sum of all line amounts in EUR (REQ-ICP-004 reconciliation target).",
+            "description": "Sum of all line amounts in EUR (reconciliation target).",
             "default": 0,
             "example": 42500.0,
             "title": "Total"
           },
           "totalGoods": {
             "type": "number",
-            "description": "Sum of L + T lines (goods, including triangulation, REQ-ICP-002 threshold base).",
+            "description": "Sum of L + T lines (goods, including triangulation, threshold base).",
             "default": 0,
             "example": 30000.0,
             "title": "Total Goods"
@@ -345,14 +345,14 @@
           },
           "totalTriangulation": {
             "type": "number",
-            "description": "Sum of T lines only, for reporting clarity (REQ-ICP-006).",
+            "description": "Sum of T lines only, for reporting clarity.",
             "default": 0,
             "example": 5000.0,
             "title": "Total Triangulation"
           },
           "taxAuthorityReference": {
             "type": "string",
-            "description": "Reference number from the Digipoort submission confirmation (REQ-ICP-010).",
+            "description": "Reference number from the Digipoort submission confirmation.",
             "nullable": true,
             "example": null,
             "title": "Belastingdienst Kenmerk"
@@ -367,21 +367,21 @@
           },
           "xmlPayload": {
             "type": "string",
-            "description": "Archived SBR/Digipoort XBRL instance (NT18, bd-rpt-icp-2026.xsd) for the 10-year bewaarplicht (REQ-ICP-005).",
+            "description": "Archived SBR/Digipoort XBRL instance (NT18, bd-rpt-icp-2026.xsd) for the 10-year bewaarplicht.",
             "nullable": true,
             "example": null,
             "title": "XML Payload"
           },
           "auditBundle": {
             "type": "string",
-            "description": "FK to the audit-trail inspection bundle file (REQ-ICP-010).",
+            "description": "FK to the audit-trail inspection bundle file.",
             "nullable": true,
             "example": null,
             "title": "Audit Bundle"
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to the administration; reads scoped to the requesting user's administration (REQ-ICP-004).",
+            "description": "FK to the administration; reads scoped to the requesting user's administration.",
             "example": "adm-smb-1",
             "title": "Administration ID"
           }
@@ -395,7 +395,7 @@
                 "finalize": {
                   "target": "finalized",
                   "guard": "OCA\\Shillinq\\Lifecycle\\IcpFinalizeGuard",
-                  "description": "Reconciliation gate against BTW-aangifte rubriek 3b within EUR 1 tolerance (REQ-ICP-004) and SBR/NT18 schema validation (REQ-ICP-005)."
+                  "description": "Reconciliation gate against BTW-aangifte rubriek 3b within EUR 1 tolerance and SBR/NT18 schema validation."
                 }
               }
             },
@@ -430,20 +430,20 @@
               "description": "Belastingdienst validation failure; bookkeeper corrects and refiles."
             },
             "corrected": {
-              "description": "Superseded by a correction filing referencing this period (REQ-ICP-008)."
+              "description": "Superseded by a correction filing referencing this period."
             }
           }
         },
         "x-openregister-calculations": {
           "xmlPayload": {
-            "description": "SBR/Digipoort XBRL composition (REQ-ICP-005). Pure data → XML transformation conforming to bd-rpt-icp-2026.xsd (NT18): one bd-i:IntracommunautairePrestatieMutatieSpecificatie per line, gl-cor:periodIdentifier from period, supplyCode L/S/T, amounts EUR two-decimal half-even. Composed declaratively from lines; IcpCalculator::composeXbrl is the engine-side fallback when the calculation engine cannot emit XBRL, and validates the instance before finalize.",
+            "description": "SBR/Digipoort XBRL composition. Pure data → XML transformation conforming to bd-rpt-icp-2026.xsd (NT18): one bd-i:IntracommunautairePrestatieMutatieSpecificatie per line, gl-cor:periodIdentifier from period, supplyCode L/S/T, amounts EUR two-decimal half-even. Composed declaratively from lines; IcpCalculator:composeXbrl is the engine-side fallback when the calculation engine cannot emit XBRL, and validates the instance before finalize.",
             "engine": "sbr-xbrl",
             "target": "xmlPayload"
           }
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a ICP-opgaaf (Recapitulative Statement) is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a ICP-opgaaf (Recapitulative Statement) is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "PeriodicitySwitch": {
@@ -451,7 +451,7 @@
         "icon": "SwapHorizontal",
         "version": "0.1.0",
         "title": "Periodicity Switch",
-        "description": "Log of one quarterly↔monthly filing-periodicity transition (REQ-ICP-002). Created when cumulative goods supplies (L + T) breach EUR 50,000 in a calendar quarter, effective the first day of the following month per Art. 263 §1bis Directive 2006/112/EC and Art. 32 Uitvoeringsregeling OB. Switch-back to quarterly is offered only at a year boundary after four quarters below threshold.",
+        "description": "Log of one quarterly↔monthly filing-periodicity transition. Created when cumulative goods supplies (L + T) breach EUR 50,000 in a calendar quarter, effective the first day of the following month per Art. 263 §1bis Directive 2006/112/EC and Art. 32 Uitvoeringsregeling OB. Switch-back to quarterly is offered only at a year boundary after four quarters below threshold.",
         "x-schema-org": "schema:Event",
         "x-spec": "openspec/changes/bookkeeping-icp-opgaaf/specs/bookkeeping-icp-opgaaf/spec.md",
         "type": "object",
@@ -465,7 +465,7 @@
         "properties": {
           "administrationId": {
             "type": "string",
-            "description": "FK to the administration (REQ-ICP-002).",
+            "description": "FK to the administration.",
             "example": "adm-smb-1",
             "title": "Administration ID"
           },
@@ -514,7 +514,7 @@
           "effectiveDate": {
             "type": "string",
             "format": "date",
-            "description": "First day of the period the new periodicity takes effect (REQ-ICP-002).",
+            "description": "First day of the period the new periodicity takes effect.",
             "example": "2026-04-01",
             "title": "Effective Date"
           },
@@ -532,7 +532,7 @@
           "reversedAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Moment the switch was reverted at a year boundary (REQ-ICP-002).",
+            "description": "Moment the switch was reverted at a year boundary.",
             "nullable": true,
             "example": null,
             "title": "Reversed At"
@@ -547,19 +547,19 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Periodicity Switch is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Periodicity Switch is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "ARInvoice": {
         "properties": {
           "icpContext": {
             "type": "object",
-            "description": "Intra-community supplies overlay populated when the invoice is treated as ICP (REQ-ICP-001, REQ-ICP-006, REQ-ICP-007). Set by the VIES validation flow when the customer is in another EU member state with a valid VAT-ID. Drives ICP ledger aggregation, reverse-charge PDF rendering (REQ-ICP-007), and the Belastingdienst rubriek 3b reconciliation gate (REQ-ICP-004). Triangulation supplies (Article 141 VAT Directive 2006/112/EC) carry supplyType T and report the C-party VAT-ID rather than the A-party's.",
+            "description": "Intra-community supplies overlay populated when the invoice is treated as ICP. Set by the VIES validation flow when the customer is in another EU member state with a valid VAT-ID. Drives ICP ledger aggregation, reverse-charge PDF rendering, and the Belastingdienst rubriek 3b reconciliation gate. Triangulation supplies (Article 141 VAT Directive 2006/112/EC) carry supplyType T and report the C-party VAT-ID rather than the A-party's.",
             "nullable": true,
             "properties": {
               "treatAsIcp": {
                 "type": "boolean",
-                "description": "True when the invoice MUST be reported on the ICP-opgaaf (intra-community supply, zero-rated, reverse-charged). Drives REQ-ICP-003 aggregation and REQ-ICP-007 PDF rendering.",
+                "description": "True when the invoice MUST be reported on the ICP-opgaaf (intra-community supply, zero-rated, reverse-charged). Drives aggregation and PDF rendering.",
                 "default": false,
                 "example": true,
                 "title": "Treat As ICP"
@@ -585,7 +585,7 @@
               },
               "triangulation": {
                 "type": "boolean",
-                "description": "True when this invoice is a triangulation supply (REQ-ICP-006). When true the system validates and reports the C-party VAT-ID against VIES, never the A-party's.",
+                "description": "True when this invoice is a triangulation supply. When true the system validates and reports the C-party VAT-ID against VIES, never the A-party's.",
                 "default": false,
                 "example": false,
                 "title": "Triangulation"
@@ -605,7 +605,7 @@
         "properties": {
           "vatId": {
             "type": "string",
-            "description": "EU VAT-ID in canonical form (country code + national number, e.g. BE0123456789, FR12345678901) used for VIES verification on B2B intra-community supplies per REQ-ICP-001. Decoupled from the legacy btwNumber free-form field; canonical form is REQUIRED for VIES round-trips. When set and the buyer country differs from the seller's, invoices for this customer become ICP candidates.",
+            "description": "EU VAT-ID in canonical form (country code + national number, e.g. BE0123456789, FR12345678901) used for VIES verification on B2B intra-community supplies. Decoupled from the legacy btwNumber free-form field; canonical form is REQUIRED for VIES round-trips. When set and the buyer country differs from the seller's, invoices for this customer become ICP candidates.",
             "nullable": true,
             "example": "BE0123456789",
             "title": "VAT ID"
@@ -613,7 +613,7 @@
           "vatIdValidatedAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Timestamp of the most recent definitive VIES verification of vatId. Last-known-good evidence for the REQ-ICP-009 outage fallback (recent valid record within 30 days survives a transient VIES outage).",
+            "description": "Timestamp of the most recent definitive VIES verification of vatId. Last-known-good evidence for the outage fallback (recent valid record within 30 days survives a transient VIES outage).",
             "nullable": true,
             "example": "2026-06-15T08:30:00+00:00",
             "title": "VAT ID Validated At"
@@ -634,7 +634,7 @@
               "invalid",
               "vies_outage"
             ],
-            "description": "Most recent VIES verification outcome (REQ-ICP-001 + REQ-ICP-009). unchecked = no VIES query yet; valid = VIES returned valid:true; invalid = VIES returned valid:false (block ICP overlay); vies_outage = transient VIES outage; the system attaches the recent valid ViesValidation and queues daily revalidation via ViesOutageRetryJob.",
+            "description": "Most recent VIES verification outcome (+). unchecked = no VIES query yet; valid = VIES returned valid:true; invalid = VIES returned valid:false (block ICP overlay); vies_outage = transient VIES outage; the system attaches the recent valid ViesValidation and queues daily revalidation via ViesOutageRetryJob.",
             "default": "unchecked",
             "example": "valid",
             "title": "VAT ID Validation Status"

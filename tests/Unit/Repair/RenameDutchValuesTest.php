@@ -610,22 +610,30 @@ final class RenameDutchValuesTest extends TestCase
 
         self::assertSame(
             $schemas['Commitment']['properties']['kind']['enum'],
-            $schemas['Mandate']['properties']['kind_commitment']['items']['enum'],
-            'Mandate.kind_commitment must enumerate exactly Commitment.kind'
+            $schemas['SpendingMandate']['properties']['kind_commitment']['items']['enum'],
+            'SpendingMandate.kind_commitment must enumerate exactly Commitment.kind'
         );
 
         // The seeded mandates must speak it too, or a fresh install ships
         // mandates that match no commitment.
         $allowed = $schemas['Commitment']['properties']['kind']['enum'];
+        $checked = 0;
         foreach (($this->commitmentFragment()['objects'] ?? []) as $object) {
-            if (($object['@self']['schema'] ?? '') !== 'Mandate') {
+            if (($object['@self']['schema'] ?? '') !== 'SpendingMandate') {
                 continue;
             }
 
+            $checked++;
             foreach (($object['kind_commitment'] ?? []) as $kind) {
                 self::assertContains($kind, $allowed, sprintf('seeded mandate carries unknown kind "%s"', (string) $kind));
             }
         }
+
+        // Without this the loop above is vacuous: the schema rename from
+        // `Mandate` to `SpendingMandate` made every seeded object fail the
+        // filter, so the assertions inside stopped running while the test
+        // still reported green on the enum check alone.
+        self::assertGreaterThan(0, $checked, 'no seeded mandate was checked; the schema filter matches nothing');
 
     }//end testMandateKindCommitmentTracksTheCommitmentKindEnum()
 

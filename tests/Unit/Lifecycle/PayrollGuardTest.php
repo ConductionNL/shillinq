@@ -135,7 +135,7 @@ class PayrollGuardTest extends TestCase {
 	public function testCanCalculateWhenEmployeeActiveAndDeductionsPresent(): void {
 		$this->wireObjectService(
 			[
-				'Employee' => [['id' => 'emp-1', 'state' => 'active', 'exitDate' => null]],
+				'payrollEmployee' => [['id' => 'emp-1', 'state' => 'active', 'exitDate' => null]],
 				'Deduction' => [['id' => 'd-1', 'deductionType' => 'income-tax', 'amount' => 420.0]],
 			]
 		);
@@ -153,7 +153,7 @@ class PayrollGuardTest extends TestCase {
 	public function testCannotCalculateWithoutDeductions(): void {
 		$this->wireObjectService(
 			[
-				'Employee' => [['id' => 'emp-1', 'state' => 'active', 'exitDate' => null]],
+				'payrollEmployee' => [['id' => 'emp-1', 'state' => 'active', 'exitDate' => null]],
 				'Deduction' => [],
 			]
 		);
@@ -171,7 +171,7 @@ class PayrollGuardTest extends TestCase {
 	public function testCannotCalculateForInactiveEmployee(): void {
 		$this->wireObjectService(
 			[
-				'Employee' => [['id' => 'emp-1', 'state' => 'inactive', 'exitDate' => '2026-04-30']],
+				'payrollEmployee' => [['id' => 'emp-1', 'state' => 'inactive', 'exitDate' => '2026-04-30']],
 				'Deduction' => [['id' => 'd-1', 'deductionType' => 'income-tax', 'amount' => 420.0]],
 			]
 		);
@@ -190,7 +190,7 @@ class PayrollGuardTest extends TestCase {
 	public function testCannotCalculateAfterExitDate(): void {
 		$this->wireObjectService(
 			[
-				'Employee' => [['id' => 'emp-1', 'state' => 'active', 'exitDate' => '2026-04-30']],
+				'payrollEmployee' => [['id' => 'emp-1', 'state' => 'active', 'exitDate' => '2026-04-30']],
 				'Deduction' => [['id' => 'd-1', 'deductionType' => 'income-tax', 'amount' => 420.0]],
 			]
 		);

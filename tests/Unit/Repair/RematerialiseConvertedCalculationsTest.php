@@ -69,7 +69,7 @@ class RematerialiseConvertedCalculationsTest extends TestCase {
 		'ZzpDeduction',
 		'SisaReport',
 		'InventoryReorderRule',
-		'Project',
+		'engagement',
 		'ProjectAssignment',
 		'VatReturn',
 		'InnovatieboxElection',
@@ -215,7 +215,7 @@ class RematerialiseConvertedCalculationsTest extends TestCase {
 	 * @return void
 	 */
 	public function testObjectWithoutIdIsSkipped(): void {
-		$rowsBySchema = ['Project' => [['label' => 'no id here']]];
+		$rowsBySchema = ['engagement' => [['label' => 'no id here']]];
 		$step = $this->makeStep(rowsBySchema: $rowsBySchema);
 
 		$step->run($this->output);
@@ -255,7 +255,7 @@ class RematerialiseConvertedCalculationsTest extends TestCase {
 	 * @return void
 	 */
 	public function testFindAllFailureOnOneSchemaDoesNotBlockOthers(): void {
-		$rowsBySchema = ['Project' => [['id' => 'p-1']]];
+		$rowsBySchema = ['engagement' => [['id' => 'p-1']]];
 		$step = $this->makeStep(rowsBySchema: $rowsBySchema, failFindAllSchemas: ['FixedAsset']);
 
 		$this->output->expects(self::atLeastOnce())->method('warning');

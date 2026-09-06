@@ -99,8 +99,7 @@
 
 import { defineConfig, devices } from '@playwright/test'
 import * as path from 'path'
-
-import { resolveBaseURL } from './base-url'
+import { resolveBaseURL } from './base-url.ts'
 
 /**
  * Everything under `tests/e2e` that is NOT part of the CI regression suite.

@@ -16,15 +16,15 @@
  * runs the import" — is driven by loadIbanMapping() asserted here.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import {
-	formatOptions,
-	normalizeIban,
-	loadIbanMapping,
-	saveIbanMapping,
-	buildImportPayload,
-	setReturnBreadcrumb,
 	BREADCRUMB_FLAG,
+	buildImportPayload,
+	formatOptions,
+	loadIbanMapping,
+	normalizeIban,
+	saveIbanMapping,
+	setReturnBreadcrumb,
 } from '../../src/modals/bankStatementWizard.js'
 
 const IBAN_MAP_KEY = 'shillinq:bank-iban-map'

@@ -593,6 +593,33 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 	}//end saveObjects()
 
 	/**
+	 * Not modelled.
+	 *
+	 * @param array      $objects  Rows to append, as plain arrays.
+	 * @param string|int $register Register id, uuid or slug.
+	 * @param string|int $schema   Schema id, uuid or slug.
+	 *
+	 * @return int
+	 */
+	public function appendObjectsRaw(array $objects, string|int $register, string|int $schema): int {
+		$this->unsupported(method: 'appendObjectsRaw');
+
+	}//end appendObjectsRaw()
+
+	/**
+	 * Not modelled.
+	 *
+	 * @param string|int $register Register id, uuid or slug.
+	 * @param string|int $schema   Schema id, uuid or slug.
+	 *
+	 * @return int
+	 */
+	public function purgeExpiredObjectsRaw(string|int $register, string|int $schema): int {
+		$this->unsupported(method: 'purgeExpiredObjectsRaw');
+
+	}//end purgeExpiredObjectsRaw()
+
+	/**
 	 * Run an operation with system privileges — the stub simply runs it.
 	 *
 	 * @param callable $operation The operation to run.

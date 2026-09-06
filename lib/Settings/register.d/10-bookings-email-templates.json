@@ -6,7 +6,7 @@
         "icon": "EmailCheckOutline",
         "version": "0.1.0",
         "title": "Booking Confirmation Template",
-        "description": "Branded email template dispatched immediately when a booking is created. Operators customise subject, HTML/plain-text body, logo, accent colour and footer without code access. Body and subject support {{variable}} placeholders rendered at dispatch by the OpenRegister notification engine (ADR-022). Lifecycle draft -> published -> archived controls which version is active (REQ-BET-001/002/003).",
+        "description": "Branded email template dispatched immediately when a booking is created. Operators customise subject, HTML/plain-text body, logo, accent colour and footer without code access. Body and subject support {{variable}} placeholders rendered at dispatch by the OpenRegister notification engine (ADR-022). Lifecycle draft -> published -> archived controls which version is active.",
         "x-schema-org": "schema:EmailMessage",
         "type": "object",
         "required": [
@@ -37,13 +37,13 @@
               "from": "draft",
               "to": "published",
               "label": "Publish template",
-              "description": "Operator (role: communications-manager) activates the template; sets activatedAt to the current timestamp (REQ-BET-002)."
+              "description": "Operator (role: communications-manager) activates the template; sets activatedAt to the current timestamp."
             },
             "archive": {
               "from": "published",
               "to": "archived",
               "label": "Archive template",
-              "description": "Operator retires the template; new emails are no longer dispatched with it (REQ-BET-003). Existing instances remain visible in history."
+              "description": "Operator retires the template; new emails are no longer dispatched with it. Existing instances remain visible in history."
             },
             "archiveDraft": {
               "from": "draft",
@@ -55,7 +55,7 @@
           "hooks": {
             "onPublish": {
               "trigger": "lifecycle:publish",
-              "description": "Stamp activatedAt with the publication timestamp so the first activation is auditable (REQ-BET-002).",
+              "description": "Stamp activatedAt with the publication timestamp so the first activation is auditable.",
               "action": "x-openregister-calculations",
               "actionParameters": {
                 "calculations": [
@@ -94,32 +94,32 @@
           "activatedAt": {
             "expression": "@self.activatedAt != null ? @self.activatedAt : now()",
             "type": "datetime",
-            "description": "First-publication timestamp. Set once on the publish transition; preserved on later edits (REQ-BET-002)."
+            "description": "First-publication timestamp. Set once on the publish transition; preserved on later edits."
           },
           "renderedSubject": {
             "expression": "substitute(@self.subjectLine, @variables)",
             "type": "string",
-            "description": "Subject line with {{variableName}} placeholders replaced from the supplied variable map. Undefined variables render as an empty string (REQ-BET-004)."
+            "description": "Subject line with {{variableName}} placeholders replaced from the supplied variable map. Undefined variables render as an empty string."
           },
           "renderedHtmlBody": {
             "expression": "substitute(@self.htmlBody, @variables)",
             "type": "string",
-            "description": "HTML body with {{variableName}} placeholders replaced from the supplied variable map. Variable values are HTML-escaped to prevent injection (REQ-BET-004, Task 25)."
+            "description": "HTML body with {{variableName}} placeholders replaced from the supplied variable map. Variable values are HTML-escaped to prevent injection (Task 25)."
           },
           "renderedPlainTextBody": {
             "expression": "substitute(@self.plainTextBody, @variables)",
             "type": "string",
-            "description": "Plain-text fallback body with {{variableName}} placeholders replaced. Displayed when the client cannot render HTML (REQ-BET-006)."
+            "description": "Plain-text fallback body with {{variableName}} placeholders replaced. Displayed when the client cannot render HTML."
           },
           "subjectLineLength": {
             "expression": "length(@self.subjectLine)",
             "type": "integer",
-            "description": "Character count of the raw subject line. Validated against the 78-character cross-client limit (NFR-BET-002, Task 12)."
+            "description": "Character count of the raw subject line. Validated against the 78-character cross-client limit (Task 12)."
           },
           "bodySizeBytes": {
             "expression": "byteLength(@self.htmlBody) + byteLength(@self.plainTextBody)",
             "type": "integer",
-            "description": "Combined HTML + plain-text body size in bytes. Validated against the 102 KB (104448 bytes) SMTP limit (NFR-BET-003, Task 13)."
+            "description": "Combined HTML + plain-text body size in bytes. Validated against the 102 KB (104448 bytes) SMTP limit (Task 13)."
           }
         },
         "properties": {
@@ -144,27 +144,27 @@
           },
           "subjectLine": {
             "type": "string",
-            "description": "Email subject. Supports {{variable}} placeholders. Limited to 78 characters after substitution for cross-client compatibility (NFR-BET-002).",
+            "description": "Email subject. Supports {{variable}} placeholders. Limited to 78 characters after substitution for cross-client compatibility.",
             "example": "Boeking bevestigd: {{bookingRef}}",
             "maxLength": 255,
             "title": "Subject Line"
           },
           "htmlBody": {
             "type": "string",
-            "description": "HTML email body. Inline styles only, no external CSS or JavaScript. Supports {{variable}} placeholders (NFR-BET-001).",
+            "description": "HTML email body. Inline styles only, no external CSS or JavaScript. Supports {{variable}} placeholders.",
             "example": "<h1>Hallo {{customerName}}</h1><p>Uw boeking is bevestigd.</p>",
             "title": "Html Body"
           },
           "plainTextBody": {
             "type": "string",
-            "description": "Plain-text fallback body for clients without HTML rendering. Supports {{variable}} placeholders (REQ-BET-006).",
+            "description": "Plain-text fallback body for clients without HTML rendering. Supports {{variable}} placeholders.",
             "example": "Hallo {{customerName}}, uw boeking is bevestigd.",
             "title": "Plain Text Body"
           },
           "logoUri": {
             "type": "string",
             "format": "uri",
-            "description": "URL to the organization logo image. Loaded from a CDN or document store; inline base64 is not used (NFR-BET-004).",
+            "description": "URL to the organization logo image. Loaded from a CDN or document store; inline base64 is not used.",
             "example": "https://cdn.example.org/logo.png",
             "title": "Logo URI"
           },
@@ -196,7 +196,7 @@
           },
           "locale": {
             "type": "string",
-            "description": "BCP-47 language tag the template is authored in. Used to select the template for a customer's language preference (NFR-BET-005).",
+            "description": "BCP-47 language tag the template is authored in. Used to select the template for a customer's language preference.",
             "enum": [
               "nl",
               "en"
@@ -208,7 +208,7 @@
           "activatedAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Timestamp when the template was first published. Set on the publish transition (REQ-BET-002).",
+            "description": "Timestamp when the template was first published. Set on the publish transition.",
             "title": "Activated At"
           },
           "administrationId": {
@@ -223,7 +223,7 @@
         "icon": "EmailOutline",
         "version": "0.1.0",
         "title": "Booking Reminder Template",
-        "description": "Branded reminder email dispatched N hours before a booking starts. The hoursBeforeBooking field configures the reminder timing; the booking system queues dispatch at that offset (REQ-BET-005). Subject/body support {{variable}} placeholders including {{hoursUntilBooking}}. Lifecycle draft -> published -> archived controls the active version.",
+        "description": "Branded reminder email dispatched N hours before a booking starts. The hoursBeforeBooking field configures the reminder timing; the booking system queues dispatch at that offset. Subject/body support {{variable}} placeholders including {{hoursUntilBooking}}. Lifecycle draft -> published -> archived controls the active version.",
         "x-schema-org": "schema:EmailMessage",
         "type": "object",
         "required": [
@@ -255,13 +255,13 @@
               "from": "draft",
               "to": "published",
               "label": "Publish template",
-              "description": "Operator activates the reminder template; sets activatedAt (REQ-BET-002)."
+              "description": "Operator activates the reminder template; sets activatedAt."
             },
             "archive": {
               "from": "published",
               "to": "archived",
               "label": "Archive template",
-              "description": "Operator retires the template; new reminders no longer use it (REQ-BET-003)."
+              "description": "Operator retires the template; new reminders no longer use it."
             },
             "archiveDraft": {
               "from": "draft",
@@ -273,7 +273,7 @@
           "hooks": {
             "onPublish": {
               "trigger": "lifecycle:publish",
-              "description": "Stamp activatedAt with the publication timestamp (REQ-BET-002).",
+              "description": "Stamp activatedAt with the publication timestamp.",
               "action": "x-openregister-calculations",
               "actionParameters": {
                 "calculations": [
@@ -312,32 +312,32 @@
           "activatedAt": {
             "expression": "@self.activatedAt != null ? @self.activatedAt : now()",
             "type": "datetime",
-            "description": "First-publication timestamp (REQ-BET-002)."
+            "description": "First-publication timestamp."
           },
           "renderedSubject": {
             "expression": "substitute(@self.subjectLine, @variables)",
             "type": "string",
-            "description": "Subject with placeholders substituted (REQ-BET-004)."
+            "description": "Subject with placeholders substituted."
           },
           "renderedHtmlBody": {
             "expression": "substitute(@self.htmlBody, @variables)",
             "type": "string",
-            "description": "HTML body with placeholders substituted; values HTML-escaped (REQ-BET-004)."
+            "description": "HTML body with placeholders substituted; values HTML-escaped."
           },
           "renderedPlainTextBody": {
             "expression": "substitute(@self.plainTextBody, @variables)",
             "type": "string",
-            "description": "Plain-text fallback with placeholders substituted (REQ-BET-006)."
+            "description": "Plain-text fallback with placeholders substituted."
           },
           "subjectLineLength": {
             "expression": "length(@self.subjectLine)",
             "type": "integer",
-            "description": "Subject character count, validated against the 78-character limit (NFR-BET-002)."
+            "description": "Subject character count, validated against the 78-character limit."
           },
           "bodySizeBytes": {
             "expression": "byteLength(@self.htmlBody) + byteLength(@self.plainTextBody)",
             "type": "integer",
-            "description": "Combined body size validated against the 102 KB limit (NFR-BET-003)."
+            "description": "Combined body size validated against the 102 KB limit."
           }
         },
         "properties": {
@@ -362,7 +362,7 @@
           },
           "hoursBeforeBooking": {
             "type": "integer",
-            "description": "Number of hours before booking start at which the reminder is dispatched (e.g. 24, 2, 1). Configures timing per REQ-BET-005.",
+            "description": "Number of hours before booking start at which the reminder is dispatched (e.g. 24, 2, 1). Configures timing.",
             "minimum": 0,
             "maximum": 8760,
             "example": 24,
@@ -370,27 +370,27 @@
           },
           "subjectLine": {
             "type": "string",
-            "description": "Email subject. Supports {{variable}} placeholders (NFR-BET-002).",
+            "description": "Email subject. Supports {{variable}} placeholders.",
             "example": "Herinnering: uw boeking op {{bookingDate}}",
             "maxLength": 255,
             "title": "Subject Line"
           },
           "htmlBody": {
             "type": "string",
-            "description": "HTML email body, inline styles only (NFR-BET-001).",
+            "description": "HTML email body, inline styles only.",
             "example": "<p>Hallo {{customerName}}, over {{hoursUntilBooking}} uur start uw boeking.</p>",
             "title": "Html Body"
           },
           "plainTextBody": {
             "type": "string",
-            "description": "Plain-text fallback body (REQ-BET-006).",
+            "description": "Plain-text fallback body.",
             "example": "Hallo {{customerName}}, over {{hoursUntilBooking}} uur start uw boeking.",
             "title": "Plain Text Body"
           },
           "logoUri": {
             "type": "string",
             "format": "uri",
-            "description": "URL to the organization logo image (NFR-BET-004).",
+            "description": "URL to the organization logo image.",
             "example": "https://cdn.example.org/logo.png",
             "title": "Logo URI"
           },
@@ -422,7 +422,7 @@
           },
           "locale": {
             "type": "string",
-            "description": "BCP-47 language tag the template is authored in (NFR-BET-005).",
+            "description": "BCP-47 language tag the template is authored in.",
             "enum": [
               "nl",
               "en"
@@ -434,7 +434,7 @@
           "activatedAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Timestamp when the template was first published (REQ-BET-002).",
+            "description": "Timestamp when the template was first published.",
             "title": "Activated At"
           },
           "administrationId": {
@@ -449,7 +449,7 @@
         "icon": "EmailRemoveOutline",
         "version": "0.1.0",
         "title": "Booking Cancellation Template",
-        "description": "Branded email dispatched when a booking is cancelled. When cancellationReasonRequired is true the {{cancellationReason}} variable is included in the available bindings (REQ-BET-009). Subject/body support {{variable}} placeholders. Lifecycle draft -> published -> archived controls the active version.",
+        "description": "Branded email dispatched when a booking is cancelled. When cancellationReasonRequired is true the {{cancellationReason}} variable is included in the available bindings. Subject/body support {{variable}} placeholders. Lifecycle draft -> published -> archived controls the active version.",
         "x-schema-org": "schema:EmailMessage",
         "type": "object",
         "required": [
@@ -480,13 +480,13 @@
               "from": "draft",
               "to": "published",
               "label": "Publish template",
-              "description": "Operator activates the cancellation template; sets activatedAt (REQ-BET-002)."
+              "description": "Operator activates the cancellation template; sets activatedAt."
             },
             "archive": {
               "from": "published",
               "to": "archived",
               "label": "Archive template",
-              "description": "Operator retires the template (REQ-BET-003)."
+              "description": "Operator retires the template."
             },
             "archiveDraft": {
               "from": "draft",
@@ -498,7 +498,7 @@
           "hooks": {
             "onPublish": {
               "trigger": "lifecycle:publish",
-              "description": "Stamp activatedAt with the publication timestamp (REQ-BET-002).",
+              "description": "Stamp activatedAt with the publication timestamp.",
               "action": "x-openregister-calculations",
               "actionParameters": {
                 "calculations": [
@@ -537,32 +537,32 @@
           "activatedAt": {
             "expression": "@self.activatedAt != null ? @self.activatedAt : now()",
             "type": "datetime",
-            "description": "First-publication timestamp (REQ-BET-002)."
+            "description": "First-publication timestamp."
           },
           "renderedSubject": {
             "expression": "substitute(@self.subjectLine, @variables)",
             "type": "string",
-            "description": "Subject with placeholders substituted (REQ-BET-004)."
+            "description": "Subject with placeholders substituted."
           },
           "renderedHtmlBody": {
             "expression": "substitute(@self.htmlBody, @variables)",
             "type": "string",
-            "description": "HTML body with placeholders substituted; values HTML-escaped (REQ-BET-004, REQ-BET-009)."
+            "description": "HTML body with placeholders substituted; values HTML-escaped."
           },
           "renderedPlainTextBody": {
             "expression": "substitute(@self.plainTextBody, @variables)",
             "type": "string",
-            "description": "Plain-text fallback with placeholders substituted (REQ-BET-006)."
+            "description": "Plain-text fallback with placeholders substituted."
           },
           "subjectLineLength": {
             "expression": "length(@self.subjectLine)",
             "type": "integer",
-            "description": "Subject character count, validated against the 78-character limit (NFR-BET-002)."
+            "description": "Subject character count, validated against the 78-character limit."
           },
           "bodySizeBytes": {
             "expression": "byteLength(@self.htmlBody) + byteLength(@self.plainTextBody)",
             "type": "integer",
-            "description": "Combined body size validated against the 102 KB limit (NFR-BET-003)."
+            "description": "Combined body size validated against the 102 KB limit."
           }
         },
         "properties": {
@@ -587,26 +587,26 @@
           },
           "subjectLine": {
             "type": "string",
-            "description": "Email subject. Supports {{variable}} placeholders (NFR-BET-002).",
+            "description": "Email subject. Supports {{variable}} placeholders.",
             "example": "Boeking geannuleerd: {{bookingRef}}",
             "maxLength": 255,
             "title": "Subject Line"
           },
           "htmlBody": {
             "type": "string",
-            "description": "HTML email body, inline styles only (NFR-BET-001).",
+            "description": "HTML email body, inline styles only.",
             "example": "<p>Uw boeking {{bookingRef}} is geannuleerd.</p>",
             "title": "Html Body"
           },
           "plainTextBody": {
             "type": "string",
-            "description": "Plain-text fallback body (REQ-BET-006).",
+            "description": "Plain-text fallback body.",
             "example": "Uw boeking {{bookingRef}} is geannuleerd.",
             "title": "Plain Text Body"
           },
           "cancellationReasonRequired": {
             "type": "boolean",
-            "description": "Whether the {{cancellationReason}} variable is included in the template bindings (REQ-BET-009).",
+            "description": "Whether the {{cancellationReason}} variable is included in the template bindings.",
             "default": false,
             "example": true,
             "title": "Cancellation Reason Required"
@@ -614,7 +614,7 @@
           "logoUri": {
             "type": "string",
             "format": "uri",
-            "description": "URL to the organization logo image (NFR-BET-004).",
+            "description": "URL to the organization logo image.",
             "example": "https://cdn.example.org/logo.png",
             "title": "Logo URI"
           },
@@ -646,7 +646,7 @@
           },
           "locale": {
             "type": "string",
-            "description": "BCP-47 language tag the template is authored in (NFR-BET-005).",
+            "description": "BCP-47 language tag the template is authored in.",
             "enum": [
               "nl",
               "en"
@@ -658,7 +658,7 @@
           "activatedAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Timestamp when the template was first published (REQ-BET-002).",
+            "description": "Timestamp when the template was first published.",
             "title": "Activated At"
           },
           "administrationId": {

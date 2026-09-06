@@ -33,8 +33,10 @@
  * @e2e order-primitive::a-transition-never-crosses-ordertype-boundaries
  */
 
-import { test, expect, request as pwRequest } from '@playwright/test'
-import { OrFixtures, UNIQUE_PREFIX } from './workflows/_fixtures'
+import type { APIRequestContext } from '@playwright/test'
+
+import { expect, request as pwRequest, test } from '@playwright/test'
+import { OrFixtures, UNIQUE_PREFIX } from './workflows/_fixtures.ts'
 
 const SCHEMA = 'OrderPrimitive'
 const ADMIN_ID = 'ADM-001'
@@ -76,7 +78,7 @@ test.describe('order-primitive — Order fold + orderType-gated lifecycle (#503)
 	// can manufacture green in CI.
 
 	let fx: OrFixtures
-	let api: import('@playwright/test').APIRequestContext
+	let api: APIRequestContext
 
 	test.beforeAll(async ({ baseURL }) => {
 		api = await pwRequest.newContext({

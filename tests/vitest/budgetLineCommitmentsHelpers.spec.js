@@ -10,11 +10,11 @@
  * @spec openspec/changes/verplichtingen-commitment-accounting/specs/bookkeeping-verplichtingenadministratie/spec.md#req-vpl-011
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
-	normaliseBudgetLineRows,
-	formatAmount,
 	drilldownFilters,
+	formatAmount,
+	normaliseBudgetLineRows,
 } from '../../src/views/budgetLineCommitmentsHelpers.js'
 
 describe('budgetLineCommitmentsHelpers — normaliseBudgetLineRows', () => {

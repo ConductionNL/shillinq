@@ -290,6 +290,15 @@ export const reportViews = [
 		category: 'tax',
 	},
 	{
+		// The seventh report menu entry. The other six were already cards here
+		// when this file was written from the menu-IA audit; this one was
+		// missed, which is why its menu entry outlived the move.
+		id: 'BookkeepingDestructionReport',
+		label: 'Destruction report',
+		icon: 'DeleteClockOutline',
+		category: 'compliance',
+	},
+	{
 		id: 'VarianceReport',
 		label: 'Variance Report',
 		icon: 'ChartTimelineVariantShimmer',

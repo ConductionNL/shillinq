@@ -206,21 +206,21 @@
 					{
 						"id": "narrative-md",
 						"label": "Export narrative (Markdown)",
-						"description": "Render the flux narrative ranked by absolute variance (REQ-CLS-007).",
+						"description": "Render the flux narrative ranked by absolute variance.",
 						"endpoint": "/api/v2/flux-runs/:id/narrative?format=markdown",
 						"method": "GET"
 					},
 					{
 						"id": "narrative-pdf",
 						"label": "Export narrative (PDF)",
-						"description": "1-page board-pack ready narrative (REQ-CLS-007).",
+						"description": "A one-page narrative, ready for the board pack.",
 						"endpoint": "/api/v2/flux-runs/:id/narrative?format=pdf",
 						"method": "GET"
 					},
 					{
 						"id": "narrative-json",
 						"label": "Export narrative (JSON)",
-						"description": "Board-pack embedding format (REQ-CLS-007).",
+						"description": "Board-pack embedding format.",
 						"endpoint": "/api/v2/flux-runs/:id/narrative?format=json",
 						"method": "GET"
 					}

@@ -27,7 +27,7 @@
  * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
  */
 
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 

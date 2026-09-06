@@ -173,7 +173,6 @@ function main() {
 		manifestSize = fs.statSync(MANIFEST_PATH).size
 		fragmentsSize = sumJsonFileSizes(MANIFEST_D_DIR)
 	} catch (err) {
-		// eslint-disable-next-line no-console
 		console.error(
 			`[check-manifest-budget] could not read manifest files: ${err.message}`,
 		)
@@ -183,14 +182,12 @@ function main() {
 
 	const total = manifestSize + fragmentsSize
 
-	// eslint-disable-next-line no-console
 	console.log(
 		`[check-manifest-budget] manifest.json=${manifestSize}B manifest.d/=${fragmentsSize}B `
 			+ `total=${total}B budget=${budget}B`,
 	)
 
 	if (total > budget) {
-		// eslint-disable-next-line no-console
 		console.error(
 			`[check-manifest-budget] FAIL: combined manifest JSON (${total}B) exceeds the `
 				+ `${budget}B budget shipped in the main webpack chunk (REQ-MBP-001). Either trim `
@@ -201,7 +198,6 @@ function main() {
 		return
 	}
 
-	// eslint-disable-next-line no-console
 	console.log('[check-manifest-budget] PASS')
 }
 

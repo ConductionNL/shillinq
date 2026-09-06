@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "invoice-from-time-and-expense",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json or other fragments",
-    "description": "Tier-2 invoice generation from approved time entries and expense records (issue #111). Adds three companion schemas: BillableInvoice (the time+expense materialisation of the canonical Invoice), BillableInvoiceLine (line items with sourceType + rateApplied snapshot), and RetainerSchedule (monthly recurring fee with optional T&M overage threshold). Supports five billing models — t_and_m, fixed_fee, milestone, retainer, mixed — selectable per invoice (D1). Rates from RateCard are snapshot'd into rateApplied at generation time so historical invoices retain original rates if the rate card is later amended (D2). Retainer charges render as a mandatory separate line item per month (D3). Time entries reference the existing UrenRegistratie schema (closest equivalent to the spec's TimeEntry); expenses reference ExpenseClaimEntry. Monetary fields use multipleOf 0.01 with integer-cent persistence per the Money type used elsewhere in shillinq (e.g. VATReturn.totalVATCollected)."
+    "description": "Tier-2 invoice generation from approved time entries and expense records (issue #111). Adds three companion schemas: BillableInvoice (the time+expense materialisation of the canonical Invoice), BillableInvoiceLine (line items with sourceType + rateApplied snapshot), and RetainerSchedule (monthly recurring fee with optional T&M overage threshold). Supports five billing models: t_and_m, fixed_fee, milestone, retainer, mixed. Selectable per invoice (D1). Rates from RateCard are snapshot'd into rateApplied at generation time so historical invoices retain original rates if the rate card is later amended (D2). Retainer charges render as a mandatory separate line item per month (D3). Time entries reference the existing UrenRegistratie schema (closest equivalent to the spec's TimeEntry); expenses reference ExpenseClaimEntry. Monetary fields use multipleOf 0.01 with integer-cent persistence per the Money type used elsewhere in shillinq (e.g. VATReturn.totalVATCollected)."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "FileDocumentEditOutline",
         "version": "0.1.0",
         "title": "Billable Invoice",
-        "description": "Invoice materialised from approved time entries + expenses with explicit billing-model semantics. Companion to the canonical Invoice (from bookings-deposit-to-invoice); the BillableInvoice carries the model-specific projection while the Invoice carries the AR-aging-facing record. The billingModel is set once at draft time and immutable after posting (REQ-ITE-001, D1). Source-id arrays (timeEntryIds, expenseIds) are checked for duplicates against existing posted/draft BillableInvoice rows before generation (REQ-ITE-006, D9).",
+        "description": "Invoice materialised from approved time entries + expenses with explicit billing-model semantics. Companion to the canonical Invoice (from bookings-deposit-to-invoice); the BillableInvoice carries the model-specific projection while the Invoice carries the AR-aging-facing record. The billingModel is set once at draft time and immutable after posting (D1). Source-id arrays (timeEntryIds, expenseIds) are checked for duplicates against existing posted/draft BillableInvoice rows before generation (D9).",
         "x-schema-org": "schema:Invoice",
         "x-openregister-purpose": "fact",
         "x-spec": "openspec/changes/invoice-from-time-and-expense/specs/spec.md",
@@ -52,7 +52,7 @@
               "retainer",
               "mixed"
             ],
-            "description": "Billing-model selector (REQ-ITE-001, D1). Drives line-item composition and revenue-account choice on GL posting.",
+            "description": "Billing-model selector (D1). Drives line-item composition and revenue-account choice on GL posting.",
             "example": "t_and_m",
             "title": "Billing Model"
           },
@@ -111,14 +111,14 @@
           "rateCardId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the RateCard applied — required for t_and_m and mixed, optional for retainer overage, null for fixed_fee/milestone (REQ-ITE-002, D2).",
+            "description": "FK to the RateCard applied: required for t_and_m and mixed, optional for retainer overage, null for fixed_fee/milestone (D2).",
             "example": "rate-card-consulting",
             "title": "Rate Card ID"
           },
           "retainerScheduleId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the RetainerSchedule applied — required for retainer and mixed, null for the others (REQ-ITE-005).",
+            "description": "FK to the RetainerSchedule applied: required for retainer and mixed, null for the others.",
             "example": "retainer-support-monthly",
             "title": "Retainer Schedule ID"
           },
@@ -196,7 +196,7 @@
               "cancelled"
             ],
             "default": "draft",
-            "description": "Lifecycle status. Moves draft → posted when postInvoice() runs; cancelled is operator-initiated and prevents GL posting.",
+            "description": "Lifecycle status. Moves draft → posted when postInvoice runs; cancelled is operator-initiated and prevents GL posting.",
             "title": "Status"
           },
           "posted": {
@@ -226,7 +226,7 @@
         "icon": "FormatListBulletedSquare",
         "version": "0.1.0",
         "title": "Billable Invoice Line",
-        "description": "Single line item on a BillableInvoice. sourceType identifies the originating record (time_entry, expense, retainer_charge, fixed_fee, manual). rateApplied snapshots the applicable RateCard rate so historical invoices preserve their original rates if the rate card is later amended (REQ-ITE-003, D2). modelSpecificFields carries milestone/retainer-month metadata when applicable.",
+        "description": "Single line item on a BillableInvoice. sourceType identifies the originating record (time_entry, expense, retainer_charge, fixed_fee, manual). rateApplied snapshots the applicable RateCard rate so historical invoices preserve their original rates if the rate card is later amended (D2). modelSpecificFields carries milestone/retainer-month metadata when applicable.",
         "x-schema-org": "schema:Service",
         "x-openregister-purpose": "fact",
         "x-spec": "openspec/changes/invoice-from-time-and-expense/specs/spec.md",
@@ -267,7 +267,7 @@
               "fixed_fee",
               "manual"
             ],
-            "description": "What this line represents (REQ-ITE-003).",
+            "description": "What this line represents.",
             "example": "time_entry",
             "title": "Source Type"
           },
@@ -356,7 +356,7 @@
         "icon": "CalendarSyncOutline",
         "version": "0.1.0",
         "title": "Retainer Schedule",
-        "description": "Monthly recurring fee + optional T&M overage threshold. Referenced from BillableInvoice.retainerScheduleId when billingModel is retainer or mixed (REQ-ITE-005). monthlyAmount is locked in via effectiveDate so historical invoices retain the rate in force on their invoiceDate (D3).",
+        "description": "Monthly recurring fee + optional T&M overage threshold. Referenced from BillableInvoice.retainerScheduleId when billingModel is retainer or mixed. monthlyAmount is locked in via effectiveDate so historical invoices retain the rate in force on their invoiceDate (D3).",
         "x-schema-org": "schema:Service",
         "x-openregister-purpose": "config",
         "x-spec": "openspec/changes/invoice-from-time-and-expense/specs/spec.md",

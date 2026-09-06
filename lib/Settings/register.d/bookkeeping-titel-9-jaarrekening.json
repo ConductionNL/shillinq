@@ -14,7 +14,7 @@
         "icon": "FileDocumentOutline",
         "version": "0.1.0",
         "title": "Annual Report",
-        "description": "Titel 9 Boek 2 BW jaarrekening root record for one administration and one boekjaar (REQ-T9-001, REQ-T9-010). Carries the computed groottecategorie with its onderbouwing, the rapportagegrondslag, valuta, and the concept -> opgemaakt -> in-review -> vastgesteld -> gedeponeerd lifecycle with its wettelijke termijnen. The constituent documents (BalanceSheet, IncomeStatement, CashFlowStatement, Note, DirectorReport) reference this record by reportId. Groottecategorie is computed, not operator-selectable (design D1); the report becomes an immutable snapshot at opmaak (design D2). No AnnualReportService PHP class; generation is templated per ADR-022/ADR-031.",
+        "description": "Titel 9 Boek 2 BW jaarrekening root record for one administration and one boekjaar. Carries the computed groottecategorie with its onderbouwing, the rapportagegrondslag, valuta, and the concept -> opgemaakt -> in-review -> vastgesteld -> gedeponeerd lifecycle with its wettelijke termijnen. The constituent documents (BalanceSheet, IncomeStatement, CashFlowStatement, Note, DirectorReport) reference this record by reportId. Groottecategorie is computed, not operator-selectable (design D1); the report becomes an immutable snapshot at opmaak (design D2). No AnnualReportService PHP class; generation is templated per ADR-022/ADR-031.",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-titel-9-jaarrekening/specs/bookkeeping-titel-9-jaarrekening/spec.md",
         "type": "object",
@@ -50,7 +50,7 @@
           "financialYearEnd": {
             "type": "string",
             "format": "date",
-            "description": "Last day (balansdatum) of the boekjaar. Drives all wettelijke termijnen per art. 2:391 BW (REQ-T9-010).",
+            "description": "Last day (balansdatum) of the boekjaar. Drives all wettelijke termijnen per art. 2:391 BW.",
             "example": "2025-12-31",
             "title": "Boekjaar Eind"
           },
@@ -62,14 +62,14 @@
               "middelgroot",
               "groot"
             ],
-            "description": "Computed size category per art. 2:395a-398 BW two-of-three criterion over two consecutive boekjaren (REQ-T9-001). Computed, not operator-selectable (design D1); operator override requires groottecategorieOnderbouwing.override with motivatie.",
+            "description": "Computed size category per art. 2:395a-398 BW two-of-three criterion over two consecutive boekjaren. Computed, not operator-selectable (design D1); operator override requires groottecategorieOnderbouwing.override with motivatie.",
             "example": "micro",
             "title": "Groottecategorie"
           },
           "sizeCategorySubstantiation": {
             "type": "object",
             "nullable": true,
-            "description": "Supporting numerics behind the groottecategorie classification (REQ-T9-001). Holds the two-of-three criterion values per boekjaar plus the matched-criteria count.",
+            "description": "Supporting numerics behind the groottecategorie classification. Holds the two-of-three criterion values per boekjaar plus the matched-criteria count.",
             "properties": {
               "balanceSheetTotal": {
                 "type": "number",
@@ -145,7 +145,7 @@
               "gedeponeerd"
             ],
             "default": "draft",
-            "description": "Lifecycle status (REQ-T9-010). draft: real-time, editable; opgemaakt: bestuur-signed immutable snapshot; in-review: under accountant review (bestuur read-only); determined: AV-approved, frozen; gedeponeerd: filed at KVK.",
+            "description": "Lifecycle status. draft: real-time, editable; opgemaakt: bestuur-signed immutable snapshot; in-review: under accountant review (bestuur read-only); determined: AV-approved, frozen; gedeponeerd: filed at KVK.",
             "example": "draft",
             "title": "Status"
           },
@@ -153,33 +153,33 @@
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Date the bestuur marked Opgemaakt (snapshot taken). Wettelijke termijn: 5 months after boekjaarEind, extendable to 10 (REQ-T9-010).",
+            "description": "Date the bestuur marked Opgemaakt (snapshot taken). Wettelijke termijn: 5 months after boekjaarEind, extendable to 10.",
             "title": "Opmaak Datum"
           },
           "determinationDate": {
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Date the AV vaststelde the jaarrekening. Within 2 months after opmaak (REQ-T9-010).",
+            "description": "Date the AV vaststelde the jaarrekening. Within 2 months after opmaak.",
             "title": "Vaststelling Datum"
           },
           "depositDate": {
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Date the jaarrekening was deponed at KVK. Within 8 days after vaststelling; absolute deadline 12 months after boekjaarEind (REQ-T9-010).",
+            "description": "Date the jaarrekening was deponed at KVK. Within 8 days after vaststelling; absolute deadline 12 months after boekjaarEind.",
             "title": "Depositering Datum"
           },
           "snapshotHash": {
             "type": "string",
             "nullable": true,
-            "description": "Cryptographic hash of the immutable snapshot taken at opmaak (REQ-T9-010, design D2). Set by the opmaak action.",
+            "description": "Cryptographic hash of the immutable snapshot taken at opmaak (design D2). Set by the opmaak action.",
             "title": "Snapshot Hash"
           },
           "auditorsStatementRequired": {
             "type": "boolean",
             "default": false,
-            "description": "True when an accountantsverklaring is wettelijk verplicht (middelgroot+; REQ-T9-007/REQ-T9-009).",
+            "description": "True when an accountantsverklaring is wettelijk verplicht (middelgroot+).",
             "title": "Accountantsverklaring Vereist"
           },
           "auditorsStatementStatus": {
@@ -195,24 +195,24 @@
               "beoordeling"
             ],
             "default": "niet-vereist",
-            "description": "Status/type of the accountantsverklaring (NV-COS 700/4410/2400) per REQ-T9-007.",
+            "description": "Status/type of the accountantsverklaring (NV-COS 700/4410/2400).",
             "title": "Accountantsverklaring Status"
           },
           "cashFlowStatementRequired": {
             "type": "boolean",
             "default": false,
-            "description": "True for middelgroot+ where a kasstroomoverzicht is verplicht (REQ-T9-005/REQ-T9-009).",
+            "description": "True for middelgroot+ where a kasstroomoverzicht is verplicht.",
             "title": "Kasstroomoverzicht Vereist"
           },
           "boardReportRequired": {
             "type": "boolean",
             "default": false,
-            "description": "True for middelgroot+ where a bestuursverslag is verplicht (REQ-T9-006/REQ-T9-009).",
+            "description": "True for middelgroot+ where a bestuursverslag is verplicht.",
             "title": "Bestuursverslag Vereist"
           },
           "boardMembers": {
             "type": "array",
-            "description": "Names of the bestuursleden who sign the opmaak (REQ-T9-010).",
+            "description": "Names of the bestuursleden who sign the opmaak.",
             "items": {
               "type": "string"
             },
@@ -227,7 +227,7 @@
           "decisionRef": {
             "type": "string",
             "nullable": true,
-            "description": "Decidesk Decision id for the AV/board adoption (REQ-SIGN-002). Written only by the decidesk registry callback.",
+            "description": "Decidesk Decision id for the AV/board adoption. Written only by the decidesk registry callback.",
             "title": "Decision Ref"
           },
           "decisionOutcome": {
@@ -238,7 +238,7 @@
               "rejected"
             ],
             "nullable": true,
-            "description": "Mirror of the adoption Decision outcome (REQ-SIGN-002). The vaststellen transition is OUTCOME-DRIVEN — fires only when decisionOutcome==approved.",
+            "description": "Mirror of the adoption Decision outcome. The vaststellen transition is OUTCOME-DRIVEN: fires only when decisionOutcome==approved.",
             "title": "Decision Outcome"
           }
         },
@@ -248,7 +248,7 @@
           "states": {
             "draft": {
               "label": "Concept",
-              "description": "Earliest form; balans/V&W recalculate as the GL changes (REQ-T9-010). Editable."
+              "description": "Earliest form; balans/V&W recalculate as the GL changes. Editable."
             },
             "opgemaakt": {
               "label": "Opgemaakt door bestuur",
@@ -256,15 +256,15 @@
             },
             "in-review": {
               "label": "In review (accountant)",
-              "description": "Under accountant review. Bestuur source data is read-only until the review is cancelled (REQ-T9-007)."
+              "description": "Under accountant review. Bestuur source data is read-only until the review is cancelled."
             },
             "determined": {
               "label": "Vastgesteld door AV",
-              "description": "Approved by the algemene vergadering; final snapshot frozen; deponering activated (REQ-T9-010)."
+              "description": "Approved by the algemene vergadering; final snapshot frozen; deponering activated."
             },
             "gedeponeerd": {
               "label": "Gedeponeerd bij KVK",
-              "description": "Filed at KVK via SBR-XBRL; immutable final state (REQ-T9-008)."
+              "description": "Filed at KVK via SBR-XBRL; immutable final state."
             }
           },
           "transitions": {
@@ -272,45 +272,45 @@
               "from": "draft",
               "to": "opgemaakt",
               "label": "Opmaken door bestuur",
-              "description": "Bestuur signs the concept; an immutable snapshot is created (REQ-T9-010, design D2). Requires the balans to balance (activa = passiva).",
+              "description": "Bestuur signs the concept; an immutable snapshot is created (design D2). Requires the balans to balance (activa = passiva).",
               "requires": "OCA\\Shillinq\\Lifecycle\\AnnualReportGuard::canOpmaken"
             },
             "naarReview": {
               "from": "opgemaakt",
               "to": "in-review",
               "label": "Indienen voor accountantscontrole",
-              "description": "Submit the opgemaakte jaarrekening to the accountant. Bestuur source data becomes read-only (REQ-T9-007)."
+              "description": "Submit the opgemaakte jaarrekening to the accountant. Bestuur source data becomes read-only."
             },
             "reviewAnnuleren": {
               "from": "in-review",
               "to": "opgemaakt",
               "label": "Review annuleren",
-              "description": "Cancel the review to re-open bestuur editing (REQ-T9-007). The accountant change-log is retained."
+              "description": "Cancel the review to re-open bestuur editing. The accountant change-log is retained."
             },
             "vaststellenZonderReview": {
               "from": "opgemaakt",
               "to": "determined",
               "label": "Vaststellen door AV",
-              "description": "AV approves directly where no accountantsverklaring is verplicht (klein/micro; REQ-T9-007/REQ-T9-009). OUTCOME-DRIVEN per REQ-SIGN-003: requires adoption decisionOutcome==approved from decidesk.",
+              "description": "AV approves directly where no accountantsverklaring is verplicht (klein/micro). OUTCOME-DRIVEN: requires adoption decisionOutcome==approved from decidesk.",
               "requires": "OCA\\Shillinq\\Lifecycle\\AnnualReportGuard::canVaststellen"
             },
             "vaststellen": {
               "from": "in-review",
               "to": "determined",
               "label": "Vaststellen na review",
-              "description": "AV approves after accountant sign-off; an accountantsverklaring MUST be attached for middelgroot+ (REQ-T9-007/REQ-T9-010). OUTCOME-DRIVEN per REQ-SIGN-003: requires adoption decisionOutcome==approved from decidesk.",
+              "description": "AV approves after accountant sign-off; an accountantsverklaring MUST be attached for middelgroot+. OUTCOME-DRIVEN: requires adoption decisionOutcome==approved from decidesk.",
               "requires": "OCA\\Shillinq\\Lifecycle\\AnnualReportGuard::canVaststellen"
             },
             "deponeren": {
               "from": "determined",
               "to": "gedeponeerd",
               "label": "Deponeren bij KVK",
-              "description": "Hand the final AnnualReport snapshot to bookkeeping-sbr-xbrl-reporting for SBR-XBRL conversion and Digipoort submission (REQ-T9-008).",
+              "description": "Hand the final AnnualReport snapshot to bookkeeping-sbr-xbrl-reporting for SBR-XBRL conversion and Digipoort submission.",
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "emit-cloud-event",
-                  "description": "Emit a CloudEvent consumed by bookkeeping-sbr-xbrl-reporting to convert the snapshot to SBR-XBRL and submit via Digipoort (REQ-T9-008). Cross-module integration point; no PHP orchestration here (ADR-022).",
+                  "description": "Emit a CloudEvent consumed by bookkeeping-sbr-xbrl-reporting to convert the snapshot to SBR-XBRL and submit via Digipoort. Cross-module integration point; no PHP orchestration here (ADR-022).",
                   "actionParameters": {
                     "eventType": "nl.shillinq.jaarrekening.gedeponeerd",
                     "snapshotField": "snapshotHash"
@@ -412,7 +412,7 @@
         "icon": "ScaleBalance",
         "version": "0.1.0",
         "title": "Balance Sheet",
-        "description": "Balans conforming to art. 2:373 BW (REQ-T9-002). Activa split into vaste activa (B.I immaterieel, B.II materieel, B.III financieel) and vlottende activa (C.I voorraden, C.II vorderingen, C.III effecten, C.IV liquide middelen); passiva split into A eigen vermogen, B voorzieningen, C langlopende schulden, D kortlopende schulden. Each rubriek carries huidigJaar, vorigJaar (comparatief) and footnote references. GL-to-rubriek mapping is configuration (lib/Settings/seeds/balans-rubriek-mapping.json), not code (design D3).",
+        "description": "Balans conforming to art. 2:373 BW. Activa split into vaste activa (B.I immaterieel, B.II materieel, B.III financieel) and vlottende activa (C.I voorraden, C.II vorderingen, C.III effecten, C.IV liquide middelen); passiva split into A eigen vermogen, B voorzieningen, C langlopende schulden, D kortlopende schulden. Each rubriek carries huidigJaar, vorigJaar (comparatief) and footnote references. GL-to-rubriek mapping is configuration (lib/Settings/seeds/balans-rubriek-mapping.json), not code (design D3).",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-titel-9-jaarrekening/specs/bookkeeping-titel-9-jaarrekening/spec.md",
         "type": "object",
@@ -426,7 +426,7 @@
         "properties": {
           "reportId": {
             "type": "string",
-            "description": "FK to the parent AnnualReport (REQ-T9-002).",
+            "description": "FK to the parent AnnualReport.",
             "example": "annual-report-adm-001-2025",
             "title": "Report ID",
             "$ref": "AnnualReport"
@@ -507,7 +507,7 @@
                 "previousYear": {
                   "type": "number",
                   "nullable": true,
-                  "description": "Prior-year comparatief amount (REQ-T9-002).",
+                  "description": "Prior-year comparatief amount.",
                   "title": "Vorig Jaar"
                 },
                 "notes": {
@@ -550,7 +550,7 @@
         "icon": "ChartLine",
         "version": "0.1.0",
         "title": "Income Statement",
-        "description": "Winst-en-verliesrekening per art. 2:377 BW (REQ-T9-003). Model A 'categorisch' groups costs by type; Model E 'functioneel' groups costs by function. Model choice must be consistent year-on-year; a change is a stelselwijziging disclosure. Subtotals (bedrijfsresultaat, resultaat voor belasting, nettoresultaat) are computed. The model rubriek catalogue is configuration (lib/Settings/seeds/vw-model-rubrieken.json), not code.",
+        "description": "Winst-en-verliesrekening per art. 2:377 BW. Model A 'categorisch' groups costs by type; Model E 'functioneel' groups costs by function. Model choice must be consistent year-on-year; a change is a stelselwijziging disclosure. Subtotals (bedrijfsresultaat, resultaat voor belasting, nettoresultaat) are computed. The model rubriek catalogue is configuration (lib/Settings/seeds/vw-model-rubrieken.json), not code.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-titel-9-jaarrekening/specs/bookkeeping-titel-9-jaarrekening/spec.md",
         "type": "object",
@@ -565,7 +565,7 @@
         "properties": {
           "reportId": {
             "type": "string",
-            "description": "FK to the parent AnnualReport (REQ-T9-003).",
+            "description": "FK to the parent AnnualReport.",
             "example": "annual-report-adm-001-2025",
             "title": "Report ID",
             "$ref": "AnnualReport"
@@ -584,7 +584,7 @@
               "e-functional"
             ],
             "default": "a-categorical",
-            "description": "V&W model per art. 2:377 BW (REQ-T9-003). A: costs by type; E: costs by function.",
+            "description": "V&W model per art. 2:377 BW. A: costs by type; E: costs by function.",
             "example": "a-categorical",
             "title": "Model"
           },
@@ -614,7 +614,7 @@
           "accountingPolicyChangeRationale": {
             "type": "string",
             "nullable": true,
-            "description": "Required motivatie when the model changes year-on-year (stelselwijziging, REQ-T9-003).",
+            "description": "Required motivatie when the model changes year-on-year (stelselwijziging).",
             "title": "Stelselwijziging Motivatie"
           },
           "rubrieken": {
@@ -709,7 +709,7 @@
         "icon": "CashMultiple",
         "version": "0.1.0",
         "title": "Cash Flow Statement",
-        "description": "Kasstroomoverzicht per RJ 350 (REQ-T9-005). Mandatory only for middelgroot+; klein/micro may prepare voluntarily. Indirect method is default (nettoresultaat + afschrijvingen + mutaties werkkapitaal); direct method optional. Three categories (operationeel, investering, financiering) reconcile to the change in liquide middelen on the balans.",
+        "description": "Kasstroomoverzicht per RJ 350. Mandatory only for middelgroot+; klein/micro may prepare voluntarily. Indirect method is default (nettoresultaat + afschrijvingen + mutaties werkkapitaal); direct method optional. Three categories (operationeel, investering, financiering) reconcile to the change in liquide middelen on the balans.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-titel-9-jaarrekening/specs/bookkeeping-titel-9-jaarrekening/spec.md",
         "type": "object",
@@ -723,7 +723,7 @@
         "properties": {
           "reportId": {
             "type": "string",
-            "description": "FK to the parent AnnualReport (REQ-T9-005).",
+            "description": "FK to the parent AnnualReport.",
             "example": "annual-report-adm-003-2025",
             "title": "Report ID",
             "$ref": "AnnualReport"
@@ -742,7 +742,7 @@
               "direct"
             ],
             "default": "indirect",
-            "description": "Cash flow method per RJ 350 (REQ-T9-005). Indirect is the SME default (design D5).",
+            "description": "Cash flow method per RJ 350. Indirect is the SME default (design D5).",
             "example": "indirect",
             "title": "Method"
           },
@@ -784,7 +784,7 @@
           "netMovementCashEquivalents": {
             "type": "number",
             "nullable": true,
-            "description": "Reconciling net change in cash; MUST match the balans liquide-middelen delta (REQ-T9-005).",
+            "description": "Reconciling net change in cash; MUST match the balans liquide-middelen delta.",
             "title": "Netto Mutatie Geldmiddelen"
           },
           "rules": {
@@ -851,7 +851,7 @@
         "icon": "NoteTextOutline",
         "version": "0.1.0",
         "title": "Toelichting Note",
-        "description": "An individual toelichting-paragraaf (accounting note) per art. 2:381-388 BW and the RJ guidelines (REQ-T9-004). Each note carries its volgorde, code, title, structured content, the wettelijke basis (RJ guideline / wetsartikel) and the template that generated it. Mandatory notes per groottecategorie come from lib/Settings/seeds/toelichting-templates.json (design D4).",
+        "description": "An individual toelichting-paragraaf (accounting note) per art. 2:381-388 BW and the RJ guidelines. Each note carries its volgorde, code, title, structured content, the wettelijke basis (RJ guideline / wetsartikel) and the template that generated it. Mandatory notes per groottecategorie come from lib/Settings/seeds/toelichting-templates.json (design D4).",
         "x-schema-org": "schema:Comment",
         "x-spec": "openspec/changes/bookkeeping-titel-9-jaarrekening/specs/bookkeeping-titel-9-jaarrekening/spec.md",
         "type": "object",
@@ -865,7 +865,7 @@
         "properties": {
           "reportId": {
             "type": "string",
-            "description": "FK to the parent AnnualReport (REQ-T9-004).",
+            "description": "FK to the parent AnnualReport.",
             "example": "annual-report-adm-001-2025",
             "title": "Report ID",
             "$ref": "AnnualReport"
@@ -911,7 +911,7 @@
           "mandatory": {
             "type": "boolean",
             "default": false,
-            "description": "True when this note is wettelijk verplicht for the report's groottecategorie (REQ-T9-004/REQ-T9-009).",
+            "description": "True when this note is wettelijk verplicht for the report's groottecategorie.",
             "title": "Verplicht"
           }
         },
@@ -942,7 +942,7 @@
         "icon": "AccountTieOutline",
         "version": "0.1.0",
         "title": "Director Report",
-        "description": "Bestuursverslag per art. 2:391 BW (REQ-T9-006), mandatory for middelgroot+. A separate entity from AnnualReport (design D8) so it can be versioned and signed independently. Sections (algemeen, financiële-gang, risico's, toekomst, personeel, milieu, optional r-d and esg) carry auto-populated context plus operator narrative.",
+        "description": "Bestuursverslag per art. 2:391 BW, mandatory for middelgroot+. A separate entity from AnnualReport (design D8) so it can be versioned and signed independently. Sections (algemeen, financiële-gang, risico's, toekomst, personeel, milieu, optional r-d and esg) carry auto-populated context plus operator narrative.",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-titel-9-jaarrekening/specs/bookkeeping-titel-9-jaarrekening/spec.md",
         "type": "object",
@@ -954,7 +954,7 @@
         "properties": {
           "reportId": {
             "type": "string",
-            "description": "FK to the parent AnnualReport (REQ-T9-006).",
+            "description": "FK to the parent AnnualReport.",
             "example": "annual-report-adm-003-2025",
             "title": "Report ID",
             "$ref": "AnnualReport"
@@ -971,7 +971,7 @@
           },
           "secties": {
             "type": "array",
-            "description": "Bestuursverslag sections per art. 2:391 BW (REQ-T9-006).",
+            "description": "Bestuursverslag sections per art. 2:391 BW.",
             "items": {
               "type": "object",
               "required": [
@@ -990,7 +990,7 @@
                     "r-d",
                     "esg"
                   ],
-                  "description": "Section identifier. r-d and esg are optional (REQ-T9-006).",
+                  "description": "Section identifier. r-d and esg are optional.",
                   "title": "Name"
                 },
                 "content": {
@@ -1055,7 +1055,7 @@
         "icon": "ClipboardCheckOutline",
         "version": "0.1.0",
         "title": "Review Workflow",
-        "description": "Accountant-review workflow for a jaarrekening (REQ-T9-007). A strict linear progression (design D6): concept -> in-review -> vastgesteld -> gedeponeerd, with per-step assignee, status and an immutable comment/handover log. During in-review the bestuur cannot edit source data without cancelling (enforced via AnnualReportGuard). The accountantsverklaring attaches at the in-review -> vastgesteld boundary.",
+        "description": "Accountant-review workflow for a jaarrekening. A strict linear progression (design D6): concept -> in-review -> vastgesteld -> gedeponeerd, with per-step assignee, status and an immutable comment/handover log. During in-review the bestuur cannot edit source data without cancelling (enforced via AnnualReportGuard). The accountantsverklaring attaches at the in-review -> vastgesteld boundary.",
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/bookkeeping-titel-9-jaarrekening/specs/bookkeeping-titel-9-jaarrekening/spec.md",
         "type": "object",
@@ -1066,7 +1066,7 @@
         "properties": {
           "reportId": {
             "type": "string",
-            "description": "FK to the AnnualReport under review (REQ-T9-007).",
+            "description": "FK to the AnnualReport under review.",
             "example": "annual-report-adm-003-2025",
             "title": "Report ID",
             "$ref": "AnnualReport"
@@ -1126,7 +1126,7 @@
                 },
                 "comments": {
                   "type": "array",
-                  "description": "Immutable review-comment log (REQ-T9-007).",
+                  "description": "Immutable review-comment log.",
                   "items": {
                     "type": "object",
                     "required": [
@@ -1154,7 +1154,7 @@
                           "ter-discussie"
                         ],
                         "default": "open",
-                        "description": "Resolution status of the comment (REQ-T9-007).",
+                        "description": "Resolution status of the comment.",
                         "title": "Status"
                       },
                       "rationale": {
@@ -1173,7 +1173,7 @@
           },
           "overdrachtenLog": {
             "type": "array",
-            "description": "Immutable handover/state-transition log (REQ-T9-007/REQ-T9-010).",
+            "description": "Immutable handover/state-transition log.",
             "items": {
               "type": "object",
               "properties": {

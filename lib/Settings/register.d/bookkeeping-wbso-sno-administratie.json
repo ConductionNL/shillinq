@@ -6,12 +6,12 @@
         "icon": "CertificateOutline",
         "version": "0.1.0",
         "title": "WBSO Beschikking",
-        "description": "RVO grant decision (beschikking) awarding S&O (Speur- en Ontwikkelingswerk) hours for a WBSO project (REQ-WBSO-001). Records the granted ceiling of S&O hours and the hourly rate against which the realisatie (SoUurregistratie) and the closing WbsoMededeling are validated. The granted hours form the immutable ceiling that the mededeling realisatie may never exceed (REQ-WBSO-005).",
+        "description": "RVO grant decision (beschikking) awarding S&O (Speur- en Ontwikkelingswerk) hours for a WBSO project. Records the granted ceiling of S&O hours and the hourly rate against which the realisatie (SoUurregistratie) and the closing WbsoMededeling are validated. The granted hours form the immutable ceiling that the mededeling realisatie may never exceed.",
         "x-schema-org": "schema:GovernmentPermit",
         "x-spec": "openspec/changes/bookkeeping-wbso-sno-administratie/specs.md#req-wbso-001",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Beschikking changes (rate corrections, granted-hour adjustments, state flips) MUST be audit-trail-immutable per ADR-022 — the granted ceiling governs every downstream realisatie and the closing mededeling."
+          "description": "Beschikking changes (rate corrections, granted-hour adjustments, state flips) MUST be audit-trail-immutable per ADR-022: the granted ceiling governs every downstream realisatie and the closing mededeling."
         },
         "x-openregister-lifecycle": {
           "field": "state",
@@ -19,15 +19,15 @@
           "states": {
             "granted": {
               "label": "Granted",
-              "description": "Active RVO grant; S&O hours may be booked against this beschikking (REQ-WBSO-001)."
+              "description": "Active RVO grant; S&O hours may be booked against this beschikking."
             },
             "expired": {
               "label": "Expired",
-              "description": "The grant period has ended; no further realisatie may be booked (REQ-WBSO-001)."
+              "description": "The grant period has ended; no further realisatie may be booked."
             },
             "withdrawn": {
               "label": "Withdrawn",
-              "description": "The grant was withdrawn by RVO; the beschikking no longer authorises any S&O hours (REQ-WBSO-001)."
+              "description": "The grant was withdrawn by RVO; the beschikking no longer authorises any S&O hours."
             }
           },
           "transitions": {
@@ -35,13 +35,13 @@
               "from": "granted",
               "to": "expired",
               "label": "Expire beschikking",
-              "description": "Close the grant once its period has elapsed (REQ-WBSO-001)."
+              "description": "Close the grant once its period has elapsed."
             },
             "withdraw": {
               "from": "granted",
               "to": "withdrawn",
               "label": "Withdraw beschikking",
-              "description": "Record an RVO withdrawal of the grant (REQ-WBSO-001)."
+              "description": "Record an RVO withdrawal of the grant."
             }
           }
         },
@@ -76,45 +76,45 @@
         "properties": {
           "administrationId": {
             "type": "string",
-            "description": "FK to the Administration entity that owns this beschikking (REQ-WBSO-001).",
+            "description": "FK to the Administration entity that owns this beschikking.",
             "title": "Administration ID"
           },
           "decisionNumber": {
             "type": "string",
-            "description": "RVO beschikking number identifying the grant decision (REQ-WBSO-001). Unique per administration.",
+            "description": "RVO beschikking number identifying the grant decision. Unique per administration.",
             "example": "WBSO-2026-000123",
             "title": "Beschikking Number"
           },
           "rvoReference": {
             "type": "string",
-            "description": "RVO case reference for the grant application/decision (REQ-WBSO-001).",
+            "description": "RVO case reference for the grant application/decision.",
             "example": "RVO/2026/SO/000123",
             "title": "Rvo Reference"
           },
           "projectNumber": {
             "type": "string",
-            "description": "WBSO project number the granted S&O hours belong to (REQ-WBSO-001).",
+            "description": "WBSO project number the granted S&O hours belong to.",
             "example": "PRJ-2026-007",
             "title": "Project Number"
           },
           "periodStart": {
             "type": "string",
             "format": "date",
-            "description": "Start of the grant period (REQ-WBSO-001).",
+            "description": "Start of the grant period.",
             "example": "2026-01-01",
             "title": "Period Start"
           },
           "periodEnd": {
             "type": "string",
             "format": "date",
-            "description": "End of the grant period (REQ-WBSO-001).",
+            "description": "End of the grant period.",
             "example": "2026-12-31",
             "title": "Period End"
           },
           "grantedSoHours": {
             "type": "number",
             "minimum": 0,
-            "description": "Ceiling of S&O hours granted by RVO. The closing mededeling realisatie may never exceed this value (REQ-WBSO-001 / REQ-WBSO-005).",
+            "description": "Ceiling of S&O hours granted by RVO. The closing mededeling realisatie may never exceed this value.",
             "example": 1200,
             "title": "Granted So Hours"
           },
@@ -122,7 +122,7 @@
             "type": "number",
             "minimum": 0,
             "multipleOf": 0.01,
-            "description": "Statutory S&O hourly rate applied to the granted hours (REQ-WBSO-001).",
+            "description": "Statutory S&O hourly rate applied to the granted hours.",
             "example": 29.0,
             "title": "So Hourly Rate"
           },
@@ -134,7 +134,7 @@
               "withdrawn"
             ],
             "default": "granted",
-            "description": "Lifecycle state of the grant (REQ-WBSO-001).",
+            "description": "Lifecycle state of the grant.",
             "title": "State"
           }
         }
@@ -144,12 +144,12 @@
         "icon": "ClockOutline",
         "version": "0.1.0",
         "title": "S&O Uurregistratie",
-        "description": "S&O (Speur- en Ontwikkelingswerk) hour registration booked by a Nextcloud employee against a WBSO beschikking (REQ-WBSO-002). The employee is the Nextcloud identity, not an app-local person schema (ADR-022). Daily hours are capped at 24. Confirmed registrations accumulate into the realisatie that the WbsoMededeling reports against the granted ceiling.",
+        "description": "S&O (Speur- en Ontwikkelingswerk) hour registration booked by a Nextcloud employee against a WBSO beschikking. The employee is the Nextcloud identity, not an app-local person schema (ADR-022). Daily hours are capped at 24. Confirmed registrations accumulate into the realisatie that the WbsoMededeling reports against the granted ceiling.",
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/bookkeeping-wbso-sno-administratie/specs.md#req-wbso-002",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "S&O hour registrations MUST be audit-trail-immutable per ADR-022 — locked registrations form the realisatie reported in the WBSO mededeling."
+          "description": "S&O hour registrations MUST be audit-trail-immutable per ADR-022: locked registrations form the realisatie reported in the WBSO mededeling."
         },
         "x-openregister-lifecycle": {
           "field": "state",
@@ -157,15 +157,15 @@
           "states": {
             "draft": {
               "label": "Draft",
-              "description": "Entered but not yet confirmed; editable by the booking employee (REQ-WBSO-002)."
+              "description": "Entered but not yet confirmed; editable by the booking employee."
             },
             "confirmed": {
               "label": "Confirmed",
-              "description": "Confirmed by the employee and counted toward the realisatie (REQ-WBSO-002)."
+              "description": "Confirmed by the employee and counted toward the realisatie."
             },
             "locked": {
               "label": "Locked",
-              "description": "Locked once the period mededeling is submitted; no further edits (REQ-WBSO-002)."
+              "description": "Locked once the period mededeling is submitted; no further edits."
             }
           },
           "transitions": {
@@ -173,13 +173,13 @@
               "from": "draft",
               "to": "confirmed",
               "label": "Confirm hours",
-              "description": "Confirm the booked S&O hours so they count toward the realisatie (REQ-WBSO-002)."
+              "description": "Confirm the booked S&O hours so they count toward the realisatie."
             },
             "lock": {
               "from": "confirmed",
               "to": "locked",
               "label": "Lock hours",
-              "description": "Lock confirmed hours when the period mededeling is submitted (REQ-WBSO-002)."
+              "description": "Lock confirmed hours when the period mededeling is submitted."
             }
           }
         },
@@ -218,25 +218,25 @@
         "properties": {
           "administrationId": {
             "type": "string",
-            "description": "FK to the Administration entity that owns this registration (REQ-WBSO-002).",
+            "description": "FK to the Administration entity that owns this registration.",
             "title": "Administration ID"
           },
           "employeeId": {
             "type": "string",
-            "description": "Nextcloud user id of the employee who performed the S&O work (REQ-WBSO-002 / ADR-022). The Nextcloud identity is reused, not an app-local person schema.",
+            "description": "Nextcloud user id of the employee who performed the S&O work (ADR-022). The Nextcloud identity is reused, not an app-local person schema.",
             "example": "alice",
             "title": "Employee ID"
           },
           "decisionNumber": {
             "type": "string",
-            "description": "RVO beschikking number the hours are booked against (REQ-WBSO-002).",
+            "description": "RVO beschikking number the hours are booked against.",
             "example": "WBSO-2026-000123",
             "title": "Beschikking Number"
           },
           "workDate": {
             "type": "string",
             "format": "date",
-            "description": "Date the S&O work was performed (REQ-WBSO-002).",
+            "description": "Date the S&O work was performed.",
             "example": "2026-02-03",
             "title": "Work Date"
           },
@@ -244,13 +244,13 @@
             "type": "number",
             "minimum": 0,
             "maximum": 24,
-            "description": "S&O hours booked on the work date. Capped at 24 hours per day (REQ-WBSO-002).",
+            "description": "S&O hours booked on the work date. Capped at 24 hours per day.",
             "example": 6,
             "title": "Hours"
           },
           "description": {
             "type": "string",
-            "description": "Description of the S&O activity performed (REQ-WBSO-002).",
+            "description": "Description of the S&O activity performed.",
             "nullable": true,
             "title": "Description"
           },
@@ -262,7 +262,7 @@
               "locked"
             ],
             "default": "draft",
-            "description": "Lifecycle state of the registration (REQ-WBSO-002).",
+            "description": "Lifecycle state of the registration.",
             "title": "State"
           }
         }
@@ -272,12 +272,12 @@
         "icon": "FileSendOutline",
         "version": "0.1.0",
         "title": "WBSO Mededeling",
-        "description": "WBSO realisatie mededeling reporting the realised S&O hours for a beschikking period to RVO (REQ-WBSO-003). The realised hours may never exceed the beschikking's granted ceiling — the submit and resubmit transitions are guarded by WbsoMededeligGuard::canSubmit which enforces this ceiling (REQ-WBSO-005).",
+        "description": "WBSO realisatie mededeling reporting the realised S&O hours for a beschikking period to RVO. The realised hours may never exceed the beschikking's granted ceiling: the submit and resubmit transitions are guarded by WbsoMededeligGuard:canSubmit which enforces this ceiling.",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-wbso-sno-administratie/specs.md#req-wbso-003",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Mededeling submissions MUST be audit-trail-immutable per ADR-022 — the mededeling is the statutory realisatie report filed with RVO."
+          "description": "Mededeling submissions MUST be audit-trail-immutable per ADR-022: the mededeling is the statutory realisatie report filed with RVO."
         },
         "x-openregister-lifecycle": {
           "field": "state",
@@ -285,19 +285,19 @@
           "states": {
             "draft": {
               "label": "Draft",
-              "description": "Realisatie being assembled; editable by the bookkeeper (REQ-WBSO-003)."
+              "description": "Realisatie being assembled; editable by the bookkeeper."
             },
             "submitted": {
               "label": "Submitted",
-              "description": "Submitted to RVO and awaiting acceptance (REQ-WBSO-003)."
+              "description": "Submitted to RVO and awaiting acceptance."
             },
             "accepted": {
               "label": "Accepted",
-              "description": "Accepted by RVO (REQ-WBSO-003)."
+              "description": "Accepted by RVO."
             },
             "rejected": {
               "label": "Rejected",
-              "description": "Rejected by RVO; may be corrected and resubmitted (REQ-WBSO-003)."
+              "description": "Rejected by RVO; may be corrected and resubmitted."
             }
           },
           "transitions": {
@@ -305,27 +305,27 @@
               "from": "draft",
               "to": "submitted",
               "label": "Submit mededeling",
-              "description": "Submit the realisatie mededeling to RVO. Guarded to ensure the realised S&O hours never exceed the beschikking's granted ceiling (REQ-WBSO-003 / REQ-WBSO-005).",
+              "description": "Submit the realisatie mededeling to RVO. Guarded to ensure the realised S&O hours never exceed the beschikking's granted ceiling.",
               "requires": "OCA\\Shillinq\\Lifecycle\\WbsoMededelingGuard::canSubmit"
             },
             "resubmit": {
               "from": "rejected",
               "to": "submitted",
               "label": "Resubmit mededeling",
-              "description": "Resubmit a corrected mededeling after an RVO rejection. Re-applies the realisatie-ceiling guard (REQ-WBSO-003 / REQ-WBSO-005).",
+              "description": "Resubmit a corrected mededeling after an RVO rejection. Re-applies the realisatie-ceiling guard.",
               "requires": "OCA\\Shillinq\\Lifecycle\\WbsoMededelingGuard::canSubmit"
             },
             "accept": {
               "from": "submitted",
               "to": "accepted",
               "label": "Accept mededeling",
-              "description": "Record RVO acceptance of the mededeling (REQ-WBSO-003)."
+              "description": "Record RVO acceptance of the mededeling."
             },
             "reject": {
               "from": "submitted",
               "to": "rejected",
               "label": "Reject mededeling",
-              "description": "Record RVO rejection of the mededeling (REQ-WBSO-003)."
+              "description": "Record RVO rejection of the mededeling."
             }
           }
         },
@@ -365,26 +365,26 @@
         "properties": {
           "administrationId": {
             "type": "string",
-            "description": "FK to the Administration entity that owns this mededeling (REQ-WBSO-003).",
+            "description": "FK to the Administration entity that owns this mededeling.",
             "title": "Administration ID"
           },
           "decisionNumber": {
             "type": "string",
-            "description": "RVO beschikking number whose realisatie this mededeling reports (REQ-WBSO-003).",
+            "description": "RVO beschikking number whose realisatie this mededeling reports.",
             "example": "WBSO-2026-000123",
             "title": "Beschikking Number"
           },
           "realisedSoHours": {
             "type": "number",
             "minimum": 0,
-            "description": "Total realised S&O hours reported to RVO. May never exceed the beschikking's granted ceiling (REQ-WBSO-003 / REQ-WBSO-005).",
+            "description": "Total realised S&O hours reported to RVO. May never exceed the beschikking's granted ceiling.",
             "example": 1100,
             "title": "Realised So Hours"
           },
           "reportingPeriodEnd": {
             "type": "string",
             "format": "date",
-            "description": "End date of the reporting period covered by this mededeling (REQ-WBSO-003).",
+            "description": "End date of the reporting period covered by this mededeling.",
             "example": "2026-12-31",
             "title": "Reporting Period End"
           },
@@ -397,7 +397,7 @@
               "rejected"
             ],
             "default": "draft",
-            "description": "Lifecycle state of the mededeling (REQ-WBSO-003).",
+            "description": "Lifecycle state of the mededeling.",
             "title": "State"
           }
         }

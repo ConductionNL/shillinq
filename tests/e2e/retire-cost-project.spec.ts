@@ -25,7 +25,7 @@
  * @spec openspec/changes/retire-cost-project/specs/retire-cost-project/spec.md (REQ-RCP-004/REQ-RCP-006)
  */
 
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 

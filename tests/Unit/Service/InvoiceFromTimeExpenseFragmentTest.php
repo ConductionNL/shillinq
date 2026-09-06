@@ -192,7 +192,7 @@ final class InvoiceFromTimeExpenseFragmentTest extends TestCase {
 		}
 
 		// Reuse targets are present (we extend the model, never reinvent them).
-		foreach (['RateCard', 'UrenRegistratie', 'Receipt', 'Project'] as $reused) {
+		foreach (['RateCard', 'UrenRegistratie', 'Receipt', 'engagement'] as $reused) {
 			self::assertArrayHasKey($reused, $schemas, "Reuse target $reused must exist");
 		}
 

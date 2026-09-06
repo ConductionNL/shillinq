@@ -59,7 +59,9 @@
  * relaxed and no failing test can become passing.
  */
 
-import { expect, type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
+
+import { expect } from '@playwright/test'
 
 export const APP = '/apps/shillinq'
 

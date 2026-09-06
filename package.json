@@ -15,7 +15,7 @@
     "postdev": "[ -d ../openregister/custom_apps/shillinq/js ] && cp -r js/. ../openregister/custom_apps/shillinq/js/ || true",
     "prewatch": "node scripts/generate-manifest-shell.js",
     "watch": "NODE_ENV=development webpack --config webpack.config.js --progress --watch",
-    "lint": "eslint src",
+    "lint": "eslint src tests scripts",
     "lint-fix": "npm run lint -- --fix",
     "test:l10n": "node tests/l10n/check-l10n.js",
     "test:l10n-parity": "L10N_REQUIRED_LOCALES=nl node tests/l10n/check-l10n-parity.js",
@@ -50,7 +50,7 @@
     "extends @nextcloud/browserslist-config"
   ],
   "dependencies": {
-    "@conduction/nextcloud-vue": "^2.24.4",
+    "@conduction/nextcloud-vue": "^2.37.0",
     "@nextcloud/auth": "^2.6.0",
     "@nextcloud/axios": "~2.5.2",
     "@nextcloud/capabilities": "^1.2.1",
@@ -66,7 +66,7 @@
     "@vueuse/core": "^14.4.0",
     "dexie": "^4.4.5",
     "dompurify": "^3.4.14",
-    "gridstack": "^12.6.0",
+    "gridstack": "^13.2.0",
     "marked": "^18.0.11",
     "path-browserify": "^1.0.1",
     "pinia": "^4.0.3",
@@ -78,7 +78,7 @@
   "overrides": {
     "libxmljs2": "^0.37.0",
     "apexcharts": "4.7.0",
-    "@nextcloud/axios": "~2.5.2"
+    "@nextcloud/axios": "$@nextcloud/axios"
   },
   "devDependencies": {
     "@babel/core": "^7.22.9",
@@ -89,7 +89,7 @@
     "@nextcloud/stylelint-config": "^3.2.2",
     "@nextcloud/webpack-vue-config": "^7.0.4",
     "@playwright/test": "^1.49.0",
-    "@typescript-eslint/parser": "^8.67.0",
+    "@typescript-eslint/parser": "^8.68.0",
     "@vitejs/plugin-vue": "^6.0.8",
     "@vitest/coverage-v8": "^4.1.11",
     "@vue/compiler-sfc": "^3.5.41",
@@ -98,14 +98,14 @@
     "ajv-formats": "^3.0.1",
     "axe-core": "^4.13.0",
     "babel-loader": "^10.1.1",
-    "css-loader": "~7.1.1",
+    "css-loader": "~7.1.5",
     "eslint": "^10.9.0",
     "eslint-config-prettier": "^10.1.8",
     "node-polyfill-webpack-plugin": "^4.0.0",
-    "postcss-html": "^1.0.0",
+    "postcss-html": "^2.0.0",
     "prettier": "^3.9.6",
     "sass": "^1.103.1",
-    "sass-loader": "^17.0.0",
+    "sass-loader": "^17.0.1",
     "style-loader": "~4.0.0",
     "stylelint": "^17.14.1",
     "stylelint-config-html": "^1.1.0",
@@ -116,7 +116,7 @@
     "vitest": "^4.1.11",
     "vue-eslint-parser": "^10.3.0",
     "vue-loader": "^17.4.2",
-    "webpack": "^5.110.1",
+    "webpack": "^5.110.2",
     "webpack-cli": "^6.0.1",
     "webpack-dev-server": "^6.0.0"
   },

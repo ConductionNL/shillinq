@@ -1555,7 +1555,26 @@
         "_%n invoice outstanding_::_%n invoices outstanding_": [
             "1 reikningur ógreiddur",
             "%n reikningar ógreiddir"
-        ]
+        ],
+        "Reports": "Skýrslur",
+        "Pick a report to open it.": "Veldu skýrslu til að opna hana.",
+        "Due": "Skiladagur",
+        "Assignee": "Úthlutað",
+        "Iv3 returns": "Iv3-skýrslur",
+        "SiSa returns": "SiSa-skýrslur",
+        "EMU return": "EMU-skýrsla",
+        "Consolidated statements": "Samstæðureikningar",
+        "Budget variance": "Fjárhagsáætlunarfrávik",
+        "Generated reports": "Búnar til skýrslur",
+        "The quarterly Iv3 returns, and how far each one got.": "Ársfjórðungslegu Iv3-skýrslurnar og hversu langt hver komst.",
+        "Single information, single audit returns per scheme.": "Single information, single audit-skýrslur eftir kerfi.",
+        "The EMU balance return.": "EMU-jöfnuðarskýrslan.",
+        "The group figures, consolidated across participations.": "Samstæðutölurnar, samræmdar yfir eignarhluti.",
+        "Where the books sit against budget, and by how much.": "Hvar bókhaldið stendur gagnvart fjárhagsáætlun og um hversu mikið.",
+        "Everything Reporting & Compliance has already produced.": "Allt sem Skýrslugerð og regluvarsla hefur þegar búið til.",
+        "What retention destroyed, and when.": "Hvað varðveislan eyddi og hvenær.",
+        "Store": "Verslun",
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Settu upp skrár, skemu og flæði sem aðrar stofnanir hafa birt."
     },
     "plurals": null
 }

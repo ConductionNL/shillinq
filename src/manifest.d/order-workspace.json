@@ -72,7 +72,7 @@
 				],
 				"sidebarProps": {
 					"tabs": [
-						{"id": "documents", "label": "Documents", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+						{"id": "documents", "label": "Documents", "icon": "FileDocumentMultipleOutline", "order": 80, "widgets": [
 							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "OrderPrimitive", "objectId": ":id"}}
 						]},
 						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [

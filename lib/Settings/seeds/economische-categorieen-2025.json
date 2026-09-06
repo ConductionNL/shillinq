@@ -5,7 +5,7 @@
     "source": "BZK Iv3-informatievoorschrift bijlage A",
     "iv3Version": "2025-1.0",
     "effectiveDate": "2025-01-01",
-    "description": "Iv3 economische categorieen (kostensoorten, hoofdgroepen 1-8). Representatieve subset van de ca. 150 codes; de volledige catalogus wordt via openconnector geimporteerd (REQ-BBV-002, REQ-BBV-006).",
+    "description": "Iv3 economische categorieen (kostensoorten, hoofdgroepen 1-8). Representatieve subset van de ca. 150 codes; de volledige catalogus wordt via openconnector geimporteerd.",
     "url": "https://www.cbs.nl/iv3"
   },
   "economischeCategorieen": [

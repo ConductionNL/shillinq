@@ -27,8 +27,8 @@
  * the global `t()` translator and `axios.get` are mocked per-test.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import axios from '@nextcloud/axios'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import StatusView from '../../src/views/external-adapters/ExternalAdaptersStatus.vue'
 
 /** Identity translator: returns the source string (or fills {placeholders}). */

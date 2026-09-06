@@ -26,7 +26,9 @@
  * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
  */
 
-import { test, expect, type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
+
+import { expect, test } from '@playwright/test'
 import { becomesVisible } from './becomes-visible.js'
 
 const APP = '/apps/shillinq'

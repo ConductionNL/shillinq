@@ -7,12 +7,12 @@
  * and the profile payload shape (always status draft on create).
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
+	buildProfilePayload,
 	defaultRecurringLine,
 	perPeriodNet,
 	validateProfile,
-	buildProfilePayload,
 } from '../../src/modals/recurringInvoiceProfile.js'
 
 describe('recurringInvoiceProfile — defaults + totals', () => {

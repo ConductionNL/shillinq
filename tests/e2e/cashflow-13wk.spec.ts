@@ -13,7 +13,7 @@
  * @spec openspec/changes/zzp-cashflow-13wk/tasks.md#task-30
  */
 
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 

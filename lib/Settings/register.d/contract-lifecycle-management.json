@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "contract-lifecycle-management",
     "adr": "ADR-037 modular register fragment + ADR-022 (link-don't-store / consume OR + NC abstractions) + ADR-031 (declarative business logic) — never edit shillinq_register.json",
-    "description": "Tier 2 — Generic Contract Lifecycle Management (CLM) per REQ-CLM-001 .. REQ-CLM-009. Declares Contract + ContractObligation schemas with x-openregister-audit-trail, x-openregister-lifecycle (draft → active → expiring → expired with renewed/terminated exits), x-openregister-calculations (renewalDecisionDate = endDate − renewalTerms.noticePeriodDays), and x-openregister-notifications (canonical ADR-031 dialect; lands the contract-renewal rule deferred by shillinq-notifications). Counterparty is an NC addressbook contact reference (no Party/Customer schema). Documents/evidence are NC Files references (link, don't store). The committed-vs-invoiced spend rollup (REQ-CLM-006) is CHAINED behind bookkeeping-purchase-order-3way / add-shillinq-accounts-payable-core / add-shillinq-accounts-receivable-core: it is documented as an x-chained-aggregations note here and intentionally declares NO active aggregation rules targeting absent schemas, so the spend dashboard renders an honest empty state until those schemas land. Lease contracts become a specialization by link via specializationReference → LeaseContract (no regression to the IFRS 16 lease suite). Seed data ships demo contracts + obligations clearly marked as demo."
+    "description": "Tier 2: Generic Contract Lifecycle Management (CLM). Declares Contract + ContractObligation schemas with x-openregister-audit-trail, x-openregister-lifecycle (draft → active → expiring → expired with renewed/terminated exits), x-openregister-calculations (renewalDecisionDate = endDate − renewalTerms.noticePeriodDays), and x-openregister-notifications (canonical ADR-031 dialect; lands the contract-renewal rule deferred by shillinq-notifications). Counterparty is an NC addressbook contact reference (no Party/Customer schema). Documents/evidence are NC Files references (link, don't store). The committed-vs-invoiced spend rollup is CHAINED behind bookkeeping-purchase-order-3way / add-shillinq-accounts-payable-core / add-shillinq-accounts-receivable-core: it is documented as an x-chained-aggregations note here and intentionally declares NO active aggregation rules targeting absent schemas, so the spend dashboard renders an honest empty state until those schemas land. Lease contracts become a specialization by link via specializationReference → LeaseContract (no regression to the IFRS 16 lease suite). Seed data ships demo contracts + obligations clearly marked as demo."
   },
   "components": {
     "schemas": {
@@ -13,10 +13,10 @@
         "icon": "FileSign",
         "version": "0.1.0",
         "title": "Contract",
-        "description": "Generic contract master record covering every contract type (purchase, sales, service, subscription, lease, employment, other) per REQ-CLM-001. CRUD goes through OpenRegister's generic object surface (ADR-022) — no custom PHP model, no parallel table. The counterparty is referenced as a Nextcloud addressbook contact (counterpartyReference); no Party/Customer/Supplier schema is invented. Renewal terms are an embedded object (D3); renewalDecisionDate is a declared calculation. Documents are NC Files references (link, don't store; REQ-CLM-005). Lease contracts become a specialization by link via specializationReference → LeaseContract (REQ-CLM-007); generic records never duplicate lease accounting fields. Lifecycle and notifications are declarative (REQ-CLM-002 / REQ-CLM-004).",
+        "description": "Generic contract master record covering every contract type (purchase, sales, service, subscription, lease, employment, other). CRUD goes through OpenRegister's generic object surface (ADR-022): no custom PHP model, no parallel table. The counterparty is referenced as a Nextcloud addressbook contact (counterpartyReference); no Party/Customer/Supplier schema is invented. Renewal terms are an embedded object (D3); renewalDecisionDate is a declared calculation. Documents are NC Files references (link, don't store). Lease contracts become a specialization by link via specializationReference → LeaseContract; generic records never duplicate lease accounting fields. Lifecycle and notifications are declarative.",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Contract repository register; every create / update / lifecycle transition (activate / markExpiring / expire / terminate / renew) is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022. The audit trail is the canonical evidence chain for renewal and termination decisions per REQ-CLM-002."
+          "description": "Contract repository register; every create / update / lifecycle transition (activate / markExpiring / expire / terminate / renew) is recorded on the OR audit-trail-immutable channel + ADR-022. The audit trail is the canonical evidence chain for renewal and termination decisions."
         },
         "x-schema-org": "schema:Contract",
         "x-spec": "openspec/changes/contract-lifecycle-management/specs/contract-lifecycle-management/spec.md",
@@ -63,7 +63,7 @@
               "employment",
               "other"
             ],
-            "description": "Contract category. contractType=lease MAY link a specialized LeaseContract record via specializationReference per REQ-CLM-007.",
+            "description": "Contract category. contractType=lease MAY link a specialized LeaseContract record via specializationReference.",
             "example": "service",
             "title": "Contract Type"
           },
@@ -73,21 +73,21 @@
               "inbound",
               "outbound"
             ],
-            "description": "inbound = we pay (cost contract; AP spend leg applies); outbound = we are paid (revenue contract; AR leg applies). Drives which spend leg the chained rollup uses per REQ-CLM-006.",
+            "description": "inbound = we pay (cost contract; AP spend leg applies); outbound = we are paid (revenue contract; AR leg applies). Drives which spend leg the chained rollup uses.",
             "nullable": true,
             "example": "inbound",
             "title": "Direction"
           },
           "counterpartyReference": {
             "type": "string",
-            "description": "Nextcloud addressbook contact reference (addressbook URI / contacts UID) for the contract counterparty. A counterparty is a Nextcloud entity — no Party/Customer/Supplier schema is declared (REQ-CLM-001 / D4). Resolved via OCP\\Contacts\\IManager in the UI.",
+            "description": "Nextcloud addressbook contact reference (addressbook URI / contacts UID) for the contract counterparty. A counterparty is a Nextcloud entity: no Party/Customer/Supplier schema is declared (D4). Resolved via OCP\\Contacts\\IManager in the UI.",
             "nullable": true,
             "example": "contacts://shillinq/principals-users-admin/acme-bv",
             "title": "Counterparty Reference"
           },
           "contractOwner": {
             "type": "string",
-            "description": "Nextcloud uid of the responsible user. Notification recipient for renewal-decision and termination rules per REQ-CLM-004.",
+            "description": "Nextcloud uid of the responsible user. Notification recipient for renewal-decision and termination rules.",
             "nullable": true,
             "example": "alice",
             "title": "Contract Owner"
@@ -95,7 +95,7 @@
           "startDate": {
             "type": "string",
             "format": "date",
-            "description": "Contract commencement date. Required before the activate transition per REQ-CLM-002.",
+            "description": "Contract commencement date. Required before the activate transition.",
             "nullable": true,
             "example": "2026-01-01",
             "title": "Start Date"
@@ -110,7 +110,7 @@
           },
           "renewalTerms": {
             "type": "object",
-            "description": "Embedded renewal terms (D3 — not a separate schema). Drives the renewal-decision window and the renew transition.",
+            "description": "Embedded renewal terms (D3: not a separate schema). Drives the renewal-decision window and the renew transition.",
             "nullable": true,
             "properties": {
               "renewalType": {
@@ -195,7 +195,7 @@
           },
           "documents": {
             "type": "array",
-            "description": "NC Files references for the signed contract PDF, amendments, and annexes. Link, don't store (REQ-CLM-005); bytes live in Nextcloud Files with versioning and full-text search.",
+            "description": "NC Files references for the signed contract PDF, amendments, and annexes. Link, don't store; bytes live in Nextcloud Files with versioning and full-text search.",
             "nullable": true,
             "items": {
               "type": "object",
@@ -224,14 +224,14 @@
               "renewed",
               "terminated"
             ],
-            "description": "Contract lifecycle state per REQ-CLM-002.",
+            "description": "Contract lifecycle state.",
             "default": "draft",
             "example": "active",
             "title": "Status"
           },
           "terminationReason": {
             "type": "string",
-            "description": "Operator-authored reason for termination. Mandatory on the terminate transition per REQ-CLM-002 (fail-closed guard).",
+            "description": "Operator-authored reason for termination. Mandatory on the terminate transition (fail-closed guard).",
             "nullable": true,
             "example": "Opgezegd binnen opzegtermijn wegens herinrichting facilitair contractbeheer.",
             "title": "Termination Reason"
@@ -250,7 +250,7 @@
           },
           "specializationReference": {
             "type": "string",
-            "description": "FK to a specialized register record (e.g. a LeaseContract for contractType=lease) per REQ-CLM-007. The generic record links the specialization; it never duplicates the specialized accounting fields.",
+            "description": "FK to a specialized register record (e.g. a LeaseContract for contractType=lease). The generic record links the specialization; it never duplicates the specialized accounting fields.",
             "nullable": true,
             "example": "lease-hoofdkantoor-2024",
             "title": "Specialization Reference"
@@ -286,7 +286,7 @@
         },
         "x-openregister-calculations": {
           "renewalDecisionDate": {
-            "description": "Computed renewal/notice decision date: endDate minus renewalTerms.noticePeriodDays. Declared per REQ-CLM-001 so the scheduled renewal notification rule and the repository 'decide by' column read one real field (no PHP recomputation service).",
+            "description": "Computed renewal/notice decision date: endDate minus renewalTerms.noticePeriodDays. Declared so the scheduled renewal notification rule and the repository 'decide by' column read one real field (no PHP recomputation service).",
             "expression": "endDate - renewalTerms.noticePeriodDays days",
             "target": "renewalDecisionDate",
             "type": "date"
@@ -326,7 +326,7 @@
               "from": "draft",
               "to": "active",
               "label": "Activate contract",
-              "description": "Put the contract in force. Guard: startDate, counterpartyReference, and contractOwner must all be present (REQ-CLM-002).",
+              "description": "Put the contract in force. Guard: startDate, counterpartyReference, and contractOwner must all be present.",
               "requires": "OCA\\Shillinq\\Lifecycle\\ContractLifecycleGuard::canActivate",
               "x-adr-031-exception": "Cross-field non-empty precondition over startDate + counterpartyReference + contractOwner is not yet expressible as a single declarative requires clause; single-method fail-closed guard per ADR-031 §'PHP guards remain a legitimate seam'. Replace with a declarative condition when the lifecycle DSL supports multi-field required guards."
             },
@@ -334,11 +334,11 @@
               "from": "active",
               "to": "expiring",
               "label": "Mark expiring",
-              "description": "Time-based transition: fires when today >= renewalDecisionDate. Evaluated by OR's scheduled lifecycle machinery (ADR-031 path 2) — NOT a shillinq cron/Job class.",
+              "description": "Time-based transition: fires when today >= renewalDecisionDate. Evaluated by OR's scheduled lifecycle machinery (ADR-031 path 2): NOT a shillinq cron/Job class.",
               "x-scheduled-workflow": {
                 "primitive": "OR.ScheduledWorkflow",
                 "cron": "0 1 * * *",
-                "description": "Daily 01:00 sweep transitions active → expiring when today >= renewalDecisionDate. The renewal-decision notification (REQ-CLM-004 rule 1) filters on renewalDecisionDate directly, so the notification SLA never depends on this flip having happened."
+                "description": "Daily 01:00 sweep transitions active → expiring when today >= renewalDecisionDate. The renewal-decision notification (rule 1) filters on renewalDecisionDate directly, so the notification SLA never depends on this flip having happened."
               }
             },
             "expire": {
@@ -362,7 +362,7 @@
               ],
               "to": "terminated",
               "label": "Terminate contract",
-              "description": "End the contract early. Guard: terminationReason must be present (fail-closed) per REQ-CLM-002.",
+              "description": "End the contract early. Guard: terminationReason must be present (fail-closed).",
               "requires": "OCA\\Shillinq\\Lifecycle\\ContractLifecycleGuard::requireTerminationReason",
               "x-adr-031-exception": "The 'terminated requires terminationReason' precondition is a conditional-required field the declarative lifecycle DSL cannot yet express inside a requires clause; single-method fail-closed guard per ADR-031. Replace when the DSL supports conditional-required guards."
             },
@@ -373,7 +373,7 @@
               ],
               "to": "renewed",
               "label": "Renew contract",
-              "description": "Renew the contract. Creates a linked successor Contract in draft carrying the renewal terms forward (startDate = predecessor endDate + 1 day, term = renewalTerms.renewalTermMonths), and sets predecessorContract / successorContract self-FKs on both records per REQ-CLM-002."
+              "description": "Renew the contract. Creates a linked successor Contract in draft carrying the renewal terms forward (startDate = predecessor endDate + 1 day, term = renewalTerms.renewalTermMonths), and sets predecessorContract / successorContract self-FKs on both records."
             }
           }
         },
@@ -503,7 +503,7 @@
         "x-chained-aggregations": {
           "_chained": "REQ-CLM-006 spend rollup is CHAINED behind unmerged schemas. NO active x-openregister-aggregations rules are declared here, on purpose, to keep the fragment honest: no aggregation may target a schema that does not yet exist (gate cleanliness). The spend dashboard renders an explicit 'no linked spend data' empty state until the chained schemas land.",
           "committedSpend": {
-            "description": "DEFERRED — sum of PurchaseOrder totals where contractReference = this contract. Activated only once bookkeeping-purchase-order-3way lands its PurchaseOrder schema and adds the optional contractReference FK. Until then: honest empty state, no rule, no FK invented here.",
+            "description": "DEFERRED: sum of PurchaseOrder totals where contractReference = this contract. Activated only once bookkeeping-purchase-order-3way lands its PurchaseOrder schema and adds the optional contractReference FK. Until then: honest empty state, no rule, no FK invented here.",
             "deferredSource": "PurchaseOrder",
             "deferredOwner": "bookkeeping-purchase-order-3way",
             "deferredAggregate": "sum(totalAmount) where contractReference = this",
@@ -513,7 +513,7 @@
             ]
           },
           "invoicedSpend": {
-            "description": "DEFERRED — direction-aware: for direction=inbound sum APInvoice totals with contractReference = this; for direction=outbound sum ARInvoice totals with contractReference = this. Activated only once add-shillinq-accounts-payable-core / add-shillinq-accounts-receivable-core land their schemas and add the optional contractReference FK. Until then: honest empty state, no rule, no FK invented here.",
+            "description": "DEFERRED: direction-aware: for direction=inbound sum APInvoice totals with contractReference = this; for direction=outbound sum ARInvoice totals with contractReference = this. Activated only once add-shillinq-accounts-payable-core / add-shillinq-accounts-receivable-core land their schemas and add the optional contractReference FK. Until then: honest empty state, no rule, no FK invented here.",
             "deferredSource": [
               "APInvoice",
               "ARInvoice"
@@ -559,10 +559,10 @@
         "icon": "ClipboardCheckOutline",
         "version": "0.1.0",
         "title": "Contract Obligation",
-        "description": "Deadline-bearing obligation row owned by a Contract per REQ-CLM-003. The register row is the source of truth for the deadline and compliance status; the actionable to-do lives in NC Tasks (CalDAV VTODO) or a Deck card, created and linked by ObligationTaskBridge (taskUri). Evidence files are NC Files references (link, don't store). Shillinq declares NO task/todo schema of its own (ADR-022 / 'content types belong in leaves'). Deadline notifications fire from the OR notification engine on this row (REQ-CLM-004), so a deleted NC task never silences a deadline.",
+        "description": "Deadline-bearing obligation row owned by a Contract. The register row is the source of truth for the deadline and compliance status; the actionable to-do lives in NC Tasks (CalDAV VTODO) or a Deck card, created and linked by ObligationTaskBridge (taskUri). Evidence files are NC Files references (link, don't store). Shillinq declares NO task/todo schema of its own (ADR-022 / 'content types belong in leaves'). Deadline notifications fire from the OR notification engine on this row, so a deleted NC task never silences a deadline.",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Contract-obligation register; every create / update / status change is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022."
+          "description": "Contract-obligation register; every create / update / status change is recorded on the OR audit-trail-immutable channel + ADR-022."
         },
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/contract-lifecycle-management/specs/contract-lifecycle-management/spec.md",
@@ -610,7 +610,7 @@
           "dueDate": {
             "type": "string",
             "format": "date",
-            "description": "Deadline. The deadline notification rule (REQ-CLM-004 rule 3) reads this field directly.",
+            "description": "Deadline. The deadline notification rule (rule 3) reads this field directly.",
             "example": "2026-09-01",
             "title": "Due Date"
           },
@@ -643,14 +643,14 @@
               "waived",
               "overdue"
             ],
-            "description": "Obligation compliance status. The register row — not the NC task — is the source of truth.",
+            "description": "Obligation compliance status. The register row: not the NC task. Is the source of truth.",
             "default": "open",
             "example": "open",
             "title": "Status"
           },
           "evidence": {
             "type": "array",
-            "description": "NC Files references for compliance evidence (certificates, reports). Link, don't store (REQ-CLM-005).",
+            "description": "NC Files references for compliance evidence (certificates, reports). Link, don't store.",
             "nullable": true,
             "items": {
               "type": "object",
@@ -682,7 +682,7 @@
               "linked",
               "failed"
             ],
-            "description": "Bridge link status. failed = the bridge could not create the NC task (fail-closed); the failure is surfaced on the row and never blocks CRUD per REQ-CLM-003.",
+            "description": "Bridge link status. failed = the bridge could not create the NC task (fail-closed); the failure is surfaced on the row and never blocks CRUD.",
             "default": "unlinked",
             "example": "unlinked",
             "title": "Task Link Status"
@@ -801,7 +801,7 @@
         },
         "contractNumber": "C-2026-007",
         "title": "Office cleaning services 2026 (DEMO)",
-        "description": "DEMO seed data — wekelijkse schoonmaak hoofdkantoor. Counterparty referenced as an NC addressbook contact, not a Party schema.",
+        "description": "DEMO seed data: wekelijkse schoonmaak hoofdkantoor. Counterparty referenced as an NC addressbook contact, not a Party schema.",
         "contractType": "service",
         "direction": "inbound",
         "counterpartyReference": "contacts://shillinq/principals-users-admin/csu-schoonmaak-bv",
@@ -833,7 +833,7 @@
         },
         "contractNumber": "C-2026-011",
         "title": "CRM SaaS subscription (DEMO)",
-        "description": "DEMO seed data — jaarabonnement CRM platform. In the renewal-decision window so the scheduled renewal rule fires.",
+        "description": "DEMO seed data: jaarabonnement CRM platform. In the renewal-decision window so the scheduled renewal rule fires.",
         "contractType": "subscription",
         "direction": "inbound",
         "counterpartyReference": "contacts://shillinq/principals-users-admin/cloudcrm-bv",
@@ -865,7 +865,7 @@
         },
         "contractNumber": "C-2024-002",
         "title": "Lease hoofdkantoor (DEMO, lease specialization)",
-        "description": "DEMO seed data — generic contract wrapper for an existing LeaseContract record. contractType=lease with specializationReference; the generic record carries only repository metadata and deep-links to the LeaseContract for IFRS 16 accounting (no lease field is duplicated here) per REQ-CLM-007.",
+        "description": "DEMO seed data: generic contract wrapper for an existing LeaseContract record. ContractType=lease with specializationReference; the generic record carries only repository metadata and deep-links to the LeaseContract for IFRS 16 accounting (no lease field is duplicated here).",
         "contractType": "lease",
         "direction": "inbound",
         "counterpartyReference": "contacts://shillinq/principals-users-admin/vastgoed-beheer-bv",

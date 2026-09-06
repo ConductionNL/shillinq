@@ -60,7 +60,6 @@ export function resolveBaseURL(): string {
 	}
 
 	if (process.env.GITHUB_ACTIONS === 'true' || process.env.CI) {
-		// eslint-disable-next-line no-console
 		console.warn(
 			`[shillinq e2e] none of ${BASE_URL_ENV_NAMES.join(' / ')} is set; `
 				+ `falling back to the CI-local ${CI_DEFAULT_BASE_URL}.`,

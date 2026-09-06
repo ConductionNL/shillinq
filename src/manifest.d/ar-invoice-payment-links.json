@@ -54,7 +54,7 @@
 						"label": "Exceptions only",
 						"inputLabel": "Show exceptions only",
 						"type": "preset",
-						"description": "Per REQ-APL-008: surface failed + captured_unapplied payment requests for operator action.",
+						"description": "Surface failed and captured_unapplied payment requests for operator action.",
 						"filter": {"state": {"in": ["failed", "captured_unapplied"]}}
 					}
 				]
@@ -94,7 +94,7 @@
 						"id": "regenerate",
 						"label": "Regenerate payment link",
 						"icon": "Refresh",
-						"description": "Per REQ-APL-008: creates a NEW pending payment request with the current outstanding amount; the panel shows its link and the expired request remains visible in history. History is preserved (a new record, not a mutation)."
+						"description": "Creates a new pending payment request for the current outstanding amount. The panel shows its link, and the expired request stays visible in the history: this writes a new record rather than changing the old one."
 					}
 				],
 				"sidebarProps": {

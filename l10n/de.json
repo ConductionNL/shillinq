@@ -1556,7 +1556,26 @@
             "1 Rechnung ausstehend",
             "%n Rechnungen ausstehend"
         ],
-        "Manual Journals": "Manuelle Buchungssätze"
+        "Manual Journals": "Manuelle Buchungssätze",
+        "Reports": "Berichte",
+        "Pick a report to open it.": "Wählen Sie einen Bericht, um ihn zu öffnen.",
+        "Due": "Fällig",
+        "Assignee": "Zugewiesen an",
+        "Iv3 returns": "Iv3-Meldungen",
+        "SiSa returns": "SiSa-Meldungen",
+        "EMU return": "EMU-Meldung",
+        "Consolidated statements": "Konsolidierter Abschluss",
+        "Budget variance": "Budgetabweichung",
+        "Generated reports": "Erzeugte Berichte",
+        "The quarterly Iv3 returns, and how far each one got.": "Die vierteljährlichen Iv3-Meldungen und wie weit jede gekommen ist.",
+        "Single information, single audit returns per scheme.": "Single-information-single-audit-Meldungen je Regelung.",
+        "The EMU balance return.": "Die EMU-Saldo-Meldung.",
+        "The group figures, consolidated across participations.": "Die Konzernzahlen, konsolidiert über die Beteiligungen.",
+        "Where the books sit against budget, and by how much.": "Wo die Bücher gegenüber dem Budget stehen und um wie viel.",
+        "Everything Reporting & Compliance has already produced.": "Alles, was Berichtswesen & Compliance bereits erzeugt hat.",
+        "What retention destroyed, and when.": "Was die Aufbewahrung vernichtet hat und wann.",
+        "Store": "Store",
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Installieren Sie Register, Schemata und Flows, die andere Organisationen veröffentlicht haben."
     },
     "plurals": null
 }

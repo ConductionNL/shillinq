@@ -5,7 +5,7 @@
     "source": "Regeling Vaststelling Beleidsindicatoren (BZK)",
     "iv3Version": "2025-1.0",
     "effectiveDate": "2025-01-01",
-    "description": "BBV-verplichte beleidsindicatoren per BBV art. 25 lid 2. Representatieve subset van de 39 vaste indicatoren; de volledige set wordt via openconnector geimporteerd (REQ-BBV-007).",
+    "description": "BBV-verplichte beleidsindicatoren per BBV art. 25 lid 2. Representatieve subset van de 39 vaste indicatoren; de volledige set wordt via openconnector geimporteerd.",
     "url": "https://www.waarstaatjegemeente.nl"
   },
   "beleidsindicatoren": [

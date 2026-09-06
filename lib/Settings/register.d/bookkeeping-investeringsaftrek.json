@@ -9,7 +9,7 @@
         "icon": "SolarPower",
         "version": "0.1.0",
         "title": "InvestmentAsset",
-        "description": "A capitalised asset eligible for one or more investeringsaftrek schemes (KIA/EIA/MIA/Vamil) per Wet IB 2001 art. 3.40-3.47. 1-to-1 with FixedAsset (fixedAssetId). Eligibility is classified at capitalisation against the four schemes (REQ-INV-001); the RvO meldingstermijn deadline is derived from opdrachtverleningDatum (REQ-INV-007). Introduced by the bookkeeping-investeringsaftrek change (T4).",
+        "description": "A capitalised asset eligible for one or more investeringsaftrek schemes (KIA/EIA/MIA/Vamil) per Wet IB 2001 art. 3.40-3.47. 1-to-1 with FixedAsset (fixedAssetId). Eligibility is classified at capitalisation against the four schemes; the RvO meldingstermijn deadline is derived from opdrachtverleningDatum. Introduced by the bookkeeping-investeringsaftrek change (T4).",
         "x-schema-org": "schema:Thing",
         "x-openregister-purpose": "fact",
         "type": "object",
@@ -64,7 +64,7 @@
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Date the binding order was placed. Mandatory for EIA/MIA/Vamil assets; the RvO 3-month meldingstermijn runs from this date, NOT the invoice or delivery date (REQ-INV-007).",
+            "description": "Date the binding order was placed. Mandatory for EIA/MIA/Vamil assets; the RvO 3-month meldingstermijn runs from this date, NOT the invoice or delivery date.",
             "example": "2026-03-15",
             "title": "Opdrachtverlening Datum"
           },
@@ -106,14 +106,14 @@
           "energyListCode": {
             "type": "string",
             "nullable": true,
-            "description": "Matched EnergielijstCode.code (EIA). Resolved against the opdrachtverleningDatum year list (REQ-INV-002).",
+            "description": "Matched EnergielijstCode.code (EIA). Resolved against the opdrachtverleningDatum year list.",
             "example": "251701",
             "title": "Energielijst Code"
           },
           "environmentListCode": {
             "type": "string",
             "nullable": true,
-            "description": "Matched MilieulijstCode.code (MIA/Vamil). Resolved against the opdrachtverleningDatum year list (REQ-INV-002).",
+            "description": "Matched MilieulijstCode.code (MIA/Vamil). Resolved against the opdrachtverleningDatum year list.",
             "example": "G3110",
             "title": "Milieulijst Code"
           },
@@ -148,7 +148,7 @@
           "eligibilityOverride": {
             "type": "object",
             "nullable": true,
-            "description": "Boekhouder override of the computed classification, per scheme, with a mandatory rationale (REQ-INV-001 / D2).",
+            "description": "Boekhouder override of the computed classification, per scheme, with a mandatory rationale (D2).",
             "properties": {
               "scheme": {
                 "type": "string",
@@ -196,7 +196,7 @@
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Computed deadline = opdrachtverleningDatum + 3 months (REQ-INV-007). Derived by DesinvesteringsbijtellingGuard::computeMeldingDeadline / the calculations engine.",
+            "description": "Computed deadline = opdrachtverleningDatum + 3 months. Derived by DesinvesteringsbijtellingGuard:computeMeldingDeadline / the calculations engine.",
             "example": "2026-06-15",
             "title": "Rvo Melding Deadline"
           },
@@ -210,7 +210,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a InvestmentAsset is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a InvestmentAsset is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "EnergielijstCode": {
@@ -218,7 +218,7 @@
         "icon": "FlashOutline",
         "version": "0.1.0",
         "title": "EnergielijstCode",
-        "description": "Reference data: a single RvO Energielijst code (EIA) for a given jaartal. Versioned per year; codes are resolved against the opdrachtverleningDatum year, not the current year (REQ-INV-002). Seeded from lib/Settings/seeds/investeringsaftrek-energielijst-2026.json.",
+        "description": "Reference data: a single RvO Energielijst code (EIA) for a given jaartal. Versioned per year; codes are resolved against the opdrachtverleningDatum year, not the current year. Seeded from lib/Settings/seeds/investeringsaftrek-energielijst-2026.json.",
         "x-schema-org": "schema:DefinedTerm",
         "x-openregister-purpose": "dimension",
         "type": "object",
@@ -292,7 +292,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a EnergielijstCode is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a EnergielijstCode is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "MilieulijstCode": {
@@ -378,7 +378,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a MilieulijstCode is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a MilieulijstCode is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "InvesteringsaftrekClaim": {
@@ -386,7 +386,7 @@
         "icon": "CashRefund",
         "version": "0.1.0",
         "title": "InvesteringsaftrekClaim",
-        "description": "One claim per (asset, scheme, boekjaar) combination. Carries the grondslag, percentage and computed aftrekbedrag, plus the ingediend -> definitief lifecycle and the async RvO beschikking. Vrijwillige verlaging is tracked separately from the legal entitlement (REQ-INV-009). Introduced by bookkeeping-investeringsaftrek.",
+        "description": "One claim per (asset, scheme, boekjaar) combination. Carries the grondslag, percentage and computed aftrekbedrag, plus the ingediend -> definitief lifecycle and the async RvO beschikking. Vrijwillige verlaging is tracked separately from the legal entitlement. Introduced by bookkeeping-investeringsaftrek.",
         "x-schema-org": "schema:Thing",
         "x-openregister-purpose": "fact",
         "type": "object",
@@ -467,7 +467,7 @@
           "rvoDecision": {
             "type": "object",
             "nullable": true,
-            "description": "RvO award, populated async via the openconnector mededeling feed or overridden by the boekhouder (REQ-INV-007 / D8).",
+            "description": "RvO award, populated async via the openconnector mededeling feed or overridden by the boekhouder (D8).",
             "properties": {
               "decisionDate": {
                 "type": "string",
@@ -494,7 +494,7 @@
           "voluntaryReduction": {
             "type": "integer",
             "nullable": true,
-            "description": "Voluntary reduction applied to the legal entitlement, in EUR cents (REQ-INV-009). Not carry-forwardable.",
+            "description": "Voluntary reduction applied to the legal entitlement, in EUR cents. Not carry-forwardable.",
             "example": null,
             "title": "Vrijwillige Verlaging"
           },
@@ -508,7 +508,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a InvesteringsaftrekClaim is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a InvesteringsaftrekClaim is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "VamilDepreciation": {
@@ -516,7 +516,7 @@
         "icon": "ChartTimelineVariant",
         "version": "0.1.0",
         "title": "VamilDepreciation",
-        "description": "Willekeurige afschrijving schedule for a Vamil-claimed asset: 75% direct in the year of ingebruikname + 25% via the regular depreciation schedule. Consumed by bookkeeping-fixed-assets-depreciation via the InvestmentAsset relation (REQ-INV-010 / D6).",
+        "description": "Willekeurige afschrijving schedule for a Vamil-claimed asset: 75% direct in the year of ingebruikname + 25% via the regular depreciation schedule. Consumed by bookkeeping-fixed-assets-depreciation via the InvestmentAsset relation (D6).",
         "x-schema-org": "schema:Thing",
         "x-openregister-purpose": "fact",
         "type": "object",
@@ -597,7 +597,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a VamilDepreciation is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a VamilDepreciation is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "KIATier": {
@@ -617,7 +617,7 @@
         "properties": {
           "tier": {
             "type": "integer",
-            "description": "Tier ordinal (1..5).",
+            "description": "Tier ordinal (1.5).",
             "example": 2,
             "title": "Tier"
           },
@@ -663,7 +663,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a KIATier is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a KIATier is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     }

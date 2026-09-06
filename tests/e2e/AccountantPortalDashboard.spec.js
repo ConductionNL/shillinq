@@ -29,7 +29,7 @@
  * @spec openspec/changes/accountant-portal/specs/accountant-portal/spec.md#req-acp-002
  */
 
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import { becomesVisible } from './becomes-visible.js'
 
 const APP = '/apps/shillinq'

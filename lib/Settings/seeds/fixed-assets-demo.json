@@ -3,7 +3,7 @@
 		"spdx-license": "EUPL-1.2",
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "bookkeeping-fixed-assets-depreciation",
-		"description": "Demo FixedAsset + DepreciationSchedule records for REQ-FA-001..010 (Task 15). Four realistic Dutch SMB scenarios: company vehicle (linear), office building (linear), computer equipment (declining-balance), retired asset (fully depreciated). Each FixedAsset record carries the REQ-FA-002 operator-facing aliases (assetType/usefulLifeYears/purchaseDate/purchaseCost/status) alongside the canonical fields (assetCategory/usefulLifeMonths/acquisitionDate/acquisitionCost/lifecycleState). Each active asset has a corresponding 2026 DepreciationSchedule record showing the current-year depreciationAmount, accumulatedDepreciation and Float-Precision-rounded annualRate. Idempotent: SettingsService::seedFixedAssetsDemo() deduplicates on (assetNumber, administrationId).",
+		"description": "Demo FixedAsset + DepreciationSchedule records for.010 (Task 15). Four realistic Dutch SMB scenarios: company vehicle (linear), office building (linear), computer equipment (declining-balance), retired asset (fully depreciated). Each FixedAsset record carries the operator-facing aliases (assetType/usefulLifeYears/purchaseDate/purchaseCost/status) alongside the canonical fields (assetCategory/usefulLifeMonths/acquisitionDate/acquisitionCost/lifecycleState). Each active asset has a corresponding 2026 DepreciationSchedule record showing the current-year depreciationAmount, accumulatedDepreciation and Float-Precision-rounded annualRate. Idempotent: SettingsService:seedFixedAssetsDemo deduplicates on (assetNumber, administrationId).",
 		"spec": "openspec/changes/bookkeeping-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md",
 		"req": "REQ-FA-001..010"
 	},
@@ -11,7 +11,7 @@
 		{
 			"assetNumber": "FA-DEMO-V-2026-0001",
 			"name": "Company Vehicle – License ABC-123",
-			"description": "Volkswagen ID.4 — primary management lease vehicle",
+			"description": "Volkswagen ID.4: primary management lease vehicle",
 			"assetCategory": "vehicles",
 			"assetType": "vehicle",
 			"acquisitionDate": "2026-01-15",
@@ -36,7 +36,7 @@
 		{
 			"assetNumber": "FA-DEMO-B-2026-0001",
 			"name": "Office Building – Amsterdam",
-			"description": "Hoofdkantoor — 1,200 m2 in Amsterdam Zuidoost",
+			"description": "Hoofdkantoor: 1,200 m2 in Amsterdam Zuidoost",
 			"assetCategory": "buildings",
 			"assetType": "building",
 			"acquisitionDate": "2020-06-01",

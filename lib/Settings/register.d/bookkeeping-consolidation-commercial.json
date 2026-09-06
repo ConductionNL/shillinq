@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-consolidation-commercial",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 3 — Commercial consolidation (RJ 217 / IAS 27 / IFRS 10). Ten new schemas (ConsolidationGroup, GroupEntity, IntercompanyRelation, ConsolidationPeriod, EliminationEntry, TranslationAdjustment, MinorityInterest, Goodwill, ConsolidatedBalance, ConsolidatedIncomeStatement) enabling Dutch MKB holding companies to consolidate multi-entity financial statements. All quantitative logic is declarative (x-openregister-aggregations) per ADR-031 — no ConsolidationCalculator.php / EliminationMatcher.php services. Lifecycle automation per x-openregister-lifecycle; cross-schema preconditions (status-transition gates, accountant-review presence, balance-sheet equation, minority split) delegated to OCA\\Shillinq\\Lifecycle\\ConsolidationGuard. Reuses the existing Administration register (per-entiteit GL) and the Nextcloud user directory for executor/reviewer FKs — a person is an NC entity, never an invented schema (ADR-022)."
+    "description": "Tier 3: Commercial consolidation (RJ 217 / IAS 27 / IFRS 10). Ten new schemas (ConsolidationGroup, GroupEntity, IntercompanyRelation, ConsolidationPeriod, EliminationEntry, TranslationAdjustment, MinorityInterest, Goodwill, ConsolidatedBalance, ConsolidatedIncomeStatement) enabling Dutch MKB holding companies to consolidate multi-entity financial statements. All quantitative logic is declarative (x-openregister-aggregations) per ADR-031. No ConsolidationCalculator.php / EliminationMatcher.php services. Lifecycle automation per x-openregister-lifecycle; cross-schema preconditions (status-transition gates, accountant-review presence, balance-sheet equation, minority split) delegated to OCA\\Shillinq\\Lifecycle\\ConsolidationGuard. Reuses the existing Administration register (per-entiteit GL) and the Nextcloud user directory for executor/reviewer FKs. A person is an NC entity, never an invented schema (ADR-022)."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "Sitemap",
         "version": "0.1.0",
         "title": "Consolidation Group",
-        "description": "Definition of a consolidation circle (moeder + dochters) per RJ 217 / IFRS 10 (REQ-CONS-001). Holds the reporting framework, reporting currency, uniform fiscal-year end and default consolidation method. Wettelijke basis: BW 2:406. One per groepsstructuur; a ConsolidationPeriod runs a measurement for a specific period against this group.",
+        "description": "Definition of a consolidation circle (moeder + dochters) per RJ 217 / IFRS 10. Holds the reporting framework, reporting currency, uniform fiscal-year end and default consolidation method. Wettelijke basis: BW 2:406. One per groepsstructuur; a ConsolidationPeriod runs a measurement for a specific period against this group.",
         "x-schema-org": "schema:Organization",
         "x-spec": "openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md",
         "type": "object",
@@ -29,13 +29,13 @@
         "properties": {
           "groupName": {
             "type": "string",
-            "description": "Legal group name, e.g. \"Acme Group\" (REQ-CONS-001).",
+            "description": "Legal group name, e.g. \"Acme Group\".",
             "example": "Acme Group",
             "title": "Group Name"
           },
           "parentAdministrationId": {
             "type": "string",
-            "description": "FK to the moeder Administration (existing Administration register) — the holding whose GL anchors the group (REQ-CONS-001).",
+            "description": "FK to the moeder Administration (existing Administration register): the holding whose GL anchors the group.",
             "title": "Parent Administration ID"
           },
           "reportingCurrency": {
@@ -51,13 +51,13 @@
               "RJ217",
               "IFRS10"
             ],
-            "description": "Consolidation grondslag: RJ 217 (Nederlandse commerciële norm) or IFRS 10 (REQ-CONS-001). Gates goodwill treatment (design D5).",
+            "description": "Consolidation grondslag: RJ 217 (Nederlandse commerciële norm) or IFRS 10. Gates goodwill treatment (design D5).",
             "title": "Reporting Framework"
           },
           "fiscalYearEnd": {
             "type": "string",
             "format": "date",
-            "description": "Uniform boekjaar-einde across all groepsentiteiten; divergent fiscal years require harmonisation (REQ-CONS-001).",
+            "description": "Uniform boekjaar-einde across all groepsentiteiten; divergent fiscal years require harmonisation.",
             "title": "Fiscal Year End"
           },
           "defaultConsolidationMethod": {
@@ -73,7 +73,7 @@
           "firstConsolidationDate": {
             "type": "string",
             "format": "date",
-            "description": "Date the group first consolidated (REQ-CONS-001).",
+            "description": "Date the group first consolidated.",
             "title": "First Consolidation Date"
           },
           "notes": {
@@ -115,7 +115,7 @@
               "from": "draft",
               "to": "active",
               "label": "Activate group",
-              "description": "Activate once the parent and at least one entity are defined (REQ-CONS-001).",
+              "description": "Activate once the parent and at least one entity are defined.",
               "requires": "OCA\\Shillinq\\Lifecycle\\ConsolidationGuard::canActivateGroup"
             },
             "deactivate": {
@@ -138,7 +138,7 @@
         "icon": "OfficeBuildingOutline",
         "version": "0.1.0",
         "title": "Group Entity",
-        "description": "A deelneming within a consolidation group (REQ-CONS-001). Maps an Administration to the group with its eigendomspercentage, stem-percentage, consolidation method, eerste-consolidatie-datum and functionele valuta. Drives the per-entity column in the pre-elimination werkpapier (design D10) and the minority-interest split (design D6).",
+        "description": "A deelneming within a consolidation group. Maps an Administration to the group with its eigendomspercentage, stem-percentage, consolidation method, eerste-consolidatie-datum and functionele valuta. Drives the per-entity column in the pre-elimination werkpapier (design D10) and the minority-interest split (design D6).",
         "x-schema-org": "schema:Organization",
         "x-spec": "openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md",
         "type": "object",
@@ -154,12 +154,12 @@
         "properties": {
           "consolidationGroupId": {
             "type": "string",
-            "description": "FK to ConsolidationGroup (REQ-CONS-001).",
+            "description": "FK to ConsolidationGroup.",
             "title": "Consolidation Group ID"
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to the entity's Administration (existing Administration register) — the source GL for aggregation (REQ-CONS-001 / REQ-CONS-002).",
+            "description": "FK to the entity's Administration (existing Administration register): the source GL for aggregation.",
             "title": "Administration ID"
           },
           "entityType": {
@@ -178,7 +178,7 @@
             "minimum": 0,
             "maximum": 100,
             "default": 100,
-            "description": "Eigendomspercentage held by the group (REQ-CONS-001 / REQ-CONS-006).",
+            "description": "Eigendomspercentage held by the group.",
             "title": "Ownership Percentage"
           },
           "votingPercentage": {
@@ -201,19 +201,19 @@
           "firstConsolidationDate": {
             "type": "string",
             "format": "date",
-            "description": "Date the entity entered the consolidation circle; aggregation skips pre-acquisition periods (REQ-CONS-009).",
+            "description": "Date the entity entered the consolidation circle; aggregation skips pre-acquisition periods.",
             "title": "First Consolidation Date"
           },
           "lastConsolidationDate": {
             "type": "string",
             "format": "date",
-            "description": "Date the entity left the circle on desinvestering; CTA recycles to P&L on exit (REQ-CONS-005).",
+            "description": "Date the entity left the circle on desinvestering; CTA recycles to P&L on exit.",
             "title": "Last Consolidation Date"
           },
           "functionalCurrency": {
             "type": "string",
             "default": "EUR",
-            "description": "ISO 4217 functionele valuta of the entity; divergence from reportingCurrency triggers currency translation (REQ-CONS-005).",
+            "description": "ISO 4217 functionele valuta of the entity; divergence from reportingCurrency triggers currency translation.",
             "title": "Functional Currency"
           },
           "state": {
@@ -247,7 +247,7 @@
             },
             "desinvested": {
               "label": "Desinvested",
-              "description": "Sold/exited; cumulative CTA recycled to P&L (REQ-CONS-005)."
+              "description": "Sold/exited; cumulative CTA recycled to P&L."
             }
           },
           "transitions": {
@@ -255,7 +255,7 @@
               "from": "draft",
               "to": "active",
               "label": "Activate entity",
-              "description": "Activate once method and ownership are consistent (REQ-CONS-001).",
+              "description": "Activate once method and ownership are consistent.",
               "requires": "OCA\\Shillinq\\Lifecycle\\ConsolidationGuard::canActivateEntity"
             },
             "suspend": {
@@ -272,13 +272,13 @@
               "from": "active",
               "to": "desinvested",
               "label": "Desinvest entity",
-              "description": "Mark the entity as sold; recycle cumulative CTA (REQ-CONS-005)."
+              "description": "Mark the entity as sold; recycle cumulative CTA."
             }
           }
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Group Entity is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Group Entity is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "IntercompanyRelation": {
@@ -286,7 +286,7 @@
         "icon": "SwapHorizontal",
         "version": "0.1.0",
         "title": "Intercompany Relation",
-        "description": "Mapping of an internal trade relationship between two group entities for elimination matching (REQ-CONS-003 / REQ-CONS-004). The \"wegwijzer\" that tells the eliminatie-engine which debtor account in entity A corresponds to which creditor account in entity B, with the matching tolerance.",
+        "description": "Mapping of an internal trade relationship between two group entities for elimination matching. The \"wegwijzer\" that tells the eliminatie-engine which debtor account in entity A corresponds to which creditor account in entity B, with the matching tolerance.",
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md",
         "type": "object",
@@ -299,17 +299,17 @@
         "properties": {
           "consolidationGroupId": {
             "type": "string",
-            "description": "FK to ConsolidationGroup (REQ-CONS-003).",
+            "description": "FK to ConsolidationGroup.",
             "title": "Consolidation Group ID"
           },
           "debtorEntityId": {
             "type": "string",
-            "description": "FK to the GroupEntity carrying the debtor/sales side (REQ-CONS-003).",
+            "description": "FK to the GroupEntity carrying the debtor/sales side.",
             "title": "Debtor Entity ID"
           },
           "creditorEntityId": {
             "type": "string",
-            "description": "FK to the GroupEntity carrying the creditor/purchase side (REQ-CONS-003).",
+            "description": "FK to the GroupEntity carrying the creditor/purchase side.",
             "title": "Creditor Entity ID"
           },
           "transactionType": {
@@ -323,7 +323,7 @@
               "loan",
               "marginInInventory"
             ],
-            "description": "Type of intercompany transaction the relation eliminates (REQ-CONS-003 / REQ-CONS-004).",
+            "description": "Type of intercompany transaction the relation eliminates.",
             "title": "Transaction Type"
           },
           "defaultEliminationAccount": {
@@ -363,7 +363,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Intercompany Relation is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Intercompany Relation is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "ConsolidationPeriod": {
@@ -371,7 +371,7 @@
         "icon": "CalendarSync",
         "version": "0.1.0",
         "title": "Consolidation Period",
-        "description": "A consolidation run for a specific period (REQ-CONS-002). Container for the elimination werkpapier; carries the workflow state (open → eliminationPhase → review → closed → archived), the executor, computed elimination totals and the exception queue of out-of-tolerance mismatches (design D3). Snapshot is immutable once closed (REQ-CONS-008).",
+        "description": "A consolidation run for a specific period. Container for the elimination werkpapier; carries the workflow state (open → eliminationPhase → review → closed → archived), the executor, computed elimination totals and the exception queue of out-of-tolerance mismatches (design D3). Snapshot is immutable once closed.",
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md",
         "type": "object",
@@ -385,30 +385,30 @@
         "properties": {
           "consolidationGroupId": {
             "type": "string",
-            "description": "FK to ConsolidationGroup (REQ-CONS-002).",
+            "description": "FK to ConsolidationGroup.",
             "title": "Consolidation Group ID"
           },
           "periodStart": {
             "type": "string",
             "format": "date",
-            "description": "Start of the consolidated period (REQ-CONS-002).",
+            "description": "Start of the consolidated period.",
             "title": "Period Start"
           },
           "periodEnd": {
             "type": "string",
             "format": "date",
-            "description": "End of the consolidated period; balansposten translate at this slotkoers (REQ-CONS-005).",
+            "description": "End of the consolidated period; balansposten translate at this slotkoers.",
             "title": "Period End"
           },
           "executor": {
             "type": "string",
-            "description": "Nextcloud user id of the user who initiated the consolidation (FK to the NC user directory — a person is an NC entity, never an invented schema).",
+            "description": "Nextcloud user id of the user who initiated the consolidation (FK to the NC user directory: a person is an NC entity, never an invented schema).",
             "title": "Executor"
           },
           "executionTimestamp": {
             "type": "string",
             "format": "date-time",
-            "description": "When the consolidation run was initiated (REQ-CONS-008).",
+            "description": "When the consolidation run was initiated.",
             "title": "Execution Timestamp"
           },
           "totalEliminationCount": {
@@ -487,13 +487,13 @@
               "archived"
             ],
             "default": "open",
-            "description": "Consolidation workflow status (design D10, REQ-CONS-008).",
+            "description": "Consolidation workflow status (design D10).",
             "title": "Status"
           }
         },
         "x-openregister-aggregations": {
           "totalEliminationCount": {
-            "description": "totalEliminationCount = COUNT(EliminationEntry) for this period (REQ-CONS-002).",
+            "description": "totalEliminationCount = COUNT(EliminationEntry) for this period.",
             "join": {
               "schema": "EliminationEntry",
               "condition": "EliminationEntry.consolidationPeriodId = @self.id"
@@ -507,7 +507,7 @@
             ]
           },
           "totalEliminationAmount": {
-            "description": "totalEliminationAmount = SUM(EliminationEntry.lines[].debit) for approved eliminations of this period (REQ-CONS-002).",
+            "description": "totalEliminationAmount = SUM(EliminationEntry.lines[].debit) for approved eliminations of this period.",
             "join": {
               "schema": "EliminationEntry",
               "condition": "EliminationEntry.consolidationPeriodId = @self.id AND EliminationEntry.reviewStatus = 'approved'"
@@ -535,11 +535,11 @@
             },
             "review": {
               "label": "Review",
-              "description": "Accountant reviews each elimination entry (approve/reject); balances must reconcile (REQ-CONS-008)."
+              "description": "Accountant reviews each elimination entry (approve/reject); balances must reconcile."
             },
             "closed": {
               "label": "Closed",
-              "description": "Snapshot immutably archived; no further changes (REQ-CONS-008)."
+              "description": "Snapshot immutably archived; no further changes."
             },
             "archived": {
               "label": "Archived",
@@ -551,21 +551,21 @@
               "from": "open",
               "to": "eliminationPhase",
               "label": "Start elimination phase",
-              "description": "Begin matching once every active entity's source GL is confirmed complete (REQ-CONS-002).",
+              "description": "Begin matching once every active entity's source GL is confirmed complete.",
               "requires": "OCA\\Shillinq\\Lifecycle\\ConsolidationGuard::canStartElimination"
             },
             "submitForReview": {
               "from": "eliminationPhase",
               "to": "review",
               "label": "Submit for review",
-              "description": "Submit once at least one elimination exists and no mismatch is left pending (REQ-CONS-008).",
+              "description": "Submit once at least one elimination exists and no mismatch is left pending.",
               "requires": "OCA\\Shillinq\\Lifecycle\\ConsolidationGuard::canSubmitForReview"
             },
             "close": {
               "from": "review",
               "to": "closed",
               "label": "Close consolidation",
-              "description": "Close once every elimination entry is approved (none pending/rejected) and the accountant signs off (REQ-CONS-008).",
+              "description": "Close once every elimination entry is approved (none pending/rejected) and the accountant signs off.",
               "requires": "OCA\\Shillinq\\Lifecycle\\ConsolidationGuard::canClosePeriod"
             },
             "archive": {
@@ -584,7 +584,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Consolidation Period is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Consolidation Period is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "EliminationEntry": {
@@ -592,7 +592,7 @@
         "icon": "BookMinusOutline",
         "version": "0.1.0",
         "title": "Elimination Entry",
-        "description": "An individual elimination booking within a consolidation period (REQ-CONS-003 / REQ-CONS-004). Carries debit/credit lines per GL account, the source entities/transactions for drill-down, the auto-generated flag and the full accountant-review audit trail (who/when/why, design D7). Immutable once the period closes; a reversal is a new entry, never an overwrite (REQ-CONS-008).",
+        "description": "An individual elimination booking within a consolidation period. Carries debit/credit lines per GL account, the source entities/transactions for drill-down, the auto-generated flag and the full accountant-review audit trail (who/when/why, design D7). Immutable once the period closes; a reversal is a new entry, never an overwrite.",
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md",
         "type": "object",
@@ -608,7 +608,7 @@
         "properties": {
           "consolidationPeriodId": {
             "type": "string",
-            "description": "FK to ConsolidationPeriod (REQ-CONS-003).",
+            "description": "FK to ConsolidationPeriod.",
             "title": "Consolidation Period ID"
           },
           "eliminationType": {
@@ -624,7 +624,7 @@
               "minorityInterestSplit",
               "roundingDifference"
             ],
-            "description": "Type of elimination booking (REQ-CONS-003 / REQ-CONS-004 / REQ-CONS-005 / REQ-CONS-006 / REQ-CONS-007).",
+            "description": "Type of elimination booking.",
             "title": "Elimination Type"
           },
           "bookingDate": {
@@ -640,7 +640,7 @@
           },
           "lines": {
             "type": "array",
-            "description": "Debit/credit entries per GL account; debit total must equal credit total (REQ-CONS-003).",
+            "description": "Debit/credit entries per GL account; debit total must equal credit total.",
             "items": {
               "type": "object",
               "required": [
@@ -675,7 +675,7 @@
           },
           "sourceEntities": {
             "type": "array",
-            "description": "GroupEntity ids involved in the elimination (REQ-CONS-008).",
+            "description": "GroupEntity ids involved in the elimination.",
             "items": {
               "type": "string"
             },
@@ -683,7 +683,7 @@
           },
           "sourceTransactions": {
             "type": "array",
-            "description": "Links to the original journalEntry ids in the source administrations for drill-down (REQ-CONS-008).",
+            "description": "Links to the original journalEntry ids in the source administrations for drill-down.",
             "items": {
               "type": "string"
             },
@@ -703,7 +703,7 @@
               "rejected"
             ],
             "default": "pending",
-            "description": "Accountant review status (REQ-CONS-008).",
+            "description": "Accountant review status.",
             "title": "Review Status"
           },
           "reviewedBy": {
@@ -713,7 +713,7 @@
           },
           "reviewComment": {
             "type": "string",
-            "description": "Accountant's approval or rejection rationale (REQ-CONS-008).",
+            "description": "Accountant's approval or rejection rationale.",
             "title": "Review Comment"
           }
         },
@@ -731,7 +731,7 @@
             },
             "rejected": {
               "label": "Rejected",
-              "description": "Accountant rejected with rationale; backed out of the consolidation (REQ-CONS-008)."
+              "description": "Accountant rejected with rationale; backed out of the consolidation."
             }
           },
           "transitions": {
@@ -739,21 +739,21 @@
               "from": "pending",
               "to": "approved",
               "label": "Approve elimination",
-              "description": "Approve once a reviewer is recorded (REQ-CONS-008).",
+              "description": "Approve once a reviewer is recorded.",
               "requires": "OCA\\Shillinq\\Lifecycle\\ConsolidationGuard::canApproveElimination"
             },
             "reject": {
               "from": "pending",
               "to": "rejected",
               "label": "Reject elimination",
-              "description": "Reject once a reviewer and rationale are recorded (REQ-CONS-008).",
+              "description": "Reject once a reviewer and rationale are recorded.",
               "requires": "OCA\\Shillinq\\Lifecycle\\ConsolidationGuard::canRejectElimination"
             }
           }
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Elimination Entry is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Elimination Entry is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "TranslationAdjustment": {
@@ -761,7 +761,7 @@
         "icon": "CurrencyUsd",
         "version": "0.1.0",
         "title": "Translation Adjustment",
-        "description": "Currency revaluation (CTA) for a foreign-currency entity per the current-rate method (RJ 122 / IAS 21, REQ-CONS-005). Records the functional- and reporting-currency amounts and the isolated CTA component posted to OCI/eigen vermogen — never to the P&L (design D4).",
+        "description": "Currency revaluation (CTA) for a foreign-currency entity per the current-rate method (RJ 122 / IAS 21). Records the functional- and reporting-currency amounts and the isolated CTA component posted to OCI/eigen vermogen: never to the P&L (design D4).",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md",
         "type": "object",
@@ -777,17 +777,17 @@
         "properties": {
           "consolidationPeriodId": {
             "type": "string",
-            "description": "FK to ConsolidationPeriod (REQ-CONS-005).",
+            "description": "FK to ConsolidationPeriod.",
             "title": "Consolidation Period ID"
           },
           "entityId": {
             "type": "string",
-            "description": "FK to the foreign-currency GroupEntity (REQ-CONS-005).",
+            "description": "FK to the foreign-currency GroupEntity.",
             "title": "Entity ID"
           },
           "currencyPair": {
             "type": "string",
-            "description": "Currency pair, e.g. USD-EUR (REQ-CONS-005).",
+            "description": "Currency pair, e.g. USD-EUR.",
             "example": "USD-EUR",
             "title": "Currency Pair"
           },
@@ -803,17 +803,17 @@
           },
           "amountInFunctionalCurrency": {
             "type": "number",
-            "description": "Amount in the entity's functional currency (REQ-CONS-005).",
+            "description": "Amount in the entity's functional currency.",
             "title": "Amount In Functional Currency"
           },
           "amountInReportingCurrency": {
             "type": "number",
-            "description": "Translated amount in the group reporting currency (REQ-CONS-005).",
+            "description": "Translated amount in the group reporting currency.",
             "title": "Amount In Reporting Currency"
           },
           "ctaComponent": {
             "type": "number",
-            "description": "CTA portion posted to OCI/eigen vermogen; non-recycling until desinvestering (REQ-CONS-005).",
+            "description": "CTA portion posted to OCI/eigen vermogen; non-recycling until desinvestering.",
             "title": "Cta Component"
           },
           "notes": {
@@ -824,7 +824,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Translation Adjustment is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Translation Adjustment is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "MinorityInterest": {
@@ -832,7 +832,7 @@
         "icon": "AccountMultipleOutline",
         "version": "0.1.0",
         "title": "Minority Interest",
-        "description": "Non-controlling interest tracking per entity with ownership <100% (REQ-CONS-006). Records the third-party percentage and rolls the opening balance + period result share − dividend forward to the closing balance, presented separately under geconsolideerd eigen vermogen as \"Aandeel derden\" (RJ 217 §8 / IFRS 10 §B95-B96, design D6).",
+        "description": "Non-controlling interest tracking per entity with ownership <100%. Records the third-party percentage and rolls the opening balance + period result share − dividend forward to the closing balance, presented separately under geconsolideerd eigen vermogen as \"Aandeel derden\" (RJ 217 §8 / IFRS 10 §B95-B96, design D6).",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md",
         "type": "object",
@@ -845,24 +845,24 @@
         "properties": {
           "consolidationGroupId": {
             "type": "string",
-            "description": "FK to ConsolidationGroup (REQ-CONS-006).",
+            "description": "FK to ConsolidationGroup.",
             "title": "Consolidation Group ID"
           },
           "entityId": {
             "type": "string",
-            "description": "FK to the GroupEntity with ownership <100% (REQ-CONS-006).",
+            "description": "FK to the GroupEntity with ownership <100%.",
             "title": "Entity ID"
           },
           "thirdPartyPercentage": {
             "type": "number",
             "minimum": 0,
             "maximum": 100,
-            "description": "Percentage held by third parties = 100 − ownershipPercentage (REQ-CONS-006).",
+            "description": "Percentage held by third parties = 100 − ownershipPercentage.",
             "title": "Third Party Percentage"
           },
           "openingBalance": {
             "type": "number",
-            "description": "Prior-period ending minority balance (REQ-CONS-006).",
+            "description": "Prior-period ending minority balance.",
             "title": "Opening Balance"
           },
           "periodResultShare": {
@@ -872,7 +872,7 @@
           },
           "dividendToMinority": {
             "type": "number",
-            "description": "Dividend paid/declared to third parties (REQ-CONS-006).",
+            "description": "Dividend paid/declared to third parties.",
             "title": "Dividend To Minority"
           },
           "closingBalance": {
@@ -884,13 +884,13 @@
         "x-openregister-calculations": {
           "closingBalance": {
             "type": "number",
-            "description": "closingBalance = openingBalance + periodResultShare − dividendToMinority (REQ-CONS-006, design D6). Declarative per ADR-031 — no MinorityInterestCalculator.php.",
+            "description": "closingBalance = openingBalance + periodResultShare − dividendToMinority (design D6). Declarative per ADR-031: no MinorityInterestCalculator.php.",
             "expr": "@self.openingBalance + @self.periodResultShare - @self.dividendToMinority"
           }
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Minority Interest is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Minority Interest is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Goodwill": {
@@ -898,7 +898,7 @@
         "icon": "DiamondStone",
         "version": "0.1.0",
         "title": "Goodwill",
-        "description": "Acquisition goodwill/badwill with amortisation schedule (REQ-CONS-007). On first consolidation of an acquired subsidiary, purchasePrice − fairValueNetAssetsAcquired = goodwill (positive) or badwill (negative). Amortisation method is gated by the group's reportingFramework: RJ linear (10/20yr) vs IFRS impairment-test (design D5).",
+        "description": "Acquisition goodwill/badwill with amortisation schedule. On first consolidation of an acquired subsidiary, purchasePrice − fairValueNetAssetsAcquired = goodwill (positive) or badwill (negative). Amortisation method is gated by the group's reportingFramework: RJ linear (10/20yr) vs IFRS impairment-test (design D5).",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md",
         "type": "object",
@@ -913,28 +913,28 @@
         "properties": {
           "consolidationGroupId": {
             "type": "string",
-            "description": "FK to ConsolidationGroup (REQ-CONS-007).",
+            "description": "FK to ConsolidationGroup.",
             "title": "Consolidation Group ID"
           },
           "subsidiaryEntityId": {
             "type": "string",
-            "description": "FK to the acquired GroupEntity (REQ-CONS-007).",
+            "description": "FK to the acquired GroupEntity.",
             "title": "Subsidiary Entity ID"
           },
           "acquisitionDate": {
             "type": "string",
             "format": "date",
-            "description": "Acquisition date (REQ-CONS-007).",
+            "description": "Acquisition date.",
             "title": "Acquisition Date"
           },
           "purchasePrice": {
             "type": "number",
-            "description": "Purchase consideration (REQ-CONS-007).",
+            "description": "Purchase consideration.",
             "title": "Purchase Price"
           },
           "fairValueNetAssetsAcquired": {
             "type": "number",
-            "description": "Fair value of identifiable net assets acquired (RJ 216 / IFRS 3, REQ-CONS-007).",
+            "description": "Fair value of identifiable net assets acquired (RJ 216 / IFRS 3).",
             "title": "Fair Value Net Assets Acquired"
           },
           "goodwillAmount": {
@@ -997,13 +997,13 @@
         "x-openregister-calculations": {
           "goodwillAmount": {
             "type": "number",
-            "description": "goodwillAmount = purchasePrice − fairValueNetAssetsAcquired (positive = goodwill, negative = badwill) per RJ 216 / IFRS 3 (REQ-CONS-007, design D5). Declarative per ADR-031 — no GoodwillCalculator.php.",
+            "description": "goodwillAmount = purchasePrice − fairValueNetAssetsAcquired (positive = goodwill, negative = badwill) per RJ 216 / IFRS 3 (design D5). Declarative per ADR-031: no GoodwillCalculator.php.",
             "expr": "@self.purchasePrice - @self.fairValueNetAssetsAcquired"
           }
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Goodwill is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Goodwill is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "ConsolidatedBalance": {
@@ -1011,7 +1011,7 @@
         "icon": "ScaleBalance",
         "version": "0.1.0",
         "title": "Consolidated Balance",
-        "description": "Output object with aggregated + eliminated balance totals per RGS-rapportageregel, with comparative prior-year columns (REQ-CONS-002 / REQ-CONS-009). The balance-sheet equation totalAssets = totalLiabilities + totalEquity must hold (design D10, validated by ConsolidationGuard).",
+        "description": "Output object with aggregated + eliminated balance totals per RGS-rapportageregel, with comparative prior-year columns. The balance-sheet equation totalAssets = totalLiabilities + totalEquity must hold (design D10, validated by ConsolidationGuard).",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md",
         "type": "object",
@@ -1024,18 +1024,18 @@
         "properties": {
           "consolidationGroupId": {
             "type": "string",
-            "description": "FK to ConsolidationGroup (REQ-CONS-002).",
+            "description": "FK to ConsolidationGroup.",
             "title": "Consolidation Group ID"
           },
           "consolidationPeriodId": {
             "type": "string",
-            "description": "FK to ConsolidationPeriod (REQ-CONS-002).",
+            "description": "FK to ConsolidationPeriod.",
             "title": "Consolidation Period ID"
           },
           "reportDate": {
             "type": "string",
             "format": "date",
-            "description": "Balance sheet date (REQ-CONS-002).",
+            "description": "Balance sheet date.",
             "title": "Report Date"
           },
           "lines": {
@@ -1140,7 +1140,7 @@
               "from": "draft",
               "to": "final",
               "label": "Finalise balance",
-              "description": "Finalise once assets = liabilities + equity (REQ-CONS-002).",
+              "description": "Finalise once assets = liabilities + equity.",
               "requires": "OCA\\Shillinq\\Lifecycle\\ConsolidationGuard::canFinalizeBalance"
             },
             "publish": {
@@ -1152,7 +1152,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Consolidated Balance is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Consolidated Balance is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "ConsolidatedIncomeStatement": {
@@ -1160,7 +1160,7 @@
         "icon": "ChartLine",
         "version": "0.1.0",
         "title": "Consolidated Income Statement",
-        "description": "Output object with consolidated V&W per RGS-rapportageregel, split between parent shareholders and minority interest, with comparative prior-year columns (REQ-CONS-002 / REQ-CONS-006 / REQ-CONS-009). The split netProfitTotal = attributedToParent + attributedToMinority must hold (validated by ConsolidationGuard).",
+        "description": "Output object with consolidated V&W per RGS-rapportageregel, split between parent shareholders and minority interest, with comparative prior-year columns. The split netProfitTotal = attributedToParent + attributedToMinority must hold (validated by ConsolidationGuard).",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md",
         "type": "object",
@@ -1173,18 +1173,18 @@
         "properties": {
           "consolidationGroupId": {
             "type": "string",
-            "description": "FK to ConsolidationGroup (REQ-CONS-002).",
+            "description": "FK to ConsolidationGroup.",
             "title": "Consolidation Group ID"
           },
           "consolidationPeriodId": {
             "type": "string",
-            "description": "FK to ConsolidationPeriod (REQ-CONS-002).",
+            "description": "FK to ConsolidationPeriod.",
             "title": "Consolidation Period ID"
           },
           "reportDate": {
             "type": "string",
             "format": "date",
-            "description": "Income statement date (REQ-CONS-002).",
+            "description": "Income statement date.",
             "title": "Report Date"
           },
           "lines": {
@@ -1257,12 +1257,12 @@
           },
           "netProfitAttributedToParent": {
             "type": "number",
-            "description": "Computed net profit attributable to parent shareholders (REQ-CONS-006).",
+            "description": "Computed net profit attributable to parent shareholders.",
             "title": "Net Profit Attributed To Parent"
           },
           "netProfitAttributedToMinority": {
             "type": "number",
-            "description": "Computed net profit attributable to minority interest (REQ-CONS-006).",
+            "description": "Computed net profit attributable to minority interest.",
             "title": "Net Profit Attributed To Minority"
           },
           "state": {
@@ -1299,7 +1299,7 @@
               "from": "draft",
               "to": "final",
               "label": "Finalise income statement",
-              "description": "Finalise once netProfit = parent + minority split (REQ-CONS-006).",
+              "description": "Finalise once netProfit = parent + minority split.",
               "requires": "OCA\\Shillinq\\Lifecycle\\ConsolidationGuard::canFinalizeIncomeStatement"
             },
             "publish": {
@@ -1311,7 +1311,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Consolidated Income Statement is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Consolidated Income Statement is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     },

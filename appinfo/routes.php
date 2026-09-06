@@ -67,7 +67,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // #[AuthorizedAdminSetting(Application::class)].
             ['name' => 'fxRateAdmin#status', 'url' => '/api/admin/fx-rate-import-status', 'verb' => 'GET'],
 
-        // integration-config-to-openconnector (formerly Shillinq W8):
+        // The integration-config-to-openconnector change (formerly W8):
         // read-only admin roster over the 15 dormant external-API
         // adapter families (Digipoort/SBR, Salarisbureau, RvO, IB47,
         // CBS x2, BZK SiSa, Mollie, Bunq, KvK, UWV, Treasury Rates,
@@ -99,6 +99,13 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // Both #[NoAdminRequired]; RBAC/multitenancy enforced by OR reads.
             ['name' => 'financialDashboard#series', 'url' => '/api/dashboard/financial-series', 'verb' => 'GET'],
             ['name' => 'financialDashboard#summary', 'url' => '/api/dashboard/financial-summary', 'verb' => 'GET'],
+
+        // Subject cost (subject-cost-aggregation, ADR-081): the employer cost
+        // of the hours booked against one domain object. The domain app
+        // classifies and displays; Shillinq aggregates, because Shillinq owns
+        // the ledger. #[NoAdminRequired]; scoped to the caller's
+        // AdministrationMembership by SubjectCostService, not by the OR read.
+            ['name' => 'subjectCost#index', 'url' => '/api/subject-cost', 'verb' => 'GET'],
 
         // Spend analytics (spend-analytics): single-dimension spend analysis
         // (by supplier / category / cost-centre / period) computed server-side
@@ -638,7 +645,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // authentication + role gating happens in the controller body.
             ['name' => 'wbsoAccountApi#hierarchy', 'url' => '/api/v1/accounts/hierarchy', 'verb' => 'GET'],
 
-            // budget-grid-view REQ-BGV-001/002/003 — the begroting grid's own
+            // Budget-grid-view REQ-BGV-001/002/003: the begroting grid's own
             // single read endpoint. One request returns the whole tree +
             // column set pre-computed (design.md §1c: expand/collapse must
             // cost zero further requests).

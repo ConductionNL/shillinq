@@ -35,7 +35,11 @@
  * specs run for real the moment the register imports.
  */
 
-import { APIRequestContext, expect } from '@playwright/test'
+import type { APIResponse } from '@playwright/test'
+import type { APIRequestContext } from '@playwright/test'
+
+import { expect } from '@playwright/test'
+import { randomUUID } from 'node:crypto'
 
 /** OpenRegister generic object API base. */
 const OR = '/index.php/apps/openregister/api'
@@ -44,7 +48,12 @@ const OR = '/index.php/apps/openregister/api'
 export const REGISTER_SLUG = 'shillinq'
 
 /** A unique, filesystem/slug-safe prefix for every object this run seeds. */
-export const UNIQUE_PREFIX = `e2efin-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e4)}`
+// `randomUUID`, not `Math.random`. The prefix only has to be unique across
+// concurrent runs, but it flows into account numbers, and CodeQL reads that
+// as a security context and raises js/insecure-randomness (alert 21, high).
+// The crypto source is one call, needs no fallback under Node 19+, and is
+// unique for a better reason than four random digits were.
+export const UNIQUE_PREFIX = `e2efin-${Date.now().toString(36)}-${randomUUID().slice(0, 8)}`
 
 /**
  * One created object, tracked for afterAll cleanup.
@@ -210,10 +219,7 @@ export class OrFixtures {
 	 * @param id     The object id (uuid).
 	 * @param action The lifecycle action name (e.g. 'verleen', 'approve').
 	 */
-	async transition(
-		id: string,
-		action: string,
-	): Promise<import('@playwright/test').APIResponse> {
+	async transition(id: string, action: string): Promise<APIResponse> {
 		return this.api.post(`${OR}/objects/${id}/transition`, {
 			headers: await this.headers(),
 			data: { action },

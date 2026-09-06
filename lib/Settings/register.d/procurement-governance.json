@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "procurement-governance",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Two generic, jurisdiction-neutral procurement-governance controls abstracted from the retired purchaseq slug set (purchaseq#5). SupplierQualification: approve-before-first-PO onboarding with a duplicate-supplier check on taxId/IBAN and required documents/certificates that expire — enforced by SupplierQualificationGuard behind a default-OFF policy require_supplier_qualification_for_po. FrameworkAgreement: a supplier contract with a spend ceiling that PurchaseOrder call-offs draw down against — a call-off exceeding the remaining ceiling is blocked by FrameworkAgreementDrawdownGuard. Both consume OpenRegister's ObjectService (ADR-022) and reuse the existing PurchaseOrderService without re-implementing any business logic (ADR-031). Money fields are integer euro cents."
+    "description": "Two generic, jurisdiction-neutral procurement-governance controls abstracted from the retired purchaseq slug set (purchaseq#5). SupplierQualification: approve-before-first-PO onboarding with a duplicate-supplier check on taxId/IBAN and required documents/certificates that expire. Enforced by SupplierQualificationGuard behind a default-OFF policy require_supplier_qualification_for_po. FrameworkAgreement: a supplier contract with a spend ceiling that PurchaseOrder call-offs draw down against. A call-off exceeding the remaining ceiling is blocked by FrameworkAgreementDrawdownGuard. Both consume OpenRegister's ObjectService (ADR-022) and reuse the existing PurchaseOrderService without re-implementing any business logic (ADR-031). Money fields are integer euro cents."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "AccountCheckOutline",
         "version": "0.1.0",
         "title": "Supplier Qualification",
-        "description": "Generic supplier onboarding/qualification record. A supplier must be qualified (all required documents provided and unexpired) before its first PurchaseOrder when the require_supplier_qualification_for_po policy is enabled (REQ-PG-002). Registration rejects a duplicate supplier on taxId or IBAN (REQ-PG-003). Abstracted from purchaseq's supplier-onboarding-vragenlijst as a jurisdiction-neutral control — no country-specific questionnaire is modelled.",
+        "description": "Generic supplier onboarding/qualification record. A supplier must be qualified (all required documents provided and unexpired) before its first PurchaseOrder when the require_supplier_qualification_for_po policy is enabled. Registration rejects a duplicate supplier on taxId or IBAN. Abstracted from purchaseq's supplier-onboarding-vragenlijst as a jurisdiction-neutral control: no country-specific questionnaire is modelled.",
         "x-schema-org": "schema:Organization",
         "x-spec": "openspec/specs/procurement-governance/spec.md",
         "type": "object",
@@ -38,13 +38,13 @@
           },
           "taxId": {
             "type": "string",
-            "description": "Supplier tax/VAT identifier — checked for duplicates at registration (jurisdiction-neutral free string).",
+            "description": "Supplier tax/VAT identifier: checked for duplicates at registration (jurisdiction-neutral free string).",
             "example": "NL001234567B01",
             "title": "Tax / VAT ID"
           },
           "iban": {
             "type": "string",
-            "description": "Supplier bank account (IBAN) — checked for duplicates at registration.",
+            "description": "Supplier bank account (IBAN): checked for duplicates at registration.",
             "example": "NL91ABNA0417164300",
             "title": "IBAN"
           },
@@ -105,7 +105,7 @@
           "states": {
             "draft": {
               "label": "Concept",
-              "description": "Supplier registered; not yet qualified — cannot be used for a first PurchaseOrder while enforcement is on."
+              "description": "Supplier registered; not yet qualified: cannot be used for a first PurchaseOrder while enforcement is on."
             },
             "qualified": {
               "label": "Gekwalificeerd",
@@ -125,7 +125,7 @@
               "from": "draft",
               "to": "qualified",
               "label": "Kwalificeren",
-              "description": "Qualify the supplier once every required document is provided and unexpired (REQ-PG-002), enforced by SupplierQualificationService::qualify()."
+              "description": "Qualify the supplier once every required document is provided and unexpired, enforced by SupplierQualificationService:qualify."
             },
             "expire": {
               "from": "qualified",
@@ -163,7 +163,7 @@
         "icon": "FileSign",
         "version": "0.1.0",
         "title": "Framework Agreement",
-        "description": "Generic framework agreement (raamovereenkomst abstracted): a supplier contract with a spend ceiling that PurchaseOrder call-offs draw down against. A call-off exceeding the remaining ceiling is blocked by FrameworkAgreementDrawdownGuard (REQ-PG-004). Distinct from the generic Contract (contract-lifecycle-management), which has no ceiling/drawdown accounting. Money is integer euro cents (ADR-022).",
+        "description": "Generic framework agreement (raamovereenkomst abstracted): a supplier contract with a spend ceiling that PurchaseOrder call-offs draw down against. A call-off exceeding the remaining ceiling is blocked by FrameworkAgreementDrawdownGuard. Distinct from the generic Contract (contract-lifecycle-management), which has no ceiling/drawdown accounting. Money is integer euro cents (ADR-022).",
         "x-schema-org": "schema:Contract",
         "x-spec": "openspec/specs/procurement-governance/spec.md",
         "type": "object",
@@ -201,7 +201,7 @@
           },
           "drawnAmount": {
             "type": "integer",
-            "description": "Cumulative amount already called off against the ceiling, in integer euro cents. Server-maintained by FrameworkAgreementService::recordCallOff().",
+            "description": "Cumulative amount already called off against the ceiling, in integer euro cents. Server-maintained by FrameworkAgreementService:recordCallOff.",
             "example": 0,
             "title": "Drawn Amount (cents)"
           },

@@ -21,8 +21,10 @@
  * @spec openspec/changes/bookkeeping-trial-balance/tasks.md
  */
 
-import { test, expect, request as pwRequest } from '@playwright/test'
-import { UNIQUE_PREFIX, OrFixtures, REGISTER_SLUG } from './_fixtures'
+import type { APIRequestContext } from '@playwright/test'
+
+import { expect, request as pwRequest, test } from '@playwright/test'
+import { OrFixtures, REGISTER_SLUG, UNIQUE_PREFIX } from './_fixtures.ts'
 
 const APP = '/apps/shillinq'
 const ADMIN_ID = `${UNIQUE_PREFIX}-adm`
@@ -30,7 +32,7 @@ const NEEDED = ['Account']
 
 test.describe('shillinq finance — ledger Account full CRUD with persistence', () => {
 	let fx: OrFixtures
-	let api: import('@playwright/test').APIRequestContext
+	let api: APIRequestContext
 
 	test.beforeAll(async ({ baseURL }) => {
 		api = await pwRequest.newContext({

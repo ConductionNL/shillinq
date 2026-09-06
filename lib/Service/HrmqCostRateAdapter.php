@@ -64,18 +64,43 @@ use Throwable;
 class HrmqCostRateAdapter {
 
 	/**
-	 * The hrmq cost-rate service, as a string so nothing resolves at compile time.
+	 * The cost-rate service, newest name first, as strings so nothing resolves
+	 * at compile time.
 	 *
-	 * @var string
+	 * BOTH NAMES, AND THIS IS NOT BELT-AND-BRACES. The app renamed hrmq to
+	 * humaniq and its namespace moved with it, so the single old name here
+	 * matched nothing: `class_exists()` answered false on every instance and
+	 * `ratesFor()` returned an empty map before doing any work. A duck-typed
+	 * lookup pointed at a name nothing answers to is a silent no-op, never an
+	 * error. shillinq and humaniq also update independently, so an old humaniq
+	 * beside a new shillinq is a real state rather than a hypothetical.
+	 *
+	 * @var array<int, string>
 	 */
-	private const HRMQ_COST_RATE_SERVICE = 'OCA\\Hrmq\\Service\\EmployeeCostRateService';
+	private const COST_RATE_SERVICES = [
+		'OCA\\Humaniq\\Service\\EmployeeCostRateService',
+		'OCA\\Hrmq\\Service\\EmployeeCostRateService',
+	];
 
 	/**
-	 * The register hrmq stores its Employee / EmploymentContract objects in.
+	 * The register slugs the Employee / EmploymentContract objects may live in,
+	 * newest first.
 	 *
-	 * @var string
+	 * The humaniq#160 change renamed the register slug `hrmq` to `humaniq` and shipped
+	 * `MigrateRegisterSlug` to rename the row in place, so an upgraded instance
+	 * carries only the new one. The old name stays here for the same
+	 * independent-update reason as the service names above.
+	 *
+	 * @var array<int, string>
 	 */
-	private const HRMQ_REGISTER = 'hrmq';
+	private const REGISTERS = ['humaniq', 'hrmq'];
+
+	/**
+	 * The register slug that answered, cached per request once resolved.
+	 *
+	 * @var string|null
+	 */
+	private ?string $resolvedRegister = null;
 
 	/**
 	 * Wire collaborators.
@@ -167,18 +192,67 @@ class HrmqCostRateAdapter {
 	 * @spec openspec/specs/subject-cost-aggregation/spec.md
 	 */
 	private function costRateService(): mixed {
-		if (class_exists(class: self::HRMQ_COST_RATE_SERVICE) === false) {
-			$this->logger->debug('HrmqCostRateAdapter: hrmq is not installed — no wage rates available');
-			return null;
+		foreach (self::COST_RATE_SERVICES as $candidate) {
+			// Neither class exists in the analysis environment, which is the
+			// whole point: humaniq is a sibling app that may or may not be
+			// installed, and this probe is what makes its absence a normal
+			// state instead of a fatal.
+			// @phpstan-ignore-next-line
+			if (class_exists(class: $candidate) === false) {
+				continue;
+			}
+
+			try {
+				return $this->container->get(id: $candidate);
+			} catch (Throwable $e) {
+				$this->logger->debug(
+					'HrmqCostRateAdapter: ' . $candidate . ' present but unresolvable: ' . $e->getMessage()
+				);
+			}
 		}
 
-		try {
-			return $this->container->get(id: self::HRMQ_COST_RATE_SERVICE);
-		} catch (Throwable $e) {
-			$this->logger->debug('HrmqCostRateAdapter: hrmq present but unresolvable: ' . $e->getMessage());
-			return null;
-		}
+		$this->logger->debug('HrmqCostRateAdapter: humaniq is not installed, no wage rates available');
+		return null;
 	}//end costRateService()
+
+	/**
+	 * The register slug that answers on this instance.
+	 *
+	 * Probed rather than assumed, because getting it wrong costs nothing
+	 * visible: a read against a register that is not there throws, the caller
+	 * catches, the person is omitted, and the aggregate simply reports the
+	 * cost as unavailable. That is indistinguishable from an employee who
+	 * genuinely has no rate.
+	 *
+	 * Public because SubjectCostService reads the hour rows out of the same
+	 * register and there must be exactly one place that knows where humaniq
+	 * lives. Two copies of a slug list drift, and the drift is silent.
+	 *
+	 * @return string The register slug, defaulting to the newest name.
+	 *
+	 * @spec openspec/specs/subject-cost-aggregation/spec.md
+	 */
+	public function registerSlug(): string {
+		if ($this->resolvedRegister !== null) {
+			return $this->resolvedRegister;
+		}
+
+		foreach (self::REGISTERS as $candidate) {
+			try {
+				$this->container->get(id: 'OCA\\OpenRegister\\Service\\ObjectService')
+					->setRegister($candidate);
+				$this->resolvedRegister = $candidate;
+				return $candidate;
+			} catch (Throwable $e) {
+				$this->logger->debug(
+					'HrmqCostRateAdapter: register ' . $candidate . ' did not resolve: ' . $e->getMessage()
+				);
+			}
+		}
+
+		$this->resolvedRegister = self::REGISTERS[0];
+		return $this->resolvedRegister;
+	}//end registerSlug()
 
 	/**
 	 * Read one object from hrmq's register under the caller's RBAC.
@@ -193,7 +267,7 @@ class HrmqCostRateAdapter {
 	private function hrmqObject(string $schema, string $id): ?array {
 		try {
 			$row = $this->container->get(id: 'OCA\\OpenRegister\\Service\\ObjectService')
-				->find(id: $id, register: self::HRMQ_REGISTER, schema: $schema);
+				->find(id: $id, register: $this->registerSlug(), schema: $schema);
 		} catch (Throwable $e) {
 			$this->logger->debug(
 				'HrmqCostRateAdapter: ' . $schema . ' ' . $id . ' not readable: ' . $e->getMessage()
@@ -222,7 +296,7 @@ class HrmqCostRateAdapter {
 		try {
 			$rows = $this->container->get(id: 'OCA\\OpenRegister\\Service\\ObjectService')
 				->findAll(
-					register: self::HRMQ_REGISTER,
+					register: $this->registerSlug(),
 					schema: 'EmploymentContract',
 					filters: ['employee' => $employeeId, 'status' => 'active']
 				);
