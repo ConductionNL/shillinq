@@ -37,15 +37,18 @@ use RuntimeException;
  * neither of those could reach: that an hour set is read for a subject at all,
  * and that the caller's administration scope is applied to it.
  *
+ * The aggregator below is REAL, not a double: the composition is only worth
+ * asserting against the policy it actually delegates to. That is why the class
+ * is declared on the annotation beneath this text, because the configs set
+ * beStrictAboutCoverageMetadata, which makes an undeclared execution a RISKY
+ * test, and failOnRisky turns that into a failed job. It bites only when
+ * coverage is enabled, so a run passing --no-coverage cannot show it.
+ *
+ * Do not name an annotation in this prose. PHPUnit scans the whole docblock,
+ * so the bare word in a sentence parses as an annotation carrying no value and
+ * warns once per test method in the class.
+ *
  * @covers \OCA\Shillinq\Service\SubjectCostService
- *
- * The aggregator is REAL here, not a double: the composition is only worth
- * asserting against the policy it actually delegates to. Declared with @uses
- * because the configs set beStrictAboutCoverageMetadata, which makes an
- * undeclared execution a RISKY test, and failOnRisky turns that into a failed
- * job. It bites only when coverage is enabled, so a --no-coverage run cannot
- * show it.
- *
  * @uses \OCA\Shillinq\Service\SubjectCostAggregator
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters

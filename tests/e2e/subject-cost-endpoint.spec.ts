@@ -9,8 +9,10 @@
  * The subject-cost-aggregation capability shipped with no way to call it.
  * `SubjectCostAggregator` and `HrmqCostRateAdapter` were implemented,
  * spec-tagged and unit-tested, and no route, service or listener reached
- * either one. Every scenario in the spec was tagged `@e2e exclude ... asserted
- * by PHPUnit`, so no end-to-end run could notice there was no endpoint at all.
+ * either one. Every scenario in the spec was excluded from e2e in favour of
+ * PHPUnit, so no end-to-end run could notice there was no endpoint at all.
+ * (The exclusion marker is deliberately not spelled out here: a tag named in
+ * prose is still a tag to the parser that scans this file.)
  *
  * These tests are the part PHPUnit cannot assert: that the route is registered,
  * that the controller resolves through the container with its real
