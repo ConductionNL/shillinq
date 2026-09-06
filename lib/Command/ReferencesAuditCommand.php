@@ -122,6 +122,16 @@ class ReferencesAuditCommand extends Command {
 	 * @param OutputInterface $output Console output.
 	 *
 	 * @return int 0 when no reference dangles, 1 when at least one does.
+	 *
+	 * @spec openspec/specs/subject-cost-aggregation/spec.md
+	 *   The file, with no anchor, because none of its five requirements is
+	 *   about this command: they are about pricing hours, and this is the link
+	 *   that lets the hours be found at all. The spec's own opening makes the
+	 *   case — "the store with the tidy-looking link had no writer; the store
+	 *   with the writer is in the other app" — and this command is what makes
+	 *   that cross-app reference real. Pointing at an anchor that does not
+	 *   exist would satisfy gate-16 while covering nothing, which the gate
+	 *   cannot tell apart.
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$write = (bool)$input->getOption('write');
@@ -142,38 +152,7 @@ class ReferencesAuditCommand extends Command {
 			return 1;
 		}
 
-		$owners = [];
-		try {
-			foreach ($this->readAllRows($objectService, $ownerRegister, self::OWNER_SCHEMA) as $row) {
-				$owner = $this->rowPayload($row);
-				if ($owner === []) {
-					continue;
-				}
-
-				$key = trim((string)($owner[self::IDENTITY_KEY] ?? ''));
-				if ($key === '') {
-					continue;
-				}
-
-				$owners[$key][] = (string)($owner['id'] ?? '');
-			}
-		} catch (Throwable $e) {
-			// An absent humaniq is a normal state, not a fault. Say so plainly:
-			// with no owner register there is nothing to resolve against, and
-			// reporting every reference as dangling would be a lie.
-			$output->writeln(
-				'<comment>humaniq is not readable (' . $e->getMessage() . '). '
-				. 'Nothing can be resolved or backfilled; reporting presence only.</comment>'
-			);
-			$owners = [];
-		}//end try
-
-		$ownerIds = [];
-		foreach ($owners as $ids) {
-			foreach ($ids as $id) {
-				$ownerIds[$id] = true;
-			}
-		}
+		[$owners, $ownerIds] = $this->ownerIndex($objectService, $ownerRegister, $output);
 
 		$counts = ['set' => 0, 'dangling' => 0, 'backfillable' => 0, 'ambiguous' => 0, 'unmatched' => 0, 'written' => 0];
 
@@ -183,57 +162,19 @@ class ReferencesAuditCommand extends Command {
 				continue;
 			}
 
-			$id = (string)($row['id'] ?? '');
-			$reference = trim((string)($row[self::REFERENCE_PROPERTY] ?? ''));
-			$identity = trim((string)($row[self::IDENTITY_KEY] ?? ''));
+			$verdict = $this->classifyRow($row, $owners, $ownerIds);
+			$counts[$verdict['outcome']]++;
 
-			if ($reference !== '') {
-				if ($ownerIds === [] || isset($ownerIds[$reference]) === true) {
-					$counts['set']++;
-					continue;
-				}
+			if ($verdict['message'] !== '') {
+				$output->writeln($verdict['message']);
+			}
 
-				$counts['dangling']++;
-				$output->writeln('  <error>dangling</error>  ' . $id . ' -> ' . $reference);
+			if ($verdict['outcome'] !== 'backfillable' || $write === false) {
 				continue;
 			}
 
-			$candidates = ($owners[$identity] ?? []);
-			if ($identity === '' || $candidates === []) {
-				$counts['unmatched']++;
-				continue;
-			}
-
-			if (count($candidates) > 1) {
-				$counts['ambiguous']++;
-				$output->writeln(
-					'  <comment>ambiguous</comment> ' . $id . ' ' . self::IDENTITY_KEY . '=' . $identity
-					. ' matches ' . count($candidates) . ' owners'
-				);
-				continue;
-			}
-
-			$counts['backfillable']++;
-			if ($write === false) {
-				continue;
-			}
-
-			try {
-				// Patch, NOT saveObject/updateObject. Those two are
-				// PUT-semantic: a property absent from the payload is written
-				// as null, so a one-field update through them quietly clears
-				// every field the read did not return. Patch merges.
-				$objectService->patchObject(
-					objectId: $id,
-					data: [self::REFERENCE_PROPERTY => $candidates[0]],
-					register: 'shillinq',
-					schema: self::SATELLITE_SCHEMA,
-					_rbac: false,
-					_multitenancy: false
-				);
+			if ($this->backfill($objectService, $verdict['id'], $verdict['owner'], $output) === true) {
 				$counts['written']++;
-			} catch (Throwable $e) {
-				$output->writeln('  <error>write failed</error> ' . $id . ': ' . $e->getMessage());
 			}
 		}//end foreach
 
@@ -265,4 +206,144 @@ class ReferencesAuditCommand extends Command {
 
 		return 0;
 	}//end execute()
+
+	/**
+	 * Decide what one satellite row is, against the index of owners.
+	 *
+	 * EXTRACTED FROM execute(), which phpmd measured at cyclomatic complexity
+	 * 22 against a threshold of 15 and an NPath of 83,376 against 5,000. The
+	 * branching was never incidental: this is a five-way classification, and
+	 * naming it is what lets execute() read as "classify, report, maybe write".
+	 * Behaviour is unchanged, including the order the cases are tested in,
+	 * which matters — a row carrying a reference is never a backfill candidate
+	 * regardless of what its identity key would have matched.
+	 *
+	 * @param array<string,mixed>        $row      One satellite row's payload.
+	 * @param array<string,list<string>> $owners   Identity key to owner ids.
+	 * @param array<string,bool>         $ownerIds Every known owner id.
+	 *
+	 * @return array{outcome: string, id: string, owner: string, message: string}
+	 */
+	private function classifyRow(array $row, array $owners, array $ownerIds): array {
+		$id        = (string)($row['id'] ?? '');
+		$reference = trim((string)($row[self::REFERENCE_PROPERTY] ?? ''));
+		$identity  = trim((string)($row[self::IDENTITY_KEY] ?? ''));
+
+		if ($reference !== '') {
+			// An empty owner index means humaniq could not be read at all. That
+			// is reported as presence, never as a dangling link, or an outage
+			// would look like data loss.
+			if ($ownerIds === [] || isset($ownerIds[$reference]) === true) {
+				return ['outcome' => 'set', 'id' => $id, 'owner' => '', 'message' => ''];
+			}
+
+			return [
+				'outcome' => 'dangling',
+				'id'      => $id,
+				'owner'   => '',
+				'message' => '  <error>dangling</error>  ' . $id . ' -> ' . $reference,
+			];
+		}
+
+		$candidates = ($owners[$identity] ?? []);
+		if ($identity === '' || $candidates === []) {
+			return ['outcome' => 'unmatched', 'id' => $id, 'owner' => '', 'message' => ''];
+		}
+
+		if (count($candidates) > 1) {
+			return [
+				'outcome' => 'ambiguous',
+				'id'      => $id,
+				'owner'   => '',
+				'message' => '  <comment>ambiguous</comment> ' . $id . ' ' . self::IDENTITY_KEY . '=' . $identity
+					. ' matches ' . count($candidates) . ' owners',
+			];
+		}
+
+		return ['outcome' => 'backfillable', 'id' => $id, 'owner' => $candidates[0], 'message' => ''];
+	}//end classifyRow()
+
+	/**
+	 * Write one unambiguous owner reference onto a satellite row.
+	 *
+	 * @param mixed           $objectService The OpenRegister object service.
+	 * @param string          $id            The satellite row's id.
+	 * @param string          $owner         The owner id to record.
+	 * @param OutputInterface $output        Console output.
+	 *
+	 * @return bool True when the write landed.
+	 */
+	private function backfill(mixed $objectService, string $id, string $owner, OutputInterface $output): bool {
+		try {
+			// Patch, NOT saveObject/updateObject. Those two are PUT-semantic: a
+			// property absent from the payload is written as null, so a
+			// one-field update through them quietly clears every field the read
+			// did not return. Patch merges.
+			$objectService->patchObject(
+				objectId: $id,
+				data: [self::REFERENCE_PROPERTY => $owner],
+				register: 'shillinq',
+				schema: self::SATELLITE_SCHEMA,
+				_rbac: false,
+				_multitenancy: false
+			);
+			return true;
+		} catch (Throwable $e) {
+			$output->writeln('  <error>write failed</error> ' . $id . ': ' . $e->getMessage());
+			return false;
+		}//end try
+	}//end backfill()
+
+	/**
+	 * Read humaniq's owner records into an index keyed by the identity key.
+	 *
+	 * EXTRACTED FROM execute() alongside classifyRow(), for the same phpmd
+	 * finding. This half is a read that is allowed to fail: an absent humaniq
+	 * is a normal state, not a fault, so it answers with an empty index and
+	 * says so rather than letting the caller decide.
+	 *
+	 * @param mixed           $objectService The OpenRegister object service.
+	 * @param string          $register      humaniq's register slug.
+	 * @param OutputInterface $output        Console output.
+	 *
+	 * @return array{0: array<string,list<string>>, 1: array<string,bool>} Owners by identity key, and every owner id.
+	 */
+	private function ownerIndex(mixed $objectService, string $register, OutputInterface $output): array {
+		$owners = [];
+
+		try {
+			foreach ($this->readAllRows($objectService, $register, self::OWNER_SCHEMA) as $row) {
+				$owner = $this->rowPayload($row);
+				if ($owner === []) {
+					continue;
+				}
+
+				$key = trim((string)($owner[self::IDENTITY_KEY] ?? ''));
+				if ($key === '') {
+					continue;
+				}
+
+				$owners[$key][] = (string)($owner['id'] ?? '');
+			}
+		} catch (Throwable $e) {
+			// An absent humaniq is a normal state, not a fault. Say so plainly:
+			// with no owner register there is nothing to resolve against, and
+			// reporting every reference as dangling would be a lie.
+			$output->writeln(
+				'<comment>humaniq is not readable (' . $e->getMessage() . '). '
+				. 'Nothing can be resolved or backfilled; reporting presence only.</comment>'
+			);
+			return [[], []];
+		}//end try
+
+		$ownerIds = [];
+		foreach ($owners as $ids) {
+			foreach ($ids as $id) {
+				$ownerIds[$id] = true;
+			}
+		}
+
+		return [$owners, $ownerIds];
+	}//end ownerIndex()
+
 }//end class
