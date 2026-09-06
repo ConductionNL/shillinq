@@ -247,8 +247,15 @@ test.describe('reporting-compliance-consolidation — the ReportingComplianceOve
 		// the entry element and take its direct navigation anchor.
 		await entry.locator('a.app-navigation-entry-link').first().click()
 
+		// A predicate, not a RegExp built by escaping the route by hand. That
+		// escaping only handled forward slashes, so a backslash or any other
+		// metacharacter in the route would have been interpreted rather than
+		// matched, which is what CodeQL flagged as js/incomplete-sanitization
+		// (alerts 33-35, high). Asking the URL whether its path ends with the
+		// route needs no escaping at all and says what the assertion means.
+		// Same fix as spend-analytics.spec.ts already carries.
 		await expect(page).toHaveURL(
-			new RegExp(`${OVERVIEW_ROUTE.replace(/\//g, '\\/')}$`),
+			(url) => url.pathname.endsWith(OVERVIEW_ROUTE),
 			{ timeout: 15_000 },
 		)
 		await awaitCatalogue(page)
@@ -281,7 +288,7 @@ test.describe('reporting-compliance-consolidation — the ReportingComplianceOve
 		await openLink.click()
 
 		await expect(page).toHaveURL(
-			new RegExp(`${SAMPLE_VIEW_CARD.route.replace(/\//g, '\\/')}$`),
+			(url) => url.pathname.endsWith(SAMPLE_VIEW_CARD.route),
 			{ timeout: 15_000 },
 		)
 		await expect(page.getByTestId('cn-index-page')).toBeVisible({
@@ -309,7 +316,7 @@ test.describe('reporting-compliance-consolidation — the ReportingComplianceOve
 		await link.click()
 
 		await expect(page).toHaveURL(
-			new RegExp(`${GENERATED_ROUTE.replace(/\//g, '\\/')}$`),
+			(url) => url.pathname.endsWith(GENERATED_ROUTE),
 			{ timeout: 15_000 },
 		)
 		await expect(page.getByTestId('generated-reports')).toBeVisible({
