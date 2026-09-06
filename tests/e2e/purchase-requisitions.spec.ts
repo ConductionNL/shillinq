@@ -202,7 +202,7 @@ test.describe('purchase-requisition — the Requisitions index (REQ-REQ-001)', (
 		await leaf.click()
 
 		await expect(page).toHaveURL(
-			new RegExp(`${REQUISITIONS_ROUTE.replace(/\//g, '\\/')}$`),
+			(url) => url.pathname.endsWith(REQUISITIONS_ROUTE),
 			{ timeout: 15_000 },
 		)
 		await expect(page.getByTestId('cn-index-page')).toBeVisible({
