@@ -338,6 +338,13 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <!-- Count-equality audit for the Subsidie/PurchaseOrder/DBAOpdracht -> Order
              fold (abstract-order-primitive, REQ-ORD-003). Read-only. -->
         <command>OCA\Shillinq\Command\OrdersAuditCommand</command>
+        <!-- Audit, and on request backfill, the payrollEmployee to humaniq
+             Employee uuid reference. Read-only unless the write option is
+             given, and it fills in only an unambiguous single match on the
+             shared `bsn`: a wrong cross-app link is worse than an empty one.
+             (The option name is not spelled here: a double hyphen is illegal
+             inside an XML comment and makes info.xml unparseable.) -->
+        <command>OCA\Shillinq\Command\ReferencesAuditCommand</command>
     </commands>
 
     <settings>
