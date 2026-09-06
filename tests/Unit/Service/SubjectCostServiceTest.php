@@ -39,6 +39,15 @@ use RuntimeException;
  *
  * @covers \OCA\Shillinq\Service\SubjectCostService
  *
+ * The aggregator is REAL here, not a double: the composition is only worth
+ * asserting against the policy it actually delegates to. Declared with @uses
+ * because the configs set beStrictAboutCoverageMetadata, which makes an
+ * undeclared execution a RISKY test, and failOnRisky turns that into a failed
+ * job. It bites only when coverage is enabled, so a --no-coverage run cannot
+ * show it.
+ *
+ * @uses \OCA\Shillinq\Service\SubjectCostAggregator
+ *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 class SubjectCostServiceTest extends TestCase {
