@@ -324,22 +324,12 @@ class Application extends App implements IBootstrap {
 		// Only the queue binding lives here: the listener itself
 		// (BookingCreatedTimelinePublishListener) declares a schema interest and
 		// is therefore subscribed from boot().
-		$context->registerService(
-			TimelineRetryQueue::class,
-			static function ($c): TimelineRetryQueue {
-				return $c->get(PersistentTimelineRetryQueue::class);
-			}
-		);
+		$context->registerServiceAlias(TimelineRetryQueue::class, PersistentTimelineRetryQueue::class);
 
 		// Storage seam for the Dutch-to-English value migration. The repair step
 		// depends on the interface so its own logic can be exercised against a
 		// fake; only this binding knows the database.
-		$context->registerService(
-			ValueMigrationPort::class,
-			static function ($c): ValueMigrationPort {
-				return $c->get(DbValueMigrationPort::class);
-			}
-		);
+		$context->registerServiceAlias(ValueMigrationPort::class, DbValueMigrationPort::class);
 
 		// Bookings-pipelinq-customer-bridge slice 08 — extend the timeline
 		// publish pattern to every booking lifecycle transition
@@ -352,12 +342,7 @@ class Application extends App implements IBootstrap {
 		// notification surface, the default binding is the logging-only
 		// {@see LoggingPipelinqAdminNotifier}. ADR-032 chain member 8 of
 		// 11.
-		$context->registerService(
-			PipelinqAdminNotifier::class,
-			static function ($c): PipelinqAdminNotifier {
-				return $c->get(LoggingPipelinqAdminNotifier::class);
-			}
-		);
+		$context->registerServiceAlias(PipelinqAdminNotifier::class, LoggingPipelinqAdminNotifier::class);
 		$context->registerEventListener(
 			event: ObjectTransitionedEvent::class,
 			listener: BookingLifecycleTransitionListener::class
@@ -407,30 +392,10 @@ class Application extends App implements IBootstrap {
 		// (Graydon/Creditsafe/Atradius, Bos/Atradius Collections/Intrum,
 		// PostNL Track & Trace) swap these in production via the same
 		// registerService call.
-		$context->registerService(
-			CreditScoreFetchAdapterInterface::class,
-			static function ($c): CreditScoreFetchAdapterInterface {
-				return $c->get(LogCreditScoreFetchAdapter::class);
-			}
-		);
-		$context->registerService(
-			DunningChannelAdapterInterface::class,
-			static function ($c): DunningChannelAdapterInterface {
-				return $c->get(LogDunningChannelAdapter::class);
-			}
-		);
-		$context->registerService(
-			IncassoBureauAdapterInterface::class,
-			static function ($c): IncassoBureauAdapterInterface {
-				return $c->get(LogIncassoBureauAdapter::class);
-			}
-		);
-		$context->registerService(
-			PostNLAdapterInterface::class,
-			static function ($c): PostNLAdapterInterface {
-				return $c->get(LogPostNLAdapter::class);
-			}
-		);
+		$context->registerServiceAlias(CreditScoreFetchAdapterInterface::class, LogCreditScoreFetchAdapter::class);
+		$context->registerServiceAlias(DunningChannelAdapterInterface::class, LogDunningChannelAdapter::class);
+		$context->registerServiceAlias(IncassoBureauAdapterInterface::class, LogIncassoBureauAdapter::class);
+		$context->registerServiceAlias(PostNLAdapterInterface::class, LogPostNLAdapter::class);
 
 		// REQ-EINV-003/005 + bookings-sms-reminder-channel. Both ports below
 		// were UNBOUND, and both are type-hinted non-nullably with no default
@@ -440,18 +405,8 @@ class Application extends App implements IBootstrap {
 		// before any controller code ran. See
 		// tests/Unit/AppInfo/ContainerResolvableConstructorsTest.php, which
 		// fails when a required in-app interface dependency has no binding.
-		$context->registerService(
-			PeppolTransmissionPortInterface::class,
-			static function ($c): PeppolTransmissionPortInterface {
-				return $c->get(LogPeppolTransmissionAdapter::class);
-			}
-		);
-		$context->registerService(
-			SmsProviderAdapterInterface::class,
-			static function ($c): SmsProviderAdapterInterface {
-				return $c->get(LogSmsProviderAdapter::class);
-			}
-		);
+		$context->registerServiceAlias(PeppolTransmissionPortInterface::class, LogPeppolTransmissionAdapter::class);
+		$context->registerServiceAlias(SmsProviderAdapterInterface::class, LogSmsProviderAdapter::class);
 
 		// External-API adapter ports — every binding below is dormant by
 		// default (log-only), so the regulatory-filing lifecycles can
@@ -473,48 +428,13 @@ class Application extends App implements IBootstrap {
 		// - Belastingdienst IB47
 		// (bookkeeping-detachering-payroll-administratie,
 		// bookkeeping-btw-oss-eu).
-		$context->registerService(
-			CbsBestandenAdapterInterface::class,
-			static function ($c): CbsBestandenAdapterInterface {
-				return $c->get(LogCbsBestandenAdapter::class);
-			}
-		);
-		$context->registerService(
-			CbsIv3AdapterInterface::class,
-			static function ($c): CbsIv3AdapterInterface {
-				return $c->get(LogCbsIv3Adapter::class);
-			}
-		);
-		$context->registerService(
-			BzkSisaUploadAdapterInterface::class,
-			static function ($c): BzkSisaUploadAdapterInterface {
-				return $c->get(LogBzkSisaUploadAdapter::class);
-			}
-		);
-		$context->registerService(
-			DigipoortSbrAdapterInterface::class,
-			static function ($c): DigipoortSbrAdapterInterface {
-				return $c->get(LogDigipoortSbrAdapter::class);
-			}
-		);
-		$context->registerService(
-			SalarisbureauAdapterInterface::class,
-			static function ($c): SalarisbureauAdapterInterface {
-				return $c->get(LogSalarisbureauAdapter::class);
-			}
-		);
-		$context->registerService(
-			RvOAanvraagAdapterInterface::class,
-			static function ($c): RvOAanvraagAdapterInterface {
-				return $c->get(LogRvOAanvraagAdapter::class);
-			}
-		);
-		$context->registerService(
-			Ib47AdapterInterface::class,
-			static function ($c): Ib47AdapterInterface {
-				return $c->get(LogIb47Adapter::class);
-			}
-		);
+		$context->registerServiceAlias(CbsBestandenAdapterInterface::class, LogCbsBestandenAdapter::class);
+		$context->registerServiceAlias(CbsIv3AdapterInterface::class, LogCbsIv3Adapter::class);
+		$context->registerServiceAlias(BzkSisaUploadAdapterInterface::class, LogBzkSisaUploadAdapter::class);
+		$context->registerServiceAlias(DigipoortSbrAdapterInterface::class, LogDigipoortSbrAdapter::class);
+		$context->registerServiceAlias(SalarisbureauAdapterInterface::class, LogSalarisbureauAdapter::class);
+		$context->registerServiceAlias(RvOAanvraagAdapterInterface::class, LogRvOAanvraagAdapter::class);
+		$context->registerServiceAlias(Ib47AdapterInterface::class, LogIb47Adapter::class);
 
 		// Wave-4 external-API ports (low-volume families):
 		//
@@ -530,18 +450,8 @@ class Application extends App implements IBootstrap {
 		// Bunq exposes CAMT.053 natively).
 		// - UWV Loonaangifte + Werkhervattingskas (LHAfdracht acceptance
 		// pull + werkgever-setup sectorindeling validation).
-		$context->registerService(
-			KvkHandelsregisterAdapterInterface::class,
-			static function ($c): KvkHandelsregisterAdapterInterface {
-				return $c->get(LogKvkHandelsregisterAdapter::class);
-			}
-		);
-		$context->registerService(
-			MolliePaymentAdapterInterface::class,
-			static function ($c): MolliePaymentAdapterInterface {
-				return $c->get(LogMolliePaymentAdapter::class);
-			}
-		);
+		$context->registerServiceAlias(KvkHandelsregisterAdapterInterface::class, LogKvkHandelsregisterAdapter::class);
+		$context->registerServiceAlias(MolliePaymentAdapterInterface::class, LogMolliePaymentAdapter::class);
 
 		// Portal-payment-initiation REQ-SPPI-001 — the payment-provider port
 		// the subject-initiated pay-now flow drives. Sits one layer ABOVE
@@ -557,18 +467,8 @@ class Application extends App implements IBootstrap {
 				return new MolliePaymentProvider(mollie: $c->get(MolliePaymentAdapterInterface::class));
 			}
 		);
-		$context->registerService(
-			BunqBankConnectorAdapterInterface::class,
-			static function ($c): BunqBankConnectorAdapterInterface {
-				return $c->get(LogBunqBankConnectorAdapter::class);
-			}
-		);
-		$context->registerService(
-			UwvLoonaangifteAdapterInterface::class,
-			static function ($c): UwvLoonaangifteAdapterInterface {
-				return $c->get(LogUwvLoonaangifteAdapter::class);
-			}
-		);
+		$context->registerServiceAlias(BunqBankConnectorAdapterInterface::class, LogBunqBankConnectorAdapter::class);
+		$context->registerServiceAlias(UwvLoonaangifteAdapterInterface::class, LogUwvLoonaangifteAdapter::class);
 
 		// Bookings-deposits REQ-DP-001/005/007/008 — DepositPayment
 		// lifecycle adapter port (request / status / refund). Sits one
@@ -581,12 +481,7 @@ class Application extends App implements IBootstrap {
 		// dormant flag before advancing the lifecycle. The production
 		// binding delegates to MolliePaymentAdapterInterface and
 		// projects the Mollie state onto the DepositPayment lifecycle.
-		$context->registerService(
-			DepositPaymentAdapterInterface::class,
-			static function ($c): DepositPaymentAdapterInterface {
-				return $c->get(LogDepositPaymentAdapter::class);
-			}
-		);
+		$context->registerServiceAlias(DepositPaymentAdapterInterface::class, LogDepositPaymentAdapter::class);
 
 		// Bookkeeping-csrd-esrs Tasks 30/31/32 — EFRAG ESRS XBRL taxonomy
 		// mapping + mandatory-data-point validation + iXBRL instance build.
@@ -599,12 +494,7 @@ class Application extends App implements IBootstrap {
 		// IG-3. The produced iXBRL instance is handed to the existing
 		// DigipoortSbrAdapterInterface (filingType: csrd-xbrl-pack) for
 		// KvK / AFM transport.
-		$context->registerService(
-			CsrdEsrsXbrlAdapterInterface::class,
-			static function ($c): CsrdEsrsXbrlAdapterInterface {
-				return $c->get(LogCsrdEsrsXbrlAdapter::class);
-			}
-		);
+		$context->registerServiceAlias(CsrdEsrsXbrlAdapterInterface::class, LogCsrdEsrsXbrlAdapter::class);
 
 		// Bookkeeping-ccm-rule-engine REQ-CCM-002 — cross-app rule-engine
 		// delegation port. The local CcmRuleEngine (ADR-031 exception) runs
@@ -613,12 +503,7 @@ class Application extends App implements IBootstrap {
 		// third-party evaluator). Dormant LogCcmRuleEngineAdapter returns
 		// DEFERRED + fired=false (fail-soft) so binding the openconnector
 		// source slug `ccm-rule-engine` never raises a false finding.
-		$context->registerService(
-			CcmRuleEngineAdapterInterface::class,
-			static function ($c): CcmRuleEngineAdapterInterface {
-				return $c->get(LogCcmRuleEngineAdapter::class);
-			}
-		);
+		$context->registerServiceAlias(CcmRuleEngineAdapterInterface::class, LogCcmRuleEngineAdapter::class);
 
 		// Bookkeeping-treasury-ihb Tasks 14/15/17/22 — reference-rate
 		// (EURIBOR-3M / SOFR / SARON / ESTR) + FX-spot snapshots for the
@@ -628,12 +513,7 @@ class Application extends App implements IBootstrap {
 		// openconnector source slug `treasury-rates` (ECB SDMX / Bloomberg /
 		// Refinitiv) is bound; the IntercompanyLoan + FXPosition manual-entry
 		// path remains the v1 fallback per REQ-IHB-004.
-		$context->registerService(
-			TreasuryRateAdapterInterface::class,
-			static function ($c): TreasuryRateAdapterInterface {
-				return $c->get(LogTreasuryRateAdapter::class);
-			}
-		);
+		$context->registerServiceAlias(TreasuryRateAdapterInterface::class, LogTreasuryRateAdapter::class);
 
 		// Migrate-legacy-notification-dialect (task 1.3) — register one
 		// RoleFallbackResolver instance per (primary role, fallback role)
