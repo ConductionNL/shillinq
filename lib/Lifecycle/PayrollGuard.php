@@ -228,7 +228,7 @@ class PayrollGuard {
 
 		$employees = $this->objectService
 			->setRegister($register)
-			->setSchema('Employee')
+			->setSchema('payrollEmployee')
 			->findAll(['filters' => ['id' => $employeeId]]);
 
 		foreach ($employees as $employee) {

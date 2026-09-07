@@ -1553,7 +1553,26 @@ OC.L10N.register(
         "Margin per month": "Margin pr. måned",
         "Cashflow": "Pengestrøm",
         "Billable hours": "Fakturerbare timer",
-        "_%n invoice outstanding_::_%n invoices outstanding_": ["%n faktura udestående","%n fakturaer udestående"]
+        "_%n invoice outstanding_::_%n invoices outstanding_": ["%n faktura udestående","%n fakturaer udestående"],
+        "Reports": "Rapporter",
+        "Pick a report to open it.": "Vælg en rapport for at åbne den.",
+        "Due": "Forfalder",
+        "Assignee": "Tildelt",
+        "Iv3 returns": "Iv3-indberetninger",
+        "SiSa returns": "SiSa-indberetninger",
+        "EMU return": "EMU-indberetning",
+        "Consolidated statements": "Konsoliderede regnskaber",
+        "Budget variance": "Budgetafvigelse",
+        "Generated reports": "Genererede rapporter",
+        "The quarterly Iv3 returns, and how far each one got.": "De kvartalsvise Iv3-indberetninger, og hvor langt hver kom.",
+        "Single information, single audit returns per scheme.": "Single information, single audit-indberetninger pr. ordning.",
+        "The EMU balance return.": "EMU-saldoindberetningen.",
+        "The group figures, consolidated across participations.": "Koncerntallene, konsolideret på tværs af kapitalandele.",
+        "Where the books sit against budget, and by how much.": "Hvor bøgerne står i forhold til budgettet, og med hvor meget.",
+        "Everything Reporting & Compliance has already produced.": "Alt, hvad Rapportering & compliance allerede har produceret.",
+        "What retention destroyed, and when.": "Hvad opbevaringen destruerede, og hvornår.",
+        "Store": "Butik",
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Installer registre, skemaer og flows, som andre organisationer har udgivet."
     },
     "nplurals=2; plural=(n != 1);"
 )

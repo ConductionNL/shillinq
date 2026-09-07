@@ -7,12 +7,12 @@
  * save gate, and the correction-commit payload shape (REQ-RXC-003 / REQ-RXC-004).
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
-	reviewFormFromReceipt,
-	canSaveReceipt,
 	buildReceiptConfirmPayload,
+	canSaveReceipt,
 	receiptErrorMessage,
+	reviewFormFromReceipt,
 } from '../../src/views/receiptCapture.js'
 
 describe('receiptCapture — review form (REQ-RXC-003)', () => {

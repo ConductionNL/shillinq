@@ -42,7 +42,9 @@
  * @e2e security-endpoint-guards/req-001/cbs-submissions-delete-own-draft
  */
 
-import { test, expect, type Page, type APIRequestContext } from '@playwright/test'
+import type { APIRequestContext, Page } from '@playwright/test'
+
+import { expect, test } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 const LIST_ROUTE = '/bookkeeping/cbs-submissions'
@@ -113,7 +115,6 @@ async function cleanupViaOpenRegister(
 		headers: { 'OCS-APIRequest': 'true' },
 	})
 	if (deleted.ok() === false && deleted.status() !== 404) {
-		// eslint-disable-next-line no-console
 		console.warn(
 			`[cbs-submissions] failed to clean up seeded submission ${id}: HTTP ${deleted.status()}`,
 		)

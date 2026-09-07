@@ -112,7 +112,7 @@
               "properties": {
                 "category": {
                   "type": "string",
-                  "description": "GHG-Protocol Scope 3 category code 3-cat-01 .. 3-cat-15.",
+                  "description": "GHG-Protocol Scope 3 category code 3-cat-01. 3-cat-15.",
                   "example": "3-cat-01",
                   "title": "Category"
                 },
@@ -578,7 +578,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a ESRS Statement is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a ESRS Statement is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     }

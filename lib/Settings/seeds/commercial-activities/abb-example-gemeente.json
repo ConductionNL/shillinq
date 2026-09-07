@@ -5,7 +5,7 @@
 		"source": "shillinq-documentation",
 		"variant": "test-gemeente",
 		"spec": "openspec/changes/bookkeeping-market-government-separation/specs/bookkeeping-market-government-separation/spec.md",
-		"description": "Example AlgemeenBelangBesluit linked to the sportkantine-exploitatie activity. status=concept — operator promotes through the workflow when adopting the seed."
+		"description": "Example AlgemeenBelangBesluit linked to the sportkantine-exploitatie activity. Status=concept: operator promotes through the workflow when adopting the seed."
 	},
 	"besluiten": [
 		{

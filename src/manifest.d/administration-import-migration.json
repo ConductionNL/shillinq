@@ -121,7 +121,7 @@
 						{
 							"id": "documents",
 							"label": "Documents",
-							"icon": "FileDocumentOutline",
+							"icon": "FileDocumentMultipleOutline",
 							"order": 80,
 							"widgets": [
 								{

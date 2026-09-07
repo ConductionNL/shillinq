@@ -6,7 +6,7 @@
 		"variant": "belastingdienst-ib",
 		"taxonomyVersion": "nt17",
 		"entryPoint": "belastingdienst-ib",
-		"description": "Template mapping from FinancialStatement lines to NL-taxonomie nt17 concepts for the Belastingdienst Inkomstenbelasting (winst uit onderneming, IB-onderneming) entry point (REQ-SBR-005, REQ-SBR-006). Sibling spec bookkeeping-ib-aangifte-zzp owns the IB-aangifte object model + its own XBRL lifecycle; this mapping ships the concept resolution for those filings.",
+		"description": "Template mapping from FinancialStatement lines to NL-taxonomie nt17 concepts for the Belastingdienst Inkomstenbelasting (winst uit onderneming, IB-onderneming) entry point. Sibling spec bookkeeping-ib-aangifte-zzp owns the IB-aangifte object model + its own XBRL lifecycle; this mapping ships the concept resolution for those filings.",
 		"imported": "2026-06-09T00:00:00Z"
 	},
 	"mapping": {

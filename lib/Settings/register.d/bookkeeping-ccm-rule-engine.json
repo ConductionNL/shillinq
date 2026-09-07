@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-ccm-rule-engine",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 3 — Continuous Controls Monitoring (CCM) rule engine. Six new schemas (CcmRule, CcmFinding, CcmSegregationMatrix, CcmUserFunctionAssignment, CcmBaseline, CcmAuditCommitteeReport). Every rule/finding/report carries an immutable audit trail (x-openregister-audit-trail per REQ-CCM-009). The four-state finding triage workflow and the report approval gate are declarative (x-openregister-lifecycle) with the cross-field preconditions delegated to OCA\\Shillinq\\Lifecycle\\CcmFindingGuard (ADR-031 exception path). Finding notifications + critical-finding auto-escalation are declarative (x-openregister-notifications, REQ-CCM-008). The three nightly materialisation jobs (baseline 23:30, SoD 23:15, async sweep 23:00) are declarative (x-openregister-scheduled-workflows, REQ-CCM-003) — no PHP TimedJob classes. Rule DSL evaluation is the one imperative service (OCA\\Shillinq\\Service\\CcmRuleEngine) — a pure deterministic AST evaluator with no eval()/exec() (REQ-CCM-002). Seed data ships the 60-rule forensic library across eight control families and a representative SoD function-code matrix. A contact/user is a Nextcloud entity — rule owners, assignees, approvers are NC user ids (FK to the NC user directory), never an invented person schema. Extensions to journal-entry / journal-entry-line / organisations are DEFERRED to the bookkeeping-journal-entries / bookkeeping-general-ledger / organisations dependency apps (those schemas are not yet present in shillinq) — see tasks.md."
+    "description": "Tier 3: Continuous Controls Monitoring (CCM) rule engine. Six new schemas (CcmRule, CcmFinding, CcmSegregationMatrix, CcmUserFunctionAssignment, CcmBaseline, CcmAuditCommitteeReport). Every rule/finding/report carries an immutable audit trail (x-openregister-audit-trail per). The four-state finding triage workflow and the report approval gate are declarative (x-openregister-lifecycle) with the cross-field preconditions delegated to OCA\\Shillinq\\Lifecycle\\CcmFindingGuard (ADR-031 exception path). Finding notifications + critical-finding auto-escalation are declarative (x-openregister-notifications). The three nightly materialisation jobs (baseline 23:30, SoD 23:15, async sweep 23:00) are declarative (x-openregister-scheduled-workflows). No PHP TimedJob classes. Rule DSL evaluation is the one imperative service (OCA\\Shillinq\\Service\\CcmRuleEngine). A pure deterministic AST evaluator with no eval/exec. Seed data ships the 60-rule forensic library across eight control families and a representative SoD function-code matrix. A contact/user is a Nextcloud entity. Rule owners, assignees, approvers are NC user ids (FK to the NC user directory), never an invented person schema. Extensions to journal-entry / journal-entry-line / organisations are DEFERRED to the bookkeeping-journal-entries / bookkeeping-general-ledger / organisations dependency apps (those schemas are not yet present in shillinq). See tasks.md."
   },
   "components": {
     "schemas": {
@@ -13,12 +13,12 @@
         "icon": "ShieldSearch",
         "version": "0.1.0",
         "title": "CCM Rule",
-        "description": "A Continuous Controls Monitoring rule definition (REQ-CCM-001). Carries the control family, objective, COSO assertion, severity, evaluation mode, trigger events, and the constrained JSON DSL logic (ruleLogic) evaluated by CcmRuleEngine (REQ-CCM-002). Parameters are tenant-configurable thresholds; ruleLogic is never arbitrary code. rule owner/reviewer are Nextcloud user ids (FK to the NC user directory). Immutable audit trail per REQ-CCM-009.",
+        "description": "A Continuous Controls Monitoring rule definition. Carries the control family, objective, COSO assertion, severity, evaluation mode, trigger events, and the constrained JSON DSL logic (ruleLogic) evaluated by CcmRuleEngine. Parameters are tenant-configurable thresholds; ruleLogic is never arbitrary code. rule owner/reviewer are Nextcloud user ids (FK to the NC user directory). Immutable audit trail.",
         "x-schema-org": "schema:GovernmentService",
         "x-spec": "openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a CCM Rule is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a CCM Rule is written to OpenRegister's immutable audit trail with actor and timestamp."
         },
         "x-openregister-rbac": {
           "roles": {
@@ -61,7 +61,7 @@
         "properties": {
           "ruleCode": {
             "type": "string",
-            "description": "Sequential rule code within the tenant, e.g. SoD-01 (REQ-CCM-001/007).",
+            "description": "Sequential rule code within the tenant, e.g. SoD-01.",
             "example": "SoD-01",
             "title": "Rule Code"
           },
@@ -89,7 +89,7 @@
               "value-chain",
               "custom"
             ],
-            "description": "One of the eight control families plus custom (REQ-CCM-007).",
+            "description": "One of the eight control families plus custom.",
             "title": "Control Family"
           },
           "controlObjective": {
@@ -108,7 +108,7 @@
               "rights-and-obligations",
               "presentation-and-disclosure"
             ],
-            "description": "Mapped COSO financial-statement assertion (REQ-CCM-001).",
+            "description": "Mapped COSO financial-statement assertion.",
             "nullable": true,
             "title": "Coso Assertion"
           },
@@ -121,7 +121,7 @@
               "high",
               "critical"
             ],
-            "description": "Rule severity; inherited by findings unless overridden (REQ-CCM-004).",
+            "description": "Rule severity; inherited by findings unless overridden.",
             "title": "Severity"
           },
           "evaluationMode": {
@@ -131,7 +131,7 @@
               "synchronous-warn",
               "asynchronous-detect"
             ],
-            "description": "Block prevents the transaction; warn flags it; async runs on the nightly sweep (REQ-CCM-003).",
+            "description": "Block prevents the transaction; warn flags it; async runs on the nightly sweep.",
             "title": "Evaluation Mode"
           },
           "schedule": {
@@ -149,7 +149,7 @@
           },
           "triggerEvents": {
             "type": "array",
-            "description": "Events that trigger evaluation (REQ-CCM-001).",
+            "description": "Events that trigger evaluation.",
             "items": {
               "type": "string",
               "enum": [
@@ -167,7 +167,7 @@
           },
           "ruleLogic": {
             "type": "object",
-            "description": "Constrained JSON DSL expression evaluated by CcmRuleEngine (REQ-CCM-002). Operators: event-matches / field-equals / field-in-set / field-greater-than / field-between / field-matches-regex / time-is-within / time-is-weekend / time-is-outside-business-hours / user-has-function / user-also-has-function / user-is-in-role / value-deviates-from-baseline / value-violates-benford / count-of-similar-in-period-exceeds / duplicate-of-existing / master-data-changed-within / approval-chain-bypassed / posted-while-period-closing / same-user-as; compound: all-of / any-of / none-of. Never arbitrary code — no eval().",
+            "description": "Constrained JSON DSL expression evaluated by CcmRuleEngine. Operators: event-matches / field-equals / field-in-set / field-greater-than / field-between / field-matches-regex / time-is-within / time-is-weekend / time-is-outside-business-hours / user-has-function / user-also-has-function / user-is-in-role / value-deviates-from-baseline / value-violates-benford / count-of-similar-in-period-exceeds / duplicate-of-existing / master-data-changed-within / approval-chain-bypassed / posted-while-period-closing / same-user-as; compound: all-of / any-of / none-of. Never arbitrary code: no eval.",
             "additionalProperties": true,
             "title": "Rule Logic"
           },
@@ -206,7 +206,7 @@
           },
           "ruleOwner": {
             "type": "string",
-            "description": "Nextcloud user id of the rule owner (typically internal-audit or CFO). FK to the NC user directory — a person is an NC entity, never an invented schema.",
+            "description": "Nextcloud user id of the rule owner (typically internal-audit or CFO). FK to the NC user directory: a person is an NC entity, never an invented schema.",
             "nullable": true,
             "title": "Rule Owner"
           },
@@ -251,12 +251,12 @@
         "icon": "AlertCircleOutline",
         "version": "0.1.0",
         "title": "CCM Finding",
-        "description": "A single rule firing (REQ-CCM-004). Captures an immutable evidence snapshot at fire time (before/after, actor, approver chain, GL context) and transitions through a four-state triage workflow via x-openregister-lifecycle. Investigation notes and status history are append-only. Resolution requires a mandatory rationale (CcmFindingGuard). The assignee is a Nextcloud user id. Immutable audit trail per REQ-CCM-009.",
+        "description": "A single rule firing. Captures an immutable evidence snapshot at fire time (before/after, actor, approver chain, GL context) and transitions through a four-state triage workflow via x-openregister-lifecycle. Investigation notes and status history are append-only. Resolution requires a mandatory rationale (CcmFindingGuard). The assignee is a Nextcloud user id. Immutable audit trail.",
         "x-schema-org": "schema:GovernmentService",
         "x-spec": "openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a CCM Finding is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a CCM Finding is written to OpenRegister's immutable audit trail with actor and timestamp."
         },
         "x-openregister-rbac": {
           "roles": {
@@ -286,7 +286,7 @@
           "states": {
             "open": {
               "label": "Open",
-              "description": "Finding created; awaiting investigation (REQ-CCM-004)."
+              "description": "Finding created; awaiting investigation."
             },
             "under-investigation": {
               "label": "Under investigation",
@@ -297,19 +297,19 @@
               "description": "Investigation paused pending additional evidence."
             },
             "dismissed-false-positive": {
-              "label": "Dismissed — false positive",
+              "label": "Dismissed: false positive",
               "description": "Closed with rationale; not a real anomaly."
             },
             "dismissed-acceptable-risk": {
-              "label": "Dismissed — acceptable risk",
+              "label": "Dismissed: acceptable risk",
               "description": "Closed with rationale; accepted by management."
             },
             "confirmed-control-deficiency": {
-              "label": "Confirmed — control deficiency",
-              "description": "Escalated as a control deficiency (REQ-CCM-004)."
+              "label": "Confirmed: control deficiency",
+              "description": "Escalated as a control deficiency."
             },
             "confirmed-fraud-suspected": {
-              "label": "Confirmed — fraud suspected",
+              "label": "Confirmed: fraud suspected",
               "description": "Escalated; fraud investigation triggered."
             }
           },
@@ -318,7 +318,7 @@
               "from": "open",
               "to": "under-investigation",
               "label": "Start investigation",
-              "description": "An investigator takes ownership of the finding (REQ-CCM-004)."
+              "description": "An investigator takes ownership of the finding."
             },
             "awaitInfo": {
               "from": "under-investigation",
@@ -335,29 +335,29 @@
             "dismissFalsePositive": {
               "from": "under-investigation",
               "to": "dismissed-false-positive",
-              "label": "Dismiss — false positive",
-              "description": "Close with a mandatory rationale (REQ-CCM-004).",
+              "label": "Dismiss: false positive",
+              "description": "Close with a mandatory rationale.",
               "requires": "OCA\\Shillinq\\Lifecycle\\CcmFindingGuard::canDismiss"
             },
             "dismissAcceptableRisk": {
               "from": "under-investigation",
               "to": "dismissed-acceptable-risk",
-              "label": "Dismiss — acceptable risk",
-              "description": "Close with a mandatory rationale (REQ-CCM-004).",
+              "label": "Dismiss: acceptable risk",
+              "description": "Close with a mandatory rationale.",
               "requires": "OCA\\Shillinq\\Lifecycle\\CcmFindingGuard::canDismiss"
             },
             "confirmDeficiency": {
               "from": "under-investigation",
               "to": "confirmed-control-deficiency",
               "label": "Confirm control deficiency",
-              "description": "Escalate as a control deficiency with a mandatory rationale (REQ-CCM-004).",
+              "description": "Escalate as a control deficiency with a mandatory rationale.",
               "requires": "OCA\\Shillinq\\Lifecycle\\CcmFindingGuard::canConfirm"
             },
             "confirmFraud": {
               "from": "under-investigation",
               "to": "confirmed-fraud-suspected",
-              "label": "Confirm — fraud suspected",
-              "description": "Escalate; fraud investigation triggered, mandatory rationale (REQ-CCM-004).",
+              "label": "Confirm: fraud suspected",
+              "description": "Escalate; fraud investigation triggered, mandatory rationale.",
               "requires": "OCA\\Shillinq\\Lifecycle\\CcmFindingGuard::canConfirm"
             }
           }
@@ -375,7 +375,7 @@
                 ]
               }
             },
-            "description": "Notify the rule owner / assignee when a critical or high-severity finding is created (REQ-CCM-008). The `field` recipient resolves the finding's own assignee and yields nobody while a finding is still unassigned; the `relation` recipient reaches the owner of the CcmRule that fired, which is the fallback the retired imperative dispatcher applied.",
+            "description": "Notify the rule owner / assignee when a critical or high-severity finding is created. The `field` recipient resolves the finding's own assignee and yields nobody while a finding is still unassigned; the `relation` recipient reaches the owner of the CcmRule that fired, which is the fallback the retired imperative dispatcher applied.",
             "enabled": true,
             "channels": [
               "nc-notification"
@@ -405,7 +405,7 @@
                 "status": "open"
               }
             },
-            "description": "Auto-escalate critical findings still open after 24h to the CFO (REQ-CCM-008). The 24h re-check cadence is the scheduled trigger's intervalSec; the filter is the escalation condition.",
+            "description": "Auto-escalate critical findings still open after 24h to the CFO. The 24h re-check cadence is the scheduled trigger's intervalSec; the filter is the escalation condition.",
             "enabled": true,
             "channels": [
               "nc-notification"
@@ -428,7 +428,7 @@
         "x-openregister-scheduled-workflows": {
           "ccm-finding-auto-escalation": {
             "name": "Critical finding auto-escalation",
-            "description": "Hourly sweep that escalates critical findings still in 'open' for >24h to the CFO (REQ-CCM-008). No PHP TimedJob — declarative scheduled workflow.",
+            "description": "Hourly sweep that escalates critical findings still in 'open' for >24h to the CFO. No PHP TimedJob: declarative scheduled workflow.",
             "cron": "0 * * * *",
             "register": "shillinq",
             "schema": "CcmFinding",
@@ -470,7 +470,7 @@
           "fireTimestamp": {
             "type": "string",
             "format": "date-time",
-            "description": "When the rule fired (REQ-CCM-004).",
+            "description": "When the rule fired.",
             "title": "Fire Timestamp"
           },
           "triggeringEventType": {
@@ -501,7 +501,7 @@
               "high",
               "critical"
             ],
-            "description": "Severity inherited from the rule, overridable (REQ-CCM-004).",
+            "description": "Severity inherited from the rule, overridable.",
             "title": "Severity"
           },
           "title": {
@@ -511,7 +511,7 @@
           },
           "evidence": {
             "type": "object",
-            "description": "Immutable JSON evidence snapshot captured at fire time (before/after, actor, approver chain, GL context, diagnostics). Never updated after creation (REQ-CCM-004).",
+            "description": "Immutable JSON evidence snapshot captured at fire time (before/after, actor, approver chain, GL context, diagnostics). Never updated after creation.",
             "additionalProperties": true,
             "title": "Evidence"
           },
@@ -540,7 +540,7 @@
               "confirmed-control-deficiency",
               "confirmed-fraud-suspected"
             ],
-            "description": "Triage workflow state (REQ-CCM-004). Managed by x-openregister-lifecycle.",
+            "description": "Triage workflow state. Managed by x-openregister-lifecycle.",
             "default": "open",
             "title": "Status"
           },
@@ -608,7 +608,7 @@
           },
           "resolutionRationale": {
             "type": "string",
-            "description": "Mandatory free-text rationale on dismissal or confirmation (REQ-CCM-004).",
+            "description": "Mandatory free-text rationale on dismissal or confirmation.",
             "nullable": true,
             "title": "Resolution Rationale"
           },
@@ -646,7 +646,7 @@
           },
           "linkedFindings": {
             "type": "array",
-            "description": "Related findings for pattern clustering by vendor/user (REQ-CCM-004).",
+            "description": "Related findings for pattern clustering by vendor/user.",
             "items": {
               "type": "string"
             },
@@ -665,12 +665,12 @@
         "icon": "AccountSwitch",
         "version": "0.1.0",
         "title": "CCM Segregation Matrix",
-        "description": "Segregation-of-duties reference data (REQ-CCM-005). One row per function code, listing the conflicting function codes a single user may not also hold, with conflict severity, rationale (Dutch), and the compensating controls allowed. Pre-loaded with the standard SAP/Oracle function library, tenant-configurable.",
+        "description": "Segregation-of-duties reference data. One row per function code, listing the conflicting function codes a single user may not also hold, with conflict severity, rationale (Dutch), and the compensating controls allowed. Pre-loaded with the standard SAP/Oracle function library, tenant-configurable.",
         "x-schema-org": "schema:DefinedTerm",
         "x-spec": "openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a CCM Segregation Matrix is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a CCM Segregation Matrix is written to OpenRegister's immutable audit trail with actor and timestamp."
         },
         "x-openregister-unique": [
           "functionCode"
@@ -705,7 +705,7 @@
         "properties": {
           "functionCode": {
             "type": "string",
-            "description": "SoD function code, e.g. VENDOR-CREATE, INVOICE-POST, PAYMENT-RELEASE (REQ-CCM-005).",
+            "description": "SoD function code, e.g. VENDOR-CREATE, INVOICE-POST, PAYMENT-RELEASE.",
             "title": "Function Code"
           },
           "label": {
@@ -730,7 +730,7 @@
               "high",
               "critical"
             ],
-            "description": "Severity of holding a conflicting function (REQ-CCM-005).",
+            "description": "Severity of holding a conflicting function.",
             "title": "Conflict Severity"
           },
           "rationale": {
@@ -754,12 +754,12 @@
         "icon": "AccountKey",
         "version": "0.1.0",
         "title": "CCM User Function Assignment",
-        "description": "Materialised mapping of a Nextcloud user to a SoD function code (REQ-CCM-005), recomputed nightly from roles + direct grants + temporary elevations by the ccm-sod-materialisation scheduled workflow. The user is a Nextcloud entity (FK to the NC user directory). conflictWith records the SoD conflicts the user currently holds.",
+        "description": "Materialised mapping of a Nextcloud user to a SoD function code, recomputed nightly from roles + direct grants + temporary elevations by the ccm-sod-materialisation scheduled workflow. The user is a Nextcloud entity (FK to the NC user directory). conflictWith records the SoD conflicts the user currently holds.",
         "x-schema-org": "schema:Role",
         "x-spec": "openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a CCM User Function Assignment is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a CCM User Function Assignment is written to OpenRegister's immutable audit trail with actor and timestamp."
         },
         "x-openregister-rbac": {
           "roles": {
@@ -783,7 +783,7 @@
         "x-openregister-scheduled-workflows": {
           "ccm-sod-materialisation": {
             "name": "SoD function-assignment materialisation",
-            "description": "Nightly job (23:15) that recomputes every user's SoD function-code assignments from roles + grants + temporary elevations and records conflicts against CcmSegregationMatrix (REQ-CCM-005). No PHP TimedJob — declarative scheduled workflow.",
+            "description": "Nightly job (23:15) that recomputes every user's SoD function-code assignments from roles + grants + temporary elevations and records conflicts against CcmSegregationMatrix. No PHP TimedJob: declarative scheduled workflow.",
             "cron": "15 23 * * *",
             "register": "shillinq",
             "schema": "CcmUserFunctionAssignment",
@@ -803,7 +803,7 @@
         "properties": {
           "user": {
             "type": "string",
-            "description": "Nextcloud user id (FK to the NC user directory — a person is an NC entity).",
+            "description": "Nextcloud user id (FK to the NC user directory: a person is an NC entity).",
             "title": "User"
           },
           "functionCode": {
@@ -818,7 +818,7 @@
               "direct-grant",
               "temporary-elevation"
             ],
-            "description": "How the function was granted (REQ-CCM-005).",
+            "description": "How the function was granted.",
             "title": "Source"
           },
           "grantedAt": {
@@ -874,12 +874,12 @@
         "icon": "ChartBellCurve",
         "version": "0.1.0",
         "title": "CCM Baseline",
-        "description": "A statistical baseline that anomalous-amount and Benford's-Law rules compare against (REQ-CCM-002). Materialised nightly (not computed per evaluation, REQ-CCM-003) by the ccm-baseline-materialisation scheduled workflow over a rolling window per scope. stable=false when the sample size or variance is too small to flag.",
+        "description": "A statistical baseline that anomalous-amount and Benford's-Law rules compare against. Materialised nightly (not computed per evaluation) by the ccm-baseline-materialisation scheduled workflow over a rolling window per scope. stable=false when the sample size or variance is too small to flag.",
         "x-schema-org": "schema:QuantitativeValue",
         "x-spec": "openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a CCM Baseline is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a CCM Baseline is written to OpenRegister's immutable audit trail with actor and timestamp."
         },
         "x-openregister-rbac": {
           "roles": {
@@ -898,7 +898,7 @@
         "x-openregister-scheduled-workflows": {
           "ccm-baseline-materialisation": {
             "name": "Baseline materialisation",
-            "description": "Nightly job (23:30) computing mean/median/stddev/Benford/typical-hour/typical-day baselines per scope over a rolling 12-month window (REQ-CCM-003). Completion SLA ≤1h. No PHP TimedJob — declarative scheduled workflow.",
+            "description": "Nightly job (23:30) computing mean/median/stddev/Benford/typical-hour/typical-day baselines per scope over a rolling 12-month window. Completion SLA ≤1h. No PHP TimedJob: declarative scheduled workflow.",
             "cron": "30 23 * * *",
             "register": "shillinq",
             "schema": "CcmBaseline",
@@ -925,7 +925,7 @@
               "project",
               "tenant-wide"
             ],
-            "description": "Scope the baseline applies to (REQ-CCM-002).",
+            "description": "Scope the baseline applies to.",
             "title": "Baseline Scope"
           },
           "scopeKey": {
@@ -946,7 +946,7 @@
               "typical-day-of-week",
               "typical-poster-set"
             ],
-            "description": "Which statistic this baseline holds (REQ-CCM-002).",
+            "description": "Which statistic this baseline holds.",
             "title": "Baseline Metric"
           },
           "period": {
@@ -1007,7 +1007,7 @@
           },
           "stable": {
             "type": "boolean",
-            "description": "False when the sample size or variance is too small to flag against (REQ-CCM-002).",
+            "description": "False when the sample size or variance is too small to flag against.",
             "default": false,
             "title": "Stable"
           }
@@ -1018,12 +1018,12 @@
         "icon": "FileChartOutline",
         "version": "0.1.0",
         "title": "CCM Audit Committee Report",
-        "description": "The period-end audit-committee deliverable (REQ-CCM-006). Assembles rule-firings by family/severity, findings by status, top findings, trend analysis, SoD compliance scorecard, manual-JE summary, approver-bypass summary, and (when SOX mode is enabled) the SOX 404 deficiency log. The executive summary is LLM-drafted then human-edited; no report is published without approver sign-off (CcmFindingGuard::canApproveReport). Immutable audit trail per REQ-CCM-009.",
+        "description": "The period-end audit-committee deliverable. Assembles rule-firings by family/severity, findings by status, top findings, trend analysis, SoD compliance scorecard, manual-JE summary, approver-bypass summary, and (when SOX mode is enabled) the SOX 404 deficiency log. The executive summary is LLM-drafted then human-edited; no report is published without approver sign-off (CcmFindingGuard:canApproveReport). Immutable audit trail.",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a CCM Audit Committee Report is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a CCM Audit Committee Report is written to OpenRegister's immutable audit trail with actor and timestamp."
         },
         "x-openregister-rbac": {
           "roles": {
@@ -1053,7 +1053,7 @@
           "states": {
             "draft": {
               "label": "Draft",
-              "description": "Auto-assembled; executive summary LLM-drafted, awaiting CFO edit (REQ-CCM-006)."
+              "description": "Auto-assembled; executive summary LLM-drafted, awaiting CFO edit."
             },
             "in-review": {
               "label": "In review",
@@ -1073,20 +1073,20 @@
               "from": "draft",
               "to": "in-review",
               "label": "Submit for review",
-              "description": "CFO submits the edited report for chair review (REQ-CCM-006)."
+              "description": "CFO submits the edited report for chair review."
             },
             "approve": {
               "from": "in-review",
               "to": "approved",
               "label": "Approve",
-              "description": "Approver signs off; blocked unless an approver and an executive summary are present (REQ-CCM-006).",
+              "description": "Approver signs off; blocked unless an approver and an executive summary are present.",
               "requires": "OCA\\Shillinq\\Lifecycle\\CcmFindingGuard::canApproveReport"
             },
             "distribute": {
               "from": "approved",
               "to": "distributed",
               "label": "Distribute",
-              "description": "Distribute to the audit committee; distribution logged (REQ-CCM-006)."
+              "description": "Distribute to the audit committee; distribution logged."
             }
           }
         },
@@ -1098,7 +1098,7 @@
         "properties": {
           "period": {
             "type": "string",
-            "description": "Reporting period, e.g. 2026-Q1 (REQ-CCM-006).",
+            "description": "Reporting period, e.g. 2026-Q1.",
             "example": "2026-Q1",
             "title": "Period"
           },
@@ -1127,7 +1127,7 @@
           },
           "executiveSummary": {
             "type": "string",
-            "description": "Executive summary, LLM-drafted then human-edited (REQ-CCM-006).",
+            "description": "Executive summary, LLM-drafted then human-edited.",
             "nullable": true,
             "title": "Executive Summary"
           },
@@ -1167,7 +1167,7 @@
           },
           "trendAnalysis": {
             "type": "object",
-            "description": "Year-over-year / period-over-period trend comparison (REQ-CCM-006).",
+            "description": "Year-over-year / period-over-period trend comparison.",
             "additionalProperties": true,
             "title": "Trend Analysis"
           },
@@ -1191,7 +1191,7 @@
           },
           "soxDeficiencies": {
             "type": "array",
-            "description": "SOX 404 deficiency log (only when SOX mode is enabled, REQ-CCM-006).",
+            "description": "SOX 404 deficiency log (only when SOX mode is enabled).",
             "items": {
               "type": "object",
               "properties": {
@@ -1227,7 +1227,7 @@
           },
           "approver": {
             "type": "string",
-            "description": "Nextcloud user id of the audit-committee-chair approver (REQ-CCM-006).",
+            "description": "Nextcloud user id of the audit-committee-chair approver.",
             "nullable": true,
             "title": "Approver"
           },
@@ -1272,7 +1272,7 @@
               "approved",
               "distributed"
             ],
-            "description": "Report lifecycle state (REQ-CCM-006). Managed by x-openregister-lifecycle.",
+            "description": "Report lifecycle state. Managed by x-openregister-lifecycle.",
             "default": "draft",
             "title": "State"
           }

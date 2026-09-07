@@ -16,13 +16,13 @@
  * page's own "Analytical dimensions", not the old per-route titles.
  */
 
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import {
-	gotoPage,
 	assertIndexSurface,
 	assertNoShillinqFailures,
+	gotoPage,
 	recordShillinqErrors,
-} from './_helpers'
+} from './_helpers.ts'
 
 const PAGES: Array<{ route: string; title: string; titleRe?: RegExp }> = [
 	{

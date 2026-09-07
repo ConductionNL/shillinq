@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-treasury-ihb",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "T3 strategic + compliance — Treasury / In-house Bank (IHB) / Cash Pooling. Declares nine new schemas (CashPool, CashPoolMembership, IntercompanyLoan, IntercompanyTransaction, FXContract, FXPosition, CashForecast, BankReconciliationGroup, LiquidityKPI) plus their lifecycles, aggregation formulas, RBAC and seed objects. Per ADR-031 all treasury calculation is declarative metadata; the only PHP seam is the period-close precondition guard for IntercompanyTransaction posting (REQ-IHB-005)."
+    "description": "T3 strategic + compliance: Treasury / In-house Bank (IHB) / Cash Pooling. Declares nine new schemas (CashPool, CashPoolMembership, IntercompanyLoan, IntercompanyTransaction, FXContract, FXPosition, CashForecast, BankReconciliationGroup, LiquidityKPI) plus their lifecycles, aggregation formulas, RBAC and seed objects. Per ADR-031 all treasury calculation is declarative metadata; the only PHP seam is the period-close precondition guard for IntercompanyTransaction posting."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "BankTransfer",
         "version": "0.1.0",
         "title": "Cash Pool",
-        "description": "Group cash-pool header (REQ-IHB-001). Type discriminator distinguishes notional pooling (interest calculated on aggregate, no cash movement) from physical zero-balance / target-balance sweeping. Master account, base currency, daily interest rate, interest-allocation method and minimum-cash policy drive the daily aggregation queries and the n8n sweep orchestration (REQ-IHB-002, REQ-IHB-003).",
+        "description": "Group cash-pool header. Type discriminator distinguishes notional pooling (interest calculated on aggregate, no cash movement) from physical zero-balance / target-balance sweeping. Master account, base currency, daily interest rate, interest-allocation method and minimum-cash policy drive the daily aggregation queries and the n8n sweep orchestration.",
         "x-schema-org": "schema:FinancialProduct",
         "x-spec": "openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md",
         "type": "object",
@@ -40,12 +40,12 @@
               "zero-balance",
               "target-balance"
             ],
-            "description": "Pool type discriminator (REQ-IHB-001). Notional = interest only; zero-balance/target-balance = physical sweep.",
+            "description": "Pool type discriminator. Notional = interest only; zero-balance/target-balance = physical sweep.",
             "title": "Type"
           },
           "masterAccount": {
             "type": "string",
-            "description": "Master account IBAN that sweeps concentrate into (REQ-IHB-002).",
+            "description": "Master account IBAN that sweeps concentrate into.",
             "example": "NL91ABNA0417164300",
             "title": "Master Account"
           },
@@ -59,7 +59,7 @@
             "type": "number",
             "minimum": 0,
             "nullable": true,
-            "description": "Annualised pool interest rate used for daily notional accrual (REQ-IHB-003). Expressed as a fraction, e.g. 0.045 for 4.5% p.a.",
+            "description": "Annualised pool interest rate used for daily notional accrual. Expressed as a fraction, e.g. 0.045 for 4.5% p.a.",
             "example": 0.045,
             "title": "Daily Interest Rate"
           },
@@ -71,7 +71,7 @@
               "fixed"
             ],
             "default": "proportional",
-            "description": "How notional interest is split across members (REQ-IHB-003).",
+            "description": "How notional interest is split across members.",
             "title": "Interest Allocation Method"
           },
           "allocationWeights": {
@@ -91,7 +91,7 @@
               "on-threshold"
             ],
             "default": "daily",
-            "description": "Physical-sweep cadence (REQ-IHB-002). Ignored for notional pools.",
+            "description": "Physical-sweep cadence. Ignored for notional pools.",
             "title": "Sweep Frequency"
           },
           "sweepTime": {
@@ -105,7 +105,7 @@
             "type": "number",
             "minimum": 0,
             "nullable": true,
-            "description": "Group minimum-cash floor in pool currency; the 13-week forecast raises a treasury alert when projected closing cash drops below this (REQ-IHB-008).",
+            "description": "Group minimum-cash floor in pool currency; the 13-week forecast raises a treasury alert when projected closing cash drops below this.",
             "example": 500000.0,
             "title": "Minimum Cash Policy"
           },
@@ -131,7 +131,7 @@
               "inactive"
             ],
             "default": "draft",
-            "description": "Lifecycle state (REQ-IHB-001).",
+            "description": "Lifecycle state.",
             "title": "State"
           },
           "administrationId": {
@@ -207,7 +207,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Cash Pool is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Cash Pool is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "CashPoolMembership": {
@@ -215,7 +215,7 @@
         "icon": "BankCircle",
         "version": "0.1.0",
         "title": "Cash Pool Membership",
-        "description": "Links one administration's bank account to a CashPool (REQ-IHB-001). Sweep direction, target balance, priority and intra-day limit drive the physical-sweep calculation; exclusions list accounts that must not be swept (e.g. regulatory-balance accounts).",
+        "description": "Links one administration's bank account to a CashPool. Sweep direction, target balance, priority and intra-day limit drive the physical-sweep calculation; exclusions list accounts that must not be swept (e.g. regulatory-balance accounts).",
         "x-schema-org": "schema:AggregateOffer",
         "x-spec": "openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md",
         "type": "object",
@@ -251,7 +251,7 @@
               "downstream",
               "central"
             ],
-            "description": "Sweep polarity (REQ-IHB-002). upstream = balance flows to master; downstream = funded from master; central = the master account itself.",
+            "description": "Sweep polarity. upstream = balance flows to master; downstream = funded from master; central = the master account itself.",
             "title": "Sweep Direction"
           },
           "targetBalance": {
@@ -316,7 +316,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Cash Pool Membership is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Cash Pool Membership is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "IntercompanyLoan": {
@@ -324,7 +324,7 @@
         "icon": "HandCoinOutline",
         "version": "0.1.0",
         "title": "Intercompany Loan",
-        "description": "Inter-company loan between two administrations (REQ-IHB-004). Supports fixed and floating (reference rate + spread) interest, daily accrual and monthly GL posting on both lender and borrower ledgers. Transfer-pricing documentation reference (OECD arm's-length, Chapter X Financial Transactions) is stored for auditor review.",
+        "description": "Inter-company loan between two administrations. Supports fixed and floating (reference rate + spread) interest, daily accrual and monthly GL posting on both lender and borrower ledgers. Transfer-pricing documentation reference (OECD arm's-length, Chapter X Financial Transactions) is stored for auditor review.",
         "x-schema-org": "schema:LoanOrCredit",
         "x-spec": "openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md",
         "type": "object",
@@ -377,7 +377,7 @@
               "floating"
             ],
             "default": "fixed",
-            "description": "Whether the loan carries a fixed rate or a floating reference rate + spread (REQ-IHB-004).",
+            "description": "Whether the loan carries a fixed rate or a floating reference rate + spread.",
             "title": "Rate Type"
           },
           "fixedRate": {
@@ -395,7 +395,7 @@
               "SARON"
             ],
             "nullable": true,
-            "description": "Floating reference rate index when rateType=floating (REQ-IHB-004).",
+            "description": "Floating reference rate index when rateType=floating.",
             "title": "Reference Rate"
           },
           "spread": {
@@ -445,7 +445,7 @@
           "transferPricingDocumentReference": {
             "type": "string",
             "nullable": true,
-            "description": "docudesk URI to the OECD-compliant transfer-pricing memo (REQ-IHB-004).",
+            "description": "docudesk URI to the OECD-compliant transfer-pricing memo.",
             "example": "docudesk://00000000-0000-0000-0000-000000000000",
             "title": "Transfer Pricing Document Reference"
           },
@@ -468,7 +468,7 @@
               "written-off"
             ],
             "default": "draft",
-            "description": "Loan lifecycle state (REQ-IHB-004).",
+            "description": "Loan lifecycle state.",
             "title": "State"
           },
           "administrationId": {
@@ -509,7 +509,7 @@
               "from": "draft",
               "to": "active",
               "label": "Opnemen",
-              "description": "Treasurer draws the loan; requires arm's-length warning acknowledgement (REQ-IHB-004).",
+              "description": "Treasurer draws the loan; requires arm's-length warning acknowledgement.",
               "requires": "OCA\\Shillinq\\Lifecycle\\IntercompanyTransactionGuard::canActivateLoan"
             },
             "repay": {
@@ -549,7 +549,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Intercompany Loan is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Intercompany Loan is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "IntercompanyTransaction": {
@@ -557,7 +557,7 @@
         "icon": "SwapHorizontalBold",
         "version": "0.1.0",
         "title": "Intercompany Transaction",
-        "description": "A single in-house-bank movement between two administrations (REQ-IHB-005): a sweep, loan drawdown, interest accrual or settlement. Posting materialises balanced double-sided GL entries on both ledgers; posting is blocked when either administration's period is closed (REQ-IHB-005, REQ-PC-004).",
+        "description": "A single in-house-bank movement between two administrations: a sweep, loan drawdown, interest accrual or settlement. Posting materialises balanced double-sided GL entries on both ledgers; posting is blocked when either administration's period is closed.",
         "x-schema-org": "schema:MoneyTransfer",
         "x-spec": "openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md",
         "type": "object",
@@ -591,7 +591,7 @@
               "settlement",
               "other"
             ],
-            "description": "Movement classification (REQ-IHB-005).",
+            "description": "Movement classification.",
             "title": "Movement Type"
           },
           "amount": {
@@ -622,7 +622,7 @@
           "postingDate": {
             "type": "string",
             "format": "date",
-            "description": "GL posting date; validated against both administrations' period status (REQ-IHB-005).",
+            "description": "GL posting date; validated against both administrations' period status.",
             "title": "Posting Date"
           },
           "valueDate": {
@@ -646,7 +646,7 @@
               "settled"
             ],
             "default": "draft",
-            "description": "Movement lifecycle (REQ-IHB-005).",
+            "description": "Movement lifecycle.",
             "title": "State"
           }
         },
@@ -677,7 +677,7 @@
               "from": "draft",
               "to": "posted",
               "label": "Boeken",
-              "description": "Materialise GL entries; blocked if either administration's period is closed (REQ-IHB-005, REQ-PC-004).",
+              "description": "Materialise GL entries; blocked if either administration's period is closed.",
               "requires": "OCA\\Shillinq\\Lifecycle\\IntercompanyTransactionGuard::canPost"
             },
             "settle": {
@@ -715,7 +715,7 @@
         "icon": "CurrencyUsd",
         "version": "0.1.0",
         "title": "FX Contract",
-        "description": "Foreign-exchange contract with full IFRS 9 lifecycle (REQ-IHB-006). Records counterparty, instrument, buy/sell currency + amount, trade/value/settlement dates, contract rate, hedge designation and settlement instructions. Revalued at period close; unrealised gains/losses post to OCI or P&L per hedge designation (IFRS 9 §6.4).",
+        "description": "Foreign-exchange contract with full IFRS 9 lifecycle. Records counterparty, instrument, buy/sell currency + amount, trade/value/settlement dates, contract rate, hedge designation and settlement instructions. Revalued at period close; unrealised gains/losses post to OCI or P&L per hedge designation (IFRS 9 §6.4).",
         "x-schema-org": "schema:Invoice",
         "x-spec": "openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md",
         "type": "object",
@@ -751,7 +751,7 @@
               "swap",
               "NDF"
             ],
-            "description": "FX instrument type (REQ-IHB-006).",
+            "description": "FX instrument type.",
             "title": "Instrument Type"
           },
           "buyCurrency": {
@@ -815,7 +815,7 @@
               "net-investment"
             ],
             "nullable": true,
-            "description": "IFRS 9 §6.4 hedge designation; null = undesignated/trading (REQ-IHB-006).",
+            "description": "IFRS 9 §6.4 hedge designation; null = undesignated/trading.",
             "title": "Hedge Designation"
           },
           "settlementInstructions": {
@@ -841,7 +841,7 @@
               "cancelled"
             ],
             "default": "drafted",
-            "description": "FX contract lifecycle (REQ-IHB-006).",
+            "description": "FX contract lifecycle.",
             "title": "State"
           }
         },
@@ -925,7 +925,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a FX Contract is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a FX Contract is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "FXPosition": {
@@ -933,7 +933,7 @@
         "icon": "ChartLine",
         "version": "0.1.0",
         "title": "FX Position",
-        "description": "Per-(entity, currency) open foreign-exchange position (REQ-IHB-006). Mark-to-market valuation and unrealised P&L are derived from the open position and the current spot rate; the consolidated group total is an aggregation across all entity positions per currency.",
+        "description": "Per-(entity, currency) open foreign-exchange position. Mark-to-market valuation and unrealised P&L are derived from the open position and the current spot rate; the consolidated group total is an aggregation across all entity positions per currency.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md",
         "type": "object",
@@ -994,13 +994,13 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Timestamp of the last revaluation; UI warns when stale > 1 hour (REQ-IHB-006).",
+            "description": "Timestamp of the last revaluation; UI warns when stale > 1 hour.",
             "title": "Last Updated"
           }
         },
         "x-openregister-aggregations": {
           "groupTotal": {
-            "description": "Consolidated group position per currency = sum of all entity positions and fair values (REQ-IHB-006, REQ-IHB-007).",
+            "description": "Consolidated group position per currency = sum of all entity positions and fair values.",
             "groupBy": [
               "foreignCurrency"
             ],
@@ -1047,7 +1047,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a FX Position is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a FX Position is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "CashForecast": {
@@ -1055,7 +1055,7 @@
         "icon": "CalendarMultiselect",
         "version": "0.1.0",
         "title": "Cash Forecast",
-        "description": "One weekly bucket of the rolling 13-week cashflow forecast for a pool/scenario (REQ-IHB-008). Inflows and outflows are aggregated from AR/AP ageing, payroll calendar and scheduled debt service; closing cash is derived; variance vs prior forecast drives treasury alerts.",
+        "description": "One weekly bucket of the rolling 13-week cashflow forecast for a pool/scenario. Inflows and outflows are aggregated from AR/AP ageing, payroll calendar and scheduled debt service; closing cash is derived; variance vs prior forecast drives treasury alerts.",
         "x-schema-org": "schema:Statement",
         "x-spec": "openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md",
         "type": "object",
@@ -1076,7 +1076,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 13,
-            "description": "Week bucket index in the 13-week horizon (REQ-IHB-008).",
+            "description": "Week bucket index in the 13-week horizon.",
             "title": "Forecast Week"
           },
           "weekStartDate": {
@@ -1093,7 +1093,7 @@
               "downside",
               "stress"
             ],
-            "description": "Forecast scenario (REQ-IHB-008).",
+            "description": "Forecast scenario.",
             "title": "Scenario"
           },
           "openingCash": {
@@ -1172,7 +1172,7 @@
           "varianceVsPriorForecast": {
             "type": "number",
             "nullable": true,
-            "description": "Closing-cash delta vs the prior forecast run for the same week; alert raised when |variance| > EUR 50K (REQ-IHB-008).",
+            "description": "Closing-cash delta vs the prior forecast run for the same week; alert raised when |variance| > EUR 50K.",
             "title": "Variance Vs Prior Forecast"
           },
           "lastRegenerated": {
@@ -1212,7 +1212,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Cash Forecast is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Cash Forecast is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "BankReconciliationGroup": {
@@ -1220,7 +1220,7 @@
         "icon": "BankCheck",
         "version": "0.1.0",
         "title": "Bank Reconciliation Group",
-        "description": "A multi-administration bank-reconciliation run across all participants of a pool (REQ-IHB-009). Links one bank line to GL entries from several administrations in a single workflow (typical for shared-service-centre payments), with an auto-match score and an exception queue for operator review.",
+        "description": "A multi-administration bank-reconciliation run across all participants of a pool. Links one bank line to GL entries from several administrations in a single workflow (typical for shared-service-centre payments), with an auto-match score and an exception queue for operator review.",
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md",
         "type": "object",
@@ -1244,7 +1244,7 @@
           },
           "participatingAdministrationIds": {
             "type": "array",
-            "description": "Administrations whose ledgers are searched for matches (REQ-IHB-009).",
+            "description": "Administrations whose ledgers are searched for matches.",
             "items": {
               "type": "string"
             },
@@ -1300,7 +1300,7 @@
               "completed"
             ],
             "default": "draft",
-            "description": "Reconciliation-run lifecycle (REQ-IHB-009).",
+            "description": "Reconciliation-run lifecycle.",
             "title": "State"
           }
         },
@@ -1365,7 +1365,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Bank Reconciliation Group is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Bank Reconciliation Group is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "LiquidityKPI": {
@@ -1373,7 +1373,7 @@
         "icon": "SpeedometerSlow",
         "version": "0.1.0",
         "title": "Liquidity KPI",
-        "description": "Liquidity key-performance-indicator snapshot per pool + measurement date (REQ-IHB-010): cash-conversion cycle, days cash on hand, current ratio, quick ratio, with a per-entity breakdown and trend vs prior week. Computed from CashForecast plus AR/AP ageing.",
+        "description": "Liquidity key-performance-indicator snapshot per pool + measurement date: cash-conversion cycle, days cash on hand, current ratio, quick ratio, with a per-entity breakdown and trend vs prior week. Computed from CashForecast plus AR/AP ageing.",
         "x-schema-org": "schema:Observation",
         "x-spec": "openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md",
         "type": "object",
@@ -1397,7 +1397,7 @@
           "cashConversionCycleDays": {
             "type": "number",
             "nullable": true,
-            "description": "DIO + DSO − DPO in days (REQ-IHB-010).",
+            "description": "DIO + DSO − DPO in days.",
             "title": "Cash Conversion Cycle Days"
           },
           "daysCashOnHandDays": {
@@ -1487,7 +1487,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Liquidity KPI is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Liquidity KPI is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     }

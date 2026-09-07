@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "source": "Mandaatregeling Gemeentewet art. 168 e.v., VNG Handreiking mandatering, common MKB/ZZP delegation practice",
     "version": "2026",
-    "description": "Common mandaat (signing-authority) templates for verplichtingenadministratie (REQ-VPL-002). Loaded per-administration as a starting point; operators add/edit afterwards. Amounts are in minor units (EUR cents).",
+    "description": "Common mandaat (signing-authority) templates for verplichtingenadministratie. Loaded per-administration as a starting point; operators add/edit afterwards. Amounts are in minor units (EUR cents).",
     "imported": "2026-06-01T00:00:00Z"
   },
   "mandaatTemplates": [

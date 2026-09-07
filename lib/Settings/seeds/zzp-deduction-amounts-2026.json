@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "source": "Wet IB 2001 + Belastingplan 2026",
     "version": "2026",
-    "description": "ZZP aftrekbedragen voor belastingjaar 2026. Zelfstandigenaftrek (art. 3.76), startersaftrek (art. 3.77), MKB-winstvrijstelling percentage (art. 3.79a). Versioned seed: toekomstige wijzigingen shipped als zzp-deduction-amounts-YYYY.json per REQ-ZZP-007.",
+    "description": "ZZP aftrekbedragen voor belastingjaar 2026. Zelfstandigenaftrek (art. 3.76), startersaftrek (art. 3.77), MKB-winstvrijstelling percentage (art. 3.79a). Versioned seed: toekomstige wijzigingen shipped als zzp-deduction-amounts-YYYY.json.",
     "imported": "2026-06-03T00:00:00Z"
   },
   "taxYear": 2026,

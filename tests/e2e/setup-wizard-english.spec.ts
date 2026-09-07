@@ -43,12 +43,13 @@
  * @spec openspec/changes/setup-wizard-english/specs/setup-wizard-english/spec.md
  */
 
-import { test, expect, request, type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
+
+import { expect, request, test } from '@playwright/test'
 import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
-
-import { resolveBaseURL } from './base-url'
+import { resolveBaseURL } from './base-url.ts'
 
 const APP = '/apps/shillinq'
 const APP_ROOT = path.resolve(__dirname, '..', '..')
@@ -180,7 +181,6 @@ async function restoreCiSeedBaseline(baseURL: string): Promise<void> {
 		const status = await ctx.get('/index.php/apps/shillinq/api/setup/status')
 		const body = await status.json().catch(() => ({}))
 		if (body?.completed !== true) {
-			// eslint-disable-next-line no-console
 			console.warn(
 				'[setup-wizard-english] afterAll restore did not report completed:true — '
 					+ `sibling specs may see a blocking setup dialog. status: ${JSON.stringify(body)}`,
@@ -414,7 +414,6 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 			.getByRole('button', { name: /finish|complete|done|close/i })
 			.last()
 		await finishButton.click({ timeout: 10_000 }).catch(() => {
-			// eslint-disable-next-line no-console
 			console.warn(
 				'[setup-wizard-english] no explicit finish button matched; the wizard may auto-close on `completed: true`.',
 			)

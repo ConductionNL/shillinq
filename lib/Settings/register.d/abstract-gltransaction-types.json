@@ -31,14 +31,14 @@
               "manual"
             ],
             "nullable": true,
-            "description": "Closing group (journalType='closing'): classification of the closing entry, folded from ClosingEntry.entryType. Per REQ-YEC-001.",
+            "description": "Closing group (journalType='closing'): classification of the closing entry, folded from ClosingEntry.entryType. Per.",
             "example": "revenue-closing",
             "title": "Closing Entry Type"
           },
           "fiscalYearId": {
             "type": "string",
             "nullable": true,
-            "description": "Closing group (journalType='closing'): FK to the FiscalYear this closing entry belongs to, folded from ClosingEntry.fiscalYearId. Per REQ-YEC-001.",
+            "description": "Closing group (journalType='closing'): FK to the FiscalYear this closing entry belongs to, folded from ClosingEntry.fiscalYearId. Per.",
             "example": "fy-2026-nl",
             "title": "Fiscal Year ID"
           },
@@ -52,7 +52,7 @@
               "reversed"
             ],
             "nullable": true,
-            "description": "Closing group (journalType='closing'): lifecycle state of the closing entry, folded from ClosingEntry.approvalStatus. draft -> pending-approval -> approved -> posted; or posted -> reversed. Per REQ-YEC-001 / REQ-YEC-009.",
+            "description": "Closing group (journalType='closing'): lifecycle state of the closing entry, folded from ClosingEntry.approvalStatus. draft -> pending-approval -> approved -> posted; or posted -> reversed. Per.",
             "title": "Approval Status"
           },
           "sourceAdministrationId": {

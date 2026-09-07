@@ -3,7 +3,7 @@
     "spdx-license": "EUPL-1.2",
     "spdx-copyright": "2026 Conduction B.V.",
     "source": "Burgerlijk Wetboek Boek 2, art. 2:377 (winst-en-verliesrekening modellen)",
-    "description": "Rubriek catalogue for the two V&W modellen per art. 2:377 BW (REQ-T9-003). Model A 'categorisch' groups costs by type (lid 2); Model E 'functioneel' groups costs by function (lid 3). Configuration-as-data; the income-statement generator reads this to order and label rows.",
+    "description": "Rubriek catalogue for the two V&W modellen per art. 2:377 BW. Model A 'categorisch' groups costs by type (lid 2); Model E 'functioneel' groups costs by function (lid 3). Configuration-as-data; the income-statement generator reads this to order and label rows.",
     "imported": "2026-06-05T00:00:00Z",
     "url": "https://wetten.overheid.nl/BWBR0003045/"
   },

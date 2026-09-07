@@ -8,14 +8,14 @@
  * Data-independent.
  */
 
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import {
 	APP,
-	gotoPage,
-	dismissOverlays,
 	assertNoShillinqFailures,
+	dismissOverlays,
+	gotoPage,
 	recordShillinqErrors,
-} from './_helpers'
+} from './_helpers.ts'
 
 test.describe('shillinq spec-coverage — Dashboard & Settings', () => {
 	// No `mode: 'serial'` — see the header of ./_helpers.ts. The Dashboard

@@ -854,6 +854,45 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 	}//end saveObjects()
 
 	/**
+	 * Hand the raw append to the double, when it declares one.
+	 *
+	 * There is no fallback onto saveObject() here: the raw path exists to skip
+	 * everything saveObject() does, so emulating it through saveObject() would
+	 * make the adapter lie about the thing it stands in for.
+	 *
+	 * @param array      $objects  Rows to append, as plain arrays.
+	 * @param string|int $register Register id, uuid or slug.
+	 * @param string|int $schema   Schema id, uuid or slug.
+	 *
+	 * @return int The number of rows written.
+	 */
+	public function appendObjectsRaw(array $objects, string|int $register, string|int $schema): int {
+		if (method_exists($this->inner, 'appendObjectsRaw') === false) {
+			$this->unsupported(method: 'appendObjectsRaw');
+		}
+
+		return (int)$this->inner->appendObjectsRaw($objects, $register, $schema);
+
+	}//end appendObjectsRaw()
+
+	/**
+	 * Hand the expiry sweep to the double, when it declares one.
+	 *
+	 * @param string|int $register Register id, uuid or slug.
+	 * @param string|int $schema   Schema id, uuid or slug.
+	 *
+	 * @return int The number of rows removed.
+	 */
+	public function purgeExpiredObjectsRaw(string|int $register, string|int $schema): int {
+		if (method_exists($this->inner, 'purgeExpiredObjectsRaw') === false) {
+			$this->unsupported(method: 'purgeExpiredObjectsRaw');
+		}
+
+		return (int)$this->inner->purgeExpiredObjectsRaw($register, $schema);
+
+	}//end purgeExpiredObjectsRaw()
+
+	/**
 	 * Not modelled.
 	 *
 	 * @param string|int $identifier The object id or UUID.

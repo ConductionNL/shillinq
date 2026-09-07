@@ -8,16 +8,16 @@
  * localStorage preference round-trip with TTL expiry.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import {
-	defaultDraftLine,
-	computeTotals,
-	paymentTermDays,
-	dueDateFromTerms,
 	buildInvoicePayload,
+	computeTotals,
+	defaultDraftLine,
+	dueDateFromTerms,
+	loadQuickDraftPrefs,
+	paymentTermDays,
 	periodIdFromDate,
 	provisionalInvoiceNumber,
-	loadQuickDraftPrefs,
 	saveQuickDraftPrefs,
 } from '../../src/modals/invoiceQuickDraft.js'
 

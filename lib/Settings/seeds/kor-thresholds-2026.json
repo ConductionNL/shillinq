@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "source": "Wet OB 1968 art. 25 lid 1",
     "version": "2026",
-    "description": "KOR omzetdrempel €20.000 + waarschuwingspercentage 80% per Wet OB 1968 art. 25 lid 1. Geldig voor kalenderjaar 2026. Versioned seed: updates shipped as kor-thresholds-YYYY.json per REQ-KOR-003.",
+    "description": "KOR omzetdrempel €20.000 + waarschuwingspercentage 80% per Wet OB 1968 art. 25 lid 1. Geldig voor kalenderjaar 2026. Versioned seed: updates shipped as kor-thresholds-YYYY.json.",
     "imported": "2026-06-01T00:00:00Z"
   },
   "thresholds": [

@@ -260,7 +260,7 @@ class BudgetBlockerTest extends TestCase {
 	 */
 	public function testCommitmentWithinBudgetAllowed(): void {
 		$this->withObjectService(
-			$this->buildObjectServiceStub(['CommitmentBudget' => [$this->budget()], 'Mandate' => []])
+			$this->buildObjectServiceStub(['CommitmentBudget' => [$this->budget()], 'SpendingMandate' => []])
 		);
 
 		// Free room is EUR 300.000; a EUR 250.000 commitment fits.
@@ -275,7 +275,7 @@ class BudgetBlockerTest extends TestCase {
 	 */
 	public function testCommitmentExceedingBudgetRejected(): void {
 		$this->withObjectService(
-			$this->buildObjectServiceStub(['CommitmentBudget' => [$this->budget()], 'Mandate' => []])
+			$this->buildObjectServiceStub(['CommitmentBudget' => [$this->budget()], 'SpendingMandate' => []])
 		);
 
 		// Free room is EUR 300.000; a EUR 350.000 commitment exceeds it.
@@ -301,7 +301,7 @@ class BudgetBlockerTest extends TestCase {
 		];
 
 		$this->withObjectService(
-			$this->buildObjectServiceStub(['CommitmentBudget' => [$this->budget()], 'Mandate' => [$override]])
+			$this->buildObjectServiceStub(['CommitmentBudget' => [$this->budget()], 'SpendingMandate' => [$override]])
 		);
 
 		// EUR 350.000 exceeds free room but the override-mandate forces acceptance.
@@ -321,7 +321,7 @@ class BudgetBlockerTest extends TestCase {
 
 		$this->withObjectService(
 			$this->buildObjectServiceStub(
-				['CommitmentBudget' => [$budget2026, $budget2027], 'Mandate' => []]
+				['CommitmentBudget' => [$budget2026, $budget2027], 'SpendingMandate' => []]
 			)
 		);
 
@@ -349,7 +349,7 @@ class BudgetBlockerTest extends TestCase {
 	 */
 	public function testMissingBudgetRejected(): void {
 		$this->withObjectService(
-			$this->buildObjectServiceStub(['CommitmentBudget' => [], 'Mandate' => []])
+			$this->buildObjectServiceStub(['CommitmentBudget' => [], 'SpendingMandate' => []])
 		);
 
 		$this->assertFalse($this->guard->canCommit('PO-1', $this->commitment(1000000)));
@@ -384,7 +384,7 @@ class BudgetBlockerTest extends TestCase {
 	 */
 	public function testRegelWithUnreadableAmountIsDenied(): void {
 		$this->withObjectService(
-			$this->buildObjectServiceStub(['CommitmentBudget' => [$this->budget()], 'Mandate' => []])
+			$this->buildObjectServiceStub(['CommitmentBudget' => [$this->budget()], 'SpendingMandate' => []])
 		);
 
 		$commitment = $this->commitment(500000000);
@@ -410,7 +410,7 @@ class BudgetBlockerTest extends TestCase {
 	 */
 	public function testRegelWithNonNumericAmountIsDenied(): void {
 		$this->withObjectService(
-			$this->buildObjectServiceStub(['CommitmentBudget' => [$this->budget()], 'Mandate' => []])
+			$this->buildObjectServiceStub(['CommitmentBudget' => [$this->budget()], 'SpendingMandate' => []])
 		);
 
 		$commitment = $this->commitment(500000000);
@@ -431,7 +431,7 @@ class BudgetBlockerTest extends TestCase {
 	 */
 	public function testReadableAmountWithinBudgetIsStillAllowed(): void {
 		$this->withObjectService(
-			$this->buildObjectServiceStub(['CommitmentBudget' => [$this->budget()], 'Mandate' => []])
+			$this->buildObjectServiceStub(['CommitmentBudget' => [$this->budget()], 'SpendingMandate' => []])
 		);
 
 		$this->assertTrue($this->guard->canCommit('PO-1', $this->commitment(10000000)));

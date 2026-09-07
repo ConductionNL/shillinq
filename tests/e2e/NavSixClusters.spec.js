@@ -35,7 +35,7 @@
  * @spec openspec/changes/nav-six-clusters/specs/nav-clusters/spec.md#req-navc-009
  */
 
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import { becomesVisible } from './becomes-visible.js'
 
 const APP = '/apps/shillinq'

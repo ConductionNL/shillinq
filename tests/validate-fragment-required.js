@@ -64,7 +64,7 @@ const FRAGMENT_DIR = path.join(SETTINGS_DIR, 'register.d')
 // only ever be LOWERED — no new conflicting declaration can land.
 const BASELINE = 44
 
-const loadJson = (file) => {
+function loadJson(file) {
 	try {
 		return JSON.parse(fs.readFileSync(file, 'utf8'))
 	} catch (err) {
@@ -92,7 +92,7 @@ function registerFiles() {
 	return files
 }
 
-const sameSet = (a, b) => {
+function sameSet(a, b) {
 	const sa = [...new Set(a)].sort()
 	const sb = [...new Set(b)].sort()
 	return sa.length === sb.length && sa.every((v, i) => v === sb[i])

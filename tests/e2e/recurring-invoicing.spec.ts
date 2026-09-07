@@ -28,7 +28,7 @@
  * @e2e recurring-invoicing::dutch-ui-renders-translated-strings-from-english-keys
  */
 
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 

@@ -21,7 +21,9 @@
  * @spec openspec/changes/bookkeeping-bbv-compliance/tasks.md (Tasks 5.13-5.19)
  */
 
-import { test, expect, type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
+
+import { expect, test } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 const ROUTE_IV3_AANLEVERING = '/overheid/iv3-aanlevering'

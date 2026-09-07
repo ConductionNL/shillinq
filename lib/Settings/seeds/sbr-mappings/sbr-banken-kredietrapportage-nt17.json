@@ -6,7 +6,7 @@
 		"variant": "sbr-banken-kredietrapportage",
 		"taxonomyVersion": "nt17",
 		"entryPoint": "sbr-banken-kredietrapportage",
-		"description": "Template mapping from FinancialStatement lines to NL-taxonomie nt17 concepts for the SBR-banken consortium kredietrapportage entry point (REQ-SBR-005, REQ-SBR-006). Used by the bank consortium for credit reporting (jaarcijfers + tussentijdse cijfers). Operator-extensible for bank-specific concept additions.",
+		"description": "Template mapping from FinancialStatement lines to NL-taxonomie nt17 concepts for the SBR-banken consortium kredietrapportage entry point. Used by the bank consortium for credit reporting (jaarcijfers + tussentijdse cijfers). Operator-extensible for bank-specific concept additions.",
 		"imported": "2026-06-09T00:00:00Z"
 	},
 	"mapping": {

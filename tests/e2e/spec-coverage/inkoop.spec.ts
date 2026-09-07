@@ -15,7 +15,7 @@ import {
 	assertNoShillinqFailures,
 	gotoPage,
 	recordShillinqErrors,
-} from './_helpers'
+} from './_helpers.ts'
 
 const PAGES: Array<{ route: string; title: string; titleRe?: RegExp }> = [
 	{ route: '/inkoop/purchase-orders', title: 'Purchase Orders' },

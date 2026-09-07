@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bbv-taakveld-english-names",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Declares the English display fields carried by the BBV taakveld catalogues alongside their statutory Dutch counterparts. The Dutch strings (name/description/programmaFocus on BbvTaakveld; naam/hoofdfunctieNaam/omschrijvingIv3 on Taakveld) come from Besluit BBV bijlage IV and the Iv3-informatievoorschrift: they are what legalBasis cites and what a CBS Iv3 submission carries, so they are IDENTIFIERS rather than display text and are never translated in place. These *En fields are display-only and are never submitted to CBS nor used for matching. Declaring them is not optional: OpenRegister's MagicMapper DISCARDS properties a schema does not declare — it logs and continues — so a seed carrying naamEn against an undeclared schema would import 'successfully', store nothing, and leave the UI silently falling back to Dutch. The BbvTaakveld schema's own description already anticipates this, giving 'needs translation handling' as the reason the catalogue is a register rather than an enum.",
+    "description": "Declares the English display fields carried by the BBV taakveld catalogues alongside their statutory Dutch counterparts. The Dutch strings (name/description/programmaFocus on BbvTaakveld; naam/hoofdfunctieNaam/omschrijvingIv3 on Taakveld) come from Besluit BBV bijlage IV and the Iv3-informatievoorschrift: they are what legalBasis cites and what a CBS Iv3 submission carries, so they are IDENTIFIERS rather than display text and are never translated in place. These *En fields are display-only and are never submitted to CBS nor used for matching. Declaring them is not optional: OpenRegister's MagicMapper DISCARDS properties a schema does not declare. It logs and continues. So a seed carrying naamEn against an undeclared schema would import 'successfully', store nothing, and leave the UI silently falling back to Dutch. The BbvTaakveld schema's own description already anticipates this, giving 'needs translation handling' as the reason the catalogue is a register rather than an enum.",
     "spec": "openspec/specs/bbv-compliance/spec.md"
   },
   "components": {
@@ -52,7 +52,7 @@
           },
           "descriptionIv3And": {
             "type": "string",
-            "description": "English rendering of the Iv3 scope description. Display-only. Present only where the source regulation supplies a Dutch description — an absent description is not translated into an invented one.",
+            "description": "English rendering of the Iv3 scope description. Display-only. Present only where the source regulation supplies a Dutch description: an absent description is not translated into an invented one.",
             "nullable": true,
             "title": "Iv3 Description (English)"
           }

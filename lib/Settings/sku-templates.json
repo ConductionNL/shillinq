@@ -1,6 +1,6 @@
 {
 	"_meta": {
-		"description": "Declarative SKU generation templates per inventory-barcode-sku design D2. Each template declares a pattern and a list of rules; SkuGenerator (lib/Service/SkuGenerator.php) interpolates product attributes into the pattern, applying per-field transformations (mapping, passthrough, hex_first_3_chars). Edits to this file take effect on the next SKU generation request — no code deploy required.",
+		"description": "Declarative SKU generation templates per inventory-barcode-sku design D2. Each template declares a pattern and a list of rules; SkuGenerator (lib/Service/SkuGenerator.php) interpolates product attributes into the pattern, applying per-field transformations (mapping, passthrough, hex_first_3_chars). Edits to this file take effect on the next SKU generation request: no code deploy required.",
 		"spec": "openspec/changes/inventory-barcode-sku/specs/inventory-barcode-sku/spec.md",
 		"req": "REQ-SKU-002"
 	},
@@ -8,7 +8,7 @@
 		{
 			"templateId": "RETAIL_APPAREL_TEMPLATE",
 			"name": "Retail apparel products",
-			"description": "SKU format: {category_code}-{manufacturer_abbrev}-{size}-{color_code} — e.g. Apparel/Nike/M/Black -> AP-NK-M-000.",
+			"description": "SKU format: {category_code}-{manufacturer_abbrev}-{size}-{color_code}. E.g. Apparel/Nike/M/Black -> AP-NK-M-000.",
 			"pattern": "{category}-{manufacturer}-{size}-{color}",
 			"rules": [
 				{
@@ -50,7 +50,7 @@
 		{
 			"templateId": "PET_FOOD_TEMPLATE",
 			"name": "Pet food products",
-			"description": "SKU format: {category_prefix}-{species_code}-{formula_type}-{size_code} — e.g. Dry Food/Cat/Senior/2kg -> DV-KAT-SENIOR-2KG.",
+			"description": "SKU format: {category_prefix}-{species_code}-{formula_type}-{size_code}. E.g. Dry Food/Cat/Senior/2kg -> DV-KAT-SENIOR-2KG.",
 			"pattern": "{category}-{species}-{formula}-{size}",
 			"rules": [
 				{
@@ -94,7 +94,7 @@
 		{
 			"templateId": "SUPPLEMENT_TEMPLATE",
 			"name": "Dietary supplements (EU)",
-			"description": "SKU format: {ingredient_code}-{dose}-{unit_abbrev}-{form_code} — e.g. Vitamin C/1000/mg/Capsule -> VIT-C-1000-MG-CAP.",
+			"description": "SKU format: {ingredient_code}-{dose}-{unit_abbrev}-{form_code}. E.g. Vitamin C/1000/mg/Capsule -> VIT-C-1000-MG-CAP.",
 			"pattern": "{ingredient}-{dose}-{unit}-{form}",
 			"rules": [
 				{

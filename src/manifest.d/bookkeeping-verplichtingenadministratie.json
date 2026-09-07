@@ -157,7 +157,7 @@
 			"title": "Mandates",
 			"config": {
 				"register": "shillinq",
-				"schema": "Mandate",
+				"schema": "SpendingMandate",
 				"columns": [
 					{"key": "mandateCode", "label": "Code", "sortable": true},
 					{"key": "name", "label": "Name", "sortable": true},
@@ -176,7 +176,7 @@
 			"title": "Mandate",
 			"config": {
 				"register": "shillinq",
-				"schema": "Mandate",
+				"schema": "SpendingMandate",
 				"_note": "MANDATE (the authority definition that governs who may enter commitments and up to what amount). The body is the rule: holder + holder type, maximum amount, whether it is an override mandate, the second-signature threshold, validity window and the decision that adopted it. A config record with no children of its own; no comms. The audit trail sidebar is critical — a mandate is a delegated-authority control, so every change to its limits or holder must be traceable.",
 				"fields": [
 					{"key": "mandateCode", "label": "Code", "type": "string"},

@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-innovatiebox-administratie",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 4 — Innovatiebox administratie (Wet Vpb art. 12b-12bg). Declares the five interconnected registers QualifyingAsset (kwalificerend immaterieel activum with validated toegangsticket), NexusCalculation (OECD BEPS Action 5 modified nexus per asset per boekjaar, immutable), IBProfitAttribution (per-asset winsttoerekening: afpelmethode / forfaitair / cost-plus), IBExpenseAllocation (kostentoerekening with doorsnijdingsverbod flag), and CarryForwardLoss (asset-specific voortwenteling verlies). The declarative x-openregister-aggregations document the nexus / profit-attribution / loss-carry-forward / doorsnijdingsverbod shapes; the PHP service layer (NexusCalculationService, ProfitAttributionService, CarryForwardLossService, DoorsnijdingsVerbodValidator, QualifyingAssetValidator, InnovatieboxAggregationService) computes the same results from the real OpenRegister ObjectService API (find/findAll). Tariff 0.09 is hard-coded per Wet Vpb art. 12b 2026 (REQ-IBA-010). Seed objects provide the worked nexus / afpelmethode / forfaitair / loss-carry-forward examples from spec.md."
+    "description": "Tier 4: Innovatiebox administratie (Wet Vpb art. 12b-12bg). Declares the five interconnected registers QualifyingAsset (kwalificerend immaterieel activum with validated toegangsticket), NexusCalculation (OECD BEPS Action 5 modified nexus per asset per boekjaar, immutable), IBProfitAttribution (per-asset winsttoerekening: afpelmethode / forfaitair / cost-plus), IBExpenseAllocation (kostentoerekening with doorsnijdingsverbod flag), and CarryForwardLoss (asset-specific voortwenteling verlies). The declarative x-openregister-aggregations document the nexus / profit-attribution / loss-carry-forward / doorsnijdingsverbod shapes; the PHP service layer (NexusCalculationService, ProfitAttributionService, CarryForwardLossService, DoorsnijdingsVerbodValidator, QualifyingAssetValidator, InnovatieboxAggregationService) computes the same results from the real OpenRegister ObjectService API (find/findAll). Tariff 0.09 is hard-coded per Wet Vpb art. 12b 2026. Seed objects provide the worked nexus / afpelmethode / forfaitair / loss-carry-forward examples from spec.md."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "Lightbulb",
         "version": "0.1.0",
         "title": "Qualifying Asset",
-        "description": "Kwalificerend immaterieel activum (IP asset) with a validated toegangsticket per Wet Vpb art. 12ba (REQ-IBA-001). Assets without a valid access ticket get status invalid_access_ticket and are excluded from nexus / profit-attribution aggregations.",
+        "description": "Kwalificerend immaterieel activum (IP asset) with a validated toegangsticket per Wet Vpb art. 12ba. Assets without a valid access ticket get status invalid_access_ticket and are excluded from nexus / profit-attribution aggregations.",
         "x-schema-org": "schema:CreativeWork",
         "x-spec": "openspec/changes/bookkeeping-innovatiebox-administratie/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-001",
         "type": "object",
@@ -50,7 +50,7 @@
           },
           "accessTicket": {
             "type": "object",
-            "description": "Access-ticket evidence (REQ-IBA-001). soort drives which sub-fields are required.",
+            "description": "Access-ticket evidence. soort drives which sub-fields are required.",
             "nullable": true,
             "properties": {
               "kind": {
@@ -197,14 +197,14 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to the administration; reads are scoped to the requesting user's administration (REQ-IBA-008).",
+            "description": "FK to the administration; reads are scoped to the requesting user's administration.",
             "example": "adm-mkb-1",
             "title": "Administration ID"
           }
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Qualifying Asset is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Qualifying Asset is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "NexusCalculation": {
@@ -212,7 +212,7 @@
         "icon": "Sigma",
         "version": "0.1.0",
         "title": "Nexus Calculation",
-        "description": "OECD BEPS Action 5 modified-nexus calculation per asset per fiscal year (REQ-IBA-002). nexusbreuk = min(1; 1.3 x (eigen + uitbesteed_derden) / totaal). Immutable after creation (audit-trail enforced).",
+        "description": "OECD BEPS Action 5 modified-nexus calculation per asset per fiscal year. nexusbreuk = min(1; 1.3 x (eigen + uitbesteed_derden) / totaal). Immutable after creation (audit-trail enforced).",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-innovatiebox-administratie/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-002",
         "x-openregister": {
@@ -329,7 +329,7 @@
         },
         "x-openregister-aggregations": {
           "nexusByAssetYear": {
-            "description": "Declarative shape of the modified-nexus roll-up NexusCalculationService computes (REQ-IBA-002). Groups R&D cost by (qualifying_asset_id, boekjaar), derives teller_voor_uplift = eigen + uitbesteed_derden, teller_na_uplift = min(1.3 x teller_voor_uplift, totaal), and nexusbreuk_toegepast = min(teller_na_uplift / totaal, 1.0).",
+            "description": "Declarative shape of the modified-nexus roll-up NexusCalculationService computes. Groups R&D cost by (qualifying_asset_id, boekjaar), derives teller_voor_uplift = eigen + uitbesteed_derden, teller_na_uplift = min(1.3 x teller_voor_uplift, totaal), and nexusbreuk_toegepast = min(teller_na_uplift / totaal, 1.0).",
             "source": "NexusCalculation",
             "groupBy": [
               "NexusCalculation.qualifying_asset_id",
@@ -346,7 +346,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Nexus Calculation is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Nexus Calculation is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "IBProfitAttribution": {
@@ -354,7 +354,7 @@
         "icon": "ChartPie",
         "version": "0.1.0",
         "title": "IB Profit Attribution",
-        "description": "Per-asset winsttoerekening per fiscal year using one of three methods: per_asset_afpelmethode, forfaitair_25pct (25% capped at EUR 25k, no nexus), cost_plus (REQ-IBA-003). Exactly one record per (qualifying_asset_id, boekjaar).",
+        "description": "Per-asset winsttoerekening per fiscal year using one of three methods: per_asset_afpelmethode, forfaitair_25pct (25% capped at EUR 25k, no nexus), cost_plus. Exactly one record per (qualifying_asset_id, boekjaar).",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-innovatiebox-administratie/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-003",
         "type": "object",
@@ -461,7 +461,7 @@
           },
           "effective_rate": {
             "type": "number",
-            "description": "Innovatiebox tariff 0.09 (Wet Vpb art. 12b 2026, REQ-IBA-010).",
+            "description": "Innovatiebox tariff 0.09 (Wet Vpb art. 12b 2026).",
             "default": 0.09,
             "example": 0.09,
             "title": "Effectief Tarief"
@@ -500,13 +500,13 @@
           },
           "vso_locked": {
             "type": "boolean",
-            "description": "True once the fiscal year is signed off in a VSO; record becomes read-only (REQ-IBA-008).",
+            "description": "True once the fiscal year is signed off in a VSO; record becomes read-only.",
             "default": false,
             "title": "Vso Locked"
           },
           "flat_rate_cap_applied": {
             "type": "boolean",
-            "description": "True when the forfaitair_25pct election hit the EUR 25k annual cap (art. 12bg). Drives the ForfaitairCap.applied audit event (REQ-IBA-008).",
+            "description": "True when the forfaitair_25pct election hit the EUR 25k annual cap (art. 12bg). Drives the ForfaitairCap.applied audit event.",
             "default": false,
             "title": "Forfaitair Cap Applied"
           },
@@ -519,7 +519,7 @@
         },
         "x-openregister-aggregations": {
           "innovatieboxAdministratie": {
-            "description": "Per-asset Vpb innovatiebox roll-up (REQ-IBA-006). For each valid QualifyingAsset, joins IBProfitAttribution + NexusCalculation + CarryForwardLoss for the boekjaar and emits naam, kwalificerende_winst_voor_nexus, nexusbreuk_toegepast, kwalificerende_winst_na_nexus, effectief_tarief, vpb_op_innovatiedeel. The grand total contributes to Vpb-aangifte regel 23. InnovatieboxAggregationService computes this in PHP from the real ObjectService API.",
+            "description": "Per-asset Vpb innovatiebox roll-up. For each valid QualifyingAsset, joins IBProfitAttribution + NexusCalculation + CarryForwardLoss for the boekjaar and emits naam, kwalificerende_winst_voor_nexus, nexusbreuk_toegepast, kwalificerende_winst_na_nexus, effectief_tarief, vpb_op_innovatiedeel. The grand total contributes to Vpb-aangifte regel 23. InnovatieboxAggregationService computes this in PHP from the real ObjectService API.",
             "join": {
               "from": "IBProfitAttribution.qualifying_asset_id",
               "through": "QualifyingAsset",
@@ -546,7 +546,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a IB Profit Attribution is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a IB Profit Attribution is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "IBExpenseAllocation": {
@@ -554,7 +554,7 @@
         "icon": "CashMinus",
         "version": "0.1.0",
         "title": "IB Expense Allocation",
-        "description": "Kostentoerekening per asset per periode with the doorsnijdingsverbod flag exclusief_in_winstbepaling (REQ-IBA-004). When true, the same (grootboekrekening, kostenplaats) pair MUST NOT appear in the regular GL deduction feed.",
+        "description": "Kostentoerekening per asset per periode with the doorsnijdingsverbod flag exclusief_in_winstbepaling. When true, the same (grootboekrekening, kostenplaats) pair MUST NOT appear in the regular GL deduction feed.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-innovatiebox-administratie/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-004",
         "type": "object",
@@ -694,7 +694,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a IB Expense Allocation is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a IB Expense Allocation is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "CarryForwardLoss": {
@@ -702,7 +702,7 @@
         "icon": "TrendingDown",
         "version": "0.1.0",
         "title": "Carry Forward Loss",
-        "description": "Asset-specific voortwenteling verlies per Wet Vpb art. 12be (REQ-IBA-005). A loss from asset A can only offset future profit on asset A; the first profit offsets at the full statutory tariff before 9% applies to the residual. Immutable after creation.",
+        "description": "Asset-specific voortwenteling verlies per Wet Vpb art. 12be. A loss from asset A can only offset future profit on asset A; the first profit offsets at the full statutory tariff before 9% applies to the residual. Immutable after creation.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-innovatiebox-administratie/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-005",
         "x-openregister": {
@@ -796,7 +796,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Carry Forward Loss is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Carry Forward Loss is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "InnovatieboxAuditEvent": {
@@ -804,7 +804,7 @@
         "icon": "TextBoxCheckOutline",
         "version": "0.1.0",
         "title": "Innovatiebox Audit Event",
-        "description": "Immutable audit event for innovatiebox lifecycle transitions (REQ-IBA-008 + REQ-IBA-009). One record per nexus calculation, profit-attribution write, year-end finalisation, VSO-locked amendment attempt, doorsnijdingsverbod check and forfaitair-cap application. Append-only by x-openregister.immutable. Used by Belastingdienst VSO audit-reproducibility and by the internal audit log.",
+        "description": "Immutable audit event for innovatiebox lifecycle transitions (+). One record per nexus calculation, profit-attribution write, year-end finalisation, VSO-locked amendment attempt, doorsnijdingsverbod check and forfaitair-cap application. Append-only by x-openregister.immutable. Used by Belastingdienst VSO audit-reproducibility and by the internal audit log.",
         "x-spec": "openspec/changes/bookkeeping-innovatiebox-administratie/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008",
         "x-openregister": {
           "immutable": true
@@ -846,7 +846,7 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "Administration scope (REQ-IBA-008).",
+            "description": "Administration scope.",
             "example": "adm-mkb-1",
             "title": "Administration ID"
           },
@@ -891,7 +891,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Innovatiebox Audit Event is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Innovatiebox Audit Event is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     },

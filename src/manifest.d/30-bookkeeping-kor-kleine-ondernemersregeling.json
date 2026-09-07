@@ -77,7 +77,7 @@
 				"detailRoute": "KorDrempelMonitor",
 				"_note_rowRoute": "`detailRoute` is inert; the implicit fallback matches a `type:\"detail\"` page by register+schema and KorDrempelMonitor is bound to a different schema. The helpText below promises a click-through that did nothing without `rowRoute`.",
 				"rowRoute": "KorDrempelMonitor",
-				"helpText": "Overview of all KOR registrations for this administration. Click through to the Threshold monitor to view real-time threshold utilization, monthly forecast and alert history (REQ-KOR-002, REQ-KOR-003)."
+				"helpText": "Overview of all KOR registrations for this administration. Click through to the threshold monitor for real-time threshold use, the monthly forecast and the alert history."
 			}
 		},
 		{

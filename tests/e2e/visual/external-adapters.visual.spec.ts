@@ -1,3 +1,5 @@
+import type { Page } from '@playwright/test'
+
 /*
  * SPDX-License-Identifier: EUPL-1.2
  *
@@ -30,14 +32,14 @@
  * See _visual-helpers.ts for the platform-rendering caveat + the shared
  * freeze / dismiss / mask determinism guarantees.
  */
-import { test, expect, type Page } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import {
 	dismissSupportDialog,
-	waitForContentReady,
+	dynamicMasks,
 	freezePage,
 	SHOT_OPTIONS,
-	dynamicMasks,
-} from './_visual-helpers'
+	waitForContentReady,
+} from './_visual-helpers.ts'
 
 // Use the SPA's history-mode base (no /index.php/ prefix) so the deep-link
 // matches the vue-router base and does not get reset to the dashboard.

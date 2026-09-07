@@ -91,7 +91,7 @@ final class PayrollDetacheringFragmentTest extends TestCase {
 	 */
 	public function testFragmentDeclaresFourSchemas(): void {
 		$schemas = $this->fragment()['components']['schemas'];
-		foreach (['Employee', 'Payroll', 'Deduction', 'DeterminationLetter'] as $name) {
+		foreach (['payrollEmployee', 'Payroll', 'Deduction', 'DeterminationLetter'] as $name) {
 			self::assertArrayHasKey($name, $schemas, "Fragment must declare $name");
 		}
 	}//end testFragmentDeclaresFourSchemas()
@@ -164,7 +164,7 @@ final class PayrollDetacheringFragmentTest extends TestCase {
 	 * @return void
 	 */
 	public function testEmployeeBsnIsPiiFlagged(): void {
-		$employee = $this->fragment()['components']['schemas']['Employee'];
+		$employee = $this->fragment()['components']['schemas']['payrollEmployee'];
 		$bsn = $employee['properties']['bsn'];
 
 		self::assertTrue(($bsn['pii'] ?? false), 'BSN must be flagged pii');
@@ -188,7 +188,7 @@ final class PayrollDetacheringFragmentTest extends TestCase {
 		$merged = $this->merge($base, $frag);
 		$schemas = $merged['components']['schemas'];
 
-		foreach (['Employee', 'Payroll', 'Deduction', 'DeterminationLetter'] as $name) {
+		foreach (['payrollEmployee', 'Payroll', 'Deduction', 'DeterminationLetter'] as $name) {
 			self::assertArrayHasKey($name, $schemas, "$name must be present after merge");
 		}
 
@@ -214,7 +214,7 @@ final class PayrollDetacheringFragmentTest extends TestCase {
 	public function testSeedObjectsAreWellFormed(): void {
 		$objects = $this->fragment()['objects'];
 		self::assertNotEmpty($objects);
-		$allowed = ['Employee', 'Payroll', 'Deduction', 'DeterminationLetter'];
+		$allowed = ['payrollEmployee', 'Payroll', 'Deduction', 'DeterminationLetter'];
 
 		foreach ($objects as $object) {
 			self::assertArrayHasKey('@self', $object);

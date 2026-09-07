@@ -62,7 +62,7 @@ function slimPages(pages, fragment) {
 	return pages.map((page) => {
 		const slim = { _fragment: fragment }
 		for (const key of SHELL_PAGE_KEYS) {
-			if (page && Object.prototype.hasOwnProperty.call(page, key)) {
+			if (page && Object.hasOwn(page, key)) {
 				slim[key] = page[key]
 			}
 		}
@@ -135,7 +135,7 @@ function generateShellDocument(dir = MANIFEST_D_DIR) {
 function main() {
 	const shell = generateShellDocument()
 	fs.writeFileSync(SHELL_OUTPUT_PATH, JSON.stringify(shell, null, '\t') + '\n')
-	// eslint-disable-next-line no-console
+
 	console.log(
 		`[generate-manifest-shell] wrote ${SHELL_OUTPUT_PATH} `
 			+ `(${shell.fragments.length} fragments, `

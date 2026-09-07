@@ -124,7 +124,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "DepreciationSchedule",
-				"description": "REQ-FA-009 cost-centre and method-based depreciation reporting backed by the DepreciationSchedule register x-openregister-aggregations queries (depreciationAmountByCostCenter, depreciationAmountByMethod, accumulatedDepreciationByAsset).",
+				"description": "Cost-centre and method-based depreciation reporting, backed by the DepreciationSchedule register's aggregation queries: depreciationAmountByCostCenter, depreciationAmountByMethod and accumulatedDepreciationByAsset.",
 				"columns": [
 					{ "key": "costCenterCode", "label": "Cost Centre", "sortable": true },
 					{ "key": "depreciationMethod", "label": "Method", "sortable": true },

@@ -1,5 +1,5 @@
 {
-	"description": "Default per-administration mapping from inventory stock-movement events to RGS 3.5 MKB chart-of-accounts numbers (inventory-cogs-posting REQ-CG-001 + seed-data table in design.md). Idempotent: seeder dedupes on administrationId so re-runs preserve operator overrides.",
+	"description": "Default per-administration mapping from inventory stock-movement events to RGS 3.5 MKB chart-of-accounts numbers (inventory-cogs-posting + seed-data table in design.md). Idempotent: seeder dedupes on administrationId so re-runs preserve operator overrides.",
 	"configs": [
 		{
 			"cogsAccountNumber": "7000",
@@ -7,7 +7,7 @@
 			"grIrClearingAccountNumber": "1800",
 			"inventoryAdjustmentAccountNumber": "7100",
 			"isActive": true,
-			"description": "Shillinq demo administratie — NL RGS 3.5 MKB defaults (7000 Kostprijs omzet / 1400 Voorraden / 1800 GR/IR clearing / 7100 Voorraadmutaties)."
+			"description": "Shillinq demo administratie: NL RGS 3.5 MKB defaults (7000 Kostprijs omzet / 1400 Voorraden / 1800 GR/IR clearing / 7100 Voorraadmutaties)."
 		}
 	]
 }

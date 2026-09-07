@@ -6,7 +6,7 @@
     "overheidslaag": "province",
     "iv3Version": "2025-1.0",
     "effectiveDate": "2025-01-01",
-    "description": "BBV taakveldenstructuur voor provincies per Iv3-informatievoorschrift. 14 provinciale taakvelden grouped in 7 hoofdfuncties; conform Besluit BBV bijlage IV (provincies). Volledige catalogus wordt via openconnector geimporteerd (REQ-BBV-001).",
+    "description": "BBV taakveldenstructuur voor provincies per Iv3-informatievoorschrift. 14 provinciale taakvelden grouped in 7 hoofdfuncties; conform Besluit BBV bijlage IV (provincies). Volledige catalogus wordt via openconnector geimporteerd.",
     "descriptionEn": "BBV task-field structure for provinces per the Iv3 information regulation. 14 provincial task fields grouped into 7 principal functions, per Besluit BBV annex IV (provinces). The full catalogue is imported via openconnector (REQ-BBV-001).",
     "url": "https://www.referentiegrootboekschema.nl",
     "translationNote": "`naam`, `hoofdfunctieNaam` and `omschrijvingIv3` are the STATUTORY Dutch strings and are what a CBS Iv3 submission carries. They are identifiers, not display text, and must never be replaced by a translation. The `*En` fields alongside them are display-only, for an English UI locale. If the two ever disagree, the Dutch one is right by definition. Note that two entries have no `omschrijvingIv3` in the source regulation and therefore have no `omschrijvingIv3En` either — an absent description is not translated into an invented one."

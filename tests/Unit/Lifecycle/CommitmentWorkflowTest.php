@@ -236,7 +236,7 @@ class CommitmentWorkflowTest extends TestCase {
 			$this->buildObjectServiceStub(
 				[
 					'CommitmentBudget' => [$budget],
-					'Mandate' => [$mandate],
+					'SpendingMandate' => [$mandate],
 				]
 			)
 		);
@@ -276,7 +276,7 @@ class CommitmentWorkflowTest extends TestCase {
 			$this->buildObjectServiceStub(
 				[
 					'CommitmentBudget' => [$budget],
-					'Mandate' => [$mandate],
+					'SpendingMandate' => [$mandate],
 				]
 			)
 		);
@@ -314,7 +314,7 @@ class CommitmentWorkflowTest extends TestCase {
 			$this->buildObjectServiceStub(
 				[
 					'CommitmentBudget' => [$budget2026, $budget2027],
-					'Mandate' => [],
+					'SpendingMandate' => [],
 				]
 			)
 		);
@@ -364,7 +364,7 @@ class CommitmentWorkflowTest extends TestCase {
 			$this->buildObjectServiceStub(
 				[
 					'CommitmentBudget' => [$budget],
-					'Mandate' => [$override],
+					'SpendingMandate' => [$override],
 				]
 			)
 		);
@@ -395,7 +395,7 @@ class CommitmentWorkflowTest extends TestCase {
 			$this->buildObjectServiceStub(
 				[
 					'CommitmentBudget' => [$this->makeBudget()],
-					'Mandate' => [$mandate],
+					'SpendingMandate' => [$mandate],
 				]
 			)
 		);

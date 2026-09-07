@@ -6,7 +6,7 @@
         "icon": "CalendarRemoveOutline",
         "version": "0.1.0",
         "title": "Cancellation Policy",
-        "description": "Operator-defined booking cancellation policy: minimum notice for free cancellation, reschedule window, late-cancellation fee brackets, no-show fee, card-hold requirement, and refund method. Resolved at appointment-creation time and snapshot onto the appointment so historical bookings keep their original terms (design D2). Per REQ-BCR-001.",
+        "description": "Operator-defined booking cancellation policy: minimum notice for free cancellation, reschedule window, late-cancellation fee brackets, no-show fee, card-hold requirement, and refund method. Resolved at appointment-creation time and snapshot onto the appointment so historical bookings keep their original terms (design D2). Per.",
         "x-schema-org": "schema:Service",
         "type": "object",
         "required": [
@@ -43,7 +43,7 @@
           "minNoticeDays": {
             "type": "integer",
             "minimum": 0,
-            "description": "Minimum whole days of notice for a free cancellation (0 = same-day allowed). Per REQ-BCR-001.",
+            "description": "Minimum whole days of notice for a free cancellation (0 = same-day allowed). Per.",
             "example": 2,
             "title": "Min Notice Days"
           },
@@ -105,7 +105,7 @@
           "noShowFee": {
             "type": "integer",
             "minimum": 0,
-            "description": "Fee applied when the customer does not show. Percentage (0-100) of appointment cost; interpreted by the policy's no-show feeType convention. Per REQ-BCR-001.",
+            "description": "Fee applied when the customer does not show. Percentage (0-100) of appointment cost; interpreted by the policy's no-show feeType convention. Per.",
             "example": 100,
             "title": "No Show Fee"
           },
@@ -199,7 +199,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Cancellation Policy is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Cancellation Policy is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "BookingCancellation": {
@@ -207,7 +207,7 @@
         "icon": "CalendarRemoveOutline",
         "version": "0.1.0",
         "title": "Booking Cancellation",
-        "description": "Immutable cancellation record for an appointment. Captures the cancellation timestamp, reason, the policy snapshot that applied, the calculated refund amount, and the refund lifecycle. One per cancelled appointment; a second cancellation of the same appointment MUST be rejected (REQ-BCR-008 immutability). The appointmentId FK targets the Appointment register declared by the bookings-create-appointment fragment (10-bookings-create-appointment.json); the x-openregister-relation below resolves it.",
+        "description": "Immutable cancellation record for an appointment. Captures the cancellation timestamp, reason, the policy snapshot that applied, the calculated refund amount, and the refund lifecycle. One per cancelled appointment; a second cancellation of the same appointment MUST be rejected (immutability). The appointmentId FK targets the Appointment register declared by the bookings-create-appointment fragment (10-bookings-create-appointment.json); the x-openregister-relation below resolves it.",
         "x-schema-org": "schema:Action",
         "type": "object",
         "required": [
@@ -248,7 +248,7 @@
           },
           "cancelledBy": {
             "type": "string",
-            "description": "Actor that initiated the cancellation (admin user id or 'customer:<email>'). Recorded for audit (REQ-BCR-007).",
+            "description": "Actor that initiated the cancellation (admin user id or 'customer:<email>'). Recorded for audit.",
             "nullable": true,
             "example": "customer:jane@example.com",
             "title": "Cancelled By"
@@ -362,7 +362,7 @@
                 "read",
                 "update"
               ],
-              "description": "Operators record and view cancellations. No delete: cancellation records are immutable (REQ-BCR-008)."
+              "description": "Operators record and view cancellations. No delete: cancellation records are immutable."
             },
             "customer": {
               "permissions": [
@@ -375,12 +375,12 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Booking Cancellation is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Booking Cancellation is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Appointment": {
         "slug": "Appointment",
-        "description": "Partial overlay (ADR-037 additive merge) onto the Appointment register owned by the bookings-create-appointment fragment (10-bookings-create-appointment.json). Adds the phase-2 cancellation fields the cancellation flow snapshots onto an appointment when it is cancelled (REQ-BCR Appointment Schema Extensions). These fields are all optional — set only at cancellation time — so they are deliberately NOT added to the base schema's required list. The base schema already declares cancelledAt and cancelledReason.",
+        "description": "Partial overlay (ADR-037 additive merge) onto the Appointment register owned by the bookings-create-appointment fragment (10-bookings-create-appointment.json). Adds the phase-2 cancellation fields the cancellation flow snapshots onto an appointment when it is cancelled (REQ-BCR Appointment Schema Extensions). These fields are all optional: set only at cancellation time. So they are deliberately NOT added to the base schema's required list. The base schema already declares cancelledAt and cancelledReason.",
         "properties": {
           "appliedPolicy": {
             "type": "object",

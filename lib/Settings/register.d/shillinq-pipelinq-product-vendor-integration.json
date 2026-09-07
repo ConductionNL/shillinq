@@ -26,7 +26,7 @@
 			},
 			"ingestExport": {
 				"appConfigKey": "shillinq_pvm_export",
-				"description": "pipelinq ingest reads shillinq's export payload from app-config key shillinq_pvm_export (JSON). Written by MigrateProductVendorMasterToPipelinq repair step. Format: {products: [...], productAttributes: [...], vendorMasterData: [...]}."
+				"description": "pipelinq ingest reads shillinq's export payload from app-config key shillinq_pvm_export (JSON). Written by MigrateProductVendorMasterToPipelinq repair step. Format: {products: [.], productAttributes: [.], vendorMasterData: [.]}."
 			}
 		}
 	}

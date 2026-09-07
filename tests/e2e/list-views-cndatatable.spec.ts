@@ -24,7 +24,7 @@
  * @spec openspec/changes/migrate-list-views-to-cndatatable/specs/list-views-cndatatable/spec.md
  */
 
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 

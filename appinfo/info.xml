@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.2.6-unstable.20260830154417</version>
+    <version>0.2.13-unstable.20260905204001</version>
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
@@ -200,6 +200,14 @@ Vrij en open source onder de EUPL-1.2-licentie.
                  Idempotent, register-scoped, non-destructive, fail-soft; it
                  refuses rather than merges when both slugs already exist. -->
             <step>OCA\Shillinq\Repair\RenameCommitmentSchemas</step>
+            <!--
+                Also before InitializeSettings, and separate from the Dutch-to-English
+                vocabulary pass above on purpose: this one ends a CROSS-APP slug
+                collision rather than translating a word. `Employee` was claimed by
+                this app and by humaniq, and a slug is global per organisation, so
+                SchemaMapper::find() answered whichever row it reached first.
+            -->
+            <step>OCA\Shillinq\Repair\RenameCollidingSchemaSlugs</step>
             <step>OCA\Shillinq\Repair\InitializeSettings</step>
             <step>OCA\Shillinq\Repair\InitializeBbvAdministration</step>
             <step>OCA\Shillinq\Repair\UnifyAnalyticalDimensions</step>
@@ -330,6 +338,13 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <!-- Count-equality audit for the Subsidie/PurchaseOrder/DBAOpdracht -> Order
              fold (abstract-order-primitive, REQ-ORD-003). Read-only. -->
         <command>OCA\Shillinq\Command\OrdersAuditCommand</command>
+        <!-- Audit, and on request backfill, the payrollEmployee to humaniq
+             Employee uuid reference. Read-only unless the write option is
+             given, and it fills in only an unambiguous single match on the
+             shared `bsn`: a wrong cross-app link is worse than an empty one.
+             (The option name is not spelled here: a double hyphen is illegal
+             inside an XML comment and makes info.xml unparseable.) -->
+        <command>OCA\Shillinq\Command\ReferencesAuditCommand</command>
     </commands>
 
     <settings>

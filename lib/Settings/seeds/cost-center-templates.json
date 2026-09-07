@@ -3,7 +3,7 @@
     "spdx-license": "EUPL-1.2",
     "spdx-copyright": "2026 Conduction B.V.",
     "source": "Conduction consultancy defaults",
-    "description": "Default CostCenter hierarchy templates for a Dutch SMB / consultancy organisation (Sales, Engineering, Operations, Finance, Administration + typical sub-departments). Codes follow CC-NNN / CC-NNN-NN for hierarchy clarity. Operator overrides per administration — these are starting-point defaults only. Money values are in integer cents.",
+    "description": "Default CostCenter hierarchy templates for a Dutch SMB / consultancy organisation (Sales, Engineering, Operations, Finance, Administration + typical sub-departments). Codes follow CC-NNN / CC-NNN-NN for hierarchy clarity. Operator overrides per administration: these are starting-point defaults only. Money values are in integer cents.",
     "imported": "2026-06-09T00:00:00Z",
     "note": "administrationId left null; the repair-step phase stamps it from app config (administration_id) before persistence. Idempotent on code."
   },

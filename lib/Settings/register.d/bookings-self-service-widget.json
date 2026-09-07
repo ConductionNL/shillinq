@@ -9,7 +9,7 @@
         "icon": "KeyOutline",
         "version": "0.1.0",
         "title": "Widget Access Key",
-        "description": "Authentication credentials granting partner websites access to the public Booking Self-service Widget API. The plaintext API key is shown to the partner once at creation; only its bcrypt hash is persisted. Used by WidgetApiController via Authorization: Bearer header to authenticate widget requests (services list, slot availability, appointment creation). Rate-limiting is enforced per business_id per REQ-WSW-009.",
+        "description": "Authentication credentials granting partner websites access to the public Booking Self-service Widget API. The plaintext API key is shown to the partner once at creation; only its bcrypt hash is persisted. Used by WidgetApiController via Authorization: Bearer header to authenticate widget requests (services list, slot availability, appointment creation). Rate-limiting is enforced per business_id.",
         "x-schema-org": "schema:DigitalDocument",
         "x-openregister-purpose": "dimension",
         "type": "object",
@@ -34,20 +34,20 @@
           },
           "apiKeyHash": {
             "type": "string",
-            "description": "bcrypt hash of the partner API key. Plaintext key is shown once at creation per REQ-WSW-009 and never persisted.",
+            "description": "bcrypt hash of the partner API key. Plaintext key is shown once at creation and never persisted.",
             "example": "$2y$10$...",
             "title": "API Key Hash"
           },
           "apiKeyPrefix": {
             "type": "string",
             "nullable": true,
-            "description": "First 8 characters of the plaintext key, stored for partner-facing display ('bk_live_xxxx...') and audit-log identification. Never sufficient to reconstruct the key.",
+            "description": "First 8 characters of the plaintext key, stored for partner-facing display ('bk_live_xxxx.') and audit-log identification. Never sufficient to reconstruct the key.",
             "example": "bk_live_",
             "title": "API Key Prefix"
           },
           "rateLimit": {
             "type": "integer",
-            "description": "Requests per minute permitted for this business_id. Defaults to 100 per REQ-WSW-001.",
+            "description": "Requests per minute permitted for this business_id. Defaults to 100.",
             "default": 100,
             "example": 100,
             "title": "Rate Limit"
@@ -74,7 +74,7 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Timestamp of the most recent rotation. Old keys remain active for 7 days after rotation per REQ-WSW-009.",
+            "description": "Timestamp of the most recent rotation. Old keys remain active for 7 days after rotation.",
             "example": "2026-06-21T10:00:00Z",
             "title": "Rotated At"
           },
@@ -160,7 +160,7 @@
         "icon": "ClipboardTextClockOutline",
         "version": "0.1.0",
         "title": "Widget Access Key Audit Entry",
-        "description": "Audit trail entry for partner widget key lifecycle operations (created, rotated, revoked). Used by SECURITY/Compliance reviewers to reconstruct who did what when to partner credentials per REQ-WSW-009.",
+        "description": "Audit trail entry for partner widget key lifecycle operations (created, rotated, revoked). Used by SECURITY/Compliance reviewers to reconstruct who did what when to partner credentials.",
         "x-schema-org": "schema:Action",
         "x-openregister-purpose": "audit",
         "type": "object",

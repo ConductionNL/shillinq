@@ -4,7 +4,7 @@
     "spdx-license": "EUPL-1.2",
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "checks-aml-banking",
-    "description": "AML / cash-handling / bank-integrity rule-engine overlay. Adds the structured fields the AmlBankingChecks provider reads onto the existing GLTransaction (period state / electronic-payment support) and Account (trust/escrow segregation) schemas, and declares the new object types the bookkeeping core does not already model — CashTransaction, AmlReport, SanctionsScreening, CddRecord, FundsTransfer, TrustLedger and CashCount — so the cash-payment-limit, CTR/SAR/Form 8300, sanctions-screening, travel-rule, retention, cash-administration and trust-segregation rules in lib/Standards/rules/banking-aml.json become machine-checkable."
+    "description": "AML / cash-handling / bank-integrity rule-engine overlay. Adds the structured fields the AmlBankingChecks provider reads onto the existing GLTransaction (period state / electronic-payment support) and Account (trust/escrow segregation) schemas, and declares the new object types the bookkeeping core does not already model: CashTransaction, AmlReport, SanctionsScreening, CddRecord, FundsTransfer, TrustLedger and CashCount. So the cash-payment-limit, CTR/SAR/Form 8300, sanctions-screening, travel-rule, retention, cash-administration and trust-segregation rules in lib/Standards/rules/banking-aml.json become machine-checkable."
   },
   "components": {
     "schemas": {
@@ -79,7 +79,7 @@
           "commingled": {
             "type": "boolean",
             "default": false,
-            "description": "True when client monies are commingled with the firm's own funds — a violation for a trust/escrow account (nl-derdengelden-segregation, us-iolta-escrow-segregation).",
+            "description": "True when client monies are commingled with the firm's own funds: a violation for a trust/escrow account (nl-derdengelden-segregation, us-iolta-escrow-segregation).",
             "title": "Commingled"
           }
         }
@@ -184,7 +184,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Cash Transaction (AML) is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Cash Transaction (AML) is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "AmlReport": {
@@ -288,7 +288,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a AML Report (CTR / SAR / 8300 / CMIR / FBAR / unusual) is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a AML Report (CTR / SAR / 8300 / CMIR / FBAR / unusual) is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "SanctionsScreening": {
@@ -367,7 +367,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Sanctions Screening (OFAC / EU / national) is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Sanctions Screening (OFAC / EU / national) is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "CddRecord": {
@@ -447,7 +447,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Customer Due Diligence Record is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Customer Due Diligence Record is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "FundsTransfer": {
@@ -509,7 +509,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Funds Transfer (travel rule) is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Funds Transfer (travel rule) is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "TrustLedger": {
@@ -574,7 +574,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Trust / Escrow Ledger is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Trust / Escrow Ledger is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "CashCount": {
@@ -636,7 +636,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Cash Count (kasadministratie / Z-report) is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Cash Count (kasadministratie / Z-report) is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     }

@@ -30,7 +30,7 @@
  * @spec openspec/changes/bookings-self-service-widget/tasks.md#task-21
  */
 
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 const SERVICES_API = APP + '/api/widget/services'

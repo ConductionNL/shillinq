@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-bcf-vat-compensation",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 3 — Btw-compensatiefonds (BCF) VAT compensation claims. Adds one BcfClaim schema with a draft → submitted → accepted → settled lifecycle (REQ-BCF-001, REQ-BCF-003) for the quarterly recovery of non-recoverable VAT by Dutch public bodies (gemeenten, waterschappen). The compensable-VAT total and per-account breakdown are computed server-side by OCA\\Shillinq\\Service\\BcfClaimService from existing GLLine + GLTransaction + BbvAccountMapping data via the real OpenRegister ObjectService API (findAll), weighting each compensable account by its BbvAccountMapping.compensablePercentage (REQ-BCF-002); the x-openregister-aggregations block documents the equivalent declarative shape. The draft → submitted transition is gated by OCA\\Shillinq\\Lifecycle\\BcfClaimGuard::canSubmit (non-empty claim + closed quarter, REQ-BCF-003). BbvAccountMapping already carries the bcfCompensable + compensablePercentage flags (REQ-BCF-004) from add-shillinq-bookkeeping-operations; this fragment also re-asserts their descriptions for completeness. Seed objects provide four worked example claims across the lifecycle states for two municipal administrations per design.md."
+    "description": "Tier 3: Btw-compensatiefonds (BCF) VAT compensation claims. Adds one BcfClaim schema with a draft → submitted → accepted → settled lifecycle for the quarterly recovery of non-recoverable VAT by Dutch public bodies (gemeenten, waterschappen). The compensable-VAT total and per-account breakdown are computed server-side by OCA\\Shillinq\\Service\\BcfClaimService from existing GLLine + GLTransaction + BbvAccountMapping data via the real OpenRegister ObjectService API (findAll), weighting each compensable account by its BbvAccountMapping.compensablePercentage; the x-openregister-aggregations block documents the equivalent declarative shape. The draft → submitted transition is gated by OCA\\Shillinq\\Lifecycle\\BcfClaimGuard:canSubmit (non-empty claim + closed quarter). BbvAccountMapping already carries the bcfCompensable + compensablePercentage flags from add-shillinq-bookkeeping-operations; this fragment also re-asserts their descriptions for completeness. Seed objects provide four worked example claims across the lifecycle states for two municipal administrations per design.md."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "BankTransfer",
         "version": "0.1.0",
         "title": "BCF VAT Compensation Claim",
-        "description": "A quarterly Btw-compensatiefonds (BCF) claim through which a Dutch public body recovers non-recoverable VAT (REQ-BCF-001). The compensable total and per-account breakdown are computed server-side by BcfClaimService from the general ledger (REQ-BCF-002); operators never author the derived figures directly. The claim follows a draft → submitted → accepted → settled lifecycle (REQ-BCF-003).",
+        "description": "A quarterly Btw-compensatiefonds (BCF) claim through which a Dutch public body recovers non-recoverable VAT. The compensable total and per-account breakdown are computed server-side by BcfClaimService from the general ledger; operators never author the derived figures directly. The claim follows a draft → submitted → accepted → settled lifecycle.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-bcf-vat-compensation/specs.md",
         "type": "object",
@@ -25,27 +25,27 @@
         "properties": {
           "claimQuarter": {
             "type": "string",
-            "description": "Quarter identifier this claim covers (FK to the GL fiscal period; aligns with T2 period boundaries). Forward-only: must be ≥ install date (REQ-BCF-003, REQ-BCF-010).",
+            "description": "Quarter identifier this claim covers (FK to the GL fiscal period; aligns with T2 period boundaries). Forward-only: must be ≥ install date.",
             "example": "2026-Q1",
             "title": "Claim Quarter"
           },
           "administrationId": {
             "type": "string",
-            "description": "Administration this claim belongs to (FK to Administration). A public body — gemeente or waterschap (REQ-BCF-010). Single administration per claim.",
+            "description": "Administration this claim belongs to (FK to Administration). A public body: gemeente or waterschap. Single administration per claim.",
             "example": "adm-gemeente-amsterdam",
             "title": "Administration ID"
           },
           "totalCompensableAmount": {
             "type": "number",
             "minimum": 0,
-            "description": "Total compensable VAT for the quarter in EUR. Derived, read-only: computed by BcfClaimService as the sum of each compensable account's VAT weighted by BbvAccountMapping.compensablePercentage (REQ-BCF-002). Frozen at submission.",
+            "description": "Total compensable VAT for the quarter in EUR. Derived, read-only: computed by BcfClaimService as the sum of each compensable account's VAT weighted by BbvAccountMapping.compensablePercentage. Frozen at submission.",
             "nullable": true,
             "example": 120000.0,
             "title": "Total Compensable Amount"
           },
           "breakdown": {
             "type": "array",
-            "description": "Per-account compensable-VAT breakdown. Derived, read-only: one row per compensable account that contributed to the quarter total (REQ-BCF-002). Frozen at submission.",
+            "description": "Per-account compensable-VAT breakdown. Derived, read-only: one row per compensable account that contributed to the quarter total. Frozen at submission.",
             "nullable": true,
             "items": {
               "type": "object",
@@ -78,7 +78,7 @@
           },
           "state": {
             "type": "string",
-            "description": "Claim lifecycle state (REQ-BCF-003). Driven by the x-openregister-lifecycle state machine; never freely edited by operators.",
+            "description": "Claim lifecycle state. Driven by the x-openregister-lifecycle state machine; never freely edited by operators.",
             "enum": [
               "draft",
               "submitted",
@@ -92,28 +92,28 @@
           "submittedOn": {
             "type": "string",
             "format": "date-time",
-            "description": "Timestamp when the claim was submitted to Belastingdienst via DigiKoppeling (REQ-BCF-005).",
+            "description": "Timestamp when the claim was submitted to Belastingdienst via DigiKoppeling.",
             "nullable": true,
             "title": "Submitted On"
           },
           "acceptedOn": {
             "type": "string",
             "format": "date-time",
-            "description": "Timestamp when Belastingdienst accepted the claim (external actor; REQ-BCF-003).",
+            "description": "Timestamp when Belastingdienst accepted the claim (external actor).",
             "nullable": true,
             "title": "Accepted On"
           },
           "settledOn": {
             "type": "string",
             "format": "date-time",
-            "description": "Timestamp when Belastingdienst settled the payment, set from the settlement webhook (REQ-BCF-007).",
+            "description": "Timestamp when Belastingdienst settled the payment, set from the settlement webhook.",
             "nullable": true,
             "title": "Settled On"
           },
           "settledAmount": {
             "type": "number",
             "minimum": 0,
-            "description": "Amount settled by Belastingdienst in EUR, recorded from the settlement webhook (REQ-BCF-007).",
+            "description": "Amount settled by Belastingdienst in EUR, recorded from the settlement webhook.",
             "nullable": true,
             "title": "Settled Amount"
           },
@@ -125,7 +125,7 @@
           },
           "notes": {
             "type": "string",
-            "description": "Operator notes; not transmitted to Belastingdienst (REQ-BCF-008).",
+            "description": "Operator notes; not transmitted to Belastingdienst.",
             "nullable": true,
             "title": "Notes"
           }
@@ -136,19 +136,19 @@
           "states": {
             "draft": {
               "label": "Concept",
-              "description": "Operator is preparing the claim; the compensable breakdown recalculates from the GL. Editable (REQ-BCF-008)."
+              "description": "Operator is preparing the claim; the compensable breakdown recalculates from the GL. Editable."
             },
             "submitted": {
               "label": "Ingediend",
-              "description": "Submitted to Belastingdienst via DigiKoppeling; figures are frozen (REQ-BCF-005)."
+              "description": "Submitted to Belastingdienst via DigiKoppeling; figures are frozen."
             },
             "accepted": {
               "label": "Geaccepteerd",
-              "description": "Belastingdienst accepted the claim (external actor; REQ-BCF-003)."
+              "description": "Belastingdienst accepted the claim (external actor)."
             },
             "settled": {
               "label": "Afgewikkeld",
-              "description": "Belastingdienst settled the payment; set from the settlement webhook (REQ-BCF-007)."
+              "description": "Belastingdienst settled the payment; set from the settlement webhook."
             }
           },
           "transitions": {
@@ -156,26 +156,26 @@
               "from": "draft",
               "to": "submitted",
               "label": "Indienen bij Belastingdienst",
-              "description": "Submit the claim. Requires a non-empty compensable total (> 0) and a closed claim quarter (period-lock from T2). The total is recomputed server-side from the GL (REQ-BCF-003).",
+              "description": "Submit the claim. Requires a non-empty compensable total (> 0) and a closed claim quarter (period-lock from T2). The total is recomputed server-side from the GL.",
               "requires": "OCA\\Shillinq\\Lifecycle\\BcfClaimGuard::canSubmit"
             },
             "accept": {
               "from": "submitted",
               "to": "accepted",
               "label": "Geaccepteerd door Belastingdienst",
-              "description": "Belastingdienst accepts the claim (external actor; no local guard, REQ-BCF-003)."
+              "description": "Belastingdienst accepts the claim (external actor; no local guard)."
             },
             "settle": {
               "from": "accepted",
               "to": "settled",
               "label": "Afgewikkeld door Belastingdienst",
-              "description": "Belastingdienst settles the payment, triggered by the settlement webhook (REQ-BCF-007). No local guard; the manual fallback transitions accepted → settled when the webhook is lost."
+              "description": "Belastingdienst settles the payment, triggered by the settlement webhook. No local guard; the manual fallback transitions accepted → settled when the webhook is lost."
             }
           }
         },
         "x-openregister-approval-chains": {
           "bcf-claim-submit-approval": {
-            "description": "Approval chain that gates the BcfClaim draft → submitted transition (REQ-BCF-006). The transition runs through OpenRegister's approval-workflow primitive: a single approver with the role bcf-administrator must approve within 7 days (configurable). On approval the claim advances to submitted and is queued for the next quarterly digikoppeling-bcf ScheduledWorkflow run; on rejection the claim stays draft and the operator is notified with the rejection comment. Declarative metadata only — OR materialises the actual approval task; this app ships no PHP approval-chain implementation.",
+            "description": "Approval chain that gates the BcfClaim draft → submitted transition. The transition runs through OpenRegister's approval-workflow primitive: a single approver with the role bcf-administrator must approve within 7 days (configurable). On approval the claim advances to submitted and is queued for the next quarterly digikoppeling-bcf ScheduledWorkflow run; on rejection the claim stays draft and the operator is notified with the rejection comment. Declarative metadata only: OR materialises the actual approval task; this app ships no PHP approval-chain implementation.",
             "transition": "submit",
             "approvers": [
               {
@@ -196,7 +196,7 @@
         },
         "x-openregister-webhooks": {
           "bcf-claim-settled": {
-            "description": "Settlement webhook routing (REQ-BCF-007). OR's generic webhook handler routes inbound CloudEvents of type nl.conduction.bcf-claim-settled to BcfClaim and applies the settle transition. The event payload is { type, objectId, data: { state: 'settled', settledAmount, settledDate } }. The handler verifies the OpenConnector signature, looks the BcfClaim up by objectId (administration scope enforced via the audit-trail context), sets state=settled + settledOn=settledDate + settledAmount=settledAmount, and records the webhook event in the audit trail (source=webhook, event-id, timestamp, payload-hash). Lost webhooks do not block — the operator can transition accepted → settled manually via the detail page as a fallback.",
+            "description": "Settlement webhook routing. OR's generic webhook handler routes inbound CloudEvents of type nl.conduction.bcf-claim-settled to BcfClaim and applies the settle transition. The event payload is { type, objectId, data: { state: 'settled', settledAmount, settledDate } }. The handler verifies the OpenConnector signature, looks the BcfClaim up by objectId (administration scope enforced via the audit-trail context), sets state=settled + settledOn=settledDate + settledAmount=settledAmount, and records the webhook event in the audit trail (source=webhook, event-id, timestamp, payload-hash). Lost webhooks do not block: the operator can transition accepted → settled manually via the detail page as a fallback.",
             "eventType": "nl.conduction.bcf-claim-settled",
             "source": "openconnector:digikoppeling-bcf",
             "transition": "settle",
@@ -220,7 +220,7 @@
         },
         "x-openregister-aggregations": {
           "compensableVatBreakdown": {
-            "description": "Declarative shape of the per-account compensable-VAT roll-up BcfClaimService computes (REQ-BCF-002, REQ-BCF-012). Groups GLLine by accountNumber within an administration + claimQuarter, sums the debit-side VAT amounts, joins BbvAccountMapping to keep only bcfCompensable accounts, and weights each by compensablePercentage / 100. The weighted sum is totalCompensableAmount and the rows are breakdown. When the OpenRegister aggregation engine cannot express the cross-schema weighted join, BcfClaimService computes the same result in PHP from the real ObjectService API.",
+            "description": "Declarative shape of the per-account compensable-VAT roll-up BcfClaimService computes. Groups GLLine by accountNumber within an administration + claimQuarter, sums the debit-side VAT amounts, joins BbvAccountMapping to keep only bcfCompensable accounts, and weights each by compensablePercentage / 100. The weighted sum is totalCompensableAmount and the rows are breakdown. When the OpenRegister aggregation engine cannot express the cross-schema weighted join, BcfClaimService computes the same result in PHP from the real ObjectService API.",
             "source": "GLLine",
             "scope": {
               "administrationId": "#/properties/administrationId",
@@ -252,7 +252,7 @@
           "bcfCompensable": {
             "type": "boolean",
             "default": false,
-            "description": "Whether VAT posted to this account is eligible for BCF compensation (REQ-BCF-004). Default false: an account is only claimed when explicitly marked compensable.",
+            "description": "Whether VAT posted to this account is eligible for BCF compensation. Default false: an account is only claimed when explicitly marked compensable.",
             "title": "Bcf Compensable"
           },
           "compensablePercentage": {
@@ -260,7 +260,7 @@
             "minimum": 0,
             "maximum": 100,
             "default": 100,
-            "description": "Weighting (0-100) for mixed-use accounts: the share of this account's VAT that is compensable (REQ-BCF-004). 100 for a fully compensable account, lower for a mixed public/commercial facility.",
+            "description": "Weighting (0-100) for mixed-use accounts: the share of this account's VAT that is compensable. 100 for a fully compensable account, lower for a mixed public/commercial facility.",
             "title": "Compensable Percentage"
           }
         }
