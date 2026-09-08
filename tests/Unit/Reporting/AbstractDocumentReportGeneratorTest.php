@@ -41,7 +41,10 @@ namespace OCA\Shillinq\Tests\Unit\Reporting;
 use OCA\Shillinq\Reporting\DocudeskUnavailableException;
 use OCA\Shillinq\Reporting\Generator\AbstractDocumentReportGenerator;
 use OCA\Shillinq\Reporting\ReportSection;
+use OCP\App\IAppManager;
+use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 
 /**
  * A fake docudesk DocumentService recording the call it received.
@@ -100,6 +103,39 @@ final class FakeAdrgTemplateService {
 }//end class
 
 /**
+ * A container that knows nothing.
+ *
+ * The fixture below overrides every seam that would consult the container, so
+ * this exists to satisfy the base's constructor and to make the absence of a
+ * real container explicit: a test that starts asking it for something gets a
+ * NotFound, never a live service off the global server.
+ */
+final class EmptyAdrgContainer implements ContainerInterface {
+
+	/**
+	 * @param string $id The service id.
+	 *
+	 * @return mixed Never returns.
+	 *
+	 * @throws \RuntimeException Always.
+	 */
+	public function get(string $id): mixed {
+		throw new class ('Nothing is registered on the test container: ' . $id)
+			extends \RuntimeException implements \Psr\Container\NotFoundExceptionInterface {
+		};
+	}//end get()
+
+	/**
+	 * @param string $id The service id.
+	 *
+	 * @return bool Always false.
+	 */
+	public function has(string $id): bool {
+		return false;
+	}//end has()
+}//end class
+
+/**
  * A minimal concrete generator exercising the base's default block vocabulary.
  */
 final class FixtureDocumentReportGenerator extends AbstractDocumentReportGenerator {
@@ -122,7 +158,9 @@ final class FixtureDocumentReportGenerator extends AbstractDocumentReportGenerat
 		?FakeAdrgDocumentService $fakeDocumentService = null,
 		?FakeAdrgTemplateService $fakeTemplateService = null,
 		string $configuredId = '',
+		?ContainerInterface $container = null,
 	) {
+		parent::__construct($container ?? new EmptyAdrgContainer());
 		$this->docudeskUp = $docudeskUp;
 		$this->fakeDocumentService = $fakeDocumentService ?? new FakeAdrgDocumentService();
 		$this->fakeTemplateService = $fakeTemplateService ?? new FakeAdrgTemplateService([
@@ -174,6 +212,30 @@ final class FixtureDocumentReportGenerator extends AbstractDocumentReportGenerat
 		$this->loadObjectsCalls++;
 		return [];
 	}//end loadObjects()
+}//end class
+
+/**
+ * A generator that overrides NOTHING the container would answer.
+ *
+ * The fixture above stubs out every resolution seam, which is what makes it a
+ * good test of the block vocabulary and a useless one for the resolution
+ * itself. This subclass keeps the base's real docudeskAvailable(),
+ * documentService(), templateService() and configuredTemplateId(), so the only
+ * way it can render is through the container it was handed.
+ */
+final class ContainerBackedDocumentReportGenerator extends AbstractDocumentReportGenerator {
+
+	public static function reportType(): string {
+		return 'balance-sheet';
+	}//end reportType()
+
+	protected function documentTitle(): string {
+		return 'Balans';
+	}//end documentTitle()
+
+	protected function build(ReportSection $section, array $context): void {
+		$this->addHeading($section, 'Activa');
+	}//end build()
 }//end class
 
 /**
@@ -307,4 +369,83 @@ final class AbstractDocumentReportGeneratorTest extends TestCase {
 
 		$this->assertSame('11111111-1111-1111-1111-111111111111', $documentService->lastCall['templateId']);
 	}//end testConfiguredTemplateIdWinsOverDiscovery()
+
+	/**
+	 * Every resolution the base makes goes through the INJECTED container.
+	 *
+	 * The base used to call \OCP\Server::get(). Outside a booted Nextcloud that
+	 * autowires from scratch and can recurse through a constructor cycle until
+	 * memory runs out; inside one it is a hidden dependency a test cannot reach.
+	 * The doubles registered below exist nowhere else, so this can only pass if
+	 * the app manager, the app config and both document-app services came out of
+	 * the container the generator was constructed with.
+	 *
+	 * It also pins the namespace fallback: the first candidate FQCN
+	 * (`OCA\Filinq\...`, the post-rename name) is not registered, and resolution
+	 * has to fall through to `OCA\DocuDesk\...` rather than read the miss as
+	 * "the app is absent".
+	 *
+	 * @return void
+	 */
+	public function testEveryResolutionGoesThroughTheInjectedContainer(): void {
+		$documentService = new FakeAdrgDocumentService(['content' => 'FROM-THE-CONTAINER']);
+		$templateService = new FakeAdrgTemplateService([
+			['id' => 'tpl-1', 'category' => 'shillinq-balans'],
+		]);
+
+		$appManager = $this->createMock(IAppManager::class);
+		$appManager->method('isInstalled')->willReturnCallback(
+			static fn (string $id): bool => $id === 'docudesk'
+		);
+
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('');
+
+		$asked = [];
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			function (string $id) use (&$asked, $appManager, $appConfig, $documentService, $templateService): mixed {
+				$asked[] = $id;
+
+				return match ($id) {
+					IAppManager::class => $appManager,
+					IAppConfig::class => $appConfig,
+					'OCA\\DocuDesk\\Service\\DocumentService' => $documentService,
+					'OCA\\DocuDesk\\Service\\TemplateService' => $templateService,
+					default => throw new \RuntimeException('not registered: ' . $id),
+				};
+			}
+		);
+
+		$generator = new ContainerBackedDocumentReportGenerator($container);
+
+		$file = $generator->generate(['administrationId' => 'admin-1', 'period' => '2026'], 'pdf');
+
+		$this->assertSame('FROM-THE-CONTAINER', $file->content);
+		$this->assertSame('tpl-1', $documentService->lastCall['templateId']);
+		$this->assertContains(IAppManager::class, $asked);
+		$this->assertContains('OCA\\Filinq\\Service\\DocumentService', $asked, 'the post-rename FQCN must be tried first');
+		$this->assertContains('OCA\\DocuDesk\\Service\\DocumentService', $asked, 'and the pre-rename one must be the fallback');
+	}//end testEveryResolutionGoesThroughTheInjectedContainer()
+
+	/**
+	 * A container that cannot produce the document app reads as "docudesk is
+	 * absent", which is the visible outcome, not a silent fallback.
+	 *
+	 * @return void
+	 */
+	public function testAContainerWithoutTheDocumentAppThrowsDocudeskUnavailable(): void {
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			static function (string $id): mixed {
+				throw new \RuntimeException('not registered: ' . $id);
+			}
+		);
+
+		$generator = new ContainerBackedDocumentReportGenerator($container);
+
+		$this->expectException(DocudeskUnavailableException::class);
+
+		$generator->generate([], 'pdf');
+	}//end testAContainerWithoutTheDocumentAppThrowsDocudeskUnavailable()
 }//end class
