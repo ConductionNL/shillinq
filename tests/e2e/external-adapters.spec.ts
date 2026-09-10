@@ -90,9 +90,41 @@ async function openRoster(page: Page): Promise<void> {
 	await page.waitForLoadState('domcontentloaded')
 	await dismissOverlays(page)
 	await expect(page).toHaveURL(/external-adapters/, { timeout: 10_000 })
-	await expect(page.locator('.external-adapters__list').first()).toBeVisible({
-		timeout: 15_000,
-	})
+
+	// SAY WHY THERE IS NO LIST. `ExternalAdaptersStatus.vue` renders exactly
+	// one of three branches: loading, an error, or the body that holds
+	// `.external-adapters__list`. Waiting on the list alone reports
+	// "element(s) not found" after 15s and names none of the other two, so a
+	// served, deliberate error reads identically to a page that never loaded.
+	//
+	// The error branch is the likely one and it is not a defect in this page:
+	// `ExternalAdaptersAdminController::index()` answers
+	// `ERROR_REGISTER_ABSENT` with a full sentence when the connector register
+	// is not on the instance under any slug it has answered to, and the
+	// component surfaces that sentence verbatim. On CI that is a provisioning
+	// fact about the instance, not a broken roster.
+	const errorBranch = page.locator('.external-adapters__error')
+	const list = page.locator('.external-adapters__list').first()
+
+	await expect
+		.poll(
+			async () => {
+				if (await list.isVisible().catch(() => false)) return 'list'
+				if (await errorBranch.isVisible().catch(() => false)) return 'error'
+				return 'loading'
+			},
+			{ timeout: 15_000 },
+		)
+		.not.toBe('loading')
+
+	if (await errorBranch.isVisible().catch(() => false)) {
+		const served = (await errorBranch.innerText().catch(() => '')).trim()
+		throw new Error(
+			`the roster served its error branch instead of the list: ${served}`,
+		)
+	}
+
+	await expect(list).toBeVisible({ timeout: 15_000 })
 }
 
 /** Collect shillinq-origin console errors + 5xx, filtering NC-core / env noise. */
