@@ -49,9 +49,17 @@ use RuntimeException;
  *
  * A second mutation was run for the absent case: with the `isResolved()` branch
  * in `index()` removed and the slug taken as `$resolution->slug ?? 'integriq'`,
- * `testAnInstanceWithoutTheRegisterAnswers404` reddened (it got 200 and a
- * fifteen-row roster of `declared-not-provisioned`) and nothing else moved.
- * That is the defect in one line: the fallback reads as "no data".
+ * two assertions reddened and the static guard stayed green, which is correct
+ * because that mutation types no superseded literal at all:
+ *
+ *  - `testAnInstanceWithoutTheRegisterAnswers404` — got 200 and a fifteen-row
+ *    roster instead of 404.
+ *  - `testTheAppBeingEnabledDoesNotDecideTheRegisterSlug` — the absent case read
+ *    with `integriq` rather than reading with nothing.
+ *
+ * That is the defect in one line: the fallback reads as "no data". It is also
+ * why the static guard is not sufficient on its own. It watches the literal
+ * being TYPED; only these watch the resolved slug being IGNORED.
  *
  * ## Why the app id is not the answer either
  *
