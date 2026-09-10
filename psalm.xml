@@ -68,20 +68,6 @@
                      verification pass is what surfaced it. -->
                 <referencedClass name="OCA\OpenRegister\Contract\ObjectServiceInterface"/>
                 <referencedClass name="OCA\OpenRegister\Contract\ObjectEntityInterface"/>
-                <!-- The register-slug resolver contract and its return type.
-                     Same situation as the two above, with one extra wrinkle worth
-                     writing down: these were published to the hydra-gates package
-                     by ConductionNL/.github#739, which merged AFTER v1.17.0 was
-                     cut. Measured on this checkout with ^1.17.0 installed,
-                     vendor/conduction/hydra-gates/hydra-gates/contracts/ holds
-                     ObjectEntityInterface, ObjectServiceInterface and
-                     fleet-schema-slugs.json and nothing else, so no tagged release
-                     ships these two yet and psalm cannot resolve them from vendor.
-                     Once a tag carries them this pair can go, and
-                     findUnusedBaselineEntry is not what enforces that: someone
-                     re-reading this comment is. -->
-                <referencedClass name="OCA\OpenRegister\Contract\RegisterSlugResolverInterface"/>
-                <referencedClass name="OCA\OpenRegister\Contract\RegisterSlugResolution"/>
                 <referencedClass name="OCA\OpenRegister\Db\ObjectEntity"/>
                 <referencedClass name="OCA\OpenRegister\Db\RegisterMapper"/>
                 <referencedClass name="OCA\OpenRegister\Db\SchemaMapper"/>
@@ -210,5 +196,27 @@
     </issueHandlers>
     <extraFiles>
         <directory name="vendor/nextcloud/ocp" />
+        <!-- OpenRegister's published contracts, shipped by
+             conduction/hydra-gates v1.18.0 and held byte identical to
+             openregister's own lib/Contract/ by gate 67
+             (openregister-contract-parity).
+
+             Scanned rather than suppressed, and the suppression this replaces
+             said so itself: it recorded that no tagged release shipped the
+             resolver contract yet and that the pair could go once one did.
+             v1.18.0 is that tag. Every other OCA\OpenRegister\* type above
+             stays an UndefinedClass suppression because the class genuinely is
+             out of this repository's reach; a suppression buys silence rather
+             than checking, and would accept RegisterSlugResolution::isReslved()
+             just as happily. These two are in reach, so psalm reads the real
+             definitions.
+
+             Read out of vendor, never copied. tests/stubs/OpenRegister/Contract/
+             holds hand-edited copies of the same four files, and hand-edited is
+             the problem: their @spec tags were rewritten to @link, and the
+             ObjectServiceInterface copy is 18KB against the published 28KB. A
+             copy that drifts is a contract that no longer says what the owner
+             says. -->
+        <directory name="vendor/conduction/hydra-gates/hydra-gates/contracts" />
     </extraFiles>
 </psalm>
