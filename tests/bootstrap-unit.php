@@ -33,47 +33,32 @@ foreach (spl_autoload_functions() as $loader) {
 	}
 }
 
-// The published OpenRegister contracts, preferred over the stubs beside them.
+// The published OpenRegister register-slug contracts, loaded from the vendored
+// hydra-gates package.
 //
-// `tests/stubs/OpenRegister/Contract/RegisterSlugResolution.php` and
-// `RegisterSlugResolverInterface.php` are copies of openregister's own
-// `lib/Contract/`, and the psr-4 entry above resolves them. They are copies
-// because no tagged hydra-gates release ships them yet: measured on this
-// checkout with `^1.17.0` installed,
-// `vendor/conduction/hydra-gates/hydra-gates/contracts/` holds
-// ObjectEntityInterface, ObjectServiceInterface and fleet-schema-slugs.json and
-// nothing else. ConductionNL/.github#739 published the pair AFTER v1.17.0 was
-// cut.
+// This app used to keep verbatim copies of both files at
+// `tests/stubs/OpenRegister/Contract/`, because ConductionNL/.github#739
+// published them to the package after v1.17.0 was cut, so no tagged release
+// carried them and no constraint could reach them. v1.18.0 carries both, so the
+// copies are gone and the definitions come from vendor.
 //
-// The copies differ from the originals in exactly one respect, and only in
-// prose: openregister's `@spec openspec/specs/register-slug-resolution/spec.md`
-// tags are `@link`s here, because that spec file lives in openregister and gate
-// 46 (`spec-anchor-existence`) resolves every `@spec` target against THIS
-// repository. Retargeting a tag at a spec this app does not own would be worse
-// than dropping it. Verify the rest with:
+// That removes a real drift risk rather than documenting it. The copies were
+// byte identical to the originals apart from seven docblock tags: openregister's
+// `@spec openspec/specs/register-slug-resolution/spec.md` had to become `@link`
+// here, because that spec lives in openregister and gate 46
+// (`spec-anchor-existence`) resolves every `@spec` target against THIS
+// repository. Loading from vendor moves the files out of the gate's scope
+// entirely, so the tags need no rewriting and cannot fall behind.
 //
-//   diff <(sed 's/@link https:\/\/github.com\/ConductionNL\/openregister /@spec /' \
-//            tests/stubs/OpenRegister/Contract/RegisterSlugResolution.php) \
-//        ../openregister/lib/Contract/RegisterSlugResolution.php
-//
-// This block loads a REAL one when a real one is reachable, so the copies stop
-// being what the suite measures the moment either source carries them. Two
-// sources are listed because they arrive at different times: the package copy
-// ships on a tag, while openregister's own tree is what a CI leg has (this
-// repo's `additional-apps` checks out ConductionNL/openregister at
-// `development`) and what a dev checkout has beside it. Gate 67
-// (`openregister-contract-parity`) requires the two to be byte identical, so
-// either yields the same type.
+// Gate 67 (`openregister-contract-parity`) requires the package copy and
+// openregister's own `lib/Contract/` to be byte identical, so the vendored file
+// is the definition openregister declares.
 //
 // `RegisterSlugResolution` is a CLASS and `RegisterSlugResolverInterface` an
 // INTERFACE, so the guard has to ask both questions. Asking only
 // `interface_exists()` would re-require a file that is already loaded, and a
 // duplicate declaration is a fatal, not a no-op.
-$shillinqContractSources = [
-	__DIR__ . '/../vendor/conduction/hydra-gates/hydra-gates/contracts',
-	__DIR__ . '/../../openregister/lib/Contract',
-	__DIR__ . '/../../../apps-extra/openregister/lib/Contract',
-];
+$shillinqContractDir = __DIR__ . '/../vendor/conduction/hydra-gates/hydra-gates/contracts';
 
 foreach (['RegisterSlugResolution', 'RegisterSlugResolverInterface'] as $contract) {
 	$fqcn = '\\OCA\\OpenRegister\\Contract\\' . $contract;
@@ -81,12 +66,9 @@ foreach (['RegisterSlugResolution', 'RegisterSlugResolverInterface'] as $contrac
 		continue;
 	}
 
-	foreach ($shillinqContractSources as $contractDir) {
-		$shipped = $contractDir . '/' . $contract . '.php';
-		if (file_exists($shipped) === true) {
-			require_once $shipped;
-			break;
-		}
+	$shipped = $shillinqContractDir . '/' . $contract . '.php';
+	if (file_exists($shipped) === true) {
+		require_once $shipped;
 	}
 }
 

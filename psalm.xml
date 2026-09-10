@@ -69,17 +69,21 @@
                 <referencedClass name="OCA\OpenRegister\Contract\ObjectServiceInterface"/>
                 <referencedClass name="OCA\OpenRegister\Contract\ObjectEntityInterface"/>
                 <!-- The register-slug resolver contract and its return type.
-                     Same situation as the two above, with one extra wrinkle worth
-                     writing down: these were published to the hydra-gates package
-                     by ConductionNL/.github#739, which merged AFTER v1.17.0 was
-                     cut. Measured on this checkout with ^1.17.0 installed,
-                     vendor/conduction/hydra-gates/hydra-gates/contracts/ holds
-                     ObjectEntityInterface, ObjectServiceInterface and
-                     fleet-schema-slugs.json and nothing else, so no tagged release
-                     ships these two yet and psalm cannot resolve them from vendor.
-                     Once a tag carries them this pair can go, and
-                     findUnusedBaselineEntry is not what enforces that: someone
-                     re-reading this comment is. -->
+                     Same situation as the two above, and for the same reason,
+                     which is not the reason the first version of this comment
+                     gave. That version said the pair could go once a tagged
+                     hydra-gates release carried the files. v1.18.0 carries them,
+                     and psalm still cannot resolve them, so the claim was wrong.
+                     The cause is structural: conduction/hydra-gates declares no
+                     autoload section, so nothing under
+                     vendor/conduction/hydra-gates/hydra-gates/contracts/ is
+                     autoloadable, and this config ignores vendor outright.
+                     Measured on buildiq, which shares the shape, by deleting the
+                     ObjectEntityInterface entry that the package has shipped far
+                     longer: psalm exits 2 on that one too. What would make all
+                     four removable is an autoload entry on the package, or
+                     listing the contract files as psalm stubs here. A tag is not
+                     it. -->
                 <referencedClass name="OCA\OpenRegister\Contract\RegisterSlugResolverInterface"/>
                 <referencedClass name="OCA\OpenRegister\Contract\RegisterSlugResolution"/>
                 <referencedClass name="OCA\OpenRegister\Db\ObjectEntity"/>
