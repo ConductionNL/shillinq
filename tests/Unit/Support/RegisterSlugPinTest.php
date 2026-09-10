@@ -55,20 +55,44 @@ final class RegisterSlugPinTest extends TestCase {
 	/**
 	 * Superseded register slug => the canonical slug replacing it.
 	 *
-	 * Only the registers this app actually reads. openregister owns the full
-	 * fleet map in `lib/Support/RegisterSlugAliases.php`, which is not published
-	 * to consumers, and copying all ten here would put a second copy of that
-	 * truth in a repository that does not own it. What this guard needs is
-	 * narrower anyway: the slugs THIS app could plausibly type.
+	 * openregister owns the full fleet map in
+	 * `lib/Support/RegisterSlugAliases.php`, which is not published
+	 * to consumers, and this list is transcribed from it rather than derived: the
+	 * map is not recoverable from the app-rename map, because `stackiq` renamed
+	 * the register `voorzieningen` while its former app id `softwarecatalog` was
+	 * never a register slug on any instance.
 	 *
-	 * `hrmq` is deliberately absent. {@see \OCA\Shillinq\Service\HrmqCostRateAdapter}
-	 * probes `['humaniq', 'hrmq']` in order and caches whichever answered, which
-	 * is the resolution this guard exists to require, hand rolled before the
-	 * contract was published. Listing `hrmq` here would flag a correct file.
+	 * All ten, and this list used to hold one. It said it covered "the slugs
+	 * THIS app could plausibly type", and that premise is measurably wrong about
+	 * this repository. A sweep of register position under `lib/` finds
+	 * `integriq`, `pipelinq` and `portaliq` already there, beside the 77 sites
+	 * naming `shillinq` itself. Billing reads what it bills for, so it reaches
+	 * into other apps' registers by design, and a guard scoped to `openconnector`
+	 * alone watched the one slug this repository has already been cleaned of.
+	 *
+	 * `hrmq` is now listed, and the note saying it was deliberately absent was
+	 * wrong about why. {@see \OCA\Shillinq\Service\HrmqCostRateAdapter} probes
+	 * `['humaniq', 'hrmq']` in order and caches whichever answered, which is the
+	 * resolution this guard exists to require, hand rolled before the contract
+	 * was published. That line is an array, and every pattern below needs a
+	 * single quoted slug after the operator, so listing `hrmq` never could have
+	 * flagged it. Measured, not reasoned: the widened patterns over all ten slugs
+	 * report nothing under `lib/`.
 	 *
 	 * @var array<string, string>
 	 */
-	private const SUPERSEDED = ['openconnector' => 'integriq'];
+	private const SUPERSEDED = [
+		'openconnector'   => 'integriq',
+		'openbuild'       => 'buildiq',
+		'decidesk'        => 'decidiq',
+		'hrmq'            => 'humaniq',
+		'larpingapp'      => 'larpinq',
+		'planix'          => 'planninq',
+		'voorzieningen'   => 'stackiq',
+		'procest'         => 'dossiq',
+		'procest-default' => 'dossiq-default',
+		'scholiq'         => 'learniq',
+	];
 
 	/**
 	 * Files allowed to name a superseded slug, and why.
@@ -97,6 +121,15 @@ final class RegisterSlugPinTest extends TestCase {
 	 * seeded workflow `engine` is not this defect, and a guard that flagged
 	 * those would be turned off.
 	 *
+	 * The last three cover the NULL-COALESCING DEFAULT, and they are the reason
+	 * this list is eight long rather than five. integriq shipped
+	 * `register: ($data['register'] ?? 'openconnector')` in MappingsController
+	 * and this guard, which is the same guard, did not see it: all five of the
+	 * original patterns require the quote to follow `register:` directly, and
+	 * the coalesce operator sits in between. It was found by a hand grep. A
+	 * default is the likeliest place for a pin to survive a rename, because it
+	 * is the branch nobody exercises on a healthy instance.
+	 *
 	 * @var list<string>
 	 */
 	private const REGISTER_POSITION = [
@@ -105,6 +138,9 @@ final class RegisterSlugPinTest extends TestCase {
 		'/\'register\'\s*=>\s*\'([a-zA-Z0-9_-]+)\'/',
 		'/\bconst\s+[A-Z0-9_]*REGISTER[A-Z0-9_]*\s*=\s*\'([a-zA-Z0-9_-]+)\'/',
 		'/\$[a-zA-Z0-9_]*(?:[Rr]egister|[Ss]lug)[a-zA-Z0-9_]*\s*=\s*\'([a-zA-Z0-9_-]+)\'/',
+		'/\bregister:\s*\(?[^,()]*\?\?\s*\'([a-zA-Z0-9_-]+)\'/',
+		'/\'register\'\s*=>\s*\(?[^,()]*\?\?\s*\'([a-zA-Z0-9_-]+)\'/',
+		'/\$[a-zA-Z0-9_]*(?:[Rr]egister|[Ss]lug)[a-zA-Z0-9_]*\s*=\s*[^;]*\?\?\s*\'([a-zA-Z0-9_-]+)\'/',
 	];
 
 	/**
@@ -217,6 +253,10 @@ final class RegisterSlugPinTest extends TestCase {
 	 * register-position form a known-bad line and requires a match, so a regex
 	 * that stops matching reddens immediately instead of going quiet.
 	 *
+	 * The sixth sample is not invented. It is integriq's MappingsController line
+	 * as it stood on `development`, copied verbatim, and it is here because the
+	 * five patterns above let it through.
+	 *
 	 * @return void
 	 */
 	public function testEachRegisterPositionPatternStillMatches(): void {
@@ -226,6 +266,9 @@ final class RegisterSlugPinTest extends TestCase {
 			'/\'register\'\s*=>\s*\'([a-zA-Z0-9_-]+)\'/'              => "'filters' => ['register' => 'openconnector', 'schema' => 'source'],",
 			'/\bconst\s+[A-Z0-9_]*REGISTER[A-Z0-9_]*\s*=\s*\'([a-zA-Z0-9_-]+)\'/' => "\tprivate const CONNECTOR_REGISTER = 'openconnector';",
 			'/\$[a-zA-Z0-9_]*(?:[Rr]egister|[Ss]lug)[a-zA-Z0-9_]*\s*=\s*\'([a-zA-Z0-9_-]+)\'/' => "\t\t\$registerSlug = 'openconnector';",
+			'/\bregister:\s*\(?[^,()]*\?\?\s*\'([a-zA-Z0-9_-]+)\'/'   => "\t\t\tregister: (\$data['register'] ?? 'openconnector'),",
+			'/\'register\'\s*=>\s*\(?[^,()]*\?\?\s*\'([a-zA-Z0-9_-]+)\'/' => "'register' => (\$data['register'] ?? 'hrmq'),",
+			'/\$[a-zA-Z0-9_]*(?:[Rr]egister|[Ss]lug)[a-zA-Z0-9_]*\s*=\s*[^;]*\?\?\s*\'([a-zA-Z0-9_-]+)\'/' => "\t\t\$register = \$resolution?->slug ?? 'hrmq';",
 		];
 
 		foreach (self::REGISTER_POSITION as $pattern) {
