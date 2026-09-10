@@ -188,10 +188,13 @@ describe('ExternalAdaptersStatus.vue', () => {
 		// status code, so it must reach the admin rather than being replaced by
 		// "Request failed with status code 404", which reads as a broken route.
 		const served =
-			'The connector register is not on this instance under any of the slugs it has ' +
-			'answered to (integriq, openconnector).'
+			'The connector register is not on this instance under any of the slugs it has '
+			+ 'answered to (integriq, openconnector).'
 		const rejection = new Error('Request failed with status code 404')
-		rejection.response = { status: 404, data: { error: 'connector-register-absent', message: served } }
+		rejection.response = {
+			status: 404,
+			data: { error: 'connector-register-absent', message: served },
+		}
 
 		vi.spyOn(axios, 'get').mockRejectedValueOnce(rejection)
 		const ctx = { loading: true, errorMessage: '', adapters: [], summary: {} }
