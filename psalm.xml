@@ -68,6 +68,20 @@
                      verification pass is what surfaced it. -->
                 <referencedClass name="OCA\OpenRegister\Contract\ObjectServiceInterface"/>
                 <referencedClass name="OCA\OpenRegister\Contract\ObjectEntityInterface"/>
+                <!-- The register-slug resolver contract and its return type.
+                     Same situation as the two above, with one extra wrinkle worth
+                     writing down: these were published to the hydra-gates package
+                     by ConductionNL/.github#739, which merged AFTER v1.17.0 was
+                     cut. Measured on this checkout with ^1.17.0 installed,
+                     vendor/conduction/hydra-gates/hydra-gates/contracts/ holds
+                     ObjectEntityInterface, ObjectServiceInterface and
+                     fleet-schema-slugs.json and nothing else, so no tagged release
+                     ships these two yet and psalm cannot resolve them from vendor.
+                     Once a tag carries them this pair can go, and
+                     findUnusedBaselineEntry is not what enforces that: someone
+                     re-reading this comment is. -->
+                <referencedClass name="OCA\OpenRegister\Contract\RegisterSlugResolverInterface"/>
+                <referencedClass name="OCA\OpenRegister\Contract\RegisterSlugResolution"/>
                 <referencedClass name="OCA\OpenRegister\Db\ObjectEntity"/>
                 <referencedClass name="OCA\OpenRegister\Db\RegisterMapper"/>
                 <referencedClass name="OCA\OpenRegister\Db\SchemaMapper"/>

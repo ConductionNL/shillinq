@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\AppInfo;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Contract\RegisterSlugResolverInterface;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
@@ -188,6 +189,34 @@ class Application extends App implements IBootstrap {
 		$context->registerServiceAlias(
 			ObjectServiceInterface::class,
 			'OCA\OpenRegister\Service\ObjectService'
+		);
+
+		// The register-slug resolver, bound the same way and for the same reason.
+		//
+		// Register slugs live in `openregister_registers`, and nine fleet apps ship
+		// a repair step that renames theirs. The step is per instance, so both
+		// slugs are live across the estate at once and a literal is wrong on half
+		// of it. The old-slug case is the quiet one: OpenRegister finds no
+		// register, matches no rows, and returns an empty set that is byte for byte
+		// what a healthy empty register returns. No exception, no 404, no log line.
+		// This app read Integriq's connector register that way, from
+		// ExternalAdaptersAdminController.
+		//
+		// Verified against this container, not assumed: OpenRegister registers the
+		// resolver in its OWN container, so nothing of that registration reaches
+		// here. What reaches here is the alias stated here plus autowiring of the
+		// concrete class, whose only dependencies are `RegisterMapper` and
+		// `LoggerInterface`. Both resolve from a leaf app's DIContainer, and the
+		// interface then answers with a live resolution. Resolved live in this
+		// app's own DIContainer on the running instance before this was written.
+		//
+		// The one thing lost is OpenRegister's shared-instance registration: a leaf
+		// container autowires a fresh resolver per injection point, so the
+		// request-scoped memo is per consumer rather than per request. That costs
+		// one indexed read per consumer and changes no answer.
+		$context->registerServiceAlias(
+			RegisterSlugResolverInterface::class,
+			'OCA\OpenRegister\Service\RegisterSlugResolver'
 		);
 		// OpenRegister AppHost adoption (adopt-apphost) — the mechanical
 		// controllers/settings that are byte-for-byte the fleet skeleton are
