@@ -314,11 +314,13 @@ export default {
 				// with status code 404", which sends an admin looking for a
 				// broken route instead of a missing register.
 				const served = err?.response?.data?.message
-				this.errorMessage = served ?? t(
-					'shillinq',
-					'Could not load external adapter status: {message}',
-					{ message: err?.message ?? 'unknown error' },
-				)
+				this.errorMessage =
+					served
+					?? t(
+						'shillinq',
+						'Could not load external adapter status: {message}',
+						{ message: err?.message ?? 'unknown error' },
+					)
 			} finally {
 				this.loading = false
 			}
