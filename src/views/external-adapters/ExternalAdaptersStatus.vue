@@ -286,6 +286,17 @@ export default {
 			}
 		},
 
+		/**
+		 * Load the roster, or the reason there is nothing truthful to show.
+		 *
+		 * A 404 here is not a routing failure. It is REQ-ICO-003's absent-register
+		 * answer: the connector register is on this instance under none of the
+		 * slugs it has answered to, and the body names the slugs that were
+		 * probed. Surfacing the served sentence rather than the axios status line
+		 * is what keeps that distinction visible to an admin.
+		 *
+		 * @spec openspec/changes/integration-config-to-openconnector/specs/integration-config-to-openconnector/spec.md
+		 */
 		async loadStatus() {
 			this.loading = true
 			this.errorMessage = ''
@@ -295,7 +306,15 @@ export default {
 				this.adapters = data?.adapters ?? []
 				this.summary = data?.summary ?? { total: 0, dormant: 0, live: 0 }
 			} catch (err) {
-				this.errorMessage = t(
+				// Prefer the server's own sentence when it sent one. A 404 here
+				// is not a routing accident: it is the endpoint saying the
+				// connector register is on this instance under none of the slugs
+				// it has answered to, and it names the slugs it probed. Falling
+				// back to the axios message would turn that into "Request failed
+				// with status code 404", which sends an admin looking for a
+				// broken route instead of a missing register.
+				const served = err?.response?.data?.message
+				this.errorMessage = served ?? t(
 					'shillinq',
 					'Could not load external adapter status: {message}',
 					{ message: err?.message ?? 'unknown error' },

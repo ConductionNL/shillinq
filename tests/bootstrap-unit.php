@@ -33,6 +33,63 @@ foreach (spl_autoload_functions() as $loader) {
 	}
 }
 
+// The published OpenRegister contracts, preferred over the stubs beside them.
+//
+// `tests/stubs/OpenRegister/Contract/RegisterSlugResolution.php` and
+// `RegisterSlugResolverInterface.php` are copies of openregister's own
+// `lib/Contract/`, and the psr-4 entry above resolves them. They are copies
+// because no tagged hydra-gates release ships them yet: measured on this
+// checkout with `^1.17.0` installed,
+// `vendor/conduction/hydra-gates/hydra-gates/contracts/` holds
+// ObjectEntityInterface, ObjectServiceInterface and fleet-schema-slugs.json and
+// nothing else. ConductionNL/.github#739 published the pair AFTER v1.17.0 was
+// cut.
+//
+// The copies differ from the originals in exactly one respect, and only in
+// prose: openregister's `@spec openspec/specs/register-slug-resolution/spec.md`
+// tags are `@link`s here, because that spec file lives in openregister and gate
+// 46 (`spec-anchor-existence`) resolves every `@spec` target against THIS
+// repository. Retargeting a tag at a spec this app does not own would be worse
+// than dropping it. Verify the rest with:
+//
+//   diff <(sed 's/@link https:\/\/github.com\/ConductionNL\/openregister /@spec /' \
+//            tests/stubs/OpenRegister/Contract/RegisterSlugResolution.php) \
+//        ../openregister/lib/Contract/RegisterSlugResolution.php
+//
+// This block loads a REAL one when a real one is reachable, so the copies stop
+// being what the suite measures the moment either source carries them. Two
+// sources are listed because they arrive at different times: the package copy
+// ships on a tag, while openregister's own tree is what a CI leg has (this
+// repo's `additional-apps` checks out ConductionNL/openregister at
+// `development`) and what a dev checkout has beside it. Gate 67
+// (`openregister-contract-parity`) requires the two to be byte identical, so
+// either yields the same type.
+//
+// `RegisterSlugResolution` is a CLASS and `RegisterSlugResolverInterface` an
+// INTERFACE, so the guard has to ask both questions. Asking only
+// `interface_exists()` would re-require a file that is already loaded, and a
+// duplicate declaration is a fatal, not a no-op.
+$shillinqContractSources = [
+	__DIR__ . '/../vendor/conduction/hydra-gates/hydra-gates/contracts',
+	__DIR__ . '/../../openregister/lib/Contract',
+	__DIR__ . '/../../../apps-extra/openregister/lib/Contract',
+];
+
+foreach (['RegisterSlugResolution', 'RegisterSlugResolverInterface'] as $contract) {
+	$fqcn = '\\OCA\\OpenRegister\\Contract\\' . $contract;
+	if (interface_exists($fqcn) === true || class_exists($fqcn) === true) {
+		continue;
+	}
+
+	foreach ($shillinqContractSources as $contractDir) {
+		$shipped = $contractDir . '/' . $contract . '.php';
+		if (file_exists($shipped) === true) {
+			require_once $shipped;
+			break;
+		}
+	}
+}
+
 // OCP\DB\QueryBuilder\IQueryBuilder declares class constants whose default
 // expressions reference Doctrine\DBAL\ParameterType / ArrayParameterType. The
 // bare unit env does not install doctrine/dbal, so any test that mocks
