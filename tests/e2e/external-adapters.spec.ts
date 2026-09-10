@@ -114,10 +114,15 @@ async function openRoster(page: Page): Promise<void> {
  * happened to render. A DOM-shaped test would pass whichever way the page
  * broke, which is how the fabricated roster survived for three weeks.
  *
- * The fetch runs INSIDE the page so it carries the browser session. This CI
- * instance installs OpenRegister and nothing else, and the seed imports only
- * Shillinq's own register, so `present` is false here by construction. It is
- * still asked rather than assumed, because the same spec runs against
+ * The fetch runs INSIDE the page so it carries the browser session. CALL THIS
+ * AFTER `openRoster`, never before: on `about:blank` there is no origin to
+ * resolve a relative URL against, and the failure is
+ * `TypeError: Failed to parse URL from /index.php/...` rather than anything
+ * that mentions navigation.
+ *
+ * This CI instance installs OpenRegister and nothing else, and the seed imports
+ * only Shillinq's own register, so `present` is false here by construction. It
+ * is still asked rather than assumed, because the same spec runs against
  * instances that do carry Integriq.
  */
 async function readRoster(
@@ -162,8 +167,8 @@ test.describe('Shillinq — External Connections roster', () => {
 	test('the roster page lists all 15 declared families', async ({ page }) => {
 		const errors = trackShillinqErrors(page)
 
-		const roster = await readRoster(page)
 		await openRoster(page)
+		const roster = await readRoster(page)
 
 		await expect(page.locator('.external-adapters__title')).toContainText(
 			/External Connections/i,
@@ -250,8 +255,8 @@ test.describe('Shillinq — External Connections roster', () => {
 	 * @e2e integration-config-to-openconnector::every-rows-deep-link-is-a-well-formed-url
 	 */
 	test("every row's deep link is a well-formed URL", async ({ page }) => {
-		const roster = await readRoster(page)
 		await openRoster(page)
+		const roster = await readRoster(page)
 
 		if (!roster.present) {
 			// No register means no rows, so there is no row href to inspect. The
