@@ -16,6 +16,29 @@
     </projectFiles>
     <stubs>
         <file name="vendor/nextcloud/ocp/OCP/Capabilities/ICapability.php" preloadClasses="true" />
+        <!--
+            OpenRegister's data-access contract and its register-slug resolver,
+            which this app's lib/ typehints but does not own. OpenRegister
+            supplies them at RUNTIME; these are analysis stubs only.
+
+            All four were referencedClass suppressions until now, because
+            conduction/hydra-gates declares no autoload section, so nothing under
+            hydra-gates/contracts/ is autoloadable and this config ignores vendor
+            outright. A stub is read anyway: stubs are loaded explicitly rather
+            than scanned, so ignoreFiles does not reach them.
+
+            The suppression was not cosmetic and the swap is not either. A
+            suppressed class makes every value flowing through it mixed, so psalm
+            stops analysing the very branch this contract exists to force.
+            decidesk made the same swap and psalm immediately found a real
+            nullable that had shipped behind the suppression. The stub is what
+            lets psalm see that RegisterSlugResolution::isResolved() returns bool
+            and that ->slug is readonly ?string.
+        -->
+        <file name="vendor/conduction/hydra-gates/hydra-gates/contracts/ObjectServiceInterface.php" />
+        <file name="vendor/conduction/hydra-gates/hydra-gates/contracts/ObjectEntityInterface.php" />
+        <file name="vendor/conduction/hydra-gates/hydra-gates/contracts/RegisterSlugResolution.php" />
+        <file name="vendor/conduction/hydra-gates/hydra-gates/contracts/RegisterSlugResolverInterface.php" />
     </stubs>
     <issueHandlers>
         <UndefinedDocblockClass errorLevel="suppress"/>
@@ -60,14 +83,6 @@
                 <referencedClass name="OCP\Notification\IManager"/>
                 <referencedClass name="OCP\Share\IManager"/>
                 <!-- OpenRegister cross-app classes (loaded dynamically) -->
-                <!-- ADR-084 published contract (adopted by commit ef9c8fa5, pre-dates
-                     security-endpoint-guards) — missing from this allowlist since that
-                     adoption; every controller injecting these two (CBSSubmissionController,
-                     InvoiceApiController, and others) already failed UndefinedClass here.
-                     Not introduced by this change; fixed alongside since this change's own
-                     verification pass is what surfaced it. -->
-                <referencedClass name="OCA\OpenRegister\Contract\ObjectServiceInterface"/>
-                <referencedClass name="OCA\OpenRegister\Contract\ObjectEntityInterface"/>
                 <referencedClass name="OCA\OpenRegister\Db\ObjectEntity"/>
                 <referencedClass name="OCA\OpenRegister\Db\RegisterMapper"/>
                 <referencedClass name="OCA\OpenRegister\Db\SchemaMapper"/>
@@ -196,27 +211,5 @@
     </issueHandlers>
     <extraFiles>
         <directory name="vendor/nextcloud/ocp" />
-        <!-- OpenRegister's published contracts, shipped by
-             conduction/hydra-gates v1.18.0 and held byte identical to
-             openregister's own lib/Contract/ by gate 67
-             (openregister-contract-parity).
-
-             Scanned rather than suppressed, and the suppression this replaces
-             said so itself: it recorded that no tagged release shipped the
-             resolver contract yet and that the pair could go once one did.
-             v1.18.0 is that tag. Every other OCA\OpenRegister\* type above
-             stays an UndefinedClass suppression because the class genuinely is
-             out of this repository's reach; a suppression buys silence rather
-             than checking, and would accept RegisterSlugResolution::isReslved()
-             just as happily. These two are in reach, so psalm reads the real
-             definitions.
-
-             Read out of vendor, never copied. tests/stubs/OpenRegister/Contract/
-             holds hand-edited copies of the same four files, and hand-edited is
-             the problem: their @spec tags were rewritten to @link, and the
-             ObjectServiceInterface copy is 18KB against the published 28KB. A
-             copy that drifts is a contract that no longer says what the owner
-             says. -->
-        <directory name="vendor/conduction/hydra-gates/hydra-gates/contracts" />
     </extraFiles>
 </psalm>
