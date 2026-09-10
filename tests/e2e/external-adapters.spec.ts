@@ -21,12 +21,18 @@ import type { ConsoleMessage, Page } from '@playwright/test'
  * workflows spec with mocked responses for its three provisioning states).
  *
  * This file asserts:
- *   1. The roster lists all 15 declared families (REQ-ICO-002).
+ *   1. The roster lists all 15 declared families (REQ-ICO-002) where the
+ *      connector register resolves, and where it does not, that the page says
+ *      so and renders ZERO rows (REQ-ICO-003). Which branch runs is decided by
+ *      the served answer, not by the DOM. Both directions matter: this page
+ *      once fabricated all fifteen families out of a register that was not
+ *      there, and a test that only counted rows passed on it.
  *   2. No per-adapter detail route exists any more — the old
  *      `/external-adapters/<family-id>` deep links no longer resolve to a
  *      detail panel (REQ-ICO-002 / REQ-ICO-004).
  *   3. Every row's "provision in OpenConnector" deep link is a well-formed
- *      URL (REQ-ICO-007).
+ *      URL (REQ-ICO-007), and where there are no rows, that the absent-register
+ *      answer still carries that same deep link.
  *   4. No test file under tests/e2e/** still references a removed
  *      per-adapter route literal (REQ-ICO-007) — a static check over the
  *      test tree itself, not a page assertion.
@@ -90,9 +96,44 @@ async function openRoster(page: Page): Promise<void> {
 	await page.waitForLoadState('domcontentloaded')
 	await dismissOverlays(page)
 	await expect(page).toHaveURL(/external-adapters/, { timeout: 10_000 })
-	await expect(page.locator('.external-adapters__list').first()).toBeVisible({
+	// Either branch of the page is a settled roster: the list when the
+	// connector register resolves, the error section when it does not. Waiting
+	// only for the list made an absent register look like a page that never
+	// finished loading.
+	await expect(
+		page.locator('.external-adapters__list, .external-adapters__error').first(),
+	).toBeVisible({
 		timeout: 15_000,
 	})
+}
+
+/**
+ * Ask the admin endpoint whether the connector register is on this instance.
+ *
+ * The branch below is chosen by the SERVED ANSWER, never by which element
+ * happened to render. A DOM-shaped test would pass whichever way the page
+ * broke, which is how the fabricated roster survived for three weeks.
+ *
+ * The fetch runs INSIDE the page so it carries the browser session. This CI
+ * instance installs OpenRegister and nothing else, and the seed imports only
+ * Shillinq's own register, so `present` is false here by construction. It is
+ * still asked rather than assumed, because the same spec runs against
+ * instances that do carry Integriq.
+ */
+async function readRoster(
+	page: Page,
+): Promise<{ present: boolean; status: number; body: any }> {
+	const result = await page.evaluate(async () => {
+		const res = await fetch(
+			'/index.php/apps/shillinq/api/admin/external-adapters',
+			{
+				headers: { 'OCS-APIREQUEST': 'true', Accept: 'application/json' },
+			},
+		)
+		return { status: res.status, body: await res.json().catch(() => null) }
+	})
+
+	return { present: result.status === 200, ...result }
 }
 
 /** Collect shillinq-origin console errors + 5xx, filtering NC-core / env noise. */
@@ -121,12 +162,45 @@ test.describe('Shillinq — External Connections roster', () => {
 	test('the roster page lists all 15 declared families', async ({ page }) => {
 		const errors = trackShillinqErrors(page)
 
+		const roster = await readRoster(page)
 		await openRoster(page)
 
 		await expect(page.locator('.external-adapters__title')).toContainText(
 			/External Connections/i,
 			{ timeout: 15_000 },
 		)
+
+		if (!roster.present) {
+			// REQ-ICO-003's absent-register answer, and the assertion that would
+			// have caught the defect this page used to have. The endpoint read a
+			// hardcoded `openconnector` register, OpenRegister matched no rows,
+			// and all fifteen families came back `declared-not-provisioned` —
+			// fifteen rows telling an admin to provision a Source in a register
+			// that is not there. This test passed on exactly that, because it
+			// only ever counted rows.
+			//
+			// So the count is asserted in the direction that hurts: ZERO rows.
+			expect(roster.status, 'an absent connector register answers 404').toBe(
+				404,
+			)
+			expect(roster.body?.error).toBe('connector-register-absent')
+			await expect(page.locator('.external-adapters__error')).toBeVisible({
+				timeout: 10_000,
+			})
+			await expect(page.locator('.external-adapters__error')).toContainText(
+				/Integriq/i,
+			)
+			await expect(
+				page.locator('.external-adapters__item[data-adapter-id]'),
+			).toHaveCount(0)
+
+			expect(
+				errors(),
+				`shillinq-origin errors:\n${errors().join('\n')}`,
+			).toEqual([])
+			return
+		}
+
 		await expect(page.locator('.external-adapters__summary')).toBeVisible({
 			timeout: 10_000,
 		})
@@ -176,7 +250,30 @@ test.describe('Shillinq — External Connections roster', () => {
 	 * @e2e integration-config-to-openconnector::every-rows-deep-link-is-a-well-formed-url
 	 */
 	test("every row's deep link is a well-formed URL", async ({ page }) => {
+		const roster = await readRoster(page)
 		await openRoster(page)
+
+		if (!roster.present) {
+			// No register means no rows, so there is no row href to inspect. The
+			// property the scenario is about still holds and is still asserted:
+			// the served answer carries the same Sources deep link the rows would
+			// have carried, so an admin who cannot see a roster can still reach
+			// the place the roster points at.
+			const served = roster.body?.deepLink
+			expect(
+				served,
+				'the absent-register answer still carries a deep link',
+			).toBeTruthy()
+			expect(
+				/^https?:\/\//.test(served as string)
+					|| /\/apps\/openconnector\/sources/.test(served as string),
+				`deepLink "${served}" is not a well-formed openconnector deep link`,
+			).toBeTruthy()
+			await expect(
+				page.locator('.external-adapters__item-actions a'),
+			).toHaveCount(0)
+			return
+		}
 
 		const links = page.locator(
 			'.external-adapters__item-actions a, .external-adapters__item-actions [href]',
