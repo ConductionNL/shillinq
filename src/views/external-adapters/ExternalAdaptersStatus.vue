@@ -286,6 +286,17 @@ export default {
 			}
 		},
 
+		/**
+		 * Load the roster, or the reason there is nothing truthful to show.
+		 *
+		 * A 404 here is not a routing failure. It is REQ-ICO-003's absent-register
+		 * answer: the connector register is on this instance under none of the
+		 * slugs it has answered to, and the body names the slugs that were
+		 * probed. Surfacing the served sentence rather than the axios status line
+		 * is what keeps that distinction visible to an admin.
+		 *
+		 * @spec openspec/changes/integration-config-to-openconnector/specs/integration-config-to-openconnector/spec.md
+		 */
 		async loadStatus() {
 			this.loading = true
 			this.errorMessage = ''

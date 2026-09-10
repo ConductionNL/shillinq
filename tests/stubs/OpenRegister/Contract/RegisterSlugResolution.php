@@ -33,7 +33,7 @@ namespace OCA\OpenRegister\Contract;
 /**
  * An immutable register-slug resolution.
  *
- * @spec openspec/specs/register-slug-resolution/spec.md
+ * @link https://github.com/ConductionNL/openregister openspec/specs/register-slug-resolution/spec.md
  */
 final class RegisterSlugResolution {
 
@@ -84,7 +84,7 @@ final class RegisterSlugResolution {
 	 *
 	 * @return bool True when {@see $slug} is usable.
 	 *
-	 * @spec openspec/specs/register-slug-resolution/spec.md
+	 * @link https://github.com/ConductionNL/openregister openspec/specs/register-slug-resolution/spec.md
 	 */
 	public function isResolved(): bool {
 		return $this->slug !== null;
@@ -95,7 +95,7 @@ final class RegisterSlugResolution {
 	 *
 	 * @return bool True when nothing matched.
 	 *
-	 * @spec openspec/specs/register-slug-resolution/spec.md
+	 * @link https://github.com/ConductionNL/openregister openspec/specs/register-slug-resolution/spec.md
 	 */
 	public function isAbsent(): bool {
 		return $this->state === self::ABSENT;
@@ -107,7 +107,7 @@ final class RegisterSlugResolution {
 	 * @return bool True when the instance carries two rows the rename should
 	 *              have collapsed into one.
 	 *
-	 * @spec openspec/specs/register-slug-resolution/spec.md
+	 * @link https://github.com/ConductionNL/openregister openspec/specs/register-slug-resolution/spec.md
 	 */
 	public function isAmbiguous(): bool {
 		return $this->state === self::AMBIGUOUS;

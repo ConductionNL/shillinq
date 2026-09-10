@@ -38,10 +38,10 @@ use RuntimeException;
  * {@see ExternalAdaptersAdminController::resolveProvisioning()}, two assertions
  * reddened and they were the right two:
  *
- *  - `testAMigratedInstanceIsReadWithItsNewSlug` — expected `integriq`, got
+ *  - `testAMigratedInstanceIsReadWithItsNewSlug`, which expected `integriq` and got
  *    `openconnector`.
- *  - `RegisterSlugPinTest::testNoSourceFilePinsASupersededRegisterSlug` —
- *    naming the file, the line and the canonical slug.
+ *  - `RegisterSlugPinTest::testNoSourceFilePinsASupersededRegisterSlug`, which
+ *    named the file, the line and the canonical slug.
  *
  * `testAnUnmigratedInstanceIsReadWithItsOldSlug` stayed GREEN under that
  * mutation, exactly as it should. So did the absent case, because that one is
@@ -52,10 +52,10 @@ use RuntimeException;
  * two assertions reddened and the static guard stayed green, which is correct
  * because that mutation types no superseded literal at all:
  *
- *  - `testAnInstanceWithoutTheRegisterAnswers404` — got 200 and a fifteen-row
- *    roster instead of 404.
- *  - `testTheAppBeingEnabledDoesNotDecideTheRegisterSlug` — the absent case read
- *    with `integriq` rather than reading with nothing.
+ *  - `testAnInstanceWithoutTheRegisterAnswers404`, which got 200 and a
+ *    fifteen-row roster instead of 404.
+ *  - `testTheAppBeingEnabledDoesNotDecideTheRegisterSlug`, where the absent
+ *    case read with `integriq` rather than reading with nothing.
  *
  * That is the defect in one line: the fallback reads as "no data". It is also
  * why the static guard is not sufficient on its own. It watches the literal
@@ -123,7 +123,7 @@ final class ExternalAdaptersRegisterResolutionTest extends TestCase {
 	 *
 	 * The absence has to have an HTTP shape. Before the resolution this path
 	 * read `openconnector` regardless, matched nothing, and returned 200 with
-	 * fifteen families all reporting `declared-not-provisioned` — a page of
+	 * fifteen families all reporting `declared-not-provisioned`, a page of
 	 * instructions telling an admin to provision Sources inside a register that
 	 * is not there. That is indistinguishable from a register that exists and
 	 * holds nothing, which is the whole defect.

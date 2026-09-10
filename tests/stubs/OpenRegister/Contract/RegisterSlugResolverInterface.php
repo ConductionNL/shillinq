@@ -55,7 +55,7 @@ namespace OCA\OpenRegister\Contract;
 /**
  * Resolves a register by any of the slugs it has answered to.
  *
- * @spec openspec/specs/register-slug-resolution/spec.md
+ * @link https://github.com/ConductionNL/openregister openspec/specs/register-slug-resolution/spec.md
  */
 interface RegisterSlugResolverInterface {
 
@@ -70,7 +70,7 @@ interface RegisterSlugResolverInterface {
 	 *
 	 * @return RegisterSlugResolution The slug to use, or an explicit absence.
 	 *
-	 * @spec openspec/specs/register-slug-resolution/spec.md
+	 * @link https://github.com/ConductionNL/openregister openspec/specs/register-slug-resolution/spec.md
 	 */
 	public function resolve(string $canonical, array $candidates=[]): RegisterSlugResolution;
 
@@ -86,7 +86,7 @@ interface RegisterSlugResolverInterface {
 	 *
 	 * @return string|null The slug to use, or null.
 	 *
-	 * @spec openspec/specs/register-slug-resolution/spec.md
+	 * @link https://github.com/ConductionNL/openregister openspec/specs/register-slug-resolution/spec.md
 	 */
 	public function slugOrNull(string $canonical, array $candidates=[]): ?string;
 }//end interface
