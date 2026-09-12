@@ -180,4 +180,29 @@ describe('ExternalAdaptersStatus.vue', () => {
 		expect(ctx.errorMessage).toContain('boom')
 		expect(ctx.loading).toBe(false)
 	})
+
+	it('loadStatus surfaces the server sentence on a 404, not the axios status line', async () => {
+		// A 404 from this endpoint means the connector register is on this
+		// instance under none of the slugs it has answered to, and the response
+		// names the slugs it probed. That sentence is the whole point of the
+		// status code, so it must reach the admin rather than being replaced by
+		// "Request failed with status code 404", which reads as a broken route.
+		const served =
+			'The connector register is not on this instance under any of the slugs it has '
+			+ 'answered to (integriq, openconnector).'
+		const rejection = new Error('Request failed with status code 404')
+		rejection.response = {
+			status: 404,
+			data: { error: 'connector-register-absent', message: served },
+		}
+
+		vi.spyOn(axios, 'get').mockRejectedValueOnce(rejection)
+		const ctx = { loading: true, errorMessage: '', adapters: [], summary: {} }
+		await StatusView.methods.loadStatus.call(ctx)
+
+		expect(ctx.errorMessage).toBe(served)
+		expect(ctx.errorMessage).not.toContain('status code 404')
+		expect(ctx.adapters).toEqual([])
+		expect(ctx.loading).toBe(false)
+	})
 })

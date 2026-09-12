@@ -33,6 +33,45 @@ foreach (spl_autoload_functions() as $loader) {
 	}
 }
 
+// The published OpenRegister register-slug contracts, loaded from the vendored
+// hydra-gates package.
+//
+// This app used to keep verbatim copies of both files at
+// `tests/stubs/OpenRegister/Contract/`, because ConductionNL/.github#739
+// published them to the package after v1.17.0 was cut, so no tagged release
+// carried them and no constraint could reach them. v1.18.0 carries both, so the
+// copies are gone and the definitions come from vendor.
+//
+// That removes a real drift risk rather than documenting it. The copies were
+// byte identical to the originals apart from seven docblock tags: openregister's
+// `@spec openspec/specs/register-slug-resolution/spec.md` had to become `@link`
+// here, because that spec lives in openregister and gate 46
+// (`spec-anchor-existence`) resolves every `@spec` target against THIS
+// repository. Loading from vendor moves the files out of the gate's scope
+// entirely, so the tags need no rewriting and cannot fall behind.
+//
+// Gate 67 (`openregister-contract-parity`) requires the package copy and
+// openregister's own `lib/Contract/` to be byte identical, so the vendored file
+// is the definition openregister declares.
+//
+// `RegisterSlugResolution` is a CLASS and `RegisterSlugResolverInterface` an
+// INTERFACE, so the guard has to ask both questions. Asking only
+// `interface_exists()` would re-require a file that is already loaded, and a
+// duplicate declaration is a fatal, not a no-op.
+$shillinqContractDir = __DIR__ . '/../vendor/conduction/hydra-gates/hydra-gates/contracts';
+
+foreach (['RegisterSlugResolution', 'RegisterSlugResolverInterface'] as $contract) {
+	$fqcn = '\\OCA\\OpenRegister\\Contract\\' . $contract;
+	if (interface_exists($fqcn) === true || class_exists($fqcn) === true) {
+		continue;
+	}
+
+	$shipped = $shillinqContractDir . '/' . $contract . '.php';
+	if (file_exists($shipped) === true) {
+		require_once $shipped;
+	}
+}
+
 // OCP\DB\QueryBuilder\IQueryBuilder declares class constants whose default
 // expressions reference Doctrine\DBAL\ParameterType / ArrayParameterType. The
 // bare unit env does not install doctrine/dbal, so any test that mocks

@@ -33,10 +33,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Signing;
 
 use InvalidArgumentException;
-use OCA\DocuDesk\Event\DocumentSigningRequestedEvent;
-use OCA\DocuDesk\Event\SigningProvenance;
 use OCA\Shillinq\Service\ApprovalActivityEmitter;
 use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Support\FleetAppId;
 use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -128,12 +127,18 @@ class SigningDelegationService {
 			return $financeObject;
 		}
 
-		// Fail closed when docudesk is not installed — never sign on local authority.
-		if (class_exists(DocumentSigningRequestedEvent::class) === false) {
+		// Fail closed when filinq is not installed — never sign on local
+		// authority. Resolved across every namespace filinq has shipped, so a
+		// rename cannot turn "not installed" into a false negative here; this
+		// guard THROWS, so getting it wrong blocks signing outright rather than
+		// failing silently the way the listener side did.
+		$eventClass = FleetAppId::resolveClass('filinq', 'Event\\DocumentSigningRequestedEvent');
+		$provenanceClass = FleetAppId::resolveClass('filinq', 'Event\\SigningProvenance');
+		if ($eventClass === null || $provenanceClass === null) {
 			$this->logger->warning(
-				'SigningDelegationService: docudesk not installed — signing cannot be delegated (fail closed)'
+				'SigningDelegationService: filinq not installed — signing cannot be delegated (fail closed)'
 			);
-			throw new RuntimeException('docudesk is not installed; document signing request cannot be raised.');
+			throw new RuntimeException('filinq is not installed; document signing request cannot be raised.');
 		}
 
 		$subjectId = (string)($financeObject['id'] ?? $financeObject['_id'] ?? '');
@@ -143,13 +148,14 @@ class SigningDelegationService {
 			$docReference = (string)($financeObject['documentReference'] ?? $financeObject['pdfRef'] ?? '');
 		}
 
-		// DocuDesk groups the six provenance fields into SigningProvenance —
-		// the same value object its SigningConcludedEvent already took, so both
-		// ends of the exchange now carry provenance the same way
-		// (ConductionNL/docudesk). The read surface is unchanged; only
-		// construction moved.
-		$event = new DocumentSigningRequestedEvent(
-			provenance: new SigningProvenance(
+		// Filinq groups the six provenance fields into SigningProvenance — the
+		// same value object its SigningConcludedEvent already takes, so both
+		// ends of the exchange carry provenance the same way. Constructed
+		// through the resolved class names rather than an imported symbol: the
+		// import bound this dispatch to one filinq namespace, and named
+		// arguments work identically on a dynamic class name.
+		$event = new $eventClass(
+			provenance: new $provenanceClass(
 				sourceApp: 'shillinq',
 				subjectRegister: $this->settingsService->getRegisterSlug(),
 				subjectSchema: $subjectSchema,
