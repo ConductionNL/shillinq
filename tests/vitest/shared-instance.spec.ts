@@ -29,14 +29,20 @@ const NONE = {} as NodeJS.ProcessEnv
 
 describe(`${APP_ID} shared-instance guard`, () => {
 	it('folds every loopback spelling onto localhost', () => {
-		expect(normaliseOrigin('http://127.0.0.1:8080')).toBe('http://localhost:8080')
+		expect(normaliseOrigin('http://127.0.0.1:8080')).toBe(
+			'http://localhost:8080',
+		)
 		expect(normaliseOrigin('http://[::1]:8080')).toBe('http://localhost:8080')
-		expect(normaliseOrigin('http://localhost:8080/')).toBe('http://localhost:8080')
+		expect(normaliseOrigin('http://localhost:8080/')).toBe(
+			'http://localhost:8080',
+		)
 	})
 
 	it('makes the implicit port explicit', () => {
 		expect(normaliseOrigin('http://127.0.0.1')).toBe('http://localhost:80')
-		expect(normaliseOrigin('https://example.org')).toBe('https://example.org:443')
+		expect(normaliseOrigin('https://example.org')).toBe(
+			'https://example.org:443',
+		)
 	})
 
 	it('calls loopback 80 and 8080 shared, and nothing else', () => {
