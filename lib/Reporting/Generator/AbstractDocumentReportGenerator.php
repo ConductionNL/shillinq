@@ -10,7 +10,7 @@
  * carries — headings, key/value tables, amount tables, notes), then this
  * base hands that tree to docudesk for rendering:
  * `OCA\DocuDesk\Service\DocumentService::generateDocument($templateId, [],
- * $options)`, resolved by string FQCN through `\OCP\Server::get()` — no
+ * $options)`, resolved by string FQCN through the injected container: no
  * compile-time `use` import of any `OCA\DocuDesk\*` class, no composer/
  * info.xml dependency on docudesk. This mirrors hrmq's `HrDocumentService`
  * (`hrmq-docudesk-documents` / `payslip-pdf-docudesk`): the leaf assembles
@@ -29,11 +29,10 @@
  * refuse to render rather than guess between templates that produce
  * official financial/statutory documents (mirrors hrmq design.md D3).
  *
- * The concrete generators are instantiated with no constructor arguments by
- * ReportGenerationService (mirroring RuleEngine provider discovery), so this
- * base resolves OpenRegister's ObjectService, docudesk's services and the
- * register slug lazily from the Nextcloud server container rather than via
- * constructor injection.
+ * ReportGenerationService resolves the concrete generators through the app
+ * container (mirroring RuleEngine provider discovery), so this base takes that
+ * container as its one constructor argument and resolves OpenRegister's
+ * ObjectService, docudesk's services and the register slug lazily through it.
  *
  * @category Reporting
  * @package  OCA\Shillinq\Reporting\Generator
@@ -65,6 +64,8 @@ use OCA\Shillinq\Reporting\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportCatalogue;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
 use OCA\Shillinq\Reporting\ReportSection;
+use OCA\Shillinq\Support\FleetAppId;
+use Psr\Container\ContainerInterface;
 use RuntimeException;
 use Throwable;
 
@@ -98,20 +99,22 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 	];
 
 	/**
-	 * The app id docudesk registers under (IAppManager::isInstalled probe).
+	 * The canonical fleet name of the document app, resolved through
+	 * {@see FleetAppId} so both the id probe and the service lookups follow
+	 * that app across its rename instead of pinning to one release.
 	 */
-	private const DOCUDESK_APP_ID = 'docudesk';
+	private const DOCUMENT_APP = 'filinq';
 
 	/**
-	 * docudesk's rendering service, resolved by string FQCN only (no
-	 * compile-time import).
+	 * The rendering service, named relative to the document app's root and
+	 * resolved by string FQCN only (no compile-time import).
 	 */
-	private const DOCUMENT_SERVICE_FQCN = 'OCA\\DocuDesk\\Service\\DocumentService';
+	private const DOCUMENT_SERVICE_CLASS = 'Service\\DocumentService';
 
 	/**
-	 * docudesk's template lookup service, resolved by string FQCN only.
+	 * The template lookup service, named relative to the document app's root.
 	 */
-	private const TEMPLATE_SERVICE_FQCN = 'OCA\\DocuDesk\\Service\\TemplateService';
+	private const TEMPLATE_SERVICE_CLASS = 'Service\\TemplateService';
 
 	/**
 	 * The docudesk template namespace shillinq's own templates live under.
@@ -130,6 +133,26 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 	 * ACCENT_COLOUR.
 	 */
 	protected const MUTED_COLOUR = '6B7280';
+
+	/**
+	 * Constructor.
+	 *
+	 * ReportGenerationService resolves the concrete generators through the app
+	 * container, so they are autowired and this argument costs them nothing. It
+	 * replaces the global lookups this base used to make: outside a booted
+	 * Nextcloud those autowire from scratch and can recurse through a
+	 * constructor cycle until memory runs out, and inside one they are a hidden
+	 * dependency no unit test can control.
+	 *
+	 * @param ContainerInterface $container Resolves the app manager, the app
+	 *                                      config, OpenRegister's ObjectService
+	 *                                      and the document app's services, all
+	 *                                      of them late-bound behind guards.
+	 */
+	public function __construct(
+		protected readonly ContainerInterface $container,
+	) {
+	}//end __construct()
 
 	/**
 	 * The formats every document generator can emit, editable first.
@@ -369,8 +392,8 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 	 */
 	protected function docudeskAvailable(): bool {
 		try {
-			$appManager = \OCP\Server::get(\OCP\App\IAppManager::class);
-			if ($appManager->isInstalled(self::DOCUDESK_APP_ID) === false) {
+			$appManager = $this->container->get(\OCP\App\IAppManager::class);
+			if (FleetAppId::isInstalled($appManager, self::DOCUMENT_APP) === false) {
 				return false;
 			}
 
@@ -384,22 +407,52 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 	}//end docudeskAvailable()
 
 	/**
-	 * docudesk's DocumentService, resolved by string FQCN only.
+	 * filinq's DocumentService, resolved by string FQCN only.
 	 *
-	 * @return object
+	 * @return object The service.
+	 *
+	 * @throws RuntimeException When no candidate namespace resolves.
 	 */
 	protected function documentService(): object {
-		return \OCP\Server::get(self::DOCUMENT_SERVICE_FQCN);
+		return $this->documentAppService(relative: self::DOCUMENT_SERVICE_CLASS);
 	}//end documentService()
 
 	/**
-	 * docudesk's TemplateService, resolved by string FQCN only.
+	 * filinq's TemplateService, resolved by string FQCN only.
 	 *
-	 * @return object
+	 * @return object The service.
+	 *
+	 * @throws RuntimeException When no candidate namespace resolves.
 	 */
 	protected function templateService(): object {
-		return \OCP\Server::get(self::TEMPLATE_SERVICE_FQCN);
+		return $this->documentAppService(relative: self::TEMPLATE_SERVICE_CLASS);
 	}//end templateService()
+
+	/**
+	 * Resolve one document-app service across every namespace it has shipped under.
+	 *
+	 * Pinned to a single FQCN, both lookups above threw for every instance
+	 * running filinq after its August 2026 rename — and because
+	 * `docudeskAvailable()` catches Throwable, that throw was read as "the app
+	 * is absent" and every document report silently fell back.
+	 *
+	 * @param string $relative Class name below the app root.
+	 *
+	 * @return object The resolved service.
+	 *
+	 * @throws RuntimeException When no candidate namespace resolves.
+	 */
+	private function documentAppService(string $relative): object {
+		foreach (FleetAppId::classCandidates(self::DOCUMENT_APP, $relative) as $fqcn) {
+			try {
+				return $this->container->get($fqcn);
+			} catch (Throwable $e) {
+				continue;
+			}
+		}
+
+		throw new RuntimeException('filinq service '.$relative.' is not available under any known namespace.');
+	}//end documentAppService()
 
 	/**
 	 * Template selection: config-UUID first, then namespace/category
@@ -478,7 +531,7 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 	 */
 	protected function configuredTemplateId(string $reportType): string {
 		try {
-			$appConfig = \OCP\Server::get(\OCP\IAppConfig::class);
+			$appConfig = $this->container->get(\OCP\IAppConfig::class);
 			return $appConfig->getValueString('shillinq', 'documents_template_' . $reportType, '');
 		} catch (Throwable $e) {
 			return '';
@@ -594,7 +647,7 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 	 */
 	protected function objectService(): ?object {
 		try {
-			return \OCP\Server::get('OCA\\OpenRegister\\Service\\ObjectService');
+			return $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
 		} catch (Throwable $e) {
 			return null;
 		}
@@ -608,7 +661,7 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 	 */
 	protected function register(): string {
 		try {
-			$appConfig = \OCP\Server::get(\OCP\IAppConfig::class);
+			$appConfig = $this->container->get(\OCP\IAppConfig::class);
 			$register = $appConfig->getValueString('shillinq', 'register', 'shillinq');
 			return $register === '' ? 'shillinq' : $register;
 		} catch (Throwable $e) {

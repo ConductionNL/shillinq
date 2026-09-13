@@ -56,11 +56,19 @@
         <env name="PHPUNIT_RUN" value="1"/>
         <env name="NEXTCLOUD_CONFIG_DIR" value="/srv/nextcloud/config"/>
         <!--
-            ~3970 tests exhaust PHP's stock 128M CLI limit around 89% through,
-            dying with a fatal "Allowed memory size exhausted". A fatal mid-run
-            never prints the summary line, so nothing reports how many tests
-            actually ran — the same silent-abort class this harness work exists
-            to eliminate. Keep this in sync with phpunit.xml.
+            Hard memory cap for every PHPUnit run. The CLI php.ini on developer
+            machines sets memory_limit=-1, so a runaway test has nothing to stop
+            it: on 2026-09-08 one openregister test recursed inside the DI
+            container and took 19 GB of RAM. The Unit suite of this app peaks at
+            181 MB without coverage; 1G leaves room for coverage runs and
+            still fails a leak within seconds. Raise it here, with the new
+            measurement, never with -d memory_limit on the command line.
+
+            The value predates the fleet cap: ~3960 tests exhausted PHP's stock
+            128M CLI limit at roughly 89% through, dying with a fatal "Allowed
+            memory size exhausted", and a fatal mid-run never prints the summary
+            line, so nothing reported how many tests actually ran. Keep this in
+            sync with phpunit.xml.
         -->
         <ini name="memory_limit" value="1G"/>
     </php>

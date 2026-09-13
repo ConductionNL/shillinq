@@ -52,6 +52,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
+use OCA\OpenRegister\Contract\RegisterSlugResolverInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\External\Bunq\BunqBankConnectorAdapterInterface;
 use OCA\Shillinq\Service\External\Cbs\CbsBestandenAdapterInterface;
@@ -71,6 +72,7 @@ use OCA\Shillinq\Service\External\Uwv\UwvLoonaangifteAdapterInterface;
 use OCA\Shillinq\Support\FleetAppId;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
@@ -84,6 +86,26 @@ use Throwable;
  * @spec openspec/changes/integration-config-to-openconnector/specs/integration-config-to-openconnector/spec.md
  */
 class ExternalAdaptersAdminController extends Controller {
+	/**
+	 * The canonical slug of the register Integriq's Source objects live in.
+	 *
+	 * The name asked ABOUT, not the name to read with. Integriq ships a
+	 * per-instance repair step that renames this register from `openconnector`,
+	 * so both names are live across the estate and neither is safe as a literal.
+	 * {@see RegisterSlugResolverInterface} answers which one this instance
+	 * carries; reading with the other returns zero rows rather than an error.
+	 *
+	 * @var string
+	 */
+	private const CONNECTOR_REGISTER = 'integriq';
+
+	/**
+	 * Reported when the connector register is on none of its known slugs here.
+	 *
+	 * @var string
+	 */
+	private const ERROR_REGISTER_ABSENT = 'connector-register-absent';
+
 	/**
 	 * Adapter-family registry. Each entry describes one of the 15
 	 * dormant external-API ports the app ships and the activation
@@ -454,12 +476,22 @@ class ExternalAdaptersAdminController extends Controller {
 	 * @param LoggerInterface $logger Structured logger.
 	 * @param IAppManager $appManager App manager, used to resolve the integriq
 	 *                                app id across the fleet rename.
+	 * @param RegisterSlugResolverInterface $slugResolver Which slug the connector register
+	 *                                                    answers to on THIS instance. Required,
+	 *                                                    not nullable: the only fallback a null
+	 *                                                    would leave is the literal it replaces.
+	 *                                                    Ten controllers in this app already
+	 *                                                    inject a published OpenRegister contract
+	 *                                                    the same way (ADR-083/ADR-084), and
+	 *                                                    appinfo/info.xml already records
+	 *                                                    OpenRegister as a hard dependency.
 	 */
 	public function __construct(
 		IRequest $request,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
 		private readonly IAppManager $appManager,
+		private readonly RegisterSlugResolverInterface $slugResolver,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -476,18 +508,96 @@ class ExternalAdaptersAdminController extends Controller {
 	 *    per REQ-ICO-003.
 	 *  - summary: { total: int, dormant: int, live: int } roll-up.
 	 *
+	 * Answers 404 when the connector register is on this instance under none of
+	 * the slugs it has answered to. That is the case this endpoint used to get
+	 * wrong, and it got it wrong silently: the read below went to a hardcoded
+	 * `openconnector` register, OpenRegister matched no rows, and all fifteen
+	 * families came back `declared-not-provisioned`. That status tells an admin
+	 * to go and provision a Source, which is advice they cannot follow, in a
+	 * register that is not there. A roster of fifteen rows of impossible advice
+	 * is worse than an explicit absence, so the absence is now the response.
+	 *
+	 * The register is resolved ONCE per request rather than once per family: one
+	 * absent register is one fact about this instance, not fifteen facts about
+	 * adapter families.
+	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/integration-config-to-openconnector/specs/integration-config-to-openconnector/spec.md
 	 */
 	#[AuthorizedAdminSetting(Application::class)]
 	public function index(): JSONResponse {
+		$deepLink = $this->sourcesDeepLink();
+
+		try {
+			$resolution = $this->slugResolver->resolve(canonical: self::CONNECTOR_REGISTER);
+		} catch (Throwable $e) {
+			// The resolver itself could not answer, which is not the same as
+			// answering "absent". Keep the existing fail-soft shape: the roster
+			// renders and every family reports `unknown`, never `provisioned`.
+			$this->logger->warning(
+				'Shillinq ExternalAdaptersAdminController: register-slug resolution threw',
+				['canonical' => self::CONNECTOR_REGISTER, 'exception' => $e->getMessage()]
+			);
+			return $this->roster(registerSlug: null, deepLink: $deepLink);
+		}
+
+		if ($resolution->isResolved() === false) {
+			$this->logger->warning(
+				'Shillinq ExternalAdaptersAdminController: the connector register is not on this instance '
+				. 'under any of its known slugs',
+				['canonical' => self::CONNECTOR_REGISTER, 'candidates' => $resolution->candidates]
+			);
+
+			return new JSONResponse(
+				[
+					'error' => self::ERROR_REGISTER_ABSENT,
+					'canonical' => self::CONNECTOR_REGISTER,
+					'candidates' => $resolution->candidates,
+					'deepLink' => $deepLink,
+					'message' => 'The connector register is not on this instance under any of the slugs it has '
+						. 'answered to (' . implode(', ', $resolution->candidates) . '). Every adapter family on '
+						. 'this page is provisioned as a Source inside that register, so nothing here can be '
+						. 'reported truthfully until the register exists. Install and enable Integriq, or run its '
+						. 'repair steps, then reload.',
+				],
+				Http::STATUS_NOT_FOUND
+			);
+		}
+
+		return $this->roster(registerSlug: $resolution->slug, deepLink: $deepLink);
+	}//end index()
+
+	/**
+	 * Build the adapter roster against a resolved register slug.
+	 *
+	 * @param string|null $registerSlug The slug the connector register answers to
+	 *                                  here, or null when the resolver could not
+	 *                                  say. Null makes every family report
+	 *                                  `unknown` and performs no read at all,
+	 *                                  because a read needs a slug and there is
+	 *                                  no slug worth guessing.
+	 * @param string      $deepLink     The resolved Integriq sources deep link.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/integration-config-to-openconnector/specs/integration-config-to-openconnector/spec.md
+	 */
+	private function roster(?string $registerSlug, string $deepLink): JSONResponse {
 		$entries = [];
 		$dormantCount = 0;
 
 		foreach (self::ADAPTERS as $entry) {
 			$dormant = $this->resolveDormancy(interfaceFqcn: $entry['interface']);
-			$provisioning = $this->resolveProvisioning(sourceSlug: $entry['sourceSlug']);
+			$provisioning = ['status' => 'unknown', 'deepLink' => $deepLink];
+			if ($registerSlug !== null) {
+				$provisioning = $this->resolveProvisioning(
+					sourceSlug: $entry['sourceSlug'],
+					registerSlug: $registerSlug,
+					deepLink: $deepLink
+				);
+			}
+
 			$entries[] = ($entry + ['dormant' => $dormant, 'provisioning' => $provisioning]);
 			if ($dormant === true) {
 				$dormantCount++;
@@ -506,7 +616,28 @@ class ExternalAdaptersAdminController extends Controller {
 				],
 			]
 		);
-	}//end index()
+	}//end roster()
+
+	/**
+	 * The Integriq sources deep link for this instance.
+	 *
+	 * A ROUTING key, and a separate question from the register slug. NC mounts
+	 * routes under the registered app id, whose authority is `IAppManager`; the
+	 * register slug's authority is the `openregister_registers` table. Two
+	 * different repair steps move them and either can run first, so neither
+	 * predicts the other and both have to be asked.
+	 *
+	 * @return string The path to Integriq's sources screen.
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) FleetAppId is a stateless resolver
+	 *  over a constant map, with no state to inject and nothing a test would
+	 *  substitute.
+	 *
+	 * @spec openspec/changes/integration-config-to-openconnector/specs/integration-config-to-openconnector/spec.md
+	 */
+	private function sourcesDeepLink(): string {
+		return (FleetAppId::appPath($this->appManager, 'integriq', 'sources') ?? '/apps/openconnector/sources');
+	}//end sourcesDeepLink()
 
 	/**
 	 * Resolve the bound adapter implementation and call `isDormant()`.
@@ -539,44 +670,44 @@ class ExternalAdaptersAdminController extends Controller {
 	}//end resolveDormancy()
 
 	/**
-	 * Resolve whether a family's declared openconnector source slug is
+	 * Resolve whether a family's declared Integriq source slug is
 	 * actually provisioned, per REQ-ICO-003.
 	 *
 	 * Read-only, existence-only: queries OpenRegister's generic object
-	 * API (via DI, the sanctioned ADR-022 abstraction — see
+	 * API (via DI, the sanctioned ADR-022 abstraction, see
 	 * openspec/changes/integration-config-to-openconnector/design.md §4)
-	 * for `register: 'openconnector', schema: 'source'` filtered by
+	 * for `schema: 'source'` in the connector register, filtered by
 	 * `slug`. Never reads or returns `configuration.headers`/credentials
-	 * from the resolved object — only its id.
+	 * from the resolved object, only its id.
+	 *
+	 * The register is passed IN rather than named here. This docblock used to
+	 * name the openconnector register as the one being read, and that sentence
+	 * stopped being true the day Integriq's repair step renamed the register:
+	 * the local dev instance carries `integriq` and no openconnector register
+	 * at all. It was never itself a pin, only a description of one, which is
+	 * why it went stale unnoticed for as long as the pin below it did. The slug
+	 * now comes from {@see RegisterSlugResolverInterface}, resolved once in
+	 * {@see index()}, and an unresolvable register never reaches this method.
 	 *
 	 * Defensive, mirroring {@see resolveDormancy()}'s shape exactly:
-	 * any Throwable (OpenRegister unavailable, openconnector not
+	 * any Throwable (OpenRegister unavailable, Integriq not
 	 * installed, DI resolution failure) is caught, logged at
 	 * `warning`, and resolves to `unknown` rather than failing the
 	 * whole `#index` response.
 	 *
-	 * @param string $sourceSlug The family's declared openconnector
-	 *                           source slug.
+	 * @param string $sourceSlug   The family's declared Integriq source slug.
+	 * @param string $registerSlug The slug the connector register answers to here,
+	 *                             already resolved by the caller.
+	 * @param string $deepLink     The resolved Integriq sources deep link.
 	 *
 	 * @return array{status:string,openconnectorObjectId?:string,deepLink:string}
 	 */
-	private function resolveProvisioning(string $sourceSlug): array {
-		// The deep link is a ROUTING KEY: NC mounts routes under the registered
-		// app id, which is `integriq` on development and `openconnector` on
-		// beta/main. Resolve it rather than hardcoding either, or half the fleet
-		// gets a 404 from this link.
-		//
-		// NOTE: the register slug passed to setRegister() below stays
-		// 'openconnector' deliberately. OpenRegister register slugs are frozen
-		// across the rename — they are literals already written into stored
-		// data, so changing one orphans the records it names.
-		$deepLink = (FleetAppId::appPath($this->appManager, 'integriq', 'sources') ?? '/apps/openconnector/sources');
-
+	private function resolveProvisioning(string $sourceSlug, string $registerSlug, string $deepLink): array {
 		try {
 			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
 
 			$records = $objectService
-				->setRegister('openconnector')
+				->setRegister($registerSlug)
 				->setSchema('source')
 				->findAll(['filters' => ['slug' => $sourceSlug], 'limit' => 1]);
 

@@ -131,3 +131,27 @@ parameters:
         # cannot narrow the instanceof. The call is valid at runtime — it is the
         # documented veto contract MagicMapper turns into a HookStoppedException.
         - '#Call to an undefined method OCP\\EventDispatcher\\Event::setErrors\(\)#'
+        # Cross-app event ACCESSORS, same shape as setErrors() above and now the
+        # common case rather than the exception.
+        #
+        # The fleet rename moved these event classes' namespaces (filinq was
+        # docudesk, decidiq was decidesk), so a listener can no longer name the
+        # concrete class in a type hint without pinning itself to one release of
+        # the other app. The listeners therefore take the OCP base Event and read
+        # the payload through its accessors at the boundary — see
+        # ExtractionCompletedListener::readPayload(), whose docblock states the
+        # contract as the accessor names themselves.
+        #
+        # A per-method entry like setErrors() does not scale here: one commit
+        # introduced 19 errors across 14 distinct getters. This matches the
+        # family instead, and is safe to do because OCP\EventDispatcher\Event
+        # declares NO getters at all — it has isPropagationStopped() and
+        # stopPropagation() and nothing else — so every `get*` call reaching this
+        # rule is by definition a cross-app accessor, never a typo against a real
+        # method.
+        #
+        # ⚠️ The listeners carry `@phpstan-ignore-next-line` above readPayload()
+        # already, and it does nothing: the annotation suppresses the NEXT LINE,
+        # which is the function signature, not the accessor calls several lines
+        # below inside the returned array.
+        - '#Call to an undefined method OCP\\EventDispatcher\\Event::get[A-Za-z]+\(\)#'

@@ -167,6 +167,26 @@ test.describe('ADR-111 demo data', () => {
 	test('re-installing is safe, because the step promises it is', async ({
 		page,
 	}) => {
+		// 🔴 A SECOND IMPORT COSTS WHAT THE FIRST ONE COST, BY DESIGN. This test
+		// was timing out at the 60s cap, and it is not hanging: it re-runs the
+		// same real import the test above runs, and that one already needs the
+		// allowance this one was never given.
+		//
+		// `DemoDataService::install()` passes `force: true` deliberately, so
+		// OpenRegister's version gate cannot skip the second pass — an operator
+		// told "installed" on an instance where nothing was written has been
+		// lied to by a version compare. Re-installing therefore rewrites all
+		// 1494 objects in `shillinq_mock_register.json` rather than short-
+		// circuiting, and takes the same ~70s.
+		//
+		// Evidence, run 34501399869: "installing the demo data reports HOW MUCH
+		// landed" carries `test.slow()` and PASSED in 1.2m; this test does the
+		// same work without it and died on "Test timeout of 60000ms exceeded".
+		// The per-test cap in `tests/e2e/playwright.config.ts` is measured and
+		// says of itself that it is never raised, so the fix is the per-test
+		// allowance its neighbour already uses, not a wider cap.
+		test.slow()
+
 		// The step body tells the operator it is "safe to run more than once".
 		// That sentence is a contract; this asserts the server keeps it rather
 		// than erroring or reporting failure on a second pass.

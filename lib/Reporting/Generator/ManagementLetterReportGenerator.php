@@ -218,10 +218,10 @@ final class ManagementLetterReportGenerator extends AbstractDocumentReportGenera
 	}//end build()
 
 	/**
-	 * Run the compliance audit, resolving RuleAuditService from the server
-	 * container (generators take no constructor args). Fail-soft: an empty audit
-	 * shape is returned when the service is unavailable, so the letter still
-	 * renders with zeroed figures and a note.
+	 * Run the compliance audit, resolving RuleAuditService through the container
+	 * the base class is handed. Fail-soft: an empty audit shape is returned when
+	 * the service is unavailable, so the letter still renders with zeroed
+	 * figures and a note.
 	 *
 	 * @param array<string, mixed> $context `{ administrationId, period, ... }`.
 	 *
@@ -229,7 +229,7 @@ final class ManagementLetterReportGenerator extends AbstractDocumentReportGenera
 	 */
 	private function runAudit(array $context): array {
 		try {
-			$service = \OCP\Server::get(RuleAuditService::class);
+			$service = $this->container->get(RuleAuditService::class);
 			if ($service instanceof RuleAuditService) {
 				$auditContext = [];
 				$administrationId = $this->str($context, 'administrationId');

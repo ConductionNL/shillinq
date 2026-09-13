@@ -85,7 +85,7 @@ message rather than throwing.
 
 #### Scenario: Operator forces a configuration re-import
 
-@e2e exclude REST API contract: covered by PHPUnit SettingsControllerTest::testLoad — not browser-observable
+@e2e exclude REST API contract: covered by PHPUnit SettingsControllerTest::testLoadReturnsConfigurationResult — not browser-observable
 
 - **GIVEN** OpenRegister is installed and `shillinq_register.json` is present
 - **WHEN** the operator triggers the `load` action
@@ -109,7 +109,7 @@ suitable for liveness probes and uptime monitors.
 
 #### Scenario: Monitor probes health
 
-@e2e exclude REST API liveness probe: HTTP-level check only, no DOM interaction — covered by PHPUnit HealthControllerTest
+@e2e exclude REST API liveness probe: HTTP-level check only, no DOM interaction. The endpoint is no longer served by this app: appinfo/routes.php returns \OCA\OpenRegister\AppHost\Routes::standard(), and the AppHost adoption deleted the app-local health controller and its PHPUnit class. The contract now belongs to OpenRegister's AppHost, and NOTHING in this repository tests it
 
 - **GIVEN** the app is running
 - **WHEN** any client calls the health endpoint
@@ -125,7 +125,7 @@ shape); the endpoint MUST remain reachable only to authorized admins.
 
 #### Scenario: Admin reads metrics
 
-@e2e exclude REST API contract: covered by PHPUnit MetricsControllerTest — not browser-observable
+@e2e exclude REST API contract, not browser-observable. Same as the health probe above: the AppHost adoption removed the app-local metrics controller and its PHPUnit class, and the endpoint is served by \OCA\OpenRegister\AppHost\Routes::standard(). NOTHING in this repository tests it
 
 - **GIVEN** an authorized admin
 - **WHEN** the admin calls the metrics endpoint

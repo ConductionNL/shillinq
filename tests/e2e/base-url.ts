@@ -35,6 +35,8 @@
  * running if a future workflow revision renames its variable again.
  */
 
+import { assertInstancePermitted } from './shared-instance.ts'
+
 export const BASE_URL_ENV_NAMES = [
 	'PLAYWRIGHT_BASE_URL',
 	'BASE_URL',
@@ -50,12 +52,18 @@ const CI_DEFAULT_BASE_URL = 'http://localhost:8080'
 
 /**
  * Resolve the base URL, or throw.
+ *
+ * The resolved target passes through `assertInstancePermitted`, so a run that
+ * lands on the shared development instance without naming it in
+ * `SHILLINQ_E2E_ALLOW_SHARED_INSTANCE` (or the fleet-wide
+ * `E2E_ALLOW_SHARED_INSTANCE`) stops here with an explanation. See
+ * `tests/e2e/shared-instance.ts`.
  */
 export function resolveBaseURL(): string {
 	for (const name of BASE_URL_ENV_NAMES) {
 		const value = process.env[name]
 		if (value && value.trim() !== '') {
-			return value.trim().replace(/\/+$/, '')
+			return assertInstancePermitted(value.trim().replace(/\/+$/, ''))
 		}
 	}
 

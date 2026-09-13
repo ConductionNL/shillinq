@@ -41,6 +41,7 @@ namespace OCA\Shillinq\Service\Booking;
 use DateTimeZone;
 use OCA\Shillinq\Service\IcsService;
 use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Support\FleetAppId;
 use OCA\Shillinq\Util\TokenValidator;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IURLGenerator;
@@ -470,12 +471,13 @@ class ConfirmationTokenService {
 		];
 
 		try {
-			if ($this->container->has('OCA\\OpenConnector\\Service\\NotificationDispatcher') === true) {
-				$dispatcher = $this->container->get('OCA\\OpenConnector\\Service\\NotificationDispatcher');
-				if (method_exists($dispatcher, 'dispatch') === true) {
-					$dispatcher->dispatch($payload);
-					return true;
-				}
+			// Resolved across every namespace integriq has shipped under. The
+			// old name alone made has() false on any current instance, so the
+			// appointment confirmation was never dispatched — only logged.
+			$dispatcher = FleetAppId::getService($this->container, 'integriq', 'Service\\NotificationDispatcher');
+			if ($dispatcher !== null && method_exists($dispatcher, 'dispatch') === true) {
+				$dispatcher->dispatch($payload);
+				return true;
 			}
 		} catch (Throwable $e) {
 			$this->logger->error(

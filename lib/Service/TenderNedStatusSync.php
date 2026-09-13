@@ -50,6 +50,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Support\FleetAppId;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -71,7 +72,7 @@ class TenderNedStatusSync {
 	 *
 	 * @var string
 	 */
-	private const OPENCONNECTOR_GATEWAY = 'OCA\OpenConnector\Service\OutboundIntegrationGateway';
+	private const INTEGRIQ_GATEWAY = 'Service\OutboundIntegrationGateway';
 
 	/**
 	 * Status mapped to the TenderNed dossier on a successful sync.
@@ -292,11 +293,10 @@ class TenderNedStatusSync {
 	 * @return object|null Gateway or null when openconnector is absent.
 	 */
 	private function resolveGateway(): ?object {
-		try {
-			return $this->container->get(self::OPENCONNECTOR_GATEWAY);
-		} catch (Throwable $e) {
-			return null;
-		}
+		// Resolved across every namespace integriq has shipped under. Pinned to
+		// the old name this returned null on every current instance, and a null
+		// gateway here reads as "integration not configured".
+		return FleetAppId::getService($this->container, 'integriq', self::INTEGRIQ_GATEWAY);
 
 	}//end resolveGateway()
 

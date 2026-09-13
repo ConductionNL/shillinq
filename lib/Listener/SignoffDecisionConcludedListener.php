@@ -45,6 +45,7 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\Signing\SignoffDecisionService;
+use OCA\Shillinq\Support\FleetAppId;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -112,30 +113,29 @@ final class SignoffDecisionConcludedListener implements IEventListener {
 	 * @spec openspec/changes/shillinq-delegation-via-events/specs/shillinq-delegate-signing/spec.md
 	 */
 	public function handle(Event $event): void {
-		// Only react to the decidesk DecisionConcludedEvent. Guarded by
-		// class_exists so the listener is inert when decidesk is absent.
-		if (class_exists(\OCA\Decidesk\Event\DecisionConcludedEvent::class) === false) {
-			return;
-		}
-
-		if (($event instanceof \OCA\Decidesk\Event\DecisionConcludedEvent) === false) {
+		// Match against EVERY namespace decidiq has shipped this event under.
+		// Pinned to \OCA\Decidesk alone, this listener stopped receiving
+		// anything the moment decidiq renamed.
+		if (FleetAppId::isInstanceOf($event, 'decidiq', 'Event\DecisionConcludedEvent') === false) {
 			return;
 		}
 
 		try {
+			$payload = $this->readPayload(event: $event);
+
 			// Filter to shillinq-originated decisions only.
-			if ($event->getSourceApp() !== 'shillinq') {
+			if ($payload['sourceApp'] !== 'shillinq') {
 				return;
 			}
 
-			$outcome = self::STATUS_MAP[$event->getStatus()] ?? null;
+			$outcome = self::STATUS_MAP[$payload['status']] ?? null;
 			if ($outcome === null) {
 				// Withdrawn / pending / unknown — no terminal projection.
 				return;
 			}
 
-			$decisionRef = (string)$event->getDecisionId();
-			$subjectId = $this->resolveSubjectId(event: $event);
+			$decisionRef = $payload['decisionId'];
+			$subjectId = $this->resolveSubjectId(payload: $payload);
 			if ($subjectId === '') {
 				$this->logger->info(
 					'SignoffDecisionConcludedListener: no subject id on concluded decision (skipping)',
@@ -144,7 +144,7 @@ final class SignoffDecisionConcludedListener implements IEventListener {
 				return;
 			}
 
-			$resolved = $this->resolveFinanceObject(event: $event, subjectId: $subjectId);
+			$resolved = $this->resolveFinanceObject(payload: $payload, subjectId: $subjectId);
 			if ($resolved === null) {
 				$this->logger->info(
 					'SignoffDecisionConcludedListener: no matching finance object (skipping)',
@@ -204,20 +204,48 @@ final class SignoffDecisionConcludedListener implements IEventListener {
 	}//end handle()
 
 	/**
+	 * Read the cross-app event into a shape this app owns.
+	 *
+	 * The event class lives in decidiq and its namespace has moved once
+	 * already, so naming it in a type hint here would pin this listener to one
+	 * decidiq release. Reading it into a plain array at the boundary keeps every
+	 * method below fully typed, and gathers the accessor names — the real
+	 * cross-app contract — into one readable place.
+	 *
+	 * @param Event $event The dispatched decidiq DecisionConcludedEvent.
+	 *
+	 * @return array{sourceApp: string, status: string, decisionId: string,
+	 *     externalReference: string, subjectId: string,
+	 *     subjectSchema: string} The normalised payload.
+	 *
+	 * @psalm-suppress UndefinedMethod
+	 * @phpstan-ignore-next-line
+	 */
+	private function readPayload(Event $event): array {
+		return [
+			'sourceApp'         => (string)$event->getSourceApp(),
+			'status'            => (string)$event->getStatus(),
+			'decisionId'        => (string)$event->getDecisionId(),
+			'externalReference' => (string)$event->getExternalReference(),
+			'subjectId'         => (string)($event->getSubjectId() ?? ''),
+			'subjectSchema'     => (string)($event->getSubjectSchema() ?? ''),
+		];
+	}//end readPayload()
+
+	/**
 	 * Resolve the subject id from the concluded event — prefer the
 	 * externalReference we sent on the request, fall back to subjectId.
 	 *
-	 * @param \OCA\Decidesk\Event\DecisionConcludedEvent $event The concluded event.
+	 * @param array{externalReference: string, subjectId: string} $payload The normalised event payload.
 	 *
 	 * @return string The subject id, or '' when none.
 	 */
-	private function resolveSubjectId(\OCA\Decidesk\Event\DecisionConcludedEvent $event): string {
-		$external = (string)$event->getExternalReference();
-		if ($external !== '') {
-			return $external;
+	private function resolveSubjectId(array $payload): string {
+		if ($payload['externalReference'] !== '') {
+			return $payload['externalReference'];
 		}
 
-		return (string)($event->getSubjectId() ?? '');
+		return $payload['subjectId'];
 	}//end resolveSubjectId()
 
 	/**
@@ -226,13 +254,13 @@ final class SignoffDecisionConcludedListener implements IEventListener {
 	 * Uses the event's subjectSchema when present; otherwise scans the three
 	 * known governance-decision subject schemas for the id.
 	 *
-	 * @param \OCA\Decidesk\Event\DecisionConcludedEvent $event The concluded event.
+	 * @param array{subjectSchema: string} $payload The normalised event payload.
 	 * @param string $subjectId The finance object id.
 	 *
 	 * @return array{0:string,1:array<string,mixed>}|null [schema, object] or null.
 	 */
-	private function resolveFinanceObject(\OCA\Decidesk\Event\DecisionConcludedEvent $event, string $subjectId): ?array {
-		$hintedSchema = (string)($event->getSubjectSchema() ?? '');
+	private function resolveFinanceObject(array $payload, string $subjectId): ?array {
+		$hintedSchema = $payload['subjectSchema'];
 
 		$schemas = self::SUBJECT_SCHEMAS;
 		if ($hintedSchema !== '') {

@@ -4,8 +4,8 @@
  * Document SigningConcludedEvent Listener.
  *
  * Change shillinq-signing-via-events (REQ-SIGN-001/006) — consumes the terminal
- * document-signing outcome docudesk publishes via
- * {@see \OCA\DocuDesk\Event\SigningConcludedEvent}. Filters to
+ * document-signing outcome filinq publishes via its SigningConcludedEvent,
+ * matched under every namespace filinq has shipped it under. Filters to
  * `getSourceApp() === 'shillinq'`, resolves the originating finance object
  * (ACMReport / AnnualReport / ManagementLetter) by the externalReference /
  * subjectId we sent on the matching DocumentSigningRequestedEvent, and projects
@@ -46,6 +46,7 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\Signing\SigningDelegationService;
+use OCA\Shillinq\Support\FleetAppId;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -121,30 +122,30 @@ final class SigningConcludedListener implements IEventListener {
 	 * @spec openspec/changes/shillinq-signing-via-events/specs/shillinq-delegate-signing/spec.md
 	 */
 	public function handle(Event $event): void {
-		// Only react to the docudesk SigningConcludedEvent. Guarded by
-		// class_exists so the listener is inert when docudesk is absent.
-		if (class_exists(\OCA\DocuDesk\Event\SigningConcludedEvent::class) === false) {
-			return;
-		}
-
-		if (($event instanceof \OCA\DocuDesk\Event\SigningConcludedEvent) === false) {
+		// Match against EVERY namespace filinq has shipped this event under.
+		// Pinned to \OCA\DocuDesk alone, this listener stopped receiving
+		// anything the moment filinq renamed — and a signed document that never
+		// comes back looks exactly like a document nobody has signed yet.
+		if (FleetAppId::isInstanceOf($event, 'filinq', 'Event\SigningConcludedEvent') === false) {
 			return;
 		}
 
 		try {
+			$payload = $this->readPayload(event: $event);
+
 			// Filter to shillinq-originated signing requests only.
-			if ($event->getSourceApp() !== 'shillinq') {
+			if ($payload['sourceApp'] !== 'shillinq') {
 				return;
 			}
 
-			$outcome = self::STATUS_MAP[$event->getStatus()] ?? null;
+			$outcome = self::STATUS_MAP[$payload['status']] ?? null;
 			if ($outcome === null) {
 				// Unknown / non-terminal status — no projection.
 				return;
 			}
 
-			$signingRequestRef = (string)$event->getSigningRequestId();
-			$subjectId = $this->resolveSubjectId(event: $event);
+			$signingRequestRef = $payload['signingRequestId'];
+			$subjectId = $this->resolveSubjectId(payload: $payload);
 			if ($subjectId === '') {
 				$this->logger->info(
 					'SigningConcludedListener: no subject id on concluded signing request (skipping)',
@@ -153,7 +154,7 @@ final class SigningConcludedListener implements IEventListener {
 				return;
 			}
 
-			$resolved = $this->resolveFinanceObject(event: $event, subjectId: $subjectId);
+			$resolved = $this->resolveFinanceObject(payload: $payload, subjectId: $subjectId);
 			if ($resolved === null) {
 				$this->logger->info(
 					'SigningConcludedListener: no matching finance object (skipping)',
@@ -164,7 +165,7 @@ final class SigningConcludedListener implements IEventListener {
 
 			[$schema, $financeObject] = $resolved;
 
-			$signedDocumentRef = (string)$event->getSignedDocumentRef();
+			$signedDocumentRef = $payload['signedDocumentRef'];
 
 			// Capture the accounting-consequence mutation so it can be persisted
 			// alongside the mirror. onSigningCallback owns the idempotency guard
@@ -228,20 +229,49 @@ final class SigningConcludedListener implements IEventListener {
 	}//end handle()
 
 	/**
+	 * Read the cross-app event into a shape this app owns.
+	 *
+	 * The event class lives in filinq and its namespace has moved once already,
+	 * so naming it in a type hint here would pin this listener to one filinq
+	 * release. Reading it into a plain array at the boundary keeps every method
+	 * below fully typed, and gathers the accessor names — the real cross-app
+	 * contract — into one readable place.
+	 *
+	 * @param Event $event The dispatched filinq SigningConcludedEvent.
+	 *
+	 * @return array{sourceApp: string, status: string, signingRequestId: string,
+	 *     signedDocumentRef: string, externalReference: string,
+	 *     subjectId: string, subjectSchema: string} The normalised payload.
+	 *
+	 * @psalm-suppress UndefinedMethod
+	 * @phpstan-ignore-next-line
+	 */
+	private function readPayload(Event $event): array {
+		return [
+			'sourceApp'         => (string)$event->getSourceApp(),
+			'status'            => (string)$event->getStatus(),
+			'signingRequestId'  => (string)$event->getSigningRequestId(),
+			'signedDocumentRef' => (string)$event->getSignedDocumentRef(),
+			'externalReference' => (string)$event->getExternalReference(),
+			'subjectId'         => (string)($event->getSubjectId() ?? ''),
+			'subjectSchema'     => (string)($event->getSubjectSchema() ?? ''),
+		];
+	}//end readPayload()
+
+	/**
 	 * Resolve the subject id from the concluded event — prefer the
 	 * externalReference we sent on the request, fall back to subjectId.
 	 *
-	 * @param \OCA\DocuDesk\Event\SigningConcludedEvent $event The concluded event.
+	 * @param array{externalReference: string, subjectId: string} $payload The normalised event payload.
 	 *
 	 * @return string The subject id, or '' when none.
 	 */
-	private function resolveSubjectId(\OCA\DocuDesk\Event\SigningConcludedEvent $event): string {
-		$external = (string)$event->getExternalReference();
-		if ($external !== '') {
-			return $external;
+	private function resolveSubjectId(array $payload): string {
+		if ($payload['externalReference'] !== '') {
+			return $payload['externalReference'];
 		}
 
-		return (string)($event->getSubjectId() ?? '');
+		return $payload['subjectId'];
 	}//end resolveSubjectId()
 
 	/**
@@ -250,13 +280,13 @@ final class SigningConcludedListener implements IEventListener {
 	 * Uses the event's subjectSchema when present; otherwise scans the known
 	 * document-signing subject schemas for the id.
 	 *
-	 * @param \OCA\DocuDesk\Event\SigningConcludedEvent $event The concluded event.
+	 * @param array{subjectSchema: string} $payload The normalised event payload.
 	 * @param string $subjectId The finance object id.
 	 *
 	 * @return array{0:string,1:array<string,mixed>}|null [schema, object] or null.
 	 */
-	private function resolveFinanceObject(\OCA\DocuDesk\Event\SigningConcludedEvent $event, string $subjectId): ?array {
-		$hintedSchema = (string)($event->getSubjectSchema() ?? '');
+	private function resolveFinanceObject(array $payload, string $subjectId): ?array {
+		$hintedSchema = $payload['subjectSchema'];
 
 		$schemas = self::SUBJECT_SCHEMAS;
 		if ($hintedSchema !== '') {

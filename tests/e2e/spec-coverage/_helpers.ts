@@ -172,6 +172,62 @@ export async function gotoPage(page: Page, route: string): Promise<void> {
 }
 
 /**
+ * A one-line snapshot of the page's own readiness at the moment a surface
+ * assertion failed, appended to that failure's message.
+ *
+ * The old message was precise about counts and silent about state, so a zero
+ * read identically whether the page was blank, erroring, or simply still
+ * fetching. Distinguishing those cost a trace download and a clock alignment;
+ * this line makes the next occurrence self-diagnosing. In particular
+ * `slowestXhr` names the request that was still in flight, which is exactly
+ * what the audit-trail investigation had to reconstruct by hand.
+ *
+ * Never throws: a probe that can break a test is worse than no probe.
+ */
+async function describeReadiness(page: Page): Promise<string> {
+	return await page
+		.evaluate(() => {
+			const host =
+				document.querySelector('#app-content-vue')
+				?? document.querySelector('main')
+			const busy = document.querySelectorAll(
+				'#app-content-vue .icon-loading, #app-content-vue .loading, '
+					+ '#app-content-vue [aria-busy="true"], #app-content-vue [role="progressbar"]',
+			).length
+			const xhr = performance
+				.getEntriesByType('resource')
+				.filter((r) =>
+					['xmlhttprequest', 'fetch'].includes(
+						(r as PerformanceResourceTiming).initiatorType,
+					),
+				)
+			const slowest = xhr.slice().sort((a, b) => b.duration - a.duration)[0]
+			const lastEnd = xhr.reduce(
+				(m, r) => Math.max(m, r.startTime + r.duration),
+				0,
+			)
+			return [
+				`readyState=${document.readyState}`,
+				`host=${host ? 'present' : 'MISSING'}`,
+				`hostText=${(host?.textContent ?? '').trim().length}chars`,
+				`busyIndicators=${busy}`,
+				`xhrDone=${xhr.length}`,
+				`slowestXhr=${
+					slowest
+						? `${Math.round(slowest.duration)}ms ${slowest.name.split('/').pop()?.slice(0, 60)}`
+						: 'none'
+				}`,
+				`lastXhrEndedAt=${Math.round(lastEnd)}ms`,
+				`now=${Math.round(performance.now())}ms`,
+			].join(' ')
+		})
+		.catch(
+			(e: unknown) =>
+				`readiness probe unavailable (${String(e).slice(0, 80)})`,
+		)
+}
+
+/**
  * Assert the genuine, data-independent index surface for a manifest page:
  *  - the page title text is visible, AND
  *  - at least one recognised index surface rendered (table | empty-state |
@@ -200,39 +256,82 @@ export async function assertIndexSurface(
 	//    behavioural proof the page mounted (vs a blank shell or an error
 	//    page): a data table, an empty-content block, a list, or the
 	//    primary-action toolbar (Add / Actions / Export / Reconcile …).
-	const tables = await host
-		.locator('table:visible')
-		.count()
-		.catch(() => 0)
+	const tablesLoc = host.locator('table:visible')
 	// Scoped to the page too: a `.empty-content` block belonging to a
 	// Nextcloud dialog, a toast, or CnAppRoot's "OpenRegister required"
 	// dependency state is not evidence that THIS page's index rendered.
-	const empty = await host
-		.locator('.empty-content, .emptycontent, [class*="empty-content" i]')
-		.count()
-		.catch(() => 0)
-	const lists = await host
-		.locator(
-			'ul[class*="list" i] li, [class*="app-content-list" i] [class*="item" i], [role="row"]',
-		)
-		.count()
-		.catch(() => 0)
+	const emptyLoc = host.locator(
+		'.empty-content, .emptycontent, [class*="empty-content" i]',
+	)
+	const listsLoc = host.locator(
+		'ul[class*="list" i] li, [class*="app-content-list" i] [class*="item" i], [role="row"]',
+	)
 	// Page-specific action affordances. The global "Settings" button is
 	// deliberately excluded — it renders on every shillinq page and is not
 	// proof that this page's index surface mounted.
-	const actionBtns = await host
-		.locator(
-			'button:has-text("Add"), button:has-text("Nieuw"), button:has-text("New"), button:has-text("Toevoegen"), '
-				+ 'button:has-text("Actions"), button:has-text("Acties"), button:has-text("Export"), button:has-text("Reconcile"), '
-				+ 'button:has-text("Filter"), button:has-text("Post"), button:has-text("Lock"), button:has-text("Vastleggen")',
-		)
-		.count()
-		.catch(() => 0)
+	const actionsLoc = host.locator(
+		'button:has-text("Add"), button:has-text("Nieuw"), button:has-text("New"), button:has-text("Toevoegen"), '
+			+ 'button:has-text("Actions"), button:has-text("Acties"), button:has-text("Export"), button:has-text("Reconcile"), '
+			+ 'button:has-text("Filter"), button:has-text("Post"), button:has-text("Lock"), button:has-text("Vastleggen")',
+	)
+
+	// ⚠️ WAIT FOR THE SURFACE BEFORE COUNTING IT.
+	// `gotoPage()` gives the page a flat `waitForTimeout(900)` and nothing
+	// else, and `.count()` is a ONE-SHOT read: unlike a web-first assertion it
+	// does not retry, so a surface that mounts 1 ms late counts as zero and
+	// the test fails with no recovery. That is not a hypothesis — it is the
+	// measured cause of the `/bookkeeping/audit-trail` failure in run
+	// 34532776354 (334 passed, 1 failed), read off that run's own trace:
+	//
+	//     t=5.789s  GET /apps/openregister/api/audit-trails?objectTypes=… fired
+	//     t=7.772s  `table:visible` counted  → 0   ← the assertion looked HERE
+	//     t=8.345s  that request returned 200 after 2556 ms
+	//     t=8.359s  expect(0).toBeGreaterThan(0) threw
+	//     t≈8.9s    failure screenshot: the table, fully painted, 12 rows
+	//
+	// The page was never broken. The count simply ran 573 ms too early, and
+	// the screenshot attached to the failure proved it by showing the very
+	// surface the message said was absent. Audit Trail is the suite's slowest
+	// index because it queries audit trails across ~20 object types in a
+	// single request, so it is the page that crosses the 900 ms line first —
+	// which is also why this failure is intermittent rather than permanent.
+	//
+	// So: wait, bounded, for ANY of the four surfaces to attach, then count.
+	// This is not a blanket timeout bump. It costs a passing page nothing
+	// (the wait resolves the moment a surface is there, which for every other
+	// page in this suite is immediately), and it is spent only on a page that
+	// was going to fail anyway. The budget is set from the measurement above:
+	// 10 s is ~4x the slowest observed index fetch (2556 ms) and still well
+	// inside the 60 s per-test timeout.
+	const SURFACE_TIMEOUT = 10_000
+	await tablesLoc
+		.or(emptyLoc)
+		.or(listsLoc)
+		.or(actionsLoc)
+		.first()
+		.waitFor({ state: 'attached', timeout: SURFACE_TIMEOUT })
+		.catch(() => {
+			// Deliberately swallowed: the counted assertion below is the
+			// verdict, and it reports which surfaces were missing plus the
+			// page's readiness state. Throwing here would replace that
+			// diagnosis with a bare locator timeout.
+		})
+
+	const tables = await tablesLoc.count().catch(() => 0)
+	const empty = await emptyLoc.count().catch(() => 0)
+	const lists = await listsLoc.count().catch(() => 0)
+	const actionBtns = await actionsLoc.count().catch(() => 0)
 	const surfaces = tables + empty + lists + actionBtns
+
+	// Only probe readiness when we are about to fail: the probe is an extra
+	// round trip and it is worthless on a green run.
+	const readiness = surfaces > 0 ? '' : ` | ${await describeReadiness(page)}`
 
 	expect(
 		surfaces,
-		`page "${title}" should render an index surface (tables=${tables} empty=${empty} lists=${lists} actions=${actionBtns})`,
+		`page "${title}" should render an index surface `
+			+ `(tables=${tables} empty=${empty} lists=${lists} actions=${actionBtns}) `
+			+ `after waiting ${SURFACE_TIMEOUT} ms${readiness}`,
 	).toBeGreaterThan(0)
 
 	// 2) Title text. CnIndexPage prints the page title as plain text (not an
