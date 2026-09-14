@@ -37,9 +37,11 @@ and tests keep their meaning (contract D10 step 1). `order` runs 10 to 150.
 - **Not called: `available: false`.** The message says a log-only adapter is
   bound, nothing calls it, and nothing reaches the outside party. That is the
   same reading dossiq gave its KvK row.
-- **Called: no `available`, no `adapter`.** The row starts at contract rule 6
-  with an `unconfiguredMessage` saying shillinq reports on it once a day. The
-  first report moves it to Simulated (rule 4).
+- **Called: `reportedOnly: true`, no `available`, no `adapter`.** Only
+  shillinq can see which class DI bound, so integriq skips rules 3 and 5 for
+  the row (contract D4, hydra#673). The row starts at contract rule 6 with an
+  `unconfiguredMessage` saying shillinq reports on it once a day. The first
+  report moves it to Simulated (rule 4a).
 - **`settingsUrl`** only for `treasury-rates`. It opens the FX rates admin
   page, the one screen that shows that adapter's state. No other family has a
   settings screen, so no other row links anywhere.
@@ -89,7 +91,9 @@ page request into the job.
   only pushes a route inside shillinq.
 - Shillinq passes no formatters to `CnAppRoot` today. `connectionStatus` and
   `connectionSettingsLabel` live in `src/utils/connectionFormatters.js` and
-  reach the page through a new `formatters` prop. The handler joins the
+  reach the page through a new `formatters` prop. `connectionStatus` names all
+  six statuses, `limited` included. The copy stays until a nextcloud-vue
+  release with the built-ins from nextcloud-vue#1163 is pinned. The handler joins the
   `customComponents` map, which is where `CnIndexPage` resolves a named
   handler.
 
@@ -117,15 +121,13 @@ Kept:
 
 ## D6. Where the contract is loose
 
-1. **Simulated needs an app-config key.** Rule 3 only fires on an empty
-   `adapter.configKey`. Shillinq selects adapters by DI binding, so the three
-   called rows reach Simulated through a report (rule 4). A probe newer than
-   that report outranks it. If an admin links a source to `mollie`, the row
-   can read Configured while the log-only adapter still answers. The contract
-   says simulated beats a passing probe, and it cannot keep that promise here.
-   Proposed amendment: let a `simulated` report outrank a probe, as rule 3
-   does, or add a declaration field that says the app reports its adapter
-   binding.
+1. **Simulated by DI binding. Closed by hydra#673.** Shillinq selects adapters
+   by DI binding, not by an app-config key, so the three called rows reach
+   Simulated only through a report. Before the amendment a newer probe
+   outranked that report, and a source linked to `mollie` could make the row
+   read Configured while the log-only adapter still answered. Rule 4a now lets
+   a `simulated` report stand against a newer probe, and `reportedOnly: true`
+   on the three rows tells integriq that shillinq is the only judge.
 2. **Available false outranks everything.** If a downstream app binds a real
    Digipoort adapter, the row stays Not available until shillinq's
    declaration changes. That matches what shillinq ships.

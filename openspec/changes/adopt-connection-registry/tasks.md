@@ -28,3 +28,10 @@
   specs. Not run here: it needs integriq's side installed.
 - [ ] 5.1 After integriq ships on the CI instance: run the e2e spec, then
   archive this change.
+- [x] 6.1 Contract amendments (hydra#673): `reportedOnly: true` on `mollie`,
+  `treasury-rates` and `deposit-payment`; the vendored
+  `connections.schema.json` replaced by the amended one; `limited` in
+  `connectionStatus`, with `Limited` and `Beperkt` in `l10n`.
+  - `ConnectionsDeclarationTest`: reported families are `reportedOnly`, no
+    other family is, and a non-boolean `reportedOnly` fails the schema.
+  - `tests/vitest/externalConnectionsPage.spec.js`: six labels.

@@ -7,7 +7,11 @@
 // the ones hydra's connection-registry contract gives them (design D8), so
 // every app adopting the registry renders a status the same way. Each adopting
 // app carries this local copy until @conduction/nextcloud-vue ships them as
-// built-ins.
+// built-ins. nextcloud-vue#1163 added them after 2.53.1, the latest release,
+// and shillinq pins ^2.39.0, so the copy stays.
+//
+// `limited` came with hydra#673: the connection works in part, such as a
+// preview API that serves some calls and refuses others.
 
 import { translate as t } from '@nextcloud/l10n'
 
@@ -18,6 +22,7 @@ import { translate as t } from '@nextcloud/l10n'
  */
 export const CONNECTION_STATUS_LABELS = {
 	configured: 'Configured',
+	limited: 'Limited',
 	unconfigured: 'Not configured',
 	simulated: 'Simulated',
 	unavailable: 'Not available',
@@ -31,7 +36,7 @@ export const CONNECTION_STATUS_LABELS = {
  * cannot name is still a status the admin should see.
  *
  * @param {string} value The `status` enum value.
- * @return {string} The label, or the raw value when it is not one of the five.
+ * @return {string} The label, or the raw value when it is not one of the six.
  * @spec openspec/changes/adopt-connection-registry/specs/external-connections/spec.md
  */
 export function connectionStatus(value) {
