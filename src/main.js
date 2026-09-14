@@ -27,6 +27,8 @@ import bundledManifest from './manifest.json'
 import menuLayout from './menu-layout.json'
 import pinia from './pinia.js'
 import registry from './registry.js'
+import connectionFormatters from './utils/connectionFormatters.js'
+import { openIntegriqConnections } from './utils/integriqConnections.js'
 import {
 	buildPageFragmentIndex,
 	mergeFullFragmentIntoManifest,
@@ -287,11 +289,18 @@ const registryProp = { ...registry }
 // `actionsComponent: FinancialDashboardActions`) silently disappear. Flatten
 // ALL kinds (page + widget + …) so every name a manifest can reference resolves.
 // Mirrors the procest / docudesk / opencatalogi wiring.
-const customComponentsProp = Object.fromEntries(
-	Object.entries(registry)
-		.filter(([, entry]) => entry && entry.component)
-		.map(([name, entry]) => [name, entry.component]),
-)
+//
+// Function handlers ride the same map: CnIndexPage resolves a header action's
+// named `handler` against `customComponents`. The External Connections page's
+// Add integration action leaves for integriq (adopt-connection-registry).
+const customComponentsProp = {
+	...Object.fromEntries(
+		Object.entries(registry)
+			.filter(([, entry]) => entry && entry.component)
+			.map(([name, entry]) => [name, entry.component]),
+	),
+	openIntegriqConnections,
+}
 
 // Vue 3 `mount()` renders INSIDE the matched element; Vue 2's `$mount()`
 // REPLACED it. The old host was `#content`, which is ALSO the id of
@@ -306,6 +315,9 @@ const app = createApp({
 			pageTypes: pageTypesProp,
 			registry: registryProp,
 			customComponents: customComponentsProp,
+			// Column formatters beyond the lib's built-ins. The External
+			// Connections page renders integriq's status enum through them.
+			formatters: connectionFormatters,
 		}),
 })
 

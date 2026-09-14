@@ -199,7 +199,7 @@
         <UndefinedInterfaceMethod errorLevel="suppress"/>
         <MissingTemplateParam errorLevel="suppress"/>
         <!-- InvalidConstantAssignmentValue / InvalidPropertyAssignmentValue:
-             Psalm over-narrows literal string types in array constants (ExternalAdaptersAdminController::ADAPTERS)
+             Psalm over-narrows literal string types in array constants
              and lazy-init property patterns (PaymentRunExportService::$generators). These patterns are
              correct at runtime. -->
         <InvalidConstantAssignmentValue errorLevel="suppress"/>

@@ -453,11 +453,16 @@ class CycleCountService {
 				$filters['locationId'] = $locationFilter;
 			}
 
-			// ADR-084: findAll() is declared `: array` — never null, always an array.
-			$rows = $this->objectService
-				->setRegister($this->register())
-				->setSchema('InventoryStock')
-				->findAll(['filters' => $filters]);
+			// ADR-084: findAll() is declared `: array`, never null. Its ELEMENTS
+			// are ObjectEntity rows, not arrays: snapshotScope() skips any row
+			// that is not an array, so without this every snapshot produced zero
+			// lines on a real instance.
+			$rows = $this->asArrays(
+				rows: $this->objectService
+					->setRegister($this->register())
+					->setSchema('InventoryStock')
+					->findAll(['filters' => $filters])
+			);
 
 			// Category filter requires a Product lookup. Fall back to client-side
 			// filter (the volume of stock rows per administration is bounded by SKU
@@ -519,18 +524,21 @@ class CycleCountService {
 				// looks up a single object by identifier — it never applied the
 				// filters, and the is_array() test on its ObjectEntityInterface
 				// result was false regardless, so every SKU was categorised ''.
-				// findAll() is the filtered lookup and returns array rows.
-				$products = $this->objectService
-					->setRegister($this->register())
-					->setSchema('Product')
-					->findAll(
-						[
-							'filters' => [
-								'administrationId' => $administrationId,
-								'sku' => $sku,
-							],
-						]
-					);
+				// findAll() is the filtered lookup; its rows are entities, so they
+				// are normalised before the category is read.
+				$products = $this->asArrays(
+					rows: $this->objectService
+						->setRegister($this->register())
+						->setSchema('Product')
+						->findAll(
+							[
+								'filters' => [
+									'administrationId' => $administrationId,
+									'sku' => $sku,
+								],
+							]
+						)
+				);
 				$product = ($products[0] ?? null);
 				$cat = '';
 				if (is_array($product) === true && isset($product['category']) === true) {
@@ -571,18 +579,22 @@ class CycleCountService {
 	 */
 	private function findLinesForCount(string $administrationId, string $countId): array {
 		try {
-			// ADR-084: findAll() is declared `: array` — never null, always an array.
-			return $this->objectService
-				->setRegister($this->register())
-				->setSchema('InventoryCycleCountLine')
-				->findAll(
-					[
-						'filters' => [
-							'administrationId' => $administrationId,
-							'countId' => $countId,
-						],
-					]
-				);
+			// ADR-084: findAll() is declared `: array`, never null. Its rows are
+			// entities; emitAdjustments() skips any line that is not an array, so
+			// they are normalised here or no adjustment is ever posted.
+			return $this->asArrays(
+				rows: $this->objectService
+					->setRegister($this->register())
+					->setSchema('InventoryCycleCountLine')
+					->findAll(
+						[
+							'filters' => [
+								'administrationId' => $administrationId,
+								'countId' => $countId,
+							],
+						]
+					)
+			);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'CycleCountService: findLinesForCount failed',
@@ -640,6 +652,36 @@ class CycleCountService {
 	private function extractId(mixed $saved): string {
 		return ObjectIdentifier::resolve(saved: $saved);
 	}//end extractId()
+
+	/**
+	 * Normalise OpenRegister rows to plain arrays.
+	 *
+	 * A row that is already an array passes through; an entity yields its
+	 * jsonSerialize() payload; anything else is dropped rather than handed on
+	 * as an empty row.
+	 *
+	 * @param array<int|string,mixed> $rows Rows from ObjectService::findAll().
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function asArrays(array $rows): array {
+		$out = [];
+		foreach ($rows as $row) {
+			if (is_array($row) === true) {
+				$out[] = $row;
+				continue;
+			}
+
+			if ($row instanceof \JsonSerializable) {
+				$serialized = $row->jsonSerialize();
+				if (is_array($serialized) === true) {
+					$out[] = $serialized;
+				}
+			}
+		}
+
+		return $out;
+	}//end asArrays()
 
 	/**
 	 * Resolve the OpenRegister register slug, defaulting to 'shillinq'.

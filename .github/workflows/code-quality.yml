@@ -207,7 +207,13 @@ jobs:
       # in run 30896861325: not one of those endpoints was ever reached.
       # `development` is also what the rest of the fleet pins (opencatalogi,
       # openconnector, procest, softwarecatalog, scholiq, pipelinq).
-      additional-apps: '[{"repo":"ConductionNL/openregister","app":"openregister","ref":"development"}]'
+      #
+      # integriq is here because External Connections reads integriq's
+      # `app_connection` rows since #1603. Without it the listing tests in
+      # external-connections.spec.ts skip on every run and only the
+      # missing-dependency screen is ever checked. `app` is `integriq`,
+      # verified in its appinfo/info.xml on `development` on 2026-09-14.
+      additional-apps: '[{"repo":"ConductionNL/openregister","app":"openregister","ref":"development"},{"repo":"ConductionNL/integriq","app":"integriq","ref":"development"}]'
       enable-sbom: true
 
       # ── E2E browser tests ────────────────────────────────────────────────

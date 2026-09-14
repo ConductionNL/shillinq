@@ -37,16 +37,14 @@ use SplFileInfo;
  *
  * It reads lines, not data flow. A superseded slug arriving from app config,
  * from a manifest, or through more than one assignment is invisible to it, as
- * is a `match` arm built at run time. That is why
- * {@see \OCA\Shillinq\Tests\Unit\Controller\ExternalAdaptersRegisterResolutionTest}
- * exists beside it: this guard stops the literal being TYPED, and that one
- * stops the resolved slug being IGNORED.
+ * is a `match` arm built at run time. A resolved slug that is then ignored
+ * needs a behavioural test beside the code that resolves it.
  *
- * Measured on the mutation that reinstated `openconnector` in
- * `ExternalAdaptersAdminController`: the unmigrated-instance test still passed,
- * because on an unmigrated instance the pinned literal happens to be the right
- * answer. Only the migrated case failed, and only the migrated case has ever
- * mattered.
+ * This guard was written for `ExternalAdaptersAdminController`, which read
+ * integriq's connector register under a pinned `openconnector` slug. That
+ * controller is gone (adopt-connection-registry): integriq's connection
+ * registry answers for those adapters now. The guard stays, because every
+ * other register read under lib/ can still pin a superseded slug.
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
@@ -152,9 +150,8 @@ final class RegisterSlugPinTest extends TestCase {
 	 * it is a false finding. False findings are not harmless here. The way this
 	 * guard dies is that someone hits one, adds the file to ALLOWED to get green,
 	 * and the real pin in that same file stops being watched. A stale docblock is
-	 * still worth fixing, and the one in ExternalAdaptersAdminController was
-	 * fixed alongside the pin it described, but it is a prose defect and this is
-	 * not the instrument for it.
+	 * still worth fixing, but it is a prose defect and this is not the
+	 * instrument for it.
 	 *
 	 * PHP cannot put a string literal in register position on a line that opens
 	 * with `*`, `//` or `#`, so nothing real is lost. A pin with a trailing
@@ -234,9 +231,9 @@ final class RegisterSlugPinTest extends TestCase {
 
 		$this->assertGreaterThan(500, count($files), 'The walker must see lib/, or the guard above cannot fail.');
 		$this->assertArrayHasKey(
-			'lib/Controller/ExternalAdaptersAdminController.php',
+			'lib/BackgroundJob/BankfeedReconciliationJob.php',
 			$files,
-			'The adapters controller is the file this guard was written for; the walker must reach it.'
+			'A file that reads a register by slug must be reachable, or the guard above reads nothing.'
 		);
 		$this->assertArrayHasKey(
 			'lib/Support/FleetAppId.php',
