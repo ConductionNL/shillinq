@@ -43,8 +43,9 @@ Shillinq SHALL declare its fifteen adapter families in
 REQ-CONN-001). A family whose port no screen or service calls SHALL be
 declared not available, with a message saying a log-only adapter is bound and
 nothing calls it. A family whose port is called SHALL NOT be declared not
-available, and SHALL carry a message saying shillinq has not reported on it
-yet. A `settingsUrl` SHALL only point at a page shillinq's manifest declares.
+available, SHALL be declared `reportedOnly: true` because only shillinq can see
+its DI binding (hydra#673, contract D4), and SHALL carry a message saying
+shillinq has not reported on it yet. No other family SHALL be `reportedOnly`. A `settingsUrl` SHALL only point at a page shillinq's manifest declares.
 A `sourceTemplate` SHALL only name a template integriq ships.
 
 **Feature tier**: MVP
@@ -97,6 +98,14 @@ by slug.
 - **WHEN** shillinq's daily connection report has run
 - **THEN** the Mollie payments row SHALL read Simulated
 - **AND** its message SHALL say a log-only adapter answers
+
+#### Scenario: A linked source does not overrule a log-only adapter
+@e2e exclude The order of a report and a probe is integriq's resolver (contract D4 rule 4a), and no browser flow sets it; tests/Unit/Settings/ConnectionsDeclarationTest.php::testTheReportedFamiliesAreTheAvailableOnes asserts the three reported families are reportedOnly and no other family is.
+
+- **GIVEN** shillinq reported `mollie` as `simulated`
+- **AND** an admin linked a source to the Mollie payments row and its probe passed later
+- **WHEN** integriq resolves the row
+- **THEN** it SHALL still read Simulated
 
 #### Scenario: Without integriq nothing is sent and nothing is logged
 

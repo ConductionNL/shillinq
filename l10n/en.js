@@ -3015,6 +3015,7 @@ OC.L10N.register(
         "Configured": "Configured",
         "Not configured": "Not configured",
         "Simulated": "Simulated",
+        "Limited": "Limited",
         "Not available": "Not available"
     },
     "nplurals=2; plural=(n != 1);"

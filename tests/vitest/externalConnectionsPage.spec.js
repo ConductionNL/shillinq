@@ -114,7 +114,7 @@ describe('the External Connections page', () => {
 	})
 
 	it('translates every new label into Dutch', () => {
-		for (const key of ['Add integration', 'All connections', 'Status message', 'Last checked', 'Open settings', 'Configured', 'Not configured', 'Simulated', 'Not available']) {
+		for (const key of ['Add integration', 'All connections', 'Status message', 'Last checked', 'Open settings', 'Configured', 'Limited', 'Not configured', 'Simulated', 'Not available']) {
 			expect(en[key], key).toBe(key)
 			expect(nl[key], key).toBeTruthy()
 			expect(nl[key], key).not.toBe(key)
@@ -142,8 +142,9 @@ describe('the External Connections menu entry', () => {
 })
 
 describe('the connection formatters', () => {
-	it('name each of the five states', () => {
+	it('name each of the six states', () => {
 		expect(connectionStatus('configured')).toBe('Configured')
+		expect(connectionStatus('limited')).toBe('Limited')
 		expect(connectionStatus('unconfigured')).toBe('Not configured')
 		expect(connectionStatus('simulated')).toBe('Simulated')
 		expect(connectionStatus('unavailable')).toBe('Not available')
@@ -155,6 +156,14 @@ describe('the connection formatters', () => {
 	it('do not let a log-only adapter read as configured or unavailable', () => {
 		expect(connectionStatus('simulated')).not.toBe(connectionStatus('configured'))
 		expect(connectionStatus('simulated')).not.toBe(connectionStatus('unavailable'))
+	})
+
+	// Limited came with hydra#673. A connection that works in part is neither
+	// working nor broken, so it must not borrow either label.
+	it('keep a connection that works in part apart from working and broken', () => {
+		expect(connectionStatus('limited')).not.toBe(connectionStatus('configured'))
+		expect(connectionStatus('limited')).not.toBe(connectionStatus('unavailable'))
+		expect(connectionStatus('limited')).not.toBe(connectionStatus('error'))
 	})
 
 	it('render an unknown value as itself and a missing one as empty', () => {

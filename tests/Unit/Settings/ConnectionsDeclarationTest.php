@@ -144,6 +144,16 @@ final class ConnectionsDeclarationTest extends TestCase {
 			condition: $this->validates(json: (string)json_encode($broken)),
 			message: 'the control failed: the validator accepted a field the schema forbids'
 		);
+
+		// The vendored schema must be the amended one (hydra#673): it knows
+		// `reportedOnly` and types it. An old copy would reject the file above,
+		// and a copy without the type would accept this.
+		$mistyped = $this->declaration();
+		$mistyped['connections'][0]['reportedOnly'] = 'yes';
+		$this->assertFalse(
+			condition: $this->validates(json: (string)json_encode($mistyped)),
+			message: 'the control failed: the validator accepted a reportedOnly that is not a boolean'
+		);
 	}//end testTheFileValidatesAgainstIntegriqsSchema()
 
 	/**
@@ -196,7 +206,8 @@ final class ConnectionsDeclarationTest extends TestCase {
 	 *
 	 * A family declared unavailable never leaves that state (contract rule 2),
 	 * so a report for it is a wasted write. A family not declared unavailable
-	 * and never reported sits on Not checked yet forever.
+	 * and never reported sits on Not checked yet forever. Every reported
+	 * family is `reportedOnly`, and no other family is.
 	 *
 	 * @return void
 	 */
@@ -205,6 +216,12 @@ final class ConnectionsDeclarationTest extends TestCase {
 		foreach ($this->declaration()['connections'] as $connection) {
 			if (($connection['available'] ?? true) === true) {
 				$available[] = $connection['key'];
+				// Only shillinq can see which class DI bound, so integriq must
+				// not judge the row from app config (contract D4, hydra#673).
+				$this->assertTrue(
+					condition: ($connection['reportedOnly'] ?? false) === true,
+					message: $connection['key'] . ' is reported, so it must be reportedOnly'
+				);
 				$this->assertStringContainsString(
 					needle: 'once a day',
 					haystack: (string)($connection['unconfiguredMessage'] ?? ''),
@@ -217,6 +234,11 @@ final class ConnectionsDeclarationTest extends TestCase {
 				needle: 'no screen or service calls it',
 				haystack: (string)($connection['unavailableMessage'] ?? ''),
 				message: $connection['key'] . ' must say why it is not available'
+			);
+			$this->assertArrayNotHasKey(
+				key: 'reportedOnly',
+				array: $connection,
+				message: $connection['key'] . ' gets no report, so reportedOnly would promise one that never comes'
 			);
 		}
 

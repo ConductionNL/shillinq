@@ -3017,6 +3017,7 @@
         "Configured": "Configured",
         "Not configured": "Not configured",
         "Simulated": "Simulated",
+        "Limited": "Limited",
         "Not available": "Not available"
     },
     "plurals": "",

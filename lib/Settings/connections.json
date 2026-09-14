@@ -62,6 +62,7 @@
             "title": "Mollie payments",
             "description": "iDEAL, Bancontact and SEPA payments started from the portal's pay now button.",
             "order": 80,
+            "reportedOnly": true,
             "unconfiguredMessage": "Not checked yet. Shillinq reports which adapter answers here once a day."
         },
         {
@@ -95,6 +96,7 @@
             "description": "Daily reference rates and exchange rates from the ECB or a market data provider.",
             "order": 120,
             "settingsUrl": "/apps/shillinq/bookkeeping/multi-currency/fx-rates/admin",
+            "reportedOnly": true,
             "unconfiguredMessage": "Not checked yet. Shillinq reports which adapter answers here once a day."
         },
         {
@@ -118,6 +120,7 @@
             "title": "Deposit payments",
             "description": "Deposit and no-show fee payments for bookings, one layer above the payment provider.",
             "order": 150,
+            "reportedOnly": true,
             "unconfiguredMessage": "Not checked yet. Shillinq reports which adapter answers here once a day."
         }
     ]

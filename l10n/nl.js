@@ -5265,6 +5265,7 @@ OC.L10N.register(
         "Configured": "Ingericht",
         "Not configured": "Niet geconfigureerd",
         "Simulated": "Gesimuleerd",
+        "Limited": "Beperkt",
         "Not available": "Niet beschikbaar"
     },
     "nplurals=2; plural=(n != 1);"
