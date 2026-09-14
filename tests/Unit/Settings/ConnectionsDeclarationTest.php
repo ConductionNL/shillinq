@@ -333,10 +333,9 @@ final class ConnectionsDeclarationTest extends TestCase {
 	 * @return array<int, string>
 	 */
 	private function manifestRoutes(): array {
-		$files = array_merge(
-			[$this->root() . '/src/manifest.json'],
-			(glob($this->root() . '/src/manifest.d/*.json') ?: [])
-		);
+		$fragments = glob($this->root() . '/src/manifest.d/*.json');
+		$this->assertIsArray(actual: $fragments);
+		$files = array_merge([$this->root() . '/src/manifest.json'], $fragments);
 
 		$routes = [];
 		foreach ($files as $file) {

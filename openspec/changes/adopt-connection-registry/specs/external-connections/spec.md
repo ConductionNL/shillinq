@@ -24,8 +24,6 @@ This requirement supersedes REQ-ICO-002 and REQ-ICO-007 of
 
 #### Scenario: Without integriq the page says what is missing
 
-@e2e exclude The CI instance installs integriq, so no browser flow reaches shillinq without it. tests/vitest/externalConnectionsPage.spec.js asserts the requiresApp and visibleIf declarations, and CnPageRenderer renders the screen.
-
 - **GIVEN** integriq is not installed
 - **WHEN** an admin opens `/apps/shillinq/external-adapters` by URL
 - **THEN** the missing-dependency screen SHALL name Integriq
@@ -102,7 +100,7 @@ by slug.
 
 #### Scenario: Without integriq nothing is sent and nothing is logged
 
-@e2e exclude The CI instance installs integriq. tests/Unit/Service/ConnectionReportServiceTest.php asserts that nothing is dispatched or logged when the event class is absent.
+@e2e exclude A background job's dispatch has no browser surface. tests/Unit/Service/ConnectionReportServiceTest.php asserts that nothing is dispatched or logged when the event class is absent.
 
 - **GIVEN** integriq is not installed
 - **WHEN** the daily connection report runs

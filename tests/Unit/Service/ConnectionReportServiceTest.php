@@ -289,7 +289,7 @@ class ConnectionReportServiceTest extends TestCase {
 	public function testAThrowingListenerNeverEscapes(): void {
 		$dispatcher = $this->createMock(originalClassName: IEventDispatcher::class);
 		$dispatcher->method('dispatchTyped')->willThrowException(new RuntimeException('registry down'));
-		$this->logger->expects($this->exactly(3))->method('warning')
+		$this->logger->expects($this->exactly(count: 3))->method('warning')
 			->with($this->stringContains(string: 'could not send'), $this->arrayHasKey(key: 'key'));
 
 		$service = new ConnectionReportService(

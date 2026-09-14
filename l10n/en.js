@@ -3006,7 +3006,16 @@ OC.L10N.register(
         "Open Flows in the menu": "Open Flows in the menu",
         "Payroll employee": "Payroll employee",
         "HR employee": "HR employee",
-        "UUID of the humaniq `Employee` this payroll record is for. A plain uuid and not a `$ref`: humaniq's register is a different register, and ADR-062 rule 7 gives a cross-register target a plain string. Empty when humaniq is not installed, in which case this record stands alone and `employeeNumber` is the only key.": "UUID of the humaniq `Employee` this payroll record is for. A plain uuid and not a `$ref`: humaniq's register is a different register, and ADR-062 rule 7 gives a cross-register target a plain string. Empty when humaniq is not installed, in which case this record stands alone and `employeeNumber` is the only key."
+        "UUID of the humaniq `Employee` this payroll record is for. A plain uuid and not a `$ref`: humaniq's register is a different register, and ADR-062 rule 7 gives a cross-register target a plain string. Empty when humaniq is not installed, in which case this record stands alone and `employeeNumber` is the only key.": "UUID of the humaniq `Employee` this payroll record is for. A plain uuid and not a `$ref`: humaniq's register is a different register, and ADR-062 rule 7 gives a cross-register target a plain string. Empty when humaniq is not installed, in which case this record stands alone and `employeeNumber` is the only key.",
+        "Add integration": "Add integration",
+        "All connections": "All connections",
+        "Status message": "Status message",
+        "Last checked": "Last checked",
+        "Open settings": "Open settings",
+        "Configured": "Configured",
+        "Not configured": "Not configured",
+        "Simulated": "Simulated",
+        "Not available": "Not available"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -4327,7 +4327,13 @@
 					"label": "External Connections",
 					"icon": "TransitConnectionVariant",
 					"route": "ExternalAdaptersStatus",
-					"order": 46
+					"query": {
+						"app": "shillinq"
+					},
+					"order": 46,
+					"visibleIf": {
+						"appInstalled": "integriq"
+					}
 				}
 			],
 			"pages": [
@@ -4335,7 +4341,7 @@
 					"_fragment": "external-adapters-w8",
 					"id": "ExternalAdaptersStatus",
 					"route": "/external-adapters",
-					"type": "custom",
+					"type": "index",
 					"title": "External Connections"
 				}
 			]
