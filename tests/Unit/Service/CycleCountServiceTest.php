@@ -489,10 +489,10 @@ class CycleCountServiceTest extends TestCase {
 			'administrationId' => 'adm-consultancy-nl',
 		];
 
-		self::assertTrue($this->service->snapshotScope($count));
-		self::assertCount(1, $this->objectService->savedLines);
-		self::assertSame('SKU-001', $this->objectService->savedLines[0]['sku']);
-		self::assertEquals(25.00, $this->objectService->savedLines[0]['expectedValue']);
+		self::assertTrue(condition: $this->service->snapshotScope($count));
+		self::assertCount(expectedCount: 1, haystack: $this->objectService->savedLines);
+		self::assertSame(expected: 'SKU-001', actual: $this->objectService->savedLines[0]['sku']);
+		self::assertEquals(expected: 25.00, actual: $this->objectService->savedLines[0]['expectedValue']);
 
 	}//end testSnapshotScopeReadsEntityRows()
 
@@ -520,9 +520,9 @@ class CycleCountServiceTest extends TestCase {
 			'administrationId' => 'adm-consultancy-nl',
 		];
 
-		self::assertTrue($this->service->snapshotScope($count));
-		self::assertCount(1, $this->objectService->savedLines);
-		self::assertSame('SKU-001', $this->objectService->savedLines[0]['sku']);
+		self::assertTrue(condition: $this->service->snapshotScope($count));
+		self::assertCount(expectedCount: 1, haystack: $this->objectService->savedLines);
+		self::assertSame(expected: 'SKU-001', actual: $this->objectService->savedLines[0]['sku']);
 
 	}//end testSnapshotScopeFiltersByCategoryFromEntityProducts()
 
@@ -551,9 +551,9 @@ class CycleCountServiceTest extends TestCase {
 			'administrationId' => 'adm-consultancy-nl',
 		];
 
-		self::assertTrue($this->service->emitAdjustments($count));
-		self::assertCount(1, $this->objectService->savedMoves);
-		self::assertSame('issue', $this->objectService->savedMoves[0]['movementType']);
+		self::assertTrue(condition: $this->service->emitAdjustments($count));
+		self::assertCount(expectedCount: 1, haystack: $this->objectService->savedMoves);
+		self::assertSame(expected: 'issue', actual: $this->objectService->savedMoves[0]['movementType']);
 
 	}//end testEmitAdjustmentsReadsEntityLines()
 }//end class

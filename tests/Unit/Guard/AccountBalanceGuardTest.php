@@ -219,16 +219,16 @@ class AccountBalanceGuardTest extends TestCase {
 		$this->guard = $this->buildGuard(store: $this->buildObjectServiceStub(lines: $lines, closingAccounts: []));
 
 		self::assertTrue(
-			$this->guard->requireZeroBalance(['accountNumber' => '0001', 'administrationId' => 'adm-1']),
-			'A balanced account read as entities must be archivable'
+			condition: $this->guard->requireZeroBalance(['accountNumber' => '0001', 'administrationId' => 'adm-1']),
+			message: 'A balanced account read as entities must be archivable'
 		);
 
 		$this->guard = $this->buildGuard(
 			store: $this->buildObjectServiceStub(lines: [new ObjectEntityStub(payload: ['debit' => 40.0, 'credit' => 0.0])], closingAccounts: [])
 		);
 		self::assertFalse(
-			$this->guard->requireZeroBalance(['accountNumber' => '0001', 'administrationId' => 'adm-1']),
-			'An unbalanced account read as entities must still be refused'
+			condition: $this->guard->requireZeroBalance(['accountNumber' => '0001', 'administrationId' => 'adm-1']),
+			message: 'An unbalanced account read as entities must still be refused'
 		);
 
 	}//end testRequireZeroBalanceReadsEntityRows()
@@ -241,17 +241,23 @@ class AccountBalanceGuardTest extends TestCase {
 	 */
 	public function testRequireSingleClosingAccountReadsEntityRows(): void {
 		$existing = [
-			new ObjectEntityStub(payload: ['id' => 'close-uuid', 'accountNumber' => 'CLOSE', 'administrationId' => 'adm-1', 'isClosingAccount' => true]),
+			new ObjectEntityStub(
+				payload: ['id' => 'close-uuid', 'accountNumber' => 'CLOSE', 'administrationId' => 'adm-1', 'isClosingAccount' => true]
+			),
 		];
 		$this->guard = $this->buildGuard(store: $this->buildObjectServiceStub(lines: [], closingAccounts: $existing));
 
 		self::assertTrue(
-			$this->guard->requireSingleClosingAccount(['isClosingAccount' => true, 'id' => 'close-uuid', 'accountNumber' => 'CLOSE', 'administrationId' => 'adm-1']),
-			'Re-saving the existing closing account must be permitted'
+			condition: $this->guard->requireSingleClosingAccount(
+				['isClosingAccount' => true, 'id' => 'close-uuid', 'accountNumber' => 'CLOSE', 'administrationId' => 'adm-1']
+			),
+			message: 'Re-saving the existing closing account must be permitted'
 		);
 		self::assertFalse(
-			$this->guard->requireSingleClosingAccount(['isClosingAccount' => true, 'id' => 'other-uuid', 'accountNumber' => 'CLOSE-2', 'administrationId' => 'adm-1']),
-			'A second closing account must be refused'
+			condition: $this->guard->requireSingleClosingAccount(
+				['isClosingAccount' => true, 'id' => 'other-uuid', 'accountNumber' => 'CLOSE-2', 'administrationId' => 'adm-1']
+			),
+			message: 'A second closing account must be refused'
 		);
 
 	}//end testRequireSingleClosingAccountReadsEntityRows()
