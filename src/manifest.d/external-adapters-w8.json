@@ -1,22 +1,85 @@
 {
-	"$comment": "Shillinq W8/integration-config-to-openconnector — 'External Connections' nav leaf + roster page over the 15 dormant external-API adapter ports. Per ADR-067/ADR-091/ADR-022 (openspec/changes/integration-config-to-openconnector), integration configuration (credentials, endpoints, protocol mapping) belongs to openconnector; this app holds only the source-slug reference. One page renders every family as a row (declared slug, activation summary, dormant/live badge, provisioned-in-openconnector status) sourced from ExternalAdaptersAdminController#index — the 15 per-adapter detail pages this fragment used to declare are gone; there is no per-family route left to deep-link.",
+	"$comment": "Shillinq External Connections (adopt-connection-registry, hydra connection-registry D8). The rows are integriq's `app_connection` objects, synced from lib/Settings/connections.json. Integriq works out each status; shillinq only reports which adapter answers for the families it calls. The menu id, its settings-foldout place, the page id and the route are the ones the removed roster page used, so bookmarks and menu-layout.json keep working.",
 	"menu": [
 		{
 			"id": "ExternalConnections",
 			"label": "External Connections",
 			"icon": "TransitConnectionVariant",
 			"route": "ExternalAdaptersStatus",
-			"order": 46
+			"query": {
+				"app": "shillinq"
+			},
+			"order": 46,
+			"visibleIf": {
+				"appInstalled": "integriq"
+			}
 		}
 	],
 	"pages": [
 		{
 			"id": "ExternalAdaptersStatus",
 			"route": "/external-adapters",
-			"type": "custom",
+			"type": "index",
 			"title": "External Connections",
-			"component": "ExternalAdaptersStatus",
-			"_note": "The adapter catalogue is a PHP-side registry served by externalAdaptersAdmin#index (/api/admin/external-adapters), not an OpenRegister register/schema — there is no object collection for `type: index` to bind config.register/config.schema to. Each row also carries a live dormancy verdict and a live openconnector-provisioning verdict computed per request, not a stored field, so a declarative column list cannot express it."
+			"requiresApp": {
+				"id": "integriq",
+				"name": "Integriq"
+			},
+			"config": {
+				"register": "integriq",
+				"schema": "app_connection",
+				"showViewAction": false,
+				"showAdd": false,
+				"_registryNote": "The `app=shillinq` preset is the menu entry's `query` (ADR-097 decision 5); the index page merges the route query into the fetch as a bare filter key. `showAdd` is false because a row nothing declared has nothing to check (connection-registry D9). Add integration leaves for integriq's overview through the `openIntegriqConnections` handler, since a header action's `navigate` only pushes a route inside shillinq.",
+				"headerActions": [
+					{
+						"id": "add-integration",
+						"label": "Add integration",
+						"icon": "TransitConnectionVariant",
+						"handler": "openIntegriqConnections"
+					}
+				],
+				"defaultSort": {
+					"field": "order",
+					"direction": "asc"
+				},
+				"folderSidebar": {
+					"source": "field",
+					"field": "status",
+					"allLabel": "All connections"
+				},
+				"columns": [
+					{
+						"key": "title",
+						"label": "Title"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"formatter": "connectionStatus"
+					},
+					{
+						"key": "statusMessage",
+						"label": "Status message",
+						"sortable": false
+					},
+					{
+						"key": "checkedAt",
+						"label": "Last checked",
+						"formatter": "datetime"
+					},
+					{
+						"key": "settingsUrl",
+						"label": "Settings",
+						"sortable": false,
+						"formatter": "connectionSettingsLabel",
+						"widget": "link",
+						"widgetProps": {
+							"href": "{settingsUrl}"
+						}
+					}
+				]
+			}
 		}
 	]
 }

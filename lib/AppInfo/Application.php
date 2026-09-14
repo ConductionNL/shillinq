@@ -199,8 +199,8 @@ class Application extends App implements IBootstrap {
 		// of it. The old-slug case is the quiet one: OpenRegister finds no
 		// register, matches no rows, and returns an empty set that is byte for byte
 		// what a healthy empty register returns. No exception, no 404, no log line.
-		// This app read Integriq's connector register that way, from
-		// ExternalAdaptersAdminController.
+		// This app once read Integriq's connector register that way, from the
+		// external-adapters roster that adopt-connection-registry removed.
 		//
 		// Verified against this container, not assumed: OpenRegister registers the
 		// resolver in its OWN container, so nothing of that registration reaches
