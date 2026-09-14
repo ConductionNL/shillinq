@@ -67,20 +67,9 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // #[AuthorizedAdminSetting(Application::class)].
             ['name' => 'fxRateAdmin#status', 'url' => '/api/admin/fx-rate-import-status', 'verb' => 'GET'],
 
-        // The integration-config-to-openconnector change (formerly W8):
-        // read-only admin roster over the 15 dormant external-API
-        // adapter families (Digipoort/SBR, Salarisbureau, RvO, IB47,
-        // CBS x2, BZK SiSa, Mollie, Bunq, KvK, UWV, Treasury Rates,
-        // CCM Rule Engine, CSRD ESRS XBRL, DepositPayment). Drives the
-        // single ExternalAdaptersStatus.vue roster page — the 15
-        // per-adapter detail pages (and their #show deep-link target)
-        // are gone, so #show was removed as dead code (no browser
-        // caller left; ORCHESTRATOR RULING: dead surface once the
-        // per-adapter pages go). Gated by
-        // #[AuthorizedAdminSetting(Application::class)] — the
-        // per-row activation recipe reveals configuration keys which
-        // are admin-only data.
-            ['name' => 'externalAdaptersAdmin#index', 'url' => '/api/admin/external-adapters', 'verb' => 'GET'],
+        // No external-adapters roster route: adopt-connection-registry moved
+        // the External Connections page onto integriq's app_connection rows,
+        // declared in lib/Settings/connections.json.
 
         // Booking notification trigger configuration (organizer, per booking).
             ['name' => 'bookingNotification#getBookingTriggers',    'url' => '/api/bookings/{id}/notification-triggers', 'verb' => 'GET'],
