@@ -25,6 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 use OCA\Shillinq\Lifecycle\VarianceGate;
 use OCA\Shillinq\Service\CycleCountService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
+use OCA\Shillinq\Tests\Unit\Service\Support\ObjectEntityStub;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -111,6 +112,9 @@ class CycleCountServiceTest extends TestCase {
 			/** @var array<int,array<string,mixed>> line rows for emit tests */
 			public array $lineRows = [];
 
+			/** @var array<int,mixed> product rows for category-filter tests */
+			public array $productRows = [];
+
 			/** @var array<int,array<string,mixed>> lines saved during the test */
 			public array $savedLines = [];
 
@@ -139,6 +143,10 @@ class CycleCountServiceTest extends TestCase {
 
 				if ($this->currentSchema === 'InventoryCycleCountLine') {
 					return $this->lineRows;
+				}
+
+				if ($this->currentSchema === 'Product') {
+					return $this->productRows;
 				}
 
 				return [];
@@ -453,4 +461,99 @@ class CycleCountServiceTest extends TestCase {
 		self::assertSame('sm-id-1', $lineUpdates[0]['adjustmentStockMoveId']);
 
 	}//end testEmitAdjustmentsBackReferencesStockMove()
+
+	/**
+	 * snapshotScope reads InventoryStock rows as the entities findAll() returns.
+	 *
+	 * OpenRegister hands back ObjectEntity rows, not arrays. snapshotScope()
+	 * skips any row that is not an array, so before the rows were normalised a
+	 * real instance produced zero count lines for every count.
+	 *
+	 * @return void
+	 */
+	public function testSnapshotScopeReadsEntityRows(): void {
+		$this->objectService->stockRows = [
+			new ObjectEntityStub(
+				payload: [
+					'sku' => 'SKU-001',
+					'locationId' => 'loc-w01',
+					'quantity' => 10,
+					'unitCost' => 2.50,
+				]
+			),
+		];
+
+		$count = [
+			'countId' => 'CC-2026-05-00009',
+			'countType' => 'full',
+			'administrationId' => 'adm-consultancy-nl',
+		];
+
+		self::assertTrue($this->service->snapshotScope($count));
+		self::assertCount(1, $this->objectService->savedLines);
+		self::assertSame('SKU-001', $this->objectService->savedLines[0]['sku']);
+		self::assertEquals(25.00, $this->objectService->savedLines[0]['expectedValue']);
+
+	}//end testSnapshotScopeReadsEntityRows()
+
+	/**
+	 * A partial count scoped by category keeps only the stock whose Product,
+	 * read as an entity, carries that category.
+	 *
+	 * Before the fix the product entity failed an is_array() test, every SKU
+	 * resolved to an empty category, and the filter matched nothing.
+	 *
+	 * @return void
+	 */
+	public function testSnapshotScopeFiltersByCategoryFromEntityProducts(): void {
+		$this->objectService->stockRows = [
+			new ObjectEntityStub(payload: ['sku' => 'SKU-001', 'locationId' => 'loc-w01', 'quantity' => 1, 'unitCost' => 1.00]),
+		];
+		$this->objectService->productRows = [
+			new ObjectEntityStub(payload: ['sku' => 'SKU-001', 'category' => 'fasteners']),
+		];
+
+		$count = [
+			'countId' => 'CC-2026-05-00010',
+			'countType' => 'partial',
+			'categoryFilter' => 'fasteners',
+			'administrationId' => 'adm-consultancy-nl',
+		];
+
+		self::assertTrue($this->service->snapshotScope($count));
+		self::assertCount(1, $this->objectService->savedLines);
+		self::assertSame('SKU-001', $this->objectService->savedLines[0]['sku']);
+
+	}//end testSnapshotScopeFiltersByCategoryFromEntityProducts()
+
+	/**
+	 * emitAdjustments reads count lines as entities and posts their variance.
+	 *
+	 * @return void
+	 */
+	public function testEmitAdjustmentsReadsEntityLines(): void {
+		$this->objectService->lineRows = [
+			new ObjectEntityStub(
+				payload: [
+					'lineId' => 'CC-2026-05-00011-001',
+					'sku' => 'SKU-001',
+					'locationId' => 'loc-w01',
+					'expectedQuantity' => 10,
+					'countedQuantity' => 7,
+					'unitCost' => 4.00,
+					'reasonCode' => 'ERR-COUNT',
+				]
+			),
+		];
+
+		$count = [
+			'countId' => 'CC-2026-05-00011',
+			'administrationId' => 'adm-consultancy-nl',
+		];
+
+		self::assertTrue($this->service->emitAdjustments($count));
+		self::assertCount(1, $this->objectService->savedMoves);
+		self::assertSame('issue', $this->objectService->savedMoves[0]['movementType']);
+
+	}//end testEmitAdjustmentsReadsEntityLines()
 }//end class
