@@ -16,8 +16,8 @@
 - [x] 3.1 `src/manifest.d/external-adapters-w8.json`: `integriq/app_connection`
   index page, `requiresApp`, `showAdd: false`, Add integration header action;
   menu entry `query` and `visibleIf.appInstalled`.
-- [x] 3.2 `src/services/connectionFormatters.js` and
-  `src/services/integriqConnections.js`, wired through `src/main.js` and
+- [x] 3.2 `src/utils/connectionFormatters.js` and
+  `src/utils/integriqConnections.js`, wired through `src/main.js` and
   `src/App.vue`.
   - `tests/vitest/externalConnectionsPage.spec.js`.
   - l10n keys in `en` and `nl`.

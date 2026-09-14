@@ -88,7 +88,7 @@ page request into the job.
   opens `/apps/integriq/connections?app=shillinq&link=1`. A `navigate` handler
   only pushes a route inside shillinq.
 - Shillinq passes no formatters to `CnAppRoot` today. `connectionStatus` and
-  `connectionSettingsLabel` live in `src/services/connectionFormatters.js` and
+  `connectionSettingsLabel` live in `src/utils/connectionFormatters.js` and
   reach the page through a new `formatters` prop. The handler joins the
   `customComponents` map, which is where `CnIndexPage` resolves a named
   handler.
@@ -132,3 +132,7 @@ Kept:
 3. **A report before the first sync is refused.** On a fresh install the job
    can run before integriq syncs shillinq's file. Integriq logs a warning and
    the next daily run lands.
+4. **The CI instance has no integriq.** `code-quality.yml` installs only
+   openregister beside shillinq. On CI the e2e spec asserts the
+   missing-dependency screen, and the listing tests skip with that reason.
+   Adding integriq to `additional-apps` is a follow-up, not part of this change.
