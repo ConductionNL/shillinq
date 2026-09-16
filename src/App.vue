@@ -16,7 +16,6 @@
 		:manifest="manifest"
 		:pageTypes="pageTypes"
 		:customComponents="customComponents"
-		:formatters="formatters"
 		:registry="registry"
 		appId="shillinq"
 		:translate="translateForApp"
@@ -126,16 +125,6 @@ export default {
 		 * Mirrors the procest / docudesk / opencatalogi wiring. See main.js.
 		 */
 		customComponents: {
-			type: Object,
-			default: () => ({}),
-		},
-
-		/**
-		 * Column formatters by name, merged by CnAppRoot over the lib's
-		 * built-ins. `connectionStatus` and `connectionSettingsLabel` render
-		 * the External Connections page (adopt-connection-registry).
-		 */
-		formatters: {
 			type: Object,
 			default: () => ({}),
 		},
