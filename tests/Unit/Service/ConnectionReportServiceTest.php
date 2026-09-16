@@ -50,6 +50,9 @@ use RuntimeException;
  * Unit tests for ConnectionReportService.
  *
  * @covers \OCA\Shillinq\Service\ConnectionReportService
+ * @uses   \OCA\Shillinq\Service\External\DepositPayment\LogDepositPaymentAdapter
+ * @uses   \OCA\Shillinq\Service\External\Mollie\LogMolliePaymentAdapter
+ * @uses   \OCA\Shillinq\Service\External\TreasuryRate\LogTreasuryRateAdapter
  */
 class ConnectionReportServiceTest extends TestCase {
 
