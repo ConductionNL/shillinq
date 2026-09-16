@@ -164,7 +164,11 @@ final class ConnectionsDeclarationTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheFileNamesThisApp(): void {
-		$infoXml = simplexml_load_file($this->root() . '/appinfo/info.xml');
+		// Read the bytes, not the path. Nextcloud's lib/base.php installs an external
+		// entity loader that returns null, and libxml routes the primary document
+		// through it too, so simplexml_load_file() returns false for a valid file in CI.
+		$infoRaw = (string) file_get_contents($this->root() . '/appinfo/info.xml');
+		$infoXml = simplexml_load_string($infoRaw);
 
 		$this->assertNotFalse(condition: $infoXml);
 		$this->assertSame(expected: (string)$infoXml->id, actual: $this->declaration()['app']);
