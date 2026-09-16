@@ -27,7 +27,6 @@ import bundledManifest from './manifest.json'
 import menuLayout from './menu-layout.json'
 import pinia from './pinia.js'
 import registry from './registry.js'
-import connectionFormatters from './utils/connectionFormatters.js'
 import { openIntegriqConnections } from './utils/integriqConnections.js'
 import {
 	buildPageFragmentIndex,
@@ -315,9 +314,6 @@ const app = createApp({
 			pageTypes: pageTypesProp,
 			registry: registryProp,
 			customComponents: customComponentsProp,
-			// Column formatters beyond the lib's built-ins. The External
-			// Connections page renders integriq's status enum through them.
-			formatters: connectionFormatters,
 		}),
 })
 

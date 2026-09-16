@@ -11,9 +11,13 @@
  * Everything asserted here fails SILENTLY in the browser. A menu entry without
  * its `query` lists every app's rows as though they were shillinq's; a header
  * action naming a handler nobody passes to CnAppRoot does nothing when clicked;
- * a formatter CnAppRoot never receives renders the raw enum; and a menu id
+ * a formatter name nothing answers renders the raw enum; and a menu id
  * missing from `settingsSection` lands in the main nav. So the guard is here,
  * not in a reviewer's eye.
+ *
+ * The two formatters are nextcloud-vue built-ins since 3.2.0. CnAppRoot merges
+ * `{ ...BUILT_IN_FORMATTERS, ...formatters }`, so an app formatter of the same
+ * name would shadow the library's. Shillinq passes none.
  *
  * @spec openspec/changes/adopt-connection-registry/specs/external-connections/spec.md
  */
@@ -21,14 +25,16 @@
 import fs from 'fs'
 import path from 'path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import formatters, {
-	connectionSettingsLabel,
-	connectionStatus,
-} from '../../src/utils/connectionFormatters.js'
 import {
 	INTEGRIQ_CONNECTIONS_PATH,
 	openIntegriqConnections,
 } from '../../src/utils/integriqConnections.js'
+
+// The built-ins translate through @nextcloud/l10n, which reads the browser
+// session on import. The suite runs in node, so lend it the global scope.
+globalThis.window ??= globalThis
+const { BUILT_IN_FORMATTERS } =
+	await import('@conduction/nextcloud-vue/src/utils/builtInFormatters.js')
 
 const ROOT = path.resolve(__dirname, '..', '..')
 const read = (...parts) => fs.readFileSync(path.join(ROOT, ...parts), 'utf8')
@@ -107,9 +113,24 @@ describe('the External Connections page', () => {
 		)
 	})
 
-	it('passes the formatters to CnAppRoot', () => {
-		expect(mainSource).toContain('formatters: connectionFormatters')
-		expect(appSource).toContain(':formatters="formatters"')
+	it('labels a switched-off connection through the nextcloud-vue built-in', () => {
+		// The registry the way CnAppRoot builds it. Shillinq passes no
+		// formatters of its own, so the built-ins answer every column. Both
+		// files count: App.vue does not declare the prop, so a `formatters`
+		// passed from main.js falls through onto CnAppRoot all the same.
+		expect(appSource, 'App.vue passes its own formatters').not.toContain(
+			':formatters=',
+		)
+		expect(mainSource, 'main.js passes its own formatters').not.toContain(
+			'formatters:',
+		)
+		const registry = { ...BUILT_IN_FORMATTERS }
+		for (const column of page.config.columns.filter((c) => c.formatter)) {
+			expect(typeof registry[column.formatter], column.formatter).toBe(
+				'function',
+			)
+		}
+		expect(registry.connectionStatus('disabled')).toBe('Switched off')
 	})
 
 	it('no longer registers the roster component', () => {
@@ -125,12 +146,6 @@ describe('the External Connections page', () => {
 			'All connections',
 			'Status message',
 			'Last checked',
-			'Open settings',
-			'Configured',
-			'Limited',
-			'Not configured',
-			'Simulated',
-			'Not available',
 		]) {
 			expect(en[key], key).toBe(key)
 			expect(nl[key], key).toBeTruthy()
@@ -155,57 +170,6 @@ describe('the External Connections menu entry', () => {
 	it('keeps its place in the settings foldout', () => {
 		expect(menuEntry.route).toBe(page.id)
 		expect(menuLayout.settingsSection).toContain('ExternalConnections')
-	})
-})
-
-describe('the connection formatters', () => {
-	it('name each of the six states', () => {
-		expect(connectionStatus('configured')).toBe('Configured')
-		expect(connectionStatus('limited')).toBe('Limited')
-		expect(connectionStatus('unconfigured')).toBe('Not configured')
-		expect(connectionStatus('simulated')).toBe('Simulated')
-		expect(connectionStatus('unavailable')).toBe('Not available')
-		expect(connectionStatus('error')).toBe('Error')
-	})
-
-	// A log-only adapter WORKS and delivers nothing. Rendering it as
-	// Configured or Not available is the claim this page exists to stop.
-	it('do not let a log-only adapter read as configured or unavailable', () => {
-		expect(connectionStatus('simulated')).not.toBe(
-			connectionStatus('configured'),
-		)
-		expect(connectionStatus('simulated')).not.toBe(
-			connectionStatus('unavailable'),
-		)
-	})
-
-	// Limited came with hydra#673. A connection that works in part is neither
-	// working nor broken, so it must not borrow either label.
-	it('keep a connection that works in part apart from working and broken', () => {
-		expect(connectionStatus('limited')).not.toBe(connectionStatus('configured'))
-		expect(connectionStatus('limited')).not.toBe(connectionStatus('unavailable'))
-		expect(connectionStatus('limited')).not.toBe(connectionStatus('error'))
-	})
-
-	it('render an unknown value as itself and a missing one as empty', () => {
-		expect(connectionStatus('degraded')).toBe('degraded')
-		expect(connectionStatus(undefined)).toBe('')
-		expect(connectionStatus(null)).toBe('')
-	})
-
-	it('label a settings link only when there is somewhere to go', () => {
-		expect(
-			connectionSettingsLabel(
-				'/apps/shillinq/bookkeeping/multi-currency/fx-rates/admin',
-			),
-		).toBe('Open settings')
-		expect(connectionSettingsLabel('')).toBe('')
-		expect(connectionSettingsLabel(undefined)).toBe('')
-	})
-
-	it('are exported under the names the manifest uses', () => {
-		expect(formatters.connectionStatus).toBe(connectionStatus)
-		expect(formatters.connectionSettingsLabel).toBe(connectionSettingsLabel)
 	})
 })
 
