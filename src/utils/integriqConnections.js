@@ -13,7 +13,8 @@ import { generateUrl } from '@nextcloud/router'
  *
  * @type {string}
  */
-export const INTEGRIQ_CONNECTIONS_PATH = '/apps/integriq/connections?app=shillinq&link=1'
+export const INTEGRIQ_CONNECTIONS_PATH =
+	'/apps/integriq/connections?app=shillinq&link=1'
 
 /**
  * Open integriq's Connections overview on the link-a-source dialog.

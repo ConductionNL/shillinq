@@ -48,7 +48,7 @@ const page = fragment.pages.find((p) => p.id === 'ExternalAdaptersStatus')
 const menuEntry = fragment.menu.find((m) => m.id === 'ExternalConnections')
 
 describe('the External Connections page', () => {
-	it('reads integriq\'s app_connection schema as an index page', () => {
+	it("reads integriq's app_connection schema as an index page", () => {
 		expect(page).toBeDefined()
 		expect(page.type).toBe('index')
 		expect(page.component).toBeUndefined()
@@ -94,13 +94,17 @@ describe('the External Connections page', () => {
 	})
 
 	it('sends Add integration to integriq through a handler CnAppRoot receives', () => {
-		const add = (page.config.headerActions ?? []).find((a) => a.id === 'add-integration')
+		const add = (page.config.headerActions ?? []).find(
+			(a) => a.id === 'add-integration',
+		)
 		expect(add).toBeDefined()
 		expect(add.label).toBe('Add integration')
 		expect(add.handler).toBe('openIntegriqConnections')
 		expect(iconsSource).toMatch(new RegExp(`\\b${add.icon}\\b`))
 		// CnIndexPage resolves a named handler against `customComponents`.
-		expect(mainSource).toMatch(/customComponentsProp = \{[\s\S]*openIntegriqConnections,/)
+		expect(mainSource).toMatch(
+			/customComponentsProp = \{[\s\S]*openIntegriqConnections,/,
+		)
 	})
 
 	it('passes the formatters to CnAppRoot', () => {
@@ -110,11 +114,24 @@ describe('the External Connections page', () => {
 
 	it('no longer registers the roster component', () => {
 		expect(registrySource).not.toContain('ExternalAdaptersStatus')
-		expect(fs.existsSync(path.join(ROOT, 'src', 'views', 'external-adapters'))).toBe(false)
+		expect(
+			fs.existsSync(path.join(ROOT, 'src', 'views', 'external-adapters')),
+		).toBe(false)
 	})
 
 	it('translates every new label into Dutch', () => {
-		for (const key of ['Add integration', 'All connections', 'Status message', 'Last checked', 'Open settings', 'Configured', 'Limited', 'Not configured', 'Simulated', 'Not available']) {
+		for (const key of [
+			'Add integration',
+			'All connections',
+			'Status message',
+			'Last checked',
+			'Open settings',
+			'Configured',
+			'Limited',
+			'Not configured',
+			'Simulated',
+			'Not available',
+		]) {
 			expect(en[key], key).toBe(key)
 			expect(nl[key], key).toBeTruthy()
 			expect(nl[key], key).not.toBe(key)
@@ -126,7 +143,7 @@ describe('the External Connections menu entry', () => {
 	// THE PRESET. integriq's schema holds every app's rows. The query is what
 	// makes this shillinq's page, and a bare key is the spelling the objects
 	// endpoint reads as a filter.
-	it('presets the list to shillinq\'s own rows', () => {
+	it("presets the list to shillinq's own rows", () => {
 		expect(menuEntry.query).toEqual({ app: 'shillinq' })
 		expect(declaration.app).toBe('shillinq')
 	})
@@ -154,8 +171,12 @@ describe('the connection formatters', () => {
 	// A log-only adapter WORKS and delivers nothing. Rendering it as
 	// Configured or Not available is the claim this page exists to stop.
 	it('do not let a log-only adapter read as configured or unavailable', () => {
-		expect(connectionStatus('simulated')).not.toBe(connectionStatus('configured'))
-		expect(connectionStatus('simulated')).not.toBe(connectionStatus('unavailable'))
+		expect(connectionStatus('simulated')).not.toBe(
+			connectionStatus('configured'),
+		)
+		expect(connectionStatus('simulated')).not.toBe(
+			connectionStatus('unavailable'),
+		)
 	})
 
 	// Limited came with hydra#673. A connection that works in part is neither
@@ -173,7 +194,11 @@ describe('the connection formatters', () => {
 	})
 
 	it('label a settings link only when there is somewhere to go', () => {
-		expect(connectionSettingsLabel('/apps/shillinq/bookkeeping/multi-currency/fx-rates/admin')).toBe('Open settings')
+		expect(
+			connectionSettingsLabel(
+				'/apps/shillinq/bookkeeping/multi-currency/fx-rates/admin',
+			),
+		).toBe('Open settings')
 		expect(connectionSettingsLabel('')).toBe('')
 		expect(connectionSettingsLabel(undefined)).toBe('')
 	})
@@ -189,13 +214,17 @@ describe('the Add integration handler', () => {
 		vi.unstubAllGlobals()
 	})
 
-	it('opens integriq\'s overview filtered to shillinq with the link dialog', () => {
+	it("opens integriq's overview filtered to shillinq with the link dialog", () => {
 		const assign = vi.fn()
 		vi.stubGlobal('window', { location: { assign } })
 
 		openIntegriqConnections()
 
-		expect(INTEGRIQ_CONNECTIONS_PATH).toBe('/apps/integriq/connections?app=shillinq&link=1')
-		expect(assign).toHaveBeenCalledWith('/index.php/apps/integriq/connections?app=shillinq&link=1')
+		expect(INTEGRIQ_CONNECTIONS_PATH).toBe(
+			'/apps/integriq/connections?app=shillinq&link=1',
+		)
+		expect(assign).toHaveBeenCalledWith(
+			'/index.php/apps/integriq/connections?app=shillinq&link=1',
+		)
 	})
 })

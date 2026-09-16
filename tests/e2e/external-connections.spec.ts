@@ -1,4 +1,3 @@
-
 /**
  * SPDX-License-Identifier: EUPL-1.2
  * Copyright (C) 2026 Conduction B.V.
@@ -38,8 +37,11 @@ const CONNECTIONS_API =
 
 /** The declaration integriq syncs, read from the repository. */
 const declaration = JSON.parse(
-	readFileSync(join(__dirname, '..', '..', 'lib', 'Settings', 'connections.json'), 'utf8'),
-) as { app: string, connections: Array<Record<string, any>> }
+	readFileSync(
+		join(__dirname, '..', '..', 'lib', 'Settings', 'connections.json'),
+		'utf8',
+	),
+) as { app: string; connections: Array<Record<string, any>> }
 
 const DECLARED_KEYS = declaration.connections.map((c) => String(c.key))
 
@@ -113,11 +115,18 @@ test.describe('Shillinq: External Connections', () => {
 	/**
 	 * @e2e external-connections::without-integriq-the-page-says-what-is-missing
 	 */
-	test('without integriq, the page names Integriq and the menu hides the entry', async ({ page }) => {
+	test('without integriq, the page names Integriq and the menu hides the entry', async ({
+		page,
+	}) => {
 		const state = await openExternalConnections(page)
-		test.skip(state === 'listed', 'integriq is installed on this instance; the listing tests cover it')
+		test.skip(
+			state === 'listed',
+			'integriq is installed on this instance; the listing tests cover it',
+		)
 
-		await expect(page.locator('[data-testid="cn-page-dependency-missing"]')).toContainText(/Integriq/)
+		await expect(
+			page.locator('[data-testid="cn-page-dependency-missing"]'),
+		).toContainText(/Integriq/)
 		await expect(page.locator('a[href*="/external-adapters"]')).toHaveCount(0)
 	})
 
@@ -125,7 +134,10 @@ test.describe('Shillinq: External Connections', () => {
 	 * @e2e external-connections::the-menu-opens-the-page-on-shillinqs-own-rows
 	 * @e2e external-connections::an-uncalled-family-reads-not-available-and-says-why
 	 */
-	test('lists the fifteen declared families from integriq, in order', async ({ page, request }) => {
+	test('lists the fifteen declared families from integriq, in order', async ({
+		page,
+		request,
+	}) => {
 		const state = await openExternalConnections(page)
 		test.skip(state === 'missing', 'integriq is not installed on this instance')
 
@@ -138,7 +150,9 @@ test.describe('Shillinq: External Connections', () => {
 
 		for (const connection of declaration.connections) {
 			await expect(
-				page.getByRole('row', { name: new RegExp(String(connection.title), 'i') }),
+				page.getByRole('row', {
+					name: new RegExp(String(connection.title), 'i'),
+				}),
 			).toBeVisible()
 		}
 	})
@@ -146,15 +160,19 @@ test.describe('Shillinq: External Connections', () => {
 	/**
 	 * @e2e external-connections::only-the-treasury-row-links-to-a-shillinq-page
 	 */
-	test('offers Open settings on the treasury row only', async ({ page, request }) => {
+	test('offers Open settings on the treasury row only', async ({
+		page,
+		request,
+	}) => {
 		const state = await openExternalConnections(page)
 		test.skip(state === 'missing', 'integriq is not installed on this instance')
 
 		const byKey = await rowsByKey(request)
 		for (const key of DECLARED_KEYS) {
-			const expected = key === 'treasury-rates'
-				? `${APP}/bookkeeping/multi-currency/fx-rates/admin`
-				: ''
+			const expected =
+				key === 'treasury-rates'
+					? `${APP}/bookkeeping/multi-currency/fx-rates/admin`
+					: ''
 			expect(String(byKey[key].settingsUrl || ''), key).toBe(expected)
 		}
 
@@ -165,7 +183,10 @@ test.describe('Shillinq: External Connections', () => {
 	/**
 	 * @e2e external-connections::a-log-only-mollie-adapter-reads-simulated
 	 */
-	test('reads Simulated for Mollie once shillinq has reported', async ({ page, request }) => {
+	test('reads Simulated for Mollie once shillinq has reported', async ({
+		page,
+		request,
+	}) => {
 		const state = await openExternalConnections(page)
 		test.skip(state === 'missing', 'integriq is not installed on this instance')
 
@@ -181,7 +202,9 @@ test.describe('Shillinq: External Connections', () => {
 	/**
 	 * @e2e external-connections::add-integration-goes-to-integriq
 	 */
-	test('sends Add integration to integriq instead of offering a form', async ({ page }) => {
+	test('sends Add integration to integriq instead of offering a form', async ({
+		page,
+	}) => {
 		const state = await openExternalConnections(page)
 		test.skip(state === 'missing', 'integriq is not installed on this instance')
 
@@ -189,8 +212,14 @@ test.describe('Shillinq: External Connections', () => {
 
 		await page.locator('[data-testid="cn-actions"] button').first().click()
 		await Promise.all([
-			page.waitForURL(/\/apps\/integriq\/connections\?app=shillinq&link=1$/, { timeout: 30_000 }),
-			page.getByRole('menuitem', { name: /Add integration|Integratie toevoegen/i }).click(),
+			page.waitForURL(/\/apps\/integriq\/connections\?app=shillinq&link=1$/, {
+				timeout: 30_000,
+			}),
+			page
+				.getByRole('menuitem', {
+					name: /Add integration|Integratie toevoegen/i,
+				})
+				.click(),
 		])
 	})
 
@@ -198,7 +227,9 @@ test.describe('Shillinq: External Connections', () => {
 	 * @e2e external-connections::the-roster-endpoint-is-gone
 	 */
 	test('no longer serves the adapter roster', async ({ request }) => {
-		const res = await request.get('/index.php/apps/shillinq/api/admin/external-adapters')
+		const res = await request.get(
+			'/index.php/apps/shillinq/api/admin/external-adapters',
+		)
 		const body = await res.text()
 		expect(body).not.toContain('"adapters"')
 	})
