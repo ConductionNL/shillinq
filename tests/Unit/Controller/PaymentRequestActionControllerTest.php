@@ -23,6 +23,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\PaymentRequestActionController;
+use OCA\Shillinq\Integration\PaymentRequestLeafProvider;
+use OCA\Shillinq\Service\FeeScheduleService;
+use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\AppFramework\Http;
@@ -82,16 +85,28 @@ final class PaymentRequestActionControllerTest extends TestCase {
 	/**
 	 * Build the controller under test.
 	 *
-	 * @param array<int, array<string, mixed>> $stored Stored rows.
+	 * @param array<string, array<int, array<string, mixed>>> $stored Rows per schema slug.
 	 * @param bool $mayAdminister Whether the caller carries payment.administer.
+	 * @param bool $mayRequest Whether the caller carries payment.request.
 	 *
 	 * @return PaymentRequestActionController The controller.
 	 */
-	private function makeController(array $stored, bool $mayAdminister): PaymentRequestActionController {
+	private function makeController(
+		array $stored,
+		bool $mayAdminister,
+		bool $mayRequest = true,
+	): PaymentRequestActionController {
 		$saved = &$this->saved;
 		$double = new class($stored, $saved) {
 			/**
-			 * @param array<int, array<string, mixed>> $stored Stored rows.
+			 * The schema the fluent chain last selected.
+			 *
+			 * @var string
+			 */
+			private string $schema = '';
+
+			/**
+			 * @param array<string, array<int, array<string, mixed>>> $stored Rows per schema slug.
 			 * @param array<int, array<string, mixed>> $saved Sink.
 			 */
 			public function __construct(
@@ -105,6 +120,7 @@ final class PaymentRequestActionControllerTest extends TestCase {
 			}
 
 			public function setSchema(string $schema): static {
+				$this->schema = $schema;
 				return $this;
 			}
 
@@ -114,7 +130,7 @@ final class PaymentRequestActionControllerTest extends TestCase {
 			 * @return array<int, array<string, mixed>>
 			 */
 			public function findAll(array $params = []): array {
-				return $this->stored;
+				return ($this->stored[$this->schema] ?? []);
 			}
 
 			/**
@@ -132,10 +148,13 @@ final class PaymentRequestActionControllerTest extends TestCase {
 
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturnCallback(
-			static function (string $app, string $key, string $default = '') use ($mayAdminister): string {
+			static function (string $app, string $key, string $default = '') use ($mayAdminister, $mayRequest): string {
 				if ($key === PaymentActionAuthorizer::CONFIG_ACTION_GROUPS) {
 					return json_encode(
-						[PaymentActionAuthorizer::ACTION_ADMINISTER => ($mayAdminister === true ? ['finance'] : ['treasury'])],
+						[
+							PaymentActionAuthorizer::ACTION_ADMINISTER => ($mayAdminister === true ? ['finance'] : ['treasury']),
+							PaymentActionAuthorizer::ACTION_REQUEST => ($mayRequest === true ? ['finance'] : ['treasury']),
+						],
 						JSON_THROW_ON_ERROR
 					);
 				}
@@ -164,14 +183,27 @@ final class PaymentRequestActionControllerTest extends TestCase {
 			}
 		);
 
+		$objectService = new DuckObjectServiceAdapter(inner: $double);
+		$authorizer = new PaymentActionAuthorizer(appConfig: $appConfig, userSession: $session, groupManager: $groupManager);
+		$logger = $this->createMock(LoggerInterface::class);
+		$feeSchedules = new FeeScheduleService(objectService: $objectService, appConfig: $appConfig, logger: $logger);
+
 		return new PaymentRequestActionController(
 			'shillinq',
 			$this->createMock(IRequest::class),
-			new DuckObjectServiceAdapter(inner: $double),
-			new PaymentActionAuthorizer(appConfig: $appConfig, userSession: $session, groupManager: $groupManager),
+			$objectService,
+			$authorizer,
 			$mailer,
 			$appConfig,
-			$this->createMock(LoggerInterface::class),
+			$logger,
+			$feeSchedules,
+			new PaymentRequestLeafProvider(
+				objectService: $objectService,
+				validator: new ObjectPaymentRequestValidator(),
+				appConfig: $appConfig,
+				authorizer: $authorizer,
+				feeSchedules: $feeSchedules,
+			),
 		);
 	}//end makeController()
 
@@ -184,7 +216,7 @@ final class PaymentRequestActionControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testHandlerWithoutTheActionCannotSendTheLink(): void {
-		$controller = $this->makeController([$this->storedRequest()], mayAdminister: false);
+		$controller = $this->makeController(['PaymentRequest' => [$this->storedRequest()]], mayAdminister: false);
 
 		$response = $controller->send('pr-1');
 
@@ -199,7 +231,7 @@ final class PaymentRequestActionControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testHandlerWithoutTheActionCannotSettle(): void {
-		$controller = $this->makeController([$this->storedRequest()], mayAdminister: false);
+		$controller = $this->makeController(['PaymentRequest' => [$this->storedRequest()]], mayAdminister: false);
 
 		$response = $controller->settle('pr-1', 'PIN-2026-0001', 'pin');
 
@@ -214,7 +246,7 @@ final class PaymentRequestActionControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testPermittedHandlerSendsTheLinkAndRecordsIt(): void {
-		$controller = $this->makeController([$this->storedRequest()], mayAdminister: true);
+		$controller = $this->makeController(['PaymentRequest' => [$this->storedRequest()]], mayAdminister: true);
 
 		$response = $controller->send('pr-1');
 
@@ -230,7 +262,7 @@ final class PaymentRequestActionControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testARequestWithoutADebtorEmailIsNotSent(): void {
-		$controller = $this->makeController([$this->storedRequest(['debtor' => ['name' => 'J. de Vries']])], mayAdminister: true);
+		$controller = $this->makeController(['PaymentRequest' => [$this->storedRequest(['debtor' => ['name' => 'J. de Vries']])]], mayAdminister: true);
 
 		$response = $controller->send('pr-1');
 
@@ -245,7 +277,7 @@ final class PaymentRequestActionControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testSettlementNeedsAReference(): void {
-		$controller = $this->makeController([$this->storedRequest()], mayAdminister: true);
+		$controller = $this->makeController(['PaymentRequest' => [$this->storedRequest()]], mayAdminister: true);
 
 		$response = $controller->settle('pr-1', '   ', 'pin');
 
@@ -260,7 +292,7 @@ final class PaymentRequestActionControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testPermittedHandlerSettlesByOtherMeans(): void {
-		$controller = $this->makeController([$this->storedRequest()], mayAdminister: true);
+		$controller = $this->makeController(['PaymentRequest' => [$this->storedRequest()]], mayAdminister: true);
 
 		$response = $controller->settle('pr-1', 'PIN-2026-0001', 'pin');
 
@@ -279,7 +311,7 @@ final class PaymentRequestActionControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testAnAlreadyCapturedRequestIsNotSettledAgain(): void {
-		$controller = $this->makeController([$this->storedRequest(['state' => 'captured'])], mayAdminister: true);
+		$controller = $this->makeController(['PaymentRequest' => [$this->storedRequest(['state' => 'captured'])]], mayAdminister: true);
 
 		$response = $controller->settle('pr-1', 'PIN-2026-0002', 'pin');
 
@@ -299,4 +331,114 @@ final class PaymentRequestActionControllerTest extends TestCase {
 
 		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
 	}//end testAnUnknownRequestIsNotFound()
+	/**
+	 * A published fee for the case's type.
+	 *
+	 * @param array<string, mixed> $overrides Fields to change.
+	 *
+	 * @return array<string, mixed> The schedule row.
+	 */
+	private function feeSchedule(array $overrides = []): array {
+		return array_merge(
+			[
+				'id' => 'fs-1',
+				'targetApp' => 'dossiq',
+				'register' => 'dossiq',
+				'schema' => 'Zaak',
+				'typeProperty' => 'caseType',
+				'typeValue' => 'bouwvergunning',
+				'amount' => 245.0,
+				'currency' => 'EUR',
+				'payAtIntake' => 'required',
+				'legalBasis' => 'Legesverordening 2026, artikel 2.3.1',
+				'validFrom' => '2020-01-01',
+				'validTo' => '',
+				'intakeChannel' => '',
+			],
+			$overrides
+		);
+	}//end feeSchedule()
+
+	/**
+	 * A clerk raises the published leges in one action, and the amount comes from
+	 * the schedule rather than from the request body (REQ-SOPR-008).
+	 *
+	 * @return void
+	 */
+	public function testAClerkRaisesThePublishedLeges(): void {
+		$controller = $this->makeController(
+			[
+				'Zaak' => [['id' => 'zaak-7', 'caseType' => 'bouwvergunning']],
+				'FeeSchedule' => [$this->feeSchedule()],
+			],
+			mayAdminister: true,
+		);
+
+		$response = $controller->raiseLeges('dossiq', 'Zaak', 'zaak-7');
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+
+		$data = $response->getData();
+		self::assertSame(245.0, $data['request']['amount']);
+		self::assertSame('leges', $data['request']['requestType']);
+		self::assertStringContainsString('Legesverordening 2026', (string)$data['request']['description']);
+	}//end testAClerkRaisesThePublishedLeges()
+
+	/**
+	 * A type with no published fee answers 404 and raises nothing, rather than
+	 * inventing a zero-amount request the citizen can never pay.
+	 *
+	 * @return void
+	 */
+	public function testATypeWithoutAPublishedFeeRaisesNothing(): void {
+		$controller = $this->makeController(
+			[
+				'Zaak' => [['id' => 'zaak-8', 'caseType' => 'melding']],
+				'FeeSchedule' => [$this->feeSchedule()],
+			],
+			mayAdminister: true,
+		);
+
+		$response = $controller->raiseLeges('dossiq', 'Zaak', 'zaak-8');
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		self::assertSame([], $this->saved);
+	}//end testATypeWithoutAPublishedFeeRaisesNothing()
+
+	/**
+	 * A clerk without the `payment.request` action is refused. This is the least
+	 * privileged principal that should be refused here: someone who may see the
+	 * case and may administer payments generally, but was not granted the right
+	 * to raise a demand for money.
+	 *
+	 * @return void
+	 */
+	public function testAClerkWithoutTheRequestActionIsRefused(): void {
+		$controller = $this->makeController(
+			[
+				'Zaak' => [['id' => 'zaak-7', 'caseType' => 'bouwvergunning']],
+				'FeeSchedule' => [$this->feeSchedule()],
+			],
+			mayAdminister: true,
+			mayRequest: false,
+		);
+
+		$response = $controller->raiseLeges('dossiq', 'Zaak', 'zaak-7');
+
+		self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		self::assertSame([], $this->saved);
+	}//end testAClerkWithoutTheRequestActionIsRefused()
+
+	/**
+	 * A call that does not name its object is refused before anything is read.
+	 *
+	 * @return void
+	 */
+	public function testRaisingLegesNeedsAnObject(): void {
+		$controller = $this->makeController([], mayAdminister: true);
+
+		$response = $controller->raiseLeges('dossiq', 'Zaak', '');
+
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+	}//end testRaisingLegesNeedsAnObject()
 }//end class

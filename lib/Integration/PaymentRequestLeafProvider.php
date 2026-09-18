@@ -38,6 +38,7 @@ namespace OCA\Shillinq\Integration;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Service\Integration\IntegrationProvider;
+use OCA\Shillinq\Service\FeeScheduleService;
 use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
 use OCP\IAppConfig;
@@ -77,6 +78,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	 * @param ObjectPaymentRequestValidator $validator The conditional shape and the uniqueness invariant.
 	 * @param IAppConfig $appConfig App config, for the register slug.
 	 * @param PaymentActionAuthorizer $authorizer Whether the caller carries payment.request.
+	 * @param FeeScheduleService $feeSchedules The published fee for the host object's type.
 	 *
 	 * @return void
 	 */
@@ -85,6 +87,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 		private readonly ObjectPaymentRequestValidator $validator,
 		private readonly IAppConfig $appConfig,
 		private readonly PaymentActionAuthorizer $authorizer,
+		private readonly FeeScheduleService $feeSchedules,
 	) {
 	}//end __construct()
 
@@ -187,9 +190,10 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	 * @param string $objectId The host object's id.
 	 * @param array<string, mixed> $filters Optional list filters; unknown keys are ignored.
 	 *
-	 * @return array<int, array<string, mixed>> The requests.
+	 * @return array<string, mixed> The `{items, total, nextCursor, fee}` envelope.
 	 *
 	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-003)
+	 * @spec openspec/changes/leges-at-intake/specs/object-payment-requests/spec.md (REQ-SOPR-008)
 	 */
 	public function list(string $register, string $schema, string $objectId, array $filters = []): array {
 		$requests = $this->requestsOn(register: $register, schema: $schema, objectId: $objectId);
@@ -210,8 +214,54 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 			];
 		}
 
-		return $projected;
+		// The paginated envelope, plus the published fee for this object's type
+		// (REQ-SOPR-008). The fee is what lets the panel offer "Raise leges
+		// request" with a real amount instead of an empty form; a desk clerk
+		// who has to look the tariff up somewhere else is the failure this
+		// closes.
+		return [
+			'items' => $projected,
+			'total' => count($projected),
+			'nextCursor' => null,
+			'fee' => $this->feeFor(register: $register, schema: $schema, objectId: $objectId),
+		];
 	}//end list()
+
+	/**
+	 * The published fee for the host object's type, or null when it carries none.
+	 *
+	 * Never throws: a fee that cannot be resolved must not take the request list
+	 * down with it, because the list is the part a handler actually needs.
+	 *
+	 * @param string $register The host object's register.
+	 * @param string $schema The host object's schema.
+	 * @param string $objectId The host object's id.
+	 *
+	 * @return array<string, mixed>|null The schedule, or null.
+	 *
+	 * @spec openspec/changes/leges-at-intake/specs/object-payment-requests/spec.md (REQ-SOPR-008)
+	 */
+	private function feeFor(string $register, string $schema, string $objectId): ?array {
+		try {
+			$rows = $this->objectService
+				->setRegister($register)
+				->setSchema($schema)
+				->findAll(['filters' => ['id' => $objectId], 'limit' => 1]);
+
+			if (is_array($rows) === false || $rows === [] || is_array($rows[0]) === false) {
+				return null;
+			}
+
+			return $this->feeSchedules->resolveForObject(
+				register: $register,
+				schema: $schema,
+				object: $rows[0],
+				intakeChannel: 'desk',
+			);
+		} catch (\Throwable $e) {
+			return null;
+		}
+	}//end feeFor()
 
 	/**
 	 * One request by id, scoped to the host object so a request on another
@@ -227,7 +277,8 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	 * @throws RuntimeException When no such request stands on this object.
 	 */
 	public function get(string $register, string $schema, string $objectId, string $entityId): array {
-		foreach ($this->list(register: $register, schema: $schema, objectId: $objectId) as $request) {
+		$listed = $this->list(register: $register, schema: $schema, objectId: $objectId);
+		foreach ($listed['items'] as $request) {
 			if ($request['id'] === $entityId) {
 				return $request;
 			}

@@ -748,6 +748,12 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'paymentRequestAction#send', 'url' => '/api/payment-requests/{id}/send', 'verb' => 'POST'],
             ['name' => 'paymentRequestAction#settle', 'url' => '/api/payment-requests/{id}/settle', 'verb' => 'POST'],
 
+            // Raise the published leges for an object's type in one action
+            // (leges-at-intake, REQ-SOPR-008). The amount comes from the fee
+            // schedule, never from the request body: a desk clerk should not be
+            // retyping a tariff out of a verordening.
+            ['name' => 'paymentRequestAction#raiseLeges', 'url' => '/api/payment-requests/leges', 'verb' => 'POST'],
+
             // Portal payment initiation (portal-payment-initiation, ADR-046 contract
             // v2 A6). Receives portaliq's server-to-server forward of the `pay`
             // endpoint-forward action declared on the customer manifest

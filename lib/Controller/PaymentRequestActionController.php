@@ -32,6 +32,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Integration\PaymentRequestLeafProvider;
+use OCA\Shillinq\Service\FeeScheduleService;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -65,6 +67,8 @@ class PaymentRequestActionController extends Controller {
 	 * @param IMailer $mailer Nextcloud's mailer.
 	 * @param IAppConfig $appConfig App config, for the register slug.
 	 * @param LoggerInterface $logger Logger.
+	 * @param FeeScheduleService $feeSchedules The published fees.
+	 * @param PaymentRequestLeafProvider $leaf The leaf that appends the request.
 	 *
 	 * @return void
 	 */
@@ -76,6 +80,8 @@ class PaymentRequestActionController extends Controller {
 		private readonly IMailer $mailer,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly FeeScheduleService $feeSchedules,
+		private readonly PaymentRequestLeafProvider $leaf,
 	) {
 		parent::__construct($appName, $request);
 	}//end __construct()
@@ -219,4 +225,113 @@ class PaymentRequestActionController extends Controller {
 	private function registerSlug(): string {
 		return $this->appConfig->getValueString('shillinq', 'register', 'shillinq');
 	}//end registerSlug()
+	/**
+	 * Raise a leges request on an object for the fee its type has published.
+	 *
+	 * The desk half of REQ-SOPR-008: a clerk who has just created a case at the
+	 * counter sees the amount and raises the request in one action, rather than
+	 * looking the tariff up in a verordening and typing it in. The amount is
+	 * therefore never taken from the request body; it comes from the schedule.
+	 *
+	 * @param string $register The object's register slug.
+	 * @param string $schema The object's schema slug.
+	 * @param string $objectId The object's id.
+	 * @param string $intakeChannel Where the application came in; `desk` by default.
+	 *
+	 * @return JSONResponse The created request, or the refusal.
+	 *
+	 * @spec openspec/changes/leges-at-intake/specs/object-payment-requests/spec.md (REQ-SOPR-008)
+	 */
+	#[NoAdminRequired]
+	public function raiseLeges(
+		string $register = '',
+		string $schema = '',
+		string $objectId = '',
+		string $intakeChannel = 'desk',
+	): JSONResponse {
+		if ($register === '' || $schema === '' || $objectId === '') {
+			return new JSONResponse(['error' => 'Name the register, the schema and the object to raise the fee on.'], Http::STATUS_BAD_REQUEST);
+		}
+
+		$object = $this->loadObject(register: $register, schema: $schema, objectId: $objectId);
+		if ($object === null) {
+			return new JSONResponse(['error' => 'No such object.'], Http::STATUS_NOT_FOUND);
+		}
+
+		$fee = $this->feeSchedules->resolveForObject(
+			register: $register,
+			schema: $schema,
+			object: $object,
+			intakeChannel: $intakeChannel,
+		);
+
+		if ($fee === null) {
+			return new JSONResponse(['error' => 'This type has no published fee, so there is nothing to raise.'], Http::STATUS_NOT_FOUND);
+		}
+
+		$amount = ($fee['amount'] ?? null);
+		if (is_numeric($amount) === false || (float)$amount <= 0.0) {
+			return new JSONResponse(
+				['error' => 'A fee is published for this type but no amount can be read for it.'],
+				Http::STATUS_CONFLICT
+			);
+		}
+
+		try {
+			$created = $this->leaf->create(
+				$register,
+				$schema,
+				$objectId,
+				[
+					'requestType' => 'leges',
+					'amount' => (float)$amount,
+					'currency' => (string)($fee['currency'] ?? 'EUR'),
+					'description' => $this->describeFee($fee),
+				]
+			);
+		} catch (\Throwable $e) {
+			$status = (str_contains($e->getMessage(), '403') === true ? Http::STATUS_FORBIDDEN : Http::STATUS_CONFLICT);
+
+			return new JSONResponse(['error' => $e->getMessage()], $status);
+		}
+
+		return new JSONResponse(['request' => $created, 'fee' => $fee]);
+	}//end raiseLeges()
+
+	/**
+	 * Read one object of any register and schema.
+	 *
+	 * @param string $register The register slug.
+	 * @param string $schema The schema slug.
+	 * @param string $objectId The object id.
+	 *
+	 * @return array<string, mixed>|null The object, or null.
+	 */
+	private function loadObject(string $register, string $schema, string $objectId): ?array {
+		$rows = $this->objectService
+			->setRegister($register)
+			->setSchema($schema)
+			->findAll(['filters' => ['id' => $objectId], 'limit' => 1]);
+
+		if (is_array($rows) === false || $rows === [] || is_array($rows[0]) === false) {
+			return null;
+		}
+
+		return $rows[0];
+	}//end loadObject()
+
+	/**
+	 * The sentence a citizen reads on the checkout, naming the regulation the fee
+	 * is published in where the schedule says so.
+	 *
+	 * @param array<string, mixed> $fee The resolved schedule.
+	 *
+	 * @return string The description.
+	 */
+	private function describeFee(array $fee): string {
+		$type = (string)($fee['typeValue'] ?? 'application');
+		$basis = (string)($fee['legalBasis'] ?? '');
+
+		return ($basis === '' ? sprintf('Leges %s', $type) : sprintf('Leges %s (%s)', $type, $basis));
+	}//end describeFee()
 }//end class
