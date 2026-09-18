@@ -26,7 +26,6 @@
  */
 
 import { expect, test } from '@playwright/test'
-
 import { resolveBaseURL } from './base-url.ts'
 
 const LEAF_ID = 'shillinq-payment-requests'

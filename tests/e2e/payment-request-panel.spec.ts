@@ -23,13 +23,14 @@
  */
 
 import { expect, test } from '@playwright/test'
-
 import { resolveBaseURL } from './base-url.ts'
 
-const SEND = (id: string) =>
-	`/index.php/apps/shillinq/api/payment-requests/${id}/send`
-const SETTLE = (id: string) =>
-	`/index.php/apps/shillinq/api/payment-requests/${id}/settle`
+function SEND (id: string) {
+  return `/index.php/apps/shillinq/api/payment-requests/${id}/send`
+}
+function SETTLE (id: string) {
+  return `/index.php/apps/shillinq/api/payment-requests/${id}/settle`
+}
 const HEADERS = { 'OCS-APIRequest': 'true' }
 
 /**
