@@ -38,17 +38,15 @@ import { resolveBaseURL } from './base-url.ts'
 
 const CATALOGUE = '/index.php/apps/openregister/api/integrations'
 const CONTRACT_LEAF = 'shillinq-contracts'
-function SETTLE (id: string) {
-  return `/index.php/apps/shillinq/api/payment-requests/${id}/settle`
+function SETTLE(id: string) {
+	return `/index.php/apps/shillinq/api/payment-requests/${id}/settle`
 }
 const HEADERS = { 'OCS-APIRequest': 'true' }
 
 const ABSENT_ID = `pr-e2e-${Date.now()}`
 
 test.describe('fees-payments-and-the-contract-register', () => {
-	test('the contract leaf is on OpenRegister\'s catalogue', async ({
-		request,
-	}) => {
+	test("the contract leaf is on OpenRegister's catalogue", async ({ request }) => {
 		const response = await request.get(CATALOGUE, { headers: HEADERS })
 
 		test.skip(response.status() === 404, 'OpenRegister is not installed here')
@@ -59,7 +57,7 @@ test.describe('fees-payments-and-the-contract-register', () => {
 			Record<string, unknown>
 		>
 
-		expect(entries.map(entry => String(entry.id ?? ''))).toContain(
+		expect(entries.map((entry) => String(entry.id ?? ''))).toContain(
 			CONTRACT_LEAF,
 		)
 	})
@@ -97,7 +95,11 @@ test.describe('fees-payments-and-the-contract-register', () => {
 		// not be read, which sends a clerk looking at the wrong thing.
 		const response = await request.post(SETTLE(ABSENT_ID), {
 			headers: HEADERS,
-			data: { settlementReference: 'PIN-E2E-0002', method: 'pin', amount: 245 },
+			data: {
+				settlementReference: 'PIN-E2E-0002',
+				method: 'pin',
+				amount: 245,
+			},
 		})
 
 		test.skip(response.status() === 401, 'this run has no authenticated session')

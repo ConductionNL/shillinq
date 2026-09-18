@@ -192,16 +192,24 @@ class PaymentRequestActionController extends Controller {
 		$ownAmount = $this->settlements->amountOf(request: $request);
 		if ($amount <= 0.0 && $ownAmount === null) {
 			return new JSONResponse(
-				['error' => 'This payment request carries no amount that can be read, so a settlement cannot fall back to it. Record the amount that actually arrived.'],
+				[
+					'error' => 'This payment request carries no amount that can be read, so a settlement '
+						.'cannot fall back to it. Record the amount that actually arrived.',
+				],
 				Http::STATUS_BAD_REQUEST
 			);
+		}
+
+		$settlementAmount = $ownAmount;
+		if ($amount > 0.0) {
+			$settlementAmount = $amount;
 		}
 
 		try {
 			$settlement = $this->settlements->build(
 				input: [
 					'method' => $method,
-					'amount' => ($amount > 0.0 ? $amount : $ownAmount),
+					'amount' => $settlementAmount,
 					'reference' => $settlementReference,
 					'reason' => $reason,
 				],

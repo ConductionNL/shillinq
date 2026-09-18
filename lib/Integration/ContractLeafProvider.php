@@ -300,13 +300,13 @@ final class ContractLeafProvider implements IntegrationProvider {
 			'status' => $status,
 			'needsAttention' => in_array($status, self::ATTENTION_STATUSES, true),
 			'currency' => (string)($contract['currency'] ?? 'EUR'),
-			'totalContractValue' => $this->money($contract['totalContractValue'] ?? null),
+			'totalContractValue' => $this->money(value: ($contract['totalContractValue'] ?? null)),
 			// Null, never 0.00. A contract that has not been rolled up yet, or
 			// one whose roll-up came back incomplete, has no remaining value;
 			// rendering that as 0.00 says the budget is spent and stops work
 			// that is in fact funded (REQ-FPCR-005).
-			'incurredCost' => $this->money($contract['incurredCost'] ?? null),
-			'remainingValue' => $this->money($contract['remainingValue'] ?? null),
+			'incurredCost' => $this->money(value: ($contract['incurredCost'] ?? null)),
+			'remainingValue' => $this->money(value: ($contract['remainingValue'] ?? null)),
 			'incurredCostComputedAt' => (string)($contract['incurredCostComputedAt'] ?? ''),
 			'incurredCostComplete' => ($contract['incurredCostComplete'] ?? null) !== false,
 			'incurredCostUnreadableLinks' => (int)($contract['incurredCostUnreadableLinks'] ?? 0),
@@ -326,7 +326,7 @@ final class ContractLeafProvider implements IntegrationProvider {
 		}
 
 		return (float)$value;
-	}//end project()
+	}//end money()
 
 	/**
 	 * Every readable contract that names this object among its linked objects.

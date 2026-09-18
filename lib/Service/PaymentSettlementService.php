@@ -193,12 +193,19 @@ final class PaymentSettlementService {
 	 *
 	 * @param array<string, mixed> $request The request.
 	 *
-	 * @return float The total.
+	 * @return float The total. Zero when a settlement cannot be read, because
+	 *               this signature cannot say "unknown"; report() can, and a
+	 *               caller that needs to tell the two apart asks that instead.
+	 *
+	 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-003)
 	 */
 	public function settledAmount(array $request): float {
-		$cents = $this->settledCents($request);
+		$cents = $this->settledCents(request: $request);
+		if ($cents === null) {
+			return 0.0;
+		}
 
-		return ($cents === null ? 0.0 : (float)($cents / 100));
+		return (float)($cents / 100);
 	}//end settledAmount()
 
 	/**
@@ -214,9 +221,12 @@ final class PaymentSettlementService {
 	 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-003)
 	 */
 	public function amountOf(array $request): ?float {
-		$cents = $this->cents($request['amount'] ?? null);
+		$cents = $this->cents(value: ($request['amount'] ?? null));
+		if ($cents === null) {
+			return null;
+		}
 
-		return ($cents === null ? null : (float)($cents / 100));
+		return (float)($cents / 100);
 	}//end amountOf()
 
 	/**
@@ -269,7 +279,7 @@ final class PaymentSettlementService {
 				return null;
 			}
 
-			$cents = $this->cents($settlement['amount'] ?? null);
+			$cents = $this->cents(value: ($settlement['amount'] ?? null));
 			if ($cents === null) {
 				return null;
 			}
@@ -296,8 +306,8 @@ final class PaymentSettlementService {
 	 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-003)
 	 */
 	public function report(array $request): array {
-		$dueCents = $this->cents($request['amount'] ?? null);
-		$settledCents = $this->settledCents($request);
+		$dueCents = $this->cents(value: ($request['amount'] ?? null));
+		$settledCents = $this->settledCents(request: $request);
 		$providerState = (string)($request['state'] ?? 'pending');
 
 		if ($dueCents === null || $settledCents === null) {
@@ -312,11 +322,16 @@ final class PaymentSettlementService {
 				return ['state' => self::REPORTED_UNPAYABLE, 'settled' => 0.0, 'due' => null, 'over' => null];
 			}
 
+			// What IS readable is still reported: a counter payment that was
+			// recorded happened, whatever the request says it owes.
+			$settledSoFar = null;
+			if ($settledCents !== null) {
+				$settledSoFar = (float)($settledCents / 100);
+			}
+
 			return [
 				'state' => self::REPORTED_INDETERMINATE,
-				// What IS readable is still reported: a counter payment that
-				// was recorded happened, whatever the request says it owes.
-				'settled' => ($settledCents === null ? null : (float)($settledCents / 100)),
+				'settled' => $settledSoFar,
 				'due' => null,
 				'over' => null,
 			];
