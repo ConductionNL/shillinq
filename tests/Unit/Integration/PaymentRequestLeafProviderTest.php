@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Integration;
 
 use InvalidArgumentException;
 use OCA\Shillinq\Integration\PaymentRequestLeafProvider;
+use OCA\Shillinq\Service\FeeScheduleService;
 use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
@@ -32,6 +33,7 @@ use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 /**
@@ -140,14 +142,21 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 			static fn (string $uid, string $group): bool => in_array($group, $groups, true)
 		);
 
+		$objectService = new DuckObjectServiceAdapter(inner: $this->objectServiceDouble($stored));
+
 		return new PaymentRequestLeafProvider(
-			objectService: new DuckObjectServiceAdapter(inner: $this->objectServiceDouble($stored)),
+			objectService: $objectService,
 			validator: new ObjectPaymentRequestValidator(),
 			appConfig: $appConfig,
 			authorizer: new PaymentActionAuthorizer(
 				appConfig: $appConfig,
 				userSession: $session,
 				groupManager: $groupManager,
+			),
+			feeSchedules: new FeeScheduleService(
+				objectService: $objectService,
+				appConfig: $appConfig,
+				logger: $this->createMock(LoggerInterface::class),
 			),
 		);
 	}//end makeProvider()
@@ -198,11 +207,13 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 			[$this->storedRequest('pr-1', 'zaak-7'), $this->storedRequest('pr-2', 'zaak-9')]
 		);
 
-		$rows = $provider->list('dossiq', 'Zaak', 'zaak-7');
+		$listed = $provider->list('dossiq', 'Zaak', 'zaak-7');
 
-		self::assertCount(1, $rows);
-		self::assertSame('pr-1', $rows[0]['id']);
-		self::assertSame('https://pay.example/pr-1', $rows[0]['paymentLink']);
+		self::assertCount(1, $listed['items']);
+		self::assertSame(1, $listed['total']);
+		self::assertSame('pr-1', $listed['items'][0]['id']);
+		self::assertSame('https://pay.example/pr-1', $listed['items'][0]['paymentLink']);
+		self::assertArrayHasKey('fee', $listed);
 	}//end testListIsScopedToTheHostObject()
 
 	/**

@@ -20,6 +20,7 @@
  *
  * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md
  * @e2e object-payment-requests/requirement-a-panel-shows-and-acts-on-the-requests-req-sopr-004/a-handler-sends-the-link-from-the-case
+ * @e2e object-payment-requests/requirement-the-desk-sees-the-fee-and-raises-it-in-one-click-req-sopr-008/a-clerk-raises-leges-after-a-desk-intake
  */
 
 import { expect, test } from '@playwright/test'
@@ -31,6 +32,7 @@ function SEND (id: string) {
 function SETTLE (id: string) {
   return `/index.php/apps/shillinq/api/payment-requests/${id}/settle`
 }
+const RAISE_LEGES = '/index.php/apps/shillinq/api/payment-requests/leges'
 const HEADERS = { 'OCS-APIRequest': 'true' }
 
 /**
@@ -78,5 +80,30 @@ test.describe('case-payment-requests — the panel actions', () => {
 		expect(response.status()).not.toBe(200)
 
 		await anonymous.dispose()
+	})
+
+	test('the desk can ask for the published fee, and is told when there is none', async ({
+		request,
+	}) => {
+		// The amount is never in the body: a clerk who could type it would be
+		// back to reading a tariff out of a verordening, which is the whole gap
+		// this closes. So the only thing sent is which object to raise it on.
+		const response = await request.post(RAISE_LEGES, {
+			headers: HEADERS,
+			data: {
+				register: 'dossiq',
+				schema: 'Zaak',
+				objectId: `zaak-e2e-${Date.now()}`,
+			},
+		})
+
+		expect(
+			response.headers()['content-type'] ?? '',
+			'the leges route did not answer JSON',
+		).toContain('application/json')
+
+		// On a CI stack with no dossiq case and no published schedule the honest
+		// answer is 404 with a reason, not a request for an invented amount.
+		expect([200, 400, 403, 404, 409]).toContain(response.status())
 	})
 })
