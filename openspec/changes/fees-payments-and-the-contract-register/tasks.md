@@ -20,6 +20,8 @@
 - [x] 3.2 Derive the reported state from the provider state and the settlements, and report an overpayment explicitly.
 - [x] 3.3 Gate the append behind the payment administration right.
 - [x] 3.4 PHPUnit on the derivation, the overpayment case and the 403.
+- [x] 3.5 Derive in whole cents, and report that the sum could not be done rather than a due of zero when an amount cannot be read.
+- [x] 3.6 Refuse a settlement that omits its amount against a request whose own amount cannot be read.
 
 ## 4. The provider submission
 
@@ -35,6 +37,7 @@
 - [x] 5.2 Compute `incurredCost` in a scheduled job and stamp it with the computation time.
 - [x] 5.3 Recompute on unlink without touching the linked object.
 - [x] 5.4 PHPUnit on the roll-up and on the unlink.
+- [x] 5.5 Count the links that cannot be priced, mark the total incomplete, and withhold the remaining value rather than deriving it from a floor.
 
 ## 6. The contract leaf
 
