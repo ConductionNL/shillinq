@@ -222,6 +222,13 @@ final class LegesIntakeStepService {
 			'paymentGateway' => 'mollie',
 		];
 
+		if (isset($schedule['legalBasis']) === true && is_array($schedule['legalBasis']) === true) {
+			// The article the amount rests on travels with the request, so a
+			// citizen asked for money can see what it rests on and so can anyone
+			// checking the books later (REQ-FPCR-001).
+			$request['legalBasis'] = $schedule['legalBasis'];
+		}
+
 		if ((string)($schedule['revenueAccount'] ?? '') !== '') {
 			$request['revenueAccount'] = (string)$schedule['revenueAccount'];
 		}
@@ -306,13 +313,13 @@ final class LegesIntakeStepService {
 	 */
 	private function describe(array $context, array $schedule): string {
 		$type = (string)($context['typeValue'] ?? 'application');
-		$basis = (string)($schedule['legalBasis'] ?? '');
+		$citation = $this->feeSchedules->citation($schedule);
 
-		if ($basis === '') {
+		if ($citation === '') {
 			return sprintf('Leges %s', $type);
 		}
 
-		return sprintf('Leges %s (%s)', $type, $basis);
+		return sprintf('Leges %s (%s)', $type, $citation);
 	}//end describe()
 
 	/**

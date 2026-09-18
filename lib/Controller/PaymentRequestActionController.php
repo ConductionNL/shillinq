@@ -35,6 +35,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Integration\PaymentRequestLeafProvider;
 use OCA\Shillinq\Service\FeeScheduleService;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
+use OCA\Shillinq\Service\PaymentSettlementService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -69,6 +70,7 @@ class PaymentRequestActionController extends Controller {
 	 * @param LoggerInterface $logger Logger.
 	 * @param FeeScheduleService $feeSchedules The published fees.
 	 * @param PaymentRequestLeafProvider $leaf The leaf that appends the request.
+	 * @param PaymentSettlementService $settlements Money that arrived another way.
 	 *
 	 * @return void
 	 */
@@ -82,6 +84,7 @@ class PaymentRequestActionController extends Controller {
 		private readonly LoggerInterface $logger,
 		private readonly FeeScheduleService $feeSchedules,
 		private readonly PaymentRequestLeafProvider $leaf,
+		private readonly PaymentSettlementService $settlements,
 	) {
 		parent::__construct($appName, $request);
 	}//end __construct()
@@ -146,26 +149,35 @@ class PaymentRequestActionController extends Controller {
 	}//end send()
 
 	/**
-	 * Record that the money arrived another way: at the desk, by bank transfer,
-	 * through an ERP. The reference is typed by the handler and is what a later
-	 * bank reconciliation matches on, so it is required.
+	 * Record that the money arrived another way: at the counter in cash or by
+	 * pin, by bank transfer, or that the fee was waived.
+	 *
+	 * The record is APPENDED. The provider's own state is left exactly where it
+	 * was, so a capture that lands afterwards is still readable and the request
+	 * reports an overpayment instead of one record quietly replacing the other
+	 * and the refund never happening (REQ-FPCR-003).
 	 *
 	 * @param string $id The payment request id.
-	 * @param string $settlementReference The reference the handler types.
-	 * @param string $method How the money arrived.
+	 * @param string $settlementReference The evidence a bank reconciliation will match on.
+	 * @param string $method How the money arrived: cash, pin, bank-transfer, waived or other.
+	 * @param float $amount How much arrived; the request's own amount when zero.
+	 * @param string $reason Why, which a waiver needs.
 	 *
-	 * @return JSONResponse The outcome.
+	 * @return JSONResponse The derived report, or the refusal.
 	 *
 	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004)
+	 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-003)
 	 */
 	#[NoAdminRequired]
-	public function settle(string $id, string $settlementReference = '', string $method = 'other'): JSONResponse {
+	public function settle(
+		string $id,
+		string $settlementReference = '',
+		string $method = 'other',
+		float $amount = 0.0,
+		string $reason = '',
+	): JSONResponse {
 		if ($this->authorizer->may(PaymentActionAuthorizer::ACTION_ADMINISTER) === false) {
 			return new JSONResponse(['error' => 'Settling a payment request needs the payment.administer action.'], Http::STATUS_FORBIDDEN);
-		}
-
-		if (trim($settlementReference) === '') {
-			return new JSONResponse(['error' => 'A settlement by other means needs a reference.'], Http::STATUS_BAD_REQUEST);
 		}
 
 		$request = $this->loadRequest(id: $id);
@@ -173,18 +185,21 @@ class PaymentRequestActionController extends Controller {
 			return new JSONResponse(['error' => 'No payment request with that id.'], Http::STATUS_NOT_FOUND);
 		}
 
-		if ((string)($request['state'] ?? '') !== 'pending') {
-			return new JSONResponse(
-				['error' => sprintf('This request is %s, so it cannot be settled by other means.', (string)($request['state'] ?? 'unknown'))],
-				Http::STATUS_CONFLICT
+		try {
+			$settlement = $this->settlements->build(
+				input: [
+					'method' => $method,
+					'amount' => ($amount > 0.0 ? $amount : (float)($request['amount'] ?? 0)),
+					'reference' => $settlementReference,
+					'reason' => $reason,
+				],
+				actor: $this->authorizer->callerId(),
 			);
+		} catch (\InvalidArgumentException $e) {
+			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
 		}
 
-		$request['state'] = 'captured';
-		$request['capturedAt'] = gmdate('Y-m-d\TH:i:s\Z');
-		$request['settlementReference'] = trim($settlementReference);
-		$request['settlementMethod'] = $method;
-		$request['settledBy'] = $this->authorizer->callerId();
+		$request = $this->settlements->append(request: $request, settlement: $settlement);
 
 		$this->objectService->saveObject(
 			object: $request,
@@ -192,7 +207,9 @@ class PaymentRequestActionController extends Controller {
 			schema: self::SCHEMA,
 		);
 
-		return new JSONResponse(['settled' => true, 'state' => 'captured']);
+		return new JSONResponse(
+			['settled' => true, 'settlement' => $settlement, 'report' => $this->settlements->report($request)]
+		);
 	}//end settle()
 
 	/**
@@ -287,6 +304,7 @@ class PaymentRequestActionController extends Controller {
 					'amount' => (float)$amount,
 					'currency' => (string)($fee['currency'] ?? 'EUR'),
 					'description' => $this->describeFee($fee),
+					'legalBasis' => ($fee['legalBasis'] ?? null),
 				]
 			);
 		} catch (\Throwable $e) {
@@ -330,8 +348,8 @@ class PaymentRequestActionController extends Controller {
 	 */
 	private function describeFee(array $fee): string {
 		$type = (string)($fee['typeValue'] ?? 'application');
-		$basis = (string)($fee['legalBasis'] ?? '');
+		$citation = $this->feeSchedules->citation($fee);
 
-		return ($basis === '' ? sprintf('Leges %s', $type) : sprintf('Leges %s (%s)', $type, $basis));
+		return ($citation === '' ? sprintf('Leges %s', $type) : sprintf('Leges %s (%s)', $type, $citation));
 	}//end describeFee()
 }//end class

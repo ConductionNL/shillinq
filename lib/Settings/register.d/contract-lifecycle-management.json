@@ -282,6 +282,70 @@
             "x-external-register": "decidesk",
             "referenceType": "decision",
             "x-allow-create": true
+          },
+          "linkedObjects": {
+            "type": "array",
+            "description": "The objects raised under this contract: the cases a maintenance agreement covers, the orders placed against a framework. Held as semantic references (ADR-048), so the case app keeps its object and shillinq keeps the agreement, and neither copies the other (REQ-FPCR-005).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "description": "The semantic type of the linked object.",
+                  "example": "case",
+                  "title": "Type"
+                },
+                "register": {
+                  "type": "string",
+                  "description": "The register slug holding it.",
+                  "example": "dossiq",
+                  "title": "Register"
+                },
+                "schema": {
+                  "type": "string",
+                  "description": "Its schema slug.",
+                  "example": "Zaak",
+                  "title": "Schema"
+                },
+                "id": {
+                  "type": "string",
+                  "description": "Its identifier.",
+                  "example": "zaak-7",
+                  "title": "Id"
+                },
+                "label": {
+                  "type": "string",
+                  "description": "What to show for it, so the contract screen does not have to read every linked object to draw a list.",
+                  "example": "Onderhoud gemaal, 2026-0042",
+                  "title": "Label"
+                }
+              },
+              "required": [
+                "register",
+                "schema",
+                "id"
+              ]
+            },
+            "title": "Linked Objects"
+          },
+          "incurredCost": {
+            "type": "number",
+            "description": "What the linked objects have cost so far, rolled up by a scheduled job. Stored rather than computed on read because the roll-up crosses registers and a contract list would otherwise read every case in the fleet to draw one column (REQ-FPCR-005).",
+            "example": 18240.5,
+            "title": "Incurred Cost"
+          },
+          "incurredCostComputedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When incurredCost was last computed. A total with no timestamp cannot be told apart from a total that stopped updating, which is the failure this field exists to prevent.",
+            "example": "2026-09-18T03:00:00Z",
+            "title": "Incurred Cost Computed At"
+          },
+          "remainingValue": {
+            "type": "number",
+            "description": "totalContractValue minus incurredCost at the time of the roll-up. Reported through the contract leaf so a case app can show what is left without reading the ledger.",
+            "example": "81759.5",
+            "title": "Remaining Value"
           }
         },
         "x-openregister-calculations": {

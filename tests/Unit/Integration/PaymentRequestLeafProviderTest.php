@@ -27,6 +27,7 @@ use OCA\Shillinq\Integration\PaymentRequestLeafProvider;
 use OCA\Shillinq\Service\FeeScheduleService;
 use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
+use OCA\Shillinq\Service\PaymentSettlementService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
@@ -158,6 +159,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 				appConfig: $appConfig,
 				logger: $this->createMock(LoggerInterface::class),
 			),
+			settlements: new PaymentSettlementService(),
 		);
 	}//end makeProvider()
 

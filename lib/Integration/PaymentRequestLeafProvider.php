@@ -41,6 +41,7 @@ use OCA\OpenRegister\Service\Integration\IntegrationProvider;
 use OCA\Shillinq\Service\FeeScheduleService;
 use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
+use OCA\Shillinq\Service\PaymentSettlementService;
 use OCP\IAppConfig;
 use RuntimeException;
 
@@ -79,6 +80,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	 * @param IAppConfig $appConfig App config, for the register slug.
 	 * @param PaymentActionAuthorizer $authorizer Whether the caller carries payment.request.
 	 * @param FeeScheduleService $feeSchedules The published fee for the host object's type.
+	 * @param PaymentSettlementService $settlements Money that arrived another way, and the state it derives.
 	 *
 	 * @return void
 	 */
@@ -88,6 +90,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 		private readonly IAppConfig $appConfig,
 		private readonly PaymentActionAuthorizer $authorizer,
 		private readonly FeeScheduleService $feeSchedules,
+		private readonly PaymentSettlementService $settlements,
 	) {
 	}//end __construct()
 
@@ -211,6 +214,11 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 				'paymentLink' => (string)($request['paymentLink'] ?? ''),
 				'capturedAt' => (string)($request['capturedAt'] ?? ''),
 				'confirmationSummary' => (string)($request['confirmationSummary'] ?? ''),
+				// The provider's own `state` above is only half the truth once a
+				// counter payment exists. `reported` is the two together, which is
+				// what a handler is actually asking when they look (REQ-FPCR-003).
+				'reported' => $this->settlements->report($request),
+				'settlements' => (is_array($request['settlements'] ?? null) === true ? $request['settlements'] : []),
 			];
 		}
 

@@ -139,8 +139,69 @@ final class FeeScheduleService {
 			return null;
 		}
 
-		return $this->withResolvedAmount($match);
+		return $this->withResolvedAmount($this->applyChannelAmount($match, $intakeChannel));
 	}//end resolve()
+
+	/**
+	 * Take the amount for the intake channel out of the schedule's `amounts`
+	 * list, falling back to the default entry.
+	 *
+	 * A schedule written before `amounts` existed carries a flat `amount`, and
+	 * that is read as its default entry. This is the migration: no stored
+	 * schedule stops resolving the day `amounts` ships (REQ-FPCR-002).
+	 *
+	 * @param array<string, mixed> $schedule The schedule.
+	 * @param string $intakeChannel The channel the application came in through.
+	 *
+	 * @return array<string, mixed> The schedule with `amount`, `currency` and `amountChannel` set.
+	 *
+	 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-002)
+	 */
+	public function applyChannelAmount(array $schedule, string $intakeChannel): array {
+		$amounts = ($schedule['amounts'] ?? null);
+		if (is_array($amounts) === false || $amounts === []) {
+			$schedule['amountChannel'] = '';
+
+			return $schedule;
+		}
+
+		$default = null;
+		$match = null;
+		foreach ($amounts as $entry) {
+			if (is_array($entry) === false) {
+				continue;
+			}
+
+			$channel = (string)($entry['intakeChannel'] ?? '');
+			if ($channel === '') {
+				$default = ($default ?? $entry);
+				continue;
+			}
+
+			if ($intakeChannel !== '' && $channel === $intakeChannel) {
+				$match = $entry;
+				break;
+			}
+		}
+
+		$chosen = ($match ?? $default);
+		if ($chosen === null) {
+			// No default and no matching channel. assertNoOverlap refuses this at
+			// save, so reaching it means a schedule was written another way;
+			// leaving the amount off makes the caller report `unpriced` rather
+			// than charging some other channel's fee.
+			unset($schedule['amount']);
+			$schedule['amountChannel'] = 'none';
+
+			return $schedule;
+		}
+
+		$schedule['amount'] = (float)($chosen['amount'] ?? 0);
+		$schedule['currency'] = (string)($chosen['currency'] ?? ($schedule['currency'] ?? 'EUR'));
+		$schedule['amountChannel'] = (string)($chosen['intakeChannel'] ?? '');
+
+		return $schedule;
+	}//end applyChannelAmount()
 
 	/**
 	 * The schedule that applies to an object the caller already has in hand.
@@ -232,6 +293,9 @@ final class FeeScheduleService {
 	 * @spec openspec/changes/leges-at-intake/specs/object-payment-requests/spec.md (REQ-SOPR-006)
 	 */
 	public function assertNoOverlap(array $schedule, ?array $existing = null): void {
+		$this->assertLegalBasis($schedule);
+		$this->assertAmountsHaveADefault($schedule);
+
 		$from = (string)($schedule['validFrom'] ?? '');
 		if ($from === '') {
 			throw new InvalidArgumentException('A fee schedule needs a validFrom; a fee without a start date cannot be applied to a day.');
@@ -267,6 +331,123 @@ final class FeeScheduleService {
 			);
 		}
 	}//end assertNoOverlap()
+
+	/**
+	 * Refuse a schedule that cannot say which council decision its amount comes
+	 * from (REQ-FPCR-001).
+	 *
+	 * @param array<string, mixed> $schedule The schedule.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the basis is missing or incomplete.
+	 *
+	 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-001)
+	 */
+	public function assertLegalBasis(array $schedule): void {
+		$basis = ($schedule['legalBasis'] ?? null);
+		if (is_array($basis) === false || $basis === []) {
+			throw new InvalidArgumentException(
+				'A fee needs a legalBasis: the regulation, the article and the date it took effect. An amount nobody can trace to a council decision cannot be charged.'
+			);
+		}
+
+		$missing = [];
+		foreach (['regulation', 'article', 'effectiveDate'] as $part) {
+			if ((string)($basis[$part] ?? '') === '') {
+				$missing[] = $part;
+			}
+		}
+
+		if ($missing !== []) {
+			throw new InvalidArgumentException(
+				sprintf('The legalBasis is missing %s.', implode(', ', $missing))
+			);
+		}
+	}//end assertLegalBasis()
+
+	/**
+	 * Refuse an `amounts` list with no default entry, or with more than one
+	 * (REQ-FPCR-002).
+	 *
+	 * A schedule whose only entry names one channel resolves to nothing for
+	 * every other channel, and a fee that resolves to nothing looks exactly like
+	 * a type that is free. That is the refusal this is.
+	 *
+	 * @param array<string, mixed> $schedule The schedule.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When there is no single default entry.
+	 *
+	 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-002)
+	 */
+	public function assertAmountsHaveADefault(array $schedule): void {
+		$amounts = ($schedule['amounts'] ?? null);
+		if (is_array($amounts) === false || $amounts === []) {
+			// A schedule with no amounts list carries a flat amount, or a
+			// productRef. Both are their own default.
+			return;
+		}
+
+		$defaults = 0;
+		$channels = [];
+		foreach ($amounts as $entry) {
+			if (is_array($entry) === false) {
+				continue;
+			}
+
+			$channel = (string)($entry['intakeChannel'] ?? '');
+			if ($channel === '') {
+				$defaults++;
+				continue;
+			}
+
+			$channels[] = $channel;
+		}
+
+		if ($defaults === 0) {
+			throw new InvalidArgumentException(
+				sprintf(
+					'This fee names only %s and no default, so every other channel would resolve to no fee at all. Add an entry without an intakeChannel.',
+					implode(', ', $channels)
+				)
+			);
+		}
+
+		if ($defaults > 1) {
+			throw new InvalidArgumentException('This fee names more than one default amount; only one entry may omit its intakeChannel.');
+		}
+	}//end assertAmountsHaveADefault()
+
+	/**
+	 * The citation as an administrator reads it beside the amount
+	 * (REQ-FPCR-001).
+	 *
+	 * @param array<string, mixed> $schedule The schedule.
+	 *
+	 * @return string The citation, or an empty string when there is none.
+	 */
+	public function citation(array $schedule): string {
+		$basis = ($schedule['legalBasis'] ?? null);
+		if (is_array($basis) === false) {
+			return '';
+		}
+
+		$regulation = (string)($basis['regulation'] ?? '');
+		$article = (string)($basis['article'] ?? '');
+		$effective = (string)($basis['effectiveDate'] ?? '');
+
+		if ($regulation === '' || $article === '') {
+			return '';
+		}
+
+		if ($effective === '') {
+			return sprintf('%s, article %s', $regulation, $article);
+		}
+
+		return sprintf('%s, article %s, in force since %s', $regulation, $article, $effective);
+	}//end citation()
 
 	/**
 	 * The tuple key of a schedule or a lookup, for comparing two of them.
