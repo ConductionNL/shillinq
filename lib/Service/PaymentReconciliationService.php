@@ -196,8 +196,19 @@ class PaymentReconciliationService {
 		private IAppConfig $appConfig,
 		private LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly ?PaymentRevenueAccountResolver $revenueAccounts = null,
 	) {
 	}//end __construct()
+
+	/**
+	 * The revenue-account mapping, resolved lazily so the existing callers that
+	 * built this service before `case-payment-requests` keep working.
+	 *
+	 * @return PaymentRevenueAccountResolver The resolver.
+	 */
+	private function revenueAccounts(): PaymentRevenueAccountResolver {
+		return ($this->revenueAccounts ?? new PaymentRevenueAccountResolver(appConfig: $this->appConfig));
+	}//end revenueAccounts()
 
 	/**
 	 * Reconcile a single payment record against a reported outcome.
@@ -299,7 +310,27 @@ class PaymentReconciliationService {
 		// request lands in captured_unapplied — surfaced, never silently dropped
 		// (REQ-APL-005). DepositPayment capture handling is unchanged from the
 		// deposits path (its own lifecycle owns AR materialisation).
-		if ($outcome === self::OUTCOME_CAPTURED && $schema === self::SCHEMA_PAYMENT_REQUEST) {
+		if ($outcome === self::OUTCOME_CAPTURED
+			&& $schema === self::SCHEMA_PAYMENT_REQUEST
+			&& (string)($record['subjectKind'] ?? 'invoice') === 'object'
+		) {
+			// A request on an object has no invoice to settle. Shillinq books the
+			// receipt itself, against the account mapped to the request type, and
+			// the domain app books nothing (ADR-107 / REQ-SOPR-002).
+			$refusal = $this->bookObjectReceipt(registerSlug: $registerSlug, request: $record);
+			if ($refusal !== null) {
+				$record['state'] = 'captured_unapplied';
+				$record['failureReason'] = $refusal;
+				$this->objectService->saveObject(
+					object: $record,
+					register: $registerSlug,
+					schema: $schema,
+				);
+				return ['result' => self::RESULT_UNAPPLIED, 'schema' => $schema];
+			}
+
+			$record['confirmationSummary'] = $this->buildObjectConfirmationSummary(request: $record);
+		} elseif ($outcome === self::OUTCOME_CAPTURED && $schema === self::SCHEMA_PAYMENT_REQUEST) {
 			$settledInvoice = $this->settleLinkedInvoice(
 				objectService: $this->objectService,
 				registerSlug: $registerSlug,
@@ -465,6 +496,141 @@ class PaymentReconciliationService {
 
 		return sprintf('Invoice %s paid on %s, reference %s.', $invoiceNumber, $date, $reference);
 	}//end buildConfirmationSummary()
+
+	/**
+	 * Book the receipt for a captured request that stands on an object.
+	 *
+	 * Posts ONE GLTransaction with two lines: a credit on the revenue account
+	 * mapped to the request type, and a debit on the clearing account the money
+	 * arrived through. The subject travels in the description of both the
+	 * transaction and the revenue line, so the posting still says which case was
+	 * paid for long after the request itself has been archived.
+	 *
+	 * Returns null when the receipt is booked, or a reason when it is not. An
+	 * unmapped request type is the reason that matters: it names the type, so an
+	 * administrator can add the mapping and replay, rather than hunting for a
+	 * receipt that landed on a guessed account (REQ-SOPR-002).
+	 *
+	 * @param string $registerSlug The register slug.
+	 * @param array<string, mixed> $request The captured PaymentRequest, by value.
+	 *
+	 * @return string|null Null on success, or the refusal reason.
+	 *
+	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-002)
+	 */
+	private function bookObjectReceipt(string $registerSlug, array &$request): ?string {
+		$requestType = (string)($request['requestType'] ?? '');
+		if ($requestType === '') {
+			return 'This payment request stands on an object but names no requestType, so no revenue account can be resolved.';
+		}
+
+		$account = $this->revenueAccounts()->resolve(requestType: $requestType);
+		if ($account === null) {
+			return sprintf(
+				'No revenue account is mapped for request type "%s"; add it to paymentRevenueAccounts and replay the capture.',
+				$requestType
+			);
+		}
+
+		$amount = (float)($request['amount'] ?? 0);
+		if ($amount <= 0.0) {
+			return 'This payment request carries no amount above zero, so there is nothing to book.';
+		}
+
+		$request['revenueAccount'] = $account;
+
+		$currency = (string)($request['currency'] ?? 'EUR');
+		$subject = (is_array($request['subject'] ?? null) === true ? (array)$request['subject'] : []);
+		$memo = $this->describeSubject(subject: $subject, requestType: $requestType);
+		$capturedAt = (string)($request['capturedAt'] ?? gmdate('Y-m-d\TH:i:s\Z'));
+		$postingDate = substr($capturedAt, 0, 10);
+		$clearing = $this->revenueAccounts()->resolve(requestType: 'clearing');
+
+		$transaction = [
+			'transactionNumber' => sprintf('PR-%s', (string)($request['paymentIntentId'] ?? $postingDate)),
+			'postingDate' => $postingDate,
+			'periodId' => substr($postingDate, 0, 7),
+			'currency' => $currency,
+			'description' => $memo,
+			'sourceReference' => (string)($request['paymentIntentId'] ?? ''),
+			'state' => 'posted',
+			'administrationId' => (string)($request['administrationId'] ?? ''),
+			'lines' => [
+				[
+					'lineNumber' => 1,
+					'accountNumber' => ($clearing ?? 'clearing'),
+					'side' => 'debit',
+					'amount' => $amount,
+					'currency' => $currency,
+					'description' => $memo,
+				],
+				[
+					'lineNumber' => 2,
+					'accountNumber' => $account,
+					'side' => 'credit',
+					'amount' => $amount,
+					'currency' => $currency,
+					'description' => $memo,
+				],
+			],
+		];
+
+		try {
+			$this->objectService->saveObject(
+				object: $transaction,
+				register: $registerSlug,
+				schema: 'GLTransaction',
+			);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'Shillinq: could not post the receipt for a captured object payment request',
+				['requestType' => $requestType, 'exception' => $e->getMessage()]
+			);
+			return sprintf('The receipt could not be posted: %s', $e->getMessage());
+		}
+
+		return null;
+	}//end bookObjectReceipt()
+
+	/**
+	 * A one-line, subject-safe receipt for a captured object request.
+	 *
+	 * @param array<string, mixed> $request The captured PaymentRequest.
+	 *
+	 * @return string The confirmation summary.
+	 *
+	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-002)
+	 */
+	private function buildObjectConfirmationSummary(array $request): string {
+		$capturedAt = (string)($request['capturedAt'] ?? '');
+		$date = ($capturedAt === '' ? gmdate('Y-m-d') : substr($capturedAt, 0, 10));
+		$reference = (string)($request['settlementReference'] ?? ($request['paymentIntentId'] ?? ''));
+		$what = (string)($request['description'] ?? $this->describeSubject(
+			subject: (is_array($request['subject'] ?? null) === true ? (array)$request['subject'] : []),
+			requestType: (string)($request['requestType'] ?? 'other'),
+		));
+
+		return sprintf('%s paid on %s, reference %s.', $what, $date, $reference);
+	}//end buildObjectConfirmationSummary()
+
+	/**
+	 * Name the subject of an object request in one readable phrase.
+	 *
+	 * @param array<string, mixed> $subject The semantic reference (ADR-048).
+	 * @param string $requestType The request type.
+	 *
+	 * @return string The phrase.
+	 */
+	private function describeSubject(array $subject, string $requestType): string {
+		$type = (string)($subject['type'] ?? 'object');
+		$id = (string)($subject['id'] ?? '');
+
+		if ($id === '') {
+			return sprintf('%s on a %s', $requestType, $type);
+		}
+
+		return sprintf('%s on %s %s', $requestType, $type, $id);
+	}//end describeSubject()
 
 	/**
 	 * Post the settlement-time realised FX gain/loss for a just-paid ARInvoice

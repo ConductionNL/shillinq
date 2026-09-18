@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\PaymentReconciliationService;
+use OCA\Shillinq\Service\PaymentRevenueAccountResolver;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -405,4 +406,145 @@ final class PaymentReconciliationServiceTest extends TestCase {
 		self::assertSame(0, $counters['reconciled']);
 		self::assertCount(0, $saved);
 	}//end testPollPendingSurvivesProviderError()
+	/**
+	 * Build the service with a revenue-account mapping in app config, so the
+	 * object branch has somewhere to book (REQ-SOPR-002).
+	 *
+	 * @param object $objectService The ObjectService stub.
+	 * @param array<string, string> $accounts Request type to account number.
+	 *
+	 * @return PaymentReconciliationService
+	 */
+	private function makeServiceWithAccounts(object $objectService, array $accounts): PaymentReconciliationService {
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturn($objectService);
+
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = ''): string {
+				return ($key === 'register' ? 'shillinq' : $default);
+			}
+		);
+
+		$accountConfig = $this->createMock(IAppConfig::class);
+		$accountConfig->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = '') use ($accounts): string {
+				if ($key === PaymentRevenueAccountResolver::CONFIG_KEY) {
+					return json_encode($accounts, JSON_THROW_ON_ERROR);
+				}
+
+				return ($key === 'register' ? 'shillinq' : $default);
+			}
+		);
+
+		return new PaymentReconciliationService(
+			container: $container,
+			appConfig: $appConfig,
+			logger: $this->createMock(LoggerInterface::class),
+			objectService: new DuckObjectServiceAdapter(inner: $objectService),
+			revenueAccounts: new PaymentRevenueAccountResolver(appConfig: $accountConfig),
+		);
+	}//end makeServiceWithAccounts()
+
+	/**
+	 * A well-formed pending object request standing on a case.
+	 *
+	 * @param string $requestType The request type.
+	 *
+	 * @return array<string, mixed> The request.
+	 */
+	private function objectRequest(string $requestType): array {
+		return [
+			'id' => 'pr-obj-1',
+			'paymentIntentId' => 'tr_obj',
+			'state' => 'pending',
+			'subjectKind' => 'object',
+			'subject' => ['type' => 'case', 'register' => 'dossiq', 'schema' => 'Zaak', 'id' => 'zaak-7'],
+			'requestType' => $requestType,
+			'amount' => 250.0,
+			'currency' => 'EUR',
+		];
+	}//end objectRequest()
+
+	/**
+	 * A captured dwangsom on a case books ONE GLTransaction with a credit line on
+	 * the mapped account, for the request's own amount, carrying the case in the
+	 * memo. The request itself reaches captured and stamps the account it used
+	 * (REQ-SOPR-002).
+	 *
+	 * @return void
+	 */
+	public function testCapturedObjectRequestBooksOnTheMappedRevenueAccount(): void {
+		$saved = [];
+		$stub = $this->buildObjectServiceStub(['PaymentRequest' => [$this->objectRequest('dwangsom')]], $saved);
+		$service = $this->makeServiceWithAccounts($stub, ['dwangsom' => '8400', 'clearing' => '1100']);
+
+		$out = $service->reconcile('mollie', ['paymentIntentId' => 'tr_obj', 'outcome' => 'captured']);
+
+		self::assertSame(PaymentReconciliationService::RESULT_APPLIED, $out['result']);
+
+		$transactions = array_values(array_filter($saved, static fn (array $s): bool => $s['schema'] === 'GLTransaction'));
+		self::assertCount(1, $transactions);
+
+		$lines = $transactions[0]['object']['lines'];
+		$credit = array_values(array_filter($lines, static fn (array $l): bool => $l['side'] === 'credit'));
+		self::assertCount(1, $credit);
+		self::assertSame('8400', $credit[0]['accountNumber']);
+		self::assertSame(250.0, $credit[0]['amount']);
+		self::assertStringContainsString('zaak-7', (string)$transactions[0]['object']['description']);
+
+		$request = array_values(array_filter($saved, static fn (array $s): bool => $s['schema'] === 'PaymentRequest'))[0]['object'];
+		self::assertSame('captured', $request['state']);
+		self::assertSame('8400', $request['revenueAccount']);
+	}//end testCapturedObjectRequestBooksOnTheMappedRevenueAccount()
+
+	/**
+	 * An unmapped request type books NOTHING and leaves the request in
+	 * captured_unapplied with a reason naming the type. A receipt on a guessed
+	 * account is worse than a receipt that waits (REQ-SOPR-002).
+	 *
+	 * @return void
+	 */
+	public function testUnmappedRequestTypeDoesNotBook(): void {
+		$saved = [];
+		$stub = $this->buildObjectServiceStub(['PaymentRequest' => [$this->objectRequest('deposit')]], $saved);
+		$service = $this->makeServiceWithAccounts($stub, ['dwangsom' => '8400']);
+
+		$out = $service->reconcile('mollie', ['paymentIntentId' => 'tr_obj', 'outcome' => 'captured']);
+
+		self::assertSame(PaymentReconciliationService::RESULT_UNAPPLIED, $out['result']);
+
+		$schemas = array_map(static fn (array $s): string => $s['schema'], $saved);
+		self::assertNotContains('GLTransaction', $schemas);
+
+		$request = array_values(array_filter($saved, static fn (array $s): bool => $s['schema'] === 'PaymentRequest'))[0]['object'];
+		self::assertSame('captured_unapplied', $request['state']);
+		self::assertStringContainsString('deposit', (string)$request['failureReason']);
+	}//end testUnmappedRequestTypeDoesNotBook()
+
+	/**
+	 * An object request never reaches the invoice branch: there is no invoice, and
+	 * a capture that fell through to settleLinkedInvoice() would land in
+	 * captured_unapplied for the wrong reason. The tell is that the invoice in the
+	 * store is untouched (REQ-SOPR-001).
+	 *
+	 * @return void
+	 */
+	public function testObjectRequestDoesNotSettleAnInvoice(): void {
+		$saved = [];
+		$stub = $this->buildObjectServiceStub(
+			[
+				'PaymentRequest' => [$this->objectRequest('leges')],
+				'ARInvoice' => [['id' => 'inv-1', 'state' => 'issued']],
+			],
+			$saved
+		);
+		$service = $this->makeServiceWithAccounts($stub, ['leges' => '8300', 'clearing' => '1100']);
+
+		$out = $service->reconcile('mollie', ['paymentIntentId' => 'tr_obj', 'outcome' => 'captured']);
+
+		self::assertSame(PaymentReconciliationService::RESULT_APPLIED, $out['result']);
+		$schemas = array_map(static fn (array $s): string => $s['schema'], $saved);
+		self::assertNotContains('ARInvoice', $schemas);
+	}//end testObjectRequestDoesNotSettleAnInvoice()
 }//end class

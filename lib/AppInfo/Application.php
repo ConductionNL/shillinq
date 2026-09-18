@@ -67,6 +67,7 @@ use OCA\Shillinq\Listener\IntercompanyLinkListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
 use OCA\Shillinq\Listener\OrderFulfilmentTransitionListener;
 use OCA\Shillinq\Listener\OssPaymentReconciliationListener;
+use OCA\Shillinq\Listener\PaymentRequestLeafRegistrationListener;
 use OCA\Shillinq\Listener\PeppolDeliveryStatusListener;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
 use OCA\Shillinq\Listener\PosStockDecrementListener;
@@ -248,6 +249,17 @@ class Application extends App implements IBootstrap {
 			event: DeepLinkRegistrationEvent::class,
 			listener: DeepLinkRegistrationListener::class
 		);
+
+		// case-payment-requests REQ-SOPR-003 / REQ-SOPR-004 — contribute the
+		// payment-request leaves to OpenRegister's catalogue, so a case app can
+		// ask for money on its own object without shillinq knowing the app.
+		// Guarded on the event class: shillinq boots without OpenRegister.
+		if (class_exists('OCA\\OpenRegister\\Event\\RegisterLeafProvidersEvent') === true) {
+			$context->registerEventListener(
+				event: \OCA\OpenRegister\Event\RegisterLeafProvidersEvent::class,
+				listener: PaymentRequestLeafRegistrationListener::class
+			);
+		}
 
 		// Inventory-valuation-fifo-avg REQ-INV-003 / REQ-INV-004 / REQ-INV-007
 		// — dispatch posted StockMove records into the valuation engine
