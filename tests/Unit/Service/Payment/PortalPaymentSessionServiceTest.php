@@ -543,4 +543,58 @@ final class PortalPaymentSessionServiceTest extends TestCase {
 
 		self::assertSame('downstream_error', $result->status);
 	}//end testProviderFailureIsDownstreamError()
+
+	/**
+	 * An invoice whose amount cannot be read opens NO checkout. The cast used to
+	 * make it 0.00 and the citizen was sent to a payment page for nothing, which
+	 * they then believe they have paid (REQ-SPPI-004).
+	 *
+	 * @return void
+	 */
+	public function testAnInvoiceWithAnUnreadableAmountNeverReachesThePsp(): void {
+		unset($this->objectService->data['shillinq']['ARInvoice'][0]['totalAmount']);
+
+		$this->provider->expects($this->never())->method('createSession');
+
+		$result = $this->makeService()->initiate(claims: $this->claims(), target: self::INVOICE_ID);
+
+		self::assertSame('downstream_error', $result->status);
+	}//end testAnInvoiceWithAnUnreadableAmountNeverReachesThePsp()
+
+	/**
+	 * Nor does one that is payable for zero. A checkout for 0.00 is a page that
+	 * cannot be paid, and the invoice needs a person, not a provider.
+	 *
+	 * @return void
+	 */
+	public function testAnInvoiceOfZeroNeverReachesThePsp(): void {
+		$this->objectService->data['shillinq']['ARInvoice'][0]['totalAmount'] = 0.0;
+
+		$this->provider->expects($this->never())->method('createSession');
+
+		$result = $this->makeService()->initiate(claims: $this->claims(), target: self::INVOICE_ID);
+
+		self::assertSame('downstream_error', $result->status);
+	}//end testAnInvoiceOfZeroNeverReachesThePsp()
+
+	/**
+	 * No PaymentRequest is written either. A pending request for 0.00 would be
+	 * reused by the next attempt, so the refusal has to leave nothing behind.
+	 *
+	 * @return void
+	 */
+	public function testAnUnreadableAmountWritesNoPaymentRequest(): void {
+		unset($this->objectService->data['shillinq']['ARInvoice'][0]['totalAmount']);
+
+		$this->makeService()->initiate(claims: $this->claims(), target: self::INVOICE_ID);
+
+		// The stub records every write, so this reads the writes that HAPPENED
+		// rather than the seed data, which the stub never mutates.
+		self::assertEmpty(
+			array_filter(
+				$this->objectService->saved,
+				static fn (array $write): bool => $write['schema'] === 'PaymentRequest'
+			)
+		);
+	}//end testAnUnreadableAmountWritesNoPaymentRequest()
 }//end class
