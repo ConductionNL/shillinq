@@ -227,4 +227,39 @@ final class ContractLeafProviderTest extends TestCase {
 
 		$provider->create('dossiq', 'Zaak', 'zaak-7', ['contractNumber' => 'OVK-2026-0002']);
 	}//end testTheLeafRefusesToCreateAContract()
+
+	/**
+	 * A contract that has never been rolled up reports no cost and no remaining
+	 * value, not 0.00 of each. Zero incurred and zero remaining are two claims
+	 * about money, and this leaf has neither to make (REQ-FPCR-005).
+	 *
+	 * @return void
+	 */
+	public function testAContractNeverRolledUpReportsNoNumbersRatherThanZero(): void {
+		$bare = $this->contract();
+		unset($bare['incurredCost'], $bare['remainingValue']);
+		$provider = $this->makeProvider([$bare]);
+
+		$contract = $provider->list('dossiq', 'Zaak', 'zaak-7')['items'][0];
+
+		self::assertNull($contract['incurredCost']);
+		self::assertNull($contract['remainingValue']);
+	}//end testAContractNeverRolledUpReportsNoNumbersRatherThanZero()
+
+	/**
+	 * An incomplete roll-up travels with the numbers it produced, so a reader
+	 * can tell a floor from a total (REQ-FPCR-005).
+	 *
+	 * @return void
+	 */
+	public function testAnIncompleteRollUpIsReportedAsIncomplete(): void {
+		$provider = $this->makeProvider(
+			[$this->contract(['incurredCostComplete' => false, 'incurredCostUnreadableLinks' => 2])]
+		);
+
+		$contract = $provider->list('dossiq', 'Zaak', 'zaak-7')['items'][0];
+
+		self::assertFalse($contract['incurredCostComplete']);
+		self::assertSame(2, $contract['incurredCostUnreadableLinks']);
+	}//end testAnIncompleteRollUpIsReportedAsIncomplete()
 }//end class
