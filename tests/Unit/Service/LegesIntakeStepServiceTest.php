@@ -159,7 +159,11 @@ final class LegesIntakeStepServiceTest extends TestCase {
 				'amount' => 245.0,
 				'currency' => 'EUR',
 				'payAtIntake' => 'required',
-				'legalBasis' => 'Legesverordening 2026, artikel 2.3.1',
+				'legalBasis' => [
+					'regulation' => 'Legesverordening 2026',
+					'article' => '2.3.1',
+					'effectiveDate' => '2026-01-01',
+				],
 				'validFrom' => '2026-01-01',
 				'validTo' => '2026-12-31',
 				'intakeChannel' => '',

@@ -33,6 +33,7 @@ namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\RegisterLeafProvidersEvent;
 use OCA\OpenRegister\Service\Integration\LeafDescriptor;
+use OCA\Shillinq\Integration\ContractLeafProvider;
 use OCA\Shillinq\Integration\PaymentRequestLeafProvider;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -53,14 +54,23 @@ final class PaymentRequestLeafRegistrationListener implements IEventListener {
 	public const PANEL_ID = 'shillinq-payment-requests-panel';
 
 	/**
+	 * The render-surface half of the contract leaf.
+	 *
+	 * @var string
+	 */
+	public const CONTRACT_PANEL_ID = 'shillinq-contracts-panel';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param PaymentRequestLeafProvider $provider The data-provider half.
+	 * @param ContractLeafProvider $contracts The contract a case is handled under.
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private readonly PaymentRequestLeafProvider $provider,
+		private readonly ContractLeafProvider $contracts,
 	) {
 	}//end __construct()
 
@@ -96,6 +106,34 @@ final class PaymentRequestLeafRegistrationListener implements IEventListener {
 				id: self::PANEL_ID,
 				label: 'Payment requests',
 				icon: 'CreditCardOutline',
+				kinds: [LeafDescriptor::KIND_RENDER_SURFACE],
+				requiredApp: 'shillinq',
+				group: 'Finance',
+				surfaces: ['widget', 'tab'],
+			),
+			null,
+		);
+
+		// fees-payments-and-the-contract-register REQ-FPCR-006 — the case app
+		// names the contract and reads its term, counterparty and remaining
+		// value from here, so no case ever carries a stale copy of an agreement.
+		$event->registerLeaf(
+			new LeafDescriptor(
+				id: ContractLeafProvider::LEAF_ID,
+				label: 'Contract',
+				icon: 'FileDocumentOutline',
+				kinds: [LeafDescriptor::KIND_DATA_PROVIDER],
+				requiredApp: 'shillinq',
+				group: 'Finance',
+			),
+			$this->contracts,
+		);
+
+		$event->registerLeaf(
+			new LeafDescriptor(
+				id: self::CONTRACT_PANEL_ID,
+				label: 'Contract',
+				icon: 'FileDocumentOutline',
 				kinds: [LeafDescriptor::KIND_RENDER_SURFACE],
 				requiredApp: 'shillinq',
 				group: 'Finance',

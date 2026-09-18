@@ -112,6 +112,11 @@ final class FeeScheduleServiceTest extends TestCase {
 			$this->tuple(),
 			[
 				'id' => 'fs-1',
+				'legalBasis' => [
+					'regulation' => 'Legesverordening 2026',
+					'article' => '2.3.1',
+					'effectiveDate' => '2026-01-01',
+				],
 				'amount' => 245.0,
 				'currency' => 'EUR',
 				'payAtIntake' => 'required',

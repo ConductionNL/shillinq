@@ -99,6 +99,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
              monthly calibration. REQ-CF-010/012/013. Moved from lib/Cron/
              by background-job-consolidation (ADR-069 D1). -->
         <job>OCA\Shillinq\BackgroundJob\BankfeedReconciliationJob</job>
+        <job>OCA\Shillinq\BackgroundJob\ContractCostRollupJob</job>
         <job>OCA\Shillinq\BackgroundJob\CrisisModeRefreshJob</job>
         <job>OCA\Shillinq\BackgroundJob\CalibrationBatchJob</job>
         <!-- inventory-lot-batch-expiry REQ-LOT-007: daily sweep raising

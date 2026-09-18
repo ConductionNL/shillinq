@@ -81,6 +81,7 @@ final class LegesAtIntakeFragmentTest extends TestCase {
 				'currency',
 				'revenueAccount',
 				'payAtIntake',
+				'amounts',
 				'legalBasis',
 				'validFrom',
 				'validTo',
@@ -109,7 +110,9 @@ final class LegesAtIntakeFragmentTest extends TestCase {
 	public function testTheTupleAndTheWindowStartAreRequired(): void {
 		$required = $this->schema()['required'];
 
-		foreach (['targetApp', 'register', 'schema', 'typeProperty', 'typeValue', 'payAtIntake', 'validFrom'] as $field) {
+		foreach (
+			['targetApp', 'register', 'schema', 'typeProperty', 'typeValue', 'payAtIntake', 'validFrom', 'legalBasis'] as $field
+		) {
 			self::assertContains($field, $required, $field . ' must be required');
 		}
 	}//end testTheTupleAndTheWindowStartAreRequired()
@@ -122,4 +125,31 @@ final class LegesAtIntakeFragmentTest extends TestCase {
 	public function testTheScheduleIsAudited(): void {
 		self::assertTrue($this->schema()['x-openregister-audit-trail']['enabled']);
 	}//end testTheScheduleIsAudited()
+	/**
+	 * The legal basis is a citation with three parts, not a free-text note. A
+	 * string would be searchable and nothing else; the article and its effective
+	 * date are what an auditor asks for (REQ-FPCR-001).
+	 *
+	 * @return void
+	 */
+	public function testTheLegalBasisIsAStructuredCitation(): void {
+		$basis = $this->schema()['properties']['legalBasis'];
+
+		self::assertSame('object', $basis['type']);
+		self::assertSame(['regulation', 'article', 'effectiveDate'], $basis['required']);
+	}//end testTheLegalBasisIsAStructuredCitation()
+
+	/**
+	 * `amounts` carries one entry per intake channel, and an entry needs its
+	 * amount (REQ-FPCR-002).
+	 *
+	 * @return void
+	 */
+	public function testAmountsAreDeclaredPerIntakeChannel(): void {
+		$amounts = $this->schema()['properties']['amounts'];
+
+		self::assertSame('array', $amounts['type']);
+		self::assertArrayHasKey('intakeChannel', $amounts['items']['properties']);
+		self::assertSame(['amount'], $amounts['items']['required']);
+	}//end testAmountsAreDeclaredPerIntakeChannel()
 }//end class

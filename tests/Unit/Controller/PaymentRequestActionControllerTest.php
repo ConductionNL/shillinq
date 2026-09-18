@@ -27,6 +27,7 @@ use OCA\Shillinq\Integration\PaymentRequestLeafProvider;
 use OCA\Shillinq\Service\FeeScheduleService;
 use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
+use OCA\Shillinq\Service\PaymentSettlementService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\AppFramework\Http;
 use OCP\IAppConfig;
@@ -203,7 +204,9 @@ final class PaymentRequestActionControllerTest extends TestCase {
 				appConfig: $appConfig,
 				authorizer: $authorizer,
 				feeSchedules: $feeSchedules,
+				settlements: new PaymentSettlementService(),
 			),
+			new PaymentSettlementService(),
 		);
 	}//end makeController()
 
@@ -298,11 +301,65 @@ final class PaymentRequestActionControllerTest extends TestCase {
 
 		self::assertSame(Http::STATUS_OK, $response->getStatus());
 		self::assertCount(1, $this->saved);
-		self::assertSame('captured', $this->saved[0]['state']);
-		self::assertSame('PIN-2026-0001', $this->saved[0]['settlementReference']);
-		self::assertSame('pin', $this->saved[0]['settlementMethod']);
-		self::assertSame('handler', $this->saved[0]['settledBy']);
+
+		// The provider's own state is UNTOUCHED. Overwriting it is how a later
+		// capture becomes invisible and the refund never happens (REQ-FPCR-003).
+		self::assertSame('pending', $this->saved[0]['state']);
+
+		$settlement = $this->saved[0]['settlements'][0];
+		self::assertSame('PIN-2026-0001', $settlement['reference']);
+		self::assertSame('pin', $settlement['method']);
+		self::assertSame('handler', $settlement['actor']);
+		self::assertSame(45.0, $settlement['amount']);
+		self::assertSame('paid', $response->getData()['report']['state']);
 	}//end testPermittedHandlerSettlesByOtherMeans()
+
+	/**
+	 * A provider capture landing AFTER a counter payment is not lost: both are
+	 * readable and the request reports the overpayment (REQ-FPCR-003).
+	 *
+	 * @return void
+	 */
+	public function testACaptureAfterAManualSettlementReportsAnOverpayment(): void {
+		$alreadySettled = $this->storedRequest(
+			[
+				'state' => 'captured',
+				'settlements' => [
+					[
+						'method' => 'pin',
+						'amount' => 45.0,
+						'reference' => 'PIN-2026-0001',
+						'actor' => 'handler',
+						'settledAt' => '2026-09-18T10:00:00Z',
+						'reason' => '',
+					],
+				],
+			]
+		);
+		$controller = $this->makeController(['PaymentRequest' => [$alreadySettled]], mayAdminister: true);
+
+		$response = $controller->settle('pr-1', 'PIN-2026-0002', 'pin', 0.0, '');
+
+		$report = $response->getData()['report'];
+		self::assertSame('overpaid', $report['state']);
+		self::assertSame(45.0 + 45.0 + 45.0 - 45.0, $report['over']);
+		self::assertCount(2, $this->saved[0]['settlements']);
+	}//end testACaptureAfterAManualSettlementReportsAnOverpayment()
+
+	/**
+	 * A waiver carries no bank evidence, so it needs the reason it was granted
+	 * instead of a reference.
+	 *
+	 * @return void
+	 */
+	public function testAWaivedFeeNeedsItsReason(): void {
+		$controller = $this->makeController(['PaymentRequest' => [$this->storedRequest()]], mayAdminister: true);
+
+		$response = $controller->settle('pr-1', '', 'waived', 0.0, '');
+
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		self::assertSame([], $this->saved);
+	}//end testAWaivedFeeNeedsItsReason()
 
 	/**
 	 * A request that is already captured cannot be settled a second time: that
@@ -310,14 +367,16 @@ final class PaymentRequestActionControllerTest extends TestCase {
 	 *
 	 * @return void
 	 */
-	public function testAnAlreadyCapturedRequestIsNotSettledAgain(): void {
+	public function testACapturedRequestSettledAgainReportsTheOverpayment(): void {
 		$controller = $this->makeController(['PaymentRequest' => [$this->storedRequest(['state' => 'captured'])]], mayAdminister: true);
 
 		$response = $controller->settle('pr-1', 'PIN-2026-0002', 'pin');
 
-		self::assertSame(Http::STATUS_CONFLICT, $response->getStatus());
-		self::assertSame([], $this->saved);
-	}//end testAnAlreadyCapturedRequestIsNotSettledAgain()
+		// Not a conflict. Refusing here would leave a counter payment nobody
+		// recorded; recording it is what makes the refund findable.
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame('overpaid', $response->getData()['report']['state']);
+	}//end testACapturedRequestSettledAgainReportsTheOverpayment()
 
 	/**
 	 * An unknown id is a 404, not a silent success.
@@ -347,10 +406,14 @@ final class PaymentRequestActionControllerTest extends TestCase {
 				'schema' => 'Zaak',
 				'typeProperty' => 'caseType',
 				'typeValue' => 'bouwvergunning',
-				'amount' => 245.0,
+				'amounts' => [['intakeChannel' => '', 'amount' => 245.0, 'currency' => 'EUR']],
 				'currency' => 'EUR',
 				'payAtIntake' => 'required',
-				'legalBasis' => 'Legesverordening 2026, artikel 2.3.1',
+				'legalBasis' => [
+					'regulation' => 'Legesverordening 2026',
+					'article' => '2.3.1',
+					'effectiveDate' => '2026-01-01',
+				],
 				'validFrom' => '2020-01-01',
 				'validTo' => '',
 				'intakeChannel' => '',

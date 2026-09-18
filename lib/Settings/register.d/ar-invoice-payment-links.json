@@ -11,9 +11,9 @@
       "PaymentRequest": {
         "slug": "PaymentRequest",
         "icon": "CreditCardOutline",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "title": "Payment Request",
-        "description": "An online payment attempt against an AR invoice. One AR invoice can carry several payment requests over its life (link expired and regenerated, a failed attempt then a new link, a link voided after partial credit): each request has its own lifecycle, gateway identity and audit needs, so payment state lives here and never folds onto ARInvoice (design D1). Mirrors the proven DepositPayment shape minus booking fields, FK'd to ARInvoice. STORES NO PCI DATA: no card number, CVV, PAN, IBAN credential, or authorization token is ever persisted. OpenConnector (PCI-certified) handles all sensitive payment data and only opaque references (paymentIntentId, settlementReference) are stored here, identical to DepositPayment. V0.1.1 (portal-payment-initiation) adds confirmationSummary. A subject-safe settlement receipt written on capture and surfaced through the customer portal's read-only paymentRequests collection. V0.2.0 (case-payment-requests) lets a request stand on any object: subjectKind, subject, requestType, description, debtor, dueAt and revenueAccount, with invoiceReference optional. An object request carries its own amount and books a receipt against the revenue account mapped to its requestType; a domain app never books the money itself (ADR-107).",
+        "description": "An online payment attempt against an AR invoice. One AR invoice can carry several payment requests over its life (link expired and regenerated, a failed attempt then a new link, a link voided after partial credit): each request has its own lifecycle, gateway identity and audit needs, so payment state lives here and never folds onto ARInvoice (design D1). Mirrors the proven DepositPayment shape minus booking fields, FK'd to ARInvoice. STORES NO PCI DATA: no card number, CVV, PAN, IBAN credential, or authorization token is ever persisted. OpenConnector (PCI-certified) handles all sensitive payment data and only opaque references (paymentIntentId, settlementReference) are stored here, identical to DepositPayment. V0.1.1 (portal-payment-initiation) adds confirmationSummary. A subject-safe settlement receipt written on capture and surfaced through the customer portal's read-only paymentRequests collection. V0.2.0 (case-payment-requests) lets a request stand on any object: subjectKind, subject, requestType, description, debtor, dueAt and revenueAccount, with invoiceReference optional. An object request carries its own amount and books a receipt against the revenue account mapped to its requestType; a domain app never books the money itself (ADR-107). V0.3.0 (fees-payments-and-the-contract-register) adds settlements, an append-only record of money that arrived another way, and legalBasis, the article the amount rests on.",
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Payment-attempt register; every create / update / lifecycle transition (authorize / capture / markUnapplied / fail / expire / void) is recorded on the OR audit-trail-immutable channel + ADR-022. The captured PaymentRequest is the canonical payment-evidence chain linked to the settled ARInvoice."
@@ -238,6 +238,93 @@
             "description": "Subject-safe, plain-language settlement receipt written by PaymentReconciliationService on capture (portal-payment-initiation): e.g. 'Invoice INV-2026-014 paid on 2026-07-23, reference tr_xxx'. Surfaced through the customer portal's read-only paymentRequests collection so the debtor sees a receipt without a dedicated portal inbox. Never overwritten by a replayed/idempotent webhook.",
             "example": "Invoice INV-2026-0042 paid on 2026-07-23, reference tr_WDqYK6vllg.",
             "title": "Confirmation Summary"
+          },
+          "legalBasis": {
+            "type": "object",
+            "description": "The council decision the amount comes from, carried over from the fee schedule that raised this request. A citizen asked for money is owed the article it rests on, and so is anyone checking the books later (REQ-FPCR-001).",
+            "properties": {
+              "regulation": {
+                "type": "string",
+                "description": "The regulation the fee is published in.",
+                "example": "Legesverordening 2026",
+                "title": "Regulation"
+              },
+              "article": {
+                "type": "string",
+                "description": "The article inside that regulation.",
+                "example": "2.3.1",
+                "title": "Article"
+              },
+              "effectiveDate": {
+                "type": "string",
+                "format": "date",
+                "description": "The day that article took effect.",
+                "example": "2026-01-01",
+                "title": "Effective Date"
+              }
+            },
+            "title": "Legal Basis"
+          },
+          "settlements": {
+            "type": "array",
+            "description": "Money that arrived another way: cash or pin at the counter, a bank transfer, a waiver. An APPEND, never an overwrite of the provider state, so a provider capture landing after a manual settlement is still readable and the two together report an overpayment rather than one quietly replacing the other (REQ-FPCR-003).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "method": {
+                  "type": "string",
+                  "enum": [
+                    "cash",
+                    "pin",
+                    "bank-transfer",
+                    "waived",
+                    "other"
+                  ],
+                  "description": "How the money arrived, or that it was waived.",
+                  "example": "pin",
+                  "title": "Method"
+                },
+                "amount": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How much arrived. A partial settlement is allowed and leaves the request short, not paid.",
+                  "example": 245.0,
+                  "title": "Amount"
+                },
+                "reference": {
+                  "type": "string",
+                  "description": "The evidence a later bank reconciliation matches on: a terminal slip number, a transfer reference. NOT a PCI field.",
+                  "example": "PIN-2026-0001",
+                  "title": "Reference"
+                },
+                "actor": {
+                  "type": "string",
+                  "description": "The user who recorded it. A settlement nobody is named for cannot be questioned.",
+                  "example": "j.jansen",
+                  "title": "Actor"
+                },
+                "settledAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When it was recorded.",
+                  "example": "2026-09-18T11:04:00Z",
+                  "title": "Settled At"
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Why, which is what a waiver needs and a cash payment does not.",
+                  "example": "Betaald aan de balie",
+                  "title": "Reason"
+                }
+              },
+              "required": [
+                "method",
+                "amount",
+                "actor",
+                "settledAt"
+              ]
+            },
+            "title": "Settlements"
           }
         },
         "x-openregister-calculations": {
