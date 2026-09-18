@@ -739,6 +739,15 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // Symfony matches it first per ADR-016.
             ['name' => 'paymentRequestWebhook#handle', 'url' => '/api/v1/payment-requests/webhook/{gateway}', 'verb' => 'POST'],
 
+            // Payment-request panel actions (case-payment-requests, REQ-SOPR-004).
+            // The two verbs the render-surface leaf offers on a case: mail the
+            // payment link to the debtor, and record that the money arrived
+            // another way. #[NoAdminRequired] on both, gated INSIDE the
+            // controller on the payment.administer action — seeing a case is not
+            // the same right as settling its money.
+            ['name' => 'paymentRequestAction#send', 'url' => '/api/payment-requests/{id}/send', 'verb' => 'POST'],
+            ['name' => 'paymentRequestAction#settle', 'url' => '/api/payment-requests/{id}/settle', 'verb' => 'POST'],
+
             // Portal payment initiation (portal-payment-initiation, ADR-046 contract
             // v2 A6). Receives portaliq's server-to-server forward of the `pay`
             // endpoint-forward action declared on the customer manifest
