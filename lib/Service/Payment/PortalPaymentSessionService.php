@@ -57,6 +57,7 @@ use OCP\IAppConfig;
 use OCP\IURLGenerator;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -403,9 +404,21 @@ class PortalPaymentSessionService {
 			return $pending[0];
 		}
 
+		// 🔴 NEVER MINT A REQUEST FOR AN AMOUNT NOBODY COULD READ. The cast
+		// below used to turn a missing or malformed `totalAmount` into 0.00,
+		// and the citizen was sent to a checkout for nothing. A payment page
+		// for zero euro is worse than a page that says the payment could not
+		// be started, because the person believes they have paid.
+		$amount = ($invoice['totalAmount'] ?? null);
+		if (is_bool($amount) === true || is_numeric($amount) === false || (float)$amount <= 0.0) {
+			throw new RuntimeException(
+				'This invoice carries no amount that can be charged, so no payment session was opened.'
+			);
+		}
+
 		$paymentRequest = [
 			'invoiceReference' => $invoiceKey,
-			'amount' => (float)($invoice['totalAmount'] ?? 0.0),
+			'amount' => (float)$amount,
 			'currency' => (string)($invoice['currency'] ?? 'EUR'),
 			'paymentGateway' => self::GATEWAY,
 			'state' => 'pending',

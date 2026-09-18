@@ -504,4 +504,51 @@ final class PaymentRequestActionControllerTest extends TestCase {
 
 		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 	}//end testRaisingLegesNeedsAnObject()
+
+	/**
+	 * Settling without naming an amount means "the whole of what this request
+	 * asks for". When the request's own amount cannot be read there is no whole
+	 * to settle, so the call is refused and says why. The old cast made it a
+	 * counter payment of 0.00 with a named clerk on it, which is a record of
+	 * money arriving for nothing (REQ-FPCR-003).
+	 *
+	 * @return void
+	 */
+	public function testSettlingAnUnreadableAmountIsRefusedRatherThanRecordedAsZero(): void {
+		$unreadable = $this->storedRequest(['amount' => null]);
+		$controller = $this->makeController(['PaymentRequest' => [$unreadable]], mayAdminister: true);
+
+		$response = $controller->settle('pr-1', 'PIN-2026-0009', 'pin', 0.0, '');
+
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		self::assertCount(0, $this->saved);
+
+		// The sentence has to name the fallback, because that is what the clerk
+		// has to do differently. "A settlement needs the amount that arrived",
+		// which is what the builder says about the clerk's OWN input, sends
+		// them looking at a field they left empty on purpose.
+		self::assertStringContainsString('fall back', $response->getData()['error']);
+	}//end testSettlingAnUnreadableAmountIsRefusedRatherThanRecordedAsZero()
+
+	/**
+	 * The refusal above is about the FALLBACK, not about settling at all. A
+	 * clerk who names the amount that actually arrived may still record it
+	 * against a request whose own amount is unreadable, and what the request
+	 * then reports is that the sum cannot be done, never that it is settled.
+	 *
+	 * @return void
+	 */
+	public function testANamedAmountStillSettlesAgainstAnUnreadableRequest(): void {
+		$unreadable = $this->storedRequest(['amount' => null]);
+		$controller = $this->makeController(['PaymentRequest' => [$unreadable]], mayAdminister: true);
+
+		$response = $controller->settle('pr-1', 'PIN-2026-0010', 'pin', 45.0, '');
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame(45.0, $this->saved[0]['settlements'][0]['amount']);
+
+		$report = $response->getData()['report'];
+		self::assertSame('indeterminate', $report['state']);
+		self::assertNull($report['due']);
+	}//end testANamedAmountStillSettlesAgainstAnUnreadableRequest()
 }//end class
