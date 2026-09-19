@@ -1,0 +1,206 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "leges-at-intake",
+    "adr": "ADR-107 shillinq books and pipelinq originates the fee + ADR-037 modular register fragment + ADR-085 the checkout is a journey step — never edit shillinq_register.json",
+    "description": "Competitor gap register row 1.11, online payment during intake. Declares FeeSchedule: what a case type costs, per intake channel of the owning app, valid between two dates. A fee is a council decision published in a verordening, so the schedule is configuration an administrator maintains and never a number in code. Where pipelinq is installed the fee originates as a product and the schedule references it (productRef); the schedule holds its own amount only when pipelinq is absent. payAtIntake decides what the intake journey does with the answer: required blocks completion until the payment is authorized, optional and later complete with a pending request and the link in the receipt. No PCI data: the money itself still moves through the PaymentRequest of case-payment-requests."
+  },
+  "components": {
+    "schemas": {
+      "FeeSchedule": {
+        "slug": "FeeSchedule",
+        "icon": "CashRegister",
+        "version": "0.2.0",
+        "title": "Fee Schedule",
+        "description": "What a case type costs. One row per (targetApp, register, schema, typeProperty, typeValue, intakeChannel) and validity window, so a fee change is a new row with a new validFrom rather than an edit that loses what was charged last year. At most one schedule is valid per tuple on a given day: FeeScheduleService refuses an overlap and names the schedule it overlaps with, because two valid fees for one case type is a question nothing can answer. V0.2.0 (fees-payments-and-the-contract-register) makes the legal basis a structured citation and required, and moves the amount into `amounts`, one entry per intake channel with at most one default.",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "A fee is a council decision. Every create, edit and withdrawal is recorded on the OR audit-trail-immutable channel, so what was charged on a given day stays answerable."
+        },
+        "x-schema-org": "schema:PriceSpecification",
+        "x-spec": "openspec/changes/leges-at-intake/specs/object-payment-requests/spec.md",
+        "type": "object",
+        "required": [
+          "targetApp",
+          "register",
+          "schema",
+          "typeProperty",
+          "typeValue",
+          "payAtIntake",
+          "validFrom",
+          "legalBasis"
+        ],
+        "properties": {
+          "targetApp": {
+            "type": "string",
+            "example": "dossiq",
+            "title": "Target App",
+            "description": "The app whose objects this fee applies to, as its OpenRegister register slug names it. A fee is administered per case type of one app; shillinq never assumes there is only one."
+          },
+          "register": {
+            "type": "string",
+            "example": "dossiq",
+            "title": "Register",
+            "description": "The register slug holding the objects that carry the fee."
+          },
+          "schema": {
+            "type": "string",
+            "example": "Zaak",
+            "title": "Schema",
+            "description": "The schema slug of those objects."
+          },
+          "typeProperty": {
+            "type": "string",
+            "example": "caseType",
+            "title": "Type Property",
+            "description": "The property on that schema holding the type value, so the same schedule shape works for a case type, a permit kind or a product line."
+          },
+          "typeValue": {
+            "type": "string",
+            "example": "bouwvergunning",
+            "title": "Type Value",
+            "description": "The value of that property this fee applies to."
+          },
+          "intakeChannel": {
+            "type": "string",
+            "enum": [
+              "",
+              "portal",
+              "desk",
+              "post",
+              "phone"
+            ],
+            "example": "portal",
+            "title": "Intake Channel",
+            "description": "Where the application came in. A counter and a website can charge differently, and a schedule with no channel is the default for every channel."
+          },
+          "productRef": {
+            "type": "string",
+            "example": "prod-leges-bouw-2026",
+            "title": "Product Ref",
+            "description": "FK to the pipelinq product that originates this fee (ADR-107 decision 3). When set, the amount is READ from the product and the amount below is ignored, so the price lives in one place."
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 0,
+            "example": 245.0,
+            "title": "Amount",
+            "description": "The fee when it does not differ per channel. Kept for the schedules written before `amounts` existed: a schedule with no `amounts` reads this as its default entry, which is the migration (REQ-FPCR-002). New schedules use `amounts`."
+          },
+          "amounts": {
+            "type": "array",
+            "description": "What the fee is, per intake channel. At most one entry omits intakeChannel and that entry is the default; a lookup takes the entry matching the case's channel and the default where none matches. A schedule with neither a matching channel nor a default is refused at save, because a fee that resolves to nothing looks exactly like a type that is free (REQ-FPCR-002).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "intakeChannel": {
+                  "type": "string",
+                  "enum": [
+                    "",
+                    "portal",
+                    "web",
+                    "desk",
+                    "post",
+                    "phone"
+                  ],
+                  "description": "Where the application came in. Empty means this entry is the default.",
+                  "example": "desk",
+                  "title": "Intake Channel"
+                },
+                "amount": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The fee for that channel.",
+                  "example": 265.0,
+                  "title": "Amount"
+                },
+                "currency": {
+                  "type": "string",
+                  "default": "EUR",
+                  "description": "ISO 4217 currency code.",
+                  "example": "EUR",
+                  "title": "Currency"
+                }
+              },
+              "required": [
+                "amount"
+              ]
+            },
+            "title": "Amounts"
+          },
+          "currency": {
+            "type": "string",
+            "default": "EUR",
+            "example": "EUR",
+            "title": "Currency",
+            "description": "ISO 4217 currency code."
+          },
+          "revenueAccount": {
+            "type": "string",
+            "example": "8300",
+            "title": "Revenue Account",
+            "description": "The general-ledger account the receipt books against, overriding the requestType mapping for this type when set."
+          },
+          "payAtIntake": {
+            "type": "string",
+            "enum": [
+              "required",
+              "optional",
+              "later"
+            ],
+            "default": "required",
+            "example": "required",
+            "title": "Pay At Intake",
+            "description": "What the intake journey does with the fee. `required` blocks completion until the payment is authorized; `optional` completes with a pending request and offers the link; `later` completes and sends the link in the receipt."
+          },
+          "legalBasis": {
+            "type": "object",
+            "description": "The council decision this fee comes from: the regulation, the article inside it, and the date that article took effect. An amount that cannot say where it comes from cannot be checked by anyone, which is why a schedule without a basis is refused (REQ-FPCR-001).",
+            "properties": {
+              "regulation": {
+                "type": "string",
+                "description": "The regulation the fee is published in.",
+                "example": "Legesverordening 2026",
+                "title": "Regulation"
+              },
+              "article": {
+                "type": "string",
+                "description": "The article inside that regulation.",
+                "example": "2.3.1",
+                "title": "Article"
+              },
+              "effectiveDate": {
+                "type": "string",
+                "format": "date",
+                "description": "The day that article took effect.",
+                "example": "2026-01-01",
+                "title": "Effective Date"
+              }
+            },
+            "required": [
+              "regulation",
+              "article",
+              "effectiveDate"
+            ],
+            "title": "Legal Basis"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-01-01",
+            "title": "Valid From",
+            "description": "First day this fee applies, inclusive."
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-12-31",
+            "title": "Valid To",
+            "description": "Last day this fee applies, inclusive. Empty means open ended."
+          }
+        }
+      }
+    }
+  }
+}

@@ -65,8 +65,10 @@ use OCA\Shillinq\Listener\GRIRClearingListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
 use OCA\Shillinq\Listener\IntercompanyLinkListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
+use OCA\Shillinq\Listener\FeeScheduleValidationListener;
 use OCA\Shillinq\Listener\OrderFulfilmentTransitionListener;
 use OCA\Shillinq\Listener\OssPaymentReconciliationListener;
+use OCA\Shillinq\Listener\PaymentRequestLeafRegistrationListener;
 use OCA\Shillinq\Listener\PeppolDeliveryStatusListener;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
 use OCA\Shillinq\Listener\PosStockDecrementListener;
@@ -199,8 +201,8 @@ class Application extends App implements IBootstrap {
 		// of it. The old-slug case is the quiet one: OpenRegister finds no
 		// register, matches no rows, and returns an empty set that is byte for byte
 		// what a healthy empty register returns. No exception, no 404, no log line.
-		// This app read Integriq's connector register that way, from
-		// ExternalAdaptersAdminController.
+		// This app once read Integriq's connector register that way, from the
+		// external-adapters roster that adopt-connection-registry removed.
 		//
 		// Verified against this container, not assumed: OpenRegister registers the
 		// resolver in its OWN container, so nothing of that registration reaches
@@ -248,6 +250,17 @@ class Application extends App implements IBootstrap {
 			event: DeepLinkRegistrationEvent::class,
 			listener: DeepLinkRegistrationListener::class
 		);
+
+		// Spec case-payment-requests REQ-SOPR-003 / REQ-SOPR-004 — contribute the
+		// payment-request leaves to OpenRegister's catalogue, so a case app can
+		// ask for money on its own object without shillinq knowing the app.
+		// Guarded on the event class: shillinq boots without OpenRegister.
+		if (class_exists('OCA\\OpenRegister\\Event\\RegisterLeafProvidersEvent') === true) {
+			$context->registerEventListener(
+				event: \OCA\OpenRegister\Event\RegisterLeafProvidersEvent::class,
+				listener: PaymentRequestLeafRegistrationListener::class
+			);
+		}
 
 		// Inventory-valuation-fifo-avg REQ-INV-003 / REQ-INV-004 / REQ-INV-007
 		// — dispatch posted StockMove records into the valuation engine
@@ -648,6 +661,18 @@ class Application extends App implements IBootstrap {
 
 		// REQ-004 bewijsstuk-required completion gate, both halves.
 		(new OrderFulfilmentGateRegistration())->register(context: $context);
+
+		// REQ-SOPR-006 fee-schedule rules on the write path. No controller in
+		// this app writes a FeeSchedule: they go straight into OpenRegister, so
+		// the pre-save veto is the only place the overlap, legal-basis and
+		// default-amount rules can run at all. Until this listener existed
+		// FeeScheduleService::assertNoOverlap() had tests and no caller.
+		foreach (['OCA\\OpenRegister\\Event\\ObjectCreatingEvent', 'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent'] as $preSaveEvent) {
+			$context->registerEventListener(
+				event: $preSaveEvent,
+				listener: FeeScheduleValidationListener::class
+			);
+		}
 
 		// REQ-SIGN-001/005/006 — the decidesk DECISION and docudesk DOCUMENT
 		// signing request+outcome listeners, registered as one unit.

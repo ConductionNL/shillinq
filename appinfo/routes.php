@@ -67,20 +67,9 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // #[AuthorizedAdminSetting(Application::class)].
             ['name' => 'fxRateAdmin#status', 'url' => '/api/admin/fx-rate-import-status', 'verb' => 'GET'],
 
-        // The integration-config-to-openconnector change (formerly W8):
-        // read-only admin roster over the 15 dormant external-API
-        // adapter families (Digipoort/SBR, Salarisbureau, RvO, IB47,
-        // CBS x2, BZK SiSa, Mollie, Bunq, KvK, UWV, Treasury Rates,
-        // CCM Rule Engine, CSRD ESRS XBRL, DepositPayment). Drives the
-        // single ExternalAdaptersStatus.vue roster page — the 15
-        // per-adapter detail pages (and their #show deep-link target)
-        // are gone, so #show was removed as dead code (no browser
-        // caller left; ORCHESTRATOR RULING: dead surface once the
-        // per-adapter pages go). Gated by
-        // #[AuthorizedAdminSetting(Application::class)] — the
-        // per-row activation recipe reveals configuration keys which
-        // are admin-only data.
-            ['name' => 'externalAdaptersAdmin#index', 'url' => '/api/admin/external-adapters', 'verb' => 'GET'],
+        // No external-adapters roster route: adopt-connection-registry moved
+        // the External Connections page onto integriq's app_connection rows,
+        // declared in lib/Settings/connections.json.
 
         // Booking notification trigger configuration (organizer, per booking).
             ['name' => 'bookingNotification#getBookingTriggers',    'url' => '/api/bookings/{id}/notification-triggers', 'verb' => 'GET'],
@@ -749,6 +738,21 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // placeholder selects mollie / stripe. Declared before the SPA catch-all so
             // Symfony matches it first per ADR-016.
             ['name' => 'paymentRequestWebhook#handle', 'url' => '/api/v1/payment-requests/webhook/{gateway}', 'verb' => 'POST'],
+
+            // Payment-request panel actions (case-payment-requests, REQ-SOPR-004).
+            // The two verbs the render-surface leaf offers on a case: mail the
+            // payment link to the debtor, and record that the money arrived
+            // another way. #[NoAdminRequired] on both, gated INSIDE the
+            // controller on the payment.administer action — seeing a case is not
+            // the same right as settling its money.
+            ['name' => 'paymentRequestAction#send', 'url' => '/api/payment-requests/{id}/send', 'verb' => 'POST'],
+            ['name' => 'paymentRequestAction#settle', 'url' => '/api/payment-requests/{id}/settle', 'verb' => 'POST'],
+
+            // Raise the published leges for an object's type in one action
+            // (leges-at-intake, REQ-SOPR-008). The amount comes from the fee
+            // schedule, never from the request body: a desk clerk should not be
+            // retyping a tariff out of a verordening.
+            ['name' => 'paymentRequestAction#raiseLeges', 'url' => '/api/payment-requests/leges', 'verb' => 'POST'],
 
             // Portal payment initiation (portal-payment-initiation, ADR-046 contract
             // v2 A6). Receives portaliq's server-to-server forward of the `pay`
