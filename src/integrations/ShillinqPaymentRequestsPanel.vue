@@ -255,6 +255,8 @@ export default {
 		 * here instead of in a verordening (REQ-SOPR-008).
 		 *
 		 * @return {string} The line, or an empty string when no fee is published.
+		 *
+		 * @spec openspec/changes/leges-at-intake/specs/object-payment-requests/spec.md (REQ-SOPR-008)
 		 */
 		feeLine() {
 			if (this.fee === null || typeof this.fee !== 'object') {
@@ -279,6 +281,8 @@ export default {
 		 * Read the requests standing on the host object.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004)
 		 */
 		async load() {
 			const identity = hostIdentity(this.$props)
@@ -305,6 +309,8 @@ export default {
 		 *
 		 * @param {object} request One request.
 		 * @return {string} The amount.
+		 *
+		 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004)
 		 */
 		amountOf(request) {
 			return formatAmount(request.amount, request.currency)
@@ -315,6 +321,8 @@ export default {
 		 *
 		 * @param {object} request One request.
 		 * @return {string} The reported state.
+		 *
+		 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004)
 		 */
 		stateOf(request) {
 			const reported = request.reported
@@ -329,6 +337,8 @@ export default {
 		 *
 		 * @param {object} request One request.
 		 * @return {string} The line, or an empty string.
+		 *
+		 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004)
 		 */
 		dueLine(request) {
 			if (!request.dueAt) {
@@ -344,6 +354,8 @@ export default {
 		 *
 		 * @param {object} request The request to send.
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004)
 		 */
 		async send(request) {
 			this.busyId = request.id
@@ -369,6 +381,8 @@ export default {
 		 *
 		 * @param {object} request The request.
 		 * @return {void}
+		 *
+		 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004)
 		 */
 		openSettle(request) {
 			this.settleFor = request.id
@@ -379,6 +393,8 @@ export default {
 		 * Close the settlement form.
 		 *
 		 * @return {void}
+		 *
+		 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004)
 		 */
 		closeSettle() {
 			this.settleFor = ''
@@ -389,6 +405,8 @@ export default {
 		 *
 		 * @param {object} request The request to settle.
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004)
 		 */
 		async settle(request) {
 			this.busyId = request.id
@@ -419,6 +437,8 @@ export default {
 		 *
 		 * @param {object} e The axios error.
 		 * @return {string} The message.
+		 *
+		 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004)
 		 */
 		refusal(e) {
 			const message =

@@ -138,6 +138,8 @@ export default {
 		 * Read the contracts this object is handled under.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-006)
 		 */
 		async load() {
 			const identity = hostIdentity(this.$props)
@@ -163,6 +165,8 @@ export default {
 		 *
 		 * @param {object} contract One contract.
 		 * @return {string} The heading.
+		 *
+		 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-006)
 		 */
 		titleOf(contract) {
 			return (
@@ -177,6 +181,8 @@ export default {
 		 *
 		 * @param {object} contract One contract.
 		 * @return {string} The line.
+		 *
+		 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-006)
 		 */
 		counterpartyLine(contract) {
 			return t('shillinq', 'With {party}', {
@@ -189,6 +195,8 @@ export default {
 		 *
 		 * @param {object} contract One contract.
 		 * @return {string} The line, or an empty string when neither date is set.
+		 *
+		 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-006)
 		 */
 		termLine(contract) {
 			const from = String(contract.startDate || '').slice(0, 10)
@@ -211,6 +219,8 @@ export default {
 		 *
 		 * @param {object} contract One contract.
 		 * @return {string} The line.
+		 *
+		 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-005)
 		 */
 		remainingLine(contract) {
 			if (
