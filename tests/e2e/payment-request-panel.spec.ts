@@ -26,11 +26,11 @@
 import { expect, test } from '@playwright/test'
 import { resolveBaseURL } from './base-url.ts'
 
-function SEND (id: string) {
-  return `/index.php/apps/shillinq/api/payment-requests/${id}/send`
+function SEND(id: string) {
+	return `/index.php/apps/shillinq/api/payment-requests/${id}/send`
 }
-function SETTLE (id: string) {
-  return `/index.php/apps/shillinq/api/payment-requests/${id}/settle`
+function SETTLE(id: string) {
+	return `/index.php/apps/shillinq/api/payment-requests/${id}/settle`
 }
 const RAISE_LEGES = '/index.php/apps/shillinq/api/payment-requests/leges'
 const HEADERS = { 'OCS-APIRequest': 'true' }

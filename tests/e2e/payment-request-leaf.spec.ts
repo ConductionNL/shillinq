@@ -39,7 +39,7 @@ const HEADERS = { 'OCS-APIRequest': 'true' }
 const HOST_ID = `zaak-e2e-${Date.now()}-${Math.floor(Math.random() * 10_000)}`
 
 test.describe('case-payment-requests — the payment-request leaf', () => {
-	test('the leaf is on OpenRegister\'s catalogue under its own id', async ({
+	test("the leaf is on OpenRegister's catalogue under its own id", async ({
 		request,
 	}) => {
 		const response = await request.get(CATALOGUE, { headers: HEADERS })
