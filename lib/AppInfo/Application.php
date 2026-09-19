@@ -250,7 +250,7 @@ class Application extends App implements IBootstrap {
 			listener: DeepLinkRegistrationListener::class
 		);
 
-		// case-payment-requests REQ-SOPR-003 / REQ-SOPR-004 — contribute the
+		// Spec case-payment-requests REQ-SOPR-003 / REQ-SOPR-004 — contribute the
 		// payment-request leaves to OpenRegister's catalogue, so a case app can
 		// ask for money on its own object without shillinq knowing the app.
 		// Guarded on the event class: shillinq boots without OpenRegister.

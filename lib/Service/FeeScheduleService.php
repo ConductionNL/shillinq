@@ -76,6 +76,14 @@ final class FeeScheduleService {
 	public const TUPLE_PARTS = ['targetApp', 'register', 'schema', 'typeProperty', 'typeValue'];
 
 	/**
+	 * The date an open-ended validity window is compared as. A schedule with no
+	 * validTo runs until it is closed, and this is the far end it stands in for.
+	 *
+	 * @var string
+	 */
+	private const OPEN_ENDED = '9999-12-31';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service (ADR-083).
@@ -109,11 +117,15 @@ final class FeeScheduleService {
 	 * @spec openspec/changes/leges-at-intake/specs/object-payment-requests/spec.md (REQ-SOPR-006)
 	 */
 	public function resolve(array $tuple, string $intakeChannel = '', string $onDate = ''): ?array {
-		$day = ($onDate === '' ? gmdate('Y-m-d') : $onDate);
+		$day = $onDate;
+		if ($day === '') {
+			$day = gmdate('Y-m-d');
+		}
+
 
 		$valid = [];
-		foreach ($this->schedulesFor($tuple) as $schedule) {
-			if ($this->isValidOn($schedule, $day) === true) {
+		foreach ($this->schedulesFor(tuple: $tuple) as $schedule) {
+			if ($this->isValidOn(schedule: $schedule, day: $day) === true) {
 				$valid[] = $schedule;
 			}
 		}
@@ -139,7 +151,9 @@ final class FeeScheduleService {
 			return null;
 		}
 
-		return $this->withResolvedAmount($this->applyChannelAmount($match, $intakeChannel));
+		return $this->withResolvedAmount(
+			schedule: $this->applyChannelAmount(schedule: $match, intakeChannel: $intakeChannel)
+		);
 	}//end resolve()
 
 	/**
@@ -289,8 +303,8 @@ final class FeeScheduleService {
 	 * @spec openspec/changes/leges-at-intake/specs/object-payment-requests/spec.md (REQ-SOPR-006)
 	 */
 	public function assertNoOverlap(array $schedule, ?array $existing = null): void {
-		$this->assertLegalBasis($schedule);
-		$this->assertAmountsHaveADefault($schedule);
+		$this->assertLegalBasis(schedule: $schedule);
+		$this->assertAmountsHaveADefault(schedule: $schedule);
 
 		$from = (string)($schedule['validFrom'] ?? '');
 		if ($from === '') {
@@ -301,7 +315,7 @@ final class FeeScheduleService {
 		$channel = (string)($schedule['intakeChannel'] ?? '');
 		$selfId = (string)($schedule['id'] ?? '');
 
-		$candidates = ($existing ?? $this->schedulesFor($schedule));
+		$candidates = ($existing ?? $this->schedulesFor(tuple: $schedule));
 
 		foreach ($candidates as $candidate) {
 			$candidateId = (string)($candidate['id'] ?? '');
@@ -313,16 +327,32 @@ final class FeeScheduleService {
 				continue;
 			}
 
-			if ($this->windowsOverlap($from, $to, (string)($candidate['validFrom'] ?? ''), (string)($candidate['validTo'] ?? '')) === false) {
+			$overlaps = $this->windowsOverlap(
+				aFrom: $from,
+				aTo: $to,
+				bFrom: (string)($candidate['validFrom'] ?? ''),
+				bTo: (string)($candidate['validTo'] ?? '')
+			);
+			if ($overlaps === false) {
 				continue;
+			}
+
+			$until = '';
+			if ((string)($candidate['validTo'] ?? '') !== '') {
+				$until = ' to ' . (string)$candidate['validTo'];
+			}
+
+			$named = '';
+			if ($candidateId !== '') {
+				$named = sprintf(' (%s)', $candidateId);
 			}
 
 			throw new InvalidArgumentException(
 				sprintf(
 					'This fee overlaps the schedule valid from %s%s%s; close that one before opening this.',
 					(string)($candidate['validFrom'] ?? '?'),
-					((string)($candidate['validTo'] ?? '') === '' ? '' : ' to ' . (string)$candidate['validTo']),
-					($candidateId === '' ? '' : sprintf(' (%s)', $candidateId))
+					$until,
+					$named
 				)
 			);
 		}
@@ -344,7 +374,9 @@ final class FeeScheduleService {
 		$basis = ($schedule['legalBasis'] ?? null);
 		if (is_array($basis) === false || $basis === []) {
 			throw new InvalidArgumentException(
-				'A fee needs a legalBasis: the regulation, the article and the date it took effect. An amount nobody can trace to a council decision cannot be charged.'
+				'A fee needs a legalBasis: the regulation, the article and the date it '
+				. 'took effect. An amount nobody can trace to a council decision cannot '
+				. 'be charged.'
 			);
 		}
 
@@ -503,7 +535,7 @@ final class FeeScheduleService {
 			return $schedule;
 		}
 
-		$product = $this->readProduct($productRef);
+		$product = $this->readProduct(productRef: $productRef);
 		if ($product === null) {
 			unset($schedule['amount']);
 			$schedule['amountSource'] = 'product-missing';
@@ -543,7 +575,11 @@ final class FeeScheduleService {
 			return null;
 		}
 
-		return (is_array($rows[0]) === true ? $rows[0] : null);
+		if (is_array($rows[0]) === false) {
+			return null;
+		}
+
+		return $rows[0];
 	}//end readProduct()
 
 	/**
@@ -559,11 +595,11 @@ final class FeeScheduleService {
 			->setSchema(self::SCHEMA)
 			->findAll(['filters' => ['targetApp' => (string)($tuple['targetApp'] ?? '')], 'limit' => 500]);
 
-		$key = $this->tupleKey($tuple);
+		$key = $this->tupleKey(tuple: $tuple);
 
 		$mine = [];
 		foreach ($rows as $row) {
-			if (is_array($row) === true && $this->tupleKey($row) === $key) {
+			if (is_array($row) === true && $this->tupleKey(tuple: $row) === $key) {
 				$mine[] = $row;
 			}
 		}
@@ -586,8 +622,16 @@ final class FeeScheduleService {
 			return false;
 		}
 
-		$aEnd = ($aTo === '' ? '9999-12-31' : $aTo);
-		$bEnd = ($bTo === '' ? '9999-12-31' : $bTo);
+		$aEnd = $aTo;
+		if ($aEnd === '') {
+			$aEnd = self::OPEN_ENDED;
+		}
+
+		$bEnd = $bTo;
+		if ($bEnd === '') {
+			$bEnd = self::OPEN_ENDED;
+		}
+
 
 		return ($aFrom <= $bEnd && $bFrom <= $aEnd);
 	}//end windowsOverlap()

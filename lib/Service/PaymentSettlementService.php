@@ -156,12 +156,17 @@ final class PaymentSettlementService {
 			throw new InvalidArgumentException('A settlement needs the reference a later bank reconciliation will match on.');
 		}
 
+		$when = $settledAt;
+		if ($when === '') {
+			$when = gmdate('Y-m-d\TH:i:s\Z');
+		}
+
 		return [
 			'method' => $method,
 			'amount' => (float)$amount,
 			'reference' => $reference,
 			'actor' => $actor,
-			'settledAt' => ($settledAt === '' ? gmdate('Y-m-d\TH:i:s\Z') : $settledAt),
+			'settledAt' => $when,
 			'reason' => $reason,
 		];
 	}//end build()

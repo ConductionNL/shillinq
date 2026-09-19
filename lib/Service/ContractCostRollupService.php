@@ -93,7 +93,7 @@ final class ContractCostRollupService {
 					continue;
 				}
 
-				$cost = $this->costOf($link);
+				$cost = $this->costOf(link: $link);
 				if ($cost === null) {
 					// Counted, not summed. A subject that cannot be priced used
 					// to contribute zero in silence, and the comment beside it
@@ -109,7 +109,12 @@ final class ContractCostRollupService {
 			}
 		}
 
-		$contract['linkedObjects'] = (is_array($links) === true ? array_values($links) : []);
+		$linked = [];
+		if (is_array($links) === true) {
+			$linked = array_values($links);
+		}
+
+		$contract['linkedObjects'] = $linked;
 		$contract['incurredCost'] = round($total, 2);
 		$contract['incurredCostComputedAt'] = gmdate('Y-m-d\TH:i:s\Z');
 		$contract['incurredCostComplete'] = ($unreadable === 0);
@@ -148,11 +153,11 @@ final class ContractCostRollupService {
 	 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-005)
 	 */
 	public function unlink(array $contract, array $reference, bool $persist = true): array {
-		$key = $this->linkKey($reference);
+		$key = $this->linkKey(link: $reference);
 
 		$kept = [];
 		foreach (($contract['linkedObjects'] ?? []) as $link) {
-			if (is_array($link) === true && $this->linkKey($link) === $key) {
+			if (is_array($link) === true && $this->linkKey(link: $link) === $key) {
 				continue;
 			}
 

@@ -185,8 +185,8 @@ final class ContractLeafProvider implements IntegrationProvider {
 	 */
 	public function list(string $register, string $schema, string $objectId, array $filters = []): array {
 		$items = [];
-		foreach ($this->contractsLinkedTo($register, $schema, $objectId) as $contract) {
-			$items[] = $this->project($contract);
+		foreach ($this->contractsLinkedTo(register: $register, schema: $schema, objectId: $objectId) as $contract) {
+			$items[] = $this->project(contract: $contract);
 		}
 
 		return ['items' => $items, 'total' => count($items), 'nextCursor' => null];
@@ -212,9 +212,9 @@ final class ContractLeafProvider implements IntegrationProvider {
 	 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-006)
 	 */
 	public function get(string $register, string $schema, string $objectId, string $entityId): array {
-		foreach ($this->contractsLinkedTo($register, $schema, $objectId) as $contract) {
+		foreach ($this->contractsLinkedTo(register: $register, schema: $schema, objectId: $objectId) as $contract) {
 			if ((string)($contract['id'] ?? '') === $entityId) {
-				return $this->project($contract);
+				return $this->project(contract: $contract);
 			}
 		}
 

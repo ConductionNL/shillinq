@@ -188,6 +188,7 @@ class PaymentReconciliationService {
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger (never receives raw payment data).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param ?PaymentRevenueAccountResolver $revenueAccounts Resolves the revenue account for a settlement, absent when nothing maps one.
 	 *
 	 * @return void
 	 */
@@ -540,7 +541,11 @@ class PaymentReconciliationService {
 		$request['revenueAccount'] = $account;
 
 		$currency = (string)($request['currency'] ?? 'EUR');
-		$subject = (is_array($request['subject'] ?? null) === true ? (array)$request['subject'] : []);
+		$subject = [];
+		if (is_array($request['subject'] ?? null) === true) {
+			$subject = (array)$request['subject'];
+		}
+
 		$memo = $this->describeSubject(subject: $subject, requestType: $requestType);
 		$capturedAt = (string)($request['capturedAt'] ?? gmdate('Y-m-d\TH:i:s\Z'));
 		$postingDate = substr($capturedAt, 0, 10);
@@ -603,10 +608,19 @@ class PaymentReconciliationService {
 	 */
 	private function buildObjectConfirmationSummary(array $request): string {
 		$capturedAt = (string)($request['capturedAt'] ?? '');
-		$date = ($capturedAt === '' ? gmdate('Y-m-d') : substr($capturedAt, 0, 10));
+		$date = substr($capturedAt, 0, 10);
+		if ($capturedAt === '') {
+			$date = gmdate('Y-m-d');
+		}
+
+		$subject = [];
+		if (is_array($request['subject'] ?? null) === true) {
+			$subject = (array)$request['subject'];
+		}
+
 		$reference = (string)($request['settlementReference'] ?? ($request['paymentIntentId'] ?? ''));
 		$what = (string)($request['description'] ?? $this->describeSubject(
-			subject: (is_array($request['subject'] ?? null) === true ? (array)$request['subject'] : []),
+			subject: $subject,
 			requestType: (string)($request['requestType'] ?? 'other'),
 		));
 

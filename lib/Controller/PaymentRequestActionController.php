@@ -86,7 +86,7 @@ class PaymentRequestActionController extends Controller {
 		private readonly PaymentRequestLeafProvider $leaf,
 		private readonly PaymentSettlementService $settlements,
 	) {
-		parent::__construct($appName, $request);
+		parent::__construct(appName: $appName, request: $request);
 	}//end __construct()
 
 	/**
@@ -109,7 +109,7 @@ class PaymentRequestActionController extends Controller {
 			return new JSONResponse(['error' => 'No payment request with that id.'], Http::STATUS_NOT_FOUND);
 		}
 
-		$email = (string)(($request['debtor']['email'] ?? '') ?: '');
+		$email = (string)($request['debtor']['email'] ?? '');
 		if ($email === '') {
 			return new JSONResponse(['error' => 'This request has no debtor email to send the link to.'], Http::STATUS_BAD_REQUEST);
 		}
@@ -251,7 +251,11 @@ class PaymentRequestActionController extends Controller {
 
 		$row = $rows[0];
 
-		return (is_array($row) === true ? $row : null);
+		if (is_array($row) === false) {
+			return null;
+		}
+
+		return $row;
 	}//end loadRequest()
 
 	/**
@@ -323,12 +327,16 @@ class PaymentRequestActionController extends Controller {
 					'requestType' => 'leges',
 					'amount' => (float)$amount,
 					'currency' => (string)($fee['currency'] ?? 'EUR'),
-					'description' => $this->describeFee($fee),
+					'description' => $this->describeFee(fee: $fee),
 					'legalBasis' => ($fee['legalBasis'] ?? null),
 				]
 			);
 		} catch (\Throwable $e) {
-			$status = (str_contains($e->getMessage(), '403') === true ? Http::STATUS_FORBIDDEN : Http::STATUS_CONFLICT);
+			$status = Http::STATUS_CONFLICT;
+			if (str_contains($e->getMessage(), '403') === true) {
+				$status = Http::STATUS_FORBIDDEN;
+			}
+
 
 			return new JSONResponse(['error' => $e->getMessage()], $status);
 		}
@@ -370,6 +378,10 @@ class PaymentRequestActionController extends Controller {
 		$type = (string)($fee['typeValue'] ?? 'application');
 		$citation = $this->feeSchedules->citation($fee);
 
-		return ($citation === '' ? sprintf('Leges %s', $type) : sprintf('Leges %s (%s)', $type, $citation));
+		if ($citation === '') {
+			return sprintf('Leges %s', $type);
+		}
+
+		return sprintf('Leges %s (%s)', $type, $citation);
 	}//end describeFee()
 }//end class

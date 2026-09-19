@@ -114,7 +114,7 @@ final class PaymentRequestLeafRegistrationListener implements IEventListener {
 			null,
 		);
 
-		// fees-payments-and-the-contract-register REQ-FPCR-006 — the case app
+		// Spec fees-payments-and-the-contract-register REQ-FPCR-006 — the case app
 		// names the contract and reads its term, counterparty and remaining
 		// value from here, so no case ever carries a stale copy of an agreement.
 		$event->registerLeaf(
