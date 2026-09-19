@@ -30,6 +30,30 @@ final class LeafDescriptor {
 	public const RENDER_MODE_COMPONENT = 'component';
 
 	/**
+	 * The mount hand-off mode. Missing from this stub until 2026-09-19, which
+	 * made a descriptor that correctly declares it read as an undefined
+	 * constant. A stub that lags the real class reports a defect in code that
+	 * has none.
+	 *
+	 * @var string
+	 */
+	public const RENDER_MODE_MOUNT = 'mount';
+
+	/**
+	 * Every surface a descriptor may target. Mirrored here because a leaf that
+	 * declares a surface outside this list is filtered out of every grid and
+	 * nothing says so.
+	 *
+	 * @var array<int, string>
+	 */
+	public const VALID_SURFACES = [
+		'user-dashboard',
+		'app-dashboard',
+		'detail-page',
+		'single-entity',
+	];
+
+	/**
 	 * @param array<int, string> $kinds Kinds.
 	 * @param array<int, string> $surfaces Surfaces.
 	 */
@@ -85,9 +109,9 @@ final class LeafDescriptor {
 		return $this->referenceType;
 	}//end getReferenceType()
 
-	public function getRequiresPermission(): ?string {
+	public function requiresPermission(): ?string {
 		return $this->requiresPermission;
-	}//end getRequiresPermission()
+	}//end requiresPermission()
 
 	public function getRenderMode(): string {
 		return $this->renderMode;
