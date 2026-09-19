@@ -18,7 +18,6 @@
 // object.
 
 import { translate as t } from '@nextcloud/l10n'
-import ShillinqPaymentRequestsPanel from './ShillinqPaymentRequestsPanel.vue'
 import { mountPairFor, sharedRegistry } from './leafMount.js'
 
 /**
@@ -29,7 +28,7 @@ import { mountPairFor, sharedRegistry } from './leafMount.js'
  */
 export const PAYMENT_REQUESTS_PANEL_ID = 'shillinq-payment-requests-panel'
 
-const pair = mountPairFor(ShillinqPaymentRequestsPanel)
+const pair = mountPairFor(() => import('./ShillinqPaymentRequestsPanel.vue'))
 
 /**
  * The descriptor. Every field here that the server descriptor also states is

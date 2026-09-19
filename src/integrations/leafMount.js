@@ -19,7 +19,7 @@
 // gate-24 read the id it registers under.
 
 import { translatePlural as n, translate as t } from '@nextcloud/l10n'
-import { createApp } from 'vue'
+import { createApp, defineAsyncComponent, h } from 'vue'
 
 /**
  * Build the `mount` / `unmount` pair for one leaf component.
@@ -28,12 +28,21 @@ import { createApp } from 'vue'
  * twice on one page, once as a sidebar tab and once as a detail-page widget,
  * and each mount is its own app.
  *
- * @param {object} component The Vue component to root at the host's element.
+ * The component arrives as a LOADER, not as a component, and that is the
+ * difference between a 1.6 MB every-page bundle and a small one. The init
+ * script registers these descriptors on every Nextcloud page, but a panel
+ * renders only where a host actually mounts it, so the panel and the
+ * `@nextcloud/vue` components it pulls in belong in a chunk that loads then.
+ * The lazy chunk resolves against `__webpack_public_path__`, which is why
+ * every entry point importing this must import `setPublicPath.js` first.
+ *
+ * @param {() => Promise<object>} loader Dynamic import of the leaf component.
  *
  * @return {{mount: (el: Element, props: object) => void, unmount: (el: Element) => void}} The pair the registry stores.
  */
-export function mountPairFor(component) {
+export function mountPairFor(loader) {
 	const mountedApps = new Map()
+	let component = null
 
 	/**
 	 * Root the leaf's own Vue app at a host-owned element. Idempotent per
@@ -48,7 +57,15 @@ export function mountPairFor(component) {
 		if (el === undefined || el === null || mountedApps.has(el) === true) {
 			return
 		}
-		const app = createApp(component, { ...(props || {}) })
+		if (component === null) {
+			component = defineAsyncComponent(loader)
+		}
+		// A plain root rendering the async panel, rather than the async
+		// component as the root itself: the root's own props are fixed at
+		// createApp time, and this keeps the forwarded context in one place.
+		const child = component
+		const forwarded = { ...(props || {}) }
+		const app = createApp({ render: () => h(child, forwarded) })
 		// The panels import `t()` directly, but any shared library component
 		// they pull in reads `this.t` / `this.n` off the app instance. main.js
 		// installs both in the app bundle; a leaf mounts its own app, so it

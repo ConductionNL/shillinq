@@ -17,5 +17,13 @@
 import { registerContractLeaf } from './integrations/registerContractLeaf.js'
 import { registerPaymentRequestsLeaf } from './integrations/registerPaymentRequestsLeaf.js'
 
+// Sets __webpack_public_path__ / __webpack_nonce__ for this entry. The panels
+// load as lazy chunks, and a chunk fetched from the wrong webroot does not 404
+// here: Nextcloud answers the HTML shell with a 200 and the load fails as a
+// MIME refusal (see src/setPublicPath.js). It sits last because the linter
+// sorts side-effect imports there and because it only has to run before a
+// chunk is REQUESTED, which is after every module in this entry has evaluated.
+import './setPublicPath.js'
+
 registerPaymentRequestsLeaf()
 registerContractLeaf()

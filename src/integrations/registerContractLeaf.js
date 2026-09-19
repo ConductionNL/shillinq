@@ -13,7 +13,6 @@
 // carries no registration of its own: it is the source this surface reads.
 
 import { translate as t } from '@nextcloud/l10n'
-import ShillinqContractPanel from './ShillinqContractPanel.vue'
 import { mountPairFor, sharedRegistry } from './leafMount.js'
 
 /**
@@ -24,7 +23,7 @@ import { mountPairFor, sharedRegistry } from './leafMount.js'
  */
 export const CONTRACTS_PANEL_ID = 'shillinq-contracts-panel'
 
-const pair = mountPairFor(ShillinqContractPanel)
+const pair = mountPairFor(() => import('./ShillinqContractPanel.vue'))
 
 /**
  * The descriptor. Every field the server descriptor also states is stated
