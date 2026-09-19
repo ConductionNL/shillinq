@@ -8,6 +8,20 @@
  * there a fee for this type on this day, does a request already stand on the
  * object, and may the journey finish before the money arrives.
  *
+ * NOTHING CALLS THIS YET, AND THAT IS NOT AN OVERSIGHT
+ * ----------------------------------------------------
+ * There is no route to it, no DI registration naming it and no caller in any
+ * app. It decides a journey step, and the journey does not exist: `CnJourney`
+ * is not in `@conduction/nextcloud-vue`, `journey` and `journeyRun` are not
+ * register schemas in portaliq, ADR-085 names three step kinds and `payment`
+ * is not one of them, and portaliq's portal still boots React. The full chain
+ * and the reason portaliq's existing intake queue cannot stand in are in
+ * `openspec/changes/leges-at-intake/tasks.md` under task 2.2, and the portaliq
+ * side is recorded in portaliq#617.
+ *
+ * Read the green unit suite below as what it is: proof that the decision is
+ * right, not proof that anybody reaches it.
+ *
  * WHY THE STEP DOES NOT GO THROUGH THE LEAF'S ACTION GATE
  * ------------------------------------------------------
  * `shillinq-payment-requests` refuses a caller without `payment.request`,
