@@ -234,10 +234,6 @@ final class FeeScheduleService {
 			->setSchema(self::SCHEMA)
 			->findAll(['filters' => ['register' => $register], 'limit' => 500]);
 
-		if (is_array($rows) === false) {
-			return null;
-		}
-
 		$seen = [];
 		foreach ($rows as $row) {
 			if (is_array($row) === false
@@ -543,7 +539,7 @@ final class FeeScheduleService {
 			return null;
 		}
 
-		if (is_array($rows) === false || $rows === []) {
+		if ($rows === []) {
 			return null;
 		}
 
@@ -562,10 +558,6 @@ final class FeeScheduleService {
 			->setRegister($this->registerSlug())
 			->setSchema(self::SCHEMA)
 			->findAll(['filters' => ['targetApp' => (string)($tuple['targetApp'] ?? '')], 'limit' => 500]);
-
-		if (is_array($rows) === false) {
-			return [];
-		}
 
 		$key = $this->tupleKey($tuple);
 

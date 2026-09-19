@@ -111,18 +111,18 @@ final class ContractLeafProvider implements IntegrationProvider {
 	/**
 	 * The group the leaf sorts under.
 	 *
-	 * @return string|null The group.
+	 * @return string The group.
 	 */
-	public function getGroup(): ?string {
+	public function getGroup(): string {
 		return 'Finance';
 	}//end getGroup()
 
 	/**
 	 * The app that must be installed for this leaf to answer.
 	 *
-	 * @return string|null The app id.
+	 * @return string The app id.
 	 */
-	public function getRequiredApp(): ?string {
+	public function getRequiredApp(): string {
 		return 'shillinq';
 	}//end getRequiredApp()
 
@@ -342,10 +342,6 @@ final class ContractLeafProvider implements IntegrationProvider {
 			->setRegister($this->registerSlug())
 			->setSchema(self::SCHEMA)
 			->findAll(['limit' => 500]);
-
-		if (is_array($rows) === false) {
-			return [];
-		}
 
 		$key = implode('|', [$register, $schema, $objectId]);
 
