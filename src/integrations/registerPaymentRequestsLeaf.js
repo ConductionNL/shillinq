@@ -72,6 +72,9 @@ export function registerPaymentRequestsLeaf(globalRef) {
 		// app bundle and the every-page init script both register, so a
 		// duplicate on a shillinq page is expected, not a boot failure.
 		// eslint-disable-next-line no-console
-		console.warn('[shillinq] the payment requests panel was already registered', e)
+		console.warn(
+			'[shillinq] the payment requests panel was already registered',
+			e,
+		)
 	}
 }

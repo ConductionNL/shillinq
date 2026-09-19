@@ -18,7 +18,7 @@
 // descriptor, rather than handing both to a helper here. That is what lets
 // gate-24 read the id it registers under.
 
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
+import { translatePlural as n, translate as t } from '@nextcloud/l10n'
 import { createApp } from 'vue'
 
 /**
@@ -30,7 +30,7 @@ import { createApp } from 'vue'
  *
  * @param {object} component The Vue component to root at the host's element.
  *
- * @return {{mount: Function, unmount: Function}} The pair the registry stores.
+ * @return {{mount: (el: Element, props: object) => void, unmount: (el: Element) => void}} The pair the registry stores.
  */
 export function mountPairFor(component) {
 	const mountedApps = new Map()

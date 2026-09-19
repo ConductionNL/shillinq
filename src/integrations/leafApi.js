@@ -85,9 +85,12 @@ export async function sendPaymentLink(requestId) {
  * @return {Promise<object>} The derived report.
  */
 export async function settleByOtherMeans(requestId, settlement) {
-	const url = generateUrl('/apps/shillinq/api/payment-requests/{requestId}/settle', {
-		requestId,
-	})
+	const url = generateUrl(
+		'/apps/shillinq/api/payment-requests/{requestId}/settle',
+		{
+			requestId,
+		},
+	)
 	const response = await axios.post(url, settlement)
 	return response.data || {}
 }
@@ -143,7 +146,7 @@ export function formatAmount(amount, currency) {
 			style: 'currency',
 			currency: currency || 'EUR',
 		}).format(value)
-	} catch (e) {
+	} catch {
 		return `${currency || 'EUR'} ${value.toFixed(2)}`
 	}
 }

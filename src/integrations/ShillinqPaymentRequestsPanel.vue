@@ -44,8 +44,12 @@
 					class="shillinq-leaf__row"
 					:data-testid="`shillinq-payment-request-${request.id}`">
 					<div class="shillinq-leaf__row-head">
-						<span class="shillinq-leaf__amount">{{ amountOf(request) }}</span>
-						<span class="shillinq-leaf__state">{{ stateOf(request) }}</span>
+						<span class="shillinq-leaf__amount">{{
+							amountOf(request)
+						}}</span>
+						<span class="shillinq-leaf__state">{{
+							stateOf(request)
+						}}</span>
 					</div>
 
 					<p v-if="request.description" class="shillinq-leaf__description">
@@ -83,7 +87,10 @@
 						<select
 							:id="`shillinq-settle-method-${request.id}`"
 							v-model="settleForm.method">
-							<option v-for="option in methods" :key="option.value" :value="option.value">
+							<option
+								v-for="option in methods"
+								:key="option.value"
+								:value="option.value">
 								{{ option.label }}
 							</option>
 						</select>
@@ -95,7 +102,7 @@
 							:id="`shillinq-settle-reference-${request.id}`"
 							v-model="settleForm.settlementReference"
 							type="text"
-							:placeholder="referencePlaceholder">
+							:placeholder="referencePlaceholder" />
 
 						<label :for="`shillinq-settle-reason-${request.id}`">
 							{{ reasonLabel }}
@@ -103,13 +110,13 @@
 						<input
 							:id="`shillinq-settle-reason-${request.id}`"
 							v-model="settleForm.reason"
-							type="text">
+							type="text" />
 
 						<div class="shillinq-leaf__actions">
 							<NcButton
 								:disabled="busyId === request.id"
 								variant="primary"
-								native-type="submit">
+								type="submit">
 								{{ confirmSettleLabel }}
 							</NcButton>
 							<NcButton variant="tertiary" @click="closeSettle">
@@ -134,10 +141,10 @@
 import { translate as t } from '@nextcloud/l10n'
 import { NcButton, NcLoadingIcon } from '@nextcloud/vue'
 import {
-	PAYMENT_REQUESTS_DATA_LEAF,
 	formatAmount,
 	hostIdentity,
 	isResolvable,
+	PAYMENT_REQUESTS_DATA_LEAF,
 	readLeaf,
 	sendPaymentLink,
 	settleByOtherMeans,
@@ -186,7 +193,10 @@ export default {
 	computed: {
 		/** @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004) */
 		emptyLabel() {
-			return t('shillinq', 'Nobody has been asked to pay anything on this record yet.')
+			return t(
+				'shillinq',
+				'Nobody has been asked to pay anything on this record yet.',
+			)
 		},
 
 		/** @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004) */
@@ -254,7 +264,9 @@ export default {
 			if (amount === '') {
 				return ''
 			}
-			return t('shillinq', 'Published fee for this record: {amount}', { amount })
+			return t('shillinq', 'Published fee for this record: {amount}', {
+				amount,
+			})
 		},
 	},
 
@@ -281,7 +293,7 @@ export default {
 				const envelope = await readLeaf(identity, PAYMENT_REQUESTS_DATA_LEAF)
 				this.requests = Array.isArray(envelope.items) ? envelope.items : []
 				this.fee = envelope.fee || null
-			} catch (e) {
+			} catch {
 				this.error = t('shillinq', 'The payment requests could not be read.')
 			} finally {
 				this.loading = false
@@ -322,7 +334,9 @@ export default {
 			if (!request.dueAt) {
 				return ''
 			}
-			return t('shillinq', 'Due {date}', { date: String(request.dueAt).slice(0, 10) })
+			return t('shillinq', 'Due {date}', {
+				date: String(request.dueAt).slice(0, 10),
+			})
 		},
 
 		/**
@@ -338,7 +352,10 @@ export default {
 				await sendPaymentLink(request.id)
 				this.notices = {
 					...this.notices,
-					[request.id]: t('shillinq', 'The payment link went out to the debtor.'),
+					[request.id]: t(
+						'shillinq',
+						'The payment link went out to the debtor.',
+					),
 				}
 			} catch (e) {
 				this.notices = { ...this.notices, [request.id]: this.refusal(e) }
@@ -404,7 +421,8 @@ export default {
 		 * @return {string} The message.
 		 */
 		refusal(e) {
-			const message = e && e.response && e.response.data && e.response.data.error
+			const message =
+				e && e.response && e.response.data && e.response.data.error
 			if (typeof message === 'string' && message !== '') {
 				return message
 			}

@@ -40,12 +40,17 @@
 					<span>{{ titleOf(contract) }}</span>
 					<span
 						class="shillinq-leaf__state"
-						:class="{ 'shillinq-leaf__state--attention': contract.needsAttention }">
+						:class="{
+							'shillinq-leaf__state--attention':
+								contract.needsAttention,
+						}">
 						{{ contract.status }}
 					</span>
 				</div>
 
-				<p v-if="contract.counterpartyReference" class="shillinq-leaf__description">
+				<p
+					v-if="contract.counterpartyReference"
+					class="shillinq-leaf__description">
 					{{ counterpartyLine(contract) }}
 				</p>
 
@@ -117,7 +122,10 @@ export default {
 
 		/** @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-005) */
 		incompleteLabel() {
-			return t('shillinq', 'Some linked costs could not be read, so the remaining value is a floor, not a total.')
+			return t(
+				'shillinq',
+				'Some linked costs could not be read, so the remaining value is a floor, not a total.',
+			)
 		},
 	},
 
@@ -143,7 +151,7 @@ export default {
 			try {
 				const envelope = await readLeaf(identity, CONTRACTS_DATA_LEAF)
 				this.contracts = Array.isArray(envelope.items) ? envelope.items : []
-			} catch (e) {
+			} catch {
 				this.error = t('shillinq', 'The contract could not be read.')
 			} finally {
 				this.loading = false
@@ -157,7 +165,11 @@ export default {
 		 * @return {string} The heading.
 		 */
 		titleOf(contract) {
-			return contract.title || contract.contractNumber || t('shillinq', 'Contract')
+			return (
+				contract.title
+				|| contract.contractNumber
+				|| t('shillinq', 'Contract')
+			)
 		},
 
 		/**
@@ -167,7 +179,9 @@ export default {
 		 * @return {string} The line.
 		 */
 		counterpartyLine(contract) {
-			return t('shillinq', 'With {party}', { party: contract.counterpartyReference })
+			return t('shillinq', 'With {party}', {
+				party: contract.counterpartyReference,
+			})
 		},
 
 		/**
@@ -199,8 +213,14 @@ export default {
 		 * @return {string} The line.
 		 */
 		remainingLine(contract) {
-			if (contract.remainingValue === null || contract.remainingValue === undefined) {
-				return t('shillinq', 'The remaining value has not been rolled up yet.')
+			if (
+				contract.remainingValue === null
+				|| contract.remainingValue === undefined
+			) {
+				return t(
+					'shillinq',
+					'The remaining value has not been rolled up yet.',
+				)
 			}
 			const amount = formatAmount(contract.remainingValue, contract.currency)
 			return t('shillinq', 'Remaining value {amount}', { amount })
