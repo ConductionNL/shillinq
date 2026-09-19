@@ -22,10 +22,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ShillinqContractPanel from '../../src/integrations/ShillinqContractPanel.vue'
 import {
 	CONTRACTS_DATA_LEAF,
-	PAYMENT_REQUESTS_DATA_LEAF,
 	formatAmount,
 	hostIdentity,
 	isResolvable,
+	PAYMENT_REQUESTS_DATA_LEAF,
 	readLeaf,
 	sendPaymentLink,
 	settleByOtherMeans,
@@ -238,10 +238,7 @@ describe('finance leaves — the host identity the registry hands over', () => {
 
 describe('contract panel — an absent remaining value is not zero', () => {
 	const bind = (name, ...args) =>
-		ShillinqContractPanel.methods[name].call(
-			{ t: (app, text) => text },
-			...args,
-		)
+		ShillinqContractPanel.methods[name].call({ t: (app, text) => text }, ...args)
 
 	it('🔴 says the roll-up has not run rather than showing 0,00', () => {
 		expect(bind('remainingLine', { remainingValue: null })).toBe(
