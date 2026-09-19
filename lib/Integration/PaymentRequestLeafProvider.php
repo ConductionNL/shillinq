@@ -197,6 +197,9 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	 *
 	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-003)
 	 * @spec openspec/changes/leges-at-intake/specs/object-payment-requests/spec.md (REQ-SOPR-008)
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $filters is IntegrationProvider's;
+	 * this leaf returns every request on the object and filters nothing yet.
 	 */
 	public function list(string $register, string $schema, string $objectId, array $filters = []): array {
 		$requests = $this->requestsOn(register: $register, schema: $schema, objectId: $objectId);
@@ -381,6 +384,10 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	 * @return array<string, mixed> Never returns.
 	 *
 	 * @throws RuntimeException Always.
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is
+	 * IntegrationProvider's. The method refuses every call, so it reads none of
+	 * its arguments; dropping them would break the contract.
 	 */
 	public function update(string $register, string $schema, string $objectId, string $entityId, array $payload): array {
 		throw new RuntimeException('A payment request changes state through its lifecycle, not through the leaf.');
@@ -397,6 +404,10 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	 * @return void
 	 *
 	 * @throws RuntimeException Always.
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is
+	 * IntegrationProvider's. The method refuses every call, so it reads none of
+	 * its arguments; dropping them would break the contract.
 	 */
 	public function delete(string $register, string $schema, string $objectId, string $entityId): void {
 		throw new RuntimeException('A payment request is payment evidence and is voided, never deleted.');

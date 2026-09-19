@@ -42,6 +42,7 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Support\DateWindow;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 
@@ -74,14 +75,6 @@ final class FeeScheduleService {
 	 * @var array<int, string>
 	 */
 	public const TUPLE_PARTS = ['targetApp', 'register', 'schema', 'typeProperty', 'typeValue'];
-
-	/**
-	 * The date an open-ended validity window is compared as. A schedule with no
-	 * validTo runs until it is closed, and this is the far end it stands in for.
-	 *
-	 * @var string
-	 */
-	private const OPEN_ENDED = '9999-12-31';
 
 	/**
 	 * Constructor.
@@ -327,7 +320,7 @@ final class FeeScheduleService {
 				continue;
 			}
 
-			$overlaps = $this->windowsOverlap(
+			$overlaps = DateWindow::overlaps(
 				aFrom: $from,
 				aTo: $to,
 				bFrom: (string)($candidate['validFrom'] ?? ''),
@@ -606,35 +599,6 @@ final class FeeScheduleService {
 
 		return $mine;
 	}//end schedulesFor()
-
-	/**
-	 * True when two closed or open-ended day windows share a day.
-	 *
-	 * @param string $aFrom Start of the first window.
-	 * @param string $aTo End of the first window, or empty for open ended.
-	 * @param string $bFrom Start of the second window.
-	 * @param string $bTo End of the second window, or empty for open ended.
-	 *
-	 * @return bool True when they overlap.
-	 */
-	private function windowsOverlap(string $aFrom, string $aTo, string $bFrom, string $bTo): bool {
-		if ($bFrom === '') {
-			return false;
-		}
-
-		$aEnd = $aTo;
-		if ($aEnd === '') {
-			$aEnd = self::OPEN_ENDED;
-		}
-
-		$bEnd = $bTo;
-		if ($bEnd === '') {
-			$bEnd = self::OPEN_ENDED;
-		}
-
-
-		return ($aFrom <= $bEnd && $bFrom <= $aEnd);
-	}//end windowsOverlap()
 
 	/**
 	 * The register slug holding shillinq's own objects.

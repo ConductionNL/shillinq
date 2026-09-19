@@ -91,6 +91,9 @@ class ContractCostRollupJob extends TimedJob {
 	 * @return void
 	 *
 	 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-005)
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
+	 * TimedJob's run() signature; this job takes no argument.
 	 */
 	protected function run($argument): void {
 		$register = $this->appConfig->getValueString('shillinq', 'register', 'shillinq');

@@ -182,6 +182,9 @@ final class ContractLeafProvider implements IntegrationProvider {
 	 * @return array<string, mixed> The `{items, total, nextCursor}` envelope.
 	 *
 	 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-006)
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $filters is IntegrationProvider's;
+	 * this leaf returns every request on the object and filters nothing yet.
 	 */
 	public function list(string $register, string $schema, string $objectId, array $filters = []): array {
 		$items = [];
@@ -232,6 +235,10 @@ final class ContractLeafProvider implements IntegrationProvider {
 	 * @return array<string, mixed> Never returns.
 	 *
 	 * @throws RuntimeException Always.
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is
+	 * IntegrationProvider's. The method refuses every call, so it reads none of
+	 * its arguments; dropping them would break the contract.
 	 */
 	public function create(string $register, string $schema, string $objectId, array $payload): array {
 		throw new RuntimeException('A contract is administered in shillinq; the leaf reads it and does not create one.');
@@ -249,6 +256,10 @@ final class ContractLeafProvider implements IntegrationProvider {
 	 * @return array<string, mixed> Never returns.
 	 *
 	 * @throws RuntimeException Always.
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is
+	 * IntegrationProvider's. The method refuses every call, so it reads none of
+	 * its arguments; dropping them would break the contract.
 	 */
 	public function update(string $register, string $schema, string $objectId, string $entityId, array $payload): array {
 		throw new RuntimeException('A contract is edited in shillinq, where its lifecycle and its audit trail are.');
@@ -265,6 +276,10 @@ final class ContractLeafProvider implements IntegrationProvider {
 	 * @return void
 	 *
 	 * @throws RuntimeException Always.
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is
+	 * IntegrationProvider's. The method refuses every call, so it reads none of
+	 * its arguments; dropping them would break the contract.
 	 */
 	public function delete(string $register, string $schema, string $objectId, string $entityId): void {
 		throw new RuntimeException('A contract is an agreement and is terminated, never deleted from a case.');

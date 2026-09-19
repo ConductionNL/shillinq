@@ -76,13 +76,12 @@ final class ContractCostRollupService {
 	 * them with the time of the computation.
 	 *
 	 * @param array<string, mixed> $contract The contract.
-	 * @param bool $persist Whether to write the result back.
 	 *
 	 * @return array<string, mixed> The contract with the roll-up applied.
 	 *
 	 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-005)
 	 */
-	public function rollUp(array $contract, bool $persist = true): array {
+	public function rollUp(array $contract): array {
 		$total = 0.0;
 		$unreadable = 0;
 		$links = ($contract['linkedObjects'] ?? []);
@@ -130,13 +129,11 @@ final class ContractCostRollupService {
 			unset($contract['remainingValue']);
 		}
 
-		if ($persist === true) {
-			$this->objectService->saveObject(
-				object: $contract,
-				register: $this->registerSlug(),
-				schema: self::SCHEMA,
-			);
-		}
+		$this->objectService->saveObject(
+			object: $contract,
+			register: $this->registerSlug(),
+			schema: self::SCHEMA,
+		);
 
 		return $contract;
 	}//end rollUp()
@@ -146,13 +143,12 @@ final class ContractCostRollupService {
 	 *
 	 * @param array<string, mixed> $contract The contract.
 	 * @param array<string, mixed> $reference The link to remove: register, schema, id.
-	 * @param bool $persist Whether to write the result back.
 	 *
 	 * @return array<string, mixed> The contract with the link gone and the total recomputed.
 	 *
 	 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-005)
 	 */
-	public function unlink(array $contract, array $reference, bool $persist = true): array {
+	public function unlink(array $contract, array $reference): array {
 		$key = $this->linkKey(link: $reference);
 
 		$kept = [];
@@ -168,7 +164,7 @@ final class ContractCostRollupService {
 
 		// Deliberately nothing is written to the unlinked object. The link was
 		// the contract's claim about it, not a property of the object.
-		return $this->rollUp(contract: $contract, persist: $persist);
+		return $this->rollUp(contract: $contract);
 	}//end unlink()
 
 	/**
