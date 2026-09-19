@@ -124,18 +124,18 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	/**
 	 * The group the leaf sorts under.
 	 *
-	 * @return string|null The group.
+	 * @return string The group.
 	 */
-	public function getGroup(): ?string {
+	public function getGroup(): string {
 		return 'Finance';
 	}//end getGroup()
 
 	/**
 	 * The app that must be installed for this leaf to answer.
 	 *
-	 * @return string|null The app id.
+	 * @return string The app id.
 	 */
-	public function getRequiredApp(): ?string {
+	public function getRequiredApp(): string {
 		return 'shillinq';
 	}//end getRequiredApp()
 
@@ -170,9 +170,9 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	/**
 	 * The action a write needs.
 	 *
-	 * @return string|null The action.
+	 * @return string The action.
 	 */
-	public function requiresPermission(): ?string {
+	public function requiresPermission(): string {
 		return self::ACTION_REQUEST;
 	}//end requiresPermission()
 
@@ -256,7 +256,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 				->setSchema($schema)
 				->findAll(['filters' => ['id' => $objectId], 'limit' => 1]);
 
-			if (is_array($rows) === false || $rows === [] || is_array($rows[0]) === false) {
+			if ($rows === [] || is_array($rows[0]) === false) {
 				return null;
 			}
 

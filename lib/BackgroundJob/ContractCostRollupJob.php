@@ -105,10 +105,6 @@ class ContractCostRollupJob extends TimedJob {
 			return;
 		}
 
-		if (is_array($contracts) === false) {
-			return;
-		}
-
 		$done = 0;
 		foreach ($contracts as $contract) {
 			if (is_array($contract) === false || is_array($contract['linkedObjects'] ?? null) === false) {

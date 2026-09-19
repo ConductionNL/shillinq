@@ -280,10 +280,6 @@ final class LegesIntakeStepService {
 			->setSchema(self::SCHEMA_REQUEST)
 			->findAll(['filters' => ['requestType' => 'leges'], 'limit' => 200]);
 
-		if (is_array($rows) === false) {
-			return null;
-		}
-
 		$key = $this->validator->subjectKey(
 			[
 				'register' => (string)($context['register'] ?? ''),

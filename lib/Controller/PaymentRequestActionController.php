@@ -245,7 +245,7 @@ class PaymentRequestActionController extends Controller {
 			->setSchema(self::SCHEMA)
 			->findAll(['filters' => ['id' => $id], 'limit' => 1]);
 
-		if (is_array($rows) === false || $rows === []) {
+		if ($rows === []) {
 			return null;
 		}
 
@@ -351,7 +351,7 @@ class PaymentRequestActionController extends Controller {
 			->setSchema($schema)
 			->findAll(['filters' => ['id' => $objectId], 'limit' => 1]);
 
-		if (is_array($rows) === false || $rows === [] || is_array($rows[0]) === false) {
+		if ($rows === [] || is_array($rows[0]) === false) {
 			return null;
 		}
 
