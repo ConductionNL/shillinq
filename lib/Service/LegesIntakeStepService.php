@@ -134,7 +134,7 @@ final class LegesIntakeStepService {
 	/**
 	 * Decide the step for one object the journey has just written.
 	 *
-	 * @param array<string, mixed> $context The step context: targetApp, register, schema, typeProperty, typeValue, objectId, subjectType, intakeChannel, onDate, debtor.
+	 * @param array<string, mixed> $context The step context: the fee tuple parts plus objectId, subjectType, intakeChannel, onDate and debtor.
 	 *
 	 * @return array{outcome: string, request: ?array<string, mixed>, fee: ?array<string, mixed>, reason: string} The decision.
 	 *
@@ -156,11 +156,11 @@ final class LegesIntakeStepService {
 			];
 		}
 
-		$existing = $this->existingLegesRequest($context);
+		$existing = $this->existingLegesRequest(context: $context);
 		if ($existing !== null) {
 			// A resumed run. The request that already stands IS the answer; a
 			// second one would be both a double charge and a refusal.
-			return $this->gate($schedule, $existing);
+			return $this->gate(schedule: $schedule, request: $existing);
 		}
 
 		$amount = ($schedule['amount'] ?? null);
@@ -173,9 +173,9 @@ final class LegesIntakeStepService {
 			];
 		}
 
-		$request = $this->raise($context, $schedule);
+		$request = $this->raise(context: $context, schedule: $schedule);
 
-		return $this->gate($schedule, $request);
+		return $this->gate(schedule: $schedule, request: $request);
 	}//end evaluate()
 
 	/**
@@ -201,13 +201,16 @@ final class LegesIntakeStepService {
 			];
 		}
 
+		$reason = 'The application is complete; the payment link travels with the receipt.';
+		if ($payAtIntake === 'required') {
+			$reason = 'The fee has been paid.';
+		}
+
 		return [
 			'outcome' => self::OUTCOME_COMPLETE,
 			'request' => $request,
 			'fee' => $schedule,
-			'reason' => ($payAtIntake === 'required'
-				? 'The fee has been paid.'
-				: 'The application is complete; the payment link travels with the receipt.'),
+			'reason' => $reason,
 		];
 	}//end gate()
 
@@ -231,7 +234,7 @@ final class LegesIntakeStepService {
 			'requestType' => 'leges',
 			'amount' => (float)$schedule['amount'],
 			'currency' => (string)($schedule['currency'] ?? 'EUR'),
-			'description' => $this->describe($context, $schedule),
+			'description' => $this->describe(context: $context, schedule: $schedule),
 			'state' => 'pending',
 			'paymentGateway' => 'mollie',
 		];

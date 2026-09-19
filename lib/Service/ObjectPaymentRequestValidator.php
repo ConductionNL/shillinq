@@ -107,7 +107,7 @@ final class ObjectPaymentRequestValidator {
 			return;
 		}
 
-		$this->assertSubject($request['subject'] ?? null);
+		$this->assertSubject(subject: ($request['subject'] ?? null));
 
 		$requestType = (string)($request['requestType'] ?? '');
 		if (in_array($requestType, self::REQUEST_TYPES, true) === false) {
@@ -191,7 +191,7 @@ final class ObjectPaymentRequestValidator {
 	 * @throws InvalidArgumentException When an open request of the same type exists.
 	 */
 	private function assertNoOpenRequest(array $subject, string $requestType, array $existing, string $selfId): void {
-		$key = $this->subjectKey($subject);
+		$key = $this->subjectKey(subject: $subject);
 
 		foreach ($existing as $candidate) {
 			if ((string)($candidate['state'] ?? 'pending') !== 'pending') {
@@ -203,7 +203,7 @@ final class ObjectPaymentRequestValidator {
 			}
 
 			if (is_array($candidate['subject'] ?? null) === false
-				|| $this->subjectKey((array)$candidate['subject']) !== $key
+				|| $this->subjectKey(subject: (array)$candidate['subject']) !== $key
 			) {
 				continue;
 			}
@@ -213,11 +213,16 @@ final class ObjectPaymentRequestValidator {
 				continue;
 			}
 
+			$named = '';
+			if ($candidateId !== '') {
+				$named = sprintf(' (%s)', $candidateId);
+			}
+
 			throw new InvalidArgumentException(
 				sprintf(
 					'A pending %s request already stands on this object%s; settle or void it before raising another.',
 					$requestType,
-					($candidateId === '' ? '' : sprintf(' (%s)', $candidateId))
+					$named
 				)
 			);
 		}

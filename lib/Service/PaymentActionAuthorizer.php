@@ -125,6 +125,10 @@ final class PaymentActionAuthorizer {
 	public function callerId(): string {
 		$user = $this->userSession->getUser();
 
-		return ($user === null ? '' : $user->getUID());
+		if ($user === null) {
+			return '';
+		}
+
+		return $user->getUID();
 	}//end callerId()
 }//end class

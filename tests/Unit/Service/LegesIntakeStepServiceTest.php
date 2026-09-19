@@ -240,6 +240,10 @@ final class LegesIntakeStepServiceTest extends TestCase {
 
 		self::assertSame(LegesIntakeStepService::OUTCOME_COMPLETE, $decision['outcome']);
 		self::assertSame('pending', $decision['request']['state']);
+		self::assertSame(
+			'The application is complete; the payment link travels with the receipt.',
+			$decision['reason']
+		);
 	}//end testAnOptionalFeeCompletesWithAPendingRequest()
 
 	/**
@@ -274,6 +278,7 @@ final class LegesIntakeStepServiceTest extends TestCase {
 
 		self::assertSame(LegesIntakeStepService::OUTCOME_COMPLETE, $decision['outcome']);
 		self::assertSame([], $this->saved);
+		self::assertSame('The fee has been paid.', $decision['reason']);
 	}//end testAnAuthorizedPaymentCompletesARequiredStep()
 
 	/**

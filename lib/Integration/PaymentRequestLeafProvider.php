@@ -203,6 +203,11 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 
 		$projected = [];
 		foreach ($requests as $request) {
+			$settlements = [];
+			if (is_array($request['settlements'] ?? null) === true) {
+				$settlements = $request['settlements'];
+			}
+
 			$projected[] = [
 				'id' => (string)($request['id'] ?? ''),
 				'state' => (string)($request['state'] ?? 'pending'),
@@ -218,7 +223,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 				// counter payment exists. `reported` is the two together, which is
 				// what a handler is actually asking when they look (REQ-FPCR-003).
 				'reported' => $this->settlements->report($request),
-				'settlements' => (is_array($request['settlements'] ?? null) === true ? $request['settlements'] : []),
+				'settlements' => $settlements,
 			];
 		}
 

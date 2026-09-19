@@ -73,7 +73,11 @@ final class PaymentRevenueAccountResolver {
 	public function resolve(string $requestType): ?string {
 		$account = (string)($this->all()[$requestType] ?? '');
 
-		return ($account === '' ? null : $account);
+		if ($account === '') {
+			return null;
+		}
+
+		return $account;
 	}//end resolve()
 
 	/**
