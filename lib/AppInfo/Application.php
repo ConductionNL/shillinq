@@ -139,6 +139,7 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
+use OCP\Util;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -1212,6 +1213,15 @@ class Application extends App implements IBootstrap {
 	 */
 	public function boot(IBootContext $context): void {
 		$dispatcher = $context->getServerContainer()->get(IEventDispatcher::class);
+
+		// Put shillinq's two finance panels on every page, not just shillinq's
+		// own (ADR-019 / ADR-066, REQ-SOPR-004 and REQ-FPCR-006). The leaves
+		// are meant to be read on ANOTHER app's object: a case, a record, a
+		// contract party. Nextcloud loads an app's bundle only on that app's
+		// routes, so a leaf registered from src/main.js alone never reaches the
+		// page it exists for. This tiny entry registers the two descriptors and
+		// nothing else; the panels load their data only once mounted.
+		Util::addInitScript(self::APP_ID, self::APP_ID.'-integration-init');
 
 		// Bookings-confirm-flow REQ-BCF-001/010 — issue a ConfirmationToken
 		// + dispatch the confirmation email when a new Appointment record is

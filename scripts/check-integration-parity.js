@@ -42,8 +42,11 @@
  *                         `mount` + `unmount` for renderMode 'mount',
  *                         `tab` + `widget` for 'component' (the default).
  *   R2  id correlation    every server-side render-surface leaf id has a JS
- *                         registration, and every JS registration id has a
- *                         server-side face (descriptor OR provider).
+ *                         registration; every data-provider leaf id is at
+ *                         least NAMED somewhere in `src/**`, so the data it
+ *                         serves is reachable from this app's frontend; and
+ *                         every JS registration id has a server-side face
+ *                         (descriptor OR provider).
  *   R3  renderMode        for a shared id, both faces declare the same
  *                         renderMode.
  *   R4  metadata          for a shared id, every field BOTH faces declare
@@ -448,9 +451,10 @@ function collectServerFaces() {
 		}
 		if (typeof face.fields.id === 'string') {
 			face.id = face.fields.id
-			// A provider is a data face, not a render surface: it is discoverable
-			// through the capability and therefore MUST have a JS registration,
-			// but it does not itself declare a render pair.
+			// A provider is a data face, not a render surface: it declares no
+			// render pair, so R2 asks of it only that this app's frontend names
+			// it somewhere. See the data-provider branch in R2 for why a
+			// registration is the wrong thing to demand here.
 			face.renderSurface = false
 			face.renderMode =
 				typeof face.fields.renderMode === 'string'
@@ -776,6 +780,84 @@ function sameValue(a, b) {
 }
 
 /**
+ * Every string literal in one source, with comments excluded.
+ *
+ * Comments are excluded deliberately and it is not a detail. The first version
+ * of this scan read the raw text, and a mutation test then passed with the id
+ * renamed everywhere in the CODE, because a docblock still mentioned the old
+ * one in backticks. A check that a comment can satisfy is a check that cannot
+ * fail.
+ *
+ * @param {string} src  The source text.
+ * @param {Set<string>} out The set to add to.
+ *
+ * @return {void}
+ */
+function addStringLiterals(src, out) {
+	// HTML comments first: a `.vue` file's file-level docblock is one, and the
+	// JS state machine below would read straight through it.
+	const text = src.replace(/<!--[\s\S]*?-->/g, ' ')
+	let i = 0
+	while (i < text.length) {
+		const ch = text[i]
+		if (ch === '/' && text[i + 1] === '/') {
+			const nl = text.indexOf('\n', i)
+			i = nl === -1 ? text.length : nl + 1
+			continue
+		}
+		if (ch === '/' && text[i + 1] === '*') {
+			const end = text.indexOf('*/', i + 2)
+			i = end === -1 ? text.length : end + 2
+			continue
+		}
+		if (ch === "'" || ch === '"' || ch === '`') {
+			let j = i + 1
+			let value = ''
+			while (j < text.length && text[j] !== ch) {
+				if (text[j] === '\\') {
+					j += 2
+					continue
+				}
+				value += text[j]
+				j += 1
+			}
+			if (value.length >= 2 && value.length <= 200) {
+				out.add(value)
+			}
+			i = j + 1
+			continue
+		}
+		i += 1
+	}
+}
+
+/**
+ * Every string literal appearing in this app's own frontend under `src/**`.
+ *
+ * Used for ONE purpose: to tell a data-provider leaf that client code reads
+ * from one that no client code names at all. A leaf id is a stable kebab-case
+ * string, so a literal occurrence of it in the frontend is evidence that some
+ * surface fetches it.
+ *
+ * @return {Set<string>} The literals.
+ */
+function collectSrcStringLiterals() {
+	const literals = new Set()
+	const files = collectFiles(
+		path.join(REPO_ROOT, 'src'),
+		(n) => n.endsWith('.js') || n.endsWith('.ts') || n.endsWith('.vue'),
+	)
+	for (const file of files) {
+		try {
+			addStringLiterals(fs.readFileSync(file, 'utf8'), literals)
+		} catch {
+			continue
+		}
+	}
+	return literals
+}
+
+/**
  * Run every rule and report.
  *
  * @return {void}
@@ -785,6 +867,7 @@ function main() {
 	const counts = {}
 	const faces = collectServerFaces()
 	const regs = collectJsRegistrations()
+	const srcLiterals = collectSrcStringLiterals()
 	const { schemas, files: schemaFiles } = collectOrSchemas()
 
 	const jsById = new Map()
@@ -832,13 +915,44 @@ function main() {
 			continue
 		}
 		counts.R2++
-		if (jsById.has(f.id) === false) {
-			failures.push(
-				`✗ [R2 id-correlation] server leaf "${f.id}" (${f.kind}, ${f.file}) has NO matching `
-					+ `registerIntegration({ id: '${f.id}' }) in src/** — phantom leaf: the `
-					+ `openregister.integrations.leaves capability advertises a surface that never mounts.`,
-			)
+		if (jsById.has(f.id) === true) {
+			continue
 		}
+		// A RENDER-SURFACE face with no registration is the phantom this rule
+		// is named for: the capability advertises a tab that mounts nothing.
+		//
+		// A DATA-PROVIDER face is a different thing and gets a different test.
+		// It ships no render pair by construction — OpenRegister's own
+		// LeafDescriptor says a leaf's `surfaces` are "empty when the leaf
+		// offers no render surface" — and a repo may deliberately split a leaf
+		// in two, a provider that answers and a panel that reads it under its
+		// own id. Demanding a registration for the provider half would put a
+		// second identical tab on every object detail page, which is a UI
+		// defect invented to satisfy a check.
+		//
+		// What still must hold is that SOMETHING in this app's frontend reads
+		// it. A provider no client code so much as names is data nobody can
+		// reach, which is the same darkness by another route. So the provider
+		// half passes on a literal mention of its id in `src/**`, and fails
+		// when there is none.
+		if (f.renderSurface === false) {
+			if (srcLiterals.has(f.id) === true) {
+				continue
+			}
+			failures.push(
+				`✗ [R2 id-correlation] server leaf "${f.id}" (${f.kind}, ${f.file}) is a data `
+					+ `provider that NOTHING in src/** names: no registration under that id, and `
+					+ `not one literal occurrence of it. Nothing in this app's frontend can reach `
+					+ `the data it serves. Either register a surface for it, or read it from the `
+					+ `panel that does.`,
+			)
+			continue
+		}
+		failures.push(
+			`✗ [R2 id-correlation] server leaf "${f.id}" (${f.kind}, ${f.file}) has NO matching `
+				+ `registerIntegration({ id: '${f.id}' }) in src/** — phantom leaf: the `
+				+ `openregister.integrations.leaves capability advertises a surface that never mounts.`,
+		)
 	}
 	for (const r of regs) {
 		if (r.id === null) {

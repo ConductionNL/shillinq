@@ -61,6 +61,22 @@ final class PaymentRequestLeafRegistrationListener implements IEventListener {
 	public const CONTRACT_PANEL_ID = 'shillinq-contracts-panel';
 
 	/**
+	 * Where both panels render, written out on this half and repeated verbatim
+	 * on the JS half, because two explicit sets are what the parity check can
+	 * compare.
+	 *
+	 * The values come from `LeafDescriptor::VALID_SURFACES`. They used to read
+	 * `['widget', 'tab']`, which is not that vocabulary: nothing validates
+	 * surfaces at registration, and `CnIntegrationWidgetGrid` filters with
+	 * `surfaces.includes(surface)`, so those two words excluded the panels from
+	 * every grid they were meant to appear in while reading like a declaration
+	 * that they appeared in two.
+	 *
+	 * @var array<int, string>
+	 */
+	public const PANEL_SURFACES = ['detail-page', 'single-entity'];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param PaymentRequestLeafProvider $provider The data-provider half.
@@ -109,7 +125,8 @@ final class PaymentRequestLeafRegistrationListener implements IEventListener {
 				kinds: [LeafDescriptor::KIND_RENDER_SURFACE],
 				requiredApp: 'shillinq',
 				group: 'Finance',
-				surfaces: ['widget', 'tab'],
+				surfaces: self::PANEL_SURFACES,
+				renderMode: LeafDescriptor::RENDER_MODE_MOUNT,
 			),
 			null,
 		);
@@ -137,7 +154,8 @@ final class PaymentRequestLeafRegistrationListener implements IEventListener {
 				kinds: [LeafDescriptor::KIND_RENDER_SURFACE],
 				requiredApp: 'shillinq',
 				group: 'Finance',
-				surfaces: ['widget', 'tab'],
+				surfaces: self::PANEL_SURFACES,
+				renderMode: LeafDescriptor::RENDER_MODE_MOUNT,
 			),
 			null,
 		);
