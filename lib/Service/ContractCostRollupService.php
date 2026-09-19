@@ -225,6 +225,13 @@ final class ContractCostRollupService {
 	 * @return string The slug.
 	 */
 	private function registerSlug(): string {
-		return $this->appConfig->getValueString('shillinq', 'register', 'shillinq');
+		$register = $this->appConfig->getValueString('shillinq', 'register', 'shillinq');
+		if ($register === '') {
+			// An admin who blanks the setting must not silently point every
+			// read and write at the empty register. Fall back to the default.
+			return 'shillinq';
+		}
+
+		return $register;
 	}//end registerSlug()
 }//end class
