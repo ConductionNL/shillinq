@@ -39,6 +39,22 @@
         <file name="vendor/conduction/hydra-gates/hydra-gates/contracts/ObjectEntityInterface.php" />
         <file name="vendor/conduction/hydra-gates/hydra-gates/contracts/RegisterSlugResolution.php" />
         <file name="vendor/conduction/hydra-gates/hydra-gates/contracts/RegisterSlugResolverInterface.php" />
+        <!--
+            OpenRegister's leaf-provider contract, which the payment-request and
+            contract leaves implement. phpstan already sees these three through
+            scanDirectories; psalm reads stubs explicitly, so it was the only
+            analyser still calling them UndefinedClass.
+
+            A stub rather than a referencedClass suppression, for the reason the
+            block above records: a suppressed class turns every value flowing
+            through it into mixed, and psalm then stops analysing the branch the
+            contract exists to force. With the stub loaded psalm sees that
+            getGroup() and getRequiredApp() return string and that
+            registerLeaf() takes a LeafDescriptor.
+        -->
+        <file name="tests/stubs/OpenRegister/Service/Integration/IntegrationProvider.php" />
+        <file name="tests/stubs/OpenRegister/Service/Integration/LeafDescriptor.php" />
+        <file name="tests/stubs/OpenRegister/Event/RegisterLeafProvidersEvent.php" />
     </stubs>
     <issueHandlers>
         <UndefinedDocblockClass errorLevel="suppress"/>

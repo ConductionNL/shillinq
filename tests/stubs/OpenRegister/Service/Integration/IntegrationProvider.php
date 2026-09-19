@@ -51,7 +51,10 @@ interface IntegrationProvider {
 	public function authRequirements(): array;
 
 	/**
-	 * @param array<string, mixed> $filters Filters.
+	 * No @param here on purpose. Psalm reads a STUB's docblock as part of the
+	 * signature, so `array<string, mixed>` on an implementer's plain `array`
+	 * parameter is a MethodSignatureMismatch rather than a docblock note. The
+	 * return types below are what this stub is loaded for.
 	 *
 	 * @return array<int|string, mixed>
 	 */
@@ -63,15 +66,11 @@ interface IntegrationProvider {
 	public function get(string $register, string $schema, string $objectId, string $entityId): array;
 
 	/**
-	 * @param array<string, mixed> $payload Payload.
-	 *
 	 * @return array<string, mixed>
 	 */
 	public function create(string $register, string $schema, string $objectId, array $payload): array;
 
 	/**
-	 * @param array<string, mixed> $payload Payload.
-	 *
 	 * @return array<string, mixed>
 	 */
 	public function update(string $register, string $schema, string $objectId, string $entityId, array $payload): array;
