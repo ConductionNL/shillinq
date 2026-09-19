@@ -3018,7 +3018,12 @@
         "Not configured": "Not configured",
         "Simulated": "Simulated",
         "Limited": "Limited",
-        "Not available": "Not available"
+        "Not available": "Not available",
+        "Incurred Cost Complete": "Incurred Cost Complete",
+        "Whether every linked object answered with a cost. False means the total is a floor and not the cost: at least one subject could not be priced. The timestamp beside it still moves on an incomplete run, so the timestamp alone cannot tell the two apart (REQ-FPCR-005).": "Whether every linked object answered with a cost. False means the total is a floor and not the cost: at least one subject could not be priced. The timestamp beside it still moves on an incomplete run, so the timestamp alone cannot tell the two apart (REQ-FPCR-005).",
+        "Incurred Cost Unreadable Links": "Incurred Cost Unreadable Links",
+        "How many linked objects could not be priced on the last roll-up. Zero on a complete run.": "How many linked objects could not be priced on the last roll-up. Zero on a complete run.",
+        "totalContractValue minus incurredCost at the time of the roll-up, and absent when the roll-up was incomplete. Reported through the contract leaf so a case app can show what is left without reading the ledger. A remaining value computed from an understated cost overstates the budget left, which is the one direction this number must never be wrong in (REQ-FPCR-005).": "totalContractValue minus incurredCost at the time of the roll-up, and absent when the roll-up was incomplete. Reported through the contract leaf so a case app can show what is left without reading the ledger. A remaining value computed from an understated cost overstates the budget left, which is the one direction this number must never be wrong in (REQ-FPCR-005)."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

@@ -300,12 +300,33 @@ final class ContractLeafProvider implements IntegrationProvider {
 			'status' => $status,
 			'needsAttention' => in_array($status, self::ATTENTION_STATUSES, true),
 			'currency' => (string)($contract['currency'] ?? 'EUR'),
-			'totalContractValue' => (float)($contract['totalContractValue'] ?? 0),
-			'incurredCost' => (float)($contract['incurredCost'] ?? 0),
-			'remainingValue' => (float)($contract['remainingValue'] ?? 0),
+			'totalContractValue' => $this->money(value: ($contract['totalContractValue'] ?? null)),
+			// Null, never 0.00. A contract that has not been rolled up yet, or
+			// one whose roll-up came back incomplete, has no remaining value;
+			// rendering that as 0.00 says the budget is spent and stops work
+			// that is in fact funded (REQ-FPCR-005).
+			'incurredCost' => $this->money(value: ($contract['incurredCost'] ?? null)),
+			'remainingValue' => $this->money(value: ($contract['remainingValue'] ?? null)),
 			'incurredCostComputedAt' => (string)($contract['incurredCostComputedAt'] ?? ''),
+			'incurredCostComplete' => ($contract['incurredCostComplete'] ?? null) !== false,
+			'incurredCostUnreadableLinks' => (int)($contract['incurredCostUnreadableLinks'] ?? 0),
 		];
 	}//end project()
+
+	/**
+	 * One money field as a number, or null when it is not one.
+	 *
+	 * @param mixed $value The stored value.
+	 *
+	 * @return float|null The amount, or null when there is none to report.
+	 */
+	private function money(mixed $value): ?float {
+		if (is_bool($value) === true || is_numeric($value) === false) {
+			return null;
+		}
+
+		return (float)$value;
+	}//end money()
 
 	/**
 	 * Every readable contract that names this object among its linked objects.

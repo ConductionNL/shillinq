@@ -185,11 +185,31 @@ class PaymentRequestActionController extends Controller {
 			return new JSONResponse(['error' => 'No payment request with that id.'], Http::STATUS_NOT_FOUND);
 		}
 
+		// Omitting the amount means "the whole of what this request asks for".
+		// When the request's own amount cannot be read, there is no whole to
+		// settle, and the old cast turned that into a counter payment of 0.00
+		// signed by a named clerk: a record saying money arrived for nothing.
+		$ownAmount = $this->settlements->amountOf(request: $request);
+		if ($amount <= 0.0 && $ownAmount === null) {
+			return new JSONResponse(
+				[
+					'error' => 'This payment request carries no amount that can be read, so a settlement '
+						.'cannot fall back to it. Record the amount that actually arrived.',
+				],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
+
+		$settlementAmount = $ownAmount;
+		if ($amount > 0.0) {
+			$settlementAmount = $amount;
+		}
+
 		try {
 			$settlement = $this->settlements->build(
 				input: [
 					'method' => $method,
-					'amount' => ($amount > 0.0 ? $amount : (float)($request['amount'] ?? 0)),
+					'amount' => $settlementAmount,
 					'reference' => $settlementReference,
 					'reason' => $reason,
 				],

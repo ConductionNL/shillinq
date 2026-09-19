@@ -5266,7 +5266,12 @@ OC.L10N.register(
         "Not configured": "Niet geconfigureerd",
         "Simulated": "Gesimuleerd",
         "Limited": "Beperkt",
-        "Not available": "Niet beschikbaar"
+        "Not available": "Niet beschikbaar",
+        "Incurred Cost Complete": "Gemaakte kosten compleet",
+        "Whether every linked object answered with a cost. False means the total is a floor and not the cost: at least one subject could not be priced. The timestamp beside it still moves on an incomplete run, so the timestamp alone cannot tell the two apart (REQ-FPCR-005).": "Of elk gekoppeld object een kostprijs teruggaf. Onwaar betekent dat het totaal een ondergrens is en niet de kosten. Minstens één onderwerp kon niet geprijsd worden. Het tijdstempel ernaast loopt ook door op een onvolledige roll-up, dus dat alleen maakt het verschil niet zichtbaar (REQ-FPCR-005).",
+        "Incurred Cost Unreadable Links": "Gemaakte kosten onleesbare koppelingen",
+        "How many linked objects could not be priced on the last roll-up. Zero on a complete run.": "Hoeveel gekoppelde objecten bij de laatste roll-up niet geprijsd konden worden. Nul bij een volledige ronde.",
+        "totalContractValue minus incurredCost at the time of the roll-up, and absent when the roll-up was incomplete. Reported through the contract leaf so a case app can show what is left without reading the ledger. A remaining value computed from an understated cost overstates the budget left, which is the one direction this number must never be wrong in (REQ-FPCR-005).": "totalContractValue min incurredCost op het moment van de roll-up. Afwezig als de roll-up onvolledig was. Het contractblad geeft dit door, zodat een zaakapp kan tonen wat er over is zonder het grootboek te lezen. Een restwaarde uit een te laag totaal overschat het resterende budget. Dat is de ene richting waarin dit getal nooit fout mag zijn (REQ-FPCR-005)."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -84,14 +84,26 @@ final class ContractCostRollupService {
 	 */
 	public function rollUp(array $contract, bool $persist = true): array {
 		$total = 0.0;
+		$unreadable = 0;
 		$links = ($contract['linkedObjects'] ?? []);
 		if (is_array($links) === true) {
 			foreach ($links as $index => $link) {
 				if (is_array($link) === false) {
+					++$unreadable;
 					continue;
 				}
 
 				$cost = $this->costOf($link);
+				if ($cost === null) {
+					// Counted, not summed. A subject that cannot be priced used
+					// to contribute zero in silence, and the comment beside it
+					// said the tell was a total that stops moving. It is not:
+					// the timestamp below moves on every run, complete or not.
+					++$unreadable;
+					$links[$index]['cost'] = null;
+					continue;
+				}
+
 				$links[$index]['cost'] = $cost;
 				$total += $cost;
 			}
@@ -100,10 +112,17 @@ final class ContractCostRollupService {
 		$contract['linkedObjects'] = (is_array($links) === true ? array_values($links) : []);
 		$contract['incurredCost'] = round($total, 2);
 		$contract['incurredCostComputedAt'] = gmdate('Y-m-d\TH:i:s\Z');
+		$contract['incurredCostComplete'] = ($unreadable === 0);
+		$contract['incurredCostUnreadableLinks'] = $unreadable;
 
 		$agreed = ($contract['totalContractValue'] ?? null);
-		if (is_numeric($agreed) === true) {
+		if (is_numeric($agreed) === true && $unreadable === 0) {
 			$contract['remainingValue'] = round(((float)$agreed - $contract['incurredCost']), 2);
+		} elseif ($unreadable > 0) {
+			// An incomplete total understates the cost, so a remaining value
+			// derived from it OVERSTATES the budget left, and somebody commits
+			// money that is already spent. No number is the honest answer.
+			unset($contract['remainingValue']);
 		}
 
 		if ($persist === true) {
@@ -152,9 +171,11 @@ final class ContractCostRollupService {
 	 *
 	 * @param array<string, mixed> $link The link.
 	 *
-	 * @return float The cost, or zero when it cannot be read.
+	 * @return float|null The cost, or null when it cannot be read. Null and 0.0
+	 *                    are different answers: one is a subject nobody could
+	 *                    price, the other a subject that cost nothing.
 	 */
-	private function costOf(array $link): float {
+	private function costOf(array $link): ?float {
 		try {
 			$aggregate = $this->subjectCosts->costFor(
 				subjectApp: (string)($link['register'] ?? ''),
@@ -162,17 +183,18 @@ final class ContractCostRollupService {
 				administrationIds: null,
 			);
 		} catch (\Throwable $e) {
-			// A subject whose cost cannot be read contributes nothing rather than
-			// taking the whole roll-up down. The gap is visible in the stamp: a
-			// total that stops moving is the tell, not a thrown job.
-			return 0.0;
+			// A subject whose cost cannot be read does not take the whole
+			// roll-up down, but it is not silently worth nothing either. The
+			// caller counts it and marks the total incomplete.
+			return null;
 		}
 
 		$cents = ($aggregate['costCents'] ?? null);
 		if (is_numeric($cents) === false) {
 			// SubjectCostService withholds the total when a person is unpriced,
-			// and it is right to. A withheld cost is zero here, never a guess.
-			return 0.0;
+			// and it is right to. A withheld cost is withheld here too: reading
+			// it as zero is the guess that service refused to make.
+			return null;
 		}
 
 		return round(((float)$cents / 100), 2);

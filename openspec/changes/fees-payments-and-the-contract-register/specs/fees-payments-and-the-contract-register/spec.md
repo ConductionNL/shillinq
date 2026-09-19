@@ -70,6 +70,13 @@ from the provider state and the settlements together, and a request settled
 beyond its amount SHALL report the overpayment rather than hiding it.
 Recording a settlement SHALL require the payment administration right.
 
+The derivation SHALL be done in whole cents. Where the amount owed or an
+amount settled cannot be read as a number, the request SHALL report that the
+sum could not be done, and SHALL NOT report a due, an overpayment or a
+settled total it inferred from a missing value. A settlement that omits its
+amount SHALL be refused when the request's own amount cannot be read, rather
+than recorded for zero.
+
 Candidate C-intake-7, `should`, one driven passer (xxllnc-zaken).
 
 #### Scenario: A pin payment at the counter is recorded against the case
@@ -89,6 +96,30 @@ Candidate C-intake-7, `should`, one driven passer (xxllnc-zaken).
 - **GIVEN** a user without the payment administration right
 - **WHEN** they record a settlement
 - **THEN** the request is refused with 403
+
+#### Scenario: A fee paid in two parts is paid, to the cent
+
+@e2e exclude backend/data: the cent arithmetic is a pure derivation over a stored request, asserted in PaymentSettlementServiceTest; no browser can see the rounding
+
+- **GIVEN** a request of 4.45 with counter payments of 4.35 and 0.10
+- **WHEN** the request is reported
+- **THEN** it reads paid, with nothing outstanding
+
+#### Scenario: A request whose amount cannot be read says so
+
+@e2e exclude backend/data: the write paths refuse such a request, so the row cannot be created through the browser; asserted in PaymentSettlementServiceTest
+
+- **GIVEN** a request whose stored amount is missing or is not a number
+- **WHEN** the request is reported
+- **THEN** it reads as indeterminate, with no due and no overpayment, and never as open with nothing left to pay
+
+#### Scenario: Settling without an amount is refused when there is nothing to fall back on
+
+@e2e exclude backend/data: needs a request with an unreadable amount, which the create path refuses; asserted in PaymentRequestActionControllerTest
+
+- **GIVEN** a request whose amount cannot be read
+- **WHEN** an authorised clerk records a settlement without naming an amount
+- **THEN** the call is refused and the message asks for the amount that actually arrived, and nothing is written
 
 ### Requirement: REQ-FPCR-004 A payment run is submitted to a provider
 
@@ -128,7 +159,11 @@ objects raised under the contract, beside its existing
 `counterpartyReference`. A contract SHALL report `incurredCost`, the sum of
 the costs booked against those objects, stamped with the time it was
 computed. Removing a link SHALL recompute the sum and SHALL leave the
-underlying objects untouched.
+underlying objects untouched. Where a linked object cannot be priced, the
+contract SHALL report the total as incomplete and SHALL count those objects,
+and SHALL NOT report a remaining value derived from it: an understated cost
+overstates the budget left. The timestamp SHALL NOT be read as evidence of
+completeness, because it is written on every run.
 
 Candidate C-parties-and-contacts-1, `should`, one driven passer (glpi) and
 one documented (easy-redmine).
@@ -144,6 +179,14 @@ one documented (easy-redmine).
 - **GIVEN** the same contract
 - **WHEN** one case is unlinked
 - **THEN** the total drops by that case's cost and the case itself is unchanged
+
+#### Scenario: A case nobody can price makes the total a floor, and says so
+
+@e2e exclude backend/data: the roll-up is a scheduled job over another app's costs, asserted in ContractCostRollupServiceTest
+
+- **GIVEN** a contract with three linked cases, one of which cannot be priced
+- **WHEN** the roll-up runs
+- **THEN** the total is marked incomplete, the unpriced case is counted, and no remaining value is reported
 
 ### Requirement: REQ-FPCR-006 A case reads its contract without copying it
 

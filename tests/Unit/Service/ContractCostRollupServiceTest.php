@@ -241,4 +241,87 @@ final class ContractCostRollupServiceTest extends TestCase {
 		self::assertSame(500.0, $contract['remainingValue']);
 		self::assertNotSame('', (string)$contract['incurredCostComputedAt']);
 	}//end testAContractWithNoLinksRollsUpToZero()
+
+	/**
+	 * A linked case nobody can price makes the total INCOMPLETE, and the
+	 * contract says so. It used to contribute zero in silence, and the comment
+	 * beside it claimed the tell was a total that stops moving. It is not: the
+	 * timestamp is written on every run, so an understated total looks exactly
+	 * like a freshly computed correct one (REQ-FPCR-005).
+	 *
+	 * @return void
+	 */
+	public function testAnUnpricedLinkMarksTheTotalIncomplete(): void {
+		$service = $this->service(['zaak-1' => 120000, 'zaak-2' => null, 'zaak-3' => 17000]);
+
+		$contract = $service->rollUp($this->contract());
+
+		self::assertFalse($contract['incurredCostComplete']);
+		self::assertSame(1, $contract['incurredCostUnreadableLinks']);
+	}//end testAnUnpricedLinkMarksTheTotalIncomplete()
+
+	/**
+	 * An incomplete total understates the cost, so the remaining value derived
+	 * from it OVERSTATES the budget left and somebody commits money that is
+	 * already spent. The field is withheld instead (REQ-FPCR-005).
+	 *
+	 * @return void
+	 */
+	public function testAnIncompleteRollUpWithholdsTheRemainingValue(): void {
+		$service = $this->service(['zaak-1' => 120000, 'zaak-2' => null, 'zaak-3' => 17000]);
+
+		$contract = $service->rollUp($this->contract());
+
+		self::assertArrayNotHasKey('remainingValue', $contract);
+	}//end testAnIncompleteRollUpWithholdsTheRemainingValue()
+
+	/**
+	 * An unpriced link carries no cost of its own either. Rendering 0.00 beside
+	 * it says the case cost nothing, which is the same lie one row down.
+	 *
+	 * @return void
+	 */
+	public function testAnUnpricedLinkCarriesNoCostOfItsOwn(): void {
+		$service = $this->service(['zaak-1' => 120000, 'zaak-2' => null, 'zaak-3' => 17000]);
+
+		$contract = $service->rollUp($this->contract());
+
+		self::assertNull($contract['linkedObjects'][1]['cost']);
+		self::assertSame(1200.0, $contract['linkedObjects'][0]['cost']);
+	}//end testAnUnpricedLinkCarriesNoCostOfItsOwn()
+
+	/**
+	 * A complete roll-up still says so, and still reports the remaining value.
+	 * The flag has to be able to read true, or it only ever means "this field
+	 * exists" (REQ-FPCR-005).
+	 *
+	 * @return void
+	 */
+	public function testACompleteRollUpSaysSoAndKeepsTheRemainingValue(): void {
+		$service = $this->service(['zaak-1' => 120000, 'zaak-2' => 45050, 'zaak-3' => 17000]);
+
+		$contract = $service->rollUp($this->contract());
+
+		self::assertTrue($contract['incurredCostComplete']);
+		self::assertSame(0, $contract['incurredCostUnreadableLinks']);
+		self::assertSame((100000.0 - 1820.5), $contract['remainingValue']);
+	}//end testACompleteRollUpSaysSoAndKeepsTheRemainingValue()
+
+	/**
+	 * A contract that already carried a remaining value loses it when a later
+	 * roll-up comes back incomplete. A stale number left in place is read as a
+	 * current one, which is the whole failure this change is about.
+	 *
+	 * @return void
+	 */
+	public function testAStaleRemainingValueIsRemovedOnAnIncompleteRollUp(): void {
+		$service = $this->service(['zaak-1' => 120000, 'zaak-2' => null, 'zaak-3' => 17000]);
+		$contract = $this->contract();
+		$contract['remainingValue'] = 98179.5;
+
+		$rolled = $service->rollUp($contract);
+
+		self::assertArrayNotHasKey('remainingValue', $rolled);
+		self::assertArrayNotHasKey('remainingValue', $this->saved[0]['object']);
+	}//end testAStaleRemainingValueIsRemovedOnAnIncompleteRollUp()
 }//end class

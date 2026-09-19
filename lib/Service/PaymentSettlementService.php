@@ -85,6 +85,20 @@ final class PaymentSettlementService {
 	public const REPORTED_UNPAYABLE = 'unpayable';
 
 	/**
+	 * The sum could not be done, so this request owes an unknown amount.
+	 *
+	 * 🔴 THIS STATE EXISTS SO THAT A MISSING AMOUNT NEVER READS AS ZERO. A row
+	 * whose `amount` is absent or unreadable used to fall through every branch
+	 * below and report `open` with `due` of 0.00, which renders as a request
+	 * with nothing left to pay. Those are opposite facts. A reader that cannot
+	 * do the sum says so and the numbers come back null, so a caller that
+	 * prints one has to decide what to print rather than being handed a zero.
+	 *
+	 * @var string
+	 */
+	public const REPORTED_INDETERMINATE = 'indeterminate';
+
+	/**
 	 * Provider states in which the gateway itself has the money.
 	 *
 	 * @var array<int, string>
@@ -179,18 +193,102 @@ final class PaymentSettlementService {
 	 *
 	 * @param array<string, mixed> $request The request.
 	 *
-	 * @return float The total.
+	 * @return float The total. Zero when a settlement cannot be read, because
+	 *               this signature cannot say "unknown"; report() can, and a
+	 *               caller that needs to tell the two apart asks that instead.
+	 *
+	 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-003)
 	 */
 	public function settledAmount(array $request): float {
-		$total = 0.0;
-		foreach (($request['settlements'] ?? []) as $settlement) {
-			if (is_array($settlement) === true && is_numeric($settlement['amount'] ?? null) === true) {
-				$total += (float)$settlement['amount'];
+		$cents = $this->settledCents(request: $request);
+		if ($cents === null) {
+			return 0.0;
+		}
+
+		return (float)($cents / 100);
+	}//end settledAmount()
+
+	/**
+	 * The amount a request says it owes, or null when that cannot be read.
+	 *
+	 * A caller asking this is about to fall back on the request's own amount,
+	 * and null is its instruction to refuse rather than to fall back on zero.
+	 *
+	 * @param array<string, mixed> $request The request.
+	 *
+	 * @return float|null The amount, or null when it is missing or not a number.
+	 *
+	 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-003)
+	 */
+	public function amountOf(array $request): ?float {
+		$cents = $this->cents(value: ($request['amount'] ?? null));
+		if ($cents === null) {
+			return null;
+		}
+
+		return (float)($cents / 100);
+	}//end amountOf()
+
+	/**
+	 * One money value as whole cents, or null when it cannot be read.
+	 *
+	 * 🔑 THE SUM IS DONE IN CENTS, NOT IN FLOATS. `4.35 + 0.10 >= 4.45` is
+	 * false in binary floating point, so a request paid in full in two parts
+	 * reported `partly-paid` and, in dossiq, blocked the case of a citizen who
+	 * had paid everything. Whole cents are exact and the comparison then means
+	 * what it says.
+	 *
+	 * @param mixed $value The amount as it was stored.
+	 *
+	 * @return int|null The amount in cents, or null when it is missing, not a
+	 *                  number, negative or too large to be one.
+	 */
+	private function cents(mixed $value): ?int {
+		if (is_bool($value) === true || is_numeric($value) === false) {
+			return null;
+		}
+
+		$cents = round(((float)$value * 100));
+		if (is_finite($cents) === false || $cents < 0.0 || $cents > 1.0e+15) {
+			return null;
+		}
+
+		return (int)$cents;
+	}//end cents()
+
+	/**
+	 * Everything settled by hand, in cents, or null when one entry cannot be read.
+	 *
+	 * A settlement whose amount is unreadable is NOT skipped. Skipping it makes
+	 * the total too low, which turns a paid request into a partly-paid one, and
+	 * that is the same wrong number from the other side.
+	 *
+	 * @param array<string, mixed> $request The request.
+	 *
+	 * @return int|null The total in cents, or null when any entry is unreadable.
+	 */
+	private function settledCents(array $request): ?int {
+		$settlements = ($request['settlements'] ?? []);
+		if (is_array($settlements) === false) {
+			return null;
+		}
+
+		$total = 0;
+		foreach ($settlements as $settlement) {
+			if (is_array($settlement) === false) {
+				return null;
 			}
+
+			$cents = $this->cents(value: ($settlement['amount'] ?? null));
+			if ($cents === null) {
+				return null;
+			}
+
+			$total += $cents;
 		}
 
 		return $total;
-	}//end settledAmount()
+	}//end settledCents()
 
 	/**
 	 * The state a human reads, derived from the provider state and the
@@ -198,30 +296,64 @@ final class PaymentSettlementService {
 	 *
 	 * @param array<string, mixed> $request The request.
 	 *
-	 * @return array{state: string, settled: float, due: float, over: float} The report.
+	 * @return array{state: string, settled: float|null, due: float|null, over: float|null} The report.
+	 *                                                                                     `due` and `over` are null only
+	 *                                                                                     when the amount could not be
+	 *                                                                                     read, and `settled` is null
+	 *                                                                                     only when a settlement could
+	 *                                                                                     not be read.
 	 *
 	 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-003)
 	 */
 	public function report(array $request): array {
-		$due = (float)($request['amount'] ?? 0);
-		$settled = $this->settledAmount($request);
+		$dueCents = $this->cents(value: ($request['amount'] ?? null));
+		$settledCents = $this->settledCents(request: $request);
 		$providerState = (string)($request['state'] ?? 'pending');
 
+		if ($dueCents === null || $settledCents === null) {
+			// The sum cannot be done. A provider state that says no money will
+			// ever come is still a fact about this request, and it does not
+			// need the amount, so it is reported. Everything else says plainly
+			// that the amount is unknown, with no number attached, because the
+			// number this branch used to invent was zero.
+			if ($settledCents === 0
+				&& in_array($providerState, self::PROVIDER_DEAD_STATES, true) === true
+			) {
+				return ['state' => self::REPORTED_UNPAYABLE, 'settled' => 0.0, 'due' => null, 'over' => null];
+			}
+
+			// What IS readable is still reported: a counter payment that was
+			// recorded happened, whatever the request says it owes.
+			$settledSoFar = null;
+			if ($settledCents !== null) {
+				$settledSoFar = (float)($settledCents / 100);
+			}
+
+			return [
+				'state' => self::REPORTED_INDETERMINATE,
+				'settled' => $settledSoFar,
+				'due' => null,
+				'over' => null,
+			];
+		}
+
 		if (in_array($providerState, self::PROVIDER_PAID_STATES, true) === true) {
-			$settled += $due;
+			$settledCents += $dueCents;
 		}
 
-		$over = max(0.0, round(($settled - $due), 2));
+		$overCents = max(0, ($settledCents - $dueCents));
+		$settled = (float)($settledCents / 100);
+		$due = (float)($dueCents / 100);
 
-		if ($over > 0.0) {
-			return ['state' => self::REPORTED_OVERPAID, 'settled' => $settled, 'due' => $due, 'over' => $over];
+		if ($overCents > 0) {
+			return ['state' => self::REPORTED_OVERPAID, 'settled' => $settled, 'due' => $due, 'over' => (float)($overCents / 100)];
 		}
 
-		if ($due > 0.0 && $settled >= $due) {
+		if ($dueCents > 0 && $settledCents >= $dueCents) {
 			return ['state' => self::REPORTED_PAID, 'settled' => $settled, 'due' => $due, 'over' => 0.0];
 		}
 
-		if ($settled > 0.0) {
+		if ($settledCents > 0) {
 			return ['state' => self::REPORTED_PART_PAID, 'settled' => $settled, 'due' => $due, 'over' => 0.0];
 		}
 

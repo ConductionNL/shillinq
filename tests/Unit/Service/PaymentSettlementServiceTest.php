@@ -246,4 +246,148 @@ final class PaymentSettlementServiceTest extends TestCase {
 
 		self::assertSame(PaymentSettlementService::REPORTED_PAID, $this->service->report($request)['state']);
 	}//end testAFailedRequestPaidAtTheCounterReportsPaid()
+
+	/**
+	 * Two part payments that together make the amount report paid. They are
+	 * summed in cents: 4.35 + 0.10 is below 4.45 in binary floating point, so
+	 * this request used to report partly paid and, on the case, refused a
+	 * citizen who had paid in full (REQ-FPCR-003).
+	 *
+	 * @return void
+	 */
+	public function testTwoPartPaymentsThatMeetTheAmountReportPaidInCents(): void {
+		$request = ['amount' => 4.45, 'currency' => 'EUR', 'state' => 'pending', 'settlements' => []];
+		$request = $this->service->append($request, $this->settlement(4.35));
+		$request = $this->service->append($request, $this->settlement(0.10));
+
+		$report = $this->service->report($request);
+
+		self::assertSame(PaymentSettlementService::REPORTED_PAID, $report['state']);
+		self::assertSame(4.45, $report['settled']);
+		self::assertSame(0.0, $report['over']);
+	}//end testTwoPartPaymentsThatMeetTheAmountReportPaidInCents()
+
+	/**
+	 * A cent short is still a cent short. The cent arithmetic must not round a
+	 * shortfall away in the other direction.
+	 *
+	 * @return void
+	 */
+	public function testACentShortStillReportsPartlyPaid(): void {
+		$request = ['amount' => 4.45, 'currency' => 'EUR', 'state' => 'pending', 'settlements' => []];
+		$request = $this->service->append($request, $this->settlement(4.44));
+
+		$report = $this->service->report($request);
+
+		self::assertSame(PaymentSettlementService::REPORTED_PART_PAID, $report['state']);
+		self::assertSame(4.44, $report['settled']);
+	}//end testACentShortStillReportsPartlyPaid()
+
+	/**
+	 * A request whose amount cannot be read reports that it cannot be read, and
+	 * carries no numbers. The old answer was `open` with a due of 0.00, which
+	 * is a request with nothing left to pay: the opposite fact (REQ-FPCR-003).
+	 *
+	 * @return void
+	 */
+	public function testARequestWithNoAmountIsIndeterminateAndNotZero(): void {
+		$report = $this->service->report(['currency' => 'EUR', 'state' => 'pending', 'settlements' => []]);
+
+		self::assertSame(PaymentSettlementService::REPORTED_INDETERMINATE, $report['state']);
+		self::assertNull($report['due']);
+		self::assertNull($report['over']);
+		self::assertNotSame(PaymentSettlementService::REPORTED_OPEN, $report['state']);
+	}//end testARequestWithNoAmountIsIndeterminateAndNotZero()
+
+	/**
+	 * An amount stored as a formatted string is not a number this app can add
+	 * up, so it is unreadable rather than zero.
+	 *
+	 * @return void
+	 */
+	public function testAnAmountThatIsNotANumberIsIndeterminate(): void {
+		$report = $this->service->report(
+			['amount' => '162,50 EUR', 'currency' => 'EUR', 'state' => 'pending', 'settlements' => []]
+		);
+
+		self::assertSame(PaymentSettlementService::REPORTED_INDETERMINATE, $report['state']);
+		self::assertNull($report['due']);
+	}//end testAnAmountThatIsNotANumberIsIndeterminate()
+
+	/**
+	 * A captured request whose amount cannot be read does NOT report paid. The
+	 * gateway has money and this app cannot say how much, and the two together
+	 * are exactly the case where inventing a number is worst.
+	 *
+	 * @return void
+	 */
+	public function testACapturedRequestWithAnUnreadableAmountIsIndeterminate(): void {
+		$report = $this->service->report(['amount' => null, 'currency' => 'EUR', 'state' => 'captured', 'settlements' => []]);
+
+		self::assertSame(PaymentSettlementService::REPORTED_INDETERMINATE, $report['state']);
+		self::assertNull($report['due']);
+	}//end testACapturedRequestWithAnUnreadableAmountIsIndeterminate()
+
+	/**
+	 * A counter payment against an unreadable amount is still reported. What can
+	 * be read is read; only the sum is withheld.
+	 *
+	 * @return void
+	 */
+	public function testASettlementAgainstAnUnreadableAmountIsStillReported(): void {
+		$request = ['amount' => null, 'currency' => 'EUR', 'state' => 'pending', 'settlements' => []];
+		$request = $this->service->append($request, $this->settlement(50.0));
+
+		$report = $this->service->report($request);
+
+		self::assertSame(PaymentSettlementService::REPORTED_INDETERMINATE, $report['state']);
+		self::assertSame(50.0, $report['settled']);
+		self::assertNull($report['over']);
+	}//end testASettlementAgainstAnUnreadableAmountIsStillReported()
+
+	/**
+	 * A settlement whose own amount cannot be read makes the sum unreadable
+	 * rather than smaller. Skipping it understates what arrived, which turns a
+	 * paid request into a partly paid one: the same wrong number from the other
+	 * side.
+	 *
+	 * @return void
+	 */
+	public function testAnUnreadableSettlementMakesTheSumIndeterminate(): void {
+		$request = $this->request('pending', [['method' => 'cash', 'amount' => 'twohundred', 'actor' => 'clerk']]);
+
+		$report = $this->service->report($request);
+
+		self::assertSame(PaymentSettlementService::REPORTED_INDETERMINATE, $report['state']);
+		self::assertNull($report['settled']);
+	}//end testAnUnreadableSettlementMakesTheSumIndeterminate()
+
+	/**
+	 * A failed request with nothing settled is unpayable even when its amount
+	 * cannot be read: no money will come, and that fact does not need the sum.
+	 * The amount stays null rather than becoming zero.
+	 *
+	 * @return void
+	 */
+	public function testAFailedRequestWithAnUnreadableAmountIsStillUnpayable(): void {
+		$report = $this->service->report(['currency' => 'EUR', 'state' => 'failed', 'settlements' => []]);
+
+		self::assertSame(PaymentSettlementService::REPORTED_UNPAYABLE, $report['state']);
+		self::assertNull($report['due']);
+	}//end testAFailedRequestWithAnUnreadableAmountIsStillUnpayable()
+
+	/**
+	 * Unpayable, partly paid and open are three different words. A caller that
+	 * cannot tell them apart cannot tell a citizen who owes nothing from one
+	 * whose payment failed.
+	 *
+	 * @return void
+	 */
+	public function testUnpaidUnpayableAndPartlyPaidAreThreeDistinctStates(): void {
+		$open = $this->service->report($this->request())['state'];
+		$unpayable = $this->service->report($this->request('expired'))['state'];
+		$part = $this->service->report($this->service->append($this->request(), $this->settlement(10.0)))['state'];
+
+		self::assertSame(3, count(array_unique([$open, $unpayable, $part])));
+	}//end testUnpaidUnpayableAndPartlyPaidAreThreeDistinctStates()
 }//end class
