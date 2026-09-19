@@ -88,7 +88,7 @@
 							:id="`shillinq-settle-method-${request.id}`"
 							v-model="settleForm.method">
 							<option
-								v-for="option in methods"
+								v-for="option in settlementMethods"
 								:key="option.value"
 								:value="option.value">
 								{{ option.label }}
@@ -240,7 +240,7 @@ export default {
 		},
 
 		/** @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004) */
-		methods() {
+		settlementMethods() {
 			return [
 				{ value: 'pin', label: t('shillinq', 'Pin at the counter') },
 				{ value: 'cash', label: t('shillinq', 'Cash at the counter') },

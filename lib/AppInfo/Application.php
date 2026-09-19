@@ -1210,6 +1210,12 @@ class Application extends App implements IBootstrap {
 	 * @param IBootContext $context The boot context
 	 *
 	 * @return void
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) OCP\Util exposes script registration
+	 * (addInitScript) as a static method only. Nextcloud ships no injectable
+	 * service for it, and boot() is the only place an app-wide init script can
+	 * be registered, so a seam class would relocate the identical static call
+	 * rather than remove it. Verified against nextcloud lib/public/Util.php.
 	 */
 	public function boot(IBootContext $context): void {
 		$dispatcher = $context->getServerContainer()->get(IEventDispatcher::class);
