@@ -1111,6 +1111,141 @@
 			"note": "GL-backed views refuse (500) until the GLLine administration backfill repair step has proven complete (SpendAnalyticsService.php:303); no supplier x category cross-tab."
 		},
 		{
+			"id": "exp-receipt-photo",
+			"area": "expenses",
+			"name": "Photograph a receipt on your phone and have it read and categorised.",
+			"shillinq": "partial",
+			"exact-online": "yes",
+			"moneybird": "yes",
+			"snelstart": "yes",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "src/views/ReceiptCapture.vue:3-18 reviews a Receipt draft created by lib/Listener/ExtractionCompletedListener from docudesk's extraction.completed event (ExtractionPrefillService.php:207 mapReceiptFields incl. category); re-request at ReceiptCapture.vue:573 needs an existing sourceDocumentUri; no camera/upload control in shillinq's receipt screens",
+				"reachedOn": "Receipts /inkoop/receipts (menu Purchasing > Receipts); ReceiptDetail /inkoop/receipts/:id (ReceiptCapture)",
+				"owner": "ConductionNL/docudesk"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12078 (Exact Online (Boekhouden), 2026-04-06): Expense receipt capture via mobile app with automatic categorization",
+				"moneybird": "intelligence-db competitor_features#12114 (Moneybird, 2026-04-06): Receipt scanning via mobile app with automatic expense categorization",
+				"snelstart": "intelligence-db competitor_features#14114 (SnelStart, 2026-04-06): Receipt capture via mobile with automatic categorization",
+				"odoo": "intelligence-db competitor_features#15554 (Odoo Expenses, 2026-04-06): Mobile Receipt Capture"
+			},
+			"provider": "docudesk",
+			"providerHow": "read-from-code",
+			"feature": "receipt-extraction",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "The photo is taken and read in docudesk/filinq; shillinq only shows and corrects the extracted draft."
+		},
+		{
+			"id": "exp-category-mapping",
+			"area": "expenses",
+			"name": "Map expense categories to ledger accounts so they post themselves.",
+			"shillinq": "no",
+			"exact-online": "unknown",
+			"moneybird": "yes",
+			"snelstart": "yes",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "none",
+				"evidence": "Receipt.category and ExpenseClaimEntry are free fields in shillinq_register.json with no category->GL account map; no ExpenseCategory schema (grep ExpenseCategory only hits docudesk-templates.json and a description); no service posts ExpenseClaimEntry/Receipt to the ledger",
+				"reachedOn": "nothing reaches it: no mapping table or page exists",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"moneybird": "intelligence-db competitor_features#12115 (Moneybird, 2026-04-06): Expense categorization with configurable ledger account mapping",
+				"snelstart": "intelligence-db competitor_features#14115 (SnelStart, 2026-04-06): Expense categorization with Dutch standard ledger accounts",
+				"odoo": "intelligence-db competitor_features#14925 (Odoo Expenses, 2026-04-06): Expense Categories"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "expense-claims",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "The nearest thing is the per-draft AI GL-account suggestion from docudesk (GlAccountSuggestionClient), which is a suggestion, not a mapping."
+		},
+		{
+			"id": "exp-subscriptions",
+			"area": "expenses",
+			"name": "Keep track of recurring supplier subscriptions as expected costs.",
+			"shillinq": "yes",
+			"exact-online": "unknown",
+			"moneybird": "yes",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "built",
+				"evidence": "CashflowRecurring schema (label, category, frequency, standardAmount, indexationRule, validFrom/To, accountNumberExpense) in shillinq_register.json; read by lib/Service/CashflowExportService.php:93 and lib/Service/BudgetScenarioEvaluator.php:21 as expected monthly costs",
+				"reachedOn": "CashflowRecurring /cashflow/recurring (settings gear > Recurring Costs)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"moneybird": "intelligence-db competitor_features#12116 (Moneybird, 2026-04-06): Subscription management for tracking recurring business costs"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "cashflow-13wk",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "No supplier link field; KnownCostReader/KnownCostBudgetWriter (budget-known-costs) have no caller."
+		},
+		{
+			"id": "exp-reinvoice",
+			"area": "expenses",
+			"name": "Pass an expense on to a client, with or without a markup.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "src/components/invoice/InvoiceGenerator.vue:102 takes 'Expense IDs (comma-separated)' -> InvoiceGenerationService.php:570 loadExpenses bills ExpenseClaimEntry cost; BillingModelEngine.php:53 supports markupPercent but InvoiceGenerationService.php:199 only copies a line markup (default 0) and PassThroughMarkupRule is read only by the unregistered ExpenseReimbursementGuard",
+				"reachedOn": "BillableInvoiceGenerate /invoice/generate (menu Sales > Generate invoice); PassThroughMarkupRules (settings gear)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"odoo": "intelligence-db competitor_features#14922 (Odoo Expenses, 2026-04-06): Customer Re-Invoicing"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "invoice-from-time-and-expense",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "Passing an expense on at cost works by typing its id; markup rules are kept but never applied."
+		},
+		{
+			"id": "exp-policy",
+			"area": "expenses",
+			"name": "Check expense claims against a spending policy.",
+			"shillinq": "no",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "ReimbursementPolicy (expense-reimbursement-or-passthrough.json) holds a markup-approval threshold, read only by lib/Lifecycle/ExpenseReimbursementGuard.php:405, whose requires tags are not registered in Application.php; no spending-limit check on claims anywhere in lib/",
+				"reachedOn": "ReimbursementPolicies /reimbursement-policies (settings gear > Reimbursement Policies) keeps records only",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"odoo": "intelligence-db competitor_features#14926 (Odoo Expenses, 2026-04-06): Policy Compliance"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "expense-claims",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "Policy records can be kept; nothing checks a claim against them."
+		},
+		{
 			"id": "tax-vat-calc",
 			"area": "tax",
 			"name": "Have VAT calculated per line from rates you can configure.",
@@ -2294,7 +2429,7 @@
 			"id": "led-manual-journal",
 			"area": "ledger",
 			"name": "Post a manual journal entry with several debit and credit lines.",
-			"shillinq": "partial",
+			"shillinq": "unknown",
 			"exact-online": "yes",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
@@ -2316,13 +2451,14 @@
 			"featureConfidence": "medium",
 			"source": "competitor",
 			"note": "A journal can be drafted with lines; the post into the ledger is declaration-only.",
-			"pendingReason": "Posting rests on the declared lifecycle action materialise-gl-transaction, which has no handler; the entry can be kept but not posted to the GL."
+			"pendingReason": "Posting rests on the declared lifecycle action materialise-gl-transaction, which has no handler; the entry can be kept but not posted to the GL.",
+			"ratingFromCode": "partial"
 		},
 		{
 			"id": "led-lock-period",
 			"area": "ledger",
 			"name": "Close a fiscal year or lock a period so nobody can post into it.",
-			"shillinq": "partial",
+			"shillinq": "unknown",
 			"exact-online": "unknown",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
@@ -2343,13 +2479,14 @@
 			"featureConfidence": "medium",
 			"source": "competitor",
 			"note": "A period can be marked closed and audit-locked, but nothing stops a post into it.",
-			"pendingReason": "Blocking posts into a closed period rests only on `preconditions` declarations OpenRegister does not execute."
+			"pendingReason": "Blocking posts into a closed period rests only on `preconditions` declarations OpenRegister does not execute.",
+			"ratingFromCode": "partial"
 		},
 		{
 			"id": "led-year-end-entries",
 			"area": "ledger",
 			"name": "Book the year-end closing entries that carry the result to equity.",
-			"shillinq": "partial",
+			"shillinq": "unknown",
 			"exact-online": "unknown",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
@@ -2368,13 +2505,14 @@
 			"featureConfidence": "medium",
 			"source": "own-code",
 			"note": "Closing entries can be recorded by hand and moved through states; no ledger posting follows.",
-			"pendingReason": "Generating and posting the result-to-equity entries rests on a declared lifecycle action with no handler."
+			"pendingReason": "Generating and posting the result-to-equity entries rests on a declared lifecycle action with no handler.",
+			"ratingFromCode": "partial"
 		},
 		{
 			"id": "sal-status",
 			"area": "sales",
 			"name": "See whether an invoice was sent, opened, paid or is overdue.",
-			"shillinq": "partial",
+			"shillinq": "unknown",
 			"exact-online": "unknown",
 			"moneybird": "yes",
 			"snelstart": "unknown",
@@ -2396,13 +2534,14 @@
 			"featureConfidence": "medium",
 			"source": "competitor",
 			"note": "A status is shown, but there is no 'opened' tracking, overdue is not set by any shillinq code, and the paid write uses the wrong field name ('state').",
-			"pendingReason": "The automatic overdue move rests only on the declared x-openregister-lifecycle transition 'mark-overdue' and a declared scheduled notification."
+			"pendingReason": "The automatic overdue move rests only on the declared x-openregister-lifecycle transition 'mark-overdue' and a declared scheduled notification.",
+			"ratingFromCode": "partial"
 		},
 		{
 			"id": "sal-credit-note",
 			"area": "sales",
 			"name": "Issue a credit note against the original invoice and reverse its booking.",
-			"shillinq": "partial",
+			"shillinq": "unknown",
 			"exact-online": "yes",
 			"moneybird": "yes",
 			"snelstart": "yes",
@@ -2426,13 +2565,14 @@
 			"featureConfidence": "medium",
 			"source": "competitor",
 			"note": "A credit-note record can be kept against an invoice, but the reversal booking is not made by any code.",
-			"pendingReason": "GL posting on issue is only described in the declared ARInvoice x-openregister-lifecycle 'issue' transition; no shillinq code books it or its reversal."
+			"pendingReason": "GL posting on issue is only described in the declared ARInvoice x-openregister-lifecycle 'issue' transition; no shillinq code books it or its reversal.",
+			"ratingFromCode": "partial"
 		},
 		{
 			"id": "sal-recurring",
 			"area": "sales",
 			"name": "Bill a customer automatically on a recurring schedule.",
-			"shillinq": "partial",
+			"shillinq": "unknown",
 			"exact-online": "yes",
 			"moneybird": "yes",
 			"snelstart": "yes",
@@ -2457,13 +2597,14 @@
 			"featureConfidence": "medium",
 			"source": "competitor",
 			"note": "The profile can be kept and the generator is real code, but nothing in shillinq itself triggers it.",
-			"pendingReason": "Automatic generation rests only on x-openregister-scheduled-workflows calling RecurringInvoiceGenerator::runScheduled; whether OpenRegister executes it is not shown in this tree."
+			"pendingReason": "Automatic generation rests only on x-openregister-scheduled-workflows calling RecurringInvoiceGenerator::runScheduled; whether OpenRegister executes it is not shown in this tree.",
+			"ratingFromCode": "partial"
 		},
 		{
 			"id": "sal-retainer",
 			"area": "sales",
 			"name": "Draw a prepaid retainer down, and roll unused hours over or true them up.",
-			"shillinq": "partial",
+			"shillinq": "unknown",
 			"exact-online": "unknown",
 			"moneybird": "no",
 			"snelstart": "unknown",
@@ -2484,13 +2625,14 @@
 			"featureConfidence": "medium",
 			"source": "own-code",
 			"note": "The retainer records can be kept and a retainer fee billed, but drawdown, rollover and true-up are hand-entered, not calculated.",
-			"pendingReason": "The remaining pool balance rests on declared x-openregister-aggregations on RetainerPool."
+			"pendingReason": "The remaining pool balance rests on declared x-openregister-aggregations on RetainerPool.",
+			"ratingFromCode": "partial"
 		},
 		{
 			"id": "pur-invoice-ocr",
 			"area": "purchasing",
 			"name": "Scan a purchase invoice and have supplier, amount, date and VAT read from it.",
-			"shillinq": "partial",
+			"shillinq": "unknown",
 			"exact-online": "yes",
 			"moneybird": "yes",
 			"snelstart": "yes",
@@ -2515,13 +2657,14 @@
 			"featureConfidence": "medium",
 			"source": "competitor",
 			"note": "The read itself happens in docudesk (filinq); shillinq only prefills a draft from docudesk's extraction event and cannot start OCR from its own upload.",
-			"pendingReason": "Works only if docudesk/filinq ships the extraction.financial route under the id 'docudesk'; the filinq id move is in flight."
+			"pendingReason": "Works only if docudesk/filinq ships the extraction.financial route under the id 'docudesk'; the filinq id move is in flight.",
+			"ratingFromCode": "partial"
 		},
 		{
 			"id": "pur-supplier-qualification",
 			"area": "purchasing",
 			"name": "Qualify a supplier before you buy from them.",
-			"shillinq": "partial",
+			"shillinq": "unknown",
 			"exact-online": "unknown",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
@@ -2540,13 +2683,14 @@
 			"featureConfidence": "medium",
 			"source": "own-code",
 			"note": "A record and a status can be kept; the PO gate is off unless an admin sets an appconfig key by occ.",
-			"pendingReason": "The qualify step is an x-openregister-lifecycle transition executed by OpenRegister; the documented 'all documents present and unexpired' check lives in SupplierQualificationService, which nothing calls."
+			"pendingReason": "The qualify step is an x-openregister-lifecycle transition executed by OpenRegister; the documented 'all documents present and unexpired' check lives in SupplierQualificationService, which nothing calls.",
+			"ratingFromCode": "partial"
 		},
 		{
 			"id": "pur-tenderned",
 			"area": "purchasing",
 			"name": "Follow public tenders published on TenderNed.",
-			"shillinq": "partial",
+			"shillinq": "unknown",
 			"exact-online": "unknown",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
@@ -2565,13 +2709,14 @@
 			"featureConfidence": "medium",
 			"source": "own-code",
 			"note": "The follow-up (award -> commitment, completion status back) is built; the pull from TenderNed is not in this tree.",
-			"pendingReason": "Could not confirm an integriq TenderNed source exists that feeds TenderNedProcurement; without it the page only holds hand-entered dossiers."
+			"pendingReason": "Could not confirm an integriq TenderNed source exists that feeds TenderNedProcurement; without it the page only holds hand-entered dossiers.",
+			"ratingFromCode": "partial"
 		},
 		{
 			"id": "pur-ap-aging",
 			"area": "purchasing",
 			"name": "See unpaid supplier invoices by due date to plan payments.",
-			"shillinq": "partial",
+			"shillinq": "unknown",
 			"exact-online": "yes",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
@@ -2593,13 +2738,70 @@
 			"featureConfidence": "medium",
 			"source": "competitor",
 			"note": "Covers APTransaction only; SupplierInvoice records from the purchasing flow are not in the aging.",
-			"pendingReason": "The by-due-date view rests entirely on an x-openregister-aggregations declaration executed by OpenRegister; two of three variants are declared inert."
+			"pendingReason": "The by-due-date view rests entirely on an x-openregister-aggregations declaration executed by OpenRegister; two of three variants are declared inert.",
+			"ratingFromCode": "partial"
+		},
+		{
+			"id": "exp-claim",
+			"area": "expenses",
+			"name": "Submit an expense claim and have it approved and reimbursed.",
+			"shillinq": "unknown",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "shillinq_register.json ExpenseClaimEntry lifecycle: submit requires ExpenseClaimGuard::requireCostCentresAndItems and post requires ExpenseClaimGuard::requireOpenPeriodAndCostCentres, neither registered in lib/AppInfo/Application.php (only 20 '::' tags are), which lib/Lifecycle/RegisterRequiresGuardAdapter.php:8-25 says makes the transition hard-fail; markReimbursed is a bare status flip, no payout or GL posting service reads ExpenseClaimEntry",
+				"reachedOn": "ExpenseClaims /inkoop/expense-claims (menu Purchasing > Expense Claims); ExpenseClaimDetail has no lifecycleActions",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"odoo": "intelligence-db competitor_features#14921 (Odoo Expenses, 2026-04-06): Manager Approval Workflow"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "expense-claims",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "Claims can be kept as records; submit/approve/reimburse is not a working path.",
+			"pendingReason": "Approval and reimbursement exist only as x-openregister-lifecycle transitions; the guarded ones cannot resolve their requires tag.",
+			"ratingFromCode": "partial"
+		},
+		{
+			"id": "exp-mileage",
+			"area": "expenses",
+			"name": "Log business mileage and have it turned into an expense at a set rate.",
+			"shillinq": "unknown",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "shillinq_register.json MileageEntry x-openregister-calculations totalAmount = distance * @ref.rate.ratePerKm via an x-openregister-references lookup into MileageRate; no PHP service computes it (grep MileageEntry in lib/Service empty)",
+				"reachedOn": "MileageLog /inkoop/mileage-log (menu Purchasing > Mileage Log)",
+				"owner": "ConductionNL/openregister"
+			},
+			"evidence": {
+				"odoo": "intelligence-db competitor_features#14923 (Odoo Expenses, 2026-04-06): Mileage Tracking"
+			},
+			"provider": "openregister",
+			"providerHow": "read-from-code",
+			"feature": "expense-claims",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "Mileage entries can be logged; turning them into a claimable expense depends on the claim flow, which does not run (see exp-claim).",
+			"pendingReason": "The rate lookup and amount rest only on an x-openregister-calculations/-references declaration executed by OpenRegister.",
+			"ratingFromCode": "partial"
 		},
 		{
 			"id": "plt-roles",
 			"area": "platform",
 			"name": "Give each user a role with its own permissions.",
-			"shillinq": "partial",
+			"shillinq": "unknown",
 			"exact-online": "yes",
 			"moneybird": "unknown",
 			"snelstart": "yes",
@@ -2621,7 +2823,8 @@
 			"feature": "access-control",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"pendingReason": "Role permissions rest on x-openregister-rbac declarations; nothing in this tree shows OpenRegister enforcing them for shillinq's schemas. Settle by signing in as an auditor role and trying to edit a VAT return."
+			"pendingReason": "Role permissions rest on x-openregister-rbac declarations; nothing in this tree shows OpenRegister enforcing them for shillinq's schemas. Settle by signing in as an auditor role and trying to edit a VAT return.",
+			"ratingFromCode": "partial"
 		},
 		{
 			"id": "plt-webhooks",
@@ -2647,13 +2850,14 @@
 			"feature": "api",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"pendingReason": "Whether OpenRegister's webhooks fire on shillinq objects was not settled from this tree."
+			"pendingReason": "Whether OpenRegister's webhooks fire on shillinq objects was not settled from this tree.",
+			"ratingFromCode": "unknown"
 		},
 		{
 			"id": "plt-mcp",
 			"area": "platform",
 			"name": "Let an AI tool work with your books through MCP.",
-			"shillinq": "partial",
+			"shillinq": "unknown",
 			"exact-online": "unknown",
 			"moneybird": "yes",
 			"snelstart": "unknown",
@@ -2673,13 +2877,14 @@
 			"feature": "ai-assistance",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"pendingReason": "Rests entirely on the x-openregister-mcp declaration; nothing here shows OpenRegister serving it. Settle by listing the MCP tools on an instance."
+			"pendingReason": "Rests entirely on the x-openregister-mcp declaration; nothing here shows OpenRegister serving it. Settle by listing the MCP tools on an instance.",
+			"ratingFromCode": "partial"
 		},
 		{
 			"id": "plt-anomaly",
 			"area": "platform",
 			"name": "Have unusual transactions flagged for review.",
-			"shillinq": "partial",
+			"shillinq": "unknown",
 			"exact-online": "yes",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
@@ -2699,13 +2904,14 @@
 			"feature": "controls-monitoring",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"pendingReason": "Findings only appear if OpenRegister executes the scheduled-workflow declaration; the PHP engine has no caller. Settle by booking a transaction that breaks a rule and waiting a night."
+			"pendingReason": "Findings only appear if OpenRegister executes the scheduled-workflow declaration; the PHP engine has no caller. Settle by booking a transaction that breaks a rule and waiting a night.",
+			"ratingFromCode": "partial"
 		},
 		{
 			"id": "plt-workflows",
 			"area": "platform",
 			"name": "Automate a workflow without writing code.",
-			"shillinq": "partial",
+			"shillinq": "unknown",
 			"exact-online": "unknown",
 			"moneybird": "yes",
 			"snelstart": "unknown",
@@ -2726,13 +2932,14 @@
 			"feature": "automation",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"pendingReason": "The authoring screen is reachable; whether OpenRegister's flow engine runs a shillinq flow was not settled from this tree."
+			"pendingReason": "The authoring screen is reachable; whether OpenRegister's flow engine runs a shillinq flow was not settled from this tree.",
+			"ratingFromCode": "partial"
 		},
 		{
 			"id": "pub-schatkist",
 			"area": "public-sector",
 			"name": "Keep to treasury banking rules and report the position.",
-			"shillinq": "partial",
+			"shillinq": "unknown",
 			"exact-online": "unknown",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
@@ -2750,13 +2957,14 @@
 			"feature": "treasury-public",
 			"featureConfidence": "medium",
 			"source": "own-code",
-			"pendingReason": "The position rests on dashboard widgets over declared aggregations; no service computes the threshold. Settle by loading balances and reading the widget."
+			"pendingReason": "The position rests on dashboard widgets over declared aggregations; no service computes the threshold. Settle by loading balances and reading the widget.",
+			"ratingFromCode": "partial"
 		},
 		{
 			"id": "pub-ccm",
 			"area": "public-sector",
 			"name": "Run continuous control checks including segregation of duties.",
-			"shillinq": "partial",
+			"shillinq": "unknown",
 			"exact-online": "unknown",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
@@ -2774,7 +2982,8 @@
 			"feature": "controls-monitoring",
 			"featureConfidence": "medium",
 			"source": "own-code",
-			"pendingReason": "Segregation checks run only if OpenRegister executes the register's scheduled-workflow declaration."
+			"pendingReason": "Segregation checks run only if OpenRegister executes the register's scheduled-workflow declaration.",
+			"ratingFromCode": "partial"
 		}
 	]
 }
