@@ -56,11 +56,14 @@ updates:
       # carries the same 4.4.6 and would blank on any instance that runs it
       # beside openregister. Fixed here rather than waiting for the report.
       #
-      # Pinned EXACTLY in package.json rather than left as a caret: `^4.4.5`
-      # resolves to 4.4.6 on the next clean install and reintroduces the drift
-      # with nothing visible in the diff.
+      # Pinned EXACTLY in package.json rather than left as a caret: a caret
+      # resolves to the next patch on a clean install and reintroduces the
+      # drift with nothing visible in the diff.
       #
-      # Lift this WITH openregister, never before it.
+      # On 2026-09-25 the whole fleet moved to 4.4.6 in one step, together
+      # with openregister (ConductionNL/openregister#3788). The next move works
+      # the same way: with openregister and every other app at once, never one
+      # app alone.
       - dependency-name: "dexie"
     cooldown:
       default-days: 1
