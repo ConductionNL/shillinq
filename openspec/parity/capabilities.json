@@ -1,0 +1,1057 @@
+{
+	"comparedOn": "2026-09-25",
+	"category": "Shillinq competes as an all-in-one bookkeeping and business administration suite for Dutch freelancers, SMBs and larger firms: ledger, sales invoicing, purchasing, bank, VAT and reporting, with inventory, bookings and payroll-adjacent modules around it, and a public-sector finance layer (BBV, Iv3, SiSa) that none of the chosen columns serve. Written 2026-09-25 from appinfo/info.xml, 160 openspec specs, 583 manifest pages and lib/Settings; correct it here if it is wrong, because the areas and the columns follow from it.",
+	"corpus": {
+		"repo": "ConductionNL/shillinq",
+		"file": "openspec/parity/capabilities.json",
+		"commit": "ea0c9e574f34d82848c3595c969739375012fb6d",
+		"research": "intelligence database (competitor_features, competitor_apps), read 2026-09-25"
+	},
+	"systems": [
+		{
+			"key": "shillinq",
+			"name": "Shillinq",
+			"vendor": "Conduction",
+			"isSelf": true,
+			"readOn": "2026-09-25",
+			"columnAddedOn": "2026-09-25",
+			"note": "Rated by reading the code at ConductionNL/shillinq@ea0c9e574f34 (development), not by driving an instance."
+		},
+		{
+			"key": "exact-online",
+			"name": "Exact Online Boekhouden",
+			"vendor": "Exact",
+			"readOn": "2026-04-06",
+			"columnAddedOn": "2026-09-25",
+			"evidenceGrade": "docs-only",
+			"unknownReason": "Not among the 75 feature rows the intelligence database holds for Exact Online (competitor 346) (written 2026-04-06 and 2026-07-12 from vendor documentation, read 2026-09-25). Absence from that list is not evidence the product lacks it; nobody has driven the product."
+		},
+		{
+			"key": "moneybird",
+			"name": "Moneybird",
+			"vendor": "Moneybird",
+			"readOn": "2026-04-06",
+			"columnAddedOn": "2026-09-25",
+			"evidenceGrade": "docs-only",
+			"unknownReason": "Not among the 87 feature rows the intelligence database holds for Moneybird (competitors 347 and 1341, a duplicate record) (written 2026-04-06 and 2026-05-20 from vendor documentation, read 2026-09-25). Absence from that list is not evidence the product lacks it; nobody has driven the product."
+		},
+		{
+			"key": "snelstart",
+			"name": "SnelStart",
+			"vendor": "SnelStart",
+			"readOn": "2026-04-06",
+			"columnAddedOn": "2026-09-25",
+			"evidenceGrade": "docs-only",
+			"unknownReason": "Not among the 56 feature rows the intelligence database holds for SnelStart (competitor 351) (written 2026-04-06 from vendor documentation, read 2026-09-25). Absence from that list is not evidence the product lacks it; nobody has driven the product."
+		},
+		{
+			"key": "twinfield",
+			"name": "Twinfield",
+			"vendor": "Wolters Kluwer",
+			"readOn": "2026-04-06",
+			"columnAddedOn": "2026-09-25",
+			"evidenceGrade": "docs-only",
+			"unknownReason": "Not among the 53 feature rows the intelligence database holds for Twinfield (competitor 350) (written 2026-04-06 and 2026-07-12 from vendor documentation, read 2026-09-25). Absence from that list is not evidence the product lacks it; nobody has driven the product."
+		},
+		{
+			"key": "odoo",
+			"name": "Odoo (Community and Enterprise)",
+			"vendor": "Odoo S.A.",
+			"readOn": "2026-04-06",
+			"columnAddedOn": "2026-09-25",
+			"evidenceGrade": "docs-only",
+			"unknownReason": "Not among the 314 feature rows the intelligence database holds for Odoo (competitors 106, 439, 440, 441, 452, 453, 463 and 471: ecosystem, Invoicing, Purchase, Inventory, Accounting, Expenses, Subscriptions, Consolidation) (written 2026-04-06 and 2026-05-20 from vendor documentation, read 2026-09-25). Absence from that list is not evidence the product lacks it; nobody has driven the product."
+		}
+	],
+	"areas": [
+		{
+			"key": "ledger",
+			"name": "General ledger and closing",
+			"name_nl": "Grootboek en afsluiting"
+		},
+		{
+			"key": "sales",
+			"name": "Sales invoicing",
+			"name_nl": "Verkoopfacturatie"
+		},
+		{
+			"key": "receivables",
+			"name": "Receivables and collection",
+			"name_nl": "Debiteuren en incasso"
+		},
+		{
+			"key": "purchasing",
+			"name": "Purchasing and supplier invoices",
+			"name_nl": "Inkoop en inkoopfacturen"
+		},
+		{
+			"key": "expenses",
+			"name": "Expenses and receipts",
+			"name_nl": "Declaraties en bonnetjes"
+		},
+		{
+			"key": "banking",
+			"name": "Bank, payments and cash",
+			"name_nl": "Bank, betalingen en liquiditeit"
+		},
+		{
+			"key": "tax",
+			"name": "VAT and tax",
+			"name_nl": "Btw en belastingen"
+		},
+		{
+			"key": "reporting",
+			"name": "Reports and statements",
+			"name_nl": "Rapportages en jaarstukken"
+		},
+		{
+			"key": "planning",
+			"name": "Budgets, assets and contracts",
+			"name_nl": "Begroting, activa en contracten"
+		},
+		{
+			"key": "inventory",
+			"name": "Stock and products",
+			"name_nl": "Voorraad en artikelen"
+		},
+		{
+			"key": "bookings",
+			"name": "Appointments and bookings",
+			"name_nl": "Afspraken en boekingen"
+		},
+		{
+			"key": "people",
+			"name": "Payroll, hours and engagements",
+			"name_nl": "Salaris, uren en inhuur"
+		},
+		{
+			"key": "platform",
+			"name": "Access, integration and assistance",
+			"name_nl": "Toegang, koppelingen en assistentie"
+		},
+		{
+			"key": "public-sector",
+			"name": "Public sector finance",
+			"name_nl": "Overheidsfinancien"
+		}
+	],
+	"providers": [
+		{
+			"key": "shillinq",
+			"name": "Shillinq",
+			"kind": "self"
+		},
+		{
+			"key": "openregister",
+			"name": "Open Register",
+			"kind": "app"
+		},
+		{
+			"key": "pipelinq",
+			"name": "Pipelinq",
+			"kind": "app"
+		},
+		{
+			"key": "humaniq",
+			"name": "Humaniq",
+			"kind": "app"
+		},
+		{
+			"key": "integriq",
+			"name": "Integriq (app id still openconnector)",
+			"kind": "app"
+		},
+		{
+			"key": "docudesk",
+			"name": "Filinq (app id still docudesk)",
+			"kind": "app"
+		},
+		{
+			"key": "dossiq",
+			"name": "Dossiq (app id still procest)",
+			"kind": "app"
+		},
+		{
+			"key": "nextcloud",
+			"name": "Nextcloud",
+			"kind": "platform"
+		}
+	],
+	"capabilities": [
+		{
+			"id": "sal-branded-invoice",
+			"area": "sales",
+			"name": "Create a sales invoice with your own logo, colours and layout.",
+			"shillinq": "partial",
+			"exact-online": "yes",
+			"moneybird": "yes",
+			"snelstart": "yes",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "lib/Service/InvoicePdfGenerator.php:287-330 renderHtml emits one fixed layout (inline CSS, Helvetica, #222) with no logo, colour or template input; grep for logo/branding/huisstijl in lib and src finds nothing for invoices",
+				"reachedOn": "BillableInvoiceDetail /invoice/:invoiceId (via menu Sales > Invoices > All invoices), PDF button calls /api/v1/invoices/{id}/pdf",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12047 (Exact Online (Boekhouden), 2026-04-06): Professional invoice creation with customizable templates and company branding",
+				"moneybird": "intelligence-db competitor_features#12093 (Moneybird, 2026-04-06): Professional invoice creation with customizable branded templates",
+				"snelstart": "intelligence-db competitor_features#14106 (SnelStart, 2026-04-06): Invoice creation with customizable templates and company branding",
+				"odoo": "intelligence-db competitor_features#14706 (Odoo Invoicing, 2026-04-06): Invoice Customization"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "sales-invoice-document",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "An invoice and its PDF exist, but the layout is hard-coded: no logo, colours or layout choice, and no docudesk template is used for invoices."
+		},
+		{
+			"id": "sal-numbering",
+			"area": "sales",
+			"name": "Number invoices in an unbroken sequence without doing it by hand.",
+			"shillinq": "partial",
+			"exact-online": "yes",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "lib/Service/InvoiceGenerationService.php:760-772 numbers BillableInvoice as BIL-<year>-<count+1> from a findAll count per administration (not a locked sequence; a deleted or concurrent invoice breaks it, count is not per year); ARInvoice.invoiceNumber is a free text field (lib/Settings/register.d/add-shillinq-bookkeeping-compliance.json)",
+				"reachedOn": "BillableInvoiceGenerate /invoice/generate (via menu Sales > Invoices > Generate invoice); AccountsReceivable /bookkeeping/accounts-receivable (via menu Sales > Accounts Receivable) has a hand-typed number",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#31703 (Exact Online (Boekhouden), 2026-07-12): Sales invoicing (verkoopfacturen)",
+				"odoo": "intelligence-db competitor_features#14713 (Odoo Invoicing, 2026-04-06): Invoice Sequence Management"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "sales-invoice-numbering",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "Automatic number on the time-and-expense invoice only, derived from a record count, so gaps and duplicates are possible; the AR invoice number is typed by hand."
+		},
+		{
+			"id": "sal-email-pdf",
+			"area": "sales",
+			"name": "Send the invoice to the customer by email as a PDF from the app.",
+			"shillinq": "no",
+			"exact-online": "yes",
+			"moneybird": "yes",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "none",
+				"evidence": "IMailer is used only in lib/Controller/PaymentRequestActionController.php:123-135 (payment request mail), ConfirmationMailer and SmsReminderDispatcher; no service or button mails an invoice PDF. src/components/ar-invoice/arEInvoiceActions.js:64 even tells the user to 'use PDF + email instead' outside the app",
+				"reachedOn": "nothing reaches it: no send-by-email action on AccountsReceivable, ARInvoiceDetail or BillableInvoiceDetail",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12048 (Exact Online (Boekhouden), 2026-04-06): Automated invoice sending via email with PDF attachment on approval",
+				"moneybird": "intelligence-db competitor_features#14374 (Moneybird, 2026-04-06): Invoice email auto-send via workflow",
+				"odoo": "intelligence-db competitor_features#14714 (Odoo Invoicing, 2026-04-06): Email Invoicing"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "sales-invoice-delivery",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "The PDF can be opened (/api/v1/invoices/{id}/pdf) but not emailed from the app."
+		},
+		{
+			"id": "sal-quote-to-invoice",
+			"area": "sales",
+			"name": "Turn an accepted quote into an invoice without retyping the lines.",
+			"shillinq": "no",
+			"exact-online": "yes",
+			"moneybird": "yes",
+			"snelstart": "yes",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "building",
+				"evidence": "Quote, QuoteLine, SalesOrder, Invoice, CreditNote schemas in lib/Settings/register.d/bookkeeping-quote-order-invoice.json plus lib/Lifecycle/QuoteOrderInvoiceGuard.php guards, but no manifest page uses schema Quote/SalesOrder/Invoice and no service copies quote lines to an invoice (grep 'quote' in lib/Service, src/views: none)",
+				"reachedOn": "nothing reaches it: no page for Quote in src/manifest.json or src/manifest.d",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12053 (Exact Online (Boekhouden), 2026-04-06): Quotation/offer creation with conversion to invoice workflow",
+				"moneybird": "intelligence-db competitor_features#12097 (Moneybird, 2026-04-06): Quote/estimate creation with one-click conversion to invoice",
+				"snelstart": "intelligence-db competitor_features#14107 (SnelStart, 2026-04-06): Quote (offerte) creation with conversion to invoice workflow",
+				"odoo": "intelligence-db competitor_features#14628 (Odoo (Ecosystem), 2026-04-06): Sales (Community)"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "quote-to-cash",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "Quotes belong to pipelinq per openspec/changes/shillinq-product-vendor-to-pipelinq; shillinq has no path from an accepted quote to invoice lines."
+		},
+		{
+			"id": "pur-ubl-import",
+			"area": "purchasing",
+			"name": "Import a supplier's UBL e-invoice and book it without typing.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "yes",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "built",
+				"evidence": "lib/Controller/SupplierInvoiceImportController.php:190 importUbl -> SupplierInvoiceService::ingestUBLInvoice (SupplierInvoiceService.php:186) saves a SupplierInvoice with statusCode=received; no GL posting on import, the ledger entry only comes from GRIRClearingListener on SupplierInvoice matching->matched (3-way match)",
+				"reachedOn": "Dashboard / (header action 'Import bill' opens BillImportModal, accepts .xml/.ubl/.csv); result lands on SupplierInvoices /inkoop/supplier-invoices (menu Purchasing > Supplier Invoices)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"moneybird": "intelligence-db competitor_features#11781 (Moneybird, 2026-04-06): UBL auto-import and processing of electronic invoices"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "supplier-invoice-capture",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "Import without typing works; 'book it' only happens for PO-backed invoices after a 3-way match, a non-PO invoice is never posted automatically."
+		},
+		{
+			"id": "pur-invoice-approval",
+			"area": "purchasing",
+			"name": "Route supplier invoices through an approval chain before they are paid.",
+			"shillinq": "partial",
+			"exact-online": "yes",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "yes",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "lib/Service/SupplierInvoiceService.php:124 ALLOWED_TRANSITIONS received->matching->matched/exception->approved->paid, driven by ThreeWayMatchingEngine.php:1086; src/components/supplier-invoice/SupplierInvoiceDetail.vue:16 says transitions are not exposed in the UI; APTransaction approvalNeeded exists only as an x-openregister-notifications declaration (bookkeeping-accounts-payable-core.json)",
+				"reachedOn": "ThreeWayMatchIndex /inkoop/three-way-matches (menu Purchasing > Three-way matches) exception panel accept/reject; SupplierInvoiceDetail is read-only",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12084 (Exact Online (Boekhouden), 2026-04-06): Workflow approval chains for invoice authorization before payment",
+				"twinfield": "intelligence-db competitor_features#13935 (Twinfield (Wolters Kluwer), 2026-04-06): Invoice approval workflow with multi-step authorization",
+				"odoo": "intelligence-db competitor_features#14669 (Odoo (Ecosystem), 2026-04-06): Approvals"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "supplier-invoice-approval",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "One approval gate (match or accepted exception), no multi-step approver chain for supplier invoices."
+		},
+		{
+			"id": "pur-three-way",
+			"area": "purchasing",
+			"name": "Match a purchase order, the goods received and the supplier invoice before paying.",
+			"shillinq": "yes",
+			"exact-online": "yes",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "lib/Service/ThreeWayMatchingEngine.php evaluateMatch + setStatus at :1086; src/components/three-way-match/ThreeWayMatchIndex.vue:312 POSTs /api/three-way-matches/evaluate; ThreeWayMatchExceptionPanel.vue calls /api/three-way-match/exceptions/*; lib/Listener/GRIRClearingListener.php (Application.php:309) posts the GR/IR settlement on SupplierInvoice matched; SupplierInvoice cannot reach approved/paid without matched or an accepted exception (SupplierInvoiceService.php:124)",
+				"reachedOn": "ThreeWayMatchIndex /inkoop/three-way-matches (menu Purchasing > Three-way matches); ThreeWayMatchDetail /inkoop/3way-matches/:id",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12079 (Exact Online (Boekhouden), 2026-04-06): Purchase order creation and matching to supplier invoices",
+				"odoo": "intelligence-db competitor_features#15402 (Odoo Accounting, 2026-04-06): Three-Way Matching"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "purchase-order-3way",
+			"featureConfidence": "medium",
+			"source": "competitor"
+		},
+		{
+			"id": "pur-requisition",
+			"area": "purchasing",
+			"name": "Request a purchase and have it approved before it becomes an order.",
+			"shillinq": "yes",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "lib/Service/RequisitionService.php:186 submit, :224 approve (only from submitted, BudgetBlocker check), :260 reject; RequisitionConversionService.php:100 convertToPurchaseOrder refuses unless approved; src/manifest.json:13215-13273 RequisitionDetail actions call /api/requisitions/@objectId/submit|approve|reject|convert",
+				"reachedOn": "Requisitions /inkoop/requisitions (menu Purchasing > Requisitions); RequisitionDetail /inkoop/requisitions/:id",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"odoo": "intelligence-db competitor_features#15442 (Odoo Purchase, 2026-04-06): Purchase Requisitions"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "purchase-requisition",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "approve does not check approver differs from requester."
+		},
+		{
+			"id": "pur-po",
+			"area": "purchasing",
+			"name": "Raise a purchase order and send it to the supplier.",
+			"shillinq": "partial",
+			"exact-online": "yes",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "src/components/purchase-order/PurchaseOrderForm.vue:371 POSTs /api/purchase-orders (PurchaseOrderController.php:101); PurchaseOrderDetail.vue:367/374 call transmit/peppol and transmit/email, but Application.php:451 binds LogPeppolTransmissionAdapter and PurchaseOrderService defaults to LogPurchaseOrderMailer (lib/Service/PurchaseOrder/LogPurchaseOrderMailer.php: 'Records the dispatch attempt through Nextcloud's logger')",
+				"reachedOn": "PurchaseOrders /inkoop/purchase-orders (menu Purchasing > Purchase Orders); PurchaseOrderDetail send buttons",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12079 (Exact Online (Boekhouden), 2026-04-06): Purchase order creation and matching to supplier invoices",
+				"odoo": "intelligence-db competitor_features#14724 (Odoo Purchase, 2026-04-06): Purchase Order Management"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "purchase-order",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "Raising the PO works; 'send to supplier' marks it sent but both Peppol and PDF+email are log-only adapters, nothing reaches the supplier."
+		},
+		{
+			"id": "pur-receipt",
+			"area": "purchasing",
+			"name": "Record goods or services received against an order, including partial deliveries.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "src/components/goods-receipt-note/GoodsReceiptNoteForm.vue:414/437 POST /api/goods-receipt-notes + lines; lib/Service/GoodsReceiptNoteService.php:689 sets partial_received vs fully_received; GoodsReceiptNoteDetail.vue:339 accept -> GRIRClearingListener posts GR/IR; service receipts (/api/service-receipts*, ServiceReceiptService.php) have no page and are absent from _lane/frontend-api-paths.txt",
+				"reachedOn": "GoodsReceiptNoteForm /inkoop/goods-receipt-notes/new (menu Purchasing > Receive goods); GoodsReceipts /inkoop/goods-receipts (menu Purchasing > Goods Receipts)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"odoo": "intelligence-db competitor_features#15444 (Odoo Purchase, 2026-04-06): Receipt Management"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "purchase-order-3way",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "Goods including partial deliveries: yes; services: API only, no screen reaches it."
+		},
+		{
+			"id": "tax-vat-calc",
+			"area": "tax",
+			"name": "Have VAT calculated per line from rates you can configure.",
+			"shillinq": "partial",
+			"exact-online": "yes",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "lib/Service/VATCalculationService.php:31 fixes the rates in a VALID_RATES constant (0, 6, 9, 21); lib/Service/InvoiceGenerationService.php:67 applies it per line when an invoice is generated from time and expense",
+				"reachedOn": "BillableInvoiceGenerate /invoice/generate (menu Sales > Invoices)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12061 (Exact Online (Boekhouden), 2026-04-06): Automatic VAT calculation with configurable tax codes and rates",
+				"odoo": "intelligence-db competitor_features#14712 (Odoo Invoicing, 2026-04-06): Tax Rules Engine"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "vat-return",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "Per-line VAT works on the generated invoice, but the rates are a code constant, not configurable."
+		},
+		{
+			"id": "tax-vat-file",
+			"area": "tax",
+			"name": "File the VAT return directly with the Belastingdienst.",
+			"shillinq": "no",
+			"exact-online": "yes",
+			"moneybird": "unknown",
+			"snelstart": "yes",
+			"twinfield": "yes",
+			"odoo": "unknown",
+			"built": {
+				"state": "specified",
+				"evidence": "lib/Settings/connections.json key digipoort-sbr: available false, 'Only a log-only adapter is bound, and no screen or service calls it yet. Nothing reaches Digipoort.'; lib/Service/External/Digipoort/LogDigipoortSbrAdapter.php",
+				"reachedOn": "nothing reaches it: the Submit button on VATReturnDetail is an OpenRegister lifecycle transition that changes a status, it sends nothing",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12059 (Exact Online (Boekhouden), 2026-04-06): Direct BTW-aangifte (VAT return) filing to Dutch Belastingdienst",
+				"moneybird": "not checked: two readings disagree, #12105 says one-click submission and #30621 says preparation with export to the accountant",
+				"snelstart": "intelligence-db competitor_features#14122 (SnelStart, 2026-04-06): Direct electronic BTW filing to Belastingdienst",
+				"twinfield": "intelligence-db competitor_features#13954 (Twinfield (Wolters Kluwer), 2026-04-06): BTW-aangifte preparation and electronic filing to Belastingdienst"
+			},
+			"provider": "integriq",
+			"providerHow": "read-from-code",
+			"feature": "vat-return",
+			"featureConfidence": "medium",
+			"source": "competitor"
+		},
+		{
+			"id": "tax-icp",
+			"area": "tax",
+			"name": "Produce and file the ICP declaration of EU supplies.",
+			"shillinq": "partial",
+			"exact-online": "yes",
+			"moneybird": "yes",
+			"snelstart": "yes",
+			"twinfield": "yes",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "lib/Service/IcpService.php, IcpCalculator.php and IcpFilingService.php exist and ViesOutageRetryJob is registered in appinfo/info.xml, but /api/icp/* (appinfo/routes.php:479-485) is called by nothing under src/; filing depends on digipoort-sbr, unavailable in lib/Settings/connections.json",
+				"reachedOn": "IcpOpgaaf /belastingen/icp-opgaaf (menu Taxes) lists IcpStatement records only",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12060 (Exact Online (Boekhouden), 2026-04-06): ICP (Intracommunautaire Prestaties) declaration with EU trade reporting",
+				"moneybird": "intelligence-db competitor_features#12106 (Moneybird, 2026-04-06): ICP declaration generation for intra-EU trade reporting",
+				"snelstart": "intelligence-db competitor_features#14123 (SnelStart, 2026-04-06): ICP-opgaaf generation for intra-EU trade declarations",
+				"twinfield": "intelligence-db competitor_features#13955 (Twinfield (Wolters Kluwer), 2026-04-06): ICP declaration and Intrastat reporting for EU compliance"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "vat-return",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "The statement can be kept by hand; computing it from the ledger and filing it are not reachable."
+		},
+		{
+			"id": "tax-suppletie",
+			"area": "tax",
+			"name": "File a supplementary VAT return to correct an earlier period.",
+			"shillinq": "partial",
+			"exact-online": "yes",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "lib/Service/VatSuppletieDetectionService.php detects corrections, called from VATReturnService and AansluitingService, neither reached from a page (no /api/vat-returns or /api/aansluitingen call under src/)",
+				"reachedOn": "BtwCorrecties /belastingen/btw-correcties (menu Taxes) lists VatCorrection records",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12063 (Exact Online (Boekhouden), 2026-04-06): Suppletie-aangifte (supplementary VAT return) for corrections"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "vat-return",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "Corrections can be recorded; detecting and filing the supplementary return is not reachable."
+		},
+		{
+			"id": "tax-reverse-charge",
+			"area": "tax",
+			"name": "Apply reverse-charge VAT on cross-border business invoices.",
+			"shillinq": "partial",
+			"exact-online": "yes",
+			"moneybird": "yes",
+			"snelstart": "yes",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "lib/Service/ArInvoiceIcpPdfRenderer.php renders the reverse-charge mention but is reached only by GET /api/icp/invoice-pdf, uncalled from src/; the BtwAangifte regime filter offers reverse-charge (src/manifest.d/bookkeeping-vat-btw-filing.json)",
+				"reachedOn": "nothing reaches the invoice mention; the regime is a filter value on VATReturns /vat-returns",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12062 (Exact Online (Boekhouden), 2026-04-06): VAT reverse charge mechanism support for B2B cross-border transactions",
+				"moneybird": "intelligence-db competitor_features#12108 (Moneybird, 2026-04-06): Reverse charge VAT handling for international B2B invoicing",
+				"snelstart": "intelligence-db competitor_features#14124 (SnelStart, 2026-04-06): VAT reverse charge support for B2B cross-border invoicing"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "vat-return",
+			"featureConfidence": "medium",
+			"source": "competitor"
+		},
+		{
+			"id": "tax-kor",
+			"area": "tax",
+			"name": "Use the small business VAT scheme (KOR) and see where you are against its threshold.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "yes",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "lib/Service/KorMonitorService.php and KorThresholdCalculator.php compute the threshold, reached only by GET /api/kor/monitor (appinfo/routes.php:542), uncalled from src/",
+				"reachedOn": "KorStatus /belastingen/kor and KorDashboard /belastingen/kor-dashboard list KorRegime and KORRegistration records",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"moneybird": "intelligence-db competitor_features#12107 (Moneybird, 2026-04-06): Configurable VAT schemes including kleineondernemersregeling (KOR)"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "kor",
+			"featureConfidence": "medium",
+			"source": "competitor"
+		},
+		{
+			"id": "tax-margin-scheme",
+			"area": "tax",
+			"name": "Apply the margin scheme for second-hand goods.",
+			"shillinq": "no",
+			"exact-online": "unknown",
+			"moneybird": "yes",
+			"snelstart": "yes",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "none",
+				"evidence": "only lib/Standards/Checks/InvoiceMentionsTailChecks.php mentions the margin scheme, as an audit rule run by occ shillinq rules:audit; no invoice or VAT code applies it",
+				"reachedOn": "nothing reaches it",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"moneybird": "intelligence-db competitor_features#12107 (Moneybird, 2026-04-06): Configurable VAT schemes including kleineondernemersregeling (KOR)",
+				"snelstart": "intelligence-db competitor_features#14125 (SnelStart, 2026-04-06): Margin scheme support for second-hand goods dealers"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "vat-return",
+			"featureConfidence": "medium",
+			"source": "competitor"
+		},
+		{
+			"id": "tax-vat-position",
+			"area": "tax",
+			"name": "Check the running VAT position before you file.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "yes",
+			"snelstart": "yes",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "VATReports /vat-reports is a dashboard of summary widgets summing BtwAangifte.vatBalance (src/manifest.d/bookkeeping-vat-btw-filing.json); it sums returns already made, not the running position from the ledger",
+				"reachedOn": "VATReports /vat-reports (menu Taxes)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"moneybird": "intelligence-db competitor_features#12122 (Moneybird, 2026-04-06): Tax report overview showing VAT collected/paid by period",
+				"snelstart": "intelligence-db competitor_features#14126 (SnelStart, 2026-04-06): Interim BTW check to prevent surprises at filing time"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "vat-return",
+			"featureConfidence": "medium",
+			"source": "competitor"
+		},
+		{
+			"id": "tax-oss",
+			"area": "tax",
+			"name": "File the EU One-Stop-Shop VAT return for distance sales.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "lib/Service/OssReturnGenerator.php and OssInvoiceRouter.php exist; GET /api/oss/return (appinfo/routes.php:126) is uncalled from src/",
+				"reachedOn": "OssReturns /bookkeeping/oss/returns (menu Taxes) lists OssReturn records",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "oss",
+			"featureConfidence": "medium",
+			"source": "own-code"
+		},
+		{
+			"id": "tax-vpb",
+			"area": "tax",
+			"name": "Prepare the corporate income tax (Vpb) return and track provisional payments.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "src/manifest.d/bookkeeping-vpb-corporate-tax.json and bookkeeping-vpb-corporate-tax-balans.json declare index pages for deadlines, payments, quarterly statements and a VpbBalansAangifte detail; no Vpb service or /api/vpb route exists in lib/ or appinfo/routes.php",
+				"reachedOn": "VpbDeadlines /bookkeeping/vpb/deadlines, VpbPayments /bookkeeping/vpb/payments (menu Taxes > Vpb)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "vpb",
+			"featureConfidence": "medium",
+			"source": "own-code",
+			"note": "Records of payments and deadlines can be kept; the return itself is not computed."
+		},
+		{
+			"id": "tax-ib-zzp",
+			"area": "tax",
+			"name": "Prepare a sole trader's income tax return with the entrepreneur allowances.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "src/manifest.d/30-bookkeeping-ib-aangifte-zzp.json declares index pages for returns, entrepreneur allowances, annuities and box 3; lib/Settings/register.d/30-bookkeeping-ib-aangifte-zzp.json holds the schemas; no service computes the return",
+				"reachedOn": "IbAangiftenZzp /ib-aangifte/aangiften (menu Taxes > IB return)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "ib-zzp",
+			"featureConfidence": "medium",
+			"source": "own-code"
+		},
+		{
+			"id": "tax-hours-criterion",
+			"area": "tax",
+			"name": "Track your hours against the 1,225-hour criterion for sole trader allowances.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "lib/Service/UrenTallyService.php, UrenAlertService.php and UrenPrognoseService.php count hours against the criterion, but nothing outside them calls them (grep of lib/ finds only UrenPrognoseService calling UrenTallyService)",
+				"reachedOn": "Urenregistratie /belastingen/urenregistratie (menu Taxes) lists UrenRegistratie records; nothing shows the tally",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "ib-zzp",
+			"featureConfidence": "medium",
+			"source": "own-code",
+			"note": "Hours can be listed; the 1,225-hour tally and alerts have no caller."
+		},
+		{
+			"id": "tax-deferred",
+			"area": "tax",
+			"name": "Record deferred tax from temporary differences and losses carried forward.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "src/manifest.json pages TaxProvisions, TemporaryDifferences, DeferredTaxMovements, TaxLossCarryForwards and TaxRateReconciliations are index pages over lib/Settings/register.d/bookkeeping-deferred-tax.json; lib/Service/TaxCalculationService.php is referenced only by TaxCalculationHelper and the register",
+				"reachedOn": "TaxProvisions /belastingen/uitgestelde-belastingen/provisies (menu Taxes)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "deferred-tax",
+			"featureConfidence": "medium",
+			"source": "own-code"
+		},
+		{
+			"id": "tax-wbso",
+			"area": "tax",
+			"name": "Tag R&D hours and costs for WBSO and export them for the claim.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "no",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "WBSOTags, WBSOActivityCodes and WBSOExport are index pages in src/manifest.json; the Generate Export action (src/manifest.json:16010) is type create, it adds a WBSOExportLog record and builds no file; the RVO connection is unavailable in lib/Settings/connections.json",
+				"reachedOn": "WBSOExport /wbso/export (menu Reporting & Compliance)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"moneybird": "intelligence-db competitor_features#30630 (Moneybird, 2026-05-20): No WBSO-specific tagging"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "wbso",
+			"featureConfidence": "medium",
+			"source": "own-code"
+		},
+		{
+			"id": "tax-innovation-box",
+			"area": "tax",
+			"name": "Elect the innovation box and value the IP assets under it.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "lib/Service/InnovatieboxAggregationService.php computes the box, reached only by /api/innovatiebox/* (appinfo/routes.php:585-588), uncalled from src/",
+				"reachedOn": "InnovatieboxElections /bookkeeping/innovatiebox (menu Taxes) lists elections",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "innovation-box",
+			"featureConfidence": "medium",
+			"source": "own-code"
+		},
+		{
+			"id": "tax-investment-deduction",
+			"area": "tax",
+			"name": "Work out investment deductions (KIA, EIA, MIA) on new assets.",
+			"shillinq": "no",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "specified",
+				"evidence": "lib/Settings/register.d/bookkeeping-investeringsaftrek.json and seeds lib/Settings/seeds/investeringsaftrek-*-2026.json exist; no manifest page and no service reads them; the RVO adapter is log-only (lib/Service/External/RvO/LogRvOAanvraagAdapter.php)",
+				"reachedOn": "nothing reaches it: no page in src/manifest.json or src/manifest.d",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "investment-deduction",
+			"featureConfidence": "medium",
+			"source": "own-code"
+		},
+		{
+			"id": "tax-deadline-calendar",
+			"area": "tax",
+			"name": "Get tax filing and payment deadlines in your calendar with reminders.",
+			"shillinq": "yes",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "built",
+				"evidence": "lib/BackgroundJob/DeadlineReminderJob.php and TaxDeadlineReminderJob.php, both registered in appinfo/info.xml:174 and :185; lib/Service/ComplianceDeadlineCalendarService.php publishes VEVENTs; src/views/DeadlineCalendarSettings.vue calls /api/deadline-calendar/settings",
+				"reachedOn": "DeadlineCalendarSettings /settings/deadline-calendar (settings gear) and the user's Nextcloud calendar",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "deadline-calendar",
+			"featureConfidence": "medium",
+			"source": "own-code"
+		},
+		{
+			"id": "tax-sbr",
+			"area": "tax",
+			"name": "Submit filings to the Belastingdienst and KvK through SBR/XBRL.",
+			"shillinq": "no",
+			"exact-online": "yes",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "yes",
+			"odoo": "unknown",
+			"built": {
+				"state": "specified",
+				"evidence": "lib/Settings/connections.json key digipoort-sbr: available false, log-only adapter; SbrXbrlFilings and SBRDocuments pages list XbrlInstance records only",
+				"reachedOn": "nothing reaches a submission; SbrXbrlFilings /sbr-xbrl-filings lists records",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12087 (Exact Online (Boekhouden), 2026-04-06): SBR (Standard Business Reporting) integration for government filings",
+				"twinfield": "intelligence-db competitor_features#13956 (Twinfield (Wolters Kluwer), 2026-04-06): SBR/XBRL filing for annual accounts to Chamber of Commerce"
+			},
+			"provider": "integriq",
+			"providerHow": "read-from-code",
+			"feature": "sbr",
+			"featureConfidence": "medium",
+			"source": "competitor"
+		}
+	],
+	"pending": [
+		{
+			"id": "sal-status",
+			"area": "sales",
+			"name": "See whether an invoice was sent, opened, paid or is overdue.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "yes",
+			"snelstart": "unknown",
+			"twinfield": "partial",
+			"odoo": "unknown",
+			"built": {
+				"state": "built",
+				"evidence": "ARInvoice.lifecycleState enum draft/issued/paid/overdue/disputed/written-off (lib/Settings/register.d/add-shillinq-bookkeeping-compliance.json) shown as Status column on AccountsReceivable (src/manifest.json); 'mark-overdue' is only a declared x-openregister-lifecycle transition, no job sets overdue; lib/Service/PaymentReconciliationService.php:430-450 sets paid but reads/writes field 'state', not 'lifecycleState'",
+				"reachedOn": "AccountsReceivable /bookkeeping/accounts-receivable (via menu Sales > Accounts Receivable) and ARInvoiceDetail",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"moneybird": "intelligence-db competitor_features#12095 (Moneybird, 2026-04-06): Invoice status tracking with sent/viewed/paid/overdue indicators",
+				"twinfield": "intelligence-db competitor_features#13932 (Twinfield (Wolters Kluwer), 2026-04-06): Sales invoice creation with automated workflow and audit timeline"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "sales-invoice-status",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "A status is shown, but there is no 'opened' tracking, overdue is not set by any shillinq code, and the paid write uses the wrong field name ('state').",
+			"pendingReason": "The automatic overdue move rests only on the declared x-openregister-lifecycle transition 'mark-overdue' and a declared scheduled notification."
+		},
+		{
+			"id": "sal-credit-note",
+			"area": "sales",
+			"name": "Issue a credit note against the original invoice and reverse its booking.",
+			"shillinq": "partial",
+			"exact-online": "yes",
+			"moneybird": "yes",
+			"snelstart": "yes",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "building",
+				"evidence": "ARInvoice.invoiceType enum includes 'credit-note' referencing precedingInvoiceReferences (lib/Settings/register.d/abstract-arinvoice-types.json); separate CreditNote schema (bookkeeping-quote-order-invoice.json) has no page; no code posts a reversing GLTransaction for an ARInvoice (grep 'ARInvoice' in lib/Service shows no GL posting)",
+				"reachedOn": "AccountsReceivable /bookkeeping/accounts-receivable create form (via menu Sales > Accounts Receivable), type credit-note",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12052 (Exact Online (Boekhouden), 2026-04-06): Credit note creation linked to original invoice with automatic ledger reversal",
+				"moneybird": "intelligence-db competitor_features#12099 (Moneybird, 2026-04-06): Credit invoice generation linked to original sales invoice",
+				"snelstart": "intelligence-db competitor_features#14112 (SnelStart, 2026-04-06): Credit note creation with automatic ledger reversal",
+				"odoo": "intelligence-db competitor_features#15532 (Odoo Invoicing, 2026-04-06): Credit Note Management"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "sales-credit-note",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "A credit-note record can be kept against an invoice, but the reversal booking is not made by any code.",
+			"pendingReason": "GL posting on issue is only described in the declared ARInvoice x-openregister-lifecycle 'issue' transition; no shillinq code books it or its reversal."
+		},
+		{
+			"id": "sal-recurring",
+			"area": "sales",
+			"name": "Bill a customer automatically on a recurring schedule.",
+			"shillinq": "partial",
+			"exact-online": "yes",
+			"moneybird": "yes",
+			"snelstart": "yes",
+			"twinfield": "yes",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "RecurringInvoiceProfile page (src/manifest.d/recurring-invoicing.json); generator lib/Service/RecurringInvoiceGenerator.php is called only from the declared x-openregister-scheduled-workflows handler in lib/Settings/register.d/recurring-invoicing.json:394; no shillinq TimedJob in appinfo/info.xml runs it",
+				"reachedOn": "RecurringInvoiceProfiles /bookkeeping/recurring-invoices (via menu Sales > Recurring Invoices)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12049 (Exact Online (Boekhouden), 2026-04-06): Recurring invoice scheduling with configurable frequency and auto-generation",
+				"moneybird": "intelligence-db competitor_features#12094 (Moneybird, 2026-04-06): Recurring invoice automation with configurable billing cycles",
+				"snelstart": "intelligence-db competitor_features#14108 (SnelStart, 2026-04-06): Recurring invoice scheduling for periodic billing",
+				"twinfield": "intelligence-db competitor_features#13934 (Twinfield (Wolters Kluwer), 2026-04-06): Recurring invoice profiles with automated generation",
+				"odoo": "intelligence-db competitor_features#14716 (Odoo Invoicing, 2026-04-06): Recurring Invoices"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "recurring-invoicing",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "The profile can be kept and the generator is real code, but nothing in shillinq itself triggers it.",
+			"pendingReason": "Automatic generation rests only on x-openregister-scheduled-workflows calling RecurringInvoiceGenerator::runScheduled; whether OpenRegister executes it is not shown in this tree."
+		},
+		{
+			"id": "pur-invoice-ocr",
+			"area": "purchasing",
+			"name": "Scan a purchase invoice and have supplier, amount, date and VAT read from it.",
+			"shillinq": "partial",
+			"exact-online": "yes",
+			"moneybird": "yes",
+			"snelstart": "yes",
+			"twinfield": "yes",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "lib/Controller/SupplierInvoiceImportController.php:160 returns 422 'deferred: pdf-ocr' for a PDF upload (no OCR in shillinq); lib/Service/Extraction/DocudeskExtractionClient.php:75 posts to docudesk.extraction.financial and lib/Listener/ExtractionCompletedListener (Application.php:702) + ExtractionPrefillService.php:172 map docudesk's extracted fields onto a SupplierInvoice draft, reviewed in src/modals/BillImportModal.vue",
+				"reachedOn": "Dashboard / (header action 'Import bill' opens BillImportModal); PDF upload there shows 'PDF OCR extraction is not yet available'",
+				"owner": "ConductionNL/docudesk"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12077 (Exact Online (Boekhouden), 2026-04-06): Purchase invoice scanning with OCR data extraction",
+				"moneybird": "intelligence-db competitor_features#12113 (Moneybird, 2026-04-06): Purchase invoice upload with OCR scanning and auto-data extraction",
+				"snelstart": "intelligence-db competitor_features#14113 (SnelStart, 2026-04-06): Purchase invoice scanning with OCR recognition and auto-entry",
+				"twinfield": "intelligence-db competitor_features#13933 (Twinfield (Wolters Kluwer), 2026-04-06): Purchase invoice processing with OCR scanning and auto-entry",
+				"odoo": "intelligence-db competitor_features#14901 (Odoo Accounting, 2026-04-06): OCR Bill Processing"
+			},
+			"provider": "docudesk",
+			"providerHow": "read-from-code",
+			"feature": "supplier-invoice-capture",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "The read itself happens in docudesk (filinq); shillinq only prefills a draft from docudesk's extraction event and cannot start OCR from its own upload.",
+			"pendingReason": "Works only if docudesk/filinq ships the extraction.financial route under the id 'docudesk'; the filinq id move is in flight."
+		},
+		{
+			"id": "tax-vat-prepare",
+			"area": "tax",
+			"name": "Have the VAT return filled in from the books.",
+			"shillinq": "partial",
+			"exact-online": "yes",
+			"moneybird": "yes",
+			"snelstart": "yes",
+			"twinfield": "yes",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "lib/Settings/register.d/bookkeeping-vat-btw-filing.json BtwAangifte x-openregister-aggregations.totalsByReturn declares the totals; lib/Service/VATReturnService.php derives lines from the GL but is reached only by POST /api/vat-returns (appinfo/routes.php:165), which no file under src/ calls",
+				"reachedOn": "VATReturns /vat-returns (menu Taxes); the page is an OpenRegister index whose totals rest on a declaration",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12059 (Exact Online (Boekhouden), 2026-04-06): Direct BTW-aangifte (VAT return) filing to Dutch Belastingdienst",
+				"moneybird": "intelligence-db competitor_features#12105 (Moneybird, 2026-04-06): Automated BTW-aangifte preparation with one-click submission to Belastingdienst",
+				"snelstart": "intelligence-db competitor_features#14121 (SnelStart, 2026-04-06): Automatic BTW-aangifte calculation with pre-filled return",
+				"twinfield": "intelligence-db competitor_features#13954 (Twinfield (Wolters Kluwer), 2026-04-06): BTW-aangifte preparation and electronic filing to Belastingdienst"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "vat-return",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "Two VAT return models coexist: VatReturn (BtwAangiften page) and BtwAangifte (VATReturns page).",
+			"pendingReason": "The return's totals rest on x-openregister-aggregations and lifecycle declarations; the service that derives lines from the ledger has no page calling it. Settle by creating a return on an instance with booked invoices and checking the totals fill in."
+		}
+	]
+}
