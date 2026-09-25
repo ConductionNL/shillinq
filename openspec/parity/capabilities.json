@@ -179,6 +179,142 @@
 	],
 	"capabilities": [
 		{
+			"id": "led-double-entry",
+			"area": "ledger",
+			"name": "Keep double-entry books where every entry balances debit against credit.",
+			"shillinq": "partial",
+			"exact-online": "yes",
+			"moneybird": "yes",
+			"snelstart": "yes",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "lib/Lifecycle/BalanceGuard.php:77 isBalanced() sums GLLine debit vs credit and is the `requires` on GLTransaction.post (lib/Settings/shillinq_register.json GLTransaction lifecycle); several PHP posters write balanced GLTransaction+GLLine directly (lib/Service/FixedAssetDisposalService.php, CogsPosterService.php, PayrollService.php). But the same post transition declares action `evaluate-allocation-rules`, and no handler for it is registered in shillinq, while OpenRegister's LifecycleActionRegistry (openregister lib/Service/Lifecycle/LifecycleActionRegistry.php:57 BUILTINS = set-fields only) throws on an unresolved action, so a user-driven post from the GL page aborts.",
+				"reachedOn": "GeneralLedger /general-ledger (via menu Bookkeeping > General Ledger), detail GeneralLedgerDetail /general-ledger/:id with GLLine relation and lifecycle buttons",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12065 (Exact Online (Boekhouden), 2026-04-06): General ledger with double-entry bookkeeping and automatic balancing",
+				"moneybird": "intelligence-db competitor_features#12118 (Moneybird, 2026-04-06): General ledger with automatic double-entry posting from all modules",
+				"snelstart": "intelligence-db competitor_features#14128 (SnelStart, 2026-04-06): Double-entry bookkeeping with automated journal posting",
+				"odoo": "intelligence-db competitor_features#14905 (Odoo Accounting, 2026-04-06): General Ledger"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "ledger-core",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "The balance invariant is real PHP; the user-facing post path dies on an unregistered declared lifecycle action (fail-loud executor)."
+		},
+		{
+			"id": "led-rgs-chart",
+			"area": "ledger",
+			"name": "Start from a chart of accounts that follows the Dutch reference scheme (RGS).",
+			"shillinq": "yes",
+			"exact-online": "yes",
+			"moneybird": "yes",
+			"snelstart": "partial",
+			"twinfield": "yes",
+			"odoo": "partial",
+			"built": {
+				"state": "built",
+				"evidence": "lib/Service/SettingsService.php:182 seedRgsTemplate() imports lib/Settings/seeds/rgs-3.5-mkb.json (143 accounts), rgs-3.5-zzp.json or rgs-bbv.json into Account; called from lib/Controller/SetupController.php:260 (setup wizard 'seed' action) and lib/Repair/InitializeSettings.php:1637.",
+				"reachedOn": "First-run setup wizard (src/manifest.json setup steps rgs-template + seed), result on ChartOfAccounts /chart-of-accounts (via menu Bookkeeping > Chart of Accounts)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12064 (Exact Online (Boekhouden), 2026-04-06): Configurable chart of accounts with Dutch RGS (Referentie Grootboekschema) support",
+				"moneybird": "intelligence-db competitor_features#12117 (Moneybird, 2026-04-06): Customizable chart of accounts following Dutch RGS standard",
+				"snelstart": "intelligence-db competitor_features#14127 (SnelStart, 2026-04-06): Customizable chart of accounts with Dutch standard defaults",
+				"twinfield": "intelligence-db competitor_features#13957 (Twinfield (Wolters Kluwer), 2026-04-06): Configurable chart of accounts with RGS (Referentie Grootboekschema) support",
+				"odoo": "intelligence-db competitor_features#15401 (Odoo Accounting, 2026-04-06): Fiscal Localization Packages"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "ledger-core",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "MKB seed holds 143 RGS 3.5 accounts, a subset of the full RGS scheme."
+		},
+		{
+			"id": "led-dimensions",
+			"area": "ledger",
+			"name": "Tag entries with a cost centre, project or other dimension and report on it.",
+			"shillinq": "partial",
+			"exact-online": "yes",
+			"moneybird": "unknown",
+			"snelstart": "yes",
+			"twinfield": "yes",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "GLLine carries costCenterCode, costCarrierCode, projectCode, dimensions (lib/Settings/shillinq_register.json GLLine); src/views/bookkeeping/dimensions/SegmentPnLDashboard.vue:315 reads OR named aggregations byCostCenter/byProject/byAnalyticalDimension, but those aggregations (lib/Settings/register.d/bookkeeping-cost-centers-dimensions.json:385,450) are `metric: sum, field: amount` with an empty filter, so debit and credit legs and balance-sheet accounts add up unsigned; the roll-up is not a signed result.",
+				"reachedOn": "AnalyticalDimensions /bookkeeping/dimensions/analytical-dimensions (via menu Bookkeeping > Analytical dimensions), SegmentPnLDashboard /bookkeeping/dimensions/segment-pnl (via menu Bookkeeping > Segment P&L)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12067 (Exact Online (Boekhouden), 2026-04-06): Cost center and profit center allocation for departmental accounting",
+				"snelstart": "intelligence-db competitor_features#14129 (SnelStart, 2026-04-06): Cost center tracking for departmental expense analysis",
+				"twinfield": "intelligence-db competitor_features#13958 (Twinfield (Wolters Kluwer), 2026-04-06): Dimension-based accounting (cost center, project, activity, free fields)",
+				"odoo": "intelligence-db competitor_features#14913 (Odoo Accounting, 2026-04-06): Analytic Accounting"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "dimensions-segment-reporting",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "Tagging works; the report sums amount without side or account-type sign."
+		},
+		{
+			"id": "led-close-checklist",
+			"area": "ledger",
+			"name": "Work through a period-end close checklist and see what is still open.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "built",
+				"evidence": "src/components/period-close/PeriodCloseDetail.vue:162 renders taskChecklistItems and lib/Service/PeriodCloseService.php:324 blocks close on unresolved AP/AR items, but every writer initialises the list empty (lib/Repair/PeriodCloseBackfill.php:158, lib/Repair/BackfillFiscalPeriods.php:276) and no code or button adds or resolves an item; CloseChecklistTemplate/Instance schemas (bookkeeping-soft-close-flux.json) have no page.",
+				"reachedOn": "PeriodCloseDetail /bookkeeping/period-close/:id (via menu Bookkeeping > Period Close); YearEndCloseChecklist /bookkeeping/year-end-close-checklist is only a FiscalYear list filtered to open/closing",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "period-close",
+			"featureConfidence": "medium",
+			"source": "own-code",
+			"note": "The checklist panel always shows 'No checklist items yet.'"
+		},
+		{
+			"id": "led-soft-close",
+			"area": "ledger",
+			"name": "Have a nightly soft close run and flag unusual swings per account.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "built",
+				"evidence": "lib/BackgroundJob/SoftCloseJob.php (registered in appinfo/info.xml, INTERVAL_SECONDS=86400) runs lib/Service/SoftCloseExecutor.php:118 per administration (accruals, FX, cut-off, intercompany, trial balance, PeriodStatus soft-closed). Swing flagging lives in lib/Service/FluxService.php:133 classifyMateriality, reached only via POST /api/v2/flux-runs/execute (appinfo/routes.php:579), which no page calls and the nightly run does not invoke.",
+				"reachedOn": "ContinuousClose /bookkeeping/continuous-close (via menu Bookkeeping > Continuous Close, 'Run soft-close now' action); FluxAnalysis /bookkeeping/flux-analysis lists FluxRun records but nothing creates them from the UI",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "continuous-close",
+			"featureConfidence": "medium",
+			"source": "own-code",
+			"note": "Nightly soft close is real; flux swing flagging has no caller."
+		},
+		{
 			"id": "sal-branded-invoice",
 			"area": "sales",
 			"name": "Create a sales invoice with your own logo, colours and layout.",
@@ -290,6 +426,400 @@
 			"featureConfidence": "medium",
 			"source": "competitor",
 			"note": "Quotes belong to pipelinq per openspec/changes/shillinq-product-vendor-to-pipelinq; shillinq has no path from an accepted quote to invoice lines."
+		},
+		{
+			"id": "sal-pay-link",
+			"area": "sales",
+			"name": "Put a pay now link for iDEAL or card on the invoice.",
+			"shillinq": "partial",
+			"exact-online": "yes",
+			"moneybird": "yes",
+			"snelstart": "yes",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "PaymentRequest page (src/manifest.d/ar-invoice-payment-links.json) and lib/Controller/PaymentRequestActionController.php:102-150 mails an existing paymentLink; nothing in lib writes paymentLink (grep \"'paymentLink' =>\" only reads it, lib/Integration/PaymentRequestLeafProvider.php:222); Mollie is bound to LogMolliePaymentAdapter (lib/AppInfo/Application.php:497) and connections.json marks mollie reportedOnly; the invoice PDF (lib/Service/InvoicePdfGenerator.php renderHtml) carries no link",
+				"reachedOn": "PaymentRequests /bookkeeping/payment-requests (via menu Sales > Payment requests)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12051 (Exact Online (Boekhouden), 2026-04-06): Payment link integration on invoices for one-click online payment",
+				"moneybird": "intelligence-db competitor_features#14377 (Moneybird, 2026-04-06): Mollie native payment integration",
+				"snelstart": "intelligence-db competitor_features#14111 (SnelStart, 2026-04-06): iDEAL/online payment link integration on invoices",
+				"odoo": "intelligence-db competitor_features#14707 (Odoo Invoicing, 2026-04-06): Online Payment Links"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "invoice-payment-links",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "A payment request can be kept and a link mailed if one is filled in, but no provider creates the iDEAL/card link and it is not printed on the invoice."
+		},
+		{
+			"id": "sal-qr",
+			"area": "sales",
+			"name": "Print a scan-to-pay QR code on the invoice.",
+			"shillinq": "no",
+			"exact-online": "unknown",
+			"moneybird": "yes",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "none",
+				"evidence": "grep -i 'qr.?code|epc.?qr|scan.to.pay' in lib and src finds only barcode scanning (src/components/inventory/BarcodeScanner.vue) and a rule-check file; InvoicePdfGenerator.php renders no QR",
+				"reachedOn": "nothing reaches it: no QR on any invoice output",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"moneybird": "intelligence-db competitor_features#14378 (Moneybird, 2026-04-06): EPC QR code on invoices",
+				"odoo": "intelligence-db competitor_features#14719 (Odoo Invoicing, 2026-04-06): QR Code Payments"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "invoice-payment-links",
+			"featureConfidence": "medium",
+			"source": "competitor"
+		},
+		{
+			"id": "sal-peppol-send",
+			"area": "sales",
+			"name": "Send a sales invoice as a UBL e-invoice over Peppol.",
+			"shillinq": "partial",
+			"exact-online": "yes",
+			"moneybird": "yes",
+			"snelstart": "yes",
+			"twinfield": "yes",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "Send e-invoice button (src/components/ar-invoice/arEInvoiceActions.js -> /api/ar-invoices/{invoiceNumber}/send-einvoice) runs lib/Service/EInvoice/EInvoiceService.php: UBL via ArInvoiceUblMapper, local port LogPeppolTransmissionAdapter (log-only), then IEventDispatcher::dispatch('nl.conduction.peppol.outbound.requested') at :270. integriq's PeppolOutboundConsumer (openconnector/lib/AppInfo/Application.php:201) listens only to OpenRegister ObjectCreatedEvent for an object in register openconnector schema event, so the named NC event shillinq dispatches never reaches it",
+				"reachedOn": "ARInvoiceDetail /bookkeeping/accounts-receivable/:id header action AREInvoiceActions (via menu Sales > Accounts Receivable)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12086 (Exact Online (Boekhouden), 2026-04-06): Peppol/UBL e-invoicing for electronic invoice exchange with trading partners",
+				"moneybird": "intelligence-db competitor_features#12100 (Moneybird, 2026-04-06): Peppol e-invoicing for standardized electronic invoice exchange",
+				"snelstart": "intelligence-db competitor_features#14110 (SnelStart, 2026-04-06): Peppol e-invoicing support for government and enterprise clients",
+				"twinfield": "intelligence-db competitor_features#13936 (Twinfield (Wolters Kluwer), 2026-04-06): E-invoicing via UBL/Peppol for electronic invoice exchange",
+				"odoo": "intelligence-db competitor_features#15523 (Odoo Invoicing, 2026-04-06): Peppol BIS 3.0 Native"
+			},
+			"provider": "integriq",
+			"providerHow": "read-from-code",
+			"feature": "einvoicing-ubl-peppol",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "The UBL is built and the invoice goes to 'queued', but the hand-off to integriq uses a different event channel than integriq listens on, so nothing is transmitted."
+		},
+		{
+			"id": "sal-customer-language",
+			"area": "sales",
+			"name": "Send invoices and their emails in the customer's own language.",
+			"shillinq": "no",
+			"exact-online": "unknown",
+			"moneybird": "yes",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "none",
+				"evidence": "CustomerMaster has no language/locale property (lib/Settings/register.d/add-shillinq-bookkeeping-compliance.json); lib/Service/InvoicePdfGenerator.php:320 hard-codes <html lang=\"nl\"> and Dutch number formatting (:371); no invoice email exists",
+				"reachedOn": "nothing reaches it: no language field on customer or invoice",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"moneybird": "intelligence-db competitor_features#14385 (Moneybird, 2026-04-06): Multi-language invoice templates"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "sales-invoice-document",
+			"featureConfidence": "medium",
+			"source": "competitor"
+		},
+		{
+			"id": "sal-time-to-invoice",
+			"area": "sales",
+			"name": "Turn logged hours and expenses into invoice lines.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "yes",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "lib/Service/InvoiceGenerationService.php:90-130 draftInvoice loads UrenRegistratie (:511) and ExpenseClaimEntry (:570) records, rates them via RateCardResolver and writes BillableInvoiceLine rows; src/components/invoice/InvoiceGenerator.vue:103,211 takes time-entry and expense ids as comma-separated text typed by the user",
+				"reachedOn": "BillableInvoiceGenerate /invoice/generate (via menu Sales > Invoices > Generate invoice)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"moneybird": "intelligence-db competitor_features#12110 (Moneybird, 2026-04-06): Time-to-invoice conversion pulling tracked hours into invoice line items",
+				"odoo": "intelligence-db competitor_features#14705 (Odoo Invoicing, 2026-04-06): Auto Invoice Generation"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "invoice-from-time-and-expense",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "The conversion works, but the user must paste record ids; there is no picker or list of unbilled hours and expenses."
+		},
+		{
+			"id": "sal-usage-billing",
+			"area": "sales",
+			"name": "Bill a customer per unit of usage they consumed.",
+			"shillinq": "no",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "UsageRatePlan and MeterReading schemas (lib/Settings/register.d/usage-metered-billing.json) and lib/Service/UsageRatingCalculator.php + BillingModelEngine.php:299-326 exist, but no manifest page uses either schema and src/components/invoice/InvoiceGenerator.vue:25-37 offers no usage billing model nor meter-reading input",
+				"reachedOn": "nothing reaches it: no page for MeterReading/UsageRatePlan and the generator form cannot request usage lines",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "usage-metered-billing",
+			"featureConfidence": "medium",
+			"source": "own-code"
+		},
+		{
+			"id": "sal-approval",
+			"area": "sales",
+			"name": "Have an invoice approved by a second person before it goes out.",
+			"shillinq": "no",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "yes",
+			"odoo": "unknown",
+			"built": {
+				"state": "none",
+				"evidence": "ARInvoice lifecycle states draft/issued/paid/overdue/disputed/written-off have no approval state (lib/Settings/register.d/add-shillinq-bookkeeping-compliance.json); grep 'approv' in lib/Service/InvoiceGenerationService.php, lib/Controller/InvoiceApiController.php, src/views/invoice, src/components/ar-invoice finds nothing",
+				"reachedOn": "nothing reaches it: no approve step on any sales invoice page",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"twinfield": "intelligence-db competitor_features#13935 (Twinfield (Wolters Kluwer), 2026-04-06): Invoice approval workflow with multi-step authorization"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "sales-invoice-approval",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "Approval chains exist for purchase orders (PurchaseOrderApprovalService), not for sales invoices."
+		},
+		{
+			"id": "sal-batch",
+			"area": "sales",
+			"name": "Create and send a batch of invoices in one go.",
+			"shillinq": "no",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "none",
+				"evidence": "lib/Controller/InvoiceApiController.php generate/post/pdf act on one invoice; no batch route in appinfo/routes.php for invoices; the only multi-invoice generator is RecurringInvoiceGenerator, triggered by a declaration",
+				"reachedOn": "nothing reaches it: no batch create/send action on AccountsReceivable or BillableInvoiceList",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"odoo": "intelligence-db competitor_features#14718 (Odoo Invoicing, 2026-04-06): Batch Invoicing"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "sales-invoice-delivery",
+			"featureConfidence": "medium",
+			"source": "competitor"
+		},
+		{
+			"id": "sal-rate-cards",
+			"area": "sales",
+			"name": "Keep rate cards per client or role and see how rates changed over time.",
+			"shillinq": "yes",
+			"exact-online": "unknown",
+			"moneybird": "partial",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "built",
+				"evidence": "RateSchedule carries tier (role), entityId (client), effectiveDate/expiryDate (lib/Settings/shillinq_register.json); RateCardTemplate/RateCardVersion versions; lib/Service/RateCardResolver.php resolves the rate for a date and is used by InvoiceGenerationService.php:528",
+				"reachedOn": "RateCards /beheer/rate-cards, RateSchedules /beheer/rate-schedules, RateAuditTrail /beheer/rate-audit-trail (via menu Sales > Rate Cards / Rate Schedules / Rate Audit Trail)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"moneybird": "intelligence-db competitor_features#30619 (Moneybird, 2026-05-20): Hourly rates per project"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "rate-cards",
+			"featureConfidence": "medium",
+			"source": "own-code",
+			"note": "Rate changes over time show as dated schedule versions plus an audit list of resolved rates."
+		},
+		{
+			"id": "sal-customer-terms",
+			"area": "sales",
+			"name": "Set default payment terms and delivery method per customer.",
+			"shillinq": "no",
+			"exact-online": "unknown",
+			"moneybird": "yes",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "none",
+				"evidence": "CustomerMaster properties (add-shillinq-bookkeeping-compliance.json, sepa, peppol, icp fragments) contain no payment term or delivery method; the Customers index column 'paymentTermDays' in src/manifest.json points at a field that does not exist on the schema (CustomerDetail _note says so)",
+				"reachedOn": "nothing reaches it: Customers /bookkeeping/customers (via menu Sales > Customers) has no terms field to set",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"moneybird": "intelligence-db competitor_features#14384 (Moneybird, 2026-04-06): Per-contact payment terms",
+				"odoo": "intelligence-db competitor_features#15533 (Odoo Invoicing, 2026-04-06): Payment Terms Configuration"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "customer-master",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "Only defaultMandateId and peppolParticipantId exist per customer; payment terms live per invoice."
+		},
+		{
+			"id": "sal-webshop-sync",
+			"area": "sales",
+			"name": "Turn web shop orders into sales invoices automatically.",
+			"shillinq": "no",
+			"exact-online": "unknown",
+			"moneybird": "yes",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "none",
+				"evidence": "grep -i 'webshop|woocommerce|shopify|lightspeed|magento|e-?commerce' in lib and src hits only rule catalogue text (lib/Standards/rules/vat.json, ComplianceCatalogue.php) and a KOR fragment; no importer, connector or page",
+				"reachedOn": "nothing reaches it: no web shop source or order import",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"moneybird": "intelligence-db competitor_features#12127 (Moneybird, 2026-04-06): WooCommerce/Shopify integration for automatic order-to-invoice sync"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "webshop-sync",
+			"featureConfidence": "medium",
+			"source": "competitor"
+		},
+		{
+			"id": "sal-orders",
+			"area": "sales",
+			"name": "Record a customer order and follow it through to the invoice.",
+			"shillinq": "partial",
+			"exact-online": "yes",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "building",
+				"evidence": "Orders page on OrderPrimitive (src/manifest.d/order-workspace.json) with OrderLine and Payment related lists; orderType enum has 'sales' but lib/Settings/register.d/zz-order-primitive.json says only purchase/subsidy/engagement are populated and the quick filters omit sales; SalesOrder schema (bookkeeping-quote-order-invoice.json) has no page; no code turns an order into an ARInvoice (the 'invoice' transition belongs to the purchase flow)",
+				"reachedOn": "Orders /orders (via menu Sales > Orders)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#31717 (Exact Online (Boekhouden), 2026-07-12): Inventory & order management",
+				"odoo": "intelligence-db competitor_features#14628 (Odoo (Ecosystem), 2026-04-06): Sales (Community)"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "quote-to-cash",
+			"featureConfidence": "medium",
+			"source": "own-code",
+			"note": "A customer order can be recorded as a generic order, but it cannot be followed through to an invoice."
+		},
+		{
+			"id": "sal-customer-portal",
+			"area": "sales",
+			"name": "Let customers view, download and pay their invoices in a portal.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "lib/Portal/PortalContributionProvider.php contributes read-only ARInvoice and PaymentRequest collections to portaliq for the customer audience (Wave 2, scoped on claims.shillinq.customerMasterId); pay-now goes through /api/portal/payments/initiate -> lib/Service/Payment/PortalPaymentSessionService.php -> MolliePaymentProvider, whose adapter is LogMolliePaymentAdapter by default (lib/AppInfo/Application.php:497; connections.json mollie reportedOnly)",
+				"reachedOn": "portaliq external portal (not a shillinq page); nothing in shillinq's own UI",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"odoo": "intelligence-db competitor_features#15534 (Odoo Invoicing, 2026-04-06): Customer Portal Invoices"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "customer-invoice-portal",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "Viewing works only when portaliq is installed; paying depends on a Mollie adapter that is log-only by default, and no invoice PDF download was found in the contribution."
+		},
+		{
+			"id": "sal-foreign-currency",
+			"area": "sales",
+			"name": "Invoice a customer in their own currency.",
+			"shillinq": "partial",
+			"exact-online": "yes",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "yes",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "ARInvoice.currency (add-shillinq-bookkeeping-compliance.json) is carried into UBL DocumentCurrencyCode (lib/Service/EInvoice/ArInvoiceUblMapper.php:92-127) and realised FX is posted on settlement (lib/Service/PaymentReconciliationService.php:664); but InvoicePdfGenerator.php renderHtml prints a hard-coded '€' and InvoiceGenerationService.php:154,160,537 fixes currency to EUR",
+				"reachedOn": "AccountsReceivable /bookkeeping/accounts-receivable (via menu Sales > Accounts Receivable), FX Rates pages under Banking & Cashflow",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12075 (Exact Online (Boekhouden), 2026-04-06): Multi-currency transaction support with automatic exchange rate updates",
+				"twinfield": "intelligence-db competitor_features#13951 (Twinfield (Wolters Kluwer), 2026-04-06): Multi-currency accounting with automatic daily exchange rate updates",
+				"odoo": "intelligence-db competitor_features#14708 (Odoo Invoicing, 2026-04-06): Multi-Currency Invoicing"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "multi-currency",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "The AR record and e-invoice honour the currency, the PDF and the time-and-expense generator do not."
+		},
+		{
+			"id": "sal-quick-draft",
+			"area": "sales",
+			"name": "Draft an invoice in a few fields from anywhere in the app.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "built",
+				"evidence": "src/modals/InvoiceQuickDraftModal.vue posts an ARInvoice draft to /apps/openregister/api/objects/{register}/ARInvoice (:472) with customer, lines and VAT; the only trigger is the Dashboard headerActions 'create-invoice' in src/manifest.json:5166-5172",
+				"reachedOn": "Dashboard / header action 'Create invoice' (modal InvoiceQuickDraftModal)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "sales-invoice-quick-draft",
+			"featureConfidence": "medium",
+			"source": "own-code",
+			"note": "The few-field draft works, but it opens from the dashboard only, not from anywhere in the app."
 		},
 		{
 			"id": "pur-ubl-import",
@@ -451,6 +981,136 @@
 			"note": "Goods including partial deliveries: yes; services: API only, no screen reaches it."
 		},
 		{
+			"id": "pur-vendor-score",
+			"area": "purchasing",
+			"name": "Score suppliers on on-time delivery, quantity, price and invoice accuracy.",
+			"shillinq": "yes",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "lib/Service/VendorPerformanceAggregation.php:14-25 computes onTimeDelivery, quantityAccuracy, priceAccuracy, invoiceAccuracy and a weighted overallScore + trend from GRN/ThreeWayMatch/SupplierInvoice; VendorPerformanceAggregationJob registered in appinfo/info.xml",
+				"reachedOn": "VendorPerformanceIndex /inkoop/vendor-performance (menu Purchasing > Vendor performance); VendorPerformanceDetail /inkoop/vendor-performance/:id",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"odoo": "intelligence-db competitor_features#14733 (Odoo Purchase, 2026-04-06): Vendor Rating"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "vendor-performance",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "Scores only suppliers that go through PO + GRN + 3-way match."
+		},
+		{
+			"id": "pur-framework",
+			"area": "purchasing",
+			"name": "Keep framework agreements with suppliers and order against their terms.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "lib/Service/PurchaseOrderService.php:307-312 calls FrameworkAgreementDrawdownGuard::assertWithinCeiling when the payload has frameworkAgreementId; src/components/purchase-order/PurchaseOrderForm.vue never sends frameworkAgreementId (grep empty)",
+				"reachedOn": "FrameworkAgreements /inkoop/framework-agreements (menu Purchasing > Framework Agreements); FrameworkAgreementDetail shows ceiling KPI and linked POs",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"odoo": "intelligence-db competitor_features#14726 (Odoo Purchase, 2026-04-06): Blanket Orders"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "procurement-governance",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "Agreements can be kept; ordering against one (ceiling drawdown) has no field in the PO form, and only the spend ceiling is enforced, not agreed prices."
+		},
+		{
+			"id": "pur-ai-agent",
+			"area": "purchasing",
+			"name": "Let an assistant process and code incoming purchase invoices for you.",
+			"shillinq": "partial",
+			"exact-online": "yes",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "built",
+				"evidence": "lib/Service/Extraction/GlAccountSuggestionClient.php calls docudesk's /api/extraction/{id}/suggest-account; src/modals/BillImportModal.vue:549 and src/views/ReceiptCapture.vue:500 request a suggestion that the operator must accept ('Use suggestion'); zzz-mcp-tool-surface.json exposes read-only MCP search/get only",
+				"reachedOn": "Dashboard / 'Import bill' -> BillImportModal review step (extraction drafts only)",
+				"owner": "ConductionNL/docudesk"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#11774 (Exact Online (Boekhouden), 2026-04-06): AI Purchase Agent for automated purchase invoice processing"
+			},
+			"provider": "docudesk",
+			"providerHow": "read-from-code",
+			"feature": "supplier-invoice-capture",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "AI suggests a GL account per draft; no agent processes or books invoices on its own."
+		},
+		{
+			"id": "pur-po-approval",
+			"area": "purchasing",
+			"name": "Have a purchase order approved according to amount thresholds.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "PurchaseOrderService::determineApprovalChain (PurchaseOrderController.php:184, called from PurchaseOrderForm.vue:337) materialises an amount-threshold chain and PurchaseOrderDetail.vue:223 blocks sending until every approver signs; the decision endpoint /api/purchase-orders/{id}/approval-decision (routes.php:365, PurchaseOrderApprovalService::recordApprovalDecision) is not called anywhere in src/ (absent from _lane/frontend-api-paths.txt)",
+				"reachedOn": "PurchaseOrders /inkoop/purchase-orders (menu Purchasing > Purchase Orders) shows the chain; nothing reaches the approve action: no button calls approval-decision",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"odoo": "intelligence-db competitor_features#15437 (Odoo Purchase, 2026-04-06): Automatic Purchase Approval"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "purchase-order",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "Thresholds route the PO, but an approver has no screen to sign, so a chained PO can never be sent."
+		},
+		{
+			"id": "pur-spend-analysis",
+			"area": "purchasing",
+			"name": "Analyse spend by supplier and category.",
+			"shillinq": "yes",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "lib/Service/SpendAnalyticsService.php spend-by-supplier (APTransaction vendorId), -by-category (GLLine accountNumber), -by-cost-centre, -by-period via OR AggregationRunner; src/components/spend-analytics/SpendAnalyticsPanel.vue:505 GETs /api/analytics/spend",
+				"reachedOn": "SpendAnalytics /reporting-compliance/spend-analytics (menu ReportingCompliance > Spend analysis)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"odoo": "intelligence-db competitor_features#14730 (Odoo Purchase, 2026-04-06): Purchase Analytics"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "spend-analytics",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "GL-backed views refuse (500) until the GLLine administration backfill repair step has proven complete (SpendAnalyticsService.php:303); no supplier x category cross-tab."
+		},
+		{
 			"id": "tax-vat-calc",
 			"area": "tax",
 			"name": "Have VAT calculated per line from rates you can configure.",
@@ -476,6 +1136,35 @@
 			"featureConfidence": "medium",
 			"source": "competitor",
 			"note": "Per-line VAT works on the generated invoice, but the rates are a code constant, not configurable."
+		},
+		{
+			"id": "tax-vat-prepare",
+			"area": "tax",
+			"name": "Have the VAT return filled in from the books.",
+			"shillinq": "partial",
+			"exact-online": "yes",
+			"moneybird": "yes",
+			"snelstart": "yes",
+			"twinfield": "yes",
+			"odoo": "unknown",
+			"built": {
+				"state": "built",
+				"evidence": "lib/Reporting/Generator/VatReturnReportGenerator.php renders the return XML by rubriek from a stored VatReturnFiling or, failing that, from the period's ARInvoice rows (output tax only, input tax only from the filing record); opened by src/modals/GenerateReportDialog.vue:330 POST /api/reporting/generate",
+				"reachedOn": "ReportingComplianceOverview /reporting-compliance, report card BTW-aangifte, Genereer",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12059 (Exact Online (Boekhouden), 2026-04-06): Direct BTW-aangifte (VAT return) filing to Dutch Belastingdienst",
+				"moneybird": "intelligence-db competitor_features#12105 (Moneybird, 2026-04-06): Automated BTW-aangifte preparation with one-click submission to Belastingdienst",
+				"snelstart": "intelligence-db competitor_features#14121 (SnelStart, 2026-04-06): Automatic BTW-aangifte calculation with pre-filled return",
+				"twinfield": "intelligence-db competitor_features#13954 (Twinfield (Wolters Kluwer), 2026-04-06): BTW-aangifte preparation and electronic filing to Belastingdienst"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "vat-return",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "The file can be produced from sales invoices; input VAT from purchases is not derived, and the VATReturns page totals rest on x-openregister-aggregations. Its own spec REQ-VBTW-004 forbids this derivation (issue #525)."
 		},
 		{
 			"id": "tax-vat-file",
@@ -517,7 +1206,7 @@
 			"odoo": "unknown",
 			"built": {
 				"state": "building",
-				"evidence": "lib/Service/IcpService.php, IcpCalculator.php and IcpFilingService.php exist and ViesOutageRetryJob is registered in appinfo/info.xml, but /api/icp/* (appinfo/routes.php:479-485) is called by nothing under src/; filing depends on digipoort-sbr, unavailable in lib/Settings/connections.json",
+				"evidence": "lib/Service/IcpService.php, IcpCalculator.php and IcpFilingService.php exist and ViesOutageRetryJob is registered in appinfo/info.xml, but /api/icp/* (appinfo/routes.php:479-485) is called by nothing under src/; filing depends on digipoort-sbr, unavailable in lib/Settings/connections.json; lib/Reporting/ReportCatalogue.php lists icp-opgaaf but lib/Reporting/Generator has no generator for it (ReportGenerationService.php:160 'no generator for report type')",
 				"reachedOn": "IcpOpgaaf /belastingen/icp-opgaaf (menu Taxes) lists IcpStatement records only",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -699,7 +1388,7 @@
 			"odoo": "unknown",
 			"built": {
 				"state": "building",
-				"evidence": "src/manifest.d/bookkeeping-vpb-corporate-tax.json and bookkeeping-vpb-corporate-tax-balans.json declare index pages for deadlines, payments, quarterly statements and a VpbBalansAangifte detail; no Vpb service or /api/vpb route exists in lib/ or appinfo/routes.php",
+				"evidence": "src/manifest.d/bookkeeping-vpb-corporate-tax.json and bookkeeping-vpb-corporate-tax-balans.json declare index pages for deadlines, payments, quarterly statements and a VpbBalansAangifte detail; no Vpb service or /api/vpb route exists in lib/ or appinfo/routes.php; the vpb-aangifte report in lib/Reporting/ReportCatalogue.php has no generator",
 				"reachedOn": "VpbDeadlines /bookkeeping/vpb/deadlines, VpbPayments /bookkeeping/vpb/payments (menu Taxes > Vpb)",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -723,7 +1412,7 @@
 			"odoo": "unknown",
 			"built": {
 				"state": "building",
-				"evidence": "src/manifest.d/30-bookkeeping-ib-aangifte-zzp.json declares index pages for returns, entrepreneur allowances, annuities and box 3; lib/Settings/register.d/30-bookkeeping-ib-aangifte-zzp.json holds the schemas; no service computes the return",
+				"evidence": "src/manifest.d/30-bookkeeping-ib-aangifte-zzp.json declares index pages for returns, entrepreneur allowances, annuities and box 3; lib/Settings/register.d/30-bookkeeping-ib-aangifte-zzp.json holds the schemas; no service computes the return; the ib-aangifte report in lib/Reporting/ReportCatalogue.php has no generator",
 				"reachedOn": "IbAangiftenZzp /ib-aangifte/aangiften (menu Taxes > IB return)",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -887,7 +1576,7 @@
 			"odoo": "unknown",
 			"built": {
 				"state": "specified",
-				"evidence": "lib/Settings/connections.json key digipoort-sbr: available false, log-only adapter; SbrXbrlFilings and SBRDocuments pages list XbrlInstance records only",
+				"evidence": "lib/Settings/connections.json key digipoort-sbr: available false, log-only adapter; SbrXbrlFilings and SBRDocuments pages list XbrlInstance records only; the sbr-xbrl report in lib/Reporting/ReportCatalogue.php has no generator",
 				"reachedOn": "nothing reaches a submission; SbrXbrlFilings /sbr-xbrl-filings lists records",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -900,9 +1589,787 @@
 			"feature": "sbr",
 			"featureConfidence": "medium",
 			"source": "competitor"
+		},
+		{
+			"id": "plt-accountant",
+			"area": "platform",
+			"name": "Give your accountant their own access to review and correct the books.",
+			"shillinq": "yes",
+			"exact-online": "yes",
+			"moneybird": "yes",
+			"snelstart": "yes",
+			"twinfield": "yes",
+			"odoo": "unknown",
+			"built": {
+				"state": "built",
+				"evidence": "src/views/AccountantPortalDashboard.vue calls /api/accountant/dashboard and /api/accountant/administrations (lib/Controller/AccountantPortalController.php)",
+				"reachedOn": "AccountantPortalDashboard /accountant-portal (menu Reporting & Compliance)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12089 (Exact Online (Boekhouden), 2026-04-06): Accountant portal with read/write access to client administrations",
+				"moneybird": "intelligence-db competitor_features#12123 (Moneybird, 2026-04-06): Accountant access portal with separate login for external bookkeeper",
+				"snelstart": "intelligence-db competitor_features#14139 (SnelStart, 2026-04-06): Accountant sharing portal for external bookkeeper access",
+				"twinfield": "intelligence-db competitor_features#13963 (Twinfield (Wolters Kluwer), 2026-04-06): Accountant/advisor portal with client administration management"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "accountant-access",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "Read on the code only; whether the accountant can correct entries depends on OpenRegister permissions not checked here."
+		},
+		{
+			"id": "plt-2fa",
+			"area": "platform",
+			"name": "Protect sign-in with two-factor authentication.",
+			"shillinq": "yes",
+			"exact-online": "unknown",
+			"moneybird": "yes",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "built",
+				"evidence": "Shillinq has no login of its own; every page sits behind Nextcloud authentication, whose two-factor providers apply (appinfo/info.xml navigation shillinq.dashboard.page)",
+				"reachedOn": "Nextcloud login, before any shillinq page",
+				"owner": "nextcloud/server"
+			},
+			"evidence": {
+				"moneybird": "intelligence-db competitor_features#12132 (Moneybird, 2026-04-06): Two-factor authentication (2FA) for account security"
+			},
+			"provider": "nextcloud",
+			"providerHow": "read-from-code",
+			"feature": "access-control",
+			"featureConfidence": "medium",
+			"source": "competitor"
+		},
+		{
+			"id": "plt-api",
+			"area": "platform",
+			"name": "Connect other software through a documented REST API.",
+			"shillinq": "yes",
+			"exact-online": "yes",
+			"moneybird": "yes",
+			"snelstart": "yes",
+			"twinfield": "yes",
+			"odoo": "unknown",
+			"built": {
+				"state": "built",
+				"evidence": "every page reads and writes through OpenRegister's REST API (/index.php/apps/openregister/api/objects/shillinq/..., e.g. src/manifest.json BtwAangifteDetail sidebar source); appinfo/routes.php adds 843 lines of app routes",
+				"reachedOn": "any client with Nextcloud credentials; no API documentation page is shipped in this repo",
+				"owner": "ConductionNL/openregister"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12085 (Exact Online (Boekhouden), 2026-04-06): REST API with OAuth 2.0 for third-party application integration",
+				"moneybird": "intelligence-db competitor_features#12125 (Moneybird, 2026-04-06): REST API with webhook support for real-time event notifications",
+				"snelstart": "intelligence-db competitor_features#14141 (SnelStart, 2026-04-06): API access for third-party application integration",
+				"twinfield": "intelligence-db competitor_features#13961 (Twinfield (Wolters Kluwer), 2026-04-06): Open API with REST/SOAP endpoints for third-party integration"
+			},
+			"provider": "openregister",
+			"providerHow": "read-from-code",
+			"feature": "api",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "The API exists; a published reference for integrators was not found in the repo."
+		},
+		{
+			"id": "plt-mobile",
+			"area": "platform",
+			"name": "Create invoices and capture receipts in a mobile app.",
+			"shillinq": "partial",
+			"exact-online": "yes",
+			"moneybird": "partial",
+			"snelstart": "yes",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "no native app; src/manifest.d/inventory-mobile-scanner.json registers a mobile scanner PWA (four custom pages) and src/views/ReceiptCapture.vue captures receipts in the browser; the Nextcloud web UI is responsive",
+				"reachedOn": "MobileScannerHome /inventory/mobile; Receipts /inkoop/receipts",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12092 (Exact Online (Boekhouden), 2026-04-06): Mobile app for iOS and Android with invoice creation and expense capture",
+				"moneybird": "intelligence-db competitor_features#12133 (Moneybird, 2026-04-06): Mobile-responsive web interface accessible on all devices",
+				"snelstart": "intelligence-db competitor_features#14142 (SnelStart, 2026-04-06): Mobile app for iOS and Android with core accounting functions",
+				"odoo": "intelligence-db competitor_features#14677 (Odoo (Ecosystem), 2026-04-06): Mobile App"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "mobile",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "No iOS or Android app of its own."
+		},
+		{
+			"id": "plt-kvk",
+			"area": "platform",
+			"name": "Look a company up in the KvK register and fill in its details.",
+			"shillinq": "no",
+			"exact-online": "unknown",
+			"moneybird": "yes",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "specified",
+				"evidence": "lib/Settings/connections.json key kvk: available false, 'Only a log-only adapter is bound, and no screen or service calls it yet. Nothing reaches the KvK.'",
+				"reachedOn": "nothing reaches it",
+				"owner": "ConductionNL/integriq"
+			},
+			"evidence": {
+				"moneybird": "intelligence-db competitor_features#14382 (Moneybird, 2026-04-06): KvK number lookup"
+			},
+			"provider": "integriq",
+			"providerHow": "read-from-code",
+			"feature": "kvk-lookup",
+			"featureConfidence": "medium",
+			"source": "competitor"
+		},
+		{
+			"id": "plt-nl-query",
+			"area": "platform",
+			"name": "Ask questions about your finances in plain language.",
+			"shillinq": "no",
+			"exact-online": "yes",
+			"moneybird": "yes",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "none",
+				"evidence": "no question box or assistant integration in src/; the only AI surface is the read-only MCP declaration in lib/Settings/register.d/zzz-mcp-tool-surface.json",
+				"reachedOn": "nothing reaches it inside shillinq",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12083 (Exact Online (Boekhouden), 2026-04-06): AI assistant for natural language financial queries and answers",
+				"moneybird": "intelligence-db competitor_features#11780 (Moneybird, 2026-04-06): MCP AI integration: natural language queries on bookkeeping data"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "ai-assistance",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "An outside AI client could ask through the MCP surface, which is itself pending."
+		},
+		{
+			"id": "plt-attachments",
+			"area": "platform",
+			"name": "Attach documents to invoices and expenses.",
+			"shillinq": "yes",
+			"exact-online": "unknown",
+			"moneybird": "yes",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "detail pages carry an openregister-file-references sidebar tab (e.g. src/manifest.json BtwAangifteDetail sidebarProps.tabs files)",
+				"reachedOn": "the Files tab on any detail page",
+				"owner": "ConductionNL/openregister"
+			},
+			"evidence": {
+				"moneybird": "intelligence-db competitor_features#12129 (Moneybird, 2026-04-06): Document attachment storage linked to invoices and expenses",
+				"odoo": "intelligence-db competitor_features#15566 (Odoo Expenses, 2026-04-06): Receipt Attachment Storage"
+			},
+			"provider": "openregister",
+			"providerHow": "read-from-code",
+			"feature": "documents",
+			"featureConfidence": "medium",
+			"source": "competitor"
+		},
+		{
+			"id": "plt-custom-fields",
+			"area": "platform",
+			"name": "Add your own fields to contacts and invoices.",
+			"shillinq": "no",
+			"exact-online": "unknown",
+			"moneybird": "yes",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "none",
+				"evidence": "the fields every page shows are fixed in src/manifest.json config.fields; an admin could add a property to a schema in OpenRegister, but no shillinq page would show it",
+				"reachedOn": "nothing reaches it",
+				"owner": "ConductionNL/openregister"
+			},
+			"evidence": {
+				"moneybird": "intelligence-db competitor_features#12128 (Moneybird, 2026-04-06): Custom fields on contacts and invoices for business-specific data",
+				"odoo": "intelligence-db competitor_features#14654 (Odoo (Ecosystem), 2026-04-06): Studio"
+			},
+			"provider": "openregister",
+			"providerHow": "read-from-code",
+			"feature": "customisation",
+			"featureConfidence": "medium",
+			"source": "competitor"
+		},
+		{
+			"id": "plt-languages",
+			"area": "platform",
+			"name": "Use the interface in Dutch, English and other languages.",
+			"shillinq": "yes",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "yes",
+			"odoo": "unknown",
+			"built": {
+				"state": "built",
+				"evidence": "l10n/ ships 25 languages (50 .js/.json files), including nl, en, de and fr",
+				"reachedOn": "every page, following the Nextcloud user language",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"twinfield": "intelligence-db competitor_features#13953 (Twinfield (Wolters Kluwer), 2026-04-06): Multi-language interface supporting Dutch, English, French, German"
+			},
+			"provider": "nextcloud",
+			"providerHow": "read-from-code",
+			"feature": "localisation",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "Several page titles in src/manifest.json are still Dutch in the English source strings."
+		},
+		{
+			"id": "plt-marketplace",
+			"area": "platform",
+			"name": "Pick from a marketplace of ready-made integrations.",
+			"shillinq": "no",
+			"exact-online": "yes",
+			"moneybird": "yes",
+			"snelstart": "unknown",
+			"twinfield": "yes",
+			"odoo": "unknown",
+			"built": {
+				"state": "none",
+				"evidence": "no integration catalogue; ExternalAdaptersStatus /external-adapters lists the 15 connections of lib/Settings/connections.json, of which 11 are marked unavailable",
+				"reachedOn": "ExternalAdaptersStatus /external-adapters (settings gear)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#31720 (Exact Online (Boekhouden), 2026-07-12): Large integration marketplace",
+				"moneybird": "intelligence-db competitor_features#12126 (Moneybird, 2026-04-06): Zapier integration for no-code workflow automation with 5000+ apps",
+				"twinfield": "intelligence-db competitor_features#13962 (Twinfield (Wolters Kluwer), 2026-04-06): Exact/SAP/Microsoft integration connectors for ERP connectivity"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "integrations",
+			"featureConfidence": "medium",
+			"source": "competitor"
+		},
+		{
+			"id": "plt-import",
+			"area": "platform",
+			"name": "Move an administration over from another bookkeeping package.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "src/manifest.d/administration-import-migration.json: the ImportWizard page is marked x-deferred, its component does not exist and it renders an empty state; ImportBatches and ImportMappings index pages remain",
+				"reachedOn": "ImportBatches /import/batches (settings gear)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "migration",
+			"featureConfidence": "medium",
+			"source": "own-code",
+			"note": "Batches and mappings can be kept; the six-stage wizard that parses and posts an import is not built."
+		},
+		{
+			"id": "plt-self-host",
+			"area": "platform",
+			"name": "Run it on your own servers.",
+			"shillinq": "yes",
+			"exact-online": "no",
+			"moneybird": "no",
+			"snelstart": "no",
+			"twinfield": "no",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "appinfo/info.xml: a Nextcloud app under EUPL-1.2 with OpenRegister as its data layer, installed on the customer's own Nextcloud",
+				"reachedOn": "Nextcloud app store or a manual install",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitors.license 'Proprietary SaaS'",
+				"moneybird": "intelligence-db competitors.license 'Proprietary SaaS'",
+				"snelstart": "intelligence-db competitors.license 'Proprietary SaaS'",
+				"twinfield": "intelligence-db competitors.license 'Proprietary SaaS'",
+				"odoo": "intelligence-db competitors.license 'LGPL-3.0 (Community) / Proprietary (Enterprise)'"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "deployment",
+			"featureConfidence": "medium",
+			"source": "competitor"
+		},
+		{
+			"id": "plt-help-assistant",
+			"area": "platform",
+			"name": "Get how-to answers from an in-app assistant at any hour.",
+			"shillinq": "no",
+			"exact-online": "yes",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "none",
+				"evidence": "no in-app assistant; pages link out to documentationUrl entries on shillinq.conduction.nl",
+				"reachedOn": "nothing reaches it",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#11775 (Exact Online (Boekhouden), 2026-04-06): AI Support Agent (24/7 how-to assistant with 98% resolution rate)"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "ai-assistance",
+			"featureConfidence": "medium",
+			"source": "competitor"
+		},
+		{
+			"id": "plt-connection-status",
+			"area": "platform",
+			"name": "See which outside connections actually work before relying on them.",
+			"shillinq": "yes",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "built",
+				"evidence": "lib/Settings/connections.json registers 15 connections with an honest available flag; lib/BackgroundJob/ConnectionReportJob.php (registered in appinfo/info.xml) reports them to integriq daily; the page reads integriq's app_connection schema",
+				"reachedOn": "ExternalAdaptersStatus /external-adapters (settings gear)",
+				"owner": "ConductionNL/integriq"
+			},
+			"evidence": {},
+			"provider": "integriq",
+			"providerHow": "read-from-code",
+			"feature": "integrations",
+			"featureConfidence": "medium",
+			"source": "own-code"
+		},
+		{
+			"id": "pub-bbv",
+			"area": "public-sector",
+			"name": "Keep a municipality's books under BBV with every line on a task field.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "BbvMapping /overheid/bbv-mapping lists mappings to taakvelden seeded from lib/Settings/seeds/bbv-taakvelden-*.json; src/components/Dashboard/BBVComplianceDashboard.vue:290 calls /api/bbv-dashboard, which reads materialised aggregation values (lib/Controller/BBVDashboardController.php:12)",
+				"reachedOn": "BbvMapping /overheid/bbv-mapping (settings gear); BBVComplianceDashboard /bbv-dashboard",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "bbv",
+			"featureConfidence": "medium",
+			"source": "own-code",
+			"note": "The dashboard's figures come from x-openregister-aggregations materialisation."
+		},
+		{
+			"id": "pub-iv3",
+			"area": "public-sector",
+			"name": "Produce the quarterly Iv3 report for Statistics Netherlands.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "built",
+				"evidence": "lib/Reporting/Generator/Iv3ReportGenerator.php sums GL lines per taakveld into baten and lasten, XML or CSV, via the report dialog; sending to CBS is unavailable in lib/Settings/connections.json (cbs-iv3)",
+				"reachedOn": "ReportingComplianceOverview /reporting-compliance, report card IV3-rapportage",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "iv3",
+			"featureConfidence": "medium",
+			"source": "own-code",
+			"note": "Covers taakveld totals only, not the economic categories, and cannot be submitted."
+		},
+		{
+			"id": "pub-sisa",
+			"area": "public-sector",
+			"name": "Produce the SiSa appendix for specific grants.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "SisaRapportages /sisa-rapportages lists records; lib/Service/SisaReportingService.php has no caller in lib/; the bzk-sisa connection is unavailable in lib/Settings/connections.json",
+				"reachedOn": "SisaRapportages /sisa-rapportages (report card)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "sisa",
+			"featureConfidence": "medium",
+			"source": "own-code"
+		},
+		{
+			"id": "pub-rechtmatigheid",
+			"area": "public-sector",
+			"name": "Write the lawfulness statement with tolerances and findings.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "src/manifest.d/bookkeeping-rechtmatigheidsverantwoording.json declares index pages for assessment, findings, tolerances, the paragraph and an audit export; no service under lib/Service computes the statement",
+				"reachedOn": "Rechtmatigheidstoetsing /rechtmatigheid/toetsing (menu Reporting & Compliance)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "rechtmatigheid",
+			"featureConfidence": "medium",
+			"source": "own-code"
+		},
+		{
+			"id": "pub-bcf",
+			"area": "public-sector",
+			"name": "Claim VAT back from the VAT compensation fund (BCF).",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "lib/Service/BcfClaimService.php and BcfCompensationCalculator.php compute the claim, reached only by GET /api/bcf/compensation (appinfo/routes.php:458), which nothing under src/ calls",
+				"reachedOn": "BcfClaims /overheid/bcf-claims lists claims",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "bcf",
+			"featureConfidence": "medium",
+			"source": "own-code"
+		},
+		{
+			"id": "pub-fido",
+			"area": "public-sector",
+			"name": "Check the Wet Fido limits and file the quarterly treasury report.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "TreasuryDashboard /treasury/dashboard plus index pages for loans, derivatives, statutes and quarterly reports (src/manifest.d/bookkeeping-wet-fido-treasury.json); lib/Service/Treasury holds the calculations",
+				"reachedOn": "TreasuryDashboard /treasury/dashboard (menu Banking & Cashflow)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "treasury-public",
+			"featureConfidence": "medium",
+			"source": "own-code",
+			"note": "Whether the Treasury services feed the dashboard was not traced to a caller."
+		},
+		{
+			"id": "pub-emu",
+			"area": "public-sector",
+			"name": "Report the EMU balance each quarter.",
+			"shillinq": "yes",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "built",
+				"evidence": "lib/BackgroundJob/EmuQuarterlyDraftJob.php, registered in appinfo/info.xml, calls EmuReportingService::generateQuarterlyDraft 5 to 7 working days after quarter end",
+				"reachedOn": "EmuRapportage /emu-rapportage (report card on /reporting-compliance)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "emu",
+			"featureConfidence": "medium",
+			"source": "own-code",
+			"note": "Produces the draft; submission to CBS is not wired."
+		},
+		{
+			"id": "pub-gr",
+			"area": "public-sector",
+			"name": "Split costs over the participants of a joint arrangement.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "GRDeelnemers, GRVerdeelsleutels and GRConsolidated are index pages in src/manifest.json over lib/Settings/register.d/add-shillinq-bookkeeping-gr-consolidation.json",
+				"reachedOn": "GRDeelnemers /gr/deelnemers (menu Bookkeeping)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "gr",
+			"featureConfidence": "medium",
+			"source": "own-code",
+			"note": "Participants and allocation keys can be kept; no service found that applies the keys."
+		},
+		{
+			"id": "pub-market-separation",
+			"area": "public-sector",
+			"name": "Separate commercial activities from public tasks and set integral cost prices.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "eight index pages under /wmo (src/manifest.d/bookkeeping-market-government-separation.json); lib/Service/IntegralCostPriceCalculator.php and CrossSubsidyDetector.php have no caller in lib/",
+				"reachedOn": "CommercialActivities /wmo/commercial-activities",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "market-separation",
+			"featureConfidence": "medium",
+			"source": "own-code"
+		},
+		{
+			"id": "pub-ensia",
+			"area": "public-sector",
+			"name": "Run the ENSIA self-evaluation and prepare the council statement.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "ENSIA cycles, evaluations, findings and the college statement are manifest pages (src/manifest.json ENSIACycles..ENSIACollegeVerklaring); lib/Service/ENSIAVerklaringGenerator.php and ENSIABevindingGenerator.php have no caller in lib/",
+				"reachedOn": "ENSIACycles /compliance/ensia/cycles (menu Reporting & Compliance)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "ensia",
+			"featureConfidence": "medium",
+			"source": "own-code"
+		},
+		{
+			"id": "pub-programme-budget",
+			"area": "public-sector",
+			"name": "Build the programme budget and link budget lines to programmes.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "built",
+				"evidence": "BudgetToProgrammeLinker /bbv-provincie/budget-to-programme with src/components/bbv-provincie filter bar calls /api/bbv-provincie/programme-budget-vs-actuals (lib/Controller/BbvProgrammeBudgetController.php); the programmabegroting exports /api/programmabegroting/* are uncalled",
+				"reachedOn": "BudgetToProgrammeLinker /bbv-provincie/budget-to-programme (settings gear)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "bbv",
+			"featureConfidence": "medium",
+			"source": "own-code",
+			"note": "Linking and budget-versus-actuals work; the closing-budget check and exports have no page."
+		},
+		{
+			"id": "pub-subsidies",
+			"area": "public-sector",
+			"name": "Keep grants given and received, including reclaims.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "SubsidiesOverzicht, SubsidieAanvragen and SubsidieTerugvorderingen are index pages; lib/Service/SubsidieVerantwoordingService.php has no caller in lib/",
+				"reachedOn": "SubsidiesOverzicht /subsidies/overzicht (menu Reporting & Compliance)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "subsidies",
+			"featureConfidence": "medium",
+			"source": "own-code"
+		},
+		{
+			"id": "pub-eu-funds",
+			"area": "public-sector",
+			"name": "Declare EU fund spending with its evidence and report irregularities.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "five index pages under /eu-fondsen (src/manifest.d/40-eu-fondsen.json); no service under lib/Service handles declarations",
+				"reachedOn": "EuProjecten /eu-fondsen/projecten (menu Reporting & Compliance)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "eu-funds",
+			"featureConfidence": "medium",
+			"source": "own-code"
+		},
+		{
+			"id": "pub-audit-protocol",
+			"area": "public-sector",
+			"name": "Run an audit protocol with samples and findings for the auditor.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "four index pages under /bado (src/manifest.d/bookkeeping-bado-controleprotocol.json); lib/Service/BadoControleprotocolService.php is reached only by /api/bado/controleprotocol/* (appinfo/routes.php:597-599), uncalled from src/",
+				"reachedOn": "AuditProtocols /bado/protocols (settings gear)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "audit-protocol",
+			"featureConfidence": "medium",
+			"source": "own-code"
 		}
 	],
 	"pending": [
+		{
+			"id": "led-manual-journal",
+			"area": "ledger",
+			"name": "Post a manual journal entry with several debit and credit lines.",
+			"shillinq": "partial",
+			"exact-online": "yes",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "JournalEntry schema with embedded `lines` and JournalEntryGuard::canPost balance check (lib/Lifecycle/JournalEntryGuard.php:94); but post/postDirect declare action `materialise-gl-transaction` (lib/Settings/register.d/add-shillinq-bookkeeping-foundation.json:240-275) and no handler is registered anywhere (only lib/Lifecycle/Action/AppendReopenHistoryAction.php exists; OR registry BUILTINS lack it), so posting throws and no GLTransaction is produced.",
+				"reachedOn": "Journals /journals (via menu Bookkeeping > Manual Journals), detail JournalDetail /journals/:id with lifecycle buttons",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12066 (Exact Online (Boekhouden), 2026-04-06): Journal entry creation with multi-line debit/credit posting",
+				"odoo": "intelligence-db competitor_features#14905 (Odoo Accounting, 2026-04-06): General Ledger"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "ledger-core",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "A journal can be drafted with lines; the post into the ledger is declaration-only.",
+			"pendingReason": "Posting rests on the declared lifecycle action materialise-gl-transaction, which has no handler; the entry can be kept but not posted to the GL."
+		},
+		{
+			"id": "led-lock-period",
+			"area": "ledger",
+			"name": "Close a fiscal year or lock a period so nobody can post into it.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "built",
+				"evidence": "lib/Service/PeriodCloseService.php:159 closePeriod()/298 lockForAudit() set FiscalPeriod state, driven by src/components/period-close/PeriodCloseDetail.vue via /api/period-close/{id}/close|lock-audit. The posting block is declared as GLTransaction.post `preconditions` [PeriodCloseGuard::periodOpen, PeriodStatusGuard::postingAllowed] (lib/Settings/register.d/bookkeeping-period-close.json, bookkeeping-soft-close-flux.json:1320), a key OpenRegister never reads (TransitionEngine.php:805 only honours `requires`; no 'preconditions' in OR lib/).",
+				"reachedOn": "PeriodClose /bookkeeping/period-close (via menu Bookkeeping > Period Close) -> PeriodCloseDetail cockpit; FiscalYears /bookkeeping/fiscal-years (settings gear)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"odoo": "intelligence-db competitor_features#14911 (Odoo Accounting, 2026-04-06): Fiscal Year Management"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "period-close",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "A period can be marked closed and audit-locked, but nothing stops a post into it.",
+			"pendingReason": "Blocking posts into a closed period rests only on `preconditions` declarations OpenRegister does not execute."
+		},
+		{
+			"id": "led-year-end-entries",
+			"area": "ledger",
+			"name": "Book the year-end closing entries that carry the result to equity.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "built",
+				"evidence": "ClosingEntry schema and ClosingEntries index exist (lib/Settings/shillinq_register.json ClosingEntry lifecycle submit/approve/post with no action); auto-generation from ClosingEntryTemplate is only declared as action x-openregister-iterate-and-create on FiscalYear (shillinq_register.json:8137), and no PHP in lib/Service creates closing entries or a GLTransaction to equity.",
+				"reachedOn": "ClosingEntries /bookkeeping/closing-entries (via menu Bookkeeping > Closing Entries)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "period-close",
+			"featureConfidence": "medium",
+			"source": "own-code",
+			"note": "Closing entries can be recorded by hand and moved through states; no ledger posting follows.",
+			"pendingReason": "Generating and posting the result-to-equity entries rests on a declared lifecycle action with no handler."
+		},
 		{
 			"id": "sal-status",
 			"area": "sales",
@@ -993,6 +2460,33 @@
 			"pendingReason": "Automatic generation rests only on x-openregister-scheduled-workflows calling RecurringInvoiceGenerator::runScheduled; whether OpenRegister executes it is not shown in this tree."
 		},
 		{
+			"id": "sal-retainer",
+			"area": "sales",
+			"name": "Draw a prepaid retainer down, and roll unused hours over or true them up.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "no",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "built",
+				"evidence": "RetainerPool/Drawdown/Rollover/TrueUp pages (src/manifest.d/retainer-billing-engine.json); lib/Service/RetainerResolver.php:80 only resolves a retainer amount for the invoice generator; no service creates drawdowns from hours or computes rollovers/true-ups (grep RetainerRollover|RetainerTrueUp|RetainerDrawdown in lib: only lib/Lifecycle/RetainerGuard.php); pool balance is an x-openregister-aggregations declaration",
+				"reachedOn": "RetainerPools /retainer-pools, RetainerDrawdowns, RetainerRollovers, RetainerTrueUps (via menu Sales > Retainer Pools / Drawdowns / Rollovers / True-Ups)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {
+				"moneybird": "intelligence-db competitor_features#30628 (Moneybird, 2026-05-20): Subscription billing"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "retainer-billing",
+			"featureConfidence": "medium",
+			"source": "own-code",
+			"note": "The retainer records can be kept and a retainer fee billed, but drawdown, rollover and true-up are hand-entered, not calculated.",
+			"pendingReason": "The remaining pool balance rests on declared x-openregister-aggregations on RetainerPool."
+		},
+		{
 			"id": "pur-invoice-ocr",
 			"area": "purchasing",
 			"name": "Scan a purchase invoice and have supplier, amount, date and VAT read from it.",
@@ -1024,34 +2518,263 @@
 			"pendingReason": "Works only if docudesk/filinq ships the extraction.financial route under the id 'docudesk'; the filinq id move is in flight."
 		},
 		{
-			"id": "tax-vat-prepare",
-			"area": "tax",
-			"name": "Have the VAT return filled in from the books.",
+			"id": "pur-supplier-qualification",
+			"area": "purchasing",
+			"name": "Qualify a supplier before you buy from them.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "built",
+				"evidence": "lib/Lifecycle/SupplierQualificationGuard.php used by PurchaseOrderService.php:301 blocks a PO to an unqualified supplier only when appconfig require_supplier_qualification_for_po is on (no screen sets it); SupplierQualificationService (document completeness check) has no caller in lib/ or src/, the qualify transition is a plain OR lifecycle action (procurement-governance.json:124)",
+				"reachedOn": "SupplierQualifications /inkoop/supplier-qualifications (menu Purchasing > Supplier Qualifications); SupplierQualificationDetail lifecycle actions",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "procurement-governance",
+			"featureConfidence": "medium",
+			"source": "own-code",
+			"note": "A record and a status can be kept; the PO gate is off unless an admin sets an appconfig key by occ.",
+			"pendingReason": "The qualify step is an x-openregister-lifecycle transition executed by OpenRegister; the documented 'all documents present and unexpired' check lives in SupplierQualificationService, which nothing calls."
+		},
+		{
+			"id": "pur-tenderned",
+			"area": "purchasing",
+			"name": "Follow public tenders published on TenderNed.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "built",
+				"evidence": "lib/Listener/TenderNedAwardDetectedListener.php (Application.php:636) turns a TenderNedProcurement that openconnector/integriq writes into a Commitment; the import itself is 'Openconnector polls the TenderNed source ... live-instance concern' and no TenderNed entry exists in lib/Settings/connections.json; lib/BackgroundJob/TenderNedAwardPromotionJob.php is not in appinfo/info.xml (queued, not timed)",
+				"reachedOn": "TenderNedProcurements /inkoop/tenderned (menu Purchasing > TenderNed tenders)",
+				"owner": "ConductionNL/openconnector"
+			},
+			"evidence": {},
+			"provider": "integriq",
+			"providerHow": "read-from-code",
+			"feature": "tenderned-integration",
+			"featureConfidence": "medium",
+			"source": "own-code",
+			"note": "The follow-up (award -> commitment, completion status back) is built; the pull from TenderNed is not in this tree.",
+			"pendingReason": "Could not confirm an integriq TenderNed source exists that feeds TenderNedProcurement; without it the page only holds hand-entered dossiers."
+		},
+		{
+			"id": "pur-ap-aging",
+			"area": "purchasing",
+			"name": "See unpaid supplier invoices by due date to plan payments.",
 			"shillinq": "partial",
 			"exact-online": "yes",
-			"moneybird": "yes",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "yes",
+			"odoo": "unknown",
+			"built": {
+				"state": "built",
+				"evidence": "src/manifest.d/bookkeeping-accounts-payable-core.json APAgingT2 variants read x-openregister-aggregations agedPayablesDetail/Summary/Timeline (bookkeeping-accounts-payable-core.json); Detail and Summary are marked 'BLOCKED (cross-tab) ... INERT' (openregister#432), only Timeline uses a single-field groupBy (dueDate)",
+				"reachedOn": "APAgingT2 /bookkeeping/ap-aging-t2 (menu Purchasing > AP Aging)",
+				"owner": "ConductionNL/openregister"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12074 (Exact Online (Boekhouden), 2026-04-06): Aged payables report showing upcoming payment obligations",
+				"twinfield": "intelligence-db competitor_features#13949 (Twinfield (Wolters Kluwer), 2026-04-06): Aged receivables/payables reports with partner-level detail"
+			},
+			"provider": "openregister",
+			"providerHow": "read-from-code",
+			"feature": "accounts-payable-core",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"note": "Covers APTransaction only; SupplierInvoice records from the purchasing flow are not in the aging.",
+			"pendingReason": "The by-due-date view rests entirely on an x-openregister-aggregations declaration executed by OpenRegister; two of three variants are declared inert."
+		},
+		{
+			"id": "plt-roles",
+			"area": "platform",
+			"name": "Give each user a role with its own permissions.",
+			"shillinq": "partial",
+			"exact-online": "yes",
+			"moneybird": "unknown",
 			"snelstart": "yes",
 			"twinfield": "yes",
 			"odoo": "unknown",
 			"built": {
 				"state": "building",
-				"evidence": "lib/Settings/register.d/bookkeeping-vat-btw-filing.json BtwAangifte x-openregister-aggregations.totalsByReturn declares the totals; lib/Service/VATReturnService.php derives lines from the GL but is reached only by POST /api/vat-returns (appinfo/routes.php:165), which no file under src/ calls",
-				"reachedOn": "VATReturns /vat-returns (menu Taxes); the page is an OpenRegister index whose totals rest on a declaration",
+				"evidence": "AdministratieLidmaatschappen /administratie/lidmaatschappen lists AdministrationMembership records; per-schema roles are x-openregister-rbac blocks in lib/Settings/register.d (e.g. bookkeeping-vat-btw-filing.json BtwAangifte)",
+				"reachedOn": "AdministratieLidmaatschappen /administratie/lidmaatschappen (settings gear)",
+				"owner": "ConductionNL/openregister"
+			},
+			"evidence": {
+				"exact-online": "intelligence-db competitor_features#12090 (Exact Online (Boekhouden), 2026-04-06): User role management with granular permission settings",
+				"snelstart": "intelligence-db competitor_features#14140 (SnelStart, 2026-04-06): Multi-user access with role-based permissions",
+				"twinfield": "intelligence-db competitor_features#13964 (Twinfield (Wolters Kluwer), 2026-04-06): Role-based access control with field-level permission settings"
+			},
+			"provider": "openregister",
+			"providerHow": "read-from-code",
+			"feature": "access-control",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"pendingReason": "Role permissions rest on x-openregister-rbac declarations; nothing in this tree shows OpenRegister enforcing them for shillinq's schemas. Settle by signing in as an auditor role and trying to edit a VAT return."
+		},
+		{
+			"id": "plt-webhooks",
+			"area": "platform",
+			"name": "Get webhooks when an invoice or payment changes.",
+			"shillinq": "unknown",
+			"exact-online": "unknown",
+			"moneybird": "yes",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "none",
+				"evidence": "no webhook registration in lib/ or appinfo/routes.php of shillinq; outgoing webhooks would be OpenRegister's, which this reading did not open",
+				"reachedOn": "not checked: would be an OpenRegister admin screen",
+				"owner": "ConductionNL/openregister"
+			},
+			"evidence": {
+				"moneybird": "intelligence-db competitor_features#12125 (Moneybird, 2026-04-06): REST API with webhook support for real-time event notifications"
+			},
+			"provider": "openregister",
+			"providerHow": "read-from-code",
+			"feature": "api",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"pendingReason": "Whether OpenRegister's webhooks fire on shillinq objects was not settled from this tree."
+		},
+		{
+			"id": "plt-mcp",
+			"area": "platform",
+			"name": "Let an AI tool work with your books through MCP.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "yes",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "lib/Settings/register.d/zzz-mcp-tool-surface.json adds a read-only x-openregister-mcp block (search and get, zero write verbs) to 12 curated schemas",
+				"reachedOn": "OpenRegister's MCP endpoint, if it serves the declaration",
+				"owner": "ConductionNL/openregister"
+			},
+			"evidence": {
+				"moneybird": "intelligence-db competitor_features#11766 (Moneybird, 2026-04-06): MCP AI Assistant - NL Financial Queries"
+			},
+			"provider": "openregister",
+			"providerHow": "read-from-code",
+			"feature": "ai-assistance",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"pendingReason": "Rests entirely on the x-openregister-mcp declaration; nothing here shows OpenRegister serving it. Settle by listing the MCP tools on an instance."
+		},
+		{
+			"id": "plt-anomaly",
+			"area": "platform",
+			"name": "Have unusual transactions flagged for review.",
+			"shillinq": "partial",
+			"exact-online": "yes",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "lib/Service/CcmRuleEngine.php evaluates rules but is only wired in lib/AppInfo/Application.php, with no caller; the nightly run lives on the register's x-openregister-scheduled-workflows (lib/Settings/register.d/bookkeeping-ccm-rule-engine.json); the outside engine is unavailable in lib/Settings/connections.json",
+				"reachedOn": "CcmFindings /ccm/findings and CcmRules /ccm/rules (menu Reporting & Compliance)",
 				"owner": "ConductionNL/shillinq"
 			},
 			"evidence": {
-				"exact-online": "intelligence-db competitor_features#12059 (Exact Online (Boekhouden), 2026-04-06): Direct BTW-aangifte (VAT return) filing to Dutch Belastingdienst",
-				"moneybird": "intelligence-db competitor_features#12105 (Moneybird, 2026-04-06): Automated BTW-aangifte preparation with one-click submission to Belastingdienst",
-				"snelstart": "intelligence-db competitor_features#14121 (SnelStart, 2026-04-06): Automatic BTW-aangifte calculation with pre-filled return",
-				"twinfield": "intelligence-db competitor_features#13954 (Twinfield (Wolters Kluwer), 2026-04-06): BTW-aangifte preparation and electronic filing to Belastingdienst"
+				"exact-online": "intelligence-db competitor_features#12082 (Exact Online (Boekhouden), 2026-04-06): AI-powered anomaly detection for unusual transaction flagging"
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "vat-return",
+			"feature": "controls-monitoring",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Two VAT return models coexist: VatReturn (BtwAangiften page) and BtwAangifte (VATReturns page).",
-			"pendingReason": "The return's totals rest on x-openregister-aggregations and lifecycle declarations; the service that derives lines from the ledger has no page calling it. Settle by creating a return on an instance with booked invoices and checking the totals fill in."
+			"pendingReason": "Findings only appear if OpenRegister executes the scheduled-workflow declaration; the PHP engine has no caller. Settle by booking a transaction that breaks a rule and waiting a night."
+		},
+		{
+			"id": "plt-workflows",
+			"area": "platform",
+			"name": "Automate a workflow without writing code.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "yes",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "building",
+				"evidence": "Flows /flows is an index over OpenRegister's native flow store and FlowDetail /flows/:id the shared flow canvas (src/manifest.json pages Flows, FlowDetail)",
+				"reachedOn": "Flows /flows (menu Flows)",
+				"owner": "ConductionNL/openregister"
+			},
+			"evidence": {
+				"moneybird": "intelligence-db competitor_features#12126 (Moneybird, 2026-04-06): Zapier integration for no-code workflow automation with 5000+ apps",
+				"odoo": "intelligence-db competitor_features#14654 (Odoo (Ecosystem), 2026-04-06): Studio"
+			},
+			"provider": "openregister",
+			"providerHow": "read-from-code",
+			"feature": "automation",
+			"featureConfidence": "medium",
+			"source": "competitor",
+			"pendingReason": "The authoring screen is reachable; whether OpenRegister's flow engine runs a shillinq flow was not settled from this tree."
+		},
+		{
+			"id": "pub-schatkist",
+			"area": "public-sector",
+			"name": "Keep to treasury banking rules and report the position.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "SchatkistPositie /overheid/schatkist-positie is a manifest dashboard; BankingRules, TreasuryAccounts and ComplianceReports are index pages (src/manifest.d/bookkeeping-schatkistbankieren.json)",
+				"reachedOn": "SchatkistPositie /overheid/schatkist-positie (menu Reporting & Compliance)",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "treasury-public",
+			"featureConfidence": "medium",
+			"source": "own-code",
+			"pendingReason": "The position rests on dashboard widgets over declared aggregations; no service computes the threshold. Settle by loading balances and reading the widget."
+		},
+		{
+			"id": "pub-ccm",
+			"area": "public-sector",
+			"name": "Run continuous control checks including segregation of duties.",
+			"shillinq": "partial",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "unknown",
+			"built": {
+				"state": "building",
+				"evidence": "see plt-anomaly: lib/Service/CcmRuleEngine.php has no caller; CcmSegregationMatrix and CcmUserFunctionAssignments are index pages (src/manifest.d/bookkeeping-ccm-rule-engine.json)",
+				"reachedOn": "CcmSegregationMatrix /ccm/segregation-matrix",
+				"owner": "ConductionNL/shillinq"
+			},
+			"evidence": {},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "controls-monitoring",
+			"featureConfidence": "medium",
+			"source": "own-code",
+			"pendingReason": "Segregation checks run only if OpenRegister executes the register's scheduled-workflow declaration."
 		}
 	]
 }
