@@ -322,7 +322,8 @@
 					"reviews": "G2 answered 403 to a scripted request (bot block), page exists for browsers"
 				}
 			},
-			"version": "19.0 (source 75c6b273, image 19.0-20260908)"
+			"version": "19.0 (source 75c6b273, image 19.0-20260908)",
+			"readVersion": "19.0 (source 75c6b273, image 19.0-20260908)"
 		}
 	],
 	"areas": [
