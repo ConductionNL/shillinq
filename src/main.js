@@ -22,11 +22,14 @@ import { createApp, h, reactive } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
 import appIcons from './icons.js'
+import { registerContractLeaf } from './integrations/registerContractLeaf.js'
+import { registerPaymentRequestsLeaf } from './integrations/registerPaymentRequestsLeaf.js'
 import manifestShell from './manifest.d.shell.json'
 import bundledManifest from './manifest.json'
 import menuLayout from './menu-layout.json'
 import pinia from './pinia.js'
 import registry from './registry.js'
+import { openIntegriqConnections } from './utils/integriqConnections.js'
 import {
 	buildPageFragmentIndex,
 	mergeFullFragmentIntoManifest,
@@ -58,6 +61,15 @@ import './assets/app.css'
 installIntegrationRegistry()
 registerBuiltinIntegrations()
 registerLeafIntegrations()
+
+// `registerLeafIntegrations()` above registers the library's OWN 18 built-in
+// leaves from a hardcoded list; it knows nothing about a consuming app's
+// leaves and never reads the server capability. Shillinq's two finance panels
+// are its own, so shillinq registers them, here for its own pages and again in
+// src/integration-init.js for every other app's pages. The second registration
+// is a no-op: first one wins (ADR-019 AD-13).
+registerPaymentRequestsLeaf()
+registerContractLeaf()
 
 // Register the app's MDI icon set + lib translations once at bootstrap.
 // registerIcons() merges the given map into the lib's ICON_MAP registry;
@@ -287,11 +299,18 @@ const registryProp = { ...registry }
 // `actionsComponent: FinancialDashboardActions`) silently disappear. Flatten
 // ALL kinds (page + widget + …) so every name a manifest can reference resolves.
 // Mirrors the procest / docudesk / opencatalogi wiring.
-const customComponentsProp = Object.fromEntries(
-	Object.entries(registry)
-		.filter(([, entry]) => entry && entry.component)
-		.map(([name, entry]) => [name, entry.component]),
-)
+//
+// Function handlers ride the same map: CnIndexPage resolves a header action's
+// named `handler` against `customComponents`. The External Connections page's
+// Add integration action leaves for integriq (adopt-connection-registry).
+const customComponentsProp = {
+	...Object.fromEntries(
+		Object.entries(registry)
+			.filter(([, entry]) => entry && entry.component)
+			.map(([name, entry]) => [name, entry.component]),
+	),
+	openIntegriqConnections,
+}
 
 // Vue 3 `mount()` renders INSIDE the matched element; Vue 2's `$mount()`
 // REPLACED it. The old host was `#content`, which is ALSO the id of

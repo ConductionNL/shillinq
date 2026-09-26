@@ -43,6 +43,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Guard;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Support\DateWindow;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -113,11 +114,11 @@ class RateScheduleOverlapGuard {
 					continue;
 				}
 
-				if ($this->windowsOverlap(
-					startA: $effectiveDate,
-					endA: $expiryDate,
-					startB: (string)($sibling['effectiveDate'] ?? ''),
-					endB: ($sibling['expiryDate'] ?? null)
+				if (DateWindow::overlaps(
+					aFrom: $effectiveDate,
+					aTo: $expiryDate,
+					bFrom: (string)($sibling['effectiveDate'] ?? ''),
+					bTo: ($sibling['expiryDate'] ?? null)
 				) === true
 				) {
 					$this->logger->info(
@@ -138,30 +139,6 @@ class RateScheduleOverlapGuard {
 		}//end try
 
 	}//end requireNonOverlappingWindow()
-
-	/**
-	 * Whether two [start, end] date windows overlap. A null end means
-	 * open-ended (extends to infinity).
-	 *
-	 * @param string $startA Window A start (Y-m-d).
-	 * @param string|null $endA Window A end (Y-m-d), or null for open-ended.
-	 * @param string $startB Window B start (Y-m-d).
-	 * @param string|null $endB Window B end (Y-m-d), or null for open-ended.
-	 *
-	 * @return bool True when the windows overlap.
-	 */
-	private function windowsOverlap(string $startA, ?string $endA, string $startB, ?string $endB): bool {
-		if ($startB === '') {
-			return false;
-		}
-
-		// Two closed (or open-ended) intervals overlap iff each starts on or
-		// before the other's end.
-		$aEndsAfterOrOnBStart = ($endA === null || $endA >= $startB);
-		$bEndsAfterOrOnAStart = ($endB === null || $endB >= $startA);
-
-		return $aEndsAfterOrOnBStart && $bEndsAfterOrOnAStart;
-	}//end windowsOverlap()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.

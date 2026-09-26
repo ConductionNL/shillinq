@@ -65,8 +65,10 @@ use OCA\Shillinq\Listener\GRIRClearingListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
 use OCA\Shillinq\Listener\IntercompanyLinkListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
+use OCA\Shillinq\Listener\FeeScheduleValidationListener;
 use OCA\Shillinq\Listener\OrderFulfilmentTransitionListener;
 use OCA\Shillinq\Listener\OssPaymentReconciliationListener;
+use OCA\Shillinq\Listener\PaymentRequestLeafRegistrationListener;
 use OCA\Shillinq\Listener\PeppolDeliveryStatusListener;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
 use OCA\Shillinq\Listener\PosStockDecrementListener;
@@ -137,6 +139,7 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
+use OCP\Util;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -199,8 +202,8 @@ class Application extends App implements IBootstrap {
 		// of it. The old-slug case is the quiet one: OpenRegister finds no
 		// register, matches no rows, and returns an empty set that is byte for byte
 		// what a healthy empty register returns. No exception, no 404, no log line.
-		// This app read Integriq's connector register that way, from
-		// ExternalAdaptersAdminController.
+		// This app once read Integriq's connector register that way, from the
+		// external-adapters roster that adopt-connection-registry removed.
 		//
 		// Verified against this container, not assumed: OpenRegister registers the
 		// resolver in its OWN container, so nothing of that registration reaches
@@ -248,6 +251,17 @@ class Application extends App implements IBootstrap {
 			event: DeepLinkRegistrationEvent::class,
 			listener: DeepLinkRegistrationListener::class
 		);
+
+		// Spec case-payment-requests REQ-SOPR-003 / REQ-SOPR-004 — contribute the
+		// payment-request leaves to OpenRegister's catalogue, so a case app can
+		// ask for money on its own object without shillinq knowing the app.
+		// Guarded on the event class: shillinq boots without OpenRegister.
+		if (class_exists('OCA\\OpenRegister\\Event\\RegisterLeafProvidersEvent') === true) {
+			$context->registerEventListener(
+				event: \OCA\OpenRegister\Event\RegisterLeafProvidersEvent::class,
+				listener: PaymentRequestLeafRegistrationListener::class
+			);
+		}
 
 		// Inventory-valuation-fifo-avg REQ-INV-003 / REQ-INV-004 / REQ-INV-007
 		// — dispatch posted StockMove records into the valuation engine
@@ -648,6 +662,18 @@ class Application extends App implements IBootstrap {
 
 		// REQ-004 bewijsstuk-required completion gate, both halves.
 		(new OrderFulfilmentGateRegistration())->register(context: $context);
+
+		// REQ-SOPR-006 fee-schedule rules on the write path. No controller in
+		// this app writes a FeeSchedule: they go straight into OpenRegister, so
+		// the pre-save veto is the only place the overlap, legal-basis and
+		// default-amount rules can run at all. Until this listener existed
+		// FeeScheduleService::assertNoOverlap() had tests and no caller.
+		foreach (['OCA\\OpenRegister\\Event\\ObjectCreatingEvent', 'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent'] as $preSaveEvent) {
+			$context->registerEventListener(
+				event: $preSaveEvent,
+				listener: FeeScheduleValidationListener::class
+			);
+		}
 
 		// REQ-SIGN-001/005/006 — the decidesk DECISION and docudesk DOCUMENT
 		// signing request+outcome listeners, registered as one unit.
@@ -1184,9 +1210,24 @@ class Application extends App implements IBootstrap {
 	 * @param IBootContext $context The boot context
 	 *
 	 * @return void
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) OCP\Util exposes script registration
+	 * (addInitScript) as a static method only. Nextcloud ships no injectable
+	 * service for it, and boot() is the only place an app-wide init script can
+	 * be registered, so a seam class would relocate the identical static call
+	 * rather than remove it. Verified against nextcloud lib/public/Util.php.
 	 */
 	public function boot(IBootContext $context): void {
 		$dispatcher = $context->getServerContainer()->get(IEventDispatcher::class);
+
+		// Put shillinq's two finance panels on every page, not just shillinq's
+		// own (ADR-019 / ADR-066, REQ-SOPR-004 and REQ-FPCR-006). The leaves
+		// are meant to be read on ANOTHER app's object: a case, a record, a
+		// contract party. Nextcloud loads an app's bundle only on that app's
+		// routes, so a leaf registered from src/main.js alone never reaches the
+		// page it exists for. This tiny entry registers the two descriptors and
+		// nothing else; the panels load their data only once mounted.
+		Util::addInitScript(self::APP_ID, self::APP_ID.'-integration-init');
 
 		// Bookings-confirm-flow REQ-BCF-001/010 — issue a ConfirmationToken
 		// + dispatch the confirmation email when a new Appointment record is

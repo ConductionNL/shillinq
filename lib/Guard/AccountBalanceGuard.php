@@ -138,9 +138,13 @@ class AccountBalanceGuard {
 
 			// Use integer cents to avoid IEEE-754 float equality issues (C1).
 			// 0.1 + 0.2 - 0.3 in floats ≠ 0.0, but (10 + 20 - 30) === 0.
+			// findAll() yields ObjectEntity rows, and ObjectEntity does not
+			// implement ArrayAccess: subscripting a row directly throws, the
+			// catch below turns that into a denial, and no account with a single
+			// posting could ever be archived, balanced or not. Normalise first.
 			$balanceCents = array_sum(
 				array_map(
-					static fn ($line) => (int)round(((float)($line['debit'] ?? 0) - (float)($line['credit'] ?? 0)) * 100),
+					fn (mixed $row): int => $this->lineBalanceCents(row: $row),
 					$lines
 				)
 			);
@@ -196,9 +200,16 @@ class AccountBalanceGuard {
 			$currentId = ($account['id'] ?? null);
 			$currentAccountNumber = ($account['accountNumber'] ?? null);
 			$currentAdminId = ($account['administrationId'] ?? null);
+			// Normalised for the same reason as requireZeroBalance(): a raw
+			// ObjectEntity row cannot be subscripted, so the filter below threw
+			// and every closing account after the first was denied, including a
+			// re-save of the existing one.
 			$otherClosing = array_filter(
-				$existing,
-				static function ($candidate) use ($currentId, $currentAccountNumber, $currentAdminId) {
+				array_map(
+					fn (mixed $row): array => $this->asArray(row: $row),
+					$existing
+				),
+				static function (array $candidate) use ($currentId, $currentAccountNumber, $currentAdminId) {
 					// Cross-tenant defence: only consider candidates in the same administration.
 					if ($currentAdminId !== null && ($candidate['administrationId'] ?? null) !== $currentAdminId) {
 						return false;
@@ -225,4 +236,41 @@ class AccountBalanceGuard {
 			return false;
 		}//end try
 	}//end requireSingleClosingAccount()
+
+	/**
+	 * Signed debit-minus-credit of one GLLine row, in integer cents.
+	 *
+	 * @param mixed $row A GLLine row from ObjectService: an ObjectEntity in
+	 *                   production, a plain array in some unit fixtures.
+	 *
+	 * @return int Debit minus credit, in cents.
+	 */
+	private function lineBalanceCents(mixed $row): int {
+		$line = $this->asArray(row: $row);
+
+		return (int)round((((float)($line['debit'] ?? 0)) - ((float)($line['credit'] ?? 0))) * 100);
+	}//end lineBalanceCents()
+
+	/**
+	 * Normalise an OpenRegister row to a plain array.
+	 *
+	 * @param mixed $row A row from ObjectService::findAll().
+	 *
+	 * @return array<string, mixed> The stored object, or an empty array when the
+	 *                              row carries no serialisable payload.
+	 */
+	private function asArray(mixed $row): array {
+		if (is_array($row) === true) {
+			return $row;
+		}
+
+		if ($row instanceof \JsonSerializable) {
+			$serialized = $row->jsonSerialize();
+			if (is_array($serialized) === true) {
+				return $serialized;
+			}
+		}
+
+		return [];
+	}//end asArray()
 }//end class

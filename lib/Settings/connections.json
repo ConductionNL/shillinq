@@ -1,0 +1,127 @@
+{
+    "app": "shillinq",
+    "connections": [
+        {
+            "key": "digipoort-sbr",
+            "title": "Digipoort SBR",
+            "description": "SBR and XBRL filings, such as the VAT return and annual accounts, sent to the Belastingdienst.",
+            "order": 10,
+            "available": false,
+            "unavailableMessage": "Only a log-only adapter is bound, and no screen or service calls it yet. Nothing reaches Digipoort."
+        },
+        {
+            "key": "salarisbureau",
+            "title": "Payroll bureau",
+            "description": "Payroll run results sent to an outside payroll bureau such as Nmbrs, Visma or Loket.",
+            "order": 20,
+            "available": false,
+            "unavailableMessage": "Only a log-only adapter is bound, and no screen or service calls it yet. Nothing reaches a payroll bureau."
+        },
+        {
+            "key": "rvo",
+            "title": "RVO subsidy requests",
+            "description": "WBSO, SNO and investment deduction requests sent to the Netherlands Enterprise Agency.",
+            "order": 30,
+            "available": false,
+            "unavailableMessage": "Only a log-only adapter is bound, and no screen or service calls it yet. Nothing reaches RVO."
+        },
+        {
+            "key": "ib47",
+            "title": "Belastingdienst IB47",
+            "description": "The yearly IB47 statement of payments to third parties.",
+            "order": 40,
+            "available": false,
+            "unavailableMessage": "Only a log-only adapter is bound, and no screen or service calls it yet. Nothing reaches the Belastingdienst."
+        },
+        {
+            "key": "cbs-bestanden",
+            "title": "CBS Bestanden",
+            "description": "Statistical surveys uploaded to Statistics Netherlands.",
+            "order": 50,
+            "available": false,
+            "unavailableMessage": "Only a log-only adapter is bound, and no screen or service calls it yet. Nothing reaches CBS."
+        },
+        {
+            "key": "cbs-iv3",
+            "title": "CBS Iv3",
+            "description": "The quarterly Iv3 report of a municipality, province or water board, sent to Statistics Netherlands.",
+            "order": 60,
+            "available": false,
+            "unavailableMessage": "Only a log-only adapter is bound, and no screen or service calls it yet. Nothing reaches CBS."
+        },
+        {
+            "key": "bzk-sisa",
+            "title": "BZK SiSa",
+            "description": "The SiSa appendix uploaded to the Ministry of the Interior.",
+            "order": 70,
+            "available": false,
+            "unavailableMessage": "Only a log-only adapter is bound, and no screen or service calls it yet. Nothing reaches the SiSa portal."
+        },
+        {
+            "key": "mollie",
+            "title": "Mollie payments",
+            "description": "iDEAL, Bancontact and SEPA payments started from the portal's pay now button.",
+            "order": 80,
+            "reportedOnly": true,
+            "unconfiguredMessage": "Not checked yet. Shillinq reports which adapter answers here once a day."
+        },
+        {
+            "key": "bunq",
+            "title": "Bunq bank feed",
+            "description": "CAMT.053 statements pulled from Bunq per bank connection.",
+            "order": 90,
+            "available": false,
+            "unavailableMessage": "Only a log-only adapter is bound, and no screen or service calls it yet. Nothing reaches Bunq."
+        },
+        {
+            "key": "kvk",
+            "title": "KvK Handelsregister",
+            "description": "Company lookups in the chamber of commerce register.",
+            "order": 100,
+            "available": false,
+            "unavailableMessage": "Only a log-only adapter is bound, and no screen or service calls it yet. Nothing reaches the KvK.",
+            "sourceTemplate": "kvk"
+        },
+        {
+            "key": "uwv",
+            "title": "UWV payroll tax return",
+            "description": "Acceptance status of the payroll tax return, read back from UWV.",
+            "order": 110,
+            "available": false,
+            "unavailableMessage": "Only a log-only adapter is bound, and no screen or service calls it yet. Nothing reaches UWV."
+        },
+        {
+            "key": "treasury-rates",
+            "title": "Treasury rates",
+            "description": "Daily reference rates and exchange rates from the ECB or a market data provider.",
+            "order": 120,
+            "settingsUrl": "/apps/shillinq/bookkeeping/multi-currency/fx-rates/admin",
+            "reportedOnly": true,
+            "unconfiguredMessage": "Not checked yet. Shillinq reports which adapter answers here once a day."
+        },
+        {
+            "key": "ccm-rule-engine",
+            "title": "CCM rule engine",
+            "description": "An outside rule engine for continuous controls monitoring. The built-in engine runs without it.",
+            "order": 130,
+            "available": false,
+            "unavailableMessage": "Only a log-only adapter is bound, and no screen or service calls it yet. The built-in rule engine keeps running."
+        },
+        {
+            "key": "csrd-esrs-xbrl",
+            "title": "CSRD ESRS XBRL",
+            "description": "ESRS taxonomy mapping and the iXBRL build for a sustainability report.",
+            "order": 140,
+            "available": false,
+            "unavailableMessage": "Only a log-only adapter is bound, and no screen or service calls it yet. No sustainability report is validated or built."
+        },
+        {
+            "key": "deposit-payment",
+            "title": "Deposit payments",
+            "description": "Deposit and no-show fee payments for bookings, one layer above the payment provider.",
+            "order": 150,
+            "reportedOnly": true,
+            "unconfiguredMessage": "Not checked yet. Shillinq reports which adapter answers here once a day."
+        }
+    ]
+}
