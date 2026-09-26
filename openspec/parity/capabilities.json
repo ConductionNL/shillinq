@@ -515,7 +515,7 @@
 				"state": "built",
 				"evidence": "src/views/ReceiptCapture.vue:500 and src/modals/BillImportModal.vue:549 POST /api/v1/extraction/drafts/{id}/suggest-account; lib/Controller/ExtractionRequestController.php suggestGlAccount proxies docudesk's ai-gl-account-suggestion with shillinq's chart; operator clicks 'Use suggestion'. The bank-line variant /api/v1/bank-rules/suggest-account (appinfo/routes.php:727) has no frontend caller.",
 				"reachedOn": "ReceiptDetail (ReceiptCapture) from Receipts /inkoop/receipts (via menu Purchasing > Receipts); BillImportModal on SupplierInvoices (via menu Purchasing > Supplier Invoices)",
-				"owner": "ConductionNL/docudesk"
+				"owner": "ConductionNL/filinq"
 			},
 			"evidence": {
 				"exact-online": "intelligence-db competitor_features#12081 (Exact Online (Boekhouden), 2026-04-06): AI Boekhoudbot for automated transaction categorization suggestions",
@@ -1437,7 +1437,7 @@
 				"state": "built",
 				"evidence": "lib/Service/Extraction/GlAccountSuggestionClient.php calls docudesk's /api/extraction/{id}/suggest-account; src/modals/BillImportModal.vue:549 and src/views/ReceiptCapture.vue:500 request a suggestion that the operator must accept ('Use suggestion'); zzz-mcp-tool-surface.json exposes read-only MCP search/get only",
 				"reachedOn": "Dashboard / 'Import bill' -> BillImportModal review step (extraction drafts only)",
-				"owner": "ConductionNL/docudesk"
+				"owner": "ConductionNL/filinq"
 			},
 			"evidence": {
 				"exact-online": "intelligence-db competitor_features#11774 (Exact Online (Boekhouden), 2026-04-06): AI Purchase Agent for automated purchase invoice processing"
@@ -1515,7 +1515,7 @@
 				"state": "built",
 				"evidence": "src/views/ReceiptCapture.vue:3-18 reviews a Receipt draft created by lib/Listener/ExtractionCompletedListener from docudesk's extraction.completed event (ExtractionPrefillService.php:207 mapReceiptFields incl. category); re-request at ReceiptCapture.vue:573 needs an existing sourceDocumentUri; no camera/upload control in shillinq's receipt screens",
 				"reachedOn": "Receipts /inkoop/receipts (menu Purchasing > Receipts); ReceiptDetail /inkoop/receipts/:id (ReceiptCapture)",
-				"owner": "ConductionNL/docudesk"
+				"owner": "ConductionNL/filinq"
 			},
 			"evidence": {
 				"exact-online": "intelligence-db competitor_features#12078 (Exact Online (Boekhouden), 2026-04-06): Expense receipt capture via mobile app with automatic categorization",
@@ -1650,7 +1650,7 @@
 				"state": "building",
 				"evidence": "lib/Settings/connections.json 'bunq' available:false (log-only adapter lib/Service/External/Bunq/LogBunqBankConnectorAdapter.php); lib/BackgroundJob/BankfeedReconciliationJob.php:137 says 'The PSD2 fetch itself is performed by openconnector' and only reads existing BankStatement rows, counts matches and logs (writes nothing); grep psd2/nordigen/gocardless/ponto finds no other feed",
 				"reachedOn": "BankConnections /bank-connections (menu Bookkeeping > Bank Connections) keeps connection records only",
-				"owner": "ConductionNL/openconnector"
+				"owner": "ConductionNL/integriq"
 			},
 			"evidence": {
 				"exact-online": "intelligence-db competitor_features#12054 (Exact Online (Boekhouden), 2026-04-06): Automatic bank statement import via PSD2 direct bank connection",
