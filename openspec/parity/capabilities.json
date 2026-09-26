@@ -195,9 +195,10 @@
 			"odoo": "yes",
 			"built": {
 				"state": "built",
-				"evidence": "lib/Lifecycle/BalanceGuard.php:77 isBalanced() sums GLLine debit vs credit and is the `requires` on GLTransaction.post (lib/Settings/shillinq_register.json GLTransaction lifecycle); several PHP posters write balanced GLTransaction+GLLine directly (lib/Service/FixedAssetDisposalService.php, CogsPosterService.php, PayrollService.php). But the same post transition declares action `evaluate-allocation-rules`, and no handler for it is registered in shillinq, while OpenRegister's LifecycleActionRegistry (openregister lib/Service/Lifecycle/LifecycleActionRegistry.php:57 BUILTINS = set-fields only) throws on an unresolved action, so a user-driven post from the GL page aborts.",
+				"evidence": "The effective `requires` on GLTransaction.post is RuleComplianceGuard::validateTransaction: lib/Settings/register.d/add-shillinq-rule-compliance-guard.json:24 overrides lib/Settings/shillinq_register.json:512 (BalanceGuard::isBalanced) through deepMergeConfig, and validateTransaction delegates the balance check to lib/Lifecycle/BalanceGuard.php:77 isBalanced(), which sums GLLine debit vs credit; several PHP posters write balanced GLTransaction+GLLine directly (lib/Service/FixedAssetDisposalService.php, CogsPosterService.php, PayrollService.php). But the same post transition declares action `evaluate-allocation-rules`, and no handler for it is registered in shillinq, while OpenRegister's LifecycleActionRegistry (openregister lib/Service/Lifecycle/LifecycleActionRegistry.php:57 BUILTINS = set-fields only) throws on an unresolved action, so a user-driven post from the GL page aborts.",
 				"reachedOn": "GeneralLedger /general-ledger (via menu Bookkeeping > General Ledger), detail GeneralLedgerDetail /general-ledger/:id with GLLine relation and lifecycle buttons",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"readOn": "2026-09-26"
 			},
 			"evidence": {
 				"exact-online": "intelligence-db competitor_features#12065 (Exact Online (Boekhouden), 2026-04-06): General ledger with double-entry bookkeeping and automatic balancing",
@@ -707,9 +708,10 @@
 			"odoo": "yes",
 			"built": {
 				"state": "built",
-				"evidence": "Send e-invoice button (src/components/ar-invoice/arEInvoiceActions.js -> /api/ar-invoices/{invoiceNumber}/send-einvoice) runs lib/Service/EInvoice/EInvoiceService.php: UBL via ArInvoiceUblMapper, local port LogPeppolTransmissionAdapter (log-only), then IEventDispatcher::dispatch('nl.conduction.peppol.outbound.requested') at :270. integriq's PeppolOutboundConsumer (openconnector/lib/AppInfo/Application.php:201) listens only to OpenRegister ObjectCreatedEvent for an object in register openconnector schema event, so the named NC event shillinq dispatches never reaches it",
+				"evidence": "Send e-invoice button (src/components/ar-invoice/arEInvoiceActions.js -> /api/ar-invoices/{invoiceNumber}/send-einvoice) runs lib/Service/EInvoice/EInvoiceService.php: UBL via ArInvoiceUblMapper, local port LogPeppolTransmissionAdapter (log-only), then IEventDispatcher::dispatch('nl.conduction.peppol.outbound.requested') at :270. integriq's PeppolOutboundConsumer (integriq lib/AppInfo/Application.php:252) listens only to OpenRegister ObjectCreatedEvent for an object in register `integriq` schema event (integriq lib/Service/PeppolTransmissionService.php:60 REGISTER = 'integriq'), so the named NC event shillinq dispatches never reaches it",
 				"reachedOn": "ARInvoiceDetail /bookkeeping/accounts-receivable/:id header action AREInvoiceActions (via menu Sales > Accounts Receivable)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"readOn": "2026-09-26"
 			},
 			"evidence": {
 				"exact-online": "intelligence-db competitor_features#12086 (Exact Online (Boekhouden), 2026-04-06): Peppol/UBL e-invoicing for electronic invoice exchange with trading partners",
@@ -970,7 +972,8 @@
 				"state": "built",
 				"evidence": "lib/Portal/PortalContributionProvider.php contributes read-only ARInvoice and PaymentRequest collections to portaliq for the customer audience (Wave 2, scoped on claims.shillinq.customerMasterId); pay-now goes through /api/portal/payments/initiate -> lib/Service/Payment/PortalPaymentSessionService.php -> MolliePaymentProvider, whose adapter is LogMolliePaymentAdapter by default (lib/AppInfo/Application.php:497; connections.json mollie reportedOnly)",
 				"reachedOn": "portaliq external portal (not a shillinq page); nothing in shillinq's own UI",
-				"owner": "ConductionNL/portaliq"
+				"owner": "ConductionNL/portaliq",
+				"readOn": "2026-09-26"
 			},
 			"evidence": {
 				"odoo": "intelligence-db competitor_features#15534 (Odoo Invoicing, 2026-04-06): Customer Portal Invoices"
@@ -980,7 +983,7 @@
 			"feature": "customer-invoice-portal",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Viewing works only when portaliq is installed; paying depends on a Mollie adapter that is log-only by default, and no invoice PDF download was found in the contribution. Provider is portaliq, which renders the portal; shillinq only contributes the invoice and payment-request collections (lib/Portal/PortalContributionProvider.php)."
+			"note": "Viewing works only when portaliq is installed; paying depends on a Mollie adapter that is log-only by default, and no invoice PDF download was found in the contribution. Provider is portaliq, which renders the portal; shillinq only contributes the invoice and payment-request collections (lib/Portal/PortalContributionProvider.php). Folded on 2026-09-26 into portaliq's row cmp-cas-pay: portaliq src/portal/App.jsx:225-238 onAction() forwards through lib/Service/PortalActionForwarder.php:89 to shillinq appinfo/routes.php:764 portalPaymentInitiation#initiate; the portal side of this capability is rated on portaliq's row cmp-cas-pay."
 		},
 		{
 			"id": "sal-foreign-currency",
@@ -2794,9 +2797,10 @@
 			"odoo": "unknown",
 			"built": {
 				"state": "built",
-				"evidence": "Commitment lifecycle in lib/Settings/register.d/bookkeeping-verplichtingenadministratie.json: indienen requires MandateEnforcer::requiresApproval, goedkeuren requires BudgetBlocker::canCommit (real PHP guards); BudgetLineCommitments.vue shows committed vs realised. But the 'aangaan' transition declares action record-mutatie, which has no handler anywhere (grep lib/ finds none), so OpenRegister's executor throws on it.",
+				"evidence": "Commitment lifecycle in lib/Settings/register.d/bookkeeping-verplichtingenadministratie.json: indienen requires MandateEnforcer::requiresApproval, goedkeuren requires BudgetBlocker::canCommit (the PHP classes exist, but these guard tags are not among the 21 guard tags shillinq registers, so the transitions abort instead of evaluating them); BudgetLineCommitments.vue shows committed vs realised. But the 'aangaan' transition declares action record-mutatie, which has no handler anywhere (grep lib/ finds none), so OpenRegister's executor throws on it.",
 				"reachedOn": "CommitmentsRegister /commitments, Mandates /commitments/mandates, ApprovalSteps (via menu Purchasing > Commitments register / Mandates / Approvals); BudgetLineCommitments (menu Purchasing > Committed vs. realised)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"readOn": "2026-09-26"
 			},
 			"evidence": {},
 			"provider": "shillinq",
@@ -2804,7 +2808,7 @@
 			"feature": "commitments",
 			"featureConfidence": "medium",
 			"source": "own-code",
-			"note": "Spending authority and budget checks are enforced; entering the commitment trips an unregistered action."
+			"note": "Corrected 2026-09-26: spending authority and budget checks are not enforced, they abort. MandateEnforcer::requiresApproval (lib/Settings/register.d/bookkeeping-verplichtingenadministratie.json:275) and BudgetBlocker::canCommit (:282, :301) are declared as lifecycle guards on unregistered guard tags, and the aangaan transition also declares the unhandled action record-mutatie (:286)."
 		},
 		{
 			"id": "pln-budget-grid",
@@ -4831,10 +4835,11 @@
 			"odoo": "yes",
 			"built": {
 				"state": "built",
-				"evidence": "Buying and selling write StockMove rows (GoodsReceiptNoteService.php:606 posted receipt move; SalesDispatchStockIssueService.php:532-564 issue move via DeliveryDispatchListener, Application.php:281) but no code updates InventoryStock.quantityOnHand from a StockMove (grep InventoryStock: 0 hits in GoodsReceiptNoteService, StockMoveTransitionedListener, Fifo/MovingAverage services); the reconciliation is only the netQuantityForLocation x-openregister-aggregation (inventory-stock-movement-ledger.json); only the mobile scanner (InventoryMobileScannerService.php:685 mutateStock) changes quantityOnHand directly",
+				"evidence": "Buying and selling write StockMove rows (GoodsReceiptNoteService.php:606 posted receipt move; SalesDispatchStockIssueService.php:532-564 issue move via DeliveryDispatchListener, Application.php:281) but no code updates InventoryStock.quantityOnHand from a StockMove (grep InventoryStock: 0 hits in GoodsReceiptNoteService, StockMoveTransitionedListener, Fifo/MovingAverage services); the reconciliation is only the netQuantityForLocation x-openregister-aggregation (inventory-stock-movement-ledger.json); the mobile scanner does not update it either: InventoryMobileScannerService.php:685 mutateStock() writes a field named `quantity` (:725-726), not `quantityOnHand`",
 				"reachedOn": "StockLevels /inventory/stock (menu Purchasing > Stock Levels); StockMovements /inventory/stock-movements (menu Purchasing > Stock Movements)",
 				"owner": "ConductionNL/shillinq",
-				"ratingFromCode": "partial"
+				"ratingFromCode": "partial",
+				"readOn": "2026-09-26"
 			},
 			"evidence": {
 				"exact-online": "intelligence-db competitor_features#31717 (Exact Online (Boekhouden), 2026-07-12): Inventory & order management",
@@ -4846,7 +4851,7 @@
 			"feature": "inventory-stock-ledger",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Movements are recorded; the stock level shown only moves on scanner operations.",
+			"note": "Movements are recorded; the stock level shown is not updated by buying, selling or the mobile scanner (corrected 2026-09-26).",
 			"pendingReason": "Stock per product following purchases and sales rests only on a declared OR aggregation; the snapshot a user sees on Stock Levels is not updated by any buy/sell code."
 		},
 		{
