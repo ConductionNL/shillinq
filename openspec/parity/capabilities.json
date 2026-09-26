@@ -6684,6 +6684,76 @@
 			"origin": "changelog",
 			"originUrl": "https://taasupportportal.wolterskluwer.com/nl/nl-nl/release-notes/twinfield-boekh-3041276",
 			"note": "Broken fiscal year supported, VAT corrections not grouped by it."
+		},
+		{
+			"id": "plt-required-fields",
+			"area": "platform",
+			"name": "Decide yourself which input fields must be filled in.",
+			"shillinq": "no",
+			"exact-online": "partial",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "partial",
+			"odoo": "yes",
+			"built": {
+				"state": "none",
+				"owner": "ConductionNL/shillinq",
+				"readOn": "2026-09-26",
+				"reachedOn": "nothing reaches it",
+				"evidence": "which fields are required is fixed in the register JSON the app ships (lib/Settings/shillinq_register.json:26, :297, :396 and the required lists under lib/Settings/register.d/) and the forms take their fields from src/manifest.json config.fields (:1255, :1410); no shillinq page or setting lets an administrator mark a field as required. An edit in OpenRegister's own schema editor is not a shillinq surface, the same reading as plt-custom-fields."
+			},
+			"evidence": {
+				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-costanalysis-costcenter-fincctr-linkglacctt?language=en_GB: which cost centres an employee \"can or must select\" per G/L account; https://www.exact.com/nl/producten/boekhouden/features-en-prijzen Flex adds free fields (Premium) Note: Required dimensions per account; general required-field rules are not described.",
+				"moneybird": "not checked: custom fields are text or list (https://helpcenter.moneybird.nl/nl/articles/223860-extra-velden-instellen); making fields mandatory is not stated",
+				"snelstart": "not checked: only system-mandatory fields appear (e.g. Kennisplein 'het-veld-rechtsvorm-is-verplicht'); user-defined mandatory fields are not stated",
+				"twinfield": "https://taasupportportal.wolterskluwer.com/nl/nl-nl/artikel/dagboeken-3041094: \"Factuurnummer: leg hier vast of het factuurnummer bij een boeking verplicht, toegestaan of niet toegestaan is\"; https://taasupportportal.wolterskluwer.com/nl/nl-nl/artikel/dimensies-koste-3041118: cost centre can be made required Note: Per journal and per account settings only.",
+				"odoo": "https://www.odoo.com/documentation/19.0/applications/studio/fields.html field properties include a 'Required' checkbox; Community can set required through a view inheritance in developer mode (odoo/odoo@19.0 odoo/addons/base/models/ir_ui_view.py) Note: Point-and-click only with Studio (Enterprise, Custom plan)"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "access-control",
+			"featureConfidence": "low",
+			"source": "competitor",
+			"origin": "tender",
+			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/416109",
+			"originRequirements": [
+				"intelligence-db requirements#109523",
+				"intelligence-db requirements#109837"
+			],
+			"note": "Required fields are decided by the shipped schemas; a user cannot choose them in shillinq."
+		},
+		{
+			"id": "sal-down-payment",
+			"area": "sales",
+			"name": "Invoice a down payment on an order and deduct it on the final invoice.",
+			"shillinq": "no",
+			"exact-online": "partial",
+			"moneybird": "yes",
+			"snelstart": "partial",
+			"twinfield": "unknown",
+			"odoo": "yes",
+			"built": {
+				"state": "none",
+				"owner": "ConductionNL/shillinq",
+				"readOn": "2026-09-26",
+				"reachedOn": "nothing reaches it for orders; bookings have their own Deposits page (bok-deposit)",
+				"evidence": "grep over lib/ and src/ for down payment, aanbetaling and prepayment finds only the bookings deposit schema (lib/Settings/register.d/50-bookings-deposits.json:9, deposit collected at booking time) and two RGS seed accounts (lib/Settings/seeds/rgs-3.5-mkb.json:216, :549); no sales order or sales invoice path creates a down-payment invoice or deducts one on the final invoice."
+			},
+			"evidence": {
+				"exact-online": "https://www.exact.com/nl/producten/projectadministratie/features-en-prijzen: \"Voorschotten & uurbundels\"; fixed price projects billed in terms Note: Advances in Projectadministratie; deduction on a final order invoice is not described.",
+				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207189-factureren-van-een-offerte : 'Factureer een offerte in één keer, of in delen met een deelfactuur en een eindfactuur'; https://helpcenter.moneybird.nl/nl/articles/207923-aanbetalen-van-facturen : 'Kies dan op de offerte voor Meer factuuropties > Deelfactuur maken'; changelog 'offertes-in-delen-factureren' (September 2026)",
+				"snelstart": "https://kennisplein.snelstart.nl/snelstartpolaris/vooruitbetalingsfactuur-boeken : 'Vanaf het pakket inKaart kun je een vooruitbetaling van een factuur boeken ... De factuur afboeken aan de vooruitbetaling en de resterende betaling' Note: the prepayment is booked and offset by hand; a down-payment invoice deducted on the final invoice is not stated",
+				"twinfield": "not checked: searched the Twinfield support portal (help articles, release notes 2025 and 2026, site search) today: not stated",
+				"odoo": "odoo/odoo@19.0 addons/sale/wizard/sale_make_invoice_advance.py:16 'Down payment (percentage)' and has_down_payments (:29) deducted on the final invoice; release notes 19 'Down payment account moved from Product Category to Accounting Settings'"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "quote-to-cash",
+			"featureConfidence": "low",
+			"source": "competitor",
+			"origin": "changelog",
+			"originUrl": "https://www.odoo.com/odoo-19-release-notes",
+			"note": "Only booking deposits exist (see bok-deposit, pending on a declared lifecycle); a down payment on a sales order is not built."
 		}
 	],
 	"pending": [
@@ -7894,75 +7964,6 @@
 			"featureConfidence": "medium",
 			"source": "own-code",
 			"pendingReason": "Segregation checks run only if OpenRegister executes the register's scheduled-workflow declaration."
-		},
-		{
-			"id": "plt-required-fields",
-			"area": "platform",
-			"name": "Decide yourself which input fields must be filled in.",
-			"shillinq": "unknown",
-			"exact-online": "partial",
-			"moneybird": "unknown",
-			"snelstart": "unknown",
-			"twinfield": "partial",
-			"odoo": "yes",
-			"built": {
-				"state": "unknown",
-				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26"
-			},
-			"evidence": {
-				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-costanalysis-costcenter-fincctr-linkglacctt?language=en_GB: which cost centres an employee \"can or must select\" per G/L account; https://www.exact.com/nl/producten/boekhouden/features-en-prijzen Flex adds free fields (Premium) Note: Required dimensions per account; general required-field rules are not described.",
-				"moneybird": "not checked: custom fields are text or list (https://helpcenter.moneybird.nl/nl/articles/223860-extra-velden-instellen); making fields mandatory is not stated",
-				"snelstart": "not checked: only system-mandatory fields appear (e.g. Kennisplein 'het-veld-rechtsvorm-is-verplicht'); user-defined mandatory fields are not stated",
-				"twinfield": "https://taasupportportal.wolterskluwer.com/nl/nl-nl/artikel/dagboeken-3041094: \"Factuurnummer: leg hier vast of het factuurnummer bij een boeking verplicht, toegestaan of niet toegestaan is\"; https://taasupportportal.wolterskluwer.com/nl/nl-nl/artikel/dimensies-koste-3041118: cost centre can be made required Note: Per journal and per account settings only.",
-				"odoo": "https://www.odoo.com/documentation/19.0/applications/studio/fields.html field properties include a 'Required' checkbox; Community can set required through a view inheritance in developer mode (odoo/odoo@19.0 odoo/addons/base/models/ir_ui_view.py) Note: Point-and-click only with Studio (Enterprise, Custom plan)"
-			},
-			"provider": "shillinq",
-			"providerHow": "read-from-code",
-			"feature": "access-control",
-			"featureConfidence": "low",
-			"source": "competitor",
-			"origin": "tender",
-			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/416109",
-			"originRequirements": [
-				"intelligence-db requirements#109523",
-				"intelligence-db requirements#109837"
-			],
-			"note": "not checked: required fields are set in the register JSON shipped with the app; whether an admin edit in OpenRegister's schema editor survives the register import on upgrade was not tested.",
-			"pendingReason": "not checked: required fields are set in the register JSON shipped with the app; whether an admin edit in OpenRegister's schema editor survives the register import on upgrade was not tested."
-		},
-		{
-			"id": "sal-down-payment",
-			"area": "sales",
-			"name": "Invoice a down payment on an order and deduct it on the final invoice.",
-			"shillinq": "unknown",
-			"exact-online": "partial",
-			"moneybird": "yes",
-			"snelstart": "partial",
-			"twinfield": "unknown",
-			"odoo": "yes",
-			"built": {
-				"state": "building",
-				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"reachedOn": "Deposits page (bookings only)"
-			},
-			"evidence": {
-				"exact-online": "https://www.exact.com/nl/producten/projectadministratie/features-en-prijzen: \"Voorschotten & uurbundels\"; fixed price projects billed in terms Note: Advances in Projectadministratie; deduction on a final order invoice is not described.",
-				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207189-factureren-van-een-offerte : 'Factureer een offerte in één keer, of in delen met een deelfactuur en een eindfactuur'; https://helpcenter.moneybird.nl/nl/articles/207923-aanbetalen-van-facturen : 'Kies dan op de offerte voor Meer factuuropties > Deelfactuur maken'; changelog 'offertes-in-delen-factureren' (September 2026)",
-				"snelstart": "https://kennisplein.snelstart.nl/snelstartpolaris/vooruitbetalingsfactuur-boeken : 'Vanaf het pakket inKaart kun je een vooruitbetaling van een factuur boeken ... De factuur afboeken aan de vooruitbetaling en de resterende betaling' Note: the prepayment is booked and offset by hand; a down-payment invoice deducted on the final invoice is not stated",
-				"twinfield": "not checked: searched the Twinfield support portal (help articles, release notes 2025 and 2026, site search) today: not stated",
-				"odoo": "odoo/odoo@19.0 addons/sale/wizard/sale_make_invoice_advance.py:16 'Down payment (percentage)' and has_down_payments (:29) deducted on the final invoice; release notes 19 'Down payment account moved from Product Category to Accounting Settings'"
-			},
-			"provider": "shillinq",
-			"providerHow": "read-from-code",
-			"feature": "quote-to-cash",
-			"featureConfidence": "low",
-			"source": "competitor",
-			"origin": "changelog",
-			"originUrl": "https://www.odoo.com/odoo-19-release-notes",
-			"note": "Deposits exist for bookings, and deducting them on the final invoice rests on the declared lifecycle in bookings-deposit-to-invoice.json, the same open question as bok-deposit.",
-			"pendingReason": "Deposits exist for bookings, and deducting them on the final invoice rests on the declared lifecycle in bookings-deposit-to-invoice.json, the same open question as bok-deposit."
 		}
 	]
 }
