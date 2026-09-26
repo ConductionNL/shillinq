@@ -4414,7 +4414,7 @@
 				"state": "built",
 				"evidence": "lib/Controller/SupplierInvoiceImportController.php:160 returns 422 'deferred: pdf-ocr' for a PDF upload (no OCR in shillinq); lib/Service/Extraction/DocudeskExtractionClient.php:75 posts to docudesk.extraction.financial and lib/Listener/ExtractionCompletedListener (Application.php:702) + ExtractionPrefillService.php:172 map docudesk's extracted fields onto a SupplierInvoice draft, reviewed in src/modals/BillImportModal.vue",
 				"reachedOn": "Dashboard / (header action 'Import bill' opens BillImportModal); PDF upload there shows 'PDF OCR extraction is not yet available'",
-				"owner": "ConductionNL/docudesk",
+				"owner": "ConductionNL/filinq",
 				"ratingFromCode": "partial"
 			},
 			"evidence": {
@@ -4472,7 +4472,7 @@
 				"state": "built",
 				"evidence": "lib/Listener/TenderNedAwardDetectedListener.php (Application.php:636) turns a TenderNedProcurement that openconnector/integriq writes into a Commitment; the import itself is 'Openconnector polls the TenderNed source ... live-instance concern' and no TenderNed entry exists in lib/Settings/connections.json; lib/BackgroundJob/TenderNedAwardPromotionJob.php is not in appinfo/info.xml (queued, not timed)",
 				"reachedOn": "TenderNedProcurements /inkoop/tenderned (menu Purchasing > TenderNed tenders)",
-				"owner": "ConductionNL/openconnector",
+				"owner": "ConductionNL/integriq",
 				"ratingFromCode": "partial"
 			},
 			"evidence": {},
