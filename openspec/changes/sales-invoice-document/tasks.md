@@ -10,7 +10,7 @@
 ## 2. Template and renderer
 
 - [ ] 2.1 Add the `sales-invoice` template to `docudesk-templates.json` with the three variants (REQ-SID-002). Verify: the template validator the repo runs on that file.
-- [ ] 2.2 Make `InvoicePdfGenerator::generatePdf()` a docudesk consumer with the absence exception; remove `renderHtml()` and `assemblePdf()` (REQ-SID-002). Verify: PHPUnit with docudesk present and absent.
+- [ ] 2.2 Make `InvoicePdfGenerator::generatePdf()` a docudesk consumer with the absence exception, returning PDF bytes instead of HTML; leave `renderHtml()`, `buildHybridPdfBytes()` and `assemblePdf()` to the hybrid path (REQ-SID-002). Verify: PHPUnit with docudesk present and absent, asserting the served file starts with `%PDF`.
 - [ ] 2.3 Language labels and `NumberFormatter` amounts in the assembled data (REQ-SID-003, REQ-SID-004). Verify: PHPUnit for nl and en with EUR and GBP.
 - [ ] 2.4 EPC and pay-link QR payloads (REQ-SID-005). Verify: PHPUnit against the EPC069-12 field order.
 
