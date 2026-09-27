@@ -16,6 +16,14 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
+		"row": "prod-overdue-chasing",
+		"matrix": "pipelinq",
+		"decision": "build",
+		"reason": "Same capability as shillinq rec-reminders, which four competitors rate yes; covered by the same change; changelog https://www.hubspot.com/spotlight; 1 competitor yes (hubspot-crm).",
+		"change": "receivables-automatic-dunning",
+		"decidedOn": "2026-09-27"
+	},
+	{
 		"row": "bnk-fx-rates",
 		"matrix": "shillinq",
 		"decision": "build",
@@ -144,6 +152,14 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
+		"row": "exp-category-mapping",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; 3 competitor yes (moneybird, snelstart, odoo).",
+		"change": "expenses-category-mapping",
+		"decidedOn": "2026-09-27"
+	},
+	{
 		"row": "exp-company-cards",
 		"matrix": "shillinq",
 		"decision": "defer",
@@ -157,6 +173,14 @@
 		"decision": "defer",
 		"reason": "Rated no with records built; no competitor rates it yes and no demand, outside the core areas.",
 		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "exp-reinvoice",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is applying the markup rules and picking the expense; 2 competitor yes (exact-online, odoo).",
+		"change": "sales-time-and-expense-billing",
 		"decidedOn": "2026-09-27"
 	},
 	{
@@ -624,6 +648,46 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
+		"row": "rec-ladder-per-customer",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the override only matters once dunning runs, same missing half as rec-reminders; 2 competitor yes (exact-online, moneybird).",
+		"change": "receivables-automatic-dunning",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "rec-payment-plan",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is a payment plan for an ordinary customer debt, instalments exist only for grant reclaims; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109).",
+		"change": "receivables-payment-plans",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "rec-payment-request",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half (a provider that creates the link and reports paid) is the same code path as sal-pay-link, which four competitors rate yes; 1 competitor yes (moneybird).",
+		"change": "receivables-payment-links",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "rec-psp-payouts",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; 2 competitor yes (exact-online, moneybird).",
+		"change": "receivables-provider-payouts",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "rec-reminders",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is dunning that runs on its own and a channel that sends; 4 competitor yes (exact-online, moneybird, snelstart, odoo).",
+		"change": "receivables-automatic-dunning",
+		"decidedOn": "2026-09-27"
+	},
+	{
 		"row": "rep-ai-report",
 		"matrix": "shillinq",
 		"decision": "defer",
@@ -696,6 +760,14 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
+		"row": "rep-relation-both-sides",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109); 2 competitor yes (moneybird, odoo).",
+		"change": "reporting-relation-both-sides",
+		"decidedOn": "2026-09-27"
+	},
+	{
 		"row": "rep-scheduled",
 		"matrix": "shillinq",
 		"decision": "build",
@@ -720,6 +792,14 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
+		"row": "sal-batch",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no, core area (sales); the school contribution bulk raise (extracurricular-fee-to-shillinq) is called by another app and does not send; 3 competitor yes (exact-online, snelstart, odoo).",
+		"change": "sales-invoice-sending",
+		"decidedOn": "2026-09-27"
+	},
+	{
 		"row": "sal-branded-invoice",
 		"matrix": "shillinq",
 		"decision": "build",
@@ -728,11 +808,51 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
+		"row": "sal-churn-reason",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no, core area (sales); changelog https://www.moneybird.nl/changelog/ontdek-waarom-klanten-hun-abonnement-stopzetten/; 2 competitor yes (moneybird, odoo).",
+		"change": "sales-cancellation",
+		"decidedOn": "2026-09-27"
+	},
+	{
 		"row": "sal-customer-language",
 		"matrix": "shillinq",
 		"decision": "build",
 		"reason": "Rated no, core area (sales); 3 competitor yes (moneybird, twinfield, odoo).",
 		"change": "sales-invoice-document",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-customer-terms",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no, core area (sales); 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "sales-invoice-sending",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-down-payment",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no, core area (sales); changelog https://www.odoo.com/odoo-19-release-notes; 2 competitor yes (moneybird, odoo).",
+		"change": "sales-down-payments",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-einvoice-rejection",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated partial in the matrix, corrected to no by the code read of 2026-09-27 (the listener never fires and its notification has no notifier); core area (sales), and it rests on the same hand-off as sal-peppol-send; changelog https://support.exactonline.com/community/s/article/All-All-HNO-Content-rn-whatsnewlandingpage?language=en_GB; 2 competitor yes (exact-online, odoo).",
+		"change": "sales-einvoice-exchange",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-email-pdf",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no, core area (sales); 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "sales-invoice-sending",
 		"decidedOn": "2026-09-27"
 	},
 	{
@@ -752,6 +872,22 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
+		"row": "sal-pay-link",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is a provider that creates the iDEAL or card link and the link printed on the invoice; 4 competitor yes (exact-online, moneybird, snelstart, odoo).",
+		"change": "receivables-payment-links",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-peppol-send",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is the hand-off to integriq on the channel integriq listens on; 4 competitor yes (exact-online, moneybird, snelstart, odoo).",
+		"change": "sales-einvoice-exchange",
+		"decidedOn": "2026-09-27"
+	},
+	{
 		"row": "sal-qr",
 		"matrix": "shillinq",
 		"decision": "build",
@@ -765,6 +901,46 @@
 		"decision": "defer",
 		"reason": "Partial, built, no demand; no competitor rates it yes.",
 		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-self-billing",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated partial in the matrix, corrected to no by the code read of 2026-09-27 (the self-billing flags are not declared on ARInvoice); core area (sales); changelog https://support.exactonline.com/community/s/article/All-All-HNO-Content-rn-whatsnewlandingpage?language=en_GB; 1 competitor yes (exact-online).",
+		"change": "sales-einvoice-exchange",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-tap-to-pay",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no, core area (sales); changelog https://www.moneybird.nl/changelog/laat-je-klant-contactloos-betalen/; 2 competitor yes (moneybird, odoo).",
+		"change": "receivables-provider-payouts",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-time-to-invoice",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is picking unbilled hours and expenses instead of typing ids; 3 competitor yes (exact-online, moneybird, odoo).",
+		"change": "sales-time-and-expense-billing",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-webshop-sync",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no, core area (sales); 3 competitor yes (moneybird, snelstart, odoo).",
+		"change": "sales-webshop-orders",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-withdrawal-button",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no, core area (sales); changelog https://www.moneybird.nl/changelog/herroepingsknop-voor-online-verkopen/; 1 competitor yes (moneybird).",
+		"change": "sales-cancellation",
 		"decidedOn": "2026-09-27"
 	},
 	{
@@ -853,6 +1029,14 @@
 		"decision": "build",
 		"reason": "Partial, built; the missing half is input VAT derived from purchases; 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
 		"change": "tax-vat-return-from-books",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "cmp-cas-pay",
+		"matrix": "portaliq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is the provider behind the checkout, which is LogMolliePaymentAdapter, the same code path as shillinq sal-pay-link; 1 competitor yes (nl-portal).",
+		"change": "receivables-payment-links",
 		"decidedOn": "2026-09-27"
 	},
 	{

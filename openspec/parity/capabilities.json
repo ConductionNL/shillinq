@@ -907,10 +907,11 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
-				"evidence": "IMailer is used only in lib/Controller/PaymentRequestActionController.php:123-135 (payment request mail), ConfirmationMailer and SmsReminderDispatcher; no service or button mails an invoice PDF. src/components/ar-invoice/arEInvoiceActions.js:64 even tells the user to 'use PDF + email instead' outside the app",
+				"state": "specified",
+				"evidence": "IMailer is used only in lib/Controller/PaymentRequestActionController.php:123-135 (payment request mail), ConfirmationMailer and SmsReminderDispatcher; no service or button mails an invoice PDF. src/components/ar-invoice/arEInvoiceActions.js:64 even tells the user to 'use PDF + email instead' outside the app The PDF route /api/v1/invoices/{id}/pdf (InvoiceApiController::pdf) serves HTML with a .html filename and only for a BillableInvoice; for an ARInvoice the only real PDF bytes come from generateHybridPdf() inside the Peppol path.",
 				"reachedOn": "nothing reaches it: no send-by-email action on AccountsReceivable, ARInvoiceDetail or BillableInvoiceDetail",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"readOn": "2026-09-27"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-sales-invoices-slsinv-trackslsinvt: \"Met Verzend en volgen kun je een verkoopfactuur per e-mail naar een klant verzenden en kun je volgen of de klant de factuur heeft gelezen\"",
@@ -924,7 +925,7 @@
 			"feature": "sales-invoice-delivery",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "The PDF can be opened (/api/v1/invoices/{id}/pdf) but not emailed from the app."
+			"note": "The PDF can be opened (/api/v1/invoices/{id}/pdf) but not emailed from the app. Specified 2026-09-27 in openspec/changes/sales-invoice-sending (OpenSpec pass). Corrected 2026-09-27 (OpenSpec pass, code read of batch 2): the invoice PDF that could be opened is HTML, and only for time-and-expense invoices."
 		},
 		{
 			"id": "sal-quote-to-invoice",
@@ -967,7 +968,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "PaymentRequest page (src/manifest.d/ar-invoice-payment-links.json) and lib/Controller/PaymentRequestActionController.php:102-150 mails an existing paymentLink; nothing in lib writes paymentLink (grep \"'paymentLink' =>\" only reads it, lib/Integration/PaymentRequestLeafProvider.php:222); Mollie is bound to LogMolliePaymentAdapter (lib/AppInfo/Application.php:497) and connections.json marks mollie reportedOnly; the invoice PDF (lib/Service/InvoicePdfGenerator.php renderHtml) carries no link",
 				"reachedOn": "PaymentRequests /bookkeeping/payment-requests (via menu Sales > Payment requests)",
 				"owner": "ConductionNL/shillinq"
@@ -984,7 +985,7 @@
 			"feature": "invoice-payment-links",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "A payment request can be kept and a link mailed if one is filled in, but no provider creates the iDEAL/card link and it is not printed on the invoice."
+			"note": "A payment request can be kept and a link mailed if one is filled in, but no provider creates the iDEAL/card link and it is not printed on the invoice. Specified 2026-09-27 in openspec/changes/receivables-payment-links (OpenSpec pass)."
 		},
 		{
 			"id": "sal-qr",
@@ -1027,11 +1028,11 @@
 			"twinfield": "partial",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
-				"evidence": "Send e-invoice button (src/components/ar-invoice/arEInvoiceActions.js -> /api/ar-invoices/{invoiceNumber}/send-einvoice) runs lib/Service/EInvoice/EInvoiceService.php: UBL via ArInvoiceUblMapper, local port LogPeppolTransmissionAdapter (log-only), then IEventDispatcher::dispatch('nl.conduction.peppol.outbound.requested') at :270. integriq's PeppolOutboundConsumer (integriq lib/AppInfo/Application.php:252) listens only to OpenRegister ObjectCreatedEvent for an object in register `integriq` schema event (integriq lib/Service/PeppolTransmissionService.php:60 REGISTER = 'integriq'), so the named NC event shillinq dispatches never reaches it",
+				"state": "specified",
+				"evidence": "Send e-invoice button (src/components/ar-invoice/arEInvoiceActions.js -> /api/ar-invoices/{invoiceNumber}/send-einvoice) runs lib/Service/EInvoice/EInvoiceService.php: UBL via ArInvoiceUblMapper, local port LogPeppolTransmissionAdapter (log-only), then IEventDispatcher::dispatch('nl.conduction.peppol.outbound.requested') at :270. integriq's PeppolOutboundConsumer (integriq lib/AppInfo/Application.php:268) listens only to OpenRegister ObjectCreatedEvent for an object in register `integriq` schema event (integriq lib/Service/PeppolTransmissionService.php:60 REGISTER = 'integriq'), so the named NC event shillinq dispatches never reaches it EInvoiceService::storeArtefact() (:309) discards the PDF and returns a placeholder docudesk://file/<hash>; integriq's consumer compares register and schema slugs where OpenRegister stamps numeric ids, which needs a live check.",
 				"reachedOn": "ARInvoiceDetail /bookkeeping/accounts-receivable/:id header action AREInvoiceActions (via menu Sales > Accounts Receivable)",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26"
+				"readOn": "2026-09-27"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Met Exact Online is het mogelijk om elektronische verkoopfacturen te verzenden via het Peppol-netwerk\"; supported formats \"UBL, Peppol BISv3 en SI-UBL 2.0\"",
@@ -1045,7 +1046,7 @@
 			"feature": "einvoicing-ubl-peppol",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "The UBL is built and the invoice goes to 'queued', but the hand-off to integriq uses a different event channel than integriq listens on, so nothing is transmitted."
+			"note": "The UBL is built and the invoice goes to 'queued', but the hand-off to integriq uses a different event channel than integriq listens on, so nothing is transmitted. Specified 2026-09-27 in openspec/changes/sales-einvoice-exchange (OpenSpec pass). Corrected 2026-09-27 (OpenSpec pass, code read of batch 2): integriq registration line is :268, and the artefact store is a placeholder."
 		},
 		{
 			"id": "sal-customer-language",
@@ -1088,7 +1089,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "lib/Service/InvoiceGenerationService.php:90-130 draftInvoice loads UrenRegistratie (:511) and ExpenseClaimEntry (:570) records, rates them via RateCardResolver and writes BillableInvoiceLine rows; src/components/invoice/InvoiceGenerator.vue:103,211 takes time-entry and expense ids as comma-separated text typed by the user",
 				"reachedOn": "BillableInvoiceGenerate /invoice/generate (via menu Sales > Invoices > Generate invoice)",
 				"owner": "ConductionNL/shillinq"
@@ -1105,7 +1106,7 @@
 			"feature": "invoice-from-time-and-expense",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "The conversion works, but the user must paste record ids; there is no picker or list of unbilled hours and expenses."
+			"note": "The conversion works, but the user must paste record ids; there is no picker or list of unbilled hours and expenses. Specified 2026-09-27 in openspec/changes/sales-time-and-expense-billing (OpenSpec pass)."
 		},
 		{
 			"id": "sal-usage-billing",
@@ -1177,7 +1178,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"evidence": "lib/Controller/InvoiceApiController.php generate/post/pdf act on one invoice; no batch route in appinfo/routes.php for invoices; the only multi-invoice generator is RecurringInvoiceGenerator, triggered by a declaration",
 				"reachedOn": "nothing reaches it: no batch create/send action on AccountsReceivable or BillableInvoiceList",
 				"owner": "ConductionNL/shillinq"
@@ -1193,7 +1194,8 @@
 			"providerHow": "read-from-code",
 			"feature": "sales-invoice-delivery",
 			"featureConfidence": "medium",
-			"source": "competitor"
+			"source": "competitor",
+			"note": "Specified 2026-09-27 in openspec/changes/sales-invoice-sending (OpenSpec pass)."
 		},
 		{
 			"id": "sal-rate-cards",
@@ -1236,10 +1238,11 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
-				"evidence": "CustomerMaster properties (add-shillinq-bookkeeping-compliance.json, sepa, peppol, icp fragments) contain no payment term or delivery method; the Customers index column 'paymentTermDays' in src/manifest.json points at a field that does not exist on the schema (CustomerDetail _note says so)",
+				"state": "specified",
+				"evidence": "CustomerMaster properties (add-shillinq-bookkeeping-compliance.json, sepa, peppol, icp fragments) contain no payment term or delivery method; the Customers index column 'paymentTermDays' in src/manifest.json points at a field that does not exist on the schema (CustomerDetail _note says so) The Customers index also lists customerNumber and name, which do not exist (the keys are customerId and legalName, src/manifest.json:7547); the quick draft reads a nonexistent customer.paymentTerms (src/modals/InvoiceQuickDraftModal.vue:424); InvoiceGenerationService hard-codes 30 days and 'net 30' (:134, :161).",
 				"reachedOn": "nothing reaches it: Customers /bookkeeping/customers (via menu Sales > Customers) has no terms field to set",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"readOn": "2026-09-27"
 			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207517-instellingen-bij-contacten : per contact a fixed 'Verzendmethode' and a standard invoice workflow, where 'In de workflow bepaal je het vervaltermijn, de teksten op de factuur en de betaalopties'",
@@ -1253,7 +1256,7 @@
 			"feature": "customer-master",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Only defaultMandateId and peppolParticipantId exist per customer; payment terms live per invoice."
+			"note": "Only defaultMandateId and peppolParticipantId exist per customer; payment terms live per invoice. Specified 2026-09-27 in openspec/changes/sales-invoice-sending (OpenSpec pass). Corrected 2026-09-27 (OpenSpec pass, code read of batch 2): more broken customer fields than the note named."
 		},
 		{
 			"id": "sal-webshop-sync",
@@ -1266,7 +1269,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"evidence": "grep -i 'webshop|woocommerce|shopify|lightspeed|magento|e-?commerce' in lib and src hits only rule catalogue text (lib/Standards/rules/vat.json, ComplianceCatalogue.php) and a KOR fragment; no importer, connector or page",
 				"reachedOn": "nothing reaches it: no web shop source or order import",
 				"owner": "ConductionNL/shillinq"
@@ -1282,7 +1285,8 @@
 			"providerHow": "read-from-code",
 			"feature": "webshop-sync",
 			"featureConfidence": "medium",
-			"source": "competitor"
+			"source": "competitor",
+			"note": "Specified 2026-09-27 in openspec/changes/sales-webshop-orders (OpenSpec pass)."
 		},
 		{
 			"id": "sal-orders",
@@ -1416,10 +1420,11 @@
 			"twinfield": "partial",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
-				"evidence": "DunningLadder stages kept on DunningLadders (settings) and lib/Service/DunningRunService.php:193 tickInvoice/:400 executeStage implement the ladder, but they are reached only from lib/Controller/DunningController.php (/api/dunning/runs/execute), which no frontend file calls (not in _lane/frontend-api-paths.txt), no BackgroundJob in appinfo/info.xml runs dunning, and the channel adapter is LogDunningChannelAdapter / LogPostNLAdapter (lib/Service/Dunning/)",
+				"state": "specified",
+				"evidence": "DunningLadder stages kept on DunningLadders (settings) and lib/Service/DunningRunService.php:193 tickInvoice/:400 executeStage implement the ladder, but they are reached only from lib/Controller/DunningController.php (/api/dunning/runs/execute), which no frontend file calls (not in _lane/frontend-api-paths.txt), no BackgroundJob in appinfo/info.xml runs dunning, and the channel adapter is LogDunningChannelAdapter / LogPostNLAdapter (lib/Service/Dunning/) DunningChannelAdapterInterface is bound (Application.php:439) but never called: executeStage() (DunningRunService.php:414) records a run and sends nothing, and tickInvoice() (:196) has no caller.",
 				"reachedOn": "DunningLadders /bookkeeping/dunning/ladders (settings gear), DunningRuns /bookkeeping/dunning/runs (via menu Bookkeeping > Dunning Runs)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"readOn": "2026-09-27"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Met Exact Online kun je betalingsherinneringen automatisch laten versturen. De software bepaalt zelf het aantal contactmomenten, de timing en de boodschap\" Note: Debtor Agent from Plus.",
@@ -1433,7 +1438,7 @@
 			"feature": "credit-control-dunning",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Escalating ladders can be defined and runs listed, but nothing sends a reminder automatically: no job, no page calling the run endpoint, log-only channel."
+			"note": "Escalating ladders can be defined and runs listed, but nothing sends a reminder automatically: no job, no page calling the run endpoint, log-only channel. Specified 2026-09-27 in openspec/changes/receivables-automatic-dunning (OpenSpec pass). Corrected 2026-09-27 (OpenSpec pass, code read of batch 2): the channel adapter is never called, not only log-only."
 		},
 		{
 			"id": "rec-ladder-per-customer",
@@ -1446,7 +1451,7 @@
 			"twinfield": "partial",
 			"odoo": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "KlantLadderOverride page (src/manifest.json DunningKlantOverrides, settingsSection in src/menu-layout.json) and DunningRunService.php:297 resolveLadderForKlant applies it, but that service runs only from the uncalled /api/dunning endpoints",
 				"reachedOn": "DunningKlantOverrides /bookkeeping/dunning/overrides (settings gear)",
 				"owner": "ConductionNL/shillinq"
@@ -1463,7 +1468,7 @@
 			"feature": "credit-control-dunning",
 			"featureConfidence": "medium",
 			"source": "own-code",
-			"note": "The per-customer override can be kept; it only matters once dunning actually runs, which nothing triggers."
+			"note": "The per-customer override can be kept; it only matters once dunning actually runs, which nothing triggers. Specified 2026-09-27 in openspec/changes/receivables-automatic-dunning (OpenSpec pass)."
 		},
 		{
 			"id": "rec-direct-debit",
@@ -1534,7 +1539,7 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"evidence": "grep payout/psp in lib/Service finds deposit and no-show fee code (DepositReconciliationService.php, NoShowFeeCaptureService.php) and payment session types; no service matches a provider payout batch to the ARInvoices it settles",
 				"reachedOn": "nothing reaches it",
 				"owner": "ConductionNL/shillinq"
@@ -1550,7 +1555,8 @@
 			"providerHow": "read-from-code",
 			"feature": "invoice-payment-links",
 			"featureConfidence": "medium",
-			"source": "competitor"
+			"source": "competitor",
+			"note": "Specified 2026-09-27 in openspec/changes/receivables-provider-payouts (OpenSpec pass)."
 		},
 		{
 			"id": "rec-payment-request",
@@ -1563,7 +1569,7 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "PaymentRequests page (src/manifest.d/ar-invoice-payment-links.json) and the case leaf src/integrations/ShillinqPaymentRequestsPanel.vue call /api/payment-requests/{id}/send and /settle (src/integrations/leafApi.js:66,88; lib/Controller/PaymentRequestActionController.php); raiseLeges creates the request at intake; paid state comes from manual settle or the provider webhook, but no code creates the payment link (Mollie bound to LogMolliePaymentAdapter, lib/AppInfo/Application.php:497)",
 				"reachedOn": "PaymentRequests /bookkeeping/payment-requests (via menu Sales > Payment requests); panel on the case in dossiq via the shillinq-payment-requests leaf",
 				"owner": "ConductionNL/shillinq"
@@ -1580,7 +1586,7 @@
 			"feature": "case-payment-requests",
 			"featureConfidence": "medium",
 			"source": "own-code",
-			"note": "The request, its mail and a manual 'paid' record work; online payment and automatic paid status need a real provider adapter that is not bound."
+			"note": "The request, its mail and a manual 'paid' record work; online payment and automatic paid status need a real provider adapter that is not bound. Specified 2026-09-27 in openspec/changes/receivables-payment-links (OpenSpec pass)."
 		},
 		{
 			"id": "rec-ai-debtor",
@@ -1981,7 +1987,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"evidence": "Receipt.category and ExpenseClaimEntry are free fields in shillinq_register.json with no category->GL account map; no ExpenseCategory schema (grep ExpenseCategory only hits docudesk-templates.json and a description); no service posts ExpenseClaimEntry/Receipt to the ledger",
 				"reachedOn": "nothing reaches it: no mapping table or page exists",
 				"owner": "ConductionNL/shillinq"
@@ -1998,7 +2004,7 @@
 			"feature": "expense-claims",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "The nearest thing is the per-draft AI GL-account suggestion from docudesk (GlAccountSuggestionClient), which is a suggestion, not a mapping."
+			"note": "The nearest thing is the per-draft AI GL-account suggestion from docudesk (GlAccountSuggestionClient), which is a suggestion, not a mapping. Specified 2026-09-27 in openspec/changes/expenses-category-mapping (OpenSpec pass)."
 		},
 		{
 			"id": "exp-subscriptions",
@@ -2041,10 +2047,11 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
-				"evidence": "src/components/invoice/InvoiceGenerator.vue:102 takes 'Expense IDs (comma-separated)' -> InvoiceGenerationService.php:570 loadExpenses bills ExpenseClaimEntry cost; BillingModelEngine.php:53 supports markupPercent but InvoiceGenerationService.php:199 only copies a line markup (default 0) and PassThroughMarkupRule is read only by the unregistered ExpenseReimbursementGuard",
+				"state": "specified",
+				"evidence": "src/components/invoice/InvoiceGenerator.vue:102 takes 'Expense IDs (comma-separated)' -> InvoiceGenerationService.php:570 loadExpenses bills ExpenseClaimEntry cost; BillingModelEngine.php:53 supports markupPercent but InvoiceGenerationService.php:199 only copies a line markup (default 0) and PassThroughMarkupRule is read by SettlementGuard::matchMarkupRule() (lib/Lifecycle/SettlementGuard.php:299), which nothing calls; ExpenseReimbursementGuard (referenced by FQCN in register.d/expense-reimbursement-or-passthrough.json:333-422) reads markupRateApplied, which nothing writes, and the markupLookup calculations (:68, :131, :193) use a lookup() the JSON-AST evaluator does not have; loadExpenses() bills whole claims",
 				"reachedOn": "BillableInvoiceGenerate /invoice/generate (menu Sales > Generate invoice); PassThroughMarkupRules (settings gear)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"readOn": "2026-09-27"
 			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/sale/models/product_template.py:22 expense_policy (at cost or sales price) and addons/sale_expense/models/account_move_line.py:16 adds the expense to the customer's sales order; markup through the sales price policy",
@@ -2058,7 +2065,7 @@
 			"feature": "invoice-from-time-and-expense",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Passing an expense on at cost works by typing its id; markup rules are kept but never applied."
+			"note": "Passing an expense on at cost works by typing its id; markup rules are kept but never applied. Specified 2026-09-27 in openspec/changes/sales-time-and-expense-billing (OpenSpec pass). Corrected 2026-09-27 (OpenSpec pass, code read of batch 2): the markup rule is read by an uncalled SettlementGuard method, not only by ExpenseReimbursementGuard."
 		},
 		{
 			"id": "exp-policy",
@@ -5304,10 +5311,10 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"evidence": "RepaymentInstallment (instalments with dueDate, paidDate, isOverdue) on SubsidieDetail /subsidies/:id covers repayment plans for grant reclaims only (lib/Settings/register.d/add-shillinq-bookkeeping-operations.json:1424).",
+				"readOn": "2026-09-27",
+				"evidence": "RepaymentInstallment (instalments with dueDate, paidDate and an isOverdue status value; the schema is declared twice, shillinq_register.json:15534 and register.d/add-shillinq-bookkeeping-operations.json:1419) on SubsidieDetail /subsidies/:id covers repayment plans for grant reclaims only (lib/Settings/register.d/add-shillinq-bookkeeping-operations.json:1424).",
 				"reachedOn": "SubsidieDetail /subsidies/:id"
 			},
 			"evidence": {
@@ -5328,7 +5335,7 @@
 				"intelligence-db requirements#109694",
 				"intelligence-db requirements#109691"
 			],
-			"note": "Instalment plans exist only for grant reclaims, not for ordinary customer debts."
+			"note": "Instalment plans exist only for grant reclaims, not for ordinary customer debts. Specified 2026-09-27 in openspec/changes/receivables-payment-plans (OpenSpec pass). Corrected 2026-09-27 (OpenSpec pass, code read of batch 2): isOverdue is a status value and RepaymentInstallment is declared twice."
 		},
 		{
 			"id": "pub-asset-interest",
@@ -5560,7 +5567,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -5582,7 +5589,7 @@
 			"originRequirements": [
 				"intelligence-db requirements#109825"
 			],
-			"note": "Customers (CustomerMaster) and suppliers are separate records and no report joins sent and received invoices per relation."
+			"note": "Customers (CustomerMaster) and suppliers are separate records and no report joins sent and received invoices per relation. Specified 2026-09-27 in openspec/changes/reporting-relation-both-sides (OpenSpec pass)."
 		},
 		{
 			"id": "ppl-hours-budget",
@@ -5993,7 +6000,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -6012,7 +6019,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.moneybird.nl/changelog/laat-je-klant-contactloos-betalen/",
-			"note": "No point-of-sale or tap-to-pay flow; card payments exist only as online payment links through a payment provider port."
+			"note": "No point-of-sale or tap-to-pay flow; card payments exist only as online payment links through a payment provider port. Specified 2026-09-27 in openspec/changes/receivables-provider-payouts (OpenSpec pass)."
 		},
 		{
 			"id": "bnk-integrated-account",
@@ -6057,7 +6064,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -6076,7 +6083,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.moneybird.nl/changelog/ontdek-waarom-klanten-hun-abonnement-stopzetten/",
-			"note": "RecurringInvoiceProfile has a status but no cancellation reason; the only cancellationReason is on SEPA mandates (lib/Lifecycle/MandateGuard.php:132)."
+			"note": "RecurringInvoiceProfile has a status but no cancellation reason; the only cancellationReason is on SEPA mandates (lib/Lifecycle/MandateGuard.php:132). Specified 2026-09-27 in openspec/changes/sales-cancellation (OpenSpec pass)."
 		},
 		{
 			"id": "sal-withdrawal-button",
@@ -6089,10 +6096,11 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"reachedOn": "nothing"
+				"readOn": "2026-09-27",
+				"reachedOn": "nothing",
+				"evidence": "No withdrawal function in lib/ or src/. Shillinq does serve an online consumer surface: the embeddable booking widget (webpack.config.js:42-54, REQ-WSW-004, POST /api/widget/appointments at appinfo/routes.php:153), which has no withdrawal button."
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
@@ -6108,7 +6116,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.moneybird.nl/changelog/herroepingsknop-voor-online-verkopen/",
-			"note": "No consumer sales page or withdrawal function in lib/ or src/."
+			"note": "No consumer sales page or withdrawal function in lib/ or src/. Specified 2026-09-27 in openspec/changes/sales-cancellation (OpenSpec pass). Corrected 2026-09-27 (OpenSpec pass, code read of batch 2): the note said no consumer sales page; the booking widget is one."
 		},
 		{
 			"id": "plt-readonly-access",
@@ -6406,18 +6414,18 @@
 			"id": "sal-self-billing",
 			"area": "sales",
 			"name": "Receive self-billed invoices that a customer made on your behalf and book them as sales.",
-			"shillinq": "partial",
+			"shillinq": "no",
 			"exact-online": "yes",
 			"moneybird": "partial",
 			"snelstart": "unknown",
 			"twinfield": "unknown",
 			"odoo": "unknown",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"evidence": "ARInvoice carries selfBilled and selfBillingMention, and lib/Standards/Checks/InvoiceMentionsTailChecks.php:65 requires the self-billing mention when the flag is set; there is no import of an invoice the customer made.",
-				"reachedOn": "ARInvoiceDetail /bookkeeping/accounts-receivable/:id"
+				"readOn": "2026-09-27",
+				"evidence": "ARInvoice declares neither selfBilled nor selfBillingMention anywhere in lib/Settings; only the rule check lib/Standards/Checks/InvoiceMentionsTailChecks.php:65 reads them, and nothing imports an invoice the customer made.",
+				"reachedOn": "nothing reaches it"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Content-rn-whatsnewlandingpage?language=en_GB (December 2025): \"Easily receive self-billed invoices from your customers\"",
@@ -6433,24 +6441,24 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://support.exactonline.com/community/s/article/All-All-HNO-Content-rn-whatsnewlandingpage?language=en_GB",
-			"note": "A sales invoice can be marked self-billed; receiving the customer-made invoice is not supported."
+			"note": "A sales invoice can be marked self-billed; receiving the customer-made invoice is not supported. Specified 2026-09-27 in openspec/changes/sales-einvoice-exchange (OpenSpec pass). Corrected 2026-09-27 (OpenSpec pass, code read of batch 2): rated partial, but the self-billing flags the rating rested on are not declared on ARInvoice."
 		},
 		{
 			"id": "sal-einvoice-rejection",
 			"area": "sales",
 			"name": "Be told when a customer rejects an e-invoice you sent.",
-			"shillinq": "partial",
+			"shillinq": "no",
 			"exact-online": "yes",
 			"moneybird": "partial",
 			"snelstart": "unknown",
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"evidence": "lib/Listener/PeppolDeliveryStatusListener.php:85 turns a rejected delivery status into a notification and applies the declared delivery transitions; the status events come from integriq, while shillinq's own Peppol transmission port is log-only (see sal-peppol-send).",
-				"reachedOn": "Nextcloud notification after Send e-invoice"
+				"readOn": "2026-09-27",
+				"evidence": "lib/Listener/PeppolDeliveryStatusListener.php:85 would notify with subject einvoice_delivery_rejected, but no notifier renders that subject (only DeadlineReminderNotifier and PosStockUnmatchedLineNotifier are registered, lib/AppInfo/Application.php:752, :760), and the listener is registered on a named Nextcloud event (Application.php:340-350) that integriq never dispatches: integriq emits delivery status as a CloudEvent object in register integriq, schema event (integriq lib/Service/EventService.php:2584).",
+				"reachedOn": "nothing reaches it"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Content-rn-whatsnewlandingpage?language=en_GB (May 2026): \"Now receive email notifications for rejected sales invoices sent via Peppol to stay updated and take timely action\"",
@@ -6466,7 +6474,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://support.exactonline.com/community/s/article/All-All-HNO-Content-rn-whatsnewlandingpage?language=en_GB",
-			"note": "The listener is wired; whether rejections ever arrive depends on the integriq Peppol path."
+			"note": "The listener is wired; whether rejections ever arrive depends on the integriq Peppol path. Specified 2026-09-27 in openspec/changes/sales-einvoice-exchange (OpenSpec pass). Corrected 2026-09-27 (OpenSpec pass, code read of batch 2): rated partial, but no rejection can reach the user: the listener never fires and its notification has no notifier."
 		},
 		{
 			"id": "led-multi-legislation",
@@ -6743,7 +6751,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing reaches it for orders; bookings have their own Deposits page (bok-deposit)",
@@ -6763,7 +6771,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-19-release-notes",
-			"note": "Only booking deposits exist (see bok-deposit, pending on a declared lifecycle); a down payment on a sales order is not built."
+			"note": "Only booking deposits exist (see bok-deposit, pending on a declared lifecycle); a down payment on a sales order is not built. Specified 2026-09-27 in openspec/changes/sales-down-payments (OpenSpec pass)."
 		}
 	],
 	"pending": [
