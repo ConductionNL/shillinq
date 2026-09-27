@@ -222,4 +222,96 @@ final class ObjectPaymentRequestValidatorTest extends TestCase {
 
 		self::assertTrue(true);
 	}//end testARequestDoesNotBlockItself()
+
+	/**
+	 * A contribution request for its child.
+	 *
+	 * @param string $child The child's id.
+	 * @param array<string, mixed> $overrides Fields to change.
+	 *
+	 * @return array<string, mixed> The request.
+	 */
+	private function contributionFor(string $child, array $overrides = []): array {
+		return $this->objectRequest(
+			array_merge(
+				[
+					'subject' => ['app' => 'learniq', 'type' => 'fee-item', 'register' => 'learniq', 'schema' => 'FeeItem', 'id' => 'fee-1'],
+					'requestType' => 'contribution',
+					'amount' => 60.0,
+					'beneficiary' => ['type' => 'learner', 'register' => 'learniq', 'schema' => 'LearnerProfile', 'id' => $child],
+				],
+				$overrides
+			)
+		);
+	}//end contributionFor()
+
+	/**
+	 * The beneficiary joins the uniqueness key: one fee item carries a pending
+	 * request per child, and a second for the same child is refused by name
+	 * (REQ-SCON-003).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-003)
+	 */
+	public function testTheBeneficiaryJoinsTheUniquenessKey(): void {
+		$existing = [$this->contributionFor('child-a', ['id' => 'pr-a'])];
+
+		// Child B on the same fee item is a different pending request.
+		$this->validator->validate($this->contributionFor('child-b'), $existing);
+
+		// Child A again is the duplicate the key exists to refuse.
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('pr-a');
+		$this->validator->validate($this->contributionFor('child-a'), $existing);
+	}//end testTheBeneficiaryJoinsTheUniquenessKey()
+
+	/**
+	 * A request without a beneficiary still collides with another without one,
+	 * so the leges and dwangsom rule is unchanged, and it does not collide with
+	 * a request that names a child.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-003)
+	 */
+	public function testAMissingBeneficiaryOnlyCollidesWithAnotherMissingOne(): void {
+		$existing = [$this->contributionFor('child-a', ['id' => 'pr-a'])];
+		$household = $this->contributionFor('child-a');
+		unset($household['beneficiary']);
+
+		$this->validator->validate($household, $existing);
+
+		self::assertSame('', $this->validator->beneficiaryKey(null));
+		self::assertSame('learner|learniq|LearnerProfile|child-a', $this->validator->beneficiaryKey($existing[0]['beneficiary']));
+	}//end testAMissingBeneficiaryOnlyCollidesWithAnotherMissingOne()
+
+	/**
+	 * The beneficiary type is part of who it is: a learner and a customer with
+	 * the same id are two people.
+	 *
+	 * @return void
+	 */
+	public function testTheBeneficiaryTypeSeparatesTwoPeopleWithOneId(): void {
+		$existing = [$this->contributionFor('alice', ['id' => 'pr-a', 'beneficiary' => ['type' => 'learner', 'id' => 'alice']])];
+
+		$this->validator->validate(
+			$this->contributionFor('alice', ['beneficiary' => ['type' => 'customer', 'id' => 'alice']]),
+			$existing
+		);
+
+		self::assertTrue(true);
+	}//end testTheBeneficiaryTypeSeparatesTwoPeopleWithOneId()
+
+	/**
+	 * A beneficiary that does not say who it is, is refused.
+	 *
+	 * @return void
+	 */
+	public function testABeneficiaryWithoutAnIdIsRefused(): void {
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('beneficiary');
+
+		$this->validator->validate($this->contributionFor('x', ['beneficiary' => ['type' => 'learner']]));
+	}//end testABeneficiaryWithoutAnIdIsRefused()
 }//end class

@@ -22,8 +22,8 @@ repair step imports.
 - **acceptance_criteria**:
   - GIVEN a pending contribution request for child A WHEN one for child B on the same subject is validated THEN it is accepted, and a second for A is refused naming the first
   - GIVEN two leges requests without a beneficiary WHEN validated THEN the existing refusal holds
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 3: The invoice and request builder, with the voluntary text
 - **spec_ref**: `openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md#requirement-a-voluntary-contribution-says-so-on-the-invoice-req-scon-007`
