@@ -103,8 +103,8 @@ inside the method this change must edit anyway.
 2. Validate the payload whole (`ContributionInvoiceBuilder::normaliseCharge`); a
    bad payload writes nothing.
 3. Load every request already on the chargeable once
-   (`PaymentRequestLeafProvider::requestsFor`, all pages) and index them by
-   beneficiary key.
+   (`PaymentRequestFinder::onSubject`, all pages, read past the caller's rights
+   so the duplicate check sees every request) and index them by beneficiary key.
 4. Per recipient, in a `try`: resolve the debtor (D7); derive the beneficiary
    (the recipient's, else `{type: customer, register: <shillinq>, schema:
    CustomerMaster, id: <customerMasterId>}`); skip when a request that is not
@@ -207,20 +207,26 @@ group, so it was never raised by this change).
 `PortalContributionProvider::getAudiences()` gains `parent`; `getContribution()`
 answers it with a manifest of the two AR collections (`salesInvoices`,
 `paymentRequests`) and the `pay` action, built from the same arrays as the
-customer manifest. `PortalPaymentSessionService` accepts audiences `customer` and
-`parent`, reads the invoice state from `lifecycleState ?? state`, and when it
-mints a request for an invoice carrying a `contribution` group, copies
-`subjectKind = object`, `subject`, `beneficiary`, `requestType = contribution`,
-`voluntary` and `raiseBatchId` from it.
+customer manifest. `PortalPaymentInitiationController` and `PortalPaymentSessionService` accept
+audiences `customer` and `parent`. The session service reads the invoice state
+from `lifecycleState ?? state` and the amount from `totalAmount ?? grossAmount`
+(ARInvoice declares `grossAmount`), and when it mints a request for an invoice
+carrying a `contribution` group, copies `subjectKind = object`, `subject`,
+`beneficiary`, `requestType = contribution`, `voluntary`, `raiseBatchId` and the
+debtor from it. The parent manifest names the amounts by the fields ARInvoice
+declares (`grossAmount`, `vatAmount`, where the customer manifest lists
+`totalAmount`, `taxAmount`), and adds `invoiceNote` to the invoices and
+`description` to the requests.
 
 ### D10. The leaf reads every page
 
 `PaymentRequestLeafProvider::requestsOn()` read one page of 200 object requests
 and filtered in PHP. With contributions, a shillinq holds far more than 200 object
-requests, and a case's leges request would drop off the page. The read now pages
-until a short page. The projection gains `beneficiary`, `invoiceReference`,
-`voluntary`, `settledAt` and `settledVia`. `requestsFor()` is the public name the
-raise uses.
+requests, and a case's leges request would drop off the page. The read moves to
+`PaymentRequestFinder::onSubject()`, which pages until a short page (capped at
+500 pages); the leaf reads as the caller and the raise as the system. The
+projection gains `beneficiary`, `invoiceReference`, `voluntary`, `settledAt` and
+`settledVia`.
 
 ## Declarative-vs-imperative decision (ADR-031)
 
@@ -276,6 +282,9 @@ lib/
   Service/ContributionRaiseService.php                  (new)
   Service/ContributionInvoiceBuilder.php                (new)
   Service/ContributionDebtorResolver.php                (new)
+  Service/PaymentRequestFinder.php                      (new)
+  Util/ObjectIdentifier.php                             (recordWithId keeps the uuid)
+  Controller/PortalPaymentInitiationController.php      (parent audience)
   Service/Dunning/VoluntaryContributionPolicy.php       (new)
   Service/ObjectPaymentRequestValidator.php             (beneficiary, contribution)
   Service/PaymentReconciliationService.php              (invoice branch, lifecycleState, settled edge)
