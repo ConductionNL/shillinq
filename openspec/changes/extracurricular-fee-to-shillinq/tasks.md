@@ -31,8 +31,8 @@ repair step imports.
 - **acceptance_criteria**:
   - GIVEN a voluntary charge in Dutch WHEN the invoice is built THEN invoiceNote carries the notice and the line ends with "(vrijwillig)"
   - GIVEN a recipient amount WHEN built THEN it overrides the charge; the request references the chargeable and the child
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 4: Debtor resolution and the portal claim
 - **spec_ref**: `openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md#requirement-the-debtor-resolves-to-a-customer-the-portal-can-scope-req-scon-005`
