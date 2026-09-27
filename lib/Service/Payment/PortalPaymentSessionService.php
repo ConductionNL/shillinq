@@ -122,10 +122,13 @@ class PortalPaymentSessionService {
 	private const CLAIM_NAME = 'customerMasterId';
 
 	/**
-	 * The audience this flow serves — a non-customer assertion is refused
-	 * upstream by the controller, but the service re-checks defensively.
+	 * The audiences this flow serves: customers, and parents paying a school
+	 * contribution (REQ-SCON-010). Any other assertion is refused upstream by
+	 * the controller, and the service re-checks defensively.
+	 *
+	 * @var array<int, string>
 	 */
-	private const AUDIENCE_CUSTOMER = 'customer';
+	private const PAYING_AUDIENCES = ['customer', 'parent'];
 
 	/**
 	 * The webhook route name (shillinq.paymentRequestWebhook.handle) — an
@@ -172,6 +175,7 @@ class PortalPaymentSessionService {
 	 * @return PortalPaymentSessionResult
 	 *
 	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002, REQ-SPPI-003, REQ-SPPI-004)
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-010)
 	 */
 	public function initiate(array $claims, string $target): PortalPaymentSessionResult {
 		$target = trim($target);
@@ -179,7 +183,7 @@ class PortalPaymentSessionService {
 			return PortalPaymentSessionResult::forbidden();
 		}
 
-		if ((string)($claims['audience'] ?? '') !== self::AUDIENCE_CUSTOMER) {
+		if (in_array((string)($claims['audience'] ?? ''), self::PAYING_AUDIENCES, true) === false) {
 			return PortalPaymentSessionResult::forbidden();
 		}
 
@@ -356,7 +360,12 @@ class PortalPaymentSessionService {
 
 			if (is_array($rows) === true && empty($rows) === false) {
 				$invoice = $rows[0];
-				if (in_array((string)($invoice['state'] ?? ''), self::PAYABLE_STATES, true) === true) {
+
+				// ARInvoice's lifecycle field is `lifecycleState`; `state` is not a
+				// property it declares, so reading only `state` found no invoice
+				// payable at all (REQ-SCON-010).
+				$state = (string)($invoice['lifecycleState'] ?? ($invoice['state'] ?? ''));
+				if (in_array($state, self::PAYABLE_STATES, true) === true) {
 					return $invoice;
 				}
 
@@ -381,6 +390,7 @@ class PortalPaymentSessionService {
 	 * @return array<string, mixed> The (possibly newly persisted) PaymentRequest row.
 	 *
 	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002, REQ-SPPI-004)
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-010)
 	 */
 	private function mintOrReusePaymentRequest(object $objectService, array $invoice): array {
 		$invoiceKey = (string)($invoice['id'] ?? '');
@@ -409,7 +419,9 @@ class PortalPaymentSessionService {
 		// and the citizen was sent to a checkout for nothing. A payment page
 		// for zero euro is worse than a page that says the payment could not
 		// be started, because the person believes they have paid.
-		$amount = ($invoice['totalAmount'] ?? null);
+		// ARInvoice declares `grossAmount`; `totalAmount` is kept first for the
+		// rows that carry it (REQ-SCON-010).
+		$amount = ($invoice['totalAmount'] ?? ($invoice['grossAmount'] ?? null));
 		if (is_bool($amount) === true || is_numeric($amount) === false || (float)$amount <= 0.0) {
 			throw new RuntimeException(
 				'This invoice carries no amount that can be charged, so no payment session was opened.'
@@ -424,6 +436,22 @@ class PortalPaymentSessionService {
 			'state' => 'pending',
 			'administrationId' => (string)($invoice['administrationId'] ?? ''),
 		];
+
+		// A fresh request for a school contribution (the raised one failed or
+		// expired) keeps the reference to the chargeable, or the settled signal
+		// would no longer name the owning app (REQ-SCON-010).
+		$contribution = ($invoice['contribution'] ?? null);
+		if (is_array($contribution) === true && is_array($contribution['chargeable'] ?? null) === true) {
+			$paymentRequest += [
+				'subjectKind' => 'object',
+				'subject' => $contribution['chargeable'],
+				'beneficiary' => ($contribution['beneficiary'] ?? null),
+				'requestType' => 'contribution',
+				'voluntary' => (($contribution['voluntary'] ?? false) === true),
+				'raiseBatchId' => (string)($contribution['raiseBatchId'] ?? ''),
+				'debtor' => ['customerMasterId' => (string)($invoice['customerId'] ?? '')],
+			];
+		}
 
 		$saved = $objectService->saveObject(
 			object: $paymentRequest,

@@ -957,4 +957,173 @@ final class DunningRunServiceTest extends TestCase {
 
 	}//end testPauseAcceptsWellFormedEvidenceUri()
 
+	/**
+	 * A store with a three-stage ladder and one voluntary contribution invoice.
+	 *
+	 * @return OpenRegisterFaithfulObjectService The store.
+	 */
+	private function voluntaryStore(): OpenRegisterFaithfulObjectService {
+		$os = new OpenRegisterFaithfulObjectService();
+		$os->seed(schema: 'DunningLadder', rows: [
+			[
+				'id' => 'ladder-1',
+				'stages' => [
+					['nr' => 1, 'daysAfterExpiryDate' => 0,  'channel' => 'EMAIL', 'templateId' => 'tpl-friendly'],
+					['nr' => 2, 'daysAfterExpiryDate' => 14, 'channel' => 'EMAIL', 'templateId' => 'tpl-firm'],
+					['nr' => 3, 'daysAfterExpiryDate' => 60, 'channel' => 'REGISTERED_POST', 'templateId' => 'tpl-final'],
+				],
+			],
+		]);
+		$os->seed(schema: 'ARInvoice', rows: [$this->voluntaryInvoice()]);
+
+		return $os;
+	}//end voluntaryStore()
+
+	/**
+	 * A voluntary ouderbijdrage invoice, 60 days past due on 2026-12-31.
+	 *
+	 * @return array<string, mixed> The invoice.
+	 */
+	private function voluntaryInvoice(): array {
+		return [
+			'id' => 'inv-vol',
+			'dueDate' => '2026-11-01',
+			'grossAmount' => 60.0,
+			'customerId' => 'cm-1',
+			'lifecycleState' => 'overdue',
+			'contribution' => ['kind' => 'parental-contribution', 'voluntary' => true],
+		];
+	}//end voluntaryInvoice()
+
+	/**
+	 * A voluntary contribution 60 days late gets the first, friendly stage once,
+	 * without costs; a later tick runs nothing; stage 2 is refused even when
+	 * asked for directly; a compulsory invoice of the same age still reaches
+	 * stage 3 (REQ-SCON-008).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-008)
+	 */
+	public function testAVoluntaryContributionGetsOneReminderAtMost(): void {
+		$os = $this->voluntaryStore();
+		$service = $this->makeService(os: $os);
+		$now = new \DateTimeImmutable('2026-12-31T12:00:00Z');
+
+		$first = $service->tickInvoice(
+			administrationId: 'adm-1',
+			invoice: $this->voluntaryInvoice(),
+			baseLadderId: 'ladder-1',
+			params: ['collectionCostAmount' => 40.0, 'interestAmount' => 1.5],
+			now: $now
+		);
+
+		self::assertNotNull($first);
+		self::assertSame(1, (int)$first['stageNr']);
+		self::assertSame('tpl-friendly', $first['templateId']);
+		self::assertNull($first['collectionCostAmount']);
+		self::assertNull($first['interestAmount']);
+
+		$second = $service->tickInvoice(
+			administrationId: 'adm-1',
+			invoice: $this->voluntaryInvoice(),
+			baseLadderId: 'ladder-1',
+			params: [],
+			now: $now->modify('+30 days')
+		);
+		self::assertNull($second);
+		self::assertCount(1, $os->dump(schema: 'DunningRun'));
+
+		try {
+			$service->executeStage(administrationId: 'adm-1', params: ['invoiceId' => 'inv-vol', 'stageNr' => 2]);
+			self::fail('stage 2 ran for a voluntary contribution');
+		} catch (\RuntimeException $e) {
+			self::assertStringContainsString('one reminder at most', $e->getMessage());
+		}
+
+		self::assertCount(1, $os->dump(schema: 'DunningRun'));
+
+		$compulsory = $this->voluntaryInvoice();
+		$compulsory['id'] = 'inv-comp';
+		$compulsory['contribution']['voluntary'] = false;
+		$run = $service->tickInvoice(
+			administrationId: 'adm-1',
+			invoice: $compulsory,
+			baseLadderId: 'ladder-1',
+			params: [],
+			now: $now
+		);
+		self::assertSame(3, (int)$run['stageNr']);
+	}//end testAVoluntaryContributionGetsOneReminderAtMost()
+
+	/**
+	 * Asked directly, executeStage runs the first stage for a voluntary
+	 * contribution only once: a second first-stage run is refused too.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-008)
+	 */
+	public function testExecuteStageRefusesASecondReminderForAVoluntaryContribution(): void {
+		$service = $this->makeService(os: $this->voluntaryStore());
+
+		$run = $service->executeStage(
+			administrationId: 'adm-1',
+			params: ['invoiceId' => 'inv-vol', 'stageNr' => 1, 'collectionCostAmount' => 40.0]
+		);
+		self::assertNull($run['collectionCostAmount']);
+
+		$this->expectException(\RuntimeException::class);
+		$service->executeStage(administrationId: 'adm-1', params: ['invoiceId' => 'inv-vol', 'stageNr' => 1]);
+	}//end testExecuteStageRefusesASecondReminderForAVoluntaryContribution()
+
+	/**
+	 * A voluntary contribution is never handed to a collection agency: the
+	 * transfer is refused, the run stays unsealed and the agency adapter is
+	 * never called (REQ-SCON-008).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-008)
+	 */
+	public function testAVoluntaryContributionIsNeverHandedToACollectionAgency(): void {
+		$os = $this->voluntaryStore();
+		$os->seed(schema: 'DunningRun', rows: [
+			[
+				'id' => 'dr-vol',
+				'administrationId' => 'adm-1',
+				'invoiceId' => 'inv-vol',
+				'stageNr' => 1,
+				'lifecycleState' => 'executed',
+			],
+		]);
+		$agency = new class implements IncassoBureauAdapterInterface {
+			/**
+			 * Dossiers the agency received.
+			 *
+			 * @var int
+			 */
+			public int $calls = 0;
+
+			public function transfer(string $administrationId, string $invoiceId, array $dossier): DunningChannelSendResult {
+				$this->calls++;
+				return new DunningChannelSendResult(channel: 'COLLECTION_AGENCY_API', deliveryStatus: 'DELIVERED');
+			}
+		};
+		$service = $this->makeService(os: $os, incasso: $agency);
+
+		$result = $service->transferToIncasso(
+			administrationId: 'adm-1',
+			invoiceId: 'inv-vol',
+			dossier: ['invoiceId' => 'inv-vol'],
+			dunningRunId: 'dr-vol'
+		);
+
+		self::assertSame('FAILED', $result->deliveryStatus);
+		self::assertStringContainsString('collection agency', (string)$result->errorMessage);
+		self::assertSame(0, $agency->calls);
+		$runs = $os->dump(schema: 'DunningRun');
+		self::assertSame('executed', end($runs)['lifecycleState']);
+	}//end testAVoluntaryContributionIsNeverHandedToACollectionAgency()
+
 }//end class

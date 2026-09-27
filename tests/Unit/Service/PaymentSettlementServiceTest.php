@@ -390,4 +390,42 @@ final class PaymentSettlementServiceTest extends TestCase {
 
 		self::assertSame(3, count(array_unique([$open, $unpayable, $part])));
 	}//end testUnpaidUnpayableAndPartlyPaidAreThreeDistinctStates()
+
+	/**
+	 * The settled edge is stamped the first time the request reports paid, by
+	 * hand or by the provider, and never moved or written for a partial payment
+	 * or an unapplied capture (REQ-SCON-009).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-009)
+	 */
+	public function testStampSettledMarksTheFirstPaidReport(): void {
+		$byHand = $this->service->stampSettled(
+			$this->service->append($this->request(), $this->settlement(245.0)),
+			'2026-09-18T11:00:00Z',
+			'pin'
+		);
+		self::assertSame('2026-09-18T11:00:00Z', $byHand['settledAt']);
+		self::assertSame('pin', $byHand['settledVia']);
+
+		$captured = $this->service->stampSettled($this->request('captured'), '2026-09-19T08:00:00Z', 'provider');
+		self::assertSame('provider', $captured['settledVia']);
+
+		$moved = $this->service->stampSettled($byHand, '2026-09-20T09:00:00Z', 'provider');
+		self::assertSame('2026-09-18T11:00:00Z', $moved['settledAt']);
+		self::assertSame('pin', $moved['settledVia']);
+
+		$partial = $this->service->stampSettled(
+			$this->service->append($this->request(), $this->settlement(100.0)),
+			'2026-09-18T11:00:00Z',
+			'pin'
+		);
+		self::assertArrayNotHasKey('settledAt', $partial);
+
+		$unapplied = $this->service->stampSettled($this->request('captured_unapplied'), '', 'provider');
+		self::assertArrayNotHasKey('settledAt', $unapplied);
+
+		self::assertArrayNotHasKey('settledAt', $this->service->stampSettled($this->request('pending'), '', 'provider'));
+	}//end testStampSettledMarksTheFirstPaidReport()
 }//end class

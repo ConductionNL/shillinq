@@ -315,6 +315,24 @@ final class PaymentRequestActionControllerTest extends TestCase {
 	}//end testPermittedHandlerSettlesByOtherMeans()
 
 	/**
+	 * Cash at the desk that covers the request writes the settled edge in the
+	 * same save, with the method as the route (REQ-SCON-009).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-009)
+	 */
+	public function testSettleStampsTheSettledEdge(): void {
+		$controller = $this->makeController(['PaymentRequest' => [$this->storedRequest()]], mayAdminister: true);
+
+		$controller->settle('pr-1', 'KAS-2026-0001', 'cash');
+
+		self::assertCount(1, $this->saved);
+		self::assertSame('cash', $this->saved[0]['settledVia']);
+		self::assertSame($this->saved[0]['settlements'][0]['settledAt'], $this->saved[0]['settledAt']);
+	}//end testSettleStampsTheSettledEdge()
+
+	/**
 	 * A provider capture landing AFTER a counter payment is not lost: both are
 	 * readable and the request reports the overpayment (REQ-FPCR-003).
 	 *

@@ -103,6 +103,26 @@ namespace OCA\Shillinq\Portal;
  */
 class PortalContributionProvider {
 	/**
+	 * The collections a parent sees: their own school contribution invoices
+	 * and the payment requests on them (extracurricular-fee-to-shillinq).
+	 *
+	 * @var array<int, string>
+	 */
+	private const PARENT_COLLECTIONS = ['salesInvoices', 'paymentRequests'];
+
+	/**
+	 * ARInvoice's declared names for the amounts and the lines the customer
+	 * manifest lists under names ARInvoice does not carry.
+	 *
+	 * @var array<string, string>
+	 */
+	private const PARENT_FIELD_MAP = [
+		'totalAmount' => 'grossAmount',
+		'taxAmount' => 'vatAmount',
+		'lines' => 'invoiceLines',
+	];
+
+	/**
 	 * The audiences this provider contributes to (contract v2, preferred).
 	 *
 	 * The registry probes for this method first; the audience vocabulary is
@@ -118,6 +138,7 @@ class PortalContributionProvider {
 			'customer',
 			'supplier',
 			'accountant',
+			'parent',
 		];
 
 	}//end getAudiences()
@@ -167,6 +188,10 @@ class PortalContributionProvider {
 
 		if ($audience === 'accountant') {
 			return $this->accountantManifest();
+		}
+
+		if ($audience === 'parent') {
+			return $this->parentManifest();
 		}
 
 		return null;
@@ -433,6 +458,75 @@ class PortalContributionProvider {
 		];
 
 	}//end customerManifest()
+
+	/**
+	 * The parent manifest: a guardian's own school contribution invoices and
+	 * their payment requests, with the `pay` action (REQ-SCON-010).
+	 *
+	 * Guardians sign in to the portal with audience `parent`, and until this
+	 * manifest existed they saw no shillinq invoice at all. It reuses the
+	 * customer's AR collections and scoping (the `customerMasterId` claim, which
+	 * the contribution raise links), names the amounts by the fields ARInvoice
+	 * declares, and adds the voluntary notice and the request's description.
+	 *
+	 * @return array<string, mixed> The parent manifest.
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-010)
+	 */
+	private function parentManifest(): array {
+		$manifest = $this->customerManifest();
+
+		$collections = [];
+		foreach ($manifest['collections'] as $collection) {
+			if (in_array($collection['id'], self::PARENT_COLLECTIONS, true) === true) {
+				$collections[] = $this->forParents(collection: $collection);
+			}
+		}
+
+		$manifest['label'] = 'School contributions';
+		$manifest['collections'] = $collections;
+
+		return $manifest;
+	}//end parentManifest()
+
+	/**
+	 * One customer AR collection, reworded and re-fielded for a parent.
+	 *
+	 * @param array<string, mixed> $collection The customer collection.
+	 *
+	 * @return array<string, mixed> The parent collection.
+	 */
+	private function forParents(array $collection): array {
+		$extra = 'description';
+		$collection['label'] = 'Pay my contributions';
+		if ($collection['id'] === 'salesInvoices') {
+			$extra = 'invoiceNote';
+			$collection['label'] = 'My contributions';
+		}
+
+		$collection['fields'] = $this->parentFields(fields: $collection['fields'], extra: $extra);
+		$collection['detail']['fields'] = $this->parentFields(fields: $collection['detail']['fields'], extra: $extra);
+		foreach ($collection['columns'] as $index => $column) {
+			$collection['columns'][$index]['field'] = (self::PARENT_FIELD_MAP[$column['field']] ?? $column['field']);
+		}
+
+		return $collection;
+	}//end forParents()
+
+	/**
+	 * A field list with ARInvoice's declared amount names and one extra field.
+	 *
+	 * @param array<int, string> $fields The customer field list.
+	 * @param string $extra The field a parent also sees.
+	 *
+	 * @return array<int, string> The parent field list.
+	 */
+	private function parentFields(array $fields, string $extra): array {
+		$mapped = array_map(static fn (string $field): string => (self::PARENT_FIELD_MAP[$field] ?? $field), $fields);
+		$mapped[] = $extra;
+
+		return $mapped;
+	}//end parentFields()
 
 	/**
 	 * The read-only supplier (AP-side) manifest.

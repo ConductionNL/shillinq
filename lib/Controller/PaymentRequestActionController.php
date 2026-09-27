@@ -167,6 +167,7 @@ class PaymentRequestActionController extends Controller {
 	 *
 	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004)
 	 * @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-003)
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-009)
 	 */
 	#[NoAdminRequired]
 	public function settle(
@@ -220,6 +221,14 @@ class PaymentRequestActionController extends Controller {
 		}
 
 		$request = $this->settlements->append(request: $request, settlement: $settlement);
+
+		// The settled edge the owning app of a contribution listens for, in the
+		// same save as the settlement that completed the request (REQ-SCON-009).
+		$request = $this->settlements->stampSettled(
+			request: $request,
+			settledAt: (string)$settlement['settledAt'],
+			via: (string)$settlement['method'],
+		);
 
 		$this->objectService->saveObject(
 			object: $request,

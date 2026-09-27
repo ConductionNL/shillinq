@@ -189,6 +189,7 @@ class PaymentReconciliationService {
 	 * @param LoggerInterface $logger Logger (never receives raw payment data).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param ?PaymentRevenueAccountResolver $revenueAccounts Resolves the revenue account for a settlement, absent when nothing maps one.
+	 * @param ?PaymentSettlementService $settlements Stamps the settled edge; built on demand when absent.
 	 *
 	 * @return void
 	 */
@@ -198,8 +199,19 @@ class PaymentReconciliationService {
 		private LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 		private readonly ?PaymentRevenueAccountResolver $revenueAccounts = null,
+		private readonly ?PaymentSettlementService $settlements = null,
 	) {
 	}//end __construct()
+
+	/**
+	 * The settlement service, built on demand so the callers that constructed
+	 * this service before `extracurricular-fee-to-shillinq` keep working.
+	 *
+	 * @return PaymentSettlementService The service.
+	 */
+	private function settlements(): PaymentSettlementService {
+		return ($this->settlements ?? new PaymentSettlementService());
+	}//end settlements()
 
 	/**
 	 * The revenue-account mapping, resolved lazily so the existing callers that
@@ -311,9 +323,15 @@ class PaymentReconciliationService {
 		// request lands in captured_unapplied — surfaced, never silently dropped
 		// (REQ-APL-005). DepositPayment capture handling is unchanged from the
 		// deposits path (its own lifecycle owns AR materialisation).
+		// A request with an invoice behind it settles that invoice, whatever its
+		// subjectKind: a school contribution stands on an object AND on its
+		// invoice, and the invoice already carries the revenue, so booking the
+		// object receipt as well would book the income twice (REQ-SCON-006).
+		$hasInvoice = ((string)($record['invoiceReference'] ?? '') !== '');
 		if ($outcome === self::OUTCOME_CAPTURED
 			&& $schema === self::SCHEMA_PAYMENT_REQUEST
 			&& (string)($record['subjectKind'] ?? 'invoice') === 'object'
+			&& $hasInvoice === false
 		) {
 			// A request on an object has no invoice to settle. Shillinq books the
 			// receipt itself, against the account mapped to the request type, and
@@ -331,6 +349,7 @@ class PaymentReconciliationService {
 			}
 
 			$record['confirmationSummary'] = $this->buildObjectConfirmationSummary(request: $record);
+			$record = $this->settlements()->stampSettled(request: $record, settledAt: (string)$record['capturedAt'], via: 'provider');
 		} elseif ($outcome === self::OUTCOME_CAPTURED && $schema === self::SCHEMA_PAYMENT_REQUEST) {
 			$settledInvoice = $this->settleLinkedInvoice(
 				objectService: $this->objectService,
@@ -351,6 +370,7 @@ class PaymentReconciliationService {
 			// existing read-only paymentRequests portal collection — no
 			// dedicated inbox schema (portal-payment-initiation REQ-SPPI-005).
 			$record['confirmationSummary'] = $this->buildConfirmationSummary(invoice: $settledInvoice, request: $record);
+			$record = $this->settlements()->stampSettled(request: $record, settledAt: (string)$record['capturedAt'], via: 'provider');
 		}//end if
 
 		$this->objectService->saveObject(
@@ -427,7 +447,12 @@ class PaymentReconciliationService {
 			}
 
 			$invoice = $invoices[0];
-			$invoiceState = (string)($invoice['state'] ?? '');
+
+			// ARInvoice's lifecycle field is `lifecycleState`. This read used to
+			// take `state`, a property ARInvoice does not declare, so a real
+			// issued invoice read as '' and every capture against it landed in
+			// captured_unapplied (REQ-SCON-006).
+			$invoiceState = (string)($invoice['lifecycleState'] ?? ($invoice['state'] ?? ''));
 
 			// The AR matchPaid transition only fires from issued / partially-paid
 			// / overdue. Any other state (already paid, written-off, voided,
@@ -442,7 +467,11 @@ class PaymentReconciliationService {
 
 			// Trigger the existing AR lifecycle transition to paid, with the
 			// PaymentRequest as payment evidence. AR core owns the GL posting.
-			$invoice['state'] = 'paid';
+			$invoice['lifecycleState'] = 'paid';
+			if (array_key_exists('state', $invoice) === true) {
+				$invoice['state'] = 'paid';
+			}
+
 			$invoice['paymentEvidenceRef'] = (string)($request['paymentIntentId'] ?? '');
 			$invoice['settlementReference'] = (string)($request['settlementReference'] ?? '');
 

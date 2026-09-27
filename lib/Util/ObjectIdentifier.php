@@ -239,6 +239,35 @@ final class ObjectIdentifier {
 	}//end findOne()
 
 	/**
+	 * Normalise a result entry to a record that keeps its uuid as `id`.
+	 *
+	 * `findOne()` hands back the entity's payload, which on an entity row does
+	 * not carry the uuid. A caller that reports or links the row by id needs it,
+	 * so this answers the payload with `id` filled from resolve() when absent.
+	 *
+	 * @param mixed $candidate Result entry or single object.
+	 *
+	 * @return array<string,mixed>|null The record, or null when not usable.
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-003)
+	 */
+	public static function recordWithId(mixed $candidate): ?array {
+		$record = self::record(candidate: $candidate);
+		if ($record === null) {
+			return null;
+		}
+
+		if ((string)($record['id'] ?? '') === '') {
+			$uuid = self::resolve(saved: $candidate);
+			if ($uuid !== '') {
+				$record['id'] = $uuid;
+			}
+		}
+
+		return $record;
+	}//end recordWithId()
+
+	/**
 	 * Normalise an ObjectService result entry to a plain record array.
 	 *
 	 * Results arrive as either plain arrays or ObjectEntity instances

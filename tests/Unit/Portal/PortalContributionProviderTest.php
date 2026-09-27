@@ -146,17 +146,18 @@ class PortalContributionProviderTest extends TestCase {
 	}//end testClassIsPlainAndDependencyFree()
 
 	/**
-	 * getAudiences() (v2) returns exactly ['customer', 'supplier', 'accountant'].
+	 * getAudiences() (v2) returns exactly ['customer', 'supplier', 'accountant',
+	 * 'parent']; `parent` is how guardians sign in (REQ-SCON-010).
 	 *
 	 * @return void
 	 */
-	public function testGetAudiencesReturnsCustomerSupplierAccountant(): void {
+	public function testGetAudiencesReturnsCustomerSupplierAccountantParent(): void {
 		$this->assertSame(
-			['customer', 'supplier', 'accountant'],
+			['customer', 'supplier', 'accountant', 'parent'],
 			$this->provider->getAudiences()
 		);
 
-	}//end testGetAudiencesReturnsCustomerSupplierAccountant()
+	}//end testGetAudiencesReturnsCustomerSupplierAccountantParent()
 
 	/**
 	 * getAudience() (v1 fallback) returns the primary audience, contained in v2.
@@ -748,4 +749,40 @@ class PortalContributionProviderTest extends TestCase {
 		$this->assertSame(1, $joins, 'Expected exactly the paymentRequests via join.');
 
 	}//end testViaJoinMatchesOnObjectIdentity()
+
+	/**
+	 * A parent sees their own contribution invoices and the requests on them,
+	 * scoped by the same customerMasterId claim as a customer, named by the
+	 * amount fields ARInvoice declares, with the voluntary notice and the pay
+	 * action; nothing from the customer's other collections (REQ-SCON-010).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-010)
+	 */
+	public function testTheParentManifestListsTheContributionInvoicesAndThePayAction(): void {
+		$manifest = $this->provider->getContribution(['audience' => 'parent']);
+
+		self::assertIsArray($manifest);
+		$ids = array_column($manifest['collections'], 'id');
+		self::assertSame(['salesInvoices', 'paymentRequests'], $ids);
+
+		$invoices = $manifest['collections'][0];
+		self::assertSame('customerId', $invoices['scopeField']);
+		self::assertSame('customerMasterId', $invoices['scopeClaim']);
+		self::assertSame('pay', $invoices['rowAction']);
+		self::assertContains('grossAmount', $invoices['fields']);
+		self::assertContains('invoiceNote', $invoices['fields']);
+		self::assertNotContains('totalAmount', $invoices['fields']);
+		self::assertContains('invoiceLines', $invoices['fields']);
+		self::assertNotContains('lines', $invoices['fields']);
+		self::assertContains('grossAmount', array_column($invoices['columns'], 'field'));
+
+		$requests = $manifest['collections'][1];
+		self::assertSame('customerMasterId', $requests['scopeClaim']);
+		self::assertContains('description', $requests['fields']);
+
+		self::assertSame('pay', $manifest['actions'][0]['id']);
+		self::assertSame('/apps/shillinq/api/portal/payments/initiate', $manifest['actions'][0]['endpoint']);
+	}//end testTheParentManifestListsTheContributionInvoicesAndThePayAction()
 }//end class

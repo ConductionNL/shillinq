@@ -52,6 +52,7 @@ use OCA\Shillinq\Service\Dunning\DunningChannelSendResult;
 use OCA\Shillinq\Service\Dunning\EvidenceRetentionEnforcer;
 use OCA\Shillinq\Service\Dunning\IncassoBureauAdapterInterface;
 use OCA\Shillinq\Service\Dunning\PostNLAdapterInterface;
+use OCA\Shillinq\Service\Dunning\VoluntaryContributionPolicy;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -104,12 +105,14 @@ class DunningRunService {
 	 * @param IAppConfig $appConfig App config.
 	 * @param LoggerInterface $logger Logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param VoluntaryContributionPolicy $voluntary The one-reminder cap on a voluntary contribution.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly VoluntaryContributionPolicy $voluntary = new VoluntaryContributionPolicy(),
 	) {
 	}//end __construct()
 
@@ -237,6 +240,17 @@ class DunningRunService {
 		}
 
 		$stageNr = (int)($stage['nr'] ?? 1);
+
+		// A voluntary contribution gets the first stage once, without costs (REQ-SCON-008).
+		if ($this->voluntary->isVoluntary(invoice: $invoice) === true) {
+			if ($this->runCount(administrationId: $administrationId, invoiceId: $invoiceId) > 0) {
+				return null;
+			}
+
+			$stageNr = VoluntaryContributionPolicy::ONLY_STAGE;
+			$stage = ($this->stageDefinition(stages: $resolved['stages'], stageNr: $stageNr) ?? $stage);
+			$params = $this->voluntary->stripCosts(params: $params);
+		}
 
 		// Idempotency: skip when this stage has already fired for this invoice.
 		$existing = $this->findAll(
@@ -405,6 +419,17 @@ class DunningRunService {
 
 		if ($this->hasActivePause(administrationId: $administrationId, invoiceId: $invoiceId) === true) {
 			throw new RuntimeException(sprintf('Cannot execute DunningRun: invoice %s is paused.', $invoiceId));
+		}
+
+		// Every route to a run passes here, the HTTP one included (REQ-SCON-008).
+		$invoice = $this->fetchById(schema: 'ARInvoice', id: $invoiceId);
+		if ($this->voluntary->isVoluntary(invoice: $invoice) === true) {
+			$runs = $this->runCount(administrationId: $administrationId, invoiceId: $invoiceId);
+			if ($this->voluntary->allowsStage(invoice: $invoice, stageNr: (int)($params['stageNr'] ?? 1), runsSoFar: $runs) === false) {
+				throw new RuntimeException(VoluntaryContributionPolicy::REFUSAL);
+			}
+
+			$params = $this->voluntary->stripCosts(params: $params);
 		}
 
 		$now = new DateTimeImmutable();
@@ -995,6 +1020,11 @@ class DunningRunService {
 		array $dossier,
 		string $dunningRunId,
 	): DunningChannelSendResult {
+		// 0. A voluntary contribution is never handed to a collection agency (REQ-SCON-008).
+		if ($this->voluntary->isVoluntary(invoice: $this->fetchById(schema: 'ARInvoice', id: $invoiceId)) === true) {
+			return new DunningChannelSendResult(channel: self::INCASSO_CHANNEL, deliveryStatus: 'FAILED', errorMessage: VoluntaryContributionPolicy::REFUSAL);
+		}
+
 		// 1. Resolve the run BEFORE anything leaves the building. A dossier
 		// dispatched against a run this app cannot find is a dossier with no
 		// evidence trail and no re-dispatch guard, so absent = refuse.
@@ -1195,6 +1225,18 @@ class DunningRunService {
 	private function resolvePostNlAdapter(): PostNLAdapterInterface {
 		return $this->container->get(PostNLAdapterInterface::class);
 	}//end resolvePostNlAdapter()
+
+	/**
+	 * How many dunning runs an invoice already had (REQ-SCON-008).
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $invoiceId Invoice FK.
+	 *
+	 * @return int The number of runs.
+	 */
+	private function runCount(string $administrationId, string $invoiceId): int {
+		return count($this->findAll(schema: 'DunningRun', filters: ['administrationId' => $administrationId, 'invoiceId' => $invoiceId]));
+	}//end runCount()
 
 	/**
 	 * Whether the invoice has an active DunningPauseDispute.

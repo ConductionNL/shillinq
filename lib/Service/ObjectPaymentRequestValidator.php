@@ -55,7 +55,7 @@ final class ObjectPaymentRequestValidator {
 	 *
 	 * @var array<int, string>
 	 */
-	public const REQUEST_TYPES = ['leges', 'dwangsom', 'deposit', 'other'];
+	public const REQUEST_TYPES = ['leges', 'dwangsom', 'deposit', 'other', 'contribution'];
 
 	/**
 	 * The parts a semantic reference (ADR-048) must name.
@@ -76,6 +76,17 @@ final class ObjectPaymentRequestValidator {
 	 * @var array<int, string>
 	 */
 	public const IDENTITY_PARTS = ['register', 'schema', 'id'];
+
+	/**
+	 * The parts that decide WHO a beneficiary is.
+	 *
+	 * Unlike the subject, `type` IS part of this identity: a beneficiary may be a
+	 * Nextcloud user with no register or schema, and `learner:alice` must not
+	 * collide with `customer:alice`.
+	 *
+	 * @var array<int, string>
+	 */
+	public const BENEFICIARY_PARTS = ['type', 'register', 'schema', 'id'];
 
 	/**
 	 * Refuse a request that does not satisfy its own subject kind, or that
@@ -108,6 +119,7 @@ final class ObjectPaymentRequestValidator {
 		}
 
 		$this->assertSubject(subject: ($request['subject'] ?? null));
+		$this->assertBeneficiary(beneficiary: ($request['beneficiary'] ?? null));
 
 		$requestType = (string)($request['requestType'] ?? '');
 		if (in_array($requestType, self::REQUEST_TYPES, true) === false) {
@@ -130,6 +142,7 @@ final class ObjectPaymentRequestValidator {
 			requestType: $requestType,
 			existing: $existing,
 			selfId: (string)($request['id'] ?? ''),
+			beneficiary: ($request['beneficiary'] ?? null),
 		);
 	}//end validate()
 
@@ -148,6 +161,54 @@ final class ObjectPaymentRequestValidator {
 
 		return implode('|', $parts);
 	}//end subjectKey()
+
+	/**
+	 * The stable key of a beneficiary, or an empty string when there is none.
+	 *
+	 * Two requests without a beneficiary compare equal on it, which keeps the
+	 * one-pending-leges-request-per-case rule exactly as it was before the
+	 * beneficiary existed.
+	 *
+	 * @param mixed $beneficiary The beneficiary as stored, or null.
+	 *
+	 * @return string The key, over type, register, schema and id in a fixed order.
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-003)
+	 */
+	public function beneficiaryKey(mixed $beneficiary): string {
+		if (is_array($beneficiary) === false || $beneficiary === []) {
+			return '';
+		}
+
+		$parts = [];
+		foreach (self::BENEFICIARY_PARTS as $part) {
+			$parts[] = (string)($beneficiary[$part] ?? '');
+		}
+
+		return implode('|', $parts);
+	}//end beneficiaryKey()
+
+	/**
+	 * Refuse a beneficiary that is present but does not say who it is.
+	 *
+	 * @param mixed $beneficiary The beneficiary as given, or null.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When a type or an id is missing.
+	 */
+	private function assertBeneficiary(mixed $beneficiary): void {
+		if ($beneficiary === null || $beneficiary === []) {
+			return;
+		}
+
+		if (is_array($beneficiary) === false
+			|| (string)($beneficiary['type'] ?? '') === ''
+			|| (string)($beneficiary['id'] ?? '') === ''
+		) {
+			throw new InvalidArgumentException('A beneficiary names at least a type and an id.');
+		}
+	}//end assertBeneficiary()
 
 	/**
 	 * Refuse a subject that does not name all four parts of a semantic reference.
@@ -185,13 +246,21 @@ final class ObjectPaymentRequestValidator {
 	 * @param string $requestType The type of the new request.
 	 * @param array<int, array<string, mixed>> $existing Requests already stored.
 	 * @param string $selfId The id of the request being revalidated, if it is an update.
+	 * @param mixed $beneficiary The beneficiary of the new request, or null.
 	 *
 	 * @return void
 	 *
 	 * @throws InvalidArgumentException When an open request of the same type exists.
 	 */
-	private function assertNoOpenRequest(array $subject, string $requestType, array $existing, string $selfId): void {
+	private function assertNoOpenRequest(
+		array $subject,
+		string $requestType,
+		array $existing,
+		string $selfId,
+		mixed $beneficiary = null,
+	): void {
 		$key = $this->subjectKey(subject: $subject);
+		$beneficiaryKey = $this->beneficiaryKey(beneficiary: $beneficiary);
 
 		foreach ($existing as $candidate) {
 			if ((string)($candidate['state'] ?? 'pending') !== 'pending') {
@@ -205,6 +274,11 @@ final class ObjectPaymentRequestValidator {
 			if (is_array($candidate['subject'] ?? null) === false
 				|| $this->subjectKey(subject: (array)$candidate['subject']) !== $key
 			) {
+				continue;
+			}
+
+			// One chargeable carries a pending request per child (REQ-SCON-003).
+			if ($this->beneficiaryKey(beneficiary: ($candidate['beneficiary'] ?? null)) !== $beneficiaryKey) {
 				continue;
 			}
 

@@ -547,4 +547,162 @@ final class PaymentReconciliationServiceTest extends TestCase {
 		$schemas = array_map(static fn (array $s): string => $s['schema'], $saved);
 		self::assertNotContains('ARInvoice', $schemas);
 	}//end testObjectRequestDoesNotSettleAnInvoice()
+
+	/**
+	 * A pending school contribution: an object request with its invoice behind it.
+	 *
+	 * @param array<string, mixed> $overrides Fields to change.
+	 *
+	 * @return array<string, mixed> The request.
+	 */
+	private function contributionRequest(array $overrides = []): array {
+		return array_merge(
+			[
+				'id' => 'pr-ctb-1',
+				'paymentIntentId' => 'tr_ctb',
+				'state' => 'pending',
+				'subjectKind' => 'object',
+				'subject' => ['app' => 'learniq', 'type' => 'fee-item', 'register' => 'learniq', 'schema' => 'FeeItem', 'id' => 'fee-1'],
+				'beneficiary' => ['type' => 'learner', 'id' => 'child-a'],
+				'requestType' => 'contribution',
+				'invoiceReference' => 'inv-ctb-1',
+				'amount' => 60.0,
+				'currency' => 'EUR',
+			],
+			$overrides
+		);
+	}//end contributionRequest()
+
+	/**
+	 * The saved objects of one schema.
+	 *
+	 * @param array<int, array{schema: string, object: array<string, mixed>}> $saved The sink.
+	 * @param string $schema The schema.
+	 *
+	 * @return array<int, array<string, mixed>> The objects.
+	 */
+	private function savedIn(array $saved, string $schema): array {
+		return array_values(
+			array_map(
+				static fn (array $s): array => $s['object'],
+				array_filter($saved, static fn (array $s): bool => $s['schema'] === $schema)
+			)
+		);
+	}//end savedIn()
+
+	/**
+	 * A captured contribution settles its invoice through `lifecycleState` and
+	 * books no object receipt, so the income is booked once (REQ-SCON-006).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-006)
+	 */
+	public function testAnInvoiceBackedObjectRequestSettlesItsInvoiceAndBooksNoReceipt(): void {
+		$saved = [];
+		$stub = $this->buildObjectServiceStub(
+			[
+				'PaymentRequest' => [$this->contributionRequest()],
+				'ARInvoice' => [['id' => 'inv-ctb-1', 'lifecycleState' => 'issued', 'invoiceNumber' => 'CTB-2026-1A2B3C4D-0001']],
+			],
+			$saved
+		);
+		$service = $this->makeServiceWithAccounts($stub, ['contribution' => '8400', 'clearing' => '1100']);
+
+		$out = $service->reconcile('mollie', ['paymentIntentId' => 'tr_ctb', 'outcome' => 'captured']);
+
+		self::assertSame(PaymentReconciliationService::RESULT_APPLIED, $out['result']);
+		self::assertSame([], $this->savedIn($saved, 'GLTransaction'));
+
+		$invoice = $this->savedIn($saved, 'ARInvoice')[0];
+		self::assertSame('paid', $invoice['lifecycleState']);
+		self::assertArrayNotHasKey('state', $invoice);
+
+		$request = $this->savedIn($saved, 'PaymentRequest')[0];
+		self::assertSame('captured', $request['state']);
+		self::assertStringContainsString('CTB-2026-1A2B3C4D-0001', (string)$request['confirmationSummary']);
+		self::assertArrayNotHasKey('revenueAccount', $request);
+	}//end testAnInvoiceBackedObjectRequestSettlesItsInvoiceAndBooksNoReceipt()
+
+	/**
+	 * A plain invoice request against an invoice that only carries
+	 * `lifecycleState` settles it. Before this change the read took `state` and
+	 * every such capture landed in captured_unapplied (REQ-SCON-006).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-006)
+	 */
+	public function testAnInvoiceCarryingOnlyLifecycleStateIsSettled(): void {
+		$saved = [];
+		$stub = $this->buildObjectServiceStub(
+			[
+				'PaymentRequest' => [['paymentIntentId' => 'tr_1', 'state' => 'pending', 'invoiceReference' => 'inv-1', 'amount' => 121.0]],
+				'ARInvoice' => [['id' => 'inv-1', 'lifecycleState' => 'overdue']],
+			],
+			$saved
+		);
+
+		$out = $this->makeService($stub)->reconcile('mollie', ['paymentIntentId' => 'tr_1', 'outcome' => 'captured']);
+
+		self::assertSame(PaymentReconciliationService::RESULT_APPLIED, $out['result']);
+		self::assertSame('paid', $this->savedIn($saved, 'ARInvoice')[0]['lifecycleState']);
+	}//end testAnInvoiceCarryingOnlyLifecycleStateIsSettled()
+
+	/**
+	 * The first capture writes the settled edge, `settledAt` and
+	 * `settledVia = provider`, in the save that moves the request to captured;
+	 * a replayed webhook saves nothing, so no second edge (REQ-SCON-009).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-009)
+	 */
+	public function testACaptureStampsTheSettledEdgeOnce(): void {
+		$saved = [];
+		$stub = $this->buildObjectServiceStub(
+			[
+				'PaymentRequest' => [$this->contributionRequest()],
+				'ARInvoice' => [['id' => 'inv-ctb-1', 'lifecycleState' => 'issued']],
+			],
+			$saved
+		);
+
+		$this->makeService($stub)->reconcile('mollie', ['paymentIntentId' => 'tr_ctb', 'outcome' => 'captured']);
+
+		$request = $this->savedIn($saved, 'PaymentRequest')[0];
+		self::assertSame('provider', $request['settledVia']);
+		self::assertSame($request['capturedAt'], $request['settledAt']);
+
+		$replaySaved = [];
+		$replayStub = $this->buildObjectServiceStub(['PaymentRequest' => [$request]], $replaySaved);
+		$replay = $this->makeService($replayStub)->reconcile('mollie', ['paymentIntentId' => 'tr_ctb', 'outcome' => 'captured']);
+
+		self::assertSame(PaymentReconciliationService::RESULT_NOOP, $replay['result']);
+		self::assertSame([], $replaySaved);
+	}//end testACaptureStampsTheSettledEdgeOnce()
+
+	/**
+	 * A capture that could not settle its invoice is not a settled request, so
+	 * no edge is written (REQ-SCON-009).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-009)
+	 */
+	public function testAnUnappliedCaptureWritesNoSettledEdge(): void {
+		$saved = [];
+		$stub = $this->buildObjectServiceStub(
+			[
+				'PaymentRequest' => [$this->contributionRequest()],
+				'ARInvoice' => [['id' => 'inv-ctb-1', 'lifecycleState' => 'written-off']],
+			],
+			$saved
+		);
+
+		$out = $this->makeService($stub)->reconcile('mollie', ['paymentIntentId' => 'tr_ctb', 'outcome' => 'captured']);
+
+		self::assertSame(PaymentReconciliationService::RESULT_UNAPPLIED, $out['result']);
+		self::assertArrayNotHasKey('settledAt', $this->savedIn($saved, 'PaymentRequest')[0]);
+	}//end testAnUnappliedCaptureWritesNoSettledEdge()
 }//end class

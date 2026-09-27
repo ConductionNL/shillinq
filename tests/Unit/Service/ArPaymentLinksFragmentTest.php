@@ -221,7 +221,7 @@ final class ArPaymentLinksFragmentTest extends TestCase {
 
 		self::assertSame(['invoice', 'object'], $properties['subjectKind']['enum']);
 		self::assertSame('invoice', $properties['subjectKind']['default']);
-		self::assertSame(['leges', 'dwangsom', 'deposit', 'other'], $properties['requestType']['enum']);
+		self::assertSame(['leges', 'dwangsom', 'deposit', 'other', 'contribution'], $properties['requestType']['enum']);
 	}//end testPaymentRequestCarriesTheObjectRequestProperties()
 
 	/**
