@@ -785,4 +785,34 @@ class PortalContributionProviderTest extends TestCase {
 		self::assertSame('pay', $manifest['actions'][0]['id']);
 		self::assertSame('/apps/shillinq/api/portal/payments/initiate', $manifest['actions'][0]['endpoint']);
 	}//end testTheParentManifestListsTheContributionInvoicesAndThePayAction()
+
+	/**
+	 * A parent can answer the voluntary reminder with "I will not pay": the
+	 * parent manifest declares the decline action next to pay, forwarding only
+	 * the invoice id to an instance-local path; a customer never sees it
+	 * (REQ-SCON-013).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-013)
+	 */
+	public function testOnlyTheParentManifestCarriesTheDeclineAction(): void {
+		$parent = $this->provider->getContribution(['audience' => 'parent']);
+		$actions = [];
+		foreach ($parent['actions'] as $action) {
+			$actions[$action['id']] = $action;
+		}
+
+		self::assertSame(['pay', 'decline'], array_keys($actions));
+		$decline = $actions['decline'];
+		self::assertSame('I will not pay', $decline['label']);
+		self::assertSame('endpoint-forward', $decline['type']);
+		self::assertSame('/apps/shillinq/api/portal/contributions/decline', $decline['endpoint']);
+		self::assertSame('POST', $decline['method']);
+		self::assertSame(['invoiceId'], $decline['fields']);
+		self::assertSame('low', $decline['minTrust']);
+
+		$customer = $this->provider->getContribution(self::CUSTOMER_SUBJECT);
+		self::assertSame(['pay'], array_column($customer['actions'], 'id'));
+	}//end testOnlyTheParentManifestCarriesTheDeclineAction()
 }//end class

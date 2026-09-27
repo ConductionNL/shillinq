@@ -40,8 +40,8 @@ repair step imports. Every fix starts with a test that fails.
 - **acceptance_criteria**:
   - GIVEN an open own voluntary invoice WHEN declined THEN it is declined, declinedAt is set and pending requests are voided; a repeat writes nothing
   - GIVEN a foreign, compulsory or paid invoice, a malformed id or a wrong audience WHEN declined THEN one forbidden answer and no save
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 5: Seed data and docs
 - **spec_ref**: `openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md#requirement-a-declined-contribution-is-closed-req-scon-014`

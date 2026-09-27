@@ -7,7 +7,8 @@
  * initiation chain"). Given a VERIFIED assertion's claims and a client-chosen
  * opaque target id, this service:
  *
- *   1. resolves the subject's `customerMasterId` scope claim server-side by
+ *   1. resolves the subject's `customerMasterId` scope claim server-side
+ *      (PortalSubjectResolver, shared with the decline receiver) by
  *      reading portaliq's OWN `portalAccount` register the same way
  *      portaliq's `PortalObjectReader::resolveClaim()` does (design.md Open
  *      Q1) — the frozen A6 assertion carries only `sub`/`audience`/
@@ -53,6 +54,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Payment;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Portal\PortalSubjectResolver;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
 use Psr\Container\ContainerInterface;
@@ -83,17 +85,6 @@ class PortalPaymentSessionService {
 	private const REGISTER = 'shillinq';
 
 	/**
-	 * Portaliq's own register slug — read cross-app to resolve the subject's
-	 * claims, never written.
-	 */
-	private const PORTALIQ_REGISTER = 'portaliq';
-
-	/**
-	 * The portalAccount schema, carrying the server-managed `claims` map.
-	 */
-	private const SCHEMA_PORTAL_ACCOUNT = 'portalAccount';
-
-	/**
 	 * The AR invoice schema.
 	 */
 	private const SCHEMA_AR_INVOICE = 'ARInvoice';
@@ -109,17 +100,6 @@ class PortalPaymentSessionService {
 	 * @var array<int, string>
 	 */
 	private const PAYABLE_STATES = ['issued', 'partially-paid', 'overdue'];
-
-	/**
-	 * The claim namespace this app's own scope claim lives under
-	 * (`claims.shillinq.customerMasterId`, contract v2 A4 addressing).
-	 */
-	private const CLAIM_APP_ID = 'shillinq';
-
-	/**
-	 * The claim name resolved from the subject's portalAccount.
-	 */
-	private const CLAIM_NAME = 'customerMasterId';
 
 	/**
 	 * The audiences this flow serves: customers, and parents paying a school
@@ -156,6 +136,7 @@ class PortalPaymentSessionService {
 	 * @param IURLGenerator $urlGenerator Builds the webhook + default redirect URL.
 	 * @param IAppConfig $appConfig App config for the redirect-URL override.
 	 * @param LoggerInterface $logger Logger (never receives PSP/PII detail).
+	 * @param PortalSubjectResolver $subjects The ownership chain shared with the decline receiver.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
@@ -163,6 +144,7 @@ class PortalPaymentSessionService {
 		private readonly IURLGenerator $urlGenerator,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly PortalSubjectResolver $subjects = new PortalSubjectResolver(),
 	) {
 	}//end __construct()
 
@@ -179,7 +161,7 @@ class PortalPaymentSessionService {
 	 */
 	public function initiate(array $claims, string $target): PortalPaymentSessionResult {
 		$target = trim($target);
-		if ($this->isOpaqueId(target: $target) === false) {
+		if ($this->subjects->isOpaqueId(target: $target) === false) {
 			return PortalPaymentSessionResult::forbidden();
 		}
 
@@ -196,7 +178,7 @@ class PortalPaymentSessionService {
 
 		$session = null;
 		try {
-			$customerMasterId = $this->resolveCustomerMasterId(
+			$customerMasterId = $this->subjects->customerMasterId(
 				objectService: $objectService,
 				subjectRef: (string)($claims['sub'] ?? ''),
 				audience: (string)($claims['audience'] ?? ''),
@@ -236,96 +218,6 @@ class PortalPaymentSessionService {
 
 		return PortalPaymentSessionResult::success(checkoutUrl: $session->checkoutUrl);
 	}//end initiate()
-
-	/**
-	 * SSRF hardening (REQ-SPPI-003): the target is used ONLY as an opaque
-	 * OpenRegister object id/slug, never to build an outbound request. Reject
-	 * anything that looks like a URL, an absolute/relative path, or a parent
-	 * traversal.
-	 *
-	 * @param string $target The client-supplied target id.
-	 *
-	 * @return bool True when the target is safe to use as an opaque id.
-	 *
-	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-003)
-	 */
-	private function isOpaqueId(string $target): bool {
-		if ($target === '') {
-			return false;
-		}
-
-		if (str_contains($target, '://') === true) {
-			return false;
-		}
-
-		if (str_starts_with($target, '/') === true || str_starts_with($target, '\\') === true) {
-			return false;
-		}
-
-		if (str_contains($target, '..') === true) {
-			return false;
-		}
-
-		return true;
-	}//end isOpaqueId()
-
-	/**
-	 * Resolve `claims.shillinq.customerMasterId` from the subject's OWN
-	 * portalAccount row — mirrors portaliq's
-	 * `PortalObjectReader::resolveClaim()` (design.md Open Q1): the frozen A6
-	 * assertion carries only `sub`/`audience`/`organisation`/`trust`/`jti`,
-	 * never an app-specific scope claim, so this app resolves it itself by
-	 * reading portaliq's own register cross-app (read-only).
-	 *
-	 * @param object $objectService OpenRegister's ObjectService.
-	 * @param string $subjectRef The verified assertion's `sub` claim.
-	 * @param string $audience The verified assertion's `audience` claim.
-	 *
-	 * @return string|null The resolved customerMasterId, or null when absent/malformed.
-	 *
-	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002)
-	 */
-	private function resolveCustomerMasterId(object $objectService, string $subjectRef, string $audience): ?string {
-		if ($subjectRef === '' || $audience === '') {
-			return null;
-		}
-
-		$rows = $objectService
-			->setRegister(self::PORTALIQ_REGISTER)
-			->setSchema(self::SCHEMA_PORTAL_ACCOUNT)
-			->findAll(
-				config: [
-					'filters' => [
-						'subjectRef' => $subjectRef,
-						'audience' => $audience,
-					],
-					'limit' => 2,
-				],
-				_rbac: false,
-				_multitenancy: false,
-			);
-
-		if (is_array($rows) === false || empty($rows) === true) {
-			return null;
-		}
-
-		$claims = ($rows[0]['claims'] ?? null);
-		if (is_array($claims) === false) {
-			return null;
-		}
-
-		$appClaims = ($claims[self::CLAIM_APP_ID] ?? null);
-		if (is_array($appClaims) === false) {
-			return null;
-		}
-
-		$value = ($appClaims[self::CLAIM_NAME] ?? null);
-		if (is_string($value) === false || $value === '') {
-			return null;
-		}
-
-		return $value;
-	}//end resolveCustomerMasterId()
 
 	/**
 	 * Resolve the target ARInvoice — id/slug match AND owned by the
