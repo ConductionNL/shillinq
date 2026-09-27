@@ -60,8 +60,8 @@ repair step imports.
   - GIVEN an invoice-backed object request WHEN captured THEN the invoice moves to lifecycleState paid and no receipt is posted (REQ-SCON-006)
   - GIVEN a pending request WHEN captured twice THEN settledAt and settledVia are saved once
   - GIVEN a cash settlement covering the amount WHEN recorded THEN settledVia is cash
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 7: A voluntary contribution gets one reminder at most
 - **spec_ref**: `openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md#requirement-a-voluntary-contribution-is-never-dunned-beyond-one-reminder-req-scon-008`

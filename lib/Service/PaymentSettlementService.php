@@ -172,6 +172,48 @@ final class PaymentSettlementService {
 	}//end build()
 
 	/**
+	 * Stamp the settled edge the first time the request reports paid.
+	 *
+	 * The owning app of a school contribution listens for this: the old object
+	 * without `settledAt`, the new one with it (REQ-SCON-009). So it is written
+	 * once, in the same save as the change that settled the request, and it is
+	 * never cleared or moved. A capture that could not settle what it was for
+	 * (`captured_unapplied`) is not stamped: an operator resolves that first.
+	 *
+	 * @param array<string, mixed> $request The request, after the change that may settle it.
+	 * @param string $settledAt When it settled; now when empty.
+	 * @param string $via `provider`, or the method of the settlement that completed it.
+	 *
+	 * @return array<string, mixed> The request, stamped when it has just settled.
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-009)
+	 */
+	public function stampSettled(array $request, string $settledAt, string $via): array {
+		if ((string)($request['settledAt'] ?? '') !== '') {
+			return $request;
+		}
+
+		if ((string)($request['state'] ?? 'pending') === 'captured_unapplied') {
+			return $request;
+		}
+
+		$reported = $this->report(request: $request)['state'];
+		if ($reported !== self::REPORTED_PAID && $reported !== self::REPORTED_OVERPAID) {
+			return $request;
+		}
+
+		$when = $settledAt;
+		if ($when === '') {
+			$when = gmdate('Y-m-d\TH:i:s\Z');
+		}
+
+		$request['settledAt'] = $when;
+		$request['settledVia'] = $via;
+
+		return $request;
+	}//end stampSettled()
+
+	/**
 	 * Append a settlement to a request WITHOUT touching its provider state.
 	 *
 	 * @param array<string, mixed> $request The request.
