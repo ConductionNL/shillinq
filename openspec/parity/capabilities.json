@@ -457,7 +457,7 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "The effective `requires` on GLTransaction.post is RuleComplianceGuard::validateTransaction: lib/Settings/register.d/add-shillinq-rule-compliance-guard.json:24 overrides lib/Settings/shillinq_register.json:512 (BalanceGuard::isBalanced) through deepMergeConfig, and validateTransaction delegates the balance check to lib/Lifecycle/BalanceGuard.php:77 isBalanced(), which sums GLLine debit vs credit; several PHP posters write balanced GLTransaction+GLLine directly (lib/Service/FixedAssetDisposalService.php, CogsPosterService.php, PayrollService.php). But the same post transition declares action `evaluate-allocation-rules`, and no handler for it is registered in shillinq, while OpenRegister's LifecycleActionRegistry (openregister lib/Service/Lifecycle/LifecycleActionRegistry.php:57 BUILTINS = set-fields only) throws on an unresolved action, so a user-driven post from the GL page aborts.",
 				"reachedOn": "GeneralLedger /general-ledger (via menu Bookkeeping > General Ledger), detail GeneralLedgerDetail /general-ledger/:id with GLLine relation and lifecycle buttons",
 				"owner": "ConductionNL/shillinq",
@@ -475,7 +475,7 @@
 			"feature": "ledger-core",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "The balance invariant is real PHP; the user-facing post path dies on an unregistered declared lifecycle action (fail-loud executor)."
+			"note": "The balance invariant is real PHP; the user-facing post path dies on an unregistered declared lifecycle action (fail-loud executor). Specified 2026-09-27 in openspec/changes/ledger-posting-path (OpenSpec pass)."
 		},
 		{
 			"id": "led-rgs-chart",
@@ -518,7 +518,7 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "GLLine carries costCenterCode, costCarrierCode, projectCode, dimensions (lib/Settings/shillinq_register.json GLLine); src/views/bookkeeping/dimensions/SegmentPnLDashboard.vue:315 reads OR named aggregations byCostCenter/byProject/byAnalyticalDimension, but those aggregations (lib/Settings/register.d/bookkeeping-cost-centers-dimensions.json:385,450) are `metric: sum, field: amount` with an empty filter, so debit and credit legs and balance-sheet accounts add up unsigned; the roll-up is not a signed result.",
 				"reachedOn": "AnalyticalDimensions /bookkeeping/dimensions/analytical-dimensions (via menu Bookkeeping > Analytical dimensions), SegmentPnLDashboard /bookkeeping/dimensions/segment-pnl (via menu Bookkeeping > Segment P&L)",
 				"owner": "ConductionNL/shillinq"
@@ -535,7 +535,7 @@
 			"feature": "dimensions-segment-reporting",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Tagging works; the report sums amount without side or account-type sign."
+			"note": "Tagging works; the report sums amount without side or account-type sign. Specified 2026-09-27 in openspec/changes/reporting-segment-results (OpenSpec pass)."
 		},
 		{
 			"id": "led-close-checklist",
@@ -548,7 +548,7 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "src/components/period-close/PeriodCloseDetail.vue:162 renders taskChecklistItems and lib/Service/PeriodCloseService.php:324 blocks close on unresolved AP/AR items, but every writer initialises the list empty (lib/Repair/PeriodCloseBackfill.php:158, lib/Repair/BackfillFiscalPeriods.php:276) and no code or button adds or resolves an item; CloseChecklistTemplate/Instance schemas (bookkeeping-soft-close-flux.json) have no page.",
 				"reachedOn": "PeriodCloseDetail /bookkeeping/period-close/:id (via menu Bookkeeping > Period Close); YearEndCloseChecklist /bookkeeping/year-end-close-checklist is only a FiscalYear list filtered to open/closing",
 				"owner": "ConductionNL/shillinq"
@@ -565,7 +565,7 @@
 			"feature": "period-close",
 			"featureConfidence": "medium",
 			"source": "own-code",
-			"note": "The checklist panel always shows 'No checklist items yet.'"
+			"note": "The checklist panel always shows 'No checklist items yet.' Specified 2026-09-27 in openspec/changes/ledger-period-end (OpenSpec pass)."
 		},
 		{
 			"id": "led-multi-admin",
@@ -578,7 +578,7 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "Administrations and memberships are kept (Administraties, AdministratieLidmaatschappen) and src/components/AdministratieSwitcher.vue posts /api/administrations/switch, but lib/Controller/AdministrationController.php:128 switch() only validates and echoes the id (persists nothing), and lib/Service/AdministrationContextService.php:181 always returns the FIRST membership as activeAdministrationId, so after the switcher's page reload the old administration is active again; generic index pages (e.g. GeneralLedger) carry no administrationId filter.",
 				"reachedOn": "AdministrationSwitcher /administratie/wisselen (via menu Bookkeeping > Switch administration); Administraties (settings gear > Administrations)",
 				"owner": "ConductionNL/shillinq"
@@ -595,7 +595,7 @@
 			"feature": "multi-administration",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Several books can be kept; the switch does not stick and lists are not scoped."
+			"note": "Several books can be kept; the switch does not stick and lists are not scoped. Specified 2026-09-27 in openspec/changes/ledger-multi-administration (OpenSpec pass)."
 		},
 		{
 			"id": "led-audit-trail",
@@ -668,7 +668,7 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "lib/Service/SoftCloseExecutor.php:233 computeAccrualCents (fixed-amount, percentage-of-revenue, straight-line-from-contract) runs nightly from lib/BackgroundJob/SoftCloseJob.php (registered) over AutoAccrualRule and saves AutoAccrualPosting records (line ~352), not GLTransactions; no service spreads prepaid costs or deferred revenue balances over periods (grep prepaid/deferred revenue in lib/Service finds only lease and tax code).",
 				"reachedOn": "AccrualRules /bookkeeping/accrual-rules (settings gear > Accrual Rules); results on ContinuousClose /bookkeeping/continuous-close",
 				"owner": "ConductionNL/shillinq"
@@ -685,7 +685,7 @@
 			"feature": "continuous-close",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Accrual amounts are computed and recorded; nothing books or releases a deferral."
+			"note": "Accrual amounts are computed and recorded; nothing books or releases a deferral. Specified 2026-09-27 in openspec/changes/ledger-period-end (OpenSpec pass)."
 		},
 		{
 			"id": "led-dual-gaap",
@@ -847,7 +847,7 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "lib/Service/InvoicePdfGenerator.php:287-330 renderHtml emits one fixed layout (inline CSS, Helvetica, #222) with no logo, colour or template input; grep for logo/branding/huisstijl in lib and src finds nothing for invoices",
 				"reachedOn": "BillableInvoiceDetail /invoice/:invoiceId (via menu Sales > Invoices > All invoices), PDF button calls /api/v1/invoices/{id}/pdf",
 				"owner": "ConductionNL/shillinq"
@@ -864,7 +864,7 @@
 			"feature": "sales-invoice-document",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "An invoice and its PDF exist, but the layout is hard-coded: no logo, colours or layout choice, and no docudesk template is used for invoices."
+			"note": "An invoice and its PDF exist, but the layout is hard-coded: no logo, colours or layout choice, and no docudesk template is used for invoices. Specified 2026-09-27 in openspec/changes/sales-invoice-document (OpenSpec pass)."
 		},
 		{
 			"id": "sal-numbering",
@@ -877,7 +877,7 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "lib/Service/InvoiceGenerationService.php:760-772 numbers BillableInvoice as BIL-<year>-<count+1> from a findAll count per administration (not a locked sequence; a deleted or concurrent invoice breaks it, count is not per year); ARInvoice.invoiceNumber is a free text field (lib/Settings/register.d/add-shillinq-bookkeeping-compliance.json)",
 				"reachedOn": "BillableInvoiceGenerate /invoice/generate (via menu Sales > Invoices > Generate invoice); AccountsReceivable /bookkeeping/accounts-receivable (via menu Sales > Accounts Receivable) has a hand-typed number",
 				"owner": "ConductionNL/shillinq"
@@ -894,7 +894,7 @@
 			"feature": "sales-invoice-numbering",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Automatic number on the time-and-expense invoice only, derived from a record count, so gaps and duplicates are possible; the AR invoice number is typed by hand."
+			"note": "Automatic number on the time-and-expense invoice only, derived from a record count, so gaps and duplicates are possible; the AR invoice number is typed by hand. Specified 2026-09-27 in openspec/changes/sales-invoice-issue-controls (OpenSpec pass)."
 		},
 		{
 			"id": "sal-email-pdf",
@@ -997,7 +997,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"evidence": "grep -i 'qr.?code|epc.?qr|scan.to.pay' in lib and src finds only barcode scanning (src/components/inventory/BarcodeScanner.vue) and a rule-check file; InvoicePdfGenerator.php renders no QR",
 				"reachedOn": "nothing reaches it: no QR on any invoice output",
 				"owner": "ConductionNL/shillinq"
@@ -1013,7 +1013,8 @@
 			"providerHow": "read-from-code",
 			"feature": "invoice-payment-links",
 			"featureConfidence": "medium",
-			"source": "competitor"
+			"source": "competitor",
+			"note": "Specified 2026-09-27 in openspec/changes/sales-invoice-document (OpenSpec pass)."
 		},
 		{
 			"id": "sal-peppol-send",
@@ -1057,7 +1058,7 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"evidence": "CustomerMaster has no language/locale property (lib/Settings/register.d/add-shillinq-bookkeeping-compliance.json); lib/Service/InvoicePdfGenerator.php:320 hard-codes <html lang=\"nl\"> and Dutch number formatting (:371); no invoice email exists",
 				"reachedOn": "nothing reaches it: no language field on customer or invoice",
 				"owner": "ConductionNL/shillinq"
@@ -1073,7 +1074,8 @@
 			"providerHow": "read-from-code",
 			"feature": "sales-invoice-document",
 			"featureConfidence": "medium",
-			"source": "competitor"
+			"source": "competitor",
+			"note": "Specified 2026-09-27 in openspec/changes/sales-invoice-document (OpenSpec pass)."
 		},
 		{
 			"id": "sal-time-to-invoice",
@@ -1145,7 +1147,7 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"evidence": "ARInvoice lifecycle states draft/issued/paid/overdue/disputed/written-off have no approval state (lib/Settings/register.d/add-shillinq-bookkeeping-compliance.json); grep 'approv' in lib/Service/InvoiceGenerationService.php, lib/Controller/InvoiceApiController.php, src/views/invoice, src/components/ar-invoice finds nothing",
 				"reachedOn": "nothing reaches it: no approve step on any sales invoice page",
 				"owner": "ConductionNL/shillinq"
@@ -1162,7 +1164,7 @@
 			"feature": "sales-invoice-approval",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Approval chains exist for purchase orders (PurchaseOrderApprovalService), not for sales invoices."
+			"note": "Approval chains exist for purchase orders (PurchaseOrderApprovalService), not for sales invoices. Specified 2026-09-27 in openspec/changes/sales-invoice-issue-controls (OpenSpec pass)."
 		},
 		{
 			"id": "sal-batch",
@@ -1354,7 +1356,7 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "ARInvoice.currency (add-shillinq-bookkeeping-compliance.json) is carried into UBL DocumentCurrencyCode (lib/Service/EInvoice/ArInvoiceUblMapper.php:92-127) and realised FX is posted on settlement (lib/Service/PaymentReconciliationService.php:664); but InvoicePdfGenerator.php renderHtml prints a hard-coded '€' and InvoiceGenerationService.php:154,160,537 fixes currency to EUR",
 				"reachedOn": "AccountsReceivable /bookkeeping/accounts-receivable (via menu Sales > Accounts Receivable), FX Rates pages under Banking & Cashflow",
 				"owner": "ConductionNL/shillinq"
@@ -1371,7 +1373,7 @@
 			"feature": "multi-currency",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "The AR record and e-invoice honour the currency, the PDF and the time-and-expense generator do not."
+			"note": "The AR record and e-invoice honour the currency, the PDF and the time-and-expense generator do not. Specified 2026-09-27 in openspec/changes/sales-invoice-document (OpenSpec pass)."
 		},
 		{
 			"id": "sal-quick-draft",
@@ -2925,7 +2927,7 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "lib/Reporting/Generator/ProfitLossReportGenerator.php renders one period's revenue minus expenses (no prior-period column; grep prior/compar finds nothing), document kind via docudesk; comparison exists only as KPIs: lib/Service/FinancialDashboardService.php:167 summary() returns turnover/margin for current vs previousPeriod on the Dashboard.",
 				"reachedOn": "ReportingComplianceOverview /reporting-compliance (via menu Reporting & compliance) report card 'Winst- en verliesrekening' -> GenerateReportDialog; comparison KPIs on Dashboard / (via menu Dashboard)",
 				"owner": "ConductionNL/shillinq"
@@ -2942,7 +2944,7 @@
 			"feature": "financial-statements",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "A P&L statement exists but has no comparative columns; only headline KPIs compare periods."
+			"note": "A P&L statement exists but has no comparative columns; only headline KPIs compare periods. Specified 2026-09-27 in openspec/changes/reporting-financial-statements (OpenSpec pass)."
 		},
 		{
 			"id": "rep-drilldown",
@@ -2955,7 +2957,7 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"evidence": "Statements are generated files (lib/Reporting/Generator/*); TrialBalanceLines index has no detailRoute/rowRoute (src/manifest.json TrialBalanceLines config) and SegmentPnLDashboard.vue has no router link to transactions; grep 'drill' in src finds only BudgetLineCommitments.vue (budget line -> commitments, not ledger transactions).",
 				"reachedOn": "nothing reaches it: no report figure links to GLTransaction/GLLine rows",
 				"owner": "ConductionNL/shillinq"
@@ -2972,7 +2974,7 @@
 			"feature": "financial-statements",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "A GL transaction detail shows its own lines, but no figure-to-transactions path exists."
+			"note": "A GL transaction detail shows its own lines, but no figure-to-transactions path exists. Specified 2026-09-27 in openspec/changes/reporting-financial-statements (OpenSpec pass)."
 		},
 		{
 			"id": "rep-balance-sheet",
@@ -2985,7 +2987,7 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "lib/Reporting/Generator/BalanceSheetReportGenerator.php:232 groupByType uses the account's stored balance or ALL GLLine movements (deriveMovements, no date filter), so 'per peildatum' is only a cover label; P&L accounts are skipped and the current result is not added to equity. BalanceSheet index page lists BalanceSheet objects no code writes.",
 				"reachedOn": "ReportingComplianceOverview /reporting-compliance report card 'Balans' -> GenerateReportDialog (document kind, rendered through docudesk); BalanceSheet /financial-statements/balance-sheet (via menu Bookkeeping > Balance Sheet) is an empty list",
 				"owner": "ConductionNL/shillinq"
@@ -3002,7 +3004,7 @@
 			"feature": "financial-statements",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "No as-of date filter, and the unclosed year result is left out of equity."
+			"note": "No as-of date filter, and the unclosed year result is left out of equity. Specified 2026-09-27 in openspec/changes/reporting-financial-statements (OpenSpec pass)."
 		},
 		{
 			"id": "rep-cashflow-statement",
@@ -3222,7 +3224,7 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "src/views/bookkeeping/dimensions/SegmentPnLDashboard.vue:315 reads OR named aggregations byCostCenter/byCostCenterHierarchy/byProject/byAnalyticalDimension on GLLine, but each is `metric: sum, field: amount` with `filter: {}` (lib/Settings/register.d/bookkeeping-cost-centers-dimensions.json:385-465): debit and credit add up unsigned, balance-sheet lines and unposted lines are included, so the figure is gross turnover of postings, not a profit or loss.",
 				"reachedOn": "SegmentPnLDashboard /bookkeeping/dimensions/segment-pnl (via menu Bookkeeping > Segment P&L)",
 				"owner": "ConductionNL/shillinq"
@@ -3239,7 +3241,7 @@
 			"feature": "dimensions-segment-reporting",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Page and grouping work; the aggregation does not sign by side or restrict to P&L accounts."
+			"note": "Page and grouping work; the aggregation does not sign by side or restrict to P&L accounts. Specified 2026-09-27 in openspec/changes/reporting-segment-results (OpenSpec pass)."
 		},
 		{
 			"id": "rep-bi",
@@ -3970,7 +3972,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "decided-no",
 				"evidence": "lib/Service/PayrollService.php:88 berekenLoonStrook and PayrollCalculator.php compute a Dutch payslip, but they are reachable only via GET /api/payroll/loonstrook (appinfo/routes.php:137), which no page calls (absent from _lane/frontend-api-paths.txt), and they persist nothing (no saveObject in PayrollService). Loonstroken/Loonperiodes are plain index pages over LoonStrook/LoonPeriode; no payslip template exists in lib/Settings/docudesk-templates.json; payroll bureau and UWV adapters are log-only (lib/Settings/connections.json:14,87).",
 				"reachedOn": "Loonstroken /loonadministratie/loonstroken and Loonperiodes (via menu Bookkeeping > Payslips / Pay periods), list only; the calculation: nothing reaches it",
 				"owner": "ConductionNL/shillinq"
@@ -3987,7 +3989,7 @@
 			"feature": "payroll-nl",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "A payroll engine exists in code with no page or job that runs it; payslips cannot be issued."
+			"note": "A payroll engine exists in code with no page or job that runs it; payslips cannot be issued. Decided no 2026-09-27 (OpenSpec pass): Payroll runs in humaniq: humaniq matrix pay-run is yes and built with owner humaniq, and hydra ADR-107 decisions 4 and 6 give payroll and the wage base to humaniq; a second payroll engine in shillinq is not built."
 		},
 		{
 			"id": "ppl-time",
@@ -4119,7 +4121,7 @@
 			"twinfield": "partial",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "lib/Service/PayrollService.php:315 bouwLoonjournaalpost builds a balanced payroll journal via PayrollChartOfAccountsMapping, but only behind GET /api/payroll/journaalpost (appinfo/routes.php:139), which no page calls, and it writes no GLTransaction or Loonjournaalpost; Loonjournaalposten is a plain list.",
 				"reachedOn": "Loonjournaalposten /loonadministratie/loonjournaalposten (via menu Bookkeeping > Payroll journal entries), list only; the builder: nothing reaches it",
 				"owner": "ConductionNL/shillinq"
@@ -4136,7 +4138,7 @@
 			"feature": "payroll-nl",
 			"featureConfidence": "medium",
 			"source": "own-code",
-			"note": "The journal is computed in code with no caller, and nothing posts it."
+			"note": "The journal is computed in code with no caller, and nothing posts it. Specified 2026-09-27 in openspec/changes/ledger-posting-path (OpenSpec pass)."
 		},
 		{
 			"id": "plt-accountant",
@@ -5009,7 +5011,7 @@
 			"twinfield": "partial",
 			"odoo": "partial",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -5032,7 +5034,7 @@
 				"intelligence-db requirements#109524",
 				"intelligence-db requirements#109525"
 			],
-			"note": "AnalyticalDimension has start/end dates and a lifecycle, but no rule set forbids combinations of account, cost centre and project; searched lib/ for combination rules."
+			"note": "AnalyticalDimension has start/end dates and a lifecycle, but no rule set forbids combinations of account, cost centre and project; searched lib/ for combination rules. Specified 2026-09-27 in openspec/changes/ledger-booking-rules (OpenSpec pass)."
 		},
 		{
 			"id": "led-control-account-lock",
@@ -5045,7 +5047,7 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -5067,7 +5069,7 @@
 			"originRequirements": [
 				"intelligence-db requirements#109740"
 			],
-			"note": "Account carries isAPControlAccount/isExpenseControlAccount flags used as posting targets, but no guard in lib/Lifecycle or lib/Guard rejects a manual journal line on a control account."
+			"note": "Account carries isAPControlAccount/isExpenseControlAccount flags used as posting targets, but no guard in lib/Lifecycle or lib/Guard rejects a manual journal line on a control account. Specified 2026-09-27 in openspec/changes/ledger-booking-rules (OpenSpec pass)."
 		},
 		{
 			"id": "led-open-years",
@@ -5080,7 +5082,7 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"evidence": "lib/Settings/shillinq_register.json:7935 FiscalYear open->closing requires FiscalYearGuard::requireAllPeriodsClosedForYear; nothing limits how many FiscalYear records are open at once, so several years can be open. Posting itself aborts on the user path (see led-double-entry).",
@@ -5104,7 +5106,7 @@
 				"intelligence-db requirements#109515",
 				"intelligence-db requirements#109513"
 			],
-			"note": "Several years can be open; the post path they would receive entries on is broken."
+			"note": "Several years can be open; the post path they would receive entries on is broken. Specified 2026-09-27 in openspec/changes/ledger-posting-path (OpenSpec pass)."
 		},
 		{
 			"id": "pur-duplicate-check",
@@ -5623,7 +5625,7 @@
 			"twinfield": "partial",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "FixedAssetDetail /fixed-assets/:id (field edit only)"
@@ -5647,7 +5649,7 @@
 				"intelligence-db requirements#109550",
 				"intelligence-db requirements#109551"
 			],
-			"note": "depreciationMethod and usefulLife are editable fields on FixedAsset, but no periodic depreciation is posted at all (see pln-fixed-assets), so a change of method or an extra depreciation books nothing."
+			"note": "depreciationMethod and usefulLife are editable fields on FixedAsset, but no periodic depreciation is posted at all (see pln-fixed-assets), so a change of method or an extra depreciation books nothing. Specified 2026-09-27 in openspec/changes/assets-method-change-and-reserve (OpenSpec pass)."
 		},
 		{
 			"id": "bnk-pay-from-app",
@@ -5660,7 +5662,7 @@
 			"twinfield": "partial",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -5679,7 +5681,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-20-release-notes",
-			"note": "Payment runs export a SEPA credit transfer file for the bank (lib/PaymentRun/PaymentRunExportService.php:122); nothing initiates the transfer through a bank connection (bnk-psd2 is no)."
+			"note": "Payment runs export a SEPA credit transfer file for the bank (lib/PaymentRun/PaymentRunExportService.php:122); nothing initiates the transfer through a bank connection (bnk-psd2 is no). Specified 2026-09-27 by the existing change openspec/changes/fees-payments-and-the-contract-register (OpenSpec pass)."
 		},
 		{
 			"id": "exp-company-cards",
@@ -5788,7 +5790,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"evidence": "Account carries a free-text description property (lib/Settings/shillinq_register.json Account.description at line 1422), editable on the chart of accounts.",
@@ -5808,7 +5810,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-19-release-notes",
-			"note": "A description field, not guidance shown when booking."
+			"note": "A description field, not guidance shown when booking. Specified 2026-09-27 in openspec/changes/ledger-booking-rules (OpenSpec pass)."
 		},
 		{
 			"id": "led-tamper-proof",
@@ -5821,7 +5823,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"evidence": "lib/Lifecycle/AuditTrailGuard.php:9 keeps audit records insert-only; lib/Service/AuditExportService.php:31 and lib/Service/AccountantsdossierExportService.php:23 stamp a SHA-256 over exported packages so later tampering is detectable. Posted entries themselves are not hash-chained.",
@@ -5841,7 +5843,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-19-release-notes",
-			"note": "Export packages are sealed, individual posted entries are not."
+			"note": "Export packages are sealed, individual posted entries are not. Specified 2026-09-27 in openspec/changes/ledger-sealed-entries (OpenSpec pass)."
 		},
 		{
 			"id": "rec-early-payment-discount",
@@ -6112,7 +6114,7 @@
 			"twinfield": "partial",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"evidence": "lib/Settings/register.d/zzz-mcp-tool-surface.json exposes a read-only MCP surface (search and get only) on 12 curated schemas; whether the installed OpenRegister executes x-openregister-mcp is the open question of plt-mcp. Nextcloud app passwords give API access but not a read-only scope.",
@@ -6132,7 +6134,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.moneybird.nl/changelog/read-only-api-tokens/",
-			"note": "Read-only by declaration on 12 schemas; rests on the same executor as plt-mcp."
+			"note": "Read-only by declaration on 12 schemas; rests on the same executor as plt-mcp. Specified 2026-09-27 by the existing change openspec/changes/mcp-action-tool-surface (OpenSpec pass)."
 		},
 		{
 			"id": "tax-payment-reference",
@@ -6177,7 +6179,7 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -6196,7 +6198,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.moneybird.nl/changelog/herinvesteringsreserve/",
-			"note": "No reinvestment reserve in lib/ or the register; asset disposal books gain or loss (lib/Service/FixedAssetDisposalService.php)."
+			"note": "No reinvestment reserve in lib/ or the register; asset disposal books gain or loss (lib/Service/FixedAssetDisposalService.php). Specified 2026-09-27 in openspec/changes/assets-method-change-and-reserve (OpenSpec pass)."
 		},
 		{
 			"id": "plt-client-templates",
@@ -6209,7 +6211,7 @@
 			"twinfield": "yes",
 			"odoo": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"evidence": "lib/Service/SettingsService.php:182 seedRgsTemplate() starts an administration from a shipped RGS template (MKB, ZZP or BBV) in the setup wizard; an office cannot save its own chart as a template.",
@@ -6229,7 +6231,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.moneybird.nl/changelog/sjabloon-administraties-in-mijn-kantoor/",
-			"note": "Shipped templates only, no office template."
+			"note": "Shipped templates only, no office template. Specified 2026-09-27 in openspec/changes/ledger-multi-administration (OpenSpec pass)."
 		},
 		{
 			"id": "led-open-item-clearing",
@@ -6242,7 +6244,7 @@
 			"twinfield": "yes",
 			"odoo": "partial",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -6261,7 +6263,7 @@
 			"source": "competitor",
 			"origin": "roadmap",
 			"originUrl": "https://helpcenter.moneybird.nl/nl/articles/549560-afletteren-in-beta",
-			"note": "Only the GR/IR clearing account has a saldo check (lib/Controller/GRIRReconciliationController.php:9); no general matching of debit and credit items on a balance account."
+			"note": "Only the GR/IR clearing account has a saldo check (lib/Controller/GRIRReconciliationController.php:9); no general matching of debit and credit items on a balance account. Specified 2026-09-27 in openspec/changes/ledger-open-item-clearing (OpenSpec pass)."
 		},
 		{
 			"id": "tax-fiscal-unity",
@@ -6470,7 +6472,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -6489,7 +6491,7 @@
 			"source": "competitor",
 			"origin": "roadmap",
 			"originUrl": "https://www.exact.com/nl/vooruitblik",
-			"note": "Administrations are Dutch only: RGS templates (lib/Service/SettingsService.php:182) and Dutch VAT; no ledger rules for another country."
+			"note": "Administrations are Dutch only: RGS templates (lib/Service/SettingsService.php:182) and Dutch VAT; no ledger rules for another country. Specified 2026-09-27 in openspec/changes/ledger-foreign-legislation (OpenSpec pass)."
 		},
 		{
 			"id": "led-master-data-sync",
@@ -6502,7 +6504,7 @@
 			"twinfield": "partial",
 			"odoo": "partial",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -6521,7 +6523,7 @@
 			"source": "competitor",
 			"origin": "roadmap",
 			"originUrl": "https://www.exact.com/nl/vooruitblik",
-			"note": "No sync of chart of accounts, journals or cost centres across administrations; searched masterData, sync and propagate in lib/."
+			"note": "No sync of chart of accounts, journals or cost centres across administrations; searched masterData, sync and propagate in lib/. Specified 2026-09-27 in openspec/changes/ledger-multi-administration (OpenSpec pass)."
 		},
 		{
 			"id": "plt-dark-mode",
@@ -6534,7 +6536,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "decided-no",
 				"owner": "nextcloud/server",
 				"readOn": "2026-09-26",
 				"evidence": "Nextcloud's theming offers a dark theme for every app, and shillinq pages are rendered from nextcloud-vue components that follow its CSS variables; the embeddable booking widget has its own darkMode option (src/components/widget/SelfServiceWidget.vue:297). Not driven, so hard-coded colours were not checked.",
@@ -6554,7 +6556,7 @@
 			"source": "competitor",
 			"origin": "roadmap",
 			"originUrl": "https://www.exact.com/nl/vooruitblik",
-			"note": "Comes from Nextcloud; not checked on screen."
+			"note": "Comes from Nextcloud; not checked on screen. Decided no 2026-09-27 (OpenSpec pass): Owned by nextcloud/server: dark mode comes from Nextcloud theming, which shillinq inherits; platform-provided, so shillinq builds no theme of its own."
 		},
 		{
 			"id": "plt-custom-entities",
