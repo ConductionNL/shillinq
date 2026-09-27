@@ -5402,7 +5402,9 @@ OC.L10N.register(
         "(voluntary)": "(vrijwillig)",
         "School contributions": "Schoolbijdragen",
         "My contributions": "Mijn bijdragen",
-        "Pay my contributions": "Mijn bijdragen betalen"
+        "Pay my contributions": "Mijn bijdragen betalen",
+        "The account the contribution income belongs to, as the school named it. ARInvoice lines carry no account of their own.": "De rekening waar de opbrengst van de bijdrage bij hoort, zoals de school die noemde. Regels van een verkoopfactuur hebben geen eigen rekening.",
+        "Revenue account": "Opbrengstrekening"
     },
     "nplurals=2; plural=(n != 1);"
 )

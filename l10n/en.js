@@ -3158,7 +3158,9 @@ OC.L10N.register(
         "(voluntary)": "(voluntary)",
         "School contributions": "School contributions",
         "My contributions": "My contributions",
-        "Pay my contributions": "Pay my contributions"
+        "Pay my contributions": "Pay my contributions",
+        "The account the contribution income belongs to, as the school named it. ARInvoice lines carry no account of their own.": "The account the contribution income belongs to, as the school named it. ARInvoice lines carry no account of their own.",
+        "Revenue account": "Revenue account"
     },
     "nplurals=2; plural=(n != 1);"
 )

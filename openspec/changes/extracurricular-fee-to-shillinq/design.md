@@ -79,7 +79,11 @@ behaviour is unchanged. `REQUEST_TYPES` gains `contribution`.
 
 `lib/Settings/register.d/school-contributions.json` adds a nullable group:
 `kind` (`parental-contribution`, `lunch-supervision`, `school-trip`, `activity`,
-`other`), `voluntary`, `chargeable`, `beneficiary`, `raiseBatchId`. The fragment
+`other`), `voluntary`, `chargeable`, `beneficiary`, `raiseBatchId` and
+`revenueAccount` (ARInvoice's EN 16931 `invoiceLines` carry no account). The one
+line goes in `invoiceLines` (`itemName`, `netPrice`, `netAmount`, `unitCode`
+C62, `vatCategory` E, `vatRate` 0): `lines` is not a property ARInvoice declares,
+and OpenRegister drops an undeclared property in silence (gate 108). The fragment
 sorts after every other `ARInvoice` fragment, so its `version` (0.14.0) is the
 merged one; today's merged version is 0.6.0 (last writer `checks-vat.json`), and
 an import only updates a schema whose version rises.
@@ -170,8 +174,8 @@ array{customerMasterId, portalLinked}`:
 1. `customerMasterId`: read it (`ObjectIdentifier::findOne`); missing means the
    recipient fails.
 2. `portalSubjectRef`: read portaliq's `portalAccount` rows for that subject
-   (audience `parent` first, then `customer`, as the pay flow does) and use a
-   `claims.shillinq.customerMasterId` that exists.
+   and use the first `claims.shillinq.customerMasterId` that names an existing
+   customer.
 3. `email`: the first `CustomerMaster` with that email in the administration.
 4. Otherwise create one: `customerId = G-<first 10 of sha1(lowercased email)>`,
    `legalName = name`, `email`, `administrationId`, `lifecycleState = active`.

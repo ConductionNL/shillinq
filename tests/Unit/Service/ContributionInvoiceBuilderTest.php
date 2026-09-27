@@ -115,7 +115,7 @@ final class ContributionInvoiceBuilderTest extends TestCase {
 		$request = $this->builder->buildRequest($charge, 60.0, 'cm-1', $beneficiary, 'inv-1', 'ctb-20261001-1a2b3c4d');
 
 		self::assertSame('Deze bijdrage is vrijwillig. Uw kind doet mee, of u nu betaalt of niet.', $invoice['invoiceNote']);
-		self::assertSame('Ouderbijdrage 2026-2027 (vrijwillig)', $invoice['lines'][0]['description']);
+		self::assertSame('Ouderbijdrage 2026-2027 (vrijwillig)', $invoice['invoiceLines'][0]['itemName']);
 		self::assertSame('Ouderbijdrage 2026-2027 (vrijwillig)', $request['description']);
 		self::assertTrue($invoice['contribution']['voluntary']);
 		self::assertTrue($request['voluntary']);
@@ -135,7 +135,7 @@ final class ContributionInvoiceBuilderTest extends TestCase {
 		$invoice = $this->builder->buildInvoice($charge, 60.0, 'cm-1', ['type' => 'learner', 'id' => 'child-a'], 'ctb-20261001-1a2b3c4d', 1);
 
 		self::assertArrayNotHasKey('invoiceNote', $invoice);
-		self::assertSame('Ouderbijdrage 2026-2027', $invoice['lines'][0]['description']);
+		self::assertSame('Ouderbijdrage 2026-2027', $invoice['invoiceLines'][0]['itemName']);
 		self::assertSame(
 			'This contribution is voluntary. Your child takes part whether you pay or not.',
 			$this->builder->voluntaryNotice('en')
@@ -161,8 +161,10 @@ final class ContributionInvoiceBuilderTest extends TestCase {
 		self::assertSame('2026-10-31', $invoice['dueDate']);
 		self::assertSame(60.0, $invoice['grossAmount']);
 		self::assertSame(0.0, $invoice['vatAmount']);
-		self::assertCount(1, $invoice['lines']);
-		self::assertSame('8400', $invoice['lines'][0]['glAccount']);
+		self::assertCount(1, $invoice['invoiceLines']);
+		self::assertArrayNotHasKey('lines', $invoice);
+		self::assertSame('E', $invoice['invoiceLines'][0]['vatCategory']);
+		self::assertSame('8400', $invoice['contribution']['revenueAccount']);
 		self::assertSame('CTB-2026-1A2B3C4D-0007', $invoice['invoiceNumber']);
 		self::assertSame('parental-contribution', $invoice['contribution']['kind']);
 		self::assertSame('ctb-20261001-1a2b3c4d', $invoice['contribution']['raiseBatchId']);

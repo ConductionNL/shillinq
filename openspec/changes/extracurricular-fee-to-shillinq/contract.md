@@ -120,6 +120,7 @@ chargeable and beneficiary; the response names it, so a retried chunk is safe.
 | 400  | The chargeable misses a part, `kind` is unknown, `amount` is not above zero, `recipients` is empty or longer than 200, or `administrationId` is missing |
 | 401  | No session |
 | 403  | The user does not carry `payment.request` |
+| 500  | An unexpected failure before any recipient was processed; nothing is reported per recipient |
 
 ## The settled signal
 
@@ -216,6 +217,7 @@ request does not carry.
 | 400 | Bad request | See the endpoint table |
 | 401 | Unauthenticated | No Nextcloud session |
 | 403 | Forbidden | The user lacks `payment.request` |
+| 500 | Server error | An unexpected failure outside the per-recipient isolation |
 
 ## Versioning
 
@@ -232,6 +234,7 @@ have moved.
 
 ## SLA
 
-Synchronous. A call of 200 recipients does at most four OpenRegister writes per
-recipient (a customer, an invoice, a request, a portal claim) and two reads per
-call to load the requests already standing on the chargeable.
+Synchronous. A call of 200 recipients does at most three OpenRegister writes per
+recipient (a customer, an invoice, a request) plus one portal claim event, up to
+four reads per recipient to resolve the debtor, and one read per 200 requests
+already standing on the chargeable.

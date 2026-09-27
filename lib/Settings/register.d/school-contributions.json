@@ -116,6 +116,12 @@
                 "description": "The bulk raise that wrote this record, so one batch can be found and checked together.",
                 "example": "ctb-20261001-1a2b3c4d",
                 "title": "Raise batch"
+              },
+              "revenueAccount": {
+                "type": "string",
+                "description": "The account the contribution income belongs to, as the school named it. ARInvoice lines carry no account of their own.",
+                "example": "8400",
+                "title": "Revenue account"
               }
             },
             "title": "School contribution"
@@ -166,17 +172,19 @@
         "periodId": "2026-10",
         "lifecycleState": "issued",
         "invoiceType": "standard",
-        "lines": [
+        "invoiceNote": "Deze bijdrage is vrijwillig. Uw kind doet mee, of u nu betaalt of niet.",
+        "invoiceLines": [
           {
-            "lineNumber": 1,
-            "description": "Ouderbijdrage 2026-2027 (vrijwillig)",
+            "lineId": "1",
             "quantity": 1,
-            "unitPrice": 60.0,
-            "vatRate": 0,
-            "glAccount": "8400"
+            "unitCode": "C62",
+            "itemName": "Ouderbijdrage 2026-2027 (vrijwillig)",
+            "netPrice": 60.0,
+            "netAmount": 60.0,
+            "vatCategory": "E",
+            "vatRate": 0
           }
         ],
-        "invoiceNote": "Deze bijdrage is vrijwillig. Uw kind doet mee, of u nu betaalt of niet.",
         "contribution": {
           "kind": "parental-contribution",
           "voluntary": true,
@@ -193,7 +201,8 @@
             "schema": "LearnerProfile",
             "id": "00000000-0000-4000-8000-00000000c001"
           },
-          "raiseBatchId": "ctb-20261001-demo0001"
+          "raiseBatchId": "ctb-20261001-demo0001",
+          "revenueAccount": "8400"
         }
       },
       {
@@ -214,17 +223,19 @@
         "periodId": "2026-09",
         "lifecycleState": "paid",
         "invoiceType": "standard",
-        "lines": [
+        "invoiceNote": "Deze bijdrage is vrijwillig. Uw kind doet mee, of u nu betaalt of niet.",
+        "invoiceLines": [
           {
-            "lineNumber": 1,
-            "description": "Schoolreisje groep 5, Artis (vrijwillig)",
+            "lineId": "1",
             "quantity": 1,
-            "unitPrice": 35.0,
-            "vatRate": 0,
-            "glAccount": "8400"
+            "unitCode": "C62",
+            "itemName": "Schoolreisje groep 5, Artis (vrijwillig)",
+            "netPrice": 35.0,
+            "netAmount": 35.0,
+            "vatCategory": "E",
+            "vatRate": 0
           }
         ],
-        "invoiceNote": "Deze bijdrage is vrijwillig. Uw kind doet mee, of u nu betaalt of niet.",
         "contribution": {
           "kind": "school-trip",
           "voluntary": true,
@@ -241,7 +252,8 @@
             "schema": "LearnerProfile",
             "id": "00000000-0000-4000-8000-00000000c002"
           },
-          "raiseBatchId": "ctb-20260915-demo0002"
+          "raiseBatchId": "ctb-20260915-demo0002",
+          "revenueAccount": "8400"
         }
       },
       {
@@ -262,14 +274,16 @@
         "periodId": "2026-09",
         "lifecycleState": "issued",
         "invoiceType": "standard",
-        "lines": [
+        "invoiceLines": [
           {
-            "lineNumber": 1,
-            "description": "Overblijfbijdrage najaar 2026",
+            "lineId": "1",
             "quantity": 1,
-            "unitPrice": 120.0,
-            "vatRate": 0,
-            "glAccount": "8400"
+            "unitCode": "C62",
+            "itemName": "Overblijfbijdrage najaar 2026",
+            "netPrice": 120.0,
+            "netAmount": 120.0,
+            "vatCategory": "E",
+            "vatRate": 0
           }
         ],
         "contribution": {
@@ -288,7 +302,8 @@
             "schema": "LearnerProfile",
             "id": "00000000-0000-4000-8000-00000000c001"
           },
-          "raiseBatchId": "ctb-20260901-demo0003"
+          "raiseBatchId": "ctb-20260901-demo0003",
+          "revenueAccount": "8400"
         }
       },
       {

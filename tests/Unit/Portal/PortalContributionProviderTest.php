@@ -774,6 +774,8 @@ class PortalContributionProviderTest extends TestCase {
 		self::assertContains('grossAmount', $invoices['fields']);
 		self::assertContains('invoiceNote', $invoices['fields']);
 		self::assertNotContains('totalAmount', $invoices['fields']);
+		self::assertContains('invoiceLines', $invoices['fields']);
+		self::assertNotContains('lines', $invoices['fields']);
 		self::assertContains('grossAmount', array_column($invoices['columns'], 'field'));
 
 		$requests = $manifest['collections'][1];

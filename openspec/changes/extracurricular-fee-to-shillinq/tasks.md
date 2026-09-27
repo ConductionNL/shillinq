@@ -104,7 +104,7 @@ repair step imports.
 
 ## Documentation (company-wide ADR-010)
 
-- N/A for `docs/`: no user-facing screen. The contract for the consuming apps is contract.md, and the PR body says what learniq and portaliq do on their side.
+- `docs/api/school-contributions.md` documents the endpoint, the voluntary rule and the settled signal. No screen, so no screenshot. The full interface for the consuming apps is contract.md.
 
 ## i18n (company-wide ADR-005)
 

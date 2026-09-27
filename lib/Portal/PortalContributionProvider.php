@@ -111,12 +111,16 @@ class PortalContributionProvider {
 	private const PARENT_COLLECTIONS = ['salesInvoices', 'paymentRequests'];
 
 	/**
-	 * ARInvoice's declared names for the amounts the customer manifest lists
-	 * under names ARInvoice does not carry.
+	 * ARInvoice's declared names for the amounts and the lines the customer
+	 * manifest lists under names ARInvoice does not carry.
 	 *
 	 * @var array<string, string>
 	 */
-	private const PARENT_FIELD_MAP = ['totalAmount' => 'grossAmount', 'taxAmount' => 'vatAmount'];
+	private const PARENT_FIELD_MAP = [
+		'totalAmount' => 'grossAmount',
+		'taxAmount' => 'vatAmount',
+		'lines' => 'invoiceLines',
+	];
 
 	/**
 	 * The audiences this provider contributes to (contract v2, preferred).

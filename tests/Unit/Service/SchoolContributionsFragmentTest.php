@@ -98,7 +98,7 @@ final class SchoolContributionsFragmentTest extends TestCase {
 
 		self::assertSame('object', $group['type']);
 		self::assertTrue($group['nullable']);
-		foreach (['kind', 'voluntary', 'chargeable', 'beneficiary', 'raiseBatchId'] as $part) {
+		foreach (['kind', 'voluntary', 'chargeable', 'beneficiary', 'raiseBatchId', 'revenueAccount'] as $part) {
 			self::assertArrayHasKey($part, $group['properties'], $part . ' is missing from ARInvoice.contribution');
 		}
 
@@ -195,7 +195,7 @@ final class SchoolContributionsFragmentTest extends TestCase {
 			if ($invoice['contribution']['voluntary'] === true) {
 				$voluntarySeen = true;
 				self::assertStringContainsString('vrijwillig', $invoice['invoiceNote']);
-				self::assertStringEndsWith('(vrijwillig)', $invoice['lines'][0]['description']);
+				self::assertStringEndsWith('(vrijwillig)', $invoice['invoiceLines'][0]['itemName']);
 			} else {
 				self::assertArrayNotHasKey('invoiceNote', $invoice);
 			}

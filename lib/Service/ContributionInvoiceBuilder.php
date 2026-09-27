@@ -262,14 +262,20 @@ final class ContributionInvoiceBuilder {
 			'grossAmount' => $amount,
 			'lifecycleState' => 'issued',
 			'invoiceType' => 'standard',
-			'lines' => [
+			// `invoiceLines` is the line property ARInvoice declares (EN 16931
+			// BG-25); an undeclared `lines` would be dropped by OpenRegister in
+			// silence, taking the voluntary mark with it. A school contribution
+			// is exempt from VAT (category E, education).
+			'invoiceLines' => [
 				[
-					'lineNumber' => 1,
-					'description' => $this->describe(charge: $charge),
+					'lineId' => '1',
 					'quantity' => 1,
-					'unitPrice' => $amount,
+					'unitCode' => 'C62',
+					'itemName' => $this->describe(charge: $charge),
+					'netPrice' => $amount,
+					'netAmount' => $amount,
+					'vatCategory' => 'E',
 					'vatRate' => 0,
-					'glAccount' => (string)$charge['revenueAccount'],
 				],
 			],
 			'contribution' => [
@@ -278,6 +284,7 @@ final class ContributionInvoiceBuilder {
 				'chargeable' => $charge['chargeable'],
 				'beneficiary' => $beneficiary,
 				'raiseBatchId' => $batchId,
+				'revenueAccount' => (string)$charge['revenueAccount'],
 			],
 		];
 
