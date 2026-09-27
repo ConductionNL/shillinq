@@ -69,8 +69,8 @@ repair step imports.
 - **acceptance_criteria**:
   - GIVEN a voluntary invoice 60 days late WHEN ticked twice THEN stage 1 runs once with no costs
   - GIVEN a voluntary invoice WHEN stage 2 or the incasso transfer is asked THEN it is refused
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 8: A parent pays from the portal
 - **spec_ref**: `openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md#requirement-a-guardian-sees-and-pays-the-contribution-from-the-portal-req-scon-010`

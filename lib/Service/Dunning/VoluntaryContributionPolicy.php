@@ -1,0 +1,112 @@
+<?php
+
+/**
+ * Voluntary Contribution Policy
+ *
+ * The Wet vrijwillige ouderbijdrage (in force since 2021-08-01) makes a school's
+ * parental contribution voluntary: a child takes part whether or not it is
+ * paid, and a school may not pressure a parent into paying. For dunning that
+ * means one reminder at most, with no collection costs, no statutory interest
+ * and never a hand-over to a collection agency.
+ *
+ * This class decides that from the invoice alone and does no I/O, so every
+ * place a reminder can start asks the same question and gets the same answer.
+ * DunningRunService consults it in tickInvoice(), executeStage() and
+ * transferToIncasso().
+ *
+ * @category Service
+ * @package  OCA\Shillinq\Service\Dunning
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @link https://conduction.nl
+ *
+ * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-008)
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+declare(strict_types=1);
+
+namespace OCA\Shillinq\Service\Dunning;
+
+/**
+ * Caps the dunning of a voluntary school contribution at one plain reminder.
+ *
+ * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-008)
+ */
+final class VoluntaryContributionPolicy {
+	/**
+	 * The only stage a voluntary contribution may reach.
+	 *
+	 * @var integer
+	 */
+	public const ONLY_STAGE = 1;
+
+	/**
+	 * Why a stage or a hand-over was refused.
+	 *
+	 * @var string
+	 */
+	public const REFUSAL = 'A voluntary contribution gets one reminder at most, without costs, and is never handed to a collection agency.';
+
+	/**
+	 * True when the invoice is a voluntary school contribution.
+	 *
+	 * An invoice without a contribution group was never raised as one, so a
+	 * missing or unreadable invoice is dunned as before.
+	 *
+	 * @param array<string, mixed>|null $invoice The invoice, or null when it could not be read.
+	 *
+	 * @return bool True for a voluntary contribution.
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-008)
+	 */
+	public function isVoluntary(?array $invoice): bool {
+		if ($invoice === null) {
+			return false;
+		}
+
+		$contribution = ($invoice['contribution'] ?? null);
+
+		return is_array($contribution) === true && ($contribution['voluntary'] ?? false) === true;
+	}//end isVoluntary()
+
+	/**
+	 * True when this stage may run for this invoice.
+	 *
+	 * @param array<string, mixed>|null $invoice The invoice.
+	 * @param int $stageNr The stage about to run.
+	 * @param int $runsSoFar How many runs this invoice already had.
+	 *
+	 * @return bool True when the stage may run.
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-008)
+	 */
+	public function allowsStage(?array $invoice, int $stageNr, int $runsSoFar): bool {
+		if ($this->isVoluntary(invoice: $invoice) === false) {
+			return true;
+		}
+
+		return $stageNr === self::ONLY_STAGE && $runsSoFar === 0;
+	}//end allowsStage()
+
+	/**
+	 * The dispatch parameters with collection costs and interest removed.
+	 *
+	 * @param array<string, mixed> $params The run parameters.
+	 *
+	 * @return array<string, mixed> The parameters without costs.
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-008)
+	 */
+	public function stripCosts(array $params): array {
+		$params['collectionCostAmount'] = null;
+		$params['interestAmount'] = null;
+
+		return $params;
+	}//end stripCosts()
+}//end class
