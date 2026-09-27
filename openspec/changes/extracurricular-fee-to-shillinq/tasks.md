@@ -13,8 +13,8 @@ repair step imports.
 - **acceptance_criteria**:
   - GIVEN the merged register WHEN it is built THEN PaymentRequest is 0.4.0 with subject.app, beneficiary, voluntary, raiseBatchId, settledAt, settledVia and requestType contribution
   - GIVEN the merged register WHEN it is built THEN ARInvoice is 0.14.0 with a nullable contribution group, and the seed rows carry the contribution shape
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 2: The beneficiary joins the uniqueness key
 - **spec_ref**: `openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md#requirement-the-raise-is-idempotent-per-chargeable-and-child-req-scon-003`

@@ -4,16 +4,16 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "ar-invoice-payment-links",
     "adr": "ADR-037 modular register fragment + ADR-031 declarative business logic + ADR-022 OR notification engine — never edit shillinq_register.json",
-    "description": "Tier 2: AR Invoice Payment Links (EXPECTED-GAP 2 of 2026-06-11 re-evaluation). Adds the PaymentRequest schema: an online payment link (iDEAL via Mollie, cards via Stripe) on every AR invoice, reconciled back to ARInvoice.paid automatically. Generalizes the bookings-deposits payment plumbing to ARInvoice records WITHOUT forking it. The shared PaymentReconciliationService + PaymentRequestWebhookController handle BOTH DepositPayment and PaymentRequest through one code path. Stores NO PCI data: OpenConnector (PCI-certified) owns card details, tokens, hosted payment UI and refunds; the register stores only opaque references (paymentIntentId, settlementReference), mirroring DepositPayment. The paymentLink is a declarative x-openregister-calculations field resolving to OpenConnector's hosted payment UI with a short-lived signed token. No Mollie/Stripe URL is ever constructed in app code. On capture the linked ARInvoice settles through its existing matchPaid lifecycle transition (AR core owns GL posting); a capture that cannot apply lands in captured_unapplied. Surfaced, never silently dropped. Settlement by other means voids open requests; capture records the gateway payout reference for bank-reconciliation auto-matching. Two declarative x-openregister-notifications rules (paymentReceived / paymentFailed). No imperative dispatch (gate-18). Seed data ships 3 demo PaymentRequest records spanning pending / captured / failed. case-payment-requests (2026-09-18) generalises PaymentRequest a second time: from AR invoices to any object in any register, so a case app can ask a citizen for leges, a dwangsom or a deposit without inventing a second payment mechanism."
+    "description": "Tier 2: AR Invoice Payment Links (EXPECTED-GAP 2 of 2026-06-11 re-evaluation). Adds the PaymentRequest schema: an online payment link (iDEAL via Mollie, cards via Stripe) on every AR invoice, reconciled back to ARInvoice.paid automatically. Generalizes the bookings-deposits payment plumbing to ARInvoice records WITHOUT forking it. The shared PaymentReconciliationService + PaymentRequestWebhookController handle BOTH DepositPayment and PaymentRequest through one code path. Stores NO PCI data: OpenConnector (PCI-certified) owns card details, tokens, hosted payment UI and refunds; the register stores only opaque references (paymentIntentId, settlementReference), mirroring DepositPayment. The paymentLink is a declarative x-openregister-calculations field resolving to OpenConnector's hosted payment UI with a short-lived signed token. No Mollie/Stripe URL is ever constructed in app code. On capture the linked ARInvoice settles through its existing matchPaid lifecycle transition (AR core owns GL posting); a capture that cannot apply lands in captured_unapplied. Surfaced, never silently dropped. Settlement by other means voids open requests; capture records the gateway payout reference for bank-reconciliation auto-matching. Two declarative x-openregister-notifications rules (paymentReceived / paymentFailed). No imperative dispatch (gate-18). Seed data ships 3 demo PaymentRequest records spanning pending / captured / failed. case-payment-requests (2026-09-18) generalises PaymentRequest a second time: from AR invoices to any object in any register, so a case app can ask a citizen for leges, a dwangsom or a deposit without inventing a second payment mechanism. extracurricular-fee-to-shillinq (2026-09-27) lets a request stand on a school contribution: an invoice-backed object request that names the chargeable in the owning app, the child it is for, and the moment it first counts as settled."
   },
   "components": {
     "schemas": {
       "PaymentRequest": {
         "slug": "PaymentRequest",
         "icon": "CreditCardOutline",
-        "version": "0.3.0",
+        "version": "0.4.0",
         "title": "Payment Request",
-        "description": "An online payment attempt against an AR invoice. One AR invoice can carry several payment requests over its life (link expired and regenerated, a failed attempt then a new link, a link voided after partial credit): each request has its own lifecycle, gateway identity and audit needs, so payment state lives here and never folds onto ARInvoice (design D1). Mirrors the proven DepositPayment shape minus booking fields, FK'd to ARInvoice. STORES NO PCI DATA: no card number, CVV, PAN, IBAN credential, or authorization token is ever persisted. OpenConnector (PCI-certified) handles all sensitive payment data and only opaque references (paymentIntentId, settlementReference) are stored here, identical to DepositPayment. V0.1.1 (portal-payment-initiation) adds confirmationSummary. A subject-safe settlement receipt written on capture and surfaced through the customer portal's read-only paymentRequests collection. V0.2.0 (case-payment-requests) lets a request stand on any object: subjectKind, subject, requestType, description, debtor, dueAt and revenueAccount, with invoiceReference optional. An object request carries its own amount and books a receipt against the revenue account mapped to its requestType; a domain app never books the money itself (ADR-107). V0.3.0 (fees-payments-and-the-contract-register) adds settlements, an append-only record of money that arrived another way, and legalBasis, the article the amount rests on.",
+        "description": "An online payment attempt against an AR invoice. One AR invoice can carry several payment requests over its life (link expired and regenerated, a failed attempt then a new link, a link voided after partial credit): each request has its own lifecycle, gateway identity and audit needs, so payment state lives here and never folds onto ARInvoice (design D1). Mirrors the proven DepositPayment shape minus booking fields, FK'd to ARInvoice. STORES NO PCI DATA: no card number, CVV, PAN, IBAN credential, or authorization token is ever persisted. OpenConnector (PCI-certified) handles all sensitive payment data and only opaque references (paymentIntentId, settlementReference) are stored here, identical to DepositPayment. V0.1.1 (portal-payment-initiation) adds confirmationSummary. A subject-safe settlement receipt written on capture and surfaced through the customer portal's read-only paymentRequests collection. V0.2.0 (case-payment-requests) lets a request stand on any object: subjectKind, subject, requestType, description, debtor, dueAt and revenueAccount, with invoiceReference optional. An object request carries its own amount and books a receipt against the revenue account mapped to its requestType; a domain app never books the money itself (ADR-107). V0.3.0 (fees-payments-and-the-contract-register) adds settlements, an append-only record of money that arrived another way, and legalBasis, the article the amount rests on. V0.4.0 (extracurricular-fee-to-shillinq) lets a request stand on a school contribution: subject.app names the app owning the chargeable, beneficiary names the child and joins the uniqueness key, requestType gains contribution, voluntary carries the Wet vrijwillige ouderbijdrage flag, raiseBatchId names the bulk raise, and settledAt with settledVia mark the moment the request first counts as settled, which is the signal an owning app listens for.",
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Payment-attempt register; every create / update / lifecycle transition (authorize / capture / markUnapplied / fail / expire / void) is recorded on the OR audit-trail-immutable channel + ADR-022. The captured PaymentRequest is the canonical payment-evidence chain linked to the settled ARInvoice."
@@ -30,7 +30,7 @@
         "properties": {
           "invoiceReference": {
             "type": "string",
-            "description": "FK to the ARInvoice (UUID or slug) being paid. Required when subjectKind = invoice, and absent on an object request. The capture transition settles this invoice through its existing matchPaid lifecycle transition (REQ-SOPR-001).",
+            "description": "FK to the ARInvoice (UUID or slug) being paid. Required when subjectKind = invoice. An object request carries one when an invoice stands behind it, as a school contribution does, and then settles that invoice on capture instead of booking a receipt.",
             "example": "ar-invoice-c-2026-0042",
             "title": "Invoice Reference"
           },
@@ -47,8 +47,14 @@
           },
           "subject": {
             "type": "object",
-            "description": "Semantic reference (ADR-048) to the object the money is asked for. Required when subjectKind = object. Never a consuming app's slug: the four parts name the object without shillinq knowing the app (REQ-SOPR-001).",
+            "description": "Semantic reference (ADR-048) to the object the money is asked for. Required when subjectKind = object. Names the app, the register, the schema and the id, so shillinq never needs the consuming app's own code (REQ-SOPR-001).",
             "properties": {
+              "app": {
+                "type": "string",
+                "description": "The app that owns the referenced object, for example learniq. It describes the reference and never makes two references differ.",
+                "example": "learniq",
+                "title": "App"
+              },
               "type": {
                 "type": "string",
                 "description": "The semantic type of the referenced object, for example `case`.",
@@ -82,11 +88,56 @@
               "leges",
               "dwangsom",
               "deposit",
-              "other"
+              "other",
+              "contribution"
             ],
             "description": "Why the money is asked for. Required when subjectKind = object. Drives the revenue account the receipt books against through the paymentRevenueAccounts mapping (REQ-SOPR-002).",
             "example": "dwangsom",
             "title": "Request Type"
+          },
+          "beneficiary": {
+            "type": "object",
+            "description": "Who the charge is for, such as the child on a school contribution. It joins the uniqueness key, so one chargeable can carry a pending request per child.",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "The semantic type of the referenced object, for example `case`.",
+                "example": "learner",
+                "title": "Type"
+              },
+              "register": {
+                "type": "string",
+                "description": "The register slug holding the object.",
+                "example": "learniq",
+                "title": "Register"
+              },
+              "schema": {
+                "type": "string",
+                "description": "The schema slug of the object.",
+                "example": "LearnerProfile",
+                "title": "Schema"
+              },
+              "id": {
+                "type": "string",
+                "description": "The object's identifier inside that register and schema.",
+                "example": "00000000-0000-0000-0000-000000000001",
+                "title": "Id"
+              }
+            },
+            "title": "Beneficiary"
+          },
+          "voluntary": {
+            "type": "boolean",
+            "default": false,
+            "description": "True for a voluntary contribution under the Wet vrijwillige ouderbijdrage. Such a request is never dunned beyond one reminder.",
+            "example": true,
+            "title": "Voluntary"
+          },
+          "raiseBatchId": {
+            "type": "string",
+            "description": "The bulk raise that wrote this record, so one batch can be found and checked together.",
+            "example": "ctb-20261001-1a2b3c4d",
+            "title": "Raise batch"
           },
           "description": {
             "type": "string",
@@ -219,6 +270,29 @@
             "description": "Capture timestamp, set on the capture transition.",
             "example": "2026-06-13T10:22:00Z",
             "title": "Captured At"
+          },
+          "settledAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When this request first counted as settled, by the provider or by money recorded by hand. Written once and never moved. An owning app listens for this field appearing.",
+            "example": "2026-10-03T09:12:00Z",
+            "title": "Settled at"
+          },
+          "settledVia": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "provider",
+              "cash",
+              "pin",
+              "bank-transfer",
+              "waived",
+              "other"
+            ],
+            "description": "How the request was settled: through the payment provider, or by the method of the money recorded by hand.",
+            "example": "provider",
+            "title": "Settled via"
           },
           "administrationId": {
             "type": "string",
