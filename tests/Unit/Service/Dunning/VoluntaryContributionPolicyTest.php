@@ -71,4 +71,20 @@ final class VoluntaryContributionPolicyTest extends TestCase {
 
 		self::assertSame(['invoiceId' => 'inv-1', 'collectionCostAmount' => null, 'interestAmount' => null], $params);
 	}//end testCostsAreStripped()
+
+	/**
+	 * A declined invoice is closed; an open one and a missing one are not
+	 * (REQ-SCON-014).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-014)
+	 */
+	public function testADeclinedInvoiceIsRecognised(): void {
+		$policy = new VoluntaryContributionPolicy();
+
+		self::assertTrue($policy->isDeclined(['lifecycleState' => 'declined']));
+		self::assertFalse($policy->isDeclined(['lifecycleState' => 'overdue']));
+		self::assertFalse($policy->isDeclined(null));
+	}//end testADeclinedInvoiceIsRecognised()
 }//end class

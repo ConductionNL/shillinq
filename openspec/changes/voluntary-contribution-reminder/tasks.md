@@ -22,8 +22,8 @@ repair step imports. Every fix starts with a test that fails.
 - **acceptance_criteria**:
   - GIVEN a Dutch voluntary invoice WHEN rendered THEN the nl template says voluntary and names no term, costs, interest or IBAN
   - GIVEN en_GB, de and no language WHEN rendered THEN en, nl, nl; the raise writes contribution.language
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 3: The dunning selects the template and leaves a declined invoice alone
 - **spec_ref**: `openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md#requirement-every-route-to-the-voluntary-reminder-selects-that-template-req-scon-012`

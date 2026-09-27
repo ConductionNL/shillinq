@@ -54,6 +54,33 @@ final class VoluntaryContributionPolicy {
 	public const REFUSAL = 'A voluntary contribution gets one reminder at most, without costs, and is never handed to a collection agency.';
 
 	/**
+	 * The lifecycle state of a voluntary contribution the parent refused.
+	 *
+	 * @var string
+	 */
+	public const DECLINED_STATE = 'declined';
+
+	/**
+	 * Why a run on a declined contribution was refused.
+	 *
+	 * @var string
+	 */
+	public const DECLINED_REFUSAL = 'The parent said they will not pay this voluntary contribution, so it is not reminded.';
+
+	/**
+	 * True when the invoice was declined: closed, and never reminded.
+	 *
+	 * @param array<string, mixed>|null $invoice The invoice, or null when it could not be read.
+	 *
+	 * @return bool True for a declined invoice.
+	 *
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-014)
+	 */
+	public function isDeclined(?array $invoice): bool {
+		return ($invoice['lifecycleState'] ?? null) === self::DECLINED_STATE;
+	}//end isDeclined()
+
+	/**
 	 * True when the invoice is a voluntary school contribution.
 	 *
 	 * An invoice without a contribution group was never raised as one, so a

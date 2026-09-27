@@ -122,6 +122,27 @@ final class ContributionInvoiceBuilderTest extends TestCase {
 	}//end testAVoluntaryChargeIsMarkedOnTheInvoice()
 
 	/**
+	 * The invoice records the language its text was written in, so the one
+	 * voluntary reminder follows it; a call without one records Dutch
+	 * (REQ-SCON-011).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-011)
+	 */
+	public function testTheInvoiceRecordsItsLanguage(): void {
+		$beneficiary = ['type' => 'learner', 'id' => 'child-a'];
+
+		$english = $this->builder->normaliseCharge($this->call(['language' => 'en']), '2026-09-27');
+		$invoice = $this->builder->buildInvoice($english, 60.0, 'cm-1', $beneficiary, 'ctb-20261001-1a2b3c4d', 1);
+		self::assertSame('en', $invoice['contribution']['language']);
+
+		$default = $this->builder->normaliseCharge($this->call(), '2026-09-27');
+		$invoice = $this->builder->buildInvoice($default, 60.0, 'cm-1', $beneficiary, 'ctb-20261001-1a2b3c4d', 1);
+		self::assertSame('nl', $invoice['contribution']['language']);
+	}//end testTheInvoiceRecordsItsLanguage()
+
+	/**
 	 * A compulsory charge carries neither the notice nor the mark, and English
 	 * is used when asked for.
 	 *
