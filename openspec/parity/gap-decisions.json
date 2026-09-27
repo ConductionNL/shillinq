@@ -296,6 +296,14 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
+		"row": "plt-nl-query",
+		"matrix": "shillinq",
+		"decision": "existing",
+		"reason": "Rated no in the matrix, corrected to partial: src/App.vue:15 already mounts the hermiq companion (CnAppRoot aiCompanion), and REQ-MCP-004 and REQ-MCP-005 give it a read tool for every shillinq action with routing descriptions, so a finance question in plain language is covered by that open change.",
+		"change": "mcp-action-tool-surface",
+		"decidedOn": "2026-09-27"
+	},
+	{
 		"row": "plt-readonly-access",
 		"matrix": "shillinq",
 		"decision": "existing",

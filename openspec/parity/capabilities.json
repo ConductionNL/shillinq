@@ -4292,17 +4292,18 @@
 			"id": "plt-nl-query",
 			"area": "platform",
 			"name": "Ask questions about your finances in plain language.",
-			"shillinq": "no",
+			"shillinq": "partial",
 			"exact-online": "yes",
 			"moneybird": "yes",
 			"snelstart": "unknown",
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
-				"evidence": "no question box or assistant integration in src/; the only AI surface is the read-only MCP declaration in lib/Settings/register.d/zzz-mcp-tool-surface.json",
-				"reachedOn": "nothing reaches it inside shillinq",
-				"owner": "ConductionNL/shillinq"
+				"state": "specified",
+				"evidence": "src/App.vue:15 mounts the hermiq companion through CnAppRoot; lib/Settings/register.d/zzz-mcp-tool-surface.json declares search and get tools on 12 curated schemas that the companion can route a question to; tools for reports and actions are the open change mcp-action-tool-surface.",
+				"reachedOn": "The floating companion on every shillinq page when hermiq is installed",
+				"owner": "ConductionNL/shillinq",
+				"readOn": "2026-09-27"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/nieuws/nieuwe-ai-agent-brengt-financieel-professionals-sneller-van-cijfers-naar-beslissingen (3 September 2026): \"De Financial Agent begrijpt financiele context, zoals de balans en winst- en verliesrekening, en analyseert prestaties op basis van ruim 60 financiele KPI's\" Note: New in September 2026; edition not stated.",
@@ -4316,7 +4317,7 @@
 			"feature": "ai-assistance",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "An outside AI client could ask through the MCP surface, which is itself pending."
+			"note": "An outside AI client could ask through the MCP surface, which is itself pending. Corrected 2026-09-27 (OpenSpec pass): the matrix read found no question box, but the shell mounts the hermiq companion. Specified 2026-09-27 by the existing change openspec/changes/mcp-action-tool-surface (OpenSpec pass)."
 		},
 		{
 			"id": "plt-attachments",
