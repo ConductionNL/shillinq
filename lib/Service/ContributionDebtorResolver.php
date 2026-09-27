@@ -125,24 +125,7 @@ final class ContributionDebtorResolver {
 			$claimed = $this->claimOf(subjectRef: $subjectRef);
 		}
 
-		$created = false;
-		$customerId = trim((string)($debtor['customerMasterId'] ?? ''));
-		if ($customerId !== '') {
-			$found = $this->customer(id: $customerId);
-			if ($found === null) {
-				throw new InvalidArgumentException(sprintf('No customer %s exists.', $customerId));
-			}
-
-			$customerId = $found;
-		} else {
-			if ($claimed !== null) {
-				$customerId = ($this->customer(id: $claimed) ?? '');
-			}
-
-			if ($customerId === '') {
-				[$customerId, $created] = $this->byEmailOrNew(debtor: $debtor, administrationId: $administrationId);
-			}
-		}//end if
+		[$customerId, $created] = $this->customerFor(debtor: $debtor, claimed: $claimed, administrationId: $administrationId);
 
 		$linked = false;
 		if ($subjectRef !== '') {
@@ -151,6 +134,38 @@ final class ContributionDebtorResolver {
 
 		return ['customerMasterId' => $customerId, 'portalLinked' => $linked, 'created' => $created];
 	}//end resolve()
+
+	/**
+	 * The customer to bill: the named one, else the claimed one, else by email or new.
+	 *
+	 * @param array<string, mixed> $debtor The debtor.
+	 * @param string|null $claimed The customer the portal account points at, or null.
+	 * @param string $administrationId The school's administration.
+	 *
+	 * @return array{0: string, 1: bool} The customer id and whether it was created.
+	 *
+	 * @throws InvalidArgumentException When a named customer does not exist, or a new one cannot be made.
+	 */
+	private function customerFor(array $debtor, ?string $claimed, string $administrationId): array {
+		$named = trim((string)($debtor['customerMasterId'] ?? ''));
+		if ($named !== '') {
+			$found = $this->customer(id: $named);
+			if ($found === null) {
+				throw new InvalidArgumentException(sprintf('No customer %s exists.', $named));
+			}
+
+			return [$found, false];
+		}
+
+		if ($claimed !== null) {
+			$found = $this->customer(id: $claimed);
+			if ($found !== null) {
+				return [$found, false];
+			}
+		}
+
+		return $this->byEmailOrNew(debtor: $debtor, administrationId: $administrationId);
+	}//end customerFor()
 
 	/**
 	 * The customer with the debtor's email, or a new one.

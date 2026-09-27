@@ -50,8 +50,8 @@ repair step imports.
   - GIVEN three recipients WHEN raised THEN three issued invoices and three invoice-backed object requests exist
   - GIVEN a retried call WHEN raised THEN nothing new is written and each recipient is skipped naming its request
   - GIVEN a caller without payment.request WHEN raising THEN 403 and nothing written (REQ-SCON-002)
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 6: Settlement through the invoice, and the settled edge
 - **spec_ref**: `openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md#requirement-shillinq-signals-the-moment-a-request-is-settled-req-scon-009`

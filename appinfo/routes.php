@@ -754,6 +754,14 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // retyping a tariff out of a verordening.
             ['name' => 'paymentRequestAction#raiseLeges', 'url' => '/api/payment-requests/leges', 'verb' => 'POST'],
 
+            // School contributions raised in bulk (extracurricular-fee-to-shillinq,
+            // REQ-SCON-001). One chargeable in another app (a learniq fee item, a
+            // portaliq activity) and up to 200 guardians in, one issued invoice and
+            // one payment request per guardian out. #[NoAdminRequired], gated INSIDE
+            // the controller on the payment.request action. Static URL, declared
+            // before the SPA catch-all per ADR-016.
+            ['name' => 'contribution#raise', 'url' => '/api/contributions/raise', 'verb' => 'POST'],
+
             // Portal payment initiation (portal-payment-initiation, ADR-046 contract
             // v2 A6). Receives portaliq's server-to-server forward of the `pay`
             // endpoint-forward action declared on the customer manifest
