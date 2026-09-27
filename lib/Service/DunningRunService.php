@@ -53,6 +53,7 @@ use OCA\Shillinq\Service\Dunning\EvidenceRetentionEnforcer;
 use OCA\Shillinq\Service\Dunning\IncassoBureauAdapterInterface;
 use OCA\Shillinq\Service\Dunning\PostNLAdapterInterface;
 use OCA\Shillinq\Service\Dunning\VoluntaryContributionPolicy;
+use OCA\Shillinq\Service\Dunning\VoluntaryReminderTemplate;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -106,6 +107,7 @@ class DunningRunService {
 	 * @param LoggerInterface $logger Logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param VoluntaryContributionPolicy $voluntary The one-reminder cap on a voluntary contribution.
+	 * @param VoluntaryReminderTemplate $reminder The voluntary contribution's own reminder letter.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
@@ -113,6 +115,7 @@ class DunningRunService {
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 		private readonly VoluntaryContributionPolicy $voluntary = new VoluntaryContributionPolicy(),
+		private readonly VoluntaryReminderTemplate $reminder = new VoluntaryReminderTemplate(),
 	) {
 	}//end __construct()
 
@@ -192,6 +195,7 @@ class DunningRunService {
 	 * @return array<string,mixed>|null The materialised `DunningRun`, or null when the tick was a no-op.
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-12
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-014)
 	 */
 	public function tickInvoice(
 		string $administrationId,
@@ -202,7 +206,8 @@ class DunningRunService {
 	): ?array {
 		$now = ($now ?? new DateTimeImmutable());
 		$invoiceId = (string)($invoice['id'] ?? ($invoice['@self']['id'] ?? ''));
-		if ($invoiceId === '') {
+		// A contribution the parent declined is never reminded (REQ-SCON-014).
+		if ($invoiceId === '' || $this->voluntary->isDeclined(invoice: $invoice) === true) {
 			return null;
 		}
 
@@ -410,6 +415,8 @@ class DunningRunService {
 	 * @return array<string,mixed> The executed DunningRun record.
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-012)
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-014)
 	 */
 	public function executeStage(string $administrationId, array $params): array {
 		$invoiceId = (string)($params['invoiceId'] ?? '');
@@ -421,15 +428,13 @@ class DunningRunService {
 			throw new RuntimeException(sprintf('Cannot execute DunningRun: invoice %s is paused.', $invoiceId));
 		}
 
-		// Every route to a run passes here, the HTTP one included (REQ-SCON-008).
+		// Every route to a run passes here, the HTTP one included: a declined
+		// contribution is refused, a voluntary one runs once, without costs, in
+		// its own letter (REQ-SCON-008, REQ-SCON-012, REQ-SCON-014).
 		$invoice = $this->fetchById(schema: 'ARInvoice', id: $invoiceId);
-		if ($this->voluntary->isVoluntary(invoice: $invoice) === true) {
+		if ($this->voluntary->isVoluntary(invoice: $invoice) === true || $this->voluntary->isDeclined(invoice: $invoice) === true) {
 			$runs = $this->runCount(administrationId: $administrationId, invoiceId: $invoiceId);
-			if ($this->voluntary->allowsStage(invoice: $invoice, stageNr: (int)($params['stageNr'] ?? 1), runsSoFar: $runs) === false) {
-				throw new RuntimeException(VoluntaryContributionPolicy::REFUSAL);
-			}
-
-			$params = $this->voluntary->stripCosts(params: $params);
+			$params = $this->voluntary->prepareRun(invoice: $invoice, params: $params, runsSoFar: $runs, reminder: $this->reminder);
 		}
 
 		$now = new DateTimeImmutable();

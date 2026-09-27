@@ -31,8 +31,8 @@ repair step imports. Every fix starts with a test that fails.
 - **acceptance_criteria**:
   - GIVEN a voluntary invoice WHEN ticked or executed with a generic template THEN the run carries the voluntary template and body
   - GIVEN a declined invoice WHEN ticked or executed THEN nothing runs
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 4: The decline service, receiver, route and portal action
 - **spec_ref**: `openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md#requirement-a-guardian-can-say-they-will-not-pay-a-voluntary-contribution-req-scon-013`

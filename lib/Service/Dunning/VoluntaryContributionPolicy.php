@@ -9,8 +9,11 @@
  * means one reminder at most, with no collection costs, no statutory interest
  * and never a hand-over to a collection agency.
  *
- * This class decides that from the invoice alone and does no I/O, so every
- * place a reminder can start asks the same question and gets the same answer.
+ * This class decides that from the invoice alone and does no I/O of its own,
+ * so every place a reminder can start asks the same question and gets the same
+ * answer. The one reminder it allows carries the voluntary letter
+ * (VoluntaryReminderTemplate, decision D28), and a declined contribution gets
+ * none.
  * DunningRunService consults it in tickInvoice(), executeStage() and
  * transferToIncasso().
  *
@@ -32,6 +35,8 @@
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Dunning;
+
+use RuntimeException;
 
 /**
  * Caps the dunning of a voluntary school contribution at one plain reminder.
@@ -136,4 +141,42 @@ final class VoluntaryContributionPolicy {
 
 		return $params;
 	}//end stripCosts()
+
+	/**
+	 * The run parameters a voluntary contribution's one reminder goes out with.
+	 *
+	 * Refuses a declined invoice, a stage above the first and a second run.
+	 * The run that is allowed loses its costs and carries the voluntary letter
+	 * in place of whatever template or text the stage or the caller gave: the
+	 * generic letter names a term and an IBAN.
+	 *
+	 * @param array<string, mixed>|null $invoice The invoice.
+	 * @param array<string, mixed> $params The run parameters.
+	 * @param int $runsSoFar How many runs this invoice already had.
+	 * @param VoluntaryReminderTemplate $reminder The voluntary letter.
+	 *
+	 * @return array<string, mixed> The parameters for the one allowed run.
+	 *
+	 * @throws RuntimeException When no run is allowed.
+	 *
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-012)
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-014)
+	 */
+	public function prepareRun(?array $invoice, array $params, int $runsSoFar, VoluntaryReminderTemplate $reminder): array {
+		if ($this->isDeclined(invoice: $invoice) === true) {
+			throw new RuntimeException(self::DECLINED_REFUSAL);
+		}
+
+		if ($this->allowsStage(invoice: $invoice, stageNr: (int)($params['stageNr'] ?? 1), runsSoFar: $runsSoFar) === false) {
+			throw new RuntimeException(self::REFUSAL);
+		}
+
+		$letter = $reminder->render(invoice: ($invoice ?? []));
+		$params = $this->stripCosts(params: $params);
+		$params['templateId'] = $letter['templateId'];
+		$params['renderedSubject'] = $letter['subject'];
+		$params['renderedBody'] = $letter['body'];
+
+		return $params;
+	}//end prepareRun()
 }//end class
