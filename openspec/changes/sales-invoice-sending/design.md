@@ -104,9 +104,10 @@ a later move is one edit.
 ### D2. The send reads the PDF from the generator, and attaches real PDF bytes
 
 The service calls `InvoicePdfGenerator::generateHybridPdf()` with the invoice's
-own lines and the UBL from `ArInvoiceUblMapper::toNlciusXml()` when the
-customer has a VAT id, and the plain rendering otherwise, and attaches the
-bytes as `Factuur-<invoiceNumber>.pdf`. When `sales-invoice-document` moves
+own lines and the UBL from `ArInvoiceUblMapper::toNlciusXml()`, the only entry
+point that returns real PDF bytes, and attaches them as
+`Factuur-<invoiceNumber>.pdf`. The embedded UBL does no harm to a reader
+without e-invoicing software and helps one with it. When `sales-invoice-document` moves
 rendering to docudesk (ADR-075), the service follows that entry point; this
 change does not add a second renderer.
 
