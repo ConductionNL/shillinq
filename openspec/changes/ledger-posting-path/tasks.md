@@ -1,6 +1,6 @@
 # Tasks: ledger-posting-path
 
-<!-- HYDRA CAP: max 20 unindented `- [ ]` lines. This file uses 8. -->
+<!-- HYDRA CAP: max 20 unindented `- [ ]` lines. This file uses 9. -->
 
 ## 1. Inventory
 
@@ -9,7 +9,8 @@
 ## 2. Handlers
 
 - [ ] 2.1 Add `lib/Lifecycle/Action/MaterialiseGlTransactionAction.php` with the JournalEntry mapper, idempotency and the balance refusal; register it under `materialise-gl-transaction` in `lib/AppInfo/Application.php` (REQ-LPP-004). Verify: PHPUnit for balanced, unbalanced and repeated runs.
-- [ ] 2.2 Add the `APInvoice`, `ExpenseClaimEntry` and `InventoryValuation` mappers (REQ-LPP-006). Verify: one PHPUnit case per mapper with a balanced and an unbalanced source.
+- [ ] 2.2 Add the `APInvoice`, `ExpenseClaimEntry` (through `ExpenseAccountResolver` of `expenses-category-mapping`) and `InventoryValuation` mappers (REQ-LPP-006). Verify: one PHPUnit case per mapper with a balanced and an unbalanced source.
+- [ ] 2.4 Declare `materialise-gl-transaction` on `ARInvoice.issue` and add the `ARInvoice` mapper (REQ-LPP-007). Verify: PHPUnit that an issued invoice of EUR 1,210 books 1,210 on receivables, 1,000 on revenue and 210 on VAT.
 - [ ] 2.3 Add `lib/Lifecycle/Action/EvaluateAllocationRulesAction.php` and register it under `evaluate-allocation-rules` (REQ-LPP-001, REQ-LPP-002). Verify: PHPUnit for a matching rule, no matching rule and a repeated run.
 
 ## 3. Declarations

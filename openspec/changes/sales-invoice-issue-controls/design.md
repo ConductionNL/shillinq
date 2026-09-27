@@ -29,6 +29,9 @@ the invoice's fiscal year under a lock (`ILockingProvider`, key
 `shillinq-invoice-seq-<administrationId>-<kind>`), formats the number and
 writes it with the next counter value. A deleted draft therefore never
 leaves a gap.
+A self-billed invoice (made by the customer, `sales-einvoice-exchange`)
+keeps the customer's number: the action skips it, so the seller's series
+only counts invoices the seller made.
 
 New schema `InvoiceNumberSequence`: `administrationId`, `kind` (`sales`,
 `billable`, `credit`), `pattern` (tokens `{year}`, `{seq:N}`, literal
