@@ -3254,7 +3254,7 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"evidence": "Dashboards are fixed manifest widget lists (src/manifest.json Dashboard, *Dashboard pages); grep 'pivot' in src/lib finds only a stock-by-location page description; no user-editable dashboard or pivot builder component in src/components or src/views.",
 				"reachedOn": "nothing reaches it: no page lets a user compose a dashboard or pivot",
 				"owner": "ConductionNL/shillinq"
@@ -3270,7 +3270,8 @@
 			"providerHow": "read-from-code",
 			"feature": "financial-dashboard",
 			"featureConfidence": "medium",
-			"source": "competitor"
+			"source": "competitor",
+			"note": "Specified 2026-09-27 in openspec/changes/reporting-custom-analysis (OpenSpec pass)."
 		},
 		{
 			"id": "rep-export",
@@ -3434,7 +3435,7 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "BudgetLine holds ledgerGroupId + month01Amount..month12Amount (lib/Settings/register.d/budget-core-schema.json), entered one record at a time on the BudgetLines index form; src/views/BudgetGrid.vue only GETs /api/budget-grid (BudgetGridController.php; appinfo/routes.php:641 is GET only) and its inputs are period filters, so the grid is read-only.",
 				"reachedOn": "BudgetLines /begroting/budget-lines and BudgetGrid /begroting/grid (via menu Banking & Cashflow > Budget Lines / Budget Grid); AnnualBudgets, LedgerGroups in the same cluster",
 				"owner": "ConductionNL/shillinq"
@@ -3451,7 +3452,7 @@
 			"feature": "budgeting",
 			"featureConfidence": "medium",
 			"source": "own-code",
-			"note": "A budget per ledger group can be built, but row by row, not by typing into the grid."
+			"note": "A budget per ledger group can be built, but row by row, not by typing into the grid. Specified 2026-09-27 in openspec/changes/planning-budget-editing (OpenSpec pass)."
 		},
 		{
 			"id": "pln-budget-scenarios",
@@ -3613,7 +3614,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "lib/Listener/StockMoveTransitionedListener.php:103-112 runs FifoValuationService/MovingAverageValuationService only on an ObjectTransitionedEvent to 'posted'; GoodsReceiptNoteService.php:26-29/606 creates receipt StockMoves already posted via saveObject, and GRIRClearingListener.php:24 notes OR fires no transition event for a state set at create, so purchase receipts never add FIFO layers; /api/inventory/valuation-report is absent from _lane/frontend-api-paths.txt",
 				"reachedOn": "InventoryValuation /inventory/valuation (menu Purchasing > Valuation) lists InventoryValuation records",
 				"owner": "ConductionNL/shillinq"
@@ -3630,7 +3631,7 @@
 			"feature": "inventory-valuation",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "FIFO/average engines and GL posting exist, but goods received through a GRN never reach them; only hand-made draft->posted moves do. Worth a live check."
+			"note": "FIFO/average engines and GL posting exist, but goods received through a GRN never reach them; only hand-made draft->posted moves do. Worth a live check. Specified 2026-09-27 in openspec/changes/inventory-receipt-cost-layers (OpenSpec pass)."
 		},
 		{
 			"id": "inv-cogs",
@@ -3643,7 +3644,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "lib/Listener/DeliveryDispatchListener.php -> SalesDispatchStockIssueService.php:532-564 creates a draft issue StockMove and posts it through OR's TransitionEngine -> StockMoveTransitionedListener -> CogsPosterService::postCogs (balanced GLTransaction); POS sales via PosStockDecrementListener (Application.php:720, pipelinq event); but FIFO layers are never fed by GRN receipts (see inv-valuation), so the cost read on issue has no purchase layers",
 				"reachedOn": "no page of its own: fires when a Delivery is confirmed (Orders /orders, menu Sales) or a pipelinq POS sale posts; GL result on General Ledger",
 				"owner": "ConductionNL/shillinq"
@@ -3660,7 +3661,7 @@
 			"feature": "inventory-valuation",
 			"featureConfidence": "medium",
 			"source": "own-code",
-			"note": "The trigger and posting are wired; the cost figure depends on receipt layers that GRN receipts never create."
+			"note": "The trigger and posting are wired; the cost figure depends on receipt layers that GRN receipts never create. Specified 2026-09-27 in openspec/changes/inventory-receipt-cost-layers (OpenSpec pass)."
 		},
 		{
 			"id": "inv-catalog",
@@ -4240,7 +4241,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "no native app; src/manifest.d/inventory-mobile-scanner.json registers a mobile scanner PWA (four custom pages) and src/views/ReceiptCapture.vue captures receipts in the browser; the Nextcloud web UI is responsive",
 				"reachedOn": "MobileScannerHome /inventory/mobile; Receipts /inkoop/receipts",
 				"owner": "ConductionNL/shillinq"
@@ -4257,7 +4258,7 @@
 			"feature": "mobile",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "No iOS or Android app of its own."
+			"note": "No iOS or Android app of its own. Specified 2026-09-27 in openspec/changes/platform-mobile-pwa (OpenSpec pass)."
 		},
 		{
 			"id": "plt-kvk",
@@ -4418,7 +4419,7 @@
 			"twinfield": "partial",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"evidence": "no integration catalogue; ExternalAdaptersStatus /external-adapters lists the 15 connections of lib/Settings/connections.json, of which 11 are marked unavailable",
 				"reachedOn": "ExternalAdaptersStatus /external-adapters (settings gear)",
 				"owner": "ConductionNL/shillinq"
@@ -4434,7 +4435,8 @@
 			"providerHow": "read-from-code",
 			"feature": "integrations",
 			"featureConfidence": "medium",
-			"source": "competitor"
+			"source": "competitor",
+			"note": "Specified 2026-09-27 in openspec/changes/platform-integration-catalogue (OpenSpec pass)."
 		},
 		{
 			"id": "plt-import",
@@ -4499,17 +4501,18 @@
 			"id": "plt-help-assistant",
 			"area": "platform",
 			"name": "Get how-to answers from an in-app assistant at any hour.",
-			"shillinq": "no",
+			"shillinq": "partial",
 			"exact-online": "yes",
 			"moneybird": "yes",
 			"snelstart": "unknown",
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
-				"evidence": "no in-app assistant; pages link out to documentationUrl entries on shillinq.conduction.nl",
-				"reachedOn": "nothing reaches it",
-				"owner": "ConductionNL/shillinq"
+				"state": "specified",
+				"evidence": "src/App.vue:15 passes :aiCompanion=\"true\" to CnAppRoot, which mounts CnAiCompanion (nextcloud-vue CnAppRoot.vue:412) when the chat backend (hermiq) answers its health probe, with the page context (appId, pageKind); no shillinq documentation is given to it as knowledge, so how-to answers rest on the model alone.",
+				"reachedOn": "The floating companion on every shillinq page when hermiq is installed",
+				"owner": "ConductionNL/shillinq",
+				"readOn": "2026-09-27"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"De Support Agent in Exact AI Assistant staat 24/7 voor je klaar om al jouw how-to vragen te beantwoorden\"",
@@ -4522,7 +4525,8 @@
 			"providerHow": "read-from-code",
 			"feature": "ai-assistance",
 			"featureConfidence": "medium",
-			"source": "competitor"
+			"source": "competitor",
+			"note": "Corrected 2026-09-27 (OpenSpec pass): the matrix read found no assistant, but the shell mounts the hermiq companion. Specified 2026-09-27 in openspec/changes/platform-help-agent (OpenSpec pass)."
 		},
 		{
 			"id": "plt-connection-status",
@@ -5335,7 +5339,7 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -5358,7 +5362,7 @@
 				"intelligence-db requirements#109556",
 				"intelligence-db requirements#109553"
 			],
-			"note": "Reserve has a rentetoerekening flag and the programmabegroting register describes an Investering kapitaallasten schedule (lib/Settings/register.d/bookkeeping-programmabegroting.json:7), but no page reaches Investering and nothing charges interest to tasks."
+			"note": "Reserve has a rentetoerekening flag and the programmabegroting register describes an Investering kapitaallasten schedule (lib/Settings/register.d/bookkeeping-programmabegroting.json:7), but no page reaches Investering and nothing charges interest to tasks. Specified 2026-09-27 in openspec/changes/public-sector-reserves-and-interest (OpenSpec pass)."
 		},
 		{
 			"id": "pub-reserves",
@@ -5371,7 +5375,7 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -5395,7 +5399,7 @@
 				"intelligence-db requirements#109763",
 				"intelligence-db requirements#109766"
 			],
-			"note": "Reserve schema with toevoegingen, onttrekkingen and opening and closing balances exists (lib/Settings/shillinq_register.json:20209 area), but no manifest page in src/manifest.json or src/manifest.d names it."
+			"note": "Reserve schema with toevoegingen, onttrekkingen and opening and closing balances exists (lib/Settings/shillinq_register.json:20209 area), but no manifest page in src/manifest.json or src/manifest.d names it. Specified 2026-09-27 in openspec/changes/public-sector-reserves-and-interest (OpenSpec pass)."
 		},
 		{
 			"id": "pln-multi-year-budget",
@@ -5408,7 +5412,7 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"evidence": "AnnualBudget is keyed by fiscalYear (lib/Settings/register.d/budget-core-schema.json), so a budget per year can be kept on AnnualBudgets /begroting/annual-budgets; the Meerjarenraming and MeerjarenBudget schemas that hold the multi-year horizon have no page.",
@@ -5432,7 +5436,7 @@
 				"intelligence-db requirements#109572",
 				"intelligence-db requirements#109573"
 			],
-			"note": "One budget per year, no multi-year view."
+			"note": "One budget per year, no multi-year view. Specified 2026-09-27 in openspec/changes/planning-budget-editing (OpenSpec pass)."
 		},
 		{
 			"id": "pln-budget-amendments",
@@ -5445,7 +5449,7 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -5470,7 +5474,7 @@
 				"intelligence-db requirements#109628",
 				"intelligence-db requirements#109629"
 			],
-			"note": "Begrotingswijziging with a draft->vastgesteld lifecycle and BegrotingswijzigingGuard (lib/Lifecycle/BegrotingswijzigingGuard.php:43) exists and BudgetOverrunGuard stacks it, but no manifest page names Begrotingswijziging, so a user cannot record one."
+			"note": "Begrotingswijziging with a draft->vastgesteld lifecycle and BegrotingswijzigingGuard (lib/Lifecycle/BegrotingswijzigingGuard.php:43) exists and BudgetOverrunGuard stacks it, but no manifest page names Begrotingswijziging, so a user cannot record one. Specified 2026-09-27 in openspec/changes/planning-budget-editing (OpenSpec pass)."
 		},
 		{
 			"id": "rep-scheduled",
@@ -5483,7 +5487,7 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -5505,7 +5509,7 @@
 			"originRequirements": [
 				"intelligence-db requirements#109807"
 			],
-			"note": "Reports are generated on demand from the report library (lib/Reporting/ReportCatalogue.php); no job or setting schedules a report."
+			"note": "Reports are generated on demand from the report library (lib/Reporting/ReportCatalogue.php); no job or setting schedules a report. Specified 2026-09-27 in openspec/changes/reporting-data-delivery (OpenSpec pass)."
 		},
 		{
 			"id": "rep-bi-feed",
@@ -5518,7 +5522,7 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"evidence": "OpenRegister's REST object API exposes every shillinq schema to an outside tool that pulls it (see plt-api), and index pages export CSV or Excel; there is no push feed, OData endpoint or BI connector.",
@@ -5541,7 +5545,7 @@
 			"originRequirements": [
 				"intelligence-db requirements#109469"
 			],
-			"note": "Pull through the generic API only."
+			"note": "Pull through the generic API only. Specified 2026-09-27 in openspec/changes/reporting-data-delivery (OpenSpec pass)."
 		},
 		{
 			"id": "rep-relation-both-sides",
@@ -5589,7 +5593,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"evidence": "ProjectAssignment.estimatedHours (lib/Settings/shillinq_register.json:6218) records an estimate per person per project, shown on ProjectDetail and Utilisatie; nothing warns when logged hours exceed it.",
@@ -5613,7 +5617,7 @@
 				"intelligence-db requirements#109775",
 				"intelligence-db requirements#109776"
 			],
-			"note": "Estimate recorded, no overrun warning."
+			"note": "Estimate recorded, no overrun warning. Specified 2026-09-27 in openspec/changes/people-hours-budget (OpenSpec pass)."
 		},
 		{
 			"id": "pln-asset-method-change",
@@ -5954,7 +5958,7 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"evidence": "The inventory scanner is an offline-first PWA whose queued scans sync through POST /api/inventory/scan (appinfo/routes.php:628, lib/Controller/InventoryScanController.php:189).",
@@ -5974,7 +5978,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-20-release-notes",
-			"note": "Offline only for warehouse scanning."
+			"note": "Offline only for warehouse scanning. Specified 2026-09-27 in openspec/changes/platform-mobile-pwa (OpenSpec pass)."
 		},
 		{
 			"id": "sal-tap-to-pay",
@@ -6309,7 +6313,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"evidence": "lib/Service/EInvoice/EInvoiceValidationService.php:6 runs the VIES VAT number check through lib/Service/ViesService.php before an e-invoice is sent, from the Send e-invoice button (see sal-peppol-send); the standalone lookup route /api/icp/vat-id-lookup (appinfo/routes.php:482) is not called from src/.",
@@ -6329,7 +6333,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.snelstart.nl/productnieuws/snelstart-polaris-release-notes-30-oktober-snelstart",
-			"note": "Checked for customers when sending an e-invoice only; not for suppliers."
+			"note": "Checked for customers when sending an e-invoice only; not for suppliers. Specified 2026-09-27 in openspec/changes/tax-vat-number-check (OpenSpec pass)."
 		},
 		{
 			"id": "bnk-scheduled-payment",
@@ -6700,7 +6704,7 @@
 			"twinfield": "partial",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing reaches it",
@@ -6724,7 +6728,7 @@
 				"intelligence-db requirements#109523",
 				"intelligence-db requirements#109837"
 			],
-			"note": "Required fields are decided by the shipped schemas; a user cannot choose them in shillinq."
+			"note": "Required fields are decided by the shipped schemas; a user cannot choose them in shillinq. Specified 2026-09-27 in openspec/changes/platform-required-fields (OpenSpec pass)."
 		},
 		{
 			"id": "sal-down-payment",

@@ -112,6 +112,22 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
+		"row": "inv-cogs",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is the cost read on issue, which depends on the receipt layers of inv-valuation; 3 competitor yes (exact-online, snelstart, odoo).",
+		"change": "inventory-receipt-cost-layers",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "inv-valuation",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is goods received through a GRN creating cost layers; 2 competitor yes (snelstart, odoo).",
+		"change": "inventory-receipt-cost-layers",
+		"decidedOn": "2026-09-27"
+	},
+	{
 		"row": "led-account-guidance",
 		"matrix": "shillinq",
 		"decision": "build",
@@ -264,6 +280,22 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
+		"row": "pln-budget-amendments",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; the Begrotingswijziging schema has no page; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109).",
+		"change": "planning-budget-editing",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pln-budget-grid",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is typing into the grid, budget-grid-view is read-only by design; 3 competitor yes (exact-online, twinfield, odoo).",
+		"change": "planning-budget-editing",
+		"decidedOn": "2026-09-27"
+	},
+	{
 		"row": "pln-commitments",
 		"matrix": "shillinq",
 		"decision": "defer",
@@ -277,6 +309,14 @@
 		"decision": "defer",
 		"reason": "Partial, built, no demand; no competitor rates it yes.",
 		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pln-multi-year-budget",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is a multi-year view over the Meerjarenraming schemas; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109); 3 competitor yes (exact-online, twinfield, odoo).",
+		"change": "planning-budget-editing",
 		"decidedOn": "2026-09-27"
 	},
 	{
@@ -296,6 +336,30 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
+		"row": "plt-help-assistant",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no in the matrix, corrected to partial: src/App.vue:15 mounts the hermiq companion through CnAppRoot, so an assistant is there when hermiq answers; the missing half is shillinq knowledge for how-to answers; 4 competitor yes (exact-online, moneybird, twinfield, odoo).",
+		"change": "platform-help-agent",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "plt-marketplace",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; adopt-connection-registry is a status page for shillinq own connections, not a catalogue; 4 competitor yes (exact-online, moneybird, snelstart, odoo).",
+		"change": "platform-integration-catalogue",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "plt-mobile",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is creating invoices and capturing receipts from an installable mobile app; 4 competitor yes (exact-online, moneybird, snelstart, odoo).",
+		"change": "platform-mobile-pwa",
+		"decidedOn": "2026-09-27"
+	},
+	{
 		"row": "plt-nl-query",
 		"matrix": "shillinq",
 		"decision": "existing",
@@ -304,11 +368,35 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
+		"row": "plt-offline",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is offline work beyond warehouse scanning, which the mobile app needs for receipts and draft invoices; changelog https://www.odoo.com/odoo-20-release-notes.",
+		"change": "platform-mobile-pwa",
+		"decidedOn": "2026-09-27"
+	},
+	{
 		"row": "plt-readonly-access",
 		"matrix": "shillinq",
 		"decision": "existing",
 		"reason": "REQ-MCP-003 gives every agent a default-deny grant with a read scope through hermiq, and REQ-MCP-005 serves the read tools on both MCP surfaces; a scoped read-only token for a non-agent integration is a Nextcloud app password capability, which has no scope in nextcloud/server.",
 		"change": "mcp-action-tool-surface",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "plt-required-fields",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109); 1 competitor yes (odoo).",
+		"change": "platform-required-fields",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "ppl-hours-budget",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is a warning when logged hours pass the estimate; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109); 2 competitor yes (exact-online, odoo).",
+		"change": "people-hours-budget",
 		"decidedOn": "2026-09-27"
 	},
 	{
@@ -344,6 +432,14 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
+		"row": "pub-asset-interest",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109).",
+		"change": "public-sector-reserves-and-interest",
+		"decidedOn": "2026-09-27"
+	},
+	{
 		"row": "pub-iv3",
 		"matrix": "shillinq",
 		"decision": "defer",
@@ -357,6 +453,14 @@
 		"decision": "defer",
 		"reason": "Partial, built, no demand; no competitor rates it yes.",
 		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pub-reserves",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; the Reserve schema has no page; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109).",
+		"change": "public-sector-reserves-and-interest",
 		"decidedOn": "2026-09-27"
 	},
 	{
@@ -432,6 +536,22 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
+		"row": "rep-bi",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; 4 competitor yes (exact-online, snelstart, twinfield, odoo).",
+		"change": "reporting-custom-analysis",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "rep-bi-feed",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is a push feed or OData endpoint for a BI tool; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109); 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "reporting-data-delivery",
+		"decidedOn": "2026-09-27"
+	},
+	{
 		"row": "rep-consolidation",
 		"matrix": "shillinq",
 		"decision": "defer",
@@ -453,6 +573,14 @@
 		"decision": "build",
 		"reason": "Partial, built; the missing half is comparative columns on the statement; 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
 		"change": "reporting-financial-statements",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "rep-scheduled",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109).",
+		"change": "reporting-data-delivery",
 		"decidedOn": "2026-09-27"
 	},
 	{
@@ -533,6 +661,14 @@
 		"decision": "defer",
 		"reason": "Rated no; changelog demand with one competitor yes (moneybird) meets none of the build tests, outside the core areas.",
 		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "tax-vat-number-check",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is checking suppliers and a lookup a user can reach; changelog https://www.snelstart.nl/productnieuws/snelstart-polaris-release-notes-30-oktober-snelstart; 3 competitor yes (moneybird, snelstart, odoo).",
+		"change": "tax-vat-number-check",
 		"decidedOn": "2026-09-27"
 	},
 	{
