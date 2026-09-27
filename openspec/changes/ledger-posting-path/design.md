@@ -28,6 +28,7 @@ Every declaration, parsed from the register JSON on 2026-09-27:
 | `JournalEntry.post` (pending to posted) | `register.d/add-shillinq-bookkeeping-foundation.json` | `materialise-gl-transaction` | No |
 | `JournalEntry.postDirect` (draft to posted) | same | `materialise-gl-transaction` | No |
 | `APInvoice.post` | `lib/Settings/shillinq_register.json` | `materialise-gl-transaction` | No |
+| `ARInvoice.issue` (draft to issued) | `register.d/add-shillinq-bookkeeping-compliance.json:395` | none declared | No: the issued state's description says the invoice is booked, but no action is declared and no PHP poster books it (found by the OpenSpec pass review of batch 2); this change adds the declaration |
 | `ExpenseClaimEntry.post` | `shillinq_register.json` and `register.d/expense-reimbursement-or-passthrough.json` (two entries) | `materialise-gl-transaction` | No |
 | `InventoryValuation.postCOGS`, `postReceipt`, `postVariance` | `register.d/inventory-cogs-posting.json` | `materialise-gl-transaction` | No caller in `lib/` or `src/` |
 | `StockMove.post` | `register.d/inventory-stock-movement-ledger.json` | `materialise-gl-transaction` | Yes: `StockMoveTransitionedListener` calls `CogsPosterService::postCogs` on `posted` |
@@ -87,6 +88,14 @@ transitioned object and the declaration's `actionParameters`
    credit, by throwing, which aborts the transition with the imbalance named.
 4. Writes through `ObjectService`, then sets the source object's
    `glTransactionId`.
+
+`ARInvoice.issue` gains the declaration too, with an `ARInvoice` mapper that
+debits the receivables control account and credits revenue and VAT per line;
+`sales-down-payments` adds its down-payment and deduction rules to that
+mapper. The `ExpenseClaimEntry` mapper resolves its accounts through
+`ExpenseAccountResolver` from `expenses-category-mapping`, because the
+declaration's lookups (`Account[category=...]`, `isExpenseControlAccount`
+and siblings) name fields `Account` does not declare.
 
 The mapping from a source line to a `GLLine` differs per schema
 (`JournalEntry.lines` already carries account, side and amount; `APInvoice`

@@ -62,3 +62,15 @@ at once.
 - GIVEN fiscal years 2025 and 2026 both open
 - WHEN the bookkeeper posts a balanced transaction dated 2025-12-20
 - THEN the transaction posts and counts in the 2025 trial balance
+
+### Requirement: An issued sales invoice posts to the ledger (REQ-LPP-007)
+
+When an AR invoice is issued, shillinq SHALL write one balanced general ledger
+transaction debiting the receivables control account for the invoice total
+and crediting revenue and VAT per line.
+
+#### Scenario: A bookkeeper issues an invoice and it reaches the ledger
+
+- GIVEN a draft AR invoice of EUR 1,000 plus EUR 210 VAT to Bakkerij Jansen
+- WHEN the bookkeeper presses Issue on the AR invoice detail page
+- THEN the general ledger shows one posted transaction with EUR 1,210 debit on receivables, EUR 1,000 credit on revenue and EUR 210 credit on VAT

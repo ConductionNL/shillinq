@@ -14,13 +14,21 @@ When an AR invoice is issued, shillinq SHALL assign the next number of the
 administration's sales sequence for the invoice's fiscal year, under a lock,
 and a time-and-expense invoice SHALL take its number from the billable
 sequence. A number MUST NOT be assigned twice, and a draft SHALL carry no
-number.
+number. A self-billed invoice, made by the customer on the seller's behalf,
+SHALL keep the number the customer gave it and SHALL NOT take a number from
+the sequence.
 
 #### Scenario: Two bookkeepers issue at the same moment
 
 - GIVEN the sales sequence of Adviesbureau Van Dijk for 2026 at 41
 - WHEN two bookkeepers each press Issue on a different draft on the AR invoice detail page at the same time
 - THEN one invoice is 2026-0042 and the other 2026-0043
+
+#### Scenario: A self-billed invoice keeps the customer's number
+
+- GIVEN a self-billed invoice received from Gemeente Voorbeeld with its own number GV-2026-0815
+- WHEN it is issued
+- THEN it keeps GV-2026-0815 and the sales sequence does not advance
 
 #### Scenario: A deleted draft leaves no gap
 
