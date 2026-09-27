@@ -40,8 +40,8 @@ repair step imports.
 - **acceptance_criteria**:
   - GIVEN a portal subject without a claim and no customer WHEN resolved THEN one customer is created and the claim event is dispatched
   - GIVEN a customer with the email WHEN resolved THEN no customer is created
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 5: The raise service, endpoint and route
 - **spec_ref**: `openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md#requirement-a-bulk-raise-creates-one-invoice-and-one-payment-request-per-guardian-req-scon-001`
