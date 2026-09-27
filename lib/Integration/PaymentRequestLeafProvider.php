@@ -41,6 +41,7 @@ use OCA\OpenRegister\Service\Integration\IntegrationProvider;
 use OCA\Shillinq\Service\FeeScheduleService;
 use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
+use OCA\Shillinq\Service\PaymentRequestFinder;
 use OCA\Shillinq\Service\PaymentSettlementService;
 use OCP\IAppConfig;
 use RuntimeException;
@@ -81,6 +82,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	 * @param PaymentActionAuthorizer $authorizer Whether the caller carries payment.request.
 	 * @param FeeScheduleService $feeSchedules The published fee for the host object's type.
 	 * @param PaymentSettlementService $settlements Money that arrived another way, and the state it derives.
+	 * @param PaymentRequestFinder|null $finder Reads every page of requests on a subject; built on demand when absent.
 	 *
 	 * @return void
 	 */
@@ -91,6 +93,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 		private readonly PaymentActionAuthorizer $authorizer,
 		private readonly FeeScheduleService $feeSchedules,
 		private readonly PaymentSettlementService $settlements,
+		private readonly ?PaymentRequestFinder $finder = null,
 	) {
 	}//end __construct()
 
@@ -222,6 +225,13 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 				'paymentLink' => (string)($request['paymentLink'] ?? ''),
 				'capturedAt' => (string)($request['capturedAt'] ?? ''),
 				'confirmationSummary' => (string)($request['confirmationSummary'] ?? ''),
+				// What the owning app of a school contribution reads to find the
+				// state of each child's payment (REQ-SCON-004, REQ-SCON-009).
+				'beneficiary' => ($request['beneficiary'] ?? null),
+				'invoiceReference' => (string)($request['invoiceReference'] ?? ''),
+				'voluntary' => (($request['voluntary'] ?? false) === true),
+				'settledAt' => (string)($request['settledAt'] ?? ''),
+				'settledVia' => (string)($request['settledVia'] ?? ''),
 				// The provider's own `state` above is only half the truth once a
 				// counter payment exists. `reported` is the two together, which is
 				// what a handler is actually asking when they look (REQ-FPCR-003).
@@ -423,37 +433,26 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	}//end health()
 
 	/**
-	 * Every stored request whose subject is this host object.
+	 * Every stored request whose subject is this host object, read to the last
+	 * page. One page of 200 used to be read and filtered here, so with school
+	 * contributions in the store a case's own request could fall off the page.
 	 *
 	 * @param string $register The host object's register.
 	 * @param string $schema The host object's schema.
 	 * @param string $objectId The host object's id.
 	 *
 	 * @return array<int, array<string, mixed>> The raw requests.
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-004)
 	 */
 	private function requestsOn(string $register, string $schema, string $objectId): array {
-		$rows = $this->objectService
-			->setRegister($this->registerSlug())
-			->setSchema(self::SCHEMA)
-			->findAll(['filters' => ['subjectKind' => 'object'], 'limit' => 200]);
+		$finder = ($this->finder ?? new PaymentRequestFinder(
+			objectService: $this->objectService,
+			validator: $this->validator,
+			appConfig: $this->appConfig,
+		));
 
-		$key = $this->validator->subjectKey(['register' => $register, 'schema' => $schema, 'id' => $objectId]);
-
-		$mine = [];
-		foreach ($rows as $row) {
-			$subject = $row['subject'] ?? null;
-			if (is_array($subject) === false) {
-				continue;
-			}
-
-			$candidate = $this->validator->subjectKey((array)$subject);
-
-			if ($candidate === $key) {
-				$mine[] = $row;
-			}
-		}
-
-		return $mine;
+		return $finder->onSubject(register: $register, schema: $schema, objectId: $objectId);
 	}//end requestsOn()
 
 	/**

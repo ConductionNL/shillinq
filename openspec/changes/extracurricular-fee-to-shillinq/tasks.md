@@ -86,8 +86,8 @@ repair step imports.
 - **files**: `lib/Integration/PaymentRequestLeafProvider.php`, `tests/Unit/Integration/PaymentRequestLeafProviderTest.php`
 - **acceptance_criteria**:
   - GIVEN 250 requests on one chargeable WHEN listed THEN all 250 come back with beneficiary, invoiceReference, voluntary, settledAt and settledVia
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ## Verification
 

@@ -107,6 +107,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 	 * @param array<int, string> $groups Groups the caller is in.
 	 * @param array<string, array<int, string>> $actionGroups The configured action matrix.
 	 * @param bool $signedIn Whether there is a session at all.
+	 * @param object|null $inner An object-service double to use instead of the default one.
 	 *
 	 * @return PaymentRequestLeafProvider The provider.
 	 */
@@ -116,6 +117,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 		array $groups = [],
 		array $actionGroups = [],
 		bool $signedIn = true,
+		?object $inner = null,
 	): PaymentRequestLeafProvider {
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturnCallback(
@@ -143,7 +145,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 			static fn (string $uid, string $group): bool => in_array($group, $groups, true)
 		);
 
-		$objectService = new DuckObjectServiceAdapter(inner: $this->objectServiceDouble($stored));
+		$objectService = new DuckObjectServiceAdapter(inner: ($inner ?? $this->objectServiceDouble($stored)));
 
 		return new PaymentRequestLeafProvider(
 			objectService: $objectService,
@@ -336,4 +338,73 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 
 		$provider->get('dossiq', 'Zaak', 'zaak-7', 'pr-2');
 	}//end testGetCannotReachARequestOnAnotherObject()
+
+	/**
+	 * A fee item carrying 250 contribution requests, behind 10 on another
+	 * subject, lists all 250 with the fields the owning app reads. One page of
+	 * 200 was read before, so 50 children's payments read as absent
+	 * (REQ-SCON-004).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-004)
+	 */
+	public function testListReadsEveryPageOfRequests(): void {
+		$rows = [];
+		for ($i = 0; $i < 10; $i++) {
+			$rows[] = $this->storedRequest('pr-case-' . $i, 'zaak-' . $i);
+		}
+
+		for ($i = 0; $i < 250; $i++) {
+			$rows[] = [
+				'id' => 'pr-ctb-' . $i,
+				'subjectKind' => 'object',
+				'subject' => ['app' => 'learniq', 'type' => 'fee-item', 'register' => 'learniq', 'schema' => 'FeeItem', 'id' => 'fee-1'],
+				'beneficiary' => ['type' => 'learner', 'id' => 'child-' . $i],
+				'requestType' => 'contribution',
+				'invoiceReference' => 'inv-' . $i,
+				'voluntary' => true,
+				'amount' => 60.0,
+				'state' => ($i === 0 ? 'captured' : 'pending'),
+				'settledAt' => ($i === 0 ? '2026-10-03T09:12:00Z' : null),
+				'settledVia' => ($i === 0 ? 'provider' : null),
+			];
+		}
+
+		$paging = new class($rows) {
+			/**
+			 * @param array<int, array<string, mixed>> $rows Stored rows.
+			 */
+			public function __construct(private array $rows) {
+			}
+
+			public function setRegister(string $register): static {
+				return $this;
+			}
+
+			public function setSchema(string $schema): static {
+				return $this;
+			}
+
+			/**
+			 * @param array<string, mixed> $params Query params, with limit and offset honoured.
+			 * @return array<int, array<string, mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				return array_slice($this->rows, (int)($params['offset'] ?? 0), (int)($params['limit'] ?? 20));
+			}
+		};
+
+		$listed = $this->makeProvider(inner: $paging)->list('learniq', 'FeeItem', 'fee-1');
+
+		self::assertSame(250, $listed['total']);
+		self::assertCount(250, $listed['items']);
+		$first = $listed['items'][0];
+		self::assertSame('child-0', $first['beneficiary']['id']);
+		self::assertSame('inv-0', $first['invoiceReference']);
+		self::assertTrue($first['voluntary']);
+		self::assertSame('2026-10-03T09:12:00Z', $first['settledAt']);
+		self::assertSame('provider', $first['settledVia']);
+		self::assertSame('', $listed['items'][249]['settledAt']);
+	}//end testListReadsEveryPageOfRequests()
 }//end class
