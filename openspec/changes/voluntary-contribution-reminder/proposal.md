@@ -36,7 +36,7 @@ ladder at one reminder and stripped the costs, but reading `development` on
    the guardian's language, so a reminder cannot follow the language the invoice
    note was written in.
 3. A guardian who does not want to pay has no way to say so. The invoice stays
-   open, shows in AR ageing and credit exposure, and the one reminder still
+   open, counts as overdue, and the one reminder still
    fires. The law lets a parent refuse; the books should hear it.
 
 The school contribution chain is the money half of learniq round 2 (D19, D30).
@@ -71,7 +71,8 @@ proposal cites; this change completes the voluntary branch of it.
   `ARInvoice.contribution.declinedAt`.
 - A `declined` lifecycle state on `ARInvoice`, with `decline` transitions from
   `issued` and `overdue` guarded by `VoluntaryDeclineGuard`. A declined invoice is
-  not overdue and leaves AR ageing and credit exposure.
+  not overdue. (`arAging` and `creditExposure` declare no metric and compute
+  nothing today, #1261; they are left alone.)
 - A `decline` endpoint-forward action on the parent portal manifest and its
   receiver `POST /apps/shillinq/api/portal/contributions/decline`: it declines the
   guardian's own open voluntary contribution and voids its pending payment

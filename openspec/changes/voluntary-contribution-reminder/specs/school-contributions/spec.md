@@ -110,8 +110,7 @@ The customer manifest SHALL NOT carry the action.
 `decline` from `issued` and `decline-overdue` from `overdue`, each requiring
 `VoluntaryDeclineGuard::requireVoluntary`, so a bookkeeper can record a refusal
 received by mail or phone for a voluntary contribution and for nothing else. A
-declined invoice SHALL NOT count as overdue and SHALL leave the AR ageing and
-credit exposure aggregations. `tickInvoice()` SHALL run nothing for it and
+declined invoice SHALL NOT count as overdue. `tickInvoice()` SHALL run nothing for it and
 `executeStage()` SHALL refuse it.
 
 #### Scenario: Dunning leaves a declined contribution alone

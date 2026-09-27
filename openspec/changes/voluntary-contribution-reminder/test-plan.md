@@ -81,7 +81,7 @@ case. Every fix has a test that fails before the fix.
 - **spec_ref**: `...#requirement-a-declined-contribution-is-closed-req-scon-014`
 - **type**: functional
 - **steps**: `VoluntaryDeclineGuard::requireVoluntary()`; read the merged fragments
-- **expected result**: the guard admits only a voluntary invoice; ARInvoice 0.15.0 has `declined`, both transitions require the guard, `isOverdue` and both aggregations exclude it
+- **expected result**: the guard admits only a voluntary invoice; ARInvoice 0.15.0 has `declined`, both transitions require the guard, and `isOverdue` excludes it
 - **test command**: `--filter 'VoluntaryDeclineGuardTest|SchoolContributionsFragmentTest'`
 
 ## Coverage Summary

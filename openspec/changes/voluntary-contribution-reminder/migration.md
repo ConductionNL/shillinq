@@ -11,7 +11,8 @@ overdue, disputed and written-off.
 `ARInvoice` 0.15.0: `contribution` also has `language` and `declinedAt`;
 `lifecycleState` also knows `declined`, reached by `decline` (from issued) and
 `decline-overdue` (from overdue). `isOverdue` is false for a declined invoice;
-`arAging` and `creditExposure` leave it out.
+`arAging` and `creditExposure` are untouched: they declare no metric and
+compute nothing today (#1261).
 
 ## Migration Class
 

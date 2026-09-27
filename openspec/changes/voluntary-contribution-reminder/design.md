@@ -80,7 +80,7 @@ See `contract.md`: `POST /apps/shillinq/api/portal/contributions/decline`,
 |---|---|---|
 | `declined` state and its transitions | declarative, `x-openregister-lifecycle` overlay in `school-contributions.json` | state graph |
 | "only a voluntary contribution" on the transition | imperative guard `VoluntaryDeclineGuard` | ADR-031 lifecycle guard exception |
-| not overdue, out of ageing and exposure | declarative, `x-openregister-calculations` and `x-openregister-aggregations` overlay | derived fields and aggregations |
+| not overdue | declarative, `x-openregister-calculations` overlay | derived field |
 | template choice and rendering | imperative, `VoluntaryReminderTemplate` | document generation exception |
 | portal decline | imperative receiver | external integration (portaliq forward), ADR-046 |
 

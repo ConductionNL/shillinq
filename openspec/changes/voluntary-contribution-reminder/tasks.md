@@ -12,9 +12,9 @@ repair step imports. Every fix starts with a test that fails.
 - **files**: `lib/Settings/register.d/school-contributions.json`, `lib/Lifecycle/VoluntaryDeclineGuard.php`, `tests/Unit/Service/SchoolContributionsFragmentTest.php`, `tests/Unit/Lifecycle/VoluntaryDeclineGuardTest.php`
 - **acceptance_criteria**:
   - GIVEN the merged register WHEN built THEN ARInvoice is 0.15.0 with contribution.language, contribution.declinedAt, the declined enum value and state, and both decline transitions require the guard
-  - GIVEN the merged register WHEN built THEN isOverdue, arAging and creditExposure exclude declined
-- [ ] Implement
-- [ ] Test
+  - GIVEN the merged register WHEN built THEN isOverdue is false for a declined invoice
+- [x] Implement
+- [x] Test
 
 ### Task 2: The voluntary reminder templates and their reader
 - **spec_ref**: `openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md#requirement-the-voluntary-reminder-has-its-own-template-in-english-and-dutch-req-scon-011`
