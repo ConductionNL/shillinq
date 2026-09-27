@@ -597,4 +597,125 @@ final class PortalPaymentSessionServiceTest extends TestCase {
 			)
 		);
 	}//end testAnUnreadableAmountWritesNoPaymentRequest()
+
+	/**
+	 * Seed a parent's portal account and an issued school contribution invoice
+	 * that carries only the fields ARInvoice declares.
+	 *
+	 * @return void
+	 */
+	private function seedParentContribution(): void {
+		$this->objectService->data['portaliq']['portalAccount'] = [
+			[
+				'subjectRef' => self::SUBJECT_REF,
+				'audience' => 'parent',
+				'claims' => ['shillinq' => ['customerMasterId' => self::CUSTOMER_MASTER_ID]],
+			],
+		];
+		$this->objectService->data['shillinq']['ARInvoice'] = [
+			[
+				'id' => self::INVOICE_ID,
+				'customerId' => self::CUSTOMER_MASTER_ID,
+				'lifecycleState' => 'issued',
+				'grossAmount' => 35.0,
+				'currency' => 'EUR',
+				'invoiceNumber' => 'CTB-2026-1A2B3C4D-0001',
+				'administrationId' => 'adm-school-1',
+				'contribution' => [
+					'kind' => 'school-trip',
+					'voluntary' => true,
+					'chargeable' => ['app' => 'learniq', 'type' => 'fee-item', 'register' => 'learniq', 'schema' => 'FeeItem', 'id' => 'fee-9'],
+					'beneficiary' => ['type' => 'learner', 'id' => 'child-a'],
+					'raiseBatchId' => 'ctb-20261001-1a2b3c4d',
+				],
+			],
+		];
+	}//end seedParentContribution()
+
+	/**
+	 * A parent pays an issued contribution invoice (read through
+	 * `lifecycleState`) through the request the raise already wrote, for
+	 * exactly its amount (REQ-SCON-010).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-010)
+	 */
+	public function testAParentPaysAnIssuedContributionInvoice(): void {
+		$this->seedParentContribution();
+		$this->objectService->data['shillinq']['PaymentRequest'] = [
+			[
+				'id' => 'pr-raised-1',
+				'invoiceReference' => self::INVOICE_ID,
+				'subjectKind' => 'object',
+				'requestType' => 'contribution',
+				'amount' => 35.0,
+				'currency' => 'EUR',
+				'state' => 'pending',
+			],
+		];
+
+		$captured = null;
+		$this->provider->method('createSession')->willReturnCallback(
+			function (PaymentSessionRequest $request) use (&$captured): PaymentSessionResult {
+				$captured = $request;
+				return new PaymentSessionResult(dormant: false, checkoutUrl: 'https://mollie.example/checkout/tr_p', paymentIntentId: 'tr_p');
+			}
+		);
+
+		$result = $this->makeService()->initiate(claims: $this->claims(['audience' => 'parent']), target: self::INVOICE_ID);
+
+		self::assertSame('ok', $result->status);
+		self::assertSame(35.0, $captured->amount);
+		self::assertSame('pr-raised-1', $captured->metadata['correlationId']);
+		$last = end($this->objectService->saved);
+		self::assertSame('pr-raised-1', $last['uuid']);
+		self::assertSame('tr_p', $last['object']['paymentIntentId']);
+	}//end testAParentPaysAnIssuedContributionInvoice()
+
+	/**
+	 * After a failed attempt the fresh request keeps the contribution
+	 * reference, so the settled signal still names the owning app, and its
+	 * amount comes from `grossAmount` (REQ-SCON-010).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-010)
+	 */
+	public function testAFreshRequestForAContributionKeepsItsReference(): void {
+		$this->seedParentContribution();
+		$this->objectService->data['shillinq']['PaymentRequest'] = [
+			['id' => 'pr-failed-1', 'invoiceReference' => self::INVOICE_ID, 'amount' => 35.0, 'state' => 'failed'],
+		];
+		$this->provider->method('createSession')->willReturn(
+			new PaymentSessionResult(dormant: false, checkoutUrl: 'https://mollie.example/checkout/tr_q', paymentIntentId: 'tr_q')
+		);
+
+		$result = $this->makeService()->initiate(claims: $this->claims(['audience' => 'parent']), target: self::INVOICE_ID);
+
+		self::assertSame('ok', $result->status);
+		$minted = $this->objectService->saved[0]['object'];
+		self::assertSame('object', $minted['subjectKind']);
+		self::assertSame('contribution', $minted['requestType']);
+		self::assertSame('fee-9', $minted['subject']['id']);
+		self::assertSame('learniq', $minted['subject']['app']);
+		self::assertSame('child-a', $minted['beneficiary']['id']);
+		self::assertTrue($minted['voluntary']);
+		self::assertSame(35.0, $minted['amount']);
+		self::assertSame(self::CUSTOMER_MASTER_ID, $minted['debtor']['customerMasterId']);
+	}//end testAFreshRequestForAContributionKeepsItsReference()
+
+	/**
+	 * A supplier still cannot pay: only customers and parents do.
+	 *
+	 * @return void
+	 */
+	public function testASupplierStillCannotPay(): void {
+		$this->seedParentContribution();
+		$this->provider->expects($this->never())->method('createSession');
+
+		$result = $this->makeService()->initiate(claims: $this->claims(['audience' => 'supplier']), target: self::INVOICE_ID);
+
+		self::assertSame('forbidden', $result->status);
+	}//end testASupplierStillCannotPay()
 }//end class

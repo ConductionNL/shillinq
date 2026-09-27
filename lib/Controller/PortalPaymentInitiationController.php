@@ -58,10 +58,13 @@ use Throwable;
  */
 class PortalPaymentInitiationController extends Controller {
 	/**
-	 * The audience this receiver serves — any other audience is refused
-	 * before any OpenRegister read (REQ-SPPI-002).
+	 * The audiences this receiver serves: customers, and parents paying a
+	 * school contribution (REQ-SCON-010). Any other audience is refused before
+	 * any OpenRegister read (REQ-SPPI-002).
+	 *
+	 * @var array<int, string>
 	 */
-	private const AUDIENCE_CUSTOMER = 'customer';
+	private const PAYING_AUDIENCES = ['customer', 'parent'];
 
 	/**
 	 * Constructor.
@@ -114,7 +117,7 @@ class PortalPaymentInitiationController extends Controller {
 		}
 
 		// 2. Audience gate — before any OpenRegister read (REQ-SPPI-002).
-		if ((string)($claims['audience'] ?? '') !== self::AUDIENCE_CUSTOMER) {
+		if (in_array((string)($claims['audience'] ?? ''), self::PAYING_AUDIENCES, true) === false) {
 			return new JSONResponse(['error' => 'forbidden'], Http::STATUS_FORBIDDEN);
 		}
 

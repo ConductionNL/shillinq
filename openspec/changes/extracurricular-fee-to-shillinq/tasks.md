@@ -78,8 +78,8 @@ repair step imports.
 - **acceptance_criteria**:
   - GIVEN audience parent WHEN the manifest is asked THEN it lists the AR invoices, the payment requests and the pay action
   - GIVEN an issued contribution invoice (lifecycleState) WHEN a parent pays THEN the raised request is reused; after a failed one the fresh request keeps the reference
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 9: The leaf reads every page and projects the new fields
 - **spec_ref**: `openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md#requirement-the-payment-request-references-the-chargeable-in-the-owning-app-req-scon-004`

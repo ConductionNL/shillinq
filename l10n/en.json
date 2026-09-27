@@ -3157,7 +3157,10 @@
         "Who the charge is for, such as the child on a school contribution. It joins the uniqueness key, so one chargeable can carry a pending request per child.": "Who the charge is for, such as the child on a school contribution. It joins the uniqueness key, so one chargeable can carry a pending request per child.",
         "Who the contribution is for, such as the child.": "Who the contribution is for, such as the child.",
         "This contribution is voluntary. Your child takes part whether you pay or not.": "This contribution is voluntary. Your child takes part whether you pay or not.",
-        "(voluntary)": "(voluntary)"
+        "(voluntary)": "(voluntary)",
+        "School contributions": "School contributions",
+        "My contributions": "My contributions",
+        "Pay my contributions": "Pay my contributions"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

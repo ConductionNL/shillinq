@@ -308,4 +308,26 @@ final class PortalPaymentInitiationControllerTest extends TestCase {
 
 		self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
 	}//end testMissingInvoiceIdIsPassedAsEmptyString()
+
+	/**
+	 * A parent's assertion passes the audience gate, so a guardian can pay a
+	 * school contribution (REQ-SCON-010).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-010)
+	 */
+	public function testAParentAssertionPassesTheAudienceGate(): void {
+		$this->wireRequest(
+			header: $this->mintAssertion(secret: self::SECRET, overrides: ['audience' => 'parent']),
+			invoiceId: self::INVOICE_ID
+		);
+		$this->sessionService->expects($this->once())->method('initiate')->willReturn(
+			PortalPaymentSessionResult::success(checkoutUrl: 'https://mollie.example/checkout/tr_p')
+		);
+
+		$response = $this->controller->initiate();
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+	}//end testAParentAssertionPassesTheAudienceGate()
 }//end class

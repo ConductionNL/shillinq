@@ -5399,7 +5399,10 @@ OC.L10N.register(
         "Who the charge is for, such as the child on a school contribution. It joins the uniqueness key, so one chargeable can carry a pending request per child.": "Voor wie de betaling is, zoals het kind bij een schoolbijdrage. Hoort bij de uniciteitssleutel, zodat een kostenpost per kind een openstaand verzoek kan hebben.",
         "Who the contribution is for, such as the child.": "Voor wie de bijdrage is, zoals het kind.",
         "This contribution is voluntary. Your child takes part whether you pay or not.": "Deze bijdrage is vrijwillig. Uw kind doet mee, of u nu betaalt of niet.",
-        "(voluntary)": "(vrijwillig)"
+        "(voluntary)": "(vrijwillig)",
+        "School contributions": "Schoolbijdragen",
+        "My contributions": "Mijn bijdragen",
+        "Pay my contributions": "Mijn bijdragen betalen"
     },
     "nplurals=2; plural=(n != 1);"
 )
