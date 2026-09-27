@@ -48,8 +48,8 @@ repair step imports. Every fix starts with a test that fails.
 - **files**: `lib/Settings/register.d/school-contributions.json`, `docs/api/school-contributions.md`
 - **acceptance_criteria**:
   - GIVEN a fresh install WHEN seeded THEN every contribution invoice has a language and one declined voluntary contribution exists
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 6: Verify
 - [ ] Diff-scoped checks, then `composer check:strict`, `npm run lint`, `npm run format`, `npm run test:l10n`, hydra gates, once
