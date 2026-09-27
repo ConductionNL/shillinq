@@ -16,11 +16,67 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
+		"row": "bnk-fx-rates",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is applying the daily rate at booking; 4 competitor yes (exact-online, moneybird, twinfield, odoo).",
+		"change": "banking-fx-at-booking",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "bnk-integrated-account",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; changelog https://www.moneybird.nl/changelog/ideal-voor-de-moneybird-betaalrekening/; 2 competitor yes (moneybird, snelstart).",
+		"change": "banking-connected-accounts",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "bnk-manual-match",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is pairing a bank line with an invoice or ledger entry by hand; 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "banking-manual-match",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "bnk-multi-account",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is connected accounts feeding a combined cash position; the connection itself is integriq (shillinq matrix bnk-psd2, building); 4 competitor yes (exact-online, moneybird, snelstart, odoo).",
+		"change": "banking-connected-accounts",
+		"decidedOn": "2026-09-27"
+	},
+	{
 		"row": "bnk-pay-from-app",
 		"matrix": "shillinq",
 		"decision": "existing",
 		"reason": "REQ-FPCR-004 submits an approved payment run to a provider through integriq instead of exporting a file, with the per line result back; that is paying supplier bills from the app.",
 		"change": "fees-payments-and-the-contract-register",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "bnk-payment-block",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109); 1 competitor yes (odoo).",
+		"change": "banking-payment-run",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "bnk-scheduled-payment",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is a date per payment rather than per batch; changelog https://www.moneybird.nl/changelog/slim-plannen-van-betalingen/; 4 competitor yes (exact-online, moneybird, snelstart, twinfield).",
+		"change": "banking-payment-run",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "bnk-sepa-batch",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is proposing the run from the invoices due instead of typing lines; 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "banking-payment-run",
 		"decidedOn": "2026-09-27"
 	},
 	{
@@ -296,6 +352,14 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
+		"row": "pln-commitment-carryover",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109).",
+		"change": "planning-commitment-year-end",
+		"decidedOn": "2026-09-27"
+	},
+	{
 		"row": "pln-commitments",
 		"matrix": "shillinq",
 		"decision": "defer",
@@ -464,11 +528,35 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
+		"row": "pur-approval-delegate",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109).",
+		"change": "purchasing-approval-delegation",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pur-duplicate-check",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is the check on a typed invoice; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109); 2 competitor yes (moneybird, odoo).",
+		"change": "purchasing-supplier-invoice-intake",
+		"decidedOn": "2026-09-27"
+	},
+	{
 		"row": "pur-framework",
 		"matrix": "shillinq",
 		"decision": "defer",
 		"reason": "Partial, built, no demand; one competitor yes (odoo).",
 		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pur-iban-check",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109).",
+		"change": "purchasing-supplier-invoice-intake",
 		"decidedOn": "2026-09-27"
 	},
 	{
@@ -480,11 +568,43 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
+		"row": "pur-last-invoice-close",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109).",
+		"change": "planning-commitment-year-end",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pur-po",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is the PO actually reaching the supplier, both adapters are log-only; 3 competitor yes (exact-online, snelstart, odoo).",
+		"change": "purchasing-order-dispatch-and-receipt",
+		"decidedOn": "2026-09-27"
+	},
+	{
 		"row": "pur-po-approval",
 		"matrix": "shillinq",
 		"decision": "defer",
 		"reason": "Partial, built, no demand; one competitor yes (odoo).",
 		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pur-receipt",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is a screen for service receipts; 3 competitor yes (exact-online, snelstart, odoo).",
+		"change": "purchasing-order-dispatch-and-receipt",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pur-ubl-import",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is booking a non-PO invoice without a three-way match; 4 competitor yes (exact-online, moneybird, snelstart, odoo).",
+		"change": "purchasing-supplier-invoice-intake",
 		"decidedOn": "2026-09-27"
 	},
 	{
@@ -648,11 +768,35 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
+		"row": "tax-broken-year-vat",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is VAT corrections grouped by the broken fiscal year; changelog https://taasupportportal.wolterskluwer.com/nl/nl-nl/release-notes/twinfield-boekh-3041276; 3 competitor yes (snelstart, twinfield, odoo).",
+		"change": "tax-vat-return-from-books",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "tax-fiscal-unity",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; roadmap https://www.snelstart.nl/boekhouders-en-accountants/functies/fiscaal; 2 competitor yes (twinfield, odoo).",
+		"change": "tax-vat-return-from-books",
+		"decidedOn": "2026-09-27"
+	},
+	{
 		"row": "tax-margin-scheme",
 		"matrix": "shillinq",
 		"decision": "defer",
 		"reason": "Rated no; one competitor yes (snelstart) and no demand, outside the core areas.",
 		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "tax-partial-deductibility",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; changelog https://www.odoo.com/odoo-19-release-notes; 2 competitor yes (moneybird, odoo).",
+		"change": "tax-vat-rates-and-deductibility",
 		"decidedOn": "2026-09-27"
 	},
 	{
@@ -664,11 +808,51 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
+		"row": "tax-return-checks",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; changelog https://www.odoo.com/odoo-19-release-notes; 2 competitor yes (exact-online, odoo).",
+		"change": "tax-vat-return-from-books",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "tax-sbr",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no and marked specified with no change directory; archived SBR work shipped a log-only adapter, so the change is written here; 2 competitor yes (exact-online, snelstart).",
+		"change": "tax-digipoort-filing",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "tax-vat-calc",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is rates kept as configuration instead of a code constant; 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "tax-vat-rates-and-deductibility",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "tax-vat-file",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no and marked specified with no change directory; archived VAT filing work shipped a log-only Digipoort adapter, so the change is written here; 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "tax-digipoort-filing",
+		"decidedOn": "2026-09-27"
+	},
+	{
 		"row": "tax-vat-number-check",
 		"matrix": "shillinq",
 		"decision": "build",
 		"reason": "Partial, built; the missing half is checking suppliers and a lookup a user can reach; changelog https://www.snelstart.nl/productnieuws/snelstart-polaris-release-notes-30-oktober-snelstart; 3 competitor yes (moneybird, snelstart, odoo).",
 		"change": "tax-vat-number-check",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "tax-vat-prepare",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is input VAT derived from purchases; 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "tax-vat-return-from-books",
 		"decidedOn": "2026-09-27"
 	},
 	{

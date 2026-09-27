@@ -1622,7 +1622,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "lib/Controller/SupplierInvoiceImportController.php:190 importUbl -> SupplierInvoiceService::ingestUBLInvoice (SupplierInvoiceService.php:186) saves a SupplierInvoice with statusCode=received; no GL posting on import, the ledger entry only comes from GRIRClearingListener on SupplierInvoice matching->matched (3-way match)",
 				"reachedOn": "Dashboard / (header action 'Import bill' opens BillImportModal, accepts .xml/.ubl/.csv); result lands on SupplierInvoices /inkoop/supplier-invoices (menu Purchasing > Supplier Invoices)",
 				"owner": "ConductionNL/shillinq"
@@ -1639,7 +1639,7 @@
 			"feature": "supplier-invoice-capture",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Import without typing works; 'book it' only happens for PO-backed invoices after a 3-way match, a non-PO invoice is never posted automatically."
+			"note": "Import without typing works; 'book it' only happens for PO-backed invoices after a 3-way match, a non-PO invoice is never posted automatically. Specified 2026-09-27 in openspec/changes/purchasing-supplier-invoice-intake (OpenSpec pass)."
 		},
 		{
 			"id": "pur-invoice-approval",
@@ -1741,7 +1741,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "src/components/purchase-order/PurchaseOrderForm.vue:371 POSTs /api/purchase-orders (PurchaseOrderController.php:101); PurchaseOrderDetail.vue:367/374 call transmit/peppol and transmit/email, but Application.php:451 binds LogPeppolTransmissionAdapter and PurchaseOrderService defaults to LogPurchaseOrderMailer (lib/Service/PurchaseOrder/LogPurchaseOrderMailer.php: 'Records the dispatch attempt through Nextcloud's logger')",
 				"reachedOn": "PurchaseOrders /inkoop/purchase-orders (menu Purchasing > Purchase Orders); PurchaseOrderDetail send buttons",
 				"owner": "ConductionNL/shillinq"
@@ -1758,7 +1758,7 @@
 			"feature": "purchase-order",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Raising the PO works; 'send to supplier' marks it sent but both Peppol and PDF+email are log-only adapters, nothing reaches the supplier."
+			"note": "Raising the PO works; 'send to supplier' marks it sent but both Peppol and PDF+email are log-only adapters, nothing reaches the supplier. Specified 2026-09-27 in openspec/changes/purchasing-order-dispatch-and-receipt (OpenSpec pass)."
 		},
 		{
 			"id": "pur-receipt",
@@ -1771,7 +1771,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "src/components/goods-receipt-note/GoodsReceiptNoteForm.vue:414/437 POST /api/goods-receipt-notes + lines; lib/Service/GoodsReceiptNoteService.php:689 sets partial_received vs fully_received; GoodsReceiptNoteDetail.vue:339 accept -> GRIRClearingListener posts GR/IR; service receipts (/api/service-receipts*, ServiceReceiptService.php) have no page and are absent from _lane/frontend-api-paths.txt",
 				"reachedOn": "GoodsReceiptNoteForm /inkoop/goods-receipt-notes/new (menu Purchasing > Receive goods); GoodsReceipts /inkoop/goods-receipts (menu Purchasing > Goods Receipts)",
 				"owner": "ConductionNL/shillinq"
@@ -1788,7 +1788,7 @@
 			"feature": "purchase-order-3way",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Goods including partial deliveries: yes; services: API only, no screen reaches it."
+			"note": "Goods including partial deliveries: yes; services: API only, no screen reaches it. Specified 2026-09-27 in openspec/changes/purchasing-order-dispatch-and-receipt (OpenSpec pass)."
 		},
 		{
 			"id": "pur-vendor-score",
@@ -2161,7 +2161,7 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "src/manifest.json:17146-17169 UnmatchedItems bulk actions POST /api/reconciliations/:reconId/matches/bulk-resolve -> ReconciliationResolutionService (classify as timing/pending/adjustment with reason + audit event); no screen pairs a bank line to a specific invoice or GL entry (ReconciliationMatch rows must already exist)",
 				"reachedOn": "UnmatchedItems /bookkeeping/unmatched-items (menu BankingCashflow > Unmatched Items); ReconciliationDetail /bookkeeping/reconciliations/:id",
 				"owner": "ConductionNL/shillinq"
@@ -2178,7 +2178,7 @@
 			"feature": "bank-reconciliation",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Unmatched items can be classified, not matched by hand; the bulk-action URLs lack the /apps/shillinq prefix used elsewhere, worth a live check."
+			"note": "Unmatched items can be classified, not matched by hand; the bulk-action URLs lack the /apps/shillinq prefix used elsewhere, worth a live check. Specified 2026-09-27 in openspec/changes/banking-manual-match (OpenSpec pass)."
 		},
 		{
 			"id": "bnk-sepa-batch",
@@ -2191,7 +2191,7 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "lib/PaymentRun/PaymentRunExportService.php:120 renders pain.001.001.03 XML + CSV from PaymentRun.paymentLines (refuses lines without creditorIban); src/manifest.d/bookkeeping-accounts-payable-core.json:433 'Export to bank' header action; no service proposes a run from due APTransactions/SupplierInvoices (grep 'PaymentRun' in lib/Service only hits ComplianceDeadlineCalendarService)",
 				"reachedOn": "PaymentRuns /bookkeeping/payment-runs (menu Purchasing > Payment Runs); PaymentRunDetail 'Export to bank' when approved",
 				"owner": "ConductionNL/shillinq"
@@ -2208,7 +2208,7 @@
 			"feature": "payment-run-sepa-export",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "The SEPA file is real; the batch lines are typed by hand, not selected from the invoices due."
+			"note": "The SEPA file is real; the batch lines are typed by hand, not selected from the invoices due. Specified 2026-09-27 in openspec/changes/banking-payment-run (OpenSpec pass)."
 		},
 		{
 			"id": "bnk-four-eyes",
@@ -2250,7 +2250,7 @@
 			"twinfield": "partial",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "BankAccounts index (bookkeeping-multi-currency.json) keeps several accounts; lib/Service/FinancialSeriesCalculator.php:572-603 sums liquid GL accounts into cashPosition, served by /api/dashboard/financial-summary to the Dashboard; 'connect' has no working feed (connections.json bunq available:false); GroupLiquidityDashboard 'Group cash position' is a static count 0",
 				"reachedOn": "BankAccounts /bookkeeping/bank-accounts (menu BankingCashflow > Bank Accounts); Dashboard / (combined cash position)",
 				"owner": "ConductionNL/shillinq"
@@ -2267,7 +2267,7 @@
 			"feature": "bank-feed",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Accounts are kept and a combined GL cash position is shown; accounts cannot be connected."
+			"note": "Accounts are kept and a combined GL cash position is shown; accounts cannot be connected. Specified 2026-09-27 in openspec/changes/banking-connected-accounts (OpenSpec pass)."
 		},
 		{
 			"id": "bnk-fx-rates",
@@ -2280,7 +2280,7 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "lib/BackgroundJob/FxRateImportJob.php:130 skips when TreasuryRateAdapter is dormant (connections.json treasury-rates reportedOnly), manual FxRate entry via FxRatesAdmin; GLLine carries fxRate/fxRateSource fields (add-shillinq-multi-currency-t4.json:155) but no posting code looks up FxRate at booking time (only RealisedFxSettlementService.php:485 at settlement)",
 				"reachedOn": "FXRates /bookkeeping/multi-currency/fx-rates and FxRatesAdmin (menu BankingCashflow > FX Rates / FX Rates (Admin))",
 				"owner": "ConductionNL/shillinq"
@@ -2297,7 +2297,7 @@
 			"feature": "multi-currency",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Rates can be kept (by hand) and are used for realised FX on settlement; the rate at booking is not applied automatically."
+			"note": "Rates can be kept (by hand) and are used for realised FX on settlement; the rate at booking is not applied automatically. Specified 2026-09-27 in openspec/changes/banking-fx-at-booking (OpenSpec pass)."
 		},
 		{
 			"id": "bnk-fx-revaluation",
@@ -2370,7 +2370,7 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "lib/Service/VATCalculationService.php:31 fixes the rates in a VALID_RATES constant (0, 6, 9, 21); lib/Service/InvoiceGenerationService.php:67 applies it per line when an invoice is generated from time and expense",
 				"reachedOn": "BillableInvoiceGenerate /invoice/generate (menu Sales > Invoices)",
 				"owner": "ConductionNL/shillinq"
@@ -2387,7 +2387,7 @@
 			"feature": "vat-return",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Per-line VAT works on the generated invoice, but the rates are a code constant, not configurable."
+			"note": "Per-line VAT works on the generated invoice, but the rates are a code constant, not configurable. Specified 2026-09-27 in openspec/changes/tax-vat-rates-and-deductibility (OpenSpec pass)."
 		},
 		{
 			"id": "tax-vat-prepare",
@@ -2400,7 +2400,7 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"evidence": "lib/Reporting/Generator/VatReturnReportGenerator.php renders the return XML by rubriek from a stored VatReturnFiling or, failing that, from the period's ARInvoice rows (output tax only, input tax only from the filing record); opened by src/modals/GenerateReportDialog.vue:330 POST /api/reporting/generate",
 				"reachedOn": "ReportingComplianceOverview /reporting-compliance, report card BTW-aangifte, Genereer",
 				"owner": "ConductionNL/shillinq"
@@ -2417,7 +2417,7 @@
 			"feature": "vat-return",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "The file can be produced from sales invoices; input VAT from purchases is not derived, and the VATReturns page totals rest on x-openregister-aggregations. Its own spec REQ-VBTW-004 forbids this derivation (issue #525)."
+			"note": "The file can be produced from sales invoices; input VAT from purchases is not derived, and the VATReturns page totals rest on x-openregister-aggregations. Its own spec REQ-VBTW-004 forbids this derivation (issue #525). Specified 2026-09-27 in openspec/changes/tax-vat-return-from-books (OpenSpec pass)."
 		},
 		{
 			"id": "tax-vat-file",
@@ -2446,7 +2446,8 @@
 			"providerHow": "read-from-code",
 			"feature": "vat-return",
 			"featureConfidence": "medium",
-			"source": "competitor"
+			"source": "competitor",
+			"note": "Specified 2026-09-27 in openspec/changes/tax-digipoort-filing (OpenSpec pass)."
 		},
 		{
 			"id": "tax-icp",
@@ -2914,7 +2915,8 @@
 			"providerHow": "read-from-code",
 			"feature": "sbr",
 			"featureConfidence": "medium",
-			"source": "competitor"
+			"source": "competitor",
+			"note": "Specified 2026-09-27 in openspec/changes/tax-digipoort-filing (OpenSpec pass)."
 		},
 		{
 			"id": "rep-pnl",
@@ -4980,7 +4982,7 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -5003,7 +5005,7 @@
 				"intelligence-db requirements#109521",
 				"intelligence-db requirements#109664"
 			],
-			"note": "No approval delegation or stand-in concept anywhere in lib/ or src/ (searched delegate, deputy, substitute, plaatsvervang, absence)."
+			"note": "No approval delegation or stand-in concept anywhere in lib/ or src/ (searched delegate, deputy, substitute, plaatsvervang, absence). Specified 2026-09-27 in openspec/changes/purchasing-approval-delegation (OpenSpec pass)."
 		},
 		{
 			"id": "led-dimension-block",
@@ -5124,7 +5126,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"evidence": "lib/Controller/SupplierInvoiceImportController.php:195 duplicateExists() rejects a UBL import whose invoice number already exists for that supplier (HTTP 409), reached from BillImportModal (src/modals/BillImportModal.vue:649), opened by the Dashboard header action 'Import bill' (src/manifest.json:5160). Manual entry on SupplierInvoices has no such check.",
@@ -5147,7 +5149,7 @@
 			"originRequirements": [
 				"intelligence-db requirements#109647"
 			],
-			"note": "Only on UBL import, not on a typed invoice."
+			"note": "Only on UBL import, not on a typed invoice. Specified 2026-09-27 in openspec/changes/purchasing-supplier-invoice-intake (OpenSpec pass)."
 		},
 		{
 			"id": "pur-iban-check",
@@ -5160,7 +5162,7 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -5182,7 +5184,7 @@
 			"originRequirements": [
 				"intelligence-db requirements#109648"
 			],
-			"note": "SupplierQualification stores an iban, but nothing compares an incoming invoice's bank account with it; the only IBAN matching is the one-off repair lib/Repair/MigrateProductVendorMasterToPipelinq.php:344."
+			"note": "SupplierQualification stores an iban, but nothing compares an incoming invoice's bank account with it; the only IBAN matching is the one-off repair lib/Repair/MigrateProductVendorMasterToPipelinq.php:344. Specified 2026-09-27 in openspec/changes/purchasing-supplier-invoice-intake (OpenSpec pass)."
 		},
 		{
 			"id": "pur-last-invoice-close",
@@ -5195,7 +5197,7 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "CommitmentDetail /commitments/:id (manual afsluiten only)"
@@ -5217,7 +5219,7 @@
 			"originRequirements": [
 				"intelligence-db requirements#109655"
 			],
-			"note": "Commitment has a manual afsluiten transition that releases the remainder (lib/Settings/register.d/bookkeeping-verplichtingenadministratie.json:321), but no invoice approval marks a last invoice or triggers it, and a commitment only reaches committed through goedkeuren whose guard tags abort (see pln-commitments)."
+			"note": "Commitment has a manual afsluiten transition that releases the remainder (lib/Settings/register.d/bookkeeping-verplichtingenadministratie.json:321), but no invoice approval marks a last invoice or triggers it, and a commitment only reaches committed through goedkeuren whose guard tags abort (see pln-commitments). Specified 2026-09-27 in openspec/changes/planning-commitment-year-end (OpenSpec pass)."
 		},
 		{
 			"id": "pln-commitment-carryover",
@@ -5230,7 +5232,7 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -5253,7 +5255,7 @@
 				"intelligence-db requirements#109596",
 				"intelligence-db requirements#109604"
 			],
-			"note": "CommitmentLine carries financialYear, but no transition, job or service moves open remainders to the next year; searched carry, rollover, overhevel, doorschuiven."
+			"note": "CommitmentLine carries financialYear, but no transition, job or service moves open remainders to the next year; searched carry, rollover, overhevel, doorschuiven. Specified 2026-09-27 in openspec/changes/planning-commitment-year-end (OpenSpec pass)."
 		},
 		{
 			"id": "bnk-payment-block",
@@ -5266,7 +5268,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -5289,7 +5291,7 @@
 				"intelligence-db requirements#109661",
 				"intelligence-db requirements#109679"
 			],
-			"note": "APInvoice declares a dispute state (posted->disputed, lib/Settings/shillinq_register.json APInvoice lifecycle) described as a payment hold, but posted is only reached through post, which declares the unregistered action materialise-gl-transaction and aborts; PaymentRun export (lib/PaymentRun/PaymentRunExportService.php:122) checks only the run's own state, and there is no supplier-level block."
+			"note": "APInvoice declares a dispute state (posted->disputed, lib/Settings/shillinq_register.json APInvoice lifecycle) described as a payment hold, but posted is only reached through post, which declares the unregistered action materialise-gl-transaction and aborts; PaymentRun export (lib/PaymentRun/PaymentRunExportService.php:122) checks only the run's own state, and there is no supplier-level block. Specified 2026-09-27 in openspec/changes/banking-payment-run (OpenSpec pass)."
 		},
 		{
 			"id": "rec-payment-plan",
@@ -5731,7 +5733,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -5750,7 +5752,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-19-release-notes",
-			"note": "VAT checks run at invoice issuance (lib/Lifecycle/VatPreconditionGuard.php), not as a check list on the return before filing."
+			"note": "VAT checks run at invoice issuance (lib/Lifecycle/VatPreconditionGuard.php), not as a check list on the return before filing. Specified 2026-09-27 in openspec/changes/tax-vat-return-from-books (OpenSpec pass)."
 		},
 		{
 			"id": "rep-annotations",
@@ -5893,7 +5895,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -5912,7 +5914,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-19-release-notes",
-			"note": "lib/Service/TaxReportCalculator.php:202 adds nonDeductible expense back on the income tax return, but no booking splits a mixed cost into a deductible share with its VAT."
+			"note": "lib/Service/TaxReportCalculator.php:202 adds nonDeductible expense back on the income tax return, but no booking splits a mixed cost into a deductible share with its VAT. Specified 2026-09-27 in openspec/changes/tax-vat-rates-and-deductibility (OpenSpec pass)."
 		},
 		{
 			"id": "plt-ai-fill",
@@ -6023,7 +6025,7 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -6042,7 +6044,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.moneybird.nl/changelog/ideal-voor-de-moneybird-betaalrekening/",
-			"note": "Shillinq offers no payment account of its own; bank data arrives by statement import (bnk-file-import)."
+			"note": "Shillinq offers no payment account of its own; bank data arrives by statement import (bnk-file-import). Specified 2026-09-27 in openspec/changes/banking-connected-accounts (OpenSpec pass)."
 		},
 		{
 			"id": "sal-churn-reason",
@@ -6281,7 +6283,7 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -6300,7 +6302,7 @@
 			"source": "competitor",
 			"origin": "roadmap",
 			"originUrl": "https://www.snelstart.nl/boekhouders-en-accountants/functies/fiscaal",
-			"note": "FiscaleEenheid exists for corporate income tax (lib/Lifecycle/VpbAangifteGuard.php:185), and no manifest page names it; no combined VAT return for a fiscal unity."
+			"note": "FiscaleEenheid exists for corporate income tax (lib/Lifecycle/VpbAangifteGuard.php:185), and no manifest page names it; no combined VAT return for a fiscal unity. Specified 2026-09-27 in openspec/changes/tax-vat-return-from-books (OpenSpec pass)."
 		},
 		{
 			"id": "tax-vat-number-check",
@@ -6346,7 +6348,7 @@
 			"twinfield": "yes",
 			"odoo": "partial",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"evidence": "PaymentRun.executionDate is written into the pain.001 file as the requested execution date (lib/PaymentRun/Generator/SepaPain001Generator.php:74), so an exported batch asks the bank to pay on that day.",
@@ -6366,7 +6368,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.moneybird.nl/changelog/slim-plannen-van-betalingen/",
-			"note": "Per batch through the export file, not per payment in the bank."
+			"note": "Per batch through the export file, not per payment in the bank. Specified 2026-09-27 in openspec/changes/banking-payment-run (OpenSpec pass)."
 		},
 		{
 			"id": "ppl-payroll-tax-return",
@@ -6671,7 +6673,7 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "built",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"evidence": "The administration record carries nonCalendarFiscalYear (lib/Settings/register.d/bookkeeping-multi-administratie.json:145), so a broken fiscal year can be kept; VAT returns stay on calendar periods and no screen groups corrections by the broken year.",
@@ -6691,7 +6693,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://taasupportportal.wolterskluwer.com/nl/nl-nl/release-notes/twinfield-boekh-3041276",
-			"note": "Broken fiscal year supported, VAT corrections not grouped by it."
+			"note": "Broken fiscal year supported, VAT corrections not grouped by it. Specified 2026-09-27 in openspec/changes/tax-vat-return-from-books (OpenSpec pass)."
 		},
 		{
 			"id": "plt-required-fields",
