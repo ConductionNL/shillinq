@@ -2253,17 +2253,19 @@
 			"id": "bnk-multi-account",
 			"area": "banking",
 			"name": "Connect several bank accounts and see the combined cash position.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "yes",
 			"moneybird": "yes",
 			"snelstart": "yes",
 			"twinfield": "partial",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
-				"evidence": "BankAccounts index (bookkeeping-multi-currency.json) keeps several accounts; lib/Service/FinancialSeriesCalculator.php:572-603 sums liquid GL accounts into cashPosition, served by /api/dashboard/financial-summary to the Dashboard; 'connect' has no working feed (connections.json bunq available:false); GroupLiquidityDashboard 'Group cash position' is a static count 0",
-				"reachedOn": "BankAccounts /bookkeeping/bank-accounts (menu BankingCashflow > Bank Accounts); Dashboard / (combined cash position)",
-				"owner": "ConductionNL/shillinq"
+				"state": "built",
+				"evidence": "Bank accounts carry their ledger account, connection and last sync (BankAccount 0.3.0); GET /api/v1/cash-position (FinancialSeriesCalculator::cashPositionByAccount) feeds the Group cash position stat and the Cash per bank account table on GroupLiquidityDashboard; integriq bank feed batches arrive through BankfeedSyncedListener and StatementIntakeService (shillinq#1768).",
+				"reachedOn": "Treasury > Group liquidity /treasury/group-liquidity; Banking > Bank accounts /bookkeeping/bank-accounts",
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-09-28-banking-connected-accounts",
+				"readOn": "2026-09-28"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: Professional and Premium have \"Bankkoppelingen: onbeperkt\"; \"Financiele cockpit: Een compleet gevisualiseerd overzicht van belangrijke financiele cijfers zoals je omzet, resultaat, banksaldi en openstaande posten\"",
@@ -6033,17 +6035,19 @@
 			"id": "bnk-integrated-account",
 			"area": "banking",
 			"name": "Open a business payment account inside the bookkeeping app so every payment is booked as it happens.",
-			"shillinq": "no",
+			"shillinq": "partial",
 			"exact-online": "unknown",
 			"moneybird": "yes",
 			"snelstart": "yes",
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"reachedOn": "nothing"
+				"readOn": "2026-09-28",
+				"reachedOn": "Banking > Bank accounts, Connect a bank; bank reconciliation statements with source feed",
+				"change": "2026-09-28-banking-connected-accounts",
+				"evidence": "A connected account books its payments on arrival: BankfeedIntakeService writes each integriq pull as a statement and ExactMatchBooker confirms a line that can only mean one open invoice as system:bankfeed, which settles the invoice (shillinq#1768). Shillinq holds no money; the account is the bank, connected through integriq."
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: bank links and invoice financing are described, a payment account inside Exact Online is not",

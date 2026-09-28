@@ -6,7 +6,7 @@
  * position. The "Group cash position" stat was a literal count of 0; it and
  * the per-account table now read /api/v1/cash-position, which must be routed.
  *
- * @spec openspec/changes/banking-connected-accounts/tasks.md#task-4.2
+ * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
  */
 
 import fs from 'fs'

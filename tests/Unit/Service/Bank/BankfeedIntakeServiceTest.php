@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/banking-connected-accounts/tasks.md#task-2.2
+ * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
