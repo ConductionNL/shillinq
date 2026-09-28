@@ -809,6 +809,10 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'paymentRun#export', 'url' => '/api/v1/payment-runs/{id}/export', 'verb' => 'POST'],
             ['name' => 'paymentRun#reconcile', 'url' => '/api/v1/payment-runs/{id}/reconcile', 'verb' => 'POST'],
 
+            // banking-manual-match (REQ-BMM-001, REQ-BMM-002): pair a bank line
+            // with open invoices, or book it to a ledger account, by hand.
+            ['name' => 'manualMatch#match', 'url' => '/api/v1/bank-lines/{lineId}/match', 'verb' => 'POST'],
+
             // Compliance-deadline-calendar (REQ-CDC-006). Per-user category
             // toggles + reminder lead times for the deadline calendar. Both
             // endpoints are #[NoAdminRequired] and STRICTLY current-user scoped

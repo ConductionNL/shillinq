@@ -11,7 +11,7 @@
       "BankAccount": {
         "slug": "BankAccount",
         "icon": "Bank",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "Bank Account",
         "titleNl": "Bankrekening",
         "description": "A bank account held by a Shillinq administration. Holds the IBAN / BIC / bank name plus the optional `primaryCurrency` (ISO 4217) declaration. Existing single-currency deployments may leave `primaryCurrency` null: the system treats null as EUR on read (scenario 'Single-currency account without primaryCurrency declared'). Multi-currency tracking is delegated to CurrencyBalance snapshots keyed on (accountId, currency).",
@@ -39,6 +39,13 @@
             "description": "IBAN of the bank account (ISO 13616). Used as the natural-key for reconciliation against BankStatement.",
             "example": "NL23ABNA0123456789",
             "title": "IBAN"
+          },
+          "ledgerAccountNumber": {
+            "type": "string",
+            "nullable": true,
+            "description": "The ledger account this bank account books to. A bank line booked to a ledger account by hand posts against it.",
+            "example": "1100",
+            "title": "Ledger account"
           },
           "bic": {
             "type": "string",
