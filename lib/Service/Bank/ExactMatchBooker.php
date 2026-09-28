@@ -86,7 +86,8 @@ class ExactMatchBooker {
 			$schema = 'ARInvoice';
 		}
 
-		$text = strtolower(trim((string)($line['remittanceInfo'] ?? '') . ' ' . (string)($line['endToEndRef'] ?? '') . ' ' . (string)($line['reference'] ?? '')));
+		$parts = [(string)($line['remittanceInfo'] ?? ''), (string)($line['endToEndRef'] ?? ''), (string)($line['reference'] ?? '')];
+		$text = strtolower(trim(implode(' ', $parts)));
 		$candidates = [];
 		foreach ($this->openInvoices(schema: $schema, administrationId: (string)($line['administrationId'] ?? '')) as $invoice) {
 			if (abs($this->invoiceAmount(schema: $schema, invoice: $invoice) - abs($amount)) >= 0.005) {

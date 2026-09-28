@@ -3,7 +3,7 @@
 /**
  * Turns an integriq bank feed batch into a statement, and books its exact matches.
  *
- * integriq's BankfeedSyncService persists every pull as an `integriq` /
+ * Integriq's BankfeedSyncService persists every pull as an `integriq` /
  * `bankfeed_batch` object and emits `nl.conduction.bankfeed.transactions.synced`
  * with `{connectionId, accountIban, since, until, transactionCount, batchUri}`.
  * This service reads the batch behind the `batchUri`, finds the shillinq bank

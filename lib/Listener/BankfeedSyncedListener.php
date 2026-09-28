@@ -3,7 +3,7 @@
 /**
  * Takes integriq's bank feed pulls into shillinq.
  *
- * integriq saves each CloudEvent as an object in its `integriq` register,
+ * Integriq saves each CloudEvent as an object in its `integriq` register,
  * `event` schema, so the only thing shillinq can hear is OpenRegister's
  * ObjectCreatedEvent for that object (see IntegriqCloudEventListener). This
  * listener acts on type `nl.conduction.bankfeed.transactions.synced` and hands
