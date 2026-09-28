@@ -413,6 +413,10 @@ class PurchaseOrderService {
 	 * @throws \RuntimeException When the PO is missing, not approved, or the chain
 	 *                           is incomplete.
 	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) PurchaseOrderApprovalService::isApprovedEntry()
+	 *  is a pure check on one chain entry, shared with the approval service so the
+	 *  send check and the signing read one shape (#1716).
+	 *
 	 * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
 	 */
 	public function blockSendUntilApproved(string $administrationId, string $purchaseOrderId): array {
@@ -600,6 +604,10 @@ class PurchaseOrderService {
 	 * @return array<string,mixed> The persisted PurchaseOrder record.
 	 *
 	 * @throws \RuntimeException When the PO is missing or the chain is incomplete.
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) PurchaseOrderApprovalService::isApprovedEntry()
+	 *  is a pure check on one chain entry, shared with the approval service so the
+	 *  send check and the signing read one shape (#1716).
 	 */
 	private function loadPurchaseOrderForTransmission(
 		string $administrationId,

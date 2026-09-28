@@ -286,6 +286,7 @@ export default {
 		 * button's disabled state, never permission.
 		 *
 		 * @return {boolean}
+		 * @spec openspec/changes/purchasing-approval-delegation/tasks.md
 		 */
 		canSend() {
 			if (!this.purchaseOrder) {
