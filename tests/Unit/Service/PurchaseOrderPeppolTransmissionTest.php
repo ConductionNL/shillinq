@@ -187,8 +187,8 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 	 */
 	public function testSendToPeppolRefusesWhenApprovalIncomplete(): void {
 		$po = $this->approvedPo();
-		$po['approvalChain'][1]['status'] = 'pending';
-		$po['approvalChain'][1]['signedAt'] = '';
+		$po['approvalChain'][1]['decision'] = 'pending';
+		$po['approvalChain'][1]['decidedAt'] = '';
 		$data = [
 			'PurchaseOrder' => [$po],
 		];
@@ -313,16 +313,16 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 				[
 					'role' => 'teamleider',
 					'order' => 1,
-					'status' => 'approved',
-					'signedAt' => '2026-06-01T12:00:00+00:00',
-					'signedBy' => 'teamleider-1',
+					'decision' => 'approved',
+					'decidedAt' => '2026-06-01T12:00:00+00:00',
+					'userId' => 'teamleider-1',
 				],
 				[
 					'role' => 'facility_manager',
 					'order' => 2,
-					'status' => 'approved',
-					'signedAt' => '2026-06-02T09:00:00+00:00',
-					'signedBy' => 'facility-1',
+					'decision' => 'approved',
+					'decidedAt' => '2026-06-02T09:00:00+00:00',
+					'userId' => 'facility-1',
 				],
 			],
 		];

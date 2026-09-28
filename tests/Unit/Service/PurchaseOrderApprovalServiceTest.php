@@ -100,6 +100,44 @@ final class PurchaseOrderApprovalServiceTest extends TestCase {
 	}//end testRecordApprovalAdvancesLifecycleWhenChainFullySigned()
 
 	/**
+	 * A purchase order created before #1716 carries `status: pending` chain
+	 * entries. It can still be approved, and signing moves the entry onto the
+	 * declared shape so the send check reads it.
+	 *
+	 * @return void
+	 */
+	public function testAChainWrittenBeforeTheFieldFixCanStillBeApproved(): void {
+		$data = [
+			'PurchaseOrder' => [
+				[
+					'id' => 'po-legacy',
+					'administrationId' => 'admin-1',
+					'lifecycleState' => 'pending_approval',
+					'approvalChain' => [
+						['role' => 'teamleider', 'order' => 1, 'status' => 'pending', 'signedAt' => '', 'signedBy' => ''],
+					],
+				],
+			],
+		];
+
+		$saved = [];
+		$service = $this->buildService(data: $data, saved: $saved, accessibleAdministrations: ['admin-1'], userId: 'alice');
+
+		$result = $service->recordApprovalDecision(
+			administrationId: 'admin-1',
+			purchaseOrderId: 'po-legacy',
+			decision: PurchaseOrderApprovalService::DECISION_APPROVED
+		);
+
+		self::assertSame('approved', $result['lifecycleState']);
+		$entry = $result['approvalChain'][0];
+		self::assertSame('approved', $entry['decision']);
+		self::assertArrayNotHasKey('status', $entry);
+		self::assertArrayNotHasKey('signedAt', $entry);
+		self::assertTrue(PurchaseOrderApprovalService::isApprovedEntry(entry: $entry));
+	}//end testAChainWrittenBeforeTheFieldFixCanStillBeApproved()
+
+	/**
 	 * A chain with two pending entries only advances after BOTH are
 	 * approved. The first approval stays in pending_approval.
 	 *

@@ -92,6 +92,13 @@ class PurchaseOrderApprovalService {
 	public const DECISION_DELEGATED = 'delegated';
 
 	/**
+	 * Decision pending: the slot waits for its approver.
+	 *
+	 * @var string
+	 */
+	public const DECISION_PENDING = 'pending';
+
+	/**
 	 * Schema slug for PurchaseOrder records (slice 01).
 	 *
 	 * @var string
@@ -214,10 +221,13 @@ class PurchaseOrderApprovalService {
 				continue;
 			}
 
-			if ((string)($entry['decision'] ?? '') !== 'pending') {
+			if (self::isPendingEntry(entry: $entry) === false) {
 				continue;
 			}
 
+			// An entry written before #1716 carries status/signedAt/signedBy;
+			// signing it moves it onto the one shape the schema declares.
+			unset($entry['status'], $entry['signedAt'], $entry['signedBy']);
 			$entry['userId'] = $userId;
 			$entry['decision'] = $decision;
 			$entry['decidedAt'] = $decidedAt;
@@ -274,6 +284,50 @@ class PurchaseOrderApprovalService {
 
 		return $saved;
 	}//end recordApprovalDecision()
+
+	/**
+	 * Whether an approval-chain entry still waits for its approver.
+	 *
+	 * The chain has one shape, the one `PurchaseOrder.approvalChain` declares:
+	 * `userId`, `decision`, `decidedAt`, `comment`. An entry written before
+	 * #1716 carries `status: pending` instead of a decision, and still counts
+	 * as pending so a purchase order created then can be approved.
+	 *
+	 * @param array<string,mixed> $entry One approval-chain entry.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
+	 */
+	public static function isPendingEntry(array $entry): bool {
+		$decision = (string)($entry['decision'] ?? '');
+		if ($decision !== '') {
+			return $decision === self::DECISION_PENDING;
+		}
+
+		return (string)($entry['status'] ?? '') === self::DECISION_PENDING;
+	}//end isPendingEntry()
+
+	/**
+	 * Whether an approval-chain entry is approved and stamped with its time.
+	 *
+	 * The send check and the Peppol transmission read this, so they read what
+	 * recordApprovalDecision() writes (#1716).
+	 *
+	 * @param mixed $entry One approval-chain entry.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+	 */
+	public static function isApprovedEntry(mixed $entry): bool {
+		if (is_array($entry) === false) {
+			return false;
+		}
+
+		return (string)($entry['decision'] ?? '') === self::DECISION_APPROVED
+			&& trim((string)($entry['decidedAt'] ?? '')) !== '';
+	}//end isApprovedEntry()
 
 	/**
 	 * Determine the next PO lifecycleState after a decision.
