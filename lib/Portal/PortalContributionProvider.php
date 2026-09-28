@@ -468,10 +468,13 @@ class PortalContributionProvider {
 	 * customer's AR collections and scoping (the `customerMasterId` claim, which
 	 * the contribution raise links), names the amounts by the fields ARInvoice
 	 * declares, and adds the voluntary notice and the request's description.
+	 * It also carries the `decline` action, "I will not pay", for a voluntary
+	 * contribution.
 	 *
 	 * @return array<string, mixed> The parent manifest.
 	 *
 	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-010)
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-013)
 	 */
 	private function parentManifest(): array {
 		$manifest = $this->customerManifest();
@@ -485,6 +488,20 @@ class PortalContributionProvider {
 
 		$manifest['label'] = 'School contributions';
 		$manifest['collections'] = $collections;
+
+		// "I will not pay" answers the one reminder of a voluntary contribution
+		// and closes it without dunning (REQ-SCON-013). Parents only: the
+		// receiver refuses anything but the guardian's own open voluntary
+		// contribution, and a business customer has none.
+		$manifest['actions'][] = [
+			'id' => 'decline',
+			'label' => 'I will not pay',
+			'type' => 'endpoint-forward',
+			'endpoint' => '/apps/shillinq/api/portal/contributions/decline',
+			'method' => 'POST',
+			'fields' => ['invoiceId'],
+			'minTrust' => 'low',
+		];
 
 		return $manifest;
 	}//end parentManifest()

@@ -149,8 +149,60 @@ final class SchoolContributionsFragmentTest extends TestCase {
 		}
 
 		self::assertSame('school-contributions.json', $lastWriter);
-		self::assertSame('0.14.0', $lastVersion);
+		self::assertSame('0.15.0', $lastVersion);
 	}//end testTheMergedInvoiceVersionIsThisFragments()
+
+	/**
+	 * The whole register as the repair step builds it: the base descriptor with
+	 * every fragment merged in sort order by SettingsService's own merge.
+	 *
+	 * @return array<string, mixed> The merged register.
+	 */
+	private function mergedRegister(): array {
+		$merge = new \ReflectionMethod(\OCA\Shillinq\Service\SettingsService::class, 'deepMergeConfig');
+		$config = json_decode((string)file_get_contents(self::FRAGMENT_DIR . '/../shillinq_register.json'), true);
+		$files = glob(self::FRAGMENT_DIR . '/*.json');
+		self::assertIsArray($files);
+		sort($files);
+		foreach ($files as $file) {
+			$config = $merge->invoke(null, $config, json_decode((string)file_get_contents($file), true));
+		}
+
+		return $config;
+	}//end mergedRegister()
+
+	/**
+	 * A declined voluntary contribution is a closed invoice: the merged ARInvoice
+	 * knows the state, reaches it only through the guarded transitions, and is
+	 * never overdue (REQ-SCON-014). The raise's language and the decline moment are declared,
+	 * or OpenRegister drops them in silence (REQ-SCON-011, REQ-SCON-013).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-014)
+	 */
+	public function testADeclinedContributionIsAClosedInvoice(): void {
+		$invoice = $this->mergedRegister()['components']['schemas']['ARInvoice'];
+
+		$contribution = $invoice['properties']['contribution']['properties'];
+		self::assertArrayHasKey('language', $contribution);
+		self::assertSame('date-time', $contribution['declinedAt']['format']);
+
+		self::assertContains('declined', $invoice['properties']['lifecycleState']['enum']);
+		self::assertContains('issued', $invoice['properties']['lifecycleState']['enum']);
+
+		$lifecycle = $invoice['x-openregister-lifecycle'];
+		self::assertArrayHasKey('declined', $lifecycle['states']);
+		$guard = 'OCA\\Shillinq\\Lifecycle\\VoluntaryDeclineGuard::requireVoluntary';
+		self::assertSame(['from' => 'issued', 'to' => 'declined'], array_intersect_key($lifecycle['transitions']['decline'], ['from' => 1, 'to' => 1]));
+		self::assertSame($guard, $lifecycle['transitions']['decline']['requires']);
+		self::assertSame('overdue', $lifecycle['transitions']['decline-overdue']['from']);
+		self::assertSame($guard, $lifecycle['transitions']['decline-overdue']['requires']);
+		self::assertTrue(method_exists('OCA\\Shillinq\\Lifecycle\\VoluntaryDeclineGuard', 'requireVoluntary'));
+
+		self::assertStringContainsString("lifecycleState != 'declined'", $invoice['x-openregister-calculations']['isOverdue']['expression']);
+		self::assertStringContainsString("lifecycleState != 'paid'", $invoice['x-openregister-calculations']['isOverdue']['expression']);
+	}//end testADeclinedContributionIsAClosedInvoice()
 
 	/**
 	 * PaymentRequest 0.4.0 carries the reference, the child and the settled edge.
@@ -186,12 +238,20 @@ final class SchoolContributionsFragmentTest extends TestCase {
 		self::assertGreaterThanOrEqual(3, count($invoices));
 
 		$voluntarySeen = false;
+		$declinedSeen = false;
 		foreach ($invoices as $invoice) {
 			foreach (self::INVOICE_REQUIRED as $field) {
 				self::assertArrayHasKey($field, $invoice, $invoice['@self']['slug'] . ' misses ' . $field);
 			}
 
 			self::assertIsArray($invoice['contribution']);
+			self::assertSame('nl', ($invoice['contribution']['language'] ?? null), $invoice['@self']['slug'] . ' has no language');
+			if ($invoice['lifecycleState'] === 'declined') {
+				$declinedSeen = true;
+				self::assertTrue($invoice['contribution']['voluntary']);
+				self::assertNotEmpty($invoice['contribution']['declinedAt']);
+			}
+
 			if ($invoice['contribution']['voluntary'] === true) {
 				$voluntarySeen = true;
 				self::assertStringContainsString('vrijwillig', $invoice['invoiceNote']);
@@ -202,6 +262,7 @@ final class SchoolContributionsFragmentTest extends TestCase {
 		}
 
 		self::assertTrue($voluntarySeen, 'no voluntary contribution among the seeds');
+		self::assertTrue($declinedSeen, 'no declined contribution among the seeds');
 	}//end testSeedInvoicesAreCompleteContributions()
 
 	/**

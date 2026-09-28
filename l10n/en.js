@@ -3160,7 +3160,16 @@ OC.L10N.register(
         "My contributions": "My contributions",
         "Pay my contributions": "Pay my contributions",
         "The account the contribution income belongs to, as the school named it. ARInvoice lines carry no account of their own.": "The account the contribution income belongs to, as the school named it. ARInvoice lines carry no account of their own.",
-        "Revenue account": "Revenue account"
+        "Revenue account": "Revenue account",
+        "Declined at": "Declined at",
+        "The language the raise wrote the invoice text in, such as nl or en. The one reminder of a voluntary contribution is sent in it; any other value reads as Dutch.": "The language the raise wrote the invoice text in, such as nl or en. The one reminder of a voluntary contribution is sent in it; any other value reads as Dutch.",
+        "When the parent said they will not pay this voluntary contribution. Set once, by the portal decline.": "When the parent said they will not pay this voluntary contribution. Set once, by the portal decline.",
+        "Declined": "Declined",
+        "Record refusal": "Record refusal",
+        "The parent said they will not pay this voluntary contribution. Closed without a posting; dunning never runs.": "The parent said they will not pay this voluntary contribution. Closed without a posting; dunning never runs.",
+        "The parent will not pay this voluntary contribution. Only a voluntary contribution can be declined.": "The parent will not pay this voluntary contribution. Only a voluntary contribution can be declined.",
+        "The parent will not pay this overdue voluntary contribution. Only a voluntary contribution can be declined.": "The parent will not pay this overdue voluntary contribution. Only a voluntary contribution can be declined.",
+        "I will not pay": "I will not pay"
     },
     "nplurals=2; plural=(n != 1);"
 )

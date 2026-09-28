@@ -771,6 +771,13 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // before the SPA catch-all per ADR-016.
             ['name' => 'portalPaymentInitiation#initiate', 'url' => '/api/portal/payments/initiate', 'verb' => 'POST'],
 
+            // "I will not pay" (voluntary-contribution-reminder, REQ-SCON-013).
+            // Receives portaliq's server-to-server forward of the `decline`
+            // endpoint-forward action on the parent manifest. #[PublicPage]: the
+            // X-Portal-Subject assertion IS the authentication, exactly like the
+            // pay receiver above. Static URL, before the SPA catch-all (ADR-016).
+            ['name' => 'portalContributionDecline#decline', 'url' => '/api/portal/contributions/decline', 'verb' => 'POST'],
+
             // Reporting & Compliance consolidation (reporting-compliance-consolidation).
             // The HTTP surface behind the unified "Reporting & Compliance" section:
             // types() returns the static report catalogue grouped by category (overview
