@@ -1046,5 +1046,37 @@
 		"reason": "Owned by nextcloud/server: dark mode comes from Nextcloud theming, which shillinq inherits; platform-provided, so shillinq builds no theme of its own.",
 		"change": null,
 		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "registration-payments-through-shillinq",
+		"matrix": "larpinq",
+		"decision": "build",
+		"reason": "Four halves requested by larpinq's merged change registration-payments-through-shillinq (larpinq PR #749): an event-fee requestType, matching a bank line to an object payment request by its reference, a receipt mail to the debtor on capture, and an invoice made when the debtor asks for one. Shillinq has none of them for a request on an object; larpinq's design D1 and D4 depend on them. Build: a merged change of another product depends on these halves.",
+		"change": "receivables-object-request-settlement",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "registration-cancel-transfer-refund",
+		"matrix": "larpinq",
+		"decision": "build",
+		"reason": "Two halves requested by larpinq's merged change registration-cancel-transfer-refund (larpinq PR #749): receiving a refund or credit request for an object payment request, and applying a debtor's open credit to a later request. Nothing in shillinq receives either; case-payment-requests leaves refunds out and CreditNote reverses only invoices. Build: a merged change of another product depends on these halves.",
+		"change": "receivables-object-request-refund-and-credit",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "payroll-expenses-and-allowances",
+		"matrix": "humaniq",
+		"decision": "existing",
+		"reason": "Expense account half requested by humaniq's payroll-expenses-and-allowances (design D6: a journal debit line on the new setting getGlPostAccountReimbursements). The seeded charts already carry accounts that take it: the RGS MKB seed has 4060 Overige personeelskosten, 4500 Reiskosten and 4530 Kilometervergoeding, the BBV seed 7000 Personeelslasten (lib/Settings/seeds, shipped by 2026-06-14-add-shillinq-bookkeeping-foundation). Humaniq names the number in its own setting, as it does for the other four journal lines.",
+		"change": "2026-06-14-add-shillinq-bookkeeping-foundation",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "payroll-cost-allocation",
+		"matrix": "humaniq",
+		"decision": "build",
+		"reason": "Journal-line cost codes half requested by humaniq's payroll-cost-allocation (design D4 writes costCenterCode and projectCode on the payroll journal's debit lines). JournalEntry.lines carries only account, side, amount and description, and ledger-posting-path maps only those onto GLLine, so the codes would be lost. Build: another product's merged change depends on it.",
+		"change": "ledger-journal-line-dimensions",
+		"decidedOn": "2026-09-28"
 	}
 ]
