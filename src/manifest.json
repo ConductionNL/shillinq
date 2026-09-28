@@ -249,6 +249,13 @@
 					"order": 29
 				},
 				{
+					"id": "UnmatchedBankLines",
+					"label": "Unmatched bank lines",
+					"icon": "BankTransfer",
+					"route": "UnmatchedBankLines",
+					"order": 29
+				},
+				{
 					"id": "Aansluitingen",
 					"label": "Tie-outs",
 					"icon": "FileCompare",
@@ -17136,44 +17143,89 @@
 					}
 				],
 				"defaultSort": "reconId",
+				"actions": [
+					{
+						"id": "match-by-hand",
+						"label": "Match by hand",
+						"icon": "LinkVariant",
+						"handler": "openBankLineMatch",
+						"description": "Pair the bank line of this item with the invoices it pays, or book it to a ledger account."
+					}
+				],
 				"bulkActions": [
 					{
 						"id": "bulk-classify-timing",
-						"label": "Classify as Timing",
+						"label": "Classify as timing",
 						"icon": "ClockOutline",
-						"type": "api-call",
-						"method": "POST",
-						"url": "/api/reconciliations/:reconId/matches/bulk-resolve",
-						"payload": {
-							"resolutionStatus": "timing"
-						},
+						"handler": "classifyUnmatched",
 						"description": "Classify every selected item as a timing difference, using one reason for the whole selection."
 					},
 					{
 						"id": "bulk-classify-pending",
-						"label": "Classify as Pending",
+						"label": "Classify as pending",
 						"icon": "TimerSandEmpty",
-						"type": "api-call",
-						"method": "POST",
-						"url": "/api/reconciliations/:reconId/matches/bulk-resolve",
-						"payload": {
-							"resolutionStatus": "pending"
-						}
+						"handler": "classifyUnmatched"
 					},
 					{
 						"id": "bulk-classify-adjustment",
-						"label": "Classify as Adjustment",
+						"label": "Classify as adjustment",
 						"icon": "TuneVariant",
-						"type": "api-call",
-						"method": "POST",
-						"url": "/api/reconciliations/:reconId/matches/bulk-resolve",
-						"payload": {
-							"resolutionStatus": "adjustment"
-						}
+						"handler": "classifyUnmatched"
 					}
 				],
 				"description": "Unresolved items across all open reconciliations, grouped by session. Bulk-classify multiple items at once with a shared reason.",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/year-end"
+			}
+		},
+		{
+			"id": "UnmatchedBankLines",
+			"route": "/bookkeeping/bank-lines/unmatched",
+			"type": "index",
+			"title": "Unmatched bank lines",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankStatementLine",
+				"filter": {
+					"status": "unmatched"
+				},
+				"columns": [
+					{
+						"key": "valueDate",
+						"label": "Value date",
+						"sortable": true
+					},
+					{
+						"key": "counterpartyName",
+						"label": "Counterparty",
+						"sortable": true
+					},
+					{
+						"key": "amount",
+						"label": "Amount (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "remittanceInfo",
+						"label": "Reference",
+						"sortable": false
+					},
+					{
+						"key": "statementId",
+						"label": "Statement",
+						"sortable": true
+					}
+				],
+				"defaultSort": "valueDate",
+				"actions": [
+					{
+						"id": "match-by-hand",
+						"label": "Match by hand",
+						"icon": "LinkVariant",
+						"handler": "openBankLineMatch",
+						"description": "Pair this bank line with the invoices it pays, or book it to a ledger account."
+					}
+				],
+				"description": "Bank lines no rule has matched yet. Pair a line with the invoices it pays, or book it to a ledger account."
 			}
 		},
 		{

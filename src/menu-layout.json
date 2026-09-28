@@ -9,6 +9,7 @@
 		"Treasury": "BankingCashflow",
 		"BankReconciliation": "BankingCashflow",
 		"UnmatchedItems": "BankingCashflow",
+		"UnmatchedBankLines": "BankingCashflow",
 		"BankAccounts": "BankingCashflow",
 		"CurrencyBalances": "BankingCashflow",
 		"FXRates": "BankingCashflow",
