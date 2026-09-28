@@ -195,10 +195,20 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * Whether the line brings money in.
+		 *
+		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 */
 		isCredit() {
 			return Number(this.line?.amount ?? 0) >= 0
 		},
 
+		/**
+		 * One line describing the bank line.
+		 *
+		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 */
 		lineSummary() {
 			if (!this.line) {
 				return ''
@@ -213,6 +223,11 @@ export default {
 				.join(' · ')
 		},
 
+		/**
+		 * Open invoices matching the search, exact amounts first.
+		 *
+		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 */
 		candidates() {
 			const lineAmount = Math.abs(Number(this.line?.amount ?? 0))
 			const needle = this.search.trim().toLowerCase()
@@ -231,12 +246,22 @@ export default {
 				})
 		},
 
+		/**
+		 * Sum of the selected invoices.
+		 *
+		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 */
 		selectedTotal() {
 			return this.invoices
 				.filter((invoice) => this.selected.includes(invoice.id))
 				.reduce((sum, invoice) => sum + invoice.amount, 0)
 		},
 
+		/**
+		 * Ledger accounts as select options.
+		 *
+		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 */
 		accountOptions() {
 			return this.accounts.map((account) => ({
 				value: account.accountNumber,
@@ -244,10 +269,20 @@ export default {
 			}))
 		},
 
+		/**
+		 * The VAT rates on offer.
+		 *
+		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 */
 		vatOptions() {
 			return [0, 9, 21].map((rate) => ({ value: rate, label: `${rate}%` }))
 		},
 
+		/**
+		 * Whether the current tab has what the match needs.
+		 *
+		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 */
 		canConfirm() {
 			if (!this.line) {
 				return false
@@ -262,6 +297,11 @@ export default {
 		},
 	},
 
+	/**
+	 * Load the line, then its candidate invoices and accounts.
+	 *
+	 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+	 */
 	async mounted() {
 		await this.loadLine()
 		if (this.line) {
@@ -272,16 +312,34 @@ export default {
 	methods: {
 		t,
 
+		/**
+		 * Format an amount as EUR with two decimals.
+		 *
+		 * @param {number|string} amount The amount.
+		 * @return {string} The formatted amount.
+		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 */
 		money(amount) {
 			return `EUR ${Math.abs(Number(amount || 0)).toFixed(2)}`
 		},
 
+		/**
+		 * Select or deselect one invoice.
+		 *
+		 * @param {string} id The invoice id.
+		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 */
 		toggle(id) {
 			this.selected = this.selected.includes(id)
 				? this.selected.filter((existing) => existing !== id)
 				: [...this.selected, id]
 		},
 
+		/**
+		 * Read the line by uuid, falling back to its lineId.
+		 *
+		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 */
 		async loadLine() {
 			const base = `/apps/openregister/api/objects/${REGISTER_SLUG}/BankStatementLine`
 			try {
@@ -304,6 +362,11 @@ export default {
 			}
 		},
 
+		/**
+		 * Read the open invoices of the line administration.
+		 *
+		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 */
 		async loadInvoices() {
 			const schema = this.isCredit ? 'ARInvoice' : 'APTransaction'
 			const stateField = this.isCredit ? 'lifecycleState' : 'state'
@@ -337,6 +400,11 @@ export default {
 				}))
 		},
 
+		/**
+		 * Read the ledger accounts of the line administration.
+		 *
+		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 */
 		async loadAccounts() {
 			const response = await axios.get(
 				generateUrl(
@@ -352,6 +420,11 @@ export default {
 			this.accounts = rowsOf(response)
 		},
 
+		/**
+		 * Post the selection or the ledger booking and report the answer.
+		 *
+		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 */
 		async confirm() {
 			this.submitting = true
 			this.error = ''
@@ -394,6 +467,11 @@ export default {
 			}
 		},
 
+		/**
+		 * Close without matching.
+		 *
+		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 */
 		close() {
 			this.$emit('close', null)
 		},

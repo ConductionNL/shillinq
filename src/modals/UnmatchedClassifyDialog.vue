@@ -95,6 +95,11 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The dialog title for the chosen classification.
+		 *
+		 * @spec openspec/changes/banking-manual-match/tasks.md#task-1.1
+		 */
 		title() {
 			return (
 				{
@@ -109,6 +114,11 @@ export default {
 	methods: {
 		t,
 
+		/**
+		 * Classify the selection with the reason and report the totals.
+		 *
+		 * @spec openspec/changes/banking-manual-match/tasks.md#task-1.1
+		 */
 		async confirm() {
 			this.submitting = true
 			this.error = ''
@@ -147,6 +157,11 @@ export default {
 			}
 		},
 
+		/**
+		 * Close without classifying.
+		 *
+		 * @spec openspec/changes/banking-manual-match/tasks.md#task-1.1
+		 */
 		close() {
 			this.$emit('close', null)
 		},
