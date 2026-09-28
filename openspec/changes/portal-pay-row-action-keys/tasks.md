@@ -26,4 +26,4 @@ Stacked on `arinvoice-lines-and-portal-amounts` (#1728). No migration.
 - [x] `docs/api/portal-payments.md` names the row keys and the setting
 
 ### Task 4: Verify
-- [ ] Diff-scoped checks, then `composer check:strict`, `npm run lint`, `npm run format`, `npm run test:l10n`, hydra gates, once
+- [x] Diff-scoped checks, then `composer check:strict`, `npm run lint`, `npm run format`, `npm run test:l10n`, hydra gates, once

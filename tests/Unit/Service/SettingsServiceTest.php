@@ -155,6 +155,13 @@ class SettingsServiceTest extends TestCase {
 
 		self::assertSame('', $stored['portal_payment_redirect_url']);
 		self::assertArrayNotHasKey('register', $stored, 'a refused save must write nothing at all');
+
+		// The key the settings store writes is the key the pay flow reads, or
+		// the operator's address would be saved and never used.
+		self::assertSame(
+			(new \ReflectionClassConstant(\OCA\Shillinq\Service\Payment\PortalPaymentSessionService::class, 'CONFIG_REDIRECT_URL'))->getValue(),
+			SettingsService::PORTAL_REDIRECT_KEY
+		);
 	}//end testThePortalReturnAddressIsStoredOnlyWhenHttps()
 
 	/**
