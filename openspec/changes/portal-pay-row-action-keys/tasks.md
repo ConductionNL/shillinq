@@ -11,8 +11,8 @@ Stacked on `arinvoice-lines-and-portal-amounts` (#1728). No migration.
 - **files**: `lib/Portal/PortalContributionProvider.php`, `tests/Unit/Portal/PortalContributionProviderTest.php`
 - **acceptance_criteria**:
   - GIVEN the manifests WHEN read THEN pay carries rowField invoiceId and rowWhen on lifecycleState with the receiver's payable states, parent salesInvoices carries noticeField invoiceNote, paymentRequests names no row action
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 2: The return address setting
 - **spec_ref**: `openspec/changes/portal-pay-row-action-keys/specs/portal-payment-initiation/spec.md#requirement-an-operator-sets-where-the-checkout-returns-req-sppi-010`
