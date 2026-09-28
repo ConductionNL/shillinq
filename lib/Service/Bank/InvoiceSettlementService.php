@@ -68,6 +68,16 @@ class InvoiceSettlementService {
 	public const FAILED = 'failed';
 
 	/**
+	 * The lifecycle field per invoice schema.
+	 *
+	 * @var array<string,string>
+	 */
+	public const STATE_FIELDS = [
+		'ARInvoice' => 'lifecycleState',
+		'APTransaction' => 'state',
+	];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object surface.
@@ -134,11 +144,15 @@ class InvoiceSettlementService {
 			};
 		}
 
-		if ($partial === true) {
-			return in_array($state, ['issued', 'overdue'], true) === true ? 'matchPartial' : null;
+		if ($partial === true && in_array($state, ['issued', 'overdue'], true) === true) {
+			return 'matchPartial';
 		}
 
-		return in_array($state, ['issued', 'overdue', 'partially-paid'], true) === true ? 'matchFull' : null;
+		if ($partial === false && in_array($state, ['issued', 'overdue', 'partially-paid'], true) === true) {
+			return 'matchFull';
+		}
+
+		return null;
 
 	}//end transitionFor()
 
@@ -166,11 +180,15 @@ class InvoiceSettlementService {
 			return ['outcome' => self::FAILED, 'transition' => null, 'reason' => 'not found'];
 		}
 
-		$stateField = $schema === 'ARInvoice' ? 'lifecycleState' : 'state';
+		$stateField = self::STATE_FIELDS[$schema];
 		$state = (string)($invoice[$stateField] ?? '');
 		$transition = self::transitionFor(schema: $schema, state: $state, partial: $partial);
 		if ($transition === null) {
-			$reason = 'state ' . $state . ' is not payable' . ($partial === true ? ' by a partial match' : '');
+			$reason = 'state ' . $state . ' is not payable';
+			if ($partial === true) {
+				$reason .= ' by a partial match';
+			}
+
 			$this->logger->info('InvoiceSettlementService: invoice left unchanged', ['invoiceId' => $invoiceId, 'reason' => $reason]);
 			return ['outcome' => self::SKIPPED, 'transition' => null, 'reason' => $reason];
 		}
@@ -219,7 +237,7 @@ class InvoiceSettlementService {
 		}
 
 		$single = trim((string)($match['matchedObjectId'] ?? ''));
-		return $single === '' ? [] : [$single];
+		return array_values(array_filter([$single], static fn (string $id): bool => $id !== ''));
 
 	}//end targetIds()
 }//end class

@@ -312,7 +312,7 @@ class Application extends App implements IBootstrap {
 			listener: GRIRClearingListener::class
 		);
 
-		// banking-manual-match REQ-BMM-003: a confirmed ReconciliationMatch,
+		// Banking-manual-match REQ-BMM-003: a confirmed ReconciliationMatch,
 		// by a person, a rule or the bank feed, moves the invoices it names to
 		// paid through their own declared transitions.
 		$context->registerEventListener(

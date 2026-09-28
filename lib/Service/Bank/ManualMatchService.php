@@ -139,7 +139,13 @@ class ManualMatchService {
 
 		$amount = (float)($line['amount'] ?? 0);
 		$lineAmount = abs($amount);
-		$schema = $amount >= 0 ? 'ARInvoice' : 'APTransaction';
+		$schema = 'APTransaction';
+		$type = 'ap-invoice';
+		if ($amount >= 0) {
+			$schema = 'ARInvoice';
+			$type = 'ar-invoice';
+		}
+
 		$invoices = $this->readInvoices(schema: $schema, ids: $targetIds, administrationId: (string)($line['administrationId'] ?? ''));
 		$total = array_sum(array_map(fn (array $invoice): float => $this->invoiceAmount(schema: $schema, invoice: $invoice), $invoices));
 
@@ -164,17 +170,18 @@ class ManualMatchService {
 			);
 		}
 
-		$type = $schema === 'ARInvoice' ? 'ar-invoice' : 'ap-invoice';
 		$extra = [
 			'isPartial' => $partial,
 			'partial' => $partial,
-			'resolutionReason' => $partial === true ? 'Part payment by hand, remainder ' . self::money(amount: $remainder) : 'Matched by hand',
+			'resolutionReason' => 'Matched by hand',
 		];
-		if ($schema === 'ARInvoice') {
-			$extra['arInvoiceId'] = $targetIds[0];
-		} else {
-			$extra['apTransactionId'] = $targetIds[0];
+		if ($partial === true) {
+			$extra['resolutionReason'] = 'Part payment by hand, remainder ' . self::money(amount: $remainder);
 		}
+
+		// The T4 shortcut field that names the first invoice.
+		$shortcut = ['ARInvoice' => 'arInvoiceId', 'APTransaction' => 'apTransactionId'][$schema];
+		$extra[$shortcut] = $targetIds[0];
 
 		$match = $this->writeConfirmedMatch(line: $line, type: $type, targetIds: $targetIds, matchedAmount: $lineAmount, actor: $actor, extra: $extra);
 		$match['remainder'] = $remainder;
@@ -265,8 +272,13 @@ class ManualMatchService {
 
 		// Money out (debit line): the cost is debited, the bank credited.
 		// Money in (credit line): the bank is debited, the account credited.
-		$counterSide = $amount < 0 ? 'debit' : 'credit';
-		$bankSide = $amount < 0 ? 'credit' : 'debit';
+		$counterSide = 'credit';
+		$bankSide = 'debit';
+		if ($amount < 0) {
+			$counterSide = 'debit';
+			$bankSide = 'credit';
+		}
+
 		$lines = [
 			['accountNumber' => $account, 'side' => $counterSide, 'amount' => $net, 'description' => $description],
 		];
@@ -422,7 +434,7 @@ class ManualMatchService {
 	 * @throws ManualMatchRefusedException When an invoice is missing, foreign or not open.
 	 */
 	private function readInvoices(string $schema, array $ids, string $administrationId): array {
-		$stateField = $schema === 'ARInvoice' ? 'lifecycleState' : 'state';
+		$stateField = InvoiceSettlementService::STATE_FIELDS[$schema];
 		$invoices = [];
 		foreach ($ids as $id) {
 			$invoice = ObjectIdentifier::findOne(scoped: $this->scoped(schema: $schema), id: $id);
@@ -488,7 +500,7 @@ class ManualMatchService {
 		if ($ledger === '') {
 			throw new ManualMatchRefusedException(
 				template: 'Set the ledger account of bank account %1$s first.',
-				parameters: [$iban === '' ? '?' : $iban]
+				parameters: [$iban]
 			);
 		}
 
