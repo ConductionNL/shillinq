@@ -30,6 +30,7 @@ import menuLayout from './menu-layout.json'
 import pinia from './pinia.js'
 import registry from './registry.js'
 import { classifyUnmatched, openBankLineMatch } from './utils/bankMatchActions.js'
+import { openDownPaymentInvoice } from './utils/downPaymentActions.js'
 import { openIntegriqConnections } from './utils/integriqConnections.js'
 import {
 	buildPageFragmentIndex,
@@ -315,6 +316,9 @@ const customComponentsProp = {
 	// unmatched items bulk classification.
 	openBankLineMatch,
 	classifyUnmatched,
+	// sales-down-payments: the "New down-payment invoice" header action on
+	// Accounts Receivable.
+	openDownPaymentInvoice,
 }
 
 // Vue 3 `mount()` renders INSIDE the matched element; Vue 2's `$mount()`

@@ -14,13 +14,13 @@
 						"type": "object",
 						"nullable": true,
 						"title": "Down payment",
-						"description": "Set on a down-payment invoice of an order and on the final invoice that deducts the order's down payments (sales-down-payments REQ-SDP-001, REQ-SDP-003).",
+						"description": "Set on a down-payment invoice of an order and on the final invoice that deducts the order's down payments.",
 						"properties": {
 							"kind": {
 								"type": "string",
 								"enum": ["down-payment", "final"],
 								"title": "Kind",
-								"description": "down-payment for an invoice raised up front on an order, final for the invoice that deducts them."
+								"description": "Down payment for an invoice raised up front on an order, final for the invoice that deducts them."
 							},
 							"orderReference": {
 								"type": "string",
