@@ -31,6 +31,8 @@ administration's advances account and credit VAT payable, and MUST NOT post to
 a revenue account. The advances account SHALL default to 2310 Vooruitontvangen
 bedragen in an administration seeded from the RGS template.
 
+@e2e exclude posting is the lifecycle action's behaviour, asserted by MaterialiseGlTransactionActionTest::testADownPaymentIsBookedAsAnAdvanceNotAsRevenue
+
 #### Scenario: The balance sheet shows the advance
 
 - GIVEN the down-payment invoice of EUR 5,445 for Familie De Boer
@@ -59,6 +61,8 @@ deducted on another invoice, or when the deductions exceed the invoice's total.
 On issue each deducted down payment SHALL record the final invoice that
 deducted it.
 
+@e2e exclude the refusal runs in the issue transition, asserted by DownPaymentServiceTest::testADownPaymentDeductedElsewhereIsRefusedOnIssue and DownPaymentGuardTest::testTheCheckRefusesASecondDeductionNamingTheFirstInvoice
+
 #### Scenario: A second final invoice tries the same deduction
 
 - GIVEN the down payment deducted on issued invoice 2026-0587
@@ -82,6 +86,8 @@ it.
 The UBL of a down-payment invoice SHALL carry invoice type code 386, and the UBL
 of a final invoice SHALL carry the deduction lines as negative lines at their
 VAT category and rate and a billing reference to each down-payment invoice.
+
+@e2e exclude the UBL document is rendered server side, asserted by ArInvoiceUblMapperTest::testAFinalInvoiceCarriesTheDeductionAndTheBillingReference
 
 #### Scenario: A municipality receives the final invoice over Peppol
 

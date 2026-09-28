@@ -151,3 +151,14 @@ No data migration. Rollback is reverting the PR.
 ## Open Questions
 
 - Should the advances account differ per VAT rate or per product group? The RGS seed has one account, and one is enough for every quoted competitor.
+
+## Build notes (2026-09-28, at development 77df4cf91)
+
+What the build changed against the decisions above, and why:
+
+- **D2.** A shillinq order's totals come from its `OrderLine` rows (`lineAmount` summed per `vatRate`), because `OrderPrimitive.totalAmount` mixes net and gross per order type. An order without lines is treated like one shillinq cannot read: the dialog asks the net per rate.
+- **D3.** `prepaymentAmount` is not filled. The VAT check `vatdir-art65-tax-point-prepayment` then demands `prepaymentReceiptDate`, the date a payment was received, which a down-payment invoice raised before payment does not have. Type code 386 and the `downPayment` group say what the invoice is.
+- **D4.** `ledger-posting-path` had already declared the posting on `ARInvoice.issue` and added the `ARInvoice` mapper, so this change adds only the rules. The advances account is the app-config key `ledger_advances_account` with default 2310, the same shape as the other posting accounts in `MaterialiseGlTransactionAction`, rather than a setting per administration: no posting account is per administration yet, and one per administration belongs with all of them.
+- **D5.** The check is not a `requires` guard. The transition's single `requires` slot is taken by `RuleComplianceGuard::validateInvoice`, and a guard answers true or false, so it cannot name the invoice that already deducted a down payment. `DownPaymentGuard` is a lifecycle action declared twice on `ARInvoice.issue`: `step: check` before the posting, `step: stamp` after it. An action that throws aborts the transition with its message, and the executor runs the actions in the declared order.
+- **D6.** The VAT breakdown (BG-23) carries rates in percent and the invoice lines as a fraction, as `ArInvoiceUblMapper` already renders them; the service writes both that way. A deduction line has quantity minus one and a positive price (BR-27).
+- **Pages.** The panel on `ARInvoiceDetail` is a custom widget, `ArDownPaymentPanel`, through the slot `widget-invoice-down-payments`. It reloads the page after a deduction, because the detail page's other widgets have no refresh event.
