@@ -513,7 +513,7 @@
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
-                  "action": "evaluate-allocation-rules",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\EvaluateAllocationRulesAction",
                   "description": "Evaluate all active AllocationRule records with cadence=per-posting whose sourceAccountPattern matches a line in this transaction. Emits additional balanced GLLine rows distributing source amounts per the rule targets.",
                   "actionParameters": {
                     "register": "shillinq",
@@ -10010,9 +10010,10 @@
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
-                  "action": "materialise-gl-transaction",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\MaterialiseGlTransactionAction",
                   "description": "Emit one balanced GLTransaction: debit per expense line (Receipt→expense account/CC, MileageEntry→mileage-reimbursement account/CC, PerDiem→per-diem account/CC), credit to expense-payable account (Account.isExpenseControlAccount=true). Sets glTransactionId back-reference.",
                   "actionParameters": {
+                    "sourceSchema": "ExpenseClaimEntry",
                     "register": "shillinq",
                     "targetSchema": "GLTransaction",
                     "debitSources": [
@@ -21249,9 +21250,10 @@
             "actions": [
               {
                 "trigger": "x-openregister-lifecycle-action",
-                "action": "materialise-gl-transaction",
+                "action": "OCA\\Shillinq\\Lifecycle\\Action\\MaterialiseGlTransactionAction",
                 "description": "Emit one balanced GLTransaction with debit to expense accounts per lines and credit to AP control account (Account.isAPControlAccount = true) per T1 pattern. Sets glTransactionId back-reference.",
                 "actionParameters": {
+                  "sourceSchema": "APInvoice",
                   "register": "shillinq",
                   "targetSchema": "GLTransaction",
                   "debitMapping": "lines[].accountNumber",
