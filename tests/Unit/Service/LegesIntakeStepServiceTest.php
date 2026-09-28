@@ -211,6 +211,24 @@ final class LegesIntakeStepServiceTest extends TestCase {
 	}//end testARequiredFeeRaisesARequestAndBlocksTheStep()
 
 	/**
+	 * A leges request raised for a known customer carries that customer as its
+	 * portal scope, so the citizen finds and pays it in the portal
+	 * (REQ-SPPI-008).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
+	 */
+	public function testALegesRequestForACustomerCarriesItsPortalScope(): void {
+		$service = $this->service(['FeeSchedule' => [$this->schedule()]]);
+
+		$service->evaluate($this->context(['debtor' => ['customerMasterId' => '20000000-0000-4000-8000-000000000002']]));
+
+		self::assertCount(1, $this->saved);
+		self::assertSame('20000000-0000-4000-8000-000000000002', $this->saved[0]['customerId']);
+	}//end testALegesRequestForACustomerCarriesItsPortalScope()
+
+	/**
 	 * A type with no published fee completes with `noFee` and raises nothing. A
 	 * step that invented a zero-amount request would put an unpayable line on
 	 * every application that is free.

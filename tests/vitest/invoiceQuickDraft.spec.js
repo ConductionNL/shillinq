@@ -75,7 +75,7 @@ describe('invoiceQuickDraft — payment terms + due date', () => {
 })
 
 describe('invoiceQuickDraft — payload', () => {
-	it('always builds a draft ARInvoice with normalised lines', () => {
+	it('builds a draft ARInvoice whose lines are the declared invoiceLines', () => {
 		const payload = buildInvoicePayload({
 			customerId: 'cust-1',
 			invoiceDate: '2026-02-01',
@@ -99,15 +99,38 @@ describe('invoiceQuickDraft — payload', () => {
 		expect(payload.netAmount).toBe(200)
 		expect(payload.vatAmount).toBe(42)
 		expect(payload.grossAmount).toBe(242)
-		expect(payload.lines).toHaveLength(1)
-		expect(payload.lines[0]).toEqual({
-			lineNumber: 1,
-			description: 'Consulting',
+		// ARInvoice declares its lines as `invoiceLines` (EN 16931 BG-25);
+		// OpenRegister drops an undeclared `lines`, so the draft lost them.
+		expect(payload).not.toHaveProperty('lines')
+		expect(payload.invoiceLines).toHaveLength(1)
+		expect(payload.invoiceLines[0]).toEqual({
+			lineId: '1',
+			itemName: 'Consulting',
 			quantity: 2,
-			unitPrice: 100,
+			unitCode: 'C62',
+			netPrice: 100,
+			netAmount: 200,
 			vatRate: 21,
-			glAccount: '8000',
+			vatCategory: 'S',
 		})
+	})
+
+	it('marks a zero-rate line Z and rounds the line amount to cents', () => {
+		const payload = buildInvoicePayload({
+			customerId: 'cust-1',
+			invoiceDate: '2026-02-01',
+			dueDate: '2026-03-03',
+			lines: [
+				{
+					description: 'Training',
+					quantity: 3,
+					unitPrice: 33.337,
+					vatRate: 0,
+				},
+			],
+		})
+		expect(payload.invoiceLines[0].vatCategory).toBe('Z')
+		expect(payload.invoiceLines[0].netAmount).toBe(100.01)
 	})
 
 	it('always supplies the schema-required invoiceNumber, administrationId and periodId', () => {

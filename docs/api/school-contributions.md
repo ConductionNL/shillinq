@@ -77,6 +77,40 @@ the child takes part either way. The guardian gets one reminder at most,
 without collection costs or interest, and the invoice never goes to a
 collection agency.
 
+That one reminder is its own letter, not the ladder's first stage. It says
+again that the contribution is voluntary and that the child takes part. It
+names no payment term, no costs, no interest and no bank account. It goes out
+in the invoice's language: pass `language` (`nl` or `en`) in the raise call.
+Any other language gets the Dutch letter. The templates are
+`tpl-dunning-voluntary-contribution-nl` and `-en` in
+`lib/Settings/docudesk-templates.json`.
+
+### "I will not pay"
+
+A guardian can refuse a voluntary contribution. The reminder tells them how:
+"I will not pay" in the parent portal. The invoice then becomes `declined`,
+`contribution.declinedAt` records when, and every pending payment request on it
+becomes `voided`. A declined invoice is never reminded and is not overdue.
+
+Portaliq forwards the choice server to server:
+
+```
+POST /apps/shillinq/api/portal/contributions/decline
+X-Portal-Subject: <signed assertion>
+{"invoiceId": "<invoice uuid>"}
+```
+
+- `200 {"status": "declined"}`, also for a second call on the same invoice.
+- `401` without a valid assertion.
+- `403` for anything but the guardian's own voluntary contribution in `issued` or `overdue`. One answer for every reason.
+- `502` when OpenRegister fails.
+
+A refusal that arrives by mail or phone is recorded by a bookkeeper with the
+`decline` transition on the invoice. It only accepts a voluntary contribution.
+
+An owning app (learniq, portaliq) sees the refusal as a `voided` payment request
+and an invoice in `declined`.
+
 ## Knowing when a payment is in
 
 Shillinq writes `settledAt` and `settledVia` on the payment request the first

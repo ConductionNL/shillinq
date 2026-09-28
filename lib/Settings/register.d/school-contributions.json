@@ -4,12 +4,12 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "extracurricular-fee-to-shillinq",
     "adr": "ADR-037 modular register fragment; ADR-048 semantic reference; ADR-107 shillinq books; decision D19 (school contributions are shillinq invoices)",
-    "description": "A school contribution (ouderbijdrage, overblijfbijdrage, schoolreisje, a club fee) is an ordinary ARInvoice with no order behind it, raised in bulk by ContributionRaiseService from a chargeable definition another app owns. This fragment adds the nullable ARInvoice.contribution group that names the kind, the voluntary flag, the chargeable, the child and the raise batch, plus demo rows. The file sorts after every other ARInvoice fragment, so its version is the merged one: the import only updates a schema whose version rises, and the merged version was 0.6.0. No required list here, because deepMergeConfig concatenates required lists across fragments."
+    "description": "A school contribution (ouderbijdrage, overblijfbijdrage, schoolreisje, a club fee) is an ordinary ARInvoice with no order behind it, raised in bulk by ContributionRaiseService from a chargeable definition another app owns. This fragment adds the nullable ARInvoice.contribution group that names the kind, the voluntary flag, the chargeable, the child and the raise batch, plus demo rows. The file sorts after every other ARInvoice fragment, so its version is the merged one: the import only updates a schema whose version rises, and the merged version was 0.6.0. No required list here, because deepMergeConfig concatenates required lists across fragments. voluntary-contribution-reminder (2026-09-27) adds the invoice language, the decline moment and the declined state: a parent may refuse a voluntary contribution, which closes it without dunning."
   },
   "components": {
     "schemas": {
       "ARInvoice": {
-        "version": "0.14.0",
+        "version": "0.15.0",
         "properties": {
           "contribution": {
             "type": "object",
@@ -122,9 +122,60 @@
                 "description": "The account the contribution income belongs to, as the school named it. ARInvoice lines carry no account of their own.",
                 "example": "8400",
                 "title": "Revenue account"
+              },
+              "language": {
+                "type": "string",
+                "description": "The language the raise wrote the invoice text in, such as nl or en. The one reminder of a voluntary contribution is sent in it; any other value reads as Dutch.",
+                "example": "nl",
+                "title": "Language"
+              },
+              "declinedAt": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true,
+                "description": "When the parent said they will not pay this voluntary contribution. Set once, by the portal decline.",
+                "example": "2026-11-12T09:30:00+00:00",
+                "title": "Declined at"
               }
             },
             "title": "School contribution"
+          },
+          "lifecycleState": {
+            "type": "string",
+            "enum": [
+              "declined"
+            ],
+            "description": "AR invoice lifecycle state.",
+            "title": "Lifecycle State"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "states": {
+            "declined": {
+              "label": "Declined",
+              "description": "The parent said they will not pay this voluntary contribution. Closed without a posting; dunning never runs."
+            }
+          },
+          "transitions": {
+            "decline": {
+              "from": "issued",
+              "to": "declined",
+              "label": "Record refusal",
+              "description": "The parent will not pay this voluntary contribution. Only a voluntary contribution can be declined.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\VoluntaryDeclineGuard::requireVoluntary"
+            },
+            "decline-overdue": {
+              "from": "overdue",
+              "to": "declined",
+              "label": "Record refusal",
+              "description": "The parent will not pay this overdue voluntary contribution. Only a voluntary contribution can be declined.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\VoluntaryDeclineGuard::requireVoluntary"
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "isOverdue": {
+            "expression": "dueDate < today() && lifecycleState != 'paid' && lifecycleState != 'written-off' && lifecycleState != 'declined'"
           }
         }
       }
@@ -202,7 +253,61 @@
             "id": "00000000-0000-4000-8000-00000000c001"
           },
           "raiseBatchId": "ctb-20261001-demo0001",
-          "revenueAccount": "8400"
+          "revenueAccount": "8400",
+          "language": "nl"
+        }
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ARInvoice",
+          "slug": "ar-invoice-ctb-2026-ouderbijdrage-2"
+        },
+        "invoiceNumber": "CTB-2026-DEMO0001-0002",
+        "customerId": "G-DEMO-0002",
+        "administrationId": "adm-shillinq-demo",
+        "invoiceDate": "2026-10-01",
+        "dueDate": "2026-11-01",
+        "netAmount": 60.0,
+        "vatAmount": 0.0,
+        "grossAmount": 60.0,
+        "currency": "EUR",
+        "periodId": "2026-10",
+        "lifecycleState": "declined",
+        "invoiceType": "standard",
+        "invoiceNote": "Deze bijdrage is vrijwillig. Uw kind doet mee, of u nu betaalt of niet.",
+        "invoiceLines": [
+          {
+            "lineId": "1",
+            "quantity": 1,
+            "unitCode": "C62",
+            "itemName": "Ouderbijdrage 2026-2027 (vrijwillig)",
+            "netPrice": 60.0,
+            "netAmount": 60.0,
+            "vatCategory": "E",
+            "vatRate": 0
+          }
+        ],
+        "contribution": {
+          "kind": "parental-contribution",
+          "voluntary": true,
+          "chargeable": {
+            "app": "learniq",
+            "type": "fee-item",
+            "register": "learniq",
+            "schema": "FeeItem",
+            "id": "00000000-0000-4000-8000-00000000f001"
+          },
+          "beneficiary": {
+            "type": "learner",
+            "register": "learniq",
+            "schema": "LearnerProfile",
+            "id": "00000000-0000-4000-8000-00000000c002"
+          },
+          "raiseBatchId": "ctb-20261001-demo0001",
+          "revenueAccount": "8400",
+          "language": "nl",
+          "declinedAt": "2026-11-12T09:30:00+00:00"
         }
       },
       {
@@ -253,7 +358,8 @@
             "id": "00000000-0000-4000-8000-00000000c002"
           },
           "raiseBatchId": "ctb-20260915-demo0002",
-          "revenueAccount": "8400"
+          "revenueAccount": "8400",
+          "language": "nl"
         }
       },
       {
@@ -303,7 +409,8 @@
             "id": "00000000-0000-4000-8000-00000000c001"
           },
           "raiseBatchId": "ctb-20260901-demo0003",
-          "revenueAccount": "8400"
+          "revenueAccount": "8400",
+          "language": "nl"
         }
       },
       {

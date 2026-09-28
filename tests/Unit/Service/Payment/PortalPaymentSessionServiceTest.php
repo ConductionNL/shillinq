@@ -158,6 +158,29 @@ final class PortalPaymentObjectServiceStub {
 	}//end findAll()
 
 	/**
+	 * OpenRegister's single-object lookup: by uuid, throwing on a miss.
+	 *
+	 * @param int|string $id The uuid.
+	 * @param array|null $_extend Unused.
+	 * @param bool $files Unused.
+	 * @param mixed $register The register.
+	 * @param mixed $schema The schema.
+	 * @param bool $_rbac Unused.
+	 * @param bool $_multitenancy Unused.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public function find(int|string $id, ?array $_extend = [], bool $files = false, mixed $register = null, mixed $schema = null, bool $_rbac = true, bool $_multitenancy = true): array {
+		foreach (($this->data[(string)($register ?? $this->register)][(string)($schema ?? $this->schema)] ?? []) as $row) {
+			if (($row['id'] ?? null) === (string)$id) {
+				return $row;
+			}
+		}
+
+		throw new \OCP\AppFramework\Db\DoesNotExistException('not found');
+	}//end find()
+
+	/**
 	 * @param array|object $object The object data.
 	 * @param array|null $extend Unused.
 	 * @param mixed $register Register slug.
@@ -718,4 +741,77 @@ final class PortalPaymentSessionServiceTest extends TestCase {
 
 		self::assertSame('forbidden', $result->status);
 	}//end testASupplierStillCannotPay()
+
+	/**
+	 * A pending leges request without an invoice, owed by this subject's
+	 * customer, and three that are not payable by them.
+	 *
+	 * @return void
+	 */
+	private function seedRequestsWithoutAnInvoice(): void {
+		$own = ['subjectKind' => 'object', 'requestType' => 'leges', 'amount' => 125.0, 'currency' => 'EUR', 'state' => 'pending', 'description' => 'Leges omgevingsvergunning', 'customerId' => self::CUSTOMER_MASTER_ID, 'debtor' => ['customerMasterId' => self::CUSTOMER_MASTER_ID], 'administrationId' => 'adm-1'];
+		$this->objectService->data['shillinq']['PaymentRequest'] = [
+			$own + ['id' => 'pr-own'],
+			array_merge($own, ['id' => 'pr-foreign', 'customerId' => self::OTHER_CUSTOMER_ID, 'debtor' => ['customerMasterId' => self::OTHER_CUSTOMER_ID]]),
+			array_merge($own, ['id' => 'pr-invoice', 'invoiceReference' => self::INVOICE_ID]),
+			array_merge($own, ['id' => 'pr-captured', 'state' => 'captured']),
+			array_merge($own, ['id' => 'pr-zero', 'amount' => 0]),
+		];
+	}//end seedRequestsWithoutAnInvoice()
+
+	/**
+	 * A citizen pays a leges request that has no invoice: the checkout is for
+	 * exactly the request's amount, and the intent id lands on that request
+	 * (REQ-SPPI-008, REQ-SOPR-005).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
+	 */
+	public function testACitizenPaysARequestWithoutAnInvoice(): void {
+		$this->seedRequestsWithoutAnInvoice();
+		$captured = null;
+		$this->provider->expects($this->once())->method('createSession')->willReturnCallback(
+			function (PaymentSessionRequest $request) use (&$captured): PaymentSessionResult {
+				$captured = $request;
+				return new PaymentSessionResult(dormant: false, checkoutUrl: 'https://mollie.example/checkout/tr_9', paymentIntentId: 'tr_9');
+			}
+		);
+
+		$result = $this->makeService()->initiateForRequest(claims: $this->claims(), target: 'pr-own');
+
+		self::assertSame('ok', $result->status);
+		self::assertSame(125.0, $captured->amount);
+		self::assertSame('EUR', $captured->currency);
+		self::assertSame('ideal', $captured->method);
+		self::assertStringContainsString('Leges omgevingsvergunning', $captured->description);
+		self::assertSame('pr-own', $captured->metadata['correlationId']);
+		self::assertCount(1, $this->objectService->saved);
+		self::assertSame('pr-own', $this->objectService->saved[0]['uuid']);
+		self::assertSame('tr_9', $this->objectService->saved[0]['object']['paymentIntentId']);
+		self::assertArrayNotHasKey('id', $this->objectService->saved[0]['object']);
+	}//end testACitizenPaysARequestWithoutAnInvoice()
+
+	/**
+	 * Another customer's request, an invoice-backed one and a captured one
+	 * are forbidden without a provider call; a zero amount is a downstream
+	 * error; a supplier and a URL-shaped id are forbidden (REQ-SPPI-008).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
+	 */
+	public function testOnlyTheSubjectsOwnPendingRequestWithoutAnInvoiceIsPayable(): void {
+		$this->seedRequestsWithoutAnInvoice();
+		$this->provider->expects($this->never())->method('createSession');
+		$service = $this->makeService();
+
+		foreach (['pr-foreign', 'pr-invoice', 'pr-captured', 'pr-missing', 'https://attacker.example/pr-own', ''] as $target) {
+			self::assertSame('forbidden', $service->initiateForRequest(claims: $this->claims(), target: $target)->status, $target);
+		}
+
+		self::assertSame('forbidden', $service->initiateForRequest(claims: $this->claims(['audience' => 'supplier']), target: 'pr-own')->status);
+		self::assertSame('downstream_error', $service->initiateForRequest(claims: $this->claims(), target: 'pr-zero')->status);
+		self::assertSame([], $this->objectService->saved);
+	}//end testOnlyTheSubjectsOwnPendingRequestWithoutAnInvoiceIsPayable()
 }//end class

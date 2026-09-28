@@ -5404,7 +5404,20 @@ OC.L10N.register(
         "My contributions": "Mijn bijdragen",
         "Pay my contributions": "Mijn bijdragen betalen",
         "The account the contribution income belongs to, as the school named it. ARInvoice lines carry no account of their own.": "De rekening waar de opbrengst van de bijdrage bij hoort, zoals de school die noemde. Regels van een verkoopfactuur hebben geen eigen rekening.",
-        "Revenue account": "Opbrengstrekening"
+        "Revenue account": "Opbrengstrekening",
+        "Declined at": "Geweigerd op",
+        "The language the raise wrote the invoice text in, such as nl or en. The one reminder of a voluntary contribution is sent in it; any other value reads as Dutch.": "De taal waarin de factuurtekst bij het uitgeven is geschreven, zoals nl of en. De ene herinnering voor een vrijwillige bijdrage gaat in deze taal; elke andere waarde leest als Nederlands.",
+        "When the parent said they will not pay this voluntary contribution. Set once, by the portal decline.": "Wanneer de ouder liet weten deze vrijwillige bijdrage niet te betalen. Eén keer gezet, door de weigering in het portaal.",
+        "Declined": "Geweigerd",
+        "Record refusal": "Weigering vastleggen",
+        "The parent said they will not pay this voluntary contribution. Closed without a posting; dunning never runs.": "De ouder liet weten deze vrijwillige bijdrage niet te betalen. Gesloten zonder boeking; er wordt niet aangemaand.",
+        "The parent will not pay this voluntary contribution. Only a voluntary contribution can be declined.": "De ouder betaalt deze vrijwillige bijdrage niet. Alleen een vrijwillige bijdrage kan worden geweigerd.",
+        "The parent will not pay this overdue voluntary contribution. Only a voluntary contribution can be declined.": "De ouder betaalt deze vervallen vrijwillige bijdrage niet. Alleen een vrijwillige bijdrage kan worden geweigerd.",
+        "I will not pay": "Ik betaal niet",
+        "The debtor's customer on a request that stands on its own, without an invoice, copied from debtor.customerMasterId when the request is raised. The customer portal lists the request by it. A request on an invoice reaches the portal through that invoice and leaves this empty.": "De klant van de schuldenaar bij een verzoek zonder factuur, overgenomen uit debtor.customerMasterId wanneer het verzoek wordt aangemaakt. Het klantportaal toont het verzoek hierop. Een verzoek op een factuur komt via die factuur in het portaal en laat dit leeg.",
+        "Portal return address": "Terugkeeradres portaal",
+        "Where the checkout sends a person back after paying. Use the address of your portal, starting with https://. Leave it empty to send them to Nextcloud.": "Waar de betaalpagina iemand na het betalen naartoe stuurt. Gebruik het adres van uw portaal, beginnend met https://. Laat het leeg om iemand naar Nextcloud te sturen.",
+        "The settings were not saved. Check that the portal return address starts with https://.": "De instellingen zijn niet opgeslagen. Controleer of het terugkeeradres van het portaal met https:// begint."
     },
     "nplurals=2; plural=(n != 1);"
 )
