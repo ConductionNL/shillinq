@@ -65,6 +65,7 @@ use OCA\Shillinq\Listener\GRIRClearingListener;
 use OCA\Shillinq\Listener\ReconciliationMatchSettlementListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
 use OCA\Shillinq\Listener\IntegriqCloudEventListener;
+use OCA\Shillinq\Listener\BankfeedSyncedListener;
 use OCA\Shillinq\Listener\IntercompanyLinkListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
 use OCA\Shillinq\Listener\FeeScheduleValidationListener;
@@ -368,6 +369,14 @@ class Application extends App implements IBootstrap {
 		$context->registerEventListener(
 			event: ObjectCreatedEvent::class,
 			listener: IntegriqCloudEventListener::class
+		);
+
+		// Banking-connected-accounts REQ-BCON-002: integriq's bank feed pull
+		// arrives the same way, as an `integriq` / `event` object of type
+		// nl.conduction.bankfeed.transactions.synced.
+		$context->registerEventListener(
+			event: ObjectCreatedEvent::class,
+			listener: BankfeedSyncedListener::class
 		);
 
 		// Bookings-pipelinq-customer-bridge slice 07 — when a new

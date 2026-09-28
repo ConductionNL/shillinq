@@ -122,7 +122,8 @@ class ManualMatchService {
 	 *
 	 * @param array<string,mixed> $line      The line, from findLine().
 	 * @param array<int,string>   $targetIds Invoice uuids.
-	 * @param string              $actor     The confirming user id.
+	 * @param string              $actor     The confirming user id, or `system:bankfeed`.
+	 * @param string              $reason    Why the match was made; '' for a match by hand.
 	 *
 	 * @return array<string,mixed> The confirmed match.
 	 *
@@ -130,7 +131,7 @@ class ManualMatchService {
 	 *
 	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 	 */
-	public function matchInvoices(array $line, array $targetIds, string $actor): array {
+	public function matchInvoices(array $line, array $targetIds, string $actor, string $reason = ''): array {
 		$this->assertMatchable(line: $line);
 		$targetIds = array_values(array_unique(array_filter(array_map('strval', $targetIds), static fn (string $id): bool => $id !== '')));
 		if ($targetIds === []) {
@@ -177,6 +178,10 @@ class ManualMatchService {
 		];
 		if ($partial === true) {
 			$extra['resolutionReason'] = 'Part payment by hand, remainder ' . self::money(amount: $remainder);
+		}
+
+		if ($reason !== '') {
+			$extra['resolutionReason'] = $reason;
 		}
 
 		// The T4 shortcut field that names the first invoice.
@@ -497,6 +502,11 @@ class ManualMatchService {
 
 		$bankAccount = ObjectIdentifier::recordWithId(candidate: ($accounts[0] ?? null));
 		$ledger = trim((string)($bankAccount['ledgerAccountNumber'] ?? ''));
+		if ($ledger === '') {
+			// A statement imported by file names the ledger account it books against.
+			$ledger = trim((string)($statement['glAccountId'] ?? ''));
+		}
+
 		if ($ledger === '') {
 			throw new ManualMatchRefusedException(
 				template: 'Set the ledger account of bank account %1$s first.',
