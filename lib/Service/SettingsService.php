@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use InvalidArgumentException;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\App\IAppManager;
@@ -62,7 +63,17 @@ class SettingsService {
 		'rgs_template',
 		'administration_id',
 		'legal_region',
+		self::PORTAL_REDIRECT_KEY,
 	];
+
+	/**
+	 * Where the portal checkout sends the payer back to. Read by
+	 * PortalPaymentSessionService; empty falls back to the instance root
+	 * (REQ-SPPI-010).
+	 *
+	 * @var string
+	 */
+	public const PORTAL_REDIRECT_KEY = 'portal_payment_redirect_url';
 
 	/**
 	 * Constructor for the SettingsService.
@@ -132,9 +143,17 @@ class SettingsService {
 	 *
 	 * @return array<string,mixed> The updated settings
 	 *
+	 * @throws InvalidArgumentException When the portal return address is not an absolute https address.
+	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-1
+	 * @spec openspec/changes/portal-pay-row-action-keys/specs/portal-payment-initiation/spec.md (REQ-SPPI-010)
 	 */
 	public function updateSettings(array $data): array {
+		// Checked before anything is written, so a refused save stores nothing.
+		if (isset($data[self::PORTAL_REDIRECT_KEY]) === true) {
+			$this->assertPortalRedirect(value: (string)$data[self::PORTAL_REDIRECT_KEY]);
+		}
+
 		foreach (self::CONFIG_KEYS as $key) {
 			if (isset($data[$key]) === true) {
 				$this->appConfig->setValueString(Application::APP_ID, $key, (string)$data[$key]);
@@ -143,6 +162,32 @@ class SettingsService {
 
 		return $this->getSettings();
 	}//end updateSettings()
+
+	/**
+	 * Refuse a portal return address that is neither empty nor an absolute
+	 * https address, so the checkout never sends a payer to plain http, a
+	 * script URL or a relative path.
+	 *
+	 * @param string $value The submitted address.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the address is not acceptable.
+	 *
+	 * @spec openspec/changes/portal-pay-row-action-keys/specs/portal-payment-initiation/spec.md (REQ-SPPI-010)
+	 */
+	private function assertPortalRedirect(string $value): void {
+		$value = trim($value);
+		if ($value === '') {
+			return;
+		}
+
+		$scheme = strtolower((string)parse_url($value, PHP_URL_SCHEME));
+		$host = (string)parse_url($value, PHP_URL_HOST);
+		if (filter_var($value, FILTER_VALIDATE_URL) === false || $scheme !== 'https' || $host === '') {
+			throw new InvalidArgumentException('The portal return address must be an absolute https address.');
+		}
+	}//end assertPortalRedirect()
 
 	/**
 	 * Return the configured register slug, falling back to 'shillinq' if unset.

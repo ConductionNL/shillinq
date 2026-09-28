@@ -52,3 +52,31 @@ leges intake set it when they raise the request, from `debtor.customerMasterId`.
 A repair step sets it on requests raised before this existed. A request whose
 debtor is only a name and an email has no customer, so it stays out of the
 portal; send its payment link by mail instead.
+
+## The pay buttons in the portal
+
+Portaliq shows a Pay now button on a row only for an action that says which body
+key carries the row's id (`rowField`) and which rows may pay (`rowWhen`).
+
+| Collection | Action | `rowField` | Shown while |
+|---|---|---|---|
+| My invoices (`salesInvoices`) | `pay` | `invoiceId` | `lifecycleState` is issued, partially-paid or overdue |
+| My payment requests (`requestPayments`) | `pay-request` | `paymentRequestId` | `state` is pending |
+
+Pay my invoices (`paymentRequests`) has no button: its rows are payment
+requests, and their invoice is paid from My invoices. On a parent's invoice
+cards the portal shows `invoiceNote`, the voluntary sentence, as a notice.
+
+## Where the checkout sends the payer back
+
+Set the portal's address under **Administration settings > Shillinq > Portal
+return address**, or through the settings API:
+
+```bash
+curl -u admin -X PUT -H 'Content-Type: application/json' \
+  -d '{"portal_payment_redirect_url": "https://portaal.gemeente.example/betalen"}' \
+  https://nextcloud.example/index.php/apps/shillinq/api/settings
+```
+
+Only an absolute `https` address is accepted; anything else answers 400 and
+nothing is stored. Empty sends the payer to the Nextcloud start page.

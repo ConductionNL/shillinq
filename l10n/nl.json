@@ -5416,7 +5416,10 @@
         "The parent will not pay this voluntary contribution. Only a voluntary contribution can be declined.": "De ouder betaalt deze vrijwillige bijdrage niet. Alleen een vrijwillige bijdrage kan worden geweigerd.",
         "The parent will not pay this overdue voluntary contribution. Only a voluntary contribution can be declined.": "De ouder betaalt deze vervallen vrijwillige bijdrage niet. Alleen een vrijwillige bijdrage kan worden geweigerd.",
         "I will not pay": "Ik betaal niet",
-        "The debtor's customer on a request that stands on its own, without an invoice, copied from debtor.customerMasterId when the request is raised. The customer portal lists the request by it. A request on an invoice reaches the portal through that invoice and leaves this empty.": "De klant van de schuldenaar bij een verzoek zonder factuur, overgenomen uit debtor.customerMasterId wanneer het verzoek wordt aangemaakt. Het klantportaal toont het verzoek hierop. Een verzoek op een factuur komt via die factuur in het portaal en laat dit leeg."
+        "The debtor's customer on a request that stands on its own, without an invoice, copied from debtor.customerMasterId when the request is raised. The customer portal lists the request by it. A request on an invoice reaches the portal through that invoice and leaves this empty.": "De klant van de schuldenaar bij een verzoek zonder factuur, overgenomen uit debtor.customerMasterId wanneer het verzoek wordt aangemaakt. Het klantportaal toont het verzoek hierop. Een verzoek op een factuur komt via die factuur in het portaal en laat dit leeg.",
+        "Portal return address": "Terugkeeradres portaal",
+        "Where the checkout sends a person back after paying. Use the address of your portal, starting with https://. Leave it empty to send them to Nextcloud.": "Waar de betaalpagina iemand na het betalen naartoe stuurt. Gebruik het adres van uw portaal, beginnend met https://. Laat het leeg om iemand naar Nextcloud te sturen.",
+        "The settings were not saved. Check that the portal return address starts with https://.": "De instellingen zijn niet opgeslagen. Controleer of het terugkeeradres van het portaal met https:// begint."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

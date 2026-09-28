@@ -322,9 +322,10 @@ class PortalContributionProviderTest extends TestCase {
 		$this->assertStringNotContainsString('://', $endpoint);
 		$this->assertStringNotContainsString('..', $endpoint);
 
-		// Both AR-side collections reference the action as a rowAction.
+		// The invoices reference pay as their row action; a payment request row
+		// is not an invoice, so it references none (REQ-SPPI-009).
 		$this->assertSame('pay', $collections['salesInvoices']['rowAction']);
-		$this->assertSame('pay', $collections['paymentRequests']['rowAction']);
+		$this->assertArrayNotHasKey('rowAction', $collections['paymentRequests']);
 
 	}//end testCustomerManifestPayActionAndRowAction()
 
@@ -921,4 +922,41 @@ class PortalContributionProviderTest extends TestCase {
 		self::assertNotContains('requestPayments', array_column($parent['collections'], 'id'));
 		self::assertNotContains('pay-request', array_column($parent['actions'], 'id'));
 	}//end testARequestWithoutAnInvoiceIsListedAndPayable()
+
+	/**
+	 * Portaliq offers a per-row Pay now button only for an action that names
+	 * the body key for the row id and the rows it applies to (portaliq #805).
+	 * The pay action names invoiceId and gates on lifecycleState, the field an
+	 * ARInvoice row carries, with exactly the receiver's payable states; the
+	 * parent's invoice cards show the voluntary notice; payment request rows
+	 * offer nothing (REQ-SPPI-009).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/portal-pay-row-action-keys/specs/portal-payment-initiation/spec.md (REQ-SPPI-009)
+	 */
+	public function testThePayActionNamesItsRowKeyAndItsPayableRows(): void {
+		$payable = (new \ReflectionClassConstant(\OCA\Shillinq\Service\Payment\PortalPaymentSessionService::class, 'PAYABLE_STATES'))->getValue();
+		$invoiceProperties = $this->effectiveRegister()['components']['schemas']['ARInvoice']['properties'];
+
+		foreach ([self::CUSTOMER_SUBJECT, ['audience' => 'parent']] as $subject) {
+			$manifest = $this->provider->getContribution($subject);
+			$pay = array_column($manifest['actions'], null, 'id')['pay'];
+			self::assertSame('invoiceId', $pay['rowField'], $subject['audience']);
+			self::assertSame(['field' => 'lifecycleState', 'in' => $payable], $pay['rowWhen'], $subject['audience']);
+			self::assertArrayHasKey($pay['rowWhen']['field'], $invoiceProperties, 'rowWhen names a field ARInvoice does not declare');
+
+			$collections = $this->collectionsById($manifest);
+			self::assertContains($pay['rowWhen']['field'], $collections['salesInvoices']['fields'], 'the portal cannot evaluate rowWhen on a field the list does not carry');
+			self::assertArrayNotHasKey('rowAction', $collections['paymentRequests'], $subject['audience']);
+		}
+
+		$parentInvoices = $this->collectionsById($this->provider->getContribution(['audience' => 'parent']))['salesInvoices'];
+		self::assertSame('invoiceNote', $parentInvoices['noticeField']);
+		self::assertArrayHasKey('invoiceNote', $invoiceProperties);
+		self::assertContains('invoiceNote', $parentInvoices['fields']);
+
+		$customerInvoices = $this->collectionsById($this->provider->getContribution(self::CUSTOMER_SUBJECT))['salesInvoices'];
+		self::assertArrayNotHasKey('noticeField', $customerInvoices);
+	}//end testThePayActionNamesItsRowKeyAndItsPayableRows()
 }//end class
