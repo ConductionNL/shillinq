@@ -62,7 +62,9 @@ the same policy.
 The pay receiver resolves the guardian's `customerMasterId` from their own portal
 account and rejects a non-opaque target. `PortalSubjectResolver` takes those two
 private methods out of `PortalPaymentSessionService` so the decline uses the same
-code, not a copy of the security boundary.
+code, not a copy of the security boundary. The decline then reads the invoice with
+`find()` by uuid: a `findAll()` filter on `id` addresses a JSON property and
+matches nothing in OpenRegister.
 
 ### D7: Idempotent and no existence oracle
 
@@ -123,8 +125,8 @@ appinfo/routes.php                                      (one route)
 
 No new schema. The existing seed invoices in `school-contributions.json`
 (`@self: {register: shillinq, schema: ARInvoice}`) gain `contribution.language:
-nl`. One more seed, `ctb-seed-2026-declined`, shows a declined voluntary
-lunch-supervision contribution with `declinedAt` set, so the state is visible on
+nl`. One more seed, `ar-invoice-ctb-2026-ouderbijdrage-2`, shows a declined
+voluntary parental contribution with `declinedAt` set, so the state is visible on
 a fresh install.
 
 ## Risks / Trade-offs

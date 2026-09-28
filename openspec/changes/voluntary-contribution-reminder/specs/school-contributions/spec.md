@@ -75,7 +75,7 @@ The parent portal manifest SHALL declare an endpoint-forward action `decline`
 `POST /apps/shillinq/api/portal/contributions/decline`. The receiver SHALL verify
 the `X-Portal-Subject` assertion, accept only the `parent` and `customer`
 audiences, resolve the guardian's `customerMasterId` from their own portal account
-and find the invoice by id or slug with that owner. When the invoice is a
+and find the invoice by its uuid, keeping it only when that customer owns it. When the invoice is a
 voluntary contribution in `issued` or `overdue`, it SHALL set `lifecycleState` to
 `declined`, stamp `contribution.declinedAt`, and set every `pending` payment
 request on the invoice to `voided`. An invoice this guardian already declined

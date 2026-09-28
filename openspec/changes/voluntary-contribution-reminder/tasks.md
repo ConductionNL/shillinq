@@ -52,4 +52,4 @@ repair step imports. Every fix starts with a test that fails.
 - [x] Test
 
 ### Task 6: Verify
-- [ ] Diff-scoped checks, then `composer check:strict`, `npm run lint`, `npm run format`, `npm run test:l10n`, hydra gates, once
+- [x] Diff-scoped checks, then `composer check:strict`, `npm run lint`, `npm run format`, `npm run test:l10n`, hydra gates, once

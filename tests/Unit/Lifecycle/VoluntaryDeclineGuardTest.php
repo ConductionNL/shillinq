@@ -42,8 +42,31 @@ final class VoluntaryDeclineGuardTest extends TestCase {
 
 		self::assertTrue($guard->requireVoluntary(['contribution' => ['kind' => 'parental-contribution', 'voluntary' => true]]));
 		self::assertFalse($guard->requireVoluntary(['contribution' => ['kind' => 'lunch-supervision', 'voluntary' => false]]));
-		self::assertFalse($guard->requireVoluntary(['invoiceNumber' => 'INV-2026-0001']));
+	}//end testOnlyAVoluntaryContributionMayBeDeclined()
+
+	/**
+	 * An ordinary invoice, without a contribution group, stays owed.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-014)
+	 */
+	public function testAnOrdinaryInvoiceMayNotBeDeclined(): void {
+		self::assertFalse((new VoluntaryDeclineGuard())->requireVoluntary(['invoiceNumber' => 'INV-2026-0001', 'lifecycleState' => 'issued']));
+	}//end testAnOrdinaryInvoiceMayNotBeDeclined()
+
+	/**
+	 * A malformed group, or a flag that is a string rather than true, is
+	 * refused: the guard fails closed.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-014)
+	 */
+	public function testAMalformedGroupIsRefused(): void {
+		$guard = new VoluntaryDeclineGuard();
+
 		self::assertFalse($guard->requireVoluntary(['contribution' => 'voluntary']));
 		self::assertFalse($guard->requireVoluntary(['contribution' => ['voluntary' => 'true']]));
-	}//end testOnlyAVoluntaryContributionMayBeDeclined()
+	}//end testAMalformedGroupIsRefused()
 }//end class

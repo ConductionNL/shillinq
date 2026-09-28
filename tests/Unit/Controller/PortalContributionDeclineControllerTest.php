@@ -162,4 +162,25 @@ final class PortalContributionDeclineControllerTest extends TestCase {
 		self::assertSame(Http::STATUS_BAD_GATEWAY, $boom->getStatus());
 		self::assertStringNotContainsString('SQLSTATE', (string)json_encode($boom->getData()));
 	}//end testTheServiceAnswerMapsToAStatus()
+
+	/**
+	 * A debtor signed in as a customer reaches the service too, as the
+	 * contract names both audiences; the service then decides ownership
+	 * (REQ-SCON-013).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-013)
+	 */
+	public function testACustomerAudienceReachesTheService(): void {
+		$this->service->expects(self::once())
+			->method('decline')
+			->with(self::callback(static fn (array $claims): bool => $claims['audience'] === 'customer'), self::INVOICE)
+			->willReturn(ContributionDeclineService::FORBIDDEN);
+
+		$response = $this->controller(header: $this->assertion(audience: 'customer'))->decline();
+
+		self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		self::assertSame(['error' => 'forbidden'], $response->getData());
+	}//end testACustomerAudienceReachesTheService()
 }//end class
