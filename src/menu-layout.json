@@ -120,13 +120,15 @@
 		"ImportMappings"
 	],
 	"_removals_note": "ADR-112: a report is a card on the Reporting & Compliance page OR a menu entry, never both. All six pages stay routable — deep links, e2e specs and the cards address them by route name — only their menu entries go. Five were already declared as cards in src/components/reporting/reportViews.js when that file was written from the menu-IA audit; BookkeepingDestructionReport was missed there, so it is added as a card in the same change that retires its entry. Retiring an entry whose card did not exist would have removed the report from the product rather than moving it.",
+	"_removals_btw_note": "#1717: the Taxes menu showed two VAT return pages. BtwAangiften lists VatReturn records, whose rubrieken aggregation can never compute, while VATReturnService files BtwAangifte records, which VATReturns lists. The menu keeps VATReturns only (tax-vat-return-from-books task 2.3, REQ-VBTW-004). BtwAangiften stays routable so an existing VatReturn record still opens by URL.",
 	"removals": [
 		"EmuRapportage",
 		"VarianceReport",
 		"ConsolidatedReport",
 		"BookkeepingDestructionReport",
 		"Iv3Rapportages",
-		"SisaRapportages"
+		"SisaRapportages",
+		"BtwAangiften"
 	],
 	"removalsReplacedBy": {
 		"EmuRapportage": "ReportingComplianceOverview",
@@ -134,6 +136,7 @@
 		"ConsolidatedReport": "ReportingComplianceOverview",
 		"BookkeepingDestructionReport": "ReportingComplianceOverview",
 		"Iv3Rapportages": "ReportingComplianceOverview",
-		"SisaRapportages": "ReportingComplianceOverview"
+		"SisaRapportages": "ReportingComplianceOverview",
+		"BtwAangiften": "VATReturns"
 	}
 }
