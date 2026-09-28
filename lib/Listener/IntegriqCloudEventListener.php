@@ -57,7 +57,7 @@ class IntegriqCloudEventListener implements IEventListener {
 	/**
 	 * The OpenRegister register integriq saves its CloudEvents in.
 	 *
-	 * integriq `EventService::emitCloudEvent()` saves with `register: 'integriq'`,
+	 * The integriq `EventService::emitCloudEvent()` saves with `register: 'integriq'`,
 	 * and integriq's `lib/Settings/integriq_register.json` declares that slug. A
 	 * register slug is data, frozen when an app is renamed.
 	 *

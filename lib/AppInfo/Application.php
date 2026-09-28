@@ -351,7 +351,7 @@ class Application extends App implements IBootstrap {
 			listener: PeppolDeliveryStatusListener::class
 		);
 
-		// receivables-payment-links design D3 / REQ-RPL-003 (#1681): integriq
+		// Change receivables-payment-links design D3 / REQ-RPL-003 (#1681): integriq
 		// saves every CloudEvent as an OpenRegister object in register
 		// `integriq`, schema `event`, and dispatches no Nextcloud event of its
 		// own. So a `nl.conduction.payment.status` outcome reaches shillinq's

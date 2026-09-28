@@ -278,7 +278,7 @@ class PeppolDeliveryStatusListener implements IEventListener {
 				return $invoice;
 			}
 		} catch (Throwable $notAUuid) {
-			// find() throws on a miss; fall through to the invoice number.
+			// A miss makes find() throw; fall through to the invoice number.
 		}
 
 		$byNumber = $this->findAll(schema: 'ARInvoice', filters: ['invoiceNumber' => $id]);
