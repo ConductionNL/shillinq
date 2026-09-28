@@ -40,7 +40,10 @@ since #1724; named as out of scope.
 `InvoicePdfGenerator` serves BillableInvoice (time and expense) and ARInvoice
 (hybrid e-invoice). A small `normaliseLine()` reads the BillableInvoiceLine keys
 first and falls back to the `invoiceLines` keys. Neither caller changes, and a
-time-and-expense PDF renders exactly as before.
+time-and-expense PDF renders exactly as before. The hybrid PDF discarded its
+HTML and printed only a summary line, so it also gets one text line per invoice
+line under that summary (number, description, quantity x price = amount with
+the currency code, VAT rate; up to 45 lines on its one page).
 
 ### D4: The manifest lists declared names, and a test holds it there
 

@@ -56,4 +56,4 @@ Stacked on `voluntary-contribution-reminder` (#1724). No Nextcloud migration cla
 - [x] Test
 
 ### Task 7: Verify
-- [ ] Diff-scoped checks, then `composer check:strict`, `npm run lint`, `npm run format`, `npm run test:l10n`, hydra gates, once
+- [x] Diff-scoped checks, then `composer check:strict`, `npm run lint`, `npm run format`, `npm run test:l10n`, hydra gates, once

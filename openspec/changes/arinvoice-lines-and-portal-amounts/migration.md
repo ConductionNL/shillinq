@@ -21,6 +21,8 @@ after InitializeSettings) stamps existing rows.
 
 ## Migration Steps
 
+0. `appinfo/info.xml` `<version>` moves to `0.5.3-unstable.20260928080000`
+   (gate-110): Nextcloud runs post-migration steps only when the version rises.
 1. InitializeSettings reimports the register (the fragment signature changed).
 2. BackfillPaymentRequestCustomer reads every `subjectKind: object` request in
    batches and saves `customerId` on each one without an `invoiceReference` whose
