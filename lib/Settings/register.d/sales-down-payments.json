@@ -1,0 +1,116 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "sales-down-payments",
+		"adr": "ADR-037 modular register fragment; ADR-048 semantic reference for the order",
+		"description": "A down payment on an order is an ARInvoice of type code 386 with a downPayment group; the final invoice of the order carries downPayment.kind final, one negative invoice line per down payment and VAT rate (invoiceLines[].downPaymentInvoiceId) and the deductions it took. The posting of both lives in MaterialiseGlTransactionAction (advances account, default 2310); the check and the stamp on issue live in DownPaymentGuard, declared on ARInvoice.issue in add-shillinq-bookkeeping-compliance.json so the check runs before the posting."
+	},
+	"components": {
+		"schemas": {
+			"ARInvoice": {
+				"properties": {
+					"downPayment": {
+						"type": "object",
+						"nullable": true,
+						"title": "Down payment",
+						"description": "Set on a down-payment invoice of an order and on the final invoice that deducts the order's down payments (sales-down-payments REQ-SDP-001, REQ-SDP-003).",
+						"properties": {
+							"kind": {
+								"type": "string",
+								"enum": ["down-payment", "final"],
+								"title": "Kind",
+								"description": "down-payment for an invoice raised up front on an order, final for the invoice that deducts them."
+							},
+							"orderReference": {
+								"type": "string",
+								"referenceSemanticType": "https://schema.org/Order",
+								"title": "Order",
+								"description": "The order, by semantic type (ADR-048): a shillinq OrderPrimitive or an order or quote in another app."
+							},
+							"orderLabel": {
+								"type": "string",
+								"nullable": true,
+								"title": "Order label",
+								"description": "How the order is named on the invoice, for example its order number."
+							},
+							"orderNetTotal": {
+								"type": "number",
+								"nullable": true,
+								"title": "Order net total",
+								"description": "The order's net total the down payment was computed from."
+							},
+							"orderVatBreakdown": {
+								"type": "array",
+								"nullable": true,
+								"title": "Order VAT breakdown",
+								"description": "The order's net total per VAT rate the down payment was computed from.",
+								"items": {
+									"type": "object",
+									"properties": {
+										"rate": {"type": "number", "title": "VAT rate", "description": "VAT rate as a fraction, 0.21 for 21 percent."},
+										"net": {"type": "number", "title": "Net", "description": "Net amount of the order at this rate."}
+									}
+								}
+							},
+							"percentage": {
+								"type": "number",
+								"nullable": true,
+								"title": "Percentage",
+								"description": "The percentage of the order's net total asked up front."
+							},
+							"amount": {
+								"type": "number",
+								"nullable": true,
+								"title": "Amount",
+								"description": "The fixed net amount asked up front."
+							},
+							"deductedOnInvoiceId": {
+								"type": "string",
+								"nullable": true,
+								"title": "Deducted on invoice",
+								"description": "On a down payment: the final invoice that deducted it, stamped when that invoice is issued."
+							},
+							"deductedOnInvoiceNumber": {
+								"type": "string",
+								"nullable": true,
+								"title": "Deducted on invoice number",
+								"description": "The number of the final invoice that deducted this down payment."
+							},
+							"deductions": {
+								"type": "array",
+								"nullable": true,
+								"title": "Deductions",
+								"description": "On a final invoice: every down payment it deducts, per VAT rate.",
+								"items": {
+									"type": "object",
+									"properties": {
+										"invoiceId": {"type": "string", "title": "Down-payment invoice", "description": "The down-payment invoice deducted."},
+										"invoiceNumber": {"type": "string", "title": "Down-payment invoice number", "description": "Its invoice number."},
+										"rate": {"type": "number", "title": "VAT rate", "description": "VAT rate as a fraction."},
+										"net": {"type": "number", "title": "Net", "description": "Net amount deducted at this rate."},
+										"vat": {"type": "number", "title": "VAT", "description": "VAT deducted at this rate."}
+									}
+								}
+							}
+						}
+					},
+					"invoiceLines": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"downPaymentInvoiceId": {
+									"type": "string",
+									"nullable": true,
+									"title": "Deducted down payment",
+									"description": "On a deduction line of a final invoice: the down-payment invoice this line takes off. Its net amount is booked to the advances account, not to revenue."
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
