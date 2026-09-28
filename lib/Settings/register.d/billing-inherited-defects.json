@@ -35,6 +35,9 @@
                         "title": "Customer reference"
                     },
                     "invoiceLines": {
+                        "type": "array",
+                        "title": "Invoice Lines",
+                        "description": "A list of invoice lines entries.",
                         "items": {
                             "type": "object",
                             "properties": {
