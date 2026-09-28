@@ -49,6 +49,7 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\Dunning\DunningChannelSendResult;
+use OCA\Shillinq\Service\Dunning\DunningStageDispatcher;
 use OCA\Shillinq\Service\Dunning\EvidenceRetentionEnforcer;
 use OCA\Shillinq\Service\Dunning\IncassoBureauAdapterInterface;
 use OCA\Shillinq\Service\Dunning\PostNLAdapterInterface;
@@ -283,7 +284,6 @@ class DunningRunService {
 					'channel' => $channel,
 					'templateId' => $tplId,
 					'invoiceAmount' => (float)($invoice['grossAmount'] ?? 0.0),
-					'deliveryStatus' => 'PENDING',
 				],
 				$params
 			)
@@ -384,11 +384,10 @@ class DunningRunService {
 	 *   3. Transition the run to lifecycleState = executed (immutable per
 	 *      REQ-CCD-002).
 	 *
-	 * The kanaal dispatch itself is delegated to the channel hooks
-	 * (EMAIL / EMAIL+POSTREGISTRATIE / AANGETEKENDE_POST / INCASSOBUREAU_API);
-	 * this method records the outcome but does not own the SMTP/PostNL/
-	 * incasso-bureau wiring (those land on dedicated handlers seeded via
-	 * openconnector per REQ-CCD-008 / REQ-CCD-009).
+	 * The stage is sent through the bound channel adapter by DunningStageDispatcher
+	 * before the run is saved, and the run records the adapter's outcome. A
+	 * caller-supplied `deliveryStatus` is ignored: it is not evidence that
+	 * anything left (issue #1687, design D6 of receivables-automatic-dunning).
 	 *
 	 * @param string $administrationId Administration scope.
 	 * @param array<string,mixed> $params {
@@ -406,7 +405,6 @@ class DunningRunService {
 	 *                                    factuurBedrag,
 	 *                                    incassokostenBedrag,
 	 *                                    renteBedrag,
-	 *                                    deliveryStatus,
 	 *                                    postageStatus,
 	 *                                    openTracking,
 	 *                                    digitalSignature
@@ -415,6 +413,7 @@ class DunningRunService {
 	 * @return array<string,mixed> The executed DunningRun record.
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
 	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-012)
 	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-014)
 	 */
@@ -452,7 +451,7 @@ class DunningRunService {
 			'renderedSubject' => ($params['renderedSubject'] ?? null),
 			'renderedBody' => ($params['renderedBody'] ?? null),
 			'renderedPdfHash' => ($params['renderedPdfHash'] ?? null),
-			'deliveryStatus' => (string)($params['deliveryStatus'] ?? 'PENDING'),
+			'deliveryStatus' => 'PENDING',
 			'openTracking' => ($params['openTracking'] ?? null),
 			'postageStatus' => ($params['postageStatus'] ?? null),
 			'digitalSignature' => ($params['digitalSignature'] ?? null),
@@ -463,6 +462,7 @@ class DunningRunService {
 			'lifecycleState' => 'executed',
 		];
 
+		$record = $this->container->get(DunningStageDispatcher::class)->dispatch(record: $record);
 		return $this->saveObject(schema: 'DunningRun', data: $record);
 	}//end executeStage()
 
