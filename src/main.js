@@ -29,6 +29,7 @@ import bundledManifest from './manifest.json'
 import menuLayout from './menu-layout.json'
 import pinia from './pinia.js'
 import registry from './registry.js'
+import { classifyUnmatched, openBankLineMatch } from './utils/bankMatchActions.js'
 import { openIntegriqConnections } from './utils/integriqConnections.js'
 import {
 	buildPageFragmentIndex,
@@ -310,6 +311,10 @@ const customComponentsProp = {
 			.map(([name, entry]) => [name, entry.component]),
 	),
 	openIntegriqConnections,
+	// banking-manual-match: the "Match by hand" row action and the
+	// unmatched items bulk classification.
+	openBankLineMatch,
+	classifyUnmatched,
 }
 
 // Vue 3 `mount()` renders INSIDE the matched element; Vue 2's `$mount()`

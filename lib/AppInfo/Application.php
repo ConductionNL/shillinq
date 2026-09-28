@@ -62,6 +62,7 @@ use OCA\Shillinq\Listener\ExtractionCompletedListener;
 use OCA\Shillinq\Listener\FixedAssetDisposalListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
 use OCA\Shillinq\Listener\GRIRClearingListener;
+use OCA\Shillinq\Listener\ReconciliationMatchSettlementListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
 use OCA\Shillinq\Listener\IntegriqCloudEventListener;
 use OCA\Shillinq\Listener\IntercompanyLinkListener;
@@ -309,6 +310,14 @@ class Application extends App implements IBootstrap {
 		$context->registerEventListener(
 			event: ObjectTransitionedEvent::class,
 			listener: GRIRClearingListener::class
+		);
+
+		// Banking-manual-match REQ-BMM-003: a confirmed ReconciliationMatch,
+		// by a person, a rule or the bank feed, moves the invoices it names to
+		// paid through their own declared transitions.
+		$context->registerEventListener(
+			event: ObjectTransitionedEvent::class,
+			listener: ReconciliationMatchSettlementListener::class
 		);
 
 		// Revive-gl-tax-capabilities (shillinq#417/#446) REQ-GLTAX-001 — the

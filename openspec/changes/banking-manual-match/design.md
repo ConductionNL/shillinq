@@ -144,6 +144,15 @@ VF-2026-0901 of EUR 1,500.00 as a partial.
 
 No data migration. Existing classified matches are untouched.
 
+## Built at development `83d19fc8d` (28 Sep 2026): where the design moved
+
+- **Bulk actions (D4).** CnIndexPage does not dispatch a bulk `api-call` at all: without a `handler` it only emits `bulk-action`, and the endpoint also needs a reason the declaration never sent. The three bulk actions now name the `classifyUnmatched` handler (registered in `src/main.js` customComponents), which opens `UnmatchedClassifyDialog` for the reason and posts once per `reconId` (`src/utils/bankMatchApi.js`). `ReconciliationResolutionService` now patches the match: its `updateObject` call had replace semantics and would have erased every other field of the match.
+- **Line action (D1).** The statement's lines are an `openregister-related-list` widget in a sidebar tab, which offers no row action. The line action lives on a new index page `UnmatchedBankLines` (`/bookkeeping/bank-lines/unmatched`, Banking menu) and as a row action on `UnmatchedItems`; both open `BankLineMatchModal` through the `openBankLineMatch` handler with `spawnDialog`.
+- **Over-selection (D2).** Several invoices must add up to the line; one invoice larger than the line is the partial case. A line larger than its selection is refused too, so an overpayment never hides inside a confirmed match.
+- **VAT (D2).** Shillinq has no input VAT account mapping (`VATGLAccounts` lists output accounts only), so the ledger tab takes a VAT rate and a VAT account instead of a VAT code.
+- **Bank ledger account.** `BankAccount.ledgerAccountNumber` (the field `banking-connected-accounts` task 1.1 names) is declared here, because the ledger booking needs it; `BankAccount` goes to 0.2.0. A bank account without one refuses the booking by name.
+- **Effective ReconciliationMatch.** The merged schema requires thirteen fields from two declarations (`confidence` is the string enum `auto`/`manual`, the lifecycle field is `status` from `pending`); `ManualMatchService::buildMatch` fills all of them and the tests validate the payload against the merged schema with opis.
+
 ## Open Questions
 
 None.
