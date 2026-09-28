@@ -28,6 +28,7 @@ use OCA\Shillinq\Service\FeeScheduleService;
 use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
 use OCA\Shillinq\Service\PaymentSettlementService;
+use OCA\Shillinq\Tests\Unit\Fixtures\EffectiveRegisterFixture;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
@@ -36,6 +37,7 @@ use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+
 
 /**
  * Covers the leaf's scoping, its refusals and the shape it appends
@@ -278,6 +280,30 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 		self::assertSame('handler', $created['requestedBy']);
 		self::assertCount(1, $this->saved);
 	}//end testMappedCallerAppendsAPendingRequestOnTheHostObject()
+
+	/**
+	 * Every key the leaf writes is a declared PaymentRequest property, the
+	 * requester included; before PaymentRequest 0.6.0 OpenRegister dropped
+	 * `requestedBy` (REQ-SOPR-009).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/billing-inherited-defects/specs/object-payment-requests/spec.md (REQ-SOPR-009)
+	 */
+	public function testEveryWrittenKeyIsADeclaredPaymentRequestProperty(): void {
+		$provider = $this->makeProvider(actionGroups: ['payment.request' => ['finance']], groups: ['finance']);
+
+		$created = $provider->create(
+			'dossiq',
+			'Zaak',
+			'zaak-7',
+			['requestType' => 'dwangsom', 'amount' => 250.0, 'subjectType' => 'case', 'description' => 'Dwangsom zaak 7']
+		);
+
+		$declared = EffectiveRegisterFixture::properties(schema: 'PaymentRequest');
+		self::assertSame([], array_values(array_diff(array_keys($created), $declared, ['id'])), 'Undeclared PaymentRequest keys');
+		self::assertSame('handler', $created['requestedBy']);
+	}//end testEveryWrittenKeyIsADeclaredPaymentRequestProperty()
 
 	/**
 	 * A request raised through the leaf for a known customer carries that

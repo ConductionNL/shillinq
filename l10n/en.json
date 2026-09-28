@@ -3179,7 +3179,16 @@
         "E-invoice %1$s was rejected": "E-invoice %1$s was rejected",
         "Reason: %1$s": "Reason: %1$s",
         "The Peppol network gave no reason.": "The Peppol network gave no reason.",
-        "Open the invoice, correct it and send it again.": "Open the invoice, correct it and send it again."
+        "Open the invoice, correct it and send it again.": "Open the invoice, correct it and send it again.",
+        "Recurring profile": "Recurring profile",
+        "Billing period": "Billing period",
+        "Customer reference": "Customer reference",
+        "Requested by": "Requested by",
+        "The recurring invoice profile this invoice was generated from. Empty on an invoice made by hand.": "The recurring invoice profile this invoice was generated from. Empty on an invoice made by hand.",
+        "The month a generated invoice bills, as year and month. With the profile it keeps a period from being billed twice.": "The month a generated invoice bills, as year and month. With the profile it keeps a period from being billed twice.",
+        "The customer's own reference for this invoice, such as their order number.": "The customer's own reference for this invoice, such as their order number.",
+        "The revenue account this line is booked on.": "The revenue account this line is booked on.",
+        "The user who asked for this payment from another app's record.": "The user who asked for this payment from another app's record."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

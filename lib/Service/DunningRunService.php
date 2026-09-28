@@ -54,6 +54,7 @@ use OCA\Shillinq\Service\Dunning\EvidenceRetentionEnforcer;
 use OCA\Shillinq\Service\Dunning\IncassoBureauAdapterInterface;
 use OCA\Shillinq\Service\Dunning\PostNLAdapterInterface;
 use OCA\Shillinq\Service\Dunning\VoluntaryContributionPolicy;
+use OCA\Shillinq\Service\Dunning\DunningTemplateRegistry;
 use OCA\Shillinq\Service\Dunning\VoluntaryReminderTemplate;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
@@ -109,6 +110,7 @@ class DunningRunService {
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param VoluntaryContributionPolicy $voluntary The one-reminder cap on a voluntary contribution.
 	 * @param VoluntaryReminderTemplate $reminder The voluntary contribution's own reminder letter.
+	 * @param DunningTemplateRegistry|null $templates The default template per stage; built over $appConfig when absent.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
@@ -117,6 +119,7 @@ class DunningRunService {
 		private readonly ObjectServiceInterface $objectService,
 		private readonly VoluntaryContributionPolicy $voluntary = new VoluntaryContributionPolicy(),
 		private readonly VoluntaryReminderTemplate $reminder = new VoluntaryReminderTemplate(),
+		private readonly ?DunningTemplateRegistry $templates = null,
 	) {
 	}//end __construct()
 
@@ -447,7 +450,7 @@ class DunningRunService {
 			'recipientEmail' => ($params['recipientEmail'] ?? null),
 			'recipientName' => ($params['recipientName'] ?? null),
 			'recipientAddress' => ($params['recipientAddress'] ?? null),
-			'templateId' => (string)($params['templateId'] ?? ''),
+			'templateId' => ($this->templates ?? new DunningTemplateRegistry(appConfig: $this->appConfig))->resolve(params: $params),
 			'renderedSubject' => ($params['renderedSubject'] ?? null),
 			'renderedBody' => ($params['renderedBody'] ?? null),
 			'renderedPdfHash' => ($params['renderedPdfHash'] ?? null),

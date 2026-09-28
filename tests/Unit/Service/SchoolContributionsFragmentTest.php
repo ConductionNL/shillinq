@@ -149,7 +149,9 @@ final class SchoolContributionsFragmentTest extends TestCase {
 		}
 
 		self::assertSame('school-contributions.json', $lastWriter);
-		self::assertSame('0.15.0', $lastVersion);
+		// 0.16.0: billing-inherited-defects declares four more ARInvoice fields in
+		// its own fragment, which sorts earlier, so the version moves here.
+		self::assertSame('0.16.0', $lastVersion);
 	}//end testTheMergedInvoiceVersionIsThisFragments()
 
 	/**

@@ -56,6 +56,7 @@ namespace OCA\Shillinq\Service\Payment;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Portal\PortalSubjectResolver;
 use OCA\Shillinq\Util\ObjectIdentifier;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
 use Psr\Container\ContainerInterface;
@@ -365,10 +366,16 @@ class PortalPaymentSessionService {
 	}//end prepareRequest()
 
 	/**
-	 * Resolve the target ARInvoice — id/slug match AND owned by the
-	 * verified customerMasterId AND in a payable state. A foreign owner, a
-	 * non-payable state and a non-existent id all collapse to the SAME null
-	 * (no existence oracle, REQ-SPPI-003).
+	 * Resolve the target ARInvoice: id/slug match AND owned by the verified
+	 * customerMasterId AND in a payable state. A foreign owner, a non-payable
+	 * state and a non-existent id all collapse to the SAME null (no existence
+	 * oracle, REQ-SPPI-003).
+	 *
+	 * The id is read with `find()`: a `findAll()` filter on `id` addresses a
+	 * JSON property, matches nothing in OpenRegister, and made every invoice
+	 * addressed by its uuid unpayable. A miss (DoesNotExistException) falls
+	 * through to the `slug` property; any other read failure propagates as a
+	 * downstream error.
 	 *
 	 * @param object $objectService OpenRegister's ObjectService.
 	 * @param string $target The client-supplied opaque id/slug.
@@ -377,16 +384,32 @@ class PortalPaymentSessionService {
 	 * @return array<string, mixed>|null
 	 *
 	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-003)
+	 * @spec openspec/changes/billing-inherited-defects/specs/portal-payment-initiation/spec.md (REQ-SPPI-011)
 	 */
 	private function findOwnedPayableInvoice(object $objectService, string $target, string $customerMasterId): ?array {
-		foreach (['id', 'slug'] as $key) {
+		$invoice = null;
+		try {
+			$invoice = ObjectIdentifier::recordWithId(
+				candidate: $objectService->find(
+					id: $target,
+					register: self::REGISTER,
+					schema: self::SCHEMA_AR_INVOICE,
+					_rbac: false,
+					_multitenancy: false,
+				)
+			);
+		} catch (DoesNotExistException $notFound) {
+			$invoice = null;
+		}
+
+		if ($invoice === null) {
 			$rows = $objectService
 				->setRegister(self::REGISTER)
 				->setSchema(self::SCHEMA_AR_INVOICE)
 				->findAll(
 					config: [
 						'filters' => [
-							$key => $target,
+							'slug' => $target,
 							'customerId' => $customerMasterId,
 						],
 						'limit' => 1,
@@ -394,24 +417,30 @@ class PortalPaymentSessionService {
 					_rbac: false,
 					_multitenancy: false,
 				);
-
 			if (is_array($rows) === true && empty($rows) === false) {
-				$invoice = $rows[0];
-
-				// ARInvoice's lifecycle field is `lifecycleState`; `state` is not a
-				// property it declares, so reading only `state` found no invoice
-				// payable at all (REQ-SCON-010).
-				$state = (string)($invoice['lifecycleState'] ?? ($invoice['state'] ?? ''));
-				if (in_array($state, self::PAYABLE_STATES, true) === true) {
-					return $invoice;
-				}
-
-				// Matched by id/slug but foreign/non-payable — do not also
-				// try the other key with the same raw string (it already
-				// resolved to a concrete, non-payable row).
-				return null;
+				$invoice = ObjectIdentifier::recordWithId(candidate: $rows[0]);
 			}
-		}//end foreach
+		}
+
+		if ($invoice === null) {
+			return null;
+		}
+
+		if ((string)($invoice['id'] ?? '') === '') {
+			$invoice['id'] = $target;
+		}
+
+		if ((string)($invoice['customerId'] ?? '') !== $customerMasterId) {
+			return null;
+		}
+
+		// ARInvoice's lifecycle field is `lifecycleState`; `state` is not a
+		// property it declares, so reading only `state` found no invoice
+		// payable at all (REQ-SCON-010).
+		$state = (string)($invoice['lifecycleState'] ?? ($invoice['state'] ?? ''));
+		if (in_array($state, self::PAYABLE_STATES, true) === true) {
+			return $invoice;
+		}
 
 		return null;
 	}//end findOwnedPayableInvoice()

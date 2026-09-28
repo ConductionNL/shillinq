@@ -5423,7 +5423,16 @@
         "E-invoice %1$s was rejected": "E-factuur %1$s is geweigerd",
         "Reason: %1$s": "Reden: %1$s",
         "The Peppol network gave no reason.": "Het Peppol-netwerk gaf geen reden.",
-        "Open the invoice, correct it and send it again.": "Open de factuur, verbeter hem en verstuur hem opnieuw."
+        "Open the invoice, correct it and send it again.": "Open de factuur, verbeter hem en verstuur hem opnieuw.",
+        "Recurring profile": "Terugkerend profiel",
+        "Billing period": "Factuurperiode",
+        "Customer reference": "Referentie klant",
+        "Requested by": "Aangevraagd door",
+        "The recurring invoice profile this invoice was generated from. Empty on an invoice made by hand.": "Het terugkerende factuurprofiel waaruit deze factuur is gemaakt. Leeg bij een factuur die met de hand is gemaakt.",
+        "The month a generated invoice bills, as year and month. With the profile it keeps a period from being billed twice.": "De maand die een gemaakte factuur factureert, als jaar en maand. Samen met het profiel voorkomt dit dat een periode twee keer wordt gefactureerd.",
+        "The customer's own reference for this invoice, such as their order number.": "De eigen referentie van de klant voor deze factuur, zoals het ordernummer.",
+        "The revenue account this line is booked on.": "De opbrengstrekening waarop deze regel wordt geboekt.",
+        "The user who asked for this payment from another app's record.": "De gebruiker die deze betaling vanuit een dossier in een andere app heeft aangevraagd."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

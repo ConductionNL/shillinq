@@ -104,6 +104,13 @@ final class PortalPaymentObjectServiceStub {
 	public int $findAllCalls = 0;
 
 	/**
+	 * Make find() throw an infrastructure error (not a miss).
+	 *
+	 * @var bool
+	 */
+	public bool $throwOnFind = false;
+
+	/**
 	 * Make saveObject() throw.
 	 *
 	 * @var bool
@@ -139,6 +146,15 @@ final class PortalPaymentObjectServiceStub {
 		}
 
 		$filters = ($config['filters'] ?? []);
+
+		// OpenRegister's `filters` address JSON properties, and `id` is the
+		// entity's own column: a filter on it matches nothing, for every value.
+		// The stub mirrors that, or a lookup by `id` certifies itself here and
+		// finds nothing live.
+		if (array_key_exists('id', $filters) === true) {
+			return [];
+		}
+
 		$rows = ($this->data[$this->register][$this->schema] ?? []);
 
 		return array_values(
@@ -171,6 +187,10 @@ final class PortalPaymentObjectServiceStub {
 	 * @return array<string, mixed>
 	 */
 	public function find(int|string $id, ?array $_extend = [], bool $files = false, mixed $register = null, mixed $schema = null, bool $_rbac = true, bool $_multitenancy = true): array {
+		if ($this->throwOnFind === true) {
+			throw new RuntimeException('OpenRegister read failed');
+		}
+
 		foreach (($this->data[(string)($register ?? $this->register)][(string)($schema ?? $this->schema)] ?? []) as $row) {
 			if (($row['id'] ?? null) === (string)$id) {
 				return $row;
@@ -543,9 +563,9 @@ final class PortalPaymentSessionServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testInvoiceLookupFailureIsDownstreamError(): void {
-		// Call 1 = the portalAccount claim resolution (must succeed so the
-		// failure is pinned specifically to the LATER ARInvoice read).
-		$this->objectService->throwOnFindAllFromCall = 2;
+		// The claim resolution (findAll) succeeds; the ARInvoice read by uuid
+		// (find) fails with an infrastructure error, not a miss.
+		$this->objectService->throwOnFind = true;
 
 		$this->provider->expects($this->never())->method('createSession');
 
@@ -553,6 +573,23 @@ final class PortalPaymentSessionServiceTest extends TestCase {
 
 		self::assertSame('downstream_error', $result->status);
 	}//end testInvoiceLookupFailureIsDownstreamError()
+
+	/**
+	 * An invoice addressed by its slug (not its uuid) still resolves through
+	 * the slug property, owned and payable (REQ-SPPI-009).
+	 *
+	 * @return void
+	 */
+	public function testAnInvoiceAddressedBySlugResolves(): void {
+		$this->objectService->data['shillinq']['ARInvoice'][0]['slug'] = 'inv-2026-0001';
+		$this->provider->expects($this->once())->method('createSession')->willReturn(
+			new PaymentSessionResult(dormant: false, checkoutUrl: 'https://mollie.example/checkout/tr_s', paymentIntentId: 'tr_s')
+		);
+
+		$result = $this->makeService()->initiate(claims: $this->claims(), target: 'inv-2026-0001');
+
+		self::assertSame('ok', $result->status);
+	}//end testAnInvoiceAddressedBySlugResolves()
 
 	/**
 	 * A PSP call failure is a downstream error, never leaked to the caller.

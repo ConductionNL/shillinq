@@ -257,9 +257,11 @@ final class RecurringInvoiceGeneratorTest extends TestCase {
 				'netAmount' => 500.0,
 				'vatRate' => 21,
 				'vatCategory' => 'S',
+				'glAccount' => '8000',
 			],
 			$payload['invoiceLines'][0]
 		);
+		$this->assertNull($payload['invoiceLines'][1]['glAccount']);
 		$this->assertSame('Z', $payload['invoiceLines'][1]['vatCategory']);
 		$this->assertSame(25.0, $payload['invoiceLines'][1]['netAmount']);
 		$this->assertSame(525.0, $payload['netAmount']);
@@ -329,6 +331,9 @@ final class RecurringInvoiceGeneratorTest extends TestCase {
 		$result = $generator->generateForProfile($this->profile());
 		$this->assertTrue($result['created']);
 		$this->assertNotSame('inv-cancelled', $result['invoice']['id']);
+		// The regenerated invoice gets its own number, not the cancelled one's (REQ-RIN-010).
+		$this->assertStringEndsWith('-02', $result['invoice']['invoiceNumber']);
+		$this->assertSame('2027-01', $result['invoice']['periodId']);
 
 	}//end testCancelledInvoiceUnblocksRegeneration()
 

@@ -111,6 +111,7 @@ final class DunningRunServiceTest extends TestCase {
 					'register' => 'shillinq',
 					'dunning.dispute_pause_hard_deadline_days' => '60',
 					'dunning.admin_error_lookback_days' => '90',
+					'dunning.template.stage_3' => 'tpl-deployment-stage3',
 				];
 				return $values[$key] ?? $default;
 			}
@@ -237,6 +238,64 @@ final class DunningRunServiceTest extends TestCase {
 		self::assertNotNull($persisted['executedOn']);
 
 	}//end testExecuteStagePersistsExecutedRun()
+
+	/**
+	 * Execute a run with no template anywhere, or with the given one.
+	 *
+	 * @param int         $stageNr    The stage.
+	 * @param string|null $templateId The caller's template, or none.
+	 *
+	 * @return array<string,mixed> The persisted run.
+	 */
+	private function runWithTemplate(int $stageNr, ?string $templateId): array {
+		$params = [
+			'invoiceId' => 'inv-1',
+			'ladderId' => 'ladder-1',
+			'stageNr' => $stageNr,
+			'channel' => 'EMAIL',
+			'recipientEmail' => 'klant@example.nl',
+		];
+		if ($templateId !== null) {
+			$params['templateId'] = $templateId;
+		}
+
+		return $this->makeService(os: new OpenRegisterFaithfulObjectService())->executeStage(administrationId: 'adm-1', params: $params);
+	}//end runWithTemplate()
+
+	/**
+	 * A run whose caller and stage name no template records the registry's
+	 * default for the stage (REQ-CCD-016).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/billing-inherited-defects/specs/bookkeeping-credit-control-dunning/spec.md (REQ-CCD-016)
+	 */
+	public function testAStageWithoutATemplateGetsTheRegistryDefault(): void {
+		self::assertSame('tpl-stage2-herinnering-nl', $this->runWithTemplate(stageNr: 2, templateId: null)['templateId']);
+		self::assertSame('tpl-stage1-vriendelijk-nl', $this->runWithTemplate(stageNr: 1, templateId: '')['templateId']);
+	}//end testAStageWithoutATemplateGetsTheRegistryDefault()
+
+	/**
+	 * The registry honours the deployment's app config override (REQ-CCD-016).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/billing-inherited-defects/specs/bookkeeping-credit-control-dunning/spec.md (REQ-CCD-016)
+	 */
+	public function testTheRegistryDefaultHonoursTheAppConfigOverride(): void {
+		self::assertSame('tpl-deployment-stage3', $this->runWithTemplate(stageNr: 3, templateId: null)['templateId']);
+	}//end testTheRegistryDefaultHonoursTheAppConfigOverride()
+
+	/**
+	 * A template the caller names wins over the registry (REQ-CCD-016).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/billing-inherited-defects/specs/bookkeeping-credit-control-dunning/spec.md (REQ-CCD-016)
+	 */
+	public function testANamedTemplateWinsOverTheRegistry(): void {
+		self::assertSame('tpl-custom', $this->runWithTemplate(stageNr: 2, templateId: 'tpl-custom')['templateId']);
+	}//end testANamedTemplateWinsOverTheRegistry()
 
 	/**
 	 * Issue #1687: executeStage() dispatches the run through the bound
