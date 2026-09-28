@@ -563,7 +563,19 @@
               "from": "draft",
               "to": "issued",
               "label": "Issue invoice",
-              "description": "Credit-limit check; materialises a balanced GLTransaction and writes glTransactionId."
+              "description": "Credit-limit check; materialises a balanced GLTransaction and writes glTransactionId.",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\MaterialiseGlTransactionAction",
+                  "description": "Book the issued invoice: debit the receivables control account for grossAmount, credit revenue per invoice line and output VAT for vatAmount, in one balanced GLTransaction, and write glTransactionId (REQ-LPP-007).",
+                  "actionParameters": {
+                    "sourceSchema": "ARInvoice",
+                    "register": "shillinq",
+                    "keepBalanced": true
+                  }
+                }
+              ]
             },
             "mark-paid": {
               "from": "issued",

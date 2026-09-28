@@ -108,4 +108,55 @@ class BalanceGuard {
 			return false;
 		}//end try
 	}//end isBalanced()
+
+	/**
+	 * Returns true iff an AP invoice's own amounts add up: the sum of
+	 * `lines[].amount` plus `taxAmount` equals `totalAmount`, in integer cents.
+	 *
+	 * This is the guard `APTransaction.issue` declares. It takes the object
+	 * array RegisterRequiresGuardAdapter hands it; isBalanced() cannot serve
+	 * that transition because it takes a GLTransaction id, and an AP invoice
+	 * has no GL lines before it is issued (REQ-BPR-001).
+	 *
+	 * Fail-closed: returns false when the invoice has no lines or a line
+	 * carries no numeric amount.
+	 *
+	 * @param array<string,mixed> $object The APTransaction being issued.
+	 *
+	 * @return bool True when the invoice's amounts add up and it may be issued.
+	 *
+	 * @spec openspec/changes/banking-payment-run/tasks.md#task-1.1
+	 */
+	public function isInvoiceBalanced(array $object): bool {
+		$lines = ($object['lines'] ?? []);
+		if (is_array($lines) === false || $lines === []) {
+			return false;
+		}
+
+		$lineCents = 0;
+		foreach ($lines as $line) {
+			if (is_array($line) === false || is_numeric($line['amount'] ?? null) === false) {
+				return false;
+			}
+
+			$lineCents += (int)round((float)$line['amount'] * 100);
+		}
+
+		$taxCents = (int)round((float)($object['taxAmount'] ?? 0) * 100);
+		$totalCents = (int)round((float)($object['totalAmount'] ?? 0) * 100);
+
+		if (($lineCents + $taxCents) === $totalCents) {
+			return true;
+		}
+
+		$this->logger->info(
+			'BalanceGuard: AP invoice does not add up, denying issue',
+			[
+				'invoiceNumber' => (string)($object['invoiceNumber'] ?? ''),
+				'linesPlusTax' => sprintf('%.2f', (($lineCents + $taxCents) / 100)),
+				'totalAmount' => sprintf('%.2f', ($totalCents / 100)),
+			]
+		);
+		return false;
+	}//end isInvoiceBalanced()
 }//end class

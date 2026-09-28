@@ -73,6 +73,19 @@ vocabulary (the registry's docblock lists `materialise-gl-transaction`), ten
 declarations would change, and a sibling app declaring the same name later
 would still find nothing.
 
+**Amended at build (#516, #1103): the alternative is what was built.** An
+alias registered in `Application::register()` lives in shillinq's app
+container. The registry asks OpenRegister's container and then the server
+container, and `OC\ServerContainer::query()` only reaches an app container for
+a name that starts with `OCA\<App>\`. A kebab-case alias can therefore never
+resolve. The declarations name `OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction`
+and `...\EvaluateAllocationRulesAction`, as learniq's and
+`AppendReopenHistoryAction` already do, and each posting declaration carries
+`actionParameters.sourceSchema`, because the handler is not told which schema
+it runs on. The `requires` tags of the posting transitions are registered in
+`lib/AppInfo/LedgerPostingRegistration.php`; they were unregistered too, so
+every post failed at guard resolution before it reached the action.
+
 ### D2. `materialise-gl-transaction` writes one balanced transaction, once
 
 The handler implements OpenRegister's `LifecycleActionInterface`. From the

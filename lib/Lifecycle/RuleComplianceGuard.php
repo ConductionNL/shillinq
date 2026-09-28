@@ -64,13 +64,25 @@ class RuleComplianceGuard {
 	/**
 	 * Allow ARInvoice.issue only when no mandatory invoice rule is violated.
 	 *
-	 * @param string $id The ARInvoice id being issued.
+	 * Takes either the invoice id or the invoice object itself. The object
+	 * form is what RegisterRequiresGuardAdapter passes on the transition
+	 * (#1103): it is the payload being issued, so it is evaluated as it
+	 * stands rather than re-read from the store.
+	 *
+	 * @param string|array<string,mixed> $invoiceOrId The ARInvoice id, or the ARInvoice being issued.
 	 *
 	 * @return bool True to allow the transition.
+	 *
+	 * @spec openspec/changes/ledger-posting-path/tasks.md#task-2.4
 	 */
-	public function validateInvoice(string $id): bool {
+	public function validateInvoice(string|array $invoiceOrId): bool {
+		$id = $this->idOf(objectOrId: $invoiceOrId);
 		try {
-			$invoice = $this->loadObject('ARInvoice', $id);
+			$invoice = $invoiceOrId;
+			if (is_array($invoice) === false) {
+				$invoice = $this->loadObject('ARInvoice', $id);
+			}
+
 			if ($invoice === null) {
 				return false;
 			}
@@ -93,14 +105,25 @@ class RuleComplianceGuard {
 	 * violated. Balance is delegated to BalanceGuard so existing behaviour is
 	 * preserved exactly; the engine adds completeness + sequential-numbering.
 	 *
-	 * @param string $id The GLTransaction id being posted.
+	 * Takes either the transaction id or the transaction object itself, the
+	 * form RegisterRequiresGuardAdapter passes on the transition (#1103). The
+	 * lines and the balance are read from the stored GLLine rows either way.
+	 *
+	 * @param string|array<string,mixed> $transactionOrId The GLTransaction id, or the GLTransaction being posted.
 	 *
 	 * @return bool True to allow the transition.
+	 *
+	 * @spec openspec/changes/ledger-posting-path/tasks.md#task-2.3
 	 */
-	public function validateTransaction(string $id): bool {
+	public function validateTransaction(string|array $transactionOrId): bool {
+		$id = $this->idOf(objectOrId: $transactionOrId);
 		try {
-			$transaction = $this->loadObject('GLTransaction', $id);
-			if ($transaction === null) {
+			$transaction = $transactionOrId;
+			if (is_array($transaction) === false) {
+				$transaction = $this->loadObject('GLTransaction', $id);
+			}
+
+			if ($transaction === null || $id === '') {
 				return false;
 			}
 
@@ -122,6 +145,21 @@ class RuleComplianceGuard {
 		}//end try
 
 	}//end validateTransaction()
+
+	/**
+	 * The id of an object passed either as its id or as the object array.
+	 *
+	 * @param string|array<string,mixed> $objectOrId The id, or the object.
+	 *
+	 * @return string The id, '' when the object carries none.
+	 */
+	private function idOf(string|array $objectOrId): string {
+		if (is_array($objectOrId) === false) {
+			return $objectOrId;
+		}
+
+		return (string)($objectOrId['id'] ?? ($objectOrId['@self']['id'] ?? ''));
+	}//end idOf()
 
 	/**
 	 * Build the evaluation context. Jurisdiction drives which rules apply; it
