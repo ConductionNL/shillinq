@@ -143,6 +143,13 @@ class PeppolDeliveryStatusListener implements IEventListener {
 	 *
 	 * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
 	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-2.1
+	 *
+	 * @listener-placement inline cheap-bounded — every object that is not an
+	 *   integriq delivery-status CloudEvent returns on an in-memory type check
+	 *   before any read. For the rare one that is, the work is one invoice read
+	 *   (by id, or by its invoice number), one read of that
+	 *   administration's ar-controller memberships, and one invoice save, and
+	 *   the write it runs inside is integriq's own event record, not a user's.
 	 */
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectCreatedEvent === false) {
