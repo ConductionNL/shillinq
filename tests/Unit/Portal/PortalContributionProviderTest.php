@@ -721,6 +721,66 @@ class PortalContributionProviderTest extends TestCase {
 	}//end testEveryCustomerScopeFieldIsADeclaredObjectReference()
 
 	/**
+	 * Every field a customer or parent collection lists (fields, detail fields
+	 * and columns) is a property its schema declares. The customer invoices
+	 * listed totalAmount, taxAmount, lines, state and ublXml, none of which
+	 * ARInvoice declares, so a customer saw no amount, no lines and no status
+	 * (REQ-SPPI-007).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-007)
+	 */
+	public function testEveryListedFieldIsADeclaredProperty(): void {
+		$schemas = $this->effectiveRegister()['components']['schemas'];
+
+		$checked = 0;
+		foreach ([self::CUSTOMER_SUBJECT, ['audience' => 'parent']] as $subject) {
+			foreach ($this->provider->getContribution($subject)['collections'] as $collection) {
+				$properties = ($schemas[$collection['schema']]['properties'] ?? []);
+				$listed = array_merge(
+					($collection['fields'] ?? []),
+					($collection['detail']['fields'] ?? []),
+					array_column(($collection['columns'] ?? []), 'field')
+				);
+				foreach (array_unique($listed) as $field) {
+					$this->assertArrayHasKey(
+						$field,
+						$properties,
+						$subject['audience'] . ' ' . $collection['id'] . ' lists ' . $field . ', which ' . $collection['schema'] . ' does not declare.'
+					);
+					$checked++;
+				}
+			}
+		}
+
+		$this->assertGreaterThan(20, $checked, 'The walk covered too few fields to mean anything.');
+
+		$invoices = $this->collectionsById($this->provider->getContribution(self::CUSTOMER_SUBJECT))['salesInvoices'];
+		foreach (['grossAmount', 'vatAmount', 'invoiceLines', 'lifecycleState', 'ublRef'] as $field) {
+			$this->assertContains($field, $invoices['fields']);
+		}
+
+		$this->assertSame(['invoiceNumber', 'invoiceDate', 'dueDate', 'grossAmount', 'lifecycleState'], array_column($invoices['columns'], 'field'));
+	}//end testEveryListedFieldIsADeclaredProperty()
+
+	/**
+	 * A manifest's collections keyed by id.
+	 *
+	 * @param array<string, mixed> $manifest The manifest.
+	 *
+	 * @return array<string, array<string, mixed>> The collections by id.
+	 */
+	private function collectionsById(array $manifest): array {
+		$byId = [];
+		foreach ($manifest['collections'] as $collection) {
+			$byId[$collection['id']] = $collection;
+		}
+
+		return $byId;
+	}//end collectionsById()
+
+	/**
 	 * The reverse `via` join must land on the object identity, not on a
 	 * schema property — otherwise a PaymentRequest could be matched to an
 	 * invoice by a value that repeats across administrations.

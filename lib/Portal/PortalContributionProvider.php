@@ -111,18 +111,6 @@ class PortalContributionProvider {
 	private const PARENT_COLLECTIONS = ['salesInvoices', 'paymentRequests'];
 
 	/**
-	 * ARInvoice's declared names for the amounts and the lines the customer
-	 * manifest lists under names ARInvoice does not carry.
-	 *
-	 * @var array<string, string>
-	 */
-	private const PARENT_FIELD_MAP = [
-		'totalAmount' => 'grossAmount',
-		'taxAmount' => 'vatAmount',
-		'lines' => 'invoiceLines',
-	];
-
-	/**
 	 * The audiences this provider contributes to (contract v2, preferred).
 	 *
 	 * The registry probes for this method first; the audience vocabulary is
@@ -302,18 +290,21 @@ class PortalContributionProvider {
 					'label' => 'My invoices',
 					'listable' => true,
 					'rowAction' => 'pay',
+					// ARInvoice's declared names: the amounts, lines, status and UBL
+					// reference were listed as totalAmount, taxAmount, lines, state and
+					// ublXml, which carry nothing (REQ-SPPI-007).
 					'fields' => [
 						'invoiceNumber',
 						'invoiceType',
 						'invoiceDate',
 						'dueDate',
 						'currency',
-						'totalAmount',
-						'taxAmount',
-						'lines',
-						'state',
+						'grossAmount',
+						'vatAmount',
+						'invoiceLines',
+						'lifecycleState',
 						'sourceDocumentUri',
-						'ublXml',
+						'ublRef',
 						'dunning',
 					],
 					'columns' => [
@@ -333,12 +324,12 @@ class PortalContributionProvider {
 							'render' => 'date',
 						],
 						[
-							'field' => 'totalAmount',
+							'field' => 'grossAmount',
 							'label' => 'Amount',
 							'render' => 'currency',
 						],
 						[
-							'field' => 'state',
+							'field' => 'lifecycleState',
 							'label' => 'Status',
 							'render' => 'badge',
 						],
@@ -351,12 +342,12 @@ class PortalContributionProvider {
 							'invoiceDate',
 							'dueDate',
 							'currency',
-							'totalAmount',
-							'taxAmount',
-							'lines',
-							'state',
+							'grossAmount',
+							'vatAmount',
+							'invoiceLines',
+							'lifecycleState',
 							'sourceDocumentUri',
-							'ublXml',
+							'ublRef',
 							'dunning',
 						],
 					],
@@ -466,8 +457,8 @@ class PortalContributionProvider {
 	 * Guardians sign in to the portal with audience `parent`, and until this
 	 * manifest existed they saw no shillinq invoice at all. It reuses the
 	 * customer's AR collections and scoping (the `customerMasterId` claim, which
-	 * the contribution raise links), names the amounts by the fields ARInvoice
-	 * declares, and adds the voluntary notice and the request's description.
+	 * the contribution raise links) and adds the voluntary notice and the
+	 * request's description.
 	 * It also carries the `decline` action, "I will not pay", for a voluntary
 	 * contribution.
 	 *
@@ -521,29 +512,13 @@ class PortalContributionProvider {
 			$collection['label'] = 'My contributions';
 		}
 
-		$collection['fields'] = $this->parentFields(fields: $collection['fields'], extra: $extra);
-		$collection['detail']['fields'] = $this->parentFields(fields: $collection['detail']['fields'], extra: $extra);
-		foreach ($collection['columns'] as $index => $column) {
-			$collection['columns'][$index]['field'] = (self::PARENT_FIELD_MAP[$column['field']] ?? $column['field']);
-		}
+		// The customer collections name ARInvoice's declared fields, so a
+		// parent sees the same fields plus one (REQ-SPPI-007).
+		$collection['fields'][] = $extra;
+		$collection['detail']['fields'][] = $extra;
 
 		return $collection;
 	}//end forParents()
-
-	/**
-	 * A field list with ARInvoice's declared amount names and one extra field.
-	 *
-	 * @param array<int, string> $fields The customer field list.
-	 * @param string $extra The field a parent also sees.
-	 *
-	 * @return array<int, string> The parent field list.
-	 */
-	private function parentFields(array $fields, string $extra): array {
-		$mapped = array_map(static fn (string $field): string => (self::PARENT_FIELD_MAP[$field] ?? $field), $fields);
-		$mapped[] = $extra;
-
-		return $mapped;
-	}//end parentFields()
 
 	/**
 	 * The read-only supplier (AP-side) manifest.

@@ -36,8 +36,8 @@ Stacked on `voluntary-contribution-reminder` (#1724). No Nextcloud migration cla
 - **files**: `lib/Portal/PortalContributionProvider.php`, `tests/Unit/Portal/PortalContributionProviderTest.php`
 - **acceptance_criteria**:
   - GIVEN the merged register WHEN every listed manifest field is looked up THEN each is declared
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 5: PaymentRequest.customerId, the stamping rule and the backfill
 - **spec_ref**: `openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md#requirement-a-request-without-an-invoice-is-listed-and-paid-in-the-portal-req-sppi-008`
