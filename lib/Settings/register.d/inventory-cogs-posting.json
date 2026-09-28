@@ -171,10 +171,11 @@
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
-                  "action": "materialise-gl-transaction",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\MaterialiseGlTransactionAction",
                   "condition": "@self.postingEvent == 'saleDispatch'",
                   "description": "Declarative GL posting. Dr COGS / Cr Inventory Asset. journalCode='inkoop'; subLedgerType='inventory'; subLedgerRef=@self.id.",
                   "actionParameters": {
+                    "sourceSchema": "InventoryValuation",
                     "register": "shillinq",
                     "targetSchema": "GLTransaction",
                     "linesSchema": "GLLine",
@@ -205,10 +206,11 @@
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
-                  "action": "materialise-gl-transaction",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\MaterialiseGlTransactionAction",
                   "condition": "@self.postingEvent == 'goodsReceipt'",
                   "description": "Declarative GL posting. Dr Inventory Asset / Cr GR/IR clearing. journalCode='inkoop'; subLedgerType='inventory'; subLedgerRef=@self.id.",
                   "actionParameters": {
+                    "sourceSchema": "InventoryValuation",
                     "register": "shillinq",
                     "targetSchema": "GLTransaction",
                     "linesSchema": "GLLine",
@@ -239,10 +241,11 @@
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
-                  "action": "materialise-gl-transaction",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\MaterialiseGlTransactionAction",
                   "condition": "@self.postingEvent == 'countVariance'",
                   "description": "Declarative GL posting (direction from PHP guard per ADR-031 exception). journalCode='memo'; subLedgerType='inventory'; subLedgerRef=@self.id. Zero-delta skipped by canPostVariance guard.",
                   "actionParameters": {
+                    "sourceSchema": "InventoryValuation",
                     "register": "shillinq",
                     "targetSchema": "GLTransaction",
                     "linesSchema": "GLLine",

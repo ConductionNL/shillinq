@@ -538,7 +538,7 @@
               "to": "issued",
               "label": "Issue / post invoice",
               "description": "Operator approves and posts the AP invoice. Guards: (1) balanced materialisation per T1; (2) FiscalPeriod open; (3) Payee.lifecycleState=active. Actions: (a) materialise one balanced GLTransaction (debit expense per line, credit AP payable account); (b) set glTransactionId back-reference; (c) set periodId from invoiceDate.",
-              "requires": "OCA\\Shillinq\\Lifecycle\\BalanceGuard::isBalanced"
+              "requires": "OCA\\Shillinq\\Lifecycle\\BalanceGuard::isInvoiceBalanced"
             },
             "matchFull": {
               "from": [
