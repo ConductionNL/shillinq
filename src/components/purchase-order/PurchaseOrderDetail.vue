@@ -102,16 +102,16 @@
 						</div>
 						<div class="po-detail__chain-status">
 							<span
-								:class="`po-detail__pill po-detail__pill--${entry.status}`">
-								{{ entry.status }}
+								:class="`po-detail__pill po-detail__pill--${entry.decision}`">
+								{{ entry.decision }}
 							</span>
 							<span
-								v-if="entry.signedAt"
+								v-if="entry.decidedAt"
 								class="po-detail__chain-timestamp">
 								{{ t('shillinq', 'Signed') }}:
-								{{ formatTimestamp(entry.signedAt) }}
-								<template v-if="entry.signedBy">
-									— {{ entry.signedBy }}
+								{{ formatTimestamp(entry.decidedAt) }}
+								<template v-if="entry.userId">
+									({{ entry.userId }})
 								</template>
 							</span>
 						</div>
@@ -299,7 +299,7 @@ export default {
 				return false
 			}
 			return chain.every(
-				(entry) => entry.status === 'approved' && !!entry.signedAt,
+				(entry) => entry.decision === 'approved' && !!entry.decidedAt,
 			)
 		},
 	},

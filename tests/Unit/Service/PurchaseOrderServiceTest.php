@@ -537,16 +537,16 @@ final class PurchaseOrderServiceTest extends TestCase {
 						[
 							'role' => 'teamleider',
 							'order' => 1,
-							'status' => 'approved',
-							'signedAt' => '2026-06-01T12:00:00+00:00',
-							'signedBy' => 'teamleider-1',
+							'decision' => 'approved',
+							'decidedAt' => '2026-06-01T12:00:00+00:00',
+							'userId' => 'teamleider-1',
 						],
 						[
 							'role' => 'facility_manager',
 							'order' => 2,
-							'status' => 'pending',
-							'signedAt' => '',
-							'signedBy' => '',
+							'decision' => 'pending',
+							'decidedAt' => '',
+							'userId' => '',
 						],
 					],
 				],
@@ -570,9 +570,9 @@ final class PurchaseOrderServiceTest extends TestCase {
 		}
 
 		// Second attempt: both signed.
-		$data['PurchaseOrder'][0]['approvalChain'][1]['status'] = 'approved';
-		$data['PurchaseOrder'][0]['approvalChain'][1]['signedAt'] = '2026-06-02T09:00:00+00:00';
-		$data['PurchaseOrder'][0]['approvalChain'][1]['signedBy'] = 'facility-1';
+		$data['PurchaseOrder'][0]['approvalChain'][1]['decision'] = 'approved';
+		$data['PurchaseOrder'][0]['approvalChain'][1]['decidedAt'] = '2026-06-02T09:00:00+00:00';
+		$data['PurchaseOrder'][0]['approvalChain'][1]['userId'] = 'facility-1';
 
 		$service2 = $this->buildService(
 			data: $data,
