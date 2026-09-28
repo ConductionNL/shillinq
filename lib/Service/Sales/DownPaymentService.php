@@ -602,9 +602,10 @@ class DownPaymentService {
 			$vat = (int)round($rate['net'] * $rate['rate']);
 			$netCents += $rate['net'];
 			$vatCents += $vat;
+			// BG-23 carries the rate in percent (BT-119), the lines as a fraction (ArInvoiceUblMapper).
 			$breakdown[] = [
 				'category' => self::categoryOf(rate: $rate['rate']),
-				'rate' => $rate['rate'],
+				'rate' => round(($rate['rate'] * 100), 2),
 				'taxableAmount' => self::euros(cents: $rate['net']),
 				'taxAmount' => self::euros(cents: $vat),
 			];
@@ -770,7 +771,8 @@ class DownPaymentService {
 	}//end invoiceNumber()
 
 	/**
-	 * A VAT rate as a fraction: 21 and 0.21 both mean 21 percent.
+	 * A VAT rate as a fraction: 21 and 0.21 both mean 21 percent, and 1 is one
+	 * percent (no VAT rate is 100 percent).
 	 *
 	 * @param mixed $value The rate.
 	 *
@@ -778,7 +780,7 @@ class DownPaymentService {
 	 */
 	private static function rateOf(mixed $value): float {
 		$rate = (float)$value;
-		if ($rate > 1) {
+		if ($rate >= 1) {
 			$rate /= 100;
 		}
 

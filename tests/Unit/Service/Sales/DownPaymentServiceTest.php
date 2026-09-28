@@ -90,7 +90,7 @@ final class DownPaymentServiceTest extends TestCase {
 				['lineId' => '1', 'quantity' => 1, 'unitCode' => 'C62', 'itemName' => 'Keuken Eiland', 'netPrice' => 15000.0, 'netAmount' => 15000.0, 'vatCategory' => 'S', 'vatRate' => 0.21],
 			],
 			'vatBreakdown' => [
-				['category' => 'S', 'rate' => 0.21, 'taxableAmount' => 15000.0, 'taxAmount' => 3150.0],
+				['category' => 'S', 'rate' => 21, 'taxableAmount' => 15000.0, 'taxAmount' => 3150.0],
 			],
 		];
 
@@ -195,6 +195,7 @@ final class DownPaymentServiceTest extends TestCase {
 		self::assertSame(['0.21' => 750.0, '0.09' => 250.0], $byRate);
 		self::assertSame(180.0, $invoice['vatAmount'], '157.50 + 22.50');
 		self::assertSame(1180.0, $invoice['grossAmount']);
+		self::assertSame([21.0, 9.0], array_column($invoice['vatBreakdown'], 'rate'), 'BG-23 in percent');
 		self::assertValidInvoice($invoice);
 
 	}//end testAMixedRateOrderIsSplitInProportion()
@@ -257,7 +258,7 @@ final class DownPaymentServiceTest extends TestCase {
 		self::assertSame('final', $final['downPayment']['kind']);
 		self::assertSame([['invoiceId' => $downPayment['id'], 'invoiceNumber' => '2026-0412', 'rate' => 0.21, 'net' => 4500.0, 'vat' => 945.0]], $final['downPayment']['deductions']);
 		self::assertSame('2026-0412', $final['precedingInvoiceReferences'][0]['reference']);
-		self::assertSame([['category' => 'S', 'rate' => 0.21, 'taxableAmount' => 10500.0, 'taxAmount' => 2205.0]], $final['vatBreakdown']);
+		self::assertSame([['category' => 'S', 'rate' => 21, 'taxableAmount' => 10500.0, 'taxAmount' => 2205.0]], $final['vatBreakdown'], 'BG-23 in percent, as ArInvoiceUblMapper renders it');
 		self::assertValidInvoice($final);
 
 		$stored = $this->store->setSchema('ARInvoice')->find('ar-kitchen')->getObject();
