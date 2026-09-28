@@ -302,7 +302,7 @@ class BankStatementImportControllerTest extends TestCase {
 		self::assertCount(1, $this->objectService->saved['BankStatement']);
 		$statement = $this->objectService->saved['BankStatement'][0];
 		self::assertSame('admin-7', $statement['administrationId']);
-		self::assertSame('camt053', $statement['statementFormat']);
+		self::assertSame('camt053', $statement['importFormat']);
 		self::assertSame(2, $statement['transactionCount']);
 
 		// Two BankStatementLine rows, mapped parser keys → schema fields.

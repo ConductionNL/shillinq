@@ -3231,7 +3231,6 @@
         "Feed batch": "Feed batch",
         "The bank feed batch this statement was written from. A second delivery of the same batch writes nothing.": "The bank feed batch this statement was written from. A second delivery of the same batch writes nothing.",
         "The ledger account the imported statement books against.": "The ledger account the imported statement books against.",
-        "The format the statement arrived in; feed for the bank feed.": "The format the statement arrived in; feed for the bank feed.",
         "Connect a bank": "Connect a bank",
         "Connect a bank account in integriq so its transactions arrive here on their own.": "Connect a bank account in integriq so its transactions arrive here on their own.",
         "Cash per bank account": "Cash per bank account",

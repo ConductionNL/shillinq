@@ -5472,7 +5472,6 @@ OC.L10N.register(
         "Feed batch": "Koppelingsbatch",
         "The bank feed batch this statement was written from. A second delivery of the same batch writes nothing.": "De batch van de bankkoppeling waaruit dit afschrift is geschreven. Een tweede levering van dezelfde batch schrijft niets.",
         "The ledger account the imported statement books against.": "De grootboekrekening waartegen het ingelezen afschrift boekt.",
-        "The format the statement arrived in; feed for the bank feed.": "Het formaat waarin het afschrift binnenkwam; feed voor de bankkoppeling.",
         "Connect a bank": "Bank koppelen",
         "Connect a bank account in integriq so its transactions arrive here on their own.": "Koppel een bankrekening in integriq, zodat de transacties hier vanzelf binnenkomen.",
         "Cash per bank account": "Liquide middelen per bankrekening",

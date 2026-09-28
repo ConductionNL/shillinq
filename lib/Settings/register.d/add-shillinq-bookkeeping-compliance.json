@@ -875,17 +875,6 @@
             "description": "ISO 4217 currency code.",
             "title": "Currency"
           },
-          "statementFormat": {
-            "type": "string",
-            "enum": [
-              "camt053",
-              "mt940",
-              "csv",
-              "feed"
-            ],
-            "description": "The format the statement arrived in; feed for the bank feed.",
-            "title": "Statement format"
-          },
           "importFormat": {
             "type": "string",
             "enum": [

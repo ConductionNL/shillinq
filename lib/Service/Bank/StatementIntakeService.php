@@ -138,7 +138,9 @@ class StatementIntakeService {
 		$format = (string)($meta['format'] ?? $source);
 		$statement = [
 			'bankConnectionId' => (string)($meta['bankConnectionId'] ?? self::NO_CONNECTION),
-			'statementFormat' => $format,
+			// The merged schema admits one statementFormat; importFormat
+			// carries the format the statement really arrived in.
+			'statementFormat' => 'camt.053.001.08',
 			'importFormat' => $format,
 			'statementDate' => self::dateTime(value: (string)($meta['statementDate'] ?? '')),
 			'transactionCount' => $lineCount,
