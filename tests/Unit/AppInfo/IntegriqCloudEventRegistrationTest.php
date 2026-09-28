@@ -66,4 +66,32 @@ final class IntegriqCloudEventRegistrationTest extends TestCase {
 			'IntegriqCloudEventListener must be registered on ObjectCreatedEvent, the only event integriq\'s CloudEvents raise.'
 		);
 	}//end testThePaymentStatusListenerIsRegisteredOnObjectCreatedEvent()
+
+	/**
+	 * The Peppol delivery status listener hears the object integriq saves, and
+	 * is no longer registered on the CloudEvent name nothing dispatches (issue #1111).
+	 *
+	 * @return void
+	 */
+	public function testThePeppolDeliveryStatusListenerIsRegisteredOnObjectCreatedEvent(): void {
+		self::assertMatchesRegularExpression(
+			'/registerEventListener\(\s*event:\s*ObjectCreatedEvent::class,\s*listener:\s*PeppolDeliveryStatusListener::class\s*\)/',
+			$this->source
+		);
+		self::assertDoesNotMatchRegularExpression(
+			'/registerEventListener\(\s*event:\s*(PeppolDeliveryStatusListener::\w+|\'nl\.conduction\.peppol\.delivery\.status\')/',
+			$this->source,
+			'A registration on the CloudEvent name never fires: integriq dispatches no event by that name.'
+		);
+	}//end testThePeppolDeliveryStatusListenerIsRegisteredOnObjectCreatedEvent()
+
+	/**
+	 * The rejection notice the listener raises has a notifier that renders it.
+	 *
+	 * @return void
+	 */
+	public function testTheEInvoiceNotifierIsRegistered(): void {
+		self::assertStringContainsString('use OCA\Shillinq\Notification\EInvoiceNotifier;', $this->source);
+		self::assertMatchesRegularExpression('/registerNotifierService\(\s*EInvoiceNotifier::class\s*\)/', $this->source);
+	}//end testTheEInvoiceNotifierIsRegistered()
 }//end class
