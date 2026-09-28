@@ -63,6 +63,7 @@ use OCA\Shillinq\Listener\FixedAssetDisposalListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
 use OCA\Shillinq\Listener\GRIRClearingListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
+use OCA\Shillinq\Listener\IntegriqCloudEventListener;
 use OCA\Shillinq\Listener\IntercompanyLinkListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
 use OCA\Shillinq\Listener\FeeScheduleValidationListener;
@@ -348,6 +349,16 @@ class Application extends App implements IBootstrap {
 		$context->registerEventListener(
 			event: PeppolDeliveryStatusListener::EVENT_NAME,
 			listener: PeppolDeliveryStatusListener::class
+		);
+
+		// receivables-payment-links design D3 / REQ-RPL-003 (#1681): integriq
+		// saves every CloudEvent as an OpenRegister object in register
+		// `integriq`, schema `event`, and dispatches no Nextcloud event of its
+		// own. So a `nl.conduction.payment.status` outcome reaches shillinq's
+		// reconciliation through ObjectCreatedEvent, matched by slug.
+		$context->registerEventListener(
+			event: ObjectCreatedEvent::class,
+			listener: IntegriqCloudEventListener::class
 		);
 
 		// Bookings-pipelinq-customer-bridge slice 07 — when a new
