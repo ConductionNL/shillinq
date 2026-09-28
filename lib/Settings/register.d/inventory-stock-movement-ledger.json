@@ -248,44 +248,6 @@
                     "onHandField": "quantity",
                     "guard": "OCA\\Shillinq\\Lifecycle\\StockReservationGuard::commitReservation"
                   }
-                },
-                {
-                  "trigger": "x-openregister-lifecycle-action",
-                  "action": "materialise-gl-transaction",
-                  "condition": "@self.movementType IN ('receipt', 'issue', 'manufacture')",
-                  "description": "Receipt debits Inventory Asset / credits Goods-in-Transit; issue debits COGS / credits Inventory Asset; manufacture debits Finished Goods / credits Raw Materials. transfer and repack are lateral (no GL). Amount per line = quantity * unitCost, currency = administration base. GL lines carry subLedgerType='inventory', subLedgerRef=<StockMove.id>.",
-                  "actionParameters": {
-                    "register": "shillinq",
-                    "targetSchema": "GLTransaction",
-                    "linesSchema": "GLLine",
-                    "keepBalanced": true,
-                    "backReferenceField": "glTransactionId",
-                    "idempotencyKey": "movementNumber",
-                    "subLedgerType": "inventory",
-                    "subLedgerRefField": "id",
-                    "accountRouting": {
-                      "receipt": {
-                        "debit": "@admin.inventoryAssetAccount|1300",
-                        "credit": "@admin.goodsInTransitAccount|2000"
-                      },
-                      "issue": {
-                        "debit": "@admin.cogsAccount|5100",
-                        "credit": "@admin.inventoryAssetAccount|1300"
-                      },
-                      "manufacture": {
-                        "debit": "@admin.finishedGoodsAccount|1310",
-                        "credit": "@admin.rawMaterialsAccount|1300"
-                      }
-                    },
-                    "metadataFields": [
-                      "movementNumber",
-                      "itemId",
-                      "sourceLocationId",
-                      "destinationLocationId",
-                      "movementType",
-                      "movementReason"
-                    ]
-                  }
                 }
               ]
             },

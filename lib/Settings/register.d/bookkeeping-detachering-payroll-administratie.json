@@ -393,22 +393,9 @@
               "from": "calculated",
               "to": "issued",
               "label": "Issue payroll",
-              "description": "Materialise the salary-expense GLTransaction, generate the loonstrookje and publish payroll-issued.",
+              "description": "Generate the loonstrookje and publish payroll-issued. The payroll journal is booked from humaniq's JournalEntry, not from this transition (ledger-posting-path REQ-LPP-006).",
               "requires": "OCA\\Shillinq\\Lifecycle\\PayrollGuard::canIssue",
               "actions": [
-                {
-                  "trigger": "x-openregister-lifecycle-action",
-                  "action": "materialise-gl-transaction",
-                  "description": "Materialise one balanced salary-expense GLTransaction (debit salary-expense account by contractType, credit payroll-liability) and set glTransactionId.",
-                  "actionParameters": {
-                    "register": "shillinq",
-                    "schema": "GLTransaction",
-                    "linesSchema": "GLLine",
-                    "keepBalanced": true,
-                    "backReferenceField": "payrollId",
-                    "idempotencyKey": "payrollNumber"
-                  }
-                },
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "generate-determination-letter",

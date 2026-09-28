@@ -339,10 +339,11 @@
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
-                  "action": "materialise-gl-transaction",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\MaterialiseGlTransactionAction",
                   "condition": "@self.settlementMode == 'reimbursable'",
                   "description": "Reimbursable path: debit per expense line credit to expense-payable account (Account.isExpenseControlAccount=true); sets glReimbursableTransactionId. Identical to expense-capture-core pattern but selected only when claim.settlementMode = reimbursable.",
                   "actionParameters": {
+                    "sourceSchema": "ExpenseClaimEntry",
                     "register": "shillinq",
                     "targetSchema": "GLTransaction",
                     "settlementMode": "reimbursable",
@@ -379,10 +380,11 @@
                 },
                 {
                   "trigger": "x-openregister-lifecycle-action",
-                  "action": "materialise-gl-transaction",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\MaterialiseGlTransactionAction",
                   "condition": "@self.settlementMode == 'pass-through'",
                   "description": "Pass-through path: debit customer AR account (per Receipt/MileageEntry/PerDiem.passthroughDebitAccountCode, fallback ReimbursementPolicy.passthroughDebitAccountCode), credit cost centres + revenue-deferral on the markup delta. Sets glPassThroughTransactionId. Multiple GL entries are emitted when passThroughCustomerIds.length > 1 (multi-customer).",
                   "actionParameters": {
+                    "sourceSchema": "ExpenseClaimEntry",
                     "register": "shillinq",
                     "targetSchema": "GLTransaction",
                     "settlementMode": "pass-through",
