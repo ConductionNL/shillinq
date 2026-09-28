@@ -147,6 +147,7 @@ class RecurringInvoiceGenerator {
 	 * @throws \RuntimeException When the profile is malformed.
 	 *
 	 * @spec openspec/specs/recurring-invoicing/spec.md
+	 * @spec openspec/changes/billing-inherited-defects/specs/recurring-invoicing/spec.md (REQ-RIN-010)
 	 */
 	public function generateForProfile(array $profile): array {
 		$profileId = (string)($profile['id'] ?? $profile['uuid'] ?? '');
@@ -158,7 +159,8 @@ class RecurringInvoiceGenerator {
 
 		// Idempotency: a non-cancelled invoice for this (profile, period)
 		// makes the run a no-op (REQ-RIN-004).
-		$existing = $this->findExistingInvoice(profileId: $profileId, billingPeriod: $billingPeriod);
+		$generated = $this->findGeneratedInvoices(profileId: $profileId, billingPeriod: $billingPeriod);
+		$existing = self::liveInvoice(rows: $generated);
 		if ($existing !== null) {
 			return [
 				'invoice' => $existing,
@@ -181,6 +183,7 @@ class RecurringInvoiceGenerator {
 			issueDate: $issueDate,
 			dueDate: $dueDate,
 			language: $language,
+			sequence: (count($generated) + 1),
 		);
 
 		try {
@@ -283,11 +286,13 @@ class RecurringInvoiceGenerator {
 	 * @param string $issueDate Invoice issue date (Y-m-d).
 	 * @param string $dueDate Invoice due date (Y-m-d).
 	 * @param string $language Document language for tokens.
+	 * @param int $sequence The invoice's number inside its profile and period, from 1.
 	 *
 	 * @return array<string,mixed> The ARInvoice payload.
 	 *
 	 * @spec openspec/specs/recurring-invoicing/spec.md
 	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/recurring-invoicing/spec.md#requirement-req-rin-009-a-generated-invoice-shall-carry-its-lines-as-invoicelines
+	 * @spec openspec/changes/billing-inherited-defects/specs/recurring-invoicing/spec.md (REQ-RIN-010)
 	 */
 	public static function buildArInvoicePayload(
 		array $profile,
@@ -297,6 +302,7 @@ class RecurringInvoiceGenerator {
 		string $issueDate,
 		string $dueDate,
 		string $language,
+		int $sequence = 1,
 	): array {
 		$lines = [];
 		$net = 0.0;
@@ -322,9 +328,9 @@ class RecurringInvoiceGenerator {
 
 			// ARInvoice declares its lines as `invoiceLines` in the EN 16931
 			// BG-25 shape; the former `lines` was dropped by OpenRegister, so
-			// every generated invoice arrived without lines. The line declares
-			// no account, so the profile's revenueAccount is not written per
-			// line (REQ-RIN-009).
+			// every generated invoice arrived without lines (REQ-RIN-009). The
+			// line declares `glAccount` since ARInvoice 0.16.0, so the profile
+			// line's revenue account is booked per line (REQ-RIN-010).
 			$lines[] = [
 				'lineId' => (string)$lineNumber,
 				'itemName' => $description,
@@ -334,6 +340,7 @@ class RecurringInvoiceGenerator {
 				'netAmount' => round($lineNet, 2),
 				'vatRate' => $vatRate,
 				'vatCategory' => self::vatCategory(vatRate: $vatRate),
+				'glAccount' => ($raw['revenueAccount'] ?? null),
 			];
 
 			$net += $lineNet;
@@ -349,7 +356,17 @@ class RecurringInvoiceGenerator {
 			$lifecycleState = 'issued';
 		}
 
+		// ARInvoice requires an invoice number and a period. The number is
+		// provisional and unique per profile, period and attempt, so a period
+		// regenerated after a cancellation gets its own (REQ-RIN-010).
 		return [
+			'invoiceNumber' => sprintf(
+				'REC-%s-%s-%02d',
+				str_replace('-', '', $billingPeriod),
+				strtoupper(substr(str_replace('-', '', $profileId), 0, 8)),
+				$sequence
+			),
+			'periodId' => $billingPeriod,
 			'customerId' => (string)($profile['customerReference'] ?? ''),
 			'administrationId' => ($profile['administrationId'] ?? null),
 			'invoiceDate' => $issueDate,
@@ -666,23 +683,38 @@ class RecurringInvoiceGenerator {
 	}//end immutable()
 
 	/**
-	 * Find a non-cancelled ARInvoice already generated for the
-	 * (profile, billingPeriod) key (REQ-RIN-004 idempotency probe).
+	 * Every ARInvoice already generated for the (profile, billingPeriod) key,
+	 * cancelled ones included (REQ-RIN-004 idempotency probe). Both filter
+	 * fields are declared on ARInvoice since 0.16.0; before that OpenRegister
+	 * dropped them and this probe never found an earlier invoice (REQ-RIN-010).
 	 *
 	 * @param string $profileId The profile id.
 	 * @param string $billingPeriod The billing-period key.
 	 *
-	 * @return array<string,mixed>|null The existing invoice, or null.
+	 * @return array<int,array<string,mixed>> The invoices for the key.
+	 *
+	 * @spec openspec/changes/billing-inherited-defects/specs/recurring-invoicing/spec.md (REQ-RIN-010)
 	 */
-	private function findExistingInvoice(string $profileId, string $billingPeriod): ?array {
-		$rows = $this->findAll(
+	private function findGeneratedInvoices(string $profileId, string $billingPeriod): array {
+		return $this->findAll(
 			schema: 'ARInvoice',
 			filters: [
 				'recurringProfileId' => $profileId,
 				'billingPeriod' => $billingPeriod,
 			]
 		);
+	}//end findGeneratedInvoices()
 
+	/**
+	 * The first invoice of a key that is neither cancelled nor credited.
+	 *
+	 * @param array<int,array<string,mixed>> $rows The invoices for the key.
+	 *
+	 * @return array<string,mixed>|null The live invoice, or null.
+	 *
+	 * @spec openspec/specs/recurring-invoicing/spec.md
+	 */
+	private static function liveInvoice(array $rows): ?array {
 		foreach ($rows as $row) {
 			$state = (string)($row['lifecycleState'] ?? '');
 			if ($state !== 'cancelled' && $state !== 'credited') {
@@ -691,7 +723,7 @@ class RecurringInvoiceGenerator {
 		}
 
 		return null;
-	}//end findExistingInvoice()
+	}//end liveInvoice()
 
 	/**
 	 * Persist an object via the real ObjectService API (saveObject).

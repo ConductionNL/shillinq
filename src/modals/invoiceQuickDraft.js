@@ -135,6 +135,7 @@ export function provisionalInvoiceNumber(invoiceDate, now = new Date()) {
  *
  * @spec openspec/changes/shillinq-invoice-quick-draft/proposal.md
  * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/shillinq-invoice-quick-draft/spec.md (REQ-IQD-006)
+ * @spec openspec/changes/billing-inherited-defects/specs/shillinq-invoice-quick-draft/spec.md (REQ-IQD-007)
  * @param {object} input The collected form values.
  * @param {string} input.customerId Selected customer id.
  * @param {string} input.invoiceDate Invoice date.
@@ -152,8 +153,8 @@ export function buildInvoicePayload(input) {
 	// ARInvoice declares its lines as `invoiceLines` in the EN 16931 BG-25
 	// shape. OpenRegister drops an undeclared property, so the former `lines`
 	// (with lineNumber/description/unitPrice/glAccount) never reached the
-	// invoice. The line declares no account, so the default GL account is not
-	// written per line (REQ-IQD-006).
+	// invoice (REQ-IQD-006). The line declares `glAccount` since ARInvoice
+	// 0.16.0: a line's own account, else the draft's default (REQ-IQD-007).
 	const invoiceLines = (input.lines || [])
 		.filter(
 			(l) =>
@@ -172,6 +173,7 @@ export function buildInvoicePayload(input) {
 				netAmount: round2(quantity * netPrice),
 				vatRate,
 				vatCategory: vatRate > 0 ? 'S' : 'Z',
+				glAccount: l.glAccount || input.glAccount || null,
 			}
 		})
 	return {
