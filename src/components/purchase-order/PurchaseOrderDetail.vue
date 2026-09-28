@@ -38,7 +38,7 @@
 				<h2>{{ purchaseOrder.poNumber }}</h2>
 				<p>
 					<span class="po-detail__pill">{{
-						purchaseOrder.lifecycleState
+						purchaseOrder.statusCode
 					}}</span>
 					<span
 						>{{ t('shillinq', 'Supplier') }}:
@@ -215,7 +215,7 @@
 					}}
 				</NcButton>
 				<p
-					v-if="!canSend && purchaseOrder.lifecycleState !== 'sent'"
+					v-if="!canSend && purchaseOrder.statusCode !== 'sent'"
 					class="po-detail__send-hint">
 					{{
 						t(
@@ -225,7 +225,7 @@
 					}}
 				</p>
 				<p
-					v-else-if="purchaseOrder.lifecycleState === 'sent'"
+					v-else-if="purchaseOrder.statusCode === 'sent'"
 					class="po-detail__send-hint"
 					data-testid="po-detail-already-sent">
 					{{
@@ -292,7 +292,7 @@ export default {
 			if (!this.purchaseOrder) {
 				return false
 			}
-			if (this.purchaseOrder.lifecycleState === 'sent') {
+			if (this.purchaseOrder.statusCode === 'sent') {
 				return false
 			}
 			const chain = this.purchaseOrder.approvalChain || []

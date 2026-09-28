@@ -467,7 +467,7 @@ final class PurchaseOrderServiceTest extends TestCase {
 		);
 
 		self::assertSame(18500.00, $po['totalAmount']);
-		self::assertSame('pending_approval', $po['lifecycleState']);
+		self::assertSame('draft', $po['statusCode']);
 		self::assertCount(2, $po['approvalChain']);
 		self::assertSame('inkoper-1', $po['requesterId']);
 		self::assertNotEmpty($po['poNumber']);
@@ -532,7 +532,7 @@ final class PurchaseOrderServiceTest extends TestCase {
 					'id' => 'po-1',
 					'administrationId' => 'adm-1',
 					'poNumber' => 'PO-2026-adm-1-000001',
-					'lifecycleState' => 'pending_approval',
+					'statusCode' => 'draft',
 					'approvalChain' => [
 						[
 							'role' => 'teamleider',
@@ -583,7 +583,7 @@ final class PurchaseOrderServiceTest extends TestCase {
 		);
 
 		$po = $service2->blockSendUntilApproved(administrationId: 'adm-1', purchaseOrderId: 'po-1');
-		self::assertSame('sent', $po['lifecycleState']);
+		self::assertSame('sent', $po['statusCode']);
 		self::assertNotEmpty($po['sentAt']);
 
 	}//end testBlockSendUntilApprovedGuard()
