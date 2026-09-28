@@ -3175,7 +3175,11 @@
         "The debtor's customer on a request that stands on its own, without an invoice, copied from debtor.customerMasterId when the request is raised. The customer portal lists the request by it. A request on an invoice reaches the portal through that invoice and leaves this empty.": "The debtor's customer on a request that stands on its own, without an invoice, copied from debtor.customerMasterId when the request is raised. The customer portal lists the request by it. A request on an invoice reaches the portal through that invoice and leaves this empty.",
         "Portal return address": "Portal return address",
         "Where the checkout sends a person back after paying. Use the address of your portal, starting with https://. Leave it empty to send them to Nextcloud.": "Where the checkout sends a person back after paying. Use the address of your portal, starting with https://. Leave it empty to send them to Nextcloud.",
-        "The settings were not saved. Check that the portal return address starts with https://.": "The settings were not saved. Check that the portal return address starts with https://."
+        "The settings were not saved. Check that the portal return address starts with https://.": "The settings were not saved. Check that the portal return address starts with https://.",
+        "E-invoice %1$s was rejected": "E-invoice %1$s was rejected",
+        "Reason: %1$s": "Reason: %1$s",
+        "The Peppol network gave no reason.": "The Peppol network gave no reason.",
+        "Open the invoice, correct it and send it again.": "Open the invoice, correct it and send it again."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

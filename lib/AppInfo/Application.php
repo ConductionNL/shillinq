@@ -63,6 +63,7 @@ use OCA\Shillinq\Listener\FixedAssetDisposalListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
 use OCA\Shillinq\Listener\GRIRClearingListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
+use OCA\Shillinq\Listener\IntegriqCloudEventListener;
 use OCA\Shillinq\Listener\IntercompanyLinkListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
 use OCA\Shillinq\Listener\FeeScheduleValidationListener;
@@ -76,6 +77,7 @@ use OCA\Shillinq\Listener\ReconciliationMatchToReportListener;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Listener\TenderNedAwardDetectedListener;
 use OCA\Shillinq\Notification\DeadlineReminderNotifier;
+use OCA\Shillinq\Notification\EInvoiceNotifier;
 use OCA\Shillinq\Notification\PosStockUnmatchedLineNotifier;
 use OCA\Shillinq\Notification\RoleFallbackResolver;
 use OCA\Shillinq\Repair\DbValueMigrationPort;
@@ -338,16 +340,25 @@ class Application extends App implements IBootstrap {
 		);
 
 		// Change add-invoice-pdf-export-with-ubl-peppol-support REQ-EINV-005 — consume
-		// the cross-app `nl.conduction.peppol.delivery.status` cloud event
-		// openconnector's Peppol access point emits and advance
-		// ARInvoice.deliveryStatus (REQ-AR-011). Registered against the literal
-		// event-name STRING (IRegistrationContext::registerEventListener()
-		// accepts string|class-string<T> — mirrors the emit side in
-		// BudgetImpactEmitter, which dispatches plain string event names via
-		// IEventDispatcher::dispatch()).
+		// the `nl.conduction.peppol.delivery.status` CloudEvent integriq's Peppol
+		// access point emits and advance ARInvoice.deliveryStatus (REQ-AR-011).
+		// integriq dispatches no Nextcloud event by that name: it saves the
+		// CloudEvent as an OpenRegister object (register `integriq`, schema
+		// `event`), so the listener hears ObjectCreatedEvent and matches the
+		// type itself (#1111).
 		$context->registerEventListener(
-			event: PeppolDeliveryStatusListener::EVENT_NAME,
+			event: ObjectCreatedEvent::class,
 			listener: PeppolDeliveryStatusListener::class
+		);
+
+		// Change receivables-payment-links design D3 / REQ-RPL-003 (#1681): integriq
+		// saves every CloudEvent as an OpenRegister object in register
+		// `integriq`, schema `event`, and dispatches no Nextcloud event of its
+		// own. So a `nl.conduction.payment.status` outcome reaches shillinq's
+		// reconciliation through ObjectCreatedEvent, matched by slug.
+		$context->registerEventListener(
+			event: ObjectCreatedEvent::class,
+			listener: IntegriqCloudEventListener::class
 		);
 
 		// Bookings-pipelinq-customer-bridge slice 07 — when a new
@@ -753,6 +764,11 @@ class Application extends App implements IBootstrap {
 		// notification centre. Without a registered INotifier the raised
 		// notifications would be discarded at display time.
 		$context->registerNotifierService(DeadlineReminderNotifier::class);
+
+		// REQ-EINV-005 (#1111) — render the rejection notice
+		// PeppolDeliveryStatusListener raises when the Peppol network refuses an
+		// e-invoice. Without a registered INotifier it is discarded at display time.
+		$context->registerNotifierService(EInvoiceNotifier::class);
 
 		// Change inventory-pos-decrement (shillinq#504) — render the
 		// `pos_stock_unmatched_line` notifications PosStockDecrementListener

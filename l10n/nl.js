@@ -5417,7 +5417,11 @@ OC.L10N.register(
         "The debtor's customer on a request that stands on its own, without an invoice, copied from debtor.customerMasterId when the request is raised. The customer portal lists the request by it. A request on an invoice reaches the portal through that invoice and leaves this empty.": "De klant van de schuldenaar bij een verzoek zonder factuur, overgenomen uit debtor.customerMasterId wanneer het verzoek wordt aangemaakt. Het klantportaal toont het verzoek hierop. Een verzoek op een factuur komt via die factuur in het portaal en laat dit leeg.",
         "Portal return address": "Terugkeeradres portaal",
         "Where the checkout sends a person back after paying. Use the address of your portal, starting with https://. Leave it empty to send them to Nextcloud.": "Waar de betaalpagina iemand na het betalen naartoe stuurt. Gebruik het adres van uw portaal, beginnend met https://. Laat het leeg om iemand naar Nextcloud te sturen.",
-        "The settings were not saved. Check that the portal return address starts with https://.": "De instellingen zijn niet opgeslagen. Controleer of het terugkeeradres van het portaal met https:// begint."
+        "The settings were not saved. Check that the portal return address starts with https://.": "De instellingen zijn niet opgeslagen. Controleer of het terugkeeradres van het portaal met https:// begint.",
+        "E-invoice %1$s was rejected": "E-factuur %1$s is geweigerd",
+        "Reason: %1$s": "Reden: %1$s",
+        "The Peppol network gave no reason.": "Het Peppol-netwerk gaf geen reden.",
+        "Open the invoice, correct it and send it again.": "Open de factuur, verbeter hem en verstuur hem opnieuw."
     },
     "nplurals=2; plural=(n != 1);"
 )
