@@ -251,6 +251,42 @@ class FinancialDashboardService {
 	}//end previousMonths()
 
 	/**
+	 * The cash position per bank account and combined, for one administration (REQ-BCON-004).
+	 *
+	 * @param string $administrationId The administration to scope every record to.
+	 *
+	 * @return array{accounts:array<int,array<string,mixed>>,other:float,total:float}
+	 *
+	 * @spec openspec/changes/banking-connected-accounts/tasks.md#task-4.1
+	 */
+	public function cashPosition(string $administrationId): array {
+		$data = $this->fetchSchemas(
+			schemas: [
+				'accounts' => 'Account',
+				'transactions' => 'GLTransaction',
+				'lines' => 'GLLine',
+				'bankAccounts' => 'BankAccount',
+				'statements' => 'BankStatement',
+			]
+		);
+		foreach ($data as $key => $rows) {
+			$data[$key] = array_values(
+				array_filter(
+					$rows,
+					static fn (array $row): bool => (string)($row['administrationId'] ?? '') === $administrationId
+				)
+			);
+		}
+
+		return $this->calculator->cashPositionByAccount(
+			data: $data,
+			bankAccounts: $data['bankAccounts'],
+			statements: $data['statements']
+		);
+
+	}//end cashPosition()
+
+	/**
 	 * Fetch every schema in the map, keyed by its calculator bag key. Each
 	 * schema resolves to a list of plain object arrays; a failing schema
 	 * resolves to an empty list.

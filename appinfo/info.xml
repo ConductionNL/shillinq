@@ -98,7 +98,6 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <!-- Cashflow 13wk: daily bankfeed pull, daily crisis-mode refresh,
              monthly calibration. REQ-CF-010/012/013. Moved from lib/Cron/
              by background-job-consolidation (ADR-069 D1). -->
-        <job>OCA\Shillinq\BackgroundJob\BankfeedReconciliationJob</job>
         <job>OCA\Shillinq\BackgroundJob\ContractCostRollupJob</job>
         <job>OCA\Shillinq\BackgroundJob\CrisisModeRefreshJob</job>
         <job>OCA\Shillinq\BackgroundJob\CalibrationBatchJob</job>

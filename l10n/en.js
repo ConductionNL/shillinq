@@ -3220,7 +3220,23 @@ OC.L10N.register(
         "Pair the bank line of this item with the invoices it pays, or book it to a ledger account.": "Pair the bank line of this item with the invoices it pays, or book it to a ledger account.",
         "Pair this bank line with the invoices it pays, or book it to a ledger account.": "Pair this bank line with the invoices it pays, or book it to a ledger account.",
         "Bank lines no rule has matched yet. Pair a line with the invoices it pays, or book it to a ledger account.": "Bank lines no rule has matched yet. Pair a line with the invoices it pays, or book it to a ledger account.",
-        "The ledger account this bank account books to. A bank line booked to a ledger account by hand posts against it.": "The ledger account this bank account books to. A bank line booked to a ledger account by hand posts against it."
+        "The ledger account this bank account books to. A bank line booked to a ledger account by hand posts against it.": "The ledger account this bank account books to. A bank line booked to a ledger account by hand posts against it.",
+        "Bank connection": "Bank connection",
+        "The bank connection that feeds this account's transactions. Empty when statements are imported by file.": "The bank connection that feeds this account's transactions. Empty when statements are imported by file.",
+        "Last sync": "Last sync",
+        "When the bank feed last delivered transactions for this account.": "When the bank feed last delivered transactions for this account.",
+        "How the statement arrived: a file a person imported, or the bank feed.": "How the statement arrived: a file a person imported, or the bank feed.",
+        "Feed batch": "Feed batch",
+        "The bank feed batch this statement was written from. A second delivery of the same batch writes nothing.": "The bank feed batch this statement was written from. A second delivery of the same batch writes nothing.",
+        "The ledger account the imported statement books against.": "The ledger account the imported statement books against.",
+        "Connect a bank": "Connect a bank",
+        "Connect a bank account in integriq so its transactions arrive here on their own.": "Connect a bank account in integriq so its transactions arrive here on their own.",
+        "Cash per bank account": "Cash per bank account",
+        "No bank accounts yet.": "No bank accounts yet.",
+        "Ledger balance": "Ledger balance",
+        "Bank balance": "Bank balance",
+        "Bank balance on": "Bank balance on",
+        "Group cash position": "Group cash position"
     },
     "nplurals=2; plural=(n != 1);"
 )

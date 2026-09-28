@@ -88,6 +88,8 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // Both #[NoAdminRequired]; RBAC/multitenancy enforced by OR reads.
             ['name' => 'financialDashboard#series', 'url' => '/api/dashboard/financial-series', 'verb' => 'GET'],
             ['name' => 'financialDashboard#summary', 'url' => '/api/dashboard/financial-summary', 'verb' => 'GET'],
+            // banking-connected-accounts REQ-BCON-004: cash position per bank account and combined.
+            ['name' => 'financialDashboard#cashPosition', 'url' => '/api/v1/cash-position', 'verb' => 'GET'],
 
         // Subject cost (subject-cost-aggregation, ADR-081): the employer cost
         // of the hours booked against one domain object. The domain app

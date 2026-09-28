@@ -881,7 +881,8 @@
               "camt053",
               "mt940",
               "csv",
-              "manual"
+              "manual",
+              "feed"
             ],
             "description": "Import format.",
             "title": "Import Format"
@@ -927,6 +928,28 @@
             "nullable": true,
             "description": "Docudesk FK URI for the original bank-statement file (consume bookkeeping-document-attachment-integration).",
             "title": "Source Document URI"
+          },
+          "statementSource": {
+            "type": "string",
+            "enum": [
+              "file",
+              "feed"
+            ],
+            "default": "file",
+            "description": "How the statement arrived: a file a person imported, or the bank feed.",
+            "title": "Source"
+          },
+          "sourceBatchUri": {
+            "type": "string",
+            "nullable": true,
+            "description": "The bank feed batch this statement was written from. A second delivery of the same batch writes nothing.",
+            "title": "Feed batch"
+          },
+          "glAccountId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The ledger account the imported statement books against.",
+            "title": "Ledger account"
           }
         },
         "x-openregister-uniqueness": {
@@ -998,7 +1021,8 @@
               "x-openregister-rbac-required-role": "period-closer"
             }
           }
-        }
+        },
+        "version": "0.2.0"
       },
       "BankStatementLine": {
         "slug": "BankStatementLine",

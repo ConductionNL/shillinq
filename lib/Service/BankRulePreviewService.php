@@ -366,7 +366,7 @@ class BankRulePreviewService {
 	}//end normaliseIban()
 
 	/**
-	 * Normalised Levenshtein similarity in [0,1] (mirrors BankfeedMatcher).
+	 * Normalised Levenshtein similarity in [0,1] (the same measure the retired feed matcher used).
 	 *
 	 * @param string $a First string.
 	 * @param string $b Second string.
