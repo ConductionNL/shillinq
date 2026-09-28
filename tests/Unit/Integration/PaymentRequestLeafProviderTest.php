@@ -280,6 +280,35 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 	}//end testMappedCallerAppendsAPendingRequestOnTheHostObject()
 
 	/**
+	 * A request raised through the leaf for a known customer carries that
+	 * customer as its portal scope; one for a name and an email does not
+	 * (REQ-SPPI-008).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
+	 */
+	public function testARequestForACustomerCarriesItsPortalScope(): void {
+		$provider = $this->makeProvider(actionGroups: ['payment.request' => ['finance']], groups: ['finance']);
+
+		$created = $provider->create(
+			'dossiq',
+			'Zaak',
+			'zaak-8',
+			['requestType' => 'leges', 'amount' => 125.0, 'debtor' => ['customerMasterId' => '20000000-0000-4000-8000-000000000002']]
+		);
+		self::assertSame('20000000-0000-4000-8000-000000000002', $created['customerId']);
+
+		$byMail = $provider->create(
+			'dossiq',
+			'Zaak',
+			'zaak-9',
+			['requestType' => 'leges', 'amount' => 125.0, 'debtor' => ['name' => 'J. Jansen', 'email' => 'j.jansen@example.nl']]
+		);
+		self::assertArrayNotHasKey('customerId', $byMail);
+	}//end testARequestForACustomerCarriesItsPortalScope()
+
+	/**
 	 * An administrator carries every action without a mapping, which is what keeps
 	 * a fresh install usable.
 	 *

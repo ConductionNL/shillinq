@@ -3169,7 +3169,8 @@ OC.L10N.register(
         "The parent said they will not pay this voluntary contribution. Closed without a posting; dunning never runs.": "The parent said they will not pay this voluntary contribution. Closed without a posting; dunning never runs.",
         "The parent will not pay this voluntary contribution. Only a voluntary contribution can be declined.": "The parent will not pay this voluntary contribution. Only a voluntary contribution can be declined.",
         "The parent will not pay this overdue voluntary contribution. Only a voluntary contribution can be declined.": "The parent will not pay this overdue voluntary contribution. Only a voluntary contribution can be declined.",
-        "I will not pay": "I will not pay"
+        "I will not pay": "I will not pay",
+        "The debtor's customer on a request that stands on its own, without an invoice, copied from debtor.customerMasterId when the request is raised. The customer portal lists the request by it. A request on an invoice reaches the portal through that invoice and leaves this empty.": "The debtor's customer on a request that stands on its own, without an invoice, copied from debtor.customerMasterId when the request is raised. The customer portal lists the request by it. A request on an invoice reaches the portal through that invoice and leaves this empty."
     },
     "nplurals=2; plural=(n != 1);"
 )

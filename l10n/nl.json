@@ -5415,7 +5415,8 @@
         "The parent said they will not pay this voluntary contribution. Closed without a posting; dunning never runs.": "De ouder liet weten deze vrijwillige bijdrage niet te betalen. Gesloten zonder boeking; er wordt niet aangemaand.",
         "The parent will not pay this voluntary contribution. Only a voluntary contribution can be declined.": "De ouder betaalt deze vrijwillige bijdrage niet. Alleen een vrijwillige bijdrage kan worden geweigerd.",
         "The parent will not pay this overdue voluntary contribution. Only a voluntary contribution can be declined.": "De ouder betaalt deze vervallen vrijwillige bijdrage niet. Alleen een vrijwillige bijdrage kan worden geweigerd.",
-        "I will not pay": "Ik betaal niet"
+        "I will not pay": "Ik betaal niet",
+        "The debtor's customer on a request that stands on its own, without an invoice, copied from debtor.customerMasterId when the request is raised. The customer portal lists the request by it. A request on an invoice reaches the portal through that invoice and leaves this empty.": "De klant van de schuldenaar bij een verzoek zonder factuur, overgenomen uit debtor.customerMasterId wanneer het verzoek wordt aangemaakt. Het klantportaal toont het verzoek hierop. Een verzoek op een factuur komt via die factuur in het portaal en laat dit leeg."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

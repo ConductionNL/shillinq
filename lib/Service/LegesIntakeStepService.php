@@ -120,6 +120,7 @@ final class LegesIntakeStepService {
 	 * @param ObjectPaymentRequestValidator $validator The request shape and the uniqueness invariant.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
 	 * @param IAppConfig $appConfig App config, for the register slug.
+	 * @param PaymentRequestPortalScope $portalScope Gives a request without an invoice its portal scope.
 	 *
 	 * @return void
 	 */
@@ -128,6 +129,7 @@ final class LegesIntakeStepService {
 		private readonly ObjectPaymentRequestValidator $validator,
 		private readonly ObjectServiceInterface $objectService,
 		private readonly IAppConfig $appConfig,
+		private readonly PaymentRequestPortalScope $portalScope = new PaymentRequestPortalScope(),
 	) {
 	}//end __construct()
 
@@ -253,6 +255,10 @@ final class LegesIntakeStepService {
 		if (isset($context['debtor']) === true && is_array($context['debtor']) === true) {
 			$request['debtor'] = $context['debtor'];
 		}
+
+		// The customer portal lists a request without an invoice by its
+		// debtor's customer (REQ-SPPI-008).
+		$request = $this->portalScope->stamp(request: $request);
 
 		$this->validator->validate(request: $request, existing: []);
 

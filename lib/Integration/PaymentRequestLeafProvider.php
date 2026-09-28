@@ -40,6 +40,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Service\Integration\IntegrationProvider;
 use OCA\Shillinq\Service\FeeScheduleService;
 use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
+use OCA\Shillinq\Service\PaymentRequestPortalScope;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
 use OCA\Shillinq\Service\PaymentRequestFinder;
 use OCA\Shillinq\Service\PaymentSettlementService;
@@ -83,6 +84,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	 * @param FeeScheduleService $feeSchedules The published fee for the host object's type.
 	 * @param PaymentSettlementService $settlements Money that arrived another way, and the state it derives.
 	 * @param PaymentRequestFinder|null $finder Reads every page of requests on a subject; built on demand when absent.
+	 * @param PaymentRequestPortalScope $portalScope Gives a request without an invoice its portal scope.
 	 *
 	 * @return void
 	 */
@@ -94,6 +96,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 		private readonly FeeScheduleService $feeSchedules,
 		private readonly PaymentSettlementService $settlements,
 		private readonly ?PaymentRequestFinder $finder = null,
+		private readonly PaymentRequestPortalScope $portalScope = new PaymentRequestPortalScope(),
 	) {
 	}//end __construct()
 
@@ -326,6 +329,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	 * @throws RuntimeException When the caller lacks the payment.request action.
 	 *
 	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-003)
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
 	 */
 	public function create(string $register, string $schema, string $objectId, array $payload): array {
 		if ($this->authorizer->may(self::ACTION_REQUEST) === false) {
@@ -358,6 +362,10 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 		if ((string)($payload['dueAt'] ?? '') !== '') {
 			$request['dueAt'] = (string)$payload['dueAt'];
 		}
+
+		// The customer portal lists a request without an invoice by its
+		// debtor's customer (REQ-SPPI-008).
+		$request = $this->portalScope->stamp(request: $request);
 
 		$this->validator->validate(
 			request: $request,

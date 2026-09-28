@@ -18,7 +18,7 @@
 
 ## 4. Portal
 
-- [ ] 4.1 Include object requests in the `paymentRequests` collection and read the amount from the request in the initiation endpoint (REQ-SOPR-005)
+- [x] 4.1 Include object requests in the `paymentRequests` collection and read the amount from the request in the initiation endpoint (REQ-SOPR-005). Done in `arinvoice-lines-and-portal-amounts`: a separate `requestPayments` collection scoped by `PaymentRequest.customerId`, and `paymentRequestId` on the initiation endpoint.
 
 ## 5. Quality
 
