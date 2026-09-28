@@ -4,7 +4,7 @@
 
 ## 1. Invoices become payable
 
-- [ ] 1.1 Add `BalanceGuard::isInvoiceBalanced(array $object)`, point `APTransaction.issue.requires` at it, and register the literal tag through `RegisterRequiresGuardAdapter` in `lib/AppInfo/Application.php` (REQ-BPR-001). Verify: PHPUnit for a balanced and an unbalanced invoice, and a live `issue` of a seeded invoice that reaches state issued.
+- [x] 1.1 Add `BalanceGuard::isInvoiceBalanced(array $object)`, point `APTransaction.issue.requires` at it, and register the literal tag through `RegisterRequiresGuardAdapter` in `lib/AppInfo/Application.php` (REQ-BPR-001). Verify: PHPUnit for a balanced and an unbalanced invoice, and a live `issue` of a seeded invoice that reaches state issued.
 
 ## 2. Payment block
 

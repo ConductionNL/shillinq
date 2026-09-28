@@ -242,9 +242,10 @@
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
-                  "action": "materialise-gl-transaction",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\MaterialiseGlTransactionAction",
                   "description": "Materialise exactly one balanced GLTransaction (with GLLine children derived 1:1 from `lines`) and set glTransactionId. Declarative outcome / design D3: no PHP orchestration.",
                   "actionParameters": {
+                    "sourceSchema": "JournalEntry",
                     "register": "shillinq",
                     "schema": "GLTransaction",
                     "linesSchema": "GLLine",
@@ -264,9 +265,10 @@
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
-                  "action": "materialise-gl-transaction",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\MaterialiseGlTransactionAction",
                   "description": "Materialise exactly one balanced GLTransaction (with GLLine children derived 1:1 from `lines`) and set glTransactionId.",
                   "actionParameters": {
+                    "sourceSchema": "JournalEntry",
                     "register": "shillinq",
                     "schema": "GLTransaction",
                     "linesSchema": "GLLine",

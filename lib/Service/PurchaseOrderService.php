@@ -400,7 +400,7 @@ class PurchaseOrderService {
 	 *
 	 * Server-authoritative: the Vue layer never grants the transition. The method
 	 * inspects the persisted PurchaseOrder, asserts every approval_chain entry has
-	 * status=approved + a non-empty signedAt timestamp, and on success persists
+	 * decision=approved + a non-empty decidedAt timestamp, and on success persists
 	 * lifecycleState="sent" with a sentAt stamp. On failure the PO is left in its
 	 * current state and a RuntimeException is raised so the controller maps it to
 	 * a 409 Conflict (ADR-005, REQ-PO3W-001 send-block).
@@ -412,6 +412,10 @@ class PurchaseOrderService {
 	 *
 	 * @throws \RuntimeException When the PO is missing, not approved, or the chain
 	 *                           is incomplete.
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) PurchaseOrderApprovalService::isApprovedEntry()
+	 *  is a pure check on one chain entry, shared with the approval service so the
+	 *  send check and the signing read one shape (#1716).
 	 *
 	 * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
 	 */
@@ -437,9 +441,7 @@ class PurchaseOrderService {
 		}
 
 		foreach ($chain as $entry) {
-			$status = (string)($entry['status'] ?? '');
-			$signedAt = trim((string)($entry['signedAt'] ?? ''));
-			if ($status !== 'approved' || $signedAt === '') {
+			if (PurchaseOrderApprovalService::isApprovedEntry(entry: $entry) === false) {
 				throw new RuntimeException('Purchase order cannot be sent: approval chain incomplete');
 			}
 		}
@@ -602,6 +604,10 @@ class PurchaseOrderService {
 	 * @return array<string,mixed> The persisted PurchaseOrder record.
 	 *
 	 * @throws \RuntimeException When the PO is missing or the chain is incomplete.
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) PurchaseOrderApprovalService::isApprovedEntry()
+	 *  is a pure check on one chain entry, shared with the approval service so the
+	 *  send check and the signing read one shape (#1716).
 	 */
 	private function loadPurchaseOrderForTransmission(
 		string $administrationId,
@@ -628,9 +634,7 @@ class PurchaseOrderService {
 		}
 
 		foreach ($chain as $entry) {
-			$status = (string)($entry['status'] ?? '');
-			$signedAt = trim((string)($entry['signedAt'] ?? ''));
-			if ($status !== 'approved' || $signedAt === '') {
+			if (PurchaseOrderApprovalService::isApprovedEntry(entry: $entry) === false) {
 				throw new RuntimeException('Purchase order cannot be sent: approval chain incomplete');
 			}
 		}
@@ -828,9 +832,9 @@ class PurchaseOrderService {
 	/**
 	 * Project the approval-chain descriptor into the persisted PurchaseOrder shape.
 	 *
-	 * Each entry adds a status=pending stub and an empty signedAt; the controller
-	 * (or the matcher service in later slices) will set status=approved + signedAt
-	 * once the approver acts.
+	 * Each entry is written in the shape `PurchaseOrder.approvalChain` declares
+	 * and PurchaseOrderApprovalService::recordApprovalDecision() signs:
+	 * `decision: pending`, an empty `decidedAt` and `userId` (#1716).
 	 *
 	 * @param array<int,array{role:string,order:int}> $chain Chain returned by determineApprovalChain.
 	 *
@@ -842,9 +846,9 @@ class PurchaseOrderService {
 			$entries[] = [
 				'role' => $entry['role'],
 				'order' => $entry['order'],
-				'status' => 'pending',
-				'signedAt' => '',
-				'signedBy' => '',
+				'userId' => '',
+				'decision' => PurchaseOrderApprovalService::DECISION_PENDING,
+				'decidedAt' => '',
 			];
 		}
 
