@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-down-payments/tasks.md#task-2.2
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -46,7 +46,7 @@ use Throwable;
 /**
  * Down-payment endpoints.
  *
- * @spec openspec/changes/sales-down-payments/tasks.md#task-2.2
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  */
 class DownPaymentController extends Controller {
 	/**
@@ -92,7 +92,7 @@ class DownPaymentController extends Controller {
 	 *
 	 * @return JSONResponse 201 with the draft, 403 outside the caller's administrations, or 422.
 	 *
-	 * @spec openspec/changes/sales-down-payments/tasks.md#task-2.2
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
 	#[NoAdminRequired]
 	public function create(): JSONResponse {
@@ -123,7 +123,7 @@ class DownPaymentController extends Controller {
 	 *
 	 * @return JSONResponse 200 or 404.
 	 *
-	 * @spec openspec/changes/sales-down-payments/tasks.md#task-3.2
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
 	#[NoAdminRequired]
 	public function show(string $id): JSONResponse {
@@ -146,7 +146,7 @@ class DownPaymentController extends Controller {
 	 *
 	 * @return JSONResponse 200 with the invoice, 404, or 422.
 	 *
-	 * @spec openspec/changes/sales-down-payments/tasks.md#task-3.1
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
 	#[NoAdminRequired]
 	public function deduct(string $id): JSONResponse {

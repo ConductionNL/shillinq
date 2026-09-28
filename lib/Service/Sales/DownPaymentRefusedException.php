@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-down-payments/tasks.md#task-2.2
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -30,7 +30,7 @@ use DomainException;
 /**
  * Refusal with a translatable template and its parameters.
  *
- * @spec openspec/changes/sales-down-payments/tasks.md#task-2.2
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  */
 class DownPaymentRefusedException extends DomainException {
 	/**
@@ -52,7 +52,7 @@ class DownPaymentRefusedException extends DomainException {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/sales-down-payments/tasks.md#task-2.2
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
 	public function getTemplate(): string {
 		return $this->template;
@@ -64,7 +64,7 @@ class DownPaymentRefusedException extends DomainException {
 	 *
 	 * @return array<int,string>
 	 *
-	 * @spec openspec/changes/sales-down-payments/tasks.md#task-2.2
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
 	public function getParameters(): array {
 		return $this->parameters;

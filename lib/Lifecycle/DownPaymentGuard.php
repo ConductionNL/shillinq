@@ -27,7 +27,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-down-payments/tasks.md#task-3.1
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -45,7 +45,7 @@ use RuntimeException;
 /**
  * Checks and stamps the down payments a final invoice deducts.
  *
- * @spec openspec/changes/sales-down-payments/tasks.md#task-3.1
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  */
 class DownPaymentGuard implements LifecycleActionInterface {
 	/**
@@ -73,7 +73,7 @@ class DownPaymentGuard implements LifecycleActionInterface {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
 	 *
-	 * @spec openspec/changes/sales-down-payments/tasks.md#task-3.1
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
 	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
 		$step = (string)($parameters['step'] ?? '');
@@ -100,7 +100,7 @@ class DownPaymentGuard implements LifecycleActionInterface {
 	 *
 	 * @throws RuntimeException With the refusal as its message.
 	 *
-	 * @spec openspec/changes/sales-down-payments/tasks.md#task-3.1
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
 	public function requireOpenDeductions(array $invoice): void {
 		try {

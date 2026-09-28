@@ -16,7 +16,7 @@
  widget-invoice-down-payments. The server checks the administration and
  every rule; this component only decides what to show.
 
- @spec openspec/changes/sales-down-payments/tasks.md#task-3.2
+ @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 -->
 
 <template>
@@ -146,7 +146,7 @@ export default {
 	watch: {
 		objectId: {
 			immediate: true,
-			/** @spec openspec/changes/sales-down-payments/tasks.md#task-3.2 */
+			/** @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md */
 			handler() {
 				this.load()
 			},
@@ -159,7 +159,7 @@ export default {
 		/**
 		 * Read the order's position and the orders left to deduct.
 		 *
-		 * @spec openspec/changes/sales-down-payments/tasks.md#task-3.2
+		 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 		 */
 		async load() {
 			if (!this.objectId) {
@@ -188,7 +188,7 @@ export default {
 		 * Make this draft the final invoice of the order.
 		 *
 		 * @param {string} orderReference The order.
-		 * @spec openspec/changes/sales-down-payments/tasks.md#task-3.2
+		 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 		 */
 		async deduct(orderReference) {
 			this.deducting = true
@@ -214,7 +214,7 @@ export default {
 		 *
 		 * @param {number} amount The amount.
 		 * @return {string} The formatted amount.
-		 * @spec openspec/changes/sales-down-payments/tasks.md#task-3.2
+		 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 		 */
 		money(amount) {
 			return new Intl.NumberFormat('nl-NL', {

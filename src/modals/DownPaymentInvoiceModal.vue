@@ -15,7 +15,7 @@
  Accounts Receivable (src/utils/downPaymentActions.js), so it lives in its
  own file (hydra gate-13).
 
- @spec openspec/changes/sales-down-payments/tasks.md#task-3.2
+ @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 -->
 
 <template>
@@ -187,7 +187,7 @@ export default {
 		 * The administration's customers, by name.
 		 *
 		 * @return {Array<object>} Select options.
-		 * @spec openspec/changes/sales-down-payments/tasks.md#task-3.2
+		 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 		 */
 		customerOptions() {
 			return this.customers.map((customer) => ({
@@ -205,7 +205,7 @@ export default {
 		 * The administration's sales orders held in shillinq.
 		 *
 		 * @return {Array<object>} Select options.
-		 * @spec openspec/changes/sales-down-payments/tasks.md#task-3.2
+		 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 		 */
 		orderOptions() {
 			return this.orders.map((order) => ({
@@ -219,7 +219,7 @@ export default {
 		 * Whether the form holds enough to ask the server.
 		 *
 		 * @return {boolean} True when it does.
-		 * @spec openspec/changes/sales-down-payments/tasks.md#task-3.2
+		 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 		 */
 		canSubmit() {
 			const value = parseAmount(this.value)
@@ -232,7 +232,7 @@ export default {
 	/**
 	 * Load the active administration, its customers and its sales orders.
 	 *
-	 * @spec openspec/changes/sales-down-payments/tasks.md#task-3.2
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
 	async mounted() {
 		this.loading = true
@@ -278,7 +278,7 @@ export default {
 		 *
 		 * @param {string} text The typed reference.
 		 * @return {object} The option.
-		 * @spec openspec/changes/sales-down-payments/tasks.md#task-3.2
+		 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 		 */
 		typedOrder(text) {
 			return {
@@ -291,7 +291,7 @@ export default {
 		/**
 		 * Create the draft and close.
 		 *
-		 * @spec openspec/changes/sales-down-payments/tasks.md#task-3.2
+		 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 		 */
 		async submit() {
 			this.error = ''
@@ -327,7 +327,7 @@ export default {
 		/**
 		 * Close without saving.
 		 *
-		 * @spec openspec/changes/sales-down-payments/tasks.md#task-3.2
+		 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 		 */
 		close() {
 			this.$emit('close', null)

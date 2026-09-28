@@ -19,7 +19,7 @@ export const VAT_RATES = [21, 9, 0]
  *
  * @param {string|number} value The typed value.
  * @return {number} The number, or NaN.
- * @spec openspec/changes/sales-down-payments/tasks.md#task-3.2
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  */
 export function parseAmount(value) {
 	if (typeof value === 'number') {
@@ -44,7 +44,7 @@ export function parseAmount(value) {
  *   order ({value, label, shillinq}), mode ('percentage' or 'amount'), value,
  *   invoiceDate, rates ({21: '', 9: '', 0: ''}).
  * @return {object} The request body.
- * @spec openspec/changes/sales-down-payments/tasks.md#task-3.2
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  */
 export function buildRaiseRequest(form) {
 	const request = {
@@ -76,7 +76,7 @@ export function buildRaiseRequest(form) {
  *
  * @param {object} request From buildRaiseRequest().
  * @return {Promise<object>} The draft invoice.
- * @spec openspec/changes/sales-down-payments/tasks.md#task-3.2
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  */
 export async function raiseDownPayment(request) {
 	const response = await axios.post(
@@ -91,7 +91,7 @@ export async function raiseDownPayment(request) {
  *
  * @param {string} invoiceId The invoice uuid.
  * @return {Promise<object>} `{kind, orderLabel, position, openOrders, canDeduct}`.
- * @spec openspec/changes/sales-down-payments/tasks.md#task-3.2
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  */
 export async function loadDownPayments(invoiceId) {
 	const response = await axios.get(
@@ -108,7 +108,7 @@ export async function loadDownPayments(invoiceId) {
  * @param {string} invoiceId The draft invoice uuid.
  * @param {string} orderReference The order.
  * @return {Promise<object>} The invoice as saved.
- * @spec openspec/changes/sales-down-payments/tasks.md#task-3.2
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  */
 export async function deductDownPayments(invoiceId, orderReference) {
 	const response = await axios.post(
@@ -126,7 +126,7 @@ export async function deductDownPayments(invoiceId, orderReference) {
  * @param {Error} error The axios error.
  * @param {string} fallback The fallback text.
  * @return {string} The message to show.
- * @spec openspec/changes/sales-down-payments/tasks.md#task-3.2
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  */
 export function errorMessage(error, fallback) {
 	return String(error?.response?.data?.message || fallback)

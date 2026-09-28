@@ -161,7 +161,7 @@ final class ArInvoiceUblMapper {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/sales-down-payments/tasks.md#task-4.1
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
 	private function billingReferences(array $arInvoice): string {
 		$xml = '';

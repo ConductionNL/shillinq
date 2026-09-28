@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sales-down-payments/tasks.md#task-2.2
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -42,7 +42,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Raises down payments on an order and deducts them on its final invoice.
  *
- * @spec openspec/changes/sales-down-payments/tasks.md#task-2.2
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Raise, deduct, check and stamp share one set of amount rules.
  */
@@ -87,7 +87,7 @@ class DownPaymentService {
 	 *
 	 * @throws OutOfBoundsException When there is no such invoice.
 	 *
-	 * @spec openspec/changes/sales-down-payments/tasks.md#task-2.2
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
 	public function findInvoice(string $invoiceId): array {
 		$invoice = ObjectIdentifier::findOne(scoped: $this->scoped(schema: 'ARInvoice'), id: $invoiceId, fallbackProperty: 'invoiceNumber');
@@ -110,7 +110,7 @@ class DownPaymentService {
 	 *
 	 * @throws DownPaymentRefusedException When the request cannot make a down payment.
 	 *
-	 * @spec openspec/changes/sales-down-payments/tasks.md#task-2.2
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
 	public function raise(array $request): array {
 		$administrationId = trim((string)($request['administrationId'] ?? ''));
@@ -203,7 +203,7 @@ class DownPaymentService {
 	 *
 	 * @return list<array<string,mixed>>
 	 *
-	 * @spec openspec/changes/sales-down-payments/tasks.md#task-3.1
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
 	public function openDownPayments(array $invoice, string $orderReference = ''): array {
 		$ownId = (string)($invoice['id'] ?? '');
@@ -241,7 +241,7 @@ class DownPaymentService {
 	 *
 	 * @throws DownPaymentRefusedException When the invoice is not a draft or nothing is open.
 	 *
-	 * @spec openspec/changes/sales-down-payments/tasks.md#task-3.1
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
 	public function deductOnto(array $invoice, string $orderReference): array {
 		if ((string)($invoice['lifecycleState'] ?? '') !== 'draft') {
@@ -309,7 +309,7 @@ class DownPaymentService {
 	 *
 	 * @throws DownPaymentRefusedException When the invoice may not be issued.
 	 *
-	 * @spec openspec/changes/sales-down-payments/tasks.md#task-3.1
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
 	public function requireOpenDeductions(array $invoice): void {
 		$deductions = self::deductionsOf(invoice: $invoice);
@@ -350,7 +350,7 @@ class DownPaymentService {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-down-payments/tasks.md#task-3.1
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
 	public function stampDeductions(array $invoice): void {
 		foreach (array_unique(array_column(self::deductionsOf(invoice: $invoice), 'invoiceId')) as $downPaymentId) {
@@ -371,7 +371,7 @@ class DownPaymentService {
 	 *
 	 * @return list<array<string,mixed>>
 	 *
-	 * @spec openspec/changes/sales-down-payments/tasks.md#task-3.2
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
 	public function position(array $invoice): array {
 		$orderReference = (string)(($invoice['downPayment'] ?? [])['orderReference'] ?? '');

@@ -215,7 +215,7 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-down-payments/tasks.md#task-1.1
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
 	public function testADownPaymentIsBookedAsAnAdvanceNotAsRevenue(): void {
 		$byAccount = $this->postedByAccount(
@@ -239,7 +239,7 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-down-payments/tasks.md#task-1.1
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
 	public function testAFinalInvoiceBooksFullRevenueAndReleasesTheAdvance(): void {
 		$byAccount = $this->postedByAccount(

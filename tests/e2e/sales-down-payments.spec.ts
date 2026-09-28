@@ -12,7 +12,7 @@
  * DownPaymentServiceTest and MaterialiseGlTransactionActionTest against the
  * real register schemas.
  *
- * @spec openspec/changes/sales-down-payments/tasks.md#task-3.2
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  */
 
 import type { Page, Route } from '@playwright/test'

@@ -6756,18 +6756,19 @@
 			"id": "sal-down-payment",
 			"area": "sales",
 			"name": "Invoice a down payment on an order and deduct it on the final invoice.",
-			"shillinq": "no",
+			"shillinq": "yes",
 			"exact-online": "partial",
 			"moneybird": "yes",
 			"snelstart": "partial",
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
+				"state": "built",
+				"evidence": "lib/Service/Sales/DownPaymentService.php raises a type 386 down-payment invoice on an order, split over its VAT rates, and deducts issued down payments on the final invoice; lib/Lifecycle/Action/MaterialiseGlTransactionAction.php books the down payment to the advances account (default 2310) and releases it from the final invoice's deduction lines; lib/Lifecycle/DownPaymentGuard.php refuses a second deduction on ARInvoice.issue and stamps the deducted down payment; ArInvoiceUblMapper writes the billing references (shillinq#1772).",
+				"reachedOn": "Accounts Receivable /bookkeeping/accounts-receivable, header action New down-payment invoice; the Down payments panel on an invoice page",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"reachedOn": "nothing reaches it for orders; bookings have their own Deposits page (bok-deposit)",
-				"evidence": "grep over lib/ and src/ for down payment, aanbetaling and prepayment finds only the bookings deposit schema (lib/Settings/register.d/50-bookings-deposits.json:9, deposit collected at booking time) and two RGS seed accounts (lib/Settings/seeds/rgs-3.5-mkb.json:216, :549); no sales order or sales invoice path creates a down-payment invoice or deducts one on the final invoice."
+				"change": "2026-09-29-sales-down-payments",
+				"readOn": "2026-09-29"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/projectadministratie/features-en-prijzen: \"Voorschotten & uurbundels\"; fixed price projects billed in terms Note: Advances in Projectadministratie; deduction on a final order invoice is not described.",
