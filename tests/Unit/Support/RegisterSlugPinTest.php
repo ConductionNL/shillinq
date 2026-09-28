@@ -231,7 +231,7 @@ final class RegisterSlugPinTest extends TestCase {
 
 		$this->assertGreaterThan(500, count($files), 'The walker must see lib/, or the guard above cannot fail.');
 		$this->assertArrayHasKey(
-			'lib/BackgroundJob/BankfeedReconciliationJob.php',
+			'lib/Service/ReconciliationResolutionService.php',
 			$files,
 			'A file that reads a register by slug must be reachable, or the guard above reads nothing.'
 		);

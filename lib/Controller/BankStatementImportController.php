@@ -70,13 +70,6 @@ class BankStatementImportController extends Controller {
 	private const ALLOWED_FORMATS = ['camt053', 'mt940', 'csv'];
 
 	/**
-	 * Register slug all shillinq objects live in.
-	 *
-	 * @var string
-	 */
-	private const REGISTER_SLUG = 'shillinq';
-
-	/**
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request Request.
