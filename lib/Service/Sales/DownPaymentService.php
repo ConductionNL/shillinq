@@ -150,7 +150,11 @@ class DownPaymentService {
 		$invoice = [
 			'administrationId' => $administrationId,
 			'customerId' => $customerId,
-			'invoiceNumber' => $this->invoiceNumber(given: (string)($request['invoiceNumber'] ?? ''), administrationId: $administrationId, invoiceDate: $invoiceDate),
+			'invoiceNumber' => $this->invoiceNumber(
+				given: (string)($request['invoiceNumber'] ?? ''),
+				administrationId: $administrationId,
+				invoiceDate: $invoiceDate
+			),
 			'invoiceDate' => $invoiceDate,
 			'dueDate' => self::dateOr(value: $request['dueDate'] ?? null, fallback: gmdate('Y-m-d', ((int)strtotime($invoiceDate) + (14 * 86400)))),
 			'periodId' => substr($invoiceDate, 0, 7),
@@ -279,7 +283,8 @@ class DownPaymentService {
 			$references[] = ['reference' => (string)($downPayment['invoiceNumber'] ?? ''), 'issueDate' => (string)($downPayment['invoiceDate'] ?? '')];
 		}
 
-		$patch = self::reduceTotals(invoice: $invoice, deductions: array_slice($deductions, count((array)(($invoice['downPayment'] ?? [])['deductions'] ?? []))));
+		$earlier = count((array)(($invoice['downPayment'] ?? [])['deductions'] ?? []));
+		$patch = self::reduceTotals(invoice: $invoice, deductions: array_slice($deductions, $earlier));
 		$patch['invoiceLines'] = $lines;
 		$patch['precedingInvoiceReferences'] = $references;
 		$patch['downPayment'] = [

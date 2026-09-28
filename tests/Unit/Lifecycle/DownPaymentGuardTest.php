@@ -57,7 +57,10 @@ final class DownPaymentGuardTest extends TestCase {
 					[
 						'id' => 'ar-dp', 'invoiceNumber' => '2026-0412', 'customerId' => $customer, 'administrationId' => 'adm-kvl',
 						'invoiceTypeCode' => '386', 'lifecycleState' => 'paid', 'grossAmount' => 5445.0,
-						'downPayment' => ['kind' => 'down-payment', 'orderReference' => 'order-117', 'deductedOnInvoiceId' => 'ar-kitchen', 'deductedOnInvoiceNumber' => '2026-0587'],
+						'downPayment' => [
+							'kind' => 'down-payment', 'orderReference' => 'order-117',
+							'deductedOnInvoiceId' => 'ar-kitchen', 'deductedOnInvoiceNumber' => '2026-0587',
+						],
 					],
 				],
 			]
@@ -71,7 +74,10 @@ final class DownPaymentGuardTest extends TestCase {
 		$second = [
 			'id' => 'ar-second', 'invoiceNumber' => '2026-0601', 'customerId' => $customer, 'administrationId' => 'adm-kvl',
 			'lifecycleState' => 'issued', 'grossAmount' => 12705.0,
-			'downPayment' => ['kind' => 'final', 'orderReference' => 'order-117', 'deductions' => [['invoiceId' => 'ar-dp', 'invoiceNumber' => '2026-0412', 'rate' => 0.21, 'net' => 4500.0, 'vat' => 945.0]]],
+			'downPayment' => [
+				'kind' => 'final', 'orderReference' => 'order-117',
+				'deductions' => [['invoiceId' => 'ar-dp', 'invoiceNumber' => '2026-0412', 'rate' => 0.21, 'net' => 4500.0, 'vat' => 945.0]],
+			],
 		];
 
 		return [new DownPaymentGuard($service), $second];

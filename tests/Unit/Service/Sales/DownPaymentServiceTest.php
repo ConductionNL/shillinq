@@ -61,7 +61,10 @@ final class DownPaymentServiceTest extends TestCase {
 		$this->store = new InMemoryObjectServiceStub(
 			[
 				'OrderPrimitive' => [
-					['id' => 'order-117', 'orderNumber' => 'Keuken Eiland 2026-117', 'administrationId' => 'adm-kvl', 'orderType' => 'sales', 'totalAmount' => 18150.0],
+					[
+						'id' => 'order-117', 'orderNumber' => 'Keuken Eiland 2026-117', 'administrationId' => 'adm-kvl',
+						'orderType' => 'sales', 'totalAmount' => 18150.0,
+					],
 				],
 				'OrderLine' => [
 					['id' => 'ol-1', 'orderId' => 'order-117', 'description' => 'Keuken', 'lineAmount' => 15000.0, 'vatRate' => 21],
@@ -87,7 +90,10 @@ final class DownPaymentServiceTest extends TestCase {
 			'lifecycleState' => 'draft', 'invoiceTypeCode' => '380',
 			'netAmount' => 15000.0, 'vatAmount' => 3150.0, 'grossAmount' => 18150.0, 'amountDue' => 18150.0, 'lineNetTotal' => 15000.0,
 			'invoiceLines' => [
-				['lineId' => '1', 'quantity' => 1, 'unitCode' => 'C62', 'itemName' => 'Keuken Eiland', 'netPrice' => 15000.0, 'netAmount' => 15000.0, 'vatCategory' => 'S', 'vatRate' => 0.21],
+				[
+					'lineId' => '1', 'quantity' => 1, 'unitCode' => 'C62', 'itemName' => 'Keuken Eiland',
+					'netPrice' => 15000.0, 'netAmount' => 15000.0, 'vatCategory' => 'S', 'vatRate' => 0.21,
+				],
 			],
 			'vatBreakdown' => [
 				['category' => 'S', 'rate' => 21, 'taxableAmount' => 15000.0, 'taxAmount' => 3150.0],
@@ -256,9 +262,16 @@ final class DownPaymentServiceTest extends TestCase {
 		self::assertSame(12705.0, $final['grossAmount']);
 		self::assertSame(12705.0, $final['amountDue']);
 		self::assertSame('final', $final['downPayment']['kind']);
-		self::assertSame([['invoiceId' => $downPayment['id'], 'invoiceNumber' => '2026-0412', 'rate' => 0.21, 'net' => 4500.0, 'vat' => 945.0]], $final['downPayment']['deductions']);
+		self::assertSame(
+			[['invoiceId' => $downPayment['id'], 'invoiceNumber' => '2026-0412', 'rate' => 0.21, 'net' => 4500.0, 'vat' => 945.0]],
+			$final['downPayment']['deductions']
+		);
 		self::assertSame('2026-0412', $final['precedingInvoiceReferences'][0]['reference']);
-		self::assertSame([['category' => 'S', 'rate' => 21, 'taxableAmount' => 10500.0, 'taxAmount' => 2205.0]], $final['vatBreakdown'], 'BG-23 in percent, as ArInvoiceUblMapper renders it');
+		self::assertSame(
+			[['category' => 'S', 'rate' => 21, 'taxableAmount' => 10500.0, 'taxAmount' => 2205.0]],
+			$final['vatBreakdown'],
+			'BG-23 in percent, as ArInvoiceUblMapper renders it'
+		);
 		self::assertValidInvoice($final);
 
 		$stored = $this->store->setSchema('ARInvoice')->find('ar-kitchen')->getObject();

@@ -74,7 +74,8 @@ final class DownPaymentControllerTest extends TestCase {
 		$service = $this->createMock(DownPaymentService::class);
 		$service->expects(self::never())->method('raise');
 
-		$response = $this->controller($service, false, ['administrationId' => 'adm-other', 'customerId' => 'c', 'orderReference' => 'o', 'percentage' => 30])->create();
+		$params = ['administrationId' => 'adm-other', 'customerId' => 'c', 'orderReference' => 'o', 'percentage' => 30];
+		$response = $this->controller($service, false, $params)->create();
 
 		self::assertSame(403, $response->getStatus());
 
@@ -91,7 +92,8 @@ final class DownPaymentControllerTest extends TestCase {
 			->with(self::callback(static fn (array $request): bool => $request['percentage'] === 30 && $request['administrationId'] === 'adm-kvl'))
 			->willReturn(['id' => 'ar-dp', 'grossAmount' => 5445.0]);
 
-		$response = $this->controller($service, true, ['administrationId' => 'adm-kvl', 'customerId' => 'c', 'orderReference' => 'o', 'percentage' => 30])->create();
+		$params = ['administrationId' => 'adm-kvl', 'customerId' => 'c', 'orderReference' => 'o', 'percentage' => 30];
+		$response = $this->controller($service, true, $params)->create();
 
 		self::assertSame(201, $response->getStatus());
 		self::assertSame('ar-dp', $response->getData()['id']);
@@ -142,7 +144,10 @@ final class DownPaymentControllerTest extends TestCase {
 		$service->method('position')->willReturn([]);
 		$service->method('openDownPayments')->willReturn(
 			[
-				['id' => 'ar-dp', 'invoiceNumber' => '2026-0412', 'grossAmount' => 5445.0, 'lifecycleState' => 'paid', 'downPayment' => ['orderReference' => 'order-117', 'orderLabel' => 'Keuken Eiland 2026-117']],
+				[
+					'id' => 'ar-dp', 'invoiceNumber' => '2026-0412', 'grossAmount' => 5445.0, 'lifecycleState' => 'paid',
+					'downPayment' => ['orderReference' => 'order-117', 'orderLabel' => 'Keuken Eiland 2026-117'],
+				],
 			]
 		);
 

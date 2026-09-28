@@ -210,7 +210,10 @@ final class ArInvoiceUblMapperTest extends TestCase {
 	 * @spec openspec/changes/sales-down-payments/tasks.md#task-4.1
 	 */
 	public function testADownPaymentInvoiceIsTypeCode386(): void {
-		$invoice = array_merge($this->issuedInvoice(), ['invoiceTypeCode' => '386', 'downPayment' => ['kind' => 'down-payment', 'orderReference' => 'order-117']]);
+		$invoice = array_merge(
+			$this->issuedInvoice(),
+			['invoiceTypeCode' => '386', 'downPayment' => ['kind' => 'down-payment', 'orderReference' => 'order-117']]
+		);
 
 		$doc = new SimpleXMLElement((new ArInvoiceUblMapper())->toNlciusXml(arInvoice: $invoice));
 		$doc->registerXPathNamespace('cbc', 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2');
