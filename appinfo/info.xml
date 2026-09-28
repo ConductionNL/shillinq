@@ -248,6 +248,12 @@ Vrij en open source onder de EUPL-1.2-licentie.
                  imports PaymentRequest 0.5.0. Idempotent; a fresh install has
                  no such requests, so post-migration only. -->
             <step>OCA\Shillinq\Repair\BackfillPaymentRequestCustomer</step>
+            <!-- arinvoice-field-backfill-and-bt10 (REQ-RIN-011, REQ-IQD-008).
+                 Fills recurringProfileId, billingPeriod, customerReference and
+                 line glAccount on invoices saved before ARInvoice 0.16.0, where
+                 the recurring profile or the quick draft's create audit entry
+                 gives them. After InitializeSettings; never overwrites; idempotent. -->
+            <step>OCA\Shillinq\Repair\BackfillArInvoiceProvenance</step>
             <step>OCA\Shillinq\Repair\LoadCbsSeedsStep</step>
             <step>OCA\Shillinq\Repair\LoadSbrXbrlSeedsStep</step>
             <step>OCA\Shillinq\Repair\LoadDbaSeedsStep</step>
