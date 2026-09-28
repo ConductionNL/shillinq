@@ -118,6 +118,7 @@ final class ArInvoiceUblMapper {
 			$xml .= $this->element(name: 'cbc:BuyerReference', value: $buyerReference);
 		}
 
+		$xml .= $this->billingReferences(arInvoice: $arInvoice);
 		$xml .= $this->supplierParty(arInvoice: $arInvoice);
 		$xml .= $this->customerParty(arInvoice: $arInvoice);
 
@@ -150,6 +151,42 @@ final class ArInvoiceUblMapper {
 
 		return $xml;
 	}//end toNlciusXml()
+
+	/**
+	 * Render one cac:BillingReference per preceding invoice (BG-3): on a final
+	 * invoice, each down-payment invoice it deducts (sales-down-payments
+	 * REQ-SDP-006). In UBL order they follow BuyerReference and precede the seller.
+	 *
+	 * @param array<string,mixed> $arInvoice The ARInvoice record.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/sales-down-payments/tasks.md#task-4.1
+	 */
+	private function billingReferences(array $arInvoice): string {
+		$xml = '';
+		foreach ((array)($arInvoice['precedingInvoiceReferences'] ?? []) as $reference) {
+			if (is_array($reference) === false) {
+				continue;
+			}
+
+			$number = trim((string)($reference['reference'] ?? ''));
+			if ($number === '') {
+				continue;
+			}
+
+			$xml .= '<cac:BillingReference><cac:InvoiceDocumentReference>';
+			$xml .= $this->element(name: 'cbc:ID', value: $number);
+			$issueDate = trim((string)($reference['issueDate'] ?? ''));
+			if ($issueDate !== '') {
+				$xml .= $this->element(name: 'cbc:IssueDate', value: $issueDate);
+			}
+
+			$xml .= '</cac:InvoiceDocumentReference></cac:BillingReference>';
+		}
+
+		return $xml;
+	}//end billingReferences()
 
 	/**
 	 * Render the AccountingSupplierParty (seller) block.

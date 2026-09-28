@@ -21,6 +21,7 @@
 //   registered as a `kind:"page"` custom component so the manifest router
 //   still owns the URL → component mapping.
 
+import ArDownPaymentPanel from './components/ar-invoice/ArDownPaymentPanel.vue'
 // add-invoice-pdf-export-with-ubl-peppol-support (REQ-EINV-007): the Send
 // e-invoice action + delivery-status indicator on the manifest-driven
 // ARInvoiceDetail page. Resolved as the page's `actionsComponent` (ADR-036 —
@@ -507,6 +508,15 @@ export default {
 		kind: 'widget',
 		component: SpendAnalyticsPanel,
 		_note: 'Renders all four /api/analytics/spend dimensions with four distinct states (loading / unavailable / no-rows / rows) and prints no figure for a view that did not answer. No built-in widget surfaces an endpoint error as anything but "no data" (CnChartWidget discards ep.error) or a bare em dash (CnStatWidget), which would report REQ-GLS-003\'s deliberate raise as a zero total.',
+	},
+
+	// sales-down-payments (REQ-SDP-003, REQ-SDP-005): the order's down
+	// payments on ARInvoiceDetail, through the slot widget-invoice-down-payments.
+	ArDownPaymentPanel: {
+		// @custom-widget-ratchet exclude the panel reads GET /api/ar-invoices/{id}/down-payments, a lookup across the customer's other invoices by the order reference inside their downPayment group, and writes the deduction through POST /api/ar-invoices/{id}/down-payment-deductions; no declarative widget filters on a nested field or posts a server-side recompute of an invoice's lines and totals.
+		kind: 'widget',
+		component: ArDownPaymentPanel,
+		_note: "Lists the down payments of the invoice's order across the customer's other invoices and deducts them through a server-side recompute of the lines and totals. An object-table widget filters top-level fields of one schema only and cannot post; the order reference lives inside the downPayment group.",
 	},
 
 	// add-invoice-pdf-export-with-ubl-peppol-support (REQ-EINV-007).

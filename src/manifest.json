@@ -7870,7 +7870,16 @@
 				],
 				"defaultSort": "dueDate",
 				"detailRoute": "ARInvoiceDetail",
-				"documentationUrl": "https://shillinq.conduction.nl/guides/create-invoices"
+				"documentationUrl": "https://shillinq.conduction.nl/guides/create-invoices",
+				"headerActions": [
+					{
+						"id": "new-down-payment-invoice",
+						"label": "New down-payment invoice",
+						"icon": "CashPlus",
+						"handler": "openDownPaymentInvoice",
+						"description": "Invoice part of an order up front. It is booked as an advance received and taken off the final invoice."
+					}
+				]
 			}
 		},
 		{
