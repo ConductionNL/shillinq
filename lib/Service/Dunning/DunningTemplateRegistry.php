@@ -36,6 +36,11 @@ use OCP\IAppConfig;
 /**
  * Canonical default `templateId` per dunning stage, overridable via app config.
  *
+ * Its caller is DunningRunService::executeStage(), which falls back to it when
+ * neither the caller, the ladder stage nor the voluntary letter named a template.
+ *
+ * @spec openspec/changes/billing-inherited-defects/specs/bookkeeping-credit-control-dunning/spec.md (REQ-CCD-016)
+ *
  * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-28
  */
 final class DunningTemplateRegistry {
@@ -111,6 +116,26 @@ final class DunningTemplateRegistry {
 		);
 
 	}//end templateIdForStage()
+
+	/**
+	 * The template a run records: the one the caller, the ladder stage or the
+	 * voluntary letter already named in the run's params, else the default for
+	 * the run's stage (REQ-CCD-016).
+	 *
+	 * @param array<string,mixed> $params The run params (templateId, stageNr).
+	 *
+	 * @return string The templateId.
+	 *
+	 * @spec openspec/changes/billing-inherited-defects/specs/bookkeeping-credit-control-dunning/spec.md (REQ-CCD-016)
+	 */
+	public function resolve(array $params): string {
+		$named = (string)($params['templateId'] ?? '');
+		if ($named !== '') {
+			return $named;
+		}
+
+		return $this->templateIdForStage(stageNr: (int)($params['stageNr'] ?? 1));
+	}//end resolve()
 
 	/**
 	 * Resolve the tone label for a stage.
