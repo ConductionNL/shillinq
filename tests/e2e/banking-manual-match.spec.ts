@@ -11,7 +11,7 @@
  * settlement) is proven by ManualMatchServiceTest against the real register
  * schemas and declared lifecycles.
  *
- * @spec openspec/changes/banking-manual-match/tasks.md#task-4.2
+ * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  */
 
 import type { Page, Route } from '@playwright/test'

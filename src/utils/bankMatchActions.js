@@ -28,7 +28,7 @@ export const CLASSIFY_ACTIONS = {
  *
  * @param {object} row The row.
  * @return {string} The line's uuid or business key, or ''.
- * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+ * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  */
 export function lineIdOfRow(row) {
 	if (!row) {
@@ -47,7 +47,7 @@ export function lineIdOfRow(row) {
  *
  * @param {{item: object}} scope The row scope.
  * @return {Promise<unknown>|undefined} The dialog's close payload.
- * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+ * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  */
 export function openBankLineMatch(scope) {
 	const lineId = lineIdOfRow(scope?.item)
@@ -62,7 +62,7 @@ export function openBankLineMatch(scope) {
  *
  * @param {{actionId: string, selectedIds: Array<string>}} scope The selection scope.
  * @return {Promise<unknown>|undefined} The dialog's close payload.
- * @spec openspec/changes/banking-manual-match/tasks.md#task-1.1
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  */
 export function classifyUnmatched(scope) {
 	const resolutionStatus = CLASSIFY_ACTIONS[scope?.actionId]

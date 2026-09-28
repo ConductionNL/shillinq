@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/banking-manual-match/tasks.md#task-2.1
+ * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -34,7 +34,7 @@ use RuntimeException;
 /**
  * Thin seam over OpenRegister's TransitionEngine.
  *
- * @spec openspec/changes/banking-manual-match/tasks.md#task-2.1
+ * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  */
 class ObjectTransitionRunner {
 	/**
@@ -67,7 +67,7 @@ class ObjectTransitionRunner {
 	 * @throws RuntimeException When the engine is not available.
 	 * @throws \Throwable Whatever the engine throws: a refused guard, a state it cannot leave.
 	 *
-	 * @spec openspec/changes/banking-manual-match/tasks.md#task-2.1
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 	 */
 	public function run(string $objectId, string $action, array $data = []): void {
 		if ($this->container->has(self::ENGINE_CLASS) === false) {

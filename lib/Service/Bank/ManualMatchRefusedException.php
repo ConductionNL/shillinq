@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/banking-manual-match/tasks.md#task-3.1
+ * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -30,7 +30,7 @@ use DomainException;
 /**
  * Refusal with a translatable template and its parameters.
  *
- * @spec openspec/changes/banking-manual-match/tasks.md#task-3.1
+ * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  */
 class ManualMatchRefusedException extends DomainException {
 	/**
@@ -52,7 +52,7 @@ class ManualMatchRefusedException extends DomainException {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/banking-manual-match/tasks.md#task-3.1
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 	 */
 	public function getTemplate(): string {
 		return $this->template;
@@ -64,7 +64,7 @@ class ManualMatchRefusedException extends DomainException {
 	 *
 	 * @return array<int,string>
 	 *
-	 * @spec openspec/changes/banking-manual-match/tasks.md#task-3.1
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 	 */
 	public function getParameters(): array {
 		return $this->parameters;

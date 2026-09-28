@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/banking-manual-match/tasks.md#task-2.1
+ * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -43,7 +43,7 @@ use Throwable;
 /**
  * Moves the invoices of a confirmed match to paid.
  *
- * @spec openspec/changes/banking-manual-match/tasks.md#task-2.1
+ * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  */
 class InvoiceSettlementService {
 	/**
@@ -101,7 +101,7 @@ class InvoiceSettlementService {
 	 *
 	 * @return array<string,array{outcome:string,transition:?string,reason:string}> Per invoice id.
 	 *
-	 * @spec openspec/changes/banking-manual-match/tasks.md#task-2.1
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 	 */
 	public function settle(array $match): array {
 		$type = (string)($match['targetType'] ?? ($match['matchType'] ?? ''));
@@ -129,7 +129,7 @@ class InvoiceSettlementService {
 	 *
 	 * @return string|null The transition name, or null when none applies.
 	 *
-	 * @spec openspec/changes/banking-manual-match/tasks.md#task-2.1
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 	 */
 	public static function transitionFor(string $schema, string $state, bool $partial): ?string {
 		if ($schema === 'ARInvoice') {

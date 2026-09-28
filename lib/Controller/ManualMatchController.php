@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/banking-manual-match/tasks.md#task-3.3
+ * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -45,7 +45,7 @@ use Throwable;
 /**
  * Manual bank line matching endpoint.
  *
- * @spec openspec/changes/banking-manual-match/tasks.md#task-3.3
+ * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  */
 class ManualMatchController extends Controller {
 	/**
@@ -77,7 +77,7 @@ class ManualMatchController extends Controller {
 	 *
 	 * @return JSONResponse 200 with the confirmed match, 404, or 422 with a message.
 	 *
-	 * @spec openspec/changes/banking-manual-match/tasks.md#task-3.3
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 	 */
 	#[NoAdminRequired]
 	public function match(string $lineId): JSONResponse {

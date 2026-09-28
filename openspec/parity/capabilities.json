@@ -2162,17 +2162,19 @@
 			"id": "bnk-manual-match",
 			"area": "banking",
 			"name": "Resolve the bank lines that did not match, by hand.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "yes",
 			"moneybird": "yes",
 			"snelstart": "yes",
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
-				"evidence": "src/manifest.json:17146-17169 UnmatchedItems bulk actions POST /api/reconciliations/:reconId/matches/bulk-resolve -> ReconciliationResolutionService (classify as timing/pending/adjustment with reason + audit event); no screen pairs a bank line to a specific invoice or GL entry (ReconciliationMatch rows must already exist)",
-				"reachedOn": "UnmatchedItems /bookkeeping/unmatched-items (menu BankingCashflow > Unmatched Items); ReconciliationDetail /bookkeeping/reconciliations/:id",
-				"owner": "ConductionNL/shillinq"
+				"state": "built",
+				"evidence": "lib/Service/Bank/ManualMatchService.php pairs an unmatched line with open invoices or books it to a ledger account through POST /api/v1/bank-lines/{lineId}/match; lib/Listener/ReconciliationMatchSettlementListener.php settles the named invoices on the confirm transition; src/modals/BankLineMatchModal.vue opens from the Unmatched bank lines page and the Unmatched items row action (shillinq#1761).",
+				"reachedOn": "Banking > Unmatched bank lines /bookkeeping/bank-lines/unmatched, row action Match by hand; Banking > Unmatched items row action and bulk classification",
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-09-28-banking-manual-match",
+				"readOn": "2026-09-28"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Concept-purchase-purch-efcntprcspurinvc?language=en_GB: \"Matching is the process of completing your outstanding items with your bank statements. This can be done manually or automatically\"",

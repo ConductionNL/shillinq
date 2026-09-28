@@ -29,7 +29,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/banking-manual-match/tasks.md#task-3.1
+ * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -49,7 +49,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Manual bank line matching (REQ-BMM-001, REQ-BMM-002).
  *
- * @spec openspec/changes/banking-manual-match/tasks.md#task-3.1
+ * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) One service writes the match, the journal and the line.
  */
@@ -104,7 +104,7 @@ class ManualMatchService {
 	 *
 	 * @throws OutOfBoundsException When the line does not exist.
 	 *
-	 * @spec openspec/changes/banking-manual-match/tasks.md#task-3.3
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 	 */
 	public function findLine(string $lineId): array {
 		$line = ObjectIdentifier::findOne(scoped: $this->scoped(schema: 'BankStatementLine'), id: $lineId, fallbackProperty: 'lineId');
@@ -128,7 +128,7 @@ class ManualMatchService {
 	 *
 	 * @throws ManualMatchRefusedException When the line or the selection cannot be matched.
 	 *
-	 * @spec openspec/changes/banking-manual-match/tasks.md#task-3.1
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 	 */
 	public function matchInvoices(array $line, array $targetIds, string $actor): array {
 		$this->assertMatchable(line: $line);
@@ -200,7 +200,7 @@ class ManualMatchService {
 	 *
 	 * @throws ManualMatchRefusedException When the line cannot be booked.
 	 *
-	 * @spec openspec/changes/banking-manual-match/tasks.md#task-3.2
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 	 */
 	public function bookToLedger(array $line, array $ledger, string $actor): array {
 		$this->assertMatchable(line: $line);
@@ -246,7 +246,7 @@ class ManualMatchService {
 	 *
 	 * @throws ManualMatchRefusedException When a VAT rate comes without a VAT account.
 	 *
-	 * @spec openspec/changes/banking-manual-match/tasks.md#task-3.2
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 	 */
 	public function buildJournalEntry(array $line, string $bankAccount, array $ledger): array {
 		$amount = (float)($line['amount'] ?? 0);
@@ -313,7 +313,7 @@ class ManualMatchService {
 	 *
 	 * @return array<string,mixed> The ReconciliationMatch payload, state pending.
 	 *
-	 * @spec openspec/changes/banking-manual-match/tasks.md#task-3.1
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 	 */
 	public static function buildMatch(array $line, string $type, array $targetIds, float $matchedAmount, array $extra = []): array {
 		$lineUuid = (string)($line['id'] ?? '');
