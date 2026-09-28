@@ -5548,7 +5548,9 @@ OC.L10N.register(
         "VAT deducted at this rate.": "Btw afgetrokken tegen dit tarief.",
         "VAT rate as a fraction, 0.21 for 21 percent.": "Btw-tarief als fractie, 0,21 voor 21 procent.",
         "VAT rate as a fraction.": "Btw-tarief als fractie.",
-        "Down payment for an invoice raised up front on an order, final for the invoice that deducts them.": "Down payment voor een factuur die vooraf op een order wordt gemaakt, final voor de factuur die ze aftrekt."
+        "Down payment for an invoice raised up front on an order, final for the invoice that deducts them.": "Down payment voor een factuur die vooraf op een order wordt gemaakt, final voor de factuur die ze aftrekt.",
+        "Invoice lines": "Factuurregels",
+        "A list of invoice lines entries.": "Een lijst met factuurregels."
     },
     "nplurals=2; plural=(n != 1);"
 )

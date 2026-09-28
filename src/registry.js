@@ -516,6 +516,7 @@ export default {
 		// @custom-widget-ratchet exclude the panel reads GET /api/ar-invoices/{id}/down-payments, a lookup across the customer's other invoices by the order reference inside their downPayment group, and writes the deduction through POST /api/ar-invoices/{id}/down-payment-deductions; no declarative widget filters on a nested field or posts a server-side recompute of an invoice's lines and totals.
 		kind: 'widget',
 		component: ArDownPaymentPanel,
+		_note: "Lists the down payments of the invoice's order across the customer's other invoices and deducts them through a server-side recompute of the lines and totals. An object-table widget filters top-level fields of one schema only and cannot post; the order reference lives inside the downPayment group.",
 	},
 
 	// add-invoice-pdf-export-with-ubl-peppol-support (REQ-EINV-007).

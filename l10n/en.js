@@ -3306,7 +3306,9 @@ OC.L10N.register(
         "VAT deducted at this rate.": "VAT deducted at this rate.",
         "VAT rate as a fraction, 0.21 for 21 percent.": "VAT rate as a fraction, 0.21 for 21 percent.",
         "VAT rate as a fraction.": "VAT rate as a fraction.",
-        "Down payment for an invoice raised up front on an order, final for the invoice that deducts them.": "Down payment for an invoice raised up front on an order, final for the invoice that deducts them."
+        "Down payment for an invoice raised up front on an order, final for the invoice that deducts them.": "Down payment for an invoice raised up front on an order, final for the invoice that deducts them.",
+        "Invoice lines": "Invoice lines",
+        "A list of invoice lines entries.": "A list of invoice lines entries."
     },
     "nplurals=2; plural=(n != 1);"
 )

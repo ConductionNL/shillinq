@@ -97,6 +97,8 @@
 					},
 					"invoiceLines": {
 						"type": "array",
+						"title": "Invoice lines",
+						"description": "A list of invoice lines entries.",
 						"items": {
 							"type": "object",
 							"properties": {
