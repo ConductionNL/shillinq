@@ -117,10 +117,12 @@ appinfo/info.xml
 
 ## Seed Data
 
-`PaymentRequest` gains one property. The seeded requests in
-`ar-invoice-payment-links.json` are invoice-backed and stay without it. Any seeded
-request without an invoice that names a debtor customer gets `customerId`; the
-seed checker (gate 101) and the property checker (gate 108) run on the fragment.
+`PaymentRequest` gains one property. Every seeded request (the three in
+`ar-invoice-payment-links.json`, the contribution one in
+`school-contributions.json`) is invoice-backed, so none carries it, which
+`ArPaymentLinksFragmentTest` asserts. No new seed: the seeded customers use
+customer codes, not the uuids `customerId` is declared as. The seed checker
+(gate 101) and the property checker (gate 108) run on the fragment.
 
 ## Risks / Trade-offs
 

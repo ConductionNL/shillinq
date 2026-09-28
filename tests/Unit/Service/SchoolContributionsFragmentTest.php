@@ -25,7 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Verifies the ARInvoice contribution group, the PaymentRequest 0.4.0 fields,
+ * Verifies the ARInvoice contribution group, the PaymentRequest 0.5.0 fields,
  * and that the merged ARInvoice version is the one this fragment sets.
  */
 final class SchoolContributionsFragmentTest extends TestCase {
@@ -205,7 +205,7 @@ final class SchoolContributionsFragmentTest extends TestCase {
 	}//end testADeclinedContributionIsAClosedInvoice()
 
 	/**
-	 * PaymentRequest 0.4.0 carries the reference, the child and the settled edge.
+	 * PaymentRequest 0.5.0 carries the reference, the child and the settled edge.
 	 *
 	 * @return void
 	 */
@@ -213,7 +213,7 @@ final class SchoolContributionsFragmentTest extends TestCase {
 		$schema = $this->fragment('ar-invoice-payment-links.json')['components']['schemas']['PaymentRequest'];
 		$properties = $schema['properties'];
 
-		self::assertSame('0.4.0', $schema['version']);
+		self::assertSame('0.5.0', $schema['version']);
 		foreach (['beneficiary', 'voluntary', 'raiseBatchId', 'settledAt', 'settledVia'] as $property) {
 			self::assertArrayHasKey($property, $properties, $property . ' is missing from PaymentRequest');
 		}

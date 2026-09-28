@@ -44,8 +44,8 @@ Stacked on `voluntary-contribution-reminder` (#1724). No Nextcloud migration cla
 - **files**: `lib/Settings/register.d/ar-invoice-payment-links.json`, `lib/Service/PaymentRequestPortalScope.php`, `lib/Integration/PaymentRequestLeafProvider.php`, `lib/Service/LegesIntakeStepService.php`, `lib/Repair/BackfillPaymentRequestCustomer.php`, `appinfo/info.xml`, tests for each
 - **acceptance_criteria**:
   - GIVEN a request without an invoice and a debtor customer WHEN raised or back-filled THEN it carries customerId; an invoice-backed one does not; a second backfill saves nothing
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 6: The portal lists and pays requests without an invoice
 - **spec_ref**: `openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md#requirement-a-request-without-an-invoice-is-listed-and-paid-in-the-portal-req-sppi-008`

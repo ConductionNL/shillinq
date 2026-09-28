@@ -241,6 +241,13 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Shillinq\Repair\BackfillGlLineFiscalYear</step>
             <step>OCA\Shillinq\Repair\BackfillFiscalPeriods</step>
             <step>OCA\Shillinq\Repair\PeriodCloseBackfill</step>
+            <!-- arinvoice-lines-and-portal-amounts (REQ-SPPI-008). A payment
+                 request without an invoice carries its debtor's customer in
+                 customerId so the customer portal lists it. Stamps requests
+                 raised before that existed; after InitializeSettings, which
+                 imports PaymentRequest 0.5.0. Idempotent; a fresh install has
+                 no such requests, so post-migration only. -->
+            <step>OCA\Shillinq\Repair\BackfillPaymentRequestCustomer</step>
             <step>OCA\Shillinq\Repair\LoadCbsSeedsStep</step>
             <step>OCA\Shillinq\Repair\LoadSbrXbrlSeedsStep</step>
             <step>OCA\Shillinq\Repair\LoadDbaSeedsStep</step>
