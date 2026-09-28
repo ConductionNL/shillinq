@@ -1029,7 +1029,7 @@
 			"odoo": "yes",
 			"built": {
 				"state": "specified",
-				"evidence": "Send e-invoice button (src/components/ar-invoice/arEInvoiceActions.js -> /api/ar-invoices/{invoiceNumber}/send-einvoice) runs lib/Service/EInvoice/EInvoiceService.php: UBL via ArInvoiceUblMapper, local port LogPeppolTransmissionAdapter (log-only), then IEventDispatcher::dispatch('nl.conduction.peppol.outbound.requested') at :270. integriq's PeppolOutboundConsumer (integriq lib/AppInfo/Application.php:268) listens only to OpenRegister ObjectCreatedEvent for an object in register `integriq` schema event (integriq lib/Service/PeppolTransmissionService.php:60 REGISTER = 'integriq'), so the named NC event shillinq dispatches never reaches it EInvoiceService::storeArtefact() (:309) discards the PDF and returns a placeholder docudesk://file/<hash>; integriq's consumer compares register and schema slugs where OpenRegister stamps numeric ids, which needs a live check.",
+				"evidence": "Send e-invoice button (src/components/ar-invoice/arEInvoiceActions.js -> /api/ar-invoices/{invoiceNumber}/send-einvoice) runs lib/Service/EInvoice/EInvoiceService.php: UBL via ArInvoiceUblMapper, local port LogPeppolTransmissionAdapter (log-only), then IEventDispatcher::dispatch('nl.conduction.peppol.outbound.requested') at :270. integriq's PeppolOutboundConsumer (integriq lib/AppInfo/Application.php:268) listens only to OpenRegister ObjectCreatedEvent for an object in register `integriq` schema event (integriq lib/Service/PeppolTransmissionService.php:60 REGISTER = 'integriq'), so the named NC event shillinq dispatches never reaches it EInvoiceService::storeArtefact() (:309) discards the PDF and returns a placeholder docudesk://file/<hash>; integriq's consumer compares register and schema slugs where OpenRegister stamps numeric ids, which needs a live check. Corrections round 8 (2026-09-28), integriq#1222 (comment 5860646492): the consumer no longer lets any register through, it rejects every event, because integriq lib/Service/PeppolOutboundConsumer.php:112-120 at 966d645 compares getRegister() and getSchema() with the slugs integriq and event, while OpenRegister now declares both as real methods (lib/Db/ObjectEntity.php:1181 and :1190) and stores numeric ids (lib/Service/Object/SaveObject.php:3887-3888) at 555af72; shillinq still dispatches the named event at lib/Service/EInvoice/EInvoiceService.php:270 at a165206.",
 				"reachedOn": "ARInvoiceDetail /bookkeeping/accounts-receivable/:id header action AREInvoiceActions (via menu Sales > Accounts Receivable)",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-27"
@@ -1046,7 +1046,7 @@
 			"feature": "einvoicing-ubl-peppol",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "The UBL is built and the invoice goes to 'queued', but the hand-off to integriq uses a different event channel than integriq listens on, so nothing is transmitted. Specified 2026-09-27 in openspec/changes/sales-einvoice-exchange (OpenSpec pass). Corrected 2026-09-27 (OpenSpec pass, code read of batch 2): integriq registration line is :268, and the artefact store is a placeholder."
+			"note": "The UBL is built and the invoice goes to 'queued', but the hand-off to integriq uses a different event channel than integriq listens on, so nothing is transmitted. Specified 2026-09-27 in openspec/changes/sales-einvoice-exchange (OpenSpec pass). Corrected 2026-09-27 (OpenSpec pass, code read of batch 2): integriq registration line is :268, and the artefact store is a placeholder. Corrections round 8 (2026-09-28): integriq's Peppol consumer now refuses every outbound request, its own included, because it compares slugs with numeric ids, so the live check the evidence asked for is settled, integriq#1222; rating kept at partial because the UBL is still built and the invoice queued, and nothing is transmitted."
 		},
 		{
 			"id": "sal-customer-language",
@@ -1898,7 +1898,7 @@
 			"odoo": "yes",
 			"built": {
 				"state": "built",
-				"evidence": "PurchaseOrderService::determineApprovalChain (PurchaseOrderController.php:184, called from PurchaseOrderForm.vue:337) materialises an amount-threshold chain and PurchaseOrderDetail.vue:223 blocks sending until every approver signs; the decision endpoint /api/purchase-orders/{id}/approval-decision (routes.php:365, PurchaseOrderApprovalService::recordApprovalDecision) is not called anywhere in src/ (absent from _lane/frontend-api-paths.txt)",
+				"evidence": "PurchaseOrderService::determineApprovalChain (PurchaseOrderController.php:184, called from PurchaseOrderForm.vue:337) materialises an amount-threshold chain and PurchaseOrderDetail.vue:223 blocks sending until every approver signs; the decision endpoint /api/purchase-orders/{id}/approval-decision (routes.php:365, PurchaseOrderApprovalService::recordApprovalDecision) is not called anywhere in src/ (absent from _lane/frontend-api-paths.txt) Corrections round 8 (2026-09-28), shillinq#1716: even a call to the decision endpoint cannot complete approval, because lib/Service/PurchaseOrderService.php:839-852 writes chain entries with status pending, lib/Service/PurchaseOrderApprovalService.php:217 skips every entry whose decision is not pending and :237 then throws Approval chain is fully signed, and the send checks at lib/Service/PurchaseOrderService.php:436-443 and :627-634 wait for status approved and a signedAt that nothing writes, at a165206.",
 				"reachedOn": "PurchaseOrders /inkoop/purchase-orders (menu Purchasing > Purchase Orders) shows the chain; nothing reaches the approve action: no button calls approval-decision",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -1914,7 +1914,7 @@
 			"feature": "purchase-order",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Thresholds route the PO, but an approver has no screen to sign, so a chained PO can never be sent."
+			"note": "Thresholds route the PO, but an approver has no screen to sign, so a chained PO can never be sent. Corrections round 8 (2026-09-28): approval cannot complete even once a screen calls the decision endpoint, since the chain writes status and the decision code reads decision, shillinq#1716; rating kept because the amount thresholds still build the approval chain, the half that partial records."
 		},
 		{
 			"id": "pur-spend-analysis",
