@@ -14,7 +14,7 @@
  Opened with spawnDialog from the "Match by hand" row actions
  (src/utils/bankMatchActions.js), so it lives in its own file (hydra gate-13).
 
- @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+ @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 -->
 
 <template>
@@ -198,7 +198,7 @@ export default {
 		/**
 		 * Whether the line brings money in.
 		 *
-		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 		 */
 		isCredit() {
 			return Number(this.line?.amount ?? 0) >= 0
@@ -207,7 +207,7 @@ export default {
 		/**
 		 * One line describing the bank line.
 		 *
-		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 		 */
 		lineSummary() {
 			if (!this.line) {
@@ -226,7 +226,7 @@ export default {
 		/**
 		 * Open invoices matching the search, exact amounts first.
 		 *
-		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 		 */
 		candidates() {
 			const lineAmount = Math.abs(Number(this.line?.amount ?? 0))
@@ -249,7 +249,7 @@ export default {
 		/**
 		 * Sum of the selected invoices.
 		 *
-		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 		 */
 		selectedTotal() {
 			return this.invoices
@@ -260,7 +260,7 @@ export default {
 		/**
 		 * Ledger accounts as select options.
 		 *
-		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 		 */
 		accountOptions() {
 			return this.accounts.map((account) => ({
@@ -272,7 +272,7 @@ export default {
 		/**
 		 * The VAT rates on offer.
 		 *
-		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 		 */
 		vatOptions() {
 			return [0, 9, 21].map((rate) => ({ value: rate, label: `${rate}%` }))
@@ -281,7 +281,7 @@ export default {
 		/**
 		 * Whether the current tab has what the match needs.
 		 *
-		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 		 */
 		canConfirm() {
 			if (!this.line) {
@@ -300,7 +300,7 @@ export default {
 	/**
 	 * Load the line, then its candidate invoices and accounts.
 	 *
-	 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 	 */
 	async mounted() {
 		await this.loadLine()
@@ -317,7 +317,7 @@ export default {
 		 *
 		 * @param {number|string} amount The amount.
 		 * @return {string} The formatted amount.
-		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 		 */
 		money(amount) {
 			return `EUR ${Math.abs(Number(amount || 0)).toFixed(2)}`
@@ -327,7 +327,7 @@ export default {
 		 * Select or deselect one invoice.
 		 *
 		 * @param {string} id The invoice id.
-		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 		 */
 		toggle(id) {
 			this.selected = this.selected.includes(id)
@@ -338,7 +338,7 @@ export default {
 		/**
 		 * Read the line by uuid, falling back to its lineId.
 		 *
-		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 		 */
 		async loadLine() {
 			const base = `/apps/openregister/api/objects/${REGISTER_SLUG}/BankStatementLine`
@@ -365,7 +365,7 @@ export default {
 		/**
 		 * Read the open invoices of the line administration.
 		 *
-		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 		 */
 		async loadInvoices() {
 			const schema = this.isCredit ? 'ARInvoice' : 'APTransaction'
@@ -403,7 +403,7 @@ export default {
 		/**
 		 * Read the ledger accounts of the line administration.
 		 *
-		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 		 */
 		async loadAccounts() {
 			const response = await axios.get(
@@ -423,7 +423,7 @@ export default {
 		/**
 		 * Post the selection or the ledger booking and report the answer.
 		 *
-		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 		 */
 		async confirm() {
 			this.submitting = true
@@ -470,7 +470,7 @@ export default {
 		/**
 		 * Close without matching.
 		 *
-		 * @spec openspec/changes/banking-manual-match/tasks.md#task-4.1
+		 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 		 */
 		close() {
 			this.$emit('close', null)

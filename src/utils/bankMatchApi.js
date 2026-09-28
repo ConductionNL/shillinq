@@ -19,7 +19,7 @@ const REGISTER_SLUG = 'shillinq'
  * @param {string} resolutionStatus `timing`, `pending` or `adjustment`.
  * @param {string} resolutionReason The shared reason.
  * @return {Promise<{applied: number, failed: number}>} Totals over all groups.
- * @spec openspec/changes/banking-manual-match/tasks.md#task-1.1
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  */
 export async function classifyUnmatchedItems(
 	matchIds,

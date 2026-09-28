@@ -13,7 +13,7 @@
 
  Opened with spawnDialog from src/utils/bankMatchActions.js (hydra gate-13).
 
- @spec openspec/changes/banking-manual-match/tasks.md#task-1.1
+ @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 -->
 
 <template>
@@ -98,7 +98,7 @@ export default {
 		/**
 		 * The dialog title for the chosen classification.
 		 *
-		 * @spec openspec/changes/banking-manual-match/tasks.md#task-1.1
+		 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 		 */
 		title() {
 			return (
@@ -117,7 +117,7 @@ export default {
 		/**
 		 * Classify the selection with the reason and report the totals.
 		 *
-		 * @spec openspec/changes/banking-manual-match/tasks.md#task-1.1
+		 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 		 */
 		async confirm() {
 			this.submitting = true
@@ -160,7 +160,7 @@ export default {
 		/**
 		 * Close without classifying.
 		 *
-		 * @spec openspec/changes/banking-manual-match/tasks.md#task-1.1
+		 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 		 */
 		close() {
 			this.$emit('close', null)

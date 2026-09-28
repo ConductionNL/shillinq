@@ -11,7 +11,7 @@
  * the manifest, the handler map in main.js, the dialogs' URLs and
  * appinfo/routes.php to each other.
  *
- * @spec openspec/changes/banking-manual-match/tasks.md#task-1.1
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  */
 
 import fs from 'fs'
