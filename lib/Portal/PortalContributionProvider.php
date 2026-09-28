@@ -379,7 +379,9 @@ class PortalContributionProvider {
 					],
 					'label' => 'Pay my invoices',
 					'listable' => true,
-					'rowAction' => 'pay',
+					// No row action: pay forwards the row id as invoiceId, and a
+					// row here is a payment request. Its invoice is paid from
+					// salesInvoices (REQ-SPPI-009).
 					'fields' => [
 						'invoiceReference',
 						'amount',
@@ -514,6 +516,11 @@ class PortalContributionProvider {
 			// both together if/when the AR surface moves to 'substantial' (Wave 2
 			// note above).
 			'actions' => [
+				// The rowField and rowWhen keys make pay a per-row action in
+				// portaliq (#805): the portal forwards the proven row id as invoiceId,
+				// only for a row whose lifecycleState is one the receiver
+				// accepts (PortalPaymentSessionService::PAYABLE_STATES). An
+				// ARInvoice row has no `state` (REQ-SPPI-009).
 				[
 					'id' => 'pay',
 					'label' => 'Pay now',
@@ -521,6 +528,11 @@ class PortalContributionProvider {
 					'endpoint' => '/apps/shillinq/api/portal/payments/initiate',
 					'method' => 'POST',
 					'minTrust' => 'low',
+					'rowField' => 'invoiceId',
+					'rowWhen' => [
+						'field' => 'lifecycleState',
+						'in' => ['issued', 'partially-paid', 'overdue'],
+					],
 				],
 				// The row action of requestPayments: portaliq forwards the
 				// proven row id under rowField, only while the request is
@@ -560,6 +572,7 @@ class PortalContributionProvider {
 	 *
 	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-010)
 	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-013)
+	 * @spec openspec/changes/portal-pay-row-action-keys/specs/portal-payment-initiation/spec.md (REQ-SPPI-009)
 	 */
 	private function parentManifest(): array {
 		$manifest = $this->customerManifest();
@@ -610,6 +623,9 @@ class PortalContributionProvider {
 		if ($collection['id'] === 'salesInvoices') {
 			$extra = 'invoiceNote';
 			$collection['label'] = 'My contributions';
+			// Portaliq shows this field as a notice on the card and in the
+			// confirm step: the voluntary sentence (portaliq #805, REQ-SPPI-009).
+			$collection['noticeField'] = 'invoiceNote';
 		}
 
 		// The customer collections name ARInvoice's declared fields, so a
