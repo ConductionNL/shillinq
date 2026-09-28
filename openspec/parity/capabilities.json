@@ -2125,7 +2125,7 @@
 			"feature": "bank-feed",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "No working pull of bank transactions exists in this tree."
+			"note": "No working pull of bank transactions exists in this tree. corrections round 9 (2026-09-28): integriq's archived openspec/changes/archive/2026-07-12-psd2-ais-bank-feed-connector carries the PSD2 half (integriq gap-decisions.json records bnk-psd2 as existing): at integriq development 93426b290f, lib/Controller/Psd2Controller.php runs the consent flow and lib/Service/BankfeedSyncService.php:498-510 emits nl.conduction.bankfeed.transactions.synced with a batchUri. The rating stays no, because at c92d70222 nothing in shillinq listens for that event (git grep in lib, src and appinfo finds none); that listener is shillinq's open openspec/changes/banking-connected-accounts (0 of 9 tasks)."
 		},
 		{
 			"id": "bnk-file-import",
@@ -2848,7 +2848,7 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "specified",
+				"state": "none",
 				"evidence": "lib/Settings/register.d/bookkeeping-investeringsaftrek.json and seeds lib/Settings/seeds/investeringsaftrek-*-2026.json exist; no manifest page and no service reads them; the RVO adapter is log-only (lib/Service/External/RvO/LogRvOAanvraagAdapter.php)",
 				"reachedOn": "nothing reaches it: no page in src/manifest.json or src/manifest.d",
 				"owner": "ConductionNL/shillinq"
@@ -2864,7 +2864,8 @@
 			"providerHow": "read-from-code",
 			"feature": "investment-deduction",
 			"featureConfidence": "medium",
-			"source": "own-code"
+			"source": "own-code",
+			"note": "corrections round 9 (2026-09-28): no change carries this row at c92d70222, so the state is none. The archived 2026-06-14-bookkeeping-investeringsaftrek (34 of 34 tasks ticked) and 2026-06-14-add-shillinq-investeringsaftrek shipped the register fragment, the 2026 seeds, lib/Guard/KiaSchalenLookup.php and lib/Guard/InvesteringsaftrekEligibilityGuard.php, but nothing calls either guard and no page shows a deduction, so they shipped without the capability; no open change and no gap-decisions entry covers it."
 		},
 		{
 			"id": "tax-deadline-calendar",
@@ -3026,7 +3027,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
+				"state": "none",
 				"evidence": "CashFlowStatement schema is declared (lib/Settings/register.d/bookkeeping-titel-9-jaarrekening.json) but no page uses it (grep src finds it only in audit-trail objectTypes lists), lib/Reporting/ReportCatalogue.php has no cash-flow report, and AnnualAccountsReportGenerator.php has no kasstroom section. CashflowExportService/CashflowPdfRenderer export the cash FORECAST, not a statement.",
 				"reachedOn": "nothing reaches it: no page or report card for a cash flow statement",
 				"owner": "ConductionNL/shillinq"
@@ -3042,7 +3043,8 @@
 			"providerHow": "read-from-code",
 			"feature": "financial-statements",
 			"featureConfidence": "medium",
-			"source": "competitor"
+			"source": "competitor",
+			"note": "corrections round 9 (2026-09-28): no change carries this row at c92d70222, so the state is none. The open openspec/changes/reporting-financial-statements puts a cash flow statement out of scope (proposal.md:71), and the archived 2026-06-14-bookkeeping-titel-9-jaarrekening declared the CashFlowStatement schema but marks its generation task DEFERRED (tasks.md:81-83), so it shipped without the capability."
 		},
 		{
 			"id": "rep-trial-balance",
