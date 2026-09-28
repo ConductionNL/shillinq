@@ -84,18 +84,20 @@ class JournalEntryGuard {
 	 * the JournalEntry object alone: the latter is what
 	 * RegisterRequiresGuardAdapter passes on the transition (#1103).
 	 *
-	 * @param string|array<string,mixed> $journalEntryOrId The JournalEntry.id, or the JournalEntry being posted.
+	 * The first parameter keeps its old name, `journalEntryId`, so callers
+	 * that pass it by name keep working.
+	 *
+	 * @param string|array<string,mixed> $journalEntryId The JournalEntry.id, or the JournalEntry being posted.
 	 * @param array<string,mixed>|null $object The JournalEntry object being transitioned.
 	 *
 	 * @return bool True when the journal entry's lines balance and it may post.
 	 *
 	 * @spec openspec/specs/bookkeeping-journal-entries/spec.md
 	 */
-	public function canPost(string|array $journalEntryOrId, ?array $object = null): bool {
-		$journalEntryId = $journalEntryOrId;
-		if (is_array($journalEntryOrId) === true) {
-			$object = $journalEntryOrId;
-			$journalEntryId = (string)($journalEntryOrId['id'] ?? ($journalEntryOrId['@self']['id'] ?? ''));
+	public function canPost(string|array $journalEntryId, ?array $object = null): bool {
+		if (is_array($journalEntryId) === true) {
+			$object = $journalEntryId;
+			$journalEntryId = (string)($journalEntryId['id'] ?? ($journalEntryId['@self']['id'] ?? ''));
 		}
 
 		try {
