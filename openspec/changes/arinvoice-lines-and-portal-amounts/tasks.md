@@ -12,8 +12,8 @@ Stacked on `voluntary-contribution-reminder` (#1724). No Nextcloud migration cla
 - **files**: `src/modals/invoiceQuickDraft.js`, `tests/vitest/invoiceQuickDraft.spec.js`
 - **acceptance_criteria**:
   - GIVEN a real and an empty draft line WHEN the payload is built THEN invoiceLines holds one EN 16931 line and there is no lines key
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 2: The recurring generator writes invoiceLines
 - **spec_ref**: `openspec/changes/arinvoice-lines-and-portal-amounts/specs/recurring-invoicing/spec.md#requirement-req-rin-009-a-generated-invoice-shall-carry-its-lines-as-invoicelines`
