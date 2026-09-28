@@ -93,6 +93,22 @@ class PeppolDeliveryStatusListener implements IEventListener {
 	public const NOTIFICATION_SUBJECT_REJECTED = 'einvoice_delivery_rejected';
 
 	/**
+	 * The AdministrationMembership roles told about a rejected e-invoice (#1754).
+	 *
+	 * The membership schema has no `ar-controller` role, so looking that up
+	 * found nobody. These are the roles of that enum that own the receivables:
+	 * `debiteurenadmin` runs them, `boekhouder` keeps the books they post to,
+	 * `controller` and `eigenaar` answer for the administration. The last two
+	 * also mean a small administration, which often has only an owner, still
+	 * hears about the rejection. Read-only (`inkijker`, `accountant_extern`)
+	 * and other-ledger roles (`crediteurenadmin`, `salarisadministrateur`)
+	 * are not told.
+	 *
+	 * @var array<int,string>
+	 */
+	public const RECEIVABLES_ROLES = ['debiteurenadmin', 'boekhouder', 'controller', 'eigenaar'];
+
+	/**
 	 * Declared delivery sub-lifecycle transitions (REQ-AR-011), keyed
 	 * `"<from>|<to>"`. Only these pairs are applied; anything else is logged
 	 * and skipped (fail-soft, never corrupts state).
@@ -294,8 +310,9 @@ class PeppolDeliveryStatusListener implements IEventListener {
 	}//end findByIdOrInvoiceNumber()
 
 	/**
-	 * Notify every `ar-controller` in the invoice's administration that the
-	 * e-invoice was rejected (REQ-EINV-005 — surfaced, never silent).
+	 * Notify the members of the invoice's administration who own its
+	 * receivables that the e-invoice was rejected (REQ-EINV-005, surfaced,
+	 * never silent). See {@see self::RECEIVABLES_ROLES} for who that is.
 	 *
 	 * @param array<string,mixed> $invoice Updated ARInvoice record.
 	 * @param string $detail Rejection detail from the event.
@@ -311,17 +328,20 @@ class PeppolDeliveryStatusListener implements IEventListener {
 
 		$memberships = $this->findAll(
 			schema: 'AdministrationMembership',
-			filters: [
-				'administrationId' => $administrationId,
-				'role' => 'ar-controller',
-			]
+			filters: ['administrationId' => $administrationId]
 		);
 
+		$notified = [];
 		foreach ($memberships as $membership) {
 			$userId = trim((string)($membership['userId'] ?? ''));
-			if ($userId === '') {
+			if ($userId === ''
+				|| isset($notified[$userId]) === true
+				|| in_array((string)($membership['role'] ?? ''), self::RECEIVABLES_ROLES, true) === false
+			) {
 				continue;
 			}
+
+			$notified[$userId] = true;
 
 			try {
 				$notification = $this->notificationManager->createNotification();
@@ -396,10 +416,14 @@ class PeppolDeliveryStatusListener implements IEventListener {
 			return [];
 		}
 
+		// OpenRegister's findAll() answers ObjectEntity instances, not arrays
+		// (RenderObject::renderEntities()). Keeping only arrays dropped every
+		// row a live instance returned (#1754).
 		$result = [];
 		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
+			$record = ObjectIdentifier::recordWithId(candidate: $row);
+			if ($record !== null) {
+				$result[] = $record;
 			}
 		}
 
