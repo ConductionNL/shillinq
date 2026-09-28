@@ -192,6 +192,75 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 	}//end testAnIssuedSalesInvoiceBooksReceivablesRevenueAndVat()
 
 	/**
+	 * Post an invoice and group its GL lines by account.
+	 *
+	 * @param array<string,mixed> $invoice The ARInvoice.
+	 *
+	 * @return array<string,list<array{0: string, 1: float}>>
+	 */
+	private function postedByAccount(array $invoice): array {
+		$this->action()->execute($invoice, [], ['sourceSchema' => 'ARInvoice'], MaterialiseGlTransactionAction::class);
+
+		$byAccount = [];
+		foreach ($this->store->savedOf('GLLine') as $line) {
+			$byAccount[$line['accountNumber']][] = [$line['side'], $line['amount']];
+		}
+
+		return $byAccount;
+	}//end postedByAccount()
+
+	/**
+	 * The spec scenario of REQ-SDP-002: the down payment of EUR 5,445 credits
+	 * 4,500 to 2310 and 945 to VAT, and nothing to revenue.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-down-payments/tasks.md#task-1.1
+	 */
+	public function testADownPaymentIsBookedAsAnAdvanceNotAsRevenue(): void {
+		$byAccount = $this->postedByAccount(
+			[
+				'id' => 'ar-dp', 'invoiceNumber' => '2026-0412', 'invoiceDate' => '2026-06-01', 'administrationId' => 'adm-kvl',
+				'grossAmount' => 5445.0, 'netAmount' => 4500.0, 'vatAmount' => 945.0, 'invoiceTypeCode' => '386',
+				'invoiceLines' => [['itemName' => 'Down payment on order Keuken Eiland 2026-117', 'netAmount' => 4500.0, 'vatRate' => 0.21]],
+				'downPayment' => ['kind' => 'down-payment', 'orderReference' => 'order-117'],
+			]
+		);
+
+		self::assertSame([['debit', 5445.0]], $byAccount['1100'], 'receivables');
+		self::assertSame([['credit', 4500.0]], $byAccount['2310'], 'advances received');
+		self::assertSame([['credit', 945.0]], $byAccount['2110'], 'output VAT');
+		self::assertArrayNotHasKey('8000', $byAccount, 'nothing on revenue');
+	}//end testADownPaymentIsBookedAsAnAdvanceNotAsRevenue()
+
+	/**
+	 * REQ-SDP-003: the final invoice books the full revenue, and the deduction
+	 * line debits the advances account.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-down-payments/tasks.md#task-1.1
+	 */
+	public function testAFinalInvoiceBooksFullRevenueAndReleasesTheAdvance(): void {
+		$byAccount = $this->postedByAccount(
+			[
+				'id' => 'ar-kitchen', 'invoiceNumber' => '2026-0587', 'invoiceDate' => '2026-11-02', 'administrationId' => 'adm-kvl',
+				'grossAmount' => 12705.0, 'netAmount' => 10500.0, 'vatAmount' => 2205.0,
+				'invoiceLines' => [
+					['itemName' => 'Keuken Eiland', 'netAmount' => 15000.0, 'vatRate' => 0.21],
+					['itemName' => 'Down payment 2026-0412 deducted', 'netAmount' => -4500.0, 'vatRate' => 0.21, 'downPaymentInvoiceId' => 'ar-dp'],
+				],
+				'downPayment' => ['kind' => 'final', 'orderReference' => 'order-117'],
+			]
+		);
+
+		self::assertSame([['debit', 12705.0]], $byAccount['1100'], 'receivables: the amount due');
+		self::assertSame([['credit', 15000.0]], $byAccount['8000'], 'the full revenue');
+		self::assertSame([['debit', 4500.0]], $byAccount['2310'], 'the advance released');
+		self::assertSame([['credit', 2205.0]], $byAccount['2110'], 'VAT: the order VAT less what the down payment charged');
+	}//end testAFinalInvoiceBooksFullRevenueAndReleasesTheAdvance()
+
+	/**
 	 * An invoice whose lines do not add up to its total is refused.
 	 *
 	 * @return void

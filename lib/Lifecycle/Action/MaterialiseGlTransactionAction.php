@@ -33,7 +33,10 @@
  *   - JournalEntry: `lines` 1:1 (account, side, amount).
  *   - ARInvoice: debit the receivables control account for `grossAmount`,
  *     credit revenue per invoice line (plus document charges, less document
- *     allowances), credit output VAT for `vatAmount`.
+ *     allowances), credit output VAT for `vatAmount`. A down-payment invoice
+ *     (`downPayment.kind` down-payment) credits the advances account instead
+ *     of revenue, and a deduction line of a final invoice
+ *     (`invoiceLines[].downPaymentInvoiceId`) debits it (sales-down-payments).
  *   - APInvoice: debit each line's account, debit input VAT for `taxAmount`,
  *     credit the payables control account for `totalAmount`.
  *
@@ -112,6 +115,15 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 	public const CFG_INPUT_VAT_ACCOUNT = 'ledger_input_vat_account';
 
 	/**
+	 * App-config key: advances received (RGS 3.5 MKB 2310 Vooruitontvangen
+	 * bedragen), where a down payment is booked until the final invoice
+	 * releases it (sales-down-payments REQ-SDP-002).
+	 *
+	 * @var string
+	 */
+	public const CFG_ADVANCES_ACCOUNT = 'ledger_advances_account';
+
+	/**
 	 * Defaults for the account keys, taken from the shipped RGS 3.5 MKB chart
 	 * (lib/Settings/seeds/rgs-3.5-mkb.json).
 	 *
@@ -123,6 +135,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 		self::CFG_OUTPUT_VAT_ACCOUNT => '2110',
 		self::CFG_AP_CONTROL_ACCOUNT => '2000',
 		self::CFG_INPUT_VAT_ACCOUNT => '1230',
+		self::CFG_ADVANCES_ACCOUNT => '2310',
 	];
 
 	/**
@@ -272,6 +285,11 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 		$number = (string)($invoice['invoiceNumber'] ?? $sourceId);
 		$label = 'Sales invoice ' . $number;
 		$revenue = $this->account(key: self::CFG_REVENUE_ACCOUNT);
+		$advances = $this->account(key: self::CFG_ADVANCES_ACCOUNT);
+		if ((string)(($invoice['downPayment'] ?? [])['kind'] ?? '') === 'down-payment') {
+			// A down payment is not revenue until delivery: the advance is a liability (REQ-SDP-002).
+			$revenue = $advances;
+		}
 
 		$lines = [
 			[
@@ -291,8 +309,14 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 
 		foreach ($invoiceLines as $line) {
 			if (is_array($line) === true) {
+				// A deduction line takes a down payment off: its negative net releases the advance (REQ-SDP-003).
+				$lineAccount = $revenue;
+				if ((string)($line['downPaymentInvoiceId'] ?? '') !== '') {
+					$lineAccount = $advances;
+				}
+
 				$lines[] = $this->revenueLine(
-					account: $revenue,
+					account: $lineAccount,
 					amount: ($line['netAmount'] ?? 0),
 					description: (string)($line['itemName'] ?? $label)
 				);
