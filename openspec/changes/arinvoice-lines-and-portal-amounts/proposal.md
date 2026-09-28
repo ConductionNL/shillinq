@@ -46,8 +46,8 @@ contribution work) and confirmed on `development` 2026-09-27:
 - [ ] Project: `shillinq`: quick draft payload, recurring generator, PDF line
   rendering, customer portal fields, PaymentRequest.customerId, the request-only
   portal collection and pay path, a backfill repair step.
-- [ ] Project: `portaliq`: renders the new collection with the existing `pay`
-  row action. No code here.
+- [ ] Project: `portaliq`: renders the new collection with its `pay-request`
+  row action through the generic row action of portaliq #805. No code here.
 
 ## Scope
 
@@ -63,8 +63,9 @@ contribution work) and confirmed on `development` 2026-09-27:
   stands on its own. The leaf API and the leges intake stamp it; a repair step
   back-fills existing requests.
 - A `requestPayments` collection on the customer manifest, scoped by that field,
-  with the `pay` row action; the pay endpoint accepts `paymentRequestId` and
-  charges the request's own amount.
+  with a `pay-request` row action (`rowField: paymentRequestId`, only while
+  pending); the pay endpoint accepts `paymentRequestId` and charges the
+  request's own amount. REQ-SPPI-006 (exactly one action) is modified to two.
 
 ### Out of Scope
 
@@ -99,7 +100,7 @@ merged register and fails when any listed field is not a declared property.
 rule, `PaymentRequestPortalScope::stamp()`, copies `debtor.customerMasterId` into
 it when there is no `invoiceReference`; the leaf API, the leges intake and a
 repair step for existing rows all use it. The customer manifest gains
-`requestPayments`, scoped by that field, with the existing `pay` row action. The
+`requestPayments`, scoped by that field, with its own `pay-request` row action. The
 pay endpoint takes `paymentRequestId` next to `invoiceId`; for a request it
 charges the request's own amount after checking the owner, that no invoice stands
 behind it and that it is pending (REQ-SOPR-005).
@@ -126,8 +127,10 @@ None.
 - Stacked on `voluntary-contribution-reminder` (#1724): both change the portal
   provider and the payment session service, and this change uses the
   `PortalSubjectResolver` that one introduces. Land #1724 first.
-- Portaliq sends `{paymentRequestId}` for a `requestPayments` row, as it sends
-  `{invoiceId}` for an invoice row. Recorded in contract.md for the D30 pay screen.
+- Portaliq #805 (the D30 pay screen) forwards a row action as `{<rowField>: <proven
+  row id>}`; `pay-request` names `paymentRequestId`. The `pay` action's own
+  `rowField` and `rowWhen` are the next change of this lane
+  (`portal-pay-row-action-keys`), so `pay` is left as it is here.
 
 ## Risks
 

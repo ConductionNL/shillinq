@@ -53,7 +53,7 @@ portal rendering is portaliq's.
 - **spec_ref**: `...#requirement-a-request-without-an-invoice-is-listed-and-paid-in-the-portal-req-sppi-008`
 - **type**: functional
 - **steps**: the customer manifest
-- **expected result**: `requestPayments` over PaymentRequest, scopeField `customerId`, claim `customerMasterId`, rowAction `pay`; `customerId` is a declared uuid `$ref: CustomerMaster`
+- **expected result**: `requestPayments` over PaymentRequest, scopeField `customerId`, claim `customerMasterId`, rowAction `pay-request` (rowField `paymentRequestId`, rowWhen state pending); the parent carries neither; `customerId` is a declared uuid `$ref: CustomerMaster`
 - **test command**: `--filter PortalContributionProviderTest`
 
 ### TC-8: A citizen pays a request without an invoice; nothing else is payable

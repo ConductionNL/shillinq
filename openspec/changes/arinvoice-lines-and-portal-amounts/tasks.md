@@ -52,8 +52,8 @@ Stacked on `voluntary-contribution-reminder` (#1724). No Nextcloud migration cla
 - **files**: `lib/Portal/PortalContributionProvider.php`, `lib/Service/Payment/PortalPaymentSessionService.php`, `lib/Controller/PortalPaymentInitiationController.php`, `docs/api/`, tests
 - **acceptance_criteria**:
   - GIVEN the subject's own pending request without an invoice WHEN paid THEN a checkout for its amount opens; a foreign, invoice-backed or captured request is forbidden
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 7: Verify
 - [ ] Diff-scoped checks, then `composer check:strict`, `npm run lint`, `npm run format`, `npm run test:l10n`, hydra gates, once

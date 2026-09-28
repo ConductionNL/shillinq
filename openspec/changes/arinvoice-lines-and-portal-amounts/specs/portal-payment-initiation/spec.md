@@ -37,11 +37,14 @@ SHALL carry that value in `customerId`, written by the leaf API and the leges
 intake when they create the request, and by a repair step for requests that
 exist already. A request with an invoice SHALL NOT carry it. The customer
 manifest SHALL declare a `requestPayments` collection over `PaymentRequest`
-scoped by `customerId` against the `customerMasterId` claim, with the `pay` row
-action. The pay endpoint SHALL accept `paymentRequestId` when no `invoiceId` is
-sent, read the request by uuid, and open a checkout for the request's own amount
-only when it names the subject's customer, carries no invoice and is `pending`;
-every other target SHALL get the same 403.
+scoped by `customerId` against the `customerMasterId` claim, with the row action
+`pay-request`: an endpoint-forward action on the same pay endpoint that declares
+`rowField: paymentRequestId` and `rowWhen: {field: state, in: [pending]}`, so
+portaliq forwards the proven row id only for a pending request. The parent
+manifest SHALL carry neither. The pay endpoint SHALL accept `paymentRequestId`
+when no `invoiceId` is sent, read the request by uuid, and open a checkout for
+the request's own amount only when it names the subject's customer, carries no
+invoice and is `pending`; every other target SHALL get the same 403.
 
 #### Scenario: A citizen pays leges from the portal
 
@@ -70,3 +73,31 @@ every other target SHALL get the same 403.
 - WHEN the repair step runs twice
 - THEN the first gets `customerId` once, the second is untouched, and the second run saves nothing
 - @e2e exclude repair step; covered by `BackfillPaymentRequestCustomerTest`
+
+## MODIFIED Requirements
+
+### Requirement: The customer manifest declares a pay action as a rowAction on open invoices (REQ-SPPI-006)
+
+`OCA\Shillinq\Portal\PortalContributionProvider`'s `customer` manifest MUST
+declare exactly two contract-v2 `endpoint-forward` actions: `pay` for an
+invoice and `pay-request` for a payment request without an invoice
+(REQ-SPPI-008), each `{id, label, type: 'endpoint-forward', endpoint, method:
+'POST', minTrust}` whose `endpoint` is an instance-local RELATIVE path under
+`/apps/shillinq/api/portal/payments/` (leading slash, no scheme, no host, no
+`..`). The manifest MUST reference `pay` as a `rowAction` on the open-invoice
+rows of the `salesInvoices` and/or `paymentRequests` collections, and
+`pay-request` on the `requestPayments` collection, so portaliq renders a per-row
+pay-now control (a settled/non-payable row MUST NOT offer it). `minTrust` MUST
+track the AR surface. The `supplier` and `accountant` manifests' `actions` MUST
+remain empty. The provider MUST stay a plain, dependency-free class (no portaliq
+import, no `implements`, no constructor); it only adds pure-data action and
+rowAction declarations.
+
+#### Scenario: The customer manifest carries the pay action and rowAction
+
+- GIVEN a constructed `PortalContributionProvider` and a subject with `audience: 'customer'`
+- WHEN `getContribution($subject)` is called
+- THEN the returned manifest's `actions` are exactly `pay` and `pay-request`, both of type `endpoint-forward` with an instance-local relative `endpoint` under `/apps/shillinq/api/portal/payments/`, method `POST`, and a `minTrust` tracking the AR surface
+- AND the `salesInvoices` / `paymentRequests` collections reference `pay` as a `rowAction`, and `requestPayments` references `pay-request`
+- AND the `supplier` and `accountant` manifests' `actions` stay empty
+- @e2e exclude manifest declaration; covered by `PortalContributionProviderTest::testCustomerManifestPayActionAndRowAction` and `::testCustomerManifestShape`

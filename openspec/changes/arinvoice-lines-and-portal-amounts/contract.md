@@ -3,8 +3,8 @@
 ## Consumers
 
 - `portaliq`: renders the customer manifest's `salesInvoices` and the new
-  `requestPayments` collection, and forwards the `pay` row action server to
-  server with the signed `X-Portal-Subject` assertion.
+  `requestPayments` collection, and forwards the `pay` and `pay-request` row
+  actions server to server with the signed `X-Portal-Subject` assertion.
 
 ## Endpoints
 
@@ -49,10 +49,29 @@ credential; audience `customer` or `parent`. Unchanged.
   "scopeClaim": "customerMasterId",
   "label": "My payment requests",
   "listable": true,
-  "rowAction": "pay",
+  "rowAction": "pay-request",
   "fields": ["description", "requestType", "amount", "currency", "state", "dueAt", "legalBasis", "paymentLink", "capturedAt", "failureReason", "confirmationSummary"]
 }
 ```
+
+### Customer manifest action `pay-request` (new)
+
+```json
+{
+  "id": "pay-request",
+  "label": "Pay now",
+  "type": "endpoint-forward",
+  "endpoint": "/apps/shillinq/api/portal/payments/initiate",
+  "method": "POST",
+  "minTrust": "low",
+  "rowField": "paymentRequestId",
+  "rowWhen": { "field": "state", "in": ["pending"] }
+}
+```
+
+Portaliq's row action (portaliq #805) forwards `{paymentRequestId: <proven row id>}`
+and never a raw client body. The parent manifest carries neither the collection
+nor the action.
 
 ### Customer manifest `salesInvoices` fields (corrected)
 

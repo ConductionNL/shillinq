@@ -205,8 +205,8 @@ class PortalContributionProviderTest extends TestCase {
 
 		$this->assertIsArray($manifest);
 		$this->assertSame('Shillinq', $manifest['label']);
-		$this->assertCount(1, $manifest['actions'], 'exactly one pay action (REQ-SPPI-006)');
-		$this->assertSame('pay', $manifest['actions'][0]['id']);
+		// pay for invoices, pay-request for requests without one (REQ-SPPI-006, REQ-SPPI-008).
+		$this->assertSame(['pay', 'pay-request'], array_column($manifest['actions'], 'id'));
 		$this->assertSame([], $manifest['notifications']);
 
 		// [schema, scopeField, scopeClaim] per collection id.
@@ -218,6 +218,7 @@ class PortalContributionProviderTest extends TestCase {
 			'contracts' => ['RevenueContract', 'customerId', 'customerId'],
 			'salesInvoices' => ['ARInvoice', 'customerId', 'customerMasterId'],
 			'paymentRequests' => ['PaymentRequest', 'invoiceReference', 'customerMasterId'],
+			'requestPayments' => ['PaymentRequest', 'customerId', 'customerMasterId'],
 		];
 
 		$this->assertSame(array_keys($expected), array_column($manifest['collections'], 'id'));
@@ -304,7 +305,8 @@ class PortalContributionProviderTest extends TestCase {
 			$collections[$collection['id']] = $collection;
 		}
 
-		$this->assertCount(1, $manifest['actions']);
+		// pay-request (REQ-SPPI-008) sits next to pay for requests without an invoice.
+		$this->assertSame(['pay', 'pay-request'], array_column($manifest['actions'], 'id'));
 		$action = $manifest['actions'][0];
 		$this->assertSame('pay', $action['id']);
 		$this->assertSame('endpoint-forward', $action['type']);
@@ -558,7 +560,7 @@ class PortalContributionProviderTest extends TestCase {
 		// Wave-1 customer collections stay first and in order; the two Wave-2
 		// AR surfaces are appended after them.
 		$this->assertSame(
-			['invoices', 'projectInvoices', 'quotes', 'salesOrders', 'contracts', 'salesInvoices', 'paymentRequests'],
+			['invoices', 'projectInvoices', 'quotes', 'salesOrders', 'contracts', 'salesInvoices', 'paymentRequests', 'requestPayments'],
 			array_column($customer['collections'], 'id')
 		);
 
@@ -873,6 +875,50 @@ class PortalContributionProviderTest extends TestCase {
 		self::assertSame('low', $decline['minTrust']);
 
 		$customer = $this->provider->getContribution(self::CUSTOMER_SUBJECT);
-		self::assertSame(['pay'], array_column($customer['actions'], 'id'));
+		self::assertSame(['pay', 'pay-request'], array_column($customer['actions'], 'id'));
 	}//end testOnlyTheParentManifestCarriesTheDeclineAction()
+
+	/**
+	 * A customer sees their payment requests that stand without an invoice,
+	 * scoped by the request's own customer reference, and pays one from its
+	 * row: the pay-request action forwards the proven row id as
+	 * paymentRequestId, only for a pending request. A parent sees neither
+	 * (REQ-SPPI-008).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
+	 */
+	public function testARequestWithoutAnInvoiceIsListedAndPayable(): void {
+		$customer = $this->provider->getContribution(self::CUSTOMER_SUBJECT);
+		$requests = $this->collectionsById($customer)['requestPayments'];
+
+		self::assertSame('PaymentRequest', $requests['schema']);
+		self::assertSame('customerId', $requests['scopeField']);
+		self::assertSame('customerMasterId', $requests['scopeClaim']);
+		self::assertArrayNotHasKey('via', $requests);
+		self::assertSame('pay-request', $requests['rowAction']);
+		foreach (['description', 'amount', 'state', 'paymentLink', 'confirmationSummary'] as $field) {
+			self::assertContains($field, $requests['fields']);
+		}
+
+		$actions = array_column($customer['actions'], null, 'id');
+		self::assertSame(
+			[
+				'id' => 'pay-request',
+				'label' => 'Pay now',
+				'type' => 'endpoint-forward',
+				'endpoint' => '/apps/shillinq/api/portal/payments/initiate',
+				'method' => 'POST',
+				'minTrust' => 'low',
+				'rowField' => 'paymentRequestId',
+				'rowWhen' => ['field' => 'state', 'in' => ['pending']],
+			],
+			$actions['pay-request']
+		);
+
+		$parent = $this->provider->getContribution(['audience' => 'parent']);
+		self::assertNotContains('requestPayments', array_column($parent['collections'], 'id'));
+		self::assertNotContains('pay-request', array_column($parent['actions'], 'id'));
+	}//end testARequestWithoutAnInvoiceIsListedAndPayable()
 }//end class

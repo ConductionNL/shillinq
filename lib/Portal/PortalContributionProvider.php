@@ -111,6 +111,14 @@ class PortalContributionProvider {
 	private const PARENT_COLLECTIONS = ['salesInvoices', 'paymentRequests'];
 
 	/**
+	 * The customer actions a parent keeps: pay. A contribution always has an
+	 * invoice, so pay-request (a request without one) is not theirs.
+	 *
+	 * @var array<int, string>
+	 */
+	private const PARENT_ACTIONS = ['pay'];
+
+	/**
 	 * The audiences this provider contributes to (contract v2, preferred).
 	 *
 	 * The registry probes for this method first; the audience vocabulary is
@@ -426,6 +434,76 @@ class PortalContributionProvider {
 						'direction' => 'desc',
 					],
 				],
+				// A payment request that stands without an invoice (leges on a
+				// case, a dwangsom, a deposit) is scoped by its own customerId,
+				// stamped from its debtor, because the invoice join above cannot
+				// reach it (REQ-SOPR-005, REQ-SPPI-008). Paid from its row with
+				// pay-request, which charges the request's own amount.
+				[
+					'id' => 'requestPayments',
+					'register' => 'shillinq',
+					'schema' => 'PaymentRequest',
+					'scopeField' => 'customerId',
+					'scopeClaim' => 'customerMasterId',
+					'label' => 'My payment requests',
+					'listable' => true,
+					'rowAction' => 'pay-request',
+					'fields' => [
+						'description',
+						'requestType',
+						'amount',
+						'currency',
+						'state',
+						'dueAt',
+						'legalBasis',
+						'paymentLink',
+						'capturedAt',
+						'failureReason',
+						'confirmationSummary',
+					],
+					'columns' => [
+						[
+							'field' => 'description',
+							'label' => 'For',
+							'render' => 'text',
+						],
+						[
+							'field' => 'amount',
+							'label' => 'Amount',
+							'render' => 'currency',
+						],
+						[
+							'field' => 'dueAt',
+							'label' => 'Due',
+							'render' => 'date',
+						],
+						[
+							'field' => 'state',
+							'label' => 'Status',
+							'render' => 'badge',
+						],
+					],
+					'detail' => [
+						'layout' => 'card',
+						'fields' => [
+							'description',
+							'requestType',
+							'amount',
+							'currency',
+							'state',
+							'dueAt',
+							'legalBasis',
+							'paymentLink',
+							'capturedAt',
+							'failureReason',
+							'confirmationSummary',
+						],
+					],
+					'defaultSort' => [
+						'field' => 'dueAt',
+						'direction' => 'desc',
+					],
+				],
 			],
 			// Portal-payment-initiation REQ-SPPI-006: exactly one endpoint-forward
 			// action, forwarded server-to-server by portaliq to
@@ -443,6 +521,22 @@ class PortalContributionProvider {
 					'endpoint' => '/apps/shillinq/api/portal/payments/initiate',
 					'method' => 'POST',
 					'minTrust' => 'low',
+				],
+				// The row action of requestPayments: portaliq forwards the
+				// proven row id under rowField, only while the request is
+				// pending (REQ-SPPI-008).
+				[
+					'id' => 'pay-request',
+					'label' => 'Pay now',
+					'type' => 'endpoint-forward',
+					'endpoint' => '/apps/shillinq/api/portal/payments/initiate',
+					'method' => 'POST',
+					'minTrust' => 'low',
+					'rowField' => 'paymentRequestId',
+					'rowWhen' => [
+						'field' => 'state',
+						'in' => ['pending'],
+					],
 				],
 			],
 			'notifications' => [],
@@ -479,6 +573,12 @@ class PortalContributionProvider {
 
 		$manifest['label'] = 'School contributions';
 		$manifest['collections'] = $collections;
+		$manifest['actions'] = array_values(
+			array_filter(
+				$manifest['actions'],
+				static fn (array $action): bool => in_array($action['id'], self::PARENT_ACTIONS, true)
+			)
+		);
 
 		// "I will not pay" answers the one reminder of a voluntary contribution
 		// and closes it without dunning (REQ-SCON-013). Parents only: the

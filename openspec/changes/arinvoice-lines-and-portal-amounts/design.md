@@ -12,7 +12,7 @@ EInvoiceService ──────────┴─> InvoicePdfGenerator.render
 leaf API / leges intake / repair ─> PaymentRequestPortalScope.stamp()
                                      no invoiceReference + debtor.customerMasterId -> customerId
 
-portaliq ─ requestPayments (scope customerId) ─ pay {paymentRequestId}
+portaliq ─ requestPayments (scope customerId) ─ pay-request {paymentRequestId}
         └> PortalPaymentInitiationController -> PortalPaymentSessionService.initiateForRequest()
              PortalSubjectResolver -> find(PaymentRequest, uuid) -> owner + no invoice + pending
              -> provider.createSession(request amount) -> paymentIntentId on the request
@@ -66,6 +66,15 @@ in `paymentRequests`, and would otherwise show twice.
 intake call it before saving; `BackfillPaymentRequestCustomer` calls it for rows
 that exist. A case app that writes a request straight through the OpenRegister
 API is not covered; the leaf API is the documented path (REQ-SOPR-003).
+
+### D8: A second action, not a second meaning for `pay`
+
+Portaliq's row action (#805) forwards the proven row id under the action's
+`rowField` and shows the button only while the action's `rowWhen` holds on the
+row. `pay` will name `invoiceId` and an ARInvoice state; a `requestPayments` row
+is a payment request with a `state` of its own. So the collection gets
+`pay-request` (`rowField: paymentRequestId`, `rowWhen: state in [pending]`) on
+the same endpoint. This modifies REQ-SPPI-006, which said "exactly one" action.
 
 ### D7: The request pay path shares the invoice path's chain
 
