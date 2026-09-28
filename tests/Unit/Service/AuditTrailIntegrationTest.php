@@ -86,7 +86,7 @@ final class AuditTrailIntegrationTest extends TestCase {
 					'currency' => 'EUR',
 					'costCenter' => 'FAC-2026',
 					'projectCode' => 'PRJ-A',
-					'lifecycleState' => 'pending_approval',
+					'statusCode' => 'draft',
 					'approvalChain' => [
 						['userId' => '', 'decision' => 'pending'],
 					],
@@ -151,12 +151,12 @@ final class AuditTrailIntegrationTest extends TestCase {
 			decision: PurchaseOrderApprovalService::DECISION_APPROVED,
 			comment: 'within budget'
 		);
-		self::assertSame('approved', $purchaseOrder['lifecycleState']);
+		self::assertSame('approved', $purchaseOrder['statusCode']);
 		self::assertSame('bob', $purchaseOrder['approvalChain'][0]['userId']);
 		self::assertNotEmpty($purchaseOrder['approvalChain'][0]['decidedAt']);
 
-		// ---- Step 2: simulate Peppol send + PO lifecycleState=sent ----
-		$purchaseOrder['lifecycleState'] = 'sent';
+		// ---- Step 2: simulate Peppol send + PO statusCode=sent ----
+		$purchaseOrder['statusCode'] = 'sent';
 		$purchaseOrder['peppolSentAt'] = '2026-02-15T08:00:00+00:00';
 		$purchaseOrder['peppolMessageId'] = 'urn:uuid:peppol-100';
 		$stub->saveObject($purchaseOrder);

@@ -8,11 +8,11 @@
  * decidedAt):
  *  - recordApprovalDecision() stamps the authenticated user as the
  *    chain entry's userId + decision + decidedAt;
- *  - the lifecycleState advances to `approved` only when every chain
+ *  - the statusCode advances to `approved` only when every chain
  *    entry is approved; a single rejection sends it to `rejected`;
  *  - cross-tenant calls mask as RuntimeException(`not found`);
  *  - blank/invalid decision is rejected as RuntimeException;
- *  - calling on a PO that is not pending_approval is rejected;
+ *  - calling on a PO that is not draft (waiting for approval) is rejected;
  *  - calling on a fully-signed chain is rejected;
  *  - an unauthenticated session is rejected;
  *  - the comment is trimmed + only kept when non-empty.
@@ -65,7 +65,7 @@ final class PurchaseOrderApprovalServiceTest extends TestCase {
 				[
 					'id' => 'po-1',
 					'administrationId' => 'admin-1',
-					'lifecycleState' => 'pending_approval',
+					'statusCode' => 'draft',
 					'approvalChain' => [
 						['userId' => '', 'decision' => 'pending'],
 					],
@@ -88,7 +88,7 @@ final class PurchaseOrderApprovalServiceTest extends TestCase {
 			comment: '  ack — within budget  '
 		);
 
-		self::assertSame('approved', $result['lifecycleState']);
+		self::assertSame('approved', $result['statusCode']);
 		self::assertCount(1, $result['approvalChain']);
 		$entry = $result['approvalChain'][0];
 		self::assertSame('alice', $entry['userId']);
@@ -112,7 +112,7 @@ final class PurchaseOrderApprovalServiceTest extends TestCase {
 				[
 					'id' => 'po-legacy',
 					'administrationId' => 'admin-1',
-					'lifecycleState' => 'pending_approval',
+					'statusCode' => 'draft',
 					'approvalChain' => [
 						['role' => 'teamleider', 'order' => 1, 'status' => 'pending', 'signedAt' => '', 'signedBy' => ''],
 					],
@@ -129,7 +129,7 @@ final class PurchaseOrderApprovalServiceTest extends TestCase {
 			decision: PurchaseOrderApprovalService::DECISION_APPROVED
 		);
 
-		self::assertSame('approved', $result['lifecycleState']);
+		self::assertSame('approved', $result['statusCode']);
 		$entry = $result['approvalChain'][0];
 		self::assertSame('approved', $entry['decision']);
 		self::assertArrayNotHasKey('status', $entry);
@@ -139,7 +139,7 @@ final class PurchaseOrderApprovalServiceTest extends TestCase {
 
 	/**
 	 * A chain with two pending entries only advances after BOTH are
-	 * approved. The first approval stays in pending_approval.
+	 * approved. The first approval stays in draft (waiting for approval).
 	 *
 	 * @return void
 	 */
@@ -149,7 +149,7 @@ final class PurchaseOrderApprovalServiceTest extends TestCase {
 				[
 					'id' => 'po-2',
 					'administrationId' => 'admin-1',
-					'lifecycleState' => 'pending_approval',
+					'statusCode' => 'draft',
 					'approvalChain' => [
 						['userId' => '', 'decision' => 'pending'],
 						['userId' => '', 'decision' => 'pending'],
@@ -172,7 +172,7 @@ final class PurchaseOrderApprovalServiceTest extends TestCase {
 			decision: PurchaseOrderApprovalService::DECISION_APPROVED
 		);
 
-		self::assertSame('pending_approval', $result['lifecycleState']);
+		self::assertSame('draft', $result['statusCode']);
 		self::assertSame('bob', $result['approvalChain'][0]['userId']);
 		self::assertSame('approved', $result['approvalChain'][0]['decision']);
 		self::assertSame('pending', $result['approvalChain'][1]['decision']);
@@ -191,7 +191,7 @@ final class PurchaseOrderApprovalServiceTest extends TestCase {
 				[
 					'id' => 'po-3',
 					'administrationId' => 'admin-1',
-					'lifecycleState' => 'pending_approval',
+					'statusCode' => 'draft',
 					'approvalChain' => [
 						['userId' => '', 'decision' => 'pending'],
 						['userId' => '', 'decision' => 'pending'],
@@ -215,7 +215,7 @@ final class PurchaseOrderApprovalServiceTest extends TestCase {
 			comment: 'budget exceeded'
 		);
 
-		self::assertSame('rejected', $result['lifecycleState']);
+		self::assertSame('cancelled', $result['statusCode']);
 		self::assertSame('carol', $result['approvalChain'][0]['userId']);
 		self::assertSame('rejected', $result['approvalChain'][0]['decision']);
 		self::assertSame('budget exceeded', $result['approvalChain'][0]['comment']);
@@ -234,7 +234,7 @@ final class PurchaseOrderApprovalServiceTest extends TestCase {
 				[
 					'id' => 'po-x',
 					'administrationId' => 'admin-other',
-					'lifecycleState' => 'pending_approval',
+					'statusCode' => 'draft',
 					'approvalChain' => [['userId' => '', 'decision' => 'pending']],
 				],
 			],
@@ -268,7 +268,7 @@ final class PurchaseOrderApprovalServiceTest extends TestCase {
 				[
 					'id' => 'po-4',
 					'administrationId' => 'admin-1',
-					'lifecycleState' => 'pending_approval',
+					'statusCode' => 'draft',
 					'approvalChain' => [['userId' => '', 'decision' => 'pending']],
 				],
 			],
@@ -292,7 +292,7 @@ final class PurchaseOrderApprovalServiceTest extends TestCase {
 	}//end testInvalidDecisionIsRejected()
 
 	/**
-	 * Calling on a PO that is not pending_approval is rejected.
+	 * Calling on a PO that is not draft (waiting for approval) is rejected.
 	 *
 	 * @return void
 	 */
@@ -302,7 +302,7 @@ final class PurchaseOrderApprovalServiceTest extends TestCase {
 				[
 					'id' => 'po-5',
 					'administrationId' => 'admin-1',
-					'lifecycleState' => 'approved',
+					'statusCode' => 'approved',
 					'approvalChain' => [['userId' => 'alice', 'decision' => 'approved']],
 				],
 			],
@@ -336,10 +336,10 @@ final class PurchaseOrderApprovalServiceTest extends TestCase {
 				[
 					'id' => 'po-6',
 					'administrationId' => 'admin-1',
-					// Anomaly: lifecycleState is still pending_approval but
+					// Anomaly: statusCode is still draft (waiting for approval) but
 					// every entry is already approved — defensive guard
 					// surfaces the bug rather than silently no-op'ing.
-					'lifecycleState' => 'pending_approval',
+					'statusCode' => 'draft',
 					'approvalChain' => [
 						['userId' => 'alice', 'decision' => 'approved'],
 						['userId' => 'bob', 'decision' => 'approved'],
@@ -377,7 +377,7 @@ final class PurchaseOrderApprovalServiceTest extends TestCase {
 				[
 					'id' => 'po-7',
 					'administrationId' => 'admin-1',
-					'lifecycleState' => 'pending_approval',
+					'statusCode' => 'draft',
 					'approvalChain' => [['userId' => '', 'decision' => 'pending']],
 				],
 			],

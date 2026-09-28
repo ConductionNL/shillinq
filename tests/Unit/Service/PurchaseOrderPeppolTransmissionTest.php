@@ -124,7 +124,7 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 			purchaseOrderId: 'po-1'
 		);
 
-		self::assertSame('sent', $result['lifecycleState']);
+		self::assertSame('sent', $result['statusCode']);
 		self::assertSame('urn:uuid:dead-beef-cafe', $result['peppolMessageId']);
 		self::assertNotEmpty($result['peppolSentAt']);
 		self::assertNotEmpty($result['sentAt']);
@@ -134,7 +134,7 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 
 		// The persisted record reflects the transition.
 		$persisted = $this->findSaved($saved, 'PurchaseOrder');
-		self::assertSame('sent', $persisted['lifecycleState']);
+		self::assertSame('sent', $persisted['statusCode']);
 		self::assertSame('urn:uuid:dead-beef-cafe', $persisted['peppolMessageId']);
 
 	}//end testSendToPeppolRecordsMessageIdOnRegisteredParticipant()
@@ -165,7 +165,7 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 			purchaseOrderId: 'po-1'
 		);
 
-		self::assertSame('sent', $result['lifecycleState']);
+		self::assertSame('sent', $result['statusCode']);
 		self::assertSame('supplier_not_peppol_participant', $result['peppolFallbackReason']);
 		self::assertArrayNotHasKey('peppolMessageId', $result, 'fallback path must NOT set peppolMessageId');
 		self::assertNotEmpty($result['sentAt']);
@@ -243,7 +243,7 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 			fallbackReason: 'supplier_request_pdf'
 		);
 
-		self::assertSame('sent', $result['lifecycleState']);
+		self::assertSame('sent', $result['statusCode']);
 		self::assertSame('supplier_request_pdf', $result['peppolFallbackReason']);
 		self::assertNotEmpty($result['sentAt']);
 		self::assertSame(1, $mailer->callCount, 'mailer is the only dispatch surface on the explicit fallback path');
@@ -296,7 +296,7 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 			'projectCode' => 'P-FAC',
 			'totalAmount' => 18500.00,
 			'notes' => 'Coffee machine refresh.',
-			'lifecycleState' => 'pending_approval',
+			'statusCode' => 'draft',
 			'lines' => [
 				[
 					'lineNumber' => 1,

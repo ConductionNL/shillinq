@@ -94,7 +94,7 @@ final class PurchaseOrderIntegrationTest extends TestCase {
 		);
 
 		self::assertSame(18500.00, $po['totalAmount']);
-		self::assertSame('pending_approval', $po['lifecycleState']);
+		self::assertSame('draft', $po['statusCode']);
 		self::assertCount(2, $po['approvalChain']);
 		self::assertCount(2, $notifications);
 
@@ -143,7 +143,7 @@ final class PurchaseOrderIntegrationTest extends TestCase {
 		);
 
 		$updated = $service->blockSendUntilApproved(administrationId: 'adm-1', purchaseOrderId: $poId);
-		self::assertSame('sent', $updated['lifecycleState']);
+		self::assertSame('sent', $updated['statusCode']);
 		self::assertNotEmpty($updated['sentAt']);
 
 	}//end testCreateThenSendEndToEnd()
@@ -191,7 +191,7 @@ final class PurchaseOrderIntegrationTest extends TestCase {
 
 		$approvals = $this->buildApprovalService($stub, 'teamleider-1');
 		$afterFirst = $approvals->recordApprovalDecision(administrationId: 'adm-1', purchaseOrderId: $poId, decision: 'approved');
-		self::assertSame('pending_approval', $afterFirst['lifecycleState']);
+		self::assertSame('draft', $afterFirst['statusCode']);
 		self::assertSame('approved', $afterFirst['approvalChain'][0]['decision']);
 		self::assertSame('teamleider-1', $afterFirst['approvalChain'][0]['userId']);
 
@@ -204,10 +204,10 @@ final class PurchaseOrderIntegrationTest extends TestCase {
 
 		$afterSecond = $this->buildApprovalService($stub, 'facility-1')
 			->recordApprovalDecision(administrationId: 'adm-1', purchaseOrderId: $poId, decision: 'approved');
-		self::assertSame('approved', $afterSecond['lifecycleState']);
+		self::assertSame('approved', $afterSecond['statusCode']);
 
 		$sent = $service->blockSendUntilApproved(administrationId: 'adm-1', purchaseOrderId: $poId);
-		self::assertSame('sent', $sent['lifecycleState']);
+		self::assertSame('sent', $sent['statusCode']);
 	}//end testTheApprovalDecisionsSignTheChainTheServiceCreatedAndUnblockTheSend()
 
 	/**
