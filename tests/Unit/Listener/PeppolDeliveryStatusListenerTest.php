@@ -38,7 +38,9 @@ use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\ListenerSlugContract;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
+use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\OpenRegisterFaithfulObjectService;
+use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\EventDispatcher\GenericEvent;
 use OCP\IAppConfig;
 use OCP\Notification\IManager as INotificationManager;
@@ -54,7 +56,7 @@ require_once __DIR__ . '/../Service/Support/OpenRegisterFaithfulObjectService.ph
 
 /**
  * Covers: sent -> delivered advances + persists detail; in-flight -> rejected
- * advances + persists detail + notifies ar-controller operators; illegal
+ * advances + persists detail + notifies the receivables roles; illegal
  * transitions are skipped (fail-soft, no corruption); only integriq's
  * delivery-status object is taken.
  *
@@ -142,16 +144,16 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 
 	/**
 	 * REQ-AR-011 / REQ-EINV-005 scenario: an in-flight invoice rejected;
-	 * deliveryStatus -> rejected, detail persisted, ar-controller notified with
+	 * deliveryStatus -> rejected, detail persisted, receivables roles notified with
 	 * what EInvoiceNotifier needs to render and link it.
 	 *
 	 * @return void
 	 */
 	public function testInFlightRejectedNotifiesFinanceOperators(): void {
 		$this->seedInvoice(deliveryStatus: 'queued', invoiceNumber: '2026-0060');
-		$this->store->seed(schema: 'AdministrationMembership', rows: [
-			['id' => 'm-1', 'administrationId' => 'adm-1', 'role' => 'ar-controller', 'userId' => 'controller-1'],
-			['id' => 'm-2', 'administrationId' => 'adm-1', 'role' => 'inkoper', 'userId' => 'buyer-1'],
+		$this->seedMemberships(rows: [
+			['id' => 'm-1', 'administrationId' => 'adm-1', 'role' => 'debiteurenadmin', 'userId' => 'controller-1'],
+			['id' => 'm-2', 'administrationId' => 'adm-1', 'role' => 'crediteurenadmin', 'userId' => 'buyer-1'],
 		]);
 
 		$this->listener()->handle(
@@ -183,6 +185,99 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 	 *
 	 * @return void
 	 */
+	/**
+	 * #1754: the recipients are the membership roles that own receivables,
+	 * every one of them a role the AdministrationMembership schema allows,
+	 * and nobody else. Each seeded membership is first validated against the
+	 * real register schema, so a role the register would refuse (as
+	 * `ar-controller` was) cannot be seeded here.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-einvoice-exchange/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
+	 */
+	public function testRejectedNotifiesEveryReceivablesRoleTheSchemaAllows(): void {
+		$this->seedInvoice(deliveryStatus: 'sent', invoiceNumber: '2026-0420');
+		$this->seedMemberships(rows: [
+			['id' => 'm-1', 'administrationId' => 'adm-1', 'role' => 'debiteurenadmin', 'userId' => 'debiteuren-1'],
+			['id' => 'm-2', 'administrationId' => 'adm-1', 'role' => 'boekhouder', 'userId' => 'boekhouder-1'],
+			['id' => 'm-3', 'administrationId' => 'adm-1', 'role' => 'controller', 'userId' => 'controller-1'],
+			['id' => 'm-4', 'administrationId' => 'adm-1', 'role' => 'eigenaar', 'userId' => 'admin'],
+			['id' => 'm-5', 'administrationId' => 'adm-1', 'role' => 'inkijker', 'userId' => 'viewer-1'],
+			['id' => 'm-6', 'administrationId' => 'adm-1', 'role' => 'crediteurenadmin', 'userId' => 'crediteuren-1'],
+			['id' => 'm-7', 'administrationId' => 'adm-1', 'role' => 'accountant_extern', 'userId' => 'accountant-1'],
+			['id' => 'm-8', 'administrationId' => 'adm-1', 'role' => 'salarisadministrateur', 'userId' => 'salaris-1'],
+			['id' => 'm-9', 'administrationId' => 'adm-2', 'role' => 'debiteurenadmin', 'userId' => 'other-admin-1'],
+		]);
+
+		$this->listener()->handle(
+			$this->deliveryStatus(data: ['objectUri' => 'openregister://shillinq/ARInvoice/' . self::INVOICE_ID, 'status' => 'rejected', 'detail' => 'Ordernummer ontbreekt'])
+		);
+
+		$users = array_column($this->notifications, 'user');
+		sort($users);
+		self::assertSame(['admin', 'boekhouder-1', 'controller-1', 'debiteuren-1'], $users);
+
+		foreach (PeppolDeliveryStatusListener::RECEIVABLES_ROLES as $role) {
+			self::assertContains($role, self::schemaRoles(), $role . ' is not a role the AdministrationMembership schema allows');
+		}
+
+	}//end testRejectedNotifiesEveryReceivablesRoleTheSchemaAllows()
+
+	/**
+	 * #1754: OpenRegister's findAll() answers ObjectEntity instances, not
+	 * arrays, so the membership lookup must read those too.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sales-einvoice-exchange/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
+	 */
+	public function testRejectedNotifiesWhenFindAllAnswersEntities(): void {
+		$membership = ['id' => 'm-1', 'administrationId' => 'adm-1', 'role' => 'eigenaar', 'userId' => 'admin'];
+		self::assertSame([], RegisterSchema::errors(slug: 'AdministrationMembership', object: $membership));
+
+		$store = new InMemoryObjectServiceStub(
+			data: [
+				'ARInvoice' => [['id' => self::INVOICE_ID, 'invoiceNumber' => '2026-0421', 'administrationId' => 'adm-1', 'deliveryStatus' => 'sent']],
+				'AdministrationMembership' => [$membership],
+			],
+			findAllRendersEntities: true
+		);
+
+		$this->listener(objectService: $store)->handle(
+			$this->deliveryStatus(data: ['objectUri' => 'openregister://shillinq/ARInvoice/' . self::INVOICE_ID, 'status' => 'rejected', 'detail' => 'Unknown participant'])
+		);
+
+		self::assertSame(['admin'], array_column($this->notifications, 'user'));
+
+	}//end testRejectedNotifiesWhenFindAllAnswersEntities()
+
+	/**
+	 * Seed memberships after checking each one against the register schema.
+	 *
+	 * @param array<int,array<string,mixed>> $rows Membership rows.
+	 *
+	 * @return void
+	 */
+	private function seedMemberships(array $rows): void {
+		foreach ($rows as $row) {
+			self::assertSame([], RegisterSchema::errors(slug: 'AdministrationMembership', object: $row), 'the register would refuse membership ' . $row['id']);
+		}
+
+		$this->store->seed(schema: 'AdministrationMembership', rows: $rows);
+
+	}//end seedMemberships()
+
+	/**
+	 * The roles the AdministrationMembership schema allows.
+	 *
+	 * @return array<int,string>
+	 */
+	private static function schemaRoles(): array {
+		return RegisterSchema::schema(slug: 'AdministrationMembership')['properties']['role']['enum'];
+
+	}//end schemaRoles()
+
 	public function testAnInvoiceNumberInTheObjectUriFindsTheInvoice(): void {
 		$this->seedInvoice(deliveryStatus: 'sent', invoiceNumber: '2026-0052');
 
@@ -364,8 +459,8 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 	 *
 	 * @return PeppolDeliveryStatusListener
 	 */
-	private function listener(): PeppolDeliveryStatusListener {
-		$objectService = new DuckObjectServiceAdapter($this->store);
+	private function listener(?object $objectService = null): PeppolDeliveryStatusListener {
+		$objectService ??= new DuckObjectServiceAdapter($this->store);
 		$container = $this->createStub(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
 			function (string $service) use ($objectService): object {

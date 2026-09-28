@@ -65,7 +65,9 @@ invoice or an illegal transition MUST be logged and ignored.
 ### Requirement: A rejected e-invoice reaches the bookkeeper (REQ-SEIX-004)
 
 When an e-invoice is reported `rejected`, shillinq SHALL notify every member
-with role `ar-controller` of the invoice's administration through a
+of the invoice's administration whose AdministrationMembership role owns its
+receivables (`debiteurenadmin`, `boekhouder`, `controller` or `eigenaar`;
+the membership schema has no `ar-controller` role, #1754) through a
 notification that Nextcloud can render and that links to the invoice, and the
 notification MUST carry the rejection reason. `AccountsReceivable` SHALL offer
 a filter that lists rejected e-invoices.
@@ -74,7 +76,7 @@ a filter that lists rejected e-invoices.
 
 - GIVEN invoice 2026-0420 sent to Gemeente Voorbeeld
 - WHEN integriq reports it rejected with the reason "Ordernummer ontbreekt"
-- THEN each ar-controller of the administration sees a notification naming invoice 2026-0420 and the reason, which opens its AR invoice page
+- THEN each member of the administration with one of those roles sees a notification naming invoice 2026-0420 and the reason, which opens its AR invoice page
 - AND the Rejected e-invoices filter on the Accounts Receivable page lists invoice 2026-0420
 
 ### Requirement: A customer's self-billing agreement is recorded (REQ-SEIX-005)
