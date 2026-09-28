@@ -19,7 +19,6 @@ This specification defines the requirements for bookkeeping titel 9 jaarrekening
 
 @e2e exclude pure backend/compliance: Titel 9 jaarrekening — not browser-testable
 
-
 ### REQ-T9-001: The system SHALL automatically determine groottecategorie per art. 2:395a–398 BW
 
 The system MUST classify a commercial entity into one of four size categories (micro, klein, middelgroot, groot) based on the two-of-three criterion applied over two consecutive fiscal years: balanstotaal (balance sheet total), netto-omzet (net revenue), and gemiddeld aantal werknemers (average number of employees). Classification determines which jaarrekening sections are mandatory (e.g., micro files only verkorte balans; middelgroot+ files kasstroomoverzicht + bestuursverslag).
@@ -275,12 +274,6 @@ The ReviewWorkflow and AnnualReport status progression is: `concept` (earliest f
 - **GIVEN** concept is opgemaakt; bestuur now calls AV assembly, which approves jaarrekening 2025
 - **WHEN** bestuur marks "Vastgesteld door AV" and uploads AV-besluit-PDF or records approval-date
 - **THEN** the system records vaststelling-datum, creates final immutabel-snapshot of all jaarrekening documents (balans, V&W, toelichting, bestuursverslag, accountantverklaring if attached) with cryptographic hash, transitions status to `vastgesteld`, and activates deponering-button for KVK filing. All fields are now locked (read-only); post-vaststelling changes require an explicit foutherstel-procedure.
-
----
-
-## MODIFIED Requirements
-
-*No existing entities or specs are modified by this change. All requirements are ADDED.*
 
 ---
 
