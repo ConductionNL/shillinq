@@ -21,9 +21,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
+use InvalidArgumentException;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
@@ -94,11 +96,18 @@ class SettingsController extends Controller {
 	 * @return JSONResponse Envelope with `success` and the refreshed `config`.
 	 *
 	 * @spec openspec/specs/app-administration/spec.md
+	 * @spec openspec/changes/portal-pay-row-action-keys/specs/portal-payment-initiation/spec.md (REQ-SPPI-010)
 	 */
 	#[AuthorizedAdminSetting(Application::APP_ID)]
 	public function update(): JSONResponse {
 		$data = $this->request->getParams();
-		$config = $this->settingsService->updateSettings($data);
+		try {
+			$config = $this->settingsService->updateSettings($data);
+		} catch (InvalidArgumentException $e) {
+			// A value the service refuses (the portal return address must be
+			// https) is the caller's to fix, and nothing was stored (REQ-SPPI-010).
+			return new JSONResponse(['success' => false, 'error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
+		}
 
 		return new JSONResponse(
 			[

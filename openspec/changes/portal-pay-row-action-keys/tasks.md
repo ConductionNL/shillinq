@@ -19,11 +19,11 @@ Stacked on `arinvoice-lines-and-portal-amounts` (#1728). No migration.
 - **files**: `lib/Service/SettingsService.php`, `lib/Controller/SettingsController.php`, `src/views/settings/Settings.vue`, `l10n/*`, `docs/api/portal-payments.md`, `tests/Unit/Service/SettingsServiceTest.php`, `tests/Unit/Controller/SettingsControllerWriteTest.php`
 - **acceptance_criteria**:
   - GIVEN an https address or empty WHEN saved THEN it is stored; GIVEN anything else WHEN saved THEN 400 and nothing stored
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 3: Docs
-- [ ] `docs/api/portal-payments.md` names the row keys and the setting
+- [x] `docs/api/portal-payments.md` names the row keys and the setting
 
 ### Task 4: Verify
 - [ ] Diff-scoped checks, then `composer check:strict`, `npm run lint`, `npm run format`, `npm run test:l10n`, hydra gates, once
