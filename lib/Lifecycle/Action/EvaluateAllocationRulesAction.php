@@ -242,23 +242,7 @@ class EvaluateAllocationRulesAction implements LifecycleActionInterface {
 			throw new RuntimeException(sprintf('Allocation rule "%s" has no targets.', $name));
 		}
 
-		$shares = [];
-		if ($driver === 'fixed-percentage') {
-			foreach ($targets as $target) {
-				$shares[] = [(string)($target['code'] ?? ''), (int)round($sourceCents * (float)($target['percentage'] ?? 0) / 100)];
-			}
-
-			// A 100 percent split must allocate the whole amount: put the rounding remainder on the last target.
-			$percentage = array_sum(array_map(static fn (array $t): float => (float)($t['percentage'] ?? 0), $targets));
-			if (abs($percentage - 100.0) < 0.0001) {
-				$last = (count($shares) - 1);
-				$shares[$last][1] += ($sourceCents - array_sum(array_column($shares, 1)));
-			}
-		} else if ($driver === 'fixed-amount') {
-			foreach ($targets as $target) {
-				$shares[] = [(string)($target['code'] ?? ''), (int)round((float)($target['amount'] ?? 0) * 100)];
-			}
-		} else {
+		if (in_array($driver, ['fixed-percentage', 'fixed-amount'], true) === false) {
 			throw new RuntimeException(
 				sprintf(
 					'Allocation rule "%s" uses driver "%s", which cannot run per posting. Set its cadence to monthly or pause it.',
@@ -266,7 +250,24 @@ class EvaluateAllocationRulesAction implements LifecycleActionInterface {
 					$driver
 				)
 			);
-		}//end if
+		}
+
+		$shares = [];
+		foreach ($targets as $target) {
+			$cents = (int)round((float)($target['amount'] ?? 0) * 100);
+			if ($driver === 'fixed-percentage') {
+				$cents = (int)round($sourceCents * (float)($target['percentage'] ?? 0) / 100);
+			}
+
+			$shares[] = [(string)($target['code'] ?? ''), $cents];
+		}
+
+		// A 100 percent split must allocate the whole amount: put the rounding remainder on the last target.
+		$percentage = array_sum(array_map(static fn (array $t): float => (float)($t['percentage'] ?? 0), $targets));
+		if ($driver === 'fixed-percentage' && abs($percentage - 100.0) < 0.0001) {
+			$last = (count($shares) - 1);
+			$shares[$last][1] += ($sourceCents - array_sum(array_column($shares, 1)));
+		}
 
 		if (array_sum(array_column($shares, 1)) > $sourceCents) {
 			throw new RuntimeException(sprintf('Allocation rule "%s" allocates more than the source line holds.', $name));
