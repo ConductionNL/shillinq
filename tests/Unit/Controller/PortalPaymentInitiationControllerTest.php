@@ -330,4 +330,61 @@ final class PortalPaymentInitiationControllerTest extends TestCase {
 
 		self::assertSame(Http::STATUS_OK, $response->getStatus());
 	}//end testAParentAssertionPassesTheAudienceGate()
+
+	/**
+	 * Wire a request whose body carries these params.
+	 *
+	 * @param string $header The X-Portal-Subject header value.
+	 * @param array<string, mixed> $params The body params.
+	 *
+	 * @return void
+	 */
+	private function wireParams(string $header, array $params): void {
+		$this->request->method('getHeader')->willReturn($header);
+		$this->request->method('getParam')->willReturnCallback(
+			static fn (string $key, mixed $default = null): mixed => ($params[$key] ?? $default)
+		);
+	}//end wireParams()
+
+	/**
+	 * A `requestPayments` row sends `paymentRequestId`: the controller routes
+	 * it to the request path, which charges the request's own amount
+	 * (REQ-SPPI-008).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
+	 */
+	public function testAPaymentRequestIdTakesTheRequestPath(): void {
+		$this->wireParams(header: $this->mintAssertion(secret: self::SECRET), params: ['paymentRequestId' => 'pr-own']);
+		$this->sessionService->expects($this->never())->method('initiate');
+		$this->sessionService->expects($this->once())
+			->method('initiateForRequest')
+			->with($this->anything(), 'pr-own')
+			->willReturn(PortalPaymentSessionResult::success(checkoutUrl: 'https://mollie.example/checkout/tr_r'));
+
+		$response = $this->controller->initiate();
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame(['checkoutUrl' => 'https://mollie.example/checkout/tr_r'], $response->getData());
+	}//end testAPaymentRequestIdTakesTheRequestPath()
+
+	/**
+	 * An invoice id wins when both are sent, so an invoice row keeps its
+	 * behaviour whatever else the body carries (REQ-SPPI-008).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
+	 */
+	public function testAnInvoiceIdWinsOverAPaymentRequestId(): void {
+		$this->wireParams(header: $this->mintAssertion(secret: self::SECRET), params: ['invoiceId' => self::INVOICE_ID, 'paymentRequestId' => 'pr-own']);
+		$this->sessionService->expects($this->never())->method('initiateForRequest');
+		$this->sessionService->expects($this->once())
+			->method('initiate')
+			->with($this->anything(), self::INVOICE_ID)
+			->willReturn(PortalPaymentSessionResult::forbidden());
+
+		self::assertSame(Http::STATUS_FORBIDDEN, $this->controller->initiate()->getStatus());
+	}//end testAnInvoiceIdWinsOverAPaymentRequestId()
 }//end class
