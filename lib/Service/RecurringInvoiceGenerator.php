@@ -287,6 +287,7 @@ class RecurringInvoiceGenerator {
 	 * @return array<string,mixed> The ARInvoice payload.
 	 *
 	 * @spec openspec/specs/recurring-invoicing/spec.md
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/recurring-invoicing/spec.md#requirement-req-rin-009-a-generated-invoice-shall-carry-its-lines-as-invoicelines
 	 */
 	public static function buildArInvoicePayload(
 		array $profile,
@@ -319,13 +320,20 @@ class RecurringInvoiceGenerator {
 				language: $language
 			);
 
+			// ARInvoice declares its lines as `invoiceLines` in the EN 16931
+			// BG-25 shape; the former `lines` was dropped by OpenRegister, so
+			// every generated invoice arrived without lines. The line declares
+			// no account, so the profile's revenueAccount is not written per
+			// line (REQ-RIN-009).
 			$lines[] = [
-				'lineNumber' => $lineNumber,
-				'description' => $description,
+				'lineId' => (string)$lineNumber,
+				'itemName' => $description,
 				'quantity' => $quantity,
-				'unitPrice' => $unitPrice,
+				'unitCode' => 'C62',
+				'netPrice' => $unitPrice,
+				'netAmount' => round($lineNet, 2),
 				'vatRate' => $vatRate,
-				'glAccount' => (string)($raw['revenueAccount'] ?? ''),
+				'vatCategory' => self::vatCategory(vatRate: $vatRate),
 			];
 
 			$net += $lineNet;
@@ -353,10 +361,27 @@ class RecurringInvoiceGenerator {
 			'lifecycleState' => $lifecycleState,
 			'recurringProfileId' => $profileId,
 			'billingPeriod' => $billingPeriod,
-			'lines' => $lines,
+			'invoiceLines' => $lines,
 		];
 
 	}//end buildArInvoicePayload()
+
+	/**
+	 * The EN 16931 VAT category of a line: S for a standard rate, Z at zero.
+	 *
+	 * @param int $vatRate The line's VAT rate in percent.
+	 *
+	 * @return string The category code.
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/recurring-invoicing/spec.md#requirement-req-rin-009-a-generated-invoice-shall-carry-its-lines-as-invoicelines
+	 */
+	private static function vatCategory(int $vatRate): string {
+		if ($vatRate > 0) {
+			return 'S';
+		}
+
+		return 'Z';
+	}//end vatCategory()
 
 	/**
 	 * Expand {period}/{month}/{year} tokens in a line description, localized

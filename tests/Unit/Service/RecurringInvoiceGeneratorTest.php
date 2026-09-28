@@ -210,7 +210,7 @@ final class RecurringInvoiceGeneratorTest extends TestCase {
 		// 99.00 * 21% = 20.79 by the standard engine.
 		$this->assertSame(20.79, $invoice['vatAmount']);
 		$this->assertSame(119.79, $invoice['grossAmount']);
-		$this->assertSame('Hosting January 2027', $invoice['lines'][0]['description']);
+		$this->assertSame('Hosting January 2027', $invoice['invoiceLines'][0]['itemName']);
 
 		// Profile advanced one month.
 		$this->assertSame('2027-01', $result['profile']['lastBillingPeriod']);
@@ -218,6 +218,54 @@ final class RecurringInvoiceGeneratorTest extends TestCase {
 		$this->assertSame('ok', $result['profile']['lastRunStatus']);
 
 	}//end testDueProfileGeneratesOrdinaryInvoice()
+
+	/**
+	 * A generated invoice carries its lines as `invoiceLines` in the EN 16931
+	 * shape ARInvoice declares. The former `lines` was dropped by OpenRegister,
+	 * so every generated invoice arrived without lines (REQ-RIN-009).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/recurring-invoicing/spec.md#requirement-req-rin-009-a-generated-invoice-shall-carry-its-lines-as-invoicelines
+	 */
+	public function testTheGeneratedInvoiceCarriesItsLinesAsInvoiceLines(): void {
+		$payload = RecurringInvoiceGenerator::buildArInvoicePayload(
+			profile: $this->profile(
+				[
+					'lines' => [
+						['description' => 'Retainer {month}', 'quantity' => 1, 'unitPrice' => 500.0, 'vatCode' => 21, 'revenueAccount' => '8000'],
+						['description' => 'Export levy', 'quantity' => 2, 'unitPrice' => 12.5, 'vatCode' => 0],
+					],
+				]
+			),
+			profileId: 'prof-1',
+			billingPeriod: '2026-10',
+			periodStart: '2026-10-01',
+			issueDate: '2026-10-01',
+			dueDate: '2026-10-31',
+			language: 'nl'
+		);
+
+		$this->assertArrayNotHasKey('lines', $payload);
+		$this->assertSame(
+			[
+				'lineId' => '1',
+				'itemName' => 'Retainer oktober',
+				'quantity' => 1.0,
+				'unitCode' => 'C62',
+				'netPrice' => 500.0,
+				'netAmount' => 500.0,
+				'vatRate' => 21,
+				'vatCategory' => 'S',
+			],
+			$payload['invoiceLines'][0]
+		);
+		$this->assertSame('Z', $payload['invoiceLines'][1]['vatCategory']);
+		$this->assertSame(25.0, $payload['invoiceLines'][1]['netAmount']);
+		$this->assertSame(525.0, $payload['netAmount']);
+		$this->assertSame(105.0, $payload['vatAmount']);
+		$this->assertSame(630.0, $payload['grossAmount']);
+	}//end testTheGeneratedInvoiceCarriesItsLinesAsInvoiceLines()
 
 	/**
 	 * Auto-issue profiles produce an issued (not draft) invoice.

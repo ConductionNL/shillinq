@@ -20,8 +20,8 @@ Stacked on `voluntary-contribution-reminder` (#1724). No Nextcloud migration cla
 - **files**: `lib/Service/RecurringInvoiceGenerator.php`, `tests/Unit/Service/RecurringInvoiceGeneratorTest.php`
 - **acceptance_criteria**:
   - GIVEN a one-line profile WHEN the payload is built THEN invoiceLines carries the expanded line and there is no lines key
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 3: The PDF reads ARInvoice lines
 - **spec_ref**: `openspec/changes/arinvoice-lines-and-portal-amounts/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#requirement-req-einv-009-the-hybrid-pdf-shall-print-the-arinvoices-own-lines`
