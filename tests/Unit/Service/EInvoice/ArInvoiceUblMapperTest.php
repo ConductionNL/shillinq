@@ -165,4 +165,41 @@ final class ArInvoiceUblMapperTest extends TestCase {
 		self::assertStringContainsString('A &amp; B &lt;Consultancy&gt;', $xml);
 
 	}//end testSpecialCharactersAreEscaped()
+
+	/**
+	 * REQ-EINV-010: the customer's reference is the buyer reference (BT-10),
+	 * in UBL order right after the document currency.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/arinvoice-field-backfill-and-bt10/specs/bookkeeping-einvoicing-ubl-peppol/spec.md (REQ-EINV-010)
+	 */
+	public function testCustomerReferenceIsTheBuyerReference(): void {
+		$invoice = $this->issuedInvoice();
+		$invoice['customerReference'] = 'PO-4711 & co';
+
+		$xml = (new ArInvoiceUblMapper())->toNlciusXml(arInvoice: $invoice);
+
+		self::assertInstanceOf(SimpleXMLElement::class, new SimpleXMLElement($xml));
+		self::assertStringContainsString(
+			'<cbc:DocumentCurrencyCode>EUR</cbc:DocumentCurrencyCode><cbc:BuyerReference>PO-4711 &amp; co</cbc:BuyerReference><cac:AccountingSupplierParty>',
+			$xml
+		);
+	}//end testCustomerReferenceIsTheBuyerReference()
+
+	/**
+	 * REQ-EINV-010: no reference, no empty BuyerReference element.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/arinvoice-field-backfill-and-bt10/specs/bookkeeping-einvoicing-ubl-peppol/spec.md (REQ-EINV-010)
+	 */
+	public function testNoCustomerReferenceWritesNoBuyerReference(): void {
+		$invoice = $this->issuedInvoice();
+		$invoice['customerReference'] = '  ';
+
+		$xml = (new ArInvoiceUblMapper())->toNlciusXml(arInvoice: $invoice);
+
+		self::assertStringNotContainsString('BuyerReference', $xml);
+	}//end testNoCustomerReferenceWritesNoBuyerReference()
 }//end class

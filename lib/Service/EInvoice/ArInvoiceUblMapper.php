@@ -79,6 +79,7 @@ final class ArInvoiceUblMapper {
 	 *                          lifecycle state — no XML is produced (REQ-EINV-001).
 	 *
 	 * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
+	 * @spec openspec/changes/arinvoice-field-backfill-and-bt10/specs/bookkeeping-einvoicing-ubl-peppol/spec.md (REQ-EINV-010)
 	 */
 	public function toNlciusXml(array $arInvoice): string {
 		$lifecycleState = (string)($arInvoice['lifecycleState'] ?? '');
@@ -109,6 +110,13 @@ final class ArInvoiceUblMapper {
 			value: (string)($arInvoice['invoiceTypeCode'] ?? '380')
 		);
 		$xml .= $this->element(name: 'cbc:DocumentCurrencyCode', value: $currency);
+
+		// BT-10 Buyer reference: the reference the customer gave the invoice,
+		// in UBL order after the currency. No reference, no element (REQ-EINV-010).
+		$buyerReference = trim((string)($arInvoice['customerReference'] ?? ''));
+		if ($buyerReference !== '') {
+			$xml .= $this->element(name: 'cbc:BuyerReference', value: $buyerReference);
+		}
 
 		$xml .= $this->supplierParty(arInvoice: $arInvoice);
 		$xml .= $this->customerParty(arInvoice: $arInvoice);
