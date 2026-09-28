@@ -5463,7 +5463,23 @@ OC.L10N.register(
         "Pair the bank line of this item with the invoices it pays, or book it to a ledger account.": "Koppel de bankregel van deze post aan de facturen die ermee betaald zijn, of boek hem op een grootboekrekening.",
         "Pair this bank line with the invoices it pays, or book it to a ledger account.": "Koppel deze bankregel aan de facturen die ermee betaald zijn, of boek hem op een grootboekrekening.",
         "Bank lines no rule has matched yet. Pair a line with the invoices it pays, or book it to a ledger account.": "Bankregels die nog door geen regel gematcht zijn. Koppel een regel aan de facturen die ermee betaald zijn, of boek hem op een grootboekrekening.",
-        "The ledger account this bank account books to. A bank line booked to a ledger account by hand posts against it.": "De grootboekrekening waarop deze bankrekening boekt. Een bankregel die je handmatig op een grootboekrekening boekt, wordt daartegen geboekt."
+        "The ledger account this bank account books to. A bank line booked to a ledger account by hand posts against it.": "De grootboekrekening waarop deze bankrekening boekt. Een bankregel die je handmatig op een grootboekrekening boekt, wordt daartegen geboekt.",
+        "Bank connection": "Bankkoppeling",
+        "The bank connection that feeds this account's transactions. Empty when statements are imported by file.": "De bankkoppeling die de transacties van deze rekening aanlevert. Leeg als afschriften als bestand worden ingelezen.",
+        "Last sync": "Laatst gesynchroniseerd",
+        "When the bank feed last delivered transactions for this account.": "Wanneer de bankkoppeling voor het laatst transacties voor deze rekening aanleverde.",
+        "How the statement arrived: a file a person imported, or the bank feed.": "Hoe het afschrift binnenkwam: een bestand dat iemand inlas, of de bankkoppeling.",
+        "Feed batch": "Koppelingsbatch",
+        "The bank feed batch this statement was written from. A second delivery of the same batch writes nothing.": "De batch van de bankkoppeling waaruit dit afschrift is geschreven. Een tweede levering van dezelfde batch schrijft niets.",
+        "The ledger account the imported statement books against.": "De grootboekrekening waartegen het ingelezen afschrift boekt.",
+        "The format the statement arrived in; feed for the bank feed.": "Het formaat waarin het afschrift binnenkwam; feed voor de bankkoppeling.",
+        "Connect a bank": "Bank koppelen",
+        "Connect a bank account in integriq so its transactions arrive here on their own.": "Koppel een bankrekening in integriq, zodat de transacties hier vanzelf binnenkomen.",
+        "Cash per bank account": "Liquide middelen per bankrekening",
+        "No bank accounts yet.": "Nog geen bankrekeningen.",
+        "Ledger balance": "Saldo grootboek",
+        "Bank balance": "Saldo bank",
+        "Bank balance on": "Banksaldo op"
     },
     "nplurals=2; plural=(n != 1);"
 )
