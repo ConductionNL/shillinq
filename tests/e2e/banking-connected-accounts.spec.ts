@@ -8,7 +8,7 @@
  * the scenario, so the test proves the screens. The figures themselves are
  * proven by CashPositionByAccountTest against the calculator.
  *
- * @spec openspec/changes/banking-connected-accounts/tasks.md#task-4.2
+ * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
  */
 
 import { expect, test } from '@playwright/test'

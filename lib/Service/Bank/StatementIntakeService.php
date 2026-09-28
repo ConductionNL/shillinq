@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/banking-connected-accounts/tasks.md#task-2.1
+ * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -38,7 +38,7 @@ use Psr\Log\LoggerInterface;
 /**
  * One intake for statement files and bank feed batches (REQ-BCON-002).
  *
- * @spec openspec/changes/banking-connected-accounts/tasks.md#task-2.1
+ * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
  */
 class StatementIntakeService {
 	/**
@@ -79,7 +79,7 @@ class StatementIntakeService {
 	 *
 	 * @return array{statementId:string,written:array<int,array<string,mixed>>,skipped:int,duplicateBatch:bool}
 	 *
-	 * @spec openspec/changes/banking-connected-accounts/tasks.md#task-2.1
+	 * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
 	 */
 	public function ingest(string $administrationId, string $iban, array $lines, array $meta): array {
 		$batchUri = trim((string)($meta['sourceBatchUri'] ?? ''));
@@ -131,7 +131,7 @@ class StatementIntakeService {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/banking-connected-accounts/tasks.md#task-2.1
+	 * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
 	 */
 	public static function buildStatement(string $administrationId, string $iban, int $lineCount, array $meta): array {
 		$source = (string)($meta['source'] ?? 'file');
@@ -178,7 +178,7 @@ class StatementIntakeService {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/banking-connected-accounts/tasks.md#task-2.1
+	 * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
 	 */
 	public static function buildLine(array $line, string $statementId, string $administrationId, int $lineNumber): array {
 		$ref = trim((string)($line['endToEndRef'] ?? ''));

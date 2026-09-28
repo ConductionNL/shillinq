@@ -621,7 +621,7 @@ class FinancialSeriesCalculator {
 	 *
 	 * @return array{accounts:array<int,array<string,mixed>>,other:float,total:float}
 	 *
-	 * @spec openspec/changes/banking-connected-accounts/tasks.md#task-4.1
+	 * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
 	 */
 	public function cashPositionByAccount(array $data, array $bankAccounts, array $statements): array {
 		$liquid = $this->classifyAccounts(accounts: ($data['accounts'] ?? []))['liquid'];

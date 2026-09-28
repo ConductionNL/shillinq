@@ -257,7 +257,7 @@ class FinancialDashboardService {
 	 *
 	 * @return array{accounts:array<int,array<string,mixed>>,other:float,total:float}
 	 *
-	 * @spec openspec/changes/banking-connected-accounts/tasks.md#task-4.1
+	 * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
 	 */
 	public function cashPosition(string $administrationId): array {
 		$data = $this->fetchSchemas(

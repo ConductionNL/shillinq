@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/banking-connected-accounts/tasks.md#task-3.1
+ * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -39,7 +39,7 @@ use Throwable;
 /**
  * Exact-match booking of feed lines (REQ-BCON-003).
  *
- * @spec openspec/changes/banking-connected-accounts/tasks.md#task-3.1
+ * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  */
 class ExactMatchBooker {
 	/**
@@ -73,7 +73,7 @@ class ExactMatchBooker {
 	 *
 	 * @return array<string,mixed>|null The confirmed match, or null when the line waits for a person.
 	 *
-	 * @spec openspec/changes/banking-connected-accounts/tasks.md#task-3.1
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 	 */
 	public function book(array $line): ?array {
 		$amount = round((float)($line['amount'] ?? 0), 2);
@@ -128,7 +128,7 @@ class ExactMatchBooker {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/banking-connected-accounts/tasks.md#task-3.1
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 	 */
 	public static function referenceFound(string $text, array $invoice): string {
 		foreach (['invoiceNumber', 'paymentReference'] as $field) {

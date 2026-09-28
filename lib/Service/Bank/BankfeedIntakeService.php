@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/banking-connected-accounts/tasks.md#task-2.2
+ * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -38,7 +38,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Bank feed batch intake (REQ-BCON-002, REQ-BCON-003).
  *
- * @spec openspec/changes/banking-connected-accounts/tasks.md#task-2.2
+ * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
  */
 class BankfeedIntakeService {
 	/**
@@ -81,7 +81,7 @@ class BankfeedIntakeService {
 	 *
 	 * @return array{result:string,statementId:string,lines:int,booked:int}
 	 *
-	 * @spec openspec/changes/banking-connected-accounts/tasks.md#task-2.2
+	 * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
 	 */
 	public function ingestSynced(array $data): array {
 		$iban = self::normaliseIban(iban: (string)($data['accountIban'] ?? ''));
@@ -153,7 +153,7 @@ class BankfeedIntakeService {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/banking-connected-accounts/tasks.md#task-2.2
+	 * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
 	 */
 	public static function normaliseTransaction(array $row): array {
 		$amount = (float)($row['transactionAmount']['amount'] ?? ($row['amount'] ?? 0));

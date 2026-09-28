@@ -149,7 +149,7 @@ class FinancialDashboardController extends Controller {
 	 *
 	 * @return JSONResponse `{accounts: [...], other, total}`, 400, 401 or a masked 404.
 	 *
-	 * @spec openspec/changes/banking-connected-accounts/tasks.md#task-4.1
+	 * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
 	 */
 	#[NoAdminRequired]
 	public function cashPosition(): JSONResponse {
