@@ -32,8 +32,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\Dunning\DunningChannelAdapterInterface;
 use OCA\Shillinq\Service\Dunning\DunningChannelSendResult;
+use OCA\Shillinq\Service\Dunning\DunningStageDispatcher;
 use OCA\Shillinq\Service\Dunning\IncassoBureauAdapterInterface;
+use OCA\Shillinq\Service\Dunning\LogDunningChannelAdapter;
 use OCA\Shillinq\Service\Dunning\PostNLAdapterInterface;
 use OCA\Shillinq\Service\DunningRunService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
@@ -59,10 +62,20 @@ final class DunningRunServiceTest extends TestCase {
 		InMemoryObjectService $os,
 		?IncassoBureauAdapterInterface $incasso = null,
 		?PostNLAdapterInterface $postnl = null,
+		?DunningChannelAdapterInterface $channel = null,
 	): DunningRunService {
 		$container = $this->createStub(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
-			static function (string $id) use ($os, $incasso, $postnl) {
+			static function (string $id) use ($os, $incasso, $postnl, $channel) {
+				if ($id === DunningStageDispatcher::class) {
+					// The real dispatcher over the production binding (Application.php:
+					// LogDunningChannelAdapter) unless a test supplies its own adapter.
+					$adapter = $channel;
+					if ($adapter === null) {
+						$adapter = new LogDunningChannelAdapter(logger: new NullLogger());
+					}
+					return new DunningStageDispatcher(adapter: $adapter, logger: new NullLogger());
+				}
 				if ($id === IncassoBureauAdapterInterface::class) {
 					return ($incasso !== null) ? $incasso : new class implements IncassoBureauAdapterInterface {
 						public function transfer(string $administrationId, string $invoiceId, array $dossier): DunningChannelSendResult {
@@ -224,6 +237,169 @@ final class DunningRunServiceTest extends TestCase {
 		self::assertNotNull($persisted['executedOn']);
 
 	}//end testExecuteStagePersistsExecutedRun()
+
+	/**
+	 * Issue #1687: executeStage() dispatches the run through the bound
+	 * DunningChannelAdapterInterface and records the adapter's outcome, not a
+	 * status the caller supplied (REQ-RAD-003, design D6).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
+	 */
+	public function testExecuteStageDispatchesThroughTheChannelAdapterAndRecordsItsOutcome(): void {
+		$os = new OpenRegisterFaithfulObjectService();
+		$adapter = $this->createMock(DunningChannelAdapterInterface::class);
+		$adapter->expects($this->once())
+			->method('send')
+			->with(
+				'EMAIL',
+				$this->callback(
+					static function (array $payload): bool {
+						return ($payload['invoiceId'] ?? null) === 'inv-1'
+							&& ($payload['administrationId'] ?? null) === 'adm-1'
+							&& ($payload['stageNr'] ?? null) === 1
+							&& ($payload['recipientEmail'] ?? null) === 'klant@example.nl'
+							&& ($payload['subject'] ?? null) === 'Reminder factuur'
+							&& ($payload['body'] ?? null) === 'Vriendelijk verzoek';
+					}
+				)
+			)
+			->willReturn(new DunningChannelSendResult(channel: 'EMAIL', deliveryStatus: 'FAILED', errorMessage: 'Mailbox unavailable'));
+		$service = $this->makeService(os: $os, channel: $adapter);
+
+		$persisted = $service->executeStage(administrationId: 'adm-1', params: [
+			'invoiceId' => 'inv-1',
+			'ladderId' => 'ladder-1',
+			'stageNr' => 1,
+			'templateId' => 'tpl-stage1',
+			'channel' => 'EMAIL',
+			'recipientEmail' => 'klant@example.nl',
+			'renderedSubject' => 'Reminder factuur',
+			'renderedBody' => 'Vriendelijk verzoek',
+			// A caller's claim is not evidence: the adapter's outcome wins.
+			'deliveryStatus' => 'DELIVERED',
+		]);
+
+		self::assertSame('FAILED', $persisted['deliveryStatus']);
+		self::assertSame('executed', $persisted['lifecycleState']);
+
+	}//end testExecuteStageDispatchesThroughTheChannelAdapterAndRecordsItsOutcome()
+
+	/**
+	 * Issue #1687: a delivered dispatch is recorded as delivered, with the
+	 * provider's postage evidence stamped on the run.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
+	 */
+	public function testExecuteStageRecordsTheAdaptersDeliveredStatusAndPostageEvidence(): void {
+		$os = new OpenRegisterFaithfulObjectService();
+		$adapter = $this->createMock(DunningChannelAdapterInterface::class);
+		$adapter->expects($this->once())
+			->method('send')
+			->with('REGISTERED_POST', $this->anything())
+			->willReturn(
+				new DunningChannelSendResult(
+					channel: 'REGISTERED_POST',
+					deliveryStatus: 'DELIVERED',
+					providerMessageId: 'postnl-1',
+					extras: ['barcode' => '3S0000000000001', 'trackingUrl' => 'https://postnl.nl/tracktrace/3S0000000000001'],
+				)
+			);
+		$service = $this->makeService(os: $os, channel: $adapter);
+
+		$persisted = $service->executeStage(administrationId: 'adm-1', params: [
+			'invoiceId' => 'inv-1',
+			'ladderId' => 'ladder-1',
+			'stageNr' => 4,
+			'templateId' => 'tpl-stage4',
+			'channel' => 'REGISTERED_POST',
+		]);
+
+		self::assertSame('DELIVERED', $persisted['deliveryStatus']);
+		self::assertSame('3S0000000000001', $persisted['postageStatus']['barcode']);
+
+	}//end testExecuteStageRecordsTheAdaptersDeliveredStatusAndPostageEvidence()
+
+	/**
+	 * Issue #1687: an adapter that throws leaves a FAILED run, never a run that
+	 * reads as sent.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
+	 */
+	public function testExecuteStageRecordsFailedWhenTheAdapterThrows(): void {
+		$os = new OpenRegisterFaithfulObjectService();
+		$adapter = $this->createMock(DunningChannelAdapterInterface::class);
+		$adapter->expects($this->once())
+			->method('send')
+			->willThrowException(new RuntimeException('SMTP connection refused'));
+		$service = $this->makeService(os: $os, channel: $adapter);
+
+		$persisted = $service->executeStage(administrationId: 'adm-1', params: [
+			'invoiceId' => 'inv-1',
+			'ladderId' => 'ladder-1',
+			'stageNr' => 1,
+			'templateId' => 'tpl-stage1',
+			'channel' => 'EMAIL',
+			'deliveryStatus' => 'DELIVERED',
+		]);
+
+		self::assertSame('FAILED', $persisted['deliveryStatus']);
+
+	}//end testExecuteStageRecordsFailedWhenTheAdapterThrows()
+
+	/**
+	 * Issue #1687: a paused invoice is refused before anything is dispatched.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
+	 */
+	public function testExecuteStageDispatchesNothingWhilePaused(): void {
+		$os = new OpenRegisterFaithfulObjectService();
+		$os->seed(schema: 'DunningPauseDispute', rows: [
+			['id' => 'pause-1', 'administrationId' => 'adm-1', 'invoiceId' => 'inv-1', 'lifecycleState' => 'active'],
+		]);
+		$adapter = $this->createMock(DunningChannelAdapterInterface::class);
+		$adapter->expects($this->never())->method('send');
+		$service = $this->makeService(os: $os, channel: $adapter);
+
+		$this->expectException(RuntimeException::class);
+		$service->executeStage(administrationId: 'adm-1', params: ['invoiceId' => 'inv-1', 'stageNr' => 1, 'channel' => 'EMAIL']);
+
+	}//end testExecuteStageDispatchesNothingWhilePaused()
+
+	/**
+	 * Issue #1687: the log-only production binding sends nothing, so a run it
+	 * handles never records DELIVERED (task 2.3: no channel that did not send
+	 * ever records delivered).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
+	 */
+	public function testTheLogOnlyChannelAdapterNeverRecordsDelivered(): void {
+		$os = new OpenRegisterFaithfulObjectService();
+		$service = $this->makeService(os: $os);
+
+		foreach (['EMAIL', 'eMAILPostRegistration', 'REGISTERED_POST', 'COLLECTION_AGENCY_API'] as $nr => $channel) {
+			$persisted = $service->executeStage(administrationId: 'adm-1', params: [
+				'invoiceId' => 'inv-1',
+				'ladderId' => 'ladder-1',
+				'stageNr' => ($nr + 1),
+				'templateId' => 'tpl',
+				'channel' => $channel,
+				'recipientEmail' => 'klant@example.nl',
+			]);
+			self::assertSame('PENDING', $persisted['deliveryStatus'], $channel . ' was recorded as delivered while nothing was sent');
+			self::assertNull($persisted['postageStatus'], $channel . ' carries postage evidence for a letter that was never posted');
+		}
+
+	}//end testTheLogOnlyChannelAdapterNeverRecordsDelivered()
 
 	/**
 	 * REQ-CCD-004: pause sets hardDeadlineEindigt at pauzeStart + 60 days.
