@@ -1180,6 +1180,7 @@ final class DunningRunServiceTest extends TestCase {
 	 * @return void
 	 *
 	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-008)
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-012)
 	 */
 	public function testAVoluntaryContributionGetsOneReminderAtMost(): void {
 		$os = $this->voluntaryStore();
@@ -1196,7 +1197,9 @@ final class DunningRunServiceTest extends TestCase {
 
 		self::assertNotNull($first);
 		self::assertSame(1, (int)$first['stageNr']);
-		self::assertSame('tpl-friendly', $first['templateId']);
+		// Its own letter, not the ladder's stage 1 template (REQ-SCON-012).
+		self::assertSame('tpl-dunning-voluntary-contribution-nl', $first['templateId']);
+		self::assertStringContainsString('vrijwillig', (string)$first['renderedBody']);
 		self::assertNull($first['collectionCostAmount']);
 		self::assertNull($first['interestAmount']);
 
@@ -1301,5 +1304,80 @@ final class DunningRunServiceTest extends TestCase {
 		$runs = $os->dump(schema: 'DunningRun');
 		self::assertSame('executed', end($runs)['lifecycleState']);
 	}//end testAVoluntaryContributionIsNeverHandedToACollectionAgency()
+
+	/**
+	 * Asked directly with the generic stage 1 letter, executeStage still saves
+	 * the voluntary letter in the invoice's language; a compulsory invoice
+	 * keeps the template it was given (REQ-SCON-012).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-012)
+	 */
+	public function testExecuteStageAlwaysUsesTheVoluntaryTemplate(): void {
+		$os = $this->voluntaryStore();
+		$english = $this->voluntaryInvoice();
+		$english['id'] = 'inv-vol-en';
+		$english['contribution']['language'] = 'en';
+		$compulsory = $this->voluntaryInvoice();
+		$compulsory['id'] = 'inv-comp';
+		$compulsory['contribution']['voluntary'] = false;
+		$os->seed(schema: 'ARInvoice', rows: [$english, $compulsory]);
+		$service = $this->makeService(os: $os);
+		$generic = [
+			'stageNr' => 1,
+			'templateId' => 'tpl-dunning-stage1-nl',
+			'renderedSubject' => 'Vriendelijke herinnering',
+			'renderedBody' => 'Maak het bedrag over naar IBAN NL00BANK0123456789.',
+		];
+
+		$run = $service->executeStage(administrationId: 'adm-1', params: ['invoiceId' => 'inv-vol'] + $generic);
+		self::assertSame('tpl-dunning-voluntary-contribution-nl', $run['templateId']);
+		self::assertStringNotContainsString('IBAN', (string)$run['renderedBody']);
+		self::assertStringContainsString('Deze bijdrage is vrijwillig.', (string)$run['renderedBody']);
+		self::assertNotSame('Vriendelijke herinnering', $run['renderedSubject']);
+
+		$run = $service->executeStage(administrationId: 'adm-1', params: ['invoiceId' => 'inv-vol-en'] + $generic);
+		self::assertSame('tpl-dunning-voluntary-contribution-en', $run['templateId']);
+		self::assertStringContainsString('This contribution is voluntary.', (string)$run['renderedBody']);
+
+		$run = $service->executeStage(administrationId: 'adm-1', params: ['invoiceId' => 'inv-comp'] + $generic);
+		self::assertSame('tpl-dunning-stage1-nl', $run['templateId']);
+		self::assertStringContainsString('IBAN', (string)$run['renderedBody']);
+	}//end testExecuteStageAlwaysUsesTheVoluntaryTemplate()
+
+	/**
+	 * A contribution the parent declined is never reminded: the tick runs
+	 * nothing and a direct call is refused, so no run exists (REQ-SCON-014).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-014)
+	 */
+	public function testADeclinedContributionIsNeverReminded(): void {
+		$declined = $this->voluntaryInvoice();
+		$declined['lifecycleState'] = 'declined';
+		$os = $this->voluntaryStore();
+		$os->seed(schema: 'ARInvoice', rows: [array_merge($declined, ['id' => 'inv-declined'])]);
+		$service = $this->makeService(os: $os);
+
+		$tick = $service->tickInvoice(
+			administrationId: 'adm-1',
+			invoice: array_merge($declined, ['id' => 'inv-declined']),
+			baseLadderId: 'ladder-1',
+			params: [],
+			now: new \DateTimeImmutable('2026-12-31T12:00:00Z')
+		);
+		self::assertNull($tick);
+
+		try {
+			$service->executeStage(administrationId: 'adm-1', params: ['invoiceId' => 'inv-declined', 'stageNr' => 1]);
+			self::fail('a declined contribution was reminded');
+		} catch (RuntimeException $e) {
+			self::assertStringContainsString('will not pay', $e->getMessage());
+		}
+
+		self::assertSame([], $os->dump(schema: 'DunningRun'));
+	}//end testADeclinedContributionIsNeverReminded()
 
 }//end class

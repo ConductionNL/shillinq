@@ -111,16 +111,12 @@ class PortalContributionProvider {
 	private const PARENT_COLLECTIONS = ['salesInvoices', 'paymentRequests'];
 
 	/**
-	 * ARInvoice's declared names for the amounts and the lines the customer
-	 * manifest lists under names ARInvoice does not carry.
+	 * The customer actions a parent keeps: pay. A contribution always has an
+	 * invoice, so pay-request (a request without one) is not theirs.
 	 *
-	 * @var array<string, string>
+	 * @var array<int, string>
 	 */
-	private const PARENT_FIELD_MAP = [
-		'totalAmount' => 'grossAmount',
-		'taxAmount' => 'vatAmount',
-		'lines' => 'invoiceLines',
-	];
+	private const PARENT_ACTIONS = ['pay'];
 
 	/**
 	 * The audiences this provider contributes to (contract v2, preferred).
@@ -302,18 +298,21 @@ class PortalContributionProvider {
 					'label' => 'My invoices',
 					'listable' => true,
 					'rowAction' => 'pay',
+					// ARInvoice's declared names: the amounts, lines, status and UBL
+					// reference were listed as totalAmount, taxAmount, lines, state and
+					// ublXml, which carry nothing (REQ-SPPI-007).
 					'fields' => [
 						'invoiceNumber',
 						'invoiceType',
 						'invoiceDate',
 						'dueDate',
 						'currency',
-						'totalAmount',
-						'taxAmount',
-						'lines',
-						'state',
+						'grossAmount',
+						'vatAmount',
+						'invoiceLines',
+						'lifecycleState',
 						'sourceDocumentUri',
-						'ublXml',
+						'ublRef',
 						'dunning',
 					],
 					'columns' => [
@@ -333,12 +332,12 @@ class PortalContributionProvider {
 							'render' => 'date',
 						],
 						[
-							'field' => 'totalAmount',
+							'field' => 'grossAmount',
 							'label' => 'Amount',
 							'render' => 'currency',
 						],
 						[
-							'field' => 'state',
+							'field' => 'lifecycleState',
 							'label' => 'Status',
 							'render' => 'badge',
 						],
@@ -351,12 +350,12 @@ class PortalContributionProvider {
 							'invoiceDate',
 							'dueDate',
 							'currency',
-							'totalAmount',
-							'taxAmount',
-							'lines',
-							'state',
+							'grossAmount',
+							'vatAmount',
+							'invoiceLines',
+							'lifecycleState',
 							'sourceDocumentUri',
-							'ublXml',
+							'ublRef',
 							'dunning',
 						],
 					],
@@ -380,7 +379,9 @@ class PortalContributionProvider {
 					],
 					'label' => 'Pay my invoices',
 					'listable' => true,
-					'rowAction' => 'pay',
+					// No row action: pay forwards the row id as invoiceId, and a
+					// row here is a payment request. Its invoice is paid from
+					// salesInvoices (REQ-SPPI-009).
 					'fields' => [
 						'invoiceReference',
 						'amount',
@@ -435,6 +436,76 @@ class PortalContributionProvider {
 						'direction' => 'desc',
 					],
 				],
+				// A payment request that stands without an invoice (leges on a
+				// case, a dwangsom, a deposit) is scoped by its own customerId,
+				// stamped from its debtor, because the invoice join above cannot
+				// reach it (REQ-SOPR-005, REQ-SPPI-008). Paid from its row with
+				// pay-request, which charges the request's own amount.
+				[
+					'id' => 'requestPayments',
+					'register' => 'shillinq',
+					'schema' => 'PaymentRequest',
+					'scopeField' => 'customerId',
+					'scopeClaim' => 'customerMasterId',
+					'label' => 'My payment requests',
+					'listable' => true,
+					'rowAction' => 'pay-request',
+					'fields' => [
+						'description',
+						'requestType',
+						'amount',
+						'currency',
+						'state',
+						'dueAt',
+						'legalBasis',
+						'paymentLink',
+						'capturedAt',
+						'failureReason',
+						'confirmationSummary',
+					],
+					'columns' => [
+						[
+							'field' => 'description',
+							'label' => 'For',
+							'render' => 'text',
+						],
+						[
+							'field' => 'amount',
+							'label' => 'Amount',
+							'render' => 'currency',
+						],
+						[
+							'field' => 'dueAt',
+							'label' => 'Due',
+							'render' => 'date',
+						],
+						[
+							'field' => 'state',
+							'label' => 'Status',
+							'render' => 'badge',
+						],
+					],
+					'detail' => [
+						'layout' => 'card',
+						'fields' => [
+							'description',
+							'requestType',
+							'amount',
+							'currency',
+							'state',
+							'dueAt',
+							'legalBasis',
+							'paymentLink',
+							'capturedAt',
+							'failureReason',
+							'confirmationSummary',
+						],
+					],
+					'defaultSort' => [
+						'field' => 'dueAt',
+						'direction' => 'desc',
+					],
+				],
 			],
 			// Portal-payment-initiation REQ-SPPI-006: exactly one endpoint-forward
 			// action, forwarded server-to-server by portaliq to
@@ -445,6 +516,11 @@ class PortalContributionProvider {
 			// both together if/when the AR surface moves to 'substantial' (Wave 2
 			// note above).
 			'actions' => [
+				// The rowField and rowWhen keys make pay a per-row action in
+				// portaliq (#805): the portal forwards the proven row id as invoiceId,
+				// only for a row whose lifecycleState is one the receiver
+				// accepts (PortalPaymentSessionService::PAYABLE_STATES). An
+				// ARInvoice row has no `state` (REQ-SPPI-009).
 				[
 					'id' => 'pay',
 					'label' => 'Pay now',
@@ -452,6 +528,27 @@ class PortalContributionProvider {
 					'endpoint' => '/apps/shillinq/api/portal/payments/initiate',
 					'method' => 'POST',
 					'minTrust' => 'low',
+					'rowField' => 'invoiceId',
+					'rowWhen' => [
+						'field' => 'lifecycleState',
+						'in' => ['issued', 'partially-paid', 'overdue'],
+					],
+				],
+				// The row action of requestPayments: portaliq forwards the
+				// proven row id under rowField, only while the request is
+				// pending (REQ-SPPI-008).
+				[
+					'id' => 'pay-request',
+					'label' => 'Pay now',
+					'type' => 'endpoint-forward',
+					'endpoint' => '/apps/shillinq/api/portal/payments/initiate',
+					'method' => 'POST',
+					'minTrust' => 'low',
+					'rowField' => 'paymentRequestId',
+					'rowWhen' => [
+						'field' => 'state',
+						'in' => ['pending'],
+					],
 				],
 			],
 			'notifications' => [],
@@ -466,12 +563,16 @@ class PortalContributionProvider {
 	 * Guardians sign in to the portal with audience `parent`, and until this
 	 * manifest existed they saw no shillinq invoice at all. It reuses the
 	 * customer's AR collections and scoping (the `customerMasterId` claim, which
-	 * the contribution raise links), names the amounts by the fields ARInvoice
-	 * declares, and adds the voluntary notice and the request's description.
+	 * the contribution raise links) and adds the voluntary notice and the
+	 * request's description.
+	 * It also carries the `decline` action, "I will not pay", for a voluntary
+	 * contribution.
 	 *
 	 * @return array<string, mixed> The parent manifest.
 	 *
 	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-010)
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-013)
+	 * @spec openspec/changes/portal-pay-row-action-keys/specs/portal-payment-initiation/spec.md (REQ-SPPI-009)
 	 */
 	private function parentManifest(): array {
 		$manifest = $this->customerManifest();
@@ -485,6 +586,26 @@ class PortalContributionProvider {
 
 		$manifest['label'] = 'School contributions';
 		$manifest['collections'] = $collections;
+		$manifest['actions'] = array_values(
+			array_filter(
+				$manifest['actions'],
+				static fn (array $action): bool => in_array($action['id'], self::PARENT_ACTIONS, true)
+			)
+		);
+
+		// "I will not pay" answers the one reminder of a voluntary contribution
+		// and closes it without dunning (REQ-SCON-013). Parents only: the
+		// receiver refuses anything but the guardian's own open voluntary
+		// contribution, and a business customer has none.
+		$manifest['actions'][] = [
+			'id' => 'decline',
+			'label' => 'I will not pay',
+			'type' => 'endpoint-forward',
+			'endpoint' => '/apps/shillinq/api/portal/contributions/decline',
+			'method' => 'POST',
+			'fields' => ['invoiceId'],
+			'minTrust' => 'low',
+		];
 
 		return $manifest;
 	}//end parentManifest()
@@ -502,31 +623,18 @@ class PortalContributionProvider {
 		if ($collection['id'] === 'salesInvoices') {
 			$extra = 'invoiceNote';
 			$collection['label'] = 'My contributions';
+			// Portaliq shows this field as a notice on the card and in the
+			// confirm step: the voluntary sentence (portaliq #805, REQ-SPPI-009).
+			$collection['noticeField'] = 'invoiceNote';
 		}
 
-		$collection['fields'] = $this->parentFields(fields: $collection['fields'], extra: $extra);
-		$collection['detail']['fields'] = $this->parentFields(fields: $collection['detail']['fields'], extra: $extra);
-		foreach ($collection['columns'] as $index => $column) {
-			$collection['columns'][$index]['field'] = (self::PARENT_FIELD_MAP[$column['field']] ?? $column['field']);
-		}
+		// The customer collections name ARInvoice's declared fields, so a
+		// parent sees the same fields plus one (REQ-SPPI-007).
+		$collection['fields'][] = $extra;
+		$collection['detail']['fields'][] = $extra;
 
 		return $collection;
 	}//end forParents()
-
-	/**
-	 * A field list with ARInvoice's declared amount names and one extra field.
-	 *
-	 * @param array<int, string> $fields The customer field list.
-	 * @param string $extra The field a parent also sees.
-	 *
-	 * @return array<int, string> The parent field list.
-	 */
-	private function parentFields(array $fields, string $extra): array {
-		$mapped = array_map(static fn (string $field): string => (self::PARENT_FIELD_MAP[$field] ?? $field), $fields);
-		$mapped[] = $extra;
-
-		return $mapped;
-	}//end parentFields()
 
 	/**
 	 * The read-only supplier (AP-side) manifest.

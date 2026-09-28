@@ -240,6 +240,7 @@ final class ContributionInvoiceBuilder {
 	 *
 	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-001)
 	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-007)
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-011)
 	 */
 	public function buildInvoice(
 		array $charge,
@@ -285,6 +286,9 @@ final class ContributionInvoiceBuilder {
 				'beneficiary' => $beneficiary,
 				'raiseBatchId' => $batchId,
 				'revenueAccount' => (string)$charge['revenueAccount'],
+				// The one voluntary reminder is sent in the language of the
+				// invoice note (REQ-SCON-011).
+				'language' => (string)$charge['language'],
 			],
 		];
 

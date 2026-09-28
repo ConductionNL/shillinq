@@ -252,4 +252,36 @@ final class ArPaymentLinksFragmentTest extends TestCase {
 		self::assertContains('amount', $schema['required']);
 		self::assertContains('state', $schema['required']);
 	}//end testInvoiceReferenceIsNoLongerUnconditionallyRequired()
+
+	/**
+	 * A request without an invoice carries its debtor's customer as a flat,
+	 * globally unique reference, so the portal can scope it: portaliq compares
+	 * a flat row field and cannot reach `debtor.customerMasterId`
+	 * (REQ-SPPI-008). Seeded requests without an invoice that name a debtor
+	 * customer carry it; invoice-backed seeds do not.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
+	 */
+	public function testARequestWithoutAnInvoiceDeclaresItsCustomer(): void {
+		$fragment = $this->fragment();
+		$schema = $fragment['components']['schemas']['PaymentRequest'];
+		$customerId = ($schema['properties']['customerId'] ?? []);
+
+		self::assertSame('0.5.0', $schema['version']);
+		self::assertSame('string', ($customerId['type'] ?? null));
+		self::assertSame('uuid', ($customerId['format'] ?? null));
+		self::assertSame('CustomerMaster', ($customerId['$ref'] ?? null));
+		self::assertTrue(($customerId['nullable'] ?? false));
+		self::assertNotContains('customerId', $schema['required']);
+
+		foreach ((array)($fragment['components']['objects'] ?? []) as $object) {
+			if (($object['@self']['schema'] ?? '') !== 'PaymentRequest' || (string)($object['invoiceReference'] ?? '') === '') {
+				continue;
+			}
+
+			self::assertArrayNotHasKey('customerId', $object, $object['@self']['slug'] . ' is invoice-backed and must not carry customerId');
+		}
+	}//end testARequestWithoutAnInvoiceDeclaresItsCustomer()
 }//end class
