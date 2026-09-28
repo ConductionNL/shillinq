@@ -1078,5 +1078,93 @@
 		"reason": "Journal-line cost codes half requested by humaniq's payroll-cost-allocation (design D4 writes costCenterCode and projectCode on the payroll journal's debit lines). JournalEntry.lines carries only account, side, amount and description, and ledger-posting-path maps only those onto GLLine, so the codes would be lost. Build: another product's merged change depends on it.",
 		"change": "ledger-journal-line-dimensions",
 		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "rec-ai-debtor",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "Single competitor, no demand: only exact-online rates it yes and no demand row names it.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "tax-margin-scheme",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "Single competitor, no demand: only snelstart rates it yes and no demand row names it.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "tax-investment-deduction",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "The archived 2026-06-14-bookkeeping-investeringsaftrek shipped the schemas, 2026 tables and both calculators without a caller or a page, so the row is built as the wiring the archived change promised.",
+		"change": "tax-investment-deduction-claims",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "rep-cashflow-statement",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Three competitors rate it yes (exact-online, moneybird, odoo).",
+		"change": "reporting-cash-flow-statement",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "exp-company-cards",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "Single competitor, no demand: only odoo rates it yes, and a changelog origin is not a feature request or roadmap demand.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "rep-annotations",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "Single competitor, no demand: only odoo rates it yes, and a changelog origin is not a feature request or roadmap demand.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "rec-early-payment-discount",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "Single competitor, no demand: only odoo rates it yes, and a changelog origin is not a feature request or roadmap demand.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "tax-payment-reference",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "Single competitor, no demand: only moneybird rates it yes, and a changelog origin is not a feature request or roadmap demand.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "ppl-payroll-tax-return",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes (roadmap demand only), and payroll belongs to humaniq under ADR-107, as the decided-no row ppl-payroll records.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "plt-custom-entities",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Two competitors rate it yes (exact-online, odoo).",
+		"change": "platform-custom-record-types",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "rep-ai-report",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes; roadmap demand alone meets none of the build tests.",
+		"change": null,
+		"decidedOn": "2026-09-28"
 	}
 ]

@@ -1599,7 +1599,7 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "none",
+				"state": "decided-no",
 				"evidence": "No agent, LLM or task-processing call for collections in lib or src; the MCP tool surface (lib/Settings/register.d/zzz-mcp-tool-surface.json:57) only exposes a debtor search tool; dunning itself never runs (see rec-reminders)",
 				"reachedOn": "nothing reaches it",
 				"owner": "ConductionNL/shillinq"
@@ -1615,7 +1615,8 @@
 			"providerHow": "read-from-code",
 			"feature": "credit-control-dunning",
 			"featureConfidence": "medium",
-			"source": "competitor"
+			"source": "competitor",
+			"note": "Decided no 2026-09-28 (build-all pass, defer retired): single competitor, no demand: only exact-online rates it yes and no demand row names it. Reversible when demand appears."
 		},
 		{
 			"id": "pur-ubl-import",
@@ -2585,7 +2586,7 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "none",
+				"state": "decided-no",
 				"evidence": "only lib/Standards/Checks/InvoiceMentionsTailChecks.php mentions the margin scheme, as an audit rule run by occ shillinq rules:audit; no invoice or VAT code applies it",
 				"reachedOn": "nothing reaches it",
 				"owner": "ConductionNL/shillinq"
@@ -2601,7 +2602,8 @@
 			"providerHow": "read-from-code",
 			"feature": "vat-return",
 			"featureConfidence": "medium",
-			"source": "competitor"
+			"source": "competitor",
+			"note": "Decided no 2026-09-28 (build-all pass, defer retired): single competitor, no demand: only snelstart rates it yes and no demand row names it. Reversible when demand appears."
 		},
 		{
 			"id": "tax-vat-position",
@@ -2848,7 +2850,7 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"evidence": "lib/Settings/register.d/bookkeeping-investeringsaftrek.json and seeds lib/Settings/seeds/investeringsaftrek-*-2026.json exist; no manifest page and no service reads them; the RVO adapter is log-only (lib/Service/External/RvO/LogRvOAanvraagAdapter.php)",
 				"reachedOn": "nothing reaches it: no page in src/manifest.json or src/manifest.d",
 				"owner": "ConductionNL/shillinq"
@@ -2865,7 +2867,7 @@
 			"feature": "investment-deduction",
 			"featureConfidence": "medium",
 			"source": "own-code",
-			"note": "corrections round 9 (2026-09-28): no change carries this row at c92d70222, so the state is none. The archived 2026-06-14-bookkeeping-investeringsaftrek (34 of 34 tasks ticked) and 2026-06-14-add-shillinq-investeringsaftrek shipped the register fragment, the 2026 seeds, lib/Guard/KiaSchalenLookup.php and lib/Guard/InvesteringsaftrekEligibilityGuard.php, but nothing calls either guard and no page shows a deduction, so they shipped without the capability; no open change and no gap-decisions entry covers it."
+			"note": "corrections round 9 (2026-09-28): no change carries this row at c92d70222, so the state is none. The archived 2026-06-14-bookkeeping-investeringsaftrek (34 of 34 tasks ticked) and 2026-06-14-add-shillinq-investeringsaftrek shipped the register fragment, the 2026 seeds, lib/Guard/KiaSchalenLookup.php and lib/Guard/InvesteringsaftrekEligibilityGuard.php, but nothing calls either guard and no page shows a deduction, so they shipped without the capability; no open change and no gap-decisions entry covers it. Specified 2026-09-28 (build-all pass) in openspec/changes/tax-investment-deduction-claims."
 		},
 		{
 			"id": "tax-deadline-calendar",
@@ -3027,7 +3029,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"evidence": "CashFlowStatement schema is declared (lib/Settings/register.d/bookkeeping-titel-9-jaarrekening.json) but no page uses it (grep src finds it only in audit-trail objectTypes lists), lib/Reporting/ReportCatalogue.php has no cash-flow report, and AnnualAccountsReportGenerator.php has no kasstroom section. CashflowExportService/CashflowPdfRenderer export the cash FORECAST, not a statement.",
 				"reachedOn": "nothing reaches it: no page or report card for a cash flow statement",
 				"owner": "ConductionNL/shillinq"
@@ -3044,7 +3046,7 @@
 			"feature": "financial-statements",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "corrections round 9 (2026-09-28): no change carries this row at c92d70222, so the state is none. The open openspec/changes/reporting-financial-statements puts a cash flow statement out of scope (proposal.md:71), and the archived 2026-06-14-bookkeeping-titel-9-jaarrekening declared the CashFlowStatement schema but marks its generation task DEFERRED (tasks.md:81-83), so it shipped without the capability."
+			"note": "corrections round 9 (2026-09-28): no change carries this row at c92d70222, so the state is none. The open openspec/changes/reporting-financial-statements puts a cash flow statement out of scope (proposal.md:71), and the archived 2026-06-14-bookkeeping-titel-9-jaarrekening declared the CashFlowStatement schema but marks its generation task DEFERRED (tasks.md:81-83), so it shipped without the capability. Specified 2026-09-28 (build-all pass) in openspec/changes/reporting-cash-flow-statement."
 		},
 		{
 			"id": "rep-trial-balance",
@@ -5712,7 +5714,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
+				"state": "decided-no",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -5731,7 +5733,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-19-release-notes",
-			"note": "No company card or card-feed concept in lib/ or src/; card appears only as a customer payment method at Mollie."
+			"note": "No company card or card-feed concept in lib/ or src/; card appears only as a customer payment method at Mollie. Decided no 2026-09-28 (build-all pass, defer retired): single competitor, no demand: only odoo rates it yes, and a changelog origin is not a feature request or roadmap demand. Reversible when demand appears."
 		},
 		{
 			"id": "tax-return-checks",
@@ -5776,7 +5778,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
+				"state": "decided-no",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -5795,7 +5797,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-19-release-notes",
-			"note": "Reports are generated files (lib/Reporting/ReportCatalogue.php); no note can be left on a report line."
+			"note": "Reports are generated files (lib/Reporting/ReportCatalogue.php); no note can be left on a report line. Decided no 2026-09-28 (build-all pass, defer retired): single competitor, no demand: only odoo rates it yes, and a changelog origin is not a feature request or roadmap demand. Reversible when demand appears."
 		},
 		{
 			"id": "led-account-guidance",
@@ -5874,7 +5876,7 @@
 			"twinfield": "partial",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
+				"state": "decided-no",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -5893,7 +5895,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-19-release-notes",
-			"note": "No early payment discount or skonto term anywhere in lib/ or the register (searched earlyPayment, skonto, cashDiscount, kortingstermijn)."
+			"note": "No early payment discount or skonto term anywhere in lib/ or the register (searched earlyPayment, skonto, cashDiscount, kortingstermijn). Decided no 2026-09-28 (build-all pass, defer retired): single competitor, no demand: only odoo rates it yes, and a changelog origin is not a feature request or roadmap demand. Reversible when demand appears."
 		},
 		{
 			"id": "tax-partial-deductibility",
@@ -6166,7 +6168,7 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "none",
+				"state": "decided-no",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -6185,7 +6187,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.moneybird.nl/changelog/extra-informatie-over-betaalkenmerken/",
-			"note": "A payment reference field exists and its description names the Belastingdienst betalingskenmerk (lib/Settings/register.d/bookkeeping-purchase-order-3way-01-schemas-and-registers.json:829), but nothing decodes tax and period from it."
+			"note": "A payment reference field exists and its description names the Belastingdienst betalingskenmerk (lib/Settings/register.d/bookkeeping-purchase-order-3way-01-schemas-and-registers.json:829), but nothing decodes tax and period from it. Decided no 2026-09-28 (build-all pass, defer retired): single competitor, no demand: only moneybird rates it yes, and a changelog origin is not a feature request or roadmap demand. Reversible when demand appears."
 		},
 		{
 			"id": "led-reinvestment-reserve",
@@ -6393,7 +6395,7 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "none",
+				"state": "decided-no",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -6412,7 +6414,7 @@
 			"source": "competitor",
 			"origin": "roadmap",
 			"originUrl": "https://www.snelstart.nl/boekhouders-en-accountants/functies/salarisadministratie",
-			"note": "UWV Loonaangifte is bound to LogUwvLoonaangifteAdapter (lib/AppInfo/Application.php:514), a log-only port, so nothing is filed."
+			"note": "UWV Loonaangifte is bound to LogUwvLoonaangifteAdapter (lib/AppInfo/Application.php:514), a log-only port, so nothing is filed. Decided no 2026-09-28 (build-all pass, defer retired): no competitor rates it yes (roadmap demand only), and payroll belongs to humaniq under ADR-107, as the decided-no row ppl-payroll records. Reversible when demand appears."
 		},
 		{
 			"id": "sal-self-billing",
@@ -6588,7 +6590,7 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "none",
+				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -6607,7 +6609,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://support.exactonline.com/community/s/article/All-All-HNO-Content-rn-whatsnewlandingpage?language=en_GB",
-			"note": "An admin could define a schema in OpenRegister, but no shillinq page would show it (same ground as plt-custom-fields). Open Register's half shipped in ConductionNL/openregister openspec/changes/archive/2026-06-14-openregister-runtime-schema-api (runtime record types); shillinq pages that show them are shillinq's, so the owner moved to ConductionNL/shillinq (openregister lane, OpenSpec pass 2026-09-27; owner was ConductionNL/openregister)."
+			"note": "An admin could define a schema in OpenRegister, but no shillinq page would show it (same ground as plt-custom-fields). Open Register's half shipped in ConductionNL/openregister openspec/changes/archive/2026-06-14-openregister-runtime-schema-api (runtime record types); shillinq pages that show them are shillinq's, so the owner moved to ConductionNL/shillinq (openregister lane, OpenSpec pass 2026-09-27; owner was ConductionNL/openregister). Specified 2026-09-28 (build-all pass) in openspec/changes/platform-custom-record-types."
 		},
 		{
 			"id": "rep-ai-report",
@@ -6620,7 +6622,7 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "none",
+				"state": "decided-no",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing"
@@ -6639,7 +6641,7 @@
 			"source": "competitor",
 			"origin": "roadmap",
 			"originUrl": "https://www.exact.com/nl/vooruitblik",
-			"note": "No report builder driven by a prompt; reports come from the fixed catalogue (lib/Reporting/ReportCatalogue.php)."
+			"note": "No report builder driven by a prompt; reports come from the fixed catalogue (lib/Reporting/ReportCatalogue.php). Decided no 2026-09-28 (build-all pass, defer retired): no competitor rates it yes; roadmap demand alone meets none of the build tests. Reversible when demand appears."
 		},
 		{
 			"id": "plt-sso",
