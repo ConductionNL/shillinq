@@ -27,9 +27,9 @@ Stacked on `voluntary-contribution-reminder` (#1724). No Nextcloud migration cla
 - **spec_ref**: `openspec/changes/arinvoice-lines-and-portal-amounts/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#requirement-req-einv-009-the-hybrid-pdf-shall-print-the-arinvoices-own-lines`
 - **files**: `lib/Service/InvoicePdfGenerator.php`, `tests/Unit/Service/InvoicePdfGeneratorTest.php`
 - **acceptance_criteria**:
-  - GIVEN an invoiceLines entry WHEN the hybrid PDF is built THEN the row shows its description, quantity, price, amount and rate; BillableInvoice cases unchanged
-- [ ] Implement
-- [ ] Test
+  - GIVEN an invoiceLines entry WHEN the hybrid PDF is built THEN its page prints the line and the HTML row reads it; BillableInvoice cases unchanged
+- [x] Implement
+- [x] Test
 
 ### Task 4: The customer manifest names declared fields
 - **spec_ref**: `openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md#requirement-the-customer-manifest-names-the-fields-arinvoice-declares-req-sppi-007`

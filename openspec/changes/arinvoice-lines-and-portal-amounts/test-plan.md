@@ -25,7 +25,7 @@ portal rendering is portaliq's.
 - **spec_ref**: `...specs/bookkeeping-einvoicing-ubl-peppol/spec.md#requirement-req-einv-009-the-hybrid-pdf-shall-print-the-arinvoices-own-lines`
 - **type**: regression
 - **steps**: `generateHybridPdf()` with an `invoiceLines` entry; the existing BillableInvoice cases
-- **expected result**: the row shows description, quantity, price, amount and rate; existing cases green
+- **expected result**: the hybrid page prints each line (number, description, quantity x price = amount EUR, rate); the HTML row reads the invoiceLines keys; existing BillableInvoice cases green
 - **test command**: `--filter InvoicePdfGeneratorTest`
 
 ### TC-4: Every manifest field is declared
