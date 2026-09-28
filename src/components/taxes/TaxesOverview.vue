@@ -52,11 +52,6 @@ export default {
 							route: 'VATReturns',
 						},
 						{
-							id: 'BtwAangiften',
-							label: this.t('shillinq', 'BTW returns overview'),
-							route: 'BtwAangiften',
-						},
-						{
 							id: 'OssReturns',
 							label: this.t('shillinq', 'OSS returns'),
 							route: 'OssReturns',
