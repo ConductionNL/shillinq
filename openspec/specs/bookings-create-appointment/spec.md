@@ -17,7 +17,6 @@ This specification defines the requirements for bookings create appointment in t
 
 @e2e exclude unbuilt UI: appointment creation pages not yet implemented
 
-
 ### REQ-BCA-001: The system SHALL store appointments as an OpenRegister-managed `Appointment` register
 
 The appointment data MUST be declared as a register in `lib/Settings/bookings_register.json` per ADR-024, with the `Appointment` schema as the canonical entity. No custom PHP model, no custom database table. The register is exposed through OpenRegister's generic CRUD HTTP surface at `GET/POST /ocs/v2.php/apps/openregister/api/objects/bookings/Appointment`.
@@ -222,10 +221,6 @@ The self-service portal at `/ocs/v2.php/apps/bookings/portal/book` MUST:
 - **GIVEN** no active session
 - **WHEN** attempting to access the portal
 - **THEN** the system MUST redirect to the login page
-
-## MODIFIED Requirements
-
-_None._
 
 ## DEPRECATED Requirements
 
