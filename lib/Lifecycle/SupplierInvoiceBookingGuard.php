@@ -60,6 +60,8 @@ class SupplierInvoiceBookingGuard implements LifecycleGuardInterface {
 	 *
 	 * @return GuardResult
 	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleGuardInterface's.
+	 *
 	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-3.2
 	 */
 	public function check(array $object, string $action, string $userId): GuardResult {

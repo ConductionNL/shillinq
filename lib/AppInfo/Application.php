@@ -1286,8 +1286,8 @@ class Application extends App implements IBootstrap {
 			schemas: ['Appointment']
 		);
 
-		// purchasing-supplier-invoice-intake REQ-PSII-003/004: every saved
-		// supplier invoice gets its duplicate and IBAN warnings.
+		// Every saved supplier invoice gets its duplicate and IBAN warnings
+		// (purchasing-supplier-invoice-intake REQ-PSII-003/004).
 		$this->registerFilteredObjectWriteListener(
 			dispatcher: $dispatcher,
 			listener: SupplierInvoiceWarningListener::class,

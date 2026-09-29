@@ -79,6 +79,8 @@ class HandToAccountsPayableAction implements LifecycleActionInterface {
 	 *
 	 * @return array<string, mixed> The invoice with apTransactionId set.
 	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
+	 *
 	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-3.3
 	 */
 	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {

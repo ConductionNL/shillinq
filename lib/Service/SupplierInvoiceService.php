@@ -624,6 +624,8 @@ class SupplierInvoiceService {
 	 *
 	 * @throws \RuntimeException When the document is not valid XML or the
 	 *                           mandatory InvoiceNumber field is absent.
+	 *
+	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-1.1
 	 */
 	public function parseUblInvoice(string $ublXml): array {
 		if (trim($ublXml) === '') {

@@ -280,6 +280,8 @@ class SupplierInvoiceChecks {
 	 * @param string $value The raw value.
 	 *
 	 * @return string
+	 *
+	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-2.1
 	 */
 	public static function compact(string $value): string {
 		return strtoupper((string)preg_replace('/[\s.\-]+/', '', $value));
