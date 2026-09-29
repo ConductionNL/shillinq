@@ -300,6 +300,9 @@ class ManualMatchService {
 			'description' => $description,
 			'lines' => $lines,
 			'journalType' => 'manual',
+			// The bank ledger may post the VAT line it splits out
+			// (ledger-booking-rules REQ-LBR-002).
+			'sourceApp' => 'bank',
 			'approvalState' => 'not-required',
 			'administrationId' => (string)($line['administrationId'] ?? ''),
 			'state' => 'draft',

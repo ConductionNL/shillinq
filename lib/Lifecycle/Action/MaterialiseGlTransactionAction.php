@@ -265,13 +265,22 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 				throw new RuntimeException('A journal entry line is not an object.');
 			}
 
-			$lines[] = [
+			$mapped = [
 				'accountNumber' => (string)($line['accountNumber'] ?? ''),
 				'side' => (string)($line['side'] ?? ''),
 				'cents' => $this->cents(amount: ($line['amount'] ?? 0)),
 				'description' => (string)($line['description'] ?? ($entry['description'] ?? '')),
 			];
-		}
+			// The line's cost centre and project reach the GL line
+			// (ledger-booking-rules: restrictions and segment reports read them).
+			foreach (['costCenterCode', 'projectCode'] as $dimension) {
+				if ((string)($line[$dimension] ?? '') !== '') {
+					$mapped[$dimension] = (string)$line[$dimension];
+				}
+			}
+
+			$lines[] = $mapped;
+		}//end foreach
 
 		return [
 			'header' => [
@@ -532,6 +541,12 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 					'administrationId' => (string)$header['administrationId'],
 					'description' => (string)($line['description'] ?? ''),
 				];
+				foreach (['costCenterCode', 'projectCode'] as $dimension) {
+					if (isset($line[$dimension]) === true) {
+						$row[$dimension] = (string)$line[$dimension];
+					}
+				}
+
 				if (isset($line['subLedgerType']) === true) {
 					$row['subLedgerType'] = (string)$line['subLedgerType'];
 					$row['subLedgerRef'] = (string)$line['subLedgerRef'];

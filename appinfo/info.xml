@@ -240,6 +240,12 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Shillinq\Repair\BackfillGlLineFiscalYear</step>
             <step>OCA\Shillinq\Repair\BackfillFiscalPeriods</step>
             <step>OCA\Shillinq\Repair\PeriodCloseBackfill</step>
+            <!-- ledger-booking-rules (REQ-LBR-001). Marks the receivables, payables
+                 and VAT accounts the sub-ledgers book to as control accounts, on
+                 accounts that still carry the RGS MKB seed's name and have no role.
+                 After InitializeSettings, which imports Account.controlAccountFor.
+                 Idempotent; logs every account it sets. -->
+            <step>OCA\Shillinq\Repair\BackfillControlAccountRoles</step>
             <!-- arinvoice-lines-and-portal-amounts (REQ-SPPI-008). A payment
                  request without an invoice carries its debtor's customer in
                  customerId so the customer portal lists it. Stamps requests

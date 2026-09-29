@@ -25,10 +25,12 @@ namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 use OCA\Shillinq\AppInfo\LedgerPostingRegistration;
 use OCA\Shillinq\Lifecycle\BalanceGuard;
 use OCA\Shillinq\Lifecycle\JournalEntryGuard;
+use OCA\Shillinq\Lifecycle\PostingRestrictionGuard;
 use OCA\Shillinq\Lifecycle\RegisterRequiresGuardAdapter;
 use OCA\Shillinq\Lifecycle\RuleComplianceGuard;
 use OCA\Shillinq\Tests\Unit\Lifecycle\Action\InMemoryObjectStore;
 use OCP\IAppConfig;
+use OCP\IL10N;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -90,6 +92,19 @@ final class PostingGuardsThroughAdapterTest extends TestCase {
 	}//end balanceGuard()
 
 	/**
+	 * The booking-rules guard over the in-memory store (ledger-booking-rules).
+	 *
+	 * @return PostingRestrictionGuard
+	 */
+	private function restrictions(): PostingRestrictionGuard {
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')->willReturnCallback(
+			static fn (string $text, array $parameters = []): string => vsprintf($text, $parameters)
+		);
+		return new PostingRestrictionGuard($this->appConfig(), $this->store->mock($this), $l10n);
+	}//end restrictions()
+
+	/**
 	 * Set up an empty store.
 	 *
 	 * @return void
@@ -131,7 +146,7 @@ final class PostingGuardsThroughAdapterTest extends TestCase {
 	 * @return void
 	 */
 	public function testABalancedJournalEntryPassesThroughTheAdapter(): void {
-		$guard = new JournalEntryGuard($this->appConfig(), $this->createMock(LoggerInterface::class), $this->store->mock($this));
+		$guard = new JournalEntryGuard($this->appConfig(), $this->createMock(LoggerInterface::class), $this->store->mock($this), $this->restrictions());
 		$adapter = $this->adapter('OCA\Shillinq\Lifecycle\JournalEntryGuard::canPost', $guard);
 
 		$entry = [
@@ -162,7 +177,8 @@ final class PostingGuardsThroughAdapterTest extends TestCase {
 			$this->appConfig(),
 			$this->createMock(LoggerInterface::class),
 			$this->balanceGuard(),
-			$this->store->mock($this)
+			$this->store->mock($this),
+			$this->restrictions()
 		);
 		$adapter = $this->adapter('OCA\Shillinq\Lifecycle\RuleComplianceGuard::validateTransaction', $guard);
 
@@ -203,7 +219,8 @@ final class PostingGuardsThroughAdapterTest extends TestCase {
 			$this->appConfig(),
 			$this->createMock(LoggerInterface::class),
 			$this->balanceGuard(),
-			$this->store->mock($this)
+			$this->store->mock($this),
+			$this->restrictions()
 		);
 		$adapter = $this->adapter('OCA\Shillinq\Lifecycle\RuleComplianceGuard::validateTransaction', $guard);
 
@@ -244,7 +261,7 @@ final class PostingGuardsThroughAdapterTest extends TestCase {
 			}
 		);
 
-		$guard = new RuleComplianceGuard($this->appConfig(), $logger, $this->balanceGuard(), $this->store->mock($this));
+		$guard = new RuleComplianceGuard($this->appConfig(), $logger, $this->balanceGuard(), $this->store->mock($this), $this->restrictions());
 
 		$allowed = $guard->validateInvoice(
 			[
@@ -257,4 +274,85 @@ final class PostingGuardsThroughAdapterTest extends TestCase {
 		self::assertSame(0, $errors, 'The array must be evaluated, not rejected by the fail-closed catch.');
 		self::assertNotEmpty(array_filter($warnings, static fn (string $w): bool => str_contains($w, 'en16931-br-co-15')));
 	}//end testAnInvoiceIsEvaluatedFromThePayload()
+
+	/**
+	 * JournalEntry.post: a memorial entry on the receivables control account
+	 * is refused, and the refusal names the account and its role instead of
+	 * the generic balance message (REQ-LBR-002).
+	 *
+	 * @return void
+	 */
+	public function testAManualJournalEntryOnAControlAccountIsRefusedNamingIt(): void {
+		$this->store->rows['Account'] = [
+			['id' => 'a1', 'administrationId' => 'adm-1', 'accountNumber' => '1100', 'name' => 'Debiteuren', 'controlAccountFor' => 'receivables'],
+			['id' => 'a2', 'administrationId' => 'adm-1', 'accountNumber' => '1230', 'name' => 'BTW-vordering', 'controlAccountFor' => 'vat'],
+		];
+		$guard = new JournalEntryGuard($this->appConfig(), $this->createMock(LoggerInterface::class), $this->store->mock($this), $this->restrictions());
+		$adapter = $this->adapter('OCA\Shillinq\Lifecycle\JournalEntryGuard::canPost', $guard);
+
+		$entry = [
+			'id' => 'je-9',
+			'administrationId' => 'adm-1',
+			'entryDate' => '2026-09-20',
+			'lines' => [
+				['accountNumber' => '1100', 'side' => 'debit', 'amount' => 500.0],
+				['accountNumber' => '8000', 'side' => 'credit', 'amount' => 500.0],
+			],
+		];
+		$denied = $adapter->check($entry, 'postDirect', 'alice');
+		self::assertFalse($denied->isAllowed());
+		self::assertStringContainsString('1100 Debiteuren is the receivables control account', (string)$denied->getMessage());
+
+		$bank = [
+			'id' => 'je-10',
+			'administrationId' => 'adm-1',
+			'entryDate' => '2026-09-20',
+			'sourceApp' => 'bank',
+			'lines' => [
+				['accountNumber' => '4910', 'side' => 'debit', 'amount' => 100.0],
+				['accountNumber' => '1230', 'side' => 'debit', 'amount' => 21.0],
+				['accountNumber' => '1000', 'side' => 'credit', 'amount' => 121.0],
+			],
+		];
+		self::assertTrue($adapter->check($bank, 'postDirect', 'alice')->isAllowed(), 'A bank booking may post its VAT line.');
+	}//end testAManualJournalEntryOnAControlAccountIsRefusedNamingIt()
+
+	/**
+	 * GLTransaction.post: a line on a blocked combination is refused with the
+	 * restriction's reason (REQ-LBR-005).
+	 *
+	 * @return void
+	 */
+	public function testAGlTransactionOnABlockedCombinationIsRefusedWithTheReason(): void {
+		$this->store->rows['PostingRestriction'] = [
+			[
+				'id' => 'pr-1', 'administrationId' => 'adm-1', 'accountPattern' => '4600', 'costCenterCode' => 'KP-100',
+				'projectCode' => 'P-2026-014', 'reason' => 'Sportakkoord-subsidies lopen via Sociaal Domein, niet via bestuursondersteuning',
+				'validFrom' => '2026-01-01', 'lifecycleState' => 'active',
+			],
+		];
+		$this->store->rows['GLLine'] = [
+			['id' => 'l1', 'transactionId' => 'gl-7', 'accountNumber' => '4600', 'side' => 'debit', 'amount' => 2500.0, 'costCenterCode' => 'KP-100', 'projectCode' => 'P-2026-014'],
+			['id' => 'l2', 'transactionId' => 'gl-7', 'accountNumber' => '1000', 'side' => 'credit', 'amount' => 2500.0],
+		];
+		$guard = new RuleComplianceGuard(
+			$this->appConfig(),
+			$this->createMock(LoggerInterface::class),
+			$this->balanceGuard(),
+			$this->store->mock($this),
+			$this->restrictions()
+		);
+		$adapter = $this->adapter('OCA\Shillinq\Lifecycle\RuleComplianceGuard::validateTransaction', $guard);
+		$transaction = [
+			'id' => 'gl-7', 'transactionNumber' => 'MEM-2026-0007', 'postingDate' => '2026-09-20',
+			'description' => 'Subsidie', 'sourceReference' => 'manual', 'administrationId' => 'adm-1', 'state' => 'posted',
+		];
+
+		$denied = $adapter->check($transaction, 'post', 'alice');
+		self::assertFalse($denied->isAllowed());
+		self::assertStringContainsString('Sportakkoord-subsidies lopen via Sociaal Domein', (string)$denied->getMessage());
+
+		$this->store->rows['GLLine'][0]['costCenterCode'] = 'KP-300';
+		self::assertTrue($adapter->check($transaction, 'post', 'alice')->isAllowed());
+	}//end testAGlTransactionOnABlockedCombinationIsRefusedWithTheReason()
 }//end class

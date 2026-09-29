@@ -313,6 +313,7 @@ final class ManualMatchServiceTest extends TestCase {
 
 		$journal = $this->stored('JournalEntry', $match['journalEntryId']);
 		self::assertSame('posted', $journal['state']);
+		self::assertSame('bank', $journal['sourceApp'] ?? null, 'The bank ledger may post its VAT line (ledger-booking-rules REQ-LBR-002).');
 		self::assertSame(
 			[['4910', 'debit', 12.5], ['1100', 'credit', 12.5]],
 			array_map(static fn (array $l): array => [$l['accountNumber'], $l['side'], $l['amount']], $journal['lines'])

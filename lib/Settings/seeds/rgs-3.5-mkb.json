@@ -55,7 +55,8 @@
       "currency": "EUR",
       "administrationId": "template",
       "lifecycleState": "active",
-      "description": "Groepsrekening debiteuren (uitstaande vorderingen op klanten)."
+      "description": "Groepsrekening debiteuren (uitstaande vorderingen op klanten).",
+      "controlAccountFor": "receivables"
     },
     {
       "accountNumber": "1110",
@@ -125,7 +126,8 @@
       "administrationId": "template",
       "lifecycleState": "active",
       "vatApplicable": false,
-      "description": "Terugvorderbare BTW van de Belastingdienst."
+      "description": "Terugvorderbare BTW van de Belastingdienst.",
+      "controlAccountFor": "vat"
     },
     {
       "accountNumber": "1240",
@@ -428,7 +430,8 @@
       "currency": "EUR",
       "administrationId": "template",
       "lifecycleState": "active",
-      "description": "Groepsrekening kortlopende handelsschulden aan leveranciers."
+      "description": "Groepsrekening kortlopende handelsschulden aan leveranciers.",
+      "controlAccountFor": "payables"
     },
     {
       "accountNumber": "2010",
@@ -468,7 +471,8 @@
       "administrationId": "template",
       "lifecycleState": "active",
       "vatApplicable": false,
-      "description": "Af te dragen BTW aan de Belastingdienst."
+      "description": "Af te dragen BTW aan de Belastingdienst.",
+      "controlAccountFor": "vat"
     },
     {
       "accountNumber": "2120",
@@ -1222,7 +1226,7 @@
       "lifecycleState": "active",
       "vatApplicable": true,
       "description": "Kosten externe consultants en specialisten."
-      },
+    },
     {
       "accountNumber": "4900",
       "name": "Overige bedrijfskosten",

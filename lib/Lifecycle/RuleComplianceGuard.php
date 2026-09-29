@@ -52,12 +52,15 @@ class RuleComplianceGuard {
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for violations + fail-closed diagnostics.
 	 * @param BalanceGuard $balanceGuard Existing double-entry balance guard (reused).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
+	 * @param PostingRestrictionGuard $restrictions The booking rules (ledger-booking-rules).
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly BalanceGuard $balanceGuard,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly PostingRestrictionGuard $restrictions,
 	) {
 
 	}//end __construct()
@@ -114,6 +117,8 @@ class RuleComplianceGuard {
 	 *
 	 * @return bool True to allow the transition.
 	 *
+	 * @throws PostingRefusedException When a line breaks a booking rule, naming it.
+	 *
 	 * @spec openspec/specs/bookkeeping-general-ledger/spec.md
 	 */
 	public function validateTransaction(string|array $transactionOrId): bool {
@@ -141,7 +146,20 @@ class RuleComplianceGuard {
 			}
 
 			$this->logViolations('GLTransaction', $id, $violations);
-			return RuleEngine::hasMandatory($violations) === false;
+			if (RuleEngine::hasMandatory($violations) === true) {
+				return false;
+			}
+
+			// A GLTransaction.post is always a person's posting: sub-ledgers
+			// write posted transactions directly (ledger-booking-rules D2).
+			$this->restrictions->assertAllowed(
+				lines: $transaction['lines'],
+				administrationId: (string)($transaction['administrationId'] ?? ''),
+				postingDate: (string)($transaction['postingDate'] ?? '')
+			);
+			return true;
+		} catch (PostingRefusedException $e) {
+			throw $e;
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'RuleComplianceGuard: transaction validation failed — denying post (fail-closed)',

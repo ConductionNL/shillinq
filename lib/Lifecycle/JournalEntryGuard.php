@@ -61,11 +61,13 @@ class JournalEntryGuard {
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param PostingRestrictionGuard $restrictions The booking rules (ledger-booking-rules).
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly PostingRestrictionGuard $restrictions,
 	) {
 	}//end __construct()
 
@@ -91,6 +93,7 @@ class JournalEntryGuard {
 	 * @param array<string,mixed>|null $object The JournalEntry object being transitioned.
 	 *
 	 * @return bool True when the journal entry's lines balance and it may post.
+	 * @throws PostingRefusedException When a line breaks a booking rule, naming it.
 	 *
 	 * @spec openspec/specs/bookkeeping-journal-entries/spec.md
 	 */
@@ -132,7 +135,21 @@ class JournalEntryGuard {
 				return false;
 			}//end foreach
 
-			return $debitCents > 0 && $debitCents === $creditCents;
+			if ($debitCents <= 0 || $debitCents !== $creditCents) {
+				return false;
+			}
+
+			// A person may not post on a control account or a blocked
+			// combination; the refusal names which (ledger-booking-rules).
+			$this->restrictions->assertAllowed(
+				lines: array_values($lines),
+				administrationId: (string)($object['administrationId'] ?? ''),
+				postingDate: (string)($object['entryDate'] ?? ''),
+				sourceApp: (string)($object['sourceApp'] ?? '')
+			);
+			return true;
+		} catch (PostingRefusedException $e) {
+			throw $e;
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'JournalEntryGuard: post balance check failed — denying post transition (fail-closed)',

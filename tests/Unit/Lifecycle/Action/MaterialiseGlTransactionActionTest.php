@@ -142,6 +142,28 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 	}//end testAMaterialisedTransactionMeetsTheMandatoryLedgerRules()
 
 	/**
+	 * A journal entry line's cost centre and project reach its GL line, so a
+	 * posting restriction and the segment reports see them (ledger-booking-rules).
+	 *
+	 * @return void
+	 */
+	public function testAJournalLinesCostCentreAndProjectReachTheGlLine(): void {
+		$entry = $this->journalEntry();
+		$entry['lines'][0]['costCenterCode'] = 'KP-300';
+		$entry['lines'][0]['projectCode'] = 'P-2026-014';
+		$this->action()->execute($entry, [], ['sourceSchema' => 'JournalEntry'], MaterialiseGlTransactionAction::class);
+
+		$lines = $this->store->savedOf('GLLine');
+		self::assertSame(['KP-300', 'P-2026-014'], [$lines[0]['costCenterCode'] ?? null, $lines[0]['projectCode'] ?? null]);
+		self::assertArrayNotHasKey('costCenterCode', $lines[1]);
+		$row = $lines[0];
+		unset($row['id']);
+		// The store mints non-uuid ids; OpenRegister hands out uuids.
+		$row['transactionId'] = '0f8fad5b-d9cb-469f-a165-70867728950e';
+		self::assertSame([], RegisterSchema::errors(slug: 'GLLine', object: $row));
+	}//end testAJournalLinesCostCentreAndProjectReachTheGlLine()
+
+	/**
 	 * An unbalanced entry is refused and nothing is written.
 	 *
 	 * @return void
