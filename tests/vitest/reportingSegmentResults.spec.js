@@ -15,6 +15,7 @@ import path from 'path'
 import { describe, expect, it } from 'vitest'
 import {
 	normaliseSegmentRows,
+	periodOptions,
 	SEGMENT_AGGREGATION,
 	segmentQuery,
 	segmentTotals,
@@ -59,10 +60,27 @@ describe('segment results', () => {
 
 	it('scopes to the administration and narrows to the chosen period', () => {
 		expect(segmentQuery('adm-1', '')).toEqual({ 'filter[administrationId]': 'adm-1' })
-		expect(segmentQuery('adm-1', '2026-09')).toEqual({
+		expect(segmentQuery('adm-1', '2026-M09')).toEqual({
 			'filter[administrationId]': 'adm-1',
-			'filter[periodId]': '2026-09',
+			'filter[periodId]': '2026-M09',
 		})
+	})
+
+	// GLLine.periodId holds the FiscalPeriod's own periodId (2026-M09, 2026-Q3),
+	// which the administration chooses: a month picker's 2026-09 matches no line.
+	it('offers the administration\'s fiscal periods by their periodId, oldest first', () => {
+		const payload = {
+			results: [
+				{ periodId: '2026-M10', name: 'October 2026', startDate: '2026-10-01' },
+				{ periodId: '2026-M09', name: 'September 2026', startDate: '2026-09-01' },
+				{ periodId: '', name: 'broken' },
+			],
+		}
+		expect(periodOptions(payload)).toEqual([
+			{ id: '2026-M09', label: 'September 2026' },
+			{ id: '2026-M10', label: 'October 2026' },
+		])
+		expect(periodOptions(null)).toEqual([])
 	})
 
 	it('offers every segment type over a declared aggregation with revenue, costs and result', () => {
@@ -80,6 +98,7 @@ describe('segment results', () => {
 		expect(dashboard).toContain("t('shillinq', 'Revenue')")
 		expect(dashboard).toContain("t('shillinq', 'Costs')")
 		expect(dashboard).toContain("t('shillinq', 'Result')")
-		expect(dashboard).toContain('type="month"')
+		expect(dashboard).not.toContain('type="month"')
+		expect(dashboard).toContain('v-for="period in periods"')
 	})
 })

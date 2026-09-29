@@ -109,7 +109,7 @@ export function segmentTotals(rows) {
  * The query parameters of one aggregation call: the administration always, the period when chosen.
  *
  * @param {string} administrationId The active administration.
- * @param {string} periodId The chosen period (YYYY-MM), or ''.
+ * @param {string} periodId The chosen FiscalPeriod periodId (2026-M09, 2026-Q3), or ''.
  * @return {Record<string, string>} The parameters.
  * @spec openspec/changes/reporting-segment-results/tasks.md#task-2.2
  */
@@ -119,4 +119,29 @@ export function segmentQuery(administrationId, periodId) {
 		params['filter[periodId]'] = periodId
 	}
 	return params
+}
+
+/**
+ * The fiscal periods of an administration as choices for the period filter.
+ *
+ * GLLine.periodId holds the FiscalPeriod's own periodId, whose shape the
+ * administration chooses (2026-M09, 2026-Q3), so the choices come from the
+ * periods themselves, oldest first.
+ *
+ * @param {object|Array<object>|null} payload The FiscalPeriod list response.
+ * @return {Array<{id: string, label: string}>} The choices.
+ * @spec openspec/changes/reporting-segment-results/tasks.md#task-2.2
+ */
+export function periodOptions(payload) {
+	let items = []
+	if (Array.isArray(payload?.results)) {
+		items = payload.results
+	} else if (Array.isArray(payload)) {
+		items = payload
+	}
+
+	return items
+		.filter((item) => typeof item?.periodId === 'string' && item.periodId !== '')
+		.sort((a, b) => String(a.startDate ?? a.periodId).localeCompare(String(b.startDate ?? b.periodId)))
+		.map((item) => ({ id: item.periodId, label: item.name || item.periodId }))
 }

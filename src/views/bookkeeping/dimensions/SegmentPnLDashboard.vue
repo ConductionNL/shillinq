@@ -47,11 +47,20 @@
 				</div>
 				<div class="segment-pnl-dashboard__period">
 					<label for="segment-pnl-period">{{ t('shillinq', 'Period') }}</label>
-					<input
+					<select
 						id="segment-pnl-period"
 						v-model="periodId"
-						type="month"
 						@change="loadSegment(activeSegment)">
+						<option value="">
+							{{ t('shillinq', 'All periods') }}
+						</option>
+						<option
+							v-for="period in periods"
+							:key="period.id"
+							:value="period.id">
+							{{ period.label }}
+						</option>
+					</select>
 				</div>
 				<NcButton
 					variant="tertiary"
@@ -183,6 +192,7 @@ import {
 } from '@nextcloud/vue'
 import {
 	normaliseSegmentRows,
+	periodOptions,
 	SEGMENT_AGGREGATION,
 	segmentQuery,
 	segmentTotals,
@@ -209,6 +219,7 @@ export default {
 			analyticalDimensions: [],
 			administrationId: '',
 			periodId: '',
+			periods: [],
 		}
 	},
 
@@ -254,6 +265,23 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Load the administration's fiscal periods for the period filter.
+		 *
+		 * @spec openspec/changes/reporting-segment-results/tasks.md#task-2.2
+		 */
+		async loadPeriods() {
+			try {
+				const { data } = await axios.get(
+					generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/FiscalPeriod`),
+					{ params: { administrationId: this.administrationId, _limit: 500 } },
+				)
+				this.periods = periodOptions(data)
+			} catch {
+				this.periods = []
+			}
+		},
+
 		/**
 		 * Resolve the caller's active administration.
 		 *
@@ -337,6 +365,10 @@ export default {
 						'No active administration, so the segment P&L cannot be scoped.',
 					)
 					return
+				}
+
+				if (!this.periods.length) {
+					await this.loadPeriods()
 				}
 
 				const url = generateUrl(
