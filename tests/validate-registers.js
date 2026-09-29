@@ -586,7 +586,7 @@ const AGGREGATION_REF_BASELINE = new Map([])
 // and NOT a `from`, which would have switched the runner into its cross-schema
 // path — plus `sum: ["amount"]`, which is not an engine key. Verified live
 // against the rows, not just for a non-empty response.
-const AGG_NO_METRIC_BASELINE = 137
+const AGG_NO_METRIC_BASELINE = 136
 
 // A STRING `groupBy` is silently ignored, and the result is a WRONG NUMBER.
 //
@@ -834,7 +834,7 @@ function checkAggregationPlaceholders(registry) {
 // number falling and refuses any new one. Classified in #1261; the bulk are
 // declarations carrying the inert `source` key that MEANT another schema and
 // therefore resolve their fields against the declaring schema instead.
-const AGG_BARE_REF_BASELINE = 100
+const AGG_BARE_REF_BASELINE = 98
 
 // A derived metric that names an alias which does not exist.
 //

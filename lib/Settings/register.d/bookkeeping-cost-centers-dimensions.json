@@ -383,13 +383,16 @@
       "GLLine": {
         "x-openregister-aggregations": {
           "byCostCenter": {
-            "description": "Per-cost-center roll-up of posted GL amounts within an administration. Surfaces segment P&L per AnalyticalDimension[dimensionType=cost-center].code (joined to name for drill-down). Declared declaratively per ADR-031: no PHP SegmentReportService. Re-targeted from CostCenter to AnalyticalDimension.",
+            "description": "Per-cost-center roll-up of posted GL amounts within an administration. Surfaces segment P&L per AnalyticalDimension[dimensionType=cost-center].code (joined to name for drill-down). Declared declaratively per ADR-031: no PHP SegmentReportService. Re-targeted from CostCenter to AnalyticalDimension. Result figures (reporting-segment-results REQ-RSR-002): only posted profit and loss lines count (filter accountClass pnl, countsInResult true, stamped by GLLineResultStampListener), revenue is the credit amount, costs the debit amount and result the sum of signedAmount.",
             "metric": "sum",
-            "field": "amount",
+            "field": "signedAmount",
             "groupBy": [
               "costCenterCode"
             ],
-            "filter": {},
+            "filter": {
+              "accountClass": "pnl",
+              "countsInResult": true
+            },
             "join": {
               "through": "AnalyticalDimension",
               "on": "AnalyticalDimension.code",
@@ -400,16 +403,42 @@
                 "AnalyticalDimension.name",
                 "AnalyticalDimension.parentCode"
               ]
-            }
+            },
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "credit"
+                },
+                "as": "revenue"
+              },
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "debit"
+                },
+                "as": "costs"
+              },
+              {
+                "metric": "sum",
+                "field": "signedAmount",
+                "as": "result"
+              }
+            ]
           },
           "byCostCenterHierarchy": {
-            "description": "Hierarchical roll-up of GL amounts per AnalyticalDimension[dimensionType=cost-center].parentCode tree. Child cost-center sums propagate to parents through the self-relation; drives drill-down navigation. Declarative (ADR-031). Re-targeted from CostCenter to AnalyticalDimension.",
+            "description": "Hierarchical roll-up of GL amounts per AnalyticalDimension[dimensionType=cost-center].parentCode tree. Child cost-center sums propagate to parents through the self-relation; drives drill-down navigation. Declarative (ADR-031). Re-targeted from CostCenter to AnalyticalDimension. Result figures (reporting-segment-results REQ-RSR-002): only posted profit and loss lines count (filter accountClass pnl, countsInResult true, stamped by GLLineResultStampListener), revenue is the credit amount, costs the debit amount and result the sum of signedAmount.",
             "groupBy": [
               "AnalyticalDimension.parentCode"
             ],
-            "filter": {},
+            "filter": {
+              "accountClass": "pnl",
+              "countsInResult": true
+            },
             "metric": "sum",
-            "field": "amount",
+            "field": "signedAmount",
             "join": {
               "through": "AnalyticalDimension",
               "on": {
@@ -423,18 +452,41 @@
                 "AnalyticalDimension.name"
               ]
             },
-            "sum": [
-              "amount"
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "credit"
+                },
+                "as": "revenue"
+              },
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "debit"
+                },
+                "as": "costs"
+              },
+              {
+                "metric": "sum",
+                "field": "signedAmount",
+                "as": "result"
+              }
             ]
           },
           "byCostObject": {
-            "description": "Per-cost-object (kostendrager) roll-up of posted GL amounts. Replaces the retired KostenDrager.segmentPnl. Joins GLLine.kostenDragerCode to AnalyticalDimension[dimensionType=cost-object].code. Declarative (ADR-031).",
+            "description": "Per-cost-object (kostendrager) roll-up of posted GL amounts. Replaces the retired KostenDrager.segmentPnl. Joins GLLine.kostenDragerCode to AnalyticalDimension[dimensionType=cost-object].code. Declarative (ADR-031). Result figures (reporting-segment-results REQ-RSR-002): only posted profit and loss lines count (filter accountClass pnl, countsInResult true, stamped by GLLineResultStampListener), revenue is the credit amount, costs the debit amount and result the sum of signedAmount.",
             "metric": "sum",
-            "field": "amount",
+            "field": "signedAmount",
             "groupBy": [
               "costCarrierCode"
             ],
-            "filter": {},
+            "filter": {
+              "accountClass": "pnl",
+              "countsInResult": true
+            },
             "join": {
               "through": "AnalyticalDimension",
               "on": "AnalyticalDimension.code",
@@ -445,16 +497,42 @@
                 "AnalyticalDimension.name",
                 "AnalyticalDimension.parentCode"
               ]
-            }
+            },
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "credit"
+                },
+                "as": "revenue"
+              },
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "debit"
+                },
+                "as": "costs"
+              },
+              {
+                "metric": "sum",
+                "field": "signedAmount",
+                "as": "result"
+              }
+            ]
           },
           "byProject": {
-            "description": "Per-project roll-up of posted GL amounts within an administration. Surfaces project P&L for consultancy and grant-funded work. Declarative (ADR-031).",
+            "description": "Per-project roll-up of posted GL amounts within an administration. Surfaces project P&L for consultancy and grant-funded work. Declarative (ADR-031). Result figures (reporting-segment-results REQ-RSR-002): only posted profit and loss lines count (filter accountClass pnl, countsInResult true, stamped by GLLineResultStampListener), revenue is the credit amount, costs the debit amount and result the sum of signedAmount.",
             "metric": "sum",
-            "field": "amount",
+            "field": "signedAmount",
             "groupBy": [
               "projectCode"
             ],
-            "filter": {},
+            "filter": {
+              "accountClass": "pnl",
+              "countsInResult": true
+            },
             "join": {
               "through": "engagement",
               "on": "Project.code",
@@ -462,15 +540,41 @@
                 "Project.name",
                 "Project.parentCode"
               ]
-            }
+            },
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "credit"
+                },
+                "as": "revenue"
+              },
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "debit"
+                },
+                "as": "costs"
+              },
+              {
+                "metric": "sum",
+                "field": "signedAmount",
+                "as": "result"
+              }
+            ]
           },
           "byAnalyticalDimension": {
-            "description": "Per-custom-dimension roll-up of posted GL amounts. Each registered AnalyticalDimension[dimensionType=custom] contributes a group-by key drawn from GLLine.dimensions[code]. Drives the operator-extensible segment P&L surface; new custom dimensions appear automatically without PHP/Vue edits. Scoped dimensionType = custom.",
+            "description": "Per-custom-dimension roll-up of posted GL amounts. Each registered AnalyticalDimension[dimensionType=custom] contributes a group-by key drawn from GLLine.dimensions[code]. Drives the operator-extensible segment P&L surface; new custom dimensions appear automatically without PHP/Vue edits. Scoped dimensionType = custom. Result figures (reporting-segment-results REQ-RSR-002): only posted profit and loss lines count (filter accountClass pnl, countsInResult true, stamped by GLLineResultStampListener), revenue is the credit amount, costs the debit amount and result the sum of signedAmount.",
             "source": "GLLine",
             "groupBy": [
               "dimensions.*"
             ],
-            "filter": {},
+            "filter": {
+              "accountClass": "pnl",
+              "countsInResult": true
+            },
             "join": {
               "through": "AnalyticalDimension",
               "on": "AnalyticalDimension.code",
@@ -478,8 +582,30 @@
                 "dimensionType": "custom"
               }
             },
-            "sum": [
-              "amount"
+            "metric": "sum",
+            "field": "signedAmount",
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "credit"
+                },
+                "as": "revenue"
+              },
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "debit"
+                },
+                "as": "costs"
+              },
+              {
+                "metric": "sum",
+                "field": "signedAmount",
+                "as": "result"
+              }
             ]
           }
         }

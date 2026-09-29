@@ -2,22 +2,17 @@
 <!-- Copyright (C) 2026 Conduction B.V. -->
 
 <!--
- Segment P&L Dashboard (bookkeeping-cost-centers-dimensions Task 14).
+ Segment P&L Dashboard (bookkeeping-cost-centers-dimensions Task 14,
+ reporting-segment-results REQ-RSR-003).
 
- Drives the operator-facing segment-P&L drill-down by reading the four
- server-side `x-openregister-aggregations` declared on GLLine
- (`byCostCenter`, `byCostCenterHierarchy`, `byProject`,
- `byAnalyticalDimension`) and rendering them into a per-segment table
- with hierarchical roll-up support and a CSV export. Selector chips let
- the operator switch between CostCenter, Project, and operator-defined
- AnalyticalDimensions (REQ-CD-004 / REQ-CD-007).
+ Shows revenue, costs and result per cost center, cost object, project or
+ analytical dimension, for one period or all of them. The figures come from
+ the `x-openregister-aggregations` declared on GLLine, which count only
+ posted lines on profit and loss accounts (the stamps written by
+ GLLineResultStampListener) and answer `{ groups: [{ key, values }] }`.
+ Amounts are euros.
 
- Reads from the OpenRegister aggregation endpoint (the same one the
- declarative manifest pages use for `byX` aggregations). Falls back to a
- client-side rollup of the raw GLLine list if the aggregation endpoint
- returns 404 (older OR builds).
-
- @spec openspec/changes/bookkeeping-cost-centers-dimensions/tasks.md#task-14
+ @spec openspec/changes/reporting-segment-results/tasks.md#task-2.2
 -->
 <template>
 	<NcAppContent>
@@ -30,7 +25,7 @@
 					{{
 						t(
 							'shillinq',
-							'Per-segment profit and loss roll-up across cost centers, projects, and operator-defined analytical dimensions. Driven by the server-side aggregations on GLLine — no client-side recomputation.',
+							'Revenue, costs and result per segment. Only posted lines on profit and loss accounts count.',
 						)
 					}}
 				</p>
@@ -38,7 +33,7 @@
 
 			<section
 				class="segment-pnl-dashboard__controls"
-				aria-label="segment selector">
+				:aria-label="t('shillinq', 'Segment and period')">
 				<div class="segment-pnl-dashboard__chips">
 					<NcButton
 						v-for="segment in availableSegments"
@@ -49,6 +44,14 @@
 						@click="selectSegment(segment.id)">
 						{{ segment.label }}
 					</NcButton>
+				</div>
+				<div class="segment-pnl-dashboard__period">
+					<label for="segment-pnl-period">{{ t('shillinq', 'Period') }}</label>
+					<input
+						id="segment-pnl-period"
+						v-model="periodId"
+						type="month"
+						@change="loadSegment(activeSegment)">
 				</div>
 				<NcButton
 					variant="tertiary"
@@ -69,7 +72,7 @@
 					:description="
 						t(
 							'shillinq',
-							'No GL postings carry this dimension yet. Tag postings with a cost center, project, or analytical dimension to populate the drill-down.',
+							'No posted lines on profit and loss accounts carry this segment yet.',
 						)
 					" />
 				<table
@@ -84,7 +87,17 @@
 							<th
 								scope="col"
 								class="segment-pnl-dashboard__amount-col">
-								{{ t('shillinq', 'Amount') }}
+								{{ t('shillinq', 'Revenue') }}
+							</th>
+							<th
+								scope="col"
+								class="segment-pnl-dashboard__amount-col">
+								{{ t('shillinq', 'Costs') }}
+							</th>
+							<th
+								scope="col"
+								class="segment-pnl-dashboard__amount-col">
+								{{ t('shillinq', 'Result') }}
 							</th>
 							<th v-if="hasHierarchy" scope="col">
 								{{ t('shillinq', 'Parent') }}
@@ -108,19 +121,25 @@
 								<span
 									v-if="row.name"
 									class="segment-pnl-dashboard__group-name">
-									— {{ row.name }}
+									{{ row.name }}
 								</span>
 							</th>
+							<td class="segment-pnl-dashboard__amount-cell">
+								{{ formatAmount(row.revenue) }}
+							</td>
+							<td class="segment-pnl-dashboard__amount-cell">
+								{{ formatAmount(row.costs) }}
+							</td>
 							<td
 								class="segment-pnl-dashboard__amount-cell"
 								:class="{
 									'segment-pnl-dashboard__amount-cell--negative':
-										row.amount < 0,
+										row.result < 0,
 								}">
-								{{ formatAmount(row.amount) }}
+								{{ formatAmount(row.result) }}
 							</td>
 							<td v-if="hasHierarchy">
-								{{ row.parent || '—' }}
+								{{ row.parent }}
 							</td>
 						</tr>
 					</tbody>
@@ -130,7 +149,13 @@
 								{{ t('shillinq', 'Total') }}
 							</th>
 							<td class="segment-pnl-dashboard__amount-cell">
-								{{ formatAmount(total) }}
+								{{ formatAmount(total.revenue) }}
+							</td>
+							<td class="segment-pnl-dashboard__amount-cell">
+								{{ formatAmount(total.costs) }}
+							</td>
+							<td class="segment-pnl-dashboard__amount-cell">
+								{{ formatAmount(total.result) }}
 							</td>
 							<td v-if="hasHierarchy" />
 						</tr>
@@ -156,15 +181,14 @@ import {
 	NcEmptyContent,
 	NcLoadingIcon,
 } from '@nextcloud/vue'
+import {
+	normaliseSegmentRows,
+	SEGMENT_AGGREGATION,
+	segmentQuery,
+	segmentTotals,
+} from '../../../utils/segmentResults.js'
 
 const REGISTER_SLUG = 'shillinq'
-
-const SEGMENT_AGGREGATION = {
-	costCenter: 'byCostCenter',
-	costCenterHierarchy: 'byCostCenterHierarchy',
-	project: 'byProject',
-	analyticalDimension: 'byAnalyticalDimension',
-}
 
 export default {
 	name: 'SegmentPnLDashboard',
@@ -184,6 +208,7 @@ export default {
 			rows: [],
 			analyticalDimensions: [],
 			administrationId: '',
+			periodId: '',
 		}
 	},
 
@@ -196,6 +221,7 @@ export default {
 			const map = {
 				costCenter: this.t('shillinq', 'Cost center'),
 				costCenterHierarchy: this.t('shillinq', 'Cost center (hierarchy)'),
+				costObject: this.t('shillinq', 'Cost object'),
 				project: this.t('shillinq', 'Project'),
 				analyticalDimension: this.t('shillinq', 'Analytical dimension'),
 			}
@@ -203,7 +229,7 @@ export default {
 		},
 
 		total() {
-			return this.rows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0)
+			return segmentTotals(this.rows)
 		},
 
 		availableSegments() {
@@ -213,6 +239,7 @@ export default {
 					id: 'costCenterHierarchy',
 					label: this.t('shillinq', 'Cost center (rolled up)'),
 				},
+				{ id: 'costObject', label: this.t('shillinq', 'Cost object') },
 				{ id: 'project', label: this.t('shillinq', 'Project') },
 				{
 					id: 'analyticalDimension',
@@ -280,7 +307,8 @@ export default {
 		},
 
 		/**
-		 * Load one segment's P&L roll-up, scoped to the caller's administration.
+		 * Load one segment's revenue, costs and result, scoped to the caller's
+		 * administration and narrowed to the chosen period.
 		 *
 		 * @param {string} segment One of SEGMENT_AGGREGATION's keys.
 		 * @spec openspec/changes/bookkeeping-cost-centers-dimensions/tasks.md#task-14
@@ -306,7 +334,7 @@ export default {
 					// holds into one total that looks entirely reasonable.
 					this.errorMessage = this.t(
 						'shillinq',
-						'No active administration — cannot scope segment P&L.',
+						'No active administration, so the segment P&L cannot be scoped.',
 					)
 					return
 				}
@@ -316,7 +344,7 @@ export default {
 						+ encodeURIComponent(aggregationName),
 				)
 				const { data } = await axios.get(url, {
-					params: { 'filter[administrationId]': this.administrationId },
+					params: segmentQuery(this.administrationId, this.periodId),
 				})
 				this.rows = this.normaliseRows(data, segment)
 			} catch (error) {
@@ -344,39 +372,19 @@ export default {
 			}
 		},
 
+		/**
+		 * Turn the aggregation envelope into rows, nested for the hierarchy.
+		 *
+		 * @param {object} payload The aggregation response.
+		 * @param {string} segment The segment type.
+		 * @return {Array<object>} The rows.
+		 * @spec openspec/changes/reporting-segment-results/tasks.md#task-2.2
+		 */
 		normaliseRows(payload, segment) {
-			const buckets = Array.isArray(payload?.buckets)
-				? payload.buckets
-				: Array.isArray(payload)
-					? payload
-					: []
-			const flat = buckets
-				.map((bucket) => {
-					const key = bucket?.key ?? bucket?.code ?? bucket?.groupKey ?? ''
-					const name =
-						bucket?.name
-						?? bucket?.['CostCenter.name']
-						?? bucket?.['Project.name']
-						?? ''
-					const parent =
-						bucket?.parent ?? bucket?.['CostCenter.parentCode'] ?? ''
-					const amount = Number(
-						bucket?.amount ?? bucket?.sum ?? bucket?.total ?? 0,
-					)
-					return {
-						key: String(key),
-						name: String(name),
-						parent: String(parent),
-						amount,
-						depth: 0,
-					}
-				})
-				.filter((r) => r.key !== '')
-
+			const flat = normaliseSegmentRows(payload)
 			if (segment === 'costCenterHierarchy') {
 				return this.applyHierarchy(flat)
 			}
-
 			return flat
 		},
 
@@ -418,8 +426,15 @@ export default {
 			return result
 		},
 
-		formatAmount(cents) {
-			const value = (Number(cents) || 0) / 100
+		/**
+		 * Format an amount in euros.
+		 *
+		 * @param {number} euros The amount.
+		 * @return {string} The formatted amount.
+		 * @spec openspec/changes/reporting-segment-results/tasks.md#task-2.2
+		 */
+		formatAmount(euros) {
+			const value = Number(euros) || 0
 			try {
 				return new Intl.NumberFormat(undefined, {
 					style: 'currency',
@@ -432,18 +447,25 @@ export default {
 			}
 		},
 
+		/**
+		 * Download the rows as CSV, one line per segment with revenue, costs and result.
+		 *
+		 * @spec openspec/changes/reporting-segment-results/tasks.md#task-2.2
+		 */
 		exportCsv() {
 			if (!this.rows.length) {
 				return
 			}
-			const header = ['segment', 'name', 'parent', 'amount_cents']
+			const header = ['segment', 'name', 'parent', 'revenue', 'costs', 'result']
 			const lines = [header.join(',')]
 			for (const row of this.rows) {
 				const cells = [
 					this.csvEscape(row.key),
 					this.csvEscape(row.name),
 					this.csvEscape(row.parent),
-					String(Math.round(Number(row.amount) || 0)),
+					row.revenue.toFixed(2),
+					row.costs.toFixed(2),
+					row.result.toFixed(2),
 				]
 				lines.push(cells.join(','))
 			}
@@ -506,6 +528,12 @@ export default {
 	display: flex;
 	gap: calc(var(--default-grid-baseline, 4px) * 1);
 	flex-wrap: wrap;
+}
+
+.segment-pnl-dashboard__period {
+	display: flex;
+	gap: calc(var(--default-grid-baseline, 4px) * 2);
+	align-items: center;
 }
 
 .segment-pnl-dashboard__table {

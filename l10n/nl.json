@@ -5970,7 +5970,17 @@
         "The reserve that receives interest.": "De reserve die rente ontvangt.",
         "The reserve name, as shown on the run.": "De naam van de reserve, zoals getoond op de run.",
         "The reserve balance the interest is calculated over, in euros.": "Het saldo van de reserve waarover de rente wordt berekend, in euro.",
-        "The interest added to the reserve, in euros.": "De rente die aan de reserve wordt toegevoegd, in euro."
+        "The interest added to the reserve, in euros.": "De rente die aan de reserve wordt toegevoegd, in euro.",
+        "Segment and period": "Segment en periode",
+        "No active administration, so the segment P&L cannot be scoped.": "Geen actieve administratie, dus de segment-W&V kan niet worden afgebakend.",
+        "Signed amount": "Bedrag met teken",
+        "Account class": "Rekeningklasse",
+        "Counts in result": "Telt mee in resultaat",
+        "The amount with its sign: positive on the credit side, negative on the debit side. Calculated when the line is saved, so the sum of a segment's lines is its result.": "Het bedrag met teken: positief aan de creditzijde, negatief aan de debetzijde. Berekend bij het opslaan van de regel, zodat de som van de regels van een segment het resultaat is.",
+        "Whether the line's account is a profit and loss account (revenue or expenses) or a balance sheet account, as the chart of accounts said when the transaction was posted.": "Of de rekening van de regel een resultatenrekening (opbrengsten of kosten) of een balansrekening is, zoals het rekeningschema zei toen de boeking werd geboekt.",
+        "True while the line's transaction is posted and not reversed. A draft line, and the lines of a reversed transaction and of its reversal, do not count.": "Waar zolang de boeking van de regel geboekt is en niet is teruggedraaid. Een conceptregel, en de regels van een teruggedraaide boeking en van de terugdraaiing, tellen niet mee.",
+        "No posted lines on profit and loss accounts carry this segment yet.": "Nog geen geboekte regels op resultatenrekeningen dragen dit segment.",
+        "Revenue, costs and result per segment. Only posted lines on profit and loss accounts count.": "Omzet, kosten en resultaat per segment. Alleen geboekte regels op resultatenrekeningen tellen mee."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

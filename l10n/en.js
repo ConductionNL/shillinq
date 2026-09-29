@@ -3748,7 +3748,17 @@ OC.L10N.register(
         "The reserve that receives interest.": "The reserve that receives interest.",
         "The reserve name, as shown on the run.": "The reserve name, as shown on the run.",
         "The reserve balance the interest is calculated over, in euros.": "The reserve balance the interest is calculated over, in euros.",
-        "The interest added to the reserve, in euros.": "The interest added to the reserve, in euros."
+        "The interest added to the reserve, in euros.": "The interest added to the reserve, in euros.",
+        "Segment and period": "Segment and period",
+        "No active administration, so the segment P&L cannot be scoped.": "No active administration, so the segment P&L cannot be scoped.",
+        "Signed amount": "Signed amount",
+        "Account class": "Account class",
+        "Counts in result": "Counts in result",
+        "The amount with its sign: positive on the credit side, negative on the debit side. Calculated when the line is saved, so the sum of a segment's lines is its result.": "The amount with its sign: positive on the credit side, negative on the debit side. Calculated when the line is saved, so the sum of a segment's lines is its result.",
+        "Whether the line's account is a profit and loss account (revenue or expenses) or a balance sheet account, as the chart of accounts said when the transaction was posted.": "Whether the line's account is a profit and loss account (revenue or expenses) or a balance sheet account, as the chart of accounts said when the transaction was posted.",
+        "True while the line's transaction is posted and not reversed. A draft line, and the lines of a reversed transaction and of its reversal, do not count.": "True while the line's transaction is posted and not reversed. A draft line, and the lines of a reversed transaction and of its reversal, do not count.",
+        "No posted lines on profit and loss accounts carry this segment yet.": "No posted lines on profit and loss accounts carry this segment yet.",
+        "Revenue, costs and result per segment. Only posted lines on profit and loss accounts count.": "Revenue, costs and result per segment. Only posted lines on profit and loss accounts count."
     },
     "nplurals=2; plural=(n != 1);"
 )

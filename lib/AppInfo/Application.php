@@ -705,6 +705,9 @@ class Application extends App implements IBootstrap {
 		// #516/#1103: the guards of every transition that posts to the ledger.
 		(new LedgerPostingRegistration())->register(context: $context);
 
+		// reporting-segment-results REQ-RSR-002: result stamps on ledger lines.
+		(new SegmentResultRegistration())->register(context: $context);
+
 		// REQ-SOPR-006 fee-schedule rules on the write path. No controller in
 		// this app writes a FeeSchedule: they go straight into OpenRegister, so
 		// the pre-save veto is the only place the overlap, legal-basis and
