@@ -92,6 +92,7 @@
 		"TaxConfiguration",
 		"CashflowRecurring",
 		"InventoryGLConfig",
+		"PostingRestrictions",
 		"CostCenters",
 		"CashflowBufferPolicy",
 		"EliminationRules",

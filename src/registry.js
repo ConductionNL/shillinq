@@ -156,6 +156,7 @@ import InvoiceGenerator from './components/invoice/InvoiceGenerator.vue'
 // `header-actions` widget slot, which CnWidgetGrid resolves against THIS
 // registry before its built-in widget table.
 import RecurringInvoiceProfileLauncher from './components/invoice/RecurringInvoiceProfileLauncher.vue'
+import LedgerLinesGuidancePanel from './components/ledger/LedgerLinesGuidancePanel.vue'
 // bookkeeping-period-close (REQ-PC-005, REQ-PC-006, REQ-PC-007 / Task 9 + 10):
 // the PeriodCloseDetail page composes the FiscalPeriod metadata header, the
 // close-task checklist (AP / AR / bank / expense claims) with inline
@@ -517,6 +518,30 @@ export default {
 		kind: 'widget',
 		component: ArDownPaymentPanel,
 		_note: "Lists the down payments of the invoice's order across the customer's other invoices and deducts them through a server-side recompute of the lines and totals. An object-table widget filters top-level fields of one schema only and cannot post; the order reference lives inside the downPayment group.",
+	},
+
+	// ledger-booking-rules (REQ-LBR-003): the booking lines with each
+	// account's guidance, on JournalDetail and GeneralLedgerDetail through the
+	// slots widget-journal-lines and widget-transaction-lines.
+	JournalLinesGuidance: {
+		// @custom-widget-ratchet exclude the guidance is the description of the Account record a line names by number, per administration; no declarative widget joins an embedded line array (JournalEntry.lines) or a related GLLine row to a second schema by a non-id field.
+		kind: 'widget',
+		component: {
+			extends: LedgerLinesGuidancePanel,
+			name: 'JournalLinesGuidance',
+			props: { schema: { type: String, default: 'JournalEntry' } },
+		},
+		_note: "Lists a journal entry's lines with the account name, the account's guidance under it and a control-account mark. An object-table widget shows one schema's own fields and cannot look up the account behind a line.",
+	},
+	TransactionLinesGuidance: {
+		// @custom-widget-ratchet exclude same join as JournalLinesGuidance, over the GLLine rows of a GLTransaction.
+		kind: 'widget',
+		component: {
+			extends: LedgerLinesGuidancePanel,
+			name: 'TransactionLinesGuidance',
+			props: { schema: { type: String, default: 'GLTransaction' } },
+		},
+		_note: "Lists a ledger transaction's GLLine rows with the account name, the account's guidance under it and a control-account mark.",
 	},
 
 	// add-invoice-pdf-export-with-ubl-peppol-support (REQ-EINV-007).

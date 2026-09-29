@@ -1,0 +1,310 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "ledger-booking-rules",
+		"adr": "ADR-037 modular manifest fragment, never edit src/manifest.json",
+		"description": "Posting restrictions settings pages (REQ-LBR-004) and the account guidance on the lines of JournalDetail and GeneralLedgerDetail (REQ-LBR-003). mergePages() replaces a page wholesale by id, so both detail pages are full copies of src/manifest.json with the fields moved into a data widget and the lines into a custom widget: re-sync if the base pages change."
+	},
+	"menu": [
+		{
+			"id": "PostingRestrictions",
+			"label": "Posting restrictions",
+			"icon": "CancelOutline",
+			"route": "PostingRestrictions",
+			"order": 45
+		}
+	],
+	"pages": [
+		{
+			"id": "PostingRestrictions",
+			"route": "/settings/posting-restrictions",
+			"type": "index",
+			"title": "Posting restrictions",
+			"config": {
+				"register": "shillinq",
+				"schema": "PostingRestriction",
+				"columns": [
+					{
+						"key": "accountPattern",
+						"label": "Account",
+						"sortable": true
+					},
+					{
+						"key": "costCenterCode",
+						"label": "Cost centre",
+						"sortable": true
+					},
+					{
+						"key": "projectCode",
+						"label": "Project",
+						"sortable": true
+					},
+					{
+						"key": "reason",
+						"label": "Reason"
+					},
+					{
+						"key": "validFrom",
+						"label": "Valid from",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "State",
+						"sortable": true
+					}
+				],
+				"defaultSort": "accountPattern",
+				"detailRoute": "PostingRestrictionDetail"
+			}
+		},
+		{
+			"id": "PostingRestrictionDetail",
+			"route": "/settings/posting-restrictions/:id",
+			"type": "detail",
+			"title": "Posting restriction",
+			"config": {
+				"register": "shillinq",
+				"schema": "PostingRestriction",
+				"_note": "CONFIG: one blocked combination with its reason; retire and reactivate are lifecycle actions.",
+				"fields": [
+					{
+						"key": "accountPattern",
+						"label": "Account",
+						"type": "string"
+					},
+					{
+						"key": "costCenterCode",
+						"label": "Cost centre",
+						"type": "string"
+					},
+					{
+						"key": "projectCode",
+						"label": "Project",
+						"type": "string"
+					},
+					{
+						"key": "reason",
+						"label": "Reason",
+						"type": "string"
+					},
+					{
+						"key": "validFrom",
+						"label": "Valid from",
+						"type": "date"
+					},
+					{
+						"key": "validTo",
+						"label": "Valid until",
+						"type": "date"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "State",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"auditTrail": true,
+				"lifecycleActions": true,
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				},
+				"indexRoute": "PostingRestrictions"
+			}
+		},
+		{
+			"id": "JournalDetail",
+			"route": "/journals/:id",
+			"type": "detail",
+			"title": "Journal Entry",
+			"config": {
+				"register": "shillinq",
+				"_note": "Journal entry detail: header fields, the lines with each account's guidance (ledger-booking-rules), the linked GL transaction; source document and audit trail in the sidebar.",
+				"auditTrail": true,
+				"schema": "JournalEntry",
+				"lifecycleActions": true,
+				"indexRoute": "Journals",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "documents",
+							"label": "Source Document",
+							"icon": "FileDocumentOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "docudesk-attachment-viewer",
+									"props": {
+										"uriField": "sourceDocumentUri",
+										"appField": "sourceDocumentApp",
+										"role": "receipt",
+										"fallbackMessage": "Source document unreachable — docudesk may be unavailable; retry later."
+									}
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/journals",
+				"widgets": [
+					{
+						"id": "journalDetail-document",
+						"type": "data",
+						"title": "Details",
+						"icon": "FileDocument",
+						"content": {
+							"columns": 2,
+							"include": [
+								"journalNumber",
+								"entryDate",
+								"description",
+								"journalType",
+								"state",
+								"approvalState",
+								"cadence",
+								"reversesOn",
+								"sourceDocumentUri",
+								"sourceDocumentApp",
+								"glTransactionId",
+								"administrationId"
+							]
+						}
+					},
+					{
+						"id": "journal-lines",
+						"type": "custom",
+						"title": "Lines",
+						"icon": "FormatListBulleted",
+						"_note": "ledger-booking-rules REQ-LBR-003: lines with each account's guidance under it; custom because the guidance lives on the Account the line names by number."
+					}
+				]
+			},
+			"slots": {
+				"widget-journal-lines": "JournalLinesGuidance"
+			}
+		},
+		{
+			"id": "GeneralLedgerDetail",
+			"route": "/general-ledger/:id",
+			"type": "detail",
+			"title": "GL Transaction",
+			"config": {
+				"register": "shillinq",
+				"_note": "GL transaction detail: header fields and the GL lines with each account's guidance (ledger-booking-rules); files and audit trail in the sidebar.",
+				"auditTrail": true,
+				"schema": "GLTransaction",
+				"lifecycleActions": true,
+				"indexRoute": "GeneralLedger",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "files",
+							"label": "Files",
+							"icon": "FolderOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/files",
+										"collapsed": true
+									}
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/general-ledger",
+				"widgets": [
+					{
+						"id": "generalLedgerDetail-document",
+						"type": "data",
+						"title": "Details",
+						"icon": "FileDocument",
+						"content": {
+							"columns": 2,
+							"include": [
+								"transactionNumber",
+								"postingDate",
+								"periodId",
+								"currency",
+								"description",
+								"sourceReference",
+								"state",
+								"journalEntryId",
+								"administrationId"
+							]
+						}
+					},
+					{
+						"id": "transaction-lines",
+						"type": "custom",
+						"title": "GL lines",
+						"icon": "FormatListBulleted",
+						"_note": "ledger-booking-rules REQ-LBR-003: lines with each account's guidance under it; custom because the guidance lives on the Account the line names by number."
+					}
+				]
+			},
+			"slots": {
+				"widget-transaction-lines": "TransactionLinesGuidance"
+			}
+		}
+	]
+}

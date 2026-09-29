@@ -4627,6 +4627,47 @@
 		{
 			"menu": [
 				{
+					"id": "PostingRestrictions",
+					"label": "Posting restrictions",
+					"icon": "CancelOutline",
+					"route": "PostingRestrictions",
+					"order": 45
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "ledger-booking-rules",
+					"id": "PostingRestrictions",
+					"route": "/settings/posting-restrictions",
+					"type": "index",
+					"title": "Posting restrictions"
+				},
+				{
+					"_fragment": "ledger-booking-rules",
+					"id": "PostingRestrictionDetail",
+					"route": "/settings/posting-restrictions/:id",
+					"type": "detail",
+					"title": "Posting restriction"
+				},
+				{
+					"_fragment": "ledger-booking-rules",
+					"id": "JournalDetail",
+					"route": "/journals/:id",
+					"type": "detail",
+					"title": "Journal Entry"
+				},
+				{
+					"_fragment": "ledger-booking-rules",
+					"id": "GeneralLedgerDetail",
+					"route": "/general-ledger/:id",
+					"type": "detail",
+					"title": "GL Transaction"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "Bookkeeping",
 					"route": "BookkeepingOverview"
 				},
