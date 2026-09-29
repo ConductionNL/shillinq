@@ -195,6 +195,53 @@ class ManualMatchService {
 	}//end matchInvoices()
 
 	/**
+	 * Match a line to a payment plan (receivables-payment-plans REQ-RPPL-003).
+	 *
+	 * The match names the plan's invoices and is partial, so the settlement
+	 * listener leaves them to PaymentPlanAllocator, which pays the instalments
+	 * and moves an invoice to paid once nothing is left due.
+	 *
+	 * @param array<string,mixed> $line   The line, from findLine().
+	 * @param array<string,mixed> $plan   The active plan, with its id.
+	 * @param string              $actor  The confirming user id, or `system:bankfeed`.
+	 * @param string              $reason Why the match was made.
+	 *
+	 * @return array<string,mixed> The confirmed match.
+	 *
+	 * @throws ManualMatchRefusedException When the line cannot be matched.
+	 *
+	 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-2.3
+	 */
+	public function matchPaymentPlan(array $line, array $plan, string $actor, string $reason): array {
+		$this->assertMatchable(line: $line);
+		if ((float)($line['amount'] ?? 0) <= 0) {
+			throw new ManualMatchRefusedException(template: 'Only money received can pay a payment plan.');
+		}
+
+		$invoiceIds = array_values(array_map('strval', (array)($plan['invoiceIds'] ?? [])));
+		if ($invoiceIds === []) {
+			throw new ManualMatchRefusedException(template: 'Select at least one invoice.');
+		}
+
+		$extra = [
+			'isPartial' => true,
+			'partial' => true,
+			'paymentPlanId' => (string)$plan['id'],
+			'arInvoiceId' => $invoiceIds[0],
+			'resolutionReason' => $reason,
+		];
+		return $this->writeConfirmedMatch(
+			line: $line,
+			type: 'ar-invoice',
+			targetIds: $invoiceIds,
+			matchedAmount: abs((float)$line['amount']),
+			actor: $actor,
+			extra: $extra
+		);
+
+	}//end matchPaymentPlan()
+
+	/**
 	 * Book a line to a ledger account.
 	 *
 	 * @param array<string,mixed> $line   The line, from findLine().

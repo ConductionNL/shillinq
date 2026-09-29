@@ -1,0 +1,562 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "receivables-payment-plans",
+    "adr": "ADR-037 modular register fragment; ADR-031 declarative lifecycle and notification, imperative pauses and monitor",
+    "description": "A payment plan for a customer's overdue invoices: PaymentPlan (header and lifecycle, the balanced-schedule guard on activate, the broken notification) and PaymentPlanInstalment (schedule, allocations per invoice). ARInvoice.paymentPlanId names the plan that covers an invoice; ReconciliationMatch.paymentPlanId names the plan a bank line paid. Pausing and resuming dunning, allocation and the daily monitor live in lib/PaymentPlan and lib/BackgroundJob/PaymentPlanMonitorJob.php."
+  },
+  "components": {
+    "schemas": {
+      "PaymentPlan": {
+        "slug": "PaymentPlan",
+        "icon": "CalendarClock",
+        "version": "0.1.0",
+        "title": "Payment plan",
+        "description": "Instalments a customer agreed to pay off overdue invoices.",
+        "x-schema-org": "schema:PaymentChargeSpecification",
+        "x-spec": "openspec/specs/bookkeeping-credit-control-dunning/spec.md#requirement-a-payment-plan-is-agreed-for-a-customers-overdue-invoices-req-rppl-001",
+        "type": "object",
+        "required": [
+          "planNumber",
+          "paymentReference",
+          "customerId",
+          "invoiceIds",
+          "totalAmount",
+          "instalmentCount",
+          "frequency",
+          "firstDueDate",
+          "graceDays",
+          "agreedOn",
+          "administrationId"
+        ],
+        "properties": {
+          "planNumber": {
+            "type": "string",
+            "title": "Plan number",
+            "description": "The plan's number, for example RGL-2026-0007."
+          },
+          "paymentReference": {
+            "type": "string",
+            "title": "Payment reference",
+            "description": "The reference the customer puts on every instalment payment."
+          },
+          "customerId": {
+            "type": "string",
+            "title": "Customer",
+            "description": "The customer who agreed the plan."
+          },
+          "customerName": {
+            "type": "string",
+            "title": "Customer name",
+            "description": "The customer's name as it appears on the plan.",
+            "nullable": true
+          },
+          "invoiceIds": {
+            "type": "array",
+            "title": "Invoices",
+            "description": "The overdue invoices the plan covers.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "invoiceNumbers": {
+            "type": "array",
+            "title": "Invoice numbers",
+            "description": "The numbers of the covered invoices, oldest first.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "totalAmount": {
+            "type": "number",
+            "title": "Total",
+            "description": "The open amount of the covered invoices, plus charges when included.",
+            "minimum": 0
+          },
+          "chargesAmount": {
+            "type": "number",
+            "title": "Charges",
+            "description": "Collection costs already charged that the plan includes.",
+            "minimum": 0,
+            "nullable": true
+          },
+          "includesCharges": {
+            "type": "boolean",
+            "title": "Includes charges",
+            "description": "Whether collection costs already charged are part of the plan.",
+            "default": false
+          },
+          "paidAmount": {
+            "type": "number",
+            "title": "Paid",
+            "description": "What the customer has paid on the plan so far.",
+            "minimum": 0,
+            "default": 0
+          },
+          "arrears": {
+            "type": "number",
+            "title": "Arrears",
+            "description": "What is due and not yet paid.",
+            "minimum": 0,
+            "default": 0
+          },
+          "instalmentCount": {
+            "type": "integer",
+            "title": "Number of instalments",
+            "description": "How many instalments the plan has.",
+            "minimum": 1
+          },
+          "instalmentAmount": {
+            "type": "number",
+            "title": "Instalment amount",
+            "description": "The agreed amount per instalment, when the plan was agreed by amount.",
+            "nullable": true,
+            "minimum": 0
+          },
+          "frequency": {
+            "type": "string",
+            "title": "Frequency",
+            "description": "How often an instalment falls due.",
+            "enum": [
+              "weekly",
+              "monthly"
+            ],
+            "x-enum-labels": {
+              "weekly": "Weekly",
+              "monthly": "Monthly"
+            }
+          },
+          "firstDueDate": {
+            "type": "string",
+            "title": "First due date",
+            "description": "When the first instalment falls due.",
+            "format": "date"
+          },
+          "nextDueDate": {
+            "type": "string",
+            "title": "Next due date",
+            "description": "When the next unpaid instalment falls due.",
+            "format": "date",
+            "nullable": true
+          },
+          "nextDueAmount": {
+            "type": "number",
+            "title": "Next instalment",
+            "description": "The open amount of the next unpaid instalment.",
+            "nullable": true
+          },
+          "lastDueDate": {
+            "type": "string",
+            "title": "Last due date",
+            "description": "When the last instalment falls due.",
+            "format": "date",
+            "nullable": true
+          },
+          "graceDays": {
+            "type": "integer",
+            "title": "Grace days",
+            "description": "Days after a due date before an unpaid instalment counts as missed.",
+            "minimum": 0,
+            "default": 14
+          },
+          "agreedOn": {
+            "type": "string",
+            "title": "Agreed on",
+            "description": "The day the plan was agreed.",
+            "format": "date"
+          },
+          "agreedWith": {
+            "type": "string",
+            "title": "Agreed with",
+            "description": "The person at the customer who agreed the plan.",
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "description": "Anything else about the arrangement.",
+            "nullable": true
+          },
+          "pauseIds": {
+            "type": "array",
+            "title": "Dunning pauses",
+            "description": "The dunning pauses the plan holds, one per invoice.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "customerEmail": {
+            "type": "string",
+            "title": "Customer email",
+            "description": "Where the confirmation and the end notice go.",
+            "nullable": true
+          },
+          "confirmationSentAt": {
+            "type": "string",
+            "title": "Confirmation sent",
+            "description": "When the customer was mailed the schedule.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endedOn": {
+            "type": "string",
+            "title": "Ended on",
+            "description": "When the plan was completed, broken or cancelled.",
+            "format": "date",
+            "nullable": true
+          },
+          "endReason": {
+            "type": "string",
+            "title": "End reason",
+            "description": "Why the plan ended.",
+            "nullable": true
+          },
+          "administrationId": {
+            "type": "string",
+            "title": "Administration",
+            "description": "The administration the plan belongs to."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "The schedule is drawn up and not yet agreed."
+            },
+            "active": {
+              "label": "Active",
+              "description": "The customer pays by instalment; dunning of the covered invoices is paused."
+            },
+            "completed": {
+              "label": "Completed",
+              "description": "Every instalment is paid."
+            },
+            "broken": {
+              "label": "Broken",
+              "description": "An instalment was missed past its grace period; dunning resumed."
+            },
+            "cancelled": {
+              "label": "Cancelled",
+              "description": "The plan was withdrawn."
+            }
+          },
+          "transitions": {
+            "activate": {
+              "from": "draft",
+              "to": "active",
+              "label": "Activate",
+              "description": "Agree the plan. Refused when the instalments do not add up to the total.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\PaymentPlanGuard"
+            },
+            "complete": {
+              "from": "active",
+              "to": "completed",
+              "label": "Complete",
+              "description": "Every instalment is paid."
+            },
+            "break": {
+              "from": "active",
+              "to": "broken",
+              "label": "Break",
+              "description": "An instalment was missed past its grace period."
+            },
+            "cancel": {
+              "from": [
+                "draft",
+                "active"
+              ],
+              "to": "cancelled",
+              "label": "Cancel",
+              "description": "Withdraw the plan."
+            }
+          },
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "years": 7
+          }
+        },
+        "x-openregister-notifications": {
+          "onBroken": {
+            "trigger": {
+              "type": "transition",
+              "action": "break"
+            },
+            "description": "Tell the credit controllers that a payment plan ended because an instalment was missed.",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "groups",
+                "groups": [
+                  "ar-controller"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Betalingsregeling {{planNumber}} is beëindigd: een termijn is niet betaald",
+              "en": "Payment plan {{planNumber}} ended: an instalment was not paid"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "ar-controller": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          },
+          "adminScope": {
+            "field": "administrationId",
+            "enforce": true
+          }
+        }
+      },
+      "PaymentPlanInstalment": {
+        "slug": "PaymentPlanInstalment",
+        "icon": "CalendarCheck",
+        "version": "0.1.0",
+        "title": "Payment plan instalment",
+        "description": "One instalment of a payment plan.",
+        "x-schema-org": "schema:PaymentChargeSpecification",
+        "x-spec": "openspec/specs/bookkeeping-credit-control-dunning/spec.md#requirement-instalment-payments-are-recognised-and-allocated-req-rppl-003",
+        "type": "object",
+        "required": [
+          "planId",
+          "instalmentNumber",
+          "dueDate",
+          "amount",
+          "administrationId"
+        ],
+        "properties": {
+          "planId": {
+            "type": "string",
+            "title": "Plan",
+            "description": "The payment plan this instalment belongs to."
+          },
+          "planNumber": {
+            "type": "string",
+            "title": "Plan number",
+            "description": "The number of the payment plan.",
+            "nullable": true
+          },
+          "instalmentNumber": {
+            "type": "integer",
+            "title": "Instalment",
+            "description": "The instalment's place in the schedule, from 1.",
+            "minimum": 1
+          },
+          "dueDate": {
+            "type": "string",
+            "title": "Due date",
+            "description": "When the instalment falls due.",
+            "format": "date"
+          },
+          "amount": {
+            "type": "number",
+            "title": "Amount",
+            "description": "What the instalment asks for.",
+            "minimum": 0
+          },
+          "paidAmount": {
+            "type": "number",
+            "title": "Paid",
+            "description": "What has been paid on the instalment.",
+            "minimum": 0,
+            "default": 0
+          },
+          "paidDate": {
+            "type": "string",
+            "title": "Paid on",
+            "description": "When the instalment was paid in full.",
+            "format": "date",
+            "nullable": true
+          },
+          "allocations": {
+            "type": "array",
+            "title": "Allocations",
+            "description": "Which invoice each paid euro went to.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "invoiceId": {
+                  "type": "string",
+                  "title": "Invoice",
+                  "description": "The invoice the amount paid."
+                },
+                "invoiceNumber": {
+                  "type": "string",
+                  "title": "Invoice number",
+                  "description": "The number of that invoice.",
+                  "nullable": true
+                },
+                "amount": {
+                  "type": "number",
+                  "title": "Amount",
+                  "description": "The amount allocated to that invoice."
+                },
+                "paidDate": {
+                  "type": "string",
+                  "format": "date",
+                  "title": "Paid on",
+                  "description": "When the amount arrived."
+                },
+                "source": {
+                  "type": "string",
+                  "title": "Source",
+                  "description": "How the payment arrived: bank, payment link or by hand."
+                }
+              }
+            }
+          },
+          "paymentRequestId": {
+            "type": "string",
+            "title": "Payment request",
+            "description": "The payment request that collects this instalment online.",
+            "nullable": true
+          },
+          "administrationId": {
+            "type": "string",
+            "title": "Administration",
+            "description": "The administration the plan belongs to."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "pending",
+          "states": {
+            "pending": {
+              "label": "Pending",
+              "description": "Not yet due."
+            },
+            "due": {
+              "label": "Due",
+              "description": "Due and not yet paid."
+            },
+            "paid": {
+              "label": "Paid",
+              "description": "Paid in full."
+            },
+            "missed": {
+              "label": "Missed",
+              "description": "Unpaid past the grace period."
+            }
+          },
+          "transitions": {
+            "fall-due": {
+              "from": "pending",
+              "to": "due",
+              "label": "Fall due",
+              "description": "The due date arrived."
+            },
+            "pay": {
+              "from": [
+                "pending",
+                "due",
+                "missed"
+              ],
+              "to": "paid",
+              "label": "Pay",
+              "description": "Paid in full."
+            },
+            "miss": {
+              "from": [
+                "pending",
+                "due"
+              ],
+              "to": "missed",
+              "label": "Miss",
+              "description": "Unpaid past the grace period."
+            }
+          },
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "years": 7
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "ar-controller": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          },
+          "adminScope": {
+            "field": "administrationId",
+            "enforce": true
+          }
+        }
+      },
+      "ARInvoice": {
+        "properties": {
+          "paymentPlanId": {
+            "type": "string",
+            "nullable": true,
+            "title": "Payment plan",
+            "description": "The payment plan that covers this invoice."
+          }
+        }
+      },
+      "ReconciliationMatch": {
+        "properties": {
+          "paymentPlanId": {
+            "type": "string",
+            "nullable": true,
+            "title": "Payment plan",
+            "description": "The payment plan a bank line paid an instalment of."
+          }
+        }
+      }
+    }
+  }
+}

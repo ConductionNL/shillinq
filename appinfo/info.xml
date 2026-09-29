@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.5.3-unstable.20260929080000</version>
+    <version>0.5.3-unstable.20260929120000</version>
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
@@ -188,6 +188,10 @@ Vrij en open source onder de EUPL-1.2-licentie.
              answers for the three adapter families shillinq calls. Sends
              nothing when integriq is not installed. -->
         <job>OCA\Shillinq\BackgroundJob\ConnectionReportJob</job>
+        <!-- receivables-payment-plans REQ-RPPL-004/005: daily, instalments fall
+             due or are missed, a missed one breaks its plan and resumes dunning,
+             a fully paid plan completes. -->
+        <job>OCA\Shillinq\BackgroundJob\PaymentPlanMonitorJob</job>
     </background-jobs>
 
     <repair-steps>

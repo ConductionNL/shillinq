@@ -824,6 +824,16 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // with open invoices, or book it to a ledger account, by hand.
             ['name' => 'manualMatch#match', 'url' => '/api/v1/bank-lines/{lineId}/match', 'verb' => 'POST'],
 
+            // receivables-payment-plans (REQ-RPPL-001, REQ-RPPL-003): draw up,
+            // activate, settle by hand and cancel a payment plan; the plans a
+            // bank line can pay and paying one from a line. Static URLs first.
+            ['name' => 'paymentPlan#create', 'url' => '/api/v1/payment-plans', 'verb' => 'POST'],
+            ['name' => 'paymentPlan#lineCandidates', 'url' => '/api/v1/bank-lines/{lineId}/payment-plans', 'verb' => 'GET'],
+            ['name' => 'paymentPlan#activate', 'url' => '/api/v1/payment-plans/{id}/activate', 'verb' => 'POST'],
+            ['name' => 'paymentPlan#settle', 'url' => '/api/v1/payment-plans/{id}/settle', 'verb' => 'POST'],
+            ['name' => 'paymentPlan#cancel', 'url' => '/api/v1/payment-plans/{id}/cancel', 'verb' => 'POST'],
+            ['name' => 'paymentPlan#payFromLine', 'url' => '/api/v1/payment-plans/{id}/bank-line', 'verb' => 'POST'],
+
             // Compliance-deadline-calendar (REQ-CDC-006). Per-user category
             // toggles + reminder lead times for the deadline calendar. Both
             // endpoints are #[NoAdminRequired] and STRICTLY current-user scoped
