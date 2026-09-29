@@ -523,7 +523,7 @@
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-29",
 				"reachedOn": "SegmentPnLDashboard /bookkeeping/dimensions/segment-pnl (menu Bookkeeping > Segment P&L)",
-				"evidence": "GLLine.signedAmount (credit positive) and the accountClass and countsInResult stamps written by GLLineResultStampListener when a transaction posts or is reversed (lib/Settings/register.d/reporting-segment-results.json, lib/Service/Ledger/GlLineResultStamps.php); the five segment aggregations count only posted profit and loss lines and return revenue, costs and result (lib/Settings/register.d/bookkeeping-cost-centers-dimensions.json); the dashboard shows the three per segment for a fiscal period (tests/Unit/Service/Ledger/GlLineResultStampsTest.php, tests/vitest/reportingSegmentResults.spec.js).",
+				"evidence": "GLLine.signedAmount (credit positive) and the accountClass and countsInResult stamps written by GLLineResultStampListener when a transaction posts or is reversed (lib/Settings/register.d/reporting-segment-results.json, lib/Service/Ledger/GlLineResultStamps.php); the cost centre, hierarchy, cost object and project aggregations count only posted profit and loss lines and return revenue, costs and result (lib/Settings/register.d/bookkeeping-cost-centers-dimensions.json); the dashboard shows the three per segment for a fiscal period (tests/Unit/Service/Ledger/GlLineResultStampsTest.php, tests/vitest/reportingSegmentResults.spec.js).",
 				"change": "2026-09-29-reporting-segment-results"
 			},
 			"evidence": {
@@ -3260,7 +3260,7 @@
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-29",
 				"reachedOn": "SegmentPnLDashboard /bookkeeping/dimensions/segment-pnl (menu Bookkeeping > Segment P&L)",
-				"evidence": "GLLine.signedAmount (credit positive) and the accountClass and countsInResult stamps written by GLLineResultStampListener when a transaction posts or is reversed (lib/Settings/register.d/reporting-segment-results.json, lib/Service/Ledger/GlLineResultStamps.php); the five segment aggregations count only posted profit and loss lines and return revenue, costs and result (lib/Settings/register.d/bookkeeping-cost-centers-dimensions.json); the dashboard shows the three per segment for a fiscal period (tests/Unit/Service/Ledger/GlLineResultStampsTest.php, tests/vitest/reportingSegmentResults.spec.js).",
+				"evidence": "GLLine.signedAmount (credit positive) and the accountClass and countsInResult stamps written by GLLineResultStampListener when a transaction posts or is reversed (lib/Settings/register.d/reporting-segment-results.json, lib/Service/Ledger/GlLineResultStamps.php); the cost centre, hierarchy, cost object and project aggregations count only posted profit and loss lines and return revenue, costs and result (lib/Settings/register.d/bookkeeping-cost-centers-dimensions.json); the dashboard shows the three per segment for a fiscal period (tests/Unit/Service/Ledger/GlLineResultStampsTest.php, tests/vitest/reportingSegmentResults.spec.js).",
 				"change": "2026-09-29-reporting-segment-results"
 			},
 			"evidence": {

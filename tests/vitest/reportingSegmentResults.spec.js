@@ -85,7 +85,10 @@ describe('segment results', () => {
 
 	it('offers every segment type over a declared aggregation with revenue, costs and result', () => {
 		const declared = fragment.components.schemas.GLLine['x-openregister-aggregations']
-		for (const name of Object.values(SEGMENT_AGGREGATION)) {
+		// byAnalyticalDimension groups by the wildcard dimensions.*, which no
+		// engine key expresses yet (#1261); it stays untranslated and is pinned
+		// that way in CostCentersDimensionsFragmentTest.
+		for (const name of Object.values(SEGMENT_AGGREGATION).filter((n) => n !== 'byAnalyticalDimension')) {
 			expect(declared[name], name).toBeDefined()
 			expect(declared[name].filter).toMatchObject({ accountClass: 'pnl', countsInResult: true })
 			expect(declared[name].metrics.map((m) => m.as)).toEqual(['revenue', 'costs', 'result'])

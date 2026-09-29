@@ -324,7 +324,8 @@ class GlLineResultStampsTest extends TestCase {
 		$this->stamps()->stampTransaction(self::TX_SEP);
 		$this->stamps()->stampTransaction(self::TX_DRAFT);
 
-		foreach (['byCostCenter', 'byCostObject', 'byProject', 'byCostCenterHierarchy', 'byAnalyticalDimension'] as $name) {
+		// byAnalyticalDimension stays untranslated (wildcard groupBy, #1261).
+		foreach (['byCostCenter', 'byCostObject', 'byProject', 'byCostCenterHierarchy'] as $name) {
 			$spec = RegisterSchema::schema('GLLine')['x-openregister-aggregations'][$name];
 			$this->assertSame(['accountClass' => 'pnl', 'countsInResult' => true], array_intersect_key($spec['filter'], ['accountClass' => 1, 'countsInResult' => 1]), $name);
 			$this->assertSame(['revenue', 'costs', 'result'], array_column($spec['metrics'], 'as'), $name);

@@ -566,15 +566,12 @@
             ]
           },
           "byAnalyticalDimension": {
-            "description": "Per-custom-dimension roll-up of posted GL amounts. Each registered AnalyticalDimension[dimensionType=custom] contributes a group-by key drawn from GLLine.dimensions[code]. Drives the operator-extensible segment P&L surface; new custom dimensions appear automatically without PHP/Vue edits. Scoped dimensionType = custom. Result figures (reporting-segment-results REQ-RSR-002): only posted profit and loss lines count (filter accountClass pnl, countsInResult true, stamped by GLLineResultStampListener), revenue is the credit amount, costs the debit amount and result the sum of signedAmount.",
+            "description": "Per-custom-dimension roll-up of posted GL amounts. Each registered AnalyticalDimension[dimensionType=custom] contributes a group-by key drawn from GLLine.dimensions[code]. Drives the operator-extensible segment P&L surface; new custom dimensions appear automatically without PHP/Vue edits. Scoped dimensionType = custom.",
             "source": "GLLine",
             "groupBy": [
               "dimensions.*"
             ],
-            "filter": {
-              "accountClass": "pnl",
-              "countsInResult": true
-            },
+            "filter": {},
             "join": {
               "through": "AnalyticalDimension",
               "on": "AnalyticalDimension.code",
@@ -582,30 +579,8 @@
                 "dimensionType": "custom"
               }
             },
-            "metric": "sum",
-            "field": "signedAmount",
-            "metrics": [
-              {
-                "metric": "sum",
-                "field": "amount",
-                "condition": {
-                  "side": "credit"
-                },
-                "as": "revenue"
-              },
-              {
-                "metric": "sum",
-                "field": "amount",
-                "condition": {
-                  "side": "debit"
-                },
-                "as": "costs"
-              },
-              {
-                "metric": "sum",
-                "field": "signedAmount",
-                "as": "result"
-              }
+            "sum": [
+              "amount"
             ]
           }
         }
