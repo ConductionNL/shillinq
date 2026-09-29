@@ -4828,6 +4828,115 @@
 			]
 		},
 		{
+			"menu": [
+				{
+					"id": "Overheid",
+					"children": [
+						{
+							"id": "Reserves",
+							"label": "Reserves",
+							"icon": "PiggyBankOutline",
+							"route": "Reserves",
+							"order": 60
+						},
+						{
+							"id": "ReserveMutations",
+							"label": "Reserve mutations",
+							"icon": "SwapHorizontal",
+							"route": "ReserveMutations",
+							"order": 61
+						},
+						{
+							"id": "ReserveMultiYearOverview",
+							"label": "Reserves over the years",
+							"icon": "ChartTimelineVariant",
+							"route": "ReserveMultiYearOverview",
+							"order": 62
+						},
+						{
+							"id": "Investeringen",
+							"label": "Investments",
+							"icon": "OfficeBuildingOutline",
+							"route": "Investeringen",
+							"order": 63
+						},
+						{
+							"id": "InterestAllocationRuns",
+							"label": "Interest allocation",
+							"icon": "PercentOutline",
+							"route": "InterestAllocationRuns",
+							"order": 64
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "public-sector-reserves-and-interest",
+					"id": "Reserves",
+					"route": "/overheid/reserves",
+					"type": "index",
+					"title": "Reserves"
+				},
+				{
+					"_fragment": "public-sector-reserves-and-interest",
+					"id": "ReserveDetail",
+					"route": "/overheid/reserves/:id",
+					"type": "detail",
+					"title": "Reserve"
+				},
+				{
+					"_fragment": "public-sector-reserves-and-interest",
+					"id": "ReserveMutations",
+					"route": "/overheid/reserve-mutations",
+					"type": "index",
+					"title": "Reserve mutations"
+				},
+				{
+					"_fragment": "public-sector-reserves-and-interest",
+					"id": "ReserveMutationDetail",
+					"route": "/overheid/reserve-mutations/:id",
+					"type": "detail",
+					"title": "Reserve mutation"
+				},
+				{
+					"_fragment": "public-sector-reserves-and-interest",
+					"id": "ReserveMultiYearOverview",
+					"route": "/overheid/reserves/overview",
+					"type": "dashboard",
+					"title": "Reserves over the years"
+				},
+				{
+					"_fragment": "public-sector-reserves-and-interest",
+					"id": "Investeringen",
+					"route": "/overheid/investeringen",
+					"type": "index",
+					"title": "Investments"
+				},
+				{
+					"_fragment": "public-sector-reserves-and-interest",
+					"id": "InvesteringDetail",
+					"route": "/overheid/investeringen/:id",
+					"type": "detail",
+					"title": "Investment"
+				},
+				{
+					"_fragment": "public-sector-reserves-and-interest",
+					"id": "InterestAllocationRuns",
+					"route": "/overheid/interest-allocation",
+					"type": "index",
+					"title": "Interest allocation"
+				},
+				{
+					"_fragment": "public-sector-reserves-and-interest",
+					"id": "InterestAllocationRunDetail",
+					"route": "/overheid/interest-allocation/:id",
+					"type": "detail",
+					"title": "Interest allocation run"
+				}
+			]
+		},
+		{
 			"menu": [],
 			"pages": [
 				{

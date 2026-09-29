@@ -164,7 +164,15 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // budget amendments (with Determine, files and history), the multi-year
 // estimate and the multi-year budget lines, six pages over schemas that had
 // none. Raised to 1,172,000: 6,995 B of headroom, 0.60%.
-const DEFAULT_BUDGET_BYTES = 1_172_000
+//
+// Re-measured 2026-09-29 (public-sector-reserves-and-interest): 1,177,829
+// bytes. The stack below left 1,165,325. This change adds 12,504 B, all in
+// its own fragment written one page per line: index and detail pages for
+// reserves, reserve mutations (with Realise), investments and interest runs
+// (with Calculate, Reopen and Post), and the reserves-over-the-years
+// dashboard, nine pages over four schemas that had none. Raised to
+// 1,184,500: 6,671 B of headroom, 0.56%.
+const DEFAULT_BUDGET_BYTES = 1_184_500
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),

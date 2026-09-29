@@ -5385,17 +5385,19 @@
 			"id": "pub-asset-interest",
 			"area": "public-sector",
 			"name": "Charge interest on assets over their book value and allocate it to tasks.",
-			"shillinq": "no",
+			"shillinq": "yes",
 			"exact-online": "unknown",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"reachedOn": "nothing"
+				"readOn": "2026-09-29",
+				"reachedOn": "Interest allocation /overheid/interest-allocation (Calculate, Post), Investments /overheid/investeringen (menu Government)",
+				"evidence": "InterestAllocationRun with calculate and post (lib/Lifecycle/Action/InterestAllocationAction.php over lib/Service/PublicSector/InterestAllocationService.php): the pooled rate over each investment's book value on 1 January charged to its task field, and over reserves marked for interest; one journal entry crediting Treasury task field 0.5 (tests/Unit/PublicSector/PublicSectorReservesAndInterestTest.php, seed figures EUR 54,000 and EUR 9,600).",
+				"change": "2026-09-29-public-sector-reserves-and-interest"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: no Dutch public sector function is described",
@@ -5421,17 +5423,19 @@
 			"id": "pub-reserves",
 			"area": "public-sector",
 			"name": "Keep reserves with additions and withdrawals per year and a multi-year overview.",
-			"shillinq": "no",
+			"shillinq": "yes",
 			"exact-online": "unknown",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"reachedOn": "nothing"
+				"readOn": "2026-09-29",
+				"reachedOn": "Reserves /overheid/reserves, Reserve mutations /overheid/reserve-mutations (Realise), Reserves over the years /overheid/reserves/overview (menu Government)",
+				"evidence": "ReserveMutation (planned or realised) in lib/Settings/register.d/public-sector-reserves-and-interest.json; realise posts the journal entry between the reserve account and the result account (lib/Lifecycle/Action/RealiseReserveMutationAction.php over lib/Service/PublicSector/ReserveBalances.php); the multi-year overview GET /api/v1/public-sector/reserves/overview chains opening to closing with floor and ceiling flags (tests/Unit/PublicSector/PublicSectorReservesAndInterestTest.php).",
+				"change": "2026-09-29-public-sector-reserves-and-interest"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: no Dutch public sector function is described",
