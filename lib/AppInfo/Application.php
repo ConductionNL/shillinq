@@ -45,6 +45,7 @@ use OCA\Shillinq\Lifecycle\FiscalYearGuard;
 use OCA\Shillinq\Lifecycle\FourEyesPaymentRunGuard;
 use OCA\Shillinq\Lifecycle\GLReversalGuard;
 use OCA\Shillinq\Lifecycle\PaymentRunDuplicateGuard;
+use OCA\Shillinq\PaymentRun\PaymentBlockChecker;
 use OCA\Shillinq\Lifecycle\PeriodCloseGuard;
 use OCA\Shillinq\Lifecycle\RegisterRequiresGuardAdapter;
 use OCA\Shillinq\Lifecycle\WBSOExportValidationGuard;
@@ -1084,6 +1085,7 @@ class Application extends App implements IBootstrap {
 					container: $c->get(ContainerInterface::class),
 					appConfig: $c->get(IAppConfig::class),
 					logger: $c->get(LoggerInterface::class),
+					blockChecker: $c->get(PaymentBlockChecker::class),
 				);
 			}
 		);

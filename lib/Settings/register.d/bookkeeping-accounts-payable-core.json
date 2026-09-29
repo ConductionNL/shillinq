@@ -148,6 +148,18 @@
             "example": "Net 30, korting 2%/10 dagen",
             "title": "Credit Terms"
           },
+          "paymentBlocked": {
+            "type": "boolean",
+            "default": false,
+            "description": "Payment block on this supplier (banking-payment-run REQ-BPR-004). A blocked supplier is left out of a proposed payment run and refuses the export of a run that pays it. It does not change the lifecycle state and does not stop invoices being received, issued or posted.",
+            "title": "Payment blocked"
+          },
+          "paymentBlockReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why payment is blocked; asked when the block is set and shown wherever the block refuses a payment.",
+            "title": "Payment block reason"
+          },
           "dunningPolicyRef": {
             "type": "string",
             "description": "FK to OR dunning-workflow policy record if the extension is stable per ADR-022; else null. Drives reminder cadence from the overdue state.",
@@ -451,6 +463,18 @@
             "nullable": true,
             "example": "gl-txn-2026-ap-0001",
             "title": "GL Transaction ID"
+          },
+          "paymentBlocked": {
+            "type": "boolean",
+            "default": false,
+            "description": "Payment block on this invoice (banking-payment-run REQ-BPR-003). A blocked invoice is left out of a proposed payment run and refuses the export of a run that pays it. It does not change the lifecycle state.",
+            "title": "Payment blocked"
+          },
+          "paymentBlockReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why payment is blocked; asked when the block is set and shown wherever the block refuses a payment.",
+            "title": "Payment block reason"
           },
           "writeOffReason": {
             "type": "string",
@@ -1134,6 +1158,13 @@
                   "nullable": true,
                   "title": "Remittance Info"
                 },
+                "requestedExecutionDate": {
+                  "type": "string",
+                  "format": "date",
+                  "nullable": true,
+                  "description": "The day this payment should leave the bank (banking-payment-run REQ-BPR-006). Lines without one take the run's executionDate; the pain.001 file writes one payment information block per date.",
+                  "title": "Requested execution date"
+                },
                 "apTransactionRef": {
                   "type": "string",
                   "description": "FK to the APTransaction UUID / slug this line settles.",
@@ -1402,6 +1433,76 @@
         "phone": "+31702000000",
         "administrationId": "adm-shillinq-demo",
         "lifecycleState": "active"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Payee",
+          "slug": "payee-schoonmaak-devries"
+        },
+        "vendorNumber": "V-2026-021",
+        "name": "Schoonmaakbedrijf De Vries",
+        "payeeType": "supplier",
+        "paymentTermDays": 30,
+        "defaultExpenseAccountNumber": "4400",
+        "bankAccount": {
+          "iban": "NL00TEST0444444444",
+          "accountHolderName": "Schoonmaakbedrijf De Vries"
+        },
+        "paymentBlocked": true,
+        "paymentBlockReason": "IBAN change under verification",
+        "administrationId": "adm-shillinq-demo",
+        "lifecycleState": "active"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "APTransaction",
+          "slug": "ap-txn-devries-dv-7781"
+        },
+        "invoiceNumber": "DV-7781",
+        "vendorId": "payee-schoonmaak-devries",
+        "invoiceDate": "2026-06-01",
+        "dueDate": "2026-07-01",
+        "currency": "EUR",
+        "totalAmount": 2420.0,
+        "taxAmount": 420.0,
+        "lines": [
+          {
+            "description": "Kantoorschoonmaak juni 2026",
+            "accountNumber": "4400",
+            "amount": 2000.0,
+            "taxCode": "BTW21"
+          }
+        ],
+        "state": "issued",
+        "administrationId": "adm-shillinq-demo"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "APTransaction",
+          "slug": "ap-txn-officecenter-2026-06-0019"
+        },
+        "invoiceNumber": "OC-2026-06-0019",
+        "vendorId": "payee-officecenter",
+        "invoiceDate": "2026-06-10",
+        "dueDate": "2026-06-24",
+        "currency": "EUR",
+        "totalAmount": 605.0,
+        "taxAmount": 105.0,
+        "lines": [
+          {
+            "description": "Bureaustoelen, deellevering",
+            "accountNumber": "4400",
+            "amount": 500.0,
+            "taxCode": "BTW21"
+          }
+        ],
+        "state": "issued",
+        "paymentBlocked": true,
+        "paymentBlockReason": "Wacht op creditnota",
+        "administrationId": "adm-shillinq-demo"
       },
       {
         "@self": {

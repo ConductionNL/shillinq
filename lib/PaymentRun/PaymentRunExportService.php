@@ -96,6 +96,7 @@ class PaymentRunExportService {
 	 * @param ISystemTagObjectMapper $tagMapper Maps tags onto the stored file id.
 	 * @param IUserSession $userSession Current user (storage home).
 	 * @param LoggerInterface $logger Fail-soft warning logger.
+	 * @param PaymentBlockChecker $blockChecker Names blocked and disputed lines (REQ-BPR-005).
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
@@ -104,6 +105,7 @@ class PaymentRunExportService {
 		private readonly ISystemTagObjectMapper $tagMapper,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
+		private readonly PaymentBlockChecker $blockChecker,
 	) {
 
 	}//end __construct()
@@ -128,6 +130,13 @@ class PaymentRunExportService {
 		if ($missing !== []) {
 			$this->logger->warning('PaymentRunExportService: lines missing creditorIban', ['lines' => $missing]);
 			return ['error' => 'missing-creditor-iban', 'lines' => $missing];
+		}
+
+		// REQ-BPR-005: a block set after approval stops the file before it is written.
+		$blocked = $this->blockChecker->blockedLines(paymentRun: $paymentRun);
+		if ($blocked !== []) {
+			$this->logger->warning('PaymentRunExportService: run pays a blocked invoice', ['invoices' => array_column($blocked, 'invoiceNumber')]);
+			return ['error' => 'payment-blocked', 'blocked' => $blocked];
 		}
 
 		$rendered = $this->renderArtefacts(paymentRun: $paymentRun);

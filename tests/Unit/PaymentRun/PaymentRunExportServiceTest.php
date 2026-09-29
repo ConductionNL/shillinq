@@ -24,7 +24,10 @@ namespace OCA\Shillinq\Tests\Unit\PaymentRun;
 
 use OCA\Shillinq\PaymentRun\Generator\PaymentRunCsvGenerator;
 use OCA\Shillinq\PaymentRun\Generator\SepaPain001Generator;
+use OCA\Shillinq\PaymentRun\PaymentBlockChecker;
 use OCA\Shillinq\PaymentRun\PaymentRunExportService;
+use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\Files\File;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
@@ -41,6 +44,14 @@ use Psr\Log\LoggerInterface;
  * Tests REQ-SEPA-001 / REQ-SEPA-004 / REQ-SEPA-005 — validate, store, write-back.
  */
 class PaymentRunExportServiceTest extends TestCase {
+
+	/**
+	 * How many files the export wrote into Files.
+	 *
+	 * @var int
+	 */
+	private int $newFileCalls = 0;
+
 	/**
 	 * The seeded approved PR-2026-001 fixture (SAFE placeholders).
 	 *
@@ -108,7 +119,7 @@ class PaymentRunExportServiceTest extends TestCase {
 	 *
 	 * @return PaymentRunExportService
 	 */
-	private function service(array &$captured): PaymentRunExportService {
+	private function service(array &$captured, ?array $records = null): PaymentRunExportService {
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
 			function (string $id) use (&$captured) {
@@ -138,7 +149,6 @@ class PaymentRunExportServiceTest extends TestCase {
 		$folder = $this->createMock(Folder::class);
 		$folder->method('nodeExists')->willReturn(false);
 		$folder->method('newFolder')->willReturnSelf();
-		$folder->method('newFile')->willReturn($file);
 
 		$rootFolder = $this->createMock(IRootFolder::class);
 		$rootFolder->method('getUserFolder')->willReturn($folder);
@@ -154,6 +164,26 @@ class PaymentRunExportServiceTest extends TestCase {
 		$session = $this->createMock(IUserSession::class);
 		$session->method('getUser')->willReturn($user);
 
+		if ($records === null) {
+			$records = [
+				'APTransaction' => [
+					['id' => 'a', 'invoiceNumber' => 'ENECO-2026-04-0001', 'state' => 'issued'],
+					['id' => 'b', 'invoiceNumber' => 'JDV-2026-06-0003', 'state' => 'issued'],
+				],
+			];
+		}
+
+		$settings = $this->createMock(SettingsService::class);
+		$settings->method('getRegisterSlug')->willReturn('shillinq');
+
+		$this->newFileCalls = 0;
+		$folder->method('newFile')->willReturnCallback(
+			function () use ($file) {
+				$this->newFileCalls++;
+				return $file;
+			}
+		);
+
 		return new PaymentRunExportService(
 			$container,
 			$rootFolder,
@@ -161,6 +191,7 @@ class PaymentRunExportServiceTest extends TestCase {
 			$tagMapper,
 			$session,
 			$this->createMock(LoggerInterface::class),
+			new PaymentBlockChecker(new InMemoryObjectServiceStub($records), $settings),
 		);
 	}//end service()
 
@@ -231,4 +262,29 @@ class PaymentRunExportServiceTest extends TestCase {
 		$this->assertSame([2], $result['lines']);
 		$this->assertSame([], $captured);
 	}//end testLineMissingCreditorIbanRejected()
+
+	/**
+	 * REQ-BPR-005: a blocked line refuses the export before any file is written.
+	 *
+	 * @return void
+	 */
+	public function testABlockedLineIsRefusedBeforeAnyFileIsWritten(): void {
+		$captured = [];
+		$service = $this->service(
+			$captured,
+			[
+				'APTransaction' => [
+					['id' => 'a', 'invoiceNumber' => 'ENECO-2026-04-0001', 'state' => 'issued'],
+					['id' => 'b', 'invoiceNumber' => 'JDV-2026-06-0003', 'state' => 'issued', 'paymentBlocked' => true, 'paymentBlockReason' => 'Wacht op creditnota'],
+				],
+			]
+		);
+
+		$result = $service->export($this->approvedRun());
+
+		$this->assertSame('payment-blocked', $result['error']);
+		$this->assertSame(['JDV-2026-06-0003'], array_column($result['blocked'], 'invoiceNumber'));
+		$this->assertSame(0, $this->newFileCalls);
+		$this->assertSame([], $captured);
+	}//end testABlockedLineIsRefusedBeforeAnyFileIsWritten()
 }//end class
