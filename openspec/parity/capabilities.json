@@ -5031,17 +5031,19 @@
 			"id": "led-dimension-block",
 			"area": "ledger",
 			"name": "Block combinations of account, cost centre and project that may not be booked together.",
-			"shillinq": "no",
+			"shillinq": "yes",
 			"exact-online": "partial",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
 			"twinfield": "partial",
 			"odoo": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"reachedOn": "nothing"
+				"readOn": "2026-09-29",
+				"reachedOn": "PostingRestrictions /settings/posting-restrictions (settings gear), detail /settings/posting-restrictions/:id",
+				"evidence": "PostingRestriction (lib/Settings/register.d/ledger-booking-rules.json: accountPattern prefix, costCenterCode, projectCode, reason, validFrom, validTo, lifecycle active/retired) per administration; lib/Lifecycle/PostingRestrictionGuard.php refuses a person's posting whose line matches an active restriction on the posting date, naming the reason. Journal lines carry costCenterCode and projectCode into the GL line (MaterialiseGlTransactionAction).",
+				"change": "2026-09-29-ledger-booking-rules"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-costanalysis-costcenter-fincctr-linkglacctt?language=en_GB: \"From a G/L account: Specify which cost centres or cost units an employee can or must select when they enter a transaction for that G/L account\" Note: Allowed cost centres per account; combinations with projects are not described.",
@@ -5061,23 +5063,25 @@
 				"intelligence-db requirements#109524",
 				"intelligence-db requirements#109525"
 			],
-			"note": "AnalyticalDimension has start/end dates and a lifecycle, but no rule set forbids combinations of account, cost centre and project; searched lib/ for combination rules. Specified 2026-09-27 in openspec/changes/ledger-booking-rules (OpenSpec pass)."
+			"note": "AnalyticalDimension has start/end dates and a lifecycle, but no rule set forbids combinations of account, cost centre and project; searched lib/ for combination rules. Built 2026-09-29 by ledger-booking-rules."
 		},
 		{
 			"id": "led-control-account-lock",
 			"area": "ledger",
 			"name": "Block control accounts such as VAT, receivables and payables from manual posting.",
-			"shillinq": "no",
+			"shillinq": "yes",
 			"exact-online": "unknown",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"reachedOn": "nothing"
+				"readOn": "2026-09-29",
+				"reachedOn": "JournalDetail /journals/:id, Post; GeneralLedgerDetail /general-ledger/:id, Post transaction; the role on ChartOfAccountsDetail",
+				"evidence": "lib/Lifecycle/PostingRestrictionGuard.php refuses a journal entry or GL transaction a person posts when a line is on an account with Account.controlAccountFor set (lib/Settings/register.d/ledger-booking-rules.json), naming the account and its role; JournalEntryGuard::canPost and RuleComplianceGuard::validateTransaction delegate to it and RegisterRequiresGuardAdapter shows the refusal. Sub-ledger postings pass: MaterialiseGlTransactionAction writes them directly, GR/IR drafts carry journalCode, a bank booking (sourceApp bank) may post its VAT line. The RGS MKB seed and lib/Repair/BackfillControlAccountRoles.php mark 1100, 2000, 1230 and 2110 (shillinq PR ledger-booking-rules).",
+				"change": "2026-09-29-ledger-booking-rules"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: blocking G/L accounts for all future bookings exists (search snippet of https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-glaccounts-fingl-crtglaccountst) but blocking only manual postings on control accounts is not stated",
@@ -5096,7 +5100,7 @@
 			"originRequirements": [
 				"intelligence-db requirements#109740"
 			],
-			"note": "Account carries isAPControlAccount/isExpenseControlAccount flags used as posting targets, but no guard in lib/Lifecycle or lib/Guard rejects a manual journal line on a control account. Specified 2026-09-27 in openspec/changes/ledger-booking-rules (OpenSpec pass)."
+			"note": "Account carries isAPControlAccount/isExpenseControlAccount flags used as posting targets, but no guard in lib/Lifecycle or lib/Guard rejects a manual journal line on a control account. Built 2026-09-29 by ledger-booking-rules."
 		},
 		{
 			"id": "led-open-years",
@@ -5811,18 +5815,19 @@
 			"id": "led-account-guidance",
 			"area": "ledger",
 			"name": "Add guidance to each ledger account explaining when to use it.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "unknown",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"evidence": "Account carries a free-text description property (lib/Settings/shillinq_register.json Account.description at line 1422), editable on the chart of accounts.",
-				"reachedOn": "ChartOfAccounts /chart-of-accounts"
+				"readOn": "2026-09-29",
+				"evidence": "src/components/ledger/LedgerLinesGuidancePanel.vue lists the lines of JournalDetail and GeneralLedgerDetail with each account's description under the account as guidance and marks a control account (src/manifest.d/ledger-booking-rules.json, slots widget-journal-lines and widget-transaction-lines); Account.description is titled Guidance.",
+				"reachedOn": "JournalDetail /journals/:id and GeneralLedgerDetail /general-ledger/:id, Lines panel",
+				"change": "2026-09-29-ledger-booking-rules"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
@@ -5838,7 +5843,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-19-release-notes",
-			"note": "A description field, not guidance shown when booking. Specified 2026-09-27 in openspec/changes/ledger-booking-rules (OpenSpec pass)."
+			"note": "A description field, not guidance shown when booking. Built 2026-09-29 by ledger-booking-rules."
 		},
 		{
 			"id": "led-tamper-proof",

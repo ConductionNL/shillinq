@@ -7,7 +7,7 @@
  * (REQ-LBR-004). The manifest fragment, the registry, the settings foldout
  * and the helper that pairs a line with its account are held to each other.
  *
- * @spec openspec/changes/ledger-booking-rules/tasks.md#task-3.2
+ * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
  */
 
 import fs from 'fs'

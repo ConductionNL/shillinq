@@ -16,7 +16,7 @@ select a control account SHALL select it by this field.
 
 #### Scenario: An administrator marks the VAT account as a control account
 
-- GIVEN an administrator on the chart of accounts detail page of account 1500 Te betalen btw
+- GIVEN an administrator on the chart of accounts detail page of account 2110 BTW-schuld
 - WHEN they set control account for to vat and save
 - THEN the account shows control account for vat
 
@@ -30,25 +30,31 @@ by a sub-ledger SHALL NOT be refused by this check.
 
 #### Scenario: A bookkeeper tries a memorial entry on receivables
 
-- GIVEN a draft journal entry on the journal detail page with a debit line on 1300 Debiteuren and a credit line on 8000 Omzet
+- GIVEN a draft journal entry on the journal detail page with a debit line on 1100 Debiteuren and a credit line on 8000 Netto-omzet
 - WHEN the bookkeeper presses Post without approval
-- THEN the post is refused with a message naming 1300 Debiteuren as the receivables control account
+- THEN the post is refused with a message naming 1100 Debiteuren as the receivables control account
 - AND the entry stays in draft
 
 #### Scenario: A posted sales invoice still books receivables
 
-- GIVEN an issued sales invoice whose posting materialises a debit on 1300 Debiteuren
+- GIVEN an issued sales invoice whose posting materialises a debit on 1100 Debiteuren
 - WHEN the invoice is posted
-- THEN the ledger transaction is written with the line on 1300
+- THEN the ledger transaction is written with the line on 1100
+
+#### Scenario: A bank booking posts its VAT line
+
+- GIVEN a bank line booked by hand to 4910 with 21 percent VAT
+- WHEN the booking is confirmed
+- THEN the journal entry posts with its VAT line on 1230 BTW-vordering
 
 ### Requirement: The booking line shows the account's guidance (REQ-LBR-003)
 
-The line editors on the journal detail page and the general ledger detail
-page SHALL show the chosen account's `description` under the account, and
-the account options SHALL show it as secondary text.
+The lines on the journal detail page and the general ledger detail page
+SHALL show each line's account with its `description` under it, and SHALL
+mark a control account.
 
 #### Scenario: A bookkeeper sees when to use the housing account
 
 - GIVEN account 4000 Huisvesting with the description "Huur, energie en schoonmaak van het kantoor. Niet voor thuiswerkvergoedingen."
-- WHEN a bookkeeper chooses 4000 on a journal entry line
+- WHEN a bookkeeper opens a journal entry with a line on 4000
 - THEN that description is shown under the account on the line

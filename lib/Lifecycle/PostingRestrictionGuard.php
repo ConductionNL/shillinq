@@ -31,7 +31,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-booking-rules/tasks.md#task-2.1
+ * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -49,7 +49,7 @@ use OCP\IL10N;
 /**
  * Refuses manual postings on control accounts and blocked combinations.
  *
- * @spec openspec/changes/ledger-booking-rules/tasks.md#task-2.1
+ * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
  */
 class PostingRestrictionGuard {
 
@@ -96,7 +96,7 @@ class PostingRestrictionGuard {
 	 *
 	 * @throws PostingRefusedException With the account or the reason in its message.
 	 *
-	 * @spec openspec/changes/ledger-booking-rules/tasks.md#task-2.1
+	 * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
 	 */
 	public function assertAllowed(array $lines, string $administrationId, string $postingDate, string $sourceApp = ''): void {
 		$this->assertNoControlAccount(lines: $lines, administrationId: $administrationId, sourceApp: $sourceApp);

@@ -11,7 +11,7 @@
  Rendered on JournalDetail and GeneralLedgerDetail through the page slots
  widget-journal-lines and widget-transaction-lines.
 
- @spec openspec/changes/ledger-booking-rules/tasks.md#task-3.2
+ @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
 -->
 
 <template>
@@ -111,7 +111,7 @@ export default {
 	watch: {
 		objectId: {
 			immediate: true,
-			/** @spec openspec/changes/ledger-booking-rules/tasks.md#task-3.2 */
+			/** @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md */
 			handler() {
 				this.load()
 			},
@@ -124,7 +124,7 @@ export default {
 		/**
 		 * Read the lines and their accounts.
 		 *
-		 * @spec openspec/changes/ledger-booking-rules/tasks.md#task-3.2
+		 * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
 		 */
 		async load() {
 			if (!this.objectId) {
@@ -149,7 +149,7 @@ export default {
 		 *
 		 * @param {number} amount The amount.
 		 * @return {string} The formatted amount.
-		 * @spec openspec/changes/ledger-booking-rules/tasks.md#task-3.2
+		 * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
 		 */
 		money(amount) {
 			return new Intl.NumberFormat('nl-NL', {

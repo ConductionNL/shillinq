@@ -28,7 +28,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-booking-rules/tasks.md#task-1.2
+ * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -50,7 +50,7 @@ use Throwable;
 /**
  * Sets controlAccountFor on the existing control accounts of the seed chart.
  *
- * @spec openspec/changes/ledger-booking-rules/tasks.md#task-1.2
+ * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
  */
 class BackfillControlAccountRoles implements IRepairStep {
 	use ReadsSourceRowsInBatches;
@@ -86,7 +86,7 @@ class BackfillControlAccountRoles implements IRepairStep {
 	 *
 	 * @return string The display name.
 	 *
-	 * @spec openspec/changes/ledger-booking-rules/tasks.md#task-1.2
+	 * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
 	 */
 	public function getName(): string {
 		return 'Shillinq: mark the receivables, payables and VAT accounts as control accounts';
@@ -99,7 +99,7 @@ class BackfillControlAccountRoles implements IRepairStep {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/ledger-booking-rules/tasks.md#task-1.2
+	 * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
 	 */
 	public function run(IOutput $output): void {
 		try {

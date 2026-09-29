@@ -15,7 +15,7 @@ const REGISTER = 'shillinq'
  *
  * @param {object} data The response body.
  * @return {Array<object>} The rows.
- * @spec openspec/changes/ledger-booking-rules/tasks.md#task-3.2
+ * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
  */
 export function resultsOf(data) {
 	if (Array.isArray(data)) {
@@ -32,7 +32,7 @@ export function resultsOf(data) {
  * @param {Array<object>} accounts The administration's accounts on those lines.
  * @return {Array<object>} One row per line: key, accountNumber, accountName,
  *   guidance, controlAccountFor, side, amount, costCenterCode, projectCode.
- * @spec openspec/changes/ledger-booking-rules/tasks.md#task-3.2
+ * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
  */
 export function guidanceRows(lines, accounts) {
 	const byNumber = new Map()
@@ -62,7 +62,7 @@ export function guidanceRows(lines, accounts) {
  * @param {string} schema The schema slug.
  * @param {object} filters Field filters.
  * @return {string} The URL.
- * @spec openspec/changes/ledger-booking-rules/tasks.md#task-3.2
+ * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
  */
 export function objectsUrl(schema, filters = {}) {
 	const query = new URLSearchParams()
@@ -86,7 +86,7 @@ export function objectsUrl(schema, filters = {}) {
  * @param {string} schema JournalEntry or GLTransaction.
  * @param {string} objectId The object's id.
  * @return {Promise<Array<object>>} The rows of guidanceRows().
- * @spec openspec/changes/ledger-booking-rules/tasks.md#task-3.2
+ * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
  */
 export async function loadGuidanceRows(schema, objectId) {
 	const id = encodeURIComponent(String(objectId))

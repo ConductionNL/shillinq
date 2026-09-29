@@ -78,6 +78,18 @@ account select's options show it as secondary text. The field's schema
 description changes from "Operator-authored free-text description" to
 "When to use this account; shown to the bookkeeper on every booking line."
 
+### Amended at build (29 Sep)
+
+Read against the code at build time; the decisions above hold except:
+
+- **D2.** Every posting needs a `sourceReference` (VAT Directive art. 244 is a mandatory rule under NL jurisdiction), so it cannot tell a person's posting apart. A `GLTransaction` is a sub-ledger's when it carries `journalEntryId` (its journal entry was checked already) or `journalCode` (the GR/IR and inventory posters, which leave drafts a person then posts). Everything else is a person's.
+- **D3.** `JournalEntry` had no `sourceApp`; it is added (`bank`, `humaniq`). A bank booking by hand splits out VAT on 1230, so `ManualMatchService` marks its journal `bank`, and the bank may post on `vat` accounts. humaniq writes no `sourceApp` yet, so no payroll account gets a role by default; once humaniq sets it, marking 2120 as `payroll` is safe.
+- **D5.** The detail pages have no line editor and the account field has no options list. A lines panel on both pages shows each line's account, its guidance under it and a control-account mark.
+- **Refusal message.** A guard returns a bool and the adapter showed one fixed message. The booking rules throw `PostingRefusedException`, whose message the adapter shows as it stands.
+- **Journal lines** gain `costCenterCode` and `projectCode`, carried to the GL line, so a restriction can see them on a journal entry.
+
+**Seed and migration.** The RGS MKB seed carries no `rgsCode`, and its control accounts are 1100 Debiteuren, 2000 Crediteuren, 1230 BTW-vordering and 2110 BTW-schuld (the accounts `MaterialiseGlTransactionAction` books to), not 1300, 1600 and 1500. The seed sets the role on those four; `BackfillControlAccountRoles` sets it on existing accounts with that number and the seed's name.
+
 ## Declarative-vs-imperative decision (ADR-031)
 
 | Behaviour | Path | Rationale |
