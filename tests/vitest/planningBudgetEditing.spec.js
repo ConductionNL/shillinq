@@ -7,7 +7,7 @@
  * shillinq. The helpers, the manifest, the registry and appinfo/routes.php
  * are held to each other.
  *
- * @spec openspec/changes/planning-budget-editing/specs/budget-grid-view/spec.md
+ * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/specs/budget-grid-view/spec.md
  */
 
 import fs from 'fs'

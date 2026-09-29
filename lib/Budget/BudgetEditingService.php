@@ -87,7 +87,7 @@ class BudgetEditingService {
 	 *
 	 * @throws BudgetEditRefusedException When the budget is not this administration's.
 	 *
-	 * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
 	 */
 	public function lines(string $administrationId, string $annualBudgetId): array {
 		$budget = $this->budget(administrationId: $administrationId, annualBudgetId: $annualBudgetId);
@@ -141,7 +141,7 @@ class BudgetEditingService {
 	 *
 	 * @throws BudgetEditRefusedException When the budget is closed, the line derived or the save stale.
 	 *
-	 * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
 	 */
 	public function saveCell(string $administrationId, string $annualBudgetId, string $ledgerGroupId, int $month, int $amount, int $expected): array {
 		if ($month < 1 || $month > 12) {
@@ -176,7 +176,7 @@ class BudgetEditingService {
 	 *
 	 * @throws BudgetEditRefusedException When the budget is closed, the line derived or the save stale.
 	 *
-	 * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.2
 	 */
 	public function spread(string $administrationId, string $annualBudgetId, string $ledgerGroupId, int $yearly, array $expected): array {
 		$line = $this->writableLine(administrationId: $administrationId, annualBudgetId: $annualBudgetId, ledgerGroupId: $ledgerGroupId);
@@ -199,7 +199,7 @@ class BudgetEditingService {
 	 *
 	 * @return list<int>
 	 *
-	 * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.2
 	 */
 	public static function spreadAmounts(int $yearly): array {
 		$month = intdiv($yearly, 12);
@@ -218,7 +218,7 @@ class BudgetEditingService {
 	 *
 	 * @return array{years:list<array{fiscalYear:int,annualBudgetId:string,name:string,state:string}>,rows:list<array<string,mixed>>,budgets:list<array<string,mixed>>}
 	 *
-	 * @spec openspec/changes/planning-budget-editing/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-2.1
 	 */
 	public function multiYear(string $administrationId, int $fromYear): array {
 		$years = [];
@@ -290,7 +290,7 @@ class BudgetEditingService {
 	 *
 	 * @throws BudgetEditRefusedException When next year already has a budget.
 	 *
-	 * @spec openspec/changes/planning-budget-editing/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-2.1
 	 */
 	public function startNextYear(string $administrationId, string $annualBudgetId, float $percentage): array {
 		if ($percentage < -100.0 || $percentage > 1000.0) {

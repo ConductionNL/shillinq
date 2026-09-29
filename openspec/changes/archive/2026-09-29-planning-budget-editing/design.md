@@ -82,3 +82,13 @@ None.
 ## Open Questions
 
 None.
+
+## As built (2026-09-29)
+
+- D1 changed: cells save through `PUT /api/v1/budget-editing/cell` (`BudgetEditingController`), not through the object store from the page. The server compares the month amount the person started from with the stored one and refuses a stale save, so the check does not depend on a version field `BudgetLine` does not have. A new manual line is created with `saveObject`, a stored one patched with `patchObject`. The same holds for Spread over months, which sends the twelve amounts it showed.
+- The grid at HEAD shows actuals against the default budget over any period range, so the typing surface is a section below it, Enter the budget, over one chosen annual budget and its twelve months. The read-only grid is unchanged.
+- D3: Start next year refuses a year that already has a budget, and marks the new draft as the default for its year.
+- D4: the menu cannot be gated per administration variant (`visibleIf` knows `appInstalled` only), so the multi-year estimate pages sit under Government for everyone, like IV3 and BCF.
+- D5: the history tab is OpenRegister's audit trail, the files tab its file references, as on `SbrXbrlFilingDetail`.
+- Seed data: no new seed objects. The demo data generator covers the schemas (gate 101).
+

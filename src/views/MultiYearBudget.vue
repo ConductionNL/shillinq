@@ -8,7 +8,7 @@
  budget's manual lines into a draft budget for the following year, raised by
  a percentage.
 
- @spec openspec/changes/planning-budget-editing/specs/budget-grid-view/spec.md
+ @spec openspec/changes/archive/2026-09-29-planning-budget-editing/specs/budget-grid-view/spec.md
 -->
 <template>
 	<NcAppContent>
@@ -104,7 +104,7 @@ export default {
 	},
 
 	/**
-	 * @spec openspec/changes/planning-budget-editing/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-2.1
 	 */
 	async mounted() {
 		try {
@@ -121,7 +121,7 @@ export default {
 		 * Load the years, rows and budgets.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/planning-budget-editing/tasks.md#task-2.1
+		 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-2.1
 		 */
 		async load() {
 			this.loading = true
@@ -149,7 +149,7 @@ export default {
 		 * Start next year's budget from the chosen one.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/planning-budget-editing/tasks.md#task-2.1
+		 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-2.1
 		 */
 		async start() {
 			const percentage = Number(String(this.percentage).replace(',', '.'))
@@ -174,7 +174,7 @@ export default {
 		 *
 		 * @param {number} cents The amount.
 		 * @return {string}
-		 * @spec openspec/changes/planning-budget-editing/tasks.md#task-2.1
+		 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-2.1
 		 */
 		formatEuro(cents) {
 			return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(Number(cents || 0) / 100)
@@ -185,7 +185,7 @@ export default {
 		 *
 		 * @param {string} state The state.
 		 * @return {string}
-		 * @spec openspec/changes/planning-budget-editing/tasks.md#task-2.1
+		 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-2.1
 		 */
 		stateLabel(state) {
 			const labels = {

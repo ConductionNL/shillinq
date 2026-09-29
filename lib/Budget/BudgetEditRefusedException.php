@@ -52,7 +52,7 @@ class BudgetEditRefusedException extends DomainException {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
 	 */
 	public function getTemplate(): string {
 		return $this->template;
@@ -64,7 +64,7 @@ class BudgetEditRefusedException extends DomainException {
 	 *
 	 * @return array<int,string>
 	 *
-	 * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
 	 */
 	public function getParameters(): array {
 		return $this->parameters;

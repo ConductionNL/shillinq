@@ -3458,17 +3458,19 @@
 			"id": "pln-budget-grid",
 			"area": "planning",
 			"name": "Build an annual budget per ledger group in a grid.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "yes",
 			"moneybird": "unknown",
 			"snelstart": "partial",
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
-				"evidence": "BudgetLine holds ledgerGroupId + month01Amount..month12Amount (lib/Settings/register.d/budget-core-schema.json), entered one record at a time on the BudgetLines index form; src/views/BudgetGrid.vue only GETs /api/budget-grid (BudgetGridController.php; appinfo/routes.php:641 is GET only) and its inputs are period filters, so the grid is read-only.",
-				"reachedOn": "BudgetLines /begroting/budget-lines and BudgetGrid /begroting/grid (via menu Banking & Cashflow > Budget Lines / Budget Grid); AnnualBudgets, LedgerGroups in the same cluster",
-				"owner": "ConductionNL/shillinq"
+				"state": "built",
+				"evidence": "lib/Budget/BudgetEditingService.php types the month amounts of a ledger group's manual BudgetLine (created when absent) with a stale-save check, keeps contract, recurring, projected and scenario lines read-only naming their source, and spreads a yearly amount over twelve months; src/components/BudgetLinesEditor.vue on BudgetGrid is keyboard operable (tests/Unit/Budget/BudgetEditingServiceTest.php).",
+				"reachedOn": "BudgetGrid /begroting/grid, section Enter the budget (menu Banking & Cashflow > Budget Grid)",
+				"owner": "ConductionNL/shillinq",
+				"readOn": "2026-09-29",
+				"change": "2026-09-29-planning-budget-editing"
 			},
 			"evidence": {
 				"twinfield": "https://taasupportportal.wolterskluwer.com/nl/nl-nl/artikel/budgetteren-3041182 (Budgetteren): budget lines per ledger account and period with spreading \"Gelijk\" or by template; https://api.accounting.twinfield.com/Api/swagger/docs/open-v1 exposes budgeting/budgets/annual \"Get annual budget view\"",
@@ -5451,18 +5453,19 @@
 			"id": "pln-multi-year-budget",
 			"area": "planning",
 			"name": "Budget several years ahead in yearly slices.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "yes",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"evidence": "AnnualBudget is keyed by fiscalYear (lib/Settings/register.d/budget-core-schema.json), so a budget per year can be kept on AnnualBudgets /begroting/annual-budgets; the Meerjarenraming and MeerjarenBudget schemas that hold the multi-year horizon have no page.",
-				"reachedOn": "AnnualBudgets /begroting/annual-budgets"
+				"readOn": "2026-09-29",
+				"evidence": "BudgetEditingService::multiYear() shows ledger groups against every fiscal year with an AnnualBudget from this year up to four ahead, and startNextYear() copies a budget's manual lines into a draft budget for the next year raised by a percentage (src/views/MultiYearBudget.vue); Meerjarenraming and MeerjarenBudget have index and detail pages (src/manifest.d/planning-budget-editing.json).",
+				"reachedOn": "MultiYearBudget /begroting/meerjarig; Meerjarenramingen /overheid/meerjarenramingen and MeerjarenBudgetten /overheid/meerjarenbudgetten under Government",
+				"change": "2026-09-29-planning-budget-editing"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-budget-finbdgt-crtbdgtt?language=en_GB: budgets per scenario over a future period; https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Beheer meerdere budgetten tegelijk\"",
@@ -5488,17 +5491,19 @@
 			"id": "pln-budget-amendments",
 			"area": "planning",
 			"name": "Record budget amendments with a status, a reason and attachments, and see their history.",
-			"shillinq": "no",
+			"shillinq": "yes",
 			"exact-online": "unknown",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"reachedOn": "nothing"
+				"readOn": "2026-09-29",
+				"reachedOn": "Begrotingswijzigingen /overheid/begrotingswijzigingen (menu Government > Budget amendments)",
+				"evidence": "Begrotingswijziging has index and detail pages with its number, reason, amounts, council resolution and status, the vaststellen transition as Determine (BegrotingswijzigingGuard requires the resolution), the OpenRegister files tab for attachments and the audit trail tab for history (src/manifest.d/planning-budget-editing.json).",
+				"change": "2026-09-29-planning-budget-editing"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",

@@ -75,7 +75,7 @@ class BudgetEditingController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
 	 */
 	#[NoAdminRequired]
 	public function lines(): JSONResponse {
@@ -98,7 +98,7 @@ class BudgetEditingController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
 	 */
 	#[NoAdminRequired]
 	public function saveCell(): JSONResponse {
@@ -125,7 +125,7 @@ class BudgetEditingController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.2
 	 */
 	#[NoAdminRequired]
 	public function spread(): JSONResponse {
@@ -156,7 +156,7 @@ class BudgetEditingController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/planning-budget-editing/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-2.1
 	 */
 	#[NoAdminRequired]
 	public function multiYear(): JSONResponse {
@@ -180,7 +180,7 @@ class BudgetEditingController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/planning-budget-editing/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-2.1
 	 */
 	#[NoAdminRequired]
 	public function startNextYear(): JSONResponse {

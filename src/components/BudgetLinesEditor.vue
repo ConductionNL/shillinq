@@ -10,7 +10,7 @@
  reloads the rows with the other person's value. Arrow keys and Enter move
  between cells.
 
- @spec openspec/changes/planning-budget-editing/specs/budget-grid-view/spec.md
+ @spec openspec/changes/archive/2026-09-29-planning-budget-editing/specs/budget-grid-view/spec.md
 -->
 <template>
 	<section class="budget-entry" data-testid="budget-entry">
@@ -162,7 +162,7 @@ export default {
 		 * Short month names in the user's language.
 		 *
 		 * @return {Array<string>}
-		 * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.1
+		 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
 		 */
 		monthLabels() {
 			const format = new Intl.DateTimeFormat(undefined, { month: 'short' })
@@ -174,7 +174,7 @@ export default {
 		/**
 		 * Reload the budgets when the administration is known.
 		 *
-		 * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.1
+		 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
 		 */
 		administrationId() {
 			this.loadBudgets()
@@ -182,7 +182,7 @@ export default {
 	},
 
 	/**
-	 * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
 	 */
 	mounted() {
 		this.loadBudgets()
@@ -195,7 +195,7 @@ export default {
 		 * The administration's budgets, newest year first.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.1
+		 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
 		 */
 		async loadBudgets() {
 			if (!this.administrationId) {
@@ -213,7 +213,7 @@ export default {
 		 * The rows of the chosen budget.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.1
+		 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
 		 */
 		async load() {
 			this.drafts = {}
@@ -235,7 +235,7 @@ export default {
 		 * @param {number} row The row index.
 		 * @param {number} col The month index.
 		 * @return {string}
-		 * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.1
+		 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
 		 */
 		cellKey(row, col) {
 			return `${row}-${col}`
@@ -247,7 +247,7 @@ export default {
 		 * @param {number} row The row index.
 		 * @param {number} col The month index.
 		 * @return {string}
-		 * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.1
+		 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
 		 */
 		cellRef(row, col) {
 			return `cell-${row}-${col}`
@@ -258,7 +258,7 @@ export default {
 		 *
 		 * @param {string} source The source.
 		 * @return {string}
-		 * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.1
+		 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
 		 */
 		sourceLabel(source) {
 			const labels = {
@@ -277,7 +277,7 @@ export default {
 		 * @param {number} row The row index.
 		 * @param {number} col The month index.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.1
+		 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
 		 */
 		async onKey(event, row, col) {
 			const input = event.target
@@ -303,7 +303,7 @@ export default {
 		 * @param {number} row The row index.
 		 * @param {number} col The month index.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.1
+		 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
 		 */
 		async save(row, col) {
 			const key = this.cellKey(row, col)
@@ -343,7 +343,7 @@ export default {
 		 * Open the spread form for a row.
 		 *
 		 * @param {number} row The row index.
-		 * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.2
+		 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.2
 		 */
 		openSpread(row) {
 			this.spreadRow = row
@@ -354,7 +354,7 @@ export default {
 		 * Spread the yearly amount over the row's months.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.2
+		 * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.2
 		 */
 		async spread() {
 			const row = this.spreadRow

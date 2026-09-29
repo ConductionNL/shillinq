@@ -16,7 +16,7 @@ const BASE = '/apps/shillinq/api/v1/budget-editing'
  *
  * @param {string|number} value The typed amount in euros.
  * @return {number|null} Cents, or null when it is not an amount.
- * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
  */
 export function euroToCents(value) {
 	let text = String(value ?? '').trim().replace(/\s|€|EUR/gi, '')
@@ -39,7 +39,7 @@ export function euroToCents(value) {
  *
  * @param {number} cents The amount.
  * @return {string} The amount in euros.
- * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
  */
 export function centsToInput(cents) {
 	const value = Number(cents || 0) / 100
@@ -51,7 +51,7 @@ export function centsToInput(cents) {
  *
  * @param {number} yearly The yearly amount in cents.
  * @return {Array<number>} Twelve amounts adding up to the yearly one.
- * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.2
  */
 export function spreadAmounts(yearly) {
 	const month = Math.trunc(yearly / 12)
@@ -69,7 +69,7 @@ export function spreadAmounts(yearly) {
  * @param {boolean} atStart Whether the caret is at the start of the input.
  * @param {boolean} atEnd Whether the caret is at the end of the input.
  * @return {{row:number,col:number}|null} The next cell.
- * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
  */
 export function nextCell(key, at, rowCount, atStart = true, atEnd = true) {
 	const moves = {
@@ -92,7 +92,7 @@ export function nextCell(key, at, rowCount, atStart = true, atEnd = true) {
  * @param {Error} error The axios error.
  * @param {string} fallback The fallback text.
  * @return {string} The message.
- * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
  */
 export function refusal(error, fallback) {
 	return error?.response?.data?.message || fallback
@@ -104,7 +104,7 @@ export function refusal(error, fallback) {
  * @param {string} administrationId The administration.
  * @param {string} annualBudgetId The annual budget.
  * @return {Promise<{budget:object,rows:Array<object>}>} The rows.
- * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
  */
 export async function loadBudgetLines(administrationId, annualBudgetId) {
 	const { data } = await axios.get(generateUrl(`${BASE}/lines`), {
@@ -118,7 +118,7 @@ export async function loadBudgetLines(administrationId, annualBudgetId) {
  *
  * @param {object} cell administrationId, annualBudgetId, ledgerGroupId, month (1-12), amount and expected (cents).
  * @return {Promise<object>} The row as stored.
- * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
  */
 export async function saveBudgetCell(cell) {
 	const { data } = await axios.put(generateUrl(`${BASE}/cell`), cell)
@@ -130,7 +130,7 @@ export async function saveBudgetCell(cell) {
  *
  * @param {object} request administrationId, annualBudgetId, ledgerGroupId, yearly (cents) and expected (twelve cents).
  * @return {Promise<object>} The row as stored.
- * @spec openspec/changes/planning-budget-editing/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.2
  */
 export async function spreadBudgetRow(request) {
 	const { data } = await axios.post(generateUrl(`${BASE}/spread`), request)
@@ -143,7 +143,7 @@ export async function spreadBudgetRow(request) {
  * @param {string} administrationId The administration.
  * @param {number} fromYear The first year.
  * @return {Promise<{years:Array<object>,rows:Array<object>,budgets:Array<object>}>} The view.
- * @spec openspec/changes/planning-budget-editing/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-2.1
  */
 export async function loadMultiYear(administrationId, fromYear) {
 	const { data } = await axios.get(generateUrl(`${BASE}/multi-year`), {
@@ -159,7 +159,7 @@ export async function loadMultiYear(administrationId, fromYear) {
  * @param {string} annualBudgetId The budget to start from.
  * @param {number} percentage The change in percent.
  * @return {Promise<object>} The new budget.
- * @spec openspec/changes/planning-budget-editing/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-2.1
  */
 export async function startNextYear(administrationId, annualBudgetId, percentage) {
 	const { data } = await axios.post(generateUrl(`${BASE}/next-year`), {
