@@ -107,11 +107,11 @@ class SupplierInvoiceBookingGuard implements LifecycleGuardInterface {
 		}
 
 		$warnings = $this->checks->warnings(invoice: $invoice);
-		if ($warnings['duplicateOfId'] !== null && trim((string)($invoice['duplicateAcknowledgedReason'] ?? '')) === '') {
+		if ($warnings['duplicateOfId'] !== '' && trim((string)($invoice['duplicateAcknowledgedReason'] ?? '')) === '') {
 			return 'The invoice cannot be booked: its number was already used for this supplier. Give a reason to book it anyway.';
 		}
 
-		if ($warnings['ibanMismatch'] !== null && trim((string)($invoice['ibanAcknowledgedReason'] ?? '')) === '') {
+		if ($warnings['ibanMismatch'] !== '' && trim((string)($invoice['ibanAcknowledgedReason'] ?? '')) === '') {
 			return 'The invoice cannot be booked: its IBAN differs from the supplier record. Give a reason to book it anyway.';
 		}
 

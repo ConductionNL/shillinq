@@ -161,6 +161,49 @@ class SupplierInvoiceChecks {
 	}//end duplicateOf()
 
 	/**
+	 * The duplicate rule for an invoice whose supplier is not a known payee:
+	 * another supplier invoice stating the same supplier identifier and number.
+	 *
+	 * @param string $administrationId   The administration.
+	 * @param string $supplierIdentifier The supplier as the invoice states it.
+	 * @param string $invoiceNumber      The invoice number.
+	 *
+	 * @return string|null The earlier invoice's id, DUPLICATE_UNKNOWN when the lookup failed, null when none.
+	 *
+	 * @spec openspec/changes/purchasing-supplier-invoice-intake/tasks.md#task-2.1
+	 */
+	public function duplicateOfUnresolved(string $administrationId, string $supplierIdentifier, string $invoiceNumber): ?string {
+		if (trim($invoiceNumber) === '' || trim($supplierIdentifier) === '') {
+			return null;
+		}
+
+		try {
+			$rows = $this->scoped(schema: 'SupplierInvoice')->findAll(
+				[
+					'filters' => [
+						'administrationId' => $administrationId,
+						'invoiceNumber' => trim($invoiceNumber),
+						'supplierIdentifier' => trim($supplierIdentifier),
+					],
+					'limit' => 1,
+				]
+			);
+		} catch (Throwable $e) {
+			return self::DUPLICATE_UNKNOWN;
+		}
+
+		foreach ($rows as $row) {
+			$record = ObjectIdentifier::recordWithId(candidate: $row);
+			if ($record !== null) {
+				return (string)($record['id'] ?? self::DUPLICATE_UNKNOWN);
+			}
+		}
+
+		return null;
+
+	}//end duplicateOfUnresolved()
+
+	/**
 	 * The IBAN an invoice names when the payee record does not know it.
 	 *
 	 * Compared without spaces and case against the payee's bank account and
@@ -204,7 +247,7 @@ class SupplierInvoiceChecks {
 	 *
 	 * @param array<string, mixed> $invoice The SupplierInvoice.
 	 *
-	 * @return array<string, mixed> duplicateOfId and ibanMismatch, each null when clear.
+	 * @return array{duplicateOfId: string, ibanMismatch: string} Each '' when clear (the register holds strings, not null).
 	 *
 	 * @spec openspec/changes/purchasing-supplier-invoice-intake/tasks.md#task-2.1
 	 */
@@ -214,13 +257,13 @@ class SupplierInvoiceChecks {
 		$ignore = array_values(array_filter([(string)($invoice['id'] ?? ''), (string)($invoice['apTransactionId'] ?? '')]));
 
 		$mismatch = $this->ibanMismatch(administrationId: $administrationId, supplierId: $supplierId, invoiceIban: (string)($invoice['payeeIban'] ?? ''));
-		$text = null;
+		$text = '';
 		if ($mismatch !== null) {
 			$text = $mismatch['invoiceIban'] . ' / ' . $mismatch['knownIban'];
 		}
 
 		return [
-			'duplicateOfId' => $this->duplicateOf(
+			'duplicateOfId' => (string)$this->duplicateOf(
 				administrationId: $administrationId,
 				supplierId: $supplierId,
 				invoiceNumber: (string)($invoice['invoiceNumber'] ?? ''),

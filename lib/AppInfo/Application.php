@@ -56,6 +56,7 @@ use OCA\Shillinq\Listener\BookingLifecycleTransitionListener;
 use OCA\Shillinq\Listener\CommitmentMaterialisationListener;
 use OCA\Shillinq\Listener\CommitmentTransitionListener;
 use OCA\Shillinq\Listener\ContractObligationTaskListener;
+use OCA\Shillinq\Listener\SupplierInvoiceWarningListener;
 use OCA\Shillinq\Listener\DbaInvoiceMonitorListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Listener\DeliveryDispatchListener;
@@ -1283,6 +1284,14 @@ class Application extends App implements IBootstrap {
 			event: ObjectCreatedEvent::class,
 			listener: AppointmentCreatedListener::class,
 			schemas: ['Appointment']
+		);
+
+		// purchasing-supplier-invoice-intake REQ-PSII-003/004: every saved
+		// supplier invoice gets its duplicate and IBAN warnings.
+		$this->registerFilteredObjectWriteListener(
+			dispatcher: $dispatcher,
+			listener: SupplierInvoiceWarningListener::class,
+			schemas: ['SupplierInvoice']
 		);
 
 		// --- gate-57 region: ContractObligation task trigger (REQ-CDC-005).

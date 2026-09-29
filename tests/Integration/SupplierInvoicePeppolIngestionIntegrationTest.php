@@ -45,6 +45,7 @@ use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
 use OCA\Shillinq\Service\SupplierInvoiceService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -210,6 +211,7 @@ final class SupplierInvoicePeppolIngestionIntegrationTest extends TestCase {
 			administrationContext: $administrationContext,
 			logger: $logger,
 			objectService: $this->createMock(ObjectServiceInterface::class),
+			checks: $this->createStub(SupplierInvoiceChecks::class),
 		);
 
 		// OpenRegister stamps the numeric schema id on the entity; the slug
