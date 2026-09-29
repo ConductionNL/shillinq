@@ -153,6 +153,24 @@
             "format": "date",
             "nullable": true
           },
+          "instalmentThisMonth": {
+            "type": "boolean",
+            "title": "Instalment this month",
+            "description": "Whether an instalment falls due in the current month.",
+            "default": false
+          },
+          "thisMonthAmount": {
+            "type": "number",
+            "title": "Due this month",
+            "description": "What the instalments of the current month ask for.",
+            "nullable": true
+          },
+          "thisMonthPaid": {
+            "type": "boolean",
+            "title": "Paid this month",
+            "description": "Whether this month's instalments are paid.",
+            "default": false
+          },
           "graceDays": {
             "type": "integer",
             "title": "Grace days",
@@ -337,6 +355,10 @@
             "field": "administrationId",
             "enforce": true
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Who agreed, activated, paid and ended the plan, and when."
         }
       },
       "PaymentPlanInstalment": {
@@ -535,6 +557,10 @@
             "field": "administrationId",
             "enforce": true
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every payment allocated to the instalment and each state it took."
         }
       },
       "ARInvoice": {

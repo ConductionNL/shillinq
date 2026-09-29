@@ -4768,6 +4768,33 @@
 		{
 			"menu": [
 				{
+					"id": "PaymentPlans",
+					"label": "Payment plans",
+					"icon": "CalendarClock",
+					"route": "PaymentPlans",
+					"order": 24
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "receivables-payment-plans",
+					"id": "PaymentPlans",
+					"route": "/bookkeeping/payment-plans",
+					"type": "index",
+					"title": "Payment plans"
+				},
+				{
+					"_fragment": "receivables-payment-plans",
+					"id": "PaymentPlanDetail",
+					"route": "/bookkeeping/payment-plans/:id",
+					"type": "detail",
+					"title": "Payment plan"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "RecurringInvoicing",
 					"label": "Recurring Invoices",
 					"icon": "ReceiptTextOutline",

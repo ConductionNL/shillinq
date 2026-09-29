@@ -7753,6 +7753,44 @@
 							},
 							"emptyText": "No invoices yet for this customer."
 						}
+					},
+					{
+						"id": "customer-payment-plans",
+						"type": "object-list",
+						"title": "Payment plans",
+						"icon": "CalendarClock",
+						"content": {
+							"register": "shillinq",
+							"schema": "PaymentPlan",
+							"filter": {
+								"customerId": "@objectId"
+							},
+							"limit": 20,
+							"columns": [
+								{
+									"key": "planNumber",
+									"label": "Plan"
+								},
+								{
+									"key": "totalAmount",
+									"label": "Total"
+								},
+								{
+									"key": "paidAmount",
+									"label": "Paid"
+								},
+								{
+									"key": "nextDueDate",
+									"label": "Next due"
+								},
+								{
+									"key": "lifecycleState",
+									"label": "State"
+								}
+							],
+							"rowRoute": "PaymentPlanDetail",
+							"emptyText": "No payment plans for this customer."
+						}
 					}
 				],
 				"layout": [
@@ -7811,6 +7849,27 @@
 						"gridY": 10,
 						"gridWidth": 12,
 						"gridHeight": 5
+					},
+					{
+						"id": "6",
+						"widgetId": "customer-payment-plans",
+						"gridX": 0,
+						"gridY": 15,
+						"gridWidth": 12,
+						"gridHeight": 4
+					}
+				],
+				"headerActions": [
+					{
+						"id": "agree-payment-plan",
+						"label": "Agree a payment plan",
+						"type": "open-modal",
+						"target": "AgreePaymentPlanModal",
+						"icon": "CalendarClock",
+						"props": {
+							"open": true,
+							"from": "customer"
+						}
 					}
 				],
 				"lifecycleActions": true,
@@ -7910,7 +7969,8 @@
 								"periodId",
 								"lifecycleState",
 								"ublRef",
-								"sourceDocumentUri"
+								"sourceDocumentUri",
+							"paymentPlanId"
 							]
 						}
 					},
@@ -8149,6 +8209,24 @@
 						"gridY": 16,
 						"gridWidth": 12,
 						"gridHeight": 3
+					}
+				],
+				"headerActions": [
+					{
+						"id": "agree-payment-plan",
+						"label": "Agree a payment plan",
+						"type": "open-modal",
+						"target": "AgreePaymentPlanModal",
+						"icon": "CalendarClock",
+						"props": {
+							"open": true,
+							"from": "invoice"
+						},
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"op": "eq",
+							"value": "overdue"
+						}
 					}
 				],
 				"lifecycleActions": true,

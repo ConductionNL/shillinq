@@ -124,6 +124,27 @@ final class PaymentPlanServiceTest extends TestCase {
 	}//end testTheFirstInstalmentPaysTheOldestInvoice()
 
 	/**
+	 * REQ-RPPL-006: the plan says whether an instalment falls due this month,
+	 * its amount and whether it is paid, for the Due this month filter.
+	 *
+	 * @return void
+	 */
+	public function testThePlanShowsThisMonthsInstalment(): void {
+		$plan = $this->activeZwaanPlan();
+		$this->today = '2026-11-10';
+
+		$this->service()->monitor();
+		$stored = $this->stored('PaymentPlan', (string)$plan['id']);
+		$this->assertTrue($stored['instalmentThisMonth']);
+		$this->assertSame(403.33, $stored['thisMonthAmount']);
+		$this->assertFalse($stored['thisMonthPaid']);
+
+		$result = $this->service()->receive((string)$plan['id'], 403.33, '2026-11-10', 'by-hand');
+		$this->assertTrue($result['plan']['thisMonthPaid']);
+		$this->assertSame([], RegisterSchema::errors('PaymentPlan', $result['plan']));
+	}//end testThePlanShowsThisMonthsInstalment()
+
+	/**
 	 * A partial payment stays on the instalment, which stays open.
 	 *
 	 * @return void

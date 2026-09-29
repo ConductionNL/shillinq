@@ -235,6 +235,8 @@ import VendorPerformanceDetail from './components/vendor-performance/VendorPerfo
 // rate pills, score colour band and trend indicator are bespoke, so both
 // are registered as kind:"page" custom components.
 import VendorPerformanceIndex from './components/vendor-performance/VendorPerformanceIndex.vue'
+// receivables-payment-plans: Agree a payment plan, and the plan page's actions.
+import AgreePaymentPlanModal from './modals/AgreePaymentPlanModal.vue'
 import BillImportModal from './modals/BillImportModal.vue'
 // ADR-049 Phase-4 dissolution: modals formerly launched by the imperative
 // FinancialDashboardActions / PaymentRunDetailActions widgets. Those action
@@ -243,6 +245,7 @@ import BillImportModal from './modals/BillImportModal.vue'
 // `target` resolves it. Modal-isolated under src/modals/ (hydra gate-13).
 import InvoiceQuickDraftModal from './modals/InvoiceQuickDraftModal.vue'
 import PaymentBlockModal from './modals/PaymentBlockModal.vue'
+import PaymentPlanActionModal from './modals/PaymentPlanActionModal.vue'
 import PaymentRunReconcileModal from './modals/PaymentRunReconcileModal.vue'
 import RecurringInvoiceProfileModal from './modals/RecurringInvoiceProfileModal.vue'
 // accountant-portal: the multi-client dashboard composes a per-card status
@@ -400,6 +403,10 @@ export default {
 	// banking-payment-run REQ-BPR-003/004: Block payment / Release payment on
 	// APTransactionDetail and PayeeDetail.
 	PaymentBlockModal: { kind: 'modal', component: PaymentBlockModal },
+	// receivables-payment-plans REQ-RPPL-001/003: CustomerDetail, ARInvoiceDetail
+	// and PaymentPlanDetail header actions.
+	AgreePaymentPlanModal: { kind: 'modal', component: AgreePaymentPlanModal },
+	PaymentPlanActionModal: { kind: 'modal', component: PaymentPlanActionModal },
 
 	StandardsPolicyEditor: { kind: 'page', component: StandardsPolicyEditor },
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },

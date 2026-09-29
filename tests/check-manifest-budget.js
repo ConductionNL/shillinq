@@ -151,7 +151,14 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // GeneralLedgerDetail (mergePages replaces a page wholesale), their notes
 // trimmed to one line each before measuring. Raised to 1,151,800: 6,218 B of
 // headroom, 0.54%, near the ratio above.
-const DEFAULT_BUDGET_BYTES = 1_151_800
+//
+// Re-measured 2026-09-29 (receivables-payment-plans): 1,155,542 bytes. The
+// stack below (banking-payment-run, purchasing-supplier-invoice-intake) left
+// 1,147,341. This change adds 8,201 B: the Payment plans index and plan page
+// (5,490 B fragment), and on CustomerDetail and ARInvoiceDetail the Agree a
+// payment plan action and the customer's plans list. Raised to 1,162,000:
+// 6,458 B of headroom, 0.56%.
+const DEFAULT_BUDGET_BYTES = 1_162_000
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),

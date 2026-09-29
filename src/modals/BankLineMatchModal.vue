@@ -8,7 +8,10 @@
  transactions for money out, of the line's administration, exact amounts
  first, searchable by number, counterparty and amount. Tab "Ledger account"
  books the line to an account, with the VAT split out when a rate and a VAT
- account are chosen. Both post to POST /api/v1/bank-lines/{lineId}/match;
+ account are chosen. Tab "Payment plan", for money in, lists the active
+ payment plans the line can pay (receivables-payment-plans REQ-RPPL-003):
+ the plan whose reference the remittance names, or whose next instalment
+ and customer account fit; confirming pays the plan. Both post to POST /api/v1/bank-lines/{lineId}/match;
  the server refuses a selection larger than the line and says why.
 
  Opened with spawnDialog from the "Match by hand" row actions
@@ -48,6 +51,15 @@
 					@click="tab = 'ledger'">
 					{{ t('shillinq', 'Ledger account') }}
 				</NcButton>
+				<NcButton
+					v-if="isCredit"
+					role="tab"
+					:aria-selected="tab === 'plan' ? 'true' : 'false'"
+					:variant="tab === 'plan' ? 'primary' : 'secondary'"
+					data-testid="bank-line-match-tab-plan"
+					@click="tab = 'plan'">
+					{{ t('shillinq', 'Payment plan') }}
+				</NcButton>
 			</div>
 
 			<section v-if="tab === 'invoices'" role="tabpanel">
@@ -80,6 +92,31 @@
 						})
 					}}
 				</p>
+			</section>
+
+			<section v-else-if="tab === 'plan'" role="tabpanel">
+				<p v-if="plans.length === 0" class="blm__empty">
+					{{ t('shillinq', 'No active payment plan fits this line.') }}
+				</p>
+				<ul v-else class="blm__list">
+					<li v-for="plan in plans" :key="plan.planId">
+						<NcCheckboxRadioSwitch
+							:modelValue="planId"
+							:value="plan.planId"
+							name="bank-line-plan"
+							type="radio"
+							:data-testid="'bank-line-match-plan-' + plan.planNumber"
+							@update:modelValue="planId = plan.planId">
+							{{ plan.planNumber }} · {{ plan.customerName }} ·
+							{{ money(plan.nextDueAmount) }} ·
+							{{
+								plan.confidence === 'high'
+									? t('shillinq', 'Reference found')
+									: t('shillinq', 'Amount and account fit')
+							}}
+						</NcCheckboxRadioSwitch>
+					</li>
+				</ul>
 			</section>
 
 			<section v-else role="tabpanel">
@@ -142,6 +179,7 @@ import {
 	NcSelect,
 	NcTextField,
 } from '@nextcloud/vue'
+import { payPlanFromLine, planCandidates } from '../utils/paymentPlanApi.js'
 
 const REGISTER_SLUG = 'shillinq'
 
@@ -191,6 +229,8 @@ export default {
 			description: '',
 			error: '',
 			submitting: false,
+			plans: [],
+			planId: '',
 		}
 	},
 
@@ -290,6 +330,9 @@ export default {
 			if (this.tab === 'invoices') {
 				return this.selected.length > 0
 			}
+			if (this.tab === 'plan') {
+				return this.planId !== ''
+			}
 			if (!this.account) {
 				return false
 			}
@@ -305,7 +348,11 @@ export default {
 	async mounted() {
 		await this.loadLine()
 		if (this.line) {
-			await Promise.all([this.loadInvoices(), this.loadAccounts()])
+			await Promise.all([
+				this.loadInvoices(),
+				this.loadAccounts(),
+				this.loadPlans(),
+			])
 		}
 	},
 
@@ -425,9 +472,53 @@ export default {
 		 *
 		 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
 		 */
+		/**
+		 * Load the active payment plans this line can pay.
+		 *
+		 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-2.3
+		 */
+		async loadPlans() {
+			if (!this.isCredit) {
+				return
+			}
+			try {
+				this.plans = await planCandidates(this.line.id)
+				if (this.plans.length > 0 && this.plans[0].confidence === 'high') {
+					this.planId = this.plans[0].planId
+				}
+			} catch {
+				// No plan tab content is not an error for the other tabs.
+				this.plans = []
+			}
+		},
+
+		/**
+		 * Pay the chosen payment plan from the line.
+		 *
+		 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-2.3
+		 */
+		async confirmPlan() {
+			try {
+				const match = await payPlanFromLine(this.planId, this.line.id)
+				showSuccess(t('shillinq', 'Bank line paid to the payment plan.'))
+				emit('cn:page:refresh', {})
+				this.$emit('close', match)
+			} catch (error) {
+				this.error =
+					error?.response?.data?.message
+					|| t('shillinq', 'The bank line could not be matched.')
+			} finally {
+				this.submitting = false
+			}
+		},
+
 		async confirm() {
 			this.submitting = true
 			this.error = ''
+			if (this.tab === 'plan') {
+				await this.confirmPlan()
+				return
+			}
 			const body =
 				this.tab === 'invoices'
 					? { targets: this.selected }

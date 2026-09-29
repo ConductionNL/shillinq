@@ -441,13 +441,23 @@ class PaymentPlanService {
 	 */
 	private function refresh(string $planId): array {
 		$today = $this->today();
+		$month = substr($today, 0, 7);
 		$paid = 0;
 		$arrears = 0;
 		$next = null;
+		$thisMonth = ['instalmentThisMonth' => false, 'thisMonthAmount' => null, 'thisMonthPaid' => false];
+		$monthCents = 0;
+		$monthOpen = 0;
 		foreach ($this->allocator->instalments(planId: $planId) as $instalment) {
 			$amount = (int)round((float)($instalment['amount'] ?? 0) * 100);
 			$paidCents = (int)round((float)($instalment['paidAmount'] ?? 0) * 100);
 			$paid += $paidCents;
+			if (str_starts_with((string)($instalment['dueDate'] ?? ''), $month) === true) {
+				$monthCents += $amount;
+				$monthOpen += max(0, $amount - $paidCents);
+				$thisMonth = ['instalmentThisMonth' => true, 'thisMonthAmount' => ($monthCents / 100.0), 'thisMonthPaid' => ($monthOpen === 0)];
+			}
+
 			if ($paidCents >= $amount) {
 				continue;
 			}
@@ -459,7 +469,7 @@ class PaymentPlanService {
 			$next = ($next ?? ['nextDueDate' => (string)$instalment['dueDate'], 'nextDueAmount' => (($amount - $paidCents) / 100.0)]);
 		}
 
-		$patch = ['paidAmount' => ($paid / 100.0), 'arrears' => ($arrears / 100.0)];
+		$patch = ['paidAmount' => ($paid / 100.0), 'arrears' => ($arrears / 100.0)] + $thisMonth;
 		$patch += ($next ?? ['nextDueDate' => null, 'nextDueAmount' => null]);
 		$this->scoped(schema: 'PaymentPlan')->patchObject($planId, $patch);
 		return $this->plan(planId: $planId);
