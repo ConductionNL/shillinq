@@ -18,7 +18,7 @@ const BASE = '/apps/shillinq/api/v1'
  *
  * @param {number} cents The amount.
  * @return {string} For example "18,000.00".
- * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.2
  */
 export function euro(cents) {
 	return (Number(cents || 0) / 100).toLocaleString('en-US', {
@@ -33,7 +33,7 @@ export function euro(cents) {
  * @param {string} administrationId The administration.
  * @param {number} fromYear The year that ends.
  * @return {Promise<object>} The preview: lines, shortfalls and total.
- * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.2
  */
 export async function previewCarryOver(administrationId, fromYear) {
 	const { data } = await axios.get(generateUrl(`${BASE}/commitments/carry-over`), {
@@ -48,7 +48,7 @@ export async function previewCarryOver(administrationId, fromYear) {
  * @param {string} administrationId The administration.
  * @param {number} fromYear The year that ends.
  * @return {Promise<object>} What was carried.
- * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.2
  */
 export async function carryOver(administrationId, fromYear) {
 	const { data } = await axios.post(
@@ -64,7 +64,7 @@ export async function carryOver(administrationId, fromYear) {
  * @param {string} administrationId The administration.
  * @param {string} invoiceId The supplier invoice.
  * @return {Promise<object>} invoiceNumber, commitmentNumber and release.
- * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-2.3
  */
 export async function previewLastInvoice(administrationId, invoiceId) {
 	const { data } = await axios.get(
@@ -82,7 +82,7 @@ export async function previewLastInvoice(administrationId, invoiceId) {
  * @param {string} administrationId The administration.
  * @param {string} invoiceId The supplier invoice.
  * @return {Promise<object>} What was released.
- * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-2.3
  */
 export async function markLastInvoice(administrationId, invoiceId) {
 	const { data } = await axios.post(
@@ -98,7 +98,7 @@ export async function markLastInvoice(administrationId, invoiceId) {
  * Header action on the commitments register: open the carry-over dialog.
  *
  * @return {Promise<unknown>} The dialog's close payload.
- * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.2
  */
 export function openCarryOverCommitments() {
 	return spawnDialog(CarryOverCommitmentsModal, {})

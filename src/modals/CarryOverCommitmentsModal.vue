@@ -13,7 +13,7 @@
  Opened with spawnDialog from the header action on the commitments register
  (src/utils/commitmentYearEndApi.js), so it lives in its own file (gate 13).
 
- @spec openspec/changes/planning-commitment-year-end/specs/bookkeeping-verplichtingenadministratie/spec.md
+ @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/specs/bookkeeping-verplichtingenadministratie/spec.md
 -->
 
 <template>
@@ -151,7 +151,7 @@ export default {
 	/**
 	 * Load the administration and the preview.
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.2
 	 */
 	async mounted() {
 		try {
@@ -177,7 +177,7 @@ export default {
 		/**
 		 * The preview for the chosen year.
 		 *
-		 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-3.2
+		 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.2
 		 */
 		async load() {
 			this.error = ''
@@ -198,7 +198,7 @@ export default {
 		/**
 		 * Carry the lines over.
 		 *
-		 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-3.2
+		 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.2
 		 */
 		async submit() {
 			this.submitting = true
@@ -222,7 +222,7 @@ export default {
 		/**
 		 * Close the dialog.
 		 *
-		 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-3.2
+		 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.2
 		 */
 		close() {
 			this.$emit('close', this.done)

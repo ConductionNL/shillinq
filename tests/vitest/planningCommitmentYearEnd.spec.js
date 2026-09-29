@@ -7,7 +7,7 @@
  * The helpers, the manifest, main.js and appinfo/routes.php are held to each
  * other.
  *
- * @spec openspec/changes/planning-commitment-year-end/specs/bookkeeping-verplichtingenadministratie/spec.md
+ * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/specs/bookkeeping-verplichtingenadministratie/spec.md
  */
 
 import fs from 'fs'

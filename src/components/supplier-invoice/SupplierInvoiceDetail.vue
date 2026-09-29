@@ -305,7 +305,7 @@ export default {
 		/**
 		 * Open Mark as last invoice and reload the invoice when it closed the commitment.
 		 *
-		 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-2.3
+		 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-2.3
 		 */
 		async openLastInvoice() {
 			const closed = await spawnDialog(LastInvoiceModal, {

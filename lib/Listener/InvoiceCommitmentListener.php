@@ -74,7 +74,7 @@ class InvoiceCommitmentListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-2.2
 	 */
 	public function handle(Event $event): void {
 		if (($event instanceof ObjectTransitionedEvent) === false || $event->getTo() !== 'approved') {

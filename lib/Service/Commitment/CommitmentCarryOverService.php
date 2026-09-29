@@ -68,7 +68,7 @@ class CommitmentCarryOverService {
 	 *
 	 * @return array{fromYear:int,toYear:int,lines:list<array<string,mixed>>,shortfalls:list<array<string,mixed>>,total:int}
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.1
 	 */
 	public function preview(string $administrationId, int $fromYear): array {
 		$lines = [];
@@ -145,7 +145,7 @@ class CommitmentCarryOverService {
 	 * @return array{fromYear:int,toYear:int,lines:list<array<string,mixed>>,shortfalls:list<array<string,mixed>>,total:int}
 	 *   The preview that was carried out.
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.1
 	 */
 	public function execute(string $administrationId, int $fromYear, string $user): array {
 		$preview = $this->preview(administrationId: $administrationId, fromYear: $fromYear);

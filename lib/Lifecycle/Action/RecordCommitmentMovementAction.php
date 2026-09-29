@@ -65,7 +65,7 @@ class RecordCommitmentMovementAction implements LifecycleActionInterface {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-1.2
 	 */
 	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
 		$user = $this->userSession->getUser();

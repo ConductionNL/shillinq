@@ -71,7 +71,7 @@ class CommitmentLedger {
 	 *
 	 * @return int The amount recorded in cents, 0 when it was recorded before.
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-1.2
 	 */
 	public function committed(array $commitment, string $user): int {
 		$number = (string)($commitment['commitmentNumber'] ?? '');
@@ -109,7 +109,7 @@ class CommitmentLedger {
 	 *
 	 * @return int The remaining amount of the commitment after the invoice, in cents.
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-2.2
 	 */
 	public function invoiced(array $commitment, array $invoice): int {
 		$number = (string)($commitment['commitmentNumber'] ?? '');
@@ -155,7 +155,7 @@ class CommitmentLedger {
 	 *
 	 * @return int The released amount in cents.
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-2.1
 	 */
 	public function closed(array $commitment, string $user): int {
 		$number = (string)($commitment['commitmentNumber'] ?? '');
@@ -183,7 +183,7 @@ class CommitmentLedger {
 	 *
 	 * @return int Cents.
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-2.3
 	 */
 	public function remainingOf(string $commitmentNumber): int {
 		return $this->remaining(lines: $this->openLines(commitmentNumber: $commitmentNumber));
@@ -197,7 +197,7 @@ class CommitmentLedger {
 	 *
 	 * @return list<array<string,mixed>>
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.1
 	 */
 	public function openLines(string $commitmentNumber): array {
 		$lines = $this->lines(commitmentNumber: $commitmentNumber);
@@ -212,7 +212,7 @@ class CommitmentLedger {
 	 *
 	 * @return list<array<string,mixed>>
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.1
 	 */
 	public function lines(string $commitmentNumber): array {
 		if ($commitmentNumber === '') {
@@ -232,7 +232,7 @@ class CommitmentLedger {
 	 *
 	 * @return array<string,mixed>|null
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.1
 	 */
 	public function budget(string $administrationId, string $programme, int $year): ?array {
 		$rows = $this->records(
@@ -250,7 +250,7 @@ class CommitmentLedger {
 	 *
 	 * @return int Cents.
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.1
 	 */
 	public static function free(array $budget): int {
 		return ((int)($budget['authorised_amount'] ?? 0) - (int)($budget['realised_amount'] ?? 0) - (int)($budget['outstanding_commitments'] ?? 0));
@@ -266,7 +266,7 @@ class CommitmentLedger {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.1
 	 */
 	public function adjustBudget(array $line, int $outstanding, int $realised): void {
 		if ($outstanding === 0 && $realised === 0) {
@@ -306,7 +306,7 @@ class CommitmentLedger {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.1
 	 */
 	public function movement(array $commitment, string $kind, int $amount, array $extra = []): void {
 		$movement = array_merge(
@@ -333,7 +333,7 @@ class CommitmentLedger {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.1
 	 */
 	public function patch(string $schema, string $id, array $data): void {
 		$this->scoped(schema: $schema)->patchObject($id, $data);
@@ -348,7 +348,7 @@ class CommitmentLedger {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.1
 	 */
 	public function create(string $schema, array $object): string {
 		return ObjectIdentifier::resolve(saved: $this->scoped(schema: $schema)->saveObject($object));
@@ -363,7 +363,7 @@ class CommitmentLedger {
 	 *
 	 * @return array<string,mixed>|null
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-2.2
 	 */
 	public function find(string $schema, string $id): ?array {
 		if ($id === '') {
@@ -388,7 +388,7 @@ class CommitmentLedger {
 	 *
 	 * @return list<array<string,mixed>>
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.1
 	 */
 	public function records(string $schema, array $filters): array {
 		$records = [];

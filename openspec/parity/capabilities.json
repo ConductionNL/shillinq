@@ -3427,7 +3427,7 @@
 			"id": "pln-commitments",
 			"area": "planning",
 			"name": "Record commitments against the budget and enforce who may spend how much.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "partial",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
@@ -3435,10 +3435,11 @@
 			"odoo": "partial",
 			"built": {
 				"state": "built",
-				"evidence": "Commitment lifecycle in lib/Settings/register.d/bookkeeping-verplichtingenadministratie.json: indienen requires MandateEnforcer::requiresApproval, goedkeuren requires BudgetBlocker::canCommit (the PHP classes exist, but these guard tags are not among the 21 guard tags shillinq registers, so the transitions abort instead of evaluating them); BudgetLineCommitments.vue shows committed vs realised. But the 'aangaan' transition declares action record-mutatie, which has no handler anywhere (grep lib/ finds none), so OpenRegister's executor throws on it.",
-				"reachedOn": "CommitmentsRegister /commitments, Mandates /commitments/mandates, ApprovalSteps (via menu Purchasing > Commitments register / Mandates / Approvals); BudgetLineCommitments (menu Purchasing > Committed vs. realised)",
+				"evidence": "The Commitment lifecycle resolves: MandateEnforcer::requiresApproval and BudgetBlocker::canCommit are registered through lib/Lifecycle/CommitmentGuardAdapter.php (a budget refusal names the shortfall), and RecordCommitmentMovementAction records the committed movement and the budgets' outstanding commitments on aangaan (tests/Unit/Commitment/CommitmentYearEndTest.php).",
+				"reachedOn": "CommitmentDetail /commitments/:id, Verplichting aangaan",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26"
+				"readOn": "2026-09-29",
+				"change": "2026-09-29-planning-commitment-year-end"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/proquro: \"Je voorkomt ongeoorloofde verplichtingen als je vooraf een [bestelling goedkeurt]\"; budget holders see budget use Note: Only in the separate Exact Proquro product.",
@@ -5233,17 +5234,19 @@
 			"id": "pur-last-invoice-close",
 			"area": "purchasing",
 			"name": "Mark an approved invoice as the last one on an order and have the remaining commitment released.",
-			"shillinq": "no",
+			"shillinq": "yes",
 			"exact-online": "unknown",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"reachedOn": "CommitmentDetail /commitments/:id (manual afsluiten only)"
+				"readOn": "2026-09-29",
+				"reachedOn": "SupplierInvoiceDetail, Mark as last invoice",
+				"evidence": "An approved supplier invoice lowers the commitment of its order (lib/Listener/InvoiceCommitmentListener.php, lib/Service/Commitment/CommitmentInvoicing.php); SupplierInvoice.isLastInvoice or Mark as last invoice closes it through afsluiten, releasing the remainder to the budget with a closed movement.",
+				"change": "2026-09-29-planning-commitment-year-end"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
@@ -5268,17 +5271,19 @@
 			"id": "pln-commitment-carryover",
 			"area": "planning",
 			"name": "Carry open commitments over to the next fiscal year under their original number.",
-			"shillinq": "no",
+			"shillinq": "yes",
 			"exact-online": "unknown",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"reachedOn": "nothing"
+				"readOn": "2026-09-29",
+				"reachedOn": "CommitmentsRegister /commitments, Carry open commitments to next year",
+				"evidence": "lib/Service/Commitment/CommitmentCarryOverService.php previews every open line of a year with the next year's shortfall per programme and carries it into a new line of the next year under the same commitment number (carriedFromLine), closing the old one and moving the outstanding amount between the budgets; a second run writes nothing.",
+				"change": "2026-09-29-planning-commitment-year-end"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",

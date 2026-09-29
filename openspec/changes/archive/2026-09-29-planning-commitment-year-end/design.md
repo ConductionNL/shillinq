@@ -161,3 +161,13 @@ guards resolve.
 ## Open Questions
 
 None.
+
+## As built (2026-09-29)
+
+- D2: the action is declared by class name (`OCA\Shillinq\Lifecycle\Action\RecordCommitmentMovementAction`), the form OpenRegister resolves for `StampPostingAction` and `HandToAccountsPayableAction`, instead of a `record-mutatie` alias.
+- D1: the adapter also serves `Requisition.approve`, which names `BudgetBlocker::canCommit` too (`register.d/purchase-requisition.json`); it passes the requisition id as the number, as `RequisitionService::approveRequisition()` does. That transition was refused before as an unregistered tag.
+- D3: the order comes from the invoice's `matchedPoIds`; the commitment is the one whose `sourceReference` is the order's `poNumber`. `factureren` is widened to leave committed as well, since an invoice often arrives before any receipt is recorded.
+- D4: marking the last invoice after approval is an endpoint (`POST /api/v1/supplier-invoices/{id}/last-invoice`) that sets the flag and runs `afsluiten`; an invoice approved while already marked closes through the listener.
+- D5: the shortfall compares the carried amount per programme with the next year's free capacity before the carry-over, and the carry-over writes the outstanding amount onto that budget, so its free capacity can go below zero, as the design intends.
+- Seed data: no new seed objects; the demo data generator covers the schemas (gate 101).
+

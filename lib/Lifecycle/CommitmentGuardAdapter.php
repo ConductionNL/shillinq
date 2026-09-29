@@ -74,7 +74,7 @@ final class CommitmentGuardAdapter implements LifecycleGuardInterface {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleGuardInterface's.
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-1.1
 	 */
 	public function check(array $object, string $action, string $userId): GuardResult {
 		$number = (string)($object['commitmentNumber'] ?? ($object['id'] ?? ''));
@@ -106,7 +106,7 @@ final class CommitmentGuardAdapter implements LifecycleGuardInterface {
 	 *
 	 * @return string|null Null when no line is short (for example, a missing budget).
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-1.1
 	 */
 	public function shortfall(array $commitment): ?string {
 		$administrationId = (string)($commitment['administrationId'] ?? '');

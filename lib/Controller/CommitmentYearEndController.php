@@ -85,7 +85,7 @@ class CommitmentYearEndController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.2
 	 */
 	#[NoAdminRequired]
 	public function previewCarryOver(): JSONResponse {
@@ -108,7 +108,7 @@ class CommitmentYearEndController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.2
 	 */
 	#[NoAdminRequired]
 	public function carryOver(): JSONResponse {
@@ -135,7 +135,7 @@ class CommitmentYearEndController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-2.3
 	 */
 	#[NoAdminRequired]
 	public function previewLastInvoice(string $id): JSONResponse {
@@ -155,7 +155,7 @@ class CommitmentYearEndController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-2.3
 	 */
 	#[NoAdminRequired]
 	public function markLastInvoice(string $id): JSONResponse {

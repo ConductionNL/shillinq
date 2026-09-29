@@ -80,7 +80,7 @@ class CommitmentInvoicing {
 	 *
 	 * @return array{commitmentNumber:string,remaining:int,closed:bool}|null Null when no commitment is found.
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-2.2
 	 */
 	public function book(array $invoice): ?array {
 		$commitment = $this->commitmentFor(invoice: $invoice);
@@ -115,7 +115,7 @@ class CommitmentInvoicing {
 	 *
 	 * @throws DomainException When the invoice is not approved or has no open commitment.
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-2.3
 	 */
 	public function lastInvoice(string $administrationId, string $invoiceId): array {
 		[$invoice, $commitment] = $this->invoiceAndCommitment(administrationId: $administrationId, invoiceId: $invoiceId);
@@ -137,7 +137,7 @@ class CommitmentInvoicing {
 	 *
 	 * @throws DomainException When the invoice is not approved or has no open commitment.
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-2.3
 	 */
 	public function markLast(string $administrationId, string $invoiceId): array {
 		$preview = $this->lastInvoice(administrationId: $administrationId, invoiceId: $invoiceId);

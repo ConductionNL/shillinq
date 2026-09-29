@@ -9,7 +9,7 @@
  confirmation closes the commitment. Opened from SupplierInvoiceDetail, so it
  lives in its own file (gate 13).
 
- @spec openspec/changes/planning-commitment-year-end/specs/bookkeeping-verplichtingenadministratie/spec.md
+ @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/specs/bookkeeping-verplichtingenadministratie/spec.md
 -->
 
 <template>
@@ -104,7 +104,7 @@ export default {
 	/**
 	 * Load what would be released.
 	 *
-	 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-2.3
 	 */
 	async mounted() {
 		try {
@@ -127,7 +127,7 @@ export default {
 		/**
 		 * Mark the invoice and close the commitment.
 		 *
-		 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-2.3
+		 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-2.3
 		 */
 		async submit() {
 			this.submitting = true
@@ -151,7 +151,7 @@ export default {
 		/**
 		 * Close the dialog.
 		 *
-		 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-2.3
+		 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-2.3
 		 */
 		close() {
 			this.$emit('close', this.done)
