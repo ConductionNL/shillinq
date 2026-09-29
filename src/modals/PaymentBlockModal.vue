@@ -15,7 +15,7 @@
  context, so the id falls back to the route's :id, as PaymentRunReconcileModal
  does. Its own file for hydra gate-13.
 
- @spec openspec/changes/banking-payment-run/specs/payment-control-guards/spec.md
+ @spec openspec/changes/archive/2026-09-29-banking-payment-run/specs/payment-control-guards/spec.md
 -->
 
 <template>
@@ -110,7 +110,7 @@ export default {
 		 * The object's id: the prop, else the route's :id.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/banking-payment-run/tasks.md#task-2.2
+		 * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-2.2
 		 */
 		effectiveId() {
 			return String(this.objectId || this.$route?.params?.id || '')
@@ -123,7 +123,7 @@ export default {
 		/**
 		 * Save the block or the release.
 		 *
-		 * @spec openspec/changes/banking-payment-run/tasks.md#task-2.2
+		 * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-2.2
 		 */
 		async submit() {
 			this.error = ''
@@ -150,7 +150,7 @@ export default {
 		/**
 		 * Close without saving.
 		 *
-		 * @spec openspec/changes/banking-payment-run/tasks.md#task-2.2
+		 * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-2.2
 		 */
 		onClose() {
 			this.$emit('close')

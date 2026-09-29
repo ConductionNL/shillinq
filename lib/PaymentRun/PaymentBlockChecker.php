@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/banking-payment-run/specs/payment-control-guards/spec.md
+ * @spec openspec/changes/archive/2026-09-29-banking-payment-run/specs/payment-control-guards/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -64,7 +64,7 @@ class PaymentBlockChecker {
 	 *
 	 * @return list<array{apTransactionRef: string, invoiceNumber: string, reason: string, detail: string}>
 	 *
-	 * @spec openspec/changes/banking-payment-run/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-2.3
 	 */
 	public function blockedLines(array $paymentRun): array {
 		$lines = ($paymentRun['paymentLines'] ?? []);
@@ -104,7 +104,7 @@ class PaymentBlockChecker {
 	 *
 	 * @return array{reason: string, detail: string}|null
 	 *
-	 * @spec openspec/changes/banking-payment-run/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-2.3
 	 */
 	public function reasonFor(array $invoice, ?array $payee): ?array {
 		if (($invoice['paymentBlocked'] ?? false) === true) {
@@ -133,7 +133,7 @@ class PaymentBlockChecker {
 	 *
 	 * @return array<string, mixed>|null
 	 *
-	 * @spec openspec/changes/banking-payment-run/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-2.3
 	 */
 	public function payee(string $payeeId): ?array {
 		if ($payeeId === '') {

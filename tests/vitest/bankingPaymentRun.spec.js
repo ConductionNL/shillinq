@@ -7,7 +7,7 @@
  * registry, the helpers' URLs and appinfo/routes.php are held to each other,
  * and the request the dialog sends is the one PaymentRunController reads.
  *
- * @spec openspec/changes/banking-payment-run/specs/payment-run-sepa-export/spec.md
+ * @spec openspec/changes/archive/2026-09-29-banking-payment-run/specs/payment-run-sepa-export/spec.md
  */
 
 import fs from 'fs'

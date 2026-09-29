@@ -13,7 +13,7 @@ import ProposePaymentRunModal from '../modals/ProposePaymentRunModal.vue'
  * Header action: open the Propose payment run dialog.
  *
  * @return {Promise<unknown>} The dialog's close payload.
- * @spec openspec/changes/banking-payment-run/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-3.2
  */
 export function openProposePaymentRun() {
 	return spawnDialog(ProposePaymentRunModal, {})

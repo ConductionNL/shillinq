@@ -25,7 +25,7 @@ export const BLOCKABLE_SCHEMAS = ['APTransaction', 'Payee']
  *
  * @param {object} form The dialog's values.
  * @return {object} The request body.
- * @spec openspec/changes/banking-payment-run/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-3.2
  */
 export function buildProposalRequest(form) {
 	return {
@@ -45,7 +45,7 @@ export function buildProposalRequest(form) {
  *
  * @param {object} form The dialog's values.
  * @return {Promise<object>} The proposal result.
- * @spec openspec/changes/banking-payment-run/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-3.2
  */
 export async function proposePaymentRun(form) {
 	try {
@@ -67,7 +67,7 @@ export async function proposePaymentRun(form) {
  *
  * @param {string} reason Why payment is blocked.
  * @return {object} The fields to patch.
- * @spec openspec/changes/banking-payment-run/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-2.2
  */
 export function blockPayload(reason) {
 	const trimmed = String(reason || '').trim()
@@ -81,7 +81,7 @@ export function blockPayload(reason) {
  * The patch that releases a payment block.
  *
  * @return {object} The fields to patch.
- * @spec openspec/changes/banking-payment-run/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-2.2
  */
 export function releasePayload() {
 	return { paymentBlocked: false, paymentBlockReason: null }
@@ -94,7 +94,7 @@ export function releasePayload() {
  * @param {string} id The object's id.
  * @param {object} payload The fields to patch.
  * @return {Promise<object>} The patched object.
- * @spec openspec/changes/banking-payment-run/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-2.2
  */
 export async function setPaymentBlock(schema, id, payload) {
 	if (!BLOCKABLE_SCHEMAS.includes(schema) || !id) {
@@ -114,7 +114,7 @@ export async function setPaymentBlock(schema, id, payload) {
  *
  * @param {object} skip One entry of `skipped`.
  * @return {string} The translated reason.
- * @spec openspec/changes/banking-payment-run/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-3.2
  */
 export function skipReasonText(skip) {
 	const detail = String(skip?.detail || '')

@@ -2199,17 +2199,19 @@
 			"id": "bnk-sepa-batch",
 			"area": "banking",
 			"name": "Create a SEPA payment batch for the supplier invoices due.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "yes",
 			"moneybird": "yes",
 			"snelstart": "yes",
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
-				"evidence": "lib/PaymentRun/PaymentRunExportService.php:120 renders pain.001.001.03 XML + CSV from PaymentRun.paymentLines (refuses lines without creditorIban); src/manifest.d/bookkeeping-accounts-payable-core.json:433 'Export to bank' header action; no service proposes a run from due APTransactions/SupplierInvoices (grep 'PaymentRun' in lib/Service only hits ComplianceDeadlineCalendarService)",
-				"reachedOn": "PaymentRuns /bookkeeping/payment-runs (menu Purchasing > Payment Runs); PaymentRunDetail 'Export to bank' when approved",
-				"owner": "ConductionNL/shillinq"
+				"state": "built",
+				"evidence": "lib/PaymentRun/PaymentRunProposalService.php drafts a PaymentRun from the issued, overdue and partly paid APTransactions due by a chosen date (POST /api/v1/payment-runs/propose, PaymentRunController::propose), leaving out and naming blocked, disputed, already batched and IBAN-less invoices; lib/PaymentRun/PaymentRunExportService.php renders pain.001.001.03 XML, now valid against the ISO 20022 XSD (tests/Unit/PaymentRun/SepaPain001GeneratorTest::testTheFileValidatesAgainstTheXsd).",
+				"reachedOn": "PaymentRuns /bookkeeping/payment-runs, header action Propose payment run; PaymentRunDetail Export to bank",
+				"owner": "ConductionNL/shillinq",
+				"readOn": "2026-09-29",
+				"change": "2026-09-29-banking-payment-run"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-bank-finbnk-processpaymentst?language=en_GB: \"You process payments to generate a payment file, which you can send to your bank\"; batch payments via https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-matching-fin-mtch-batchpaymentst",
@@ -2223,7 +2225,7 @@
 			"feature": "payment-run-sepa-export",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "The SEPA file is real; the batch lines are typed by hand, not selected from the invoices due. Specified 2026-09-27 in openspec/changes/banking-payment-run (OpenSpec pass)."
+			"note": "The SEPA file is real; the batch lines are typed by hand, not selected from the invoices due. Built 2026-09-29 by banking-payment-run."
 		},
 		{
 			"id": "bnk-four-eyes",
@@ -5295,17 +5297,19 @@
 			"id": "bnk-payment-block",
 			"area": "banking",
 			"name": "Block a supplier or a single invoice from being paid.",
-			"shillinq": "no",
+			"shillinq": "yes",
 			"exact-online": "partial",
 			"moneybird": "unknown",
 			"snelstart": "partial",
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"reachedOn": "nothing"
+				"readOn": "2026-09-29",
+				"reachedOn": "APTransactionDetail /bookkeeping/ap-transactions/:id and PayeeDetail /bookkeeping/payees/:id, actions Block payment and Release payment",
+				"evidence": "APTransaction and Payee carry paymentBlocked and paymentBlockReason (lib/Settings/register.d/bookkeeping-accounts-payable-core.json), set through src/modals/PaymentBlockModal.vue; lib/PaymentRun/PaymentBlockChecker.php is the one check the proposal, the export guard (lib/Lifecycle/PaymentRunDuplicateGuard.php) and the export service use, so a block set after approval refuses the export naming the invoice.",
+				"change": "2026-09-29-banking-payment-run"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-accounts-finacc-wrkbnkacct?language=en_GB: \"Select or deselect Block\" on a supplier bank account; https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-bank-fin-bnkpymt-editsplitpymntt: \"Postpone to enter a period to postpone the payments\" Note: Blocking a bank account or postponing payments; a payment block flag on a supplier or invoice is not stated.",
@@ -5325,7 +5329,7 @@
 				"intelligence-db requirements#109661",
 				"intelligence-db requirements#109679"
 			],
-			"note": "APInvoice declares a dispute state (posted->disputed, lib/Settings/shillinq_register.json APInvoice lifecycle) described as a payment hold, but posted is only reached through post, which declares the unregistered action materialise-gl-transaction and aborts; PaymentRun export (lib/PaymentRun/PaymentRunExportService.php:122) checks only the run's own state, and there is no supplier-level block. Specified 2026-09-27 in openspec/changes/banking-payment-run (OpenSpec pass)."
+			"note": "APInvoice declares a dispute state (posted->disputed, lib/Settings/shillinq_register.json APInvoice lifecycle) described as a payment hold, but posted is only reached through post, which declares the unregistered action materialise-gl-transaction and aborts; PaymentRun export (lib/PaymentRun/PaymentRunExportService.php:122) checks only the run's own state, and there is no supplier-level block. Built 2026-09-29 by banking-payment-run."
 		},
 		{
 			"id": "rec-payment-plan",
@@ -6379,18 +6383,19 @@
 			"id": "bnk-scheduled-payment",
 			"area": "banking",
 			"name": "Schedule a supplier payment to go out on a chosen day.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "yes",
 			"moneybird": "yes",
 			"snelstart": "yes",
 			"twinfield": "yes",
 			"odoo": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"evidence": "PaymentRun.executionDate is written into the pain.001 file as the requested execution date (lib/PaymentRun/Generator/SepaPain001Generator.php:74), so an exported batch asks the bank to pay on that day.",
-				"reachedOn": "PaymentRuns /bookkeeping/payment-runs"
+				"readOn": "2026-09-29",
+				"evidence": "PaymentRun.paymentLines[].requestedExecutionDate; lib/PaymentRun/Generator/SepaPain001Generator.php writes one PmtInf block per requested date with its own ReqdExctnDt, so each payment asks the bank for its own day.",
+				"reachedOn": "PaymentRuns Propose payment run, option Pay each invoice on its due date; PaymentRunDetail paymentLines",
+				"change": "2026-09-29-banking-payment-run"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-bank-fin-bnkpymt-editsplitpymntt?language=en_GB: \"This is the date the payment will be made. You can select Fixed: Date to enter a new date for all the payments or Postpone\"",
@@ -6406,7 +6411,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.moneybird.nl/changelog/slim-plannen-van-betalingen/",
-			"note": "Per batch through the export file, not per payment in the bank. Specified 2026-09-27 in openspec/changes/banking-payment-run (OpenSpec pass)."
+			"note": "Per batch through the export file, not per payment in the bank. Built 2026-09-29 by banking-payment-run."
 		},
 		{
 			"id": "ppl-payroll-tax-return",

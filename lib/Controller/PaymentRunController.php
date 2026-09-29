@@ -164,7 +164,7 @@ class PaymentRunController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/banking-payment-run/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-3.2
 	 */
 	#[NoAdminRequired]
 	public function propose(): JSONResponse {

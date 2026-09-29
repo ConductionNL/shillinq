@@ -15,7 +15,7 @@
  Payment runs (src/utils/paymentRunActions.js), so it lives in its own file
  (hydra gate-13).
 
- @spec openspec/changes/banking-payment-run/specs/payment-run-sepa-export/spec.md
+ @spec openspec/changes/archive/2026-09-29-banking-payment-run/specs/payment-run-sepa-export/spec.md
 -->
 
 <template>
@@ -146,7 +146,7 @@ export default {
 		 * Whether the form is complete.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/banking-payment-run/tasks.md#task-3.2
+		 * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-3.2
 		 */
 		canSubmit() {
 			return this.administrationId !== '' && this.dueOnOrBefore !== '' && this.executionDate !== '' && this.debtorAccountIban.trim() !== ''
@@ -156,7 +156,7 @@ export default {
 		 * Link to the new run's page.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/banking-payment-run/tasks.md#task-3.2
+		 * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-3.2
 		 */
 		runUrl() {
 			const id = this.result?.paymentRun?.id || ''
@@ -167,7 +167,7 @@ export default {
 	/**
 	 * Load the active administration.
 	 *
-	 * @spec openspec/changes/banking-payment-run/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-3.2
 	 */
 	async mounted() {
 		try {
@@ -186,7 +186,7 @@ export default {
 		 *
 		 * @param {object} skip The entry.
 		 * @return {string}
-		 * @spec openspec/changes/banking-payment-run/tasks.md#task-3.2
+		 * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-3.2
 		 */
 		reasonText(skip) {
 			return skipReasonText(skip)
@@ -195,7 +195,7 @@ export default {
 		/**
 		 * Ask for the draft run.
 		 *
-		 * @spec openspec/changes/banking-payment-run/tasks.md#task-3.2
+		 * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-3.2
 		 */
 		async submit() {
 			this.error = ''
@@ -218,7 +218,7 @@ export default {
 		/**
 		 * Close the dialog.
 		 *
-		 * @spec openspec/changes/banking-payment-run/tasks.md#task-3.2
+		 * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-3.2
 		 */
 		close() {
 			this.$emit('close', this.result)

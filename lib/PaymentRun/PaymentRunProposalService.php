@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/banking-payment-run/specs/payment-run-sepa-export/spec.md
+ * @spec openspec/changes/archive/2026-09-29-banking-payment-run/specs/payment-run-sepa-export/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -109,7 +109,7 @@ class PaymentRunProposalService {
 	 *
 	 * @return array{paymentRun: array<string, mixed>|null, skipped: list<array<string, string>>} Draft run or null, and what was left out.
 	 *
-	 * @spec openspec/changes/banking-payment-run/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-3.1
 	 */
 	public function propose(
 		string $administrationId,
