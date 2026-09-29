@@ -26,7 +26,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-posting-path/tasks.md#task-2.5
+ * @spec openspec/specs/bookkeeping-general-ledger/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -42,7 +42,7 @@ use DateTimeInterface;
 /**
  * Applies the posting stamps to a GLTransaction.
  *
- * @spec openspec/changes/ledger-posting-path/tasks.md#task-2.5
+ * @spec openspec/specs/bookkeeping-general-ledger/spec.md
  */
 final class PostingStamps {
 
@@ -75,7 +75,7 @@ final class PostingStamps {
 	 *
 	 * @return array<string,mixed> The stamped transaction.
 	 *
-	 * @spec openspec/changes/ledger-posting-path/tasks.md#task-2.5
+	 * @spec openspec/specs/bookkeeping-general-ledger/spec.md
 	 */
 	public function apply(array $transaction, string $user, DateTimeImmutable $now): array {
 		$transaction['postingLocked'] = true;

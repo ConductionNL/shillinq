@@ -59,7 +59,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-posting-path/tasks.md#task-2.1
+ * @spec openspec/specs/bookkeeping-journal-entries/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -84,7 +84,7 @@ use RuntimeException;
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) One small mapper per source schema, by design D2.
  *
- * @spec openspec/changes/ledger-posting-path/tasks.md#task-2.1
+ * @spec openspec/specs/bookkeeping-journal-entries/spec.md
  */
 class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 
@@ -194,7 +194,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
 	 *
-	 * @spec openspec/changes/ledger-posting-path/tasks.md#task-2.1
+	 * @spec openspec/specs/bookkeeping-journal-entries/spec.md
 	 */
 	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
 		$sourceSchema = (string)($parameters['sourceSchema'] ?? '');

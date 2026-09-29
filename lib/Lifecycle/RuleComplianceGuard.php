@@ -74,7 +74,7 @@ class RuleComplianceGuard {
 	 *
 	 * @return bool True to allow the transition.
 	 *
-	 * @spec openspec/changes/ledger-posting-path/tasks.md#task-2.4
+	 * @spec openspec/specs/bookkeeping-general-ledger/spec.md
 	 */
 	public function validateInvoice(string|array $invoiceOrId): bool {
 		$id = $this->idOf(objectOrId: $invoiceOrId);
@@ -114,8 +114,7 @@ class RuleComplianceGuard {
 	 *
 	 * @return bool True to allow the transition.
 	 *
-	 * @spec openspec/changes/ledger-posting-path/tasks.md#task-2.3
-	 * @spec openspec/changes/ledger-posting-path/tasks.md#task-2.5
+	 * @spec openspec/specs/bookkeeping-general-ledger/spec.md
 	 */
 	public function validateTransaction(string|array $transactionOrId): bool {
 		$id = $this->idOf(objectOrId: $transactionOrId);

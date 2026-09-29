@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-posting-path/tasks.md#task-2.5
+ * @spec openspec/specs/bookkeeping-general-ledger/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -36,7 +36,7 @@ use OCP\IUserSession;
 /**
  * Stamps a GLTransaction as posted.
  *
- * @spec openspec/changes/ledger-posting-path/tasks.md#task-2.5
+ * @spec openspec/specs/bookkeeping-general-ledger/spec.md
  */
 class StampPostingAction implements LifecycleActionInterface {
 
@@ -62,7 +62,7 @@ class StampPostingAction implements LifecycleActionInterface {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
 	 *
-	 * @spec openspec/changes/ledger-posting-path/tasks.md#task-2.5
+	 * @spec openspec/specs/bookkeeping-general-ledger/spec.md
 	 */
 	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
 		$user = $this->userSession->getUser();

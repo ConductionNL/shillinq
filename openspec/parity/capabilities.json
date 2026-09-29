@@ -450,18 +450,19 @@
 			"id": "led-double-entry",
 			"area": "ledger",
 			"name": "Keep double-entry books where every entry balances debit against credit.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "yes",
 			"moneybird": "yes",
 			"snelstart": "yes",
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
-				"evidence": "The effective `requires` on GLTransaction.post is RuleComplianceGuard::validateTransaction: lib/Settings/register.d/add-shillinq-rule-compliance-guard.json:24 overrides lib/Settings/shillinq_register.json:512 (BalanceGuard::isBalanced) through deepMergeConfig, and validateTransaction delegates the balance check to lib/Lifecycle/BalanceGuard.php:77 isBalanced(), which sums GLLine debit vs credit; several PHP posters write balanced GLTransaction+GLLine directly (lib/Service/FixedAssetDisposalService.php, CogsPosterService.php, PayrollService.php). But the same post transition declares action `evaluate-allocation-rules`, and no handler for it is registered in shillinq, while OpenRegister's LifecycleActionRegistry (openregister lib/Service/Lifecycle/LifecycleActionRegistry.php:57 BUILTINS = set-fields only) throws on an unresolved action, so a user-driven post from the GL page aborts.",
-				"reachedOn": "GeneralLedger /general-ledger (via menu Bookkeeping > General Ledger), detail GeneralLedgerDetail /general-ledger/:id with GLLine relation and lifecycle buttons",
+				"state": "built",
+				"evidence": "lib/Lifecycle/RuleComplianceGuard.php validateTransaction judges a GLTransaction.post as the post leaves it (lib/Lifecycle/PostingStamps.php: locked, intact, retained 10 years, on the audit trail) and refuses an unbalanced or incomplete entry through BalanceGuard; lib/Lifecycle/Action/StampPostingAction.php and EvaluateAllocationRulesAction.php are the declared actions of GLTransaction.post (lib/Settings/shillinq_register.json); lib/Lifecycle/Action/MaterialiseGlTransactionAction.php posts JournalEntry, ARInvoice and APInvoice into one balanced, stamped GLTransaction (shillinq#1736, #1775).",
+				"reachedOn": "GeneralLedgerDetail /general-ledger/:id, lifecycle button Post transaction; JournalDetail /journals/:id, Post",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26"
+				"readOn": "2026-09-29",
+				"change": "2026-09-29-ledger-posting-path"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Reference-financial-glaccounts-fingl-createdgltransr (G/L account transactions created by activity): every activity posts paired debit and credit G/L transactions; search snippet of the account types article: \"voor elke boeking die je aanmaakt ... transacties die in balans zijn\" Note: All Boekhouden plans.",
@@ -475,7 +476,7 @@
 			"feature": "ledger-core",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "The balance invariant is real PHP; the user-facing post path dies on an unregistered declared lifecycle action (fail-loud executor). Specified 2026-09-27 in openspec/changes/ledger-posting-path (OpenSpec pass)."
+			"note": "The balance invariant is real PHP; the user-facing post path dies on an unregistered declared lifecycle action (fail-loud executor). Built 2026-09-29 by ledger-posting-path."
 		},
 		{
 			"id": "led-rgs-chart",
@@ -4139,10 +4140,12 @@
 			"twinfield": "partial",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
-				"evidence": "lib/Service/PayrollService.php:315 bouwLoonjournaalpost builds a balanced payroll journal via PayrollChartOfAccountsMapping, but only behind GET /api/payroll/journaalpost (appinfo/routes.php:139), which no page calls, and it writes no GLTransaction or Loonjournaalpost; Loonjournaalposten is a plain list.",
-				"reachedOn": "Loonjournaalposten /loonadministratie/loonjournaalposten (via menu Bookkeeping > Payroll journal entries), list only; the builder: nothing reaches it",
-				"owner": "ConductionNL/shillinq"
+				"state": "built",
+				"evidence": "humaniq writes a balanced JournalEntry for an approved payroll run (humaniq lib/Service/PayrollGLPostService.php) and shillinq posts it through JournalEntry.post into one GLTransaction with lib/Lifecycle/Action/MaterialiseGlTransactionAction.php, with no payroll-specific path (shillinq#1736, #1775). The live hand-off on one instance is not yet checked.",
+				"reachedOn": "Journals /journals, the humaniq payroll journal entry, Post; or occ humaniq:glpost:run",
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-09-29-ledger-posting-path",
+				"readOn": "2026-09-29"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/salaris/features-en-prijzen: \"De journaalposten vanuit Exact HR Salaris Plus kunnen eenvoudig ingelezen worden in Exact Online\"; integrated Salaris posts to the linked administration Note: Salaris module or Exact HR Salaris Plus.",
@@ -4156,7 +4159,7 @@
 			"feature": "payroll-nl",
 			"featureConfidence": "medium",
 			"source": "own-code",
-			"note": "The journal is computed in code with no caller, and nothing posts it. Specified 2026-09-27 in openspec/changes/ledger-posting-path (OpenSpec pass)."
+			"note": "The journal is computed in code with no caller, and nothing posts it. Built 2026-09-29 by ledger-posting-path."
 		},
 		{
 			"id": "plt-accountant",
@@ -5099,18 +5102,19 @@
 			"id": "led-open-years",
 			"area": "ledger",
 			"name": "Keep more than one fiscal year open for posting at the same time.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "yes",
 			"moneybird": "yes",
 			"snelstart": "yes",
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"evidence": "lib/Settings/shillinq_register.json:7935 FiscalYear open->closing requires FiscalYearGuard::requireAllPeriodsClosedForYear; nothing limits how many FiscalYear records are open at once, so several years can be open. Posting itself aborts on the user path (see led-double-entry).",
-				"reachedOn": "FiscalYears /bookkeeping/fiscal-years (settings gear)"
+				"readOn": "2026-09-29",
+				"evidence": "Posting goes through the same guard and actions in any FiscalYear in state open (lib/Lifecycle/RuleComplianceGuard.php, lib/Lifecycle/Action/MaterialiseGlTransactionAction.php periodId); nothing limits how many FiscalYear records are open at once (lib/Settings/shillinq_register.json FiscalYear lifecycle) (shillinq#1775).",
+				"reachedOn": "FiscalYears /bookkeeping/fiscal-years (settings gear); GeneralLedgerDetail /general-ledger/:id, Post transaction",
+				"change": "2026-09-29-ledger-posting-path"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Concept-endofyear-finyend-yrendprcssc: for \"De overstap van 2025 naar 2026\" you create the new fiscal year before closing the old one; https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-yearend-finbnk-closefinperiodt: periods stay open until closed",
@@ -5130,7 +5134,7 @@
 				"intelligence-db requirements#109515",
 				"intelligence-db requirements#109513"
 			],
-			"note": "Several years can be open; the post path they would receive entries on is broken. Specified 2026-09-27 in openspec/changes/ledger-posting-path (OpenSpec pass)."
+			"note": "Several years can be open; the post path they would receive entries on is broken. Built 2026-09-29 by ledger-posting-path."
 		},
 		{
 			"id": "pur-duplicate-check",
