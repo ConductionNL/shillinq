@@ -150,13 +150,18 @@ class RuleComplianceGuard {
 				return false;
 			}
 
-			// A GLTransaction.post is always a person's posting: sub-ledgers
-			// write posted transactions directly (ledger-booking-rules D2).
-			$this->restrictions->assertAllowed(
-				lines: $transaction['lines'],
-				administrationId: (string)($transaction['administrationId'] ?? ''),
-				postingDate: (string)($transaction['postingDate'] ?? '')
-			);
+			// A person's posting is checked against the booking rules. A
+			// transaction a sub-ledger prepared carries its journal code (the
+			// GR/IR and inventory posters) or the journal entry it books, which
+			// JournalEntryGuard already checked (ledger-booking-rules D2).
+			if ($this->fromSubLedger(transaction: $transaction) === false) {
+				$this->restrictions->assertAllowed(
+					lines: $transaction['lines'],
+					administrationId: (string)($transaction['administrationId'] ?? ''),
+					postingDate: (string)($transaction['postingDate'] ?? '')
+				);
+			}
+
 			return true;
 		} catch (PostingRefusedException $e) {
 			throw $e;
@@ -169,6 +174,18 @@ class RuleComplianceGuard {
 		}//end try
 
 	}//end validateTransaction()
+
+	/**
+	 * Whether a transaction was prepared by a sub-ledger rather than a person.
+	 *
+	 * @param array<string,mixed> $transaction The GL transaction.
+	 *
+	 * @return bool
+	 */
+	private function fromSubLedger(array $transaction): bool {
+		return (string)($transaction['journalEntryId'] ?? '') !== ''
+			|| (string)($transaction['journalCode'] ?? '') !== '';
+	}//end fromSubLedger()
 
 	/**
 	 * The id of an object passed either as its id or as the object array.

@@ -355,4 +355,39 @@ final class PostingGuardsThroughAdapterTest extends TestCase {
 		$this->store->rows['GLLine'][0]['costCenterCode'] = 'KP-300';
 		self::assertTrue($adapter->check($transaction, 'post', 'alice')->isAllowed());
 	}//end testAGlTransactionOnABlockedCombinationIsRefusedWithTheReason()
+
+	/**
+	 * GLTransaction.post: a person may not post by hand on the payables
+	 * control account, but the GR/IR settlement draft the purchase ledger
+	 * prepared (journal code set) posts (REQ-LBR-002).
+	 *
+	 * @return void
+	 */
+	public function testASubLedgerDraftOnAControlAccountPostsAndAManualOneDoesNot(): void {
+		$this->store->rows['Account'] = [
+			['id' => 'a1', 'administrationId' => 'adm-1', 'accountNumber' => '2000', 'name' => 'Crediteuren', 'controlAccountFor' => 'payables'],
+		];
+		$this->store->rows['GLLine'] = [
+			['id' => 'l1', 'transactionId' => 'gl-8', 'accountNumber' => '1800', 'side' => 'debit', 'amount' => 800.0],
+			['id' => 'l2', 'transactionId' => 'gl-8', 'accountNumber' => '2000', 'side' => 'credit', 'amount' => 800.0],
+		];
+		$guard = new RuleComplianceGuard(
+			$this->appConfig(),
+			$this->createMock(LoggerInterface::class),
+			$this->balanceGuard(),
+			$this->store->mock($this),
+			$this->restrictions()
+		);
+		$adapter = $this->adapter('OCA\\Shillinq\\Lifecycle\\RuleComplianceGuard::validateTransaction', $guard);
+		$transaction = [
+			'id' => 'gl-8', 'transactionNumber' => 'MEM-2026-0008', 'postingDate' => '2026-09-20',
+			'description' => 'Crediteur', 'sourceReference' => 'manual', 'administrationId' => 'adm-1', 'state' => 'posted',
+		];
+
+		$denied = $adapter->check($transaction, 'post', 'alice');
+		self::assertStringContainsString('2000 Crediteuren is the payables control account', (string)$denied->getMessage());
+
+		$transaction['journalCode'] = 'GRIR-SETTLE';
+		self::assertTrue($adapter->check($transaction, 'post', 'alice')->isAllowed());
+	}//end testASubLedgerDraftOnAControlAccountPostsAndAManualOneDoesNot()
 }//end class
