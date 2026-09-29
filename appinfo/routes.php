@@ -839,6 +839,11 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'budgetEditing#spread', 'url' => '/api/v1/budget-editing/spread', 'verb' => 'POST'],
             ['name' => 'budgetEditing#multiYear', 'url' => '/api/v1/budget-editing/multi-year', 'verb' => 'GET'],
             ['name' => 'budgetEditing#startNextYear', 'url' => '/api/v1/budget-editing/next-year', 'verb' => 'POST'],
+            // planning-commitment-year-end: carry open commitments to next year, mark the last invoice of an order.
+            ['name' => 'commitmentYearEnd#previewCarryOver', 'url' => '/api/v1/commitments/carry-over', 'verb' => 'GET'],
+            ['name' => 'commitmentYearEnd#carryOver', 'url' => '/api/v1/commitments/carry-over', 'verb' => 'POST'],
+            ['name' => 'commitmentYearEnd#previewLastInvoice', 'url' => '/api/v1/supplier-invoices/{id}/last-invoice', 'verb' => 'GET'],
+            ['name' => 'commitmentYearEnd#markLastInvoice', 'url' => '/api/v1/supplier-invoices/{id}/last-invoice', 'verb' => 'POST'],
 
             // Compliance-deadline-calendar (REQ-CDC-006). Per-user category
             // toggles + reminder lead times for the deadline calendar. Both

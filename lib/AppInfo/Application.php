@@ -41,6 +41,11 @@ use OCA\Shillinq\Guard\SubsidieRepaymentGuard;
 use OCA\Shillinq\Guard\VatSubmissionGuard;
 use OCA\Shillinq\Lifecycle\AnnualBudgetDefaultGuard;
 use OCA\Shillinq\Lifecycle\APGuard;
+use OCA\Shillinq\Service\Commitment\CommitmentLedger;
+use OCA\Shillinq\Listener\InvoiceCommitmentListener;
+use OCA\Shillinq\Lifecycle\MandateEnforcer;
+use OCA\Shillinq\Lifecycle\CommitmentGuardAdapter;
+use OCA\Shillinq\Lifecycle\BudgetBlocker;
 use OCA\Shillinq\Lifecycle\FiscalYearGuard;
 use OCA\Shillinq\Lifecycle\FourEyesPaymentRunGuard;
 use OCA\Shillinq\Lifecycle\GLReversalGuard;
@@ -321,6 +326,13 @@ class Application extends App implements IBootstrap {
 		$context->registerEventListener(
 			event: ObjectTransitionedEvent::class,
 			listener: ReconciliationMatchSettlementListener::class
+		);
+
+		// Planning-commitment-year-end REQ-PCYE-002/003: an approved supplier
+		// invoice lowers the commitment of its order, and the last one closes it.
+		$context->registerEventListener(
+			event: ObjectTransitionedEvent::class,
+			listener: InvoiceCommitmentListener::class
 		);
 
 		// Revive-gl-tax-capabilities (shillinq#417/#446) REQ-GLTAX-001 — the
@@ -817,11 +829,39 @@ class Application extends App implements IBootstrap {
 		//
 		// This is deliberately scoped to the 17 guards + PeriodCloseGuard
 		// method shillinq#425 covers. Dozens of pre-existing guards
-		// (MandateEnforcer, BudgetBlocker, PeriodCloseGuard's other three
+		// (PeriodCloseGuard's other three
 		// methods, InventoryPostingGuard, KorThresholdGuard, ...) reference
 		// tags shaped the same way and are NOT registered — every one of
 		// those transitions also hard-fails today. That fleet-wide gap is
 		// filed separately as shillinq#433 and intentionally not fixed here.
+		// Planning-commitment-year-end REQ-PCYE-001 (shillinq#433 for these two):
+		// the Commitment lifecycle names MandateEnforcer::requiresApproval and
+		// BudgetBlocker::canCommit, whose methods take (commitmentNumber, object),
+		// so they go through CommitmentGuardAdapter, not RegisterRequiresGuardAdapter.
+		$context->registerService(
+			'OCA\Shillinq\Lifecycle\MandateEnforcer::requiresApproval',
+			static function ($c): CommitmentGuardAdapter {
+				return new CommitmentGuardAdapter(
+					guard: $c->get(MandateEnforcer::class),
+					method: 'requiresApproval',
+					denyMessage: 'This commitment is within your mandate. Enter into it directly.',
+					ledger: $c->get(CommitmentLedger::class),
+					logger: $c->get(LoggerInterface::class),
+				);
+			}
+		);
+		$context->registerService(
+			'OCA\Shillinq\Lifecycle\BudgetBlocker::canCommit',
+			static function ($c): CommitmentGuardAdapter {
+				return new CommitmentGuardAdapter(
+					guard: $c->get(BudgetBlocker::class),
+					method: 'canCommit',
+					denyMessage: 'The budget does not have room for this commitment.',
+					ledger: $c->get(CommitmentLedger::class),
+					logger: $c->get(LoggerInterface::class),
+				);
+			}
+		);
 		$context->registerService(
 			'OCA\Shillinq\Guard\Iv3XmlValidationGuard::requireValidXml',
 			static function ($c): RegisterRequiresGuardAdapter {

@@ -929,6 +929,12 @@
             "description": "FK to the administration this invoice belongs to.",
             "example": "adm-1",
             "title": "Administration ID"
+          },
+          "isLastInvoice": {
+            "type": "boolean",
+            "default": false,
+            "title": "Last invoice",
+            "description": "The last invoice of its order: when it is approved, or when it is marked after approval, the commitment of the order is closed and what remains goes back to the budget (planning-commitment-year-end, REQ-PCYE-003)."
           }
         },
         "x-openregister-lifecycle": {
