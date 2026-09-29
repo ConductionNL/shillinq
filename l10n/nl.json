@@ -5960,7 +5960,17 @@
         "Book the interest in one journal entry: each task field's charge against Treasury (task field 0.5), and the interest added to the reserves.": "Boek de rente in één memoriaalboeking: de toerekening per taakveld tegen Treasury (taakveld 0.5), en de rente die aan de reserves wordt toegevoegd.",
         "Run": "Toerekening",
         "Interest per investment and reserve": "Rente per investering en reserve",
-        "The reserve overview could not be loaded.": "Het reserveoverzicht kon niet worden geladen."
+        "The reserve overview could not be loaded.": "Het reserveoverzicht kon niet worden geladen.",
+        "The investment the interest is charged for.": "De investering waarvoor de rente wordt toegerekend.",
+        "What the line is, as shown on the run.": "Wat de regel is, zoals getoond op de run.",
+        "The task field the interest is charged to.": "Het taakveld waaraan de rente wordt toegerekend.",
+        "The book value on 1 January, in euros.": "De boekwaarde op 1 januari, in euro.",
+        "The interest charged, in euros.": "De toegerekende rente, in euro.",
+        "Why the investment was left out, empty when it was included.": "Waarom de investering buiten beschouwing bleef, leeg als ze is meegenomen.",
+        "The reserve that receives interest.": "De reserve die rente ontvangt.",
+        "The reserve name, as shown on the run.": "De naam van de reserve, zoals getoond op de run.",
+        "The reserve balance the interest is calculated over, in euros.": "Het saldo van de reserve waarover de rente wordt berekend, in euro.",
+        "The interest added to the reserve, in euros.": "De rente die aan de reserve wordt toegevoegd, in euro."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

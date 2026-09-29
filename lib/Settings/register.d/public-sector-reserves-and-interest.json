@@ -31,23 +31,6 @@
             "nullable": true,
             "example": "8990"
           }
-        },
-        "x-openregister-aggregations": {
-          "realisedByYear": {
-            "description": "Realised additions and withdrawals per reserve and year, summed from ReserveMutation. The balances follow from these sums: the multi-year overview (GET /api/public-sector/reserves/overview) chains each year's opening from the previous closing.",
-            "source": "ReserveMutation",
-            "groupBy": [
-              "reserveId",
-              "year",
-              "kind"
-            ],
-            "filter": {
-              "status": "realised"
-            },
-            "sum": [
-              "amount"
-            ]
-          }
         }
       },
       "Investering": {
@@ -238,6 +221,21 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Who planned and realised each mutation, and when."
+        },
+        "x-openregister-aggregations": {
+          "realisedByYear": {
+            "description": "Realised additions and withdrawals per reserve and year. The balances follow from these sums: the multi-year overview (GET /api/v1/public-sector/reserves/overview) chains each year's opening from the previous closing.",
+            "metric": "sum",
+            "field": "amount",
+            "groupBy": [
+              "reserveId",
+              "year",
+              "kind"
+            ],
+            "filter": {
+              "status": "realised"
+            }
+          }
         }
       },
       "InterestAllocationRun": {
@@ -300,30 +298,36 @@
               "properties": {
                 "investmentId": {
                   "type": "string",
-                  "title": "Investment"
+                  "title": "Investment",
+                  "description": "The investment the interest is charged for."
                 },
                 "description": {
                   "type": "string",
-                  "title": "Investment"
+                  "title": "Investment",
+                  "description": "What the line is, as shown on the run."
                 },
                 "taskFieldCode": {
                   "type": "string",
                   "nullable": true,
-                  "title": "Task field"
+                  "title": "Task field",
+                  "description": "The task field the interest is charged to."
                 },
                 "bookValue": {
                   "type": "number",
                   "nullable": true,
-                  "title": "Book value on 1 January"
+                  "title": "Book value on 1 January",
+                  "description": "The book value on 1 January, in euros."
                 },
                 "interest": {
                   "type": "number",
-                  "title": "Interest"
+                  "title": "Interest",
+                  "description": "The interest charged, in euros."
                 },
                 "excludedReason": {
                   "type": "string",
                   "nullable": true,
-                  "title": "Left out because"
+                  "title": "Left out because",
+                  "description": "Why the investment was left out, empty when it was included."
                 }
               }
             }
@@ -337,19 +341,23 @@
               "properties": {
                 "reserveId": {
                   "type": "string",
-                  "title": "Reserve"
+                  "title": "Reserve",
+                  "description": "The reserve that receives interest."
                 },
                 "name": {
                   "type": "string",
-                  "title": "Reserve"
+                  "title": "Reserve",
+                  "description": "The reserve name, as shown on the run."
                 },
                 "balance": {
                   "type": "number",
-                  "title": "Balance on 1 January"
+                  "title": "Balance on 1 January",
+                  "description": "The reserve balance the interest is calculated over, in euros."
                 },
                 "interest": {
                   "type": "number",
-                  "title": "Interest added"
+                  "title": "Interest added",
+                  "description": "The interest added to the reserve, in euros."
                 }
               }
             }

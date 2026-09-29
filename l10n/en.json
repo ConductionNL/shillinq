@@ -3740,7 +3740,17 @@
         "Book the interest in one journal entry: each task field's charge against Treasury (task field 0.5), and the interest added to the reserves.": "Book the interest in one journal entry: each task field's charge against Treasury (task field 0.5), and the interest added to the reserves.",
         "Run": "Run",
         "Interest per investment and reserve": "Interest per investment and reserve",
-        "The reserve overview could not be loaded.": "The reserve overview could not be loaded."
+        "The reserve overview could not be loaded.": "The reserve overview could not be loaded.",
+        "The investment the interest is charged for.": "The investment the interest is charged for.",
+        "What the line is, as shown on the run.": "What the line is, as shown on the run.",
+        "The task field the interest is charged to.": "The task field the interest is charged to.",
+        "The book value on 1 January, in euros.": "The book value on 1 January, in euros.",
+        "The interest charged, in euros.": "The interest charged, in euros.",
+        "Why the investment was left out, empty when it was included.": "Why the investment was left out, empty when it was included.",
+        "The reserve that receives interest.": "The reserve that receives interest.",
+        "The reserve name, as shown on the run.": "The reserve name, as shown on the run.",
+        "The reserve balance the interest is calculated over, in euros.": "The reserve balance the interest is calculated over, in euros.",
+        "The interest added to the reserve, in euros.": "The interest added to the reserve, in euros."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
