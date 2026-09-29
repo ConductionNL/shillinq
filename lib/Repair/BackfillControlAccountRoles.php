@@ -58,7 +58,7 @@ class BackfillControlAccountRoles implements IRepairStep {
 	/**
 	 * Account number => [the seed chart's name, the control role].
 	 *
-	 * @var array<string, array{0: string, 1: string}>
+	 * @var array<int, array{0: string, 1: string}>
 	 */
 	public const CONTROL_ACCOUNTS = [
 		'1100' => ['Debiteuren', 'receivables'],

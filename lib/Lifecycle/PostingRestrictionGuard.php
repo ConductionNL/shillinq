@@ -319,6 +319,10 @@ class PostingRestrictionGuard {
 	 */
 	private function register(): string {
 		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-		return $register === '' ? 'shillinq' : $register;
+		if ($register === '') {
+			return 'shillinq';
+		}
+
+		return $register;
 	}//end register()
 }//end class

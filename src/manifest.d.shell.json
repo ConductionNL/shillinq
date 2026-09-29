@@ -4629,7 +4629,7 @@
 				{
 					"id": "PostingRestrictions",
 					"label": "Posting restrictions",
-					"icon": "CancelOutline",
+					"icon": "Cancel",
 					"route": "PostingRestrictions",
 					"order": 45
 				}

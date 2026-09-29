@@ -144,13 +144,13 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // Not more: the point of restating the ratio is that the next change
 // re-measures rather than inheriting slack.
 //
-// Re-measured 2026-09-29 (ledger-booking-rules): 1,144,925 bytes. Inherited
+// Re-measured 2026-09-29 (ledger-booking-rules): 1,145,582 bytes. Inherited
 // red first: `development` already stood at 1,136,982, 1,482 B over, from the
-// fragments merged since 08-27. This change adds 7,943 B: the posting
+// fragments merged since 08-27. This change adds 8,600 B: the posting
 // restrictions settings pages and full copies of JournalDetail and
 // GeneralLedgerDetail (mergePages replaces a page wholesale), their notes
-// trimmed to one line each before measuring. Raised to 1,151,800: 6,875 B of
-// headroom, 0.60%, the ratio above.
+// trimmed to one line each before measuring. Raised to 1,151,800: 6,218 B of
+// headroom, 0.54%, near the ratio above.
 const DEFAULT_BUDGET_BYTES = 1_151_800
 
 /**

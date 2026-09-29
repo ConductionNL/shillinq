@@ -3352,7 +3352,8 @@ OC.L10N.register(
         "expense claims": "expense claims",
         "payroll": "payroll",
         "Retire restriction": "Retire restriction",
-        "Reactivate restriction": "Reactivate restriction"
+        "Reactivate restriction": "Reactivate restriction",
+        "The entry's booking lines. Each line books an amount on one account, debit or credit, optionally on a cost centre and a project.": "The entry's booking lines. Each line books an amount on one account, debit or credit, optionally on a cost centre and a project."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -55,6 +55,8 @@
 						"description": "The ledger this journal entry comes from. A bank booking may post its VAT line; a payroll journal may post on payroll accounts. Empty for an entry made by hand."
 					},
 					"lines": {
+						"title": "Lines",
+						"description": "The entry's booking lines. Each line books an amount on one account, debit or credit, optionally on a cost centre and a project.",
 						"items": {
 							"properties": {
 								"costCenterCode": {
@@ -76,7 +78,7 @@
 			},
 			"PostingRestriction": {
 				"slug": "PostingRestriction",
-				"icon": "CancelOutline",
+				"icon": "Cancel",
 				"version": "0.1.0",
 				"title": "Posting restriction",
 				"description": "A combination of account, cost centre and project that may not be booked together in this administration.",

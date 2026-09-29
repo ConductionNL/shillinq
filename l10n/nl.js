@@ -5589,7 +5589,8 @@ OC.L10N.register(
         "expense claims": "declaraties",
         "payroll": "salarissen",
         "Retire restriction": "Beperking intrekken",
-        "Reactivate restriction": "Beperking weer activeren"
+        "Reactivate restriction": "Beperking weer activeren",
+        "The entry's booking lines. Each line books an amount on one account, debit or credit, optionally on a cost centre and a project.": "De boekingsregels van de post. Elke regel boekt een bedrag op één rekening, debet of credit, eventueel op een kostenplaats en een project."
     },
     "nplurals=2; plural=(n != 1);"
 )

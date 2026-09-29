@@ -10,7 +10,7 @@
 		{
 			"id": "PostingRestrictions",
 			"label": "Posting restrictions",
-			"icon": "CancelOutline",
+			"icon": "Cancel",
 			"route": "PostingRestrictions",
 			"order": 45
 		}
@@ -217,6 +217,24 @@
 						"icon": "FormatListBulleted",
 						"_note": "ledger-booking-rules REQ-LBR-003: lines with each account's guidance under it; custom because the guidance lives on the Account the line names by number."
 					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "journalDetail-document",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 6
+					},
+					{
+						"id": "2",
+						"widgetId": "journal-lines",
+						"gridX": 0,
+						"gridY": 6,
+						"gridWidth": 12,
+						"gridHeight": 6
+					}
 				]
 			},
 			"slots": {
@@ -299,6 +317,24 @@
 						"title": "GL lines",
 						"icon": "FormatListBulleted",
 						"_note": "ledger-booking-rules REQ-LBR-003: lines with each account's guidance under it; custom because the guidance lives on the Account the line names by number."
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "generalLedgerDetail-document",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 6
+					},
+					{
+						"id": "2",
+						"widgetId": "transaction-lines",
+						"gridX": 0,
+						"gridY": 6,
+						"gridWidth": 12,
+						"gridHeight": 6
 					}
 				]
 			},
