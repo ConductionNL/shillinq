@@ -206,10 +206,10 @@ class GLLineResultStampListenerTest extends TestCase {
 	public function testTheAppWiresTheListenerAndTheRepairStep(): void {
 		$root = __DIR__ . '/../../..';
 		$application = (string)file_get_contents($root . '/lib/AppInfo/Application.php');
-		$registration = (string)file_get_contents($root . '/lib/AppInfo/SegmentResultRegistration.php');
+		$registration = (string)file_get_contents($root . '/lib/AppInfo/ReportingRegistration.php');
 		$info = (string)file_get_contents($root . '/appinfo/info.xml');
 
-		$this->assertStringContainsString('(new SegmentResultRegistration())->register(context: $context);', $application);
+		$this->assertStringContainsString('(new ReportingRegistration())->register(context: $context);', $application);
 		$this->assertMatchesRegularExpression('/ObjectTransitionedEvent::class,\s*listener: GLLineResultStampListener::class/', $registration);
 		$this->assertMatchesRegularExpression('/ObjectCreatedEvent::class,\s*listener: GLLineResultStampListener::class/', $registration);
 		$this->assertStringContainsString('<step>OCA\Shillinq\Repair\StampGlLineResults</step>', $info);

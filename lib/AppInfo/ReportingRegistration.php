@@ -1,13 +1,14 @@
 <?php
 
 /**
- * Segment Result Registration
+ * Reporting Registration
  *
- * Registers GLLineResultStampListener for the two events that change a ledger
- * line's result stamps: a GLTransaction transition (posted, reversed) and the
- * creation of a GLLine under an already posted transaction
- * (reporting-segment-results REQ-RSR-002). Kept out of Application so that
- * class stays under its length limit.
+ * Registers the reporting listeners and services. GLLineResultStampListener
+ * handles the two events that change a ledger line's result stamps: a
+ * GLTransaction transition (posted, reversed) and the creation of a GLLine
+ * under an already posted transaction (reporting-segment-results
+ * REQ-RSR-002). Kept out of Application so that class stays under its
+ * length limit.
  *
  * @category AppInfo
  * @package  OCA\Shillinq\AppInfo
@@ -34,9 +35,11 @@ use OCA\Shillinq\Listener\GLLineResultStampListener;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**
- * Registers the ledger line result stamp listener.
+ * Registers the reporting listeners and services.
+ *
+ * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
  */
-final class SegmentResultRegistration {
+final class ReportingRegistration {
 
 	/**
 	 * Register the listener for both events.

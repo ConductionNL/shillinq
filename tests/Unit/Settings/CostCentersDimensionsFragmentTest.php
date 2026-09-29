@@ -137,7 +137,11 @@ final class CostCentersDimensionsFragmentTest extends TestCase {
 		// CC-002=10000, null=24200, matching the rows exactly.
 		foreach (['byCostCenter', 'byProject'] as $key) {
 			self::assertSame('sum', $aggs[$key]['metric'], 'Aggregation MUST declare metric=sum');
-			self::assertSame('amount', $aggs[$key]['field'], 'Aggregation MUST sum the amount field');
+			// reporting-segment-results REQ-RSR-002: the unsigned amount summed
+			// debit and credit into a gross turnover; the result is the sum of
+			// the signed amount over posted profit and loss lines.
+			self::assertSame('signedAmount', $aggs[$key]['field'], 'Aggregation MUST sum the signed amount');
+			self::assertSame(['accountClass' => 'pnl', 'countsInResult' => true], $aggs[$key]['filter']);
 			self::assertArrayNotHasKey('source', $aggs[$key], '`source` is not an engine key');
 			self::assertArrayNotHasKey('sum', $aggs[$key], '`sum` is not an engine key; use metric+field');
 		}
@@ -149,7 +153,7 @@ final class CostCentersDimensionsFragmentTest extends TestCase {
 		// OpenRegister #2916 projects joined group fields onto the rows first,
 		// which is what makes the declaration computable.
 		self::assertSame('sum', $aggs['byCostCenterHierarchy']['metric']);
-		self::assertSame('amount', $aggs['byCostCenterHierarchy']['field']);
+		self::assertSame('signedAmount', $aggs['byCostCenterHierarchy']['field']);
 		self::assertArrayNotHasKey(
 			'source',
 			$aggs['byCostCenterHierarchy'],
