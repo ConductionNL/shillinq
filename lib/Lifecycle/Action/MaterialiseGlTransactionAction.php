@@ -162,7 +162,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 	 *
 	 * @var list<string>
 	 */
-	public const SUPPORTED_SOURCES = ['JournalEntry', 'ARInvoice', 'APInvoice'];
+	public const SUPPORTED_SOURCES = ['JournalEntry', 'ARInvoice', 'APInvoice', 'APTransaction'];
 
 	/**
 	 * Constructor.

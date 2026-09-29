@@ -364,6 +364,33 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 	}//end testAPurchaseInvoiceBooksExpenseVatAndPayables()
 
 	/**
+	 * REQ-PSII-002: an issued AP transaction posts like a purchase invoice,
+	 * and the schema declares that posting on its issue transition.
+	 *
+	 * @return void
+	 */
+	public function testAnIssuedApTransactionBooksExpenseVatAndCreditor(): void {
+		$this->action()->execute(
+			[
+				'id' => 'ap-0455', 'invoiceNumber' => '2026-0455', 'invoiceDate' => '2026-09-01', 'administrationId' => 'adm-1',
+				'vendorId' => 'payee-1', 'totalAmount' => 1210.0, 'taxAmount' => 210.0,
+				'lines' => [['accountNumber' => '4300', 'amount' => 1000.0, 'description' => 'Folders']],
+				'state' => 'issued',
+			],
+			[],
+			['sourceSchema' => 'APTransaction'],
+			MaterialiseGlTransactionAction::class
+		);
+
+		$lines = array_map(static fn (array $l): array => [$l['accountNumber'], $l['side'], $l['amount']], $this->store->savedOf('GLLine'));
+		self::assertSame([['4300', 'debit', 1000.0], ['1230', 'debit', 210.0], ['2000', 'credit', 1210.0]], $lines);
+
+		$issue = RegisterSchema::schema('APTransaction')['x-openregister-lifecycle']['transitions']['issue'];
+		self::assertSame(MaterialiseGlTransactionAction::class, $issue['actions'][0]['action']);
+		self::assertSame('APTransaction', $issue['actions'][0]['actionParameters']['sourceSchema']);
+	}//end testAnIssuedApTransactionBooksExpenseVatAndCreditor()
+
+	/**
 	 * A source schema without a mapper is refused by name, never guessed at.
 	 *
 	 * @return void

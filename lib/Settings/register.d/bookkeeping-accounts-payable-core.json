@@ -562,7 +562,19 @@
               "to": "issued",
               "label": "Issue / post invoice",
               "description": "Operator approves and posts the AP invoice. Guards: (1) balanced materialisation per T1; (2) FiscalPeriod open; (3) Payee.lifecycleState=active. Actions: (a) materialise one balanced GLTransaction (debit expense per line, credit AP payable account); (b) set glTransactionId back-reference; (c) set periodId from invoiceDate.",
-              "requires": "OCA\\Shillinq\\Lifecycle\\BalanceGuard::isInvoiceBalanced"
+              "requires": "OCA\\Shillinq\\Lifecycle\\BalanceGuard::isInvoiceBalanced",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\MaterialiseGlTransactionAction",
+                  "description": "Book the issued supplier invoice: debit each line's expense account and input VAT, credit the creditors control account, in one balanced GLTransaction, and write glTransactionId (purchasing-supplier-invoice-intake REQ-PSII-002).",
+                  "actionParameters": {
+                    "sourceSchema": "APTransaction",
+                    "register": "shillinq",
+                    "keepBalanced": true
+                  }
+                }
+              ]
             },
             "matchFull": {
               "from": [
