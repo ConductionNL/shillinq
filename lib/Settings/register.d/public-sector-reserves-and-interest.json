@@ -1,0 +1,815 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "public-sector-reserves-and-interest",
+    "adr": "ADR-037 modular register fragment; ADR-031 declarative lifecycles, imperative interest calculation (domain calculation over investments, depreciation and reserves)",
+    "description": "Reserve mutations per year (ReserveMutation, planned or realised, realising posts a journal entry), the accounts and opening year a reserve needs for that, the task field an investment's interest is charged to, and the yearly InterestAllocationRun (calculate, post). The calculation and posting live in lib/Service/PublicSector; the multi-year overview is served by ReserveOverviewController."
+  },
+  "components": {
+    "schemas": {
+      "Reserve": {
+        "properties": {
+          "openingBalanceYear": {
+            "type": "integer",
+            "description": "The year whose 1 January balance the opening balance is. Mutations from that year on build the later balances.",
+            "title": "Opening balance year",
+            "nullable": true,
+            "example": 2026
+          },
+          "balanceAccountNumber": {
+            "type": "string",
+            "description": "The balance sheet account that holds the reserve.",
+            "title": "Reserve account",
+            "nullable": true,
+            "example": "0520"
+          },
+          "resultAccountNumber": {
+            "type": "string",
+            "description": "The result account additions and withdrawals are booked against (mutations of reserves).",
+            "title": "Result account",
+            "nullable": true,
+            "example": "8990"
+          }
+        },
+        "x-openregister-aggregations": {
+          "realisedByYear": {
+            "description": "Realised additions and withdrawals per reserve and year, summed from ReserveMutation. The balances follow from these sums: the multi-year overview (GET /api/public-sector/reserves/overview) chains each year's opening from the previous closing.",
+            "source": "ReserveMutation",
+            "groupBy": [
+              "reserveId",
+              "year",
+              "kind"
+            ],
+            "filter": {
+              "status": "realised"
+            },
+            "sum": [
+              "amount"
+            ]
+          }
+        }
+      },
+      "Investering": {
+        "properties": {
+          "taskFieldCode": {
+            "type": "string",
+            "description": "The task field (taakveld) the investment's interest is charged to.",
+            "title": "Task field",
+            "nullable": true,
+            "example": "5.2"
+          }
+        }
+      },
+      "ReserveMutation": {
+        "slug": "ReserveMutation",
+        "icon": "SwapHorizontal",
+        "version": "0.1.0",
+        "title": "Reserve mutation",
+        "description": "An addition to or a withdrawal from a reserve in one year, decided by the council. Planned mutations shape the multi-year overview; realising one books it.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/specs/bookkeeping-programmabegroting/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "reserveId",
+          "year",
+          "kind",
+          "amount",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "The administration the reserve belongs to.",
+            "title": "Administration ID",
+            "example": "adm-gov-1"
+          },
+          "reserveId": {
+            "type": "string",
+            "description": "The reserve this mutation changes.",
+            "title": "Reserve",
+            "example": "res-onderhoud-sport"
+          },
+          "reserveName": {
+            "type": "string",
+            "description": "The reserve's name, for lists.",
+            "title": "Reserve name",
+            "nullable": true,
+            "example": "Reserve onderhoud sportaccommodaties"
+          },
+          "year": {
+            "type": "integer",
+            "description": "The budget year the mutation belongs to.",
+            "title": "Year",
+            "minimum": 1900,
+            "example": 2026
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "addition",
+              "withdrawal"
+            ],
+            "x-enum-labels": {
+              "addition": "Addition",
+              "withdrawal": "Withdrawal"
+            },
+            "description": "Whether money goes into the reserve or comes out of it.",
+            "title": "Kind",
+            "example": "withdrawal"
+          },
+          "amount": {
+            "type": "number",
+            "description": "The amount in euros.",
+            "title": "Amount",
+            "minimum": 0,
+            "example": 250000
+          },
+          "programme": {
+            "type": "string",
+            "description": "The programme the mutation is accounted for in.",
+            "title": "Programme",
+            "nullable": true,
+            "example": "5"
+          },
+          "councilResolution": {
+            "type": "string",
+            "description": "The council resolution that decided the mutation.",
+            "title": "Council resolution",
+            "nullable": true,
+            "example": "2026-088"
+          },
+          "description": {
+            "type": "string",
+            "description": "What the mutation is for.",
+            "title": "Description",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "planned",
+              "realised"
+            ],
+            "x-enum-labels": {
+              "planned": "Planned",
+              "realised": "Realised"
+            },
+            "default": "planned",
+            "description": "Planned until it is booked, then realised.",
+            "title": "Status",
+            "example": "planned"
+          },
+          "journalEntryId": {
+            "type": "string",
+            "description": "The journal entry that booked the mutation.",
+            "title": "Journal entry",
+            "nullable": true
+          },
+          "interestRunId": {
+            "type": "string",
+            "description": "The interest allocation run that added this interest, when it came from one.",
+            "title": "Interest run",
+            "nullable": true
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "planned",
+          "states": {
+            "planned": {
+              "label": "Planned",
+              "description": "The mutation is in the budget or the multi-year estimate and not yet booked."
+            },
+            "realised": {
+              "label": "Realised",
+              "description": "The mutation is booked: a journal entry moved the amount between the reserve and the result."
+            }
+          },
+          "transitions": {
+            "realise": {
+              "from": "planned",
+              "to": "realised",
+              "label": "Realise",
+              "description": "Book the mutation. Posts a journal entry between the reserve's balance account and its result account, and links it.",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\RealiseReserveMutationAction",
+                  "description": "Post the journal entry for the addition or withdrawal and set journalEntryId.",
+                  "actionParameters": {
+                    "register": "shillinq",
+                    "schema": "JournalEntry"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "bbv-controller": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          },
+          "adminScope": {
+            "field": "administrationId",
+            "enforce": true
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Who planned and realised each mutation, and when."
+        }
+      },
+      "InterestAllocationRun": {
+        "slug": "InterestAllocationRun",
+        "icon": "PercentOutline",
+        "version": "0.1.0",
+        "title": "Interest allocation run",
+        "description": "The yearly charge of interest over the book value of investments to their task fields, and over the balance of reserves marked for interest.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/specs/bookkeeping-programmabegroting/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "year",
+          "omslagrentePercentage",
+          "interestCostAccountNumber",
+          "treasuryAccountNumber",
+          "state"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "The administration the run is for.",
+            "title": "Administration ID",
+            "example": "adm-gov-1"
+          },
+          "year": {
+            "type": "integer",
+            "description": "The year the interest is charged over.",
+            "title": "Year",
+            "minimum": 1900,
+            "example": 2026
+          },
+          "omslagrentePercentage": {
+            "type": "number",
+            "description": "The pooled interest rate from the interest schedule, as a percentage.",
+            "title": "Pooled interest rate (%)",
+            "minimum": 0,
+            "maximum": 100,
+            "example": 1.2
+          },
+          "interestCostAccountNumber": {
+            "type": "string",
+            "description": "The cost account each task field is charged on.",
+            "title": "Interest cost account",
+            "example": "4810"
+          },
+          "treasuryAccountNumber": {
+            "type": "string",
+            "description": "The Treasury account (task field 0.5) the charged interest is credited to.",
+            "title": "Treasury account",
+            "example": "8050"
+          },
+          "lines": {
+            "type": "array",
+            "description": "Interest per investment, charged to its task field.",
+            "title": "Investments",
+            "items": {
+              "type": "object",
+              "properties": {
+                "investmentId": {
+                  "type": "string",
+                  "title": "Investment"
+                },
+                "description": {
+                  "type": "string",
+                  "title": "Investment"
+                },
+                "taskFieldCode": {
+                  "type": "string",
+                  "nullable": true,
+                  "title": "Task field"
+                },
+                "bookValue": {
+                  "type": "number",
+                  "nullable": true,
+                  "title": "Book value on 1 January"
+                },
+                "interest": {
+                  "type": "number",
+                  "title": "Interest"
+                },
+                "excludedReason": {
+                  "type": "string",
+                  "nullable": true,
+                  "title": "Left out because"
+                }
+              }
+            }
+          },
+          "reserveLines": {
+            "type": "array",
+            "description": "Interest added to each reserve marked for interest.",
+            "title": "Reserves",
+            "items": {
+              "type": "object",
+              "properties": {
+                "reserveId": {
+                  "type": "string",
+                  "title": "Reserve"
+                },
+                "name": {
+                  "type": "string",
+                  "title": "Reserve"
+                },
+                "balance": {
+                  "type": "number",
+                  "title": "Balance on 1 January"
+                },
+                "interest": {
+                  "type": "number",
+                  "title": "Interest added"
+                }
+              }
+            }
+          },
+          "investmentInterestTotal": {
+            "type": "number",
+            "description": "The interest charged to task fields.",
+            "title": "Charged to task fields",
+            "nullable": true
+          },
+          "reserveInterestTotal": {
+            "type": "number",
+            "description": "The interest added to reserves.",
+            "title": "Added to reserves",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "calculated",
+              "posted"
+            ],
+            "x-enum-labels": {
+              "draft": "Draft",
+              "calculated": "Calculated",
+              "posted": "Posted"
+            },
+            "default": "draft",
+            "description": "Draft, calculated or posted.",
+            "title": "State",
+            "example": "draft"
+          },
+          "journalEntryId": {
+            "type": "string",
+            "description": "The journal entry that booked the interest.",
+            "title": "Journal entry",
+            "nullable": true
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "The run has a year and a percentage and no figures yet."
+            },
+            "calculated": {
+              "label": "Calculated",
+              "description": "The interest per investment and per reserve is calculated and can be checked."
+            },
+            "posted": {
+              "label": "Posted",
+              "description": "The interest is booked in one journal entry."
+            }
+          },
+          "transitions": {
+            "calculate": {
+              "from": "draft",
+              "to": "calculated",
+              "label": "Calculate",
+              "description": "Calculate the interest over each investment's book value on 1 January and over each reserve marked for interest.",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\InterestAllocationAction",
+                  "description": "Fill the investment and reserve lines and the totals.",
+                  "actionParameters": {
+                    "step": "calculate"
+                  }
+                }
+              ]
+            },
+            "reopen": {
+              "from": "calculated",
+              "to": "draft",
+              "label": "Reopen",
+              "description": "Go back to draft to change the percentage or the accounts, then calculate again."
+            },
+            "post": {
+              "from": "calculated",
+              "to": "posted",
+              "label": "Post",
+              "description": "Book the interest: each task field's interest cost against Treasury (task field 0.5), and the interest added to each reserve.",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\InterestAllocationAction",
+                  "description": "Post one journal entry, record a realised addition on each reserve and set journalEntryId.",
+                  "actionParameters": {
+                    "step": "post"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "bbv-controller": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          },
+          "adminScope": {
+            "field": "administrationId",
+            "enforce": true
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Who calculated and posted the run, and when."
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Reserve",
+        "slug": "res-algemene-reserve-voorbeeld"
+      },
+      "administrationId": "adm-gov-1",
+      "budgetId": "pb-gem-2026",
+      "name": "Algemene reserve",
+      "kind": "algemeen",
+      "type": "algemene-reserve",
+      "openingBalance": 12000000,
+      "closingBalance": 12000000,
+      "openingBalanceYear": 2026,
+      "rentetoerekening": false,
+      "balanceAccountNumber": "0510",
+      "resultAccountNumber": "8990"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Reserve",
+        "slug": "res-onderhoud-sport"
+      },
+      "administrationId": "adm-gov-1",
+      "budgetId": "pb-gem-2026",
+      "name": "Reserve onderhoud sportaccommodaties",
+      "kind": "bestemming",
+      "type": "bestemmingsreserve",
+      "purpose": "Groot onderhoud van de gemeentelijke sportaccommodaties",
+      "designatedPurpose": "Groot onderhoud van de gemeentelijke sportaccommodaties",
+      "programme": "5",
+      "openingBalance": 800000,
+      "closingBalance": 800000,
+      "openingBalanceYear": 2026,
+      "rentetoerekening": true,
+      "floorCents": 10000000,
+      "plafondCents": 150000000,
+      "balanceAccountNumber": "0520",
+      "resultAccountNumber": "8990"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Reserve",
+        "slug": "res-egalisatie-afval"
+      },
+      "administrationId": "adm-gov-1",
+      "budgetId": "pb-gem-2026",
+      "name": "Egalisatiereserve afvalstoffenheffing",
+      "kind": "bestemming",
+      "type": "bestemmingsreserve",
+      "purpose": "Tarieven afvalstoffenheffing gelijk houden",
+      "designatedPurpose": "Tarieven afvalstoffenheffing gelijk houden",
+      "programme": "7",
+      "openingBalance": 350000,
+      "closingBalance": 350000,
+      "openingBalanceYear": 2026,
+      "rentetoerekening": false,
+      "balanceAccountNumber": "0530",
+      "resultAccountNumber": "8990"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Investering",
+        "slug": "inv-sporthal-wielewaal"
+      },
+      "administrationId": "adm-gov-1",
+      "programmeId": "5",
+      "description": "Sporthal De Wielewaal",
+      "gross": 5000000,
+      "coverage": "lening",
+      "depreciationTerm": 40,
+      "firstDepreciationYear": 2022,
+      "taskFieldCode": "5.2",
+      "capitalChargesSchedule": {
+        "2022": 125000,
+        "2023": 125000,
+        "2024": 125000,
+        "2025": 125000,
+        "2026": 125000,
+        "2027": 125000,
+        "2028": 125000,
+        "2029": 125000,
+        "2030": 125000,
+        "2031": 125000,
+        "2032": 125000,
+        "2033": 125000,
+        "2034": 125000,
+        "2035": 125000,
+        "2036": 125000,
+        "2037": 125000,
+        "2038": 125000,
+        "2039": 125000,
+        "2040": 125000,
+        "2041": 125000,
+        "2042": 125000,
+        "2043": 125000,
+        "2044": 125000,
+        "2045": 125000,
+        "2046": 125000,
+        "2047": 125000,
+        "2048": 125000,
+        "2049": 125000,
+        "2050": 125000,
+        "2051": 125000,
+        "2052": 125000,
+        "2053": 125000,
+        "2054": 125000,
+        "2055": 125000,
+        "2056": 125000,
+        "2057": 125000,
+        "2058": 125000,
+        "2059": 125000,
+        "2060": 125000,
+        "2061": 125000
+      }
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Investering",
+        "slug": "inv-brandweerkazerne-voorbeeld"
+      },
+      "administrationId": "adm-gov-1",
+      "programmeId": "1",
+      "description": "Renovatie brandweerkazerne",
+      "gross": 400000,
+      "coverage": "eigen-middelen",
+      "depreciationTerm": 20,
+      "firstDepreciationYear": 2027,
+      "taskFieldCode": "1.1",
+      "capitalChargesSchedule": {
+        "2027": 20000,
+        "2028": 20000,
+        "2029": 20000,
+        "2030": 20000,
+        "2031": 20000,
+        "2032": 20000,
+        "2033": 20000,
+        "2034": 20000,
+        "2035": 20000,
+        "2036": 20000,
+        "2037": 20000,
+        "2038": 20000,
+        "2039": 20000,
+        "2040": 20000,
+        "2041": 20000,
+        "2042": 20000,
+        "2043": 20000,
+        "2044": 20000,
+        "2045": 20000,
+        "2046": 20000
+      }
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Investering",
+        "slug": "inv-fietspad-voorbeeld"
+      },
+      "administrationId": "adm-gov-1",
+      "programmeId": "2",
+      "description": "Fietspad Rondweg",
+      "gross": 900000,
+      "coverage": "bijdragen-derden",
+      "depreciationTerm": 30,
+      "firstDepreciationYear": 2025,
+      "taskFieldCode": "2.1",
+      "capitalChargesSchedule": {
+        "2025": 30000,
+        "2026": 30000,
+        "2027": 30000,
+        "2028": 30000,
+        "2029": 30000,
+        "2030": 30000,
+        "2031": 30000,
+        "2032": 30000,
+        "2033": 30000,
+        "2034": 30000,
+        "2035": 30000,
+        "2036": 30000,
+        "2037": 30000,
+        "2038": 30000,
+        "2039": 30000,
+        "2040": 30000,
+        "2041": 30000,
+        "2042": 30000,
+        "2043": 30000,
+        "2044": 30000,
+        "2045": 30000,
+        "2046": 30000,
+        "2047": 30000,
+        "2048": 30000,
+        "2049": 30000,
+        "2050": 30000,
+        "2051": 30000,
+        "2052": 30000,
+        "2053": 30000,
+        "2054": 30000
+      }
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "ReserveMutation",
+        "slug": "resmut-onderhoud-sport-2026-088"
+      },
+      "administrationId": "adm-gov-1",
+      "reserveId": "res-onderhoud-sport",
+      "reserveName": "Reserve onderhoud sportaccommodaties",
+      "year": 2026,
+      "kind": "withdrawal",
+      "amount": 250000,
+      "programme": "5",
+      "councilResolution": "2026-088",
+      "description": "Renovatie kleedkamers sporthal",
+      "status": "planned"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "ReserveMutation",
+        "slug": "resmut-onderhoud-sport-2027-toevoeging"
+      },
+      "administrationId": "adm-gov-1",
+      "reserveId": "res-onderhoud-sport",
+      "reserveName": "Reserve onderhoud sportaccommodaties",
+      "year": 2027,
+      "kind": "addition",
+      "amount": 150000,
+      "programme": "5",
+      "councilResolution": "2026-042",
+      "description": "Jaarlijkse storting onderhoud",
+      "status": "planned"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "ReserveMutation",
+        "slug": "resmut-onderhoud-sport-2028-toevoeging"
+      },
+      "administrationId": "adm-gov-1",
+      "reserveId": "res-onderhoud-sport",
+      "reserveName": "Reserve onderhoud sportaccommodaties",
+      "year": 2028,
+      "kind": "addition",
+      "amount": 150000,
+      "programme": "5",
+      "councilResolution": "2026-042",
+      "description": "Jaarlijkse storting onderhoud",
+      "status": "planned"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "ReserveMutation",
+        "slug": "resmut-onderhoud-sport-2029-toevoeging"
+      },
+      "administrationId": "adm-gov-1",
+      "reserveId": "res-onderhoud-sport",
+      "reserveName": "Reserve onderhoud sportaccommodaties",
+      "year": 2029,
+      "kind": "addition",
+      "amount": 150000,
+      "programme": "5",
+      "councilResolution": "2026-042",
+      "description": "Jaarlijkse storting onderhoud",
+      "status": "planned"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "ReserveMutation",
+        "slug": "resmut-onderhoud-sport-2030-toevoeging"
+      },
+      "administrationId": "adm-gov-1",
+      "reserveId": "res-onderhoud-sport",
+      "reserveName": "Reserve onderhoud sportaccommodaties",
+      "year": 2030,
+      "kind": "addition",
+      "amount": 150000,
+      "programme": "5",
+      "councilResolution": "2026-042",
+      "description": "Jaarlijkse storting onderhoud",
+      "status": "planned"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "InterestAllocationRun",
+        "slug": "rente-2026-gemeente-voorbeeld"
+      },
+      "administrationId": "adm-gov-1",
+      "year": 2026,
+      "omslagrentePercentage": 1.2,
+      "interestCostAccountNumber": "4810",
+      "treasuryAccountNumber": "8050",
+      "state": "draft"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "InterestAllocationRun",
+        "slug": "rente-2025-gemeente-voorbeeld"
+      },
+      "administrationId": "adm-gov-1",
+      "year": 2025,
+      "omslagrentePercentage": 1.1,
+      "interestCostAccountNumber": "4810",
+      "treasuryAccountNumber": "8050",
+      "state": "draft"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "InterestAllocationRun",
+        "slug": "rente-2027-gemeente-voorbeeld"
+      },
+      "administrationId": "adm-gov-1",
+      "year": 2027,
+      "omslagrentePercentage": 1.3,
+      "interestCostAccountNumber": "4810",
+      "treasuryAccountNumber": "8050",
+      "state": "draft"
+    }
+  ]
+}
