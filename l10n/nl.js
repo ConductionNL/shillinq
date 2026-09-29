@@ -5623,7 +5623,26 @@ OC.L10N.register(
         "The payment run could not be proposed.": "De betaalrun kon niet worden voorgesteld.",
         "This record cannot be blocked from payment.": "Dit record kan niet voor betaling worden geblokkeerd.",
         "Payment block reason": "Reden betalingsblokkade",
-        "Put every open supplier invoice due by a date on a draft run. Blocked, disputed and already batched invoices stay off it.": "Zet elke openstaande inkoopfactuur die uiterlijk op een datum vervalt op een conceptrun. Geblokkeerde, betwiste en al ingeplande facturen blijven erbuiten."
+        "Put every open supplier invoice due by a date on a draft run. Blocked, disputed and already batched invoices stay off it.": "Zet elke openstaande inkoopfactuur die uiterlijk op een datum vervalt op een conceptrun. Geblokkeerde, betwiste en al ingeplande facturen blijven erbuiten.",
+        "Supplier as stated on the invoice": "Leverancier zoals op de factuur",
+        "Invoice IBAN": "IBAN op de factuur",
+        "Same number as": "Zelfde nummer als",
+        "Reason to book the repeated number": "Reden om het herhaalde nummer te boeken",
+        "IBAN differs from supplier record": "IBAN wijkt af van de leverancier",
+        "Reason to book the other IBAN": "Reden om de andere IBAN te boeken",
+        "AP transaction": "Crediteurenpost",
+        "IBAN differs": "IBAN wijkt af",
+        "Book without order": "Boeken zonder order",
+        "Expense account": "Kostenrekening",
+        "Supplier identifier": "Leveranciersnummer op de factuur",
+        "The supplier party identifier as the invoice states it (KvK, VAT or endpoint id). Kept when no payee matches, so the page can say which supplier it does not recognise (purchasing-supplier-invoice-intake REQ-PSII-001).": "De leverancier zoals de factuur die noemt (KvK, btw-nummer of endpoint-id). Blijft staan als geen crediteur past, zodat de pagina kan zeggen welke leverancier niet herkend wordt (purchasing-supplier-invoice-intake REQ-PSII-001).",
+        "The IBAN the invoice asks to be paid on (UBL PaymentMeans/PayeeFinancialAccount/ID), compared with the supplier record (REQ-PSII-004).": "De IBAN waarop de factuur betaald wil worden (UBL PaymentMeans/PayeeFinancialAccount/ID), vergeleken met de leverancier (REQ-PSII-004).",
+        "Set when another supplier invoice or AP transaction of this supplier has the same number: its id, or lookup-failed when the check could not run (REQ-PSII-003).": "Gezet als een andere inkoopfactuur of crediteurenpost van deze leverancier hetzelfde nummer heeft: het id daarvan, of lookup-failed als de controle niet kon draaien (REQ-PSII-003).",
+        "Why this invoice is booked although its number was already used for this supplier.": "Waarom deze factuur geboekt wordt terwijl het nummer al voor deze leverancier gebruikt is.",
+        "The invoice IBAN and the IBAN the supplier record knows, when they differ (REQ-PSII-004).": "De IBAN op de factuur en de IBAN die de leverancier kent, als ze verschillen (REQ-PSII-004).",
+        "Why this invoice is booked although its IBAN differs from the supplier record. Its AP transaction stays payment blocked until someone releases it.": "Waarom deze factuur geboekt wordt terwijl de IBAN afwijkt van de leverancier. De crediteurenpost blijft geblokkeerd voor betaling tot iemand hem vrijgeeft.",
+        "The AP transaction this invoice was booked as without an order (REQ-PSII-002).": "De crediteurenpost waarmee deze factuur zonder order geboekt is (REQ-PSII-002).",
+        "Expense account this line is booked on when the invoice is booked without an order; empty takes the supplier's default expense account (purchasing-supplier-invoice-intake REQ-PSII-002).": "Kostenrekening waarop deze regel geboekt wordt als de factuur zonder order geboekt wordt; leeg neemt de standaard kostenrekening van de leverancier (purchasing-supplier-invoice-intake REQ-PSII-002)."
     },
     "nplurals=2; plural=(n != 1);"
 )

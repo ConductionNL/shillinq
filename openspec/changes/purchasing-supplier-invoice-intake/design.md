@@ -151,3 +151,14 @@ can be booked through the new transition once coded.
 ## Open Questions
 
 - See the proposal: whether order-backed invoices are handed over after matching.
+
+## Build notes (2026-09-29)
+
+What changed against this design while building it at the stack head:
+
+- `SupplierInvoice.supplierId` already is the payee reference (`$ref: Payee`, format uuid), so no separate `payeeId` was added: intake resolves `supplierId` itself. The UBL parser used to write the raw party identifier (a KvK number, a GLN) into `supplierId`, which the uuid format refuses, so every UBL import from a party without a uuid failed validation. The raw identifier now goes to a new `supplierIdentifier`, and `supplierId` is no longer required, so an invoice from an unknown supplier is saved and shows the identifier until someone picks the payee in the edit form.
+- `SupplierInvoiceChecks` also offers `payee()` and `warnings()`, which the guard, the action and the save listener share.
+- OpenRegister lists every transition whose `from` matches, without running its guard, so "Book without order" shows on an order-backed invoice too; pressing it is refused, naming the purchase order. The spec scenario says so.
+- The warnings show as fields on the invoice page (same number as, IBAN differs, and the two reasons), not as a banner: the v1 detail page has no conditional notice.
+- `APTransaction.issue` now declares `materialise-gl-transaction` with `sourceSchema: APTransaction`, mapped like `APInvoice` (the two share the line shape). Every issued AP transaction posts from now on, not only the handed-over ones.
+- An acknowledged duplicate whose twin already reached accounts payable is still refused by `APGuard::isInvoiceNumberUnique` on `receive`: the ledger never takes the same number twice for one supplier.

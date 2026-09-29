@@ -13749,6 +13749,16 @@
 						"key": "statusCode",
 						"label": "Status",
 						"sortable": true
+					},
+					{
+						"key": "duplicateOfId",
+						"label": "Same number as",
+						"sortable": false
+					},
+					{
+						"key": "ibanMismatch",
+						"label": "IBAN differs",
+						"sortable": false
 					}
 				],
 				"defaultSort": "dueDate",
@@ -13809,6 +13819,41 @@
 					{
 						"key": "supplierId",
 						"label": "Supplier",
+						"type": "string"
+					},
+					{
+						"key": "supplierIdentifier",
+						"label": "Supplier as stated on the invoice",
+						"type": "string"
+					},
+					{
+						"key": "payeeIban",
+						"label": "Invoice IBAN",
+						"type": "string"
+					},
+					{
+						"key": "duplicateOfId",
+						"label": "Same number as",
+						"type": "string"
+					},
+					{
+						"key": "duplicateAcknowledgedReason",
+						"label": "Reason to book the repeated number",
+						"type": "string"
+					},
+					{
+						"key": "ibanMismatch",
+						"label": "IBAN differs from supplier record",
+						"type": "string"
+					},
+					{
+						"key": "ibanAcknowledgedReason",
+						"label": "Reason to book the other IBAN",
+						"type": "string"
+					},
+					{
+						"key": "apTransactionId",
+						"label": "AP transaction",
 						"type": "string"
 					},
 					{

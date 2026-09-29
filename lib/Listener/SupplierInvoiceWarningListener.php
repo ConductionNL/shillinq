@@ -92,7 +92,9 @@ class SupplierInvoiceWarningListener implements IEventListener {
 			$id = (string)($invoice['id'] ?? ($entity->getUuid() ?? ''));
 			$invoice['id'] = $id;
 			$warnings = $this->checks->warnings(invoice: $invoice);
-			if ((string)($invoice['duplicateOfId'] ?? '') === $warnings['duplicateOfId'] && (string)($invoice['ibanMismatch'] ?? '') === $warnings['ibanMismatch']) {
+			$unchanged = (string)($invoice['duplicateOfId'] ?? '') === $warnings['duplicateOfId']
+				&& (string)($invoice['ibanMismatch'] ?? '') === $warnings['ibanMismatch'];
+			if ($unchanged === true) {
 				return;
 			}
 

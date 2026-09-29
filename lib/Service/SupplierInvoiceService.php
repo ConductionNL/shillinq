@@ -703,8 +703,8 @@ class SupplierInvoiceService {
 			'totalVat' => $this->toCents(amount: $totalVat),
 			'totalInclVat' => $this->toCents(amount: $totalInclVat),
 			'paymentReference' => trim($this->xpathFirst(xml: $xml, paths: ['//cac:PaymentMeans/cbc:PaymentID'])),
-			'payeeIban' => SupplierInvoiceChecks::compact(
-				value: $this->xpathFirst(xml: $xml, paths: ['//cac:PaymentMeans/cac:PayeeFinancialAccount/cbc:ID'])
+			'payeeIban' => strtoupper(
+				(string)preg_replace('/\s+/', '', $this->xpathFirst(xml: $xml, paths: ['//cac:PaymentMeans/cac:PayeeFinancialAccount/cbc:ID']))
 			),
 			'supplierKvk' => trim(
 				$this->xpathFirst(

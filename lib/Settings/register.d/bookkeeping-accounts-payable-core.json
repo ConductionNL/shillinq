@@ -1450,6 +1450,26 @@
         "@self": {
           "register": "shillinq",
           "schema": "Payee",
+          "slug": "payee-drukkerij-vandermeer"
+        },
+        "vendorNumber": "V-2026-022",
+        "name": "Drukkerij Van der Meer B.V.",
+        "payeeType": "supplier",
+        "kvkNumber": "12345678",
+        "vatNumber": "NL812345678B01",
+        "paymentTermDays": 30,
+        "defaultExpenseAccountNumber": "4300",
+        "bankAccount": {
+          "iban": "NL00TEST0555555555",
+          "accountHolderName": "Drukkerij Van der Meer B.V."
+        },
+        "administrationId": "adm-shillinq-demo",
+        "lifecycleState": "active"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Payee",
           "slug": "payee-schoonmaak-devries"
         },
         "vendorNumber": "V-2026-021",

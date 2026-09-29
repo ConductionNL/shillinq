@@ -24,8 +24,7 @@ one.
 
 ### Requirement: An invoice without an order is booked through accounts payable (REQ-PSII-002)
 
-A received `SupplierInvoice` with no line linked to a purchase order SHALL
-offer "Book without order". The transition SHALL require a resolved payee,
+A received `SupplierInvoice` SHALL offer "Book without order". The transition SHALL require a resolved payee,
 an expense account on every line (defaulting to the payee's default expense
 account), and a reason for any open duplicate or IBAN warning. It SHALL
 write one `APTransaction` for the invoice, issue it so that the ledger shows
@@ -42,8 +41,8 @@ MUST be refused for an invoice with a line linked to a purchase order.
 #### Scenario: An order-backed invoice keeps the three-way match
 
 - GIVEN a received invoice whose line links to purchase order PO-2026-031
-- WHEN the bookkeeper looks for Book without order
-- THEN the action is not offered, and calling the transition directly is refused
+- WHEN the bookkeeper presses Book without order
+- THEN the transition is refused with a message naming PO-2026-031 and the three-way match
 
 ### Requirement: A duplicate invoice number is flagged however the invoice arrived (REQ-PSII-003)
 
