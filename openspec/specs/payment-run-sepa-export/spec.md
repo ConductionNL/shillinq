@@ -103,6 +103,16 @@ OpenRegister's lifecycle engine, not a bespoke PHP state machine.
 - **AND** `exportedAt` is set
 - **AND** the `PaymentRun` lifecycle state becomes `exported`.
 
+#### Scenario: A refused save is not reported as exported
+
+- **GIVEN** an approved `PaymentRun` whose files are stored
+- **WHEN** saving it as `exported` fails, because a guard such as the duplicate guard refuses the transition or OpenRegister is not available
+- **THEN** the export answers `export-refused` (a guard said no) or `save-failed` with the reason
+- **AND** it does not report an `exportedFileRef` or an `exported` state
+- **AND** the stored pain.001 and CSV of that run are deleted again, so no bank file exists for a run that did not export.
+
+@e2e exclude pure backend: a guard refusal at save time cannot be staged from the browser without a duplicate paid run in the register; covered by `PaymentRunExportServiceTest::testARefusedSaveIsReportedAndTheBankFileRemoved` and `testAnUnsavedRunIsNotReportedAsExported`.
+
 ### Requirement: REQ-SEPA-006: An "Export to bank" trigger SHALL invoke the export
 
 The system SHALL expose an "Export to bank" action on the `PaymentRun` detail

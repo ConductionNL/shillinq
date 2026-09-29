@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\PaymentRun;
 
+use OCA\OpenRegister\Exception\HookStoppedException;
 use OCA\Shillinq\PaymentRun\Generator\PaymentRunCsvGenerator;
 use OCA\Shillinq\PaymentRun\Generator\SepaPain001Generator;
 use OCA\Shillinq\PaymentRun\PaymentBlockChecker;
@@ -51,6 +52,27 @@ class PaymentRunExportServiceTest extends TestCase {
 	 * @var int
 	 */
 	private int $newFileCalls = 0;
+
+	/**
+	 * What the fake ObjectService throws on save (null: it saves).
+	 *
+	 * @var \Throwable|null
+	 */
+	private ?\Throwable $refusal = null;
+
+	/**
+	 * Whether OpenRegister's ObjectService resolves from the container.
+	 *
+	 * @var boolean
+	 */
+	private bool $objectServiceAvailable = true;
+
+	/**
+	 * How many stored export files were deleted again.
+	 *
+	 * @var integer
+	 */
+	private int $deletedFiles = 0;
 
 	/**
 	 * The seeded approved PR-2026-001 fixture (SAFE placeholders).
@@ -83,12 +105,14 @@ class PaymentRunExportServiceTest extends TestCase {
 	 * @return object
 	 */
 	private function fakeObjectService(array &$captured): object {
-		return new class($captured) {
+		return new class($captured, $this->refusal) {
 			/**
 			 * @param array<string,mixed> $captured Capture slot.
+			 * @param \Throwable|null     $refusal  What the save throws, if anything.
 			 */
 			public function __construct(
 				private array &$captured,
+				private ?\Throwable $refusal,
 			) {
 			}//end __construct()
 
@@ -106,6 +130,10 @@ class PaymentRunExportServiceTest extends TestCase {
 			 * @return array<string,mixed>
 			 */
 			public function saveObject(array $object): array {
+				if ($this->refusal !== null) {
+					throw $this->refusal;
+				}
+
 				$this->captured = $object;
 				return $object;
 			}//end saveObject()
@@ -134,7 +162,7 @@ class PaymentRunExportServiceTest extends TestCase {
 					return new PaymentRunCsvGenerator();
 				}
 
-				if ($id === 'OCA\\OpenRegister\\Service\\ObjectService') {
+				if ($id === 'OCA\\OpenRegister\\Service\\ObjectService' && $this->objectServiceAvailable === true) {
 					return $this->fakeObjectService($captured);
 				}
 
@@ -145,6 +173,12 @@ class PaymentRunExportServiceTest extends TestCase {
 		$file = $this->createMock(File::class);
 		$file->method('getPath')->willReturn('/admin/files/Shillinq/PaymentRuns/adm-consultancy/PR-2026-001.pain001.xml');
 		$file->method('getId')->willReturn(4242);
+		$this->deletedFiles = 0;
+		$file->method('delete')->willReturnCallback(
+			function (): void {
+				$this->deletedFiles++;
+			}
+		);
 
 		$folder = $this->createMock(Folder::class);
 		$folder->method('nodeExists')->willReturn(false);
@@ -287,4 +321,48 @@ class PaymentRunExportServiceTest extends TestCase {
 		$this->assertSame(0, $this->newFileCalls);
 		$this->assertSame([], $captured);
 	}//end testABlockedLineIsRefusedBeforeAnyFileIsWritten()
+
+	/**
+	 * A refused save (the duplicate guard stops the approved to exported
+	 * transition) is reported as a refusal, not as an exported run, and the
+	 * bank file of the refused run is removed again so nobody uploads it.
+	 *
+	 * @return void
+	 */
+	public function testARefusedSaveIsReportedAndTheBankFileRemoved(): void {
+		// The shape MagicMapper throws after LifecycleValidationListener::reject().
+		$reason = 'Invoice ENECO-2026-04-0001 is already paid in run PR-2026-000';
+		$this->refusal = new HookStoppedException(
+			$reason,
+			['message' => $reason, 'action' => 'export']
+		);
+		$captured = [];
+		$service = $this->service($captured);
+
+		$result = $service->export($this->approvedRun());
+
+		$this->assertSame('export-refused', $result['error'] ?? null);
+		$this->assertSame('Invoice ENECO-2026-04-0001 is already paid in run PR-2026-000', $result['reason']);
+		$this->assertArrayNotHasKey('exportedFileRef', $result);
+		$this->assertArrayNotHasKey('lifecycleState', $result);
+		$this->assertSame(2, $this->deletedFiles, 'The pain.001 and the CSV of a refused run must not stay in Files');
+	}//end testARefusedSaveIsReportedAndTheBankFileRemoved()
+
+	/**
+	 * Without OpenRegister's ObjectService the run cannot move to exported,
+	 * so the export must not say it did.
+	 *
+	 * @return void
+	 */
+	public function testAnUnsavedRunIsNotReportedAsExported(): void {
+		$this->objectServiceAvailable = false;
+		$captured = [];
+		$service = $this->service($captured);
+
+		$result = $service->export($this->approvedRun());
+
+		$this->assertSame('save-failed', $result['error'] ?? null);
+		$this->assertArrayNotHasKey('lifecycleState', $result);
+		$this->assertSame(2, $this->deletedFiles);
+	}//end testAnUnsavedRunIsNotReportedAsExported()
 }//end class

@@ -118,6 +118,8 @@ class PaymentRunExportService {
 	 * @return array<string, mixed> An envelope: on success
 	 *                              `{ exportedFileRef, exportedAt, lifecycleState,
 	 *                              files: [...] }`; on rejection `{ error: ... }`.
+	 *
+	 * @spec openspec/specs/payment-run-sepa-export/spec.md#requirement-req-sepa-005-export-shall-write-back-the-file-reference-and-drive-the-lifecycle
 	 */
 	public function export(array $paymentRun): array {
 		$state = (string)($paymentRun['lifecycleState'] ?? $paymentRun['status'] ?? '');
@@ -149,6 +151,7 @@ class PaymentRunExportService {
 		$userId = ($this->userSession->getUser()?->getUID() ?? '');
 
 		$storedFiles = [];
+		$storedNodes = [];
 		$xmlFileRef = null;
 		foreach ($rendered as $file) {
 			$stored = $this->storeFile(administrationId: $administrationId, rendered: $file, userId: $userId);
@@ -162,6 +165,10 @@ class PaymentRunExportService {
 						'shillinq-file-type:' . $file->format,
 					]
 				);
+			}
+
+			if ($stored['node'] !== null) {
+				$storedNodes[] = $stored['node'];
 			}
 
 			$storedFiles[] = [
@@ -196,7 +203,15 @@ class PaymentRunExportService {
 			]
 		);
 
-		$saved = $this->saveRun(run: $update);
+		$outcome = $this->saveRun(run: $update);
+		if (isset($outcome['error']) === true) {
+			// The run did not move to exported (a guard refused it, or it could
+			// not be saved): its bank file must not stay where someone uploads it.
+			$this->removeFiles(nodes: $storedNodes);
+			return $outcome;
+		}
+
+		$saved = $outcome['run'];
 
 		return [
 			'exportedFileRef' => $xmlFileRef,
@@ -322,12 +337,12 @@ class PaymentRunExportService {
 	 * @param RenderedFile $rendered The rendered payload.
 	 * @param string $userId The owning user id (storage home).
 	 *
-	 * @return array{filePath: string|null, fileId: int|null}
+	 * @return array{filePath: string|null, fileId: int|null, node: \OCP\Files\File|null}
 	 */
 	private function storeFile(string $administrationId, RenderedFile $rendered, string $userId): array {
 		if ($userId === '') {
 			$this->logger->warning('PaymentRunExportService: no user session, cannot store export file');
-			return ['filePath' => null, 'fileId' => null];
+			return ['filePath' => null, 'fileId' => null, 'node' => null];
 		}
 
 		try {
@@ -340,19 +355,19 @@ class PaymentRunExportService {
 
 			$folder = $this->ensureFolder(base: $userFolder, segments: $segments);
 			if ($folder === null) {
-				return ['filePath' => null, 'fileId' => null];
+				return ['filePath' => null, 'fileId' => null, 'node' => null];
 			}
 
 			$fileName = $this->uniqueName(folder: $folder, name: $rendered->fileName);
 			$file = $folder->newFile($fileName, $rendered->content);
 
-			return ['filePath' => $file->getPath(), 'fileId' => $file->getId()];
+			return ['filePath' => $file->getPath(), 'fileId' => $file->getId(), 'node' => $file];
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'PaymentRunExportService: failed to store export file',
 				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
 			);
-			return ['filePath' => null, 'fileId' => null];
+			return ['filePath' => null, 'fileId' => null, 'node' => null];
 		}//end try
 
 	}//end storeFile()
@@ -462,37 +477,64 @@ class PaymentRunExportService {
 	/**
 	 * Persist the updated PaymentRun through OpenRegister (drives the transition).
 	 *
+	 * A save that throws is never reported as exported: a guard that stops the
+	 * approved to exported transition (the duplicate guard, four eyes) comes
+	 * back as `export-refused` with its reason, anything else as `save-failed`.
+	 *
 	 * @param array<string, mixed> $run The updated PaymentRun fields.
 	 *
-	 * @return array<string, mixed> The saved run (or the input on failure).
+	 * @return array<string, mixed> `{ run: saved }` or `{ error, reason }`.
 	 */
 	private function saveRun(array $run): array {
-		try {
-			$objectService = $this->objectService();
-			if ($objectService === null) {
-				return $run;
-			}
+		$objectService = $this->objectService();
+		if ($objectService === null) {
+			return ['error' => 'save-failed', 'reason' => 'OpenRegister is not available'];
+		}
 
+		try {
 			$saved = $objectService
 				->setRegister(self::REGISTER)
 				->setSchema(self::SCHEMA)
 				->saveObject($run);
-
-			if (is_object($saved) === true && method_exists($saved, 'jsonSerialize') === true) {
-				return (array)$saved->jsonSerialize();
-			}
-
-			if (is_array($saved) === true) {
-				return $saved;
-			}
-
-			return $run;
 		} catch (\Throwable $e) {
 			$this->logger->warning('PaymentRunExportService: failed to save PaymentRun', ['exception' => $e->getMessage()]);
-			return $run;
-		}//end try
+			$error = 'save-failed';
+			if (method_exists($e, 'getErrors') === true && $e->getErrors() !== []) {
+				$error = 'export-refused';
+			}
+
+			return ['error' => $error, 'reason' => $e->getMessage()];
+		}
+
+		if (is_object($saved) === true && method_exists($saved, 'jsonSerialize') === true) {
+			return ['run' => (array)$saved->jsonSerialize()];
+		}
+
+		if (is_array($saved) === true) {
+			return ['run' => $saved];
+		}
+
+		return ['run' => $run];
 
 	}//end saveRun()
+
+	/**
+	 * Delete the export files of a run that did not move to exported.
+	 *
+	 * @param array<int, \OCP\Files\File> $nodes The stored files.
+	 *
+	 * @return void
+	 */
+	private function removeFiles(array $nodes): void {
+		foreach ($nodes as $node) {
+			try {
+				$node->delete();
+			} catch (\Throwable $e) {
+				$this->logger->warning('PaymentRunExportService: could not remove the file of an unexported run', ['exception' => $e->getMessage()]);
+			}
+		}
+
+	}//end removeFiles()
 
 	/**
 	 * Lazily resolve OpenRegister's ObjectService from the container (null on miss).
