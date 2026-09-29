@@ -71,6 +71,6 @@ class StampPostingAction implements LifecycleActionInterface {
 			$uid = $user->getUID();
 		}
 
-		return PostingStamps::apply(transaction: $objectData, user: $uid, now: new DateTimeImmutable());
+		return (new PostingStamps())->apply(transaction: $objectData, user: $uid, now: new DateTimeImmutable());
 	}//end execute()
 }//end class

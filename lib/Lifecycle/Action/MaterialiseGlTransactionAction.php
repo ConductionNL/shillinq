@@ -244,7 +244,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 		}
 
 		$header['periodId'] = $this->periodId(object: $objectData, postingDate: (string)$header['postingDate']);
-		$header = PostingStamps::apply(transaction: $header, user: $this->actor(), now: new DateTimeImmutable());
+		$header = (new PostingStamps())->apply(transaction: $header, user: $this->actor(), now: new DateTimeImmutable());
 
 		$objectData['glTransactionId'] = $this->write(header: $header, lines: $lines, sourceId: $sourceId);
 		return $objectData;

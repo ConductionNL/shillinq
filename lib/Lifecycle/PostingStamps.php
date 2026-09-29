@@ -77,11 +77,11 @@ final class PostingStamps {
 	 *
 	 * @spec openspec/changes/ledger-posting-path/tasks.md#task-2.5
 	 */
-	public static function apply(array $transaction, string $user, DateTimeImmutable $now): array {
+	public function apply(array $transaction, string $user, DateTimeImmutable $now): array {
 		$transaction['postingLocked'] = true;
 		$transaction['integrityVerified'] = true;
 
-		$retention = self::retentionFor(postingDate: (string)($transaction['postingDate'] ?? ''));
+		$retention = $this->retentionFor(postingDate: (string)($transaction['postingDate'] ?? ''));
 		$existing = (string)($transaction['retentionUntil'] ?? '');
 		if ($retention !== '' && $existing < $retention) {
 			$transaction['retentionUntil'] = $retention;
@@ -92,7 +92,7 @@ final class PostingStamps {
 			$trail = [];
 		}
 
-		if (self::postRecorded(trail: $trail) === false) {
+		if ($this->postRecorded(trail: $trail) === false) {
 			$trail[] = [
 				'user' => $user,
 				'timestamp' => $now->format(DateTimeInterface::ATOM),
@@ -111,7 +111,7 @@ final class PostingStamps {
 	 *
 	 * @return string The retention date (Y-m-d), or ''.
 	 */
-	private static function retentionFor(string $postingDate): string {
+	private function retentionFor(string $postingDate): string {
 		$date = DateTimeImmutable::createFromFormat('!Y-m-d', substr($postingDate, 0, 10));
 		if ($date === false) {
 			return '';
@@ -127,7 +127,7 @@ final class PostingStamps {
 	 *
 	 * @return bool
 	 */
-	private static function postRecorded(array $trail): bool {
+	private function postRecorded(array $trail): bool {
 		foreach ($trail as $entry) {
 			if (is_array($entry) === true && ($entry['action'] ?? '') === self::TRAIL_ACTION) {
 				return true;

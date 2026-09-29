@@ -85,7 +85,7 @@ final class PostingStampsTest extends TestCase {
 	public function testAStampedBalancedEntryMeetsEveryMandatoryRule(): void {
 		self::assertNotSame([], $this->mandatoryViolations($this->memorial()), 'Control: the unstamped entry is refused today.');
 
-		$stamped = PostingStamps::apply($this->memorial(), 'alice', new DateTimeImmutable('2026-09-20T10:00:00+00:00'));
+		$stamped = (new PostingStamps())->apply($this->memorial(), 'alice', new DateTimeImmutable('2026-09-20T10:00:00+00:00'));
 
 		self::assertSame([], $this->mandatoryViolations($stamped));
 		self::assertTrue($stamped['postingLocked']);
@@ -107,7 +107,7 @@ final class PostingStampsTest extends TestCase {
 		$entry['retentionUntil'] = '2040-12-31';
 		$now = new DateTimeImmutable('2026-09-20T10:00:00+00:00');
 
-		$stamped = PostingStamps::apply(PostingStamps::apply($entry, 'alice', $now), 'bob', $now);
+		$stamped = (new PostingStamps())->apply((new PostingStamps())->apply($entry, 'alice', $now), 'bob', $now);
 
 		self::assertCount(1, $stamped['auditTrail']);
 		self::assertSame('alice', $stamped['auditTrail'][0]['user']);
@@ -124,7 +124,7 @@ final class PostingStampsTest extends TestCase {
 		$entry = $this->memorial();
 		unset($entry['postingDate']);
 
-		$stamped = PostingStamps::apply($entry, 'alice', new DateTimeImmutable('2026-09-20T10:00:00+00:00'));
+		$stamped = (new PostingStamps())->apply($entry, 'alice', new DateTimeImmutable('2026-09-20T10:00:00+00:00'));
 
 		self::assertArrayNotHasKey('retentionUntil', $stamped);
 		self::assertNotSame([], $this->mandatoryViolations($stamped));
@@ -139,7 +139,7 @@ final class PostingStampsTest extends TestCase {
 		$entry = $this->memorial();
 		$entry['lines'][1]['amount'] = 1000.0;
 
-		$stamped = PostingStamps::apply($entry, 'alice', new DateTimeImmutable('2026-09-20T10:00:00+00:00'));
+		$stamped = (new PostingStamps())->apply($entry, 'alice', new DateTimeImmutable('2026-09-20T10:00:00+00:00'));
 
 		self::assertContains('gl-double-entry-balanced', $this->mandatoryViolations($stamped));
 	}//end testStampingDoesNotMakeAnUnbalancedEntryPass()

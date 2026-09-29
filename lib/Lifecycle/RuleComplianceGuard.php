@@ -133,7 +133,7 @@ class RuleComplianceGuard {
 			// retention, integrity and audit-trail fields are what the post
 			// itself gives the entry (StampPostingAction persists them), so the
 			// entry is judged as the post leaves it (REQ-LPP-001, #516).
-			$transaction = PostingStamps::apply(transaction: $transaction, user: 'system', now: new DateTimeImmutable());
+			$transaction = (new PostingStamps())->apply(transaction: $transaction, user: 'system', now: new DateTimeImmutable());
 			$transaction['lines'] = $this->loadLines($transaction);
 
 			$violations = RuleEngine::evaluate('GLTransaction', $transaction, $this->context($transaction));
