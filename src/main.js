@@ -31,12 +31,12 @@ import pinia from './pinia.js'
 import registry from './registry.js'
 import { classifyUnmatched, openBankLineMatch } from './utils/bankMatchActions.js'
 import { openDownPaymentInvoice } from './utils/downPaymentActions.js'
-import { openProposePaymentRun } from './utils/paymentRunActions.js'
 import { openIntegriqConnections } from './utils/integriqConnections.js'
 import {
 	buildPageFragmentIndex,
 	mergeFullFragmentIntoManifest,
 } from './utils/mergeFragmentIntoManifest.js'
+import { openProposePaymentRun } from './utils/paymentRunActions.js'
 
 // Must stay first: sets __webpack_public_path__ / __webpack_nonce__ before any
 // other module evaluates — see src/setPublicPath.js.

@@ -27,7 +27,12 @@
 		<div class="ppr">
 			<template v-if="!result">
 				<p class="ppr__hint">
-					{{ t('shillinq', 'Every open supplier invoice due by the date you choose goes on a draft run. Blocked, disputed and already batched invoices stay off it.') }}
+					{{
+						t(
+							'shillinq',
+							'Every open supplier invoice due by the date you choose goes on a draft run. Blocked, disputed and already batched invoices stay off it.',
+						)
+					}}
 				</p>
 				<NcTextField
 					v-model="dueOnOrBefore"
@@ -52,12 +57,22 @@
 
 			<template v-else>
 				<p v-if="result.paymentRun" data-testid="propose-created">
-					{{ t('shillinq', 'Draft run {number} with {count} payments, total EUR {total}.', {
-						number: result.paymentRun.runNumber,
-						count: result.paymentRun.paymentLines.length,
-						total: Number(result.paymentRun.totalAmount).toFixed(2),
-					}) }}
-					<a :href="runUrl" data-testid="propose-open-run">{{ t('shillinq', 'Open the payment run') }}</a>
+					{{
+						t(
+							'shillinq',
+							'Draft run {number} with {count} payments, total EUR {total}.',
+							{
+								number: result.paymentRun.runNumber,
+								count: result.paymentRun.paymentLines.length,
+								total: Number(result.paymentRun.totalAmount).toFixed(
+									2,
+								),
+							},
+						)
+					}}
+					<a :href="runUrl" data-testid="propose-open-run">{{
+						t('shillinq', 'Open the payment run')
+					}}</a>
 				</p>
 				<p v-else data-testid="propose-nothing">
 					{{ t('shillinq', 'No invoice can be paid by that date.') }}
@@ -67,7 +82,9 @@
 						{{ t('shillinq', 'Left out') }}
 					</h3>
 					<ul class="ppr__skipped" data-testid="propose-skipped">
-						<li v-for="skip in result.skipped" :key="skip.apTransactionRef">
+						<li
+							v-for="skip in result.skipped"
+							:key="skip.apTransactionRef">
 							{{ skip.invoiceNumber }}: {{ reasonText(skip) }}
 						</li>
 					</ul>
@@ -149,7 +166,12 @@ export default {
 		 * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-3.2
 		 */
 		canSubmit() {
-			return this.administrationId !== '' && this.dueOnOrBefore !== '' && this.executionDate !== '' && this.debtorAccountIban.trim() !== ''
+			return (
+				this.administrationId !== ''
+				&& this.dueOnOrBefore !== ''
+				&& this.executionDate !== ''
+				&& this.debtorAccountIban.trim() !== ''
+			)
 		},
 
 		/**
@@ -160,7 +182,9 @@ export default {
 		 */
 		runUrl() {
 			const id = this.result?.paymentRun?.id || ''
-			return generateUrl('/apps/shillinq/bookkeeping/payment-runs/' + encodeURIComponent(id))
+			return generateUrl(
+				'/apps/shillinq/bookkeeping/payment-runs/' + encodeURIComponent(id),
+			)
 		},
 	},
 
@@ -171,10 +195,17 @@ export default {
 	 */
 	async mounted() {
 		try {
-			const context = await axios.get(generateUrl('/apps/shillinq/api/administrations/context'))
-			this.administrationId = String(context.data?.activeAdministrationId || '')
+			const context = await axios.get(
+				generateUrl('/apps/shillinq/api/administrations/context'),
+			)
+			this.administrationId = String(
+				context.data?.activeAdministrationId || '',
+			)
 		} catch (error) {
-			this.error = errorMessage(error, t('shillinq', 'The administration could not be loaded.'))
+			this.error = errorMessage(
+				error,
+				t('shillinq', 'The administration could not be loaded.'),
+			)
 		}
 	},
 
@@ -209,7 +240,10 @@ export default {
 					payOnDueDate: this.payOnDueDate,
 				})
 			} catch (error) {
-				this.error = errorMessage(error, t('shillinq', 'The payment run could not be proposed.'))
+				this.error = errorMessage(
+					error,
+					t('shillinq', 'The payment run could not be proposed.'),
+				)
 			} finally {
 				this.submitting = false
 			}

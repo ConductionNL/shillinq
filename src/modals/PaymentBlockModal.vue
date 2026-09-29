@@ -21,17 +21,31 @@
 <template>
 	<NcDialog
 		v-if="open"
-		:name="mode === 'release' ? t('shillinq', 'Release payment') : t('shillinq', 'Block payment')"
+		:name="
+			mode === 'release'
+				? t('shillinq', 'Release payment')
+				: t('shillinq', 'Block payment')
+		"
 		size="small"
 		data-testid="payment-block-modal"
 		@closing="onClose">
 		<div class="pbm">
 			<p v-if="mode === 'release'">
-				{{ t('shillinq', 'Payment runs can pay this again from the next proposal on.') }}
+				{{
+					t(
+						'shillinq',
+						'Payment runs can pay this again from the next proposal on.',
+					)
+				}}
 			</p>
 			<template v-else>
 				<p>
-					{{ t('shillinq', 'No payment run pays this while the block is on. Bookkeeping goes on as usual.') }}
+					{{
+						t(
+							'shillinq',
+							'No payment run pays this while the block is on. Bookkeeping goes on as usual.',
+						)
+					}}
 				</p>
 				<NcTextField
 					v-model="reason"
@@ -55,7 +69,11 @@
 				:disabled="submitting"
 				data-testid="payment-block-submit"
 				@click="submit">
-				{{ mode === 'release' ? t('shillinq', 'Release payment') : t('shillinq', 'Block payment') }}
+				{{
+					mode === 'release'
+						? t('shillinq', 'Release payment')
+						: t('shillinq', 'Block payment')
+				}}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -67,7 +85,11 @@ import { emit } from '@nextcloud/event-bus'
 import { translate as t } from '@nextcloud/l10n'
 import { NcButton, NcDialog, NcTextField } from '@nextcloud/vue'
 import { errorMessage } from '../utils/downPaymentApi.js'
-import { blockPayload, releasePayload, setPaymentBlock } from '../utils/paymentRunApi.js'
+import {
+	blockPayload,
+	releasePayload,
+	setPaymentBlock,
+} from '../utils/paymentRunApi.js'
 
 export default {
 	name: 'PaymentBlockModal',
@@ -79,16 +101,19 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+
 		// APTransaction or Payee.
 		schema: {
 			type: String,
 			required: true,
 		},
+
 		// block or release.
 		mode: {
 			type: String,
 			default: 'block',
 		},
+
 		objectId: {
 			type: String,
 			default: '',
@@ -129,7 +154,10 @@ export default {
 			this.error = ''
 			let payload
 			try {
-				payload = this.mode === 'release' ? releasePayload() : blockPayload(this.reason)
+				payload =
+					this.mode === 'release'
+						? releasePayload()
+						: blockPayload(this.reason)
 			} catch (error) {
 				this.error = error.message
 				return
@@ -137,11 +165,23 @@ export default {
 			this.submitting = true
 			try {
 				await setPaymentBlock(this.schema, this.effectiveId, payload)
-				showSuccess(this.mode === 'release' ? t('shillinq', 'Payment released') : t('shillinq', 'Payment blocked'))
-				emit('cn:widget:refresh', { widget: this.schema === 'Payee' ? 'PayeeDetail' : 'APTransactionDetail' })
+				showSuccess(
+					this.mode === 'release'
+						? t('shillinq', 'Payment released')
+						: t('shillinq', 'Payment blocked'),
+				)
+				emit('cn:widget:refresh', {
+					widget:
+						this.schema === 'Payee'
+							? 'PayeeDetail'
+							: 'APTransactionDetail',
+				})
 				this.$emit('close', payload)
 			} catch (error) {
-				this.error = errorMessage(error, t('shillinq', 'The payment block could not be saved.'))
+				this.error = errorMessage(
+					error,
+					t('shillinq', 'The payment block could not be saved.'),
+				)
 			} finally {
 				this.submitting = false
 			}

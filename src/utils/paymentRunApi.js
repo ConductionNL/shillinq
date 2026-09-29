@@ -31,7 +31,9 @@ export function buildProposalRequest(form) {
 	return {
 		administrationId: String(form.administrationId || ''),
 		dueOnOrBefore: String(form.dueOnOrBefore || ''),
-		debtorAccountIban: String(form.debtorAccountIban || '').replace(/\s+/g, '').toUpperCase(),
+		debtorAccountIban: String(form.debtorAccountIban || '')
+			.replace(/\s+/g, '')
+			.toUpperCase(),
 		executionDate: String(form.executionDate || ''),
 		payOnDueDate: Boolean(form.payOnDueDate),
 	}
@@ -119,23 +121,23 @@ export async function setPaymentBlock(schema, id, payload) {
 export function skipReasonText(skip) {
 	const detail = String(skip?.detail || '')
 	switch (skip?.reason) {
-	case 'invoice-blocked':
-		return detail
-			? t('shillinq', 'Invoice blocked: {detail}', { detail })
-			: t('shillinq', 'Invoice blocked')
-	case 'payee-blocked':
-		return detail
-			? t('shillinq', 'Supplier blocked: {detail}', { detail })
-			: t('shillinq', 'Supplier blocked')
-	case 'invoice-disputed':
-		return t('shillinq', 'Invoice disputed')
-	case 'already-on-run':
-		return t('shillinq', 'Already on a payment run')
-	case 'no-iban':
-		return t('shillinq', 'Supplier has no IBAN')
-	case 'not-euro':
-		return t('shillinq', 'Not in euro')
-	default:
-		return t('shillinq', 'Not found')
+		case 'invoice-blocked':
+			return detail
+				? t('shillinq', 'Invoice blocked: {detail}', { detail })
+				: t('shillinq', 'Invoice blocked')
+		case 'payee-blocked':
+			return detail
+				? t('shillinq', 'Supplier blocked: {detail}', { detail })
+				: t('shillinq', 'Supplier blocked')
+		case 'invoice-disputed':
+			return t('shillinq', 'Invoice disputed')
+		case 'already-on-run':
+			return t('shillinq', 'Already on a payment run')
+		case 'no-iban':
+			return t('shillinq', 'Supplier has no IBAN')
+		case 'not-euro':
+			return t('shillinq', 'Not in euro')
+		default:
+			return t('shillinq', 'Not found')
 	}
 }
