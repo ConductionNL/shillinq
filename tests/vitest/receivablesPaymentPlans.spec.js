@@ -122,6 +122,12 @@ describe('Payment plans page', () => {
 			'activate',
 			'settle',
 			'cancel',
+			'cancel',
+		])
+		// One cancel per state: visibleWhen has no "in" operator (gate 53).
+		expect(actions.slice(2).map((a) => a.visibleWhen)).toEqual([
+			{ field: 'lifecycleState', op: 'eq', value: 'draft' },
+			{ field: 'lifecycleState', op: 'eq', value: 'active' },
 		])
 		actions.forEach((a) => expect(a.target).toBe('PaymentPlanActionModal'))
 		expect(registryJs).toContain(

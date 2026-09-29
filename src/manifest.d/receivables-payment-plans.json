@@ -148,6 +148,22 @@
 						}
 					},
 					{
+						"id": "cancel-draft-plan",
+						"label": "Cancel plan",
+						"type": "open-modal",
+						"target": "PaymentPlanActionModal",
+						"icon": "CloseCircleOutline",
+						"props": {
+							"open": true,
+							"mode": "cancel"
+						},
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"op": "eq",
+							"value": "draft"
+						}
+					},
+					{
 						"id": "cancel-plan",
 						"label": "Cancel plan",
 						"type": "open-modal",
@@ -159,8 +175,8 @@
 						},
 						"visibleWhen": {
 							"field": "lifecycleState",
-							"op": "in",
-							"value": ["draft", "active"]
+							"op": "eq",
+							"value": "active"
 						}
 					}
 				],
@@ -195,7 +211,7 @@
 						"id": "plan-instalments",
 						"type": "object-list",
 						"title": "Instalments",
-						"icon": "CalendarCheck",
+						"icon": "CalendarCheckOutline",
 						"content": {
 							"register": "shillinq",
 							"schema": "PaymentPlanInstalment",

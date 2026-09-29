@@ -85,6 +85,8 @@ final class PaymentPlanGuard implements LifecycleGuardInterface {
 	 * @return GuardResult
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-1.1
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleGuardInterface's.
 	 */
 	public function check(array $object, string $action, string $userId): GuardResult {
 		if ($action !== 'activate') {

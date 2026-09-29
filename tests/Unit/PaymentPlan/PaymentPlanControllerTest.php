@@ -148,4 +148,19 @@ final class PaymentPlanControllerTest extends TestCase {
 		$this->assertSame($plan['id'], $paid->getData()['paymentPlanId']);
 		$this->assertSame('paid', $this->all('PaymentPlanInstalment')[0]['state']);
 	}//end testABankLineIsOfferedAndConfirmed()
+	/**
+	 * Cancelling ends the plan with the reason and answers 404 outside the administration.
+	 *
+	 * @return void
+	 */
+	public function testAPlanIsCancelledWithItsReason(): void {
+		$plan = $this->activeZwaanPlan();
+
+		$this->assertSame(404, $this->controller(['reason' => 'x'], false)->cancel((string)$plan['id'])->getStatus());
+
+		$cancelled = $this->controller(['reason' => 'Customer paid in full elsewhere'])->cancel((string)$plan['id']);
+		$this->assertSame(200, $cancelled->getStatus());
+		$this->assertSame('cancelled', $cancelled->getData()['lifecycleState']);
+		$this->assertSame('Customer paid in full elsewhere', $cancelled->getData()['endReason']);
+	}//end testAPlanIsCancelledWithItsReason()
 }//end class

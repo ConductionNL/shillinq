@@ -217,7 +217,7 @@ class PaymentPlanService {
 		$details = sprintf('Payment plan %s: dunning paused while the plan is kept.', (string)$plan['planNumber']);
 		$pauseIds = [];
 		$invoices = $this->allocator->invoicesOldestFirst(plan: $plan);
-		foreach ($invoices as $invoiceId => $invoice) {
+		foreach (array_keys($invoices) as $invoiceId) {
 			$pause = $this->dunning->pause(
 				administrationId: (string)$plan['administrationId'],
 				invoiceId: $invoiceId,

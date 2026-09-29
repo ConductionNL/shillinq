@@ -512,6 +512,11 @@ export default {
 			}
 		},
 
+		/**
+		 * Confirm the chosen tab: pay a plan, or match the line to invoices.
+		 *
+		 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-2.3
+		 */
 		async confirm() {
 			this.submitting = true
 			this.error = ''
