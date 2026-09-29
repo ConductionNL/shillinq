@@ -363,7 +363,7 @@
       },
       "PaymentPlanInstalment": {
         "slug": "PaymentPlanInstalment",
-        "icon": "CalendarCheck",
+        "icon": "CalendarCheckOutline",
         "version": "0.1.0",
         "title": "Payment plan instalment",
         "description": "One instalment of a payment plan.",
