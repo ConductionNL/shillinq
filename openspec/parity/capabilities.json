@@ -512,17 +512,19 @@
 			"id": "led-dimensions",
 			"area": "ledger",
 			"name": "Tag entries with a cost centre, project or other dimension and report on it.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "yes",
 			"moneybird": "yes",
 			"snelstart": "yes",
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
-				"evidence": "GLLine carries costCenterCode, costCarrierCode, projectCode, dimensions (lib/Settings/shillinq_register.json GLLine); src/views/bookkeeping/dimensions/SegmentPnLDashboard.vue:315 reads OR named aggregations byCostCenter/byProject/byAnalyticalDimension, but those aggregations (lib/Settings/register.d/bookkeeping-cost-centers-dimensions.json:385,450) are `metric: sum, field: amount` with an empty filter, so debit and credit legs and balance-sheet accounts add up unsigned; the roll-up is not a signed result.",
-				"reachedOn": "AnalyticalDimensions /bookkeeping/dimensions/analytical-dimensions (via menu Bookkeeping > Analytical dimensions), SegmentPnLDashboard /bookkeeping/dimensions/segment-pnl (via menu Bookkeeping > Segment P&L)",
-				"owner": "ConductionNL/shillinq"
+				"state": "built",
+				"owner": "ConductionNL/shillinq",
+				"readOn": "2026-09-29",
+				"reachedOn": "SegmentPnLDashboard /bookkeeping/dimensions/segment-pnl (menu Bookkeeping > Segment P&L)",
+				"evidence": "GLLine.signedAmount (credit positive) and the accountClass and countsInResult stamps written by GLLineResultStampListener when a transaction posts or is reversed (lib/Settings/register.d/reporting-segment-results.json, lib/Service/Ledger/GlLineResultStamps.php); the five segment aggregations count only posted profit and loss lines and return revenue, costs and result (lib/Settings/register.d/bookkeeping-cost-centers-dimensions.json); the dashboard shows the three per segment for a fiscal period (tests/Unit/Service/Ledger/GlLineResultStampsTest.php, tests/vitest/reportingSegmentResults.spec.js).",
+				"change": "2026-09-29-reporting-segment-results"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Kostenplaatsen en -dragers ... Boek kosten en opbrengsten op afdeling of vestiging (kostenplaatsen) of op producten of diensten (kostendragers)\" Note: Listed under extra financial options of Boekhouden.",
@@ -3247,17 +3249,19 @@
 			"id": "rep-segment-pnl",
 			"area": "reporting",
 			"name": "See profit and loss per segment, cost centre or project.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "yes",
 			"moneybird": "yes",
 			"snelstart": "yes",
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
-				"evidence": "src/views/bookkeeping/dimensions/SegmentPnLDashboard.vue:315 reads OR named aggregations byCostCenter/byCostCenterHierarchy/byProject/byAnalyticalDimension on GLLine, but each is `metric: sum, field: amount` with `filter: {}` (lib/Settings/register.d/bookkeeping-cost-centers-dimensions.json:385-465): debit and credit add up unsigned, balance-sheet lines and unposted lines are included, so the figure is gross turnover of postings, not a profit or loss.",
-				"reachedOn": "SegmentPnLDashboard /bookkeeping/dimensions/segment-pnl (via menu Bookkeeping > Segment P&L)",
-				"owner": "ConductionNL/shillinq"
+				"state": "built",
+				"owner": "ConductionNL/shillinq",
+				"readOn": "2026-09-29",
+				"reachedOn": "SegmentPnLDashboard /bookkeeping/dimensions/segment-pnl (menu Bookkeeping > Segment P&L)",
+				"evidence": "GLLine.signedAmount (credit positive) and the accountClass and countsInResult stamps written by GLLineResultStampListener when a transaction posts or is reversed (lib/Settings/register.d/reporting-segment-results.json, lib/Service/Ledger/GlLineResultStamps.php); the five segment aggregations count only posted profit and loss lines and return revenue, costs and result (lib/Settings/register.d/bookkeeping-cost-centers-dimensions.json); the dashboard shows the three per segment for a fiscal period (tests/Unit/Service/Ledger/GlLineResultStampsTest.php, tests/vitest/reportingSegmentResults.spec.js).",
+				"change": "2026-09-29-reporting-segment-results"
 			},
 			"evidence": {
 				"twinfield": "https://taasupportportal.wolterskluwer.com/nl/nl-nl/artikel/rapporten-3041146: \"Details weergeven van : ... (relatie, kostenplaats, project, activum en/of activiteit)\" and dimension ranges per report",

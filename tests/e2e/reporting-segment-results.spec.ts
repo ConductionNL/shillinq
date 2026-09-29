@@ -27,7 +27,9 @@ const KP300 = {
 }
 
 test.describe('reporting-segment-results', () => {
-	// @e2e REQ-RSR-003 "A manager reads Sociaal Domein's September"
+	/**
+	 * @e2e bookkeeping-cost-centers-dimensions::a-manager-reads-sociaal-domeins-september
+	 */
 	test('a manager reads the September result of KP-300', async ({ page }) => {
 		const queries: string[] = []
 		await page.route('**/apps/shillinq/api/administrations/context', (route) =>

@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-segment-results/tasks.md#task-1.2
+ * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -79,7 +79,7 @@ class GlLineResultStamps {
 	 *
 	 * @return int The number of lines whose stamp changed.
 	 *
-	 * @spec openspec/changes/reporting-segment-results/tasks.md#task-1.2
+	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
 	 */
 	public function stampTransaction(string $transactionId): int {
 		$transaction = $this->transaction(transactionId: $transactionId);
@@ -106,7 +106,7 @@ class GlLineResultStamps {
 	 *
 	 * @return int The number of lines whose stamp changed.
 	 *
-	 * @spec openspec/changes/reporting-segment-results/tasks.md#task-1.2
+	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
 	 */
 	public function stampReversal(string $transactionId): int {
 		$ids = [$transactionId];
@@ -139,7 +139,7 @@ class GlLineResultStamps {
 	 *
 	 * @return bool True when the line was stamped.
 	 *
-	 * @spec openspec/changes/reporting-segment-results/tasks.md#task-1.2
+	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
 	 */
 	public function stampLine(array $line): bool {
 		$transaction = $this->transaction(transactionId: (string)($line['transactionId'] ?? ''));
@@ -158,7 +158,7 @@ class GlLineResultStamps {
 	 *
 	 * @return bool True for a posted transaction that is not the reversal of a reversed one.
 	 *
-	 * @spec openspec/changes/reporting-segment-results/tasks.md#task-1.2
+	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
 	 */
 	public function countsInResult(array $transaction): bool {
 		if ((string)($transaction['state'] ?? '') !== 'posted') {
@@ -183,7 +183,7 @@ class GlLineResultStamps {
 	 *
 	 * @return string `pnl` for revenue and expenses, `balance` for everything else.
 	 *
-	 * @spec openspec/changes/reporting-segment-results/tasks.md#task-1.2
+	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
 	 */
 	public function accountClass(string $accountType): string {
 		if (in_array($accountType, self::PNL_ACCOUNT_TYPES, true) === true) {

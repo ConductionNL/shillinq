@@ -5,7 +5,7 @@
     "change": "reporting-segment-results",
     "adr": "ADR-037 modular register fragment: never edit shillinq_register.json",
     "description": "Adds three fields to GLLine so a segment report can show a result instead of a gross total of postings. signedAmount is declared as a materialised calculation (credit positive, debit negative), so a sum over it is the result. accountClass and countsInResult are stamped by GLLineResultStampListener when the line's transaction is posted or reversed, because a line cannot see its account's type or its transaction's state through a calculation. Historic lines are stamped once by the StampGlLineResults repair step.",
-    "spec": "openspec/changes/reporting-segment-results/specs/bookkeeping-cost-centers-dimensions/spec.md"
+    "spec": "openspec/specs/bookkeeping-cost-centers-dimensions/spec.md"
   },
   "info": {
     "version": "0.1.0-reporting-segment-results"

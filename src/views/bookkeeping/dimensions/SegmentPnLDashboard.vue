@@ -12,7 +12,7 @@
  GLLineResultStampListener) and answer `{ groups: [{ key, values }] }`.
  Amounts are euros.
 
- @spec openspec/changes/reporting-segment-results/tasks.md#task-2.2
+ @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
 -->
 <template>
 	<NcAppContent>
@@ -268,7 +268,7 @@ export default {
 		/**
 		 * Load the administration's fiscal periods for the period filter.
 		 *
-		 * @spec openspec/changes/reporting-segment-results/tasks.md#task-2.2
+		 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
 		 */
 		async loadPeriods() {
 			try {
@@ -410,7 +410,7 @@ export default {
 		 * @param {object} payload The aggregation response.
 		 * @param {string} segment The segment type.
 		 * @return {Array<object>} The rows.
-		 * @spec openspec/changes/reporting-segment-results/tasks.md#task-2.2
+		 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
 		 */
 		normaliseRows(payload, segment) {
 			const flat = normaliseSegmentRows(payload)
@@ -463,7 +463,7 @@ export default {
 		 *
 		 * @param {number} euros The amount.
 		 * @return {string} The formatted amount.
-		 * @spec openspec/changes/reporting-segment-results/tasks.md#task-2.2
+		 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
 		 */
 		formatAmount(euros) {
 			const value = Number(euros) || 0
@@ -482,7 +482,7 @@ export default {
 		/**
 		 * Download the rows as CSV, one line per segment with revenue, costs and result.
 		 *
-		 * @spec openspec/changes/reporting-segment-results/tasks.md#task-2.2
+		 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
 		 */
 		exportCsv() {
 			if (!this.rows.length) {

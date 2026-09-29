@@ -9,7 +9,7 @@
  * REQ-RSR-003). The declared aggregations answer `{ groups: [{ key, values:
  * { revenue, costs, result } }] }`; amounts are euros.
  *
- * @spec openspec/changes/reporting-segment-results/tasks.md#task-2.2
+ * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
  */
 
 /**
@@ -30,7 +30,7 @@ export const SEGMENT_AGGREGATION = {
  *
  * @param {*} value The raw value.
  * @return {number} The number.
- * @spec openspec/changes/reporting-segment-results/tasks.md#task-2.2
+ * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
  */
 function figure(value) {
 	const number = Number(value)
@@ -43,7 +43,7 @@ function figure(value) {
  * @param {object} group The group.
  * @param {Array<string>} keys The candidate keys, in order.
  * @return {string} The value, or ''.
- * @spec openspec/changes/reporting-segment-results/tasks.md#task-2.2
+ * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
  */
 function firstOf(group, keys) {
 	for (const key of keys) {
@@ -60,7 +60,7 @@ function firstOf(group, keys) {
  *
  * @param {object|Array} payload The aggregation response.
  * @return {Array<{key: string, name: string, parent: string, revenue: number, costs: number, result: number, depth: number}>} The rows.
- * @spec openspec/changes/reporting-segment-results/tasks.md#task-2.2
+ * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
  */
 export function normaliseSegmentRows(payload) {
 	let groups = []
@@ -92,7 +92,7 @@ export function normaliseSegmentRows(payload) {
  *
  * @param {Array<{revenue: number, costs: number, result: number}>} rows The rows.
  * @return {{revenue: number, costs: number, result: number}} The totals.
- * @spec openspec/changes/reporting-segment-results/tasks.md#task-2.2
+ * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
  */
 export function segmentTotals(rows) {
 	return rows.reduce(
@@ -111,7 +111,7 @@ export function segmentTotals(rows) {
  * @param {string} administrationId The active administration.
  * @param {string} periodId The chosen FiscalPeriod periodId (2026-M09, 2026-Q3), or ''.
  * @return {Record<string, string>} The parameters.
- * @spec openspec/changes/reporting-segment-results/tasks.md#task-2.2
+ * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
  */
 export function segmentQuery(administrationId, periodId) {
 	const params = { 'filter[administrationId]': administrationId }
@@ -130,7 +130,7 @@ export function segmentQuery(administrationId, periodId) {
  *
  * @param {object|Array<object>|null} payload The FiscalPeriod list response.
  * @return {Array<{id: string, label: string}>} The choices.
- * @spec openspec/changes/reporting-segment-results/tasks.md#task-2.2
+ * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
  */
 export function periodOptions(payload) {
 	let items = []

@@ -7,7 +7,7 @@
  * result per segment, asks for one period, and every segment type it offers
  * names an aggregation the register declares with those three figures.
  *
- * @spec openspec/changes/reporting-segment-results/specs/bookkeeping-cost-centers-dimensions/spec.md
+ * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
  */
 
 import fs from 'fs'
