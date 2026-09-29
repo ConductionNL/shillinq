@@ -75,7 +75,7 @@ class ReserveOverviewController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/public-sector-reserves-and-interest/tasks.md#task-1.4
+	 * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
 	 */
 	#[NoAdminRequired]
 	public function overview(): JSONResponse {

@@ -65,7 +65,7 @@ class InterestAllocationService {
 	 *
 	 * @throws DomainException When the year or the percentage is missing.
 	 *
-	 * @spec openspec/changes/public-sector-reserves-and-interest/tasks.md#task-2.1
+	 * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
 	 */
 	public function calculate(array $run): array {
 		$year = (int)($run['year'] ?? 0);
@@ -118,7 +118,7 @@ class InterestAllocationService {
 	 *
 	 * @throws DomainException When the run has nothing to post or a reserve lacks its accounts.
 	 *
-	 * @spec openspec/changes/public-sector-reserves-and-interest/tasks.md#task-2.1
+	 * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
 	 */
 	public function post(array $run): array {
 		if ((string)($run['journalEntryId'] ?? '') !== '') {
@@ -162,7 +162,7 @@ class InterestAllocationService {
 	 *
 	 * @throws DomainException When there is nothing to post or an account is missing.
 	 *
-	 * @spec openspec/changes/public-sector-reserves-and-interest/tasks.md#task-2.1
+	 * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
 	 */
 	public function journalFor(array $run): array {
 		$year = (int)($run['year'] ?? 0);
@@ -228,7 +228,7 @@ class InterestAllocationService {
 	 *
 	 * @return float|null Euros.
 	 *
-	 * @spec openspec/changes/public-sector-reserves-and-interest/tasks.md#task-2.1
+	 * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
 	 */
 	public function bookValue(array $investment, int $year): ?float {
 		if (isset($investment['gross']) === false || is_numeric($investment['gross']) === false) {

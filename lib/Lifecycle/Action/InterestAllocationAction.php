@@ -60,7 +60,7 @@ class InterestAllocationAction implements LifecycleActionInterface {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
 	 *
-	 * @spec openspec/changes/public-sector-reserves-and-interest/tasks.md#task-2.1
+	 * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
 	 */
 	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
 		if (($parameters['step'] ?? '') === 'post') {

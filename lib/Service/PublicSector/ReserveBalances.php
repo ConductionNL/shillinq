@@ -66,7 +66,7 @@ class ReserveBalances {
 	 *
 	 * @return array{fromYear:int,rows:list<array<string,mixed>>}
 	 *
-	 * @spec openspec/changes/public-sector-reserves-and-interest/tasks.md#task-1.4
+	 * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
 	 */
 	public function overview(string $administrationId, int $fromYear): array {
 		$mutations = [];
@@ -99,7 +99,7 @@ class ReserveBalances {
 	 *
 	 * @return list<array<string,mixed>>
 	 *
-	 * @spec openspec/changes/public-sector-reserves-and-interest/tasks.md#task-1.4
+	 * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
 	 */
 	public function chain(array $reserve, array $mutations, int $fromYear): array {
 		$opening = $this->opening(reserve: $reserve);
@@ -145,7 +145,7 @@ class ReserveBalances {
 	 *
 	 * @return float Euros.
 	 *
-	 * @spec openspec/changes/public-sector-reserves-and-interest/tasks.md#task-2.1
+	 * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
 	 */
 	public function balanceOnFirstJanuary(array $reserve, int $year): float {
 		$opening = $this->opening(reserve: $reserve);
@@ -173,7 +173,7 @@ class ReserveBalances {
 	 *
 	 * @throws DomainException When the reserve or its accounts are missing, or the amount is not positive.
 	 *
-	 * @spec openspec/changes/public-sector-reserves-and-interest/tasks.md#task-1.2
+	 * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
 	 */
 	public function realise(array $mutation): array {
 		if ((string)($mutation['journalEntryId'] ?? '') !== '') {
@@ -204,7 +204,7 @@ class ReserveBalances {
 	 *
 	 * @throws DomainException When an account is missing or the amount is not positive.
 	 *
-	 * @spec openspec/changes/public-sector-reserves-and-interest/tasks.md#task-1.2
+	 * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
 	 */
 	public function journalFor(array $mutation, array $reserve): array {
 		$reserveAccount = trim((string)($reserve['balanceAccountNumber'] ?? ''));
@@ -220,7 +220,12 @@ class ReserveBalances {
 
 		$year = (int)($mutation['year'] ?? 0);
 		$kind = (string)($mutation['kind'] ?? 'addition');
-		$description = sprintf('%s %d: %s', $kind === 'withdrawal' ? 'Onttrekking' : 'Toevoeging', $year, (string)($reserve['name'] ?? ''));
+		$label = 'Toevoeging';
+		if ($kind === 'withdrawal') {
+			$label = 'Onttrekking';
+		}
+
+		$description = sprintf('%s %d: %s', $label, $year, (string)($reserve['name'] ?? ''));
 		$resolution = trim((string)($mutation['councilResolution'] ?? ''));
 		if ($resolution !== '') {
 			$description .= ' (raadsbesluit ' . $resolution . ')';

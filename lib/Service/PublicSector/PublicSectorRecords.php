@@ -63,7 +63,7 @@ class PublicSectorRecords {
 	 *
 	 * @return array<string,mixed>|null
 	 *
-	 * @spec openspec/changes/public-sector-reserves-and-interest/tasks.md#task-1.2
+	 * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
 	 */
 	public function find(string $schema, string $id): ?array {
 		if ($id === '') {
@@ -91,7 +91,7 @@ class PublicSectorRecords {
 	 *
 	 * @return list<array<string,mixed>>
 	 *
-	 * @spec openspec/changes/public-sector-reserves-and-interest/tasks.md#task-1.4
+	 * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
 	 */
 	public function records(string $schema, array $filters): array {
 		$records = [];
@@ -114,7 +114,7 @@ class PublicSectorRecords {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/public-sector-reserves-and-interest/tasks.md#task-2.1
+	 * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
 	 */
 	public function create(string $schema, array $object): string {
 		return ObjectIdentifier::resolve(saved: $this->scoped(schema: $schema)->saveObject($object));
@@ -129,7 +129,7 @@ class PublicSectorRecords {
 	 *
 	 * @return string The journal entry's id.
 	 *
-	 * @spec openspec/changes/public-sector-reserves-and-interest/tasks.md#task-1.2
+	 * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
 	 */
 	public function postJournal(array $journal): string {
 		$journalId = $this->create(schema: 'JournalEntry', object: $journal);
