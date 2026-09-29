@@ -24,7 +24,8 @@ vi.mock('@nextcloud/axios', () => ({ default: axiosMock }))
 
 describe('Typing the budget', () => {
 	it('reads euros as cents the way people type them', async () => {
-		const { euroToCents, centsToInput } = await import('../../src/utils/budgetEditingApi.js')
+		const { euroToCents, centsToInput } =
+			await import('../../src/utils/budgetEditingApi.js')
 		expect(euroToCents('206000')).toBe(20600000)
 		expect(euroToCents('206.000')).toBe(20600000)
 		expect(euroToCents('206.000,50')).toBe(20600050)
@@ -40,7 +41,10 @@ describe('Typing the budget', () => {
 		expect(nextCell('Enter', { row: 0, col: 0 }, 3)).toEqual({ row: 1, col: 0 })
 		expect(nextCell('ArrowUp', { row: 0, col: 0 }, 3)).toBeNull()
 		expect(nextCell('ArrowRight', { row: 1, col: 11 }, 3)).toBeNull()
-		expect(nextCell('ArrowRight', { row: 1, col: 3 }, 3, false, true)).toEqual({ row: 1, col: 4 })
+		expect(nextCell('ArrowRight', { row: 1, col: 3 }, 3, false, true)).toEqual({
+			row: 1,
+			col: 4,
+		})
 		expect(nextCell('ArrowLeft', { row: 1, col: 3 }, 3, false, true)).toBeNull()
 		expect(nextCell('a', { row: 1, col: 3 }, 3)).toBeNull()
 	})
@@ -81,7 +85,11 @@ describe('Budget editing endpoints', () => {
 		await api.saveBudgetCell({ month: 1, amount: 1, expected: 0 })
 		await api.spreadBudgetRow({ yearly: 1200 })
 		await api.startNextYear('adm', 'b-1', 3)
-		const urls = [...axiosMock.get.mock.calls, ...axiosMock.put.mock.calls, ...axiosMock.post.mock.calls].map((c) => c[0])
+		const urls = [
+			...axiosMock.get.mock.calls,
+			...axiosMock.put.mock.calls,
+			...axiosMock.post.mock.calls,
+		].map((c) => c[0])
 		expect(urls).toEqual([
 			'/index.php/apps/shillinq/api/v1/budget-editing/lines',
 			'/index.php/apps/shillinq/api/v1/budget-editing/multi-year',
@@ -90,36 +98,64 @@ describe('Budget editing endpoints', () => {
 			'/index.php/apps/shillinq/api/v1/budget-editing/next-year',
 		])
 		const routes = read('appinfo/routes.php')
-		expect(routes).toContain("'budgetEditing#lines', 'url' => '/api/v1/budget-editing/lines', 'verb' => 'GET'")
-		expect(routes).toContain("'budgetEditing#saveCell', 'url' => '/api/v1/budget-editing/cell', 'verb' => 'PUT'")
-		expect(routes).toContain("'budgetEditing#spread', 'url' => '/api/v1/budget-editing/spread', 'verb' => 'POST'")
-		expect(routes).toContain("'budgetEditing#multiYear', 'url' => '/api/v1/budget-editing/multi-year', 'verb' => 'GET'")
-		expect(routes).toContain("'budgetEditing#startNextYear', 'url' => '/api/v1/budget-editing/next-year', 'verb' => 'POST'")
+		expect(routes).toContain(
+			"'budgetEditing#lines', 'url' => '/api/v1/budget-editing/lines', 'verb' => 'GET'",
+		)
+		expect(routes).toContain(
+			"'budgetEditing#saveCell', 'url' => '/api/v1/budget-editing/cell', 'verb' => 'PUT'",
+		)
+		expect(routes).toContain(
+			"'budgetEditing#spread', 'url' => '/api/v1/budget-editing/spread', 'verb' => 'POST'",
+		)
+		expect(routes).toContain(
+			"'budgetEditing#multiYear', 'url' => '/api/v1/budget-editing/multi-year', 'verb' => 'GET'",
+		)
+		expect(routes).toContain(
+			"'budgetEditing#startNextYear', 'url' => '/api/v1/budget-editing/next-year', 'verb' => 'POST'",
+		)
 	})
 })
 
 describe('Pages', () => {
 	const fragmentPath = 'src/manifest.d/planning-budget-editing.json'
 
-	it('has the multi-year page, registered, under Budgets', () => {
-		expect(exists(fragmentPath)).toBe(true)
+	it('has the multi-year view as a section of the budget grid page, not a new custom page', () => {
+		const grid = read('src/views/BudgetGrid.vue')
+		expect(grid).toContain('<MultiYearBudget')
 		const fragment = JSON.parse(read(fragmentPath))
-		const multiYear = fragment.pages.find((p) => p.id === 'MultiYearBudget')
-		expect(multiYear.type).toBe('custom')
-		expect(read('src/registry.js')).toContain("MultiYearBudget: { kind: 'page', component: MultiYearBudget }")
-		const budgets = fragment.menu.find((m) => m.id === 'Budgets')
-		expect(budgets.children.map((c) => c.route)).toContain('MultiYearBudget')
+		expect(fragment.pages.filter((p) => p.type === 'custom')).toEqual([])
+		const view = read('src/components/MultiYearBudget.vue')
+		expect(view).toContain('await startNextYear(')
 	})
 
 	it('has amendment pages with Determine, files and history, and the multi-year estimate under Government', () => {
+		expect(exists(fragmentPath)).toBe(true)
 		const fragment = JSON.parse(read(fragmentPath))
-		const detail = fragment.pages.find((p) => p.id === 'BegrotingswijzigingDetail').config
+		const detail = fragment.pages.find(
+			(p) => p.id === 'BegrotingswijzigingDetail',
+		).config
 		expect(detail.schema).toBe('Begrotingswijziging')
-		expect(detail.actions[0]).toMatchObject({ type: 'lifecycle-transition', transition: 'vaststellen' })
-		expect(detail.sidebarProps.tabs.map((tab) => tab.id)).toEqual(['files', 'audit'])
+		expect(detail.actions[0]).toMatchObject({
+			type: 'lifecycle-transition',
+			transition: 'vaststellen',
+		})
+		expect(detail.sidebarProps.tabs.map((tab) => tab.id)).toEqual([
+			'files',
+			'audit',
+		])
 		const government = fragment.menu.find((m) => m.id === 'Overheid')
-		expect(government.children.map((c) => c.route)).toEqual(['Begrotingswijzigingen', 'Meerjarenramingen', 'MeerjarenBudgetten'])
-		for (const id of ['Begrotingswijzigingen', 'Meerjarenramingen', 'MeerjarenramingDetail', 'MeerjarenBudgetten', 'MeerjarenBudgetDetail']) {
+		expect(government.children.map((c) => c.route)).toEqual([
+			'Begrotingswijzigingen',
+			'Meerjarenramingen',
+			'MeerjarenBudgetten',
+		])
+		for (const id of [
+			'Begrotingswijzigingen',
+			'Meerjarenramingen',
+			'MeerjarenramingDetail',
+			'MeerjarenBudgetten',
+			'MeerjarenBudgetDetail',
+		]) {
 			expect(fragment.pages.map((p) => p.id)).toContain(id)
 		}
 	})

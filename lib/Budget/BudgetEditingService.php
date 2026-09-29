@@ -503,8 +503,8 @@ class BudgetEditingService {
 	/**
 	 * Depth-first flattening of the group tree.
 	 *
-	 * @param list<array<string,mixed>>                 $groups   The groups on this level.
-	 * @param array<string,list<array<string,mixed>>>   $children Children by parent id.
+	 * @param list<array{id:string,code:string,name:string,order:int,parent:string}>               $groups   The groups on this level.
+	 * @param array<string,list<array{id:string,code:string,name:string,order:int,parent:string}>> $children Children by parent id.
 	 * @param int                                       $depth    This level's depth.
 	 * @param list<array{id:string,code:string,name:string,depth:int}> $flat The result, appended to.
 	 *

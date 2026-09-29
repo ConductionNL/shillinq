@@ -35,11 +35,11 @@ Each month gets an equal share. December takes the rounding difference, so the m
 
 ## See several years
 
-Open **Budgets > Multi-year budget**. Each ledger group shows its total per fiscal year, from this year up to four years ahead. Only years with an annual budget are shown.
+On **Budgets > Budget grid**, the section **Multi-year budget** shows each ledger group with its total per fiscal year, from this year up to four years ahead. Only years with an annual budget are shown.
 
 ## Start next year
 
-1. On **Multi-year budget**, choose the budget to start from under **Start from**.
+1. In the section **Multi-year budget**, choose the budget to start from under **Start from**.
 2. Type the change in percent, for example 3.
 3. Choose **Start next year**.
 

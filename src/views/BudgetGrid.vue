@@ -23,7 +23,8 @@
 
  Below the grid, BudgetLinesEditor types the budget itself: the months of
  one annual budget per ledger group (planning-budget-editing, REQ-PBE-001,
- REQ-PBE-002).
+ REQ-PBE-002), and MultiYearBudget sets the years side by side with Start
+ next year (REQ-PBE-003).
 
  @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md
 -->
@@ -210,6 +211,8 @@
 			</section>
 
 			<BudgetLinesEditor :administrationId="administrationId" />
+
+			<MultiYearBudget :administrationId="administrationId" />
 		</div>
 	</NcAppContent>
 </template>
@@ -222,6 +225,7 @@ import ChevronDown from 'vue-material-design-icons/ChevronDown.vue'
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue'
 import BudgetGridCell from '../components/BudgetGridCell.vue'
 import BudgetLinesEditor from '../components/BudgetLinesEditor.vue'
+import MultiYearBudget from '../components/MultiYearBudget.vue'
 import { fetchAdministrationContext } from '../api/administrationApi.js'
 import { defaultRange, flattenVisibleRows } from './budgetGridHelpers.js'
 
@@ -236,6 +240,7 @@ export default {
 		ChevronRight,
 		BudgetGridCell,
 		BudgetLinesEditor,
+		MultiYearBudget,
 	},
 
 	data() {

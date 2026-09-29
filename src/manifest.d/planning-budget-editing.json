@@ -3,21 +3,9 @@
 		"spdx-license": "EUPL-1.2",
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "planning-budget-editing",
-		"description": "Budget entry: the multi-year budget page (MultiYearBudget, through BudgetEditingController), and plain index and detail pages for the multi-year estimate (Meerjarenraming, MeerjarenBudget) and for budget amendments (Begrotingswijziging, with its vaststellen transition, the files and history tabs). Typing into the grid lives on the BudgetGrid page (BudgetLinesEditor)."
+		"description": "Plain index and detail pages for the multi-year estimate (Meerjarenraming, MeerjarenBudget) and for budget amendments (Begrotingswijziging, with its vaststellen transition, the files and history tabs). Typing the budget and the multi-year view are sections of the BudgetGrid page (BudgetLinesEditor, MultiYearBudget), so no new custom page is added."
 	},
 	"menu": [
-		{
-			"id": "Budgets",
-			"children": [
-				{
-					"id": "MultiYearBudget",
-					"label": "Multi-year budget",
-					"icon": "CalendarRange",
-					"route": "MultiYearBudget",
-					"order": 7
-				}
-			]
-		},
 		{
 			"id": "Overheid",
 			"children": [
@@ -46,19 +34,6 @@
 		}
 	],
 	"pages": [
-		{
-			"id": "MultiYearBudget",
-			"route": "/begroting/meerjarig",
-			"type": "custom",
-			"title": "Multi-year budget",
-			"component": "MultiYearBudget",
-			"_note": "Ledger groups against fiscal years with a computed total per year and a Start next year form; type:index cannot generate year columns. Reads GET /api/v1/budget-editing/multi-year.",
-			"config": {
-				"register": "shillinq",
-				"schema": "AnnualBudget",
-				"endpointSource": "/apps/shillinq/api/v1/budget-editing/multi-year"
-			}
-		},
 		{
 			"id": "Begrotingswijzigingen",
 			"route": "/overheid/begrotingswijzigingen",

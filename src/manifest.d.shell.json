@@ -4756,18 +4756,6 @@
 		{
 			"menu": [
 				{
-					"id": "Budgets",
-					"children": [
-						{
-							"id": "MultiYearBudget",
-							"label": "Multi-year budget",
-							"icon": "CalendarRange",
-							"route": "MultiYearBudget",
-							"order": 7
-						}
-					]
-				},
-				{
 					"id": "Overheid",
 					"children": [
 						{
@@ -4795,13 +4783,6 @@
 				}
 			],
 			"pages": [
-				{
-					"_fragment": "planning-budget-editing",
-					"id": "MultiYearBudget",
-					"route": "/begroting/meerjarig",
-					"type": "custom",
-					"title": "Multi-year budget"
-				},
 				{
 					"_fragment": "planning-budget-editing",
 					"id": "Begrotingswijzigingen",

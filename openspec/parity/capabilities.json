@@ -5463,8 +5463,8 @@
 				"state": "built",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-29",
-				"evidence": "BudgetEditingService::multiYear() shows ledger groups against every fiscal year with an AnnualBudget from this year up to four ahead, and startNextYear() copies a budget's manual lines into a draft budget for the next year raised by a percentage (src/views/MultiYearBudget.vue); Meerjarenraming and MeerjarenBudget have index and detail pages (src/manifest.d/planning-budget-editing.json).",
-				"reachedOn": "MultiYearBudget /begroting/meerjarig; Meerjarenramingen /overheid/meerjarenramingen and MeerjarenBudgetten /overheid/meerjarenbudgetten under Government",
+				"evidence": "BudgetEditingService::multiYear() shows ledger groups against every fiscal year with an AnnualBudget from this year up to four ahead, and startNextYear() copies a budget's manual lines into a draft budget for the next year raised by a percentage (src/components/MultiYearBudget.vue on the BudgetGrid page); Meerjarenraming and MeerjarenBudget have index and detail pages (src/manifest.d/planning-budget-editing.json).",
+				"reachedOn": "BudgetGrid /begroting/grid, section Multi-year budget; Meerjarenramingen /overheid/meerjarenramingen and MeerjarenBudgetten /overheid/meerjarenbudgetten under Government",
 				"change": "2026-09-29-planning-budget-editing"
 			},
 			"evidence": {

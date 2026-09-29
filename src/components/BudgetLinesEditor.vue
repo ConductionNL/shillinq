@@ -17,7 +17,9 @@
 		<div class="budget-entry__header">
 			<h3>{{ t('shillinq', 'Enter the budget') }}</h3>
 			<div class="budget-entry__control">
-				<label for="budget-entry-budget">{{ t('shillinq', 'Budget') }}</label>
+				<label for="budget-entry-budget">{{
+					t('shillinq', 'Budget')
+				}}</label>
 				<select
 					id="budget-entry-budget"
 					v-model="annualBudgetId"
@@ -26,7 +28,10 @@
 					<option value="">
 						{{ t('shillinq', 'Choose a budget') }}
 					</option>
-					<option v-for="budget in budgets" :key="budget.annualBudgetId" :value="budget.annualBudgetId">
+					<option
+						v-for="budget in budgets"
+						:key="budget.annualBudgetId"
+						:value="budget.annualBudgetId">
 						{{ budget.fiscalYear }}: {{ budget.name }}
 					</option>
 				</select>
@@ -44,22 +49,37 @@
 						<th scope="col">
 							{{ t('shillinq', 'Ledger group') }}
 						</th>
-						<th v-for="(label, index) in monthLabels" :key="index" scope="col">
+						<th
+							v-for="(label, index) in monthLabels"
+							:key="index"
+							scope="col">
 							{{ label }}
 						</th>
 						<th scope="col">
 							{{ t('shillinq', 'Year') }}
 						</th>
 						<th scope="col">
-							<span class="hidden-visually">{{ t('shillinq', 'Actions') }}</span>
+							<span class="hidden-visually">{{
+								t('shillinq', 'Actions')
+							}}</span>
 						</th>
 					</tr>
 				</thead>
 				<tbody>
-					<tr v-for="(row, rowIndex) in rows" :key="row.ledgerGroupId" data-testid="budget-entry-row">
-						<th scope="row" :style="{ paddingInlineStart: row.depth * 20 + 8 + 'px' }">
+					<tr
+						v-for="(row, rowIndex) in rows"
+						:key="row.ledgerGroupId"
+						data-testid="budget-entry-row">
+						<th
+							scope="row"
+							:style="{
+								paddingInlineStart: row.depth * 20 + 8 + 'px',
+							}">
 							{{ row.name }}
-							<span v-if="!row.editable" class="budget-entry__source" data-testid="budget-entry-source">
+							<span
+								v-if="!row.editable"
+								class="budget-entry__source"
+								data-testid="budget-entry-source">
 								{{ sourceLabel(row.source) }}
 							</span>
 						</th>
@@ -67,19 +87,38 @@
 							<input
 								v-if="row.editable"
 								:ref="cellRef(rowIndex, col)"
-								:value="drafts[cellKey(rowIndex, col)] ?? centsToInput(amount)"
+								:value="
+									drafts[cellKey(rowIndex, col)]
+									?? centsToInput(amount)
+								"
 								class="budget-entry__cell"
 								inputmode="decimal"
-								:aria-label="t('shillinq', '{group}, {month}', { group: row.name, month: monthLabels[col] })"
+								:aria-label="
+									t('shillinq', '{group}, {month}', {
+										group: row.name,
+										month: monthLabels[col],
+									})
+								"
 								data-testid="budget-entry-cell"
-								@input="drafts = { ...drafts, [cellKey(rowIndex, col)]: $event.target.value }"
+								@input="
+									drafts = {
+										...drafts,
+										[cellKey(rowIndex, col)]:
+											$event.target.value,
+									}
+								"
 								@keydown="onKey($event, rowIndex, col)"
-								@blur="save(rowIndex, col)">
+								@blur="save(rowIndex, col)" />
 							<span
 								v-else
 								tabindex="0"
 								class="budget-entry__readonly"
-								:aria-label="t('shillinq', '{amount}, {source}, read-only', { amount: centsToInput(amount), source: sourceLabel(row.source) })">
+								:aria-label="
+									t('shillinq', '{amount}, {source}, read-only', {
+										amount: centsToInput(amount),
+										source: sourceLabel(row.source),
+									})
+								">
 								{{ centsToInput(amount) }}
 							</span>
 						</td>
@@ -106,9 +145,13 @@
 			data-testid="budget-entry-spread-form"
 			@submit.prevent="spread">
 			<label for="budget-entry-yearly">
-				{{ t('shillinq', 'Yearly amount for {group}', { group: rows[spreadRow].name }) }}
+				{{
+					t('shillinq', 'Yearly amount for {group}', {
+						group: rows[spreadRow].name,
+					})
+				}}
 			</label>
-			<input id="budget-entry-yearly" v-model="yearly" inputmode="decimal">
+			<input id="budget-entry-yearly" v-model="yearly" inputmode="decimal" />
 			<NcButton variant="primary" type="submit">
 				{{ t('shillinq', 'Spread') }}
 			</NcButton>
@@ -166,7 +209,9 @@ export default {
 		 */
 		monthLabels() {
 			const format = new Intl.DateTimeFormat(undefined, { month: 'short' })
-			return Array.from({ length: 12 }, (_, month) => format.format(new Date(2026, month, 1)))
+			return Array.from({ length: 12 }, (_, month) =>
+				format.format(new Date(2026, month, 1)),
+			)
 		},
 	},
 
@@ -202,10 +247,16 @@ export default {
 				return
 			}
 			try {
-				const view = await loadMultiYear(this.administrationId, new Date().getFullYear())
+				const view = await loadMultiYear(
+					this.administrationId,
+					new Date().getFullYear(),
+				)
 				this.budgets = view.budgets || []
 			} catch (error) {
-				this.message = refusal(error, t('shillinq', 'The budgets could not be loaded.'))
+				this.message = refusal(
+					error,
+					t('shillinq', 'The budgets could not be loaded.'),
+				)
 			}
 		},
 
@@ -222,10 +273,16 @@ export default {
 				return
 			}
 			try {
-				const data = await loadBudgetLines(this.administrationId, this.annualBudgetId)
+				const data = await loadBudgetLines(
+					this.administrationId,
+					this.annualBudgetId,
+				)
 				this.rows = data.rows || []
 			} catch (error) {
-				this.message = refusal(error, t('shillinq', 'The budget could not be loaded.'))
+				this.message = refusal(
+					error,
+					t('shillinq', 'The budget could not be loaded.'),
+				)
 			}
 		},
 
@@ -283,7 +340,13 @@ export default {
 			const input = event.target
 			const atStart = input.selectionStart === 0 && input.selectionEnd === 0
 			const atEnd = input.selectionStart === input.value.length
-			const next = nextCell(event.key, { row, col }, this.rows.length, atStart, atEnd)
+			const next = nextCell(
+				event.key,
+				{ row, col },
+				this.rows.length,
+				atStart,
+				atEnd,
+			)
 			if (event.key === 'Enter') {
 				event.preventDefault()
 				await this.save(row, col)
@@ -313,7 +376,10 @@ export default {
 			const current = this.rows[row]
 			const amount = euroToCents(this.drafts[key])
 			if (amount === null) {
-				this.message = t('shillinq', 'Enter an amount in euros, for example 206000.')
+				this.message = t(
+					'shillinq',
+					'Enter an amount in euros, for example 206000.',
+				)
 				return
 			}
 			const rest = { ...this.drafts }
@@ -334,7 +400,10 @@ export default {
 				this.rows.splice(row, 1, { ...current, ...saved })
 				this.message = ''
 			} catch (error) {
-				this.message = refusal(error, t('shillinq', 'The amount could not be saved.'))
+				this.message = refusal(
+					error,
+					t('shillinq', 'The amount could not be saved.'),
+				)
 				await this.load()
 			}
 		},
@@ -360,7 +429,10 @@ export default {
 			const row = this.spreadRow
 			const yearly = euroToCents(this.yearly)
 			if (yearly === null) {
-				this.message = t('shillinq', 'Enter an amount in euros, for example 206000.')
+				this.message = t(
+					'shillinq',
+					'Enter an amount in euros, for example 206000.',
+				)
 				return
 			}
 			const current = this.rows[row]
@@ -376,7 +448,10 @@ export default {
 				this.spreadRow = null
 				this.message = ''
 			} catch (error) {
-				this.message = refusal(error, t('shillinq', 'The amount could not be saved.'))
+				this.message = refusal(
+					error,
+					t('shillinq', 'The amount could not be saved.'),
+				)
 				await this.load()
 			}
 		},

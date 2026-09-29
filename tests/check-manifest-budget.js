@@ -159,12 +159,11 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // payment plan action and the customer's plans list. Raised to 1,162,000:
 // 6,458 B of headroom, 0.56%.
 //
-// Re-measured 2026-09-29 (planning-budget-editing): 1,165,740 bytes. This
-// change adds 9,864 B, all in its own fragment: the multi-year budget page,
-// and index and detail pages for budget amendments (with Determine, files
-// and history), the multi-year estimate and the multi-year budget lines,
-// seven pages that had a schema and no page. Raised to 1,172,000: 6,260 B of
-// headroom, 0.54%.
+// Re-measured 2026-09-29 (planning-budget-editing): 1,165,005 bytes. This
+// change adds 9,129 B, all in its own fragment: index and detail pages for
+// budget amendments (with Determine, files and history), the multi-year
+// estimate and the multi-year budget lines, six pages over schemas that had
+// none. Raised to 1,172,000: 6,995 B of headroom, 0.60%.
 const DEFAULT_BUDGET_BYTES = 1_172_000
 
 /**

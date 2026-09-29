@@ -19,7 +19,9 @@ const BASE = '/apps/shillinq/api/v1/budget-editing'
  * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
  */
 export function euroToCents(value) {
-	let text = String(value ?? '').trim().replace(/\s|€|EUR/gi, '')
+	let text = String(value ?? '')
+		.trim()
+		.replace(/\s|€|EUR/gi, '')
 	if (text === '') {
 		return null
 	}
@@ -80,7 +82,13 @@ export function nextCell(key, at, rowCount, atStart = true, atEnd = true) {
 		ArrowRight: atEnd ? { row: at.row, col: at.col + 1 } : null,
 	}
 	const next = moves[key] ?? null
-	if (next === null || next.row < 0 || next.row >= rowCount || next.col < 0 || next.col > 11) {
+	if (
+		next === null
+		|| next.row < 0
+		|| next.row >= rowCount
+		|| next.col < 0
+		|| next.col > 11
+	) {
 		return null
 	}
 	return next
