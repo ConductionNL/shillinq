@@ -833,6 +833,12 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'paymentPlan#settle', 'url' => '/api/v1/payment-plans/{id}/settle', 'verb' => 'POST'],
             ['name' => 'paymentPlan#cancel', 'url' => '/api/v1/payment-plans/{id}/cancel', 'verb' => 'POST'],
             ['name' => 'paymentPlan#payFromLine', 'url' => '/api/v1/payment-plans/{id}/bank-line', 'verb' => 'POST'],
+            // planning-budget-editing: type the budget into the grid, spread a year, the multi-year page, start next year.
+            ['name' => 'budgetEditing#lines', 'url' => '/api/v1/budget-editing/lines', 'verb' => 'GET'],
+            ['name' => 'budgetEditing#saveCell', 'url' => '/api/v1/budget-editing/cell', 'verb' => 'PUT'],
+            ['name' => 'budgetEditing#spread', 'url' => '/api/v1/budget-editing/spread', 'verb' => 'POST'],
+            ['name' => 'budgetEditing#multiYear', 'url' => '/api/v1/budget-editing/multi-year', 'verb' => 'GET'],
+            ['name' => 'budgetEditing#startNextYear', 'url' => '/api/v1/budget-editing/next-year', 'verb' => 'POST'],
 
             // Compliance-deadline-calendar (REQ-CDC-006). Per-user category
             // toggles + reminder lead times for the deadline calendar. Both
