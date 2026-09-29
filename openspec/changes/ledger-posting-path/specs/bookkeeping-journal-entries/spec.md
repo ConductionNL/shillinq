@@ -44,11 +44,20 @@ payroll-specific path in shillinq.
 
 Where a PHP poster already writes the `GLTransaction` for a transition,
 that transition SHALL NOT also declare `materialise-gl-transaction`. Every
-remaining declaration SHALL be served by a mapper for its source schema,
-and a declaration on a schema without a mapper MUST fail loudly.
+remaining declaration SHALL be served by a mapper for its source schema, or
+name a source schema whose mapper another change owes, and a declaration on
+a schema without a mapper MUST fail loudly. A transaction the handler writes
+SHALL carry the same posting stamps as an entry posted from the ledger page.
 
 #### Scenario: A stock issue books its cost of goods sold once
 
 - GIVEN a stock move posted through the dispatch path, which `CogsPosterService` books
 - WHEN the move reaches posted
 - THEN exactly one cost of goods sold transaction exists for it
+
+#### Scenario: An expense claim is refused until its accounts resolve
+
+- GIVEN an expense claim entry being posted before `expenses-category-mapping` is built
+- WHEN the posting action runs
+- THEN the post is refused with a message naming ExpenseClaimEntry
+- AND no transaction is written

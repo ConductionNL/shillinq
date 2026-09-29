@@ -355,6 +355,25 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 	}//end testASchemaWithoutAMapperIsRefusedByName()
 
 	/**
+	 * An expense claim is refused by name until expenses-category-mapping
+	 * adds its mapper, and nothing is written (REQ-LPP-006).
+	 *
+	 * @return void
+	 */
+	public function testAnExpenseClaimIsRefusedUntilItsAccountsResolve(): void {
+		$action = $this->action();
+		$source = ['id' => 'ece-1', 'administrationId' => 'adm-1', 'lines' => [['amount' => 100.08]]];
+		try {
+			$action->execute($source, [], ['sourceSchema' => 'ExpenseClaimEntry'], MaterialiseGlTransactionAction::class);
+			self::fail('An expense claim must not post without its account mapping.');
+		} catch (RuntimeException $e) {
+			self::assertStringContainsString('"ExpenseClaimEntry"', $e->getMessage());
+		}
+
+		self::assertSame([], $this->store->savedOf('GLTransaction'));
+	}//end testAnExpenseClaimIsRefusedUntilItsAccountsResolve()
+
+	/**
 	 * A line that fails to save withdraws the transaction it belonged to.
 	 *
 	 * @return void

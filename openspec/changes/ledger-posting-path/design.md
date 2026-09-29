@@ -134,6 +134,40 @@ The declaration is removed from `inventory-stock-movement-ledger.json`.
 `Payroll.issue` is removed for the reason in the table. Every other row of
 the table is served by the handlers.
 
+**Amended at build (29 Sep).** Two rows of the table are not served here:
+
+- `InventoryValuation.postCOGS`, `postReceipt` and `postVariance` are removed
+  from `register.d/inventory-cogs-posting.json`. Sale dispatch is booked per
+  stock move by `CogsPosterService`, so `postCOGS` would post twice. Nothing
+  sets `postingEvent` or fires these transitions, the snapshot has no
+  `deltaQuantity`, and one snapshot per product and warehouse keyed on its
+  own id could post only once. Goods receipt and count variance are not
+  booked by any path; that gap is for a stock-move keyed poster, not this
+  change.
+- `ExpenseClaimEntry.post` stays declared and is refused by name. Its mapper
+  needs `ExpenseAccountResolver`, so it is built in `expenses-category-mapping`
+  task 3.2.
+
+### D5. A post stamps the entry, and the guard judges it as stamped (added at build)
+
+`RuleComplianceGuard::validateTransaction` is the effective `requires` of
+`GLTransaction.post`. Under NL jurisdiction it applies the mandatory rules
+of `LedgerIntegrityChecks` for a posted entry: locked (`postingLocked`),
+kept 7 and 10 years (`retentionUntil`, art. 52 AWR, art. 2:10 BW), intact
+(`integrityVerified`, VAT Directive art. 233) and on an audit trail
+(`auditTrail`). A draft sent from the ledger page carries none of these, so
+every post from the page was refused, balanced or not.
+
+These fields are what the post establishes. `PostingStamps::apply` sets them:
+locked, intact, kept until 31 December of the posting year plus 10, and the
+post on the audit trail once. The guard evaluates the entry as stamped;
+`StampPostingAction`, declared first on `GLTransaction.post`, persists the
+stamps with the posting user; `MaterialiseGlTransactionAction` stamps the
+transactions it writes. Balance, completeness and numbering still refuse.
+`integrityVerified` records the controls a posted entry sits under (locked,
+reversal-only, insert-only audit rows); `ledger-sealed-entries` adds the hash
+chain as proof.
+
 ## Declarative-vs-imperative decision (ADR-031)
 
 | Behaviour | Path | Rationale |

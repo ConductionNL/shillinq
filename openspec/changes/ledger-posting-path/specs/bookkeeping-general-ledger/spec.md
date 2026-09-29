@@ -22,6 +22,14 @@ MUST NOT abort because the declared action has no handler.
 - THEN the transaction shows state posted
 - AND no error about an unresolved lifecycle action appears
 
+#### Scenario: A posted entry is locked, kept and on the audit trail
+
+- GIVEN the balanced memorial entry of the scenario above, dated 2026-09-20
+- WHEN the bookkeeper presses Post transaction
+- THEN the posted transaction is locked against edits and marked intact
+- AND it is kept until 2036-12-31
+- AND its audit trail names the bookkeeper and the moment of posting
+
 #### Scenario: An unbalanced transaction is still refused
 
 - GIVEN a draft transaction with debit EUR 1,200 and credit EUR 1,000
