@@ -1,0 +1,443 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "planning-budget-editing",
+		"description": "Budget entry: the multi-year budget page (MultiYearBudget, through BudgetEditingController), and plain index and detail pages for the multi-year estimate (Meerjarenraming, MeerjarenBudget) and for budget amendments (Begrotingswijziging, with its vaststellen transition, the files and history tabs). Typing into the grid lives on the BudgetGrid page (BudgetLinesEditor)."
+	},
+	"menu": [
+		{
+			"id": "Budgets",
+			"children": [
+				{
+					"id": "MultiYearBudget",
+					"label": "Multi-year budget",
+					"icon": "CalendarRange",
+					"route": "MultiYearBudget",
+					"order": 7
+				}
+			]
+		},
+		{
+			"id": "Overheid",
+			"children": [
+				{
+					"id": "Begrotingswijzigingen",
+					"label": "Budget amendments",
+					"icon": "FileDocumentEditOutline",
+					"route": "Begrotingswijzigingen",
+					"order": 50
+				},
+				{
+					"id": "Meerjarenramingen",
+					"label": "Multi-year estimate",
+					"icon": "ChartTimelineVariant",
+					"route": "Meerjarenramingen",
+					"order": 55
+				},
+				{
+					"id": "MeerjarenBudgetten",
+					"label": "Multi-year budget lines",
+					"icon": "CalendarRangeOutline",
+					"route": "MeerjarenBudgetten",
+					"order": 56
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "MultiYearBudget",
+			"route": "/begroting/meerjarig",
+			"type": "custom",
+			"title": "Multi-year budget",
+			"component": "MultiYearBudget",
+			"_note": "Ledger groups against fiscal years with a computed total per year and a Start next year form; type:index cannot generate year columns. Reads GET /api/v1/budget-editing/multi-year.",
+			"config": {
+				"register": "shillinq",
+				"schema": "AnnualBudget",
+				"endpointSource": "/apps/shillinq/api/v1/budget-editing/multi-year"
+			}
+		},
+		{
+			"id": "Begrotingswijzigingen",
+			"route": "/overheid/begrotingswijzigingen",
+			"type": "index",
+			"title": "Budget amendments",
+			"config": {
+				"register": "shillinq",
+				"schema": "Begrotingswijziging",
+				"columns": [
+					{
+						"key": "number",
+						"label": "Number",
+						"sortable": true
+					},
+					{
+						"key": "reason",
+						"label": "Reason",
+						"sortable": false
+					},
+					{
+						"key": "programme",
+						"label": "Programme",
+						"sortable": true
+					},
+					{
+						"key": "amountChangeCents",
+						"label": "Change (cents)",
+						"sortable": true
+					},
+					{
+						"key": "councilResolutionNumber",
+						"label": "Council resolution",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "number",
+				"detailRoute": "BegrotingswijzigingDetail",
+				"quickFilters": [
+					{
+						"label": "All",
+						"filter": {},
+						"default": true
+					},
+					{
+						"label": "Draft",
+						"filter": {
+							"status": "draft"
+						}
+					},
+					{
+						"label": "Determined",
+						"filter": {
+							"status": "determined"
+						}
+					}
+				]
+			}
+		},
+		{
+			"id": "BegrotingswijzigingDetail",
+			"route": "/overheid/begrotingswijzigingen/:id",
+			"type": "detail",
+			"title": "Budget amendment",
+			"config": {
+				"register": "shillinq",
+				"schema": "Begrotingswijziging",
+				"indexRoute": "Begrotingswijzigingen",
+				"auditTrail": true,
+				"lifecycleActions": true,
+				"actions": [
+					{
+						"id": "determine-amendment",
+						"label": "Determine",
+						"icon": "CheckDecagramOutline",
+						"visibleWhen": {
+							"field": "status",
+							"op": "eq",
+							"value": "draft"
+						},
+						"type": "lifecycle-transition",
+						"transition": "vaststellen",
+						"description": "Determine the amendment after entering the council resolution. Its movements then count in the budget."
+					}
+				],
+				"widgets": [
+					{
+						"id": "amendment",
+						"type": "data",
+						"title": "Amendment",
+						"icon": "FileDocumentEditOutline",
+						"content": {
+							"columns": 2,
+							"include": [
+								"number",
+								"changeNumber",
+								"reason",
+								"description",
+								"programme",
+								"taskField",
+								"originalAmountCents",
+								"amountChangeCents",
+								"newAmountCents",
+								"effectiveFrom",
+								"status"
+							]
+						}
+					},
+					{
+						"id": "resolution",
+						"type": "data",
+						"title": "Council resolution",
+						"icon": "ScaleBalance",
+						"content": {
+							"columns": 2,
+							"include": [
+								"councilResolutionNumber",
+								"councilResolutionDate",
+								"councilResolution",
+								"determinationDate"
+							]
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "amendment",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 5
+					},
+					{
+						"id": "2",
+						"widgetId": "resolution",
+						"gridX": 0,
+						"gridY": 5,
+						"gridWidth": 12,
+						"gridHeight": 5
+					}
+				],
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "files",
+							"label": "Files",
+							"icon": "FolderOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/files",
+										"collapsed": true
+									}
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "Meerjarenramingen",
+			"route": "/overheid/meerjarenramingen",
+			"type": "index",
+			"title": "Multi-year estimate",
+			"config": {
+				"register": "shillinq",
+				"schema": "Meerjarenraming",
+				"columns": [
+					{
+						"key": "year",
+						"label": "Year",
+						"sortable": true
+					},
+					{
+						"key": "revenueStructural",
+						"label": "Structural revenue",
+						"sortable": true
+					},
+					{
+						"key": "revenueIncidental",
+						"label": "Incidental revenue",
+						"sortable": true
+					},
+					{
+						"key": "expensesStructural",
+						"label": "Structural expenses",
+						"sortable": true
+					},
+					{
+						"key": "expensesIncidental",
+						"label": "Incidental expenses",
+						"sortable": true
+					},
+					{
+						"key": "balanceStructural",
+						"label": "Structural balance",
+						"sortable": true
+					},
+					{
+						"key": "saldoReëel",
+						"label": "Real balance",
+						"sortable": true
+					},
+					{
+						"key": "sluitend",
+						"label": "Balanced",
+						"sortable": true
+					}
+				],
+				"defaultSort": "year",
+				"detailRoute": "MeerjarenramingDetail"
+			}
+		},
+		{
+			"id": "MeerjarenramingDetail",
+			"route": "/overheid/meerjarenramingen/:id",
+			"type": "detail",
+			"title": "Multi-year estimate year",
+			"config": {
+				"register": "shillinq",
+				"schema": "Meerjarenraming",
+				"indexRoute": "Meerjarenramingen",
+				"auditTrail": true,
+				"widgets": [
+					{
+						"id": "estimate",
+						"type": "data",
+						"title": "Estimate",
+						"icon": "ChartTimelineVariant",
+						"content": {
+							"columns": 2,
+							"include": [
+								"year",
+								"budgetId",
+								"revenueStructural",
+								"revenueIncidental",
+								"expensesStructural",
+								"expensesIncidental",
+								"balanceStructural",
+								"balanceIncidental",
+								"saldoReëel",
+								"sluitend"
+							]
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "estimate",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 5
+					}
+				]
+			}
+		},
+		{
+			"id": "MeerjarenBudgetten",
+			"route": "/overheid/meerjarenbudgetten",
+			"type": "index",
+			"title": "Multi-year budget lines",
+			"config": {
+				"register": "shillinq",
+				"schema": "MeerjarenBudget",
+				"columns": [
+					{
+						"key": "financialYear",
+						"label": "Fiscal year",
+						"sortable": true
+					},
+					{
+						"key": "meerjarenHorizon",
+						"label": "Horizon",
+						"sortable": true
+					},
+					{
+						"key": "programme",
+						"label": "Programme",
+						"sortable": true
+					},
+					{
+						"key": "taskField",
+						"label": "Task field",
+						"sortable": true
+					},
+					{
+						"key": "revenueCents",
+						"label": "Revenue (cents)",
+						"sortable": true
+					},
+					{
+						"key": "expensesCents",
+						"label": "Expenses (cents)",
+						"sortable": true
+					},
+					{
+						"key": "version",
+						"label": "Version",
+						"sortable": true
+					}
+				],
+				"defaultSort": "financialYear",
+				"detailRoute": "MeerjarenBudgetDetail"
+			}
+		},
+		{
+			"id": "MeerjarenBudgetDetail",
+			"route": "/overheid/meerjarenbudgetten/:id",
+			"type": "detail",
+			"title": "Multi-year budget line",
+			"config": {
+				"register": "shillinq",
+				"schema": "MeerjarenBudget",
+				"indexRoute": "MeerjarenBudgetten",
+				"auditTrail": true,
+				"widgets": [
+					{
+						"id": "line",
+						"type": "data",
+						"title": "Budget line",
+						"icon": "CalendarRangeOutline",
+						"content": {
+							"columns": 2,
+							"include": [
+								"financialYear",
+								"meerjarenHorizon",
+								"programme",
+								"taskField",
+								"economicCategory",
+								"revenueCents",
+								"expensesCents",
+								"incidentalRevenueCents",
+								"incidentalExpensesCents",
+								"movementReservesCents",
+								"version",
+								"budgetAmendment",
+								"notes"
+							]
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "line",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 5
+					}
+				]
+			}
+		}
+	]
+}

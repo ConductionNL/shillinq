@@ -371,6 +371,7 @@ import ReceivePage from './views/inventory/ReceivePage.vue'
 import TransferPage from './views/inventory/TransferPage.vue'
 import AdminInvoiceDetail from './views/invoice/AdminInvoiceDetail.vue'
 import AdminInvoiceList from './views/invoice/AdminInvoiceList.vue'
+import MultiYearBudget from './views/MultiYearBudget.vue'
 // receipt-extraction-consume (REQ-RXC-003) — custom detail page for a single
 // Receipt record: prefills from a docudesk extraction draft with per-field
 // confidence + correction + re-request, none of which fits the built-in
@@ -484,6 +485,7 @@ export default {
 	SegmentPnLDashboard: { kind: 'page', component: SegmentPnLDashboard },
 	BudgetLineCommitments: { kind: 'page', component: BudgetLineCommitments },
 	BudgetGrid: { kind: 'page', component: BudgetGrid },
+	MultiYearBudget: { kind: 'page', component: MultiYearBudget },
 
 	// compliance-deadline-calendar (REQ-CDC-006): deadline calendar settings.
 	DeadlineCalendarSettings: { kind: 'page', component: DeadlineCalendarSettings },
