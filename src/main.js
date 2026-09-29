@@ -30,12 +30,14 @@ import menuLayout from './menu-layout.json'
 import pinia from './pinia.js'
 import registry from './registry.js'
 import { classifyUnmatched, openBankLineMatch } from './utils/bankMatchActions.js'
+import { openCarryOverCommitments } from './utils/commitmentYearEndApi.js'
 import { openDownPaymentInvoice } from './utils/downPaymentActions.js'
 import { openIntegriqConnections } from './utils/integriqConnections.js'
 import {
 	buildPageFragmentIndex,
 	mergeFullFragmentIntoManifest,
 } from './utils/mergeFragmentIntoManifest.js'
+import { openProposePaymentRun } from './utils/paymentRunActions.js'
 
 // Must stay first: sets __webpack_public_path__ / __webpack_nonce__ before any
 // other module evaluates — see src/setPublicPath.js.
@@ -319,6 +321,12 @@ const customComponentsProp = {
 	// sales-down-payments: the "New down-payment invoice" header action on
 	// Accounts Receivable.
 	openDownPaymentInvoice,
+	// banking-payment-run: the "Propose payment run" header action on
+	// Payment runs.
+	openProposePaymentRun,
+	// planning-commitment-year-end: the "Carry open commitments to next year"
+	// header action on Commitments.
+	openCarryOverCommitments,
 }
 
 // Vue 3 `mount()` renders INSIDE the matched element; Vue 2's `$mount()`

@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-posting-path/tasks.md#task-1.1
+ * @spec openspec/specs/bookkeeping-journal-entries/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -24,7 +24,9 @@ namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\AppInfo\LedgerPostingRegistration;
+use OCA\Shillinq\Lifecycle\Action\EvaluateAllocationRulesAction;
 use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
+use OCA\Shillinq\Lifecycle\Action\StampPostingAction;
 use OCA\Shillinq\Lifecycle\RegisterRequiresGuardAdapter;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
@@ -237,6 +239,54 @@ final class PostingPathDeclarationsTest extends TestCase {
 			}
 		}
 	}//end testStockMoveAndPayrollDoNotDeclareASecondPosting()
+
+	/**
+	 * GLTransaction.post stamps the entry before the allocation rules run, so
+	 * the posted entry keeps the fields its guard judged it by (REQ-LPP-001).
+	 *
+	 * @return void
+	 */
+	public function testGlTransactionPostStampsTheEntryBeforeAllocating(): void {
+		$names = array_map(
+			static fn (array $action): string => (string)($action['action'] ?? ''),
+			$this->actions(($this->transitions()['GLTransaction.post'] ?? []))
+		);
+
+		self::assertSame([StampPostingAction::class, EvaluateAllocationRulesAction::class], $names);
+	}//end testGlTransactionPostStampsTheEntryBeforeAllocating()
+
+	/**
+	 * Every posting declaration names a source schema the handler maps, or a
+	 * schema whose mapper another change owes; nothing else may declare it
+	 * (REQ-LPP-006). InventoryValuation is a running snapshot per product and
+	 * warehouse: sale dispatch is booked per stock move by CogsPosterService,
+	 * so its snapshot transitions declare no posting.
+	 *
+	 * @return void
+	 */
+	public function testEveryPostingDeclarationIsServedOrOwedByName(): void {
+		$owed = ['ExpenseClaimEntry' => 'expenses-category-mapping'];
+		$offenders = [];
+		foreach ($this->transitions() as $key => $transition) {
+			foreach ($this->actions($transition) as $action) {
+				if (($action['action'] ?? '') !== MaterialiseGlTransactionAction::class) {
+					continue;
+				}
+
+				$source = (string)($action['actionParameters']['sourceSchema'] ?? '');
+				if (in_array($source, MaterialiseGlTransactionAction::SUPPORTED_SOURCES, true) === false
+					&& isset($owed[$source]) === false
+				) {
+					$offenders[] = $key . ' (' . $source . ')';
+				}
+			}
+		}
+
+		self::assertSame([], $offenders);
+		self::assertArrayNotHasKey('InventoryValuation.postCOGS', $this->transitions());
+		self::assertArrayNotHasKey('InventoryValuation.postReceipt', $this->transitions());
+		self::assertArrayNotHasKey('InventoryValuation.postVariance', $this->transitions());
+	}//end testEveryPostingDeclarationIsServedOrOwedByName()
 
 	/**
 	 * A registration context that records registerService() calls.

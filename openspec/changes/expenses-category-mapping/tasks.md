@@ -15,7 +15,7 @@
 ## 3. Resolution and posting
 
 - [ ] 3.1 Add `ExpenseAccountResolver` (confirmed account, category account, settings, null with reason) (REQ-ECM-003). Verify: PHPUnit for each branch.
-- [ ] 3.2 Replace the `accountLookup` and `creditMapping` strings in both `ExpenseClaimEntry.post` declarations with the resolver reference, and have the expense claim mapper of `ledger-posting-path` call the resolver and refuse on null (REQ-ECM-003). Verify: PHPUnit for the S. de Vries claim balancing to EUR 100.08, and for an uncategorised line refusing the post.
+- [ ] 3.2 Replace the `accountLookup` and `creditMapping` strings in both `ExpenseClaimEntry.post` declarations with the resolver reference, and add the `ExpenseClaimEntry` mapper to `MaterialiseGlTransactionAction` (moved here from `ledger-posting-path` task 2.2), calling the resolver and refusing on null (REQ-ECM-003). Verify: PHPUnit for the S. de Vries claim balancing to EUR 100.08, and for an uncategorised line refusing the post.
 - [ ] 3.3 Show the docudesk suggestion next to the resolved account on the receipt and claim pages (REQ-ECM-003). Verify: Playwright with a seeded suggestion that differs from the category account.
 
 ## 4. Docs

@@ -156,6 +156,7 @@ import InvoiceGenerator from './components/invoice/InvoiceGenerator.vue'
 // `header-actions` widget slot, which CnWidgetGrid resolves against THIS
 // registry before its built-in widget table.
 import RecurringInvoiceProfileLauncher from './components/invoice/RecurringInvoiceProfileLauncher.vue'
+import LedgerLinesGuidancePanel from './components/ledger/LedgerLinesGuidancePanel.vue'
 // bookkeeping-period-close (REQ-PC-005, REQ-PC-006, REQ-PC-007 / Task 9 + 10):
 // the PeriodCloseDetail page composes the FiscalPeriod metadata header, the
 // close-task checklist (AP / AR / bank / expense claims) with inline
@@ -234,6 +235,8 @@ import VendorPerformanceDetail from './components/vendor-performance/VendorPerfo
 // rate pills, score colour band and trend indicator are bespoke, so both
 // are registered as kind:"page" custom components.
 import VendorPerformanceIndex from './components/vendor-performance/VendorPerformanceIndex.vue'
+// receivables-payment-plans: Agree a payment plan, and the plan page's actions.
+import AgreePaymentPlanModal from './modals/AgreePaymentPlanModal.vue'
 import BillImportModal from './modals/BillImportModal.vue'
 // ADR-049 Phase-4 dissolution: modals formerly launched by the imperative
 // FinancialDashboardActions / PaymentRunDetailActions widgets. Those action
@@ -241,6 +244,8 @@ import BillImportModal from './modals/BillImportModal.vue'
 // each modal is registered here as a kind:"modal" so the manifest action's
 // `target` resolves it. Modal-isolated under src/modals/ (hydra gate-13).
 import InvoiceQuickDraftModal from './modals/InvoiceQuickDraftModal.vue'
+import PaymentBlockModal from './modals/PaymentBlockModal.vue'
+import PaymentPlanActionModal from './modals/PaymentPlanActionModal.vue'
 import PaymentRunReconcileModal from './modals/PaymentRunReconcileModal.vue'
 import RecurringInvoiceProfileModal from './modals/RecurringInvoiceProfileModal.vue'
 // accountant-portal: the multi-client dashboard composes a per-card status
@@ -395,6 +400,13 @@ export default {
 	InvoiceQuickDraftModal: { kind: 'modal', component: InvoiceQuickDraftModal },
 	BillImportModal: { kind: 'modal', component: BillImportModal },
 	PaymentRunReconcileModal: { kind: 'modal', component: PaymentRunReconcileModal },
+	// banking-payment-run REQ-BPR-003/004: Block payment / Release payment on
+	// APTransactionDetail and PayeeDetail.
+	PaymentBlockModal: { kind: 'modal', component: PaymentBlockModal },
+	// receivables-payment-plans REQ-RPPL-001/003: CustomerDetail, ARInvoiceDetail
+	// and PaymentPlanDetail header actions.
+	AgreePaymentPlanModal: { kind: 'modal', component: AgreePaymentPlanModal },
+	PaymentPlanActionModal: { kind: 'modal', component: PaymentPlanActionModal },
 
 	StandardsPolicyEditor: { kind: 'page', component: StandardsPolicyEditor },
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
@@ -517,6 +529,30 @@ export default {
 		kind: 'widget',
 		component: ArDownPaymentPanel,
 		_note: "Lists the down payments of the invoice's order across the customer's other invoices and deducts them through a server-side recompute of the lines and totals. An object-table widget filters top-level fields of one schema only and cannot post; the order reference lives inside the downPayment group.",
+	},
+
+	// ledger-booking-rules (REQ-LBR-003): the booking lines with each
+	// account's guidance, on JournalDetail and GeneralLedgerDetail through the
+	// slots widget-journal-lines and widget-transaction-lines.
+	JournalLinesGuidance: {
+		// @custom-widget-ratchet exclude the guidance is the description of the Account record a line names by number, per administration; no declarative widget joins an embedded line array (JournalEntry.lines) or a related GLLine row to a second schema by a non-id field.
+		kind: 'widget',
+		component: {
+			extends: LedgerLinesGuidancePanel,
+			name: 'JournalLinesGuidance',
+			props: { schema: { type: String, default: 'JournalEntry' } },
+		},
+		_note: "Lists a journal entry's lines with the account name, the account's guidance under it and a control-account mark. An object-table widget shows one schema's own fields and cannot look up the account behind a line.",
+	},
+	TransactionLinesGuidance: {
+		// @custom-widget-ratchet exclude same join as JournalLinesGuidance, over the GLLine rows of a GLTransaction.
+		kind: 'widget',
+		component: {
+			extends: LedgerLinesGuidancePanel,
+			name: 'TransactionLinesGuidance',
+			props: { schema: { type: String, default: 'GLTransaction' } },
+		},
+		_note: "Lists a ledger transaction's GLLine rows with the account name, the account's guidance under it and a control-account mark.",
 	},
 
 	// add-invoice-pdf-export-with-ubl-peppol-support (REQ-EINV-007).

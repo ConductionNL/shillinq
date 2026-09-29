@@ -31,6 +31,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Bank;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\PaymentPlan\PaymentPlanBankMatcher;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Log\LoggerInterface;
@@ -56,12 +57,14 @@ class ExactMatchBooker {
 	 * @param ManualMatchService     $matches       Writes and confirms the match.
 	 * @param SettingsService        $settings      Register slug.
 	 * @param LoggerInterface        $logger        Logger.
+	 * @param PaymentPlanBankMatcher|null $plans    Books a line naming a payment plan's reference to that plan.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly ManualMatchService $matches,
 		private readonly SettingsService $settings,
 		private readonly LoggerInterface $logger,
+		private readonly ?PaymentPlanBankMatcher $plans = null,
 	) {
 
 	}//end __construct()
@@ -79,6 +82,17 @@ class ExactMatchBooker {
 		$amount = round((float)($line['amount'] ?? 0), 2);
 		if ($amount === 0.0) {
 			return null;
+		}
+
+		// Payment plans (REQ-RPPL-003): a line naming one active plan's
+		// payment reference pays that plan's instalments, not one invoice.
+		$planMatch = null;
+		if ($amount > 0 && $this->plans !== null) {
+			$planMatch = $this->plans->book(line: $line);
+		}
+
+		if ($planMatch !== null) {
+			return $planMatch;
 		}
 
 		$schema = 'APTransaction';

@@ -7,7 +7,7 @@
  * the registry, the helpers' URLs and appinfo/routes.php are held to each
  * other, and the request the dialog sends is the one DownPaymentController reads.
  *
- * @spec openspec/changes/sales-down-payments/tasks.md#task-3.2
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  */
 
 import fs from 'fs'

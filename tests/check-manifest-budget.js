@@ -143,7 +143,28 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // this file argues for and close to the 0.58% it ran with two bumps ago.
 // Not more: the point of restating the ratio is that the next change
 // re-measures rather than inheriting slack.
-const DEFAULT_BUDGET_BYTES = 1_135_500
+//
+// Re-measured 2026-09-29 (ledger-booking-rules): 1,145,582 bytes. Inherited
+// red first: `development` already stood at 1,136,982, 1,482 B over, from the
+// fragments merged since 08-27. This change adds 8,600 B: the posting
+// restrictions settings pages and full copies of JournalDetail and
+// GeneralLedgerDetail (mergePages replaces a page wholesale), their notes
+// trimmed to one line each before measuring. Raised to 1,151,800: 6,218 B of
+// headroom, 0.54%, near the ratio above.
+//
+// Re-measured 2026-09-29 (receivables-payment-plans): 1,155,542 bytes. The
+// stack below (banking-payment-run, purchasing-supplier-invoice-intake) left
+// 1,147,341. This change adds 8,201 B: the Payment plans index and plan page
+// (5,490 B fragment), and on CustomerDetail and ARInvoiceDetail the Agree a
+// payment plan action and the customer's plans list. Raised to 1,162,000:
+// 6,458 B of headroom, 0.56%.
+//
+// Re-measured 2026-09-29 (planning-budget-editing): 1,165,005 bytes. This
+// change adds 9,129 B, all in its own fragment: index and detail pages for
+// budget amendments (with Determine, files and history), the multi-year
+// estimate and the multi-year budget lines, six pages over schemas that had
+// none. Raised to 1,172,000: 6,995 B of headroom, 0.60%.
+const DEFAULT_BUDGET_BYTES = 1_172_000
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),

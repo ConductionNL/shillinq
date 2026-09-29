@@ -9,10 +9,10 @@
  * test the REAL schema: shillinq_register.json merged with every register.d
  * fragment by SettingsService::deepMergeConfig(), the merge the app runs at
  * install time. It validates with opis/json-schema, the library OpenRegister
- * uses, after the two preparations OpenRegister's ValidateObject applies
+ * uses, after the preparations OpenRegister's ValidateObject applies
  * first: a `$ref` on a property is a relation marker, not a schema reference,
- * and an empty string or empty array on a field that is not required is
- * dropped.
+ * an empty string or empty array on a field that is not required is
+ * dropped, and a top-level field that is not required accepts null.
  *
  * @category Test
  * @package  OCA\Shillinq\Tests\Unit\Service\Support
@@ -106,11 +106,15 @@ final class RegisterSchema {
 		unset($object['id']);
 
 		// ValidateObject::validateObject() drops an empty string or an empty
-		// array on a field that is not required before it validates.
+		// array on a field that is not required before it validates. A null on
+		// a top-level field that is not required passes too: prepareSchemaForValidation()
+		// widens that property's type with `null` (an enum without null has the
+		// key filtered out instead). Nested properties are not widened, so a
+		// null inside an object still fails, as it does in OpenRegister.
 		$required = ($schema['required'] ?? []);
 		$object = array_filter(
 			$object,
-			static fn ($value, $key): bool => in_array($key, $required, true) === true || ($value !== '' && $value !== []),
+			static fn ($value, $key): bool => in_array($key, $required, true) === true || ($value !== '' && $value !== [] && $value !== null),
 			ARRAY_FILTER_USE_BOTH
 		);
 

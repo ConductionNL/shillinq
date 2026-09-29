@@ -1,0 +1,219 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "ledger-booking-rules",
+		"adr": "ADR-037 modular register fragment; ADR-031 declarative data, imperative check inside the existing post guards",
+		"description": "Account.controlAccountFor names the sub-ledger that owns a control account; PostingRestriction holds an administration's blocked combinations of account, cost centre and project. PostingRestrictionGuard checks both on every posting a person makes, delegated from JournalEntryGuard::canPost and RuleComplianceGuard::validateTransaction. JournalEntry gains sourceApp (the sub-ledger a journal comes from) and a cost centre and project per line."
+	},
+	"components": {
+		"schemas": {
+			"Account": {
+				"properties": {
+					"controlAccountFor": {
+						"type": "string",
+						"nullable": true,
+						"enum": [
+							"receivables",
+							"payables",
+							"vat",
+							"expense-claims",
+							"payroll"
+						],
+						"x-enum-labels": {
+							"receivables": "Receivables",
+							"payables": "Payables",
+							"vat": "VAT",
+							"expense-claims": "Expense claims",
+							"payroll": "Payroll"
+						},
+						"title": "Control account for",
+						"description": "The ledger that owns this account. Only that ledger posts to it; a journal entry by hand on it is refused."
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"title": "Guidance",
+						"description": "When to use this account; shown to the bookkeeper on every booking line."
+					}
+				}
+			},
+			"JournalEntry": {
+				"properties": {
+					"sourceApp": {
+						"type": "string",
+						"nullable": true,
+						"enum": [
+							"bank",
+							"humaniq"
+						],
+						"x-enum-labels": {
+							"bank": "Bank",
+							"humaniq": "Payroll (humaniq)"
+						},
+						"title": "Source ledger",
+						"description": "The ledger this journal entry comes from. A bank booking may post its VAT line; a payroll journal may post on payroll accounts. Empty for an entry made by hand."
+					},
+					"lines": {
+						"title": "Lines",
+						"description": "The entry's booking lines. Each line books an amount on one account, debit or credit, optionally on a cost centre and a project.",
+						"items": {
+							"properties": {
+								"costCenterCode": {
+									"type": "string",
+									"nullable": true,
+									"title": "Cost centre",
+									"description": "The cost centre this line is booked on."
+								},
+								"projectCode": {
+									"type": "string",
+									"nullable": true,
+									"title": "Project",
+									"description": "The project this line is booked on."
+								}
+							}
+						}
+					}
+				}
+			},
+			"PostingRestriction": {
+				"slug": "PostingRestriction",
+				"icon": "Cancel",
+				"version": "0.1.0",
+				"title": "Posting restriction",
+				"description": "A combination of account, cost centre and project that may not be booked together in this administration.",
+				"x-schema-org": "schema:Thing",
+				"x-openregister-purpose": "config",
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "A restriction decides which postings are refused, so every change to it is kept: who added, changed or retired it and when."
+				},
+				"type": "object",
+				"required": [
+					"administrationId",
+					"accountPattern",
+					"reason",
+					"lifecycleState"
+				],
+				"properties": {
+					"administrationId": {
+						"type": "string",
+						"title": "Administration",
+						"description": "The administration this restriction applies to."
+					},
+					"accountPattern": {
+						"type": "string",
+						"title": "Account",
+						"description": "An account number, or its first digits to cover the accounts under it."
+					},
+					"costCenterCode": {
+						"type": "string",
+						"nullable": true,
+						"title": "Cost centre",
+						"description": "The cost centre this account may not be booked on. Empty covers every cost centre."
+					},
+					"projectCode": {
+						"type": "string",
+						"nullable": true,
+						"title": "Project",
+						"description": "The project this account may not be booked on. Empty covers every project."
+					},
+					"reason": {
+						"type": "string",
+						"title": "Reason",
+						"description": "Why the combination is blocked. The bookkeeper reads this when a posting is refused."
+					},
+					"validFrom": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"title": "Valid from",
+						"description": "The first posting date the restriction applies to."
+					},
+					"validTo": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"title": "Valid until",
+						"description": "The last posting date the restriction applies to."
+					},
+					"lifecycleState": {
+						"type": "string",
+						"enum": [
+							"active",
+							"retired"
+						],
+						"default": "active",
+						"x-enum-labels": {
+							"active": "Active",
+							"retired": "Retired"
+						},
+						"title": "State",
+						"description": "Only an active restriction blocks postings."
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "lifecycleState",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Blocks the combination on new postings."
+						},
+						"retired": {
+							"label": "Retired",
+							"description": "Kept for the record; blocks nothing."
+						}
+					},
+					"transitions": {
+						"retire": {
+							"from": "active",
+							"to": "retired",
+							"label": "Retire restriction",
+							"description": "Stop blocking the combination."
+						},
+						"reactivate": {
+							"from": "retired",
+							"to": "active",
+							"label": "Reactivate restriction",
+							"description": "Block the combination again."
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"administrator": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						},
+						"controller": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"bookkeeper": {
+							"permissions": [
+								"read"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					},
+					"adminScope": {
+						"field": "administrationId",
+						"enforce": true
+					}
+				}
+			}
+		}
+	}
+}

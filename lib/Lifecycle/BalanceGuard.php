@@ -125,7 +125,7 @@ class BalanceGuard {
 	 *
 	 * @return bool True when the invoice's amounts add up and it may be issued.
 	 *
-	 * @spec openspec/changes/banking-payment-run/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-1.1
 	 */
 	public function isInvoiceBalanced(array $object): bool {
 		$lines = ($object['lines'] ?? []);

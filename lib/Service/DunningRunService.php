@@ -441,10 +441,13 @@ class DunningRunService {
 	 * @param string $details Free-text details.
 	 * @param string $pausedBy Operator id.
 	 * @param array<int,string>|null $evidenceRefs Optional evidence refs.
+	 * @param DateTimeImmutable|null $hardDeadline Optional deadline; a payment plan sets its last due date plus grace
+	 *                                             (receivables-payment-plans design.md D2). Default: start plus the configured days.
 	 *
 	 * @return array<string,mixed> The created pause record.
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-17
+	 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-2.1
 	 */
 	public function pause(
 		string $administrationId,
@@ -453,10 +456,11 @@ class DunningRunService {
 		string $details,
 		string $pausedBy,
 		?array $evidenceRefs = null,
+		?DateTimeImmutable $hardDeadline = null,
 	): array {
 		$hardDeadlineDays = max(1, (int)$this->appConfig->getValueString(Application::APP_ID, self::CFG_DISPUTE_PAUSE_DAYS, '60'));
 		$pauseStart = new DateTimeImmutable();
-		$hardDeadline = $pauseStart->modify('+' . $hardDeadlineDays . ' days');
+		$hardDeadline = ($hardDeadline ?? $pauseStart->modify('+' . $hardDeadlineDays . ' days'));
 
 		$refs = ($evidenceRefs ?? []);
 		if ($refs !== []) {

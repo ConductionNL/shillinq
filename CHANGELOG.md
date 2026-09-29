@@ -144,6 +144,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   schema keys, property titles, enums, or descriptions were touched.
 
 ### Fixed
+- Posting to the ledger works end to end (`ledger-posting-path`, #516).
+  A balanced entry now posts from the general ledger page. Before, the
+  ledger rules refused every post, because a draft has no lock, retention
+  date, integrity flag or audit-trail entry. The post now sets those
+  fields itself: locked, kept until 31 December ten years on, and the
+  posting user on the audit trail. Journal entries, sales invoices and
+  purchase invoices post the same way.
+- Allocation rules run when a transaction posts. The three seeded rules
+  arrive paused. Only one runs per posting: "Facility cost
+  fixed-percentage split" (accounts 4800 to 4899), once you set it
+  active. The other two run monthly.
+- Two postings are gone because another path already books them.
+  `StockMove.post` and `Payroll.issue` no longer declare a posting, and
+  the three `InventoryValuation` posting transitions (`postCOGS`,
+  `postReceipt`, `postVariance`) are removed. Stock issues are booked
+  per stock move. Goods receipts and count variances are not booked to
+  the ledger yet.
+- Expense claims still cannot post: their account mapping arrives with
+  `expenses-category-mapping`, and the post is refused by name until then.
 - Register-config log noise on every OpenRegister config import
   (`fix-log-noise-schemas`):
   - All six `x-openregister-widgets` annotations used custom widget types

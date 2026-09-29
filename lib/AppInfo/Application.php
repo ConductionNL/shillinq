@@ -41,10 +41,12 @@ use OCA\Shillinq\Guard\SubsidieRepaymentGuard;
 use OCA\Shillinq\Guard\VatSubmissionGuard;
 use OCA\Shillinq\Lifecycle\AnnualBudgetDefaultGuard;
 use OCA\Shillinq\Lifecycle\APGuard;
+use OCA\Shillinq\Listener\InvoiceCommitmentListener;
 use OCA\Shillinq\Lifecycle\FiscalYearGuard;
 use OCA\Shillinq\Lifecycle\FourEyesPaymentRunGuard;
 use OCA\Shillinq\Lifecycle\GLReversalGuard;
 use OCA\Shillinq\Lifecycle\PaymentRunDuplicateGuard;
+use OCA\Shillinq\PaymentRun\PaymentBlockChecker;
 use OCA\Shillinq\Lifecycle\PeriodCloseGuard;
 use OCA\Shillinq\Lifecycle\RegisterRequiresGuardAdapter;
 use OCA\Shillinq\Lifecycle\WBSOExportValidationGuard;
@@ -55,6 +57,7 @@ use OCA\Shillinq\Listener\BookingLifecycleTransitionListener;
 use OCA\Shillinq\Listener\CommitmentMaterialisationListener;
 use OCA\Shillinq\Listener\CommitmentTransitionListener;
 use OCA\Shillinq\Listener\ContractObligationTaskListener;
+use OCA\Shillinq\Listener\SupplierInvoiceWarningListener;
 use OCA\Shillinq\Listener\DbaInvoiceMonitorListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Listener\DeliveryDispatchListener;
@@ -319,6 +322,13 @@ class Application extends App implements IBootstrap {
 		$context->registerEventListener(
 			event: ObjectTransitionedEvent::class,
 			listener: ReconciliationMatchSettlementListener::class
+		);
+
+		// Planning-commitment-year-end REQ-PCYE-002/003: an approved supplier
+		// invoice lowers the commitment of its order, and the last one closes it.
+		$context->registerEventListener(
+			event: ObjectTransitionedEvent::class,
+			listener: InvoiceCommitmentListener::class
 		);
 
 		// Revive-gl-tax-capabilities (shillinq#417/#446) REQ-GLTAX-001 — the
@@ -815,11 +825,13 @@ class Application extends App implements IBootstrap {
 		//
 		// This is deliberately scoped to the 17 guards + PeriodCloseGuard
 		// method shillinq#425 covers. Dozens of pre-existing guards
-		// (MandateEnforcer, BudgetBlocker, PeriodCloseGuard's other three
+		// (PeriodCloseGuard's other three
 		// methods, InventoryPostingGuard, KorThresholdGuard, ...) reference
 		// tags shaped the same way and are NOT registered — every one of
 		// those transitions also hard-fails today. That fleet-wide gap is
 		// filed separately as shillinq#433 and intentionally not fixed here.
+		// Planning-commitment-year-end REQ-PCYE-001: the commitment guard tags.
+		(new CommitmentGuardServices())->register(context: $context);
 		$context->registerService(
 			'OCA\Shillinq\Guard\Iv3XmlValidationGuard::requireValidXml',
 			static function ($c): RegisterRequiresGuardAdapter {
@@ -1084,6 +1096,7 @@ class Application extends App implements IBootstrap {
 					container: $c->get(ContainerInterface::class),
 					appConfig: $c->get(IAppConfig::class),
 					logger: $c->get(LoggerInterface::class),
+					blockChecker: $c->get(PaymentBlockChecker::class),
 				);
 			}
 		);
@@ -1281,6 +1294,14 @@ class Application extends App implements IBootstrap {
 			event: ObjectCreatedEvent::class,
 			listener: AppointmentCreatedListener::class,
 			schemas: ['Appointment']
+		);
+
+		// Every saved supplier invoice gets its duplicate and IBAN warnings
+		// (purchasing-supplier-invoice-intake REQ-PSII-003/004).
+		$this->registerFilteredObjectWriteListener(
+			dispatcher: $dispatcher,
+			listener: SupplierInvoiceWarningListener::class,
+			schemas: ['SupplierInvoice']
 		);
 
 		// --- gate-57 region: ContractObligation task trigger (REQ-CDC-005).

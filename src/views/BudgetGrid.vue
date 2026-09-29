@@ -21,6 +21,11 @@
  gap that precedent left open). A grootboek (Account) leaf row is a real
  navigation link to ChartOfAccountsDetail, not a toggle (REQ-BGV-007).
 
+ Below the grid, BudgetLinesEditor types the budget itself: the months of
+ one annual budget per ledger group (planning-budget-editing, REQ-PBE-001,
+ REQ-PBE-002), and MultiYearBudget sets the years side by side with Start
+ next year (REQ-PBE-003).
+
  @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md
 -->
 <template>
@@ -204,6 +209,10 @@
 					{{ errorMessage }}
 				</p>
 			</section>
+
+			<BudgetLinesEditor :administrationId="administrationId" />
+
+			<MultiYearBudget :administrationId="administrationId" />
 		</div>
 	</NcAppContent>
 </template>
@@ -215,6 +224,8 @@ import { NcAppContent, NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue'
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue'
 import BudgetGridCell from '../components/BudgetGridCell.vue'
+import BudgetLinesEditor from '../components/BudgetLinesEditor.vue'
+import MultiYearBudget from '../components/MultiYearBudget.vue'
 import { fetchAdministrationContext } from '../api/administrationApi.js'
 import { defaultRange, flattenVisibleRows } from './budgetGridHelpers.js'
 
@@ -228,6 +239,8 @@ export default {
 		ChevronDown,
 		ChevronRight,
 		BudgetGridCell,
+		BudgetLinesEditor,
+		MultiYearBudget,
 	},
 
 	data() {

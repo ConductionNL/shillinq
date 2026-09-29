@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-posting-path/tasks.md#task-2.1
+ * @spec openspec/specs/bookkeeping-journal-entries/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -25,10 +25,12 @@ namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 use OCA\Shillinq\AppInfo\LedgerPostingRegistration;
 use OCA\Shillinq\Lifecycle\BalanceGuard;
 use OCA\Shillinq\Lifecycle\JournalEntryGuard;
+use OCA\Shillinq\Lifecycle\PostingRestrictionGuard;
 use OCA\Shillinq\Lifecycle\RegisterRequiresGuardAdapter;
 use OCA\Shillinq\Lifecycle\RuleComplianceGuard;
 use OCA\Shillinq\Tests\Unit\Lifecycle\Action\InMemoryObjectStore;
 use OCP\IAppConfig;
+use OCP\IL10N;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -90,6 +92,19 @@ final class PostingGuardsThroughAdapterTest extends TestCase {
 	}//end balanceGuard()
 
 	/**
+	 * The booking-rules guard over the in-memory store (ledger-booking-rules).
+	 *
+	 * @return PostingRestrictionGuard
+	 */
+	private function restrictions(): PostingRestrictionGuard {
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')->willReturnCallback(
+			static fn (string $text, array $parameters = []): string => vsprintf($text, $parameters)
+		);
+		return new PostingRestrictionGuard($this->appConfig(), $this->store->mock($this), $l10n);
+	}//end restrictions()
+
+	/**
 	 * Set up an empty store.
 	 *
 	 * @return void
@@ -131,7 +146,7 @@ final class PostingGuardsThroughAdapterTest extends TestCase {
 	 * @return void
 	 */
 	public function testABalancedJournalEntryPassesThroughTheAdapter(): void {
-		$guard = new JournalEntryGuard($this->appConfig(), $this->createMock(LoggerInterface::class), $this->store->mock($this));
+		$guard = new JournalEntryGuard($this->appConfig(), $this->createMock(LoggerInterface::class), $this->store->mock($this), $this->restrictions());
 		$adapter = $this->adapter('OCA\Shillinq\Lifecycle\JournalEntryGuard::canPost', $guard);
 
 		$entry = [
@@ -162,7 +177,8 @@ final class PostingGuardsThroughAdapterTest extends TestCase {
 			$this->appConfig(),
 			$this->createMock(LoggerInterface::class),
 			$this->balanceGuard(),
-			$this->store->mock($this)
+			$this->store->mock($this),
+			$this->restrictions()
 		);
 		$adapter = $this->adapter('OCA\Shillinq\Lifecycle\RuleComplianceGuard::validateTransaction', $guard);
 
@@ -186,6 +202,44 @@ final class PostingGuardsThroughAdapterTest extends TestCase {
 	}//end testABalancedGlTransactionPassesThroughTheAdapter()
 
 	/**
+	 * GLTransaction.post from the general ledger page: the page sends the
+	 * draft with its state moved to posted and nothing else. The lock,
+	 * retention, integrity and audit-trail fields are what the post itself
+	 * gives the entry, so the guard judges the entry as the post leaves it
+	 * (REQ-LPP-001). An unbalanced one stays refused.
+	 *
+	 * @return void
+	 */
+	public function testAMemorialEntryAsTheLedgerPageSendsItPosts(): void {
+		$this->store->rows['GLLine'] = [
+			['id' => 'l1', 'transactionId' => 'gl-2', 'accountNumber' => '4000', 'side' => 'debit', 'amount' => 1200.0],
+			['id' => 'l2', 'transactionId' => 'gl-2', 'accountNumber' => '1100', 'side' => 'credit', 'amount' => 1200.0],
+		];
+		$guard = new RuleComplianceGuard(
+			$this->appConfig(),
+			$this->createMock(LoggerInterface::class),
+			$this->balanceGuard(),
+			$this->store->mock($this),
+			$this->restrictions()
+		);
+		$adapter = $this->adapter('OCA\Shillinq\Lifecycle\RuleComplianceGuard::validateTransaction', $guard);
+
+		$transaction = [
+			'id' => 'gl-2',
+			'transactionNumber' => 'MEM-2026-0002',
+			'postingDate' => '2026-09-20',
+			'description' => 'Huur september',
+			'sourceReference' => 'manual',
+			'administrationId' => 'adm-1',
+			'state' => 'posted',
+		];
+		self::assertTrue($adapter->check($transaction, 'post', 'alice')->isAllowed());
+
+		$this->store->rows['GLLine'][1]['amount'] = 1000.0;
+		self::assertFalse($adapter->check($transaction, 'post', 'alice')->isAllowed());
+	}//end testAMemorialEntryAsTheLedgerPageSendsItPosts()
+
+	/**
 	 * ARInvoice.issue: the invoice in the payload is evaluated as it stands.
 	 * A total that is not net plus VAT is refused by that rule, not by a
 	 * TypeError in the adapter.
@@ -207,7 +261,7 @@ final class PostingGuardsThroughAdapterTest extends TestCase {
 			}
 		);
 
-		$guard = new RuleComplianceGuard($this->appConfig(), $logger, $this->balanceGuard(), $this->store->mock($this));
+		$guard = new RuleComplianceGuard($this->appConfig(), $logger, $this->balanceGuard(), $this->store->mock($this), $this->restrictions());
 
 		$allowed = $guard->validateInvoice(
 			[
@@ -220,4 +274,120 @@ final class PostingGuardsThroughAdapterTest extends TestCase {
 		self::assertSame(0, $errors, 'The array must be evaluated, not rejected by the fail-closed catch.');
 		self::assertNotEmpty(array_filter($warnings, static fn (string $w): bool => str_contains($w, 'en16931-br-co-15')));
 	}//end testAnInvoiceIsEvaluatedFromThePayload()
+
+	/**
+	 * JournalEntry.post: a memorial entry on the receivables control account
+	 * is refused, and the refusal names the account and its role instead of
+	 * the generic balance message (REQ-LBR-002).
+	 *
+	 * @return void
+	 */
+	public function testAManualJournalEntryOnAControlAccountIsRefusedNamingIt(): void {
+		$this->store->rows['Account'] = [
+			['id' => 'a1', 'administrationId' => 'adm-1', 'accountNumber' => '1100', 'name' => 'Debiteuren', 'controlAccountFor' => 'receivables'],
+			['id' => 'a2', 'administrationId' => 'adm-1', 'accountNumber' => '1230', 'name' => 'BTW-vordering', 'controlAccountFor' => 'vat'],
+		];
+		$guard = new JournalEntryGuard($this->appConfig(), $this->createMock(LoggerInterface::class), $this->store->mock($this), $this->restrictions());
+		$adapter = $this->adapter('OCA\Shillinq\Lifecycle\JournalEntryGuard::canPost', $guard);
+
+		$entry = [
+			'id' => 'je-9',
+			'administrationId' => 'adm-1',
+			'entryDate' => '2026-09-20',
+			'lines' => [
+				['accountNumber' => '1100', 'side' => 'debit', 'amount' => 500.0],
+				['accountNumber' => '8000', 'side' => 'credit', 'amount' => 500.0],
+			],
+		];
+		$denied = $adapter->check($entry, 'postDirect', 'alice');
+		self::assertFalse($denied->isAllowed());
+		self::assertStringContainsString('1100 Debiteuren is the receivables control account', (string)$denied->getMessage());
+
+		$bank = [
+			'id' => 'je-10',
+			'administrationId' => 'adm-1',
+			'entryDate' => '2026-09-20',
+			'sourceApp' => 'bank',
+			'lines' => [
+				['accountNumber' => '4910', 'side' => 'debit', 'amount' => 100.0],
+				['accountNumber' => '1230', 'side' => 'debit', 'amount' => 21.0],
+				['accountNumber' => '1000', 'side' => 'credit', 'amount' => 121.0],
+			],
+		];
+		self::assertTrue($adapter->check($bank, 'postDirect', 'alice')->isAllowed(), 'A bank booking may post its VAT line.');
+	}//end testAManualJournalEntryOnAControlAccountIsRefusedNamingIt()
+
+	/**
+	 * GLTransaction.post: a line on a blocked combination is refused with the
+	 * restriction's reason (REQ-LBR-005).
+	 *
+	 * @return void
+	 */
+	public function testAGlTransactionOnABlockedCombinationIsRefusedWithTheReason(): void {
+		$this->store->rows['PostingRestriction'] = [
+			[
+				'id' => 'pr-1', 'administrationId' => 'adm-1', 'accountPattern' => '4600', 'costCenterCode' => 'KP-100',
+				'projectCode' => 'P-2026-014', 'reason' => 'Sportakkoord-subsidies lopen via Sociaal Domein, niet via bestuursondersteuning',
+				'validFrom' => '2026-01-01', 'lifecycleState' => 'active',
+			],
+		];
+		$this->store->rows['GLLine'] = [
+			['id' => 'l1', 'transactionId' => 'gl-7', 'accountNumber' => '4600', 'side' => 'debit', 'amount' => 2500.0, 'costCenterCode' => 'KP-100', 'projectCode' => 'P-2026-014'],
+			['id' => 'l2', 'transactionId' => 'gl-7', 'accountNumber' => '1000', 'side' => 'credit', 'amount' => 2500.0],
+		];
+		$guard = new RuleComplianceGuard(
+			$this->appConfig(),
+			$this->createMock(LoggerInterface::class),
+			$this->balanceGuard(),
+			$this->store->mock($this),
+			$this->restrictions()
+		);
+		$adapter = $this->adapter('OCA\Shillinq\Lifecycle\RuleComplianceGuard::validateTransaction', $guard);
+		$transaction = [
+			'id' => 'gl-7', 'transactionNumber' => 'MEM-2026-0007', 'postingDate' => '2026-09-20',
+			'description' => 'Subsidie', 'sourceReference' => 'manual', 'administrationId' => 'adm-1', 'state' => 'posted',
+		];
+
+		$denied = $adapter->check($transaction, 'post', 'alice');
+		self::assertFalse($denied->isAllowed());
+		self::assertStringContainsString('Sportakkoord-subsidies lopen via Sociaal Domein', (string)$denied->getMessage());
+
+		$this->store->rows['GLLine'][0]['costCenterCode'] = 'KP-300';
+		self::assertTrue($adapter->check($transaction, 'post', 'alice')->isAllowed());
+	}//end testAGlTransactionOnABlockedCombinationIsRefusedWithTheReason()
+
+	/**
+	 * GLTransaction.post: a person may not post by hand on the payables
+	 * control account, but the GR/IR settlement draft the purchase ledger
+	 * prepared (journal code set) posts (REQ-LBR-002).
+	 *
+	 * @return void
+	 */
+	public function testASubLedgerDraftOnAControlAccountPostsAndAManualOneDoesNot(): void {
+		$this->store->rows['Account'] = [
+			['id' => 'a1', 'administrationId' => 'adm-1', 'accountNumber' => '2000', 'name' => 'Crediteuren', 'controlAccountFor' => 'payables'],
+		];
+		$this->store->rows['GLLine'] = [
+			['id' => 'l1', 'transactionId' => 'gl-8', 'accountNumber' => '1800', 'side' => 'debit', 'amount' => 800.0],
+			['id' => 'l2', 'transactionId' => 'gl-8', 'accountNumber' => '2000', 'side' => 'credit', 'amount' => 800.0],
+		];
+		$guard = new RuleComplianceGuard(
+			$this->appConfig(),
+			$this->createMock(LoggerInterface::class),
+			$this->balanceGuard(),
+			$this->store->mock($this),
+			$this->restrictions()
+		);
+		$adapter = $this->adapter('OCA\\Shillinq\\Lifecycle\\RuleComplianceGuard::validateTransaction', $guard);
+		$transaction = [
+			'id' => 'gl-8', 'transactionNumber' => 'MEM-2026-0008', 'postingDate' => '2026-09-20',
+			'description' => 'Crediteur', 'sourceReference' => 'manual', 'administrationId' => 'adm-1', 'state' => 'posted',
+		];
+
+		$denied = $adapter->check($transaction, 'post', 'alice');
+		self::assertStringContainsString('2000 Crediteuren is the payables control account', (string)$denied->getMessage());
+
+		$transaction['journalCode'] = 'GRIR-SETTLE';
+		self::assertTrue($adapter->check($transaction, 'post', 'alice')->isAllowed());
+	}//end testASubLedgerDraftOnAControlAccountPostsAndAManualOneDoesNot()
 }//end class

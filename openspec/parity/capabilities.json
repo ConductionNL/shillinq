@@ -450,18 +450,19 @@
 			"id": "led-double-entry",
 			"area": "ledger",
 			"name": "Keep double-entry books where every entry balances debit against credit.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "yes",
 			"moneybird": "yes",
 			"snelstart": "yes",
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
-				"evidence": "The effective `requires` on GLTransaction.post is RuleComplianceGuard::validateTransaction: lib/Settings/register.d/add-shillinq-rule-compliance-guard.json:24 overrides lib/Settings/shillinq_register.json:512 (BalanceGuard::isBalanced) through deepMergeConfig, and validateTransaction delegates the balance check to lib/Lifecycle/BalanceGuard.php:77 isBalanced(), which sums GLLine debit vs credit; several PHP posters write balanced GLTransaction+GLLine directly (lib/Service/FixedAssetDisposalService.php, CogsPosterService.php, PayrollService.php). But the same post transition declares action `evaluate-allocation-rules`, and no handler for it is registered in shillinq, while OpenRegister's LifecycleActionRegistry (openregister lib/Service/Lifecycle/LifecycleActionRegistry.php:57 BUILTINS = set-fields only) throws on an unresolved action, so a user-driven post from the GL page aborts.",
-				"reachedOn": "GeneralLedger /general-ledger (via menu Bookkeeping > General Ledger), detail GeneralLedgerDetail /general-ledger/:id with GLLine relation and lifecycle buttons",
+				"state": "built",
+				"evidence": "lib/Lifecycle/RuleComplianceGuard.php validateTransaction judges a GLTransaction.post as the post leaves it (lib/Lifecycle/PostingStamps.php: locked, intact, retained 10 years, on the audit trail) and refuses an unbalanced or incomplete entry through BalanceGuard; lib/Lifecycle/Action/StampPostingAction.php and EvaluateAllocationRulesAction.php are the declared actions of GLTransaction.post (lib/Settings/shillinq_register.json); lib/Lifecycle/Action/MaterialiseGlTransactionAction.php posts JournalEntry, ARInvoice and APInvoice into one balanced, stamped GLTransaction (shillinq#1736, #1775).",
+				"reachedOn": "GeneralLedgerDetail /general-ledger/:id, lifecycle button Post transaction; JournalDetail /journals/:id, Post",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26"
+				"readOn": "2026-09-29",
+				"change": "2026-09-29-ledger-posting-path"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Reference-financial-glaccounts-fingl-createdgltransr (G/L account transactions created by activity): every activity posts paired debit and credit G/L transactions; search snippet of the account types article: \"voor elke boeking die je aanmaakt ... transacties die in balans zijn\" Note: All Boekhouden plans.",
@@ -475,7 +476,7 @@
 			"feature": "ledger-core",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "The balance invariant is real PHP; the user-facing post path dies on an unregistered declared lifecycle action (fail-loud executor). Specified 2026-09-27 in openspec/changes/ledger-posting-path (OpenSpec pass)."
+			"note": "The balance invariant is real PHP; the user-facing post path dies on an unregistered declared lifecycle action (fail-loud executor). Built 2026-09-29 by ledger-posting-path."
 		},
 		{
 			"id": "led-rgs-chart",
@@ -941,7 +942,8 @@
 				"state": "building",
 				"evidence": "Quote, QuoteLine, SalesOrder, Invoice, CreditNote schemas in lib/Settings/register.d/bookkeeping-quote-order-invoice.json plus lib/Lifecycle/QuoteOrderInvoiceGuard.php guards, but no manifest page uses schema Quote/SalesOrder/Invoice and no service copies quote lines to an invoice (grep 'quote' in lib/Service, src/views: none)",
 				"reachedOn": "nothing reaches it: no page for Quote in src/manifest.json or src/manifest.d",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "sales-quote-and-order-to-invoice"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Met Exact Online kun je offertes opstellen en goedkeuren. Het is zelfs mogelijk om offertes direct om te zetten in een factuur\"",
@@ -1122,7 +1124,8 @@
 				"state": "building",
 				"evidence": "UsageRatePlan and MeterReading schemas (lib/Settings/register.d/usage-metered-billing.json) and lib/Service/UsageRatingCalculator.php + BillingModelEngine.php:299-326 exist, but no manifest page uses either schema and src/components/invoice/InvoiceGenerator.vue:25-37 offers no usage billing model nor meter-reading input",
 				"reachedOn": "nothing reaches it: no page for MeterReading/UsageRatePlan and the generator form cannot request usage lines",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "sales-usage-billing"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/benl/blog/product-nieuws/exact-online/terugkerende-facturatie-met-exact: \"Voor meer complexe abonnementsvormen kunt u Exact koppelen met partners zoals Younium ... Zo factureert u bijvoorbeeld op basis van verbruik\" Note: Only through a partner app (Younium); native Abonnementenbeheer bills fixed recurring lines.",
@@ -1302,7 +1305,8 @@
 				"state": "building",
 				"evidence": "Orders page on OrderPrimitive (src/manifest.d/order-workspace.json) with OrderLine and Payment related lists; orderType enum has 'sales' but lib/Settings/register.d/zz-order-primitive.json says only purchase/subsidy/engagement are populated and the quick filters omit sales; SalesOrder schema (bookkeeping-quote-order-invoice.json) has no page; no code turns an order into an ARInvoice (the 'invoice' transition belongs to the purchase flow)",
 				"reachedOn": "Orders /orders (via menu Sales > Orders)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "sales-quote-and-order-to-invoice"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-sales-orders-slsord-invoicet?language=en_GB: \"After you have made a sale and created the sales order, you can start invoicing. This can be done before or after you deliver it\" Note: Exact Online Handel or Productie.",
@@ -1484,7 +1488,8 @@
 				"state": "building",
 				"evidence": "SepaMandate, DirectDebitCollection, DirectDebitBatch (pain008Xml field) schemas in lib/Settings/register.d/bookkeeping-sepa-direct-debit.json with guards (lib/Lifecycle/MandateGuard.php, SequenceTypeGuard.php) and MandateDormancyExpiryJob, but no manifest page uses any of them and no code writes a pain.008 file (grep pain.008 in lib: none); the Mandates page is the commitments register, not SEPA",
 				"reachedOn": "nothing reaches it: no page for SEPA mandates or collection batches",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "receivables-sepa-direct-debit"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Exact Online ondersteunt Europese incasso om betalingen van klanten uit andere landen te incasseren, conform de SEPA-standaarden\"; https://start.exactonline.nl/docs/HlpRestAPIResources.aspx lists cashflow/DirectDebitMandates",
@@ -1510,8 +1515,8 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "building",
-				"evidence": "CashflowARProjection schema ('expected receipt date from customer-specific betalingsgedrag', lib/Settings/register.d/zzp-cashflow-13wk.json:481) is only read (lib/BackgroundJob/BankfeedReconciliationJob.php:130, CashflowExportService.php); nothing creates it and no page shows it; CalibrationBatchJob leaves the math to OR aggregations",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: one competitor rates it yes (exact-online), no tender, feature request or roadmap names it, and receivables is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: CashflowARProjection schema ('expected receipt date from customer-specific betalingsgedrag', lib/Settings/register.d/zzp-cashflow-13wk.json:481) is only read (lib/BackgroundJob/BankfeedReconciliationJob.php:130, CashflowExportService.php); nothing creates it and no page shows it; CalibrationBatchJob leaves the math to OR aggregations",
 				"reachedOn": "nothing reaches it: no page lists expected pay dates per customer",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -1622,17 +1627,19 @@
 			"id": "pur-ubl-import",
 			"area": "purchasing",
 			"name": "Import a supplier's UBL e-invoice and book it without typing.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "yes",
 			"moneybird": "yes",
 			"snelstart": "yes",
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
-				"evidence": "lib/Controller/SupplierInvoiceImportController.php:190 importUbl -> SupplierInvoiceService::ingestUBLInvoice (SupplierInvoiceService.php:186) saves a SupplierInvoice with statusCode=received; no GL posting on import, the ledger entry only comes from GRIRClearingListener on SupplierInvoice matching->matched (3-way match)",
-				"reachedOn": "Dashboard / (header action 'Import bill' opens BillImportModal, accepts .xml/.ubl/.csv); result lands on SupplierInvoices /inkoop/supplier-invoices (menu Purchasing > Supplier Invoices)",
-				"owner": "ConductionNL/shillinq"
+				"state": "built",
+				"evidence": "lib/Service/SupplierInvoiceService.php ingestUBLInvoice resolves the supplier to a Payee by uuid, KvK or VAT number (resolveSupplier) and reads the IBAN; SupplierInvoice.bookWithoutOrder (SupplierInvoiceBookingGuard + lib/Lifecycle/Action/HandToAccountsPayableAction.php) writes and issues an APTransaction, whose issue posts through MaterialiseGlTransactionAction (expense lines, input VAT, creditors) without a purchase order.",
+				"reachedOn": "SupplierInvoiceDetail /inkoop/supplier-invoices/:id, lifecycle action Book without order; import via the bill import dialog",
+				"owner": "ConductionNL/shillinq",
+				"readOn": "2026-09-29",
+				"change": "2026-09-29-purchasing-supplier-invoice-intake"
 			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207121-ubl-facturen-verwerken : 'Wanneer je een UBL factuur ontvangt en het bestand upload ... of e-mailt naar je Moneybird administratie, worden alle gegevens' read; 'Moneybird ondersteunt UBL 2.1'; also received via Peppol",
@@ -1646,7 +1653,7 @@
 			"feature": "supplier-invoice-capture",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Import without typing works; 'book it' only happens for PO-backed invoices after a 3-way match, a non-PO invoice is never posted automatically. Specified 2026-09-27 in openspec/changes/purchasing-supplier-invoice-intake (OpenSpec pass)."
+			"note": "Import without typing works; 'book it' only happens for PO-backed invoices after a 3-way match, a non-PO invoice is never posted automatically. Built 2026-09-29 by purchasing-supplier-invoice-intake."
 		},
 		{
 			"id": "pur-invoice-approval",
@@ -2194,17 +2201,19 @@
 			"id": "bnk-sepa-batch",
 			"area": "banking",
 			"name": "Create a SEPA payment batch for the supplier invoices due.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "yes",
 			"moneybird": "yes",
 			"snelstart": "yes",
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
-				"evidence": "lib/PaymentRun/PaymentRunExportService.php:120 renders pain.001.001.03 XML + CSV from PaymentRun.paymentLines (refuses lines without creditorIban); src/manifest.d/bookkeeping-accounts-payable-core.json:433 'Export to bank' header action; no service proposes a run from due APTransactions/SupplierInvoices (grep 'PaymentRun' in lib/Service only hits ComplianceDeadlineCalendarService)",
-				"reachedOn": "PaymentRuns /bookkeeping/payment-runs (menu Purchasing > Payment Runs); PaymentRunDetail 'Export to bank' when approved",
-				"owner": "ConductionNL/shillinq"
+				"state": "built",
+				"evidence": "lib/PaymentRun/PaymentRunProposalService.php drafts a PaymentRun from the issued, overdue and partly paid APTransactions due by a chosen date (POST /api/v1/payment-runs/propose, PaymentRunController::propose), leaving out and naming blocked, disputed, already batched and IBAN-less invoices; lib/PaymentRun/PaymentRunExportService.php renders pain.001.001.03 XML, now valid against the ISO 20022 XSD (tests/Unit/PaymentRun/SepaPain001GeneratorTest::testTheFileValidatesAgainstTheXsd).",
+				"reachedOn": "PaymentRuns /bookkeeping/payment-runs, header action Propose payment run; PaymentRunDetail Export to bank",
+				"owner": "ConductionNL/shillinq",
+				"readOn": "2026-09-29",
+				"change": "2026-09-29-banking-payment-run"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-bank-finbnk-processpaymentst?language=en_GB: \"You process payments to generate a payment file, which you can send to your bank\"; batch payments via https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-matching-fin-mtch-batchpaymentst",
@@ -2218,7 +2227,7 @@
 			"feature": "payment-run-sepa-export",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "The SEPA file is real; the batch lines are typed by hand, not selected from the invoices due. Specified 2026-09-27 in openspec/changes/banking-payment-run (OpenSpec pass)."
+			"note": "The SEPA file is real; the batch lines are typed by hand, not selected from the invoices due. Built 2026-09-29 by banking-payment-run."
 		},
 		{
 			"id": "bnk-four-eyes",
@@ -2475,7 +2484,8 @@
 				"state": "building",
 				"evidence": "lib/Service/IcpService.php, IcpCalculator.php and IcpFilingService.php exist and ViesOutageRetryJob is registered in appinfo/info.xml, but /api/icp/* (appinfo/routes.php:479-485) is called by nothing under src/; filing depends on digipoort-sbr, unavailable in lib/Settings/connections.json; lib/Reporting/ReportCatalogue.php lists icp-opgaaf but lib/Reporting/Generator has no generator for it (ReportGenerationService.php:160 'no generator for report type')",
 				"reachedOn": "IcpOpgaaf /belastingen/icp-opgaaf (menu Taxes) lists IcpStatement records only",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "tax-icp-and-reverse-charge"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Btw/ICP-aangiftes\" in Essentials; \"Met Exact Online kun je je btw-aangifte en opgaaf ICP opstellen, goedkeuren en digitaal indienen\"",
@@ -2505,7 +2515,8 @@
 				"state": "building",
 				"evidence": "lib/Service/VatSuppletieDetectionService.php detects corrections, called from VATReturnService and AansluitingService, neither reached from a page (no /api/vat-returns or /api/aansluitingen call under src/)",
 				"reachedOn": "BtwCorrecties /belastingen/btw-correcties (menu Taxes) lists VatCorrection records",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "tax-vat-position-and-suppletie"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-taxes-vat-fintax-crtvatreturnt (Btw-aangiften en suppleties aanmaken, search snippet read today): \"Klik op Suppletie aanmaken ... Aangifte definitief maken\"",
@@ -2535,7 +2546,8 @@
 				"state": "building",
 				"evidence": "lib/Service/ArInvoiceIcpPdfRenderer.php renders the reverse-charge mention but is reached only by GET /api/icp/invoice-pdf, uncalled from src/; the BtwAangifte regime filter offers reverse-charge (src/manifest.d/bookkeeping-vat-btw-filing.json)",
 				"reachedOn": "nothing reaches the invoice mention; the regime is a filter value on VATReturns /vat-returns",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "tax-icp-and-reverse-charge"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-masterdata-finmd-crtedtlnkvatcodest (search snippet read today): in the Financial section of a VAT code \"Btw verlegd\" can be ticked",
@@ -2561,8 +2573,8 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "building",
-				"evidence": "lib/Service/KorMonitorService.php and KorThresholdCalculator.php compute the threshold, reached only by GET /api/kor/monitor (appinfo/routes.php:542), uncalled from src/",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: lib/Service/KorMonitorService.php and KorThresholdCalculator.php compute the threshold, reached only by GET /api/kor/monitor (appinfo/routes.php:542), uncalled from src/",
 				"reachedOn": "KorStatus /belastingen/kor and KorDashboard /belastingen/kor-dashboard list KorRegime and KORRegistration records",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -2623,7 +2635,8 @@
 				"state": "building",
 				"evidence": "VATReports /vat-reports is a dashboard of summary widgets summing BtwAangifte.vatBalance (src/manifest.d/bookkeeping-vat-btw-filing.json); it sums returns already made, not the running position from the ledger",
 				"reachedOn": "VATReports /vat-reports (menu Taxes)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "tax-vat-position-and-suppletie"
 			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207263-btw-overzicht : 'houdt Moneybird de btw automatisch bij in een btw-rapport ... Per btw-tarief zie je het totaalbedrag ... en de btw die daarover is berekend' for any chosen period",
@@ -2649,8 +2662,8 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "building",
-				"evidence": "lib/Service/OssReturnGenerator.php and OssInvoiceRouter.php exist; GET /api/oss/return (appinfo/routes.php:126) is uncalled from src/",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: one competitor rates it yes (odoo), no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: lib/Service/OssReturnGenerator.php and OssInvoiceRouter.php exist; GET /api/oss/return (appinfo/routes.php:126) is uncalled from src/",
 				"reachedOn": "OssReturns /bookkeeping/oss/returns (menu Taxes) lists OssReturn records",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -2678,8 +2691,8 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "building",
-				"evidence": "src/manifest.d/bookkeeping-vpb-corporate-tax.json and bookkeeping-vpb-corporate-tax-balans.json declare index pages for deadlines, payments, quarterly statements and a VpbBalansAangifte detail; no Vpb service or /api/vpb route exists in lib/ or appinfo/routes.php; the vpb-aangifte report in lib/Reporting/ReportCatalogue.php has no generator",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: src/manifest.d/bookkeeping-vpb-corporate-tax.json and bookkeeping-vpb-corporate-tax-balans.json declare index pages for deadlines, payments, quarterly statements and a VpbBalansAangifte detail; no Vpb service or /api/vpb route exists in lib/ or appinfo/routes.php; the vpb-aangifte report in lib/Reporting/ReportCatalogue.php has no generator",
 				"reachedOn": "VpbDeadlines /bookkeeping/vpb/deadlines, VpbPayments /bookkeeping/vpb/payments (menu Taxes > Vpb)",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -2708,8 +2721,8 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "building",
-				"evidence": "src/manifest.d/30-bookkeeping-ib-aangifte-zzp.json declares index pages for returns, entrepreneur allowances, annuities and box 3; lib/Settings/register.d/30-bookkeeping-ib-aangifte-zzp.json holds the schemas; no service computes the return; the ib-aangifte report in lib/Reporting/ReportCatalogue.php has no generator",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: src/manifest.d/30-bookkeeping-ib-aangifte-zzp.json declares index pages for returns, entrepreneur allowances, annuities and box 3; lib/Settings/register.d/30-bookkeeping-ib-aangifte-zzp.json holds the schemas; no service computes the return; the ib-aangifte report in lib/Reporting/ReportCatalogue.php has no generator",
 				"reachedOn": "IbAangiftenZzp /ib-aangifte/aangiften (menu Taxes > IB return)",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -2737,8 +2750,8 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "building",
-				"evidence": "lib/Service/UrenTallyService.php, UrenAlertService.php and UrenPrognoseService.php count hours against the criterion, but nothing outside them calls them (grep of lib/ finds only UrenPrognoseService calling UrenTallyService)",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: one competitor rates it yes (moneybird), no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: lib/Service/UrenTallyService.php, UrenAlertService.php and UrenPrognoseService.php count hours against the criterion, but nothing outside them calls them (grep of lib/ finds only UrenPrognoseService calling UrenTallyService)",
 				"reachedOn": "Urenregistratie /belastingen/urenregistratie (menu Taxes) lists UrenRegistratie records; nothing shows the tally",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -2767,8 +2780,8 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "building",
-				"evidence": "src/manifest.json pages TaxProvisions, TemporaryDifferences, DeferredTaxMovements, TaxLossCarryForwards and TaxRateReconciliations are index pages over lib/Settings/register.d/bookkeeping-deferred-tax.json; lib/Service/TaxCalculationService.php is referenced only by TaxCalculationHelper and the register",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: src/manifest.json pages TaxProvisions, TemporaryDifferences, DeferredTaxMovements, TaxLossCarryForwards and TaxRateReconciliations are index pages over lib/Settings/register.d/bookkeeping-deferred-tax.json; lib/Service/TaxCalculationService.php is referenced only by TaxCalculationHelper and the register",
 				"reachedOn": "TaxProvisions /belastingen/uitgestelde-belastingen/provisies (menu Taxes)",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -2796,8 +2809,8 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "building",
-				"evidence": "WBSOTags, WBSOActivityCodes and WBSOExport are index pages in src/manifest.json; the Generate Export action (src/manifest.json:16010) is type create, it adds a WBSOExportLog record and builds no file; the RVO connection is unavailable in lib/Settings/connections.json",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: WBSOTags, WBSOActivityCodes and WBSOExport are index pages in src/manifest.json; the Generate Export action (src/manifest.json:16010) is type create, it adds a WBSOExportLog record and builds no file; the RVO connection is unavailable in lib/Settings/connections.json",
 				"reachedOn": "WBSOExport /wbso/export (menu Reporting & Compliance)",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -2825,8 +2838,8 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "building",
-				"evidence": "lib/Service/InnovatieboxAggregationService.php computes the box, reached only by /api/innovatiebox/* (appinfo/routes.php:585-588), uncalled from src/",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: lib/Service/InnovatieboxAggregationService.php computes the box, reached only by /api/innovatiebox/* (appinfo/routes.php:585-588), uncalled from src/",
 				"reachedOn": "InnovatieboxElections /bookkeeping/innovatiebox (menu Taxes) lists elections",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -3414,7 +3427,7 @@
 			"id": "pln-commitments",
 			"area": "planning",
 			"name": "Record commitments against the budget and enforce who may spend how much.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "partial",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
@@ -3422,10 +3435,11 @@
 			"odoo": "partial",
 			"built": {
 				"state": "built",
-				"evidence": "Commitment lifecycle in lib/Settings/register.d/bookkeeping-verplichtingenadministratie.json: indienen requires MandateEnforcer::requiresApproval, goedkeuren requires BudgetBlocker::canCommit (the PHP classes exist, but these guard tags are not among the 21 guard tags shillinq registers, so the transitions abort instead of evaluating them); BudgetLineCommitments.vue shows committed vs realised. But the 'aangaan' transition declares action record-mutatie, which has no handler anywhere (grep lib/ finds none), so OpenRegister's executor throws on it.",
-				"reachedOn": "CommitmentsRegister /commitments, Mandates /commitments/mandates, ApprovalSteps (via menu Purchasing > Commitments register / Mandates / Approvals); BudgetLineCommitments (menu Purchasing > Committed vs. realised)",
+				"evidence": "The Commitment lifecycle resolves: MandateEnforcer::requiresApproval and BudgetBlocker::canCommit are registered through lib/Lifecycle/CommitmentGuardAdapter.php (a budget refusal names the shortfall), and RecordCommitmentMovementAction records the committed movement and the budgets' outstanding commitments on aangaan (tests/Unit/Commitment/CommitmentYearEndTest.php).",
+				"reachedOn": "CommitmentDetail /commitments/:id, Verplichting aangaan",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26"
+				"readOn": "2026-09-29",
+				"change": "2026-09-29-planning-commitment-year-end"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/proquro: \"Je voorkomt ongeoorloofde verplichtingen als je vooraf een [bestelling goedkeurt]\"; budget holders see budget use Note: Only in the separate Exact Proquro product.",
@@ -3445,17 +3459,19 @@
 			"id": "pln-budget-grid",
 			"area": "planning",
 			"name": "Build an annual budget per ledger group in a grid.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "yes",
 			"moneybird": "unknown",
 			"snelstart": "partial",
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
-				"evidence": "BudgetLine holds ledgerGroupId + month01Amount..month12Amount (lib/Settings/register.d/budget-core-schema.json), entered one record at a time on the BudgetLines index form; src/views/BudgetGrid.vue only GETs /api/budget-grid (BudgetGridController.php; appinfo/routes.php:641 is GET only) and its inputs are period filters, so the grid is read-only.",
-				"reachedOn": "BudgetLines /begroting/budget-lines and BudgetGrid /begroting/grid (via menu Banking & Cashflow > Budget Lines / Budget Grid); AnnualBudgets, LedgerGroups in the same cluster",
-				"owner": "ConductionNL/shillinq"
+				"state": "built",
+				"evidence": "lib/Budget/BudgetEditingService.php types the month amounts of a ledger group's manual BudgetLine (created when absent) with a stale-save check, keeps contract, recurring, projected and scenario lines read-only naming their source, and spreads a yearly amount over twelve months; src/components/BudgetLinesEditor.vue on BudgetGrid is keyboard operable (tests/Unit/Budget/BudgetEditingServiceTest.php).",
+				"reachedOn": "BudgetGrid /begroting/grid, section Enter the budget (menu Banking & Cashflow > Budget Grid)",
+				"owner": "ConductionNL/shillinq",
+				"readOn": "2026-09-29",
+				"change": "2026-09-29-planning-budget-editing"
 			},
 			"evidence": {
 				"twinfield": "https://taasupportportal.wolterskluwer.com/nl/nl-nl/artikel/budgetteren-3041182 (Budgetteren): budget lines per ledger account and period with spreading \"Gelijk\" or by template; https://api.accounting.twinfield.com/Api/swagger/docs/open-v1 exposes budgeting/budgets/annual \"Get annual budget view\"",
@@ -4139,10 +4155,12 @@
 			"twinfield": "partial",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
-				"evidence": "lib/Service/PayrollService.php:315 bouwLoonjournaalpost builds a balanced payroll journal via PayrollChartOfAccountsMapping, but only behind GET /api/payroll/journaalpost (appinfo/routes.php:139), which no page calls, and it writes no GLTransaction or Loonjournaalpost; Loonjournaalposten is a plain list.",
-				"reachedOn": "Loonjournaalposten /loonadministratie/loonjournaalposten (via menu Bookkeeping > Payroll journal entries), list only; the builder: nothing reaches it",
-				"owner": "ConductionNL/shillinq"
+				"state": "built",
+				"evidence": "humaniq writes a balanced JournalEntry for an approved payroll run (humaniq lib/Service/PayrollGLPostService.php) and shillinq posts it through JournalEntry.post into one GLTransaction with lib/Lifecycle/Action/MaterialiseGlTransactionAction.php, with no payroll-specific path (shillinq#1736, #1775). The live hand-off on one instance is not yet checked.",
+				"reachedOn": "Journals /journals, the humaniq payroll journal entry, Post; or occ humaniq:glpost:run",
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-09-29-ledger-posting-path",
+				"readOn": "2026-09-29"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/salaris/features-en-prijzen: \"De journaalposten vanuit Exact HR Salaris Plus kunnen eenvoudig ingelezen worden in Exact Online\"; integrated Salaris posts to the linked administration Note: Salaris module or Exact HR Salaris Plus.",
@@ -4156,7 +4174,7 @@
 			"feature": "payroll-nl",
 			"featureConfidence": "medium",
 			"source": "own-code",
-			"note": "The journal is computed in code with no caller, and nothing posts it. Specified 2026-09-27 in openspec/changes/ledger-posting-path (OpenSpec pass)."
+			"note": "The journal is computed in code with no caller, and nothing posts it. Built 2026-09-29 by ledger-posting-path."
 		},
 		{
 			"id": "plt-accountant",
@@ -4471,7 +4489,8 @@
 				"state": "building",
 				"evidence": "src/manifest.d/administration-import-migration.json: the ImportWizard page is marked x-deferred, its component does not exist and it renders an empty state; ImportBatches and ImportMappings index pages remain",
 				"reachedOn": "ImportBatches /import/batches (settings gear)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "platform-administration-import"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/overstappen: \"Of je nu al een Exact-pakket gebruikt ... of de overstap maakt vanaf een ander softwarepakket ... onze consultants staan voor je klaar\" and conversion tools; https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Importeer en exporteer data in XML en CSV\"",
@@ -4587,8 +4606,8 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "building",
-				"evidence": "BbvMapping /overheid/bbv-mapping lists mappings to taakvelden seeded from lib/Settings/seeds/bbv-taakvelden-*.json; src/components/Dashboard/BBVComplianceDashboard.vue:290 calls /api/bbv-dashboard, which reads materialised aggregation values (lib/Controller/BBVDashboardController.php:12)",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: BbvMapping /overheid/bbv-mapping lists mappings to taakvelden seeded from lib/Settings/seeds/bbv-taakvelden-*.json; src/components/Dashboard/BBVComplianceDashboard.vue:290 calls /api/bbv-dashboard, which reads materialised aggregation values (lib/Controller/BBVDashboardController.php:12)",
 				"reachedOn": "BbvMapping /overheid/bbv-mapping (settings gear); BBVComplianceDashboard /bbv-dashboard",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -4647,8 +4666,8 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "building",
-				"evidence": "SisaRapportages /sisa-rapportages lists records; lib/Service/SisaReportingService.php has no caller in lib/; the bzk-sisa connection is unavailable in lib/Settings/connections.json",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: SisaRapportages /sisa-rapportages lists records; lib/Service/SisaReportingService.php has no caller in lib/; the bzk-sisa connection is unavailable in lib/Settings/connections.json",
 				"reachedOn": "SisaRapportages /sisa-rapportages (report card)",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -4676,8 +4695,8 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "building",
-				"evidence": "src/manifest.d/bookkeeping-rechtmatigheidsverantwoording.json declares index pages for assessment, findings, tolerances, the paragraph and an audit export; no service under lib/Service computes the statement",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: src/manifest.d/bookkeeping-rechtmatigheidsverantwoording.json declares index pages for assessment, findings, tolerances, the paragraph and an audit export; no service under lib/Service computes the statement",
 				"reachedOn": "Rechtmatigheidstoetsing /rechtmatigheid/toetsing (menu Reporting & Compliance)",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -4705,8 +4724,8 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "building",
-				"evidence": "lib/Service/BcfClaimService.php and BcfCompensationCalculator.php compute the claim, reached only by GET /api/bcf/compensation (appinfo/routes.php:458), which nothing under src/ calls",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: lib/Service/BcfClaimService.php and BcfCompensationCalculator.php compute the claim, reached only by GET /api/bcf/compensation (appinfo/routes.php:458), which nothing under src/ calls",
 				"reachedOn": "BcfClaims /overheid/bcf-claims lists claims",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -4734,8 +4753,8 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "building",
-				"evidence": "TreasuryDashboard /treasury/dashboard plus index pages for loans, derivatives, statutes and quarterly reports (src/manifest.d/bookkeeping-wet-fido-treasury.json); lib/Service/Treasury holds the calculations",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: TreasuryDashboard /treasury/dashboard plus index pages for loans, derivatives, statutes and quarterly reports (src/manifest.d/bookkeeping-wet-fido-treasury.json); lib/Service/Treasury holds the calculations",
 				"reachedOn": "TreasuryDashboard /treasury/dashboard (menu Banking & Cashflow)",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -4794,8 +4813,8 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "building",
-				"evidence": "GRDeelnemers, GRVerdeelsleutels and GRConsolidated are index pages in src/manifest.json over lib/Settings/register.d/add-shillinq-bookkeeping-gr-consolidation.json",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: GRDeelnemers, GRVerdeelsleutels and GRConsolidated are index pages in src/manifest.json over lib/Settings/register.d/add-shillinq-bookkeeping-gr-consolidation.json",
 				"reachedOn": "GRDeelnemers /gr/deelnemers (menu Bookkeeping)",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -4824,8 +4843,8 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "building",
-				"evidence": "eight index pages under /wmo (src/manifest.d/bookkeeping-market-government-separation.json); lib/Service/IntegralCostPriceCalculator.php and CrossSubsidyDetector.php have no caller in lib/",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: eight index pages under /wmo (src/manifest.d/bookkeeping-market-government-separation.json); lib/Service/IntegralCostPriceCalculator.php and CrossSubsidyDetector.php have no caller in lib/",
 				"reachedOn": "CommercialActivities /wmo/commercial-activities",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -4853,8 +4872,8 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "building",
-				"evidence": "ENSIA cycles, evaluations, findings and the college statement are manifest pages (src/manifest.json ENSIACycles..ENSIACollegeVerklaring); lib/Service/ENSIAVerklaringGenerator.php and ENSIABevindingGenerator.php have no caller in lib/",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: ENSIA cycles, evaluations, findings and the college statement are manifest pages (src/manifest.json ENSIACycles..ENSIACollegeVerklaring); lib/Service/ENSIAVerklaringGenerator.php and ENSIABevindingGenerator.php have no caller in lib/",
 				"reachedOn": "ENSIACycles /compliance/ensia/cycles (menu Reporting & Compliance)",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -4912,8 +4931,8 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "building",
-				"evidence": "SubsidiesOverzicht, SubsidieAanvragen and SubsidieTerugvorderingen are index pages; lib/Service/SubsidieVerantwoordingService.php has no caller in lib/",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: SubsidiesOverzicht, SubsidieAanvragen and SubsidieTerugvorderingen are index pages; lib/Service/SubsidieVerantwoordingService.php has no caller in lib/",
 				"reachedOn": "SubsidiesOverzicht /subsidies/overzicht (menu Reporting & Compliance)",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -4941,8 +4960,8 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "building",
-				"evidence": "five index pages under /eu-fondsen (src/manifest.d/40-eu-fondsen.json); no service under lib/Service handles declarations",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: five index pages under /eu-fondsen (src/manifest.d/40-eu-fondsen.json); no service under lib/Service handles declarations",
 				"reachedOn": "EuProjecten /eu-fondsen/projecten (menu Reporting & Compliance)",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -4970,8 +4989,8 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "building",
-				"evidence": "four index pages under /bado (src/manifest.d/bookkeeping-bado-controleprotocol.json); lib/Service/BadoControleprotocolService.php is reached only by /api/bado/controleprotocol/* (appinfo/routes.php:597-599), uncalled from src/",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: four index pages under /bado (src/manifest.d/bookkeeping-bado-controleprotocol.json); lib/Service/BadoControleprotocolService.php is reached only by /api/bado/controleprotocol/* (appinfo/routes.php:597-599), uncalled from src/",
 				"reachedOn": "AuditProtocols /bado/protocols (settings gear)",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -5028,17 +5047,19 @@
 			"id": "led-dimension-block",
 			"area": "ledger",
 			"name": "Block combinations of account, cost centre and project that may not be booked together.",
-			"shillinq": "no",
+			"shillinq": "yes",
 			"exact-online": "partial",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
 			"twinfield": "partial",
 			"odoo": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"reachedOn": "nothing"
+				"readOn": "2026-09-29",
+				"reachedOn": "PostingRestrictions /settings/posting-restrictions (settings gear), detail /settings/posting-restrictions/:id",
+				"evidence": "PostingRestriction (lib/Settings/register.d/ledger-booking-rules.json: accountPattern prefix, costCenterCode, projectCode, reason, validFrom, validTo, lifecycle active/retired) per administration; lib/Lifecycle/PostingRestrictionGuard.php refuses a person's posting whose line matches an active restriction on the posting date, naming the reason. Journal lines carry costCenterCode and projectCode into the GL line (MaterialiseGlTransactionAction).",
+				"change": "2026-09-29-ledger-booking-rules"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-costanalysis-costcenter-fincctr-linkglacctt?language=en_GB: \"From a G/L account: Specify which cost centres or cost units an employee can or must select when they enter a transaction for that G/L account\" Note: Allowed cost centres per account; combinations with projects are not described.",
@@ -5058,23 +5079,25 @@
 				"intelligence-db requirements#109524",
 				"intelligence-db requirements#109525"
 			],
-			"note": "AnalyticalDimension has start/end dates and a lifecycle, but no rule set forbids combinations of account, cost centre and project; searched lib/ for combination rules. Specified 2026-09-27 in openspec/changes/ledger-booking-rules (OpenSpec pass)."
+			"note": "AnalyticalDimension has start/end dates and a lifecycle, but no rule set forbids combinations of account, cost centre and project; searched lib/ for combination rules. Built 2026-09-29 by ledger-booking-rules."
 		},
 		{
 			"id": "led-control-account-lock",
 			"area": "ledger",
 			"name": "Block control accounts such as VAT, receivables and payables from manual posting.",
-			"shillinq": "no",
+			"shillinq": "yes",
 			"exact-online": "unknown",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"reachedOn": "nothing"
+				"readOn": "2026-09-29",
+				"reachedOn": "JournalDetail /journals/:id, Post; GeneralLedgerDetail /general-ledger/:id, Post transaction; the role on ChartOfAccountsDetail",
+				"evidence": "lib/Lifecycle/PostingRestrictionGuard.php refuses a journal entry or GL transaction a person posts when a line is on an account with Account.controlAccountFor set (lib/Settings/register.d/ledger-booking-rules.json), naming the account and its role; JournalEntryGuard::canPost and RuleComplianceGuard::validateTransaction delegate to it and RegisterRequiresGuardAdapter shows the refusal. Sub-ledger postings pass: MaterialiseGlTransactionAction writes them directly, GR/IR drafts carry journalCode, a bank booking (sourceApp bank) may post its VAT line. The RGS MKB seed and lib/Repair/BackfillControlAccountRoles.php mark 1100, 2000, 1230 and 2110 (shillinq PR ledger-booking-rules).",
+				"change": "2026-09-29-ledger-booking-rules"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: blocking G/L accounts for all future bookings exists (search snippet of https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-glaccounts-fingl-crtglaccountst) but blocking only manual postings on control accounts is not stated",
@@ -5093,24 +5116,25 @@
 			"originRequirements": [
 				"intelligence-db requirements#109740"
 			],
-			"note": "Account carries isAPControlAccount/isExpenseControlAccount flags used as posting targets, but no guard in lib/Lifecycle or lib/Guard rejects a manual journal line on a control account. Specified 2026-09-27 in openspec/changes/ledger-booking-rules (OpenSpec pass)."
+			"note": "Account carries isAPControlAccount/isExpenseControlAccount flags used as posting targets, but no guard in lib/Lifecycle or lib/Guard rejects a manual journal line on a control account. Built 2026-09-29 by ledger-booking-rules."
 		},
 		{
 			"id": "led-open-years",
 			"area": "ledger",
 			"name": "Keep more than one fiscal year open for posting at the same time.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "yes",
 			"moneybird": "yes",
 			"snelstart": "yes",
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"evidence": "lib/Settings/shillinq_register.json:7935 FiscalYear open->closing requires FiscalYearGuard::requireAllPeriodsClosedForYear; nothing limits how many FiscalYear records are open at once, so several years can be open. Posting itself aborts on the user path (see led-double-entry).",
-				"reachedOn": "FiscalYears /bookkeeping/fiscal-years (settings gear)"
+				"readOn": "2026-09-29",
+				"evidence": "Posting goes through the same guard and actions in any FiscalYear in state open (lib/Lifecycle/RuleComplianceGuard.php, lib/Lifecycle/Action/MaterialiseGlTransactionAction.php periodId); nothing limits how many FiscalYear records are open at once (lib/Settings/shillinq_register.json FiscalYear lifecycle) (shillinq#1775).",
+				"reachedOn": "FiscalYears /bookkeeping/fiscal-years (settings gear); GeneralLedgerDetail /general-ledger/:id, Post transaction",
+				"change": "2026-09-29-ledger-posting-path"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Concept-endofyear-finyend-yrendprcssc: for \"De overstap van 2025 naar 2026\" you create the new fiscal year before closing the old one; https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-yearend-finbnk-closefinperiodt: periods stay open until closed",
@@ -5130,24 +5154,25 @@
 				"intelligence-db requirements#109515",
 				"intelligence-db requirements#109513"
 			],
-			"note": "Several years can be open; the post path they would receive entries on is broken. Specified 2026-09-27 in openspec/changes/ledger-posting-path (OpenSpec pass)."
+			"note": "Several years can be open; the post path they would receive entries on is broken. Built 2026-09-29 by ledger-posting-path."
 		},
 		{
 			"id": "pur-duplicate-check",
 			"area": "purchasing",
 			"name": "Be warned when a supplier invoice number was already booked for that supplier.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "unknown",
 			"moneybird": "yes",
 			"snelstart": "unknown",
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"evidence": "lib/Controller/SupplierInvoiceImportController.php:195 duplicateExists() rejects a UBL import whose invoice number already exists for that supplier (HTTP 409), reached from BillImportModal (src/modals/BillImportModal.vue:649), opened by the Dashboard header action 'Import bill' (src/manifest.json:5160). Manual entry on SupplierInvoices has no such check.",
-				"reachedOn": "Dashboard / header action Import bill -> BillImportModal"
+				"readOn": "2026-09-29",
+				"evidence": "lib/Service/Purchasing/SupplierInvoiceChecks.php duplicateOf is the one rule for the UBL import (409), the CSV import (skippedRows by number) and a typed invoice (lib/Listener/SupplierInvoiceWarningListener.php writes duplicateOfId on save); a failed lookup counts as a possible duplicate; booking needs duplicateAcknowledgedReason.",
+				"reachedOn": "SupplierInvoiceDetail field Same number as; SupplierInvoices column; bill import dialog (409 for UBL, skippedRows for CSV)",
+				"change": "2026-09-29-purchasing-supplier-invoice-intake"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: the Purchase Agent \"Herkent afwijkingen in inkoopfacturen\" (https://www.exact.com/nl/producten/boekhouden/features-en-prijzen) but a duplicate invoice number warning is not stated",
@@ -5166,23 +5191,25 @@
 			"originRequirements": [
 				"intelligence-db requirements#109647"
 			],
-			"note": "Only on UBL import, not on a typed invoice. Specified 2026-09-27 in openspec/changes/purchasing-supplier-invoice-intake (OpenSpec pass)."
+			"note": "Only on UBL import, not on a typed invoice. Built 2026-09-29 by purchasing-supplier-invoice-intake."
 		},
 		{
 			"id": "pur-iban-check",
 			"area": "purchasing",
 			"name": "Be warned when a supplier invoice names a different bank account than the supplier record.",
-			"shillinq": "no",
+			"shillinq": "yes",
 			"exact-online": "unknown",
 			"moneybird": "partial",
 			"snelstart": "unknown",
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"reachedOn": "nothing"
+				"readOn": "2026-09-29",
+				"reachedOn": "SupplierInvoiceDetail field IBAN differs from supplier record; the AP transaction's payment block",
+				"evidence": "SupplierInvoiceChecks::ibanMismatch compares the invoice IBAN, without spaces and case, with Payee.bankAccount.iban and SupplierQualification.iban; booking needs ibanAcknowledgedReason and HandToAccountsPayableAction writes the APTransaction payment blocked with reason 'IBAN on invoice differs from supplier record', which banking-payment-run keeps out of every run.",
+				"change": "2026-09-29-purchasing-supplier-invoice-intake"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: supplier bank accounts can be blocked (https://support.exactonline.com/community/s/article/All-All-HNO-Task-accounts-finacc-wrkbnkacct) but a mismatch warning on incoming invoices is not stated",
@@ -5201,23 +5228,25 @@
 			"originRequirements": [
 				"intelligence-db requirements#109648"
 			],
-			"note": "SupplierQualification stores an iban, but nothing compares an incoming invoice's bank account with it; the only IBAN matching is the one-off repair lib/Repair/MigrateProductVendorMasterToPipelinq.php:344. Specified 2026-09-27 in openspec/changes/purchasing-supplier-invoice-intake (OpenSpec pass)."
+			"note": "SupplierQualification stores an iban, but nothing compares an incoming invoice's bank account with it; the only IBAN matching is the one-off repair lib/Repair/MigrateProductVendorMasterToPipelinq.php:344. Built 2026-09-29 by purchasing-supplier-invoice-intake."
 		},
 		{
 			"id": "pur-last-invoice-close",
 			"area": "purchasing",
 			"name": "Mark an approved invoice as the last one on an order and have the remaining commitment released.",
-			"shillinq": "no",
+			"shillinq": "yes",
 			"exact-online": "unknown",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"reachedOn": "CommitmentDetail /commitments/:id (manual afsluiten only)"
+				"readOn": "2026-09-29",
+				"reachedOn": "SupplierInvoiceDetail, Mark as last invoice",
+				"evidence": "An approved supplier invoice lowers the commitment of its order (lib/Listener/InvoiceCommitmentListener.php, lib/Service/Commitment/CommitmentInvoicing.php); SupplierInvoice.isLastInvoice or Mark as last invoice closes it through afsluiten, releasing the remainder to the budget with a closed movement.",
+				"change": "2026-09-29-planning-commitment-year-end"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
@@ -5242,17 +5271,19 @@
 			"id": "pln-commitment-carryover",
 			"area": "planning",
 			"name": "Carry open commitments over to the next fiscal year under their original number.",
-			"shillinq": "no",
+			"shillinq": "yes",
 			"exact-online": "unknown",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"reachedOn": "nothing"
+				"readOn": "2026-09-29",
+				"reachedOn": "CommitmentsRegister /commitments, Carry open commitments to next year",
+				"evidence": "lib/Service/Commitment/CommitmentCarryOverService.php previews every open line of a year with the next year's shortfall per programme and carries it into a new line of the next year under the same commitment number (carriedFromLine), closing the old one and moving the outstanding amount between the budgets; a second run writes nothing.",
+				"change": "2026-09-29-planning-commitment-year-end"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
@@ -5278,17 +5309,19 @@
 			"id": "bnk-payment-block",
 			"area": "banking",
 			"name": "Block a supplier or a single invoice from being paid.",
-			"shillinq": "no",
+			"shillinq": "yes",
 			"exact-online": "partial",
 			"moneybird": "unknown",
 			"snelstart": "partial",
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"reachedOn": "nothing"
+				"readOn": "2026-09-29",
+				"reachedOn": "APTransactionDetail /bookkeeping/ap-transactions/:id and PayeeDetail /bookkeeping/payees/:id, actions Block payment and Release payment",
+				"evidence": "APTransaction and Payee carry paymentBlocked and paymentBlockReason (lib/Settings/register.d/bookkeeping-accounts-payable-core.json), set through src/modals/PaymentBlockModal.vue; lib/PaymentRun/PaymentBlockChecker.php is the one check the proposal, the export guard (lib/Lifecycle/PaymentRunDuplicateGuard.php) and the export service use, so a block set after approval refuses the export naming the invoice.",
+				"change": "2026-09-29-banking-payment-run"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-accounts-finacc-wrkbnkacct?language=en_GB: \"Select or deselect Block\" on a supplier bank account; https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-bank-fin-bnkpymt-editsplitpymntt: \"Postpone to enter a period to postpone the payments\" Note: Blocking a bank account or postponing payments; a payment block flag on a supplier or invoice is not stated.",
@@ -5308,24 +5341,25 @@
 				"intelligence-db requirements#109661",
 				"intelligence-db requirements#109679"
 			],
-			"note": "APInvoice declares a dispute state (posted->disputed, lib/Settings/shillinq_register.json APInvoice lifecycle) described as a payment hold, but posted is only reached through post, which declares the unregistered action materialise-gl-transaction and aborts; PaymentRun export (lib/PaymentRun/PaymentRunExportService.php:122) checks only the run's own state, and there is no supplier-level block. Specified 2026-09-27 in openspec/changes/banking-payment-run (OpenSpec pass)."
+			"note": "APInvoice declares a dispute state (posted->disputed, lib/Settings/shillinq_register.json APInvoice lifecycle) described as a payment hold, but posted is only reached through post, which declares the unregistered action materialise-gl-transaction and aborts; PaymentRun export (lib/PaymentRun/PaymentRunExportService.php:122) checks only the run's own state, and there is no supplier-level block. Built 2026-09-29 by banking-payment-run."
 		},
 		{
 			"id": "rec-payment-plan",
 			"area": "receivables",
 			"name": "Agree a payment plan with a customer and follow its instalments.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "partial",
 			"moneybird": "unknown",
 			"snelstart": "partial",
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
+				"evidence": "lib/PaymentPlan/PaymentPlanService.php agrees a PaymentPlan for a customer's overdue ARInvoices (schedule to the cent, PaymentPlanGuard on activate), pauses dunning with reason PAYMENT_PLAN until the last due date plus grace, mails the schedule; PaymentPlanAllocator pays instalments and invoices oldest first; PaymentPlanBankMatcher books a bank line naming the plan reference; lib/BackgroundJob/PaymentPlanMonitorJob.php marks instalments missed and breaks the plan, resuming dunning (tests/Unit/PaymentPlan/PaymentPlanServiceTest.php).",
+				"reachedOn": "PaymentPlans /bookkeeping/payment-plans; CustomerDetail and ARInvoiceDetail header action Agree a payment plan; Match by hand, Payment plan tab",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-27",
-				"evidence": "RepaymentInstallment (instalments with dueDate, paidDate and an isOverdue status value; the schema is declared twice, shillinq_register.json:15534 and register.d/add-shillinq-bookkeeping-operations.json:1419) on SubsidieDetail /subsidies/:id covers repayment plans for grant reclaims only (lib/Settings/register.d/add-shillinq-bookkeeping-operations.json:1424).",
-				"reachedOn": "SubsidieDetail /subsidies/:id"
+				"readOn": "2026-09-29",
+				"change": "2026-09-29-receivables-payment-plans"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Content-rn-whatsnewlandingpage?language=en_GB (June 2026): \"we've enhanced the standard layout editor so you can edit and create Debtor Statement and Payment arrangement layouts\"; https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-bank-fin-bnkpymt-editsplitpymntt?language=en_GB: split a payment into several payment terms Note: Payment arrangement letters and split terms; instalment follow-up is not described.",
@@ -5424,18 +5458,19 @@
 			"id": "pln-multi-year-budget",
 			"area": "planning",
 			"name": "Budget several years ahead in yearly slices.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "yes",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"evidence": "AnnualBudget is keyed by fiscalYear (lib/Settings/register.d/budget-core-schema.json), so a budget per year can be kept on AnnualBudgets /begroting/annual-budgets; the Meerjarenraming and MeerjarenBudget schemas that hold the multi-year horizon have no page.",
-				"reachedOn": "AnnualBudgets /begroting/annual-budgets"
+				"readOn": "2026-09-29",
+				"evidence": "BudgetEditingService::multiYear() shows ledger groups against every fiscal year with an AnnualBudget from this year up to four ahead, and startNextYear() copies a budget's manual lines into a draft budget for the next year raised by a percentage (src/components/MultiYearBudget.vue on the BudgetGrid page); Meerjarenraming and MeerjarenBudget have index and detail pages (src/manifest.d/planning-budget-editing.json).",
+				"reachedOn": "BudgetGrid /begroting/grid, section Multi-year budget; Meerjarenramingen /overheid/meerjarenramingen and MeerjarenBudgetten /overheid/meerjarenbudgetten under Government",
+				"change": "2026-09-29-planning-budget-editing"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-budget-finbdgt-crtbdgtt?language=en_GB: budgets per scenario over a future period; https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Beheer meerdere budgetten tegelijk\"",
@@ -5461,17 +5496,19 @@
 			"id": "pln-budget-amendments",
 			"area": "planning",
 			"name": "Record budget amendments with a status, a reason and attachments, and see their history.",
-			"shillinq": "no",
+			"shillinq": "yes",
 			"exact-online": "unknown",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"reachedOn": "nothing"
+				"readOn": "2026-09-29",
+				"reachedOn": "Begrotingswijzigingen /overheid/begrotingswijzigingen (menu Government > Budget amendments)",
+				"evidence": "Begrotingswijziging has index and detail pages with its number, reason, amounts, council resolution and status, the vaststellen transition as Determine (BegrotingswijzigingGuard requires the resolution), the OpenRegister files tab for attachments and the audit trail tab for history (src/manifest.d/planning-budget-editing.json).",
+				"change": "2026-09-29-planning-budget-editing"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
@@ -5807,18 +5844,19 @@
 			"id": "led-account-guidance",
 			"area": "ledger",
 			"name": "Add guidance to each ledger account explaining when to use it.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "unknown",
 			"moneybird": "unknown",
 			"snelstart": "unknown",
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"evidence": "Account carries a free-text description property (lib/Settings/shillinq_register.json Account.description at line 1422), editable on the chart of accounts.",
-				"reachedOn": "ChartOfAccounts /chart-of-accounts"
+				"readOn": "2026-09-29",
+				"evidence": "src/components/ledger/LedgerLinesGuidancePanel.vue lists the lines of JournalDetail and GeneralLedgerDetail with each account's description under the account as guidance and marks a control account (src/manifest.d/ledger-booking-rules.json, slots widget-journal-lines and widget-transaction-lines); Account.description is titled Guidance.",
+				"reachedOn": "JournalDetail /journals/:id and GeneralLedgerDetail /general-ledger/:id, Lines panel",
+				"change": "2026-09-29-ledger-booking-rules"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
@@ -5834,7 +5872,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-19-release-notes",
-			"note": "A description field, not guidance shown when booking. Specified 2026-09-27 in openspec/changes/ledger-booking-rules (OpenSpec pass)."
+			"note": "A description field, not guidance shown when booking. Built 2026-09-29 by ledger-booking-rules."
 		},
 		{
 			"id": "led-tamper-proof",
@@ -6361,18 +6399,19 @@
 			"id": "bnk-scheduled-payment",
 			"area": "banking",
 			"name": "Schedule a supplier payment to go out on a chosen day.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "yes",
 			"moneybird": "yes",
 			"snelstart": "yes",
 			"twinfield": "yes",
 			"odoo": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"evidence": "PaymentRun.executionDate is written into the pain.001 file as the requested execution date (lib/PaymentRun/Generator/SepaPain001Generator.php:74), so an exported batch asks the bank to pay on that day.",
-				"reachedOn": "PaymentRuns /bookkeeping/payment-runs"
+				"readOn": "2026-09-29",
+				"evidence": "PaymentRun.paymentLines[].requestedExecutionDate; lib/PaymentRun/Generator/SepaPain001Generator.php writes one PmtInf block per requested date with its own ReqdExctnDt, so each payment asks the bank for its own day.",
+				"reachedOn": "PaymentRuns Propose payment run, option Pay each invoice on its due date; PaymentRunDetail paymentLines",
+				"change": "2026-09-29-banking-payment-run"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-bank-fin-bnkpymt-editsplitpymntt?language=en_GB: \"This is the date the payment will be made. You can select Fixed: Date to enter a new date for all the payments or Postpone\"",
@@ -6388,7 +6427,7 @@
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.moneybird.nl/changelog/slim-plannen-van-betalingen/",
-			"note": "Per batch through the export file, not per payment in the bank. Specified 2026-09-27 in openspec/changes/banking-payment-run (OpenSpec pass)."
+			"note": "Per batch through the export file, not per payment in the bank. Built 2026-09-29 by banking-payment-run."
 		},
 		{
 			"id": "ppl-payroll-tax-return",
@@ -6756,18 +6795,19 @@
 			"id": "sal-down-payment",
 			"area": "sales",
 			"name": "Invoice a down payment on an order and deduct it on the final invoice.",
-			"shillinq": "no",
+			"shillinq": "yes",
 			"exact-online": "partial",
 			"moneybird": "yes",
 			"snelstart": "partial",
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
+				"state": "built",
+				"evidence": "lib/Service/Sales/DownPaymentService.php raises a type 386 down-payment invoice on an order, split over its VAT rates, and deducts issued down payments on the final invoice; lib/Lifecycle/Action/MaterialiseGlTransactionAction.php books the down payment to the advances account (default 2310) and releases it from the final invoice's deduction lines; lib/Lifecycle/DownPaymentGuard.php refuses a second deduction on ARInvoice.issue and stamps the deducted down payment; ArInvoiceUblMapper writes the billing references (shillinq#1772).",
+				"reachedOn": "Accounts Receivable /bookkeeping/accounts-receivable, header action New down-payment invoice; the Down payments panel on an invoice page",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"reachedOn": "nothing reaches it for orders; bookings have their own Deposits page (bok-deposit)",
-				"evidence": "grep over lib/ and src/ for down payment, aanbetaling and prepayment finds only the bookings deposit schema (lib/Settings/register.d/50-bookings-deposits.json:9, deposit collected at booking time) and two RGS seed accounts (lib/Settings/seeds/rgs-3.5-mkb.json:216, :549); no sales order or sales invoice path creates a down-payment invoice or deducts one on the final invoice."
+				"change": "2026-09-29-sales-down-payments",
+				"readOn": "2026-09-29"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/projectadministratie/features-en-prijzen: \"Voorschotten & uurbundels\"; fixed price projects billed in terms Note: Advances in Projectadministratie; deduction on a final order invoice is not described.",

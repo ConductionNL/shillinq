@@ -814,12 +814,36 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // (cross-tenant ids masked as 404). The {id} wildcard is preceded by the
             // static /export and /reconcile suffixes per Symfony route ordering, and
             // both are declared before the SPA catch-all per ADR-016.
+            // banking-payment-run REQ-BPR-002: draft a run from the invoices due.
+            // Static URL before the {id} routes and the SPA catch-all (ADR-016).
+            ['name' => 'paymentRun#propose', 'url' => '/api/v1/payment-runs/propose', 'verb' => 'POST'],
             ['name' => 'paymentRun#export', 'url' => '/api/v1/payment-runs/{id}/export', 'verb' => 'POST'],
             ['name' => 'paymentRun#reconcile', 'url' => '/api/v1/payment-runs/{id}/reconcile', 'verb' => 'POST'],
 
             // banking-manual-match (REQ-BMM-001, REQ-BMM-002): pair a bank line
             // with open invoices, or book it to a ledger account, by hand.
             ['name' => 'manualMatch#match', 'url' => '/api/v1/bank-lines/{lineId}/match', 'verb' => 'POST'],
+
+            // receivables-payment-plans (REQ-RPPL-001, REQ-RPPL-003): draw up,
+            // activate, settle by hand and cancel a payment plan; the plans a
+            // bank line can pay and paying one from a line. Static URLs first.
+            ['name' => 'paymentPlan#create', 'url' => '/api/v1/payment-plans', 'verb' => 'POST'],
+            ['name' => 'paymentPlan#lineCandidates', 'url' => '/api/v1/bank-lines/{lineId}/payment-plans', 'verb' => 'GET'],
+            ['name' => 'paymentPlan#activate', 'url' => '/api/v1/payment-plans/{id}/activate', 'verb' => 'POST'],
+            ['name' => 'paymentPlan#settle', 'url' => '/api/v1/payment-plans/{id}/settle', 'verb' => 'POST'],
+            ['name' => 'paymentPlan#cancel', 'url' => '/api/v1/payment-plans/{id}/cancel', 'verb' => 'POST'],
+            ['name' => 'paymentPlan#payFromLine', 'url' => '/api/v1/payment-plans/{id}/bank-line', 'verb' => 'POST'],
+            // planning-budget-editing: type the budget into the grid, spread a year, the multi-year page, start next year.
+            ['name' => 'budgetEditing#lines', 'url' => '/api/v1/budget-editing/lines', 'verb' => 'GET'],
+            ['name' => 'budgetEditing#saveCell', 'url' => '/api/v1/budget-editing/cell', 'verb' => 'PUT'],
+            ['name' => 'budgetEditing#spread', 'url' => '/api/v1/budget-editing/spread', 'verb' => 'POST'],
+            ['name' => 'budgetEditing#multiYear', 'url' => '/api/v1/budget-editing/multi-year', 'verb' => 'GET'],
+            ['name' => 'budgetEditing#startNextYear', 'url' => '/api/v1/budget-editing/next-year', 'verb' => 'POST'],
+            // planning-commitment-year-end: carry open commitments to next year, mark the last invoice of an order.
+            ['name' => 'commitmentYearEnd#previewCarryOver', 'url' => '/api/v1/commitments/carry-over', 'verb' => 'GET'],
+            ['name' => 'commitmentYearEnd#carryOver', 'url' => '/api/v1/commitments/carry-over', 'verb' => 'POST'],
+            ['name' => 'commitmentYearEnd#previewLastInvoice', 'url' => '/api/v1/supplier-invoices/{id}/last-invoice', 'verb' => 'GET'],
+            ['name' => 'commitmentYearEnd#markLastInvoice', 'url' => '/api/v1/supplier-invoices/{id}/last-invoice', 'verb' => 'POST'],
 
             // Compliance-deadline-calendar (REQ-CDC-006). Per-user category
             // toggles + reminder lead times for the deadline calendar. Both

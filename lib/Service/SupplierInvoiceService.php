@@ -50,6 +50,7 @@ use Psr\Log\LoggerInterface;
 use RuntimeException;
 use SimpleXMLElement;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
 
 /**
  * Slice 05 — Supplier invoice ingestion from UBL (Peppol) and PDF (OCR).
@@ -138,6 +139,7 @@ class SupplierInvoiceService {
 	 * @param AdministrationContextService $administrationContext IDOR + tenant scope (ADR-005).
 	 * @param LoggerInterface $logger Logger (no sensitive payloads).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param SupplierInvoiceChecks $checks Payee resolution and the duplicate and IBAN rules (purchasing-supplier-invoice-intake).
 	 *
 	 * @return void
 	 */
@@ -146,6 +148,7 @@ class SupplierInvoiceService {
 		private readonly AdministrationContextService $administrationContext,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly SupplierInvoiceChecks $checks,
 	) {
 
 	}//end __construct()
@@ -192,15 +195,14 @@ class SupplierInvoiceService {
 			throw new RuntimeException('Administration not found');
 		}
 
-		$parsed = $this->parseUblInvoice(ublXml: $ublXml);
+		$parsed = $this->resolveSupplier(administrationId: $administrationId, parsed: $this->parseUblInvoice(ublXml: $ublXml));
 
 		$existing = $this->findOne(
 			schema: 'SupplierInvoice',
 			filters: [
 				'administrationId' => $administrationId,
 				'invoiceNumber' => $parsed['invoiceNumber'],
-				'supplierId' => $parsed['supplierId'],
-			]
+			] + $this->supplierFilter(parsed: $parsed)
 		);
 		if ($existing !== null) {
 			// Idempotent ingestion — repeated Peppol deliveries return the
@@ -230,8 +232,62 @@ class SupplierInvoiceService {
 			]
 		);
 
+		$record = array_merge($record, array_filter($this->checks->warnings(invoice: $record)));
+
 		return $this->saveObject(schema: 'SupplierInvoice', object: $record);
 	}//end ingestUBLInvoice()
+
+	/**
+	 * The idempotency filter on the supplier: the payee when resolved, else the stated identifier.
+	 *
+	 * @param array<string,mixed> $parsed The resolved invoice.
+	 *
+	 * @return array<string,string>
+	 */
+	private function supplierFilter(array $parsed): array {
+		if (isset($parsed['supplierId']) === true) {
+			return ['supplierId' => (string)$parsed['supplierId']];
+		}
+
+		return ['supplierIdentifier' => (string)($parsed['supplierIdentifier'] ?? '')];
+
+	}//end supplierFilter()
+
+	/**
+	 * Turn the parsed supplier party into a payee reference.
+	 *
+	 * The party id stays as `supplierIdentifier`. `supplierId` is the payee's
+	 * uuid when the party id is one, else the payee with the invoice's KvK
+	 * number, else its VAT number; with no match it is left out, because the
+	 * schema holds a uuid there (purchasing-supplier-invoice-intake REQ-PSII-001).
+	 *
+	 * @param string              $administrationId The administration.
+	 * @param array<string,mixed> $parsed           The parsed invoice.
+	 *
+	 * @return array<string,mixed> The invoice without the parser's helper keys.
+	 *
+	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-1.1
+	 */
+	public function resolveSupplier(string $administrationId, array $parsed): array {
+		$identifier = (string)($parsed['supplierId'] ?? '');
+		$payee = $this->checks->payee(supplierId: $identifier);
+		if ($payee === null) {
+			$payee = $this->checks->resolvePayee(
+				administrationId: $administrationId,
+				kvkNumber: (string)($parsed['supplierKvk'] ?? ''),
+				vatNumber: (string)($parsed['supplierVatNumber'] ?? '')
+			);
+		}
+
+		unset($parsed['supplierId'], $parsed['supplierKvk'], $parsed['supplierVatNumber']);
+		$parsed['supplierIdentifier'] = $identifier;
+		if ($payee !== null && (string)($payee['administrationId'] ?? $administrationId) === $administrationId) {
+			$parsed['supplierId'] = (string)$payee['id'];
+		}
+
+		return $parsed;
+
+	}//end resolveSupplier()
 
 	/**
 	 * Ingest a PDF-attached invoice via openconnector's OCR extraction
@@ -568,6 +624,8 @@ class SupplierInvoiceService {
 	 *
 	 * @throws \RuntimeException When the document is not valid XML or the
 	 *                           mandatory InvoiceNumber field is absent.
+	 *
+	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-1.1
 	 */
 	public function parseUblInvoice(string $ublXml): array {
 		if (trim($ublXml) === '') {
@@ -647,6 +705,22 @@ class SupplierInvoiceService {
 			'totalVat' => $this->toCents(amount: $totalVat),
 			'totalInclVat' => $this->toCents(amount: $totalInclVat),
 			'paymentReference' => trim($this->xpathFirst(xml: $xml, paths: ['//cac:PaymentMeans/cbc:PaymentID'])),
+			'payeeIban' => strtoupper(
+				(string)preg_replace('/\s+/', '', $this->xpathFirst(xml: $xml, paths: ['//cac:PaymentMeans/cac:PayeeFinancialAccount/cbc:ID']))
+			),
+			'supplierKvk' => trim(
+				$this->xpathFirst(
+					xml: $xml,
+					paths: [
+						'//cac:AccountingSupplierParty/cac:Party/cac:PartyLegalEntity/cbc:CompanyID',
+						'//cac:AccountingSupplierParty/cac:Party/cbc:EndpointID[@schemeID="0106"]',
+						'//cac:AccountingSupplierParty/cac:Party/cac:PartyIdentification/cbc:ID[@schemeID="0106"]',
+					]
+				)
+			),
+			'supplierVatNumber' => trim(
+				$this->xpathFirst(xml: $xml, paths: ['//cac:AccountingSupplierParty/cac:Party/cac:PartyTaxScheme/cbc:CompanyID'])
+			),
 			'lines' => $lines,
 		];
 

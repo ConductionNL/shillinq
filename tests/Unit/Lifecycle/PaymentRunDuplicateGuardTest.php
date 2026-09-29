@@ -30,6 +30,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
 use OCA\Shillinq\Lifecycle\PaymentRunDuplicateGuard;
+use OCA\Shillinq\PaymentRun\PaymentBlockChecker;
+use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -84,11 +87,7 @@ class PaymentRunDuplicateGuardTest extends TestCase {
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 		// phpcs:enable CustomSniffs.Functions.NamedParameters
 
-		$this->guard = new PaymentRunDuplicateGuard(
-			container: $this->container,
-			appConfig: $this->appConfig,
-			logger: $this->logger,
-		);
+		$this->guard = $this->guardOver(records: []);
 
 	}//end setUp()
 
@@ -101,6 +100,7 @@ class PaymentRunDuplicateGuardTest extends TestCase {
 	 */
 	private function withRecords(array $recordsBySchema): void {
 		$this->container->method('get')->willReturn(GuardObjectServiceStub::make($recordsBySchema));
+		$this->guard = $this->guardOver(records: $recordsBySchema);
 
 	}//end withRecords()
 
@@ -336,4 +336,50 @@ class PaymentRunDuplicateGuardTest extends TestCase {
 		self::assertSame(PaymentRunDuplicateGuard::MESSAGE_INDETERMINATE, $result->getMessage());
 
 	}//end testLookupFailureFailsClosed()
+
+	/**
+	 * The guard, with a block checker reading the same records.
+	 *
+	 * @param array<string, array<int, mixed>> $records Records keyed by schema slug.
+	 *
+	 * @return PaymentRunDuplicateGuard
+	 */
+	private function guardOver(array $records): PaymentRunDuplicateGuard {
+		$settings = $this->createMock(SettingsService::class);
+		$settings->method('getRegisterSlug')->willReturn('shillinq');
+
+		return new PaymentRunDuplicateGuard(
+			container: $this->container,
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			blockChecker: new PaymentBlockChecker(new InMemoryObjectServiceStub($records), $settings),
+		);
+
+	}//end guardOver()
+
+	/**
+	 * REQ-BPR-005: a block set after approval stops the export, naming the invoice.
+	 *
+	 * @return void
+	 */
+	public function testABlockedInvoiceStopsTheExport(): void {
+		$this->withRecords(
+			[
+				'APTransaction' => [
+					[
+						'id' => 'ap-9', 'invoiceNumber' => '2026-0412', 'state' => 'issued', 'vendorId' => 'payee-1',
+						'paymentBlocked' => true, 'paymentBlockReason' => 'Wacht op creditnota',
+					],
+				],
+				'Payee' => [['id' => 'payee-1', 'name' => 'Drukkerij Van der Meer B.V.']],
+				'PaymentRun' => [['id' => 'pr-1', 'lifecycleState' => 'approved', 'paymentLines' => [['apTransactionRef' => 'ap-9']]]],
+			]
+		);
+
+		$result = $this->guard->check($this->batch('pr-1', 'ap-9'), 'export', 'alice');
+
+		self::assertFalse($result->isAllowed());
+		self::assertStringContainsString('2026-0412', (string)$result->getMessage());
+
+	}//end testABlockedInvoiceStopsTheExport()
 }//end class

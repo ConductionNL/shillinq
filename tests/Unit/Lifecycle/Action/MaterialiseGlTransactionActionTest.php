@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ledger-posting-path/tasks.md#task-2.1
+ * @spec openspec/specs/bookkeeping-journal-entries/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -23,6 +23,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
 use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
+use OCA\Shillinq\Standards\RuleEngine;
+use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -108,6 +110,58 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 
 		self::assertSame($transactions[0]['id'], $result['glTransactionId'], 'The back reference is returned so it saves with the transition.');
 	}//end testABalancedJournalEntryPostsOneTransaction()
+
+	/**
+	 * A transaction this handler writes as posted carries the posting stamps,
+	 * so it meets the same mandatory ledger rules a posted entry from the
+	 * ledger page does (REQ-LPP-004).
+	 *
+	 * @return void
+	 */
+	public function testAMaterialisedTransactionMeetsTheMandatoryLedgerRules(): void {
+		$parameters = ['sourceSchema' => 'JournalEntry', 'keepBalanced' => true];
+		$this->action()->execute($this->journalEntry(), [], $parameters, MaterialiseGlTransactionAction::class);
+
+		$transaction = $this->store->savedOf('GLTransaction')[0];
+		self::assertTrue($transaction['postingLocked']);
+		self::assertSame('2036-12-31', $transaction['retentionUntil']);
+		self::assertSame('post', $transaction['auditTrail'][0]['action']);
+		$header = $transaction;
+		unset($header['id']);
+		self::assertSame([], RegisterSchema::errors(slug: 'GLTransaction', object: $header), 'the stamped header validates against the merged register');
+
+		$transaction['lines'] = $this->store->savedOf('GLLine');
+		$mandatory = [];
+		foreach (RuleEngine::evaluate('GLTransaction', $transaction, ['jurisdiction' => 'NL']) as $violation) {
+			if ($violation->severity === 'mandatory') {
+				$mandatory[] = $violation->ruleId;
+			}
+		}
+
+		self::assertSame([], $mandatory);
+	}//end testAMaterialisedTransactionMeetsTheMandatoryLedgerRules()
+
+	/**
+	 * A journal entry line's cost centre and project reach its GL line, so a
+	 * posting restriction and the segment reports see them (ledger-booking-rules).
+	 *
+	 * @return void
+	 */
+	public function testAJournalLinesCostCentreAndProjectReachTheGlLine(): void {
+		$entry = $this->journalEntry();
+		$entry['lines'][0]['costCenterCode'] = 'KP-300';
+		$entry['lines'][0]['projectCode'] = 'P-2026-014';
+		$this->action()->execute($entry, [], ['sourceSchema' => 'JournalEntry'], MaterialiseGlTransactionAction::class);
+
+		$lines = $this->store->savedOf('GLLine');
+		self::assertSame(['KP-300', 'P-2026-014'], [$lines[0]['costCenterCode'] ?? null, $lines[0]['projectCode'] ?? null]);
+		self::assertArrayNotHasKey('costCenterCode', $lines[1]);
+		$row = $lines[0];
+		unset($row['id']);
+		// The store mints non-uuid ids; OpenRegister hands out uuids.
+		$row['transactionId'] = '0f8fad5b-d9cb-469f-a165-70867728950e';
+		self::assertSame([], RegisterSchema::errors(slug: 'GLLine', object: $row));
+	}//end testAJournalLinesCostCentreAndProjectReachTheGlLine()
 
 	/**
 	 * An unbalanced entry is refused and nothing is written.
@@ -215,7 +269,7 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-down-payments/tasks.md#task-1.1
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
 	public function testADownPaymentIsBookedAsAnAdvanceNotAsRevenue(): void {
 		$byAccount = $this->postedByAccount(
@@ -239,7 +293,7 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-down-payments/tasks.md#task-1.1
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
 	public function testAFinalInvoiceBooksFullRevenueAndReleasesTheAdvance(): void {
 		$byAccount = $this->postedByAccount(
@@ -310,6 +364,33 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 	}//end testAPurchaseInvoiceBooksExpenseVatAndPayables()
 
 	/**
+	 * REQ-PSII-002: an issued AP transaction posts like a purchase invoice,
+	 * and the schema declares that posting on its issue transition.
+	 *
+	 * @return void
+	 */
+	public function testAnIssuedApTransactionBooksExpenseVatAndCreditor(): void {
+		$this->action()->execute(
+			[
+				'id' => 'ap-0455', 'invoiceNumber' => '2026-0455', 'invoiceDate' => '2026-09-01', 'administrationId' => 'adm-1',
+				'vendorId' => 'payee-1', 'totalAmount' => 1210.0, 'taxAmount' => 210.0,
+				'lines' => [['accountNumber' => '4300', 'amount' => 1000.0, 'description' => 'Folders']],
+				'state' => 'issued',
+			],
+			[],
+			['sourceSchema' => 'APTransaction'],
+			MaterialiseGlTransactionAction::class
+		);
+
+		$lines = array_map(static fn (array $l): array => [$l['accountNumber'], $l['side'], $l['amount']], $this->store->savedOf('GLLine'));
+		self::assertSame([['4300', 'debit', 1000.0], ['1230', 'debit', 210.0], ['2000', 'credit', 1210.0]], $lines);
+
+		$issue = RegisterSchema::schema('APTransaction')['x-openregister-lifecycle']['transitions']['issue'];
+		self::assertSame(MaterialiseGlTransactionAction::class, $issue['actions'][0]['action']);
+		self::assertSame('APTransaction', $issue['actions'][0]['actionParameters']['sourceSchema']);
+	}//end testAnIssuedApTransactionBooksExpenseVatAndCreditor()
+
+	/**
 	 * A source schema without a mapper is refused by name, never guessed at.
 	 *
 	 * @return void
@@ -321,6 +402,25 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 		$source = ['id' => 'iv-1', 'administrationId' => 'adm-1'];
 		$this->action()->execute($source, [], ['sourceSchema' => 'InventoryValuation'], MaterialiseGlTransactionAction::class);
 	}//end testASchemaWithoutAMapperIsRefusedByName()
+
+	/**
+	 * An expense claim is refused by name until expenses-category-mapping
+	 * adds its mapper, and nothing is written (REQ-LPP-006).
+	 *
+	 * @return void
+	 */
+	public function testAnExpenseClaimIsRefusedUntilItsAccountsResolve(): void {
+		$action = $this->action();
+		$source = ['id' => 'ece-1', 'administrationId' => 'adm-1', 'lines' => [['amount' => 100.08]]];
+		try {
+			$action->execute($source, [], ['sourceSchema' => 'ExpenseClaimEntry'], MaterialiseGlTransactionAction::class);
+			self::fail('An expense claim must not post without its account mapping.');
+		} catch (RuntimeException $e) {
+			self::assertStringContainsString('"ExpenseClaimEntry"', $e->getMessage());
+		}
+
+		self::assertSame([], $this->store->savedOf('GLTransaction'));
+	}//end testAnExpenseClaimIsRefusedUntilItsAccountsResolve()
 
 	/**
 	 * A line that fails to save withdraws the transaction it belonged to.

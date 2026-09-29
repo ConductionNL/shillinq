@@ -7753,6 +7753,44 @@
 							},
 							"emptyText": "No invoices yet for this customer."
 						}
+					},
+					{
+						"id": "customer-payment-plans",
+						"type": "object-list",
+						"title": "Payment plans",
+						"icon": "CalendarClock",
+						"content": {
+							"register": "shillinq",
+							"schema": "PaymentPlan",
+							"filter": {
+								"customerId": "@objectId"
+							},
+							"limit": 20,
+							"columns": [
+								{
+									"key": "planNumber",
+									"label": "Plan"
+								},
+								{
+									"key": "totalAmount",
+									"label": "Total"
+								},
+								{
+									"key": "paidAmount",
+									"label": "Paid"
+								},
+								{
+									"key": "nextDueDate",
+									"label": "Next due"
+								},
+								{
+									"key": "lifecycleState",
+									"label": "State"
+								}
+							],
+							"rowRoute": "PaymentPlanDetail",
+							"emptyText": "No payment plans for this customer."
+						}
 					}
 				],
 				"layout": [
@@ -7811,6 +7849,27 @@
 						"gridY": 10,
 						"gridWidth": 12,
 						"gridHeight": 5
+					},
+					{
+						"id": "6",
+						"widgetId": "customer-payment-plans",
+						"gridX": 0,
+						"gridY": 15,
+						"gridWidth": 12,
+						"gridHeight": 4
+					}
+				],
+				"headerActions": [
+					{
+						"id": "agree-payment-plan",
+						"label": "Agree a payment plan",
+						"type": "open-modal",
+						"target": "AgreePaymentPlanModal",
+						"icon": "CalendarClock",
+						"props": {
+							"open": true,
+							"from": "customer"
+						}
 					}
 				],
 				"lifecycleActions": true,
@@ -7910,7 +7969,8 @@
 								"periodId",
 								"lifecycleState",
 								"ublRef",
-								"sourceDocumentUri"
+								"sourceDocumentUri",
+							"paymentPlanId"
 							]
 						}
 					},
@@ -8149,6 +8209,24 @@
 						"gridY": 16,
 						"gridWidth": 12,
 						"gridHeight": 3
+					}
+				],
+				"headerActions": [
+					{
+						"id": "agree-payment-plan",
+						"label": "Agree a payment plan",
+						"type": "open-modal",
+						"target": "AgreePaymentPlanModal",
+						"icon": "CalendarClock",
+						"props": {
+							"open": true,
+							"from": "invoice"
+						},
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"op": "eq",
+							"value": "overdue"
+						}
 					}
 				],
 				"lifecycleActions": true,
@@ -13749,6 +13827,16 @@
 						"key": "statusCode",
 						"label": "Status",
 						"sortable": true
+					},
+					{
+						"key": "duplicateOfId",
+						"label": "Same number as",
+						"sortable": false
+					},
+					{
+						"key": "ibanMismatch",
+						"label": "IBAN differs",
+						"sortable": false
 					}
 				],
 				"defaultSort": "dueDate",
@@ -13809,6 +13897,41 @@
 					{
 						"key": "supplierId",
 						"label": "Supplier",
+						"type": "string"
+					},
+					{
+						"key": "supplierIdentifier",
+						"label": "Supplier as stated on the invoice",
+						"type": "string"
+					},
+					{
+						"key": "payeeIban",
+						"label": "Invoice IBAN",
+						"type": "string"
+					},
+					{
+						"key": "duplicateOfId",
+						"label": "Same number as",
+						"type": "string"
+					},
+					{
+						"key": "duplicateAcknowledgedReason",
+						"label": "Reason to book the repeated number",
+						"type": "string"
+					},
+					{
+						"key": "ibanMismatch",
+						"label": "IBAN differs from supplier record",
+						"type": "string"
+					},
+					{
+						"key": "ibanAcknowledgedReason",
+						"label": "Reason to book the other IBAN",
+						"type": "string"
+					},
+					{
+						"key": "apTransactionId",
+						"label": "AP transaction",
 						"type": "string"
 					},
 					{

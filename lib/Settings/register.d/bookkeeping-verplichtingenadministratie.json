@@ -283,7 +283,7 @@
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
-                  "action": "record-mutatie",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\RecordCommitmentMovementAction",
                   "description": "Record a `committed` CommitmentMovement and increase openstaande_verplichtingen on the matching budgets.",
                   "actionParameters": {
                     "register": "shillinq",
@@ -307,7 +307,10 @@
               "description": "Record (partial) receipt. Informational; budget unchanged."
             },
             "factureren": {
-              "from": "partially_delivered",
+              "from": [
+                "committed",
+                "partially_delivered"
+              ],
               "to": "partially_invoiced",
               "label": "Factureren",
               "description": "Invoice matched against the commitment; remaining_committed reduced."
@@ -319,10 +322,27 @@
               "description": "Payment settled; openstaande_verplichtingen unchanged (already released at gefactureerd)."
             },
             "afsluiten": {
-              "from": "committed",
+              "from": [
+                "committed",
+                "partially_delivered",
+                "partially_invoiced",
+                "partially_paid"
+              ],
               "to": "closed",
               "label": "Afsluiten",
-              "description": "Close the commitment; restant released back to budget."
+              "description": "Close the commitment; restant released back to budget. Allowed from every open state, so a last invoice closes a partly invoiced commitment.",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\RecordCommitmentMovementAction",
+                  "description": "Release what remains: a closed CommitmentMovement of minus the remainder, every line closed, openstaande_verplichtingen lowered on the matching budgets.",
+                  "actionParameters": {
+                    "register": "shillinq",
+                    "schema": "CommitmentMovement",
+                    "kind": "closed"
+                  }
+                }
+              ]
             },
             "annuleren": {
               "from": "committed",
@@ -516,6 +536,11 @@
             "default": false,
             "example": false,
             "title": "Afgesloten"
+          },
+          "carriedFromLine": {
+            "type": "string",
+            "title": "Carried from line",
+            "description": "The line of the previous year this line continues, written by the year-end carry-over (planning-commitment-year-end, REQ-PCYE-004)."
           }
         },
         "x-openregister-aggregations": {
@@ -533,12 +558,20 @@
               "afgesloten": false
             },
             "metrics": [
-              { "metric": "sum", "field": "remaining_committed" },
-              { "metric": "sum", "field": "invoiced_amount" }
+              {
+                "metric": "sum",
+                "field": "remaining_committed"
+              },
+              {
+                "metric": "sum",
+                "field": "invoiced_amount"
+              }
             ],
             "join": {
               "through": "CommitmentBudget",
-              "on": { "programme": "programmeCode" },
+              "on": {
+                "programme": "programmeCode"
+              },
               "filter": {},
               "select": [
                 "CommitmentBudget.authorised_amount",
@@ -607,7 +640,8 @@
               "paid",
               "closed",
               "cancelled",
-              "reclaimed"
+              "reclaimed",
+              "carried_forward"
             ],
             "example": "committed",
             "title": "Soort"

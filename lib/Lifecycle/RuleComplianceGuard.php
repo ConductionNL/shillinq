@@ -35,6 +35,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
+use DateTimeImmutable;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Standards\RuleEngine;
 use OCP\IAppConfig;
@@ -51,12 +52,15 @@ class RuleComplianceGuard {
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for violations + fail-closed diagnostics.
 	 * @param BalanceGuard $balanceGuard Existing double-entry balance guard (reused).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
+	 * @param PostingRestrictionGuard $restrictions The booking rules (ledger-booking-rules).
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly BalanceGuard $balanceGuard,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly PostingRestrictionGuard $restrictions,
 	) {
 
 	}//end __construct()
@@ -73,7 +77,7 @@ class RuleComplianceGuard {
 	 *
 	 * @return bool True to allow the transition.
 	 *
-	 * @spec openspec/changes/ledger-posting-path/tasks.md#task-2.4
+	 * @spec openspec/specs/bookkeeping-general-ledger/spec.md
 	 */
 	public function validateInvoice(string|array $invoiceOrId): bool {
 		$id = $this->idOf(objectOrId: $invoiceOrId);
@@ -113,7 +117,9 @@ class RuleComplianceGuard {
 	 *
 	 * @return bool True to allow the transition.
 	 *
-	 * @spec openspec/changes/ledger-posting-path/tasks.md#task-2.3
+	 * @throws PostingRefusedException When a line breaks a booking rule, naming it.
+	 *
+	 * @spec openspec/specs/bookkeeping-general-ledger/spec.md
 	 */
 	public function validateTransaction(string|array $transactionOrId): bool {
 		$id = $this->idOf(objectOrId: $transactionOrId);
@@ -127,6 +133,11 @@ class RuleComplianceGuard {
 				return false;
 			}
 
+			// The page sends the draft with its state moved to posted. The lock,
+			// retention, integrity and audit-trail fields are what the post
+			// itself gives the entry (StampPostingAction persists them), so the
+			// entry is judged as the post leaves it (REQ-LPP-001, #516).
+			$transaction = (new PostingStamps())->apply(transaction: $transaction, user: 'system', now: new DateTimeImmutable());
 			$transaction['lines'] = $this->loadLines($transaction);
 
 			$violations = RuleEngine::evaluate('GLTransaction', $transaction, $this->context($transaction));
@@ -135,7 +146,25 @@ class RuleComplianceGuard {
 			}
 
 			$this->logViolations('GLTransaction', $id, $violations);
-			return RuleEngine::hasMandatory($violations) === false;
+			if (RuleEngine::hasMandatory($violations) === true) {
+				return false;
+			}
+
+			// A person's posting is checked against the booking rules. A
+			// transaction a sub-ledger prepared carries its journal code (the
+			// GR/IR and inventory posters) or the journal entry it books, which
+			// JournalEntryGuard already checked (ledger-booking-rules D2).
+			if ($this->fromSubLedger(transaction: $transaction) === false) {
+				$this->restrictions->assertAllowed(
+					lines: $transaction['lines'],
+					administrationId: (string)($transaction['administrationId'] ?? ''),
+					postingDate: (string)($transaction['postingDate'] ?? '')
+				);
+			}
+
+			return true;
+		} catch (PostingRefusedException $e) {
+			throw $e;
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'RuleComplianceGuard: transaction validation failed — denying post (fail-closed)',
@@ -145,6 +174,18 @@ class RuleComplianceGuard {
 		}//end try
 
 	}//end validateTransaction()
+
+	/**
+	 * Whether a transaction was prepared by a sub-ledger rather than a person.
+	 *
+	 * @param array<string,mixed> $transaction The GL transaction.
+	 *
+	 * @return bool
+	 */
+	private function fromSubLedger(array $transaction): bool {
+		return (string)($transaction['journalEntryId'] ?? '') !== ''
+			|| (string)($transaction['journalCode'] ?? '') !== '';
+	}//end fromSubLedger()
 
 	/**
 	 * The id of an object passed either as its id or as the object array.

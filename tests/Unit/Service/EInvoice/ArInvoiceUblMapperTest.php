@@ -207,7 +207,7 @@ final class ArInvoiceUblMapperTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-down-payments/tasks.md#task-4.1
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
 	public function testADownPaymentInvoiceIsTypeCode386(): void {
 		$invoice = array_merge(
@@ -229,7 +229,7 @@ final class ArInvoiceUblMapperTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sales-down-payments/tasks.md#task-4.1
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
 	 */
 	public function testAFinalInvoiceCarriesTheDeductionAndTheBillingReference(): void {
 		$invoice = array_merge(

@@ -4627,6 +4627,47 @@
 		{
 			"menu": [
 				{
+					"id": "PostingRestrictions",
+					"label": "Posting restrictions",
+					"icon": "Cancel",
+					"route": "PostingRestrictions",
+					"order": 45
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "ledger-booking-rules",
+					"id": "PostingRestrictions",
+					"route": "/settings/posting-restrictions",
+					"type": "index",
+					"title": "Posting restrictions"
+				},
+				{
+					"_fragment": "ledger-booking-rules",
+					"id": "PostingRestrictionDetail",
+					"route": "/settings/posting-restrictions/:id",
+					"type": "detail",
+					"title": "Posting restriction"
+				},
+				{
+					"_fragment": "ledger-booking-rules",
+					"id": "JournalDetail",
+					"route": "/journals/:id",
+					"type": "detail",
+					"title": "Journal Entry"
+				},
+				{
+					"_fragment": "ledger-booking-rules",
+					"id": "GeneralLedgerDetail",
+					"route": "/general-ledger/:id",
+					"type": "detail",
+					"title": "GL Transaction"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "Bookkeeping",
 					"route": "BookkeepingOverview"
 				},
@@ -4713,6 +4754,80 @@
 			]
 		},
 		{
+			"menu": [
+				{
+					"id": "Overheid",
+					"children": [
+						{
+							"id": "Begrotingswijzigingen",
+							"label": "Budget amendments",
+							"icon": "FileDocumentEditOutline",
+							"route": "Begrotingswijzigingen",
+							"order": 50
+						},
+						{
+							"id": "Meerjarenramingen",
+							"label": "Multi-year estimate",
+							"icon": "ChartTimelineVariant",
+							"route": "Meerjarenramingen",
+							"order": 55
+						},
+						{
+							"id": "MeerjarenBudgetten",
+							"label": "Multi-year budget lines",
+							"icon": "CalendarRangeOutline",
+							"route": "MeerjarenBudgetten",
+							"order": 56
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "planning-budget-editing",
+					"id": "Begrotingswijzigingen",
+					"route": "/overheid/begrotingswijzigingen",
+					"type": "index",
+					"title": "Budget amendments"
+				},
+				{
+					"_fragment": "planning-budget-editing",
+					"id": "BegrotingswijzigingDetail",
+					"route": "/overheid/begrotingswijzigingen/:id",
+					"type": "detail",
+					"title": "Budget amendment"
+				},
+				{
+					"_fragment": "planning-budget-editing",
+					"id": "Meerjarenramingen",
+					"route": "/overheid/meerjarenramingen",
+					"type": "index",
+					"title": "Multi-year estimate"
+				},
+				{
+					"_fragment": "planning-budget-editing",
+					"id": "MeerjarenramingDetail",
+					"route": "/overheid/meerjarenramingen/:id",
+					"type": "detail",
+					"title": "Multi-year estimate year"
+				},
+				{
+					"_fragment": "planning-budget-editing",
+					"id": "MeerjarenBudgetten",
+					"route": "/overheid/meerjarenbudgetten",
+					"type": "index",
+					"title": "Multi-year budget lines"
+				},
+				{
+					"_fragment": "planning-budget-editing",
+					"id": "MeerjarenBudgetDetail",
+					"route": "/overheid/meerjarenbudgetten/:id",
+					"type": "detail",
+					"title": "Multi-year budget line"
+				}
+			]
+		},
+		{
 			"menu": [],
 			"pages": [
 				{
@@ -4721,6 +4836,33 @@
 					"route": "/inkoop/receipts/:id",
 					"type": "custom",
 					"title": "Receipt"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "PaymentPlans",
+					"label": "Payment plans",
+					"icon": "CalendarClock",
+					"route": "PaymentPlans",
+					"order": 24
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "receivables-payment-plans",
+					"id": "PaymentPlans",
+					"route": "/bookkeeping/payment-plans",
+					"type": "index",
+					"title": "Payment plans"
+				},
+				{
+					"_fragment": "receivables-payment-plans",
+					"id": "PaymentPlanDetail",
+					"route": "/bookkeeping/payment-plans/:id",
+					"type": "detail",
+					"title": "Payment plan"
 				}
 			]
 		},
