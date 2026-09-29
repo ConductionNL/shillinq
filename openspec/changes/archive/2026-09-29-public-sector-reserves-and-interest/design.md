@@ -81,3 +81,12 @@ None; existing reserve balance fields remain as the starting point.
 ## Open Questions
 
 None.
+
+## As built (2026-09-29)
+
+- The records live in their own fragment, `lib/Settings/register.d/public-sector-reserves-and-interest.json`.
+- Amounts on `ReserveMutation` and `InterestAllocationRun` are euros, like `Investering.gross` and journal lines. `Reserve` starts from `openingBalance` in `openingBalanceYear` (falling back to `balanceYearStartCents`).
+- `InterestAllocationRun` states are draft, calculated and posted: Calculate (draft to calculated), Reopen (back to draft) and Post (calculated to posted), each executed by `InterestAllocationAction`.
+- The run names its interest cost account and Treasury account; a reserve names its balance account and result account. The journal debits the cost account per task field and credits Treasury (task field 0.5); a reserve's interest debits its result account and credits its reserve account, and is recorded as a realised addition naming the run.
+- The multi-year overview is a dashboard page over `ReserveOverviewController::overview` (hydra gate 69 refuses a new custom page), so the opening-to-closing chain is tested in PHPUnit.
+- Book value on 1 January is gross less the stored capital charges of earlier years, or the straight-line schedule from `KapitaallastenCalculator` when none is stored.
