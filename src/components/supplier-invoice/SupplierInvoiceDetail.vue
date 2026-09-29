@@ -173,6 +173,39 @@
 					}}
 				</p>
 			</section>
+
+			<section
+				v-if="
+					invoice.statusCode === 'approved'
+					&& (invoice.matchedPoIds || []).length > 0
+				"
+				class="si-detail__last-invoice"
+				data-testid="si-detail-last-invoice">
+				<h3>{{ t('shillinq', 'Commitment') }}</h3>
+				<p v-if="invoice.isLastInvoice">
+					{{
+						t(
+							'shillinq',
+							'Marked as the last invoice of its order. The commitment is closed.',
+						)
+					}}
+				</p>
+				<template v-else>
+					<p>
+						{{
+							t(
+								'shillinq',
+								'Is this the last invoice of the order? Then the rest of the commitment goes back to the budget.',
+							)
+						}}
+					</p>
+					<NcButton
+						data-testid="si-detail-mark-last"
+						@click="openLastInvoice">
+						{{ t('shillinq', 'Mark as last invoice') }}
+					</NcButton>
+				</template>
+			</section>
 		</div>
 	</div>
 </template>
@@ -180,11 +213,15 @@
 <script>
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { NcButton } from '@nextcloud/vue'
+import { spawnDialog } from '@nextcloud/vue/functions/dialog'
+import LastInvoiceModal from '../../modals/LastInvoiceModal.vue'
 
 const REGISTER_SLUG = 'shillinq'
 
 export default {
 	name: 'SupplierInvoiceDetail',
+	components: { NcButton },
 	props: {
 		/**
 		 * SupplierInvoice id from the route.
@@ -265,6 +302,21 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Open Mark as last invoice and reload the invoice when it closed the commitment.
+		 *
+		 * @spec openspec/changes/planning-commitment-year-end/tasks.md#task-2.3
+		 */
+		async openLastInvoice() {
+			const closed = await spawnDialog(LastInvoiceModal, {
+				invoiceId: this.id,
+				administrationId: String(this.invoice.administrationId || ''),
+			})
+			if (closed) {
+				await this.loadInvoice()
+			}
+		},
+
 		/** @spec openspec/changes/bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion/tasks.md */
 		async loadInvoice() {
 			this.loading = true
