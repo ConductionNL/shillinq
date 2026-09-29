@@ -75,7 +75,7 @@ class SupplierInvoiceWarningListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/purchasing-supplier-invoice-intake/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-2.1
 	 */
 	public function handle(Event $event): void {
 		if (($event instanceof ObjectCreatedEvent) === false && ($event instanceof ObjectUpdatedEvent) === false) {

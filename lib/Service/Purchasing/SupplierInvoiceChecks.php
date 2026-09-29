@@ -75,7 +75,7 @@ class SupplierInvoiceChecks {
 	 *
 	 * @return array<string, mixed>|null The payee, with its id.
 	 *
-	 * @spec openspec/changes/purchasing-supplier-invoice-intake/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-1.1
 	 */
 	public function resolvePayee(string $administrationId, string $kvkNumber, string $vatNumber): ?array {
 		$payees = $this->read(schema: 'Payee', administrationId: $administrationId);
@@ -106,7 +106,7 @@ class SupplierInvoiceChecks {
 	 *
 	 * @return array<string, mixed>|null The payee, with its id.
 	 *
-	 * @spec openspec/changes/purchasing-supplier-invoice-intake/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-3.2
 	 */
 	public function payee(string $supplierId): ?array {
 		if (trim($supplierId) === '') {
@@ -127,7 +127,7 @@ class SupplierInvoiceChecks {
 	 *
 	 * @return string|null The earlier record's id, DUPLICATE_UNKNOWN when the lookup failed, null when none.
 	 *
-	 * @spec openspec/changes/purchasing-supplier-invoice-intake/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-2.1
 	 */
 	public function duplicateOf(string $administrationId, string $supplierId, string $invoiceNumber, array $ignoreIds=[]): ?string {
 		$number = trim($invoiceNumber);
@@ -170,7 +170,7 @@ class SupplierInvoiceChecks {
 	 *
 	 * @return string|null The earlier invoice's id, DUPLICATE_UNKNOWN when the lookup failed, null when none.
 	 *
-	 * @spec openspec/changes/purchasing-supplier-invoice-intake/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-2.1
 	 */
 	public function duplicateOfUnresolved(string $administrationId, string $supplierIdentifier, string $invoiceNumber): ?string {
 		if (trim($invoiceNumber) === '' || trim($supplierIdentifier) === '') {
@@ -216,7 +216,7 @@ class SupplierInvoiceChecks {
 	 *
 	 * @return array{invoiceIban: string, knownIban: string}|null The two IBANs, null when they agree.
 	 *
-	 * @spec openspec/changes/purchasing-supplier-invoice-intake/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-2.1
 	 */
 	public function ibanMismatch(string $administrationId, string $supplierId, string $invoiceIban): ?array {
 		$iban = self::compact(value: $invoiceIban);
@@ -249,7 +249,7 @@ class SupplierInvoiceChecks {
 	 *
 	 * @return array{duplicateOfId: string, ibanMismatch: string} Each '' when clear (the register holds strings, not null).
 	 *
-	 * @spec openspec/changes/purchasing-supplier-invoice-intake/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-2.1
 	 */
 	public function warnings(array $invoice): array {
 		$administrationId = (string)($invoice['administrationId'] ?? '');

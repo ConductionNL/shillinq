@@ -6,7 +6,7 @@
  * supplier invoice pages. The manifest shows the fields the register declares,
  * and Book without order is a declared transition the lifecycle actions show.
  *
- * @spec openspec/changes/purchasing-supplier-invoice-intake/specs/bookkeeping-purchase-order-3way/spec.md
+ * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/specs/bookkeeping-purchase-order-3way/spec.md
  */
 
 import fs from 'fs'

@@ -266,7 +266,7 @@ class SupplierInvoiceService {
 	 *
 	 * @return array<string,mixed> The invoice without the parser's helper keys.
 	 *
-	 * @spec openspec/changes/purchasing-supplier-invoice-intake/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-1.1
 	 */
 	public function resolveSupplier(string $administrationId, array $parsed): array {
 		$identifier = (string)($parsed['supplierId'] ?? '');

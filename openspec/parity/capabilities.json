@@ -1627,17 +1627,19 @@
 			"id": "pur-ubl-import",
 			"area": "purchasing",
 			"name": "Import a supplier's UBL e-invoice and book it without typing.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "yes",
 			"moneybird": "yes",
 			"snelstart": "yes",
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
-				"evidence": "lib/Controller/SupplierInvoiceImportController.php:190 importUbl -> SupplierInvoiceService::ingestUBLInvoice (SupplierInvoiceService.php:186) saves a SupplierInvoice with statusCode=received; no GL posting on import, the ledger entry only comes from GRIRClearingListener on SupplierInvoice matching->matched (3-way match)",
-				"reachedOn": "Dashboard / (header action 'Import bill' opens BillImportModal, accepts .xml/.ubl/.csv); result lands on SupplierInvoices /inkoop/supplier-invoices (menu Purchasing > Supplier Invoices)",
-				"owner": "ConductionNL/shillinq"
+				"state": "built",
+				"evidence": "lib/Service/SupplierInvoiceService.php ingestUBLInvoice resolves the supplier to a Payee by uuid, KvK or VAT number (resolveSupplier) and reads the IBAN; SupplierInvoice.bookWithoutOrder (SupplierInvoiceBookingGuard + lib/Lifecycle/Action/HandToAccountsPayableAction.php) writes and issues an APTransaction, whose issue posts through MaterialiseGlTransactionAction (expense lines, input VAT, creditors) without a purchase order.",
+				"reachedOn": "SupplierInvoiceDetail /inkoop/supplier-invoices/:id, lifecycle action Book without order; import via the bill import dialog",
+				"owner": "ConductionNL/shillinq",
+				"readOn": "2026-09-29",
+				"change": "2026-09-29-purchasing-supplier-invoice-intake"
 			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207121-ubl-facturen-verwerken : 'Wanneer je een UBL factuur ontvangt en het bestand upload ... of e-mailt naar je Moneybird administratie, worden alle gegevens' read; 'Moneybird ondersteunt UBL 2.1'; also received via Peppol",
@@ -1651,7 +1653,7 @@
 			"feature": "supplier-invoice-capture",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Import without typing works; 'book it' only happens for PO-backed invoices after a 3-way match, a non-PO invoice is never posted automatically. Specified 2026-09-27 in openspec/changes/purchasing-supplier-invoice-intake (OpenSpec pass)."
+			"note": "Import without typing works; 'book it' only happens for PO-backed invoices after a 3-way match, a non-PO invoice is never posted automatically. Built 2026-09-29 by purchasing-supplier-invoice-intake."
 		},
 		{
 			"id": "pur-invoice-approval",
@@ -5155,18 +5157,19 @@
 			"id": "pur-duplicate-check",
 			"area": "purchasing",
 			"name": "Be warned when a supplier invoice number was already booked for that supplier.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "unknown",
 			"moneybird": "yes",
 			"snelstart": "unknown",
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"evidence": "lib/Controller/SupplierInvoiceImportController.php:195 duplicateExists() rejects a UBL import whose invoice number already exists for that supplier (HTTP 409), reached from BillImportModal (src/modals/BillImportModal.vue:649), opened by the Dashboard header action 'Import bill' (src/manifest.json:5160). Manual entry on SupplierInvoices has no such check.",
-				"reachedOn": "Dashboard / header action Import bill -> BillImportModal"
+				"readOn": "2026-09-29",
+				"evidence": "lib/Service/Purchasing/SupplierInvoiceChecks.php duplicateOf is the one rule for the UBL import (409), the CSV import (skippedRows by number) and a typed invoice (lib/Listener/SupplierInvoiceWarningListener.php writes duplicateOfId on save); a failed lookup counts as a possible duplicate; booking needs duplicateAcknowledgedReason.",
+				"reachedOn": "SupplierInvoiceDetail field Same number as; SupplierInvoices column; bill import dialog (409 for UBL, skippedRows for CSV)",
+				"change": "2026-09-29-purchasing-supplier-invoice-intake"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: the Purchase Agent \"Herkent afwijkingen in inkoopfacturen\" (https://www.exact.com/nl/producten/boekhouden/features-en-prijzen) but a duplicate invoice number warning is not stated",
@@ -5185,23 +5188,25 @@
 			"originRequirements": [
 				"intelligence-db requirements#109647"
 			],
-			"note": "Only on UBL import, not on a typed invoice. Specified 2026-09-27 in openspec/changes/purchasing-supplier-invoice-intake (OpenSpec pass)."
+			"note": "Only on UBL import, not on a typed invoice. Built 2026-09-29 by purchasing-supplier-invoice-intake."
 		},
 		{
 			"id": "pur-iban-check",
 			"area": "purchasing",
 			"name": "Be warned when a supplier invoice names a different bank account than the supplier record.",
-			"shillinq": "no",
+			"shillinq": "yes",
 			"exact-online": "unknown",
 			"moneybird": "partial",
 			"snelstart": "unknown",
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"reachedOn": "nothing"
+				"readOn": "2026-09-29",
+				"reachedOn": "SupplierInvoiceDetail field IBAN differs from supplier record; the AP transaction's payment block",
+				"evidence": "SupplierInvoiceChecks::ibanMismatch compares the invoice IBAN, without spaces and case, with Payee.bankAccount.iban and SupplierQualification.iban; booking needs ibanAcknowledgedReason and HandToAccountsPayableAction writes the APTransaction payment blocked with reason 'IBAN on invoice differs from supplier record', which banking-payment-run keeps out of every run.",
+				"change": "2026-09-29-purchasing-supplier-invoice-intake"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: supplier bank accounts can be blocked (https://support.exactonline.com/community/s/article/All-All-HNO-Task-accounts-finacc-wrkbnkacct) but a mismatch warning on incoming invoices is not stated",
@@ -5220,7 +5225,7 @@
 			"originRequirements": [
 				"intelligence-db requirements#109648"
 			],
-			"note": "SupplierQualification stores an iban, but nothing compares an incoming invoice's bank account with it; the only IBAN matching is the one-off repair lib/Repair/MigrateProductVendorMasterToPipelinq.php:344. Specified 2026-09-27 in openspec/changes/purchasing-supplier-invoice-intake (OpenSpec pass)."
+			"note": "SupplierQualification stores an iban, but nothing compares an incoming invoice's bank account with it; the only IBAN matching is the one-off repair lib/Repair/MigrateProductVendorMasterToPipelinq.php:344. Built 2026-09-29 by purchasing-supplier-invoice-intake."
 		},
 		{
 			"id": "pur-last-invoice-close",

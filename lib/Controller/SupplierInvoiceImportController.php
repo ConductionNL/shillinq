@@ -304,7 +304,7 @@ class SupplierInvoiceImportController extends Controller {
 	 *
 	 * @return string|null The earlier record's id, or null.
 	 *
-	 * @spec openspec/changes/purchasing-supplier-invoice-intake/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-2.1
 	 */
 	private function duplicateOf(string $administrationId, array $invoice): ?string {
 		$number = (string)($invoice['invoiceNumber'] ?? '');
@@ -329,7 +329,7 @@ class SupplierInvoiceImportController extends Controller {
 	 *
 	 * @return array<string,string> supplierId and/or supplierIdentifier; empty for an empty value.
 	 *
-	 * @spec openspec/changes/purchasing-supplier-invoice-intake/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-2.1
 	 */
 	private function csvSupplier(string $administrationId, string $value): array {
 		if ($value === '') {

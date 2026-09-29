@@ -60,7 +60,7 @@ class SupplierInvoiceBookingGuard implements LifecycleGuardInterface {
 	 *
 	 * @return GuardResult
 	 *
-	 * @spec openspec/changes/purchasing-supplier-invoice-intake/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-3.2
 	 */
 	public function check(array $object, string $action, string $userId): GuardResult {
 		try {

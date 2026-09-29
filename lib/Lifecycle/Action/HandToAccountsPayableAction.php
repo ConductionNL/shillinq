@@ -79,7 +79,7 @@ class HandToAccountsPayableAction implements LifecycleActionInterface {
 	 *
 	 * @return array<string, mixed> The invoice with apTransactionId set.
 	 *
-	 * @spec openspec/changes/purchasing-supplier-invoice-intake/tasks.md#task-3.3
+	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-3.3
 	 */
 	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
 		if ((string)($objectData['apTransactionId'] ?? '') !== '') {
@@ -114,7 +114,7 @@ class HandToAccountsPayableAction implements LifecycleActionInterface {
 	 *
 	 * @return array<string, mixed>
 	 *
-	 * @spec openspec/changes/purchasing-supplier-invoice-intake/tasks.md#task-3.3
+	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-3.3
 	 */
 	public function apTransaction(array $invoice, array $payee): array {
 		$default = trim((string)($payee['defaultExpenseAccountNumber'] ?? ''));
