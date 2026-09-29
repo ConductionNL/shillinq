@@ -4606,10 +4606,11 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "decided-no",
-				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: BbvMapping /overheid/bbv-mapping lists mappings to taakvelden seeded from lib/Settings/seeds/bbv-taakvelden-*.json; src/components/Dashboard/BBVComplianceDashboard.vue:290 calls /api/bbv-dashboard, which reads materialised aggregation values (lib/Controller/BBVDashboardController.php:12)",
+				"state": "building",
+				"evidence": "Built half: BbvMapping /overheid/bbv-mapping lists mappings to taakvelden seeded from lib/Settings/seeds/bbv-taakvelden-*.json; src/components/Dashboard/BBVComplianceDashboard.vue:290 calls /api/bbv-dashboard, which reads materialised aggregation values (lib/Controller/BBVDashboardController.php:12). The missing half is change public-sector-task-field-allocation (decided build 2026-09-29, Ruben 29 Sep: municipalities are the market).",
 				"reachedOn": "BbvMapping /overheid/bbv-mapping (settings gear); BBVComplianceDashboard /bbv-dashboard",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "public-sector-task-field-allocation"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; BBV and task fields not stated",
@@ -4666,10 +4667,11 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "decided-no",
-				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: SisaRapportages /sisa-rapportages lists records; lib/Service/SisaReportingService.php has no caller in lib/; the bzk-sisa connection is unavailable in lib/Settings/connections.json",
+				"state": "building",
+				"evidence": "Built half: SisaRapportages /sisa-rapportages lists records; lib/Service/SisaReportingService.php has no caller in lib/; the bzk-sisa connection is unavailable in lib/Settings/connections.json. The missing half is change public-sector-grant-accountability (decided build 2026-09-29, Ruben 29 Sep: municipalities are the market).",
 				"reachedOn": "SisaRapportages /sisa-rapportages (report card)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "public-sector-grant-accountability"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; SiSa not stated",
@@ -4695,10 +4697,11 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "decided-no",
-				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: src/manifest.d/bookkeeping-rechtmatigheidsverantwoording.json declares index pages for assessment, findings, tolerances, the paragraph and an audit export; no service under lib/Service computes the statement",
+				"state": "building",
+				"evidence": "Built half: src/manifest.d/bookkeeping-rechtmatigheidsverantwoording.json declares index pages for assessment, findings, tolerances, the paragraph and an audit export; no service under lib/Service computes the statement. The missing half is change public-sector-council-and-auditor-statements (decided build 2026-09-29, Ruben 29 Sep: municipalities are the market).",
 				"reachedOn": "Rechtmatigheidstoetsing /rechtmatigheid/toetsing (menu Reporting & Compliance)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "public-sector-council-and-auditor-statements"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; the lawfulness statement not stated",
@@ -4724,10 +4727,11 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "decided-no",
-				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: lib/Service/BcfClaimService.php and BcfCompensationCalculator.php compute the claim, reached only by GET /api/bcf/compensation (appinfo/routes.php:458), which nothing under src/ calls",
+				"state": "building",
+				"evidence": "Built half: lib/Service/BcfClaimService.php and BcfCompensationCalculator.php compute the claim, reached only by GET /api/bcf/compensation (appinfo/routes.php:458), which nothing under src/ calls. The missing half is change public-sector-quarterly-returns (decided build 2026-09-29, Ruben 29 Sep: municipalities are the market).",
 				"reachedOn": "BcfClaims /overheid/bcf-claims lists claims",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "public-sector-quarterly-returns"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; the BCF not stated",
@@ -4753,10 +4757,11 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "decided-no",
-				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: TreasuryDashboard /treasury/dashboard plus index pages for loans, derivatives, statutes and quarterly reports (src/manifest.d/bookkeeping-wet-fido-treasury.json); lib/Service/Treasury holds the calculations",
+				"state": "building",
+				"evidence": "Built half: TreasuryDashboard /treasury/dashboard plus index pages for loans, derivatives, statutes and quarterly reports (src/manifest.d/bookkeeping-wet-fido-treasury.json); lib/Service/Treasury holds the calculations. The missing half is change public-sector-quarterly-returns (decided build 2026-09-29, Ruben 29 Sep: municipalities are the market).",
 				"reachedOn": "TreasuryDashboard /treasury/dashboard (menu Banking & Cashflow)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "public-sector-quarterly-returns"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; Wet Fido not stated",
@@ -4813,10 +4818,11 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "decided-no",
-				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: GRDeelnemers, GRVerdeelsleutels and GRConsolidated are index pages in src/manifest.json over lib/Settings/register.d/add-shillinq-bookkeeping-gr-consolidation.json",
+				"state": "building",
+				"evidence": "Built half: GRDeelnemers, GRVerdeelsleutels and GRConsolidated are index pages in src/manifest.json over lib/Settings/register.d/add-shillinq-bookkeeping-gr-consolidation.json. The missing half is change public-sector-task-field-allocation (decided build 2026-09-29, Ruben 29 Sep: municipalities are the market).",
 				"reachedOn": "GRDeelnemers /gr/deelnemers (menu Bookkeeping)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "public-sector-task-field-allocation"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; joint arrangements not stated",
@@ -4843,10 +4849,11 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "decided-no",
-				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: eight index pages under /wmo (src/manifest.d/bookkeeping-market-government-separation.json); lib/Service/IntegralCostPriceCalculator.php and CrossSubsidyDetector.php have no caller in lib/",
+				"state": "building",
+				"evidence": "Built half: eight index pages under /wmo (src/manifest.d/bookkeeping-market-government-separation.json); lib/Service/IntegralCostPriceCalculator.php and CrossSubsidyDetector.php have no caller in lib/. The missing half is change public-sector-task-field-allocation (decided build 2026-09-29, Ruben 29 Sep: municipalities are the market).",
 				"reachedOn": "CommercialActivities /wmo/commercial-activities",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "public-sector-task-field-allocation"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; market separation and integral cost prices not stated",
@@ -4872,10 +4879,11 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "decided-no",
-				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: ENSIA cycles, evaluations, findings and the college statement are manifest pages (src/manifest.json ENSIACycles..ENSIACollegeVerklaring); lib/Service/ENSIAVerklaringGenerator.php and ENSIABevindingGenerator.php have no caller in lib/",
+				"state": "building",
+				"evidence": "Built half: ENSIA cycles, evaluations, findings and the college statement are manifest pages (src/manifest.json ENSIACycles..ENSIACollegeVerklaring); lib/Service/ENSIAVerklaringGenerator.php and ENSIABevindingGenerator.php have no caller in lib/. The missing half is change public-sector-council-and-auditor-statements (decided build 2026-09-29, Ruben 29 Sep: municipalities are the market).",
 				"reachedOn": "ENSIACycles /compliance/ensia/cycles (menu Reporting & Compliance)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "public-sector-council-and-auditor-statements"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; ENSIA not stated",
@@ -4931,10 +4939,11 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "decided-no",
-				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: SubsidiesOverzicht, SubsidieAanvragen and SubsidieTerugvorderingen are index pages; lib/Service/SubsidieVerantwoordingService.php has no caller in lib/",
+				"state": "building",
+				"evidence": "Built half: SubsidiesOverzicht, SubsidieAanvragen and SubsidieTerugvorderingen are index pages; lib/Service/SubsidieVerantwoordingService.php has no caller in lib/. The missing half is change public-sector-grant-accountability (decided build 2026-09-29, Ruben 29 Sep: municipalities are the market).",
 				"reachedOn": "SubsidiesOverzicht /subsidies/overzicht (menu Reporting & Compliance)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "public-sector-grant-accountability"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; a grants register not stated",
@@ -4960,10 +4969,11 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "decided-no",
-				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: five index pages under /eu-fondsen (src/manifest.d/40-eu-fondsen.json); no service under lib/Service handles declarations",
+				"state": "building",
+				"evidence": "Built half: five index pages under /eu-fondsen (src/manifest.d/40-eu-fondsen.json); no service under lib/Service handles declarations. The missing half is change public-sector-grant-accountability (decided build 2026-09-29, Ruben 29 Sep: municipalities are the market).",
 				"reachedOn": "EuProjecten /eu-fondsen/projecten (menu Reporting & Compliance)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "public-sector-grant-accountability"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; EU fund declarations not stated",
@@ -4989,10 +4999,11 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "decided-no",
-				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: four index pages under /bado (src/manifest.d/bookkeeping-bado-controleprotocol.json); lib/Service/BadoControleprotocolService.php is reached only by /api/bado/controleprotocol/* (appinfo/routes.php:597-599), uncalled from src/",
+				"state": "building",
+				"evidence": "Built half: four index pages under /bado (src/manifest.d/bookkeeping-bado-controleprotocol.json); lib/Service/BadoControleprotocolService.php is reached only by /api/bado/controleprotocol/* (appinfo/routes.php:597-599), uncalled from src/. The missing half is change public-sector-council-and-auditor-statements (decided build 2026-09-29, Ruben 29 Sep: municipalities are the market).",
 				"reachedOn": "AuditProtocols /bado/protocols (settings gear)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "public-sector-council-and-auditor-statements"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; audit protocols with samples not stated",

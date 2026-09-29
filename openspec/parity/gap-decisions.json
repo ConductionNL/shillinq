@@ -1398,5 +1398,93 @@
 		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
 		"change": null,
 		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-bbv",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Ruben 29 Sep: municipalities are the market. Reverses the decided-no of 2026-09-29 (build-all rule, no competitor rates it yes).",
+		"change": "public-sector-task-field-allocation",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-gr",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Ruben 29 Sep: municipalities are the market. Reverses the decided-no of 2026-09-29 (build-all rule, no competitor rates it yes).",
+		"change": "public-sector-task-field-allocation",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-market-separation",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Ruben 29 Sep: municipalities are the market. Reverses the decided-no of 2026-09-29 (build-all rule, no competitor rates it yes).",
+		"change": "public-sector-task-field-allocation",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-subsidies",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Ruben 29 Sep: municipalities are the market. Reverses the decided-no of 2026-09-29 (build-all rule, no competitor rates it yes).",
+		"change": "public-sector-grant-accountability",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-sisa",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Ruben 29 Sep: municipalities are the market. Reverses the decided-no of 2026-09-29 (build-all rule, no competitor rates it yes).",
+		"change": "public-sector-grant-accountability",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-eu-funds",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Ruben 29 Sep: municipalities are the market. Reverses the decided-no of 2026-09-29 (build-all rule, no competitor rates it yes).",
+		"change": "public-sector-grant-accountability",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-rechtmatigheid",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Ruben 29 Sep: municipalities are the market. Reverses the decided-no of 2026-09-29 (build-all rule, no competitor rates it yes).",
+		"change": "public-sector-council-and-auditor-statements",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-audit-protocol",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Ruben 29 Sep: municipalities are the market. Reverses the decided-no of 2026-09-29 (build-all rule, no competitor rates it yes).",
+		"change": "public-sector-council-and-auditor-statements",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-ensia",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Ruben 29 Sep: municipalities are the market. Reverses the decided-no of 2026-09-29 (build-all rule, no competitor rates it yes).",
+		"change": "public-sector-council-and-auditor-statements",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-bcf",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Ruben 29 Sep: municipalities are the market. Reverses the decided-no of 2026-09-29 (build-all rule, no competitor rates it yes).",
+		"change": "public-sector-quarterly-returns",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-fido",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Ruben 29 Sep: municipalities are the market. Reverses the decided-no of 2026-09-29 (build-all rule, no competitor rates it yes).",
+		"change": "public-sector-quarterly-returns",
+		"decidedOn": "2026-09-29"
 	}
 ]
