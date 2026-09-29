@@ -179,3 +179,14 @@ do today. Existing invoices and payees are unblocked by default.
 ## Open Questions
 
 None.
+
+## Build notes (2026-09-29)
+
+What changed against this design while building it at the stack head:
+
+- The export service checks the block itself, before it renders or stores a file. The guard runs on the save that moves the run to exported, which comes after the file is written into Files, so a guard alone would leave a bank file behind for a refused run. The guard still checks too.
+- The open amount of a partly paid invoice is its total less what exported or reconciled runs already paid on it; the AP transaction carries no paid amount of its own.
+- A proposal with no payable invoice writes no run and answers 422 with the invoices it left out.
+- Non-euro invoices are left out with a reason; pain.001 is a euro file.
+- The seed uses the existing demo administration (`adm-shillinq-demo`) instead of a new "Gemeente Voorbeeld" one.
+- Validating against the ISO 20022 XSD showed every pain.001 file written so far was invalid (`DbtrAgt/FinInstnId/Othr` as a text node). Fixed: `Othr/Id`.

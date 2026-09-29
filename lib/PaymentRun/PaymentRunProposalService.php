@@ -32,12 +32,28 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Selects the payable invoices due by a date into one draft PaymentRun.
+ *
+ * @spec openspec/specs/payment-run-sepa-export/spec.md
  */
 class PaymentRunProposalService {
 
 	public const REASON_ALREADY_ON_RUN = 'already-on-run';
 	public const REASON_NO_IBAN = 'no-iban';
 	public const REASON_CURRENCY = 'not-euro';
+
+	/**
+	 * Every line goes out on the run's execution date.
+	 *
+	 * @var string
+	 */
+	public const DATES_RUN = 'run';
+
+	/**
+	 * Each line goes out on the later of its due date and the run's date.
+	 *
+	 * @var string
+	 */
+	public const DATES_DUE = 'due';
 
 	/**
 	 * Invoice states a run may pay.
@@ -89,9 +105,9 @@ class PaymentRunProposalService {
 	 * @param string $dueOnOrBefore     The last due date to include (Y-m-d).
 	 * @param string $debtorAccountIban The account the money leaves from.
 	 * @param string $executionDate     The run's execution date (Y-m-d).
-	 * @param bool   $payOnDueDate      Give each line the later of its due date and the run date.
+	 * @param string $lineDates         DATES_RUN, or DATES_DUE to give each line the later of its due date and the run date.
 	 *
-	 * @return array{paymentRun: array<string, mixed>|null, skipped: list<array{apTransactionRef: string, invoiceNumber: string, reason: string, detail: string}>}
+	 * @return array{paymentRun: array<string, mixed>|null, skipped: list<array<string, string>>} Draft run or null, and what was left out.
 	 *
 	 * @spec openspec/changes/banking-payment-run/tasks.md#task-3.1
 	 */
@@ -100,7 +116,7 @@ class PaymentRunProposalService {
 		string $dueOnOrBefore,
 		string $debtorAccountIban,
 		string $executionDate,
-		bool $payOnDueDate=false
+		string $lineDates=self::DATES_RUN
 	): array {
 		$runs = $this->read(schema: 'PaymentRun', administrationId: $administrationId);
 		$occupied = $this->refsInRuns(runs: $runs, states: self::OCCUPYING_STATES, exceptPaidOut: true);
@@ -115,7 +131,7 @@ class PaymentRunProposalService {
 				continue;
 			}
 
-			if ($payOnDueDate === true) {
+			if ($lineDates === self::DATES_DUE) {
 				$outcome['requestedExecutionDate'] = max((string)($invoice['dueDate'] ?? ''), $executionDate);
 			}
 

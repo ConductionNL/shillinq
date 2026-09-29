@@ -34,6 +34,8 @@ use OCA\Shillinq\Util\ObjectIdentifier;
 /**
  * Finds the blocked lines of a payment run. Lookups that fail throw, so a
  * caller that must fail closed can.
+ *
+ * @spec openspec/specs/payment-control-guards/spec.md
  */
 class PaymentBlockChecker {
 

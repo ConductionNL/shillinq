@@ -814,6 +814,9 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // (cross-tenant ids masked as 404). The {id} wildcard is preceded by the
             // static /export and /reconcile suffixes per Symfony route ordering, and
             // both are declared before the SPA catch-all per ADR-016.
+            // banking-payment-run REQ-BPR-002: draft a run from the invoices due.
+            // Static URL before the {id} routes and the SPA catch-all (ADR-016).
+            ['name' => 'paymentRun#propose', 'url' => '/api/v1/payment-runs/propose', 'verb' => 'POST'],
             ['name' => 'paymentRun#export', 'url' => '/api/v1/payment-runs/{id}/export', 'verb' => 'POST'],
             ['name' => 'paymentRun#reconcile', 'url' => '/api/v1/payment-runs/{id}/reconcile', 'verb' => 'POST'],
 

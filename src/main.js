@@ -31,6 +31,7 @@ import pinia from './pinia.js'
 import registry from './registry.js'
 import { classifyUnmatched, openBankLineMatch } from './utils/bankMatchActions.js'
 import { openDownPaymentInvoice } from './utils/downPaymentActions.js'
+import { openProposePaymentRun } from './utils/paymentRunActions.js'
 import { openIntegriqConnections } from './utils/integriqConnections.js'
 import {
 	buildPageFragmentIndex,
@@ -319,6 +320,9 @@ const customComponentsProp = {
 	// sales-down-payments: the "New down-payment invoice" header action on
 	// Accounts Receivable.
 	openDownPaymentInvoice,
+	// banking-payment-run: the "Propose payment run" header action on
+	// Payment runs.
+	openProposePaymentRun,
 }
 
 // Vue 3 `mount()` renders INSIDE the matched element; Vue 2's `$mount()`

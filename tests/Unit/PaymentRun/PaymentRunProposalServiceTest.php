@@ -85,7 +85,7 @@ class PaymentRunProposalServiceTest extends TestCase {
 			dueOnOrBefore: '2026-10-01',
 			debtorAccountIban: 'NL91ABNA0417164300',
 			executionDate: '2026-09-30',
-			payOnDueDate: false
+			lineDates: PaymentRunProposalService::DATES_RUN
 		);
 
 		$run = $result['paymentRun'];
@@ -128,7 +128,7 @@ class PaymentRunProposalServiceTest extends TestCase {
 			dueOnOrBefore: '2026-10-01',
 			debtorAccountIban: 'NL91ABNA0417164300',
 			executionDate: '2026-09-30',
-			payOnDueDate: true
+			lineDates: PaymentRunProposalService::DATES_DUE
 		);
 
 		$this->assertCount(1, $this->saved);
@@ -151,7 +151,7 @@ class PaymentRunProposalServiceTest extends TestCase {
 			dueOnOrBefore: '2026-10-01',
 			debtorAccountIban: 'NL91ABNA0417164300',
 			executionDate: '2026-09-30',
-			payOnDueDate: true
+			lineDates: PaymentRunProposalService::DATES_DUE
 		);
 
 		$byRef = array_column($result['paymentRun']['paymentLines'], null, 'apTransactionRef');
@@ -171,7 +171,7 @@ class PaymentRunProposalServiceTest extends TestCase {
 			dueOnOrBefore: '2026-08-01',
 			debtorAccountIban: 'NL91ABNA0417164300',
 			executionDate: '2026-08-01',
-			payOnDueDate: false
+			lineDates: PaymentRunProposalService::DATES_RUN
 		);
 
 		$this->assertNull($result['paymentRun']);

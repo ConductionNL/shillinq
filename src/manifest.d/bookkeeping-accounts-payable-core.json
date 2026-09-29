@@ -99,7 +99,13 @@
 					{"key": "email", "label": "Email", "type": "string"},
 					{"key": "phone", "label": "Phone", "type": "string"},
 					{"key": "lifecycleState", "label": "Status", "type": "string"},
+					{"key": "paymentBlocked", "label": "Payment blocked", "type": "boolean"},
+					{"key": "paymentBlockReason", "label": "Payment block reason", "type": "string"},
 					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"headerActions": [
+					{"id": "block-payment", "label": "Block payment", "type": "open-modal", "target": "PaymentBlockModal", "icon": "CashLock", "props": {"open": true, "schema": "Payee", "mode": "block"}, "visibleWhen": {"field": "paymentBlocked", "op": "neq", "value": true}},
+					{"id": "release-payment", "label": "Release payment", "type": "open-modal", "target": "PaymentBlockModal", "icon": "CashCheck", "props": {"open": true, "schema": "Payee", "mode": "release"}, "visibleWhen": {"field": "paymentBlocked", "op": "eq", "value": true}}
 				],
 				"lifecycleActions": true,
 				"indexRoute": "Payees",
@@ -202,7 +208,13 @@
 					{"key": "writeOffReason", "label": "Write-off Reason", "type": "string"},
 					{"key": "writeOffGlTransactionId", "label": "Write-off GL Transaction", "type": "string"},
 					{"key": "periodId", "label": "Fiscal Period", "type": "string"},
+					{"key": "paymentBlocked", "label": "Payment blocked", "type": "boolean"},
+					{"key": "paymentBlockReason", "label": "Payment block reason", "type": "string"},
 					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"headerActions": [
+					{"id": "block-payment", "label": "Block payment", "type": "open-modal", "target": "PaymentBlockModal", "icon": "CashLock", "props": {"open": true, "schema": "APTransaction", "mode": "block"}, "visibleWhen": {"field": "paymentBlocked", "op": "neq", "value": true}},
+					{"id": "release-payment", "label": "Release payment", "type": "open-modal", "target": "PaymentBlockModal", "icon": "CashCheck", "props": {"open": true, "schema": "APTransaction", "mode": "release"}, "visibleWhen": {"field": "paymentBlocked", "op": "eq", "value": true}}
 				],
 				"lifecycleActions": true,
 				"indexRoute": "APTransactions",
@@ -413,7 +425,10 @@
 					{"key": "lifecycleState", "label": "Lifecycle", "sortable": true}
 				],
 				"defaultSort": "runNumber",
-				"detailRoute": "PaymentRunDetail"
+				"detailRoute": "PaymentRunDetail",
+				"headerActions": [
+					{"id": "propose-payment-run", "label": "Propose payment run", "icon": "CashFast", "handler": "openProposePaymentRun", "description": "Put every open supplier invoice due by a date on a draft run. Blocked, disputed and already batched invoices stay off it."}
+				]
 			}
 		},
 		{
