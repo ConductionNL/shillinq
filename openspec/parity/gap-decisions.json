@@ -1166,5 +1166,237 @@
 		"reason": "No competitor rates it yes; roadmap demand alone meets none of the build tests.",
 		"change": null,
 		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "sal-quote-to-invoice",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Core area (sales), building with no change for its missing half; 4 competitors rate it yes (exact-online, moneybird, snelstart, odoo).",
+		"change": "sales-quote-and-order-to-invoice",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "sal-orders",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Core area (sales), building with no change for its missing half; 3 competitors rate it yes (exact-online, snelstart, odoo).",
+		"change": "sales-quote-and-order-to-invoice",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "sal-usage-billing",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Core area (sales), building with no change for its missing half.",
+		"change": "sales-usage-billing",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "rec-direct-debit",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "5 competitors rate it yes (exact-online, moneybird, snelstart, twinfield, odoo); building with no change for its missing half.",
+		"change": "receivables-sepa-direct-debit",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "tax-icp",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "4 competitors rate it yes (exact-online, moneybird, snelstart, twinfield); building with no change for its missing half.",
+		"change": "tax-icp-and-reverse-charge",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "tax-reverse-charge",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "5 competitors rate it yes (exact-online, moneybird, snelstart, twinfield, odoo); building with no change for its missing half.",
+		"change": "tax-icp-and-reverse-charge",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "tax-vat-position",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "4 competitors rate it yes (exact-online, moneybird, snelstart, odoo); building with no change for its missing half.",
+		"change": "tax-vat-position-and-suppletie",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "tax-suppletie",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "4 competitors rate it yes (exact-online, moneybird, snelstart, twinfield); building with no change for its missing half.",
+		"change": "tax-vat-position-and-suppletie",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "plt-import",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "3 competitors rate it yes (exact-online, snelstart, twinfield); building with no change for its missing half.",
+		"change": "platform-administration-import",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "rec-pay-forecast",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "One competitor rates it yes (exact-online), no tender, feature request or roadmap names it, and receivables is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "tax-kor",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "tax-oss",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "One competitor rates it yes (odoo), no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "tax-vpb",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "tax-ib-zzp",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "tax-hours-criterion",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "One competitor rates it yes (moneybird), no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "tax-deferred",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "tax-wbso",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "tax-innovation-box",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-bbv",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-sisa",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-rechtmatigheid",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-bcf",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-fido",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-gr",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-market-separation",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-ensia",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-subsidies",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-eu-funds",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-audit-protocol",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
 	}
 ]

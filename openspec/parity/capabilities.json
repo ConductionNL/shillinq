@@ -942,7 +942,8 @@
 				"state": "building",
 				"evidence": "Quote, QuoteLine, SalesOrder, Invoice, CreditNote schemas in lib/Settings/register.d/bookkeeping-quote-order-invoice.json plus lib/Lifecycle/QuoteOrderInvoiceGuard.php guards, but no manifest page uses schema Quote/SalesOrder/Invoice and no service copies quote lines to an invoice (grep 'quote' in lib/Service, src/views: none)",
 				"reachedOn": "nothing reaches it: no page for Quote in src/manifest.json or src/manifest.d",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "sales-quote-and-order-to-invoice"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Met Exact Online kun je offertes opstellen en goedkeuren. Het is zelfs mogelijk om offertes direct om te zetten in een factuur\"",
@@ -1123,7 +1124,8 @@
 				"state": "building",
 				"evidence": "UsageRatePlan and MeterReading schemas (lib/Settings/register.d/usage-metered-billing.json) and lib/Service/UsageRatingCalculator.php + BillingModelEngine.php:299-326 exist, but no manifest page uses either schema and src/components/invoice/InvoiceGenerator.vue:25-37 offers no usage billing model nor meter-reading input",
 				"reachedOn": "nothing reaches it: no page for MeterReading/UsageRatePlan and the generator form cannot request usage lines",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "sales-usage-billing"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/benl/blog/product-nieuws/exact-online/terugkerende-facturatie-met-exact: \"Voor meer complexe abonnementsvormen kunt u Exact koppelen met partners zoals Younium ... Zo factureert u bijvoorbeeld op basis van verbruik\" Note: Only through a partner app (Younium); native Abonnementenbeheer bills fixed recurring lines.",
@@ -1303,7 +1305,8 @@
 				"state": "building",
 				"evidence": "Orders page on OrderPrimitive (src/manifest.d/order-workspace.json) with OrderLine and Payment related lists; orderType enum has 'sales' but lib/Settings/register.d/zz-order-primitive.json says only purchase/subsidy/engagement are populated and the quick filters omit sales; SalesOrder schema (bookkeeping-quote-order-invoice.json) has no page; no code turns an order into an ARInvoice (the 'invoice' transition belongs to the purchase flow)",
 				"reachedOn": "Orders /orders (via menu Sales > Orders)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "sales-quote-and-order-to-invoice"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-sales-orders-slsord-invoicet?language=en_GB: \"After you have made a sale and created the sales order, you can start invoicing. This can be done before or after you deliver it\" Note: Exact Online Handel or Productie.",
@@ -1485,7 +1488,8 @@
 				"state": "building",
 				"evidence": "SepaMandate, DirectDebitCollection, DirectDebitBatch (pain008Xml field) schemas in lib/Settings/register.d/bookkeeping-sepa-direct-debit.json with guards (lib/Lifecycle/MandateGuard.php, SequenceTypeGuard.php) and MandateDormancyExpiryJob, but no manifest page uses any of them and no code writes a pain.008 file (grep pain.008 in lib: none); the Mandates page is the commitments register, not SEPA",
 				"reachedOn": "nothing reaches it: no page for SEPA mandates or collection batches",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "receivables-sepa-direct-debit"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Exact Online ondersteunt Europese incasso om betalingen van klanten uit andere landen te incasseren, conform de SEPA-standaarden\"; https://start.exactonline.nl/docs/HlpRestAPIResources.aspx lists cashflow/DirectDebitMandates",
@@ -1511,8 +1515,8 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "building",
-				"evidence": "CashflowARProjection schema ('expected receipt date from customer-specific betalingsgedrag', lib/Settings/register.d/zzp-cashflow-13wk.json:481) is only read (lib/BackgroundJob/BankfeedReconciliationJob.php:130, CashflowExportService.php); nothing creates it and no page shows it; CalibrationBatchJob leaves the math to OR aggregations",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: one competitor rates it yes (exact-online), no tender, feature request or roadmap names it, and receivables is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: CashflowARProjection schema ('expected receipt date from customer-specific betalingsgedrag', lib/Settings/register.d/zzp-cashflow-13wk.json:481) is only read (lib/BackgroundJob/BankfeedReconciliationJob.php:130, CashflowExportService.php); nothing creates it and no page shows it; CalibrationBatchJob leaves the math to OR aggregations",
 				"reachedOn": "nothing reaches it: no page lists expected pay dates per customer",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -2476,7 +2480,8 @@
 				"state": "building",
 				"evidence": "lib/Service/IcpService.php, IcpCalculator.php and IcpFilingService.php exist and ViesOutageRetryJob is registered in appinfo/info.xml, but /api/icp/* (appinfo/routes.php:479-485) is called by nothing under src/; filing depends on digipoort-sbr, unavailable in lib/Settings/connections.json; lib/Reporting/ReportCatalogue.php lists icp-opgaaf but lib/Reporting/Generator has no generator for it (ReportGenerationService.php:160 'no generator for report type')",
 				"reachedOn": "IcpOpgaaf /belastingen/icp-opgaaf (menu Taxes) lists IcpStatement records only",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "tax-icp-and-reverse-charge"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Btw/ICP-aangiftes\" in Essentials; \"Met Exact Online kun je je btw-aangifte en opgaaf ICP opstellen, goedkeuren en digitaal indienen\"",
@@ -2506,7 +2511,8 @@
 				"state": "building",
 				"evidence": "lib/Service/VatSuppletieDetectionService.php detects corrections, called from VATReturnService and AansluitingService, neither reached from a page (no /api/vat-returns or /api/aansluitingen call under src/)",
 				"reachedOn": "BtwCorrecties /belastingen/btw-correcties (menu Taxes) lists VatCorrection records",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "tax-vat-position-and-suppletie"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-taxes-vat-fintax-crtvatreturnt (Btw-aangiften en suppleties aanmaken, search snippet read today): \"Klik op Suppletie aanmaken ... Aangifte definitief maken\"",
@@ -2536,7 +2542,8 @@
 				"state": "building",
 				"evidence": "lib/Service/ArInvoiceIcpPdfRenderer.php renders the reverse-charge mention but is reached only by GET /api/icp/invoice-pdf, uncalled from src/; the BtwAangifte regime filter offers reverse-charge (src/manifest.d/bookkeeping-vat-btw-filing.json)",
 				"reachedOn": "nothing reaches the invoice mention; the regime is a filter value on VATReturns /vat-returns",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "tax-icp-and-reverse-charge"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-masterdata-finmd-crtedtlnkvatcodest (search snippet read today): in the Financial section of a VAT code \"Btw verlegd\" can be ticked",
@@ -2562,8 +2569,8 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "building",
-				"evidence": "lib/Service/KorMonitorService.php and KorThresholdCalculator.php compute the threshold, reached only by GET /api/kor/monitor (appinfo/routes.php:542), uncalled from src/",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: lib/Service/KorMonitorService.php and KorThresholdCalculator.php compute the threshold, reached only by GET /api/kor/monitor (appinfo/routes.php:542), uncalled from src/",
 				"reachedOn": "KorStatus /belastingen/kor and KorDashboard /belastingen/kor-dashboard list KorRegime and KORRegistration records",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -2624,7 +2631,8 @@
 				"state": "building",
 				"evidence": "VATReports /vat-reports is a dashboard of summary widgets summing BtwAangifte.vatBalance (src/manifest.d/bookkeeping-vat-btw-filing.json); it sums returns already made, not the running position from the ledger",
 				"reachedOn": "VATReports /vat-reports (menu Taxes)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "tax-vat-position-and-suppletie"
 			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207263-btw-overzicht : 'houdt Moneybird de btw automatisch bij in een btw-rapport ... Per btw-tarief zie je het totaalbedrag ... en de btw die daarover is berekend' for any chosen period",
@@ -2650,8 +2658,8 @@
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "building",
-				"evidence": "lib/Service/OssReturnGenerator.php and OssInvoiceRouter.php exist; GET /api/oss/return (appinfo/routes.php:126) is uncalled from src/",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: one competitor rates it yes (odoo), no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: lib/Service/OssReturnGenerator.php and OssInvoiceRouter.php exist; GET /api/oss/return (appinfo/routes.php:126) is uncalled from src/",
 				"reachedOn": "OssReturns /bookkeeping/oss/returns (menu Taxes) lists OssReturn records",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -2679,8 +2687,8 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "building",
-				"evidence": "src/manifest.d/bookkeeping-vpb-corporate-tax.json and bookkeeping-vpb-corporate-tax-balans.json declare index pages for deadlines, payments, quarterly statements and a VpbBalansAangifte detail; no Vpb service or /api/vpb route exists in lib/ or appinfo/routes.php; the vpb-aangifte report in lib/Reporting/ReportCatalogue.php has no generator",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: src/manifest.d/bookkeeping-vpb-corporate-tax.json and bookkeeping-vpb-corporate-tax-balans.json declare index pages for deadlines, payments, quarterly statements and a VpbBalansAangifte detail; no Vpb service or /api/vpb route exists in lib/ or appinfo/routes.php; the vpb-aangifte report in lib/Reporting/ReportCatalogue.php has no generator",
 				"reachedOn": "VpbDeadlines /bookkeeping/vpb/deadlines, VpbPayments /bookkeeping/vpb/payments (menu Taxes > Vpb)",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -2709,8 +2717,8 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "building",
-				"evidence": "src/manifest.d/30-bookkeeping-ib-aangifte-zzp.json declares index pages for returns, entrepreneur allowances, annuities and box 3; lib/Settings/register.d/30-bookkeeping-ib-aangifte-zzp.json holds the schemas; no service computes the return; the ib-aangifte report in lib/Reporting/ReportCatalogue.php has no generator",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: src/manifest.d/30-bookkeeping-ib-aangifte-zzp.json declares index pages for returns, entrepreneur allowances, annuities and box 3; lib/Settings/register.d/30-bookkeeping-ib-aangifte-zzp.json holds the schemas; no service computes the return; the ib-aangifte report in lib/Reporting/ReportCatalogue.php has no generator",
 				"reachedOn": "IbAangiftenZzp /ib-aangifte/aangiften (menu Taxes > IB return)",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -2738,8 +2746,8 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "building",
-				"evidence": "lib/Service/UrenTallyService.php, UrenAlertService.php and UrenPrognoseService.php count hours against the criterion, but nothing outside them calls them (grep of lib/ finds only UrenPrognoseService calling UrenTallyService)",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: one competitor rates it yes (moneybird), no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: lib/Service/UrenTallyService.php, UrenAlertService.php and UrenPrognoseService.php count hours against the criterion, but nothing outside them calls them (grep of lib/ finds only UrenPrognoseService calling UrenTallyService)",
 				"reachedOn": "Urenregistratie /belastingen/urenregistratie (menu Taxes) lists UrenRegistratie records; nothing shows the tally",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -2768,8 +2776,8 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "building",
-				"evidence": "src/manifest.json pages TaxProvisions, TemporaryDifferences, DeferredTaxMovements, TaxLossCarryForwards and TaxRateReconciliations are index pages over lib/Settings/register.d/bookkeeping-deferred-tax.json; lib/Service/TaxCalculationService.php is referenced only by TaxCalculationHelper and the register",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: src/manifest.json pages TaxProvisions, TemporaryDifferences, DeferredTaxMovements, TaxLossCarryForwards and TaxRateReconciliations are index pages over lib/Settings/register.d/bookkeeping-deferred-tax.json; lib/Service/TaxCalculationService.php is referenced only by TaxCalculationHelper and the register",
 				"reachedOn": "TaxProvisions /belastingen/uitgestelde-belastingen/provisies (menu Taxes)",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -2797,8 +2805,8 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "building",
-				"evidence": "WBSOTags, WBSOActivityCodes and WBSOExport are index pages in src/manifest.json; the Generate Export action (src/manifest.json:16010) is type create, it adds a WBSOExportLog record and builds no file; the RVO connection is unavailable in lib/Settings/connections.json",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: WBSOTags, WBSOActivityCodes and WBSOExport are index pages in src/manifest.json; the Generate Export action (src/manifest.json:16010) is type create, it adds a WBSOExportLog record and builds no file; the RVO connection is unavailable in lib/Settings/connections.json",
 				"reachedOn": "WBSOExport /wbso/export (menu Reporting & Compliance)",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -2826,8 +2834,8 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "building",
-				"evidence": "lib/Service/InnovatieboxAggregationService.php computes the box, reached only by /api/innovatiebox/* (appinfo/routes.php:585-588), uncalled from src/",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: lib/Service/InnovatieboxAggregationService.php computes the box, reached only by /api/innovatiebox/* (appinfo/routes.php:585-588), uncalled from src/",
 				"reachedOn": "InnovatieboxElections /bookkeeping/innovatiebox (menu Taxes) lists elections",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -4474,7 +4482,8 @@
 				"state": "building",
 				"evidence": "src/manifest.d/administration-import-migration.json: the ImportWizard page is marked x-deferred, its component does not exist and it renders an empty state; ImportBatches and ImportMappings index pages remain",
 				"reachedOn": "ImportBatches /import/batches (settings gear)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "platform-administration-import"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/overstappen: \"Of je nu al een Exact-pakket gebruikt ... of de overstap maakt vanaf een ander softwarepakket ... onze consultants staan voor je klaar\" and conversion tools; https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Importeer en exporteer data in XML en CSV\"",
@@ -4590,8 +4599,8 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "building",
-				"evidence": "BbvMapping /overheid/bbv-mapping lists mappings to taakvelden seeded from lib/Settings/seeds/bbv-taakvelden-*.json; src/components/Dashboard/BBVComplianceDashboard.vue:290 calls /api/bbv-dashboard, which reads materialised aggregation values (lib/Controller/BBVDashboardController.php:12)",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: BbvMapping /overheid/bbv-mapping lists mappings to taakvelden seeded from lib/Settings/seeds/bbv-taakvelden-*.json; src/components/Dashboard/BBVComplianceDashboard.vue:290 calls /api/bbv-dashboard, which reads materialised aggregation values (lib/Controller/BBVDashboardController.php:12)",
 				"reachedOn": "BbvMapping /overheid/bbv-mapping (settings gear); BBVComplianceDashboard /bbv-dashboard",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -4650,8 +4659,8 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "building",
-				"evidence": "SisaRapportages /sisa-rapportages lists records; lib/Service/SisaReportingService.php has no caller in lib/; the bzk-sisa connection is unavailable in lib/Settings/connections.json",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: SisaRapportages /sisa-rapportages lists records; lib/Service/SisaReportingService.php has no caller in lib/; the bzk-sisa connection is unavailable in lib/Settings/connections.json",
 				"reachedOn": "SisaRapportages /sisa-rapportages (report card)",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -4679,8 +4688,8 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "building",
-				"evidence": "src/manifest.d/bookkeeping-rechtmatigheidsverantwoording.json declares index pages for assessment, findings, tolerances, the paragraph and an audit export; no service under lib/Service computes the statement",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: src/manifest.d/bookkeeping-rechtmatigheidsverantwoording.json declares index pages for assessment, findings, tolerances, the paragraph and an audit export; no service under lib/Service computes the statement",
 				"reachedOn": "Rechtmatigheidstoetsing /rechtmatigheid/toetsing (menu Reporting & Compliance)",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -4708,8 +4717,8 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "building",
-				"evidence": "lib/Service/BcfClaimService.php and BcfCompensationCalculator.php compute the claim, reached only by GET /api/bcf/compensation (appinfo/routes.php:458), which nothing under src/ calls",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: lib/Service/BcfClaimService.php and BcfCompensationCalculator.php compute the claim, reached only by GET /api/bcf/compensation (appinfo/routes.php:458), which nothing under src/ calls",
 				"reachedOn": "BcfClaims /overheid/bcf-claims lists claims",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -4737,8 +4746,8 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "building",
-				"evidence": "TreasuryDashboard /treasury/dashboard plus index pages for loans, derivatives, statutes and quarterly reports (src/manifest.d/bookkeeping-wet-fido-treasury.json); lib/Service/Treasury holds the calculations",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: TreasuryDashboard /treasury/dashboard plus index pages for loans, derivatives, statutes and quarterly reports (src/manifest.d/bookkeeping-wet-fido-treasury.json); lib/Service/Treasury holds the calculations",
 				"reachedOn": "TreasuryDashboard /treasury/dashboard (menu Banking & Cashflow)",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -4797,8 +4806,8 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "building",
-				"evidence": "GRDeelnemers, GRVerdeelsleutels and GRConsolidated are index pages in src/manifest.json over lib/Settings/register.d/add-shillinq-bookkeeping-gr-consolidation.json",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: GRDeelnemers, GRVerdeelsleutels and GRConsolidated are index pages in src/manifest.json over lib/Settings/register.d/add-shillinq-bookkeeping-gr-consolidation.json",
 				"reachedOn": "GRDeelnemers /gr/deelnemers (menu Bookkeeping)",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -4827,8 +4836,8 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "building",
-				"evidence": "eight index pages under /wmo (src/manifest.d/bookkeeping-market-government-separation.json); lib/Service/IntegralCostPriceCalculator.php and CrossSubsidyDetector.php have no caller in lib/",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: eight index pages under /wmo (src/manifest.d/bookkeeping-market-government-separation.json); lib/Service/IntegralCostPriceCalculator.php and CrossSubsidyDetector.php have no caller in lib/",
 				"reachedOn": "CommercialActivities /wmo/commercial-activities",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -4856,8 +4865,8 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "building",
-				"evidence": "ENSIA cycles, evaluations, findings and the college statement are manifest pages (src/manifest.json ENSIACycles..ENSIACollegeVerklaring); lib/Service/ENSIAVerklaringGenerator.php and ENSIABevindingGenerator.php have no caller in lib/",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: ENSIA cycles, evaluations, findings and the college statement are manifest pages (src/manifest.json ENSIACycles..ENSIACollegeVerklaring); lib/Service/ENSIAVerklaringGenerator.php and ENSIABevindingGenerator.php have no caller in lib/",
 				"reachedOn": "ENSIACycles /compliance/ensia/cycles (menu Reporting & Compliance)",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -4915,8 +4924,8 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "building",
-				"evidence": "SubsidiesOverzicht, SubsidieAanvragen and SubsidieTerugvorderingen are index pages; lib/Service/SubsidieVerantwoordingService.php has no caller in lib/",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: SubsidiesOverzicht, SubsidieAanvragen and SubsidieTerugvorderingen are index pages; lib/Service/SubsidieVerantwoordingService.php has no caller in lib/",
 				"reachedOn": "SubsidiesOverzicht /subsidies/overzicht (menu Reporting & Compliance)",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -4944,8 +4953,8 @@
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "building",
-				"evidence": "five index pages under /eu-fondsen (src/manifest.d/40-eu-fondsen.json); no service under lib/Service handles declarations",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: five index pages under /eu-fondsen (src/manifest.d/40-eu-fondsen.json); no service under lib/Service handles declarations",
 				"reachedOn": "EuProjecten /eu-fondsen/projecten (menu Reporting & Compliance)",
 				"owner": "ConductionNL/shillinq"
 			},
@@ -4973,8 +4982,8 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "building",
-				"evidence": "four index pages under /bado (src/manifest.d/bookkeeping-bado-controleprotocol.json); lib/Service/BadoControleprotocolService.php is reached only by /api/bado/controleprotocol/* (appinfo/routes.php:597-599), uncalled from src/",
+				"state": "decided-no",
+				"evidence": "Decided no on 2026-09-29 by the build-all rule for a building row with no change for its missing half: no competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). Reversible: rerun the rule when a tender or customer names it. Built half kept: four index pages under /bado (src/manifest.d/bookkeeping-bado-controleprotocol.json); lib/Service/BadoControleprotocolService.php is reached only by /api/bado/controleprotocol/* (appinfo/routes.php:597-599), uncalled from src/",
 				"reachedOn": "AuditProtocols /bado/protocols (settings gear)",
 				"owner": "ConductionNL/shillinq"
 			},
