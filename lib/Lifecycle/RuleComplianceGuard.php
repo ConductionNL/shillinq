@@ -35,6 +35,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
+use DateTimeImmutable;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Standards\RuleEngine;
 use OCP\IAppConfig;
@@ -114,6 +115,7 @@ class RuleComplianceGuard {
 	 * @return bool True to allow the transition.
 	 *
 	 * @spec openspec/changes/ledger-posting-path/tasks.md#task-2.3
+	 * @spec openspec/changes/ledger-posting-path/tasks.md#task-2.5
 	 */
 	public function validateTransaction(string|array $transactionOrId): bool {
 		$id = $this->idOf(objectOrId: $transactionOrId);
@@ -127,6 +129,11 @@ class RuleComplianceGuard {
 				return false;
 			}
 
+			// The page sends the draft with its state moved to posted. The lock,
+			// retention, integrity and audit-trail fields are what the post
+			// itself gives the entry (StampPostingAction persists them), so the
+			// entry is judged as the post leaves it (REQ-LPP-001, #516).
+			$transaction = PostingStamps::apply(transaction: $transaction, user: 'system', now: new DateTimeImmutable());
 			$transaction['lines'] = $this->loadLines($transaction);
 
 			$violations = RuleEngine::evaluate('GLTransaction', $transaction, $this->context($transaction));

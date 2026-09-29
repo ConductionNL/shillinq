@@ -23,6 +23,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
 use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
+use OCA\Shillinq\Standards\RuleEngine;
+use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -108,6 +110,36 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 
 		self::assertSame($transactions[0]['id'], $result['glTransactionId'], 'The back reference is returned so it saves with the transition.');
 	}//end testABalancedJournalEntryPostsOneTransaction()
+
+	/**
+	 * A transaction this handler writes as posted carries the posting stamps,
+	 * so it meets the same mandatory ledger rules a posted entry from the
+	 * ledger page does (REQ-LPP-004).
+	 *
+	 * @return void
+	 */
+	public function testAMaterialisedTransactionMeetsTheMandatoryLedgerRules(): void {
+		$parameters = ['sourceSchema' => 'JournalEntry', 'keepBalanced' => true];
+		$this->action()->execute($this->journalEntry(), [], $parameters, MaterialiseGlTransactionAction::class);
+
+		$transaction = $this->store->savedOf('GLTransaction')[0];
+		self::assertTrue($transaction['postingLocked']);
+		self::assertSame('2036-12-31', $transaction['retentionUntil']);
+		self::assertSame('post', $transaction['auditTrail'][0]['action']);
+		$header = $transaction;
+		unset($header['id']);
+		self::assertSame([], RegisterSchema::errors(slug: 'GLTransaction', object: $header), 'the stamped header validates against the merged register');
+
+		$transaction['lines'] = $this->store->savedOf('GLLine');
+		$mandatory = [];
+		foreach (RuleEngine::evaluate('GLTransaction', $transaction, ['jurisdiction' => 'NL']) as $violation) {
+			if ($violation->severity === 'mandatory') {
+				$mandatory[] = $violation->ruleId;
+			}
+		}
+
+		self::assertSame([], $mandatory);
+	}//end testAMaterialisedTransactionMeetsTheMandatoryLedgerRules()
 
 	/**
 	 * An unbalanced entry is refused and nothing is written.

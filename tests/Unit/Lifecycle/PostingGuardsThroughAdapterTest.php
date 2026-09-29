@@ -186,6 +186,43 @@ final class PostingGuardsThroughAdapterTest extends TestCase {
 	}//end testABalancedGlTransactionPassesThroughTheAdapter()
 
 	/**
+	 * GLTransaction.post from the general ledger page: the page sends the
+	 * draft with its state moved to posted and nothing else. The lock,
+	 * retention, integrity and audit-trail fields are what the post itself
+	 * gives the entry, so the guard judges the entry as the post leaves it
+	 * (REQ-LPP-001). An unbalanced one stays refused.
+	 *
+	 * @return void
+	 */
+	public function testAMemorialEntryAsTheLedgerPageSendsItPosts(): void {
+		$this->store->rows['GLLine'] = [
+			['id' => 'l1', 'transactionId' => 'gl-2', 'accountNumber' => '4000', 'side' => 'debit', 'amount' => 1200.0],
+			['id' => 'l2', 'transactionId' => 'gl-2', 'accountNumber' => '1100', 'side' => 'credit', 'amount' => 1200.0],
+		];
+		$guard = new RuleComplianceGuard(
+			$this->appConfig(),
+			$this->createMock(LoggerInterface::class),
+			$this->balanceGuard(),
+			$this->store->mock($this)
+		);
+		$adapter = $this->adapter('OCA\Shillinq\Lifecycle\RuleComplianceGuard::validateTransaction', $guard);
+
+		$transaction = [
+			'id' => 'gl-2',
+			'transactionNumber' => 'MEM-2026-0002',
+			'postingDate' => '2026-09-20',
+			'description' => 'Huur september',
+			'sourceReference' => 'manual',
+			'administrationId' => 'adm-1',
+			'state' => 'posted',
+		];
+		self::assertTrue($adapter->check($transaction, 'post', 'alice')->isAllowed());
+
+		$this->store->rows['GLLine'][1]['amount'] = 1000.0;
+		self::assertFalse($adapter->check($transaction, 'post', 'alice')->isAllowed());
+	}//end testAMemorialEntryAsTheLedgerPageSendsItPosts()
+
+	/**
 	 * ARInvoice.issue: the invoice in the payload is evaluated as it stands.
 	 * A total that is not net plus VAT is refused by that rule, not by a
 	 * TypeError in the adapter.

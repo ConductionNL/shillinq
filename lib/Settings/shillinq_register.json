@@ -513,6 +513,11 @@
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\StampPostingAction",
+                  "description": "Stamp the posted entry: postingLocked, retentionUntil (31 December of the posting year plus 10), integrityVerified and the post on the auditTrail with the posting user. RuleComplianceGuard judges the entry as these stamps leave it (ledger-posting-path REQ-LPP-001)."
+                },
+                {
+                  "trigger": "x-openregister-lifecycle-action",
                   "action": "OCA\\Shillinq\\Lifecycle\\Action\\EvaluateAllocationRulesAction",
                   "description": "Evaluate all active AllocationRule records with cadence=per-posting whose sourceAccountPattern matches a line in this transaction. Emits additional balanced GLLine rows distributing source amounts per the rule targets.",
                   "actionParameters": {

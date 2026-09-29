@@ -40,9 +40,15 @@
  *   - APInvoice: debit each line's account, debit input VAT for `taxAmount`,
  *     credit the payables control account for `totalAmount`.
  *
- * InventoryValuation and ExpenseClaimEntry declare this action too; their
- * mappers are tasks 2.2 of ledger-posting-path and of expenses-category-mapping
- * and are not built, so those declarations are refused by name.
+ * ExpenseClaimEntry declares this action too. Its mapper needs the
+ * ExpenseAccountResolver of expenses-category-mapping (task 3.2 there), so
+ * until that change lands the declaration is refused by name. The
+ * InventoryValuation declarations were removed: sale dispatch is booked per
+ * stock move by CogsPosterService, and a running valuation snapshot cannot
+ * key one posting per event.
+ *
+ * Every transaction written here carries the posting stamps (PostingStamps),
+ * so it meets the same ledger rules as an entry posted from the ledger page.
  *
  * @category Lifecycle
  * @package  OCA\Shillinq\Lifecycle\Action
@@ -65,8 +71,11 @@ namespace OCA\Shillinq\Lifecycle\Action;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
+use DateTimeImmutable;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Lifecycle\PostingStamps;
 use OCP\IAppConfig;
+use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -161,11 +170,13 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service (ADR-083).
 	 * @param IAppConfig $appConfig Register slug and account numbers.
 	 * @param LoggerInterface $logger Logger for diagnostics.
+	 * @param IUserSession|null $userSession The posting user, for the audit trail; none outside a session.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ?IUserSession $userSession = null,
 	) {
 	}//end __construct()
 
@@ -233,6 +244,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 		}
 
 		$header['periodId'] = $this->periodId(object: $objectData, postingDate: (string)$header['postingDate']);
+		$header = PostingStamps::apply(transaction: $header, user: $this->actor(), now: new DateTimeImmutable());
 
 		$objectData['glTransactionId'] = $this->write(header: $header, lines: $lines, sourceId: $sourceId);
 		return $objectData;
@@ -659,6 +671,20 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 
 		return self::DEFAULT_ACCOUNTS[$key];
 	}//end account()
+
+	/**
+	 * The posting user id, `system` outside a session.
+	 *
+	 * @return string
+	 */
+	private function actor(): string {
+		$user = $this->userSession?->getUser();
+		if ($user === null) {
+			return 'system';
+		}
+
+		return $user->getUID();
+	}//end actor()
 
 	/**
 	 * The configured register slug.
