@@ -142,3 +142,13 @@ active plans then need resuming by hand, which the release note lists.
 ## Open Questions
 
 - Should a plan that is broken be reinstatable once? This change ends it; a new plan can be agreed.
+
+## As built (2026-09-29)
+
+- The guard is declared as `requires: OCA\Shillinq\Lifecycle\PaymentPlanGuard` (a `LifecycleGuardInterface` class, the form OpenRegister's guard registry resolves); `requireBalancedSchedule()` is its method.
+- The mail goes through `IMailer` (`PaymentPlanMailer`), because sales-invoice-sending has no mail path at HEAD. Its strings are translated with the app's IL10N.
+- `DunningRunService::pause()` gained an optional deadline, so a plan's pause ends at the last due date plus grace, as D2 says.
+- A bank match to a plan is a confirmed `ReconciliationMatch` of type `ar-invoice`, partial, naming the plan's invoices and `paymentPlanId`. It is partial, so the settlement listener leaves the invoices to the allocator.
+- D4.2 (payment links) is deferred to receivables-payment-links: no code creates a payment link at HEAD.
+- The Due this month filter reads `instalmentThisMonth`, `thisMonthAmount` and `thisMonthPaid`, which the daily monitor and every payment refresh.
+- Seed data: no hand-written plan objects. They would name invoices the seed does not ship. The demo data generator covers the schemas (gate 101).

@@ -5340,18 +5340,19 @@
 			"id": "rec-payment-plan",
 			"area": "receivables",
 			"name": "Agree a payment plan with a customer and follow its instalments.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "partial",
 			"moneybird": "unknown",
 			"snelstart": "partial",
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
+				"evidence": "lib/PaymentPlan/PaymentPlanService.php agrees a PaymentPlan for a customer's overdue ARInvoices (schedule to the cent, PaymentPlanGuard on activate), pauses dunning with reason PAYMENT_PLAN until the last due date plus grace, mails the schedule; PaymentPlanAllocator pays instalments and invoices oldest first; PaymentPlanBankMatcher books a bank line naming the plan reference; lib/BackgroundJob/PaymentPlanMonitorJob.php marks instalments missed and breaks the plan, resuming dunning (tests/Unit/PaymentPlan/PaymentPlanServiceTest.php).",
+				"reachedOn": "PaymentPlans /bookkeeping/payment-plans; CustomerDetail and ARInvoiceDetail header action Agree a payment plan; Match by hand, Payment plan tab",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-27",
-				"evidence": "RepaymentInstallment (instalments with dueDate, paidDate and an isOverdue status value; the schema is declared twice, shillinq_register.json:15534 and register.d/add-shillinq-bookkeeping-operations.json:1419) on SubsidieDetail /subsidies/:id covers repayment plans for grant reclaims only (lib/Settings/register.d/add-shillinq-bookkeeping-operations.json:1424).",
-				"reachedOn": "SubsidieDetail /subsidies/:id"
+				"readOn": "2026-09-29",
+				"change": "2026-09-29-receivables-payment-plans"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Content-rn-whatsnewlandingpage?language=en_GB (June 2026): \"we've enhanced the standard layout editor so you can edit and create Debtor Statement and Payment arrangement layouts\"; https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-bank-fin-bnkpymt-editsplitpymntt?language=en_GB: split a payment into several payment terms Note: Payment arrangement letters and split terms; instalment follow-up is not described.",
