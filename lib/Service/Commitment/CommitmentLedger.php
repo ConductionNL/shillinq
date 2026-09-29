@@ -211,10 +211,8 @@ class CommitmentLedger {
 	 * @param string $commitmentNumber The commitment number.
 	 *
 	 * @return list<array<string,mixed>>
-	 *
-	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.1
 	 */
-	public function lines(string $commitmentNumber): array {
+	private function lines(string $commitmentNumber): array {
 		if ($commitmentNumber === '') {
 			return [];
 		}
@@ -252,7 +250,7 @@ class CommitmentLedger {
 	 *
 	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.1
 	 */
-	public static function free(array $budget): int {
+	public function free(array $budget): int {
 		return ((int)($budget['authorised_amount'] ?? 0) - (int)($budget['realised_amount'] ?? 0) - (int)($budget['outstanding_commitments'] ?? 0));
 
 	}//end free()
@@ -290,7 +288,7 @@ class CommitmentLedger {
 			data: [
 				'outstanding_commitments' => $budget['outstanding_commitments'],
 				'realised_amount'         => $budget['realised_amount'],
-				'free_capacity'           => self::free(budget: $budget),
+				'free_capacity'           => $this->free(budget: $budget),
 			]
 		);
 

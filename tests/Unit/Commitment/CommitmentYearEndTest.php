@@ -23,6 +23,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Commitment;
 
 use OCA\OpenRegister\Db\ObjectEntity;
+use OCA\Shillinq\AppInfo\CommitmentGuardServices;
+use OCA\Shillinq\Service\Commitment\CommitmentLedger;
+use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Lifecycle\BudgetBlocker;
 use OCA\Shillinq\Lifecycle\CommitmentGuardAdapter;
@@ -283,4 +286,42 @@ final class CommitmentYearEndTest extends TestCase {
 		$this->assertSame('OCA\\Shillinq\\Lifecycle\\Action\\RecordCommitmentMovementAction', $lifecycle['aangaan']['actions'][0]['action']);
 		$this->assertContains('carried_forward', RegisterSchema::schema('CommitmentMovement')['properties']['kind']['enum']);
 	}//end testTheLifecycleDeclaresTheWiring()
+	/**
+	 * Both tags the Commitment lifecycle names resolve to an adapter over the real guard.
+	 *
+	 * @return void
+	 */
+	public function testTheGuardTagsAreRegistered(): void {
+		$factories = [];
+		$context = $this->createMock(IRegistrationContext::class);
+		$context->method('registerService')->willReturnCallback(
+			static function (string $name, callable $factory) use (&$factories): void {
+				$factories[$name] = $factory;
+			}
+		);
+		(new CommitmentGuardServices())->register($context);
+
+		$lifecycle = RegisterSchema::schema('Commitment')['x-openregister-lifecycle']['transitions'];
+		$this->assertSame([$lifecycle['indienen']['requires'], $lifecycle['aangaan']['requires']], array_keys($factories));
+
+		$store = $this->store;
+		$config = $this->createMock(IAppConfig::class);
+		$logger = $this->createMock(LoggerInterface::class);
+		$services = [
+			MandateEnforcer::class => null,
+			CommitmentLedger::class => $this->ledger(),
+			LoggerInterface::class => $logger,
+		];
+		$inner = $this->createMock(ContainerInterface::class);
+		$inner->method('get')->willReturn($store);
+		$services[MandateEnforcer::class] = new MandateEnforcer($inner, $config, $logger);
+		$services[BudgetBlocker::class] = new BudgetBlocker($inner, $config, $logger, $services[MandateEnforcer::class]);
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnCallback(static fn (string $id): object => $services[$id]);
+
+		$commitment = $this->get('Commitment', $this->ids['v0114']);
+		foreach ($factories as $factory) {
+			$this->assertTrue($factory($container)->check($commitment, 'aangaan', 'm.jansen')->isAllowed());
+		}
+	}//end testTheGuardTagsAreRegistered()
 }//end class

@@ -91,7 +91,7 @@ class CommitmentCarryOverService {
 			$budget = $this->ledger->budget(administrationId: $administrationId, programme: (string)$programme, year: $fromYear + 1);
 			$free = 0;
 			if ($budget !== null) {
-				$free = CommitmentLedger::free(budget: $budget);
+				$free = $this->ledger->free(budget: $budget);
 			}
 
 			if ($amount > $free) {

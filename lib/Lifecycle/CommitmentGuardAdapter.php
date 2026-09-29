@@ -118,7 +118,7 @@ final class CommitmentGuardAdapter implements LifecycleGuardInterface {
 				return sprintf('There is no %d budget for programme %s.', $year, $programme);
 			}
 
-			$short = ((int)($line['amount_excl_vat'] ?? 0) - CommitmentLedger::free(budget: $budget));
+			$short = ((int)($line['amount_excl_vat'] ?? 0) - $this->ledger->free(budget: $budget));
 			if ($short > 0) {
 				return sprintf(
 					'The %d budget for programme %s is EUR %s short.',
