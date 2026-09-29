@@ -46,7 +46,9 @@
 					</NcButton>
 				</div>
 				<div class="segment-pnl-dashboard__period">
-					<label for="segment-pnl-period">{{ t('shillinq', 'Period') }}</label>
+					<label for="segment-pnl-period">{{
+						t('shillinq', 'Period')
+					}}</label>
 					<select
 						id="segment-pnl-period"
 						v-model="periodId"
@@ -273,8 +275,15 @@ export default {
 		async loadPeriods() {
 			try {
 				const { data } = await axios.get(
-					generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/FiscalPeriod`),
-					{ params: { administrationId: this.administrationId, _limit: 500 } },
+					generateUrl(
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/FiscalPeriod`,
+					),
+					{
+						params: {
+							administrationId: this.administrationId,
+							_limit: 500,
+						},
+					},
 				)
 				this.periods = periodOptions(data)
 			} catch {
@@ -488,7 +497,14 @@ export default {
 			if (!this.rows.length) {
 				return
 			}
-			const header = ['segment', 'name', 'parent', 'revenue', 'costs', 'result']
+			const header = [
+				'segment',
+				'name',
+				'parent',
+				'revenue',
+				'costs',
+				'result',
+			]
 			const lines = [header.join(',')]
 			for (const row of this.rows) {
 				const cells = [

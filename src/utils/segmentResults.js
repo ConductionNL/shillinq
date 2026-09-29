@@ -76,8 +76,16 @@ export function normaliseSegmentRows(payload) {
 			const key = Array.isArray(group?.keys) ? group.keys[0] : group?.key
 			return {
 				key: key === null || key === undefined ? '' : String(key),
-				name: firstOf(group, ['name', 'AnalyticalDimension.name', 'Project.name']),
-				parent: firstOf(group, ['parent', 'AnalyticalDimension.parentCode', 'Project.parentCode']),
+				name: firstOf(group, [
+					'name',
+					'AnalyticalDimension.name',
+					'Project.name',
+				]),
+				parent: firstOf(group, [
+					'parent',
+					'AnalyticalDimension.parentCode',
+					'Project.parentCode',
+				]),
 				revenue: figure(values.revenue),
 				costs: figure(values.costs),
 				result: figure(values.result),
@@ -142,6 +150,10 @@ export function periodOptions(payload) {
 
 	return items
 		.filter((item) => typeof item?.periodId === 'string' && item.periodId !== '')
-		.sort((a, b) => String(a.startDate ?? a.periodId).localeCompare(String(b.startDate ?? b.periodId)))
+		.sort((a, b) =>
+			String(a.startDate ?? a.periodId).localeCompare(
+				String(b.startDate ?? b.periodId),
+			),
+		)
 		.map((item) => ({ id: item.periodId, label: item.name || item.periodId }))
 }

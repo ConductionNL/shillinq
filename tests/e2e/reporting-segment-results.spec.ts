@@ -39,17 +39,26 @@ test.describe('reporting-segment-results', () => {
 			route.fulfill({
 				json: {
 					results: [
-						{ periodId: '2026-M09', name: 'September 2026', startDate: '2026-09-01' },
+						{
+							periodId: '2026-M09',
+							name: 'September 2026',
+							startDate: '2026-09-01',
+						},
 					],
 				},
 			}),
 		)
-		await page.route('**/api/objects/aggregations/**/GLLine/byCostCenter**', (route) => {
-			queries.push(route.request().url())
-			return route.fulfill({ json: KP300 })
-		})
+		await page.route(
+			'**/api/objects/aggregations/**/GLLine/byCostCenter**',
+			(route) => {
+				queries.push(route.request().url())
+				return route.fulfill({ json: KP300 })
+			},
+		)
 
-		await page.goto('/index.php/apps/shillinq/bookkeeping/dimensions/segment-pnl')
+		await page.goto(
+			'/index.php/apps/shillinq/bookkeeping/dimensions/segment-pnl',
+		)
 		await page.getByLabel('Period').selectOption('2026-M09')
 
 		const row = page.locator('tr', { hasText: 'KP-300' })

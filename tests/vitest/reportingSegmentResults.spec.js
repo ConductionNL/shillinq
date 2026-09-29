@@ -24,7 +24,10 @@ import {
 const ROOT = path.resolve(__dirname, '../..')
 const fragment = JSON.parse(
 	fs.readFileSync(
-		path.join(ROOT, 'lib/Settings/register.d/bookkeeping-cost-centers-dimensions.json'),
+		path.join(
+			ROOT,
+			'lib/Settings/register.d/bookkeeping-cost-centers-dimensions.json',
+		),
 		'utf8',
 	),
 )
@@ -47,19 +50,40 @@ describe('segment results', () => {
 		})
 
 		expect(rows).toEqual([
-			{ key: 'KP-300', name: 'Sociaal Domein', parent: '', revenue: 40000, costs: 28000, result: 12000, depth: 0 },
+			{
+				key: 'KP-300',
+				name: 'Sociaal Domein',
+				parent: '',
+				revenue: 40000,
+				costs: 28000,
+				result: 12000,
+				depth: 0,
+			},
 		])
-		expect(segmentTotals(rows)).toEqual({ revenue: 40000, costs: 28000, result: 12000 })
+		expect(segmentTotals(rows)).toEqual({
+			revenue: 40000,
+			costs: 28000,
+			result: 12000,
+		})
 	})
 
 	it('reads a multi-key group and a missing figure as 0', () => {
-		const rows = normaliseSegmentRows({ groups: [{ keys: ['P-2026-014'], values: { costs: 500 } }] })
+		const rows = normaliseSegmentRows({
+			groups: [{ keys: ['P-2026-014'], values: { costs: 500 } }],
+		})
 
-		expect(rows[0]).toMatchObject({ key: 'P-2026-014', revenue: 0, costs: 500, result: 0 })
+		expect(rows[0]).toMatchObject({
+			key: 'P-2026-014',
+			revenue: 0,
+			costs: 500,
+			result: 0,
+		})
 	})
 
 	it('scopes to the administration and narrows to the chosen period', () => {
-		expect(segmentQuery('adm-1', '')).toEqual({ 'filter[administrationId]': 'adm-1' })
+		expect(segmentQuery('adm-1', '')).toEqual({
+			'filter[administrationId]': 'adm-1',
+		})
 		expect(segmentQuery('adm-1', '2026-M09')).toEqual({
 			'filter[administrationId]': 'adm-1',
 			'filter[periodId]': '2026-M09',
@@ -68,11 +92,19 @@ describe('segment results', () => {
 
 	// GLLine.periodId holds the FiscalPeriod's own periodId (2026-M09, 2026-Q3),
 	// which the administration chooses: a month picker's 2026-09 matches no line.
-	it('offers the administration\'s fiscal periods by their periodId, oldest first', () => {
+	it("offers the administration's fiscal periods by their periodId, oldest first", () => {
 		const payload = {
 			results: [
-				{ periodId: '2026-M10', name: 'October 2026', startDate: '2026-10-01' },
-				{ periodId: '2026-M09', name: 'September 2026', startDate: '2026-09-01' },
+				{
+					periodId: '2026-M10',
+					name: 'October 2026',
+					startDate: '2026-10-01',
+				},
+				{
+					periodId: '2026-M09',
+					name: 'September 2026',
+					startDate: '2026-09-01',
+				},
 				{ periodId: '', name: 'broken' },
 			],
 		}
@@ -84,14 +116,24 @@ describe('segment results', () => {
 	})
 
 	it('offers every segment type over a declared aggregation with revenue, costs and result', () => {
-		const declared = fragment.components.schemas.GLLine['x-openregister-aggregations']
+		const declared =
+			fragment.components.schemas.GLLine['x-openregister-aggregations']
 		// byAnalyticalDimension groups by the wildcard dimensions.*, which no
 		// engine key expresses yet (#1261); it stays untranslated and is pinned
 		// that way in CostCentersDimensionsFragmentTest.
-		for (const name of Object.values(SEGMENT_AGGREGATION).filter((n) => n !== 'byAnalyticalDimension')) {
+		for (const name of Object.values(SEGMENT_AGGREGATION).filter(
+			(n) => n !== 'byAnalyticalDimension',
+		)) {
 			expect(declared[name], name).toBeDefined()
-			expect(declared[name].filter).toMatchObject({ accountClass: 'pnl', countsInResult: true })
-			expect(declared[name].metrics.map((m) => m.as)).toEqual(['revenue', 'costs', 'result'])
+			expect(declared[name].filter).toMatchObject({
+				accountClass: 'pnl',
+				countsInResult: true,
+			})
+			expect(declared[name].metrics.map((m) => m.as)).toEqual([
+				'revenue',
+				'costs',
+				'result',
+			])
 		}
 		expect(Object.keys(SEGMENT_AGGREGATION)).toContain('costObject')
 	})
