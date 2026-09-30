@@ -153,7 +153,7 @@ class RelationBothSidesService {
 
 			$relation    = $this->relation(administrationId: $administrationId, customer: $customer, range: [$from, $to], sides: $sides, withRows: false);
 			$relations[] = array_merge(
-				['customerId' => $relation['customer']['id'], 'name' => $relation['customer']['name'], 'payeeId' => $relation['payee']['id']],
+				['id' => $relation['customer']['id'], 'customerId' => $relation['customer']['id'], 'name' => $relation['customer']['name'], 'payeeId' => $relation['payee']['id']],
 				$relation['totals']
 			);
 		}

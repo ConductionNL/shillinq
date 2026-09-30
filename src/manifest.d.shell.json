@@ -5059,6 +5059,18 @@
 			]
 		},
 		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "reporting-relation-both-sides",
+					"id": "RelationsBothWays",
+					"route": "/reports/relations-both-ways",
+					"type": "dashboard",
+					"title": "Relations both ways"
+				}
+			]
+		},
+		{
 			"menu": [
 				{
 					"id": "RetainerPools",

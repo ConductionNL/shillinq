@@ -248,6 +248,7 @@ import PaymentBlockModal from './modals/PaymentBlockModal.vue'
 import PaymentPlanActionModal from './modals/PaymentPlanActionModal.vue'
 import PaymentRunReconcileModal from './modals/PaymentRunReconcileModal.vue'
 import RecurringInvoiceProfileModal from './modals/RecurringInvoiceProfileModal.vue'
+import RelationLinkDialog from './modals/RelationLinkDialog.vue'
 // accountant-portal: the multi-client dashboard composes a per-card status
 // (period-close state, BTW filing + deadline, missing documents, open items
 // from PeriodCloseAssistantService) plus a per-card "Download handover pack"
@@ -406,6 +407,8 @@ export default {
 	// receivables-payment-plans REQ-RPPL-001/003: CustomerDetail, ARInvoiceDetail
 	// and PaymentPlanDetail header actions.
 	AgreePaymentPlanModal: { kind: 'modal', component: AgreePaymentPlanModal },
+	// reporting-relation-both-sides: link a customer to its supplier record.
+	RelationLinkDialog: { kind: 'modal', component: RelationLinkDialog },
 	PaymentPlanActionModal: { kind: 'modal', component: PaymentPlanActionModal },
 
 	StandardsPolicyEditor: { kind: 'page', component: StandardsPolicyEditor },

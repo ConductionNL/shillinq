@@ -2594,6 +2594,14 @@
 						"route": "VarianceReport"
 					},
 					{
+						"id": "RelationsBothWays",
+						"label": "Relations both ways",
+						"description": "Customers that are also suppliers, and who owes whom.",
+						"icon": "ScaleBalance",
+						"category": "financial",
+						"route": "RelationsBothWays"
+					},
+					{
 						"id": "GeneratedReportsIndex",
 						"label": "Generated reports",
 						"description": "Everything Reporting & Compliance has already produced.",
@@ -7791,6 +7799,148 @@
 							"rowRoute": "PaymentPlanDetail",
 							"emptyText": "No payment plans for this customer."
 						}
+					},
+					{
+						"id": "customer-both-sides-open-receivable",
+						"title": "Open receivable",
+						"type": "stat",
+						"content": {
+							"label": "Open receivable",
+							"icon": "ScaleBalance",
+							"format": {
+								"style": "currency",
+								"currency": "EUR",
+								"decimals": 2
+							},
+							"endpointSource": {
+								"url": "/apps/shillinq/api/relations/@objectId/both-sides"
+							},
+							"valueField": "totals.openReceivable"
+						}
+					},
+					{
+						"id": "customer-both-sides-open-payable",
+						"title": "Open payable",
+						"type": "stat",
+						"content": {
+							"label": "Open payable",
+							"icon": "ScaleBalance",
+							"format": {
+								"style": "currency",
+								"currency": "EUR",
+								"decimals": 2
+							},
+							"endpointSource": {
+								"url": "/apps/shillinq/api/relations/@objectId/both-sides"
+							},
+							"valueField": "totals.openPayable"
+						}
+					},
+					{
+						"id": "customer-both-sides-net",
+						"title": "Net position",
+						"type": "stat",
+						"content": {
+							"label": "Net position",
+							"icon": "ScaleBalance",
+							"format": {
+								"style": "currency",
+								"currency": "EUR",
+								"decimals": 2
+							},
+							"endpointSource": {
+								"url": "/apps/shillinq/api/relations/@objectId/both-sides"
+							},
+							"valueField": "totals.net"
+						}
+					},
+					{
+						"id": "customer-both-sides-sent",
+						"title": "Invoices sent",
+						"type": "object-table",
+						"content": {
+							"endpointSource": {
+								"url": "/apps/shillinq/api/relations/@objectId/both-sides",
+								"responsePath": "sent.rows"
+							},
+							"columns": [
+								{
+									"key": "number",
+									"label": "Invoice"
+								},
+								{
+									"key": "date",
+									"label": "Date"
+								},
+								{
+									"key": "state",
+									"label": "Status"
+								},
+								{
+									"key": "amount",
+									"label": "Amount",
+									"formatter": "currency",
+									"formatterOptions": {
+										"currency": "EUR",
+										"decimals": 2
+									}
+								},
+								{
+									"key": "open",
+									"label": "Still open",
+									"formatter": "currency",
+									"formatterOptions": {
+										"currency": "EUR",
+										"decimals": 2
+									}
+								}
+							],
+							"emptyText": "No sales invoices this year, or none linked."
+						}
+					},
+					{
+						"id": "customer-both-sides-received",
+						"title": "Invoices received",
+						"type": "object-table",
+						"content": {
+							"endpointSource": {
+								"url": "/apps/shillinq/api/relations/@objectId/both-sides",
+								"responsePath": "received.rows"
+							},
+							"columns": [
+								{
+									"key": "number",
+									"label": "Invoice"
+								},
+								{
+									"key": "date",
+									"label": "Date"
+								},
+								{
+									"key": "state",
+									"label": "Status"
+								},
+								{
+									"key": "amount",
+									"label": "Amount",
+									"formatter": "currency",
+									"formatterOptions": {
+										"currency": "EUR",
+										"decimals": 2
+									}
+								},
+								{
+									"key": "open",
+									"label": "Still open",
+									"formatter": "currency",
+									"formatterOptions": {
+										"currency": "EUR",
+										"decimals": 2
+									}
+								}
+							],
+							"emptyText": "No purchase invoices this year, the customer is not linked to a supplier, or your role may not read purchases."
+						}
 					}
 				],
 				"layout": [
@@ -7857,6 +8007,46 @@
 						"gridY": 15,
 						"gridWidth": 12,
 						"gridHeight": 4
+					},
+					{
+						"id": "7-1",
+						"widgetId": "customer-both-sides-open-receivable",
+						"gridX": 0,
+						"gridY": 19,
+						"gridWidth": 4,
+						"gridHeight": 2
+					},
+					{
+						"id": "7-2",
+						"widgetId": "customer-both-sides-open-payable",
+						"gridX": 4,
+						"gridY": 19,
+						"gridWidth": 4,
+						"gridHeight": 2
+					},
+					{
+						"id": "7-3",
+						"widgetId": "customer-both-sides-net",
+						"gridX": 8,
+						"gridY": 19,
+						"gridWidth": 4,
+						"gridHeight": 2
+					},
+					{
+						"id": "8",
+						"widgetId": "customer-both-sides-sent",
+						"gridX": 0,
+						"gridY": 21,
+						"gridWidth": 6,
+						"gridHeight": 5
+					},
+					{
+						"id": "9",
+						"widgetId": "customer-both-sides-received",
+						"gridX": 6,
+						"gridY": 21,
+						"gridWidth": 6,
+						"gridHeight": 5
 					}
 				],
 				"headerActions": [
@@ -7869,6 +8059,16 @@
 						"props": {
 							"open": true,
 							"from": "customer"
+						}
+					},
+					{
+						"id": "link-supplier",
+						"label": "Link to a supplier",
+						"type": "open-modal",
+						"target": "RelationLinkDialog",
+						"icon": "LinkVariant",
+						"props": {
+							"open": true
 						}
 					}
 				],
