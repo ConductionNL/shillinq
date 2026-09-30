@@ -13,10 +13,9 @@
       "type": "dashboard",
       "title": "Relations both ways",
       "config": {
+        "documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/relations-both-ways",
         "description": "Customers that are also suppliers, with what you invoiced, what they invoiced and who owes whom.",
-        "headerActions": [
-          { "id": "export-relations", "label": "Export CSV", "type": "handler", "handler": "openRelationsExport", "icon": "DownloadOutline" }
-        ],
+        "headerActions": [{"id": "export-relations", "label": "Export CSV", "type": "handler", "handler": "openRelationsExport", "icon": "DownloadOutline"}],
         "dateRange": {
           "enabled": true,
           "showHeaderPicker": true,
@@ -34,18 +33,14 @@
             "title": "Linked relations",
             "type": "object-table",
             "content": {
-              "endpointSource": {
-                "url": "/apps/shillinq/api/relations/both-sides",
-                "params": { "from": "@workspace.dateFrom?", "to": "@workspace.dateTo?" },
-                "responsePath": "relations"
-              },
+              "endpointSource": { "url": "/apps/shillinq/api/relations/both-sides", "params": {"from": "@workspace.dateFrom?", "to": "@workspace.dateTo?"}, "responsePath": "relations" },
               "columns": [
                 { "key": "name", "label": "Relation" },
-                { "key": "sales", "label": "Invoiced sales", "formatter": "currency", "formatterOptions": { "currency": "EUR", "decimals": 2 } },
-                { "key": "purchases", "label": "Invoiced purchases", "formatter": "currency", "formatterOptions": { "currency": "EUR", "decimals": 2 } },
-                { "key": "openReceivable", "label": "Open receivable", "formatter": "currency", "formatterOptions": { "currency": "EUR", "decimals": 2 } },
-                { "key": "openPayable", "label": "Open payable", "formatter": "currency", "formatterOptions": { "currency": "EUR", "decimals": 2 } },
-                { "key": "net", "label": "Net position", "formatter": "currency", "formatterOptions": { "currency": "EUR", "decimals": 2 } }
+                { "key": "sales", "label": "Invoiced sales", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2} },
+                { "key": "purchases", "label": "Invoiced purchases", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2} },
+                { "key": "openReceivable", "label": "Open receivable", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2} },
+                { "key": "openPayable", "label": "Open payable", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2} },
+                { "key": "net", "label": "Net position", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2} }
               ],
               "rowRoute": "CustomerDetail",
               "emptyText": "No customer is linked to a supplier record yet. Confirm a suggestion below or link one from the customer page."
@@ -64,8 +59,20 @@
                 { "key": "number", "label": "Number" }
               ],
               "actions": [
-                { "id": "confirm-link", "label": "Link", "icon": "LinkVariant", "handler": "confirmRelationSuggestion", "description": "Link the customer and the supplier record: they are the same organisation." },
-                { "id": "dismiss-link", "label": "Not the same", "icon": "CloseCircleOutline", "handler": "dismissRelationSuggestion", "description": "Stop suggesting this pair." }
+                {
+                  "id": "confirm-link",
+                  "label": "Link",
+                  "icon": "LinkVariant",
+                  "handler": "confirmRelationSuggestion",
+                  "description": "Link the customer and the supplier record: they are the same organisation."
+                },
+                {
+                  "id": "dismiss-link",
+                  "label": "Not the same",
+                  "icon": "CloseCircleOutline",
+                  "handler": "dismissRelationSuggestion",
+                  "description": "Stop suggesting this pair."
+                }
               ],
               "emptyText": "No customer and supplier share a KvK or VAT number."
             }

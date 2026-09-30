@@ -8,7 +8,7 @@
  net. Opened from the report's Export CSV header action. Its own file for
  hydra gate-13.
 
- @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+ @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 -->
 
 <template>
@@ -74,7 +74,7 @@ export default {
 		 * The CSV download for the chosen period.
 		 *
 		 * @return {string} The URL.
-		 * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+		 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 		 */
 		downloadUrl() {
 			return (

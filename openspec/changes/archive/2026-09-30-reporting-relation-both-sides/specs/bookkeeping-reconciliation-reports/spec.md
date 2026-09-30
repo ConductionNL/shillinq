@@ -43,6 +43,8 @@ chosen period, every linked relation of the administration with its invoiced
 sales, invoiced purchases, open receivable, open payable and net position, and
 SHALL export the list as CSV.
 
+@e2e exclude the CSV body is asserted by RelationBothSidesServiceTest::testTheControllerExportsTheYear and RelationControllerTest::testTheReportAndItsCsv; a browser download adds nothing
+
 #### Scenario: The controller exports the year
 
 - GIVEN three linked relations in Drukkerij Van Wijk B.V.
@@ -54,6 +56,8 @@ SHALL export the list as CSV.
 The both-sides view SHALL read each side's invoices with the caller's
 permissions. A side the caller may not read MUST NOT be shown or counted, and the
 view SHALL say that the side is not available to them.
+
+@e2e exclude role-based sides are decided server-side and asserted by RelationControllerTest::testAReceivablesRoleSeesOnlyTheSalesSide and RelationBothSidesServiceTest::testASideTheCallerMayNotReadIsRestricted
 
 #### Scenario: An AR controller without purchase access
 

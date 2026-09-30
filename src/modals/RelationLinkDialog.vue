@@ -11,7 +11,7 @@
  Opened from the "Link to a supplier" header action on CustomerDetail (the
  route's :id is the customer). Its own file for hydra gate-13.
 
- @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+ @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 -->
 
 <template>
@@ -139,7 +139,7 @@ export default {
 		 * The customer this dialog links.
 		 *
 		 * @return {string} The customer id.
-		 * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+		 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 		 */
 		customerId() {
 			return String(this.objectId || this.$route?.params?.id || '')
@@ -158,7 +158,7 @@ export default {
 		 *
 		 * @param {string} matchedOn kvk, vat or manual.
 		 * @return {string} The label.
-		 * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+		 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 		 */
 		matchedOnLabel(matchedOn) {
 			return (
@@ -174,7 +174,7 @@ export default {
 		 * Read the current link, the suggestions for this customer and the suppliers to pick from.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+		 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 		 */
 		async load() {
 			this.error = ''
@@ -227,7 +227,7 @@ export default {
 		 * @param {string} payeeId The supplier.
 		 * @param {string} matchedOn kvk, vat or manual.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+		 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 		 */
 		async link(payeeId, matchedOn) {
 			await this.write(() =>
@@ -243,7 +243,7 @@ export default {
 		 * Remove this customer's link.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+		 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 		 */
 		async unlink() {
 			await this.write(() =>
@@ -260,7 +260,7 @@ export default {
 		 *
 		 * @param {() => Promise<unknown>} request The request.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+		 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 		 */
 		async write(request) {
 			this.busy = true

@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -46,7 +46,7 @@ use OCP\IRequest;
 /**
  * Serves relation links and both-sides views.
  *
- * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  */
 class RelationController extends Controller {
 
@@ -90,7 +90,7 @@ class RelationController extends Controller {
 	 *
 	 * @return JSONResponse The relation, 400, 401 or a masked 404.
 	 *
-	 * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+	 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
 	#[NoAdminRequired]
 	public function bothSides(string $customerId): JSONResponse {
@@ -122,7 +122,7 @@ class RelationController extends Controller {
 	 *
 	 * @return JSONResponse The relation, `{linked: false}` for an unlinked supplier, or an error.
 	 *
-	 * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+	 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
 	#[NoAdminRequired]
 	public function payeeBothSides(string $payeeId): JSONResponse {
@@ -136,7 +136,7 @@ class RelationController extends Controller {
 			return new JSONResponse(['linked' => false]);
 		}
 
-		return $this->bothSides($customerId);
+		return $this->bothSides(customerId: $customerId);
 
 	}//end payeeBothSides()
 
@@ -145,7 +145,7 @@ class RelationController extends Controller {
 	 *
 	 * @return Response JSON, or the CSV download when format=csv.
 	 *
-	 * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+	 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
 	#[NoAdminRequired]
 	public function report(): Response {
@@ -177,7 +177,7 @@ class RelationController extends Controller {
 	 *
 	 * @return JSONResponse `{suggestions: [...]}` or an error.
 	 *
-	 * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+	 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
 	#[NoAdminRequired]
 	public function suggestions(): JSONResponse {
@@ -195,7 +195,7 @@ class RelationController extends Controller {
 	 *
 	 * @return JSONResponse The link, 403 for a role that may not link, 404 or 409.
 	 *
-	 * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+	 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
 	#[NoAdminRequired]
 	public function link(): JSONResponse {
@@ -229,7 +229,7 @@ class RelationController extends Controller {
 	 *
 	 * @return JSONResponse `{dismissed: true}`, 403 or 404.
 	 *
-	 * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+	 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
 	#[NoAdminRequired]
 	public function dismiss(): JSONResponse {
@@ -263,7 +263,7 @@ class RelationController extends Controller {
 	 *
 	 * @return JSONResponse `{unlinked: true}`, 403 or 404.
 	 *
-	 * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+	 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
 	#[NoAdminRequired]
 	public function unlink(string $customerId): JSONResponse {

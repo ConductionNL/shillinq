@@ -174,12 +174,12 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // 1,184,500: 6,671 B of headroom, 0.56%.
 //
 // Re-measured 2026-09-30 (reporting-relation-both-sides): development held
-// 1,182,125 bytes. This change adds 9,468 B: its own fragment for the
+// 1,182,125 bytes. This change adds 9,701 B: its own fragment for the
 // Relations both ways report (the linked relations and the suggested links),
 // and on CustomerDetail the Link to a supplier action and five both-sides
 // widgets, and a Both sides action on PayeeDetail. reporting-custom-analysis
-// (#1815) adds 1,292 B beside it, so both together reach 1,192,885. Raised to
-// 1,199,500: 6,615 B of headroom over both, 0.55%.
+// (#1815) adds 1,292 B beside it, so both together reach 1,193,118. Raised to
+// 1,199,500: 6,382 B of headroom over both, 0.53%.
 const DEFAULT_BUDGET_BYTES = 1_199_500
 
 /**

@@ -6,7 +6,7 @@
  * the table shows, the handlers the manifest names are registered, and the
  * widgets read endpoints the routes serve.
  *
- * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  */
 
 import fs from 'fs'

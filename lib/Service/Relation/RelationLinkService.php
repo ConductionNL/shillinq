@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -36,7 +36,7 @@ use DomainException;
 /**
  * Suggests, confirms, dismisses and removes customer-supplier links.
  *
- * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  */
 class RelationLinkService {
 
@@ -58,7 +58,7 @@ class RelationLinkService {
 	 *
 	 * @return string The normalised number, empty when there is none.
 	 *
- * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
 	public function normalise(mixed $number): string {
 		if (is_scalar($number) === false) {
@@ -76,7 +76,7 @@ class RelationLinkService {
 	 *
 	 * @return array<int, array<string, string>> customerId, customerName, payeeId, payeeName, matchedOn (kvk or vat), number.
 	 *
- * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
 	public function suggestions(string $administrationId): array {
 		$customers = $this->records->rows(schema: 'CustomerMaster', administrationId: $administrationId);
@@ -123,7 +123,7 @@ class RelationLinkService {
 	 *
 	 * @throws DomainException When a record is not found or a side is linked already.
 	 *
- * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
 	public function link(string $administrationId, string $customerId, string $payeeId, string $userId, string $matchedOn): array {
 		$customer = $this->records->one(schema: 'CustomerMaster', administrationId: $administrationId, id: $customerId);
@@ -172,7 +172,7 @@ class RelationLinkService {
 	 *
 	 * @throws DomainException When the customer is not found.
 	 *
- * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
 	public function dismiss(string $administrationId, string $customerId, string $payeeId): void {
 		$customer = $this->records->one(schema: 'CustomerMaster', administrationId: $administrationId, id: $customerId);
@@ -195,7 +195,7 @@ class RelationLinkService {
 	 *
 	 * @throws DomainException When the customer is not found.
 	 *
- * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
 	public function unlink(string $administrationId, string $customerId): void {
 		if ($this->records->one(schema: 'CustomerMaster', administrationId: $administrationId, id: $customerId) === null) {

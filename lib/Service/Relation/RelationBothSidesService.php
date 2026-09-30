@@ -26,7 +26,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,7 +41,7 @@ use DomainException;
 /**
  * Totals both sides of a linked relation.
  *
- * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  */
 class RelationBothSidesService {
 
@@ -99,7 +99,7 @@ class RelationBothSidesService {
 	 *
 	 * @throws DomainException When the customer is not in the administration.
 	 *
- * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
 	public function forCustomer(string $administrationId, string $customerId, string $from, string $to, array $sides): array {
 		$customer = $this->records->one(schema: 'CustomerMaster', administrationId: $administrationId, id: $customerId);
@@ -119,7 +119,7 @@ class RelationBothSidesService {
 	 *
 	 * @return string|null The customer id, or null when the supplier is not linked.
 	 *
- * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
 	public function customerOfPayee(string $administrationId, string $payeeId): ?string {
 		if ($payeeId === '') {
@@ -142,7 +142,7 @@ class RelationBothSidesService {
 	 *
 	 * @return array<string, mixed> relations (one row each), restricted sides.
 	 *
- * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
 	public function forAdministration(string $administrationId, string $from, string $to, array $sides): array {
 		$relations = [];
@@ -153,7 +153,12 @@ class RelationBothSidesService {
 
 			$relation    = $this->relation(administrationId: $administrationId, customer: $customer, range: [$from, $to], sides: $sides, withRows: false);
 			$relations[] = array_merge(
-				['id' => $relation['customer']['id'], 'customerId' => $relation['customer']['id'], 'name' => $relation['customer']['name'], 'payeeId' => $relation['payee']['id']],
+				[
+					'id'         => $relation['customer']['id'],
+					'customerId' => $relation['customer']['id'],
+					'name'       => $relation['customer']['name'],
+					'payeeId'    => $relation['payee']['id'],
+				],
 				$relation['totals']
 			);
 		}
@@ -174,7 +179,7 @@ class RelationBothSidesService {
 	 *
 	 * @return string The CSV text.
 	 *
- * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
 	public function toCsv(array $relations): string {
 		$columns = ['name', 'sales', 'purchases', 'openReceivable', 'openPayable', 'net'];
@@ -318,7 +323,7 @@ class RelationBothSidesService {
 					}
 				}
 
-				$rows[$invoice['id']] = ['id' => $invoice['id'], 'schema' => 'ARInvoice', 'number' => (string)($invoice['invoiceNumber'] ?? ''), 'date' => (string)($invoice['invoiceDate'] ?? ''), 'state' => $state, 'amount' => $amount, 'open' => $open];
+				$rows[$invoice['id']] = $this->row(schema: 'ARInvoice', record: $invoice, state: $state, amounts: [$amount, $open]);
 			}
 		}
 
@@ -340,10 +345,12 @@ class RelationBothSidesService {
 			return [];
 		}
 
-		$rows = [];
-		foreach ($this->records->rows(schema: 'APTransaction', administrationId: $administrationId, filters: ['vendorId' => $payee['id']]) as $transaction) {
-			$state = (string)($transaction['state'] ?? '');
-			if (in_array($state, self::RECEIVED_STATES, true) === false || $this->inRange(date: $transaction['invoiceDate'] ?? null, range: $range) === false) {
+		$rows         = [];
+		$transactions = $this->records->rows(schema: 'APTransaction', administrationId: $administrationId, filters: ['vendorId' => $payee['id']]);
+		foreach ($transactions as $transaction) {
+			$state   = (string)($transaction['state'] ?? '');
+			$counted = in_array($state, self::RECEIVED_STATES, true);
+			if ($counted === false || $this->inRange(date: $transaction['invoiceDate'] ?? null, range: $range) === false) {
 				continue;
 			}
 
@@ -353,22 +360,52 @@ class RelationBothSidesService {
 				$open = $amount;
 			}
 
-			$rows[] = ['id' => $transaction['id'], 'schema' => 'APTransaction', 'number' => (string)($transaction['invoiceNumber'] ?? ''), 'date' => (string)($transaction['invoiceDate'] ?? ''), 'state' => $state, 'amount' => $amount, 'open' => $open];
+			$rows[] = $this->row(schema: 'APTransaction', record: $transaction, state: $state, amounts: [$amount, $open]);
 		}
 
-		foreach ($this->records->rows(schema: 'SupplierInvoice', administrationId: $administrationId, filters: ['supplierId' => $payee['id']]) as $invoice) {
-			$state = (string)($invoice['statusCode'] ?? '');
-			if ((string)($invoice['apTransactionId'] ?? '') !== '' || in_array($state, self::INTAKE_OPEN, true) === false || $this->inRange(date: $invoice['invoiceDate'] ?? null, range: $range) === false) {
+		$intake = $this->records->rows(schema: 'SupplierInvoice', administrationId: $administrationId, filters: ['supplierId' => $payee['id']]);
+		foreach ($intake as $invoice) {
+			// Handed to payables already: counted as its APTransaction above.
+			$booked = ((string)($invoice['apTransactionId'] ?? '') !== '');
+			$state  = (string)($invoice['statusCode'] ?? '');
+			if ($booked === true || in_array($state, self::INTAKE_OPEN, true) === false) {
+				continue;
+			}
+
+			if ($this->inRange(date: $invoice['invoiceDate'] ?? null, range: $range) === false) {
 				continue;
 			}
 
 			$amount = (float)($invoice['totalInclVat'] ?? 0);
-			$rows[] = ['id' => $invoice['id'], 'schema' => 'SupplierInvoice', 'number' => (string)($invoice['invoiceNumber'] ?? ''), 'date' => (string)($invoice['invoiceDate'] ?? ''), 'state' => $state, 'amount' => $amount, 'open' => $amount];
+			$rows[] = $this->row(schema: 'SupplierInvoice', record: $invoice, state: $state, amounts: [$amount, $amount]);
 		}
 
 		return $rows;
 
 	}//end receivedRows()
+
+	/**
+	 * One listed invoice.
+	 *
+	 * @param string                    $schema  The schema it comes from.
+	 * @param array<string, mixed>      $record  The record.
+	 * @param string                    $state   Its state.
+	 * @param array{0: float, 1: float} $amounts The signed amount and the open amount.
+	 *
+	 * @return array<string, mixed> id, schema, number, date, state, amount, open.
+	 */
+	private function row(string $schema, array $record, string $state, array $amounts): array {
+		return [
+			'id'     => (string)($record['id'] ?? ''),
+			'schema' => $schema,
+			'number' => (string)($record['invoiceNumber'] ?? ''),
+			'date'   => (string)($record['invoiceDate'] ?? ''),
+			'state'  => $state,
+			'amount' => $amounts[0],
+			'open'   => $amounts[1],
+		];
+
+	}//end row()
 
 	/**
 	 * A credit note's amount is negative whatever sign it was typed with.

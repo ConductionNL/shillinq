@@ -5629,17 +5629,19 @@
 			"id": "rep-relation-both-sides",
 			"area": "reporting",
 			"name": "See every invoice sent to and received from a relation that is both customer and supplier.",
-			"shillinq": "no",
+			"shillinq": "yes",
 			"exact-online": "partial",
 			"moneybird": "yes",
 			"snelstart": "partial",
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"reachedOn": "nothing"
+				"readOn": "2026-09-30",
+				"reachedOn": "Reports > Relations both ways (/reports/relations-both-ways); the customer page (Link to a supplier, and both sides of a linked relation); the supplier page (Both sides)",
+				"evidence": "CustomerMaster.payeeId, payeeLink and dismissedPayeeSuggestions (lib/Settings/register.d/reporting-relation-both-sides.json); RelationLinkService suggests pairs with an equal normalised KvK or VAT number and links only on confirmation, one to one; RelationBothSidesService lists ARInvoice, APTransaction and not-yet-booked SupplierInvoice rows with invoiced sales, invoiced purchases, open receivable, open payable and net, credit notes negative, each side only for a role that may read it; RelationController serves both sides, the report and its CSV (tests/Unit/Service/Relation/*, tests/Unit/Controller/RelationControllerTest.php, tests/vitest/reportingRelationBothSides.spec.js).",
+				"change": "2026-09-30-reporting-relation-both-sides"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Reference-accounts-finacc-mntresultsr?language=en_GB: \"If you select a debtor in the report you can easily compare your sales per debtor. If you select a creditor ... your purchases per creditor\" Note: Per side; one combined view for a relation that is both is not described.",

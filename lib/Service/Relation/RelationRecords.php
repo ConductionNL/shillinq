@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -35,7 +35,7 @@ use OCA\Shillinq\Service\SettingsService;
 /**
  * Administration-scoped reads and patches of the relation schemas.
  *
- * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  */
 class RelationRecords {
 
@@ -71,7 +71,7 @@ class RelationRecords {
 	 *
 	 * @return array<int, array<string, mixed>> Payloads, each with `id`.
 	 *
-	 * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+	 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
 	public function rows(string $schema, string $administrationId, array $filters = []): array {
 		$filters['administrationId'] = $administrationId;
@@ -103,7 +103,7 @@ class RelationRecords {
 	 *
 	 * @return array<string, mixed>|null The payload with `id`, or null.
 	 *
-	 * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+	 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
 	public function one(string $schema, string $administrationId, string $id): ?array {
 		if ($id === '') {
@@ -140,7 +140,7 @@ class RelationRecords {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+	 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
 	 */
 	public function patch(string $schema, string $id, array $fields): void {
 		$this->objectService

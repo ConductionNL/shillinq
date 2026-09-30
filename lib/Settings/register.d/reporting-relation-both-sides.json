@@ -5,7 +5,7 @@
     "change": "reporting-relation-both-sides",
     "adr": "ADR-037 modular register fragment: never edit shillinq_register.json",
     "description": "Links a customer record to the supplier record of the same organisation, so the invoices sent to and received from it can be shown together. RelationLinkService writes the link only after a user confirms it, and refuses a supplier that another customer is linked to already.",
-    "spec": "openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md"
+    "spec": "openspec/specs/bookkeeping-reconciliation-reports/spec.md"
   },
   "info": {
     "version": "0.1.0-reporting-relation-both-sides"

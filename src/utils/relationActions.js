@@ -21,7 +21,7 @@ import RelationsExportDialog from '../modals/RelationsExportDialog.vue'
  * @param {Error} error The request error.
  * @param {string} fallback The text when the endpoint said nothing.
  * @return {string} The text.
- * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  */
 function reason(error, fallback) {
 	return (
@@ -35,7 +35,7 @@ function reason(error, fallback) {
  *
  * @param {{item: object}} scope The row scope.
  * @return {Promise<boolean>} Whether the link was made.
- * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  */
 export async function confirmRelationSuggestion(scope) {
 	const pair = scope && scope.item
@@ -66,7 +66,7 @@ export async function confirmRelationSuggestion(scope) {
  *
  * @param {{item: object}} scope The row scope.
  * @return {Promise<boolean>} Whether the pair was dismissed.
- * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  */
 export async function dismissRelationSuggestion(scope) {
 	const pair = scope && scope.item
@@ -93,7 +93,7 @@ export async function dismissRelationSuggestion(scope) {
  * Header action: export Relations both ways for a period.
  *
  * @return {Promise<unknown>} The dialog's close payload.
- * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  */
 export function openRelationsExport() {
 	return spawnDialog(RelationsExportDialog, { open: true })
@@ -104,7 +104,7 @@ export function openRelationsExport() {
  *
  * @param {string} payeeId The supplier.
  * @return {Promise<string|null>} The customer page URL.
- * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  */
 export async function linkedCustomerUrl(payeeId) {
 	const response = await axios.get(
@@ -126,7 +126,7 @@ export async function linkedCustomerUrl(payeeId) {
  *
  * @param {{item?: object}} scope The page scope.
  * @return {Promise<boolean>} Whether a linked customer was opened.
- * @spec openspec/changes/reporting-relation-both-sides/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  */
 export async function openPayeeRelation(scope) {
 	const payeeId =
