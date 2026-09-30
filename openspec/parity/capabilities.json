@@ -5555,17 +5555,19 @@
 			"id": "rep-scheduled",
 			"area": "reporting",
 			"name": "Schedule a report to run and be delivered on its own.",
-			"shillinq": "no",
+			"shillinq": "yes",
 			"exact-online": "unknown",
 			"moneybird": "partial",
 			"snelstart": "unknown",
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"reachedOn": "nothing"
+				"readOn": "2026-09-30",
+				"reachedOn": "Reporting & Compliance > a report card > Generate > Schedule this report, and Report schedules (/reports/schedules)",
+				"evidence": "ReportSchedule with an active and paused lifecycle (lib/Settings/register.d/reporting-data-delivery.json); ScheduledReportJob runs hourly and ScheduledReportRunner produces each due report as the schedule owner (refused when the owner cannot reach the administration), ScheduledReportDelivery files it in the folder shared with the recipients and notifies them, a failed run records lastError and notifies the owner (tests/Unit/Reporting/Schedule/*, tests/vitest/reportingDataDelivery.spec.js).",
+				"change": "reporting-data-delivery"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
@@ -5597,11 +5599,12 @@
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
+				"state": "building",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"evidence": "OpenRegister's REST object API exposes every shillinq schema to an outside tool that pulls it (see plt-api), and index pages export CSV or Excel; there is no push feed, OData endpoint or BI connector.",
-				"reachedOn": "OpenRegister API /apps/openregister/api/objects (machine surface)"
+				"readOn": "2026-09-30",
+				"evidence": "OpenRegister's REST object API exposes every shillinq schema to an outside tool that pulls it (see plt-api), and index pages export CSV or Excel; there is no push feed, OData endpoint or BI connector. Built half: lib/Settings/feeds.json declares four read-only datasets (ledger-lines, accounts, periods, relations), each bound to one administration, validated by FeedDeclarationValidator. Missing half: integriq serves the declaration with its own credentials (ADR-091), drafted to integriq, not yet filed.",
+				"reachedOn": "OpenRegister API /apps/openregister/api/objects (machine surface)",
+				"change": "reporting-data-delivery"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Power BI Connector: Krijg direct toegang tot al je data, zodat je deze met Microsoft Power BI kunt omzetten naar heldere en gevisualiseerde rapportages\"; https://start.exactonline.nl/docs/HlpRestAPIResources.aspx sync and bulk endpoints Note: Premium for the connector.",
