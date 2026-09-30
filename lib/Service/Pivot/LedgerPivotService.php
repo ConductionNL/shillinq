@@ -491,7 +491,9 @@ class LedgerPivotService {
 				$this->truncated = true;
 				return array_slice($rows, 0, self::MAX_LINES);
 			}
-		} while (count($page) >= self::PAGE_SIZE);
+
+			$fullPage = (count($page) >= self::PAGE_SIZE);
+		} while ($fullPage === true);
 
 		return $rows;
 

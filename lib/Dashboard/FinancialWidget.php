@@ -131,6 +131,8 @@ abstract class FinancialWidget implements IAPIWidgetV2 {
 	 *
 	 * @return WidgetItems The items, or a message when the user has no administration.
 	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $since is the interface's; a figure has no history.
+	 *
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
 	public function getItemsV2(string $userId, ?string $since = null, int $limit = 7): WidgetItems {

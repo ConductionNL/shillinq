@@ -5032,6 +5032,31 @@
 					"id": "ReportingCompliance",
 					"children": [
 						{
+							"id": "FinancialPivot",
+							"label": "Financial pivot",
+							"icon": "TableLarge",
+							"route": "FinancialPivot",
+							"order": 95
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "reporting-custom-analysis",
+					"id": "FinancialPivot",
+					"route": "/reports/pivot",
+					"type": "custom",
+					"title": "Financial pivot"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "ReportingCompliance",
+					"children": [
+						{
 							"id": "ReportSchedules",
 							"label": "Report schedules",
 							"icon": "CalendarClock",
