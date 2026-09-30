@@ -72,6 +72,13 @@ class FinancialDashboardService {
 	];
 
 	/**
+	 * The invoice states that count as invoiced for the top-customers widget.
+	 *
+	 * @var array<int,string>
+	 */
+	private const INVOICED_STATES = ['issued', 'overdue', 'partially-paid', 'paid'];
+
+	/**
 	 * Schemas the KPI summary endpoint consumes (the series schemas plus the
 	 * open AR/AP sources).
 	 *
@@ -249,6 +256,116 @@ class FinancialDashboardService {
 
 		return $previous;
 	}//end previousMonths()
+
+	/**
+	 * The figures the Nextcloud dashboard widgets show, for one administration
+	 * (reporting-custom-analysis REQ-RCA-001). Computed with the same
+	 * calculator as the shillinq dashboard, so the numbers match.
+	 *
+	 * @param string            $administrationId The administration to scope every record to.
+	 * @param DateTimeImmutable $now              The reference date.
+	 *
+	 * @return array<string,mixed> revenue, receivables, cashPosition, resultByMonth, topCustomers.
+	 *
+	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
+	 */
+	public function widgetFigures(string $administrationId, DateTimeImmutable $now): array {
+		$data = $this->fetchSchemas(
+			schemas: [
+				'accounts' => 'Account',
+				'transactions' => 'GLTransaction',
+				'lines' => 'GLLine',
+				'arInvoices' => 'ARInvoice',
+				'customers' => 'CustomerMaster',
+			]
+		);
+		foreach ($data as $key => $rows) {
+			$data[$key] = array_values(
+				array_filter(
+					$rows,
+					static fn (array $row): bool => (string)($row['administrationId'] ?? '') === $administrationId
+				)
+			);
+		}
+
+		$thisMonth = $now->format('Y-m');
+		$lastYear  = sprintf('%04d-%s', ((int)$now->format('Y') - 1), $now->format('m'));
+		$revenue   = $this->calculator->monthlyFinancialSeries(input: $data + ['months' => [$lastYear, $thisMonth]]);
+		$recent    = $this->calculator->monthlyFinancialSeries(input: $data + ['months' => $this->calculator->lastMonths(count: 6, now: $now)]);
+
+		$openAr  = $this->calculator->openArRows(invoices: $data['arInvoices'], customers: $data['customers'], now: $now);
+		$overdue = array_values(array_filter($openAr, static fn (array $row): bool => $row['overdue'] === true));
+
+		$resultByMonth = [];
+		foreach ($recent['months'] as $index => $month) {
+			$resultByMonth[] = ['month' => $month, 'result' => $recent['margin'][$index]];
+		}
+
+		return [
+			'revenue' => [
+				'month' => $thisMonth,
+				'thisMonth' => $revenue['revenue'][1],
+				'sameMonthLastYear' => $revenue['revenue'][0],
+			],
+			'receivables' => [
+				'count' => count($openAr),
+				'amount' => round(array_sum(array_column($openAr, 'amount')), 2),
+				'overdueCount' => count($overdue),
+				'overdueAmount' => round(array_sum(array_column($overdue, 'amount')), 2),
+			],
+			'cashPosition' => $this->calculator->computeKpis(data: $data, now: $now)['cashPosition'],
+			'resultByMonth' => $resultByMonth,
+			'topCustomers' => $this->topCustomers(invoices: $data['arInvoices'], customers: $data['customers'], year: $now->format('Y')),
+		];
+
+	}//end widgetFigures()
+
+	/**
+	 * The five customers invoiced most in a year, net of VAT; drafts and cancelled invoices do not count.
+	 *
+	 * @param array<int,array<string,mixed>> $invoices  ARInvoice records.
+	 * @param array<int,array<string,mixed>> $customers CustomerMaster records.
+	 * @param string                         $year      The year, YYYY.
+	 *
+	 * @return array<int,array{customerId:string,name:string,revenue:float}>
+	 */
+	private function topCustomers(array $invoices, array $customers, string $year): array {
+		$names = [];
+		foreach ($customers as $customer) {
+			$name = (string)($customer['legalName'] ?? $customer['tradeName'] ?? '');
+			foreach ([($customer['customerId'] ?? null), ($customer['@self']['id'] ?? null), ($customer['id'] ?? null)] as $id) {
+				if (is_string($id) === true && $id !== '') {
+					$names[$id] = $name;
+				}
+			}
+		}
+
+		$totals = [];
+		foreach ($invoices as $invoice) {
+			if (in_array((string)($invoice['lifecycleState'] ?? ''), self::INVOICED_STATES, true) === false
+				|| str_starts_with((string)($invoice['invoiceDate'] ?? ''), $year) === false
+			) {
+				continue;
+			}
+
+			$customerId = (string)($invoice['customerId'] ?? '');
+			$totals[$customerId] = (($totals[$customerId] ?? 0.0) + (float)($invoice['netAmount'] ?? 0));
+		}
+
+		arsort($totals);
+		$top = [];
+		foreach (array_slice($totals, 0, 5, true) as $customerId => $revenue) {
+			$name = ($names[(string)$customerId] ?? '');
+			if ($name === '') {
+				$name = (string)$customerId;
+			}
+
+			$top[] = ['customerId' => (string)$customerId, 'name' => $name, 'revenue' => round($revenue, 2)];
+		}
+
+		return $top;
+
+	}//end topCustomers()
 
 	/**
 	 * The cash position per bank account and combined, for one administration (REQ-BCON-004).

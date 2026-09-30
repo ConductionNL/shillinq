@@ -98,6 +98,8 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'relation#unlink', 'url' => '/api/relations/links/{customerId}', 'verb' => 'DELETE'],
             ['name' => 'relation#payeeBothSides', 'url' => '/api/relations/payee/{payeeId}/both-sides', 'verb' => 'GET'],
             ['name' => 'relation#bothSides', 'url' => '/api/relations/{customerId}/both-sides', 'verb' => 'GET'],
+            // reporting-custom-analysis REQ-RCA-002: the financial pivot.
+            ['name' => 'ledgerPivot#pivot', 'url' => '/api/analysis/pivot', 'verb' => 'GET'],
 
         // Subject cost (subject-cost-aggregation, ADR-081): the employer cost
         // of the hours booked against one domain object. The domain app
