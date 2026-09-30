@@ -118,6 +118,7 @@ abstract class FinancialWidget implements IAPIWidgetV2 {
 	 */
 	public function load(): void {
 		// The items come from getItemsV2(); the dashboard draws them, so no script is added.
+		return;
 
 	}//end load()
 
