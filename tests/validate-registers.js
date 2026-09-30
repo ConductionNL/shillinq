@@ -834,7 +834,7 @@ function checkAggregationPlaceholders(registry) {
 // number falling and refuses any new one. Classified in #1261; the bulk are
 // declarations carrying the inert `source` key that MEANT another schema and
 // therefore resolve their fields against the declaring schema instead.
-const AGG_BARE_REF_BASELINE = 100
+const AGG_BARE_REF_BASELINE = 98
 
 // A derived metric that names an alias which does not exist.
 //

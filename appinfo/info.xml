@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.5.3-unstable.20260929120000</version>
+    <version>0.5.3-unstable.20260929213000</version>
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
@@ -257,6 +257,12 @@ Vrij en open source onder de EUPL-1.2-licentie.
                  imports PaymentRequest 0.5.0. Idempotent; a fresh install has
                  no such requests, so post-migration only. -->
             <step>OCA\Shillinq\Repair\BackfillPaymentRequestCustomer</step>
+            <!-- reporting-segment-results (REQ-RSR-002, design Migration Plan).
+                 Stamps accountClass and countsInResult on the lines of
+                 transactions posted or reversed before GLLineResultStampListener
+                 existed; after InitializeSettings, which imports the GLLine
+                 fields. Idempotent; post-migration only. -->
+            <step>OCA\Shillinq\Repair\StampGlLineResults</step>
             <!-- arinvoice-field-backfill-and-bt10 (REQ-RIN-011, REQ-IQD-008).
                  Fills recurringProfileId, billingPeriod, customerReference and
                  line glAccount on invoices saved before ARInvoice 0.16.0, where
