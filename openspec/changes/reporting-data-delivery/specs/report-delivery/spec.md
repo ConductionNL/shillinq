@@ -26,6 +26,8 @@ destination folder shared with the recipients, notify them with a link, and
 set the next run. A failed run SHALL record its reason and notify the
 schedule's owner.
 
+@e2e exclude backend/job: a background job run has no browser surface; asserted by ScheduledReportRunnerTest and ScheduledReportDeliveryTest via PHPUnit
+
 #### Scenario: The 5th of October
 
 - GIVEN the monthly schedule and the job running on 2026-10-05
@@ -44,6 +46,8 @@ Shillinq SHALL declare read-only feed datasets for posted ledger lines,
 accounts, periods and relations, each bound to one administration, for
 integriq to serve with its own credentials. A dataset without an
 administration binding MUST be refused by the declaration's validation.
+
+@e2e exclude backend/data: the feed is a declaration integriq serves, shillinq ships no endpoint for it; asserted by FeedDeclarationValidatorTest via PHPUnit
 
 #### Scenario: A BI workspace pulls its own ledger
 

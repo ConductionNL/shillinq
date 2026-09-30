@@ -32,6 +32,7 @@ namespace OCA\Shillinq\AppInfo;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Listener\GLLineResultStampListener;
+use OCA\Shillinq\Notification\ScheduledReportNotifier;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**
@@ -49,6 +50,7 @@ final class ReportingRegistration {
 	 * @return void
 	 *
 	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
+	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
 	 */
 	public function register(IRegistrationContext $context): void {
 		$context->registerEventListener(
@@ -59,6 +61,8 @@ final class ReportingRegistration {
 			event: ObjectCreatedEvent::class,
 			listener: GLLineResultStampListener::class
 		);
+		// Reporting-data-delivery: tells recipients a scheduled report is ready.
+		$context->registerNotifierService(ScheduledReportNotifier::class);
 
 	}//end register()
 }//end class
