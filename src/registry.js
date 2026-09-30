@@ -181,6 +181,7 @@ import PurchaseOrderDetail from './components/purchase-order/PurchaseOrderDetail
 import PurchaseOrderForm from './components/purchase-order/PurchaseOrderForm.vue'
 import PurchasingOverview from './components/purchasing/PurchasingOverview.vue'
 import GeneratedReportsIndex from './components/reporting/GeneratedReportsIndex.vue'
+import FinancialPivot from './components/reporting/FinancialPivot.vue'
 // reporting-compliance-consolidation: the Reporting & Compliance section is
 // two custom pages. The overview renders the static ReportCatalogue
 // (lib/Reporting/ReportCatalogue.php) as category-grouped cards with a
@@ -575,6 +576,7 @@ export default {
 	BankingCashflowOverview: { kind: 'page', component: BankingCashflowOverview },
 	TaxesOverview: { kind: 'page', component: TaxesOverview },
 	GeneratedReportsIndex: { kind: 'page', component: GeneratedReportsIndex },
+	FinancialPivot: { kind: 'page', component: FinancialPivot },
 	BankImportPage: { kind: 'page', component: BankImportPage },
 
 	// accountant-portal: scoped multi-client dashboard + handover-pack export.

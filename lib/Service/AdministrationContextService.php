@@ -236,6 +236,27 @@ class AdministrationContextService {
 	}//end canUserAccess()
 
 	/**
+	 * The administration a named user works in by default: their first valid membership.
+	 *
+	 * A dashboard widget is asked for a user id without a shillinq session, so
+	 * it cannot read the session's active administration.
+	 *
+	 * @param string $userId The user.
+	 *
+	 * @return string|null The administration id, or null when the user has none.
+	 *
+	 * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+	 */
+	public function defaultAdministrationIdForUser(string $userId): ?string {
+		if ($userId === '') {
+			return null;
+		}
+
+		return ($this->administrationIdsForUser(userId: $userId)[0] ?? null);
+
+	}//end defaultAdministrationIdForUser()
+
+	/**
 	 * The administration ids a user holds a currently valid membership for.
 	 *
 	 * @param string $userId The user.
