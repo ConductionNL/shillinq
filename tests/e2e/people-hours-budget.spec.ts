@@ -44,12 +44,21 @@ test.describe('people-hours-budget', () => {
 	/**
 	 * @e2e bookkeeping-consultancy-project-accounting::a-booking-updates-the-assignment
 	 */
-	test('the project page shows 96 of 120 hours and 80 percent used', async ({ page }) => {
-		await page.route(`**/api/objects/shillinq/engagement/${projectId}**`, (route) => route.fulfill({ json: project }))
-		await page.route('**/api/objects/shillinq/ProjectAssignment**', (route) =>
-			route.fulfill({ json: { results: [assignment], total: 1, page: 1, pages: 1 } }),
+	test('the project page shows 96 of 120 hours and 80 percent used', async ({
+		page,
+	}) => {
+		await page.route(
+			`**/api/objects/shillinq/engagement/${projectId}**`,
+			(route) => route.fulfill({ json: project }),
 		)
-		await page.goto(`/index.php/apps/shillinq/bookkeeping/dimensions/projects/${projectId}`)
+		await page.route('**/api/objects/shillinq/ProjectAssignment**', (route) =>
+			route.fulfill({
+				json: { results: [assignment], total: 1, page: 1, pages: 1 },
+			}),
+		)
+		await page.goto(
+			`/index.php/apps/shillinq/bookkeeping/dimensions/projects/${projectId}`,
+		)
 
 		await expect(page.getByText('Hours budget')).toBeVisible()
 		const row = page.getByRole('row', { name: /a\.bakker/ })
@@ -64,11 +73,24 @@ test.describe('people-hours-budget', () => {
 		const asked: string[] = []
 		await page.route('**/api/objects/shillinq/engagement**', (route) => {
 			asked.push(route.request().url())
-			return route.fulfill({ json: { results: [{ ...project, hoursOverBudget: true, loggedHoursTotal: 125 }], total: 1, page: 1, pages: 1 } })
+			return route.fulfill({
+				json: {
+					results: [
+						{ ...project, hoursOverBudget: true, loggedHoursTotal: 125 },
+					],
+					total: 1,
+					page: 1,
+					pages: 1,
+				},
+			})
 		})
-		await page.goto('/index.php/apps/shillinq/bookkeeping/dimensions/projects?hoursOverBudget=true')
+		await page.goto(
+			'/index.php/apps/shillinq/bookkeeping/dimensions/projects?hoursOverBudget=true',
+		)
 
-		await expect(page.getByRole('row', { name: /Herinrichting Wmo-loket/ })).toBeVisible()
+		await expect(
+			page.getByRole('row', { name: /Herinrichting Wmo-loket/ }),
+		).toBeVisible()
 		expect(asked.some((url) => url.includes('hoursOverBudget'))).toBe(true)
 	})
 })

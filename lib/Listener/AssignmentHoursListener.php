@@ -135,7 +135,7 @@ class AssignmentHoursListener implements IEventListener {
 			if ($oldEntity !== null
 				&& (string)($old['estimatedHours'] ?? '') !== (string)($new['estimatedHours'] ?? '')
 			) {
-				$this->hours->recalculate(assignmentId: ObjectIdentifier::resolve(saved: $entity), rearm: true);
+				$this->hours->rearm(assignmentId: ObjectIdentifier::resolve(saved: $entity));
 			}
 
 			return;

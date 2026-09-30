@@ -84,28 +84,49 @@ class AssignmentHours {
 	}//end __construct()
 
 	/**
-	 * Re-sum one assignment and write its hours budget and its project's totals.
+	 * Clear the warned flags of an assignment whose estimate changed, then re-sum it.
 	 *
-	 * @param string      $assignmentId  The ProjectAssignment id.
-	 * @param bool        $rearm         True when the estimate changed: the warned flags are cleared first.
-	 * @param string|null $ignoreHourId  An hour record to leave out (one being deleted).
+	 * Two writes: a flag that stays true within one write is no change, so the
+	 * declared warning would not fire again for the new estimate.
 	 *
-	 * @return bool True when the assignment was patched.
+	 * @param string $assignmentId The ProjectAssignment id.
+	 *
+	 * @return bool True when the assignment was patched after clearing.
 	 *
 	 * @spec openspec/specs/bookkeeping-consultancy-project-accounting/spec.md
 	 */
-	public function recalculate(string $assignmentId, bool $rearm = false, ?string $ignoreHourId = null): bool {
+	public function rearm(string $assignmentId): bool {
 		$assignment = $this->assignment(assignmentId: $assignmentId);
 		if ($assignment === null) {
 			return false;
 		}
 
-		if ($rearm === true && $this->anyFlagSet(assignment: $assignment) === true) {
-			// Two writes: a flag that stays true in one write is no change, so
-			// the declared warning would not fire again for the new estimate.
-			$cleared = array_fill_keys(array_keys(self::THRESHOLDS), false);
-			$this->patch(schema: self::ASSIGNMENT_SCHEMA, objectId: $assignmentId, data: $cleared);
-			$assignment = array_merge($assignment, $cleared);
+		if ($this->anyFlagSet(assignment: $assignment) === true) {
+			$this->patch(
+				schema: self::ASSIGNMENT_SCHEMA,
+				objectId: $assignmentId,
+				data: array_fill_keys(array_keys(self::THRESHOLDS), false)
+			);
+		}
+
+		return $this->recalculate(assignmentId: $assignmentId);
+
+	}//end rearm()
+
+	/**
+	 * Re-sum one assignment and write its hours budget and its project's totals.
+	 *
+	 * @param string      $assignmentId The ProjectAssignment id.
+	 * @param string|null $ignoreHourId An hour record to leave out (one being deleted).
+	 *
+	 * @return bool True when the assignment was patched.
+	 *
+	 * @spec openspec/specs/bookkeeping-consultancy-project-accounting/spec.md
+	 */
+	public function recalculate(string $assignmentId, ?string $ignoreHourId = null): bool {
+		$assignment = $this->assignment(assignmentId: $assignmentId);
+		if ($assignment === null) {
+			return false;
 		}
 
 		$logged = $this->loggedHours(assignmentId: $assignmentId, ignoreHourId: $ignoreHourId);
