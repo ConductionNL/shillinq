@@ -211,6 +211,38 @@ class AdministrationContextService {
 			return [];
 		}
 
+		return $this->administrationIdsForUser(userId: $userId);
+	}//end accessibleAdministrationIds()
+
+	/**
+	 * Whether a named user may access an administration, without a session.
+	 *
+	 * A background job runs as nobody; a scheduled report runs on behalf of the
+	 * schedule's owner and must never reach further than that owner could by hand.
+	 *
+	 * @param string $userId           The user.
+	 * @param string $administrationId The administration.
+	 *
+	 * @return bool True when the user holds a currently valid membership.
+	 *
+	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+	 */
+	public function canUserAccess(string $userId, string $administrationId): bool {
+		if ($userId === '' || $administrationId === '') {
+			return false;
+		}
+
+		return in_array(needle: $administrationId, haystack: $this->administrationIdsForUser(userId: $userId), strict: true);
+	}//end canUserAccess()
+
+	/**
+	 * The administration ids a user holds a currently valid membership for.
+	 *
+	 * @param string $userId The user.
+	 *
+	 * @return array<int,string>
+	 */
+	private function administrationIdsForUser(string $userId): array {
 		$ids = [];
 		foreach ($this->membershipsForUser(userId: $userId) as $membership) {
 			$administrationId = (string)($membership['administrationId'] ?? '');
@@ -226,7 +258,7 @@ class AdministrationContextService {
 		}
 
 		return array_values(array_unique($ids));
-	}//end accessibleAdministrationIds()
+	}//end administrationIdsForUser()
 
 	/**
 	 * Whether the authenticated user may access a given administration (REQ-MA-001).

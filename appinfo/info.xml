@@ -94,6 +94,8 @@ Vrij en open source onder de EUPL-1.2-licentie.
              third, non-canonical job directory shillinq shipped. -->
         <job>OCA\Shillinq\BackgroundJob\MandateDormancyExpiryJob</job>
         <job>OCA\Shillinq\BackgroundJob\DBAFlagGenerationJob</job>
+        <!-- reporting-data-delivery REQ-RDD-002: hourly, runs the due report schedules. -->
+        <job>OCA\Shillinq\BackgroundJob\ScheduledReportJob</job>
         <job>OCA\Shillinq\BackgroundJob\DBAPortfolioAggregationJob</job>
         <!-- Cashflow 13wk: daily bankfeed pull, daily crisis-mode refresh,
              monthly calibration. REQ-CF-010/012/013. Moved from lib/Cron/
