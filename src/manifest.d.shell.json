@@ -5027,20 +5027,7 @@
 			]
 		},
 		{
-			"menu": [
-				{
-					"id": "ReportingCompliance",
-					"children": [
-						{
-							"id": "FinancialPivot",
-							"label": "Financial pivot",
-							"icon": "TableLarge",
-							"route": "FinancialPivot",
-							"order": 95
-						}
-					]
-				}
-			],
+			"menu": [],
 			"pages": [
 				{
 					"_fragment": "reporting-custom-analysis",
