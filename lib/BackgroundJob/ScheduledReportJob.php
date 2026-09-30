@@ -68,6 +68,8 @@ class ScheduledReportJob extends TimedJob {
 	 * @return void
 	 *
 	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is TimedJob's.
 	 */
 	protected function run($argument): void {
 		try {

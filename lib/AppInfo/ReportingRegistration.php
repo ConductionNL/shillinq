@@ -61,7 +61,7 @@ final class ReportingRegistration {
 			event: ObjectCreatedEvent::class,
 			listener: GLLineResultStampListener::class
 		);
-		// reporting-data-delivery: tells recipients a scheduled report is ready.
+		// Reporting-data-delivery: tells recipients a scheduled report is ready.
 		$context->registerNotifierService(ScheduledReportNotifier::class);
 
 	}//end register()

@@ -43,6 +43,7 @@ use OCP\Notification\IManager as INotificationManager;
 use OCP\Share\IManager as IShareManager;
 use OCP\Share\IShare;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -93,7 +94,7 @@ class ScheduledReportDelivery {
 		$userFolder = $this->rootFolder->getUserFolder($ownerId);
 		$produced   = $userFolder->getFirstNodeById($fileId);
 		if ($produced instanceof File === false) {
-			throw new \RuntimeException('The produced report file cannot be found.');
+			throw new RuntimeException('The produced report file cannot be found.');
 		}
 
 		$folder = $this->folder(base: $userFolder, path: $folderPath);
@@ -282,7 +283,7 @@ class ScheduledReportDelivery {
 
 			$node = $current->get($segment);
 			if ($node instanceof Folder === false) {
-				throw new \RuntimeException('The report folder path runs into a file: ' . $segment);
+				throw new RuntimeException('The report folder path runs into a file: ' . $segment);
 			}
 
 			$current = $node;
