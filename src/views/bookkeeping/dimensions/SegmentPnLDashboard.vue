@@ -230,6 +230,12 @@ export default {
 			return this.activeSegment === 'costCenterHierarchy'
 		},
 
+		/**
+		 * Column heading for the segment the report is grouped by.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
+		 */
 		groupLabel() {
 			const map = {
 				costCenter: this.t('shillinq', 'Cost center'),
@@ -241,10 +247,22 @@ export default {
 			return map[this.activeSegment] ?? this.t('shillinq', 'Segment')
 		},
 
+		/**
+		 * Revenue, costs and result summed over the shown segments.
+		 *
+		 * @return {object}
+		 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
+		 */
 		total() {
 			return segmentTotals(this.rows)
 		},
 
+		/**
+		 * The segments the user can group the report by.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
+		 */
 		availableSegments() {
 			return [
 				{ id: 'costCenter', label: this.t('shillinq', 'Cost center') },
