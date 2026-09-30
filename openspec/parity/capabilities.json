@@ -3281,17 +3281,19 @@
 			"id": "rep-bi",
 			"area": "reporting",
 			"name": "Build your own dashboards or pivot tables on the financial data.",
-			"shillinq": "no",
+			"shillinq": "yes",
 			"exact-online": "yes",
 			"moneybird": "partial",
 			"snelstart": "yes",
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
-				"evidence": "Dashboards are fixed manifest widget lists (src/manifest.json Dashboard, *Dashboard pages); grep 'pivot' in src/lib finds only a stock-by-location page description; no user-editable dashboard or pivot builder component in src/components or src/views.",
-				"reachedOn": "nothing reaches it: no page lets a user compose a dashboard or pivot",
-				"owner": "ConductionNL/shillinq"
+				"state": "built",
+				"owner": "ConductionNL/shillinq",
+				"readOn": "2026-09-30",
+				"reachedOn": "Reports > Financial pivot (/reports/pivot); the Nextcloud dashboard and launchpad widget pickers list Revenue this month, Open receivables, Cash position, Result by month and Top customers",
+				"evidence": "Five IAPIWidgetV2 widgets (lib/Dashboard/*Widget.php, registered by lib/AppInfo/DashboardWidgetRegistration.php) show FinancialDashboardService::widgetFigures() for the user's administration and say so when there is none; GET /api/analysis/pivot (lib/Controller/LedgerPivotController.php, lib/Service/Pivot/LedgerPivotService.php) sums signedAmount of posted profit and loss lines over two of account, account group, month, quarter, cost centre, project and customer, caps each axis at 200 groups and says so; the FinancialPivot page exports CSV and Excel (tests/Unit/Service/Pivot/LedgerPivotServiceTest.php, tests/Unit/Dashboard/FinancialWidgetsTest.php, tests/vitest/reportingFinancialPivot.spec.js).",
+				"change": "2026-09-30-reporting-custom-analysis"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Power BI Connector: Krijg direct toegang tot al je data, zodat je deze met Microsoft Power BI kunt omzetten naar heldere en gevisualiseerde rapportages\" Note: Premium; Power BI licence not included.",

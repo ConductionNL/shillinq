@@ -5027,6 +5027,18 @@
 			]
 		},
 		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "reporting-custom-analysis",
+					"id": "FinancialPivot",
+					"route": "/reports/pivot",
+					"type": "custom",
+					"title": "Financial pivot"
+				}
+			]
+		},
+		{
 			"menu": [
 				{
 					"id": "ReportingCompliance",

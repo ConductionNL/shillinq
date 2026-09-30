@@ -63,6 +63,8 @@ final class ReportingRegistration {
 		);
 		// Reporting-data-delivery: tells recipients a scheduled report is ready.
 		$context->registerNotifierService(ScheduledReportNotifier::class);
+		// Reporting-custom-analysis: the financial dashboard widgets.
+		(new DashboardWidgetRegistration())->register(context: $context);
 
 	}//end register()
 }//end class

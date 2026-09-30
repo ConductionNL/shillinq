@@ -2594,6 +2594,14 @@
 						"route": "VarianceReport"
 					},
 					{
+						"id": "FinancialPivot",
+						"label": "Financial pivot",
+						"description": "The result by account, period, cost centre, project or customer, on two axes you choose.",
+						"icon": "TableLarge",
+						"category": "financial",
+						"route": "FinancialPivot"
+					},
+					{
 						"id": "GeneratedReportsIndex",
 						"label": "Generated reports",
 						"description": "Everything Reporting & Compliance has already produced.",
