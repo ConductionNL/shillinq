@@ -5073,6 +5073,38 @@
 		{
 			"menu": [
 				{
+					"id": "ReportingCompliance",
+					"children": [
+						{
+							"id": "ReportSchedules",
+							"label": "Report schedules",
+							"icon": "CalendarClock",
+							"route": "ReportSchedules",
+							"order": 90
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "reporting-data-delivery",
+					"id": "ReportSchedules",
+					"route": "/reports/schedules",
+					"type": "index",
+					"title": "Report schedules"
+				},
+				{
+					"_fragment": "reporting-data-delivery",
+					"id": "ReportScheduleDetail",
+					"route": "/reports/schedules/:id",
+					"type": "detail",
+					"title": "Report schedule"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "RetainerPools",
 					"label": "Retainer Pools",
 					"icon": "WalletOutline",
