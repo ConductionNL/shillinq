@@ -75,3 +75,11 @@ A repair step sums existing hours into `loggedHours` per assignment.
 ## Open Questions
 
 None.
+
+## Built (2026-09-30): where the code differs from the decisions above
+
+- **The project.** `ProjectDetail` and the projects list read the `engagement` schema, and `ProjectAssignment.projectId` points at it there (the planninq wording on the field is older than the page). The project owner is `engagement.responsibleUser`. `AssignmentHours` copies it onto the assignment as `projectOwner`, with the project name as `projectTitle`, because a declared recipient can only read a field of the object that changed.
+- **Warnings (D2).** Each notification is an `updated` trigger on its warned flag going from false to true (`hoursWarnedAt80`, `hoursWarnedAt100`), so it is sent once. A flag stays true while the hours fall back; a changed estimate clears the flags in one write and sets them again in a second, so a still-crossed threshold warns again for the new estimate.
+- **Totals and filter (D3).** The listener also writes `estimatedHoursTotal`, `loggedHoursTotal`, `remainingHoursTotal` and `hoursOverBudget` on the project; the over-budget filter on the projects list reads `hoursOverBudget`.
+- **Project page.** `ProjectDetail` rendered fields plus two `relatedLists` that no component draws, so the assignments were never on the page. It is now a widget grid: project, hours budget, hours per assignment (estimated, logged, remaining, used), revenue recognition and WIP history.
+- **Deletion.** OpenRegister may still return a deleted hour while `ObjectDeletedEvent` is handled, so the listener leaves that hour's id out of the sum.

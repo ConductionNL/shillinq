@@ -5668,18 +5668,19 @@
 			"id": "ppl-hours-budget",
 			"area": "people",
 			"name": "Budget hours per project and be warned when they run over.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "yes",
 			"moneybird": "partial",
 			"snelstart": "unknown",
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"evidence": "ProjectAssignment.estimatedHours (lib/Settings/shillinq_register.json:6218) records an estimate per person per project, shown on ProjectDetail and Utilisatie; nothing warns when logged hours exceed it.",
-				"reachedOn": "ProjectDetail /bookkeeping/dimensions/projects/:id, Utilisatie /utilisatie"
+				"readOn": "2026-09-30",
+				"evidence": "ProjectAssignment.loggedHours, remainingHours, hoursUsedPercent (declared calculation), hoursWarnedAt80/100 and two x-openregister-notifications to projectOwner (lib/Settings/register.d/people-hours-budget.json); AssignmentHoursListener re-sums an assignment when an UrenRegistratie is created, changed or deleted and re-arms the warnings when the estimate changes, AssignmentHours writes the project totals and hoursOverBudget, BackfillAssignmentHours sums history (tests/Unit/Listener/AssignmentHoursListenerTest.php).",
+				"reachedOn": "Projects > a project (/bookkeeping/dimensions/projects/:id): Hours budget and Hours per assignment; Projects list filter Over hours budget",
+				"change": "2026-09-30-people-hours-budget"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/projectadministratie/features-en-prijzen: \"Gebudgetteerde uren & kosten per project bewaken\" and \"Uren & kosten budgetteren (WBS)\" Note: Projectadministratie; the form of the warning is not described.",

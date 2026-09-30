@@ -26,6 +26,8 @@ The project owner SHALL receive a notification when an assignment's used
 percentage reaches 80 and when it reaches 100, once per threshold until the
 estimate changes.
 
+@e2e exclude backend/notification: the warning is a declared notification on a flag the listener writes, asserted by AssignmentHoursListenerTest, not the browser
+
 #### Scenario: The first warning
 
 - GIVEN the assignment at 75 percent
