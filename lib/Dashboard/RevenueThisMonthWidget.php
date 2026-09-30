@@ -14,7 +14,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -27,7 +27,7 @@ namespace OCA\Shillinq\Dashboard;
 /**
  * Revenue booked this month, against the same month last year.
  *
- * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  */
 class RevenueThisMonthWidget extends FinancialWidget {
 
@@ -36,7 +36,7 @@ class RevenueThisMonthWidget extends FinancialWidget {
 	 *
 	 * @return string The id.
 	 *
-	 * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
 	public function getId(): string {
 		return 'shillinq-revenue-this-month';
@@ -48,7 +48,7 @@ class RevenueThisMonthWidget extends FinancialWidget {
 	 *
 	 * @return string The title.
 	 *
-	 * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
 	public function getTitle(): string {
 		return $this->l10n->t('Revenue this month');

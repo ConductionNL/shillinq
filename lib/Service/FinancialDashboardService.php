@@ -267,7 +267,7 @@ class FinancialDashboardService {
 	 *
 	 * @return array<string,mixed> revenue, receivables, cashPosition, resultByMonth, topCustomers.
 	 *
-	 * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
 	public function widgetFigures(string $administrationId, DateTimeImmutable $now): array {
 		$data = $this->fetchSchemas(

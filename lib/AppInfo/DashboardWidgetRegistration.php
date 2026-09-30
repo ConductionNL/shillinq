@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -36,7 +36,7 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
 /**
  * Registers the five financial widgets.
  *
- * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  */
 final class DashboardWidgetRegistration {
 
@@ -47,7 +47,7 @@ final class DashboardWidgetRegistration {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
 	public function register(IRegistrationContext $context): void {
 		$context->registerDashboardWidget(RevenueThisMonthWidget::class);

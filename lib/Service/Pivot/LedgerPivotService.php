@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -43,7 +43,7 @@ use OCA\Shillinq\Service\SettingsService;
 /**
  * Pivots posted result lines on two axes.
  *
- * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  */
 class LedgerPivotService {
 	use ReadsSourceRowsInBatches;
@@ -106,7 +106,7 @@ class LedgerPivotService {
 	 *
 	 * @throws InvalidArgumentException When an axis, a date or the range is not accepted.
 	 *
-	 * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
 	public function pivot(string $administrationId, string $rowAxis, string $columnAxis, string $from, string $to): array {
 		$this->assertRequest(rowAxis: $rowAxis, columnAxis: $columnAxis, from: $from, to: $to);

@@ -180,8 +180,8 @@ import PurchaseOrderDetail from './components/purchase-order/PurchaseOrderDetail
 // components.
 import PurchaseOrderForm from './components/purchase-order/PurchaseOrderForm.vue'
 import PurchasingOverview from './components/purchasing/PurchasingOverview.vue'
-import GeneratedReportsIndex from './components/reporting/GeneratedReportsIndex.vue'
 import FinancialPivot from './components/reporting/FinancialPivot.vue'
+import GeneratedReportsIndex from './components/reporting/GeneratedReportsIndex.vue'
 // reporting-compliance-consolidation: the Reporting & Compliance section is
 // two custom pages. The overview renders the static ReportCatalogue
 // (lib/Reporting/ReportCatalogue.php) as category-grouped cards with a

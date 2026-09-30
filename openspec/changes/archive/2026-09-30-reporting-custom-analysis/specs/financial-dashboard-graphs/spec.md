@@ -14,6 +14,8 @@ open receivables, cash position, result by month and top customers, each for
 the user's active administration and with the same figures as the shillinq
 dashboard. A widget without an active administration SHALL say so.
 
+@e2e exclude the widget picker belongs to launchpad and the Nextcloud dashboard, not to a shillinq page; the widget items are asserted by tests/Unit/Dashboard/FinancialWidgetsTest.php
+
 #### Scenario: A director builds their own dashboard
 
 - GIVEN a director with launchpad installed
@@ -23,8 +25,8 @@ dashboard. A widget without an active administration SHALL say so.
 ### Requirement: A user pivots posted ledger lines (REQ-RCA-002)
 
 A pivot page SHALL sum the signed amounts of posted lines that count in
-results over two axes chosen from account, account group, period, cost
-centre, project and customer, for a date range, with totals, and SHALL
+results over two axes chosen from account, account group, month, quarter,
+cost centre, project and customer, for a date range, with totals, and SHALL
 export what it shows to CSV and Excel.
 
 #### Scenario: Revenue by quarter

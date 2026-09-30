@@ -14,7 +14,7 @@
  A custom page: two axis pickers over a cross table fit none of the typed
  archetypes (an index lists records, a dashboard lays out widgets).
 
- @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+ @spec openspec/specs/financial-dashboard-graphs/spec.md
 -->
 
 <template>
@@ -23,35 +23,58 @@
 			{{ t('shillinq', 'Financial pivot') }}
 		</h2>
 		<p class="financial-pivot__intro">
-			{{ t('shillinq', 'The result of posted ledger lines, revenue positive and costs negative, over two axes you choose.') }}
+			{{
+				t(
+					'shillinq',
+					'The result of posted ledger lines, revenue positive and costs negative, over two axes you choose.',
+				)
+			}}
 		</p>
 
 		<div class="financial-pivot__controls">
 			<div class="financial-pivot__field">
 				<label for="financial-pivot-rows">{{ t('shillinq', 'Rows') }}</label>
-				<select id="financial-pivot-rows" v-model="rowAxis" data-testid="financial-pivot-rows">
-					<option v-for="axis in axes" :key="axis.value" :value="axis.value">
+				<select
+					id="financial-pivot-rows"
+					v-model="rowAxis"
+					data-testid="financial-pivot-rows">
+					<option
+						v-for="axis in axes"
+						:key="axis.value"
+						:value="axis.value">
 						{{ axis.label }}
 					</option>
 				</select>
 			</div>
 			<div class="financial-pivot__field">
-				<label for="financial-pivot-columns">{{ t('shillinq', 'Columns') }}</label>
-				<select id="financial-pivot-columns" v-model="columnAxis" data-testid="financial-pivot-columns">
-					<option v-for="axis in axes" :key="axis.value" :value="axis.value">
+				<label for="financial-pivot-columns">{{
+					t('shillinq', 'Columns')
+				}}</label>
+				<select
+					id="financial-pivot-columns"
+					v-model="columnAxis"
+					data-testid="financial-pivot-columns">
+					<option
+						v-for="axis in axes"
+						:key="axis.value"
+						:value="axis.value">
 						{{ axis.label }}
 					</option>
 				</select>
 			</div>
 			<div class="financial-pivot__field">
 				<label for="financial-pivot-from">{{ t('shillinq', 'From') }}</label>
-				<input id="financial-pivot-from" v-model="from" type="date">
+				<input id="financial-pivot-from" v-model="from" type="date" />
 			</div>
 			<div class="financial-pivot__field">
 				<label for="financial-pivot-to">{{ t('shillinq', 'To') }}</label>
-				<input id="financial-pivot-to" v-model="to" type="date">
+				<input id="financial-pivot-to" v-model="to" type="date" />
 			</div>
-			<NcButton type="primary" :disabled="loading || rowAxis === columnAxis" data-testid="financial-pivot-show" @click="load">
+			<NcButton
+				variant="primary"
+				:disabled="loading || rowAxis === columnAxis"
+				data-testid="financial-pivot-show"
+				@click="load">
 				{{ t('shillinq', 'Show') }}
 			</NcButton>
 		</div>
@@ -69,31 +92,58 @@
 				{{ t('shillinq', 'No posted result lines in this range.') }}
 			</p>
 			<div v-else class="financial-pivot__table-wrap">
-				<table class="financial-pivot__table" data-testid="financial-pivot-table">
+				<table
+					class="financial-pivot__table"
+					data-testid="financial-pivot-table">
 					<thead>
 						<tr>
-							<th v-for="(heading, index) in table[0]" :key="'h' + index" scope="col">
+							<th
+								v-for="(heading, index) in table[0]"
+								:key="'h' + index"
+								scope="col">
 								{{ heading }}
 							</th>
 						</tr>
 					</thead>
 					<tbody>
-						<tr v-for="(row, rowIndex) in table.slice(1)" :key="'r' + rowIndex" :class="{ 'financial-pivot__total': rowIndex === table.length - 2 }">
+						<tr
+							v-for="(row, rowIndex) in table.slice(1)"
+							:key="'r' + rowIndex"
+							:class="{
+								'financial-pivot__total':
+									rowIndex === table.length - 2,
+							}">
 							<th scope="row">
 								{{ row[0] }}
 							</th>
-							<td v-for="(value, cellIndex) in row.slice(1)" :key="'c' + cellIndex" class="financial-pivot__amount">
+							<td
+								v-for="(value, cellIndex) in row.slice(1)"
+								:key="'c' + cellIndex"
+								class="financial-pivot__amount">
 								{{ formatAmount(value) }}
 							</td>
 						</tr>
 					</tbody>
 				</table>
 			</div>
-			<p v-if="pivot.capped.rows || pivot.capped.columns" class="financial-pivot__capped" data-testid="financial-pivot-capped">
-				{{ t('shillinq', 'Only the 200 largest groups are shown; the totals include every line.') }}
+			<p
+				v-if="pivot.capped.rows || pivot.capped.columns"
+				class="financial-pivot__capped"
+				data-testid="financial-pivot-capped">
+				{{
+					t(
+						'shillinq',
+						'The table shows the 200 largest groups. The totals include every line.',
+					)
+				}}
 			</p>
 			<p v-if="pivot.truncated" class="financial-pivot__capped">
-				{{ t('shillinq', 'This range holds more ledger lines than one pivot reads. Choose a shorter range for complete figures.') }}
+				{{
+					t(
+						'shillinq',
+						'This range holds more ledger lines than one pivot reads. Choose a shorter range for complete figures.',
+					)
+				}}
 			</p>
 			<div v-if="pivot.rows.length > 0" class="financial-pivot__exports">
 				<NcButton data-testid="financial-pivot-csv" @click="exportCsv">
@@ -108,11 +158,16 @@
 </template>
 
 <script>
-import { NcButton, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
-import { defaultRange, pivotTable, toCsv, toSpreadsheetXml } from '../../utils/financialPivot.js'
+import { NcButton, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
+import {
+	defaultRange,
+	pivotTable,
+	toCsv,
+	toSpreadsheetXml,
+} from '../../utils/financialPivot.js'
 
 export default {
 	name: 'FinancialPivot',
@@ -140,12 +195,15 @@ export default {
 		 * The axes the pickers offer, with their labels.
 		 *
 		 * @return {Array<{value: string, label: string}>} The axes.
-		 * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+		 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 		 */
 		axes() {
 			return [
 				{ value: 'account', label: this.t('shillinq', 'Account') },
-				{ value: 'accountGroup', label: this.t('shillinq', 'Account group') },
+				{
+					value: 'accountGroup',
+					label: this.t('shillinq', 'Account group'),
+				},
 				{ value: 'period', label: this.t('shillinq', 'Month') },
 				{ value: 'quarter', label: this.t('shillinq', 'Quarter') },
 				{ value: 'costCenter', label: this.t('shillinq', 'Cost centre') },
@@ -158,13 +216,15 @@ export default {
 		 * The table the page shows and exports.
 		 *
 		 * @return {Array<Array<string|number|null>>} Header, rows and totals.
-		 * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+		 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 		 */
 		table() {
 			if (!this.pivot) {
 				return []
 			}
-			const rowAxis = this.axes.find((axis) => axis.value === this.pivot.rowAxis)
+			const rowAxis = this.axes.find(
+				(axis) => axis.value === this.pivot.rowAxis,
+			)
 			return pivotTable(this.pivot, {
 				rowHeader: rowAxis ? rowAxis.label : '',
 				total: this.t('shillinq', 'Total'),
@@ -184,19 +244,28 @@ export default {
 		 * Fetch the pivot for the chosen axes and range.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+		 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 		 */
 		async load() {
 			this.loading = true
 			this.error = ''
 			try {
-				const response = await axios.get(generateUrl('/apps/shillinq/api/analysis/pivot'), {
-					params: { rows: this.rowAxis, columns: this.columnAxis, from: this.from, to: this.to },
-				})
+				const response = await axios.get(
+					generateUrl('/apps/shillinq/api/analysis/pivot'),
+					{
+						params: {
+							rows: this.rowAxis,
+							columns: this.columnAxis,
+							from: this.from,
+							to: this.to,
+						},
+					},
+				)
 				this.pivot = response.data
 			} catch (e) {
 				this.pivot = null
-				this.error = (e.response && e.response.data && e.response.data.error)
+				this.error =
+					(e.response && e.response.data && e.response.data.error)
 					|| this.t('shillinq', 'The pivot could not be loaded.')
 			} finally {
 				this.loading = false
@@ -208,20 +277,23 @@ export default {
 		 *
 		 * @param {number|null} value The amount.
 		 * @return {string} The text.
-		 * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+		 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 		 */
 		formatAmount(value) {
 			if (value === null || value === undefined) {
 				return ''
 			}
-			return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'EUR' }).format(value)
+			return new Intl.NumberFormat(undefined, {
+				style: 'currency',
+				currency: 'EUR',
+			}).format(value)
 		},
 
 		/**
 		 * Download the shown table as CSV.
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+		 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 		 */
 		exportCsv() {
 			this.download(toCsv(this.table), 'text/csv', 'csv')
@@ -231,10 +303,14 @@ export default {
 		 * Download the shown table as an Excel workbook.
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+		 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 		 */
 		exportExcel() {
-			this.download(toSpreadsheetXml(this.table, this.t('shillinq', 'Financial pivot')), 'application/vnd.ms-excel', 'xls')
+			this.download(
+				toSpreadsheetXml(this.table, this.t('shillinq', 'Financial pivot')),
+				'application/vnd.ms-excel',
+				'xls',
+			)
 		},
 
 		/**
@@ -244,13 +320,23 @@ export default {
 		 * @param {string} type The media type.
 		 * @param {string} extension The file extension.
 		 * @return {void}
-		 * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+		 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 		 */
 		download(content, type, extension) {
 			const url = URL.createObjectURL(new Blob([content], { type }))
 			const link = document.createElement('a')
 			link.href = url
-			link.download = 'pivot-' + this.pivot.rowAxis + '-' + this.pivot.columnAxis + '-' + this.from + '-' + this.to + '.' + extension
+			link.download =
+				'pivot-'
+				+ this.pivot.rowAxis
+				+ '-'
+				+ this.pivot.columnAxis
+				+ '-'
+				+ this.from
+				+ '-'
+				+ this.to
+				+ '.'
+				+ extension
 			link.click()
 			URL.revokeObjectURL(url)
 		},

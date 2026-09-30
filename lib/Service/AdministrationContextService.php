@@ -245,7 +245,7 @@ class AdministrationContextService {
 	 *
 	 * @return string|null The administration id, or null when the user has none.
 	 *
-	 * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
 	public function defaultAdministrationIdForUser(string $userId): ?string {
 		if ($userId === '') {

@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Serves the financial pivot.
  *
- * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  */
 class LedgerPivotController extends Controller {
 
@@ -70,7 +70,7 @@ class LedgerPivotController extends Controller {
 	 *
 	 * @return JSONResponse The pivot, 400 on a refused request, 401, a masked 404 or 500.
 	 *
-	 * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
 	#[NoAdminRequired]
 	public function pivot(): JSONResponse {

@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -43,7 +43,7 @@ use OCP\IURLGenerator;
 /**
  * Base class of the five financial widgets.
  *
- * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  */
 abstract class FinancialWidget implements IAPIWidgetV2 {
 
@@ -78,7 +78,7 @@ abstract class FinancialWidget implements IAPIWidgetV2 {
 	 *
 	 * @return int The order.
 	 *
-	 * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
 	public function getOrder(): int {
 		return 40;
@@ -90,7 +90,7 @@ abstract class FinancialWidget implements IAPIWidgetV2 {
 	 *
 	 * @return string The class.
 	 *
-	 * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
 	public function getIconClass(): string {
 		return 'icon-shillinq-widget';
@@ -102,7 +102,7 @@ abstract class FinancialWidget implements IAPIWidgetV2 {
 	 *
 	 * @return string|null The absolute URL.
 	 *
-	 * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
 	public function getUrl(): ?string {
 		return $this->urls->linkToRouteAbsolute(Application::APP_ID . '.dashboard.page');
@@ -114,7 +114,7 @@ abstract class FinancialWidget implements IAPIWidgetV2 {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
 	public function load(): void {
 		// The items come from getItemsV2(); the dashboard draws them, so no script is added.
@@ -130,7 +130,7 @@ abstract class FinancialWidget implements IAPIWidgetV2 {
 	 *
 	 * @return WidgetItems The items, or a message when the user has no administration.
 	 *
-	 * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
 	public function getItemsV2(string $userId, ?string $since = null, int $limit = 7): WidgetItems {
 		$administrationId = $this->context->defaultAdministrationIdForUser(userId: $userId);

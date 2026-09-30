@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-custom-analysis/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -132,7 +132,7 @@ class FinancialWidgetsTest extends TestCase {
 	 * @return void
 	 */
 	public function testOpenReceivablesShowsTheOpenAndOverdueInvoices(): void {
-		$this->assertSame([['€1,815.00', '2 open invoices'], ['€605.00', '1 invoice overdue']], $this->lines($this->widget(OpenReceivablesWidget::class, 'adm-1')));
+		$this->assertSame([['€1,815.00', 'Open invoices: 2'], ['€605.00', 'Overdue invoices: 1']], $this->lines($this->widget(OpenReceivablesWidget::class, 'adm-1')));
 	}
 
 	/**
