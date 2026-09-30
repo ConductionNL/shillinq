@@ -5631,17 +5631,19 @@
 			"id": "rep-relation-both-sides",
 			"area": "reporting",
 			"name": "See every invoice sent to and received from a relation that is both customer and supplier.",
-			"shillinq": "no",
+			"shillinq": "yes",
 			"exact-online": "partial",
 			"moneybird": "yes",
 			"snelstart": "partial",
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"reachedOn": "nothing"
+				"readOn": "2026-09-30",
+				"reachedOn": "Reports > Relations both ways (/reports/relations-both-ways); the customer page (Link to a supplier, and both sides of a linked relation); the supplier page (Both sides)",
+				"evidence": "CustomerMaster.payeeId, payeeLink and dismissedPayeeSuggestions (lib/Settings/register.d/reporting-relation-both-sides.json); RelationLinkService suggests pairs with an equal normalised KvK or VAT number and links only on confirmation, one to one; RelationBothSidesService lists ARInvoice, APTransaction and not-yet-booked SupplierInvoice rows with invoiced sales, invoiced purchases, open receivable, open payable and net, credit notes negative, each side only for a role that may read it; RelationController serves both sides, the report and its CSV (tests/Unit/Service/Relation/*, tests/Unit/Controller/RelationControllerTest.php, tests/vitest/reportingRelationBothSides.spec.js).",
+				"change": "2026-09-30-reporting-relation-both-sides"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Reference-accounts-finacc-mntresultsr?language=en_GB: \"If you select a debtor in the report you can easily compare your sales per debtor. If you select a creditor ... your purchases per creditor\" Note: Per side; one combined view for a relation that is both is not described.",
@@ -5666,18 +5668,19 @@
 			"id": "ppl-hours-budget",
 			"area": "people",
 			"name": "Budget hours per project and be warned when they run over.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "yes",
 			"moneybird": "partial",
 			"snelstart": "unknown",
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"evidence": "ProjectAssignment.estimatedHours (lib/Settings/shillinq_register.json:6218) records an estimate per person per project, shown on ProjectDetail and Utilisatie; nothing warns when logged hours exceed it.",
-				"reachedOn": "ProjectDetail /bookkeeping/dimensions/projects/:id, Utilisatie /utilisatie"
+				"readOn": "2026-09-30",
+				"evidence": "ProjectAssignment.loggedHours, remainingHours, hoursUsedPercent (declared calculation), hoursWarnedAt80/100 and two x-openregister-notifications to projectOwner (lib/Settings/register.d/people-hours-budget.json); AssignmentHoursListener re-sums an assignment when an UrenRegistratie is created, changed or deleted and re-arms the warnings when the estimate changes, AssignmentHours writes the project totals and hoursOverBudget, BackfillAssignmentHours sums history (tests/Unit/Listener/AssignmentHoursListenerTest.php).",
+				"reachedOn": "Projects > a project (/bookkeeping/dimensions/projects/:id): Hours budget and Hours per assignment; Projects list filter Over hours budget",
+				"change": "2026-09-30-people-hours-budget"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/projectadministratie/features-en-prijzen: \"Gebudgetteerde uren & kosten per project bewaken\" and \"Uren & kosten budgetteren (WBS)\" Note: Projectadministratie; the form of the warning is not described.",

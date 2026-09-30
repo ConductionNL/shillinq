@@ -65,6 +65,8 @@ final class ReportingRegistration {
 		$context->registerNotifierService(ScheduledReportNotifier::class);
 		// Reporting-custom-analysis: the financial dashboard widgets.
 		(new DashboardWidgetRegistration())->register(context: $context);
+		// People-hours-budget: keeps the hours budget of an assignment current.
+		(new ProjectHoursRegistration())->register(context: $context);
 
 	}//end register()
 }//end class

@@ -90,6 +90,14 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'financialDashboard#summary', 'url' => '/api/dashboard/financial-summary', 'verb' => 'GET'],
             // banking-connected-accounts REQ-BCON-004: cash position per bank account and combined.
             ['name' => 'financialDashboard#cashPosition', 'url' => '/api/v1/cash-position', 'verb' => 'GET'],
+            // reporting-relation-both-sides: links between a customer and a supplier record, and both sides of the relation.
+            ['name' => 'relation#report', 'url' => '/api/relations/both-sides', 'verb' => 'GET'],
+            ['name' => 'relation#suggestions', 'url' => '/api/relations/suggestions', 'verb' => 'GET'],
+            ['name' => 'relation#dismiss', 'url' => '/api/relations/suggestions/dismiss', 'verb' => 'POST'],
+            ['name' => 'relation#link', 'url' => '/api/relations/links', 'verb' => 'POST'],
+            ['name' => 'relation#unlink', 'url' => '/api/relations/links/{customerId}', 'verb' => 'DELETE'],
+            ['name' => 'relation#payeeBothSides', 'url' => '/api/relations/payee/{payeeId}/both-sides', 'verb' => 'GET'],
+            ['name' => 'relation#bothSides', 'url' => '/api/relations/{customerId}/both-sides', 'verb' => 'GET'],
             // reporting-custom-analysis REQ-RCA-002: the financial pivot.
             ['name' => 'ledgerPivot#pivot', 'url' => '/api/analysis/pivot', 'verb' => 'GET'],
 

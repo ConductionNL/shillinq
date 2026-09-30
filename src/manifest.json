@@ -2242,10 +2242,21 @@
 						"key": "lifecycleState",
 						"label": "Status",
 						"sortable": true
+					},
+					{
+						"key": "hoursOverBudget",
+						"label": "Over hours budget",
+						"sortable": true
 					}
 				],
 				"defaultSort": "code",
 				"detailRoute": "ProjectDetail",
+				"filters": [
+					{
+						"key": "hoursOverBudget",
+						"label": "Over hours budget"
+					}
+				],
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/dimensions"
 			}
 		},
@@ -2256,133 +2267,192 @@
 			"title": "Project",
 			"config": {
 				"register": "shillinq",
-				"_note": "Project detail — a project costing dimension with contract value, WIP and revenue-recognition (RJ 270). Assignments and WIP history are listed (existing related lists); segment P&L aggregation and audit trail evidence recognition method changes.",
+				"_note": "Project detail — a project costing dimension with contract value, WIP and revenue-recognition (RJ 270). Hours budget per assignment and in total (people-hours-budget), assignments and WIP history are listed; segment P&L aggregation and audit trail evidence recognition method changes.",
 				"auditTrail": true,
 				"schema": "engagement",
-				"fields": [
+				"widgets": [
 					{
-						"key": "code",
-						"label": "Code",
-						"type": "string"
+						"id": "project-identity",
+						"type": "data",
+						"title": "Project",
+						"icon": "BriefcaseOutline",
+						"content": {
+							"columns": 2,
+							"include": [
+								"code",
+								"name",
+								"projectNumber",
+								"customerId",
+								"parentCode",
+								"responsibleUser",
+								"state",
+								"lifecycleState",
+								"administrationId",
+								"timeBookingEnabled",
+								"startDate",
+								"endDate"
+							]
+						}
 					},
 					{
-						"key": "name",
-						"label": "Name",
-						"type": "string"
+						"id": "project-hours",
+						"type": "data",
+						"title": "Hours budget",
+						"icon": "ClockOutline",
+						"content": {
+							"columns": 2,
+							"include": [
+								"estimatedHoursTotal",
+								"loggedHoursTotal",
+								"remainingHoursTotal",
+								"hoursOverBudget"
+							]
+						}
 					},
 					{
-						"key": "parentCode",
-						"label": "Parent Project",
-						"type": "string"
+						"id": "project-finance",
+						"type": "data",
+						"title": "Revenue recognition",
+						"icon": "CashMultiple",
+						"content": {
+							"columns": 2,
+							"include": [
+								"recognitionMethod",
+								"recognitionStage",
+								"totalContractValue",
+								"totalEstimatedCosts",
+								"costsIncurredToDate",
+								"recognisedRevenue",
+								"billedRevenue",
+								"wipBalance",
+								"currency"
+							]
+						}
 					},
 					{
-						"key": "responsibleUser",
-						"label": "Responsible User",
-						"type": "string"
+						"id": "project-assignments",
+						"type": "object-list",
+						"title": "Hours per assignment",
+						"icon": "AccountGroupOutline",
+						"content": {
+							"register": "shillinq",
+							"schema": "ProjectAssignment",
+							"filter": {
+								"projectId": "@objectId"
+							},
+							"limit": 50,
+							"columns": [
+								{
+									"key": "personId",
+									"label": "Person"
+								},
+								{
+									"key": "estimatedHours",
+									"label": "Estimated hours"
+								},
+								{
+									"key": "loggedHours",
+									"label": "Logged hours"
+								},
+								{
+									"key": "remainingHours",
+									"label": "Remaining hours"
+								},
+								{
+									"key": "hoursUsedPercent",
+									"label": "Hours used (%)"
+								},
+								{
+									"key": "state",
+									"label": "Status"
+								}
+							],
+							"emptyText": "No one is assigned to this project yet."
+						}
 					},
 					{
-						"key": "timeBookingEnabled",
-						"label": "Time Booking (WBSO)",
-						"type": "boolean"
+						"id": "project-wip",
+						"type": "object-list",
+						"title": "WIP history",
+						"icon": "History",
+						"content": {
+							"register": "shillinq",
+							"schema": "WipBalance",
+							"filter": {
+								"projectId": "@objectId"
+							},
+							"limit": 24,
+							"columns": [
+								{
+									"key": "periodId",
+									"label": "Period"
+								},
+								{
+									"key": "costsIncurredToDate",
+									"label": "Costs incurred"
+								},
+								{
+									"key": "recognisedRevenue",
+									"label": "Recognised revenue"
+								},
+								{
+									"key": "billedRevenue",
+									"label": "Invoiced revenue"
+								},
+								{
+									"key": "wipBalance",
+									"label": "WIP balance"
+								}
+							],
+							"emptyText": "No WIP balance recorded yet."
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "project-identity",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5
 					},
 					{
-						"key": "lifecycleState",
-						"label": "Status",
-						"type": "string"
+						"id": "2",
+						"widgetId": "project-hours",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5
 					},
 					{
-						"key": "administrationId",
-						"label": "Administration",
-						"type": "string"
+						"id": "3",
+						"widgetId": "project-assignments",
+						"gridX": 0,
+						"gridY": 5,
+						"gridWidth": 12,
+						"gridHeight": 5
 					},
 					{
-						"key": "projectNumber",
-						"label": "Project number",
-						"type": "string"
+						"id": "4",
+						"widgetId": "project-finance",
+						"gridX": 0,
+						"gridY": 10,
+						"gridWidth": 12,
+						"gridHeight": 4
 					},
 					{
-						"key": "customerId",
-						"label": "Customer",
-						"type": "string"
-					},
-					{
-						"key": "state",
-						"label": "Status",
-						"type": "string"
-					},
-					{
-						"key": "recognitionMethod",
-						"label": "Accountability method",
-						"type": "string"
-					},
-					{
-						"key": "recognitionStage",
-						"label": "Phase (RJ 270)",
-						"type": "string"
-					},
-					{
-						"key": "totalContractValue",
-						"label": "Contract value",
-						"type": "number"
-					},
-					{
-						"key": "totalEstimatedCosts",
-						"label": "Estimated costs",
-						"type": "number"
-					},
-					{
-						"key": "costsIncurredToDate",
-						"label": "Costs incurred",
-						"type": "number"
-					},
-					{
-						"key": "recognisedRevenue",
-						"label": "Recognised revenue",
-						"type": "number"
-					},
-					{
-						"key": "billedRevenue",
-						"label": "Invoiced revenue",
-						"type": "number"
-					},
-					{
-						"key": "wipBalance",
-						"label": "WIP balance",
-						"type": "number"
-					},
-					{
-						"key": "currency",
-						"label": "Currency",
-						"type": "string"
-					},
-					{
-						"key": "startDate",
-						"label": "Start date",
-						"type": "date"
-					},
-					{
-						"key": "endDate",
-						"label": "End date",
-						"type": "date"
+						"id": "5",
+						"widgetId": "project-wip",
+						"gridX": 0,
+						"gridY": 14,
+						"gridWidth": 12,
+						"gridHeight": 4
 					}
 				],
 				"lifecycleActions": true,
 				"aggregation": "segmentPnl",
 				"indexRoute": "Projects",
-				"relatedLists": [
-					{
-						"id": "assignments",
-						"title": "Project assignments",
-						"schema": "ProjectAssignment",
-						"foreignKey": "projectId"
-					},
-					{
-						"id": "wip-history",
-						"title": "WIP-historie",
-						"schema": "WipBalance",
-						"foreignKey": "projectId"
-					}
-				],
 				"sidebarProps": {
 					"tabs": [
 						{
@@ -2592,6 +2662,14 @@
 						"icon": "TrendingUp",
 						"category": "financial",
 						"route": "VarianceReport"
+					},
+					{
+						"id": "RelationsBothWays",
+						"label": "Relations both ways",
+						"description": "Customers that are also suppliers, and who owes whom.",
+						"icon": "ScaleBalance",
+						"category": "financial",
+						"route": "RelationsBothWays"
 					},
 					{
 						"id": "FinancialPivot",
@@ -7799,6 +7877,148 @@
 							"rowRoute": "PaymentPlanDetail",
 							"emptyText": "No payment plans for this customer."
 						}
+					},
+					{
+						"id": "customer-both-sides-open-receivable",
+						"title": "Open receivable",
+						"type": "stat",
+						"content": {
+							"label": "Open receivable",
+							"icon": "ScaleBalance",
+							"format": {
+								"style": "currency",
+								"currency": "EUR",
+								"decimals": 2
+							},
+							"endpointSource": {
+								"url": "/apps/shillinq/api/relations/@objectId/both-sides"
+							},
+							"valueField": "totals.openReceivable"
+						}
+					},
+					{
+						"id": "customer-both-sides-open-payable",
+						"title": "Open payable",
+						"type": "stat",
+						"content": {
+							"label": "Open payable",
+							"icon": "ScaleBalance",
+							"format": {
+								"style": "currency",
+								"currency": "EUR",
+								"decimals": 2
+							},
+							"endpointSource": {
+								"url": "/apps/shillinq/api/relations/@objectId/both-sides"
+							},
+							"valueField": "totals.openPayable"
+						}
+					},
+					{
+						"id": "customer-both-sides-net",
+						"title": "Net position",
+						"type": "stat",
+						"content": {
+							"label": "Net position",
+							"icon": "ScaleBalance",
+							"format": {
+								"style": "currency",
+								"currency": "EUR",
+								"decimals": 2
+							},
+							"endpointSource": {
+								"url": "/apps/shillinq/api/relations/@objectId/both-sides"
+							},
+							"valueField": "totals.net"
+						}
+					},
+					{
+						"id": "customer-both-sides-sent",
+						"title": "Invoices sent",
+						"type": "object-table",
+						"content": {
+							"endpointSource": {
+								"url": "/apps/shillinq/api/relations/@objectId/both-sides",
+								"responsePath": "sent.rows"
+							},
+							"columns": [
+								{
+									"key": "number",
+									"label": "Invoice"
+								},
+								{
+									"key": "date",
+									"label": "Date"
+								},
+								{
+									"key": "state",
+									"label": "Status"
+								},
+								{
+									"key": "amount",
+									"label": "Amount",
+									"formatter": "currency",
+									"formatterOptions": {
+										"currency": "EUR",
+										"decimals": 2
+									}
+								},
+								{
+									"key": "open",
+									"label": "Still open",
+									"formatter": "currency",
+									"formatterOptions": {
+										"currency": "EUR",
+										"decimals": 2
+									}
+								}
+							],
+							"emptyText": "No sales invoices this year, or none linked."
+						}
+					},
+					{
+						"id": "customer-both-sides-received",
+						"title": "Invoices received",
+						"type": "object-table",
+						"content": {
+							"endpointSource": {
+								"url": "/apps/shillinq/api/relations/@objectId/both-sides",
+								"responsePath": "received.rows"
+							},
+							"columns": [
+								{
+									"key": "number",
+									"label": "Invoice"
+								},
+								{
+									"key": "date",
+									"label": "Date"
+								},
+								{
+									"key": "state",
+									"label": "Status"
+								},
+								{
+									"key": "amount",
+									"label": "Amount",
+									"formatter": "currency",
+									"formatterOptions": {
+										"currency": "EUR",
+										"decimals": 2
+									}
+								},
+								{
+									"key": "open",
+									"label": "Still open",
+									"formatter": "currency",
+									"formatterOptions": {
+										"currency": "EUR",
+										"decimals": 2
+									}
+								}
+							],
+							"emptyText": "No purchase invoices this year, the customer is not linked to a supplier, or your role may not read purchases."
+						}
 					}
 				],
 				"layout": [
@@ -7865,6 +8085,46 @@
 						"gridY": 15,
 						"gridWidth": 12,
 						"gridHeight": 4
+					},
+					{
+						"id": "7-1",
+						"widgetId": "customer-both-sides-open-receivable",
+						"gridX": 0,
+						"gridY": 19,
+						"gridWidth": 4,
+						"gridHeight": 2
+					},
+					{
+						"id": "7-2",
+						"widgetId": "customer-both-sides-open-payable",
+						"gridX": 4,
+						"gridY": 19,
+						"gridWidth": 4,
+						"gridHeight": 2
+					},
+					{
+						"id": "7-3",
+						"widgetId": "customer-both-sides-net",
+						"gridX": 8,
+						"gridY": 19,
+						"gridWidth": 4,
+						"gridHeight": 2
+					},
+					{
+						"id": "8",
+						"widgetId": "customer-both-sides-sent",
+						"gridX": 0,
+						"gridY": 21,
+						"gridWidth": 6,
+						"gridHeight": 5
+					},
+					{
+						"id": "9",
+						"widgetId": "customer-both-sides-received",
+						"gridX": 6,
+						"gridY": 21,
+						"gridWidth": 6,
+						"gridHeight": 5
 					}
 				],
 				"headerActions": [
@@ -7877,6 +8137,16 @@
 						"props": {
 							"open": true,
 							"from": "customer"
+						}
+					},
+					{
+						"id": "link-supplier",
+						"label": "Link to a supplier",
+						"type": "open-modal",
+						"target": "RelationLinkDialog",
+						"icon": "LinkVariant",
+						"props": {
+							"open": true
 						}
 					}
 				],

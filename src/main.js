@@ -38,6 +38,12 @@ import {
 	mergeFullFragmentIntoManifest,
 } from './utils/mergeFragmentIntoManifest.js'
 import { openProposePaymentRun } from './utils/paymentRunActions.js'
+import {
+	confirmRelationSuggestion,
+	dismissRelationSuggestion,
+	openPayeeRelation,
+	openRelationsExport,
+} from './utils/relationActions.js'
 
 // Must stay first: sets __webpack_public_path__ / __webpack_nonce__ before any
 // other module evaluates — see src/setPublicPath.js.
@@ -327,6 +333,12 @@ const customComponentsProp = {
 	// planning-commitment-year-end: the "Carry open commitments to next year"
 	// header action on Commitments.
 	openCarryOverCommitments,
+	// reporting-relation-both-sides: the suggestions' row actions, the report's
+	// export and the supplier page's way to the linked customer.
+	confirmRelationSuggestion,
+	dismissRelationSuggestion,
+	openRelationsExport,
+	openPayeeRelation,
 }
 
 // Vue 3 `mount()` renders INSIDE the matched element; Vue 2's `$mount()`

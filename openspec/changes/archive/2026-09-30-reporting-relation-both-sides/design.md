@@ -122,3 +122,11 @@ the PR.
 ## Open Questions
 
 - Whether `APInvoice` should be read at all depends on the purchasing changes of this OpenSpec pass; it is left out here.
+
+## Built (2026-09-30): where the code differs from the decisions above
+
+- **Access (D3, REQ-RRBS-004).** `x-openregister-rbac` on `ARInvoice` and `APTransaction` is documentation: OpenRegister reads `Schema::getAuthorization()`, and no shillinq schema declares one (see `lib/Service/SpendAnalyticsService.php`). Reading "with the caller's RBAC" would therefore show every side to everyone. The sides follow the caller's role in the administration instead (`RelationController::SENT_ROLES` and `RECEIVED_ROLES`): `debiteurenadmin` sees the sales side only, `crediteurenadmin` the purchase side only, `salarisadministrateur` neither, every other role both. Linking and dismissing need a role that keeps customer or supplier records (`LINK_ROLES`).
+- **Received invoices.** A `SupplierInvoice` with an `apTransactionId` is already counted as its `APTransaction`, so only supplier invoices not yet handed to payables count, and only while not paid or rejected.
+- **One to one.** `RelationLinkService::link()` refuses a supplier another customer is linked to, and a customer already linked elsewhere; a write straight through the OpenRegister API is not guarded.
+- **Pages.** `CustomerDetail` carries the Link to a supplier action and five widgets bound to `GET /api/relations/{customerId}/both-sides` (three amounts, invoices sent, invoices received). `PayeeDetail` renders fields, not a widget grid, so it gets a **Both sides** action that opens the linked customer. Relations both ways is a dashboard page with a date range, the linked relations and the suggested links (Link and Not the same row actions), and an Export CSV action that asks for the period.
+- **Endpoints.** Also `GET /api/relations/payee/{payeeId}/both-sides`, `GET /api/relations/suggestions`, `POST /api/relations/links`, `POST /api/relations/suggestions/dismiss` and `DELETE /api/relations/links/{customerId}`.

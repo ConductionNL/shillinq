@@ -39,6 +39,7 @@
 		"SisaRapportagesDetail": "ADR-112: reached from its own index page, which is reachable as a CARD on ReportingComplianceOverview. The chain card -> index -> detail is intact; only the index's duplicate MENU entry was retired. Orphaned here solely because its index is.",
 		"BtwAangiften": "Retired from navigation by #1717: it lists VatReturn records, whose rubrieken aggregation can never compute (GLLine carries no VAT tariff, rate or period dates to join on), while VATReturnService files BtwAangifte records, which VATReturns lists. menu-layout.json removalsReplacedBy names VATReturns. Kept routable so an existing VatReturn record still opens by URL; delete it together with the VatReturn schema.",
 		"BtwAangifteDetail": "Retired with its index BtwAangiften by #1717 (see that entry); reached only from BtwAangiften rows or by URL.",
+		"RelationsBothWays": "Reports card (ADR-112 Decision 2): reachable from the Relations both ways card on the Reports page, so it carries no menu entry (reporting-relation-both-sides).",
 		"FinancialPivot": "Reports card (ADR-112 Decision 2): reachable from the Financial pivot card on the Reports page, so it carries no menu entry (reporting-custom-analysis)."
 	}
 }
