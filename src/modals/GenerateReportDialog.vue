@@ -414,12 +414,22 @@ export default {
 			return Array.from({ length: max }, (_, i) => i + 1)
 		},
 
+		/**
+		 * The label of the run-day field: a weekday for a weekly schedule, a day of the month otherwise.
+		 *
+		 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+		 */
 		runDayLabel() {
 			return this.schedule.frequency === 'weekly'
 				? this.t('shillinq', 'Weekday (1 Monday to 7 Sunday)')
 				: this.t('shillinq', 'Day of the month')
 		},
 
+		/**
+		 * Whether the schedule form is complete enough to save.
+		 *
+		 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+		 */
 		canSchedule() {
 			return (
 				!this.submitting

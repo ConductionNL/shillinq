@@ -32,6 +32,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting\Schedule;
 
+use DateInterval;
 use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
@@ -62,10 +63,9 @@ class ReportScheduleCalendar {
 		$after = $after->setTimezone(new DateTimeZone('UTC'));
 		if ($frequency === 'weekly') {
 			$weekday   = max(1, min(7, $runDay));
-			$offset    = ($weekday - (int)$after->format('N'));
-			$candidate = $after->setTime(0, 0)->modify(sprintf('%+d days', $offset));
+			$candidate = $after->setISODate((int)$after->format('o'), (int)$after->format('W'), $weekday)->setTime(0, 0);
 			while ($candidate <= $after) {
-				$candidate = $candidate->modify('+7 days');
+				$candidate = $candidate->add(new DateInterval('P7D'));
 			}
 
 			return $candidate;
@@ -85,7 +85,7 @@ class ReportScheduleCalendar {
 
 		$candidate = $after->setDate((int)$after->format('Y'), $month, $day)->setTime(0, 0);
 		while ($candidate <= $after) {
-			$candidate = $candidate->modify('+' . $step . ' months');
+			$candidate = $candidate->add(new DateInterval('P' . $step . 'M'));
 		}
 
 		return $candidate;
