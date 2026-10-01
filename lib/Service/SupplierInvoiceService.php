@@ -51,6 +51,7 @@ use RuntimeException;
 use SimpleXMLElement;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
+use OCA\Shillinq\Service\Tax\VatNumberCheck;
 
 /**
  * Slice 05 — Supplier invoice ingestion from UBL (Peppol) and PDF (OCR).
@@ -140,6 +141,7 @@ class SupplierInvoiceService {
 	 * @param LoggerInterface $logger Logger (no sensitive payloads).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param SupplierInvoiceChecks $checks Payee resolution and the duplicate and IBAN rules (purchasing-supplier-invoice-intake).
+	 * @param VatNumberCheck|null $vatNumberCheck Checks a foreign EU seller's VAT number after intake (tax-vat-number-check).
 	 *
 	 * @return void
 	 */
@@ -149,6 +151,7 @@ class SupplierInvoiceService {
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 		private readonly SupplierInvoiceChecks $checks,
+		private readonly ?VatNumberCheck $vatNumberCheck=null,
 	) {
 
 	}//end __construct()
@@ -234,7 +237,7 @@ class SupplierInvoiceService {
 
 		$record = array_merge($record, array_filter($this->checks->warnings(invoice: $record)));
 
-		return $this->saveObject(schema: 'SupplierInvoice', object: $record);
+		return $this->checkSeller(invoice: $this->saveObject(schema: 'SupplierInvoice', object: $record));
 	}//end ingestUBLInvoice()
 
 	/**
@@ -279,7 +282,12 @@ class SupplierInvoiceService {
 			);
 		}
 
+		$sellerVatId = trim((string)($parsed['supplierVatNumber'] ?? ''));
 		unset($parsed['supplierId'], $parsed['supplierKvk'], $parsed['supplierVatNumber']);
+		if ($sellerVatId !== '') {
+			$parsed['sellerVatId'] = $sellerVatId;
+		}
+
 		$parsed['supplierIdentifier'] = $identifier;
 		if ($payee !== null && (string)($payee['administrationId'] ?? $administrationId) === $administrationId) {
 			$parsed['supplierId'] = (string)$payee['id'];
@@ -288,6 +296,24 @@ class SupplierInvoiceService {
 		return $parsed;
 
 	}//end resolveSupplier()
+
+	/**
+	 * Check the seller's VAT number of an arrived invoice from another EU country (REQ-TVNC-003).
+	 *
+	 * @param array<string,mixed> $invoice The saved supplier invoice.
+	 *
+	 * @return array<string,mixed> The invoice with the check's outcome, when one was made.
+	 *
+	 * @spec openspec/changes/tax-vat-number-check/tasks.md#task-2.2
+	 */
+	private function checkSeller(array $invoice): array {
+		if ($this->vatNumberCheck === null) {
+			return $invoice;
+		}
+
+		return array_merge($invoice, ($this->vatNumberCheck->checkSellerOnArrival(invoice: $invoice) ?? []));
+
+	}//end checkSeller()
 
 	/**
 	 * Ingest a PDF-attached invoice via openconnector's OCR extraction

@@ -6397,18 +6397,19 @@
 			"id": "tax-vat-number-check",
 			"area": "tax",
 			"name": "Check a customer's or supplier's VAT number against the EU VIES register.",
-			"shillinq": "partial",
+			"shillinq": "yes",
 			"exact-online": "unknown",
 			"moneybird": "yes",
 			"snelstart": "yes",
 			"twinfield": "unknown",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"evidence": "lib/Service/EInvoice/EInvoiceValidationService.php:6 runs the VIES VAT number check through lib/Service/ViesService.php before an e-invoice is sent, from the Send e-invoice button (see sal-peppol-send); the standalone lookup route /api/icp/vat-id-lookup (appinfo/routes.php:482) is not called from src/.",
-				"reachedOn": "ARInvoiceDetail /bookkeeping/accounts-receivable/:id, Send e-invoice"
+				"readOn": "2026-10-02",
+				"reachedOn": "Customer page (CustomerDetail) and supplier page (PayeeDetail): Check VAT number; the supplier invoice page shows the seller's VAT number with its check; ARInvoiceDetail Send e-invoice still checks the buyer",
+				"evidence": "POST /api/vat-number-checks/{type}/{id} (VatNumberCheckController) validates the customer's vatId or the supplier's vatNumber through ViesService and writes valid, invalid or vies_outage with the last valid date onto the record (lib/Service/Tax/VatNumberCheck.php); SupplierInvoiceService keeps the UBL seller VAT number as sellerVatId and checks a number from another EU country on arrival (tests/Unit/Service/Tax/VatNumberCheckTest.php, tests/Unit/Service/SupplierInvoiceServiceTest.php).",
+				"change": "tax-vat-number-check"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today for VIES: not stated",

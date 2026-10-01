@@ -253,12 +253,6 @@
             "description": "Dutch KvK registration number.",
             "title": "KvK Number"
           },
-          "vatID": {
-            "type": "string",
-            "nullable": true,
-            "description": "Dutch VAT number (BTW-nummer).",
-            "title": "VAT ID"
-          },
           "email": {
             "type": "string",
             "description": "Contact email for invoice delivery.",

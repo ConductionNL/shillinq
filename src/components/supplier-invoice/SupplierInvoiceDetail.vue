@@ -70,6 +70,10 @@
 						{{ formatMoney(invoice.totalVat) }})
 					</span>
 				</p>
+				<p v-if="invoice.sellerVatId" data-testid="si-seller-vat">
+					{{ t('shillinq', 'Seller VAT number') }}: {{ invoice.sellerVatId }}
+					<span v-if="sellerVatCheck">({{ sellerVatCheck }})</span>
+				</p>
 			</header>
 
 			<section
@@ -242,6 +246,30 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The outcome of the VIES check made when the invoice arrived, in words.
+		 *
+		 * @return {string} The outcome, or empty when the number was not checked.
+		 * @spec openspec/changes/tax-vat-number-check/tasks.md#task-3.1
+		 */
+		sellerVatCheck() {
+			const status = this.invoice && this.invoice.sellerVatIdValidationStatus
+			const date = this.formatDate(this.invoice && this.invoice.sellerVatIdValidatedAt)
+			if (status === 'valid') {
+				return this.t('shillinq', 'valid, checked on {date}', { date })
+			}
+			if (status === 'invalid') {
+				return this.t('shillinq', 'not valid according to VIES')
+			}
+			if (status === 'vies_outage' && this.invoice.sellerVatIdValidatedAt) {
+				return this.t('shillinq', 'VIES not reachable, last valid on {date}', { date })
+			}
+			if (status === 'vies_outage') {
+				return this.t('shillinq', 'VIES not reachable')
+			}
+			return ''
+		},
+
 		isPdfIngestion() {
 			if (!this.invoice) {
 				return false

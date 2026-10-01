@@ -25009,7 +25009,7 @@
       "name": "Demo Klant BV",
       "legalName": "Demo Klant B.V.",
       "kvkNumber": "87654321",
-      "vatID": "NL876543210B01",
+      "vatId": "NL876543210B01",
       "defaultGlAccount": "8000",
       "email": "facturen@democonsult.nl",
       "administrationId": "adm-consultancy-nl",

@@ -7694,7 +7694,7 @@
 				"schema": "CustomerMaster",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/customers",
 				"indexRoute": "Customers",
-				"_note": "Debtor master archetype — a customer that gets invoiced. Body leads with the schema-driven Data widget (legalName/tradeName, kvkNumber, vatID, iban, creditLimit, dunningPolicyRef — real CustomerMaster fields; the legacy page listed fabricated keys like customerNumber/name/tradingName/btwNumber/paymentTermDays/peppolEndpoint/phone that do not exist on this schema, fixed here) beside a Related panel. The AR position is the customer's whole reason to be here, so its invoices (ARInvoice filtered customerId=@objectId, rowRoute to ARInvoiceDetail) are the primary body list, with outstanding/open-invoice totals as summaryAggregates KPI chips. No comms leaves — CustomerMaster carries no email/talk linkedType beyond the plain email/telephone fields already in the Data widget. Audit trail evidences master-data changes (credit limit, IBAN) and stays in the sidebar per policy.",
+				"_note": "Debtor master archetype — a customer that gets invoiced. Body leads with the schema-driven Data widget (legalName/tradeName, kvkNumber, vatId with its VIES check, iban, creditLimit, dunningPolicyRef — real CustomerMaster fields; the legacy page listed fabricated keys like customerNumber/name/tradingName/btwNumber/paymentTermDays/peppolEndpoint/phone that do not exist on this schema, fixed here) beside a Related panel. The AR position is the customer's whole reason to be here, so its invoices (ARInvoice filtered customerId=@objectId, rowRoute to ARInvoiceDetail) are the primary body list, with outstanding/open-invoice totals as summaryAggregates KPI chips. No comms leaves — CustomerMaster carries no email/talk linkedType beyond the plain email/telephone fields already in the Data widget. Audit trail evidences master-data changes (credit limit, IBAN) and stays in the sidebar per policy.",
 				"widgets": [
 					{
 						"id": "customer-identity",
@@ -7708,7 +7708,9 @@
 								"legalName",
 								"tradeName",
 								"kvkNumber",
-								"vatID",
+								"vatId",
+								"vatIdValidationStatus",
+								"vatIdValidatedAt",
 								"email",
 								"telephone"
 							]
@@ -8136,6 +8138,7 @@
 					}
 				],
 				"headerActions": [
+					{"id": "check-vat-number", "label": "Check VAT number", "type": "handler", "handler": "checkCustomerVatNumber", "icon": "CheckDecagram", "description": "Check the VAT number against the EU VIES register and keep the outcome on this record."},
 					{
 						"id": "agree-payment-plan",
 						"label": "Agree a payment plan",
