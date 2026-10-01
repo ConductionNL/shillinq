@@ -35,6 +35,15 @@ when a required field is empty, stops propagation with errors naming each
 missing field and its reason. Writes carrying the system flag that
 shillinq's services set are skipped.
 
+As built (2026-10-01): shillinq has no system flag on its writes, so the
+listener tells a person's save from a system write by the request
+(`ObjectApiRequest`): only a POST, PUT or PATCH on
+`/apps/openregister/api/objects/{register}/{schema}[/{id}]` naming this
+object's schema and uuid is checked. Writes by listeners, jobs and
+shillinq's own controllers pass. A `FieldRequirement` itself is checked on
+every write: its schema must exist, be kept per administration, have the
+field, and not already always require it.
+
 Alternative considered: rewriting the schema's `required` list per
 administration. Rejected: a schema is shared by every administration in the
 register.
@@ -44,6 +53,15 @@ register.
 `RequiredFields` settings page: pick a schema, see the fields its forms use
 (from the manifest `config.fields` of that schema's pages) with the shipped
 required ones shown locked, and toggle the others with a reason.
+
+As built (2026-10-01): hydra gate 69 refuses a new `type:custom` page, so the
+page is an index of the administration's `FieldRequirement` records (create
+one with record type, field and reason; retire it to switch it off) and a
+detail page per requirement whose table lists every field of the record type
+as Always, In this administration or No, read from
+`GET /api/field-requirements/{id}/fields`. The list shows the schema's
+writable properties rather than a page's `config.fields`, because most
+forms are built from the schema.
 
 ## Declarative-vs-imperative decision (ADR-031)
 
@@ -56,7 +74,10 @@ required ones shown locked, and toggle the others with a reason.
 
 Gemeente Voorbeeld: `SupplierInvoice.costCenterCode` required, reason
 "Elke inkoopfactuur wordt op een kostenplaats verantwoord"; Adviesbureau Van
-Dijk: `CustomerMaster.email` required, reason "Facturen gaan per e-mail".
+Dijk: `CustomerMaster.kvkNumber` required, reason "Elke zakelijke klant
+staat in het Handelsregister" (`email` is already always required on
+CustomerMaster, so a requirement on it would be refused). The supplier
+invoice field is `costCenter`.
 
 ## Risks / Trade-offs
 
