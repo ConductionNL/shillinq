@@ -28,6 +28,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use Throwable;
 
 /**
  * Serves the fields of a requirement's record type, marked always, administration or no.
@@ -84,7 +85,12 @@ class FieldRequirementController extends Controller {
 			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		$requirement = $this->requirements->find(id: $id);
+		try {
+			$requirement = $this->requirements->find(id: $id);
+		} catch (Throwable $e) {
+			$requirement = null;
+		}
+
 		if ($requirement === null
 			|| $this->context->canAccess(administrationId: (string)($requirement['administrationId'] ?? '')) === false
 		) {

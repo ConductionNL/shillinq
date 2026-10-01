@@ -122,7 +122,8 @@ class FieldRequirements {
 		}
 
 		if (in_array($field, $definition['required'], true) === true) {
-			return ['field' => $this->l10n->t('%1$s is always required on %2$s.', [$this->title(definition: $definition, field: $field), $definition['title']])];
+			$title = $this->title(definition: $definition, field: $field);
+			return ['field' => $this->l10n->t('%1$s is always required on %2$s.', [$title, $definition['title']])];
 		}
 
 		return [];
