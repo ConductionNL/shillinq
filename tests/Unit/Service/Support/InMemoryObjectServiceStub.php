@@ -393,7 +393,7 @@ final class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	}//end searchObjects()
 
 	/**
-	 * Not modelled.
+	 * Removes the row with that id from the schema, as OpenRegister deletes it.
 	 *
 	 * @param string          $uuid            The object UUID.
 	 * @param string|int|null $register        Register id, UUID or slug.
@@ -416,7 +416,20 @@ final class InMemoryObjectServiceStub implements ObjectServiceInterface {
 		?IUser $currentUser = null,
 		bool $permanent = false
 	): bool {
-		$this->unsupported(method: 'deleteObject');
+		$target = $this->schema;
+		if ($schema !== null) {
+			$target = (string)$schema;
+		}
+
+		foreach (($this->data[$target] ?? []) as $index => $row) {
+			if ((string)($row['id'] ?? '') === $uuid) {
+				unset($this->data[$target][$index]);
+				$this->data[$target] = array_values($this->data[$target]);
+				return true;
+			}
+		}
+
+		return false;
 
 	}//end deleteObject()
 
