@@ -37,6 +37,7 @@ use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IRequest;
+use Throwable;
 
 /**
  * Missed depreciation of one asset.
@@ -122,7 +123,12 @@ class FixedAssetDepreciationController extends Controller {
 			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		$asset = $this->records->find(schema: DepreciationScheduleService::ASSET, id: $id);
+		try {
+			$asset = $this->records->find(schema: DepreciationScheduleService::ASSET, id: $id);
+		} catch (Throwable $e) {
+			$asset = null;
+		}
+
 		$administrationId = (string)($asset['administrationId'] ?? '');
 		if ($asset === null || $this->context->canAccess(administrationId: $administrationId) === false) {
 			return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);

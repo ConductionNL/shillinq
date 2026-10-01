@@ -6212,7 +6212,16 @@ OC.L10N.register(
         "Set by the daily run when the reserve expires with a remainder.": "Gezet door de dagelijkse run als de reserve vervalt met een restant.",
         "Available for a replacement asset.": "Beschikbaar voor een vervangend bezit.",
         "Fully applied to replacement assets.": "Volledig toegepast op vervangende bezittingen.",
-        "The remainder was released to profit at expiry.": "Het restant is op de vervaldatum in de winst vrijgevallen."
+        "The remainder was released to profit at expiry.": "Het restant is op de vervaldatum in de winst vrijgevallen.",
+        "Replacement asset": "Vervangend activum",
+        "The asset the reserve was applied to.": "Het activum waarop de reserve is toegepast.",
+        "Asset number": "Activumnummer",
+        "The replacement asset's number.": "Het nummer van het vervangende activum.",
+        "Amount applied": "Toegepast bedrag",
+        "The part of the reserve applied to this asset.": "Het deel van de reserve dat op dit activum is toegepast.",
+        "The journal entry that debited the reserve account.": "De journaalpost die de reserverekening heeft gedebiteerd.",
+        "Applied on": "Toegepast op",
+        "The date the reserve was applied.": "De datum waarop de reserve is toegepast."
     },
     "nplurals=2; plural=(n != 1);"
 )

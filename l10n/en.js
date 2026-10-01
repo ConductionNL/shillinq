@@ -3999,7 +3999,16 @@ OC.L10N.register(
         "Set by the daily run when the reserve expires with a remainder.": "Set by the daily run when the reserve expires with a remainder.",
         "Available for a replacement asset.": "Available for a replacement asset.",
         "Fully applied to replacement assets.": "Fully applied to replacement assets.",
-        "The remainder was released to profit at expiry.": "The remainder was released to profit at expiry."
+        "The remainder was released to profit at expiry.": "The remainder was released to profit at expiry.",
+        "Replacement asset": "Replacement asset",
+        "The asset the reserve was applied to.": "The asset the reserve was applied to.",
+        "Asset number": "Asset number",
+        "The replacement asset's number.": "The replacement asset's number.",
+        "Amount applied": "Amount applied",
+        "The part of the reserve applied to this asset.": "The part of the reserve applied to this asset.",
+        "The journal entry that debited the reserve account.": "The journal entry that debited the reserve account.",
+        "Applied on": "Applied on",
+        "The date the reserve was applied.": "The date the reserve was applied."
     },
     "nplurals=2; plural=(n != 1);"
 )

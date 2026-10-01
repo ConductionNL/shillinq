@@ -3,7 +3,8 @@
 /**
  * Revise Depreciation Action
  *
- * Runs on the FixedAsset `revise` transition (REQ-AMCR-002): replans the unposted months from the revision date and makes the new method and useful life the asset's own.
+ * Runs on the FixedAsset `revise` transition (REQ-AMCR-002):
+ * replans the unposted months from the revision date and makes the new method and useful life the asset's own.
  *
  * @category Lifecycle
  * @package  OCA\Shillinq\Lifecycle\Action
@@ -55,6 +56,8 @@ class ReviseDepreciationAction implements LifecycleActionInterface {
 	 * @return array<string,mixed> The asset to save.
 	 *
 	 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
 	 */
 	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
 		return $this->depreciation->revise(asset: $objectData);

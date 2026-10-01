@@ -81,7 +81,11 @@ class DepreciationScheduleService {
 	 *
 	 * @param array<string,mixed> $asset The FixedAsset record.
 	 *
-	 * @return array{id: string, number: string, administrationId: string, costCents: int, residualCents: int, months: int, acquired: string, method: string, rate: float, expenseAccount: string, accumulatedAccount: string, costCenter: string, active: bool} The figures.
+	 * @return array{
+	 *     id: string, number: string, administrationId: string, costCents: int, residualCents: int, months: int,
+	 *     acquired: string, method: string, rate: float, expenseAccount: string, accumulatedAccount: string,
+	 *     costCenter: string, active: bool
+	 * } The figures.
 	 *
 	 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
 	 */
@@ -127,7 +131,13 @@ class DepreciationScheduleService {
 		$lines = $this->records->records(schema: self::SCHEDULE, filters: ['assetRef' => $assetId]);
 		usort(
 			$lines,
-			static fn (array $left, array $right): int => [(string)($left['periodStartDate'] ?? ''), (string)($left['rateType'] ?? '')] <=> [(string)($right['periodStartDate'] ?? ''), (string)($right['rateType'] ?? '')]
+			static fn (array $left, array $right): int => [
+				(string)($left['periodStartDate'] ?? ''),
+				(string)($left['rateType'] ?? ''),
+			] <=> [
+				(string)($right['periodStartDate'] ?? ''),
+				(string)($right['rateType'] ?? ''),
+			]
 		);
 		return $lines;
 
@@ -194,7 +204,10 @@ class DepreciationScheduleService {
 			$posted = (string)($line['status'] ?? '') === self::POSTED;
 			if ($start < $fromMonth . '-01' || $posted === true) {
 				if ($posted === true && $start >= $fromMonth . '-01' && (string)($line['rateType'] ?? '') !== self::EXTRA) {
-					throw new DomainException(sprintf('The depreciation of %s is already posted, so the revision cannot start before it.', substr($start, 0, 7)));
+					throw new DomainException(sprintf(
+						'The depreciation of %s is already posted, so the revision cannot start before it.',
+						substr($start, 0, 7)
+					));
 				}
 
 				$kept[] = $line;
@@ -215,7 +228,14 @@ class DepreciationScheduleService {
 		}
 
 		$book = ($figures['costCents'] - $accumulated);
-		$plan = $this->planner->plan(fromMonth: $fromMonth, bookCents: $book, residualCents: $figures['residualCents'], months: $left, method: $method, rate: $figures['rate']);
+		$plan = $this->planner->plan(
+			fromMonth: $fromMonth,
+			bookCents: $book,
+			residualCents: $figures['residualCents'],
+			months: $left,
+			method: $method,
+			rate: $figures['rate']
+		);
 		$this->writePlan(figures: $figures, plan: $plan, method: $method, months: $months, accumulatedCents: $accumulated, reason: $reason);
 
 		return [
@@ -276,7 +296,12 @@ class DepreciationScheduleService {
 				rateType: self::EXTRA
 			)
 		);
-		$journalId = $this->post(administrationId: $figures['administrationId'], period: $date, entries: [['figures' => $figures, 'line' => $line]], description: sprintf('Extra depreciation %s: %s', $figures['number'], $reason));
+		$journalId = $this->post(
+			administrationId: $figures['administrationId'],
+			period: $date,
+			entries: [['figures' => $figures, 'line' => $line]],
+			description: sprintf('Extra depreciation %s: %s', $figures['number'], $reason)
+		);
 
 		$this->revise(asset: $asset, date: $date, method: $figures['method'], months: $figures['months'], reason: $reason);
 
@@ -308,7 +333,12 @@ class DepreciationScheduleService {
 
 		$lines = 0;
 		foreach ($byAdministration as $administrationId => $entries) {
-			$this->post(administrationId: (string)$administrationId, period: $month . '-28', entries: $entries, description: sprintf('Depreciation %s', $month));
+			$this->post(
+				administrationId: (string)$administrationId,
+				period: $month . '-28',
+				entries: $entries,
+				description: sprintf('Depreciation %s', $month)
+			);
 			$lines += count($entries);
 		}
 
@@ -361,7 +391,12 @@ class DepreciationScheduleService {
 				continue;
 			}
 
-			$this->post(administrationId: $figures['administrationId'], period: (string)$line['periodEndDate'], entries: [['figures' => $figures, 'line' => $line]], description: sprintf('Depreciation %s, %s', $row['period'], $figures['number']));
+			$this->post(
+				administrationId: $figures['administrationId'],
+				period: (string)$line['periodEndDate'],
+				entries: [['figures' => $figures, 'line' => $line]],
+				description: sprintf('Depreciation %s, %s', $row['period'], $figures['number'])
+			);
 		}
 
 		return $missed;
@@ -387,7 +422,7 @@ class DepreciationScheduleService {
 	 * Post schedule lines as one journal entry and mark them posted.
 	 *
 	 * @param string                                                         $administrationId The administration.
-	 * @param string                                                         $period           A date in the period; the entry date is the period's end for a month.
+	 * @param string                                                         $period           A date in the period (the entry date is its end).
 	 * @param list<array{figures: array<string,mixed>, line: array<string,mixed>}> $entries          The lines with their assets.
 	 * @param string                                                         $description      The journal entry's description.
 	 *
@@ -407,7 +442,13 @@ class DepreciationScheduleService {
 
 			$amount = (round((float)$entry['line']['depreciationAmount'], 2));
 			$text = sprintf('%s %s', $figures['number'], substr((string)$entry['line']['periodEndDate'], 0, 10));
-			$lines[] = ['accountNumber' => $figures['expenseAccount'], 'side' => 'debit', 'amount' => $amount, 'description' => $text, 'costCenterCode' => $figures['costCenter']];
+			$lines[] = [
+				'accountNumber' => $figures['expenseAccount'],
+				'side' => 'debit',
+				'amount' => $amount,
+				'description' => $text,
+				'costCenterCode' => $figures['costCenter'],
+			];
 			$lines[] = ['accountNumber' => $figures['accumulatedAccount'], 'side' => 'credit', 'amount' => $amount, 'description' => $text];
 			$numbers[] = (string)$entry['line']['id'];
 			$date = max($date, substr((string)$entry['line']['periodEndDate'], 0, 10));
@@ -419,7 +460,11 @@ class DepreciationScheduleService {
 
 		$journalId = $this->records->postJournal(
 			journal: [
-				'journalNumber'    => sprintf('AFS-%s-%s', str_replace('-', '', $date), substr(hash('sha256', $administrationId . '|' . implode('|', $numbers)), 0, 8)),
+				'journalNumber'    => sprintf(
+					'AFS-%s-%s',
+					str_replace('-', '', $date),
+					substr(hash('sha256', $administrationId . '|' . implode('|', $numbers)), 0, 8)
+				),
 				'entryDate'        => $date,
 				'description'      => $description,
 				'lines'            => $lines,
@@ -446,14 +491,25 @@ class DepreciationScheduleService {
 	 * @param string                                                                            $method           The FixedAsset method.
 	 * @param int                                                                               $months           The total useful life.
 	 * @param int                                                                               $accumulatedCents Depreciation before the plan.
-	 * @param string                                                                            $reason           Why the plan was made, empty for the first.
+	 * @param string                                                                            $reason           Why the plan was made, or empty.
 	 *
 	 * @return void
 	 */
 	private function writePlan(array $figures, array $plan, string $method, int $months, int $accumulatedCents, string $reason): void {
 		foreach ($plan as $month) {
 			$accumulatedCents += $month['cents'];
-			$this->records->save(schema: self::SCHEDULE, object: $this->line(figures: $figures, line: $month, method: $method, months: $months, accumulatedCents: $accumulatedCents, reason: $reason, rateType: 'fixed-amount'));
+			$this->records->save(
+				schema: self::SCHEDULE,
+				object: $this->line(
+					figures: $figures,
+					line: $month,
+					method: $method,
+					months: $months,
+					accumulatedCents: $accumulatedCents,
+					reason: $reason,
+					rateType: 'fixed-amount'
+				)
+			);
 		}
 
 	}//end writePlan()
@@ -467,7 +523,7 @@ class DepreciationScheduleService {
 	 * @param int                                                          $months           The total useful life.
 	 * @param int                                                          $accumulatedCents Accumulated depreciation including this line.
 	 * @param string                                                       $reason           Why, or empty.
-	 * @param string                                                       $rateType         fixed-amount for a planned month, extra for an extra depreciation.
+	 * @param string                                                       $rateType         fixed-amount, or extra.
 	 *
 	 * @return array<string,mixed> The line.
 	 */
@@ -495,8 +551,8 @@ class DepreciationScheduleService {
 			'bookValue'               => (($figures['costCents'] - $accumulatedCents) / 100),
 			'fiscalYear'              => (int)substr($line['start'], 0, 4),
 			'status'                  => self::PLANNED,
-			'costCenterCode'          => ($figures['costCenter'] !== '' ? $figures['costCenter'] : null),
-			'reason'                  => ($reason !== '' ? $reason : null),
+			'costCenterCode'          => $this->orNull(value: $figures['costCenter']),
+			'reason'                  => $this->orNull(value: $reason),
 			'administrationId'        => $figures['administrationId'],
 		];
 
@@ -518,9 +574,30 @@ class DepreciationScheduleService {
 		}
 
 		$diff = $from->diff($to);
-		return ((($diff->y * 12) + $diff->m) * ($diff->invert === 1 ? -1 : 1));
+		$months = (($diff->y * 12) + $diff->m);
+		if ($diff->invert === 1) {
+			return -$months;
+		}
+
+		return $months;
 
 	}//end monthsBetween()
+
+	/**
+	 * An empty string as null.
+	 *
+	 * @param string $value The value.
+	 *
+	 * @return string|null The value, or null when empty.
+	 */
+	private function orNull(string $value): ?string {
+		if ($value === '') {
+			return null;
+		}
+
+		return $value;
+
+	}//end orNull()
 
 	/**
 	 * Euros to cents.

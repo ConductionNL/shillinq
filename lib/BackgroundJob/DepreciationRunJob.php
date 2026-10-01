@@ -71,6 +71,10 @@ class DepreciationRunJob extends TimedJob {
 	 * @param mixed $argument Unused.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is TimedJob's.
 	 */
 	protected function run($argument): void {
 		try {

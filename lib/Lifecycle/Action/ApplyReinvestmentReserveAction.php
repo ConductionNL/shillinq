@@ -3,7 +3,8 @@
 /**
  * Apply Reinvestment Reserve Action
  *
- * Runs on the FixedAsset `applyReinvestmentReserve` transition (REQ-AMCR-005): lowers the asset's fiscal cost basis by the amount applied and debits the reserve account.
+ * Runs on the FixedAsset `applyReinvestmentReserve` transition (REQ-AMCR-005):
+ * lowers the asset's fiscal cost basis by the amount applied and debits the reserve account.
  *
  * @category Lifecycle
  * @package  OCA\Shillinq\Lifecycle\Action
@@ -55,6 +56,8 @@ class ApplyReinvestmentReserveAction implements LifecycleActionInterface {
 	 * @return array<string,mixed> The asset to save.
 	 *
 	 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
 	 */
 	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
 		return $this->reserves->apply(asset: $objectData);

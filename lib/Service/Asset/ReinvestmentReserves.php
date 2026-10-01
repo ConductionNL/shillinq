@@ -156,13 +156,13 @@ class ReinvestmentReserves {
 
 		$cost = self::cents(amount: ($asset['acquisitionCost'] ?? ($asset['purchaseCost'] ?? 0)));
 		$basis = $cost;
-		if (isset($asset['fiscalCostBasis']) === true && $asset['fiscalCostBasis'] !== null) {
+		if (isset($asset['fiscalCostBasis']) === true) {
 			$basis = self::cents(amount: $asset['fiscalCostBasis']);
 		}
 
 		$left = (self::cents(amount: ($reserve['amount'] ?? 0)) - self::cents(amount: ($reserve['appliedAmount'] ?? 0)));
 		$applied = min($left, $basis);
-		if (isset($asset['reserveAmountApplied']) === true && $asset['reserveAmountApplied'] !== null && (float)$asset['reserveAmountApplied'] > 0) {
+		if (isset($asset['reserveAmountApplied']) === true && (float)$asset['reserveAmountApplied'] > 0) {
 			$applied = self::cents(amount: $asset['reserveAmountApplied']);
 		}
 
@@ -180,11 +180,20 @@ class ReinvestmentReserves {
 		$journalId = $this->records->postJournal(
 			journal: $this->journal(
 				administrationId: (string)$asset['administrationId'],
-				number: sprintf('HIR-%s-%s', str_replace('-', '', $date), substr(hash('sha256', (string)$reserve['id'] . '|' . (string)($asset['id'] ?? '')), 0, 8)),
+				number: sprintf(
+					'HIR-%s-%s',
+					str_replace('-', '', $date),
+					substr(hash('sha256', (string)$reserve['id'] . '|' . (string)($asset['id'] ?? '')), 0, 8)
+				),
 				date: $date,
 				description: $text,
 				lines: [
-					['accountNumber' => (string)($reserve['reserveAccountNumber'] ?? $this->reserveAccount()), 'side' => 'debit', 'amount' => ($applied / 100), 'description' => $text],
+					[
+						'accountNumber' => (string)($reserve['reserveAccountNumber'] ?? $this->reserveAccount()),
+						'side' => 'debit',
+						'amount' => ($applied / 100),
+						'description' => $text,
+					],
 					['accountNumber' => $assetAccount, 'side' => 'credit', 'amount' => ($applied / 100), 'description' => $text],
 				]
 			)
@@ -192,8 +201,18 @@ class ReinvestmentReserves {
 
 		$appliedTotal = (self::cents(amount: ($reserve['appliedAmount'] ?? 0)) + $applied);
 		$applications = (array)($reserve['applications'] ?? []);
-		$applications[] = ['assetRef' => (string)($asset['id'] ?? ''), 'assetNumber' => (string)($asset['assetNumber'] ?? ''), 'amount' => ($applied / 100), 'journalEntryId' => $journalId, 'appliedOn' => $date];
-		$fields = ['appliedAmount' => ($appliedTotal / 100), 'remainder' => ((self::cents(amount: $reserve['amount']) - $appliedTotal) / 100), 'applications' => $applications];
+		$applications[] = [
+			'assetRef' => (string)($asset['id'] ?? ''),
+			'assetNumber' => (string)($asset['assetNumber'] ?? ''),
+			'amount' => ($applied / 100),
+			'journalEntryId' => $journalId,
+			'appliedOn' => $date,
+		];
+		$fields = [
+			'appliedAmount' => ($appliedTotal / 100),
+			'remainder' => ((self::cents(amount: $reserve['amount']) - $appliedTotal) / 100),
+			'applications' => $applications,
+		];
 		if ($appliedTotal >= self::cents(amount: $reserve['amount'])) {
 			$fields['lifecycleState'] = 'applied';
 		}
@@ -234,7 +253,12 @@ class ReinvestmentReserves {
 						date: (string)$reserve['expiresOn'],
 						description: $text,
 						lines: [
-							['accountNumber' => (string)($reserve['reserveAccountNumber'] ?? $this->reserveAccount()), 'side' => 'debit', 'amount' => ($left / 100), 'description' => $text],
+							[
+								'accountNumber' => (string)($reserve['reserveAccountNumber'] ?? $this->reserveAccount()),
+								'side' => 'debit',
+								'amount' => ($left / 100),
+								'description' => $text,
+							],
 							['accountNumber' => $this->releaseAccount(), 'side' => 'credit', 'amount' => ($left / 100), 'description' => $text],
 						]
 					)

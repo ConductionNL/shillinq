@@ -3,7 +3,8 @@
 /**
  * Extra Depreciation Action
  *
- * Runs on the FixedAsset `depreciateExtra` transition (REQ-AMCR-003): posts one extra depreciation line at once and replans the remaining months from the lower book value.
+ * Runs on the FixedAsset `depreciateExtra` transition (REQ-AMCR-003):
+ * posts one extra depreciation line at once and replans the remaining months from the lower book value.
  *
  * @category Lifecycle
  * @package  OCA\Shillinq\Lifecycle\Action
@@ -55,6 +56,8 @@ class ExtraDepreciationAction implements LifecycleActionInterface {
 	 * @return array<string,mixed> The asset to save.
 	 *
 	 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
 	 */
 	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
 		return $this->depreciation->extra(asset: $objectData);

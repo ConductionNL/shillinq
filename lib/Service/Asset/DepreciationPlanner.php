@@ -83,7 +83,15 @@ class DepreciationPlanner {
 		$lines = [];
 		$book = $bookCents;
 		for ($index = 0; $index < $months; $index++) {
-			$cents = $this->monthCents(method: $method, depreciable: $depreciable, book: $book, residual: $residualCents, months: $months, index: $index, rate: $rate);
+			$cents = $this->monthCents(
+				method: $method,
+				depreciable: $depreciable,
+				book: $book,
+				residual: $residualCents,
+				months: $months,
+				index: $index,
+				rate: $rate
+			);
 			$book -= $cents;
 			$month = $first->modify(sprintf('+%d month', $index));
 			$lines[] = [

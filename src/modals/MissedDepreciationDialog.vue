@@ -34,8 +34,8 @@
 			data-testid="missed-depreciation-rows">
 			<thead>
 				<tr>
-					<th>{{ t('shillinq', 'Month') }}</th>
-					<th>{{ t('shillinq', 'Amount') }}</th>
+					<th scope="col">{{ t('shillinq', 'Month') }}</th>
+					<th scope="col">{{ t('shillinq', 'Amount') }}</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -46,8 +46,8 @@
 			</tbody>
 			<tfoot>
 				<tr>
-					<th>{{ t('shillinq', 'Total') }}</th>
-					<th>{{ money(total) }}</th>
+					<th scope="row">{{ t('shillinq', 'Total') }}</th>
+					<td>{{ money(total) }}</td>
 				</tr>
 			</tfoot>
 		</table>
@@ -120,6 +120,12 @@ export default {
 		},
 	},
 
+	/**
+	 * Read the months that ended without their depreciation posted.
+	 *
+	 * @return {Promise<void>}
+	 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
+	 */
 	async mounted() {
 		try {
 			const { data } = await axios.get(this.url)
