@@ -134,7 +134,7 @@ class FieldRequirements {
 	 *
 	 * @param array<string, mixed> $requirement The requirement.
 	 *
-	 * @return list<array{field: string, title: string, required: string}> The fields.
+	 * @return list<array{field: string, title: string, required: string, requiredLabel: string}> The fields.
 	 *
 	 * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
 	 */
@@ -149,6 +149,11 @@ class FieldRequirements {
 			'field'
 		);
 
+		$labels = [
+			'always'         => $this->l10n->t('Always'),
+			'administration' => $this->l10n->t('In this administration'),
+			'no'             => $this->l10n->t('No'),
+		];
 		$rows = [];
 		foreach ($definition['properties'] as $field => $property) {
 			if (is_array($property) === true && ($property['readOnly'] ?? false) === true) {
@@ -165,9 +170,10 @@ class FieldRequirements {
 			}
 
 			$rows[] = [
-				'field'    => (string)$field,
-				'title'    => $this->title(definition: $definition, field: (string)$field),
-				'required' => $required,
+				'field'         => (string)$field,
+				'title'         => $this->title(definition: $definition, field: (string)$field),
+				'required'      => $required,
+				'requiredLabel' => $labels[$required],
 			];
 		}//end foreach
 

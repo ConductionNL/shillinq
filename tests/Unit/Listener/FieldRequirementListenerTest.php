@@ -419,6 +419,69 @@ class FieldRequirementListenerTest extends TestCase {
 	}//end testObjectsOutsideTheCheckAreIgnored()
 
 	/**
+	 * SchemaDefinitions reads slug, title, properties and required list through the mapper's magic getters, once.
+	 *
+	 * @return void
+	 */
+	public function testSchemaDefinitionsReadTheMapperOnce(): void {
+		$schema = new class {
+			/**
+			 * Magic getters, as OpenRegister's Schema entity serves them.
+			 *
+			 * @param string       $name      The getter.
+			 * @param array<mixed> $arguments Unused.
+			 *
+			 * @return mixed
+			 */
+			public function __call(string $name, array $arguments): mixed {
+				return [
+					'getSlug'       => 'SupplierInvoice',
+					'getTitle'      => 'Supplier invoice',
+					'getProperties' => ['costCenter' => ['type' => 'string', 'title' => 'Cost Center']],
+					'getRequired'   => ['invoiceNumber'],
+				][$name];
+			}
+		};
+		$mapper = new class ($schema) {
+			public int $calls = 0;
+
+			/**
+			 * Constructor.
+			 *
+			 * @param object $schema The schema to answer.
+			 */
+			public function __construct(private readonly object $schema) {
+			}
+
+			/**
+			 * Find by id or slug.
+			 *
+			 * @param string|int $id The id.
+			 *
+			 * @return object
+			 */
+			public function find(string|int $id): object {
+				$this->calls++;
+				if ($id !== '41') {
+					throw new \RuntimeException('Not found');
+				}
+
+				return $this->schema;
+			}
+		};
+		$container = $this->createStub(\Psr\Container\ContainerInterface::class);
+		$container->method('get')->willReturn($mapper);
+		$definitions = new SchemaDefinitions($container, $this->createStub(LoggerInterface::class));
+
+		$definition = $definitions->definition(schema: '41');
+		$definitions->definition(schema: '41');
+		$this->assertSame(['slug' => 'SupplierInvoice', 'title' => 'Supplier invoice', 'properties' => ['costCenter' => ['type' => 'string', 'title' => 'Cost Center']], 'required' => ['invoiceNumber']], $definition);
+		$this->assertSame(1, $mapper->calls);
+		$this->assertNull($definitions->definition(schema: '99'));
+
+	}//end testSchemaDefinitionsReadTheMapperOnce()
+
+	/**
 	 * The listener is registered on both pre-save events, and the app calls the registration.
 	 *
 	 * @return void

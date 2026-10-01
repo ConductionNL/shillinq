@@ -1,0 +1,150 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "platform-required-fields",
+		"adr": "ADR-037 modular manifest fragment, never edit src/manifest.json",
+		"description": "Required fields settings pages (REQ-PRF-001): the administration's FieldRequirement records, and on each one the fields of its record type, marked always required, required in this administration, or not required."
+	},
+	"menu": [
+		{
+			"id": "RequiredFields",
+			"label": "Required fields",
+			"icon": "TextBoxCheckOutline",
+			"route": "RequiredFields",
+			"order": 46
+		}
+	],
+	"pages": [
+		{
+			"id": "RequiredFields",
+			"route": "/settings/required-fields",
+			"type": "index",
+			"title": "Required fields",
+			"config": {
+				"register": "shillinq",
+				"schema": "FieldRequirement",
+				"description": "Fields that must be filled in on a record type in this administration, on top of the fields that are always required. A save without them is refused with the reason.",
+				"columns": [
+					{
+						"key": "schema",
+						"label": "Record type",
+						"sortable": true
+					},
+					{
+						"key": "field",
+						"label": "Field",
+						"sortable": true
+					},
+					{
+						"key": "reason",
+						"label": "Reason"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "State",
+						"sortable": true
+					}
+				],
+				"defaultSort": "schema",
+				"detailRoute": "RequiredFieldDetail"
+			}
+		},
+		{
+			"id": "RequiredFieldDetail",
+			"route": "/settings/required-fields/:id",
+			"type": "detail",
+			"title": "Required field",
+			"config": {
+				"register": "shillinq",
+				"schema": "FieldRequirement",
+				"_note": "CONFIG: one required field with its reason; below it every field of the record type, so an administrator sees which are always required and which this administration added.",
+				"auditTrail": true,
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "required-field-details",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 4
+					},
+					{
+						"id": "2",
+						"widgetId": "required-field-form-fields",
+						"gridX": 0,
+						"gridY": 4,
+						"gridWidth": 12,
+						"gridHeight": 8
+					}
+				],
+				"widgets": [
+					{
+						"id": "required-field-details",
+						"type": "data",
+						"title": "Details",
+						"icon": "TextBoxCheckOutline",
+						"content": {
+							"columns": 2,
+							"include": [
+								"schema",
+								"field",
+								"reason",
+								"lifecycleState",
+								"administrationId"
+							]
+						}
+					},
+					{
+						"id": "required-field-form-fields",
+						"type": "object-table",
+						"title": "Fields of this record type",
+						"icon": "FormatListChecks",
+						"content": {
+							"endpointSource": {
+								"url": "/apps/shillinq/api/field-requirements/@objectId/fields",
+								"responsePath": "rows"
+							},
+							"columns": [
+								{
+									"key": "title",
+									"label": "Field"
+								},
+								{
+									"key": "field",
+									"label": "Name"
+								},
+								{
+									"key": "requiredLabel",
+									"label": "Required"
+								}
+							],
+							"emptyText": "This record type has no fields."
+						}
+					}
+				],
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				},
+				"indexRoute": "RequiredFields"
+			}
+		}
+	]
+}
