@@ -41,24 +41,39 @@ export function vatCheckMessage(result) {
 	if (result.status === 'valid') {
 		return {
 			kind: 'success',
-			text: t('shillinq', 'VAT number {vatId} is valid (checked on {date}).', { vatId, date: day(result.lastValidAt) }),
+			text: t('shillinq', 'VAT number {vatId} is valid (checked on {date}).', {
+				vatId,
+				date: day(result.lastValidAt),
+			}),
 		}
 	}
 	if (result.status === 'invalid') {
 		return {
 			kind: 'error',
-			text: t('shillinq', 'VAT number {vatId} is not valid according to VIES.', { vatId }),
+			text: t(
+				'shillinq',
+				'VAT number {vatId} is not valid according to VIES.',
+				{ vatId },
+			),
 		}
 	}
 	if (result.lastValidAt) {
 		return {
 			kind: 'warning',
-			text: t('shillinq', 'VIES cannot be reached. VAT number {vatId} was last valid on {date}.', { vatId, date: day(result.lastValidAt) }),
+			text: t(
+				'shillinq',
+				'VIES cannot be reached. VAT number {vatId} was last valid on {date}.',
+				{ vatId, date: day(result.lastValidAt) },
+			),
 		}
 	}
 	return {
 		kind: 'warning',
-		text: t('shillinq', 'VIES cannot be reached, and VAT number {vatId} has not been confirmed before.', { vatId }),
+		text: t(
+			'shillinq',
+			'VIES cannot be reached, and VAT number {vatId} has not been confirmed before.',
+			{ vatId },
+		),
 	}
 }
 
@@ -71,14 +86,25 @@ export function vatCheckMessage(result) {
  * @spec openspec/changes/tax-vat-number-check/tasks.md#task-2.1
  */
 export async function checkVatNumber(type, scope) {
-	const id = (scope && scope.item && scope.item.id) || window.location.pathname.split('/').pop()
+	const id =
+		(scope && scope.item && scope.item.id)
+		|| window.location.pathname.split('/').pop()
 	if (!id) {
 		return null
 	}
 	try {
-		const { data } = await axios.post(generateUrl('/apps/shillinq/api/vat-number-checks/{type}/{id}', { type, id }))
+		const { data } = await axios.post(
+			generateUrl('/apps/shillinq/api/vat-number-checks/{type}/{id}', {
+				type,
+				id,
+			}),
+		)
 		const message = vatCheckMessage(data)
-		const show = { success: showSuccess, warning: showWarning, error: showError }[message.kind]
+		const show = {
+			success: showSuccess,
+			warning: showWarning,
+			error: showError,
+		}[message.kind]
 		show(message.text)
 		emit('cn:page:refresh', {})
 		return data

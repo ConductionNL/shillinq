@@ -8138,7 +8138,6 @@
 					}
 				],
 				"headerActions": [
-					{"id": "check-vat-number", "label": "Check VAT number", "type": "handler", "handler": "checkCustomerVatNumber", "icon": "CheckDecagram", "description": "Check the VAT number against the EU VIES register and keep the outcome on this record."},
 					{
 						"id": "agree-payment-plan",
 						"label": "Agree a payment plan",
@@ -8159,7 +8158,8 @@
 						"props": {
 							"open": true
 						}
-					}
+					},
+					{"id": "check-vat-number", "label": "Check VAT number", "type": "handler", "handler": "checkCustomerVatNumber", "icon": "CheckDecagramOutline", "description": "Check the VAT number against the EU VIES register and keep the outcome on this record."}
 				],
 				"lifecycleActions": true,
 				"sidebar": {

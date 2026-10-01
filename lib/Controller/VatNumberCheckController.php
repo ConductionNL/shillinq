@@ -35,6 +35,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use Throwable;
 
 /**
  * Checks the VAT number of one customer or supplier the caller can see.
@@ -103,7 +104,12 @@ class VatNumberCheckController extends Controller {
 			return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
 		}
 
-		$record = $this->records->find(schema: VatNumberCheck::RECORDS[$type]['schema'], id: $id);
+		try {
+			$record = $this->records->find(schema: VatNumberCheck::RECORDS[$type]['schema'], id: $id);
+		} catch (Throwable $e) {
+			$record = null;
+		}
+
 		if ($record === null || $this->context->canAccess(administrationId: (string)($record['administrationId'] ?? '')) === false) {
 			return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
 		}

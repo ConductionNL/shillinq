@@ -159,7 +159,10 @@ class VatNumberCheck {
 
 			return $fields;
 		} catch (\Throwable $e) {
-			$this->logger->warning('VatNumberCheck: the seller VAT number of an arrived invoice was not checked', ['invoiceId' => $invoiceId, 'exception' => $e->getMessage()]);
+			$this->logger->warning(
+				'VatNumberCheck: the seller VAT number of an arrived invoice was not checked',
+				['invoiceId' => $invoiceId, 'exception' => $e->getMessage()]
+			);
 
 			return null;
 		}

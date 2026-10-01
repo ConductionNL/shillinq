@@ -71,7 +71,8 @@
 					</span>
 				</p>
 				<p v-if="invoice.sellerVatId" data-testid="si-seller-vat">
-					{{ t('shillinq', 'Seller VAT number') }}: {{ invoice.sellerVatId }}
+					{{ t('shillinq', 'Seller VAT number') }}:
+					{{ invoice.sellerVatId }}
 					<span v-if="sellerVatCheck">({{ sellerVatCheck }})</span>
 				</p>
 			</header>
@@ -254,7 +255,9 @@ export default {
 		 */
 		sellerVatCheck() {
 			const status = this.invoice && this.invoice.sellerVatIdValidationStatus
-			const date = this.formatDate(this.invoice && this.invoice.sellerVatIdValidatedAt)
+			const date = this.formatDate(
+				this.invoice && this.invoice.sellerVatIdValidatedAt,
+			)
 			if (status === 'valid') {
 				return this.t('shillinq', 'valid, checked on {date}', { date })
 			}
@@ -262,7 +265,11 @@ export default {
 				return this.t('shillinq', 'not valid according to VIES')
 			}
 			if (status === 'vies_outage' && this.invoice.sellerVatIdValidatedAt) {
-				return this.t('shillinq', 'VIES not reachable, last valid on {date}', { date })
+				return this.t(
+					'shillinq',
+					'VIES not reachable, last valid on {date}',
+					{ date },
+				)
 			}
 			if (status === 'vies_outage') {
 				return this.t('shillinq', 'VIES not reachable')
