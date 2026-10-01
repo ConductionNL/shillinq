@@ -6281,7 +6281,10 @@ OC.L10N.register(
         "Add a file of readings. Each refused row is named with its row number and the reason.": "Voeg een bestand met meterstanden toe. Elke geweigerde regel wordt genoemd met het regelnummer en de reden.",
         "Price the selected unrated readings against their rate plan.": "Waardeer de geselecteerde meterstanden tegen hun tariefplan.",
         "The price per unit of a metered resource, flat or in tiers. A reading is rated against the plan of its resource.": "De prijs per eenheid van gemeten verbruik, vast of in staffels. Een meterstand wordt gewaardeerd tegen het plan van zijn verbruikstype.",
-        "Rate readings": "Meterstanden waarderen"
+        "Rate readings": "Meterstanden waarderen",
+        "Meter": "Meter",
+        "Price per unit (cents)": "Prijs per eenheid (cent)",
+        "Rating": "Waardering"
     },
     "nplurals=2; plural=(n != 1);"
 )

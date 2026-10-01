@@ -263,6 +263,12 @@ export default {
 			].join('|')
 		},
 
+		/**
+		 * The generation request, with the selected reading ids for usage.
+		 *
+		 * @return {object}
+		 * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.2
+		 */
 		payload() {
 			return {
 				...this.form,

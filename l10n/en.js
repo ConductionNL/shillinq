@@ -4068,7 +4068,10 @@ OC.L10N.register(
         "Add a file of readings. Each refused row is named with its row number and the reason.": "Add a file of readings. Each refused row is named with its row number and the reason.",
         "Price the selected unrated readings against their rate plan.": "Price the selected unrated readings against their rate plan.",
         "The price per unit of a metered resource, flat or in tiers. A reading is rated against the plan of its resource.": "The price per unit of a metered resource, flat or in tiers. A reading is rated against the plan of its resource.",
-        "Rate readings": "Rate readings"
+        "Rate readings": "Rate readings",
+        "Meter": "Meter",
+        "Price per unit (cents)": "Price per unit (cents)",
+        "Rating": "Rating"
     },
     "nplurals=2; plural=(n != 1);"
 )
