@@ -28,7 +28,10 @@
 		<p v-else-if="rows.length === 0">
 			{{ t('shillinq', 'Every month that ended is posted.') }}
 		</p>
-		<table v-else class="missed-depreciation" data-testid="missed-depreciation-rows">
+		<table
+			v-else
+			class="missed-depreciation"
+			data-testid="missed-depreciation-rows">
 			<thead>
 				<tr>
 					<th>{{ t('shillinq', 'Month') }}</th>
@@ -83,6 +86,7 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+
 		assetId: {
 			type: String,
 			required: true,
@@ -109,7 +113,10 @@ export default {
 		 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
 		 */
 		url() {
-			return generateUrl('/apps/shillinq/api/fixed-assets/{id}/missed-depreciation', { id: this.assetId })
+			return generateUrl(
+				'/apps/shillinq/api/fixed-assets/{id}/missed-depreciation',
+				{ id: this.assetId },
+			)
 		},
 	},
 
@@ -119,7 +126,10 @@ export default {
 			this.rows = data.rows || []
 			this.total = data.total || 0
 		} catch (e) {
-			this.error = this.reason(e, t('shillinq', 'The missed depreciation could not be read.'))
+			this.error = this.reason(
+				e,
+				t('shillinq', 'The missed depreciation could not be read.'),
+			)
 		} finally {
 			this.loading = false
 		}
@@ -136,7 +146,10 @@ export default {
 		 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
 		 */
 		money(amount) {
-			return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'EUR' }).format(amount || 0)
+			return new Intl.NumberFormat(undefined, {
+				style: 'currency',
+				currency: 'EUR',
+			}).format(amount || 0)
 		},
 
 		/**
@@ -148,7 +161,13 @@ export default {
 		 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
 		 */
 		reason(error, fallback) {
-			return (error && error.response && error.response.data && error.response.data.error) || fallback
+			return (
+				(error
+					&& error.response
+					&& error.response.data
+					&& error.response.data.error)
+				|| fallback
+			)
 		},
 
 		/**
@@ -161,11 +180,18 @@ export default {
 			this.posting = true
 			try {
 				const { data } = await axios.post(this.url)
-				showSuccess(t('shillinq', 'Posted {count} months of depreciation.', { count: (data.rows || []).length }))
+				showSuccess(
+					t('shillinq', 'Posted {count} months of depreciation.', {
+						count: (data.rows || []).length,
+					}),
+				)
 				emit('cn:page:refresh', {})
 				this.$emit('close')
 			} catch (e) {
-				this.error = this.reason(e, t('shillinq', 'The missed depreciation could not be posted.'))
+				this.error = this.reason(
+					e,
+					t('shillinq', 'The missed depreciation could not be posted.'),
+				)
 			} finally {
 				this.posting = false
 			}

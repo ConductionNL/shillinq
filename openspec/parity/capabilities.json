@@ -5706,17 +5706,19 @@
 			"id": "pln-asset-method-change",
 			"area": "planning",
 			"name": "Change an asset's depreciation method or life part way and book extra depreciation.",
-			"shillinq": "no",
+			"shillinq": "yes",
 			"exact-online": "unknown",
 			"moneybird": "partial",
 			"snelstart": "unknown",
 			"twinfield": "partial",
 			"odoo": "yes",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"reachedOn": "FixedAssetDetail /fixed-assets/:id (field edit only)"
+				"readOn": "2026-10-01",
+				"reachedOn": "Fixed Assets > an asset (/fixed-assets/:id): Revise depreciation, Extra depreciation and Post missed depreciation; the depreciation schedule shows each month planned or posted",
+				"evidence": "DepreciationRunJob posts the month that ended last per administration through JournalEntry postDirect and marks each DepreciationSchedule line posted (lib/Service/Asset/DepreciationScheduleService.php); the revise transition replans the unposted months from the book value on its date and refuses a date before a posted month (ReviseDepreciationAction); depreciateExtra posts one extra line at once and replans (ExtraDepreciationAction); straight line, degressive and units of production (tests/Unit/Asset/AssetsMethodChangeAndReserveTest.php).",
+				"change": "2026-10-01-assets-method-change-and-reserve"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-asset-finasst-depasstt covers depreciation plans; changing method part way is not stated",
@@ -6264,17 +6266,19 @@
 			"id": "led-reinvestment-reserve",
 			"area": "ledger",
 			"name": "Book the gain on a sold asset to a reinvestment reserve and apply it to a replacement asset.",
-			"shillinq": "no",
+			"shillinq": "yes",
 			"exact-online": "unknown",
 			"moneybird": "yes",
 			"snelstart": "unknown",
 			"twinfield": "unknown",
 			"odoo": "no",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
-				"readOn": "2026-09-26",
-				"reachedOn": "nothing"
+				"readOn": "2026-10-01",
+				"reachedOn": "Fixed Assets > an asset: Dispose with Add the gain to a reinvestment reserve, and Apply reinvestment reserve; Fixed Assets > Reinvestment reserves (/fixed-assets/reinvestment-reserves)",
+				"evidence": "FixedAssetDisposalService credits the gain to the reserve account instead of profit and forms a ReinvestmentReserve expiring at the end of the third year (lib/Settings/register.d/assets-method-change-and-reserve.json); applyReinvestmentReserve lowers the replacement's fiscalCostBasis and debits the reserve account, partly or fully; the daily run releases an expired remainder to profit (lib/Service/Asset/ReinvestmentReserves.php, tests/Unit/Asset/AssetsMethodChangeAndReserveTest.php, tests/Unit/Listener/FixedAssetDisposalListenerTest.php).",
+				"change": "2026-10-01-assets-method-change-and-reserve"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
