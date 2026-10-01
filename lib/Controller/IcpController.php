@@ -8,9 +8,9 @@
  * lines + totals) for a period, the reconciliation outcome against the
  * BTW-aangifte rubriek 3b, and the EUR 50,000 periodicity-threshold decision for a
  * quarter. Every endpoint is available to any authenticated user
- * (#[NoAdminRequired]); the administration scope is validated and reads are
- * delegated to OpenRegister's ObjectService, which enforces multitenancy / RBAC,
- * so no cross-administration data leaks (IDOR-safe, REQ-ICP-001). These endpoints
+ * (#[NoAdminRequired]) who is a member of the requested administration: an
+ * administration the caller does not belong to answers 404 before anything is
+ * read or written (IDOR-safe, REQ-ICP-001). These endpoints
  * are read-only; ICP filing state changes go through the IcpOpgaaf lifecycle.
  *
  * @category Controller
@@ -33,6 +33,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\ArInvoiceIcpPdfRenderer;
 use OCA\Shillinq\Service\IcpFilingService;
 use OCA\Shillinq\Service\IcpService;
@@ -71,6 +72,7 @@ class IcpController extends Controller {
 	 * @param IUserSession $userSession The session for the acting user id (auth body-guard).
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param AdministrationContextService $administrations The caller's administration memberships (REQ-ICP-001).
 	 *
 	 * @return void
 	 */
@@ -83,6 +85,7 @@ class IcpController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly AdministrationContextService $administrations,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -103,6 +106,33 @@ class IcpController extends Controller {
 
 		return null;
 	}//end requireUser()
+
+	/**
+	 * Refuse an administration the caller is not a member of (REQ-ICP-001).
+	 *
+	 * Every endpoint here takes `administration_id` from the request. The id is
+	 * validated, then checked against the caller's own memberships; an
+	 * administration they do not belong to answers 404, the same as one that
+	 * does not exist, so no other administration's data is read or written.
+	 *
+	 * @param string $administrationId The administration id from the request.
+	 *
+	 * @return JSONResponse|null A 400 or 404 response, or null when the caller is a member.
+	 *
+	 * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
+	 */
+	private function requireMember(string $administrationId): ?JSONResponse {
+		$error = $this->validateId(value: $administrationId, label: 'administration_id');
+		if ($error !== null) {
+			return $error;
+		}
+
+		if ($this->administrations->canAccess(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		return null;
+	}//end requireMember()
 
 	/**
 	 * Return the ICP ledger for a period (REQ-ICP-003).
@@ -195,7 +225,7 @@ class IcpController extends Controller {
 			return $error;
 		}
 
-		$error = $this->validateId(value: $administrationId, label: 'administration_id');
+		$error = $this->requireMember(administrationId: $administrationId);
 		if ($error !== null) {
 			return $error;
 		}
@@ -237,7 +267,7 @@ class IcpController extends Controller {
 			return new JSONResponse(['error' => 'vat_id must be a valid VAT identifier'], Http::STATUS_BAD_REQUEST);
 		}
 
-		$error = $this->validateId(value: $administrationId, label: 'administration_id');
+		$error = $this->requireMember(administrationId: $administrationId);
 		if ($error !== null) {
 			return $error;
 		}
@@ -278,7 +308,7 @@ class IcpController extends Controller {
 		$reason = trim((string)$this->request->getParam('reason', ''));
 		$lines = $this->request->getParam('lines', []);
 
-		$error = $this->validateId(value: $administrationId, label: 'administration_id');
+		$error = $this->requireMember(administrationId: $administrationId);
 		if ($error !== null) {
 			return $error;
 		}
@@ -383,7 +413,7 @@ class IcpController extends Controller {
 			return $error;
 		}
 
-		$error = $this->validateId(value: $administrationId, label: 'administration_id');
+		$error = $this->requireMember(administrationId: $administrationId);
 		if ($error !== null) {
 			return $error;
 		}
@@ -551,7 +581,7 @@ class IcpController extends Controller {
 			return ['error' => $error];
 		}
 
-		$error = $this->validateId(value: $administrationId, label: 'administration_id');
+		$error = $this->requireMember(administrationId: $administrationId);
 		if ($error !== null) {
 			return ['error' => $error];
 		}
