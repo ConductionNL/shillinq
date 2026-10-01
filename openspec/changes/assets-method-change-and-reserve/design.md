@@ -66,6 +66,15 @@ a reserve past `expiresOn` with a remainder to fiscal profit.
 Alternative considered: a flag on the disposal only. Rejected: the reserve
 outlives the disposal by up to three years and is applied elsewhere.
 
+## As built (2026-10-01)
+
+- **No code wrote schedule lines.** Only the demo seed did. `DepreciationScheduleService::ensureSchedule` writes an active asset's whole monthly plan from its acquisition month when it has none; the daily run calls it for every active asset.
+- **Three shipped calculations assumed the first plan.** `DepreciationSchedule.depreciationAmount` (cost less residual times `annualRate`) overwrote every written line amount on save, and `FixedAsset.monthlyDepreciation` and `currentBookValue` derive from the original life. The fragment switches the three off (`enabled: false`); the schedule service writes the line amount, and `FixedAssetDepreciation` writes the asset's monthly amount and book value from the schedule (on a revision, an extra depreciation and in the daily run).
+- **Posted lines** carry `status: posted` (added to the enum by repeating the full list) and the journal entry's id in `glTransactionRef`. The run posts the month that ended last; `GET/POST /api/fixed-assets/{id}/missed-depreciation` lists and posts earlier months, opened from the asset page's Post missed depreciation action.
+- **Applying a reserve** is its own transition on an active asset (`applyReinvestmentReserve`) rather than an option inside `activate`, because the merged `activate` transition belongs to the acquisition flow. It debits the reserve account and credits the asset account, and writes `fiscalCostBasis` (a new field; `fiscalBookValue` is a materialised calculation and would be overwritten).
+- **Units of production** is planned evenly over the remaining months until per-period units are recorded, so its first plan equals straight line.
+- The `dispose` transition now declares `inputs` (date, proceeds, Add the gain to a reinvestment reserve), so the dialog asks for them.
+
 ## Declarative-vs-imperative decision (ADR-031)
 
 | Behaviour | Path | Rationale |

@@ -5191,6 +5191,11 @@
 						"type": "number"
 					},
 					{
+						"key": "fiscalCostBasis",
+						"label": "Fiscal cost basis",
+						"type": "number"
+					},
+					{
 						"key": "disposalDate",
 						"label": "Disposal Date",
 						"type": "string"
@@ -5210,6 +5215,9 @@
 						"label": "Administration",
 						"type": "string"
 					}
+				],
+				"headerActions": [
+					{"id": "post-missed-depreciation", "label": "Post missed depreciation", "type": "handler", "handler": "openMissedDepreciation", "icon": "CalendarClock", "description": "List the months that ended without their depreciation posted, with the amounts, and post them."}
 				],
 				"lifecycleActions": true,
 				"indexRoute": "FixedAssets",

@@ -29,6 +29,7 @@ import bundledManifest from './manifest.json'
 import menuLayout from './menu-layout.json'
 import pinia from './pinia.js'
 import registry from './registry.js'
+import { openMissedDepreciation } from './utils/assetActions.js'
 import { classifyUnmatched, openBankLineMatch } from './utils/bankMatchActions.js'
 import { openCarryOverCommitments } from './utils/commitmentYearEndApi.js'
 import { openDownPaymentInvoice } from './utils/downPaymentActions.js'
@@ -333,6 +334,8 @@ const customComponentsProp = {
 	// planning-commitment-year-end: the "Carry open commitments to next year"
 	// header action on Commitments.
 	openCarryOverCommitments,
+	// assets-method-change-and-reserve: the fixed asset page's missed depreciation.
+	openMissedDepreciation,
 	// reporting-relation-both-sides: the suggestions' row actions, the report's
 	// export and the supplier page's way to the linked customer.
 	confirmRelationSuggestion,
