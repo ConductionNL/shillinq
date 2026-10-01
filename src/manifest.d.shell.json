@@ -4850,6 +4850,33 @@
 		{
 			"menu": [
 				{
+					"id": "RequiredFields",
+					"label": "Required fields",
+					"icon": "TextBoxCheckOutline",
+					"route": "RequiredFields",
+					"order": 46
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "platform-required-fields",
+					"id": "RequiredFields",
+					"route": "/settings/required-fields",
+					"type": "index",
+					"title": "Required fields"
+				},
+				{
+					"_fragment": "platform-required-fields",
+					"id": "RequiredFieldDetail",
+					"route": "/settings/required-fields/:id",
+					"type": "detail",
+					"title": "Required field"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "Overheid",
 					"children": [
 						{

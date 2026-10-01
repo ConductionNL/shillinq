@@ -95,6 +95,7 @@
 		"CashflowRecurring",
 		"InventoryGLConfig",
 		"PostingRestrictions",
+		"RequiredFields",
 		"CostCenters",
 		"CashflowBufferPolicy",
 		"EliminationRules",

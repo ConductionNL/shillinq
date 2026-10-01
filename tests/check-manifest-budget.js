@@ -180,7 +180,14 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // widgets, and a Both sides action on PayeeDetail. reporting-custom-analysis
 // (#1815) adds 1,292 B beside it, so both together reach 1,193,118. Raised to
 // 1,199,500: 6,382 B of headroom over both, 0.53%.
-const DEFAULT_BUDGET_BYTES = 1_199_500
+//
+// Re-measured 2026-10-01 (assets-method-change-and-reserve): development held
+// 1,198,446 bytes after platform-required-fields (#1821). This change adds
+// 2,224 B: its own fragment for the Reinvestment reserves page and the
+// Revise depreciation, Extra depreciation, Post missed depreciation and Apply
+// reinvestment reserve actions on the asset page, plus their menu entry.
+// Raised to 1,207,000: 6,330 B of headroom, 0.52%.
+const DEFAULT_BUDGET_BYTES = 1_207_000
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),
