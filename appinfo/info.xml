@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.5.3-unstable.20260930150000</version>
+    <version>0.5.3-unstable.20261001090000</version>
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
@@ -96,6 +96,8 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <job>OCA\Shillinq\BackgroundJob\DBAFlagGenerationJob</job>
         <!-- reporting-data-delivery REQ-RDD-002: hourly, runs the due report schedules. -->
         <job>OCA\Shillinq\BackgroundJob\ScheduledReportJob</job>
+        <!-- assets-method-change-and-reserve REQ-AMCR-001/005: daily, posts last month's depreciation and releases expired reinvestment reserves. -->
+        <job>OCA\Shillinq\BackgroundJob\DepreciationRunJob</job>
         <job>OCA\Shillinq\BackgroundJob\DBAPortfolioAggregationJob</job>
         <!-- Cashflow 13wk: daily bankfeed pull, daily crisis-mode refresh,
              monthly calibration. REQ-CF-010/012/013. Moved from lib/Cron/

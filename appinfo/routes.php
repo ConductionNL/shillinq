@@ -91,6 +91,9 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // banking-connected-accounts REQ-BCON-004: cash position per bank account and combined.
             ['name' => 'financialDashboard#cashPosition', 'url' => '/api/v1/cash-position', 'verb' => 'GET'],
             // reporting-relation-both-sides: links between a customer and a supplier record, and both sides of the relation.
+            // assets-method-change-and-reserve REQ-AMCR-001: an asset's missed depreciation, listed and posted on request.
+            ['name' => 'fixedAssetDepreciation#missed', 'url' => '/api/fixed-assets/{id}/missed-depreciation', 'verb' => 'GET'],
+            ['name' => 'fixedAssetDepreciation#postMissed', 'url' => '/api/fixed-assets/{id}/missed-depreciation', 'verb' => 'POST'],
             ['name' => 'relation#report', 'url' => '/api/relations/both-sides', 'verb' => 'GET'],
             ['name' => 'relation#suggestions', 'url' => '/api/relations/suggestions', 'verb' => 'GET'],
             ['name' => 'relation#dismiss', 'url' => '/api/relations/suggestions/dismiss', 'verb' => 'POST'],

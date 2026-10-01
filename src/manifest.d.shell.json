@@ -941,6 +941,26 @@
 		{
 			"menu": [
 				{
+					"id": "ReinvestmentReserves",
+					"label": "Reinvestment reserves",
+					"icon": "PiggyBankOutline",
+					"route": "ReinvestmentReserves",
+					"order": 31
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "assets-method-change-and-reserve",
+					"id": "ReinvestmentReserves",
+					"route": "/fixed-assets/reinvestment-reserves",
+					"type": "index",
+					"title": "Reinvestment reserves"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "BankImportPage",
 					"label": "Import bank statements",
 					"icon": "DatabaseImportOutline",
