@@ -67,7 +67,7 @@ export function splitCsvLine(line, separator) {
  */
 export function parseReadingsCsv(text) {
 	const lines = String(text || '')
-		.replace(/^﻿/, '')
+		.replace(/^\uFEFF/, '')
 		.split(/\r?\n/)
 		.filter((line) => line.trim() !== '')
 	if (lines.length < 2) {

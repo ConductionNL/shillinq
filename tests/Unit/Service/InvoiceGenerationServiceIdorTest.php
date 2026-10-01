@@ -46,7 +46,7 @@ use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Service\BillingModelEngine;
 use OCA\Shillinq\Service\InvoiceDeduplicationService;
 use OCA\Shillinq\Service\InvoiceGenerationService;
-use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
+use OCA\Shillinq\Service\Usage\BilledReadings;
 use OCA\Shillinq\Service\RateCardResolver;
 use OCA\Shillinq\Service\RetainerResolver;
 use OCA\Shillinq\Service\UsageRatingCalculator;
@@ -351,7 +351,7 @@ final class InvoiceGenerationServiceIdorTest extends TestCase {
 			new VATCalculationService(),
 			new UsageRatingCalculator(),
 			objectService: new DuckObjectServiceAdapter($this->objectService),
-			transitions: $this->createMock(ObjectTransitionRunner::class),
+			billedReadings: $this->createMock(BilledReadings::class),
 		);
 	}//end setUp()
 

@@ -38,19 +38,27 @@
 						type="file"
 						accept=".csv,text/csv"
 						data-testid="meter-reading-file"
-						@change="onFile">
+						@change="onFile" />
 				</label>
 				<p v-if="rows.length" data-testid="meter-reading-count">
-					{{ t('shillinq', '{count} rows to import.', { count: rows.length }) }}
+					{{
+						t('shillinq', '{count} rows to import.', {
+							count: rows.length,
+						})
+					}}
 				</p>
 			</template>
 
 			<template v-else>
 				<p data-testid="meter-reading-created">
 					{{
-						t('shillinq', '{count} readings imported. Rate them to see their amount.', {
-							count: result.created.length,
-						})
+						t(
+							'shillinq',
+							'{count} readings imported. Rate them to see their amount.',
+							{
+								count: result.created.length,
+							},
+						)
 					}}
 				</p>
 				<template v-if="result.refused.length">

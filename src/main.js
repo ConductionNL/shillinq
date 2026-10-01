@@ -46,13 +46,13 @@ import {
 	openRelationsExport,
 } from './utils/relationActions.js'
 import {
-	checkCustomerVatNumber,
-	checkSupplierVatNumber,
-} from './utils/vatNumberCheck.js'
-import {
 	openMeterReadingImport,
 	rateMeterReadings,
 } from './utils/usageBillingActions.js'
+import {
+	checkCustomerVatNumber,
+	checkSupplierVatNumber,
+} from './utils/vatNumberCheck.js'
 
 // Must stay first: sets __webpack_public_path__ / __webpack_nonce__ before any
 // other module evaluates — see src/setPublicPath.js.

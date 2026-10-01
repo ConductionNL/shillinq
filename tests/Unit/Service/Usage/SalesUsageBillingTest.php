@@ -36,6 +36,7 @@ use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\RateCardResolver;
 use OCA\Shillinq\Service\RetainerResolver;
 use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\Usage\BilledReadings;
 use OCA\Shillinq\Service\Usage\MeterReadingImportService;
 use OCA\Shillinq\Service\Usage\MeterReadingRating;
 use OCA\Shillinq\Service\UsageRatingCalculator;
@@ -320,7 +321,7 @@ class SalesUsageBillingTest extends TestCase {
 			new VATCalculationService(),
 			new UsageRatingCalculator(),
 			objectService: $this->store,
-			transitions: new ObjectTransitionRunner(container: $container),
+			billedReadings: new BilledReadings($this->store, new ObjectTransitionRunner(container: $container), $this->settings()),
 		);
 
 	}//end generator()

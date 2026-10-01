@@ -29,7 +29,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
-use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
+use OCA\Shillinq\Service\Usage\BilledReadings;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -58,7 +58,7 @@ class InvoiceGenerationService {
 	 * @param VATCalculationService $vat VAT totaller.
 	 * @param UsageRatingCalculator $usageRating Meter-quantity rating (usage model).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
-	 * @param ObjectTransitionRunner $transitions Runs MeterReading's `invoice` transition for a billed reading.
+	 * @param BilledReadings $billedReadings Refuses an unbillable reading and marks billed ones invoiced.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
@@ -70,7 +70,7 @@ class InvoiceGenerationService {
 		private readonly VATCalculationService $vat,
 		private readonly UsageRatingCalculator $usageRating,
 		private readonly ObjectServiceInterface $objectService,
-		private readonly ObjectTransitionRunner $transitions,
+		private readonly BilledReadings $billedReadings,
 	) {
 	}//end __construct()
 
@@ -209,7 +209,7 @@ class InvoiceGenerationService {
 			$this->saveObject(schema: 'BillableInvoiceLine', data: $linePayload);
 		}//end foreach
 
-		$this->markReadingsInvoiced(lineDrafts: $lineDrafts, invoiceId: $invoiceId);
+		$this->billedReadings->markInvoiced(lineDrafts: $lineDrafts, invoiceId: $invoiceId);
 
 		$this->logger->info(
 			sprintf(
@@ -631,7 +631,7 @@ class InvoiceGenerationService {
 				continue;
 			}
 
-			$this->assertBillable(reading: $reading, id: $id);
+			$this->billedReadings->assertBillable(reading: $reading, id: $id);
 
 			$planId = (string)($reading['ratePlanId'] ?? ($defaultRatePlanId ?? ''));
 			if ($planId === '') {
@@ -875,54 +875,6 @@ class InvoiceGenerationService {
 
 		return $record;
 	}//end findScoped()
-
-	/**
-	 * Refuse a meter reading that is not rated, or already on an invoice (REQ-USB-002).
-	 *
-	 * @param array<string,mixed> $reading The reading.
-	 * @param string              $id      The reading id the request named.
-	 *
-	 * @return void
-	 *
-	 * @throws RuntimeException `Conflict:` for an invoiced reading, otherwise not rated.
-	 *
-	 * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
-	 */
-	private function assertBillable(array $reading, string $id): void {
-		$status = (string)($reading['status'] ?? 'unrated');
-		if ($status === 'invoiced') {
-			throw new RuntimeException(sprintf('Conflict: meter reading %s is already invoiced', $id));
-		}
-
-		if ($status !== 'rated') {
-			throw new RuntimeException(sprintf('Meter reading %s is not rated yet', $id));
-		}
-
-	}//end assertBillable()
-
-	/**
-	 * Move every reading billed on the invoice to invoiced, with the invoice id (REQ-USB-002).
-	 *
-	 * @param array<int,array<string,mixed>> $lineDrafts The invoice's line drafts.
-	 * @param string                         $invoiceId  The saved invoice.
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
-	 */
-	private function markReadingsInvoiced(array $lineDrafts, string $invoiceId): void {
-		foreach ($lineDrafts as $line) {
-			if ((string)($line['sourceType'] ?? '') !== 'usage' || (string)($line['sourceId'] ?? '') === '') {
-				continue;
-			}
-
-			$readingId = (string)$line['sourceId'];
-			$this->objectService->setRegister($this->register())->setSchema('MeterReading')
-				->patchObject($readingId, ['invoiceId' => $invoiceId], $this->register(), 'MeterReading');
-			$this->transitions->run(objectId: $readingId, action: 'invoice');
-		}
-
-	}//end markReadingsInvoiced()
 
 	/**
 	 * Save (create or update) via the real OR ObjectService API.

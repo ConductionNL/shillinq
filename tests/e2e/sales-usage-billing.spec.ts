@@ -36,8 +36,12 @@ test.describe('sales-usage-billing', () => {
 		})
 		await page.getByTestId('meter-reading-submit').click()
 
-		await expect(page.getByTestId('meter-reading-created')).toContainText('2 readings imported')
-		await expect(page.getByTestId('meter-reading-refused')).toContainText('Row 3: The quantity is negative.')
+		await expect(page.getByTestId('meter-reading-created')).toContainText(
+			'2 readings imported',
+		)
+		await expect(page.getByTestId('meter-reading-refused')).toContainText(
+			'Row 3: The quantity is negative.',
+		)
 	})
 
 	/**
@@ -45,7 +49,11 @@ test.describe('sales-usage-billing', () => {
 	 */
 	test('rating a 250 GB reading shows EUR 30.00', async ({ page }) => {
 		await page.goto('/index.php/apps/shillinq/sales/meter-readings')
-		await page.getByRole('row', { name: /250/ }).getByRole('checkbox').first().check()
+		await page
+			.getByRole('row', { name: /250/ })
+			.getByRole('checkbox')
+			.first()
+			.check()
 		await page.getByRole('button', { name: 'Rate readings' }).click()
 
 		await expect(page.getByText('1 readings rated.')).toBeVisible()
@@ -56,7 +64,9 @@ test.describe('sales-usage-billing', () => {
 	 * @e2e usage-metered-billing::a-bookkeeper-bills-september-usage
 	 * @e2e usage-metered-billing::an-invoiced-reading-is-not-offered-again
 	 */
-	test('billing September usage takes the rated readings once', async ({ page }) => {
+	test('billing September usage takes the rated readings once', async ({
+		page,
+	}) => {
 		await page.goto('/index.php/apps/shillinq/invoice/generate')
 		await page.getByLabel('Billing model').selectOption('usage')
 		await page.getByLabel('Customer').fill('cust-hosting-noord')

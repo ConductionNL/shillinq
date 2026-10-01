@@ -26,26 +26,37 @@ vi.mock('../../src/modals/MeterReadingImportModal.vue', () => ({
 
 const ROOT = path.resolve(__dirname, '../..')
 
-const {
-	billableReadings,
-	parseReadingsCsv,
-	rateReadings,
-} = await import('../../src/utils/usageBilling.js')
+const { billableReadings, parseReadingsCsv, rateReadings } =
+	await import('../../src/utils/usageBilling.js')
 const { rateMeterReadings } = await import('../../src/utils/usageBillingActions.js')
-const InvoiceGenerator = (await import('../../src/components/invoice/InvoiceGenerator.vue')).default
+const InvoiceGenerator = (
+	await import('../../src/components/invoice/InvoiceGenerator.vue')
+).default
 
 describe('the import file', () => {
 	it('reads one row per line under the header, with ; or , and quotes', () => {
 		const rows = parseReadingsCsv(
-			'﻿customerId;resourceType;quantity;periodStart;periodEnd;colour\n'
-			+ 'cust-hosting-noord;storage_gb;250;2026-09-01;2026-09-30;red\n'
-			+ '\n'
-			+ '"Hosting; Noord";storage_gb;-5;2026-09-01;2026-09-30;blue\r\n',
+			'\uFEFFcustomerId;resourceType;quantity;periodStart;periodEnd;colour\n'
+				+ 'cust-hosting-noord;storage_gb;250;2026-09-01;2026-09-30;red\n'
+				+ '\n'
+				+ '"Hosting; Noord";storage_gb;-5;2026-09-01;2026-09-30;blue\r\n',
 		)
 
 		expect(rows).toEqual([
-			{ customerId: 'cust-hosting-noord', resourceType: 'storage_gb', quantity: '250', periodStart: '2026-09-01', periodEnd: '2026-09-30' },
-			{ customerId: 'Hosting; Noord', resourceType: 'storage_gb', quantity: '-5', periodStart: '2026-09-01', periodEnd: '2026-09-30' },
+			{
+				customerId: 'cust-hosting-noord',
+				resourceType: 'storage_gb',
+				quantity: '250',
+				periodStart: '2026-09-01',
+				periodEnd: '2026-09-30',
+			},
+			{
+				customerId: 'Hosting; Noord',
+				resourceType: 'storage_gb',
+				quantity: '-5',
+				periodStart: '2026-09-01',
+				periodEnd: '2026-09-30',
+			},
 		])
 		expect(parseReadingsCsv('customerId,quantity\n')).toEqual([])
 	})
@@ -77,11 +88,17 @@ describe('the Rate bulk action', () => {
 
 	it('is a declared handler on the readings page and wired in main.js', () => {
 		const fragment = JSON.parse(
-			fs.readFileSync(path.join(ROOT, 'src/manifest.d/sales-usage-billing.json'), 'utf8'),
+			fs.readFileSync(
+				path.join(ROOT, 'src/manifest.d/sales-usage-billing.json'),
+				'utf8',
+			),
 		)
 		const page = fragment.pages.find((p) => p.id === 'MeterReadings')
 		const mainJs = fs.readFileSync(path.join(ROOT, 'src/main.js'), 'utf8')
-		for (const action of [...page.config.bulkActions, ...page.config.headerActions]) {
+		for (const action of [
+			...page.config.bulkActions,
+			...page.config.headerActions,
+		]) {
 			expect(mainJs).toMatch(new RegExp('\\b' + action.handler + ','))
 		}
 	})
@@ -90,16 +107,46 @@ describe('the Rate bulk action', () => {
 describe('the invoice generator, usage model', () => {
 	const readings = [
 		{ id: 'r-oct', status: 'rated', customerId: 'c-1', periodEnd: '2026-10-31' },
-		{ id: 'r-b', status: 'rated', customerId: 'c-1', periodEnd: '2026-09-30', ratedAmount: 12 },
-		{ id: 'r-a', status: 'rated', customerId: 'c-1', periodEnd: '2026-09-15', ratedAmount: 30 },
-		{ id: 'r-billed', status: 'invoiced', customerId: 'c-1', periodEnd: '2026-09-30', invoiceId: 'i-1' },
-		{ id: 'r-unrated', status: 'unrated', customerId: 'c-1', periodEnd: '2026-09-30' },
-		{ id: 'r-other', status: 'rated', customerId: 'c-2', periodEnd: '2026-09-30' },
+		{
+			id: 'r-b',
+			status: 'rated',
+			customerId: 'c-1',
+			periodEnd: '2026-09-30',
+			ratedAmount: 12,
+		},
+		{
+			id: 'r-a',
+			status: 'rated',
+			customerId: 'c-1',
+			periodEnd: '2026-09-15',
+			ratedAmount: 30,
+		},
+		{
+			id: 'r-billed',
+			status: 'invoiced',
+			customerId: 'c-1',
+			periodEnd: '2026-09-30',
+			invoiceId: 'i-1',
+		},
+		{
+			id: 'r-unrated',
+			status: 'unrated',
+			customerId: 'c-1',
+			periodEnd: '2026-09-30',
+		},
+		{
+			id: 'r-other',
+			status: 'rated',
+			customerId: 'c-2',
+			periodEnd: '2026-09-30',
+		},
 	]
 
-	it('lists the customer\'s rated readings in the period that are not invoiced', () => {
+	it("lists the customer's rated readings in the period that are not invoiced", () => {
 		expect(
-			billableReadings(readings, 'c-1', '2026-09-01', '2026-09-30').map((r) => r.id),
+			billableReadings(readings, 'c-1', '2026-09-01', '2026-09-30').map(
+				(r) => r.id,
+			),
 		).toEqual(['r-a', 'r-b'])
 	})
 
@@ -115,8 +162,16 @@ describe('the invoice generator, usage model', () => {
 			...InvoiceGenerator.data(),
 			loadReadings: InvoiceGenerator.methods.loadReadings,
 		}
-		vm.form = { ...vm.form, billingModel: 'usage', customerId: 'c-1', fromDate: '2026-09-01', toDate: '2026-09-30' }
-		Object.defineProperty(vm, 'needsUsage', { get: () => InvoiceGenerator.computed.needsUsage.call(vm) })
+		vm.form = {
+			...vm.form,
+			billingModel: 'usage',
+			customerId: 'c-1',
+			fromDate: '2026-09-01',
+			toDate: '2026-09-30',
+		}
+		Object.defineProperty(vm, 'needsUsage', {
+			get: () => InvoiceGenerator.computed.needsUsage.call(vm),
+		})
 
 		await vm.loadReadings()
 
@@ -137,8 +192,14 @@ describe('the invoice generator, usage model', () => {
 	})
 
 	it('sends no reading ids for another model', () => {
-		const vm = { ...InvoiceGenerator.data(), parseIds: InvoiceGenerator.methods.parseIds, needsUsage: false }
+		const vm = {
+			...InvoiceGenerator.data(),
+			parseIds: InvoiceGenerator.methods.parseIds,
+			needsUsage: false,
+		}
 		vm.meterReadingIds = ['r-a']
-		expect(InvoiceGenerator.computed.payload.call(vm).meterReadingIds).toEqual([])
+		expect(InvoiceGenerator.computed.payload.call(vm).meterReadingIds).toEqual(
+			[],
+		)
 	})
 })

@@ -117,7 +117,7 @@
 					<input
 						v-model="meterReadingIds"
 						type="checkbox"
-						:value="reading.id">
+						:value="reading.id" />
 					{{ readingLabel(reading) }}
 				</label>
 			</fieldset>
@@ -311,7 +311,11 @@ export default {
 				return
 			}
 			try {
-				this.readings = await loadBillableReadings(customerId, fromDate, toDate)
+				this.readings = await loadBillableReadings(
+					customerId,
+					fromDate,
+					toDate,
+				)
 				this.meterReadingIds = this.readings.map((reading) => reading.id)
 			} catch {
 				this.readingsError = t(
