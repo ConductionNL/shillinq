@@ -422,7 +422,7 @@ class InvoicePdfGenerator {
 			htmlspecialchars((string)($creditor['vatID'] ?? ''), ENT_QUOTES),
 			htmlspecialchars((string)($creditor['iban'] ?? ''), ENT_QUOTES),
 			htmlspecialchars((string)($recipient['legalName'] ?? ($invoice['customerId'] ?? '')), ENT_QUOTES),
-			htmlspecialchars((string)($recipient['vatID'] ?? ''), ENT_QUOTES),
+			htmlspecialchars((string)($recipient['vatId'] ?? ($recipient['vatID'] ?? '')), ENT_QUOTES),
 			htmlspecialchars((string)($invoice['invoiceDate'] ?? ''), ENT_QUOTES),
 			htmlspecialchars((string)($invoice['dueDate'] ?? ''), ENT_QUOTES),
 			$rows,

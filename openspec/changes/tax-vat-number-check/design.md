@@ -42,6 +42,15 @@ editable on a typed invoice; when it differs from the vendor profile's
 A repair step copies `vatID` into `vatId` where `vatId` is empty and removes
 `vatID` from the schema.
 
+## As built (2026-10-02)
+
+- **The supplier profile is `Payee`, not `VendorMaster`.** `VendorMaster` was retired into pipelinq (spec `shillinq-product-vendor-to-pipelinq`); shillinq's supplier record is `Payee`, which already carries `vatNumber`. `Payee` gains the three validation fields under the customer's names (`vatIdValidationStatus`, `vatIdValidatedAt`, `vatIdValidUntil`), and the action sits on `PayeeDetail`.
+- **A record-level route, not `lookupVatId`.** `IcpController::lookupVatId` takes a number and an administration id and checks neither the caller's membership nor a record. The action calls `POST /api/vat-number-checks/{type}/{id}` (`customer` or `supplier`), which reads the record, refuses a caller outside its administration with 404, checks the number through `ViesService::validate()` and writes the outcome onto the record.
+- **Not reachable keeps the last valid date.** `ViesService` stores a reused result during an outage as a new valid record dated now, so `findRecentValid()` then reported today and the 30-day reuse window renewed itself on every outage. It now skips outage records, and the record keeps the date VIES last confirmed the number.
+- **Supplier invoices.** `sellerVatId` comes from the UBL `PartyTaxScheme/CompanyID` the parser already read; a number with another EU prefix is checked after the invoice is saved (a failure is logged and never stops the intake), and the supplier invoice page shows the number with its outcome.
+- **AR invoices.** `ARInvoice` carries `buyerVatId` and Send e-invoice already checks it through `EInvoiceValidationService`; the customer's check result is shown on the customer page, so the AR invoice page is unchanged.
+- **One spelling.** `vatID` is removed from the compliance fragment, the seeds use `vatId`, the PDF reads `vatId` first, and `FoldCustomerVatId` copies a stored `vatID` into an empty `vatId`.
+
 ## Declarative-vs-imperative decision (ADR-031)
 
 | Behaviour | Path | Rationale |

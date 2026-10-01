@@ -45,6 +45,10 @@ import {
 	openPayeeRelation,
 	openRelationsExport,
 } from './utils/relationActions.js'
+import {
+	checkCustomerVatNumber,
+	checkSupplierVatNumber,
+} from './utils/vatNumberCheck.js'
 
 // Must stay first: sets __webpack_public_path__ / __webpack_nonce__ before any
 // other module evaluates — see src/setPublicPath.js.
@@ -336,6 +340,9 @@ const customComponentsProp = {
 	openCarryOverCommitments,
 	// assets-method-change-and-reserve: the fixed asset page's missed depreciation.
 	openMissedDepreciation,
+	// tax-vat-number-check: Check VAT number on the customer and supplier pages.
+	checkCustomerVatNumber,
+	checkSupplierVatNumber,
 	// reporting-relation-both-sides: the suggestions' row actions, the report's
 	// export and the supplier page's way to the linked customer.
 	confirmRelationSuggestion,
