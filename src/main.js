@@ -49,6 +49,10 @@ import {
 	checkCustomerVatNumber,
 	checkSupplierVatNumber,
 } from './utils/vatNumberCheck.js'
+import {
+	openMeterReadingImport,
+	rateMeterReadings,
+} from './utils/usageBillingActions.js'
 
 // Must stay first: sets __webpack_public_path__ / __webpack_nonce__ before any
 // other module evaluates — see src/setPublicPath.js.
@@ -343,6 +347,9 @@ const customComponentsProp = {
 	// tax-vat-number-check: Check VAT number on the customer and supplier pages.
 	checkCustomerVatNumber,
 	checkSupplierVatNumber,
+	// sales-usage-billing: Import readings and Rate on Meter readings.
+	openMeterReadingImport,
+	rateMeterReadings,
 	// reporting-relation-both-sides: the suggestions' row actions, the report's
 	// export and the supplier page's way to the linked customer.
 	confirmRelationSuggestion,

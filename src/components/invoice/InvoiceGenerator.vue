@@ -2,8 +2,8 @@
   Invoice Generator
 
   Admin form for drafting a BillableInvoice from approved time entries +
-  expense records. Renders the five-model selector (T&M, fixed-fee,
-  milestone, retainer, mixed) per Task 15, captures the date range,
+  expense records. Renders the six-model selector (T&M, fixed-fee,
+  milestone, retainer, mixed, usage) per Task 15, captures the date range,
   rate-card / retainer pickers, customer + project, and offers the three
   end actions: Save as Draft, Preview PDF, Post to AR.
 
@@ -36,6 +36,7 @@
 							{{ t('shillinq', 'Retainer') }}
 						</option>
 						<option value="mixed">{{ t('shillinq', 'Mixed') }}</option>
+						<option value="usage">{{ t('shillinq', 'Usage') }}</option>
 					</select>
 				</label>
 				<label>
@@ -93,7 +94,35 @@
 				</label>
 			</div>
 
-			<div class="invoice-generator__row">
+			<fieldset
+				v-if="needsUsage"
+				class="invoice-generator__usage"
+				data-testid="usage-readings">
+				<legend>{{ t('shillinq', 'Rated readings to bill') }}</legend>
+				<p v-if="readingsError" role="alert">
+					{{ readingsError }}
+				</p>
+				<p v-else-if="readings.length === 0">
+					{{
+						t(
+							'shillinq',
+							'This customer has no rated readings in this period that are not on an invoice yet.',
+						)
+					}}
+				</p>
+				<label
+					v-for="reading in readings"
+					:key="reading.id"
+					class="invoice-generator__reading">
+					<input
+						v-model="meterReadingIds"
+						type="checkbox"
+						:value="reading.id">
+					{{ readingLabel(reading) }}
+				</label>
+			</fieldset>
+
+			<div v-if="!needsUsage" class="invoice-generator__row">
 				<label class="invoice-generator__row--wide">
 					{{ t('shillinq', 'Time entry IDs (comma-separated)') }}
 					<textarea v-model="timeIdsRaw" rows="2" />
@@ -148,6 +177,7 @@
 <script>
 import { translate as t } from '@nextcloud/l10n'
 import invoiceApi from '../../api/invoiceApi.js'
+import { loadBillableReadings } from '../../utils/usageBilling.js'
 
 export default {
 	name: 'InvoiceGenerator',
@@ -179,6 +209,9 @@ export default {
 			},
 
 			fixedFeeEuros: 0,
+			readings: [],
+			meterReadingIds: [],
+			readingsError: '',
 			timeIdsRaw: '',
 			expenseIdsRaw: '',
 			draftId: null,
@@ -205,13 +238,50 @@ export default {
 			return this.form.billingModel === 'milestone'
 		},
 
+		/**
+		 * Whether the usage model is chosen (sales-usage-billing REQ-USB-002).
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.2
+		 */
+		needsUsage() {
+			return this.form.billingModel === 'usage'
+		},
+
+		/**
+		 * What the usage reading list depends on.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.2
+		 */
+		usageQuery() {
+			return [
+				this.form.billingModel,
+				this.form.customerId,
+				this.form.fromDate,
+				this.form.toDate,
+			].join('|')
+		},
+
 		payload() {
 			return {
 				...this.form,
 				timeEntryIds: this.parseIds(this.timeIdsRaw),
 				expenseIds: this.parseIds(this.expenseIdsRaw),
 				fixedFeeCents: Math.round(Number(this.fixedFeeEuros) * 100),
+				meterReadingIds: this.needsUsage ? [...this.meterReadingIds] : [],
 			}
+		},
+	},
+
+	watch: {
+		/**
+		 * Reload the billable readings when the model, customer or period changes.
+		 *
+		 * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.2
+		 */
+		usageQuery() {
+			this.loadReadings()
 		},
 	},
 
@@ -225,6 +295,47 @@ export default {
 				.split(',')
 				.map((s) => s.trim())
 				.filter(Boolean)
+		},
+
+		/**
+		 * Load the customer's rated readings in the period; select them all.
+		 *
+		 * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.2
+		 */
+		async loadReadings() {
+			this.readings = []
+			this.meterReadingIds = []
+			this.readingsError = ''
+			const { customerId, fromDate, toDate } = this.form
+			if (!this.needsUsage || !customerId || !fromDate || !toDate) {
+				return
+			}
+			try {
+				this.readings = await loadBillableReadings(customerId, fromDate, toDate)
+				this.meterReadingIds = this.readings.map((reading) => reading.id)
+			} catch {
+				this.readingsError = t(
+					'shillinq',
+					'The readings could not be loaded.',
+				)
+			}
+		},
+
+		/**
+		 * One reading as a line: period, quantity and amount.
+		 *
+		 * @param {object} reading A meter reading.
+		 * @return {string}
+		 * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.2
+		 */
+		readingLabel(reading) {
+			return t('shillinq', '{from} to {to}: {quantity} {unit}, EUR {amount}', {
+				from: reading.periodStart,
+				to: reading.periodEnd,
+				quantity: reading.quantity,
+				unit: reading.unit || '',
+				amount: this.formatMoney(reading.ratedAmount),
+			})
 		},
 
 		formatMoney(value) {
@@ -305,6 +416,13 @@ export default {
 
 .invoice-generator__row--wide {
 	flex: 1 1 100%;
+}
+
+.invoice-generator__usage {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-bottom: 12px;
 }
 
 .invoice-generator__totals {

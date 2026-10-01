@@ -5222,6 +5222,54 @@
 		{
 			"menu": [
 				{
+					"id": "MeterReadings",
+					"label": "Meter readings",
+					"icon": "Counter",
+					"route": "MeterReadings",
+					"order": 40
+				},
+				{
+					"id": "UsageRatePlans",
+					"label": "Rate plans",
+					"icon": "TagOutline",
+					"route": "UsageRatePlans",
+					"order": 41
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "sales-usage-billing",
+					"id": "MeterReadings",
+					"route": "/sales/meter-readings",
+					"type": "index",
+					"title": "Meter readings"
+				},
+				{
+					"_fragment": "sales-usage-billing",
+					"id": "MeterReadingDetail",
+					"route": "/sales/meter-readings/:id",
+					"type": "detail",
+					"title": "Meter reading"
+				},
+				{
+					"_fragment": "sales-usage-billing",
+					"id": "UsageRatePlans",
+					"route": "/sales/rate-plans",
+					"type": "index",
+					"title": "Rate plans"
+				},
+				{
+					"_fragment": "sales-usage-billing",
+					"id": "UsageRatePlanDetail",
+					"route": "/sales/rate-plans/:id",
+					"type": "detail",
+					"title": "Rate plan"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "ReportingCompliance",
 					"children": [
 						{
