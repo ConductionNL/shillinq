@@ -1,0 +1,61 @@
+# Payment request leaf: raising a request from another app
+
+Another app asks shillinq for money through the `shillinq-payment-requests` leaf.
+It reaches the leaf through OpenRegister's integration registry, in PHP. The leaf
+offers two ways to raise a request. They differ in who is allowed to ask.
+
+## A person asks: `create`
+
+```php
+$provider = $registry->get('shillinq-payment-requests');
+$request  = $provider->create($register, $schema, $objectId, $payload);
+```
+
+The signed-in user must carry the `payment.request` action. Administrators carry
+it. Map the action to groups in the `paymentActionGroups` app config:
+
+```bash
+occ config:app:set shillinq paymentActionGroups --value '{"payment.request":["finance"]}'
+```
+
+`requestedBy` on the request is the user id. This is also the path OpenRegister's
+HTTP route takes (`POST /api/objects/{register}/{schema}/{id}/integrations/shillinq-payment-requests`).
+
+## An app asks: `createAsApp`
+
+Use this when nobody who may ask is signed in. Larpinq does: a player takes a free
+place, or its daily job moves a waitlisted registration up.
+
+```php
+$provider = $registry->get('shillinq-payment-requests');
+if (method_exists($provider, 'createAsApp') === true) {
+    $request = $provider->createAsApp('larpinq', $register, $schema, $objectId, $payload);
+}
+```
+
+An administrator grants the action to the app in the `paymentActionApps` app
+config. No app carries it by default:
+
+```bash
+occ config:app:set shillinq paymentActionApps --value '{"payment.request":["larpinq"]}'
+```
+
+- The app must be named for `payment.request` and be enabled. Otherwise the leaf
+  throws a `RuntimeException` whose message starts with `403`, and writes nothing.
+- A signed-in administrator does not lend the action to an app.
+- `requestedBy` on the request is `app:<appId>`, for example `app:larpinq`.
+- Shillinq reads and writes the request as the system, so it works without a user.
+- The one-open-request-per-type rule still holds. A second pending request of the
+  same type on the same object throws an `InvalidArgumentException`.
+- OpenRegister's HTTP route never calls `createAsApp`. A request body that names
+  an app does not open `create`.
+
+## Payload
+
+Both methods take the same fields: `amount`, `currency` (default `EUR`),
+`requestType`, `description`, `debtor`, `dueAt`, `subjectType` and
+`paymentGateway` (default `mollie`). The host object becomes the request's
+`subject`. Unknown keys are ignored.
+
+Both return the created request as an array, with its `id` and `state: pending`.
+Read its later state from the `PaymentRequest` object events, or with `list`.

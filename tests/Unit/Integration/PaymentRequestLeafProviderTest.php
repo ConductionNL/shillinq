@@ -26,10 +26,12 @@ use InvalidArgumentException;
 use OCA\Shillinq\Integration\PaymentRequestLeafProvider;
 use OCA\Shillinq\Service\FeeScheduleService;
 use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
+use OCA\Shillinq\Service\PaymentActionAppGrant;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
 use OCA\Shillinq\Service\PaymentSettlementService;
 use OCA\Shillinq\Tests\Unit\Fixtures\EffectiveRegisterFixture;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
+use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
 use OCP\IUser;
@@ -52,6 +54,20 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 	private array $saved = [];
 
 	/**
+	 * The `_rbac` flag of every save, in order.
+	 *
+	 * @var array<int, bool>
+	 */
+	private array $savedWithRbac = [];
+
+	/**
+	 * The `_rbac` flag of every read, in order.
+	 *
+	 * @var array<int, bool>
+	 */
+	private array $foundWithRbac = [];
+
+	/**
 	 * Build an object-service double backed by the given stored requests.
 	 *
 	 * @param array<int, array<string, mixed>> $stored Stored PaymentRequest rows.
@@ -59,14 +75,18 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 	 * @return object The double.
 	 */
 	private function objectServiceDouble(array $stored): object {
-		return new class($stored, $this->saved) {
+		return new class($stored, $this->saved, $this->savedWithRbac, $this->foundWithRbac) {
 			/**
 			 * @param array<int, array<string, mixed>> $stored Stored rows.
 			 * @param array<int, array<string, mixed>> $saved Sink.
+			 * @param array<int, bool> $savedWithRbac The _rbac flag of each save.
+			 * @param array<int, bool> $foundWithRbac The _rbac flag of each read.
 			 */
 			public function __construct(
 				private array $stored,
 				private array &$saved,
+				private array &$savedWithRbac,
+				private array &$foundWithRbac,
 			) {
 			}
 
@@ -83,7 +103,8 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 			 *
 			 * @return array<int, array<string, mixed>>
 			 */
-			public function findAll(array $params = []): array {
+			public function findAll(array $params = [], bool $_rbac = true): array {
+				$this->foundWithRbac[] = $_rbac;
 				return $this->stored;
 			}
 
@@ -94,8 +115,9 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, string $register = '', string $schema = ''): array {
-				$this->saved[] = $object;
+			public function saveObject(array $object, string $register = '', string $schema = '', bool $_rbac = true): array {
+				$this->saved[]         = $object;
+				$this->savedWithRbac[] = $_rbac;
 				return $object;
 			}
 		};
@@ -110,6 +132,8 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 	 * @param array<string, array<int, string>> $actionGroups The configured action matrix.
 	 * @param bool $signedIn Whether there is a session at all.
 	 * @param object|null $inner An object-service double to use instead of the default one.
+	 * @param array<string, array<int, string>> $appGrants The configured paymentActionApps matrix.
+	 * @param array<int, string> $enabledApps The apps that are enabled.
 	 *
 	 * @return PaymentRequestLeafProvider The provider.
 	 */
@@ -120,12 +144,18 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 		array $actionGroups = [],
 		bool $signedIn = true,
 		?object $inner = null,
+		array $appGrants = [],
+		array $enabledApps = [],
 	): PaymentRequestLeafProvider {
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturnCallback(
-			static function (string $app, string $key, string $default = '') use ($actionGroups): string {
+			static function (string $app, string $key, string $default = '') use ($actionGroups, $appGrants): string {
 				if ($key === PaymentActionAuthorizer::CONFIG_ACTION_GROUPS) {
 					return json_encode($actionGroups, JSON_THROW_ON_ERROR);
+				}
+
+				if ($key === PaymentActionAppGrant::CONFIG_ACTION_APPS) {
+					return json_encode($appGrants, JSON_THROW_ON_ERROR);
 				}
 
 				return ($key === 'register' ? 'shillinq' : $default);
@@ -149,6 +179,11 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 
 		$objectService = new DuckObjectServiceAdapter(inner: ($inner ?? $this->objectServiceDouble($stored)));
 
+		$appManager = $this->createMock(IAppManager::class);
+		$appManager->method('isEnabledForAnyone')->willReturnCallback(
+			static fn (string $appId): bool => in_array($appId, $enabledApps, true)
+		);
+
 		return new PaymentRequestLeafProvider(
 			objectService: $objectService,
 			validator: new ObjectPaymentRequestValidator(),
@@ -164,6 +199,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 				logger: $this->createMock(LoggerInterface::class),
 			),
 			settlements: new PaymentSettlementService(),
+			appGrant: new PaymentActionAppGrant(appConfig: $appConfig, appManager: $appManager),
 		);
 	}//end makeProvider()
 
@@ -462,4 +498,195 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 		self::assertSame('provider', $first['settledVia']);
 		self::assertSame('', $listed['items'][249]['settledAt']);
 	}//end testListReadsEveryPageOfRequests()
+
+	/**
+	 * Build the provider with app grants, for the createAsApp path (REQ-SOPR-010).
+	 *
+	 * @param array<string, array<int, string>> $appGrants The configured paymentActionApps matrix.
+	 * @param array<int, string> $enabledApps The apps that are enabled.
+	 * @param array<int, array<string, mixed>> $stored Stored PaymentRequest rows.
+	 * @param bool $signedIn Whether anyone is signed in.
+	 * @param bool $isAdmin Whether the signed-in user is an administrator.
+	 *
+	 * @return PaymentRequestLeafProvider The provider.
+	 */
+	private function makeAppProvider(
+		array $appGrants,
+		array $enabledApps,
+		array $stored = [],
+		bool $signedIn = false,
+		bool $isAdmin = false,
+	): PaymentRequestLeafProvider {
+		return $this->makeProvider(
+			stored: $stored,
+			isAdmin: $isAdmin,
+			signedIn: $signedIn,
+			appGrants: $appGrants,
+			enabledApps: $enabledApps,
+		);
+	}//end makeAppProvider()
+
+	/**
+	 * Larpinq's daily job moves a waitlisted registration up with nobody signed
+	 * in. An app granted payment.request raises the fee: one pending request on
+	 * the registration, requested by the app, written as the system because
+	 * there is no user OpenRegister could check (REQ-SOPR-010).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/payment-request-app-caller/specs/object-payment-requests/spec.md (REQ-SOPR-010)
+	 */
+	public function testAGrantedAppRaisesARequestWithNobodySignedIn(): void {
+		$provider = $this->makeAppProvider(appGrants: ['payment.request' => ['larpinq']], enabledApps: ['larpinq']);
+
+		$created = $provider->createAsApp(
+			'larpinq',
+			'larpinq',
+			'Registration',
+			'reg-42',
+			['requestType' => 'other', 'amount' => 45.0, 'description' => 'WC26-0042 event fee', 'subjectType' => 'registration']
+		);
+
+		self::assertSame('pending', $created['state']);
+		self::assertSame(
+			['type' => 'registration', 'register' => 'larpinq', 'schema' => 'Registration', 'id' => 'reg-42'],
+			$created['subject']
+		);
+		self::assertSame('app:larpinq', $created['requestedBy']);
+		self::assertCount(1, $this->saved);
+		self::assertSame([false], $this->savedWithRbac, 'An app request with no user is written as the system.');
+
+		$declared = EffectiveRegisterFixture::properties(schema: 'PaymentRequest');
+		self::assertSame([], array_values(array_diff(array_keys($created), $declared, ['id'])), 'Undeclared PaymentRequest keys');
+	}//end testAGrantedAppRaisesARequestWithNobodySignedIn()
+
+	/**
+	 * The callers that must be refused: an app the mapping does not name, an
+	 * app named only for another action, a granted app that is not enabled, and
+	 * ids that are no app at all. Each answers 403 and writes nothing
+	 * (REQ-SOPR-010).
+	 *
+	 * @return array<string, array{0: string, 1: array<string, array<int, string>>, 2: array<int, string>}>
+	 */
+	public static function refusedAppCallers(): array {
+		return [
+			'an app without the grant' => ['larpinq', ['payment.request' => ['dossiq']], ['larpinq', 'dossiq']],
+			'an app granted another action' => ['larpinq', ['payment.administer' => ['larpinq']], ['larpinq']],
+			'no mapping at all' => ['larpinq', [], ['larpinq']],
+			'a granted app that is not enabled' => ['larpinq', ['payment.request' => ['larpinq']], []],
+			'an unknown app' => ['ghostapp', ['payment.request' => ['larpinq']], ['larpinq']],
+			'an empty id' => ['', ['payment.request' => ['']], ['']],
+			'a user-shaped id' => ['app:larpinq', ['payment.request' => ['app:larpinq']], ['app:larpinq']],
+		];
+	}//end refusedAppCallers()
+
+	/**
+	 * See refusedAppCallers().
+	 *
+	 * @param string $appId The calling app.
+	 * @param array<string, array<int, string>> $appGrants The configured grants.
+	 * @param array<int, string> $enabledApps The enabled apps.
+	 *
+	 * @return void
+	 *
+	 * @dataProvider refusedAppCallers
+	 *
+	 * @spec openspec/changes/payment-request-app-caller/specs/object-payment-requests/spec.md (REQ-SOPR-010)
+	 */
+	#[\PHPUnit\Framework\Attributes\DataProvider('refusedAppCallers')]
+	public function testAnAppThatIsNotGrantedIsRefusedAndNothingIsWritten(string $appId, array $appGrants, array $enabledApps): void {
+		$provider = $this->makeAppProvider(appGrants: $appGrants, enabledApps: $enabledApps);
+
+		try {
+			$provider->createAsApp($appId, 'larpinq', 'Registration', 'reg-42', ['requestType' => 'other', 'amount' => 45.0]);
+			self::fail('The leaf raised a request for an app that is not granted payment.request.');
+		} catch (RuntimeException $e) {
+			self::assertStringStartsWith('403', $e->getMessage());
+		}
+
+		self::assertSame([], $this->saved);
+	}//end testAnAppThatIsNotGrantedIsRefusedAndNothingIsWritten()
+
+	/**
+	 * An administrator carries every USER action; that does not reach the app
+	 * path. A signed-in administrator does not open createAsApp for an app
+	 * that is not granted (REQ-SOPR-010).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/payment-request-app-caller/specs/object-payment-requests/spec.md (REQ-SOPR-010)
+	 */
+	public function testASignedInAdministratorDoesNotGrantTheApp(): void {
+		$provider = $this->makeAppProvider(appGrants: [], enabledApps: ['larpinq'], signedIn: true, isAdmin: true);
+
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('403');
+
+		$provider->createAsApp('larpinq', 'larpinq', 'Registration', 'reg-42', ['requestType' => 'other', 'amount' => 45.0]);
+	}//end testASignedInAdministratorDoesNotGrantTheApp()
+
+	/**
+	 * The HTTP route reaches create(), whose payload is the request body. A body
+	 * naming a granted app must not open it: an anonymous caller is still
+	 * refused, and a signed-in clerk is still the requester (REQ-SOPR-010).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/payment-request-app-caller/specs/object-payment-requests/spec.md (REQ-SOPR-010)
+	 */
+	public function testAPayloadCannotClaimAnApp(): void {
+		$claim = ['requestType' => 'other', 'amount' => 45.0, 'callerApp' => 'larpinq', 'appId' => 'larpinq', 'requestedBy' => 'app:larpinq'];
+
+		$anonymous = $this->makeAppProvider(appGrants: ['payment.request' => ['larpinq']], enabledApps: ['larpinq']);
+		try {
+			$anonymous->create('larpinq', 'Registration', 'reg-42', $claim);
+			self::fail('An anonymous create naming a granted app was accepted.');
+		} catch (RuntimeException $e) {
+			self::assertStringContainsString('403', $e->getMessage());
+		}
+
+		self::assertSame([], $this->saved);
+
+		$clerk = $this->makeProvider(
+			actionGroups: ['payment.request' => ['finance']],
+			groups: ['finance'],
+			appGrants: ['payment.request' => ['larpinq']],
+			enabledApps: ['larpinq'],
+		);
+		$created = $clerk->create('larpinq', 'Registration', 'reg-42', $claim);
+		self::assertSame('handler', $created['requestedBy']);
+		self::assertSame([true], $this->savedWithRbac, 'A user request is written under the user\'s own rights.');
+	}//end testAPayloadCannotClaimAnApp()
+
+	/**
+	 * The app path keeps the leaf's invariant: a second open request of the
+	 * same type on the same registration is refused, read as the system so an
+	 * existing request is not missed for want of a user (REQ-SOPR-010).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/payment-request-app-caller/specs/object-payment-requests/spec.md (REQ-SOPR-010)
+	 */
+	public function testAGrantedAppIsHeldToOneOpenRequestPerType(): void {
+		$existing = [
+			'id' => 'pr-1',
+			'subjectKind' => 'object',
+			'subject' => ['type' => 'registration', 'register' => 'larpinq', 'schema' => 'Registration', 'id' => 'reg-42'],
+			'requestType' => 'other',
+			'amount' => 45.0,
+			'currency' => 'EUR',
+			'state' => 'pending',
+		];
+		$provider = $this->makeAppProvider(appGrants: ['payment.request' => ['larpinq']], enabledApps: ['larpinq'], stored: [$existing]);
+
+		try {
+			$provider->createAsApp('larpinq', 'larpinq', 'Registration', 'reg-42', ['requestType' => 'other', 'amount' => 45.0]);
+			self::fail('A second open request of the same type was raised.');
+		} catch (InvalidArgumentException $e) {
+			self::assertNotSame('', $e->getMessage());
+		}
+
+		self::assertSame([], $this->saved);
+		self::assertContains(false, $this->foundWithRbac, 'The existing requests are read as the system.');
+	}//end testAGrantedAppIsHeldToOneOpenRequestPerType()
 }//end class

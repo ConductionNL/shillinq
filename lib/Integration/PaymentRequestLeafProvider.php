@@ -41,6 +41,7 @@ use OCA\OpenRegister\Service\Integration\IntegrationProvider;
 use OCA\Shillinq\Service\FeeScheduleService;
 use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
 use OCA\Shillinq\Service\PaymentRequestPortalScope;
+use OCA\Shillinq\Service\PaymentActionAppGrant;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
 use OCA\Shillinq\Service\PaymentRequestFinder;
 use OCA\Shillinq\Service\PaymentSettlementService;
@@ -83,6 +84,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	 * @param PaymentActionAuthorizer $authorizer Whether the caller carries payment.request.
 	 * @param FeeScheduleService $feeSchedules The published fee for the host object's type.
 	 * @param PaymentSettlementService $settlements Money that arrived another way, and the state it derives.
+	 * @param PaymentActionAppGrant $appGrant Whether a calling app carries payment.request (REQ-SOPR-010).
 	 * @param PaymentRequestFinder|null $finder Reads every page of requests on a subject; built on demand when absent.
 	 * @param PaymentRequestPortalScope $portalScope Gives a request without an invoice its portal scope.
 	 *
@@ -95,6 +97,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 		private readonly PaymentActionAuthorizer $authorizer,
 		private readonly FeeScheduleService $feeSchedules,
 		private readonly PaymentSettlementService $settlements,
+		private readonly PaymentActionAppGrant $appGrant,
 		private readonly ?PaymentRequestFinder $finder = null,
 		private readonly PaymentRequestPortalScope $portalScope = new PaymentRequestPortalScope(),
 	) {
@@ -208,7 +211,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	 * this leaf returns every request on the object and filters nothing yet.
 	 */
 	public function list(string $register, string $schema, string $objectId, array $filters = []): array {
-		$requests = $this->requestsOn(register: $register, schema: $schema, objectId: $objectId);
+		$requests = $this->requestsOn(register: $register, schema: $schema, objectId: $objectId, asSystem: false);
 
 		$projected = [];
 		foreach ($requests as $request) {
@@ -336,6 +339,80 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 			throw new RuntimeException('403 Raising a payment request needs the payment.request action.');
 		}
 
+		return $this->append(
+			register: $register,
+			schema: $schema,
+			objectId: $objectId,
+			payload: $payload,
+			requestedBy: $this->authorizer->callerId(),
+			asSystem: false,
+		);
+	}//end create()
+
+	/**
+	 * Append one payment request to the host object on behalf of an app.
+	 *
+	 * For a consuming app that has to ask for money with nobody signed in who
+	 * may: larpinq accepting a registration a player took a free place for, or
+	 * one its daily job moved up from the waitlist. The app must be granted
+	 * `payment.request` in `paymentActionApps` and be enabled; no app carries
+	 * it by default, and a signed-in administrator does not lend it. The
+	 * request is read and written as the system, because there may be no user,
+	 * and records `requestedBy` as `app:<appId>`.
+	 *
+	 * This method is not part of IntegrationProvider, so OpenRegister's HTTP
+	 * route never reaches it: the app id comes from PHP in the calling app,
+	 * never from a request body. `create` stays the only HTTP path.
+	 *
+	 * @param string $appId The calling app's id, for example `larpinq`.
+	 * @param string $register The host object's register.
+	 * @param string $schema The host object's schema.
+	 * @param string $objectId The host object's id.
+	 * @param array<string, mixed> $payload The same fields as create().
+	 *
+	 * @return array<string, mixed> The created request.
+	 *
+	 * @throws RuntimeException When the app is not granted payment.request or is not enabled; nothing is written.
+	 *
+	 * @spec openspec/changes/payment-request-app-caller/specs/object-payment-requests/spec.md (REQ-SOPR-010)
+	 */
+	public function createAsApp(string $appId, string $register, string $schema, string $objectId, array $payload): array {
+		if ($this->appGrant->allows(appId: $appId, action: self::ACTION_REQUEST) === false) {
+			throw new RuntimeException('403 This app is not granted the payment.request action (paymentActionApps).');
+		}
+
+		return $this->append(
+			register: $register,
+			schema: $schema,
+			objectId: $objectId,
+			payload: $payload,
+			requestedBy: 'app:'.$appId,
+			asSystem: true,
+		);
+	}//end createAsApp()
+
+	/**
+	 * Build, validate and save one request on the host object, once the caller is cleared.
+	 *
+	 * @param string $register The host object's register.
+	 * @param string $schema The host object's schema.
+	 * @param string $objectId The host object's id.
+	 * @param array<string, mixed> $payload The request fields.
+	 * @param string $requestedBy Who asked: a user id, or `app:<appId>`.
+	 * @param bool $asSystem Read and write without the session's rights (an app caller, maybe no user).
+	 *
+	 * @return array<string, mixed> The created request.
+	 *
+	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-003)
+	 */
+	private function append(
+		string $register,
+		string $schema,
+		string $objectId,
+		array $payload,
+		string $requestedBy,
+		bool $asSystem,
+	): array {
 		$subject = [
 			'type' => (string)($payload['subjectType'] ?? 'object'),
 			'register' => $register,
@@ -352,7 +429,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 			'description' => (string)($payload['description'] ?? ''),
 			'state' => 'pending',
 			'paymentGateway' => (string)($payload['paymentGateway'] ?? 'mollie'),
-			'requestedBy' => $this->authorizer->callerId(),
+			'requestedBy' => $requestedBy,
 		];
 
 		if (isset($payload['debtor']) === true && is_array($payload['debtor']) === true) {
@@ -369,13 +446,15 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 
 		$this->validator->validate(
 			request: $request,
-			existing: $this->requestsOn(register: $register, schema: $schema, objectId: $objectId),
+			existing: $this->requestsOn(register: $register, schema: $schema, objectId: $objectId, asSystem: $asSystem),
 		);
 
 		$saved = $this->objectService->saveObject(
 			object: $request,
 			register: $this->registerSlug(),
 			schema: self::SCHEMA,
+			_rbac: ($asSystem === false),
+			_multitenancy: ($asSystem === false),
 		);
 
 		// OpenRegister answers a save with an ObjectEntity, not the array that
@@ -387,7 +466,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 		}
 
 		return $created;
-	}//end create()
+	}//end append()
 
 	/**
 	 * The leaf appends; it never rewrites a request in place. A request changes
@@ -448,19 +527,20 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	 * @param string $register The host object's register.
 	 * @param string $schema The host object's schema.
 	 * @param string $objectId The host object's id.
+	 * @param bool $asSystem Read without the session's rights (an app caller, REQ-SOPR-010).
 	 *
 	 * @return array<int, array<string, mixed>> The raw requests.
 	 *
 	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-004)
 	 */
-	private function requestsOn(string $register, string $schema, string $objectId): array {
+	private function requestsOn(string $register, string $schema, string $objectId, bool $asSystem): array {
 		$finder = ($this->finder ?? new PaymentRequestFinder(
 			objectService: $this->objectService,
 			validator: $this->validator,
 			appConfig: $this->appConfig,
 		));
 
-		return $finder->onSubject(register: $register, schema: $schema, objectId: $objectId);
+		return $finder->onSubject(register: $register, schema: $schema, objectId: $objectId, asSystem: $asSystem);
 	}//end requestsOn()
 
 	/**
