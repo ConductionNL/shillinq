@@ -4,7 +4,7 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "administration-import-migration",
 		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json. ADR-004 NcSelect inputLabel + modal-isolation gates.",
-		"description": "Tier 2 — Administration Import & Migration navigation per REQ-AIM-010. Adds the 'Import & migration' menu with the import wizard, batch list, batch detail (reports + reversal action via lifecycleActions), and the mapping review grid, bound to the canonical ImportBatch / ImportMapping schemas. The multi-step wizard (upload via NC Files picker → profile selection → mapping review → validation findings → dry-run report → post) is described as a sequence over the batch detail + mapping grid; the single-screen wizard host references a custom component noted as deferred until the wizard component lands."
+		"description": "Tier 2 — Administration Import & Migration navigation per REQ-AIM-010. Adds the 'Import & migration' menu with the import wizard, batch list, batch detail (reports + reversal action via lifecycleActions), and the mapping review grid, bound to the canonical ImportBatch / ImportMapping schemas. The multi-step wizard (upload via NC Files picker → profile selection → mapping review → validation findings → dry-run report → post) is described as a sequence over the batch detail + mapping grid; the single-screen wizard host is the ImportWizard custom component."
 	},
 	"menu": [
 		{
@@ -43,18 +43,8 @@
 			"route": "/import/wizard",
 			"type": "custom",
 			"title": "Import wizard",
-			"_note": "A single-screen host for a six-stage migration run (upload via the Nextcloud Files picker, source-profile selection, mapping review, validation findings, dry-run report, post) whose stages each drive a different backend lifecycle call on one ImportBatch. `type: form` submits one object once and its config.steps only partition that object's own fields into pages — it cannot run validate, dry-run and post between stages, nor block progress on validation findings. The wizard component itself is DEFERRED (see config['x-deferred']): until it lands the page renders the empty state and the same flow is operable through ImportBatches / ImportMappings / ImportBatchDetail.",
-			"config": {
-				"x-deferred": "The wizard host references an ImportWizard.vue component that does not exist yet — and `config.component` is read by nothing (CnPageRenderer resolves a custom page as `page.component || page.slots.main`), so the key has been removed rather than left looking wired. Until the component lands the flow is fully operable as a sequence: create an ImportBatch (ImportBatches → new), review accounts in the Mapping grid (ImportMappings), then drive the lifecycle (validate → dry-run → post) from the batch detail's lifecycleActions and read the validation/dry-run reports in its tabs.",
-				"x-deferred-steps": [
-					{"id": "upload", "label": "Upload files", "description": "Select the XAF auditfile and any companion CSVs from Nextcloud Files (link, not copied)."},
-					{"id": "profile", "label": "Source system", "description": "Choose the source package profile (xaf-generic / e-boekhouden / exact-online / moneybird / snelstart)."},
-					{"id": "mapping", "label": "Mapping review", "description": "Review RGS-auto and profile-default rows, confirm suggestions, resolve unmapped accounts.", "route": "ImportMappings"},
-					{"id": "validation", "label": "Validation", "description": "Run validation; error findings block posting.", "route": "ImportBatchDetail"},
-					{"id": "dry-run", "label": "Dry-run", "description": "Generate the would-be result report; mandatory before posting.", "route": "ImportBatchDetail"},
-					{"id": "post", "label": "Post", "description": "Post the opening journal, open items, and relations.", "route": "ImportBatchDetail"}
-				]
-			}
+			"component": "ImportWizard",
+			"_note": "A single-screen host for a six-step migration run (choose the auditfile in Nextcloud Files, source package, mapping review, validation findings, dry run, post) whose steps each run a different lifecycle transition on one ImportBatch. `type: form` submits one object once and its config.steps only split that object's own fields into pages: it cannot run validate, dry-run and post between steps, nor hold progress on validation findings. Resolved against registry.js kind:page (src/views/import/ImportWizard.vue, platform-administration-import task 2.1). The same flow stays operable through ImportBatches / ImportMappings / ImportBatchDetail."
 		},
 		{
 			"id": "ImportBatches",
@@ -94,6 +84,8 @@
 					{"key": "stagedCounts", "label": "Staged counts", "type": "object"},
 					{"key": "validationReport", "label": "Validation findings", "type": "object"},
 					{"key": "dryRunReport", "label": "Dry-run report", "type": "object"},
+					{"key": "postingRefs", "label": "Posted records", "type": "object"},
+					{"key": "postingReport", "label": "Posting findings", "type": "object"},
 					{"key": "idempotencyKey", "label": "Idempotency key", "type": "string"},
 					{"key": "mappingProfile", "label": "Mapping profile", "type": "string"},
 					{"key": "owner", "label": "Owner", "type": "string"}

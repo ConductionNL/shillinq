@@ -380,6 +380,7 @@ import AdminInvoiceList from './views/invoice/AdminInvoiceList.vue'
 // src/manifest.d/receipt-extraction-consume.json's `type: "custom"` entry.
 import ReceiptCapture from './views/ReceiptCapture.vue'
 import StandardsPolicyEditor from './views/settings/StandardsPolicyEditor.vue'
+import ImportWizard from './views/import/ImportWizard.vue'
 
 export default {
 	// --- Flows (ADR-110 Decision 4). Only the SIDEBAR is an app component;
@@ -601,4 +602,7 @@ export default {
 		kind: 'page',
 		component: ProductAttributeCatalogIndex,
 	},
+
+	// platform-administration-import: the six-step import wizard (REQ-AIW-002).
+	ImportWizard: { kind: 'page', component: ImportWizard },
 }
