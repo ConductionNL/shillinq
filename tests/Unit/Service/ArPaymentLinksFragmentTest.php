@@ -221,7 +221,7 @@ final class ArPaymentLinksFragmentTest extends TestCase {
 
 		self::assertSame(['invoice', 'object'], $properties['subjectKind']['enum']);
 		self::assertSame('invoice', $properties['subjectKind']['default']);
-		self::assertSame(['leges', 'dwangsom', 'deposit', 'other', 'contribution'], $properties['requestType']['enum']);
+		self::assertSame(['leges', 'dwangsom', 'deposit', 'other', 'contribution', 'eventFee'], $properties['requestType']['enum']);
 	}//end testPaymentRequestCarriesTheObjectRequestProperties()
 
 	/**
@@ -269,7 +269,7 @@ final class ArPaymentLinksFragmentTest extends TestCase {
 		$schema = $fragment['components']['schemas']['PaymentRequest'];
 		$customerId = ($schema['properties']['customerId'] ?? []);
 
-		self::assertSame('0.5.0', $schema['version']);
+		self::assertSame('0.6.0', $schema['version']);
 		self::assertSame('string', ($customerId['type'] ?? null));
 		self::assertSame('uuid', ($customerId['format'] ?? null));
 		self::assertSame('CustomerMaster', ($customerId['$ref'] ?? null));

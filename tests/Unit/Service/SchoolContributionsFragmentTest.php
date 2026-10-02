@@ -207,7 +207,7 @@ final class SchoolContributionsFragmentTest extends TestCase {
 	}//end testADeclinedContributionIsAClosedInvoice()
 
 	/**
-	 * PaymentRequest 0.5.0 carries the reference, the child and the settled edge.
+	 * PaymentRequest 0.5.0 and later carries the reference, the child and the settled edge.
 	 *
 	 * @return void
 	 */
@@ -215,7 +215,7 @@ final class SchoolContributionsFragmentTest extends TestCase {
 		$schema = $this->fragment('ar-invoice-payment-links.json')['components']['schemas']['PaymentRequest'];
 		$properties = $schema['properties'];
 
-		self::assertSame('0.5.0', $schema['version']);
+		self::assertTrue(version_compare((string)$schema['version'], '0.5.0', '>='), 'PaymentRequest is older than 0.5.0');
 		foreach (['beneficiary', 'voluntary', 'raiseBatchId', 'settledAt', 'settledVia'] as $property) {
 			self::assertArrayHasKey($property, $properties, $property . ' is missing from PaymentRequest');
 		}
