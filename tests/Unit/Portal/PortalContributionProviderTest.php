@@ -215,6 +215,11 @@ class PortalContributionProviderTest extends TestCase {
 			$manifest = $this->provider->getContribution(['audience' => $audience]);
 			$this->assertSame($group, $manifest['label'], $audience);
 			$this->assertSame(array_column($manifest['collections'], 'id'), array_column($manifest['pages'], 'id'), $audience);
+			foreach ($manifest['collections'] as $collection) {
+				// A page per collection holds only while every collection is listable.
+				$this->assertTrue($collection['listable'], $collection['id']);
+			}
+
 
 			$labels = [];
 			foreach ($manifest['pages'] as $page) {

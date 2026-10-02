@@ -191,7 +191,7 @@ class PortalContributionProvider {
 	}//end getContribution()
 
 	/**
-	 * One page per listable collection, under the audience's menu group.
+	 * One page per collection, under the audience's menu group.
 	 *
 	 * The pages portaliq would make when an app declares none (the list and
 	 * the selected row; shillinq declares no create action), so the screens
@@ -208,11 +208,8 @@ class PortalContributionProvider {
 	 */
 	private function pagesFor(array $collections, string $group): array {
 		$pages = [];
+		// Every shillinq collection is listable, so every one gets a page.
 		foreach ($collections as $collection) {
-			if (($collection['listable'] ?? true) !== true) {
-				continue;
-			}
-
 			$id = (string)$collection['id'];
 			$pages[] = [
 				'id' => $id,
