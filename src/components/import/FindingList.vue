@@ -13,7 +13,13 @@
 			v-for="(finding, index) in sorted"
 			:key="index"
 			:class="'finding-list__item--' + finding.severity">
-			<strong>{{ finding.severity === 'error' ? t('shillinq', 'Error') : t('shillinq', 'Warning') }}:</strong>
+			<strong
+				>{{
+					finding.severity === 'error'
+						? t('shillinq', 'Error')
+						: t('shillinq', 'Warning')
+				}}:</strong
+			>
 			{{ finding.message }}
 		</li>
 	</ul>
@@ -30,11 +36,17 @@ export default {
 			default: () => [],
 		},
 	},
+
 	computed: {
 		sorted() {
-			return [...this.findings].sort((a, b) => Number(b?.severity === 'error') - Number(a?.severity === 'error'))
+			return [...this.findings].sort(
+				(a, b) =>
+					Number(b?.severity === 'error')
+					- Number(a?.severity === 'error'),
+			)
 		},
 	},
+
 	methods: { t },
 }
 </script>
@@ -42,7 +54,7 @@ export default {
 <style scoped>
 .finding-list {
 	margin: 0;
-	padding-left: 1.25rem;
+	padding-inline-start: 1.25rem;
 }
 
 .finding-list__item--error {

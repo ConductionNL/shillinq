@@ -366,6 +366,7 @@ import BudgetScenarioComparison from './views/BudgetScenarioComparison.vue'
 // endpoints; registered as a kind:"page" custom component per ADR-024.
 import DeadlineCalendarSettings from './views/DeadlineCalendarSettings.vue'
 import FlowDetailSidebar from './views/flows/FlowDetailSidebar.vue'
+import ImportWizard from './views/import/ImportWizard.vue'
 import CountPage from './views/inventory/CountPage.vue'
 import MobileScannerHome from './views/inventory/MobileScannerHome.vue'
 import PickPage from './views/inventory/PickPage.vue'
@@ -380,7 +381,6 @@ import AdminInvoiceList from './views/invoice/AdminInvoiceList.vue'
 // src/manifest.d/receipt-extraction-consume.json's `type: "custom"` entry.
 import ReceiptCapture from './views/ReceiptCapture.vue'
 import StandardsPolicyEditor from './views/settings/StandardsPolicyEditor.vue'
-import ImportWizard from './views/import/ImportWizard.vue'
 
 export default {
 	// --- Flows (ADR-110 Decision 4). Only the SIDEBAR is an app component;

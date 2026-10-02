@@ -13,7 +13,14 @@ import { generateUrl } from '@nextcloud/router'
 
 const REGISTER_SLUG = 'shillinq'
 
-export const WIZARD_STEPS = ['upload', 'profile', 'mapping', 'validation', 'dry-run', 'post']
+export const WIZARD_STEPS = [
+	'upload',
+	'profile',
+	'mapping',
+	'validation',
+	'dry-run',
+	'post',
+]
 
 export const SOURCE_SYSTEMS = [
 	{ id: 'xaf-generic', label: 'XAF auditfile (any package)' },
@@ -59,7 +66,9 @@ export function stepForBatch(batch) {
  * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
  */
 export function errorFindings(report) {
-	return (report?.findings || []).filter((finding) => finding?.severity === 'error')
+	return (report?.findings || []).filter(
+		(finding) => finding?.severity === 'error',
+	)
 }
 
 /**
@@ -70,7 +79,10 @@ export function errorFindings(report) {
  * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
  */
 export function canRunDryRun(batch) {
-	return batch?.status === 'validated' && errorFindings(batch?.validationReport).length === 0
+	return (
+		batch?.status === 'validated'
+		&& errorFindings(batch?.validationReport).length === 0
+	)
 }
 
 /**
@@ -81,7 +93,9 @@ export function canRunDryRun(batch) {
  * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
  */
 export function openMappings(mappings) {
-	return (mappings || []).filter((row) => !row?.targetAccount || row?.confirmed !== true)
+	return (mappings || []).filter(
+		(row) => !row?.targetAccount || row?.confirmed !== true,
+	)
 }
 
 /**
@@ -133,7 +147,12 @@ export function batchPayload(form) {
  * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
  */
 export function formComplete(form) {
-	return Boolean(form?.path && form?.sourceSystem && form?.migrationDate && form?.administrationId)
+	return Boolean(
+		form?.path
+		&& form?.sourceSystem
+		&& form?.migrationDate
+		&& form?.administrationId,
+	)
 }
 
 /**
@@ -160,7 +179,9 @@ export async function createBatch(form) {
  */
 export async function loadBatch(id) {
 	const { data } = await axios.get(
-		generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/ImportBatch/${encodeURIComponent(id)}`),
+		generateUrl(
+			`/apps/openregister/api/objects/${REGISTER_SLUG}/ImportBatch/${encodeURIComponent(id)}`,
+		),
 	)
 	return data
 }
@@ -175,7 +196,9 @@ export async function loadBatch(id) {
  */
 export async function runTransition(id, action) {
 	await axios.post(
-		generateUrl(`/apps/openregister/api/objects/${encodeURIComponent(id)}/transition`),
+		generateUrl(
+			`/apps/openregister/api/objects/${encodeURIComponent(id)}/transition`,
+		),
 		{ action, data: {} },
 	)
 	return loadBatch(id)
@@ -194,7 +217,9 @@ export async function loadMappings(id) {
 		{ params: { batchReference: id, _limit: 1000 } },
 	)
 	const rows = response.data?.results ?? response.data ?? []
-	return [...rows].sort((a, b) => String(a.sourceCode || '').localeCompare(String(b.sourceCode || '')))
+	return [...rows].sort((a, b) =>
+		String(a.sourceCode || '').localeCompare(String(b.sourceCode || '')),
+	)
 }
 
 /**
@@ -211,7 +236,9 @@ export async function confirmSuggestions(mappings) {
 			continue
 		}
 		await axios.patch(
-			generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/ImportMapping/${encodeURIComponent(row.id)}`),
+			generateUrl(
+				`/apps/openregister/api/objects/${REGISTER_SLUG}/ImportMapping/${encodeURIComponent(row.id)}`,
+			),
 			{ confirmed: true },
 		)
 		confirmed++

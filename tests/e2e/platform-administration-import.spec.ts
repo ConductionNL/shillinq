@@ -13,11 +13,14 @@
  * @spec openspec/changes/platform-administration-import/tasks.md#task-3.2
  */
 
+import { expect, test } from '@playwright/test'
 import fs from 'fs'
 import path from 'path'
-import { expect, test } from '@playwright/test'
 
-const fixture = fs.readFileSync(path.join(__dirname, '../fixtures/import/sample-xaf-3.2.xml'), 'utf8')
+const fixture = fs.readFileSync(
+	path.join(__dirname, '../fixtures/import/sample-xaf-3.2.xml'),
+	'utf8',
+)
 
 /**
  * Put an auditfile in the admin's Files.
@@ -27,8 +30,12 @@ const fixture = fs.readFileSync(path.join(__dirname, '../fixtures/import/sample-
  * @param body The file content.
  */
 async function putAuditfile(request, name: string, body: string): Promise<void> {
-	await request.fetch('/remote.php/dav/files/admin/Migrations', { method: 'MKCOL' })
-	await request.put(`/remote.php/dav/files/admin/Migrations/${name}`, { data: body })
+	await request.fetch('/remote.php/dav/files/admin/Migrations', {
+		method: 'MKCOL',
+	})
+	await request.put(`/remote.php/dav/files/admin/Migrations/${name}`, {
+		data: body,
+	})
 }
 
 /**
@@ -49,12 +56,16 @@ test.describe('platform-administration-import', () => {
 	/**
 	 * @e2e administration-import-migration::an-administrator-moves-over-from-snelstart
 	 */
-	test('a Snelstart auditfile is posted with its opening entry', async ({ page }) => {
+	test('a Snelstart auditfile is posted with its opening entry', async ({
+		page,
+	}) => {
 		await putAuditfile(page.request, 'snelstart-2025.xaf', fixture)
 		await page.goto('/index.php/apps/shillinq/import/wizard')
 
 		await pickAuditfile(page, 'snelstart-2025.xaf')
-		await expect(page.getByTestId('import-picked-file')).toContainText('snelstart-2025.xaf')
+		await expect(page.getByTestId('import-picked-file')).toContainText(
+			'snelstart-2025.xaf',
+		)
 		await page.getByRole('button', { name: 'Next' }).click()
 
 		await page.getByLabel('Package the auditfile comes from').click()
@@ -69,18 +80,28 @@ test.describe('platform-administration-import', () => {
 		await expect(page.getByTestId('import-step-validation')).toBeVisible()
 		await page.getByTestId('import-dry-run').click()
 
-		await expect(page.getByTestId('import-dry-run-debit')).toContainText('30,000.00')
-		await expect(page.getByTestId('import-dry-run-credit')).toContainText('30,000.00')
+		await expect(page.getByTestId('import-dry-run-debit')).toContainText(
+			'30,000.00',
+		)
+		await expect(page.getByTestId('import-dry-run-credit')).toContainText(
+			'30,000.00',
+		)
 		await page.getByTestId('import-post').click()
 
-		await expect(page.getByTestId('import-posted')).toContainText('posted with its opening entry')
+		await expect(page.getByTestId('import-posted')).toContainText(
+			'posted with its opening entry',
+		)
 	})
 
 	/**
 	 * @e2e administration-import-migration::an-error-finding-blocks-posting
 	 */
 	test('an unbalanced auditfile stops at validation', async ({ page }) => {
-		await putAuditfile(page.request, 'unbalanced-2025.xaf', fixture.replace('<amnt>5800.00</amnt>', '<amnt>5900.00</amnt>'))
+		await putAuditfile(
+			page.request,
+			'unbalanced-2025.xaf',
+			fixture.replace('<amnt>5800.00</amnt>', '<amnt>5900.00</amnt>'),
+		)
 		await page.goto('/index.php/apps/shillinq/import/wizard')
 
 		await pickAuditfile(page, 'unbalanced-2025.xaf')
@@ -90,7 +111,9 @@ test.describe('platform-administration-import', () => {
 		await page.getByTestId('import-confirm-suggestions').click()
 		await page.getByTestId('import-validate').click()
 
-		await expect(page.getByTestId('import-findings')).toContainText('Opening balance is not balanced.')
+		await expect(page.getByTestId('import-findings')).toContainText(
+			'Opening balance is not balanced.',
+		)
 		await expect(page.getByTestId('import-validation-failed')).toBeVisible()
 		await expect(page.getByTestId('import-dry-run')).toBeDisabled()
 	})

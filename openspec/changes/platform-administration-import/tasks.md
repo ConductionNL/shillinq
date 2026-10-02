@@ -10,11 +10,11 @@
 
 ## 2. Wizard
 
-- [ ] 2.1 `ImportWizard.vue` with the six steps; manifest `x-deferred` removed (REQ-AIW-002). Verify: vitest walks the steps with a stubbed store; `npm run check:manifest`; nav reachability.
+- [x] 2.1 `ImportWizard.vue` with the six steps; manifest `x-deferred` removed (REQ-AIW-002). Verify: vitest walks the steps with a stubbed store; `npm run check:manifest`; nav reachability.
 
 ## 3. Strings and end to end
 
-- [ ] 3.1 Dutch and English strings. Verify: `npm run test:l10n`.
-- [ ] 3.2 Playwright `tests/e2e/platform-administration-import.spec.ts`: import a fixture Snelstart XAF to a new administration. Verify: passes locally.
+- [x] 3.1 Dutch and English strings. Verify: `npm run test:l10n`.
+- [ ] 3.2 Playwright `tests/e2e/platform-administration-import.spec.ts`: import a fixture Snelstart XAF to a new administration. Verify: passes locally. (2026-10-02: written, not run: needs the live instance.)
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push.

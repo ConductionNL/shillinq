@@ -13,7 +13,12 @@
 		<header class="import-wizard__header">
 			<h2>{{ t('shillinq', 'Import wizard') }}</h2>
 			<p class="import-wizard__hint">
-				{{ t('shillinq', 'Move an administration over from another package with its XAF auditfile. Nothing is booked until you choose Post.') }}
+				{{
+					t(
+						'shillinq',
+						'Move an administration over from another package with its XAF auditfile. Nothing is booked until you choose Post.',
+					)
+				}}
 			</p>
 		</header>
 
@@ -21,7 +26,10 @@
 			<li
 				v-for="(id, index) in steps"
 				:key="id"
-				:class="{ 'import-wizard__step--current': id === step, 'import-wizard__step--done': index < stepIndex }"
+				:class="{
+					'import-wizard__step--current': id === step,
+					'import-wizard__step--done': index < stepIndex,
+				}"
 				:aria-current="id === step ? 'step' : null">
 				{{ stepLabel(id) }}
 			</li>
@@ -31,9 +39,19 @@
 			{{ error }}
 		</NcNoteCard>
 
-		<section v-if="step === 'upload'" class="import-wizard__panel" data-testid="import-step-upload">
+		<section
+			v-if="step === 'upload'"
+			class="import-wizard__panel"
+			data-testid="import-step-upload">
 			<h3>{{ t('shillinq', 'Choose the auditfile') }}</h3>
-			<p>{{ t('shillinq', 'Pick the XAF auditfile from your Files. The file is linked, not copied.') }}</p>
+			<p>
+				{{
+					t(
+						'shillinq',
+						'Pick the XAF auditfile from your Files. The file is linked, not copied.',
+					)
+				}}
+			</p>
 			<NcButton data-testid="import-pick-file" @click="pickFile">
 				{{ t('shillinq', 'Choose file') }}
 			</NcButton>
@@ -41,23 +59,34 @@
 				{{ form.path }}
 			</p>
 			<div class="import-wizard__actions">
-				<NcButton variant="primary" :disabled="!form.path" @click="step = 'profile'">
+				<NcButton
+					variant="primary"
+					:disabled="!form.path"
+					@click="step = 'profile'">
 					{{ t('shillinq', 'Next') }}
 				</NcButton>
 			</div>
 		</section>
 
-		<section v-else-if="step === 'profile'" class="import-wizard__panel" data-testid="import-step-profile">
+		<section
+			v-else-if="step === 'profile'"
+			class="import-wizard__panel"
+			data-testid="import-step-profile">
 			<h3>{{ t('shillinq', 'Source package') }}</h3>
 			<NcSelect
 				v-model="sourceSystem"
 				:options="sourceSystems"
-				:input-label="t('shillinq', 'Package the auditfile comes from')"
+				:inputLabel="t('shillinq', 'Package the auditfile comes from')"
 				label="label"
 				:clearable="false" />
 			<div class="import-wizard__field">
-				<label for="import-migration-date">{{ t('shillinq', 'Migration date') }}</label>
-				<input id="import-migration-date" v-model="form.migrationDate" type="date">
+				<label for="import-migration-date">{{
+					t('shillinq', 'Migration date')
+				}}</label>
+				<input
+					id="import-migration-date"
+					v-model="form.migrationDate"
+					type="date" />
 			</div>
 			<NcCheckboxRadioSwitch v-model="form.scope.openingBalance">
 				{{ t('shillinq', 'Import the opening balance') }}
@@ -79,12 +108,23 @@
 			</div>
 		</section>
 
-		<section v-else-if="step === 'mapping'" class="import-wizard__panel" data-testid="import-step-mapping">
+		<section
+			v-else-if="step === 'mapping'"
+			class="import-wizard__panel"
+			data-testid="import-step-mapping">
 			<h3>{{ t('shillinq', 'Mapping review') }}</h3>
-			<p>{{ t('shillinq', 'Accounts to review: {count}', { count: open.length }) }}</p>
+			<p>
+				{{
+					t('shillinq', 'Accounts to review: {count}', {
+						count: open.length,
+					})
+				}}
+			</p>
 			<table class="import-wizard__table">
 				<caption class="hidden-visually">
-					{{ t('shillinq', 'Account mappings') }}
+					{{
+						t('shillinq', 'Account mappings')
+					}}
 				</caption>
 				<thead>
 					<tr>
@@ -100,18 +140,37 @@
 					</tr>
 				</thead>
 				<tbody>
-					<tr v-for="row in mappings" :key="row.id" data-testid="import-mapping-row">
+					<tr
+						v-for="row in mappings"
+						:key="row.id"
+						data-testid="import-mapping-row">
 						<td>{{ row.sourceCode }} {{ row.sourceName }}</td>
-						<td>{{ row.targetAccount || t('shillinq', 'Not mapped') }}</td>
-						<td>{{ row.confirmed === true ? t('shillinq', 'Yes') : t('shillinq', 'No') }}</td>
+						<td>
+							{{ row.targetAccount || t('shillinq', 'Not mapped') }}
+						</td>
+						<td>
+							{{
+								row.confirmed === true
+									? t('shillinq', 'Yes')
+									: t('shillinq', 'No')
+							}}
+						</td>
 					</tr>
 				</tbody>
 			</table>
 			<p v-if="unmapped > 0">
-				{{ t('shillinq', 'Map the remaining accounts in the Mapping list, then come back to this batch.') }}
+				{{
+					t(
+						'shillinq',
+						'Map the remaining accounts in the Mapping list, then come back to this batch.',
+					)
+				}}
 			</p>
 			<div class="import-wizard__actions">
-				<NcButton :disabled="busy || open.length === 0" data-testid="import-confirm-suggestions" @click="confirmAll">
+				<NcButton
+					:disabled="busy || open.length === 0"
+					data-testid="import-confirm-suggestions"
+					@click="confirmAll">
 					{{ t('shillinq', 'Confirm the suggested accounts') }}
 				</NcButton>
 				<NcButton
@@ -124,11 +183,21 @@
 			</div>
 		</section>
 
-		<section v-else-if="step === 'validation'" class="import-wizard__panel" data-testid="import-step-validation">
+		<section
+			v-else-if="step === 'validation'"
+			class="import-wizard__panel"
+			data-testid="import-step-validation">
 			<h3>{{ t('shillinq', 'Validation') }}</h3>
 			<FindingList :findings="batch?.validationReport?.findings || []" />
-			<p v-if="batch?.status === 'validation_failed'" data-testid="import-validation-failed">
-				{{ t('shillinq', 'This import cannot be posted. Correct the auditfile or the mapping and start a new import.') }}
+			<p
+				v-if="batch?.status === 'validation_failed'"
+				data-testid="import-validation-failed">
+				{{
+					t(
+						'shillinq',
+						'This import cannot be posted. Correct the auditfile or the mapping and start a new import.',
+					)
+				}}
 			</p>
 			<div class="import-wizard__actions">
 				<NcButton
@@ -141,7 +210,10 @@
 			</div>
 		</section>
 
-		<section v-else-if="step === 'dry-run'" class="import-wizard__panel" data-testid="import-step-dry-run">
+		<section
+			v-else-if="step === 'dry-run'"
+			class="import-wizard__panel"
+			data-testid="import-step-dry-run">
 			<h3>{{ t('shillinq', 'Dry run') }}</h3>
 			<dl class="import-wizard__summary">
 				<dt>{{ t('shillinq', 'Opening balance debit') }}</dt>
@@ -170,7 +242,10 @@
 
 		<section v-else class="import-wizard__panel" data-testid="import-step-post">
 			<h3>{{ t('shillinq', 'Post') }}</h3>
-			<NcNoteCard v-if="batch?.status === 'posted'" type="success" data-testid="import-posted">
+			<NcNoteCard
+				v-if="batch?.status === 'posted'"
+				type="success"
+				data-testid="import-posted">
 				{{ t('shillinq', 'The import is posted with its opening entry.') }}
 			</NcNoteCard>
 			<NcNoteCard v-else-if="batch?.status === 'reversed'" type="info">
@@ -192,22 +267,27 @@
 <script>
 import { getFilePickerBuilder } from '@nextcloud/dialogs'
 import { translate as t } from '@nextcloud/l10n'
-import { NcButton, NcCheckboxRadioSwitch, NcNoteCard, NcSelect } from '@nextcloud/vue'
-import { fetchAdministrationContext } from '../../api/administrationApi.js'
-import FindingList from '../../components/import/FindingList.vue'
 import {
-	SOURCE_SYSTEMS,
-	WIZARD_STEPS,
+	NcButton,
+	NcCheckboxRadioSwitch,
+	NcNoteCard,
+	NcSelect,
+} from '@nextcloud/vue'
+import FindingList from '../../components/import/FindingList.vue'
+import { fetchAdministrationContext } from '../../api/administrationApi.js'
+import {
 	canRunDryRun,
 	confirmSuggestions,
 	createBatch,
 	formComplete,
 	loadMappings,
-	openMappings,
 	openingTotals,
+	openMappings,
 	refusalMessage,
 	runTransition,
+	SOURCE_SYSTEMS,
 	stepForBatch,
+	WIZARD_STEPS,
 } from '../../utils/importWizard.js'
 
 /**
@@ -227,7 +307,13 @@ function emptyForm() {
 
 export default {
 	name: 'ImportWizard',
-	components: { FindingList, NcButton, NcCheckboxRadioSwitch, NcNoteCard, NcSelect },
+	components: {
+		FindingList,
+		NcButton,
+		NcCheckboxRadioSwitch,
+		NcNoteCard,
+		NcSelect,
+	},
 
 	data() {
 		return {
@@ -245,38 +331,56 @@ export default {
 		stepIndex() {
 			return this.steps.indexOf(this.step)
 		},
+
 		sourceSystems() {
 			return SOURCE_SYSTEMS.map((system) => ({
 				id: system.id,
-				label: system.id === 'xaf-generic' ? t('shillinq', 'XAF auditfile (any package)') : system.label,
+				label:
+					system.id === 'xaf-generic'
+						? t('shillinq', 'XAF auditfile (any package)')
+						: system.label,
 			}))
 		},
+
 		sourceSystem: {
 			get() {
-				return this.sourceSystems.find((system) => system.id === this.form.sourceSystem) || null
+				return (
+					this.sourceSystems.find(
+						(system) => system.id === this.form.sourceSystem,
+					) || null
+				)
 			},
+
 			set(option) {
 				this.form.sourceSystem = option?.id || ''
 			},
 		},
+
 		ready() {
 			return formComplete(this.form)
 		},
+
 		open() {
 			return openMappings(this.mappings)
 		},
+
 		unmapped() {
 			return this.mappings.filter((row) => !row.targetAccount).length
 		},
+
 		dryRunAllowed() {
 			return canRunDryRun(this.batch)
 		},
+
 		totals() {
 			return openingTotals(this.batch?.dryRunReport)
 		},
+
 		openItems() {
 			const report = this.batch?.dryRunReport || {}
-			return (report.arOpenItems || []).length + (report.apOpenItems || []).length
+			return (
+				(report.arOpenItems || []).length + (report.apOpenItems || []).length
+			)
 		},
 	},
 
@@ -329,12 +433,16 @@ export default {
 		 */
 		async pickFile() {
 			try {
-				const picked = await getFilePickerBuilder(t('shillinq', 'Choose the auditfile'))
+				const picked = await getFilePickerBuilder(
+					t('shillinq', 'Choose the auditfile'),
+				)
 					.setMultiSelect(false)
 					.allowDirectories(false)
 					.build()
 					.pick()
-				this.form.path = Array.isArray(picked) ? (picked[0] || '') : (picked || '')
+				this.form.path = Array.isArray(picked)
+					? picked[0] || ''
+					: picked || ''
 			} catch {
 				// Closing the picker chooses nothing.
 			}
@@ -398,7 +506,7 @@ export default {
 		/**
 		 * Run a request, showing the refusal it comes back with.
 		 *
-		 * @param {Function} work The request.
+		 * @param {() => Promise<void>} work The request.
 		 * @return {Promise<void>}
 		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
 		 */
@@ -408,7 +516,10 @@ export default {
 			try {
 				await work()
 			} catch (error) {
-				this.error = refusalMessage(error, t('shillinq', 'The step could not be completed.'))
+				this.error = refusalMessage(
+					error,
+					t('shillinq', 'The step could not be completed.'),
+				)
 			} finally {
 				this.busy = false
 			}
@@ -436,7 +547,10 @@ export default {
 		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
 		 */
 		money(amount) {
-			return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'EUR' }).format(amount || 0)
+			return new Intl.NumberFormat(undefined, {
+				style: 'currency',
+				currency: 'EUR',
+			}).format(amount || 0)
 		},
 	},
 }
@@ -460,7 +574,7 @@ export default {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 0.5rem 1.5rem;
-	padding-left: 1.25rem;
+	padding-inline-start: 1.25rem;
 	margin: 0;
 }
 
