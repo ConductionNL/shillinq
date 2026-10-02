@@ -174,24 +174,59 @@ class PortalContributionProvider {
 	public function getContribution(array $subject): ?array {
 		$audience = $subject['audience'] ?? '';
 
-		if ($audience === 'customer') {
-			return $this->customerManifest();
+		$manifest = match ($audience) {
+			'customer' => $this->customerManifest(),
+			'supplier' => $this->supplierManifest(),
+			'accountant' => $this->accountantManifest(),
+			'parent' => $this->parentManifest(),
+			default => null,
+		};
+		if ($manifest === null) {
+			return null;
 		}
 
-		if ($audience === 'supplier') {
-			return $this->supplierManifest();
-		}
+		$manifest['pages'] = $this->pagesFor(collections: $manifest['collections'], group: (string)$manifest['label']);
 
-		if ($audience === 'accountant') {
-			return $this->accountantManifest();
-		}
-
-		if ($audience === 'parent') {
-			return $this->parentManifest();
-		}
-
-		return null;
+		return $manifest;
 	}//end getContribution()
+
+	/**
+	 * One page per listable collection, under the audience's menu group.
+	 *
+	 * The pages portaliq would make when an app declares none (the list and
+	 * the selected row; shillinq declares no create action), so the screens
+	 * stay as they were. They are declared because only a declared page
+	 * carries a `group`, the heading the site's menu shows above it instead of
+	 * the app's name.
+	 *
+	 * @param array<int, array<string, mixed>> $collections The audience's collections.
+	 * @param string                           $group       The menu heading.
+	 *
+	 * @return array<int, array<string, mixed>> The pages.
+	 *
+	 * @spec openspec/changes/portal-pages-in-dutch-groups/specs/portal-contribution/spec.md#requirement-every-portal-page-names-its-menu-group-in-dutch
+	 */
+	private function pagesFor(array $collections, string $group): array {
+		$pages = [];
+		foreach ($collections as $collection) {
+			if (($collection['listable'] ?? true) !== true) {
+				continue;
+			}
+
+			$id = (string)$collection['id'];
+			$pages[] = [
+				'id' => $id,
+				'label' => (string)($collection['label'] ?? $id),
+				'group' => $group,
+				'blocks' => [
+					['type' => 'collection', 'collection' => $id],
+					['type' => 'detail', 'collection' => $id],
+				],
+			];
+		}
+
+		return $pages;
+	}//end pagesFor()
 
 	/**
 	 * The read-only customer (AR-side) manifest.
@@ -242,7 +277,7 @@ class PortalContributionProvider {
 	 */
 	private function customerManifest(): array {
 		return [
-			'label' => 'Shillinq',
+			'label' => 'Bestellingen en facturen',
 			'collections' => [
 				[
 					'id' => 'invoices',
@@ -250,7 +285,7 @@ class PortalContributionProvider {
 					'schema' => 'Invoice',
 					'scopeField' => 'customerReference',
 					'scopeClaim' => 'customerId',
-					'label' => 'My invoices',
+					'label' => 'Mijn facturen',
 					'listable' => true,
 				],
 				[
@@ -259,7 +294,7 @@ class PortalContributionProvider {
 					'schema' => 'BillableInvoice',
 					'scopeField' => 'customerId',
 					'scopeClaim' => 'customerId',
-					'label' => 'My project invoices',
+					'label' => 'Mijn projectfacturen',
 					'listable' => true,
 				],
 				[
@@ -268,7 +303,7 @@ class PortalContributionProvider {
 					'schema' => 'Quote',
 					'scopeField' => 'customerReference',
 					'scopeClaim' => 'customerId',
-					'label' => 'My quotes',
+					'label' => 'Mijn offertes',
 					'listable' => true,
 				],
 				[
@@ -277,7 +312,7 @@ class PortalContributionProvider {
 					'schema' => 'SalesOrder',
 					'scopeField' => 'customerReference',
 					'scopeClaim' => 'customerId',
-					'label' => 'My orders',
+					'label' => 'Mijn bestellingen',
 					'listable' => true,
 				],
 				[
@@ -286,7 +321,7 @@ class PortalContributionProvider {
 					'schema' => 'RevenueContract',
 					'scopeField' => 'customerId',
 					'scopeClaim' => 'customerId',
-					'label' => 'My contracts',
+					'label' => 'Mijn contracten',
 					'listable' => true,
 				],
 				[
@@ -295,7 +330,7 @@ class PortalContributionProvider {
 					'schema' => 'ARInvoice',
 					'scopeField' => 'customerId',
 					'scopeClaim' => 'customerMasterId',
-					'label' => 'My invoices',
+					'label' => 'Mijn rekeningen',
 					'listable' => true,
 					'rowAction' => 'pay',
 					// ARInvoice's declared names: the amounts, lines, status and UBL
@@ -318,22 +353,22 @@ class PortalContributionProvider {
 					'columns' => [
 						[
 							'field' => 'invoiceNumber',
-							'label' => 'Invoice',
+							'label' => 'Factuur',
 							'render' => 'text',
 						],
 						[
 							'field' => 'invoiceDate',
-							'label' => 'Date',
+							'label' => 'Datum',
 							'render' => 'date',
 						],
 						[
 							'field' => 'dueDate',
-							'label' => 'Due',
+							'label' => 'Vervaldatum',
 							'render' => 'date',
 						],
 						[
 							'field' => 'grossAmount',
-							'label' => 'Amount',
+							'label' => 'Bedrag',
 							'render' => 'currency',
 						],
 						[
@@ -377,7 +412,7 @@ class PortalContributionProvider {
 						'targetField' => 'id',
 						'match' => 'scopeField',
 					],
-					'label' => 'Pay my invoices',
+					'label' => 'Mijn facturen betalen',
 					'listable' => true,
 					// No row action: pay forwards the row id as invoiceId, and a
 					// row here is a payment request. Its invoice is paid from
@@ -397,12 +432,12 @@ class PortalContributionProvider {
 					'columns' => [
 						[
 							'field' => 'invoiceReference',
-							'label' => 'Invoice',
+							'label' => 'Factuur',
 							'render' => 'text',
 						],
 						[
 							'field' => 'amount',
-							'label' => 'Amount',
+							'label' => 'Bedrag',
 							'render' => 'currency',
 						],
 						[
@@ -412,7 +447,7 @@ class PortalContributionProvider {
 						],
 						[
 							'field' => 'paymentLink',
-							'label' => 'Pay now',
+							'label' => 'Nu betalen',
 							'render' => 'link',
 						],
 					],
@@ -447,7 +482,7 @@ class PortalContributionProvider {
 					'schema' => 'PaymentRequest',
 					'scopeField' => 'customerId',
 					'scopeClaim' => 'customerMasterId',
-					'label' => 'My payment requests',
+					'label' => 'Mijn betaalverzoeken',
 					'listable' => true,
 					'rowAction' => 'pay-request',
 					'fields' => [
@@ -466,17 +501,17 @@ class PortalContributionProvider {
 					'columns' => [
 						[
 							'field' => 'description',
-							'label' => 'For',
+							'label' => 'Waarvoor',
 							'render' => 'text',
 						],
 						[
 							'field' => 'amount',
-							'label' => 'Amount',
+							'label' => 'Bedrag',
 							'render' => 'currency',
 						],
 						[
 							'field' => 'dueAt',
-							'label' => 'Due',
+							'label' => 'Vervaldatum',
 							'render' => 'date',
 						],
 						[
@@ -523,7 +558,7 @@ class PortalContributionProvider {
 				// ARInvoice row has no `state` (REQ-SPPI-009).
 				[
 					'id' => 'pay',
-					'label' => 'Pay now',
+					'label' => 'Nu betalen',
 					'type' => 'endpoint-forward',
 					'endpoint' => '/apps/shillinq/api/portal/payments/initiate',
 					'method' => 'POST',
@@ -539,7 +574,7 @@ class PortalContributionProvider {
 				// pending (REQ-SPPI-008).
 				[
 					'id' => 'pay-request',
-					'label' => 'Pay now',
+					'label' => 'Nu betalen',
 					'type' => 'endpoint-forward',
 					'endpoint' => '/apps/shillinq/api/portal/payments/initiate',
 					'method' => 'POST',
@@ -584,7 +619,7 @@ class PortalContributionProvider {
 			}
 		}
 
-		$manifest['label'] = 'School contributions';
+		$manifest['label'] = 'Schoolbijdragen';
 		$manifest['collections'] = $collections;
 		$manifest['actions'] = array_values(
 			array_filter(
@@ -599,7 +634,9 @@ class PortalContributionProvider {
 		// contribution, and a business customer has none.
 		$manifest['actions'][] = [
 			'id' => 'decline',
-			'label' => 'I will not pay',
+			// The name the Dutch reminder tells the parent to choose
+			// (docudesk-templates.json, the voluntary reminder).
+			'label' => 'Ik betaal niet',
 			'type' => 'endpoint-forward',
 			'endpoint' => '/apps/shillinq/api/portal/contributions/decline',
 			'method' => 'POST',
@@ -619,10 +656,10 @@ class PortalContributionProvider {
 	 */
 	private function forParents(array $collection): array {
 		$extra = 'description';
-		$collection['label'] = 'Pay my contributions';
+		$collection['label'] = 'Mijn bijdragen betalen';
 		if ($collection['id'] === 'salesInvoices') {
 			$extra = 'invoiceNote';
-			$collection['label'] = 'My contributions';
+			$collection['label'] = 'Mijn bijdragen';
 			// Portaliq shows this field as a notice on the card and in the
 			// confirm step: the voluntary sentence (portaliq #805, REQ-SPPI-009).
 			$collection['noticeField'] = 'invoiceNote';
@@ -652,7 +689,7 @@ class PortalContributionProvider {
 	 */
 	private function supplierManifest(): array {
 		return [
-			'label' => 'Shillinq',
+			'label' => 'Opdrachten en facturen',
 			'collections' => [
 				[
 					'id' => 'purchaseOrders',
@@ -660,7 +697,7 @@ class PortalContributionProvider {
 					'schema' => 'PurchaseOrder',
 					'scopeField' => 'supplierId',
 					'scopeClaim' => 'supplierId',
-					'label' => 'Purchase orders',
+					'label' => 'Inkooporders',
 					'listable' => true,
 				],
 				[
@@ -669,7 +706,7 @@ class PortalContributionProvider {
 					'schema' => 'SupplierInvoice',
 					'scopeField' => 'supplierId',
 					'scopeClaim' => 'supplierId',
-					'label' => 'My invoices',
+					'label' => 'Mijn facturen',
 					'listable' => true,
 				],
 			],
@@ -715,7 +752,7 @@ class PortalContributionProvider {
 	 */
 	private function accountantManifest(): array {
 		return [
-			'label' => 'Shillinq',
+			'label' => 'Administratie',
 			'collections' => [
 				[
 					'id' => 'salesInvoices',
@@ -723,7 +760,7 @@ class PortalContributionProvider {
 					'schema' => 'ARInvoice',
 					'scopeField' => 'administrationId',
 					'scopeClaim' => 'accountantAdministrationId',
-					'label' => 'Sales invoices',
+					'label' => 'Verkoopfacturen',
 					'listable' => true,
 				],
 				[
@@ -732,7 +769,7 @@ class PortalContributionProvider {
 					'schema' => 'SupplierInvoice',
 					'scopeField' => 'administrationId',
 					'scopeClaim' => 'accountantAdministrationId',
-					'label' => 'Purchase invoices',
+					'label' => 'Inkoopfacturen',
 					'listable' => true,
 				],
 				[
@@ -741,7 +778,7 @@ class PortalContributionProvider {
 					'schema' => 'JournalEntry',
 					'scopeField' => 'administrationId',
 					'scopeClaim' => 'accountantAdministrationId',
-					'label' => 'Journal entries',
+					'label' => 'Journaalposten',
 					'listable' => true,
 				],
 				[
@@ -750,7 +787,7 @@ class PortalContributionProvider {
 					'schema' => 'GLTransaction',
 					'scopeField' => 'administrationId',
 					'scopeClaim' => 'accountantAdministrationId',
-					'label' => 'General ledger',
+					'label' => 'Grootboek',
 					'listable' => true,
 				],
 				[
@@ -759,7 +796,7 @@ class PortalContributionProvider {
 					'schema' => 'TrialBalance',
 					'scopeField' => 'administrationId',
 					'scopeClaim' => 'accountantAdministrationId',
-					'label' => 'Trial balance',
+					'label' => 'Proefbalans',
 					'listable' => true,
 				],
 				[
@@ -768,7 +805,7 @@ class PortalContributionProvider {
 					'schema' => 'VatReturn',
 					'scopeField' => 'administrationId',
 					'scopeClaim' => 'accountantAdministrationId',
-					'label' => 'VAT returns',
+					'label' => 'Btw-aangiften',
 					'listable' => true,
 				],
 			],
