@@ -136,7 +136,7 @@
                 },
                 "slug": "MeterReading",
                 "icon": "Counter",
-                "version": "0.2.0",
+                "version": "0.3.0",
                 "title": "Meter Reading",
                 "description": "A metered quantity of a resource consumed by a customer over a billing period. Rated by UsageRatingCalculator against its UsageRatePlan into a BillableInvoiceLine through the existing invoice pipeline. Lifecycle: unrated -> rated -> invoiced so a reading is never double-billed.",
                 "x-schema-org": "schema:QuantitativeValue",
@@ -196,6 +196,14 @@
                         "description": "FK to the UsageRatePlan this reading is rated against; falls back to the request default.",
                         "example": "urp-api-standard",
                         "title": "Rate Plan ID"
+                    },
+                    "ratedAmount": {
+                        "type": "number",
+                        "minimum": 0,
+                        "nullable": true,
+                        "description": "What the reading costs before VAT in euros, set when it is rated against its rate plan.",
+                        "example": 30.0,
+                        "title": "Rated amount"
                     },
                     "periodStart": {
                         "type": "string",
@@ -260,7 +268,14 @@
                             "from": "unrated",
                             "to": "rated",
                             "label": "Rate reading",
-                            "description": "Price the reading against its UsageRatePlan."
+                            "description": "Price the reading against its UsageRatePlan.",
+                            "actions": [
+                                {
+                                    "trigger": "x-openregister-lifecycle-action",
+                                    "action": "OCA\\Shillinq\\Lifecycle\\Action\\RateMeterReadingAction",
+                                    "description": "Price the reading against its rate plan and keep the amount on it (RateMeterReadingAction)."
+                                }
+                            ]
                         },
                         "invoice": {
                             "from": "rated",
@@ -321,6 +336,23 @@
             "periodEnd": "2026-03-31",
             "description": "API calls: March 2026",
             "status": "unrated"
+        },
+        {
+            "@self": {
+                "register": "shillinq",
+                "schema": "UsageRatePlan",
+                "slug": "urp-storage-gb"
+            },
+            "administrationId": "adm-holding-nl",
+            "name": "Opslag per GB",
+            "resourceType": "storage_gb",
+            "unit": "GB",
+            "ratingMethod": "flat",
+            "unitPriceCents": 12,
+            "vatRate": 21,
+            "glRevenueAccount": "4500",
+            "currency": "EUR",
+            "effectiveFrom": "2026-01-01"
         }
     ]
 }

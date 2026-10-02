@@ -103,6 +103,13 @@ final class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	private bool $findAllRendersEntities = false;
 
 	/**
+	 * Whether a filter on `id` or `uuid` matches nothing, as in OpenRegister.
+	 *
+	 * @var boolean
+	 */
+	private bool $idFiltersMatchNothing = false;
+
+	/**
 	 * Constructor.
 	 *
 	 * ## `$findAllRendersEntities` — modelling what the engine really returns
@@ -136,14 +143,22 @@ final class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 * @param bool                                         $findAllRendersEntities Answer `findAll()` with
 	 *                                                                             ObjectEntityInterface rows,
 	 *                                                                             as the real engine does.
+	 * @param bool                                         $idFiltersMatchNothing  Answer a `filters` map naming
+	 *                                                                             `id` or `uuid` with no rows:
+	 *                                                                             those are entity columns, not
+	 *                                                                             properties, so OpenRegister
+	 *                                                                             matches none (see
+	 *                                                                             OpenRegisterFaithfulObjectService).
 	 */
 	public function __construct(
 		array $data = [],
 		?array &$saveSink = null,
-		bool $findAllRendersEntities = false
+		bool $findAllRendersEntities = false,
+		bool $idFiltersMatchNothing = false
 	) {
 		$this->data = $data;
 		$this->findAllRendersEntities = $findAllRendersEntities;
+		$this->idFiltersMatchNothing  = $idFiltersMatchNothing;
 		if ($saveSink !== null) {
 			$this->saved = &$saveSink;
 		}
@@ -203,6 +218,9 @@ final class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	public function findAll(array $config = [], bool $_rbac = true, bool $_multitenancy = true): array {
 		$rows = ($this->data[$this->schema] ?? []);
 		$filters = ($config['filters'] ?? []);
+		if ($this->idFiltersMatchNothing === true && (array_key_exists('id', $filters) === true || array_key_exists('uuid', $filters) === true)) {
+			return [];
+		}
 
 		$matched = array_values(
 			array_filter(

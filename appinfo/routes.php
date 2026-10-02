@@ -96,6 +96,8 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'fixedAssetDepreciation#postMissed', 'url' => '/api/fixed-assets/{id}/missed-depreciation', 'verb' => 'POST'],
             // tax-vat-number-check REQ-TVNC-001: check a customer's or supplier's VAT number against VIES.
             ['name' => 'vatNumberCheck#check', 'url' => '/api/vat-number-checks/{type}/{id}', 'verb' => 'POST'],
+            // sales-usage-billing: the Import readings action on the meter readings page.
+            ['name' => 'meterReadingImport#import', 'url' => '/api/meter-readings/import', 'verb' => 'POST'],
             ['name' => 'relation#report', 'url' => '/api/relations/both-sides', 'verb' => 'GET'],
             ['name' => 'relation#suggestions', 'url' => '/api/relations/suggestions', 'verb' => 'GET'],
             ['name' => 'relation#dismiss', 'url' => '/api/relations/suggestions/dismiss', 'verb' => 'POST'],
