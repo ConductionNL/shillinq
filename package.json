@@ -65,7 +65,7 @@
     "@vue/devtools-api": "^8.1.5",
     "@vueuse/core": "^14.4.0",
     "dexie": "^4.4.6",
-    "dompurify": "^3.4.15",
+    "dompurify": "^3.4.16",
     "gridstack": "^13.3.0",
     "marked": "^18.0.13",
     "path-browserify": "^1.0.1",
