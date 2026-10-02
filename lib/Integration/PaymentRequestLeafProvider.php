@@ -211,7 +211,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	 * this leaf returns every request on the object and filters nothing yet.
 	 */
 	public function list(string $register, string $schema, string $objectId, array $filters = []): array {
-		$requests = $this->requestsOn(register: $register, schema: $schema, objectId: $objectId);
+		$requests = $this->requestsOn(register: $register, schema: $schema, objectId: $objectId, asSystem: false);
 
 		$projected = [];
 		foreach ($requests as $request) {
@@ -533,7 +533,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	 *
 	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-004)
 	 */
-	private function requestsOn(string $register, string $schema, string $objectId, bool $asSystem = false): array {
+	private function requestsOn(string $register, string $schema, string $objectId, bool $asSystem): array {
 		$finder = ($this->finder ?? new PaymentRequestFinder(
 			objectService: $this->objectService,
 			validator: $this->validator,
