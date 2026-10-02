@@ -11,7 +11,7 @@
       "PaymentRequest": {
         "slug": "PaymentRequest",
         "icon": "CreditCardOutline",
-        "version": "0.5.0",
+        "version": "0.6.0",
         "title": "Payment Request",
         "description": "An online payment attempt against an AR invoice. One AR invoice can carry several payment requests over its life (link expired and regenerated, a failed attempt then a new link, a link voided after partial credit): each request has its own lifecycle, gateway identity and audit needs, so payment state lives here and never folds onto ARInvoice (design D1). Mirrors the proven DepositPayment shape minus booking fields, FK'd to ARInvoice. STORES NO PCI DATA: no card number, CVV, PAN, IBAN credential, or authorization token is ever persisted. OpenConnector (PCI-certified) handles all sensitive payment data and only opaque references (paymentIntentId, settlementReference) are stored here, identical to DepositPayment. V0.1.1 (portal-payment-initiation) adds confirmationSummary. A subject-safe settlement receipt written on capture and surfaced through the customer portal's read-only paymentRequests collection. V0.2.0 (case-payment-requests) lets a request stand on any object: subjectKind, subject, requestType, description, debtor, dueAt and revenueAccount, with invoiceReference optional. An object request carries its own amount and books a receipt against the revenue account mapped to its requestType; a domain app never books the money itself (ADR-107). V0.3.0 (fees-payments-and-the-contract-register) adds settlements, an append-only record of money that arrived another way, and legalBasis, the article the amount rests on. V0.4.0 (extracurricular-fee-to-shillinq) lets a request stand on a school contribution: subject.app names the app owning the chargeable, beneficiary names the child and joins the uniqueness key, requestType gains contribution, voluntary carries the Wet vrijwillige ouderbijdrage flag, raiseBatchId names the bulk raise, and settledAt with settledVia mark the moment the request first counts as settled, which is the signal an owning app listens for.",
         "x-openregister-audit-trail": {
@@ -89,7 +89,8 @@
               "dwangsom",
               "deposit",
               "other",
-              "contribution"
+              "contribution",
+              "eventFee"
             ],
             "description": "Why the money is asked for. Required when subjectKind = object. Drives the revenue account the receipt books against through the paymentRevenueAccounts mapping (REQ-SOPR-002).",
             "example": "dwangsom",
