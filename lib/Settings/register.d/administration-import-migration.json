@@ -11,7 +11,7 @@
       "ImportBatch": {
         "slug": "ImportBatch",
         "icon": "DatabaseImportOutline",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "Import Batch",
         "description": "A single administration migration tracked end-to-end. The unit of lifecycle, idempotency, reporting, and reversal. Source files live in Nextcloud Files (link via sourceFiles, never copied into the register). Staged parse output, the validation report, the dry-run report, and posting references all live inline on the batch. CRUD goes through OpenRegister's generic object surface (ADR-022); there is NO parallel PHP model or import table.",
         "x-openregister-audit-trail": {
@@ -279,7 +279,16 @@
               "to": "parsing",
               "label": "Parse",
               "description": "Start parsing. Requires sourceFiles, administrationId, migrationDate, and at least one scope flag. Runs under OR background machinery; the initiating request returns immediately.",
-              "requires": "OCA\\Shillinq\\Lifecycle\\ImportBatchGuard::canParse"
+              "requires": "OCA\\Shillinq\\Lifecycle\\ImportBatchGuard::canParse",
+              "actions": [
+                {
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\ImportBatchAction",
+                  "actionParameters": {
+                    "step": "parse"
+                  },
+                  "description": "Read the auditfile from Files as the batch owner and stage it; the batch moves on to staged. A file that cannot be read or parsed refuses the transition with its name (ImportBatchAction)."
+                }
+              ]
             },
             "staged": {
               "from": "parsing",
@@ -291,13 +300,31 @@
               "from": "staged",
               "to": "mapping",
               "label": "Start mapping",
-              "description": "Begin mapping resolution/review. ImportPipelineService:resolveMappings persists ImportMapping rows."
+              "description": "Begin mapping resolution/review. ImportPipelineService:resolveMappings persists ImportMapping rows.",
+              "actions": [
+                {
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\ImportBatchAction",
+                  "actionParameters": {
+                    "step": "startMapping"
+                  },
+                  "description": "Save a mapping row per staged account: RGS matches and profile hits confirmed, the rest to review (ImportBatchAction)."
+                }
+              ]
             },
             "validate": {
               "from": "mapping",
               "to": "validated",
               "label": "Validate",
-              "description": "Run all validation checks (balanced opening journal, open period, AR/AP control = open items, every referenced mapping confirmed & mapped). Fails closed to validation_failed on any error finding. Unmapped or unconfirmed referenced rows block this transition."
+              "description": "Run all validation checks (balanced opening journal, open period, AR/AP control = open items, every referenced mapping confirmed & mapped). Fails closed to validation_failed on any error finding. Unmapped or unconfirmed referenced rows block this transition.",
+              "actions": [
+                {
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\ImportBatchAction",
+                  "actionParameters": {
+                    "step": "validate"
+                  },
+                  "description": "Write the validation findings; an error finding moves the batch to validation failed instead (ImportBatchAction)."
+                }
+              ]
             },
             "validationFailed": {
               "from": "mapping",
@@ -309,7 +336,16 @@
               "from": "validated",
               "to": "dry_run_complete",
               "label": "Dry-run",
-              "description": "Generate and persist the full would-be result on dryRunReport and record the staged-state hash. MANDATORY before posting: there is deliberately NO validated→posting edge."
+              "description": "Generate and persist the full would-be result on dryRunReport and record the staged-state hash. MANDATORY before posting: there is deliberately NO validated→posting edge.",
+              "actions": [
+                {
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\ImportBatchAction",
+                  "actionParameters": {
+                    "step": "dryRun"
+                  },
+                  "description": "Write the would-be opening entry, open items and relations on the dry-run report (ImportBatchAction)."
+                }
+              ]
             },
             "post": {
               "from": "dry_run_complete",

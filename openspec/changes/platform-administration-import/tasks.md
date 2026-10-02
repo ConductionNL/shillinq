@@ -4,9 +4,9 @@
 
 ## 1. Lifecycle wiring
 
-- [ ] 1.1 `ImportBatchAction` for parse and validate with follow-up states (REQ-AIW-001). Verify: PHPUnit red first with the real pipeline on a fixture XAF 3.2 file; the patched batch validated against the real fragment.
-- [ ] 1.2 Dry-run, post (idempotent) and reverse actions (REQ-AIW-001, 003). Verify: PHPUnit; a second post of the same key is refused; the posted opening entry balances.
-- [ ] 1.3 Unreadable source file refuses parse (REQ-AIW-002). Verify: PHPUnit.
+- [x] 1.1 `ImportBatchAction` for parse and validate with follow-up states (REQ-AIW-001). Verify: PHPUnit red first with the real pipeline on a fixture XAF 3.2 file; the patched batch validated against the real fragment.
+- [ ] 1.2 Dry-run, post (idempotent) and reverse actions (REQ-AIW-001, 003). Verify: PHPUnit; a second post of the same key is refused; the posted opening entry balances. (2026-10-02: the dry-run step is built, with mapping; post and reverse are not wired yet. The pipeline's post writes a JournalEntry, open items and CustomerMaster rows that the register refuses (missing journalNumber, entryDate, journalType, state; lines need accountNumber/side/amount), so wiring it first needs those payloads built against the real fragments.)
+- [x] 1.3 Unreadable source file refuses parse (REQ-AIW-002). Verify: PHPUnit.
 
 ## 2. Wizard
 

@@ -831,8 +831,8 @@ class Application extends App implements IBootstrap {
 		// tags shaped the same way and are NOT registered — every one of
 		// those transitions also hard-fails today. That fleet-wide gap is
 		// filed separately as shillinq#433 and intentionally not fixed here.
-		// Planning-commitment-year-end REQ-PCYE-001: the commitment guard tags.
-		(new CommitmentGuardServices())->register(context: $context);
+		// The commitment (REQ-PCYE-001) and import batch guard tags.
+		(new GuardTagServices())->register(context: $context);
 		$context->registerService(
 			'OCA\Shillinq\Guard\Iv3XmlValidationGuard::requireValidXml',
 			static function ($c): RegisterRequiresGuardAdapter {
