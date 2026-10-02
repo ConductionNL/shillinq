@@ -1,6 +1,8 @@
 OC.L10N.register(
     "shillinq",
     {
+        "Posting Report": "Posting Report",
+        "The findings of the last post: warnings for what was left out (suppliers, customers without an email address) and, on posting failed, the error naming the write that was refused.": "The findings of the last post: warnings for what was left out (suppliers, customers without an email address) and, on posting failed, the error naming the write that was refused.",
         "Load example data?": "Load example data?",
         "Example data fills the lists, detail pages and dashboards so you can see the app working straight away. Pick \"None\" on a production install.": "Example data fills the lists, detail pages and dashboards so you can see the app working straight away. Pick \"None\" on a production install.",
         "Load the example data": "Load the example data",

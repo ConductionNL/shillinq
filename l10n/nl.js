@@ -5,6 +5,8 @@ OC.L10N.register(
         "2024": "2024",
         "2025": "2025",
         "2026": "2026",
+        "Posting Report": "Boekingsrapport",
+        "The findings of the last post: warnings for what was left out (suppliers, customers without an email address) and, on posting failed, the error naming the write that was refused.": "De bevindingen van de laatste boeking: waarschuwingen voor wat is weggelaten (leveranciers, klanten zonder e-mailadres) en, bij een mislukte boeking, de fout met de geweigerde schrijfactie.",
         "Load example data?": "Voorbeeldgegevens laden?",
         "Example data fills the lists, detail pages and dashboards so you can see the app working straight away. Pick \"None\" on a production install.": "Voorbeeldgegevens vullen de lijsten, detailpagina’s en dashboards, zodat je de app meteen ziet werken. Kies \"Geen\" op een productieomgeving.",
         "Load the example data": "Laad de voorbeeldgegevens",
