@@ -26,10 +26,12 @@ use OCA\Shillinq\Controller\PaymentRequestActionController;
 use OCA\Shillinq\Integration\PaymentRequestLeafProvider;
 use OCA\Shillinq\Service\FeeScheduleService;
 use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
+use OCA\Shillinq\Service\PaymentActionAppGrant;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
 use OCA\Shillinq\Service\PaymentSettlementService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\AppFramework\Http;
+use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
 use OCP\IRequest;
@@ -205,6 +207,7 @@ final class PaymentRequestActionControllerTest extends TestCase {
 				authorizer: $authorizer,
 				feeSchedules: $feeSchedules,
 				settlements: new PaymentSettlementService(),
+				appGrant: new PaymentActionAppGrant(appConfig: $appConfig, appManager: $this->createMock(IAppManager::class)),
 			),
 			new PaymentSettlementService(),
 		);
