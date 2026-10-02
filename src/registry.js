@@ -366,6 +366,7 @@ import BudgetScenarioComparison from './views/BudgetScenarioComparison.vue'
 // endpoints; registered as a kind:"page" custom component per ADR-024.
 import DeadlineCalendarSettings from './views/DeadlineCalendarSettings.vue'
 import FlowDetailSidebar from './views/flows/FlowDetailSidebar.vue'
+import ImportWizard from './views/import/ImportWizard.vue'
 import CountPage from './views/inventory/CountPage.vue'
 import MobileScannerHome from './views/inventory/MobileScannerHome.vue'
 import PickPage from './views/inventory/PickPage.vue'
@@ -601,4 +602,7 @@ export default {
 		kind: 'page',
 		component: ProductAttributeCatalogIndex,
 	},
+
+	// platform-administration-import: the six-step import wizard (REQ-AIW-002).
+	ImportWizard: { kind: 'page', component: ImportWizard },
 }

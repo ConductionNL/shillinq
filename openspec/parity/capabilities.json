@@ -4493,10 +4493,11 @@
 			"twinfield": "yes",
 			"odoo": "partial",
 			"built": {
-				"state": "building",
-				"evidence": "src/manifest.d/administration-import-migration.json: the ImportWizard page is marked x-deferred, its component does not exist and it renders an empty state; ImportBatches and ImportMappings index pages remain",
-				"reachedOn": "ImportBatches /import/batches (settings gear)",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
+				"readOn": "2026-10-02",
+				"evidence": "src/views/import/ImportWizard.vue (registry page ImportWizard) takes an XAF auditfile from Files through parse, mapping review, validation, dry run and post; each step is an ImportBatch transition whose ImportBatchAction runs ImportPipelineService (lib/Service/Import/ImportBatchSteps.php). Post writes the customers and posts the opening JournalEntry through its lifecycle (ImportPosting); reverse posts the swapped entry. Open items and suppliers are not imported (named on postingReport).",
+				"reachedOn": "Import & migration > Import wizard (/import/wizard); batches at /import/batches",
 				"change": "platform-administration-import"
 			},
 			"evidence": {
@@ -4511,7 +4512,7 @@
 			"feature": "migration",
 			"featureConfidence": "medium",
 			"source": "own-code",
-			"note": "Batches and mappings can be kept; the six-stage wizard that parses and posts an import is not built."
+			"note": "The wizard imports the chart, the opening balance and customers from an XAF auditfile and can reverse it; open items and suppliers are not imported yet, so partial."
 		},
 		{
 			"id": "plt-self-host",
