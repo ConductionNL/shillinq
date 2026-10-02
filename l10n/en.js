@@ -1,6 +1,8 @@
 OC.L10N.register(
     "shillinq",
     {
+        "Posting Report": "Posting Report",
+        "The findings of the last post: warnings for what was left out (suppliers, customers without an email address) and, on posting failed, the error naming the write that was refused.": "The findings of the last post: warnings for what was left out (suppliers, customers without an email address) and, on posting failed, the error naming the write that was refused.",
         "Accounts to review: {count}": "Accounts to review: {count}",
         "Account mappings": "Account mappings",
         "Validate": "Validate",

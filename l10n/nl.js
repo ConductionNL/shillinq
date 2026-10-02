@@ -5,6 +5,8 @@ OC.L10N.register(
         "2024": "2024",
         "2025": "2025",
         "2026": "2026",
+        "Posting Report": "Boekingsrapport",
+        "The findings of the last post: warnings for what was left out (suppliers, customers without an email address) and, on posting failed, the error naming the write that was refused.": "De bevindingen van de laatste boeking: waarschuwingen voor wat is weggelaten (leveranciers, klanten zonder e-mailadres) en, bij een mislukte boeking, de fout met de geweigerde schrijfactie.",
         "Accounts to review: {count}": "Nog te bekijken rekeningen: {count}",
         "Posted records": "Geboekte gegevens",
         "Posting findings": "Bevindingen bij het boeken",
