@@ -91,7 +91,7 @@
     "@playwright/test": "^1.63.0",
     "@typescript-eslint/parser": "^8.70.1",
     "@vitejs/plugin-vue": "^6.0.8",
-    "@vitest/coverage-v8": "^5.0.0",
+    "@vitest/coverage-v8": "^5.0.2",
     "@vue/compiler-sfc": "^3.5.41",
     "@vue/test-utils": "^2.5.0",
     "ajv": "^8.20.0",
