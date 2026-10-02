@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use InvalidArgumentException;
 use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
+use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -222,6 +223,49 @@ final class ObjectPaymentRequestValidatorTest extends TestCase {
 
 		self::assertTrue(true);
 	}//end testARequestDoesNotBlockItself()
+
+	/**
+	 * An event fee is its own request type, and it is a valid object request
+	 * that the real PaymentRequest schema accepts (REQ-SOPR-011).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/payment-request-event-fee-type/specs/object-payment-requests/spec.md (REQ-SOPR-011)
+	 */
+	public function testAnEventFeeIsAnObjectRequestType(): void {
+		$request = $this->objectRequest(
+			[
+				'subject' => ['type' => 'registration', 'register' => 'larpinq', 'schema' => 'Registration', 'id' => 'reg-42'],
+				'requestType' => 'eventFee',
+				'amount' => 45.0,
+				'currency' => 'EUR',
+				'description' => 'WC26-0042 Winter Camp 2026',
+				'requestedBy' => 'app:larpinq',
+				'paymentGateway' => 'mollie',
+			]
+		);
+
+		$this->validator->validate($request);
+
+		self::assertContains('eventFee', ObjectPaymentRequestValidator::REQUEST_TYPES);
+		self::assertSame([], RegisterSchema::errors('PaymentRequest', $request));
+	}//end testAnEventFeeIsAnObjectRequestType()
+
+	/**
+	 * The one-open-request rule holds for event fees too (REQ-SOPR-011).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/payment-request-event-fee-type/specs/object-payment-requests/spec.md (REQ-SOPR-011)
+	 */
+	public function testASecondPendingEventFeeIsRefused(): void {
+		$fee = ['subject' => ['type' => 'registration', 'register' => 'larpinq', 'schema' => 'Registration', 'id' => 'reg-42'], 'requestType' => 'eventFee'];
+		$existing = [$this->objectRequest(array_merge($fee, ['id' => 'pr-1']))];
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('A pending eventFee request already stands on this object');
+		$this->validator->validate($this->objectRequest($fee), $existing);
+	}//end testASecondPendingEventFeeIsRefused()
 
 	/**
 	 * A contribution request for its child.
