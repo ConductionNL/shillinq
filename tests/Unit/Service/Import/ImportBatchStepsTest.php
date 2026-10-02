@@ -464,6 +464,23 @@ final class ImportBatchStepsTest extends TestCase {
 	}//end testAnExistingCustomerIsLinkedNotDuplicated()
 
 	/**
+	 * A batch whose scope leaves out relations writes no customer.
+	 *
+	 * @return void
+	 */
+	public function testRelationsOutOfScopeWriteNoCustomer(): void {
+		$batch = $this->batch(status: 'draft');
+		$batch['scope']['relations'] = false;
+		$action = $this->action();
+
+		$posted = $this->step(action: $action, batch: $this->throughDryRun(action: $action, batch: $batch), to: 'posting', step: 'post');
+
+		$this->assertSame('posted', $posted['status']);
+		$this->assertCount(1, $this->rows(schema: 'JournalEntry'));
+		$this->assertSame([], $this->rows(schema: 'CustomerMaster'));
+	}//end testRelationsOutOfScopeWriteNoCustomer()
+
+	/**
 	 * An opening entry the books refuse fails the post and leaves nothing written.
 	 *
 	 * @return void

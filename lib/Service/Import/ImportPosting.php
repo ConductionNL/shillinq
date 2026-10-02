@@ -83,14 +83,21 @@ class ImportPosting {
 			);
 		}
 
+		$entry     = null;
+		$customers = [];
 		try {
-			$entry     = $this->payloads->openingEntry(batch: $batch, journal: ($report['openingJournal'] ?? []));
-			$customers = $this->customers(batch: $batch, findings: $findings);
+			if ($this->inScope(batch: $batch, part: 'openingBalance') === true) {
+				$entry = $this->payloads->openingEntry(batch: $batch, journal: ($report['openingJournal'] ?? []));
+			}
+
+			if ($this->inScope(batch: $batch, part: 'relations') === true) {
+				$customers = $this->customers(batch: $batch, findings: $findings);
+			}
 		} catch (DomainException $e) {
 			return $this->failed(code: 'posting-refused', message: $e->getMessage(), findings: $findings);
 		}
 
-		if ($entry === null) {
+		if ($entry === null && $this->inScope(batch: $batch, part: 'openingBalance') === true) {
 			$findings[] = $this->finding(
 				severity: ImportPipelineService::SEVERITY_WARNING,
 				code: 'no-opening-balance',
@@ -319,6 +326,19 @@ class ImportPosting {
 		}
 
 	}//end remove()
+
+	/**
+	 * Whether the batch's scope includes a part; a part the scope does not name is included.
+	 *
+	 * @param array<string,mixed> $batch The batch.
+	 * @param string              $part  openingBalance or relations.
+	 *
+	 * @return bool
+	 */
+	private function inScope(array $batch, string $part): bool {
+		return (($batch['scope'][$part] ?? true) !== false);
+
+	}//end inScope()
 
 	/**
 	 * The register scoped to a schema.
