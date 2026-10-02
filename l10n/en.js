@@ -1,6 +1,12 @@
 OC.L10N.register(
     "shillinq",
     {
+        "Your payment": "Your payment",
+        "We received your payment.": "We received your payment.",
+        "Amount: %s": "Amount: %s",
+        "Paid on: %s": "Paid on: %s",
+        "Reference: %s": "Reference: %s",
+        "Keep this mail as your receipt.": "Keep this mail as your receipt.",
         "Posting Report": "Posting Report",
         "The findings of the last post: warnings for what was left out (suppliers, customers without an email address) and, on posting failed, the error naming the write that was refused.": "The findings of the last post: warnings for what was left out (suppliers, customers without an email address) and, on posting failed, the error naming the write that was refused.",
         "Load example data?": "Load example data?",

@@ -19,6 +19,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\PaymentReceiptMailer;
 use OCA\Shillinq\Service\PaymentReconciliationService;
 use OCA\Shillinq\Service\PaymentRevenueAccountResolver;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
@@ -415,7 +416,7 @@ final class PaymentReconciliationServiceTest extends TestCase {
 	 *
 	 * @return PaymentReconciliationService
 	 */
-	private function makeServiceWithAccounts(object $objectService, array $accounts): PaymentReconciliationService {
+	private function makeServiceWithAccounts(object $objectService, array $accounts, ?PaymentReceiptMailer $receiptMailer = null): PaymentReconciliationService {
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturn($objectService);
 
@@ -443,6 +444,7 @@ final class PaymentReconciliationServiceTest extends TestCase {
 			logger: $this->createMock(LoggerInterface::class),
 			objectService: new DuckObjectServiceAdapter(inner: $objectService),
 			revenueAccounts: new PaymentRevenueAccountResolver(appConfig: $accountConfig),
+			receiptMailer: $receiptMailer,
 		);
 	}//end makeServiceWithAccounts()
 
@@ -497,6 +499,75 @@ final class PaymentReconciliationServiceTest extends TestCase {
 		self::assertSame('captured', $request['state']);
 		self::assertSame('8400', $request['revenueAccount']);
 	}//end testCapturedObjectRequestBooksOnTheMappedRevenueAccount()
+
+	/**
+	 * A captured object request mails its debtor one receipt, with the request
+	 * as it was saved: captured, with its confirmation (REQ-SOPR-012).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/payment-request-debtor-receipt/specs/object-payment-requests/spec.md (REQ-SOPR-012)
+	 */
+	public function testACapturedObjectRequestMailsTheDebtorAReceipt(): void {
+		$saved = [];
+		$request = array_merge($this->objectRequest('dwangsom'), ['debtor' => ['name' => 'J. de Vries', 'email' => 'j.devries@example.nl']]);
+		$stub = $this->buildObjectServiceStub(['PaymentRequest' => [$request]], $saved);
+		$mailer = $this->createMock(PaymentReceiptMailer::class);
+		$mailer->expects(self::once())->method('send')->with(
+			self::callback(
+				static fn (array $sent): bool => $sent['state'] === 'captured'
+					&& $sent['debtor']['email'] === 'j.devries@example.nl'
+					&& (string)($sent['confirmationSummary'] ?? '') !== ''
+			)
+		)->willReturn(true);
+		$service = $this->makeServiceWithAccounts($stub, ['dwangsom' => '8400', 'clearing' => '1100'], $mailer);
+
+		$out = $service->reconcile('mollie', ['paymentIntentId' => 'tr_obj', 'outcome' => 'captured']);
+
+		self::assertSame(PaymentReconciliationService::RESULT_APPLIED, $out['result']);
+	}//end testACapturedObjectRequestMailsTheDebtorAReceipt()
+
+	/**
+	 * A capture that cannot be booked mails nothing: the money waits for an
+	 * operator, and a receipt would claim more than shillinq knows (REQ-SOPR-012).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/payment-request-debtor-receipt/specs/object-payment-requests/spec.md (REQ-SOPR-012)
+	 */
+	public function testAnUnappliedCaptureMailsNoReceipt(): void {
+		$saved = [];
+		$request = array_merge($this->objectRequest('dwangsom'), ['debtor' => ['email' => 'j.devries@example.nl']]);
+		$stub = $this->buildObjectServiceStub(['PaymentRequest' => [$request]], $saved);
+		$mailer = $this->createMock(PaymentReceiptMailer::class);
+		$mailer->expects(self::never())->method('send');
+		$service = $this->makeServiceWithAccounts($stub, ['leges' => '8300'], $mailer);
+
+		$out = $service->reconcile('mollie', ['paymentIntentId' => 'tr_obj', 'outcome' => 'captured']);
+
+		self::assertSame(PaymentReconciliationService::RESULT_UNAPPLIED, $out['result']);
+	}//end testAnUnappliedCaptureMailsNoReceipt()
+
+	/**
+	 * A replayed capture webhook is a no-op, so the debtor gets one receipt, not
+	 * one per delivery (REQ-SOPR-012).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/payment-request-debtor-receipt/specs/object-payment-requests/spec.md (REQ-SOPR-012)
+	 */
+	public function testAReplayedCaptureMailsNoSecondReceipt(): void {
+		$saved = [];
+		$request = array_merge($this->objectRequest('dwangsom'), ['state' => 'captured', 'debtor' => ['email' => 'j.devries@example.nl']]);
+		$stub = $this->buildObjectServiceStub(['PaymentRequest' => [$request]], $saved);
+		$mailer = $this->createMock(PaymentReceiptMailer::class);
+		$mailer->expects(self::never())->method('send');
+		$service = $this->makeServiceWithAccounts($stub, ['dwangsom' => '8400'], $mailer);
+
+		$out = $service->reconcile('mollie', ['paymentIntentId' => 'tr_obj', 'outcome' => 'captured']);
+
+		self::assertSame(PaymentReconciliationService::RESULT_NOOP, $out['result']);
+	}//end testAReplayedCaptureMailsNoSecondReceipt()
 
 	/**
 	 * An unmapped request type books NOTHING and leaves the request in

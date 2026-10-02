@@ -1,6 +1,12 @@
 OC.L10N.register(
     "shillinq",
     {
+        "Your payment": "Je betaling",
+        "We received your payment.": "We hebben je betaling ontvangen.",
+        "Amount: %s": "Bedrag: %s",
+        "Paid on: %s": "Betaald op: %s",
+        "Reference: %s": "Kenmerk: %s",
+        "Keep this mail as your receipt.": "Bewaar deze mail als betalingsbewijs.",
         "2023": "2023",
         "2024": "2024",
         "2025": "2025",

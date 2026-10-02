@@ -190,6 +190,7 @@ class PaymentReconciliationService {
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param ?PaymentRevenueAccountResolver $revenueAccounts Resolves the revenue account for a settlement, absent when nothing maps one.
 	 * @param ?PaymentSettlementService $settlements Stamps the settled edge; built on demand when absent.
+	 * @param ?PaymentReceiptMailer $receiptMailer Mails the debtor a receipt for a booked object request; none sent when absent.
 	 *
 	 * @return void
 	 */
@@ -200,6 +201,7 @@ class PaymentReconciliationService {
 		private readonly ObjectServiceInterface $objectService,
 		private readonly ?PaymentRevenueAccountResolver $revenueAccounts = null,
 		private readonly ?PaymentSettlementService $settlements = null,
+		private readonly ?PaymentReceiptMailer $receiptMailer = null,
 	) {
 	}//end __construct()
 
@@ -299,6 +301,7 @@ class PaymentReconciliationService {
 		}
 
 		$now = gmdate('Y-m-d\TH:i:s\Z');
+		$receiptFor = null;
 
 		$record['state'] = $targetState;
 		$record['paymentGateway'] = $gateway;
@@ -350,6 +353,7 @@ class PaymentReconciliationService {
 
 			$record['confirmationSummary'] = $this->buildObjectConfirmationSummary(request: $record);
 			$record = $this->settlements()->stampSettled(request: $record, settledAt: (string)$record['capturedAt'], via: 'provider');
+			$receiptFor = $record;
 		} elseif ($outcome === self::OUTCOME_CAPTURED && $schema === self::SCHEMA_PAYMENT_REQUEST) {
 			$settledInvoice = $this->settleLinkedInvoice(
 				objectService: $this->objectService,
@@ -379,8 +383,29 @@ class PaymentReconciliationService {
 			schema: $schema,
 		);
 
+		// The receipt goes after the save, so a debtor is never told about a
+		// payment the register did not keep (REQ-SOPR-012).
+		$this->mailReceipt(request: $receiptFor);
+
 		return ['result' => self::RESULT_APPLIED, 'schema' => $schema];
 	}//end reconcile()
+
+	/**
+	 * Mail the debtor the receipt for a booked object request, when there is one.
+	 *
+	 * @param array<string, mixed>|null $request The saved request, or null when this capture books no object receipt.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/payment-request-debtor-receipt/specs/object-payment-requests/spec.md (REQ-SOPR-012)
+	 */
+	private function mailReceipt(?array $request): void {
+		if ($request === null || $this->receiptMailer === null) {
+			return;
+		}
+
+		$this->receiptMailer->send(request: $request);
+	}//end mailReceipt()
 
 	/**
 	 * Settle the ARInvoice linked to a captured PaymentRequest through the AR
