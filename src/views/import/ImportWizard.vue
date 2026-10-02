@@ -328,10 +328,20 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The position of the current step in the six.
+		 *
+		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 */
 		stepIndex() {
 			return this.steps.indexOf(this.step)
 		},
 
+		/**
+		 * The source packages the wizard offers.
+		 *
+		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 */
 		sourceSystems() {
 			return SOURCE_SYSTEMS.map((system) => ({
 				id: system.id,
@@ -343,6 +353,11 @@ export default {
 		},
 
 		sourceSystem: {
+			/**
+			 * The chosen source package as a select option.
+			 *
+			 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+			 */
 			get() {
 				return (
 					this.sourceSystems.find(
@@ -351,31 +366,68 @@ export default {
 				)
 			},
 
+			/**
+			 * Store the chosen source package.
+			 *
+			 * @param {{id: string}} option The chosen select option.
+			 *
+			 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+			 */
 			set(option) {
 				this.form.sourceSystem = option?.id || ''
 			},
 		},
 
+		/**
+		 * Whether the upload step names everything parse needs.
+		 *
+		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 */
 		ready() {
 			return formComplete(this.form)
 		},
 
+		/**
+		 * The mapping rows still to confirm.
+		 *
+		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 */
 		open() {
 			return openMappings(this.mappings)
 		},
 
+		/**
+		 * How many mapping rows have no target account.
+		 *
+		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 */
 		unmapped() {
 			return this.mappings.filter((row) => !row.targetAccount).length
 		},
 
+		/**
+		 * Whether validation lets the dry run start.
+		 *
+		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 */
 		dryRunAllowed() {
 			return canRunDryRun(this.batch)
 		},
 
+		/**
+		 * The opening balance debit and credit of the dry run.
+		 *
+		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 */
 		totals() {
 			return openingTotals(this.batch?.dryRunReport)
 		},
 
+		/**
+		 * The open items the dry run counted.
+		 *
+		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 */
 		openItems() {
 			const report = this.batch?.dryRunReport || {}
 			return (

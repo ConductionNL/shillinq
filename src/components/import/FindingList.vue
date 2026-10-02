@@ -38,6 +38,11 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The findings, errors first.
+		 *
+		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 */
 		sorted() {
 			return [...this.findings].sort(
 				(a, b) =>
