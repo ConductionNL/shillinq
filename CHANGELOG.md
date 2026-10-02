@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- An app granted `payment.request` in the `paymentActionApps` app config raises a
+  payment request through the leaf with nobody signed in
+  (`PaymentRequestLeafProvider::createAsApp`, shillinq#1836). See
+  `docs/api/payment-request-leaf.md`.
 - Read-only MCP tool surface (`shillinq-mcp-adoption`, ADR-063) — new
   `lib/Settings/register.d/zzz-mcp-tool-surface.json` declares the
   `x-openregister-mcp` dialect on 12 curated schemas (`ARInvoice`,
