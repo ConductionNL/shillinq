@@ -221,7 +221,8 @@ class MeterReadingImportService {
 	 */
 	private function planIdFor(string $administrationId, string $resourceType): ?string {
 		$plans = [];
-		foreach ($this->scoped(schema: 'UsageRatePlan')->findAll(['filters' => ['administrationId' => $administrationId, 'resourceType' => $resourceType], 'limit' => 2]) as $row) {
+		$filters = ['administrationId' => $administrationId, 'resourceType' => $resourceType];
+		foreach ($this->scoped(schema: 'UsageRatePlan')->findAll(['filters' => $filters, 'limit' => 2]) as $row) {
 			$plan = ObjectIdentifier::recordWithId(candidate: $row);
 			if ($plan !== null) {
 				$plans[] = (string)($plan['id'] ?? '');
