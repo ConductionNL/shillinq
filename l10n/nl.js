@@ -5559,6 +5559,7 @@ OC.L10N.register(
         "Only an active restriction blocks postings.": "Alleen een actieve beperking blokkeert boekingen.",
         "Payables": "Crediteuren",
         "Payroll (humaniq)": "Salaris (humaniq)",
+        "Administration import": "Administratie-import",
         "Posting restriction": "Boekingsbeperking",
         "Receivables": "Debiteuren",
         "Retired": "Ingetrokken",

@@ -3318,6 +3318,7 @@ OC.L10N.register(
         "Only an active restriction blocks postings.": "Only an active restriction blocks postings.",
         "Payables": "Payables",
         "Payroll (humaniq)": "Payroll (humaniq)",
+        "Administration import": "Administration import",
         "Posting restriction": "Posting restriction",
         "Posting restrictions": "Posting restrictions",
         "Receivables": "Receivables",

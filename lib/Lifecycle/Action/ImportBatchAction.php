@@ -40,7 +40,7 @@ class ImportBatchAction implements LifecycleActionInterface {
 	 *
 	 * @var string[]
 	 */
-	private const STEPS = ['parse', 'startMapping', 'validate', 'dryRun'];
+	private const STEPS = ['parse', 'startMapping', 'validate', 'dryRun', 'post', 'reverse'];
 
 	/**
 	 * Constructor.
