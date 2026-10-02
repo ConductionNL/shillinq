@@ -833,6 +833,7 @@ class Application extends App implements IBootstrap {
 		// filed separately as shillinq#433 and intentionally not fixed here.
 		// Planning-commitment-year-end REQ-PCYE-001: the commitment guard tags.
 		(new CommitmentGuardServices())->register(context: $context);
+		(new ImportBatchServices())->register(context: $context);
 		$context->registerService(
 			'OCA\Shillinq\Guard\Iv3XmlValidationGuard::requireValidXml',
 			static function ($c): RegisterRequiresGuardAdapter {

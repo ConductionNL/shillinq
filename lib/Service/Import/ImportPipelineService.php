@@ -169,6 +169,29 @@ class ImportPipelineService {
 			];
 		}
 
+		$result = $this->stageBatch(batch: $batch);
+
+		$batch['stagingPayload'] = $result['stagingPayload'];
+		$batch['stagedCounts'] = $result['stagedCounts'];
+		$this->persistBatch(batch: $batch);
+
+		return $result;
+
+	}//end stage()
+
+	/**
+	 * Parse a batch's auditfile into its staged data, without writing anything.
+	 *
+	 * The lifecycle action calls this while the batch itself is being saved, so
+	 * it must not save the batch again.
+	 *
+	 * @param array<string,mixed> $batch The ImportBatch data, with `sourceXaf` holding the file contents.
+	 *
+	 * @return array<string,mixed> 'stagedCounts', 'stagingPayload', 'findings'.
+	 *
+	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 */
+	public function stageBatch(array $batch): array {
 		$profile = $this->profileFor(sourceSystem: (string)($batch['sourceSystem'] ?? 'xaf-generic'));
 		$findings = [];
 
@@ -183,19 +206,14 @@ class ImportPipelineService {
 		$findings = array_merge($findings, ($parsed['findings'] ?? []));
 
 		$stagingPayload = $this->buildStagingPayload(parsed: $parsed, profile: $profile, batch: $batch, findings: $findings);
-		$stagedCounts = $this->countStaged(stagingPayload: $stagingPayload);
-
-		$batch['stagingPayload'] = $stagingPayload;
-		$batch['stagedCounts'] = $stagedCounts;
-		$this->persistBatch(batch: $batch);
 
 		return [
-			'stagedCounts' => $stagedCounts,
+			'stagedCounts' => $this->countStaged(stagingPayload: $stagingPayload),
 			'stagingPayload' => $stagingPayload,
 			'findings' => $findings,
 		];
 
-	}//end stage()
+	}//end stageBatch()
 
 	/**
 	 * Resolve account mappings for the staged batch (REQ-AIM-004).
@@ -232,6 +250,20 @@ class ImportPipelineService {
 			];
 		}
 
+		return $this->resolveBatchMappings(batch: $batch, batchId: $batchId);
+	}//end resolveMappings()
+
+	/**
+	 * Resolve and save the account mappings of a batch that is already loaded.
+	 *
+	 * @param array<string,mixed> $batch   The ImportBatch data with its staged payload.
+	 * @param string              $batchId The batch id the mapping rows reference.
+	 *
+	 * @return array<string,mixed> 'mappings', 'blocking' (bool), 'findings'.
+	 *
+	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 */
+	public function resolveBatchMappings(array $batch, string $batchId): array {
 		$stagingPayload = ($batch['stagingPayload'] ?? []);
 		$accounts = ($stagingPayload['ledgerAccounts'] ?? []);
 		$targetByRgs = $this->loadTargetAccountsByRgs(administrationId: (string)($batch['administrationId'] ?? ''));
@@ -255,7 +287,7 @@ class ImportPipelineService {
 		$blocking = $this->mappingsBlock(mappings: $mappings);
 
 		return ['mappings' => $mappings, 'blocking' => $blocking, 'findings' => []];
-	}//end resolveMappings()
+	}//end resolveBatchMappings()
 
 	/**
 	 * Resolve a single source account to a mapping row (REQ-AIM-004).
