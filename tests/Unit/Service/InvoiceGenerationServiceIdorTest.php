@@ -46,6 +46,7 @@ use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Service\BillingModelEngine;
 use OCA\Shillinq\Service\InvoiceDeduplicationService;
 use OCA\Shillinq\Service\InvoiceGenerationService;
+use OCA\Shillinq\Service\Usage\BilledReadings;
 use OCA\Shillinq\Service\RateCardResolver;
 use OCA\Shillinq\Service\RetainerResolver;
 use OCA\Shillinq\Service\UsageRatingCalculator;
@@ -259,6 +260,7 @@ final class InvoiceGenerationServiceIdorTest extends TestCase {
 					'ratePlanId' => 'urp-attacker',
 					'periodStart' => '2026-03-01',
 					'periodEnd' => '2026-03-31',
+					'status' => 'rated',
 				],
 				[
 					'id' => 'mr-victim-1',
@@ -270,6 +272,7 @@ final class InvoiceGenerationServiceIdorTest extends TestCase {
 					'ratePlanId' => 'urp-victim',
 					'periodStart' => '2026-03-01',
 					'periodEnd' => '2026-03-31',
+					'status' => 'rated',
 				],
 				[
 					// Attacker's OWN reading, but with a ratePlanId that resolves to
@@ -284,6 +287,7 @@ final class InvoiceGenerationServiceIdorTest extends TestCase {
 					'ratePlanId' => 'urp-victim',
 					'periodStart' => '2026-03-01',
 					'periodEnd' => '2026-03-31',
+					'status' => 'rated',
 				],
 			],
 			'UsageRatePlan' => [
@@ -347,6 +351,7 @@ final class InvoiceGenerationServiceIdorTest extends TestCase {
 			new VATCalculationService(),
 			new UsageRatingCalculator(),
 			objectService: new DuckObjectServiceAdapter($this->objectService),
+			billedReadings: $this->createMock(BilledReadings::class),
 		);
 	}//end setUp()
 

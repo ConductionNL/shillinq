@@ -1116,17 +1116,18 @@
 			"id": "sal-usage-billing",
 			"area": "sales",
 			"name": "Bill a customer per unit of usage they consumed.",
-			"shillinq": "no",
+			"shillinq": "yes",
 			"exact-online": "partial",
 			"moneybird": "partial",
 			"snelstart": "unknown",
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "building",
-				"evidence": "UsageRatePlan and MeterReading schemas (lib/Settings/register.d/usage-metered-billing.json) and lib/Service/UsageRatingCalculator.php + BillingModelEngine.php:299-326 exist, but no manifest page uses either schema and src/components/invoice/InvoiceGenerator.vue:25-37 offers no usage billing model nor meter-reading input",
-				"reachedOn": "nothing reaches it: no page for MeterReading/UsageRatePlan and the generator form cannot request usage lines",
+				"state": "built",
 				"owner": "ConductionNL/shillinq",
+				"readOn": "2026-10-02",
+				"reachedOn": "Sales > Meter readings (Import readings, Rate readings; Rate reading on a reading's page), Sales > Rate plans, and the invoice generator's Usage billing model",
+				"evidence": "POST /api/meter-readings/import (MeterReadingImportController, lib/Service/Usage/MeterReadingImportService.php) creates unrated readings and refuses a row by number; MeterReading's rate transition runs RateMeterReadingAction and keeps ratedAmount; InvoiceGenerationService bills the selected rated readings as usage lines, refuses an invoiced one and moves each billed reading to invoiced with the invoice id (tests/Unit/Service/Usage/SalesUsageBillingTest.php, tests/Unit/Controller/MeterReadingImportControllerTest.php, tests/vitest/salesUsageBilling.spec.js).",
 				"change": "sales-usage-billing"
 			},
 			"evidence": {

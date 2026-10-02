@@ -46,6 +46,10 @@ import {
 	openRelationsExport,
 } from './utils/relationActions.js'
 import {
+	openMeterReadingImport,
+	rateMeterReadings,
+} from './utils/usageBillingActions.js'
+import {
 	checkCustomerVatNumber,
 	checkSupplierVatNumber,
 } from './utils/vatNumberCheck.js'
@@ -343,6 +347,9 @@ const customComponentsProp = {
 	// tax-vat-number-check: Check VAT number on the customer and supplier pages.
 	checkCustomerVatNumber,
 	checkSupplierVatNumber,
+	// sales-usage-billing: Import readings and Rate on Meter readings.
+	openMeterReadingImport,
+	rateMeterReadings,
 	// reporting-relation-both-sides: the suggestions' row actions, the report's
 	// export and the supplier page's way to the linked customer.
 	confirmRelationSuggestion,
