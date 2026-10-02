@@ -28,7 +28,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Import;
 
 use DomainException;
 use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
-use OCA\Shillinq\AppInfo\ImportBatchServices;
+use OCA\Shillinq\AppInfo\GuardTagServices;
 use OCA\Shillinq\Lifecycle\Action\ImportBatchAction;
 use OCA\Shillinq\Lifecycle\ImportBatchGuard;
 use OCA\Shillinq\Lifecycle\ImportReverseGuard;
@@ -279,7 +279,7 @@ final class ImportBatchStepsTest extends TestCase {
 				$factories[$tag] = $factory;
 			}
 		);
-		(new ImportBatchServices())->register(context: $context);
+		(new GuardTagServices())->register(context: $context);
 
 		$settings = $this->createMock(SettingsService::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
