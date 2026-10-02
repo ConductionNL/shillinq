@@ -4,7 +4,7 @@
 
 ## 1. Request type and reference
 
-- [ ] 1.1 Add `event-fee` to the `requestType` enum and to `ObjectPaymentRequestValidator::REQUEST_TYPES`, and `paymentReference`, `invoiceRequested` and `receiptSentAt` to `PaymentRequest`; bump the schema version (REQ-ORS-001, REQ-ORS-002). Verify: PHPUnit `ObjectPaymentRequestValidatorTest::testEventFeeIsAccepted`, `testDuplicateOpenReferenceIsRefused` and `testShortReferenceIsRefused`.
+- [ ] 1.1 Add `event-fee` to the `requestType` enum and to `ObjectPaymentRequestValidator::REQUEST_TYPES`, and `paymentReference`, `invoiceRequested` and `receiptSentAt` to `PaymentRequest`; bump the schema version (REQ-ORS-001, REQ-ORS-002). Verify: PHPUnit `ObjectPaymentRequestValidatorTest::testEventFeeIsAccepted`, `testDuplicateOpenReferenceIsRefused` and `testShortReferenceIsRefused`. (2 Oct 2026: `event-fee` built in #1844, named `eventFee` there, renamed to `event-fee` per D1 in the follow-up; `ObjectPaymentRequestValidatorTest::testAnEventFeeIsAnObjectRequestType`, `testASecondPendingEventFeeIsRefused` and `PaymentReconciliationServiceTest::testACapturedEventFeeBooksOnItsOwnAccount` cover it. `paymentReference`, `invoiceRequested` and `receiptSentAt` are still to do.)
 - [ ] 1.2 Accept `paymentReference` and `invoiceRequested` in `PaymentRequestLeafProvider::create()`. Verify: PHPUnit `PaymentRequestLeafProviderTest::testCreateKeepsReferenceAndInvoiceFlag`.
 
 ## 2. Bank match

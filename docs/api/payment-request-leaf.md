@@ -57,10 +57,10 @@ Both methods take the same fields: `amount`, `currency` (default `EUR`),
 `paymentGateway` (default `mollie`). The host object becomes the request's
 `subject`. Unknown keys are ignored.
 
-`requestType` is one of `leges`, `dwangsom`, `deposit`, `contribution`, `eventFee`
+`requestType` is one of `leges`, `dwangsom`, `deposit`, `contribution`, `event-fee`
 (the fee for taking part in an event) and `other`. An administrator maps each
 type to a revenue account in `paymentRevenueAccounts`, for example
-`{"eventFee": "8050"}`.
+`{"event-fee": "8050"}`.
 
 Both return the created request as an array, with its `id` and `state: pending`.
 Read its later state from the `PaymentRequest` object events, or with `list`.
