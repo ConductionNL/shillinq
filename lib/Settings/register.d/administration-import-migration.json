@@ -11,7 +11,7 @@
       "ImportBatch": {
         "slug": "ImportBatch",
         "icon": "DatabaseImportOutline",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "title": "Import Batch",
         "description": "A single administration migration tracked end-to-end. The unit of lifecycle, idempotency, reporting, and reversal. Source files live in Nextcloud Files (link via sourceFiles, never copied into the register). Staged parse output, the validation report, the dry-run report, and posting references all live inline on the batch. CRUD goes through OpenRegister's generic object surface (ADR-022); there is NO parallel PHP model or import table.",
         "x-openregister-audit-trail": {
@@ -199,9 +199,15 @@
           },
           "postingRefs": {
             "type": "object",
-            "description": "References to created objects after posting (opening journal id, AR/AP item ids, contact ids, master ids). Used by reversal.",
+            "description": "What the post wrote: the opening journal entry id, the ids of the customers it wrote (masterIds) and of the existing customers it linked (linkedMasterIds); after a reversal also `reversal` with the reversing entry id and the removed customers. Used by reversal.",
             "nullable": true,
             "title": "Posting Refs"
+          },
+          "postingReport": {
+            "type": "object",
+            "description": "The findings of the last post: warnings for what was left out (suppliers, customers without an email address) and, on posting failed, the error naming the write that was refused.",
+            "nullable": true,
+            "title": "Posting Report"
           },
           "idempotencyKey": {
             "type": "string",
@@ -351,7 +357,16 @@
               "from": "dry_run_complete",
               "to": "posting",
               "label": "Post import",
-              "description": "Begin posting. Idempotent under idempotencyKey; re-post returns existing postingRefs. Composes the existing journal-entry, AR/AP, and NC contacts surfaces. Runs under OR background machinery."
+              "description": "Post the import: write the customers and post the opening journal entry through its own lifecycle. Refused when another batch already posted the same idempotencyKey.",
+              "actions": [
+                {
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\ImportBatchAction",
+                  "actionParameters": {
+                    "step": "post"
+                  },
+                  "description": "Write the customers and post the opening entry; the batch moves on to posted, or to posting failed with the refused write named on postingReport. A batch with the idempotencyKey of a posted batch is refused, naming that batch (ImportBatchAction)."
+                }
+              ]
             },
             "posted": {
               "from": "posting",
@@ -369,8 +384,17 @@
               "from": "posted",
               "to": "reversed",
               "label": "Reverse import",
-              "description": "Post the reversing journal, soft-delete imported open items and master rows, mark the batch reversed; contacts are reported but never deleted. ONLY while the target period is open: guarded.",
+              "description": "Post the reversing journal entry and remove the customers the import wrote, then mark the batch reversed. ONLY while the target period is open: guarded.",
               "requires": "OCA\\Shillinq\\Lifecycle\\ImportBatchGuard::canReverse",
+              "actions": [
+                {
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\ImportBatchAction",
+                  "actionParameters": {
+                    "step": "reverse"
+                  },
+                  "description": "Post the reversing entry (the opening entry with its sides swapped) and remove the customers the import wrote; a refused write refuses the transition and the batch stays posted (ImportBatchAction)."
+                }
+              ],
               "x-adr-031-exception": "Open-period precondition for reversal is a cross-schema FiscalPeriod check the declarative requires: DSL cannot yet express; ImportBatchGuard::canReverse is the documented ADR-031 PHP-guard seam (mirrors APGuard / StatementParser). Replace with a declarative condition when OR gains the primitive."
             }
           }

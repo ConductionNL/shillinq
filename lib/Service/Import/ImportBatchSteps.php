@@ -149,6 +149,90 @@ class ImportBatchSteps {
 	}//end dryRun()
 
 	/**
+	 * Post: write the opening entry and customers; a refused write moves to posting failed.
+	 *
+	 * @param array<string,mixed> $batch The batch in state posting.
+	 *
+	 * @return array<string,mixed> The batch in state posted or posting_failed, with its refs and findings.
+	 *
+	 * @throws DomainException When another batch already posted the same files and mappings.
+	 *
+	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 */
+	public function post(array $batch): array {
+		$this->refuseAnImportPostedBefore(batch: $batch);
+		$result = $this->pipeline->post(
+			batch: array_merge($batch, ['mappings' => $this->mappingsOf(batch: $batch)])
+		);
+
+		$batch['postingRefs']   = $result['postingRefs'];
+		$batch['postingReport'] = ['findings' => $result['findings']];
+		$batch['status']        = $result['status'];
+
+		return $batch;
+
+	}//end post()
+
+	/**
+	 * Reverse: post the reversing entry and remove the customers the import wrote.
+	 *
+	 * @param array<string,mixed> $batch The batch in state reversed.
+	 *
+	 * @return array<string,mixed> The batch with the reversal refs.
+	 *
+	 * @throws DomainException When the period is closed or a write is refused; the batch stays posted.
+	 *
+	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 */
+	public function reverse(array $batch): array {
+		$open   = $this->period->isOpen(
+			administrationId: (string)($batch['administrationId'] ?? ''),
+			date: (string)($batch['migrationDate'] ?? '')
+		);
+		$result = $this->pipeline->reverse(batch: array_merge($batch, ['status' => 'posted']), periodOpen: $open);
+		foreach ($result['findings'] as $finding) {
+			if (($finding['severity'] ?? '') === ImportPipelineService::SEVERITY_ERROR) {
+				throw new DomainException((string)($finding['message'] ?? 'The import cannot be reversed.'));
+			}
+		}
+
+		$batch['postingRefs'] = array_merge((array)($batch['postingRefs'] ?? []), ['reversal' => $result['reversalRefs']]);
+
+		return $batch;
+
+	}//end reverse()
+
+	/**
+	 * Refuse a post when another batch already posted the same files and mappings.
+	 *
+	 * @param array<string,mixed> $batch The batch.
+	 *
+	 * @return void
+	 *
+	 * @throws DomainException Naming the batch that posted them.
+	 */
+	private function refuseAnImportPostedBefore(array $batch): void {
+		$key = (string)($batch['idempotencyKey'] ?? '');
+		if ($key === '') {
+			return;
+		}
+
+		$rows = $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema('ImportBatch')
+			->findAll(['filters' => ['idempotencyKey' => $key, 'status' => 'posted']]);
+		foreach ($rows as $row) {
+			$other = ObjectIdentifier::recordWithId(candidate: $row);
+			if ($other === null || (string)$other['id'] === $this->idOf(batch: $batch)) {
+				continue;
+			}
+
+			throw new DomainException(
+				sprintf('These files were already imported by import batch %s. Reverse that import first to import them again.', (string)$other['id'])
+			);
+		}
+
+	}//end refuseAnImportPostedBefore()
+
+	/**
 	 * The batch's mapping rows, reduced to what validation and the dry-run read.
 	 *
 	 * Reduced so the staged hash recorded at the dry-run does not change with

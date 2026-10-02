@@ -61,6 +61,9 @@ class PostingRestrictionGuard {
 	public const SUB_LEDGER_ROLES = [
 		'bank' => ['vat'],
 		'humaniq' => ['payroll'],
+		// An imported opening balance carries the balances of every control
+		// account over from the previous package (platform-administration-import).
+		'import' => ['receivables', 'payables', 'vat', 'expense-claims', 'payroll'],
 	];
 
 	/**

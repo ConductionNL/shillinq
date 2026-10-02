@@ -45,14 +45,16 @@
 						"nullable": true,
 						"enum": [
 							"bank",
-							"humaniq"
+							"humaniq",
+							"import"
 						],
 						"x-enum-labels": {
 							"bank": "Bank",
-							"humaniq": "Payroll (humaniq)"
+							"humaniq": "Payroll (humaniq)",
+							"import": "Administration import"
 						},
 						"title": "Source ledger",
-						"description": "The ledger this journal entry comes from. A bank booking may post its VAT line; a payroll journal may post on payroll accounts. Empty for an entry made by hand."
+						"description": "The ledger this journal entry comes from. A bank booking may post its VAT line; a payroll journal may post on payroll accounts; an imported opening balance may post on every control account. Empty for an entry made by hand."
 					},
 					"lines": {
 						"title": "Lines",
