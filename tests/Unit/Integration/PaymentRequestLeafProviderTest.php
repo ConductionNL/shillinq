@@ -364,13 +364,13 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 				'subjectType' => 'registration',
 				'description' => 'WC26-0042 Winter Camp 2026',
 				'paymentReference' => ' WC26-0042 ',
-				'invoiceRequested' => true,
+				'invoiceRequested' => false,
 				'debtor' => ['name' => 'Anna Jansen', 'email' => 'anna@example.nl'],
 			]
 		);
 
 		self::assertSame('WC26-0042', $created['paymentReference']);
-		self::assertTrue($created['invoiceRequested']);
+		self::assertFalse($created['invoiceRequested']);
 		self::assertSame([], RegisterSchema::errors('PaymentRequest', $created));
 		$declared = EffectiveRegisterFixture::properties(schema: 'PaymentRequest');
 		self::assertSame([], array_values(array_diff(array_keys($created), $declared, ['id'])), 'Undeclared PaymentRequest keys');

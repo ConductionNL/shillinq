@@ -53,8 +53,9 @@ occ config:app:set shillinq paymentActionApps --value '{"payment.request":["larp
 ## Payload
 
 Both methods take the same fields: `amount`, `currency` (default `EUR`),
-`requestType`, `description`, `debtor`, `dueAt`, `subjectType` and
-`paymentGateway` (default `mollie`). The host object becomes the request's
+`requestType`, `description`, `debtor`, `dueAt`, `subjectType`,
+`paymentGateway` (default `mollie`), `paymentReference`, `invoiceRequested` and
+`administrationId`. The host object becomes the request's
 `subject`. Unknown keys are ignored.
 
 `requestType` is one of `leges`, `dwangsom`, `deposit`, `contribution`, `event-fee`
@@ -65,8 +66,18 @@ type to a revenue account in `paymentRevenueAccounts`, for example
 `paymentReference` is the reference the payer quotes on a bank transfer, for
 example `WC26-0042`. It is optional, at least 6 characters, and only one open
 (`pending` or `authorized`) request may carry it, compared without case; the
-leaf refuses a second one. `invoiceRequested: true` records that the payer
-wants an invoice for the payment.
+leaf refuses a second one.
+
+`invoiceRequested: true` asks for an invoice behind the request. Shillinq finds
+or creates the debtor's customer (by `debtor.customerMasterId`, else by
+`debtor.email` in the administration, else a new one from `debtor.name` and
+`debtor.email`), issues one invoice for the description and the amount, and sets
+the request's `invoiceReference` to it. A payment then settles that invoice, so
+the income is booked once. Such a call also needs `administrationId`, the
+administration that bills the invoice; without it, or without a debtor, the leaf
+throws an `InvalidArgumentException` and writes nothing. The amount is gross. A
+type is exempt from VAT unless an administrator maps a rate in
+`paymentRequestVatRates`, for example `{"event-fee": 21}`.
 
 When the request is settled (paid online, or money recorded by hand) and the
 `debtor` has an `email`, shillinq mails the debtor one receipt with the
