@@ -31,6 +31,7 @@ use OCA\Shillinq\Service\PaymentActionAuthorizer;
 use OCA\Shillinq\Service\PaymentSettlementService;
 use OCA\Shillinq\Tests\Unit\Fixtures\EffectiveRegisterFixture;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
+use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
@@ -340,6 +341,55 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 		self::assertSame([], array_values(array_diff(array_keys($created), $declared, ['id'])), 'Undeclared PaymentRequest keys');
 		self::assertSame('handler', $created['requestedBy']);
 	}//end testEveryWrittenKeyIsADeclaredPaymentRequestProperty()
+
+	/**
+	 * The leaf keeps the caller's transfer reference and invoice flag, the
+	 * request it writes fits the real PaymentRequest schema, and a reference
+	 * an open request elsewhere already carries is refused (REQ-ORS-002).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
+	 */
+	public function testCreateKeepsReferenceAndInvoiceFlag(): void {
+		$provider = $this->makeProvider(actionGroups: ['payment.request' => ['finance']], groups: ['finance']);
+
+		$created = $provider->create(
+			'larpinq',
+			'Registration',
+			'reg-42',
+			[
+				'requestType' => 'event-fee',
+				'amount' => 85.0,
+				'subjectType' => 'registration',
+				'description' => 'WC26-0042 Winter Camp 2026',
+				'paymentReference' => ' WC26-0042 ',
+				'invoiceRequested' => true,
+				'debtor' => ['name' => 'Anna Jansen', 'email' => 'anna@example.nl'],
+			]
+		);
+
+		self::assertSame('WC26-0042', $created['paymentReference']);
+		self::assertTrue($created['invoiceRequested']);
+		self::assertSame([], RegisterSchema::errors('PaymentRequest', $created));
+		$declared = EffectiveRegisterFixture::properties(schema: 'PaymentRequest');
+		self::assertSame([], array_values(array_diff(array_keys($created), $declared, ['id'])), 'Undeclared PaymentRequest keys');
+
+		$held = array_merge($this->storedRequest('pr-9', 'zaak-9'), ['paymentReference' => 'wc26-0042']);
+		$this->saved = [];
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('already on an open request');
+		try {
+			$this->makeProvider(stored: [$held], actionGroups: ['payment.request' => ['finance']], groups: ['finance'])->create(
+				'larpinq',
+				'Registration',
+				'reg-43',
+				['requestType' => 'event-fee', 'amount' => 85.0, 'paymentReference' => 'WC26-0042']
+			);
+		} finally {
+			self::assertSame([], $this->saved, 'A refused reference wrote a request');
+		}
+	}//end testCreateKeepsReferenceAndInvoiceFlag()
 
 	/**
 	 * A request raised through the leaf for a known customer carries that

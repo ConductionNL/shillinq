@@ -440,6 +440,17 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 			$request['dueAt'] = (string)$payload['dueAt'];
 		}
 
+		// The transfer reference the payer quotes, and whether an invoice is
+		// wanted behind the request (REQ-ORS-002).
+		$reference = trim((string)($payload['paymentReference'] ?? ''));
+		if ($reference !== '') {
+			$request['paymentReference'] = $reference;
+		}
+
+		if (array_key_exists('invoiceRequested', $payload) === true) {
+			$request['invoiceRequested'] = ($payload['invoiceRequested'] === true);
+		}
+
 		// The customer portal lists a request without an invoice by its
 		// debtor's customer (REQ-SPPI-008).
 		$request = $this->portalScope->stamp(request: $request);
@@ -447,6 +458,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 		$this->validator->validate(
 			request: $request,
 			existing: $this->requestsOn(register: $register, schema: $schema, objectId: $objectId, asSystem: $asSystem),
+			referenceHolders: $this->finder()->withReference(reference: $reference, asSystem: true),
 		);
 
 		$saved = $this->objectService->saveObject(
@@ -534,14 +546,21 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-004)
 	 */
 	private function requestsOn(string $register, string $schema, string $objectId, bool $asSystem): array {
-		$finder = ($this->finder ?? new PaymentRequestFinder(
+		return $this->finder()->onSubject(register: $register, schema: $schema, objectId: $objectId, asSystem: $asSystem);
+	}//end requestsOn()
+
+	/**
+	 * The request finder, injected or built on demand.
+	 *
+	 * @return PaymentRequestFinder The finder.
+	 */
+	private function finder(): PaymentRequestFinder {
+		return ($this->finder ?? new PaymentRequestFinder(
 			objectService: $this->objectService,
 			validator: $this->validator,
 			appConfig: $this->appConfig,
 		));
-
-		return $finder->onSubject(register: $register, schema: $schema, objectId: $objectId, asSystem: $asSystem);
-	}//end requestsOn()
+	}//end finder()
 
 	/**
 	 * The register slug holding shillinq's own objects.

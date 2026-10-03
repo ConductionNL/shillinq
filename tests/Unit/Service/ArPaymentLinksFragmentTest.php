@@ -225,6 +225,30 @@ final class ArPaymentLinksFragmentTest extends TestCase {
 	}//end testPaymentRequestCarriesTheObjectRequestProperties()
 
 	/**
+	 * PaymentRequest carries the transfer reference, the invoice flag and the
+	 * receipt stamp, all optional (REQ-ORS-002, REQ-ORS-005).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
+	 */
+	public function testPaymentRequestCarriesTheSettlementProperties(): void {
+		$schema = $this->fragment()['components']['schemas']['PaymentRequest'];
+		$properties = $schema['properties'];
+
+		self::assertSame('string', ($properties['paymentReference']['type'] ?? null));
+		self::assertSame(6, ($properties['paymentReference']['minLength'] ?? null));
+		self::assertSame('boolean', ($properties['invoiceRequested']['type'] ?? null));
+		self::assertFalse(($properties['invoiceRequested']['default'] ?? null));
+		self::assertSame('string', ($properties['receiptSentAt']['type'] ?? null));
+		self::assertSame('date-time', ($properties['receiptSentAt']['format'] ?? null));
+		self::assertTrue(($properties['receiptSentAt']['nullable'] ?? false));
+		foreach (['paymentReference', 'invoiceRequested', 'receiptSentAt'] as $property) {
+			self::assertNotContains($property, $schema['required']);
+		}
+	}//end testPaymentRequestCarriesTheSettlementProperties()
+
+	/**
 	 * The subject is a semantic reference (ADR-048): four parts, no app slug.
 	 *
 	 * @return void
@@ -269,7 +293,7 @@ final class ArPaymentLinksFragmentTest extends TestCase {
 		$schema = $fragment['components']['schemas']['PaymentRequest'];
 		$customerId = ($schema['properties']['customerId'] ?? []);
 
-		self::assertSame('0.6.1', $schema['version']);
+		self::assertSame('0.7.0', $schema['version']);
 		self::assertSame('string', ($customerId['type'] ?? null));
 		self::assertSame('uuid', ($customerId['format'] ?? null));
 		self::assertSame('CustomerMaster', ($customerId['$ref'] ?? null));

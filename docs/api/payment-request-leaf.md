@@ -62,5 +62,16 @@ Both methods take the same fields: `amount`, `currency` (default `EUR`),
 type to a revenue account in `paymentRevenueAccounts`, for example
 `{"event-fee": "8050"}`.
 
+`paymentReference` is the reference the payer quotes on a bank transfer, for
+example `WC26-0042`. It is optional, at least 6 characters, and only one open
+(`pending` or `authorized`) request may carry it, compared without case; the
+leaf refuses a second one. `invoiceRequested: true` records that the payer
+wants an invoice for the payment.
+
+When the request is settled (paid online, or money recorded by hand) and the
+`debtor` has an `email`, shillinq mails the debtor one receipt with the
+description, the amount, the date, the reference and the confirmation
+summary, and records `receiptSentAt`.
+
 Both return the created request as an array, with its `id` and `state: pending`.
 Read its later state from the `PaymentRequest` object events, or with `list`.

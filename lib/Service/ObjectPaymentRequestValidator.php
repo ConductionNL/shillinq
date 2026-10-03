@@ -58,6 +58,13 @@ final class ObjectPaymentRequestValidator {
 	public const REQUEST_TYPES = ['leges', 'dwangsom', 'deposit', 'other', 'contribution', 'event-fee'];
 
 	/**
+	 * The shortest transfer reference a request may carry (REQ-ORS-002).
+	 *
+	 * @var int
+	 */
+	public const REFERENCE_MIN_LENGTH = 6;
+
+	/**
 	 * The parts a semantic reference (ADR-048) must name.
 	 *
 	 * @var array<int, string>
@@ -94,14 +101,16 @@ final class ObjectPaymentRequestValidator {
 	 *
 	 * @param array<string, mixed> $request The request about to be written.
 	 * @param array<int, array<string, mixed>> $existing Requests already on the same subject.
+	 * @param array<int, array<string, mixed>> $referenceHolders Requests anywhere that carry the same paymentReference.
 	 *
 	 * @return void
 	 *
 	 * @throws InvalidArgumentException When the shape or the uniqueness is refused.
 	 *
 	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-001)
+	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
 	 */
-	public function validate(array $request, array $existing = []): void {
+	public function validate(array $request, array $existing = [], array $referenceHolders = []): void {
 		$subjectKind = (string)($request['subjectKind'] ?? 'invoice');
 
 		if (in_array($subjectKind, self::SUBJECT_KINDS, true) === false) {
@@ -144,7 +153,45 @@ final class ObjectPaymentRequestValidator {
 			selfId: (string)($request['id'] ?? ''),
 			beneficiary: ($request['beneficiary'] ?? null),
 		);
+		$this->assertReference(request: $request, holders: $referenceHolders);
 	}//end validate()
+
+	/**
+	 * Refuse a transfer reference that is too short to match safely, or that
+	 * another open request already carries, compared without case.
+	 *
+	 * @param array<string, mixed> $request The request about to be written.
+	 * @param array<int, array<string, mixed>> $holders Requests that carry the same reference.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the reference is refused.
+	 *
+	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
+	 */
+	private function assertReference(array $request, array $holders): void {
+		$reference = trim((string)($request['paymentReference'] ?? ''));
+		if ($reference === '') {
+			return;
+		}
+
+		if (mb_strlen($reference) < self::REFERENCE_MIN_LENGTH) {
+			throw new InvalidArgumentException(
+				sprintf('A payment reference needs at least %d characters, got "%s".', self::REFERENCE_MIN_LENGTH, $reference)
+			);
+		}
+
+		$selfId = (string)($request['id'] ?? '');
+		foreach ($holders as $holder) {
+			$open = in_array((string)($holder['state'] ?? ''), ['pending', 'authorized'], true);
+			$same = mb_strtolower(trim((string)($holder['paymentReference'] ?? ''))) === mb_strtolower($reference);
+			if ($open === true && $same === true && ($selfId === '' || (string)($holder['id'] ?? '') !== $selfId)) {
+				throw new InvalidArgumentException(
+					sprintf('The payment reference %s is already on an open request; a reference names one request.', $reference)
+				);
+			}
+		}
+	}//end assertReference()
 
 	/**
 	 * The stable key of a semantic reference, used to compare two subjects.
