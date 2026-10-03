@@ -29,7 +29,11 @@ namespace OCA\Shillinq\AppInfo;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
+use OCA\Shillinq\Event\PaymentCreditRequestedEvent;
+use OCA\Shillinq\Event\PaymentRefundRequestedEvent;
 use OCA\Shillinq\Listener\BankLineObjectRequestListener;
+use OCA\Shillinq\Listener\PaymentCreditRequestedListener;
+use OCA\Shillinq\Listener\PaymentRefundRequestedListener;
 use OCA\Shillinq\Listener\ObjectRequestSettledListener;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
@@ -61,6 +65,15 @@ final class ObjectRequestSettlementRegistration {
 		$context->registerEventListener(
 			event: ObjectTransitionedEvent::class,
 			listener: BankLineObjectRequestListener::class
+		);
+		// Refund and credit commands from the app a request stands on (REQ-ORC-001).
+		$context->registerEventListener(
+			event: PaymentRefundRequestedEvent::class,
+			listener: PaymentRefundRequestedListener::class
+		);
+		$context->registerEventListener(
+			event: PaymentCreditRequestedEvent::class,
+			listener: PaymentCreditRequestedListener::class
 		);
 	}//end register()
 }//end class

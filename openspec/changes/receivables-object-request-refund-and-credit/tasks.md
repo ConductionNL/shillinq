@@ -4,11 +4,11 @@
 
 ## 1. Schema
 
-- [ ] 1.1 Add the states `refund_requested`, `refunded`, `credited` with their transitions, the `refunds` list and `credit` in `settledVia` to `PaymentRequest`; add `DebtorCredit` in `register.d/debtor-credit.json`; bump versions (REQ-ORC-002, REQ-ORC-003). Verify: PHPUnit on the register import; `npm run check:schema-l10n` exit 0.
+- [x] 1.1 Add the states `refund_requested`, `refunded`, `credited` with their transitions, the `refunds` list and `credit` in `settledVia` to `PaymentRequest`; add `DebtorCredit` in `register.d/debtor-credit.json`; bump versions (REQ-ORC-002, REQ-ORC-003). Verify: PHPUnit on the register import; `npm run check:schema-l10n` exit 0. (3 Oct 2026: PaymentRequest 0.8.0 with `refund_requested`, `refunded`, `credited`, transitions `requestRefund`, `markRefunded`, `credit`, `refunds` and `credit` in `settledVia`; the version also moves in `billing-inherited-defects.json`, the last fragment that sets it. `DebtorCredit` 0.1.0 in `register.d/debtor-credit.json`, declared on the register. `check:registers` 0, `check:schema-l10n` 0 with the baseline lowered to 12203; the payloads the services write validate against the merged schemas in `PaymentRefundRequestedListenerTest`.)
 
 ## 2. Events
 
-- [ ] 2.1 `PaymentRefundRequestedEvent`, `PaymentCreditRequestedEvent` and their listeners with the D2 checks, registered in `Application::register()` (REQ-ORC-001). Verify: PHPUnit `PaymentRefundRequestedListenerTest` on the real event class: accepted for its own subject, refused for another app's subject, refused before settlement, refused twice.
+- [x] 2.1 `PaymentRefundRequestedEvent`, `PaymentCreditRequestedEvent` and their listeners with the D2 checks, registered in `Application::register()` (REQ-ORC-001). Verify: PHPUnit `PaymentRefundRequestedListenerTest` on the real event class: accepted for its own subject, refused for another app's subject, refused before settlement, refused twice. (3 Oct 2026: `lib/Event/PaymentSettlementCommandEvent.php` with the two subclasses, `accept()`/`refuse()`, `isHandled()`/`getResult()`/`getError()`; both listeners delegate to `ObjectRequestCommandService`, wired in `ObjectRequestSettlementRegistration`. The subject has no `app` key on requests raised through the leaf, so the owner is `subject.app`, or `requestedBy: app:<id>`, or the subject's register. Tests on the real event classes: `testARefundIsAcceptedForItsOwnSubject`, `testRefusedForAnotherAppBeforeSettlementAndTwice`, `testTheAppWiresBothListeners`.)
 
 ## 3. Refund
 
@@ -17,7 +17,7 @@
 
 ## 4. Credit
 
-- [ ] 4.1 `DebtorCreditService` and the credit booking with `paymentCreditAccount` (REQ-ORC-003). Verify: PHPUnit `DebtorCreditServiceTest::testCreditIsKeyedByCustomerMasterOrEmail` and `testDebtorWithoutKeyGetsNoCredit`.
+- [x] 4.1 `DebtorCreditService` and the credit booking with `paymentCreditAccount` (REQ-ORC-003). Verify: PHPUnit `DebtorCreditServiceTest::testCreditIsKeyedByCustomerMasterOrEmail` and `testDebtorWithoutKeyGetsNoCredit`. (3 Oct 2026: `DebtorCreditService` books debit the request's `revenueAccount` (or the type's mapped account), credit `paymentCreditAccount`, through a draft JournalEntry and `postDirect`, records the DebtorCredit and moves the request to `credited`; called by the credit listener. Tests in `tests/Unit/Listener/PaymentRefundRequestedListenerTest.php`: `testCreditIsKeyedByCustomerMasterOrEmail`, `testDebtorWithoutKeyGetsNoCredit`.)
 - [ ] 4.2 Apply open credit in `PaymentRequestLeafProvider::create()` (REQ-ORC-004). Verify: PHPUnit `PaymentRequestLeafProviderTest::testCreditPaysTheNextRequestFirst` and `testCreditCoveringTheWholeAmountSettlesAtOnce`.
 
 ## 5. Close
