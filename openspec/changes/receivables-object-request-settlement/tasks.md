@@ -23,5 +23,5 @@
 
 ## 5. Close
 
-- [ ] 5.1 English and Dutch strings for the mail and the admin setting; docs page on requests for other apps. Run `openspec validate receivables-object-request-settlement --strict`.
+- [x] 5.1 English and Dutch strings for the mail and the admin setting; docs page on requests for other apps. Run `openspec validate receivables-object-request-settlement --strict`. (3 Oct 2026: the receipt mail strings are in l10n en/nl since task 3.1; there is no new admin setting UI: the VAT rates are the `paymentRequestVatRates` app config, documented in `docs/api/payment-request-leaf.md` with the payload keys. `openspec validate receivables-object-request-settlement --strict`: valid.)
 - [ ] 5.2 Tell larpinq the leaf payload keys and the `event-fee` type, so `registration-payments-through-shillinq` stops using `other`.
