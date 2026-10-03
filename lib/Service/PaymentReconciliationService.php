@@ -53,6 +53,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -190,6 +191,7 @@ class PaymentReconciliationService {
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param ?PaymentRevenueAccountResolver $revenueAccounts Resolves the revenue account for a settlement, absent when nothing maps one.
 	 * @param ?PaymentSettlementService $settlements Stamps the settled edge; built on demand when absent.
+	 * @param ?ObjectTransitionRunner $transitions Posts the receipt's journal entry; built on demand when absent.
 	 *
 	 * @return void
 	 */
@@ -200,8 +202,19 @@ class PaymentReconciliationService {
 		private readonly ObjectServiceInterface $objectService,
 		private readonly ?PaymentRevenueAccountResolver $revenueAccounts = null,
 		private readonly ?PaymentSettlementService $settlements = null,
+		private readonly ?ObjectTransitionRunner $transitions = null,
 	) {
 	}//end __construct()
+
+	/**
+	 * The transition runner, built on demand so the callers that constructed
+	 * this service before the receipt moved to a journal entry keep working.
+	 *
+	 * @return ObjectTransitionRunner The runner.
+	 */
+	private function transitions(): ObjectTransitionRunner {
+		return ($this->transitions ?? new ObjectTransitionRunner(container: $this->container));
+	}//end transitions()
 
 	/**
 	 * The settlement service, built on demand so the callers that constructed
@@ -530,11 +543,14 @@ class PaymentReconciliationService {
 	/**
 	 * Book the receipt for a captured request that stands on an object.
 	 *
-	 * Posts ONE GLTransaction with two lines: a credit on the revenue account
-	 * mapped to the request type, and a debit on the clearing account the money
-	 * arrived through. The subject travels in the description of both the
-	 * transaction and the revenue line, so the posting still says which case was
-	 * paid for long after the request itself has been archived.
+	 * Posts ONE JournalEntry with two lines through its declared `postDirect`
+	 * transition: a credit on the revenue account mapped to the request type,
+	 * and a debit on the clearing account the money arrived through. Posting
+	 * materialises the GLTransaction and its GLLines, the way every posting in
+	 * shillinq does; a GLTransaction saved with inline lines is refused by the
+	 * register, whose `lines` holds GLLine uuids. The subject travels in the
+	 * description of the entry and of both lines, so the posting still says
+	 * which case was paid for long after the request itself has been archived.
 	 *
 	 * Returns null when the receipt is booked, or a reason when it is not. An
 	 * unmapped request type is the reason that matters: it names the type, so an
@@ -569,7 +585,6 @@ class PaymentReconciliationService {
 
 		$request['revenueAccount'] = $account;
 
-		$currency = (string)($request['currency'] ?? 'EUR');
 		$subject = [];
 		if (is_array($request['subject'] ?? null) === true) {
 			$subject = (array)$request['subject'];
@@ -580,41 +595,42 @@ class PaymentReconciliationService {
 		$postingDate = substr($capturedAt, 0, 10);
 		$clearing = $this->revenueAccounts()->resolve(requestType: 'clearing');
 
-		$transaction = [
-			'transactionNumber' => sprintf('PR-%s', (string)($request['paymentIntentId'] ?? $postingDate)),
-			'postingDate' => $postingDate,
-			'periodId' => substr($postingDate, 0, 7),
-			'currency' => $currency,
+		$journal = [
+			'journalNumber' => sprintf('PR-%s', (string)($request['paymentIntentId'] ?? $postingDate)),
+			'entryDate' => $postingDate,
 			'description' => $memo,
-			'sourceReference' => (string)($request['paymentIntentId'] ?? ''),
-			'state' => 'posted',
+			'journalType' => 'manual',
+			'approvalState' => 'not-required',
 			'administrationId' => (string)($request['administrationId'] ?? ''),
+			'state' => 'draft',
 			'lines' => [
 				[
-					'lineNumber' => 1,
 					'accountNumber' => ($clearing ?? 'clearing'),
 					'side' => 'debit',
 					'amount' => $amount,
-					'currency' => $currency,
 					'description' => $memo,
 				],
 				[
-					'lineNumber' => 2,
 					'accountNumber' => $account,
 					'side' => 'credit',
 					'amount' => $amount,
-					'currency' => $currency,
 					'description' => $memo,
 				],
 			],
 		];
 
 		try {
-			$this->objectService->saveObject(
-				object: $transaction,
+			$saved = $this->objectService->saveObject(
+				object: $journal,
 				register: $registerSlug,
-				schema: 'GLTransaction',
+				schema: 'JournalEntry',
 			);
+			$journalId = ObjectIdentifier::resolve(saved: $saved);
+			if ($journalId === '') {
+				return 'The receipt could not be posted: the journal entry was saved without an id.';
+			}
+
+			$this->transitions()->run(objectId: $journalId, action: 'postDirect');
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'Shillinq: could not post the receipt for a captured object payment request',
