@@ -148,6 +148,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   schema keys, property titles, enums, or descriptions were touched.
 
 ### Fixed
+- A provider capture of a payment request on an object booked nothing live:
+  the receipt was saved as a GLTransaction with inline lines, which the
+  register refuses (`lines` holds GLLine uuids). It is now a JournalEntry
+  posted through `postDirect`, and a refused posting leaves the request in
+  `captured_unapplied` with the reason.
 - Posting to the ledger works end to end (`ledger-posting-path`, #516).
   A balanced entry now posts from the general ledger page. Before, the
   ledger rules refused every post, because a draft has no lock, retention
