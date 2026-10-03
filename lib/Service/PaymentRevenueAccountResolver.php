@@ -64,7 +64,7 @@ final class PaymentRevenueAccountResolver {
 	/**
 	 * The account a request type books against, or null when nothing is mapped.
 	 *
-	 * @param string $requestType One of leges, dwangsom, deposit, other, contribution, eventFee.
+	 * @param string $requestType One of leges, dwangsom, deposit, other, contribution, event-fee.
 	 *
 	 * @return string|null The account number, or null when the type is unmapped.
 	 *

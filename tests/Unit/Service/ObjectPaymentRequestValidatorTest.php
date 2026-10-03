@@ -226,17 +226,17 @@ final class ObjectPaymentRequestValidatorTest extends TestCase {
 
 	/**
 	 * An event fee is its own request type, and it is a valid object request
-	 * that the real PaymentRequest schema accepts (REQ-SOPR-011).
+	 * that the real PaymentRequest schema accepts (REQ-ORS-001).
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/payment-request-event-fee-type/specs/object-payment-requests/spec.md (REQ-SOPR-011)
+	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-001)
 	 */
 	public function testAnEventFeeIsAnObjectRequestType(): void {
 		$request = $this->objectRequest(
 			[
 				'subject' => ['type' => 'registration', 'register' => 'larpinq', 'schema' => 'Registration', 'id' => 'reg-42'],
-				'requestType' => 'eventFee',
+				'requestType' => 'event-fee',
 				'amount' => 45.0,
 				'currency' => 'EUR',
 				'description' => 'WC26-0042 Winter Camp 2026',
@@ -247,23 +247,23 @@ final class ObjectPaymentRequestValidatorTest extends TestCase {
 
 		$this->validator->validate($request);
 
-		self::assertContains('eventFee', ObjectPaymentRequestValidator::REQUEST_TYPES);
+		self::assertContains('event-fee', ObjectPaymentRequestValidator::REQUEST_TYPES);
 		self::assertSame([], RegisterSchema::errors('PaymentRequest', $request));
 	}//end testAnEventFeeIsAnObjectRequestType()
 
 	/**
-	 * The one-open-request rule holds for event fees too (REQ-SOPR-011).
+	 * The one-open-request rule holds for event fees too (REQ-ORS-001).
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/payment-request-event-fee-type/specs/object-payment-requests/spec.md (REQ-SOPR-011)
+	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-001)
 	 */
 	public function testASecondPendingEventFeeIsRefused(): void {
-		$fee = ['subject' => ['type' => 'registration', 'register' => 'larpinq', 'schema' => 'Registration', 'id' => 'reg-42'], 'requestType' => 'eventFee'];
+		$fee = ['subject' => ['type' => 'registration', 'register' => 'larpinq', 'schema' => 'Registration', 'id' => 'reg-42'], 'requestType' => 'event-fee'];
 		$existing = [$this->objectRequest(array_merge($fee, ['id' => 'pr-1']))];
 
 		$this->expectException(InvalidArgumentException::class);
-		$this->expectExceptionMessage('A pending eventFee request already stands on this object');
+		$this->expectExceptionMessage('A pending event-fee request already stands on this object');
 		$this->validator->validate($this->objectRequest($fee), $existing);
 	}//end testASecondPendingEventFeeIsRefused()
 

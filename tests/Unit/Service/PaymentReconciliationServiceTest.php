@@ -499,17 +499,17 @@ final class PaymentReconciliationServiceTest extends TestCase {
 	}//end testCapturedObjectRequestBooksOnTheMappedRevenueAccount()
 
 	/**
-	 * A captured event fee books against the account mapped to eventFee
-	 * (REQ-SOPR-011).
+	 * A captured event fee books against the account mapped to event-fee
+	 * (REQ-ORS-001).
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/payment-request-event-fee-type/specs/object-payment-requests/spec.md (REQ-SOPR-011)
+	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-001)
 	 */
 	public function testACapturedEventFeeBooksOnItsOwnAccount(): void {
 		$saved = [];
-		$stub = $this->buildObjectServiceStub(['PaymentRequest' => [$this->objectRequest('eventFee')]], $saved);
-		$service = $this->makeServiceWithAccounts($stub, ['eventFee' => '8050', 'other' => '8999', 'clearing' => '1100']);
+		$stub = $this->buildObjectServiceStub(['PaymentRequest' => [$this->objectRequest('event-fee')]], $saved);
+		$service = $this->makeServiceWithAccounts($stub, ['event-fee' => '8050', 'other' => '8999', 'clearing' => '1100']);
 
 		$out = $service->reconcile('mollie', ['paymentIntentId' => 'tr_obj', 'outcome' => 'captured']);
 

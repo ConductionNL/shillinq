@@ -55,7 +55,7 @@ final class ObjectPaymentRequestValidator {
 	 *
 	 * @var array<int, string>
 	 */
-	public const REQUEST_TYPES = ['leges', 'dwangsom', 'deposit', 'other', 'contribution', 'eventFee'];
+	public const REQUEST_TYPES = ['leges', 'dwangsom', 'deposit', 'other', 'contribution', 'event-fee'];
 
 	/**
 	 * The parts a semantic reference (ADR-048) must name.

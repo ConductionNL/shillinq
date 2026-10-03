@@ -106,6 +106,6 @@ final class BillingPayloadDeclaredFieldsTest extends TestCase {
 		self::assertContains('customerReference', EffectiveRegisterFixture::properties(schema: 'ARInvoice'));
 		self::assertContains('requestedBy', EffectiveRegisterFixture::properties(schema: 'PaymentRequest'));
 		self::assertSame('0.16.0', EffectiveRegisterFixture::schema(schema: 'ARInvoice')['version']);
-		self::assertSame('0.6.0', EffectiveRegisterFixture::schema(schema: 'PaymentRequest')['version']);
+		self::assertSame('0.6.1', EffectiveRegisterFixture::schema(schema: 'PaymentRequest')['version']);
 	}//end testTheOtherWrittenFieldsAreDeclaredAndTheVersionsMoved()
 }//end class
