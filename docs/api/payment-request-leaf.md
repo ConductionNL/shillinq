@@ -73,5 +73,13 @@ When the request is settled (paid online, or money recorded by hand) and the
 description, the amount, the date, the reference and the confirmation
 summary, and records `receiptSentAt`.
 
+A bank statement line (file import or connected bank account) that quotes a
+pending request's `paymentReference` as a whole word is matched to it. With
+exactly one such request and the full open amount, the match is confirmed at
+once: the request gets a `bank-transfer` settlement and `settledVia:
+bank-transfer`, and the receipt is posted with the bank account debited (or
+the invoice behind the request is paid). Another amount, or two quoted
+requests, leaves a pending match for the bookkeeper to confirm or reject.
+
 Both return the created request as an array, with its `id` and `state: pending`.
 Read its later state from the `PaymentRequest` object events, or with `list`.

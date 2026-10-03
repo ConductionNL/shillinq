@@ -16467,7 +16467,8 @@
             "enum": [
               "ap-invoice",
               "ar-invoice",
-              "gl-transaction"
+              "gl-transaction",
+              "payment-request"
             ],
             "example": "ar-invoice",
             "title": "Target Type"
