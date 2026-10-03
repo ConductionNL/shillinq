@@ -20,8 +20,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\PaymentReconciliationService;
+use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\PaymentRevenueAccountResolver;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
+use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -104,6 +106,10 @@ final class PaymentReconciliationServiceTest extends TestCase {
 				}
 
 				$this->saved[] = ['schema' => $schema, 'object' => $object];
+				if (isset($object['id']) === false) {
+					$object['id'] = 'saved-' . count($this->saved);
+				}
+
 				return $object;
 			}
 		};
@@ -412,10 +418,11 @@ final class PaymentReconciliationServiceTest extends TestCase {
 	 *
 	 * @param object $objectService The ObjectService stub.
 	 * @param array<string, string> $accounts Request type to account number.
+	 * @param ?ObjectTransitionRunner $transitions The transition runner, a double when absent.
 	 *
 	 * @return PaymentReconciliationService
 	 */
-	private function makeServiceWithAccounts(object $objectService, array $accounts): PaymentReconciliationService {
+	private function makeServiceWithAccounts(object $objectService, array $accounts, ?ObjectTransitionRunner $transitions = null): PaymentReconciliationService {
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturn($objectService);
 
@@ -443,6 +450,7 @@ final class PaymentReconciliationServiceTest extends TestCase {
 			logger: $this->createMock(LoggerInterface::class),
 			objectService: new DuckObjectServiceAdapter(inner: $objectService),
 			revenueAccounts: new PaymentRevenueAccountResolver(appConfig: $accountConfig),
+			transitions: ($transitions ?? $this->createMock(ObjectTransitionRunner::class)),
 		);
 	}//end makeServiceWithAccounts()
 
@@ -483,7 +491,7 @@ final class PaymentReconciliationServiceTest extends TestCase {
 
 		self::assertSame(PaymentReconciliationService::RESULT_APPLIED, $out['result']);
 
-		$transactions = array_values(array_filter($saved, static fn (array $s): bool => $s['schema'] === 'GLTransaction'));
+		$transactions = array_values(array_filter($saved, static fn (array $s): bool => $s['schema'] === 'JournalEntry'));
 		self::assertCount(1, $transactions);
 
 		$lines = $transactions[0]['object']['lines'];
@@ -514,7 +522,7 @@ final class PaymentReconciliationServiceTest extends TestCase {
 		$out = $service->reconcile('mollie', ['paymentIntentId' => 'tr_obj', 'outcome' => 'captured']);
 
 		self::assertSame(PaymentReconciliationService::RESULT_APPLIED, $out['result']);
-		$transactions = array_values(array_filter($saved, static fn (array $s): bool => $s['schema'] === 'GLTransaction'));
+		$transactions = array_values(array_filter($saved, static fn (array $s): bool => $s['schema'] === 'JournalEntry'));
 		$credit = array_values(array_filter($transactions[0]['object']['lines'], static fn (array $l): bool => $l['side'] === 'credit'));
 		self::assertSame('8050', $credit[0]['accountNumber']);
 	}//end testACapturedEventFeeBooksOnItsOwnAccount()
@@ -726,4 +734,67 @@ final class PaymentReconciliationServiceTest extends TestCase {
 		self::assertSame(PaymentReconciliationService::RESULT_UNAPPLIED, $out['result']);
 		self::assertArrayNotHasKey('settledAt', $this->savedIn($saved, 'PaymentRequest')[0]);
 	}//end testAnUnappliedCaptureWritesNoSettledEdge()
+
+	/**
+	 * The receipt for a captured object request is a JournalEntry the merged
+	 * register accepts, posted through its declared `postDirect` transition. A
+	 * GLTransaction saved with inline line objects is refused by OpenRegister
+	 * (`lines` holds GLLine uuids), so the capture booked nothing live.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-002)
+	 */
+	public function testTheObjectReceiptIsAJournalEntryTheRegisterAccepts(): void {
+		$saved = [];
+		$stub = $this->buildObjectServiceStub(['PaymentRequest' => [$this->objectRequest('dwangsom')]], $saved);
+		$transitions = $this->createMock(ObjectTransitionRunner::class);
+		$runs = [];
+		$transitions->method('run')->willReturnCallback(
+			static function (string $objectId, string $action) use (&$runs): void {
+				$runs[] = [$objectId, $action];
+			}
+		);
+		$service = $this->makeServiceWithAccounts($stub, ['dwangsom' => '8400', 'clearing' => '1100'], $transitions);
+
+		$out = $service->reconcile('mollie', ['paymentIntentId' => 'tr_obj', 'outcome' => 'captured']);
+
+		self::assertSame(PaymentReconciliationService::RESULT_APPLIED, $out['result']);
+		foreach (['GLTransaction', 'JournalEntry'] as $schema) {
+			foreach ($this->savedIn($saved, $schema) as $object) {
+				self::assertSame([], RegisterSchema::errors($schema, $object), $schema . ' payload refused by the merged register');
+			}
+		}
+
+		self::assertSame([], $this->savedIn($saved, 'GLTransaction'));
+		$journals = $this->savedIn($saved, 'JournalEntry');
+		self::assertCount(1, $journals);
+		self::assertSame('draft', $journals[0]['state']);
+		$journalIndex = array_search('JournalEntry', array_column($saved, 'schema'), true);
+		self::assertSame([['saved-' . ($journalIndex + 1), 'postDirect']], $runs);
+	}//end testTheObjectReceiptIsAJournalEntryTheRegisterAccepts()
+
+	/**
+	 * A posting the ledger refuses leaves the request in captured_unapplied
+	 * with the reason, rather than a capture that claims a receipt it never
+	 * booked (REQ-SOPR-002).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-002)
+	 */
+	public function testARefusedPostingLeavesTheCaptureUnapplied(): void {
+		$saved = [];
+		$stub = $this->buildObjectServiceStub(['PaymentRequest' => [$this->objectRequest('dwangsom')]], $saved);
+		$transitions = $this->createMock(ObjectTransitionRunner::class);
+		$transitions->method('run')->willThrowException(new \RuntimeException('period 2026-10 is closed'));
+		$service = $this->makeServiceWithAccounts($stub, ['dwangsom' => '8400', 'clearing' => '1100'], $transitions);
+
+		$out = $service->reconcile('mollie', ['paymentIntentId' => 'tr_obj', 'outcome' => 'captured']);
+
+		self::assertSame(PaymentReconciliationService::RESULT_UNAPPLIED, $out['result']);
+		$request = $this->savedIn($saved, 'PaymentRequest')[0];
+		self::assertSame('captured_unapplied', $request['state']);
+		self::assertStringContainsString('period 2026-10 is closed', (string)($request['failureReason'] ?? ''));
+	}//end testARefusedPostingLeavesTheCaptureUnapplied()
 }//end class
