@@ -33614,6 +33614,48 @@
         "civilServantsCount": 2,
         "lastUpdatedAt": "2026-03-03",
         "denominatorStaleWarning": true
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "DebtorCredit",
+          "slug": "debtorcredit-debtorcredit-1-1"
+        },
+        "debtorKey": "joris@example.nl",
+        "amount": 85.0,
+        "remaining": 85.0,
+        "currency": "EUR",
+        "sourcePaymentRequestId": "Voorbeeld Sourcepaymentrequestid 1",
+        "administrationId": "Voorbeeld Administrationid 1",
+        "state": "open"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "DebtorCredit",
+          "slug": "debtorcredit-debtorcredit-2-2"
+        },
+        "debtorKey": "cm-demo-customer-1",
+        "amount": 45.0,
+        "remaining": 20.0,
+        "currency": "EUR",
+        "sourcePaymentRequestId": "Voorbeeld Sourcepaymentrequestid 2",
+        "administrationId": "Voorbeeld Administrationid 2",
+        "state": "open"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "DebtorCredit",
+          "slug": "debtorcredit-debtorcredit-3-3"
+        },
+        "debtorKey": "anna@example.nl",
+        "amount": 30.0,
+        "remaining": 0.0,
+        "currency": "EUR",
+        "sourcePaymentRequestId": "Voorbeeld Sourcepaymentrequestid 3",
+        "administrationId": "Voorbeeld Administrationid 3",
+        "state": "used"
       }
     ]
   }

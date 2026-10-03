@@ -11,7 +11,7 @@
       "PaymentRequest": {
         "slug": "PaymentRequest",
         "icon": "CreditCardOutline",
-        "version": "0.7.0",
+        "version": "0.8.0",
         "title": "Payment Request",
         "description": "An online payment attempt against an AR invoice. One AR invoice can carry several payment requests over its life (link expired and regenerated, a failed attempt then a new link, a link voided after partial credit): each request has its own lifecycle, gateway identity and audit needs, so payment state lives here and never folds onto ARInvoice (design D1). Mirrors the proven DepositPayment shape minus booking fields, FK'd to ARInvoice. STORES NO PCI DATA: no card number, CVV, PAN, IBAN credential, or authorization token is ever persisted. OpenConnector (PCI-certified) handles all sensitive payment data and only opaque references (paymentIntentId, settlementReference) are stored here, identical to DepositPayment. V0.1.1 (portal-payment-initiation) adds confirmationSummary. A subject-safe settlement receipt written on capture and surfaced through the customer portal's read-only paymentRequests collection. V0.2.0 (case-payment-requests) lets a request stand on any object: subjectKind, subject, requestType, description, debtor, dueAt and revenueAccount, with invoiceReference optional. An object request carries its own amount and books a receipt against the revenue account mapped to its requestType; a domain app never books the money itself (ADR-107). V0.3.0 (fees-payments-and-the-contract-register) adds settlements, an append-only record of money that arrived another way, and legalBasis, the article the amount rests on. V0.4.0 (extracurricular-fee-to-shillinq) lets a request stand on a school contribution: subject.app names the app owning the chargeable, beneficiary names the child and joins the uniqueness key, requestType gains contribution, voluntary carries the Wet vrijwillige ouderbijdrage flag, raiseBatchId names the bulk raise, and settledAt with settledVia mark the moment the request first counts as settled, which is the signal an owning app listens for. V0.7.0 (receivables-object-request-settlement) adds paymentReference, the transfer reference a payer quotes, invoiceRequested, and receiptSentAt, the once-only stamp of the debtor's receipt mail; requestType event-fee came in 0.6.x.",
         "x-openregister-audit-trail": {
@@ -236,7 +236,10 @@
               "captured_unapplied",
               "failed",
               "expired",
-              "voided"
+              "voided",
+              "refund_requested",
+              "refunded",
+              "credited"
             ],
             "default": "pending",
             "description": "Payment-request lifecycle state. Captured_unapplied is the exception state for a capture that could not settle its invoice: surfaced, never silently dropped.",
@@ -321,7 +324,8 @@
               "pin",
               "bank-transfer",
               "waived",
-              "other"
+              "other",
+              "credit"
             ],
             "description": "How the request was settled: through the payment provider, or by the method of the money recorded by hand.",
             "example": "provider",
@@ -432,6 +436,64 @@
               ]
             },
             "title": "Settlements"
+          },
+          "refunds": {
+            "type": "array",
+            "title": "Refunds",
+            "description": "Refunds asked for this request, oldest first. Each one is approved and then paid by finance.",
+            "items": {
+              "type": "object",
+              "required": [
+                "amount",
+                "state"
+              ],
+              "properties": {
+                "amount": {
+                  "type": "number",
+                  "minimum": 0,
+                  "title": "Amount",
+                  "description": "How much goes back to the payer."
+                },
+                "reason": {
+                  "type": "string",
+                  "nullable": true,
+                  "title": "Reason",
+                  "description": "Why the money goes back, in the words of the app that asked."
+                },
+                "requestedBy": {
+                  "type": "string",
+                  "title": "Requested by",
+                  "description": "The app that asked for the refund."
+                },
+                "requestedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "title": "Requested at",
+                  "description": "When the refund was asked for."
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "requested",
+                    "approved",
+                    "paid"
+                  ],
+                  "x-enum-labels": {
+                    "requested": "Requested",
+                    "approved": "Approved",
+                    "paid": "Paid"
+                  },
+                  "title": "Refund state",
+                  "description": "Where the refund is: asked for, approved by finance, or paid."
+                },
+                "bankReference": {
+                  "type": "string",
+                  "nullable": true,
+                  "title": "Bank reference",
+                  "description": "The reference of the bank payment that paid the refund."
+                }
+              }
+            }
           }
         },
         "x-openregister-calculations": {
@@ -481,6 +543,18 @@
             "voided": {
               "label": "Voided",
               "description": "The invoice was settled by other means (bank match, credit note, write-off) or its outstanding amount changed: open pending requests are voided immediately so the link stops resolving to a payable session (design D5)."
+            },
+            "refund_requested": {
+              "label": "Refund requested",
+              "description": "The app the request stands on asked for the money back. It waits on the Refunds to pay page until finance approves and pays it."
+            },
+            "refunded": {
+              "label": "Refunded",
+              "description": "Finance paid the money back to the payer. The reversal and the payment are booked."
+            },
+            "credited": {
+              "label": "Credited",
+              "description": "The money is kept as credit for the payer. Their next request is paid from it first."
             }
           },
           "transitions": {
@@ -529,6 +603,32 @@
               "to": "voided",
               "label": "Void request",
               "description": "The invoice was settled by other means (bank match, credit note, write-off) or its outstanding amount changed: open requests are voided immediately so the link stops resolving. The voiding hook rides the invoice lifecycle transitions declaratively (design D5)."
+            },
+            "requestRefund": {
+              "from": [
+                "pending",
+                "authorized",
+                "captured"
+              ],
+              "to": "refund_requested",
+              "label": "Request refund",
+              "description": "The app the request stands on asks for the money back of a settled request (PaymentRefundRequestedEvent). Shillinq checks that the request is settled and that the app owns its subject."
+            },
+            "markRefunded": {
+              "from": "refund_requested",
+              "to": "refunded",
+              "label": "Mark refunded",
+              "description": "Finance paid the refund by bank and records the bank reference."
+            },
+            "credit": {
+              "from": [
+                "pending",
+                "authorized",
+                "captured"
+              ],
+              "to": "credited",
+              "label": "Keep as credit",
+              "description": "The app the request stands on asks to keep the money of a settled request as credit for the payer (PaymentCreditRequestedEvent)."
             }
           }
         },

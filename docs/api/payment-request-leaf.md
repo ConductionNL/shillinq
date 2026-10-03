@@ -94,3 +94,41 @@ requests, leaves a pending match for the bookkeeper to confirm or reject.
 
 Both return the created request as an array, with its `id` and `state: pending`.
 Read its later state from the `PaymentRequest` object events, or with `list`.
+
+## Refund or credit a settled request
+
+The app a request stands on can ask shillinq to give the money back, or to
+keep it as credit for the payer's next request. It dispatches one of two typed
+events with `IEventDispatcher::dispatchTyped()` and reads the answer from the
+same object:
+
+```php
+$event = new \OCA\Shillinq\Event\PaymentRefundRequestedEvent(
+    sourceApp: 'larpinq',
+    paymentRequestId: $paymentRequestId,
+    reason: 'Cancelled by the player',
+    correlationId: $registrationId,
+);
+$dispatcher->dispatchTyped($event);
+if ($event->isHandled()) {
+    $state = $event->getResult()['state']; // refund_requested
+} else {
+    $error = $event->getError();
+}
+```
+
+Look the class up with `class_exists()` first, so your app keeps working
+without shillinq. The answer is `{contractVersion: 1, paymentRequestId, state}`.
+
+Shillinq accepts the command only for a request on an object that your app
+owns (named on the subject, raised by your app through `createAsApp`, or on
+your app's register), that is settled, and that was not refunded or credited
+before. Anything else comes back with an error and changes nothing.
+
+- `PaymentRefundRequestedEvent`: the request moves to `refund_requested` with
+  the full amount in `refunds`. Finance approves and pays it; the request then
+  reads `refunded`.
+- `PaymentCreditRequestedEvent`: shillinq moves the income to the customer
+  credit account set in `paymentCreditAccount`, records a `DebtorCredit` for
+  the payer's customer record or, without one, their email address, and the
+  request reads `credited`. A debtor with neither gets an error and no credit.
