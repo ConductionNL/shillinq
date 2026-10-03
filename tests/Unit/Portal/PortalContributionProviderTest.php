@@ -193,6 +193,59 @@ class PortalContributionProviderTest extends TestCase {
 	}//end testGetContributionReturnsNullForNonMatchingSubjects()
 
 	/**
+	 * Every page of every audience names its menu group, and every label is Dutch.
+	 *
+	 * Portaliq's group contract: pages with the same `group` share one heading
+	 * in the site's menu. Without declared pages a menu named them after the
+	 * app ("Shillinq") and in English ("My invoices", "Purchase orders").
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/portal-pages-in-dutch-groups/specs/portal-contribution/spec.md#requirement-every-portal-page-names-its-menu-group-in-dutch
+	 */
+	public function testEveryPageHasAGroupAndEveryLabelIsDutch(): void {
+		$english = '/\\b(My|Pay|Purchase|Sales|Journal|General|Trial|VAT|Invoice|Date|Due|Amount|For|School|will)\\b/';
+		$groups = [
+			'customer' => 'Bestellingen en facturen',
+			'parent' => 'Schoolbijdragen',
+			'supplier' => 'Opdrachten en facturen',
+			'accountant' => 'Administratie',
+		];
+		foreach ($groups as $audience => $group) {
+			$manifest = $this->provider->getContribution(['audience' => $audience]);
+			$this->assertSame($group, $manifest['label'], $audience);
+			$this->assertSame(array_column($manifest['collections'], 'id'), array_column($manifest['pages'], 'id'), $audience);
+			foreach ($manifest['collections'] as $collection) {
+				// A page per collection holds only while every collection is listable.
+				$this->assertTrue($collection['listable'], $collection['id']);
+			}
+
+
+			$labels = [];
+			foreach ($manifest['pages'] as $page) {
+				$this->assertSame($group, $page['group'], $page['id']);
+				$this->assertSame(
+					[['type' => 'collection', 'collection' => $page['id']], ['type' => 'detail', 'collection' => $page['id']]],
+					$page['blocks']
+				);
+				$labels[] = $page['label'];
+			}
+
+			$this->assertSame(array_unique($labels), $labels, $audience . ' has two pages with one name');
+			foreach ($manifest['collections'] as $collection) {
+				$this->assertDoesNotMatchRegularExpression($english, $collection['label'], $collection['id']);
+				foreach ((array)($collection['columns'] ?? []) as $column) {
+					$this->assertDoesNotMatchRegularExpression($english, $column['label'], $collection['id'] . '.' . $column['field']);
+				}
+			}
+
+			foreach ($manifest['actions'] as $action) {
+				$this->assertDoesNotMatchRegularExpression($english, $action['label'], $action['id']);
+			}
+		}//end foreach
+	}//end testEveryPageHasAGroupAndEveryLabelIsDutch()
+
+	/**
 	 * The customer manifest carries the five Wave-1 collections plus the two
 	 * Wave-2 AR-side surfaces (salesInvoices, paymentRequests).
 	 *
@@ -204,7 +257,7 @@ class PortalContributionProviderTest extends TestCase {
 		$manifest = $this->provider->getContribution(self::CUSTOMER_SUBJECT);
 
 		$this->assertIsArray($manifest);
-		$this->assertSame('Shillinq', $manifest['label']);
+		$this->assertNotSame('Shillinq', $manifest['label']);
 		// pay for invoices, pay-request for requests without one (REQ-SPPI-006, REQ-SPPI-008).
 		$this->assertSame(['pay', 'pay-request'], array_column($manifest['actions'], 'id'));
 		$this->assertSame([], $manifest['notifications']);
@@ -395,7 +448,7 @@ class PortalContributionProviderTest extends TestCase {
 		$manifest = $this->provider->getContribution(self::SUPPLIER_SUBJECT);
 
 		$this->assertIsArray($manifest);
-		$this->assertSame('Shillinq', $manifest['label']);
+		$this->assertNotSame('Shillinq', $manifest['label']);
 		$this->assertSame([], $manifest['actions']);
 		$this->assertSame([], $manifest['notifications']);
 
@@ -484,7 +537,7 @@ class PortalContributionProviderTest extends TestCase {
 		$manifest = $this->provider->getContribution(self::ACCOUNTANT_SUBJECT);
 
 		$this->assertIsArray($manifest);
-		$this->assertSame('Shillinq', $manifest['label']);
+		$this->assertNotSame('Shillinq', $manifest['label']);
 		$this->assertSame([], $manifest['actions']);
 		$this->assertSame([], $manifest['notifications']);
 
@@ -868,7 +921,8 @@ class PortalContributionProviderTest extends TestCase {
 
 		self::assertSame(['pay', 'decline'], array_keys($actions));
 		$decline = $actions['decline'];
-		self::assertSame('I will not pay', $decline['label']);
+		// The name the Dutch reminder tells the parent to choose (docudesk-templates.json).
+		self::assertSame('Ik betaal niet', $decline['label']);
 		self::assertSame('endpoint-forward', $decline['type']);
 		self::assertSame('/apps/shillinq/api/portal/contributions/decline', $decline['endpoint']);
 		self::assertSame('POST', $decline['method']);
@@ -907,7 +961,7 @@ class PortalContributionProviderTest extends TestCase {
 		self::assertSame(
 			[
 				'id' => 'pay-request',
-				'label' => 'Pay now',
+				'label' => 'Nu betalen',
 				'type' => 'endpoint-forward',
 				'endpoint' => '/apps/shillinq/api/portal/payments/initiate',
 				'method' => 'POST',
