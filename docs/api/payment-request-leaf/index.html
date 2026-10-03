@@ -5,7 +5,7 @@
 <meta name="generator" content="Docusaurus v3.10.1">
 <title data-rh="true">Payment request leaf: raising a request from another app | Shillinq</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" property="og:image" content="https://shillinq.conduction.nl/img/og-shillinq.png"><meta data-rh="true" name="twitter:image" content="https://shillinq.conduction.nl/img/og-shillinq.png"><meta data-rh="true" property="og:url" content="https://shillinq.conduction.nl/docs/api/payment-request-leaf/"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" property="og:locale:alternate" content="nl"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="twitter:site" content="@ConductionNL"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:type" content="website"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Payment request leaf: raising a request from another app | Shillinq"><meta data-rh="true" name="description" content="Another app asks shillinq for money through the shillinq-payment-requests leaf."><meta data-rh="true" property="og:description" content="Another app asks shillinq for money through the shillinq-payment-requests leaf."><link data-rh="true" rel="icon" href="/img/favicon.svg"><link data-rh="true" rel="canonical" href="https://shillinq.conduction.nl/docs/api/payment-request-leaf/"><link data-rh="true" rel="alternate" href="https://shillinq.conduction.nl/docs/api/payment-request-leaf/" hreflang="en"><link data-rh="true" rel="alternate" href="https://shillinq.conduction.nl/nl/docs/api/payment-request-leaf/" hreflang="nl"><link data-rh="true" rel="alternate" href="https://shillinq.conduction.nl/docs/api/payment-request-leaf/" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Payment request leaf: raising a request from another app","item":"https://shillinq.conduction.nl/docs/api/payment-request-leaf"}]}</script><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","@id":"https://shillinq.conduction.nl/docs/api/payment-request-leaf#article","mainEntityOfPage":"https://shillinq.conduction.nl/docs/api/payment-request-leaf","headline":"Payment request leaf: raising a request from another app","inLanguage":"en","publisher":{"@id":"https://www.conduction.nl/#org"},"description":"Another app asks shillinq for money through the shillinq-payment-requests leaf.","author":{"@type":"Organization","name":"Conduction","@id":"https://www.conduction.nl/#org"}}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","@id":"https://www.conduction.nl/#org","name":"Conduction B.V.","alternateName":"Conduction","url":"https://www.conduction.nl/","logo":"https://www.conduction.nl/img/brand/avatar-conduction-gold-on-white.svg","foundingDate":"2019","description":"Dutch open-source software company building EUPL-1.2 apps for the Nextcloud workspace.","address":{"@type":"PostalAddress","streetAddress":"Lauriergracht 14h","postalCode":"1016 RR","addressLocality":"Amsterdam","addressCountry":"NL"},"email":"info@conduction.nl","telephone":"+31-85-303-6840","taxID":"NL860784241B01","vatID":"NL860784241B01","identifier":{"@type":"PropertyValue","propertyID":"KvK","value":"76741850"},"sameAs":["https://codeberg.org/Conduction","https://www.linkedin.com/company/conduction/"]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","@id":"https://shillinq.conduction.nl/#website","url":"https://shillinq.conduction.nl/","name":"Shillinq","publisher":{"@id":"https://www.conduction.nl/#org"},"inLanguage":["en","nl"]}</script><link rel="stylesheet" href="/assets/css/styles.6e12b6d1.css">
-<script src="/assets/js/runtime~main.c39bcd30.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.79f17356.js" defer="defer"></script>
 <script src="/assets/js/main.27ca77f1.js" defer="defer"></script>
 </head>
 <body>
@@ -43,8 +43,9 @@ an app does not open <code>create</code>.</li>
 </ul>
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="payload">Payload<a href="#payload" class="hash-link" aria-label="Direct link to Payload" title="Direct link to Payload" translate="no">​</a></h2>
 <p>Both methods take the same fields: <code>amount</code>, <code>currency</code> (default <code>EUR</code>),
-<code>requestType</code>, <code>description</code>, <code>debtor</code>, <code>dueAt</code>, <code>subjectType</code> and
-<code>paymentGateway</code> (default <code>mollie</code>). The host object becomes the request&#x27;s
+<code>requestType</code>, <code>description</code>, <code>debtor</code>, <code>dueAt</code>, <code>subjectType</code>,
+<code>paymentGateway</code> (default <code>mollie</code>), <code>paymentReference</code>, <code>invoiceRequested</code> and
+<code>administrationId</code>. The host object becomes the request&#x27;s
 <code>subject</code>. Unknown keys are ignored.</p>
 <p><code>requestType</code> is one of <code>leges</code>, <code>dwangsom</code>, <code>deposit</code>, <code>contribution</code>, <code>event-fee</code>
 (the fee for taking part in an event) and <code>other</code>. An administrator maps each
@@ -53,8 +54,17 @@ type to a revenue account in <code>paymentRevenueAccounts</code>, for example
 <p><code>paymentReference</code> is the reference the payer quotes on a bank transfer, for
 example <code>WC26-0042</code>. It is optional, at least 6 characters, and only one open
 (<code>pending</code> or <code>authorized</code>) request may carry it, compared without case; the
-leaf refuses a second one. <code>invoiceRequested: true</code> records that the payer
-wants an invoice for the payment.</p>
+leaf refuses a second one.</p>
+<p><code>invoiceRequested: true</code> asks for an invoice behind the request. Shillinq finds
+or creates the debtor&#x27;s customer (by <code>debtor.customerMasterId</code>, else by
+<code>debtor.email</code> in the administration, else a new one from <code>debtor.name</code> and
+<code>debtor.email</code>), issues one invoice for the description and the amount, and sets
+the request&#x27;s <code>invoiceReference</code> to it. A payment then settles that invoice, so
+the income is booked once. Such a call also needs <code>administrationId</code>, the
+administration that bills the invoice; without it, or without a debtor, the leaf
+throws an <code>InvalidArgumentException</code> and writes nothing. The amount is gross. A
+type is exempt from VAT unless an administrator maps a rate in
+<code>paymentRequestVatRates</code>, for example <code>{&quot;event-fee&quot;: 21}</code>.</p>
 <p>When the request is settled (paid online, or money recorded by hand) and the
 <code>debtor</code> has an <code>email</code>, shillinq mails the debtor one receipt with the
 description, the amount, the date, the reference and the confirmation
