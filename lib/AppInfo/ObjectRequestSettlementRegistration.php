@@ -3,8 +3,8 @@
 /**
  * Object Request Settlement Registration
  *
- * Registers the listener that mails the debtor of a settled object payment
- * request (receivables-object-request-settlement, REQ-ORS-005). Kept out of
+ * Registers the listeners of receivables-object-request-settlement: the
+ * debtor's receipt mail (REQ-ORS-005) and the bank match (REQ-ORS-003/004). Kept out of
  * Application.php, which sits at its phpmd length limit.
  *
  * @category AppInfo
@@ -26,7 +26,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\AppInfo;
 
+use OCA\OpenRegister\Event\ObjectCreatedEvent;
+use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
+use OCA\Shillinq\Listener\BankLineObjectRequestListener;
 use OCA\Shillinq\Listener\ObjectRequestSettledListener;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
@@ -49,6 +52,15 @@ final class ObjectRequestSettlementRegistration {
 		$context->registerEventListener(
 			event: ObjectUpdatedEvent::class,
 			listener: ObjectRequestSettledListener::class
+		);
+		// The bank match: a new line is matched, a confirmed match settles (REQ-ORS-003, REQ-ORS-004).
+		$context->registerEventListener(
+			event: ObjectCreatedEvent::class,
+			listener: BankLineObjectRequestListener::class
+		);
+		$context->registerEventListener(
+			event: ObjectTransitionedEvent::class,
+			listener: BankLineObjectRequestListener::class
 		);
 	}//end register()
 }//end class

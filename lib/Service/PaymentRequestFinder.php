@@ -133,6 +133,22 @@ final class PaymentRequestFinder {
 	}//end withReference()
 
 	/**
+	 * Every pending object request that carries a transfer reference, the
+	 * set a bank line is matched against (REQ-ORS-003).
+	 *
+	 * @return array<int, array<string, mixed>> The requests.
+	 *
+	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
+	 */
+	public function pendingWithReference(): array {
+		return $this->scan(
+			keep: static fn (array $request): bool => (string)($request['state'] ?? '') === 'pending'
+				&& trim((string)($request['paymentReference'] ?? '')) !== '',
+			asSystem: true,
+		);
+	}//end pendingWithReference()
+
+	/**
 	 * Read every object request to the last page and keep the ones asked for.
 	 *
 	 * @param callable(array<string, mixed>): bool $keep Decides per request.
