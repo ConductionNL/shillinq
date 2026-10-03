@@ -41,6 +41,14 @@ module.exports = {
 		// pinia 3 is Vue-3 native and no longer routes through `vue-demi`, so
 		// the Vue-2.7 shim pin that used to live here (and its `inline` entry)
 		// is gone with it — vue-demi is no longer in the dependency graph at all.
+		// @nextcloud/dialogs is loaded for real where a test needs its builder
+		// contract (importWizardPicker.spec.js). Inlined, so that test can
+		// stand in for the @nextcloud/vue components its dialog would render.
+		server: {
+			deps: {
+				inline: [/@nextcloud\/dialogs/],
+			},
+		},
 	},
 	resolve: {
 		alias: [

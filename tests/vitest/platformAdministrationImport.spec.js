@@ -22,6 +22,7 @@ vi.mock('@nextcloud/dialogs', () => ({
 		const builder = {
 			setMultiSelect: () => builder,
 			allowDirectories: () => builder,
+			addButton: () => builder,
 			build: () => ({ pick: pickMock }),
 		}
 		return builder
