@@ -654,6 +654,39 @@ final class PaymentReconciliationServiceTest extends TestCase {
 	}//end testAnInvoiceBackedObjectRequestSettlesItsInvoiceAndBooksNoReceipt()
 
 	/**
+	 * A captured event fee that asked for an invoice at create settles that
+	 * invoice and books no object receipt, so the income is booked once
+	 * (REQ-ORS-006).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-006)
+	 */
+	public function testCaptureSettlesTheInvoiceAndBooksNoObjectReceipt(): void {
+		$saved = [];
+		$request = array_merge(
+			$this->objectRequest('event-fee'),
+			['invoiceRequested' => true, 'invoiceReference' => 'inv-req-1', 'paymentReference' => 'WC26-0042']
+		);
+		$stub = $this->buildObjectServiceStub(
+			[
+				'PaymentRequest' => [$request],
+				'ARInvoice' => [['id' => 'inv-req-1', 'lifecycleState' => 'issued', 'invoiceNumber' => 'REQ-2026-0A1B2C3D4E']],
+			],
+			$saved
+		);
+		$service = $this->makeServiceWithAccounts($stub, ['event-fee' => '8050', 'clearing' => '1100']);
+
+		$out = $service->reconcile('mollie', ['paymentIntentId' => 'tr_obj', 'outcome' => 'captured']);
+
+		self::assertSame(PaymentReconciliationService::RESULT_APPLIED, $out['result']);
+		self::assertSame([], $this->savedIn($saved, 'GLTransaction'));
+		self::assertSame([], $this->savedIn($saved, 'JournalEntry'));
+		self::assertSame('paid', $this->savedIn($saved, 'ARInvoice')[0]['lifecycleState']);
+		self::assertSame('captured', $this->savedIn($saved, 'PaymentRequest')[0]['state']);
+	}//end testCaptureSettlesTheInvoiceAndBooksNoObjectReceipt()
+
+	/**
 	 * A plain invoice request against an invoice that only carries
 	 * `lifecycleState` settles it. Before this change the read took `state` and
 	 * every such capture landed in captured_unapplied (REQ-SCON-006).

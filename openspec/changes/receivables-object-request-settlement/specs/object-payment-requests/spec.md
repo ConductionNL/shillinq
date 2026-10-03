@@ -67,7 +67,7 @@ When `settledAt` is first set on a request with `subjectKind` `object` and a kno
 
 ### Requirement: An invoice asked for at create stands behind the request (REQ-ORS-006)
 
-When the leaf's `create` receives `invoiceRequested: true`, shillinq SHALL issue one `ARInvoice` to the debtor's `CustomerMaster` for the request's description and amount and SHALL set the request's `invoiceReference`, so a capture settles the invoice and books the income once.
+When the leaf's `create` receives `invoiceRequested: true`, shillinq SHALL issue one `ARInvoice` to the debtor's `CustomerMaster` for the request's description and amount and SHALL set the request's `invoiceReference`, so a capture settles the invoice and books the income once. Such a call SHALL name the `administrationId` that bills the invoice; without it, or without a debtor, the leaf SHALL refuse the call and write nothing.
 
 #### Scenario: A player who asked for an invoice gets one
 
