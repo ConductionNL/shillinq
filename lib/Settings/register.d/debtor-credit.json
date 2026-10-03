@@ -109,50 +109,6 @@
           }
         }
       }
-    },
-    "objects": [
-      {
-        "@self": {
-          "register": "shillinq",
-          "schema": "DebtorCredit",
-          "slug": "debtor-credit-demo-1"
-        },
-        "debtorKey": "joris@example.nl",
-        "amount": 85.0,
-        "remaining": 85.0,
-        "currency": "EUR",
-        "sourcePaymentRequestId": "payment-request-demo-credit-1",
-        "administrationId": "adm-shillinq-demo",
-        "state": "open"
-      },
-      {
-        "@self": {
-          "register": "shillinq",
-          "schema": "DebtorCredit",
-          "slug": "debtor-credit-demo-2"
-        },
-        "debtorKey": "cm-demo-customer-1",
-        "amount": 45.0,
-        "remaining": 20.0,
-        "currency": "EUR",
-        "sourcePaymentRequestId": "payment-request-demo-credit-2",
-        "administrationId": "adm-shillinq-demo",
-        "state": "open"
-      },
-      {
-        "@self": {
-          "register": "shillinq",
-          "schema": "DebtorCredit",
-          "slug": "debtor-credit-demo-3"
-        },
-        "debtorKey": "anna@example.nl",
-        "amount": 30.0,
-        "remaining": 0.0,
-        "currency": "EUR",
-        "sourcePaymentRequestId": "payment-request-demo-credit-3",
-        "administrationId": "adm-shillinq-demo",
-        "state": "used"
-      }
-    ]
+    }
   }
 }
