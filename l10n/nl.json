@@ -1,5 +1,16 @@
 {
     "translations": {
+        "Invoice requested": "Factuur gevraagd",
+        "Receipt sent at": "Betalingsbewijs verstuurd op",
+        "The reference the payer quotes on a bank transfer, set by the app that raises the request. At least 6 characters, and only one open request carries it.": "Het kenmerk dat de betaler bij een overboeking vermeldt, gezet door de app die het verzoek doet. Minstens 6 tekens, en maar één open verzoek draagt het.",
+        "The payer asked for an invoice for this payment.": "De betaler heeft om een factuur voor deze betaling gevraagd.",
+        "When the payer was mailed the receipt. Empty when there was no email address or the mail failed.": "Wanneer de betaler het betalingsbewijs is gemaild. Leeg als er geen e-mailadres was of de mail mislukte.",
+        "Your payment": "Je betaling",
+        "We received your payment.": "We hebben je betaling ontvangen.",
+        "Amount: %s": "Bedrag: %s",
+        "Paid on: %s": "Betaald op: %s",
+        "Reference: %s": "Kenmerk: %s",
+        "Keep this mail as your receipt.": "Bewaar deze mail als betalingsbewijs.",
         "Posting Report": "Boekingsrapport",
         "The findings of the last post: warnings for what was left out (suppliers, customers without an email address) and, on posting failed, the error naming the write that was refused.": "De bevindingen van de laatste boeking: waarschuwingen voor wat is weggelaten (leveranciers, klanten zonder e-mailadres) en, bij een mislukte boeking, de fout met de geweigerde schrijfactie.",
         "Accounts to review: {count}": "Nog te bekijken rekeningen: {count}",

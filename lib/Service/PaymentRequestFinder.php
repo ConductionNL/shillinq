@@ -97,9 +97,55 @@ final class PaymentRequestFinder {
 	 */
 	public function onSubject(string $register, string $schema, string $objectId, bool $asSystem = false): array {
 		$key = $this->validator->subjectKey(['register' => $register, 'schema' => $schema, 'id' => $objectId]);
+
+		return $this->scan(
+			keep: fn (array $request): bool => is_array($request['subject'] ?? null) === true
+				&& $this->validator->subjectKey((array)$request['subject']) === $key,
+			asSystem: $asSystem,
+		);
+	}//end onSubject()
+
+	/**
+	 * Every object request that carries this transfer reference, compared
+	 * without case, whatever its subject (REQ-ORS-002).
+	 *
+	 * @param string $reference The transfer reference.
+	 * @param bool $asSystem True to read past the caller's rights, so the
+	 *                       uniqueness check sees requests the caller cannot.
+	 *
+	 * @return array<int, array<string, mixed>> The requests.
+	 *
+	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) Whose rights a read runs under
+	 * is data the caller decides, not a mode that changes what the method does.
+	 */
+	public function withReference(string $reference, bool $asSystem = false): array {
+		$wanted = mb_strtolower(trim($reference));
+		if ($wanted === '') {
+			return [];
+		}
+
+		return $this->scan(
+			keep: static fn (array $request): bool => mb_strtolower(trim((string)($request['paymentReference'] ?? ''))) === $wanted,
+			asSystem: $asSystem,
+		);
+	}//end withReference()
+
+	/**
+	 * Read every object request to the last page and keep the ones asked for.
+	 *
+	 * @param callable(array<string, mixed>): bool $keep Decides per request.
+	 * @param bool $asSystem Read past the caller's rights.
+	 *
+	 * @return array<int, array<string, mixed>> The kept requests, each with its `id`.
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) See onSubject().
+	 */
+	private function scan(callable $keep, bool $asSystem): array {
 		$scoped = $this->objectService->setRegister($this->registerSlug())->setSchema(self::SCHEMA);
 
-		$mine = [];
+		$kept = [];
 		for ($page = 0; $page < self::MAX_PAGES; $page++) {
 			$rows = $scoped->findAll(
 				['filters' => ['subjectKind' => 'object'], 'limit' => self::PAGE, 'offset' => ($page * self::PAGE)],
@@ -109,22 +155,18 @@ final class PaymentRequestFinder {
 
 			foreach ($rows as $row) {
 				$request = ObjectIdentifier::recordWithId(candidate: $row);
-				if ($request === null || is_array($request['subject'] ?? null) === false) {
-					continue;
-				}
-
-				if ($this->validator->subjectKey((array)$request['subject']) === $key) {
-					$mine[] = $request;
+				if ($request !== null && $keep($request) === true) {
+					$kept[] = $request;
 				}
 			}
 
 			if (count($rows) < self::PAGE) {
 				break;
 			}
-		}//end for
+		}
 
-		return $mine;
-	}//end onSubject()
+		return $kept;
+	}//end scan()
 
 	/**
 	 * The register slug holding shillinq's own objects.

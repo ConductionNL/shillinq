@@ -358,4 +358,65 @@ final class ObjectPaymentRequestValidatorTest extends TestCase {
 
 		$this->validator->validate($this->contributionFor('x', ['beneficiary' => ['type' => 'learner']]));
 	}//end testABeneficiaryWithoutAnIdIsRefused()
+	/**
+	 * A transfer reference shorter than six characters is refused, so a stray
+	 * number in a remittance text cannot match a request (REQ-ORS-002).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
+	 */
+	public function testShortReferenceIsRefused(): void {
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('at least 6 characters');
+		$this->validator->validate($this->objectRequest(['paymentReference' => 'WC26']));
+	}//end testShortReferenceIsRefused()
+
+	/**
+	 * A reference another open request already carries is refused, whatever
+	 * its case; a closed request does not hold its reference (REQ-ORS-002).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
+	 */
+	public function testDuplicateOpenReferenceIsRefused(): void {
+		$other = ['subject' => ['type' => 'registration', 'register' => 'larpinq', 'schema' => 'Registration', 'id' => 'reg-7']];
+		$captured = $this->objectRequest(array_merge($other, ['id' => 'pr-1', 'state' => 'captured', 'paymentReference' => 'WC26-0042']));
+		$authorized = $this->objectRequest(array_merge($other, ['id' => 'pr-2', 'state' => 'authorized', 'paymentReference' => 'wc26-0042']));
+
+		$this->validator->validate($this->objectRequest(['paymentReference' => 'WC26-0042']), [], [$captured]);
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('The payment reference WC26-0042 is already on an open request');
+		$this->validator->validate($this->objectRequest(['paymentReference' => 'WC26-0042']), [], [$captured, $authorized]);
+	}//end testDuplicateOpenReferenceIsRefused()
+
+	/**
+	 * A request with a reference and the invoice flag is one the real
+	 * PaymentRequest schema accepts (REQ-ORS-002).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
+	 */
+	public function testARequestWithAReferenceFitsTheSchema(): void {
+		$request = $this->objectRequest(
+			[
+				'subject' => ['type' => 'registration', 'register' => 'larpinq', 'schema' => 'Registration', 'id' => 'reg-42'],
+				'requestType' => 'event-fee',
+				'amount' => 85.0,
+				'currency' => 'EUR',
+				'paymentGateway' => 'mollie',
+				'description' => 'WC26-0042 Winter Camp 2026',
+				'paymentReference' => 'WC26-0042',
+				'invoiceRequested' => false,
+				'receiptSentAt' => '2026-10-03T09:12:00Z',
+			]
+		);
+
+		$this->validator->validate($request);
+
+		self::assertSame([], RegisterSchema::errors('PaymentRequest', $request));
+	}//end testARequestWithAReferenceFitsTheSchema()
 }//end class

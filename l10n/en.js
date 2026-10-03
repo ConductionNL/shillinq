@@ -1,6 +1,17 @@
 OC.L10N.register(
     "shillinq",
     {
+        "Invoice requested": "Invoice requested",
+        "Receipt sent at": "Receipt sent at",
+        "The reference the payer quotes on a bank transfer, set by the app that raises the request. At least 6 characters, and only one open request carries it.": "The reference the payer quotes on a bank transfer, set by the app that raises the request. At least 6 characters, and only one open request carries it.",
+        "The payer asked for an invoice for this payment.": "The payer asked for an invoice for this payment.",
+        "When the payer was mailed the receipt. Empty when there was no email address or the mail failed.": "When the payer was mailed the receipt. Empty when there was no email address or the mail failed.",
+        "Your payment": "Your payment",
+        "We received your payment.": "We received your payment.",
+        "Amount: %s": "Amount: %s",
+        "Paid on: %s": "Paid on: %s",
+        "Reference: %s": "Reference: %s",
+        "Keep this mail as your receipt.": "Keep this mail as your receipt.",
         "Posting Report": "Posting Report",
         "The findings of the last post: warnings for what was left out (suppliers, customers without an email address) and, on posting failed, the error naming the write that was refused.": "The findings of the last post: warnings for what was left out (suppliers, customers without an email address) and, on posting failed, the error naming the write that was refused.",
         "Accounts to review: {count}": "Accounts to review: {count}",

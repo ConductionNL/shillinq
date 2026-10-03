@@ -67,6 +67,8 @@ final class ReportingRegistration {
 		(new DashboardWidgetRegistration())->register(context: $context);
 		// People-hours-budget: keeps the hours budget of an assignment current.
 		(new ProjectHoursRegistration())->register(context: $context);
+		// Receivables-object-request-settlement: the debtor's receipt mail.
+		(new ObjectRequestSettlementRegistration())->register(context: $context);
 
 	}//end register()
 }//end class
