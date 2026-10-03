@@ -6327,7 +6327,8 @@ OC.L10N.register(
         "Rate readings": "Meterstanden waarderen",
         "Meter": "Meter",
         "Price per unit (cents)": "Prijs per eenheid (cent)",
-        "Rating": "Waardering"
+        "Rating": "Waardering",
+        "Choose": "Kiezen"
     },
     "nplurals=2; plural=(n != 1);"
 )

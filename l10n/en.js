@@ -4116,7 +4116,8 @@ OC.L10N.register(
         "Rate readings": "Rate readings",
         "Meter": "Meter",
         "Price per unit (cents)": "Price per unit (cents)",
-        "Rating": "Rating"
+        "Rating": "Rating",
+        "Choose": "Choose"
     },
     "nplurals=2; plural=(n != 1);"
 )

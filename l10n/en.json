@@ -4118,7 +4118,8 @@
         "Rate readings": "Rate readings",
         "Meter": "Meter",
         "Price per unit (cents)": "Price per unit (cents)",
-        "Rating": "Rating"
+        "Rating": "Rating",
+        "Choose": "Choose"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
