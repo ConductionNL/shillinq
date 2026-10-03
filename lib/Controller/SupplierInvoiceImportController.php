@@ -58,6 +58,7 @@ use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
 
 /**
  * HTTP API for the dashboard "Import bill" modal (shillinq-bill-import-modal).
@@ -92,6 +93,7 @@ class SupplierInvoiceImportController extends Controller {
 	 * @param IUserSession $session User session.
 	 * @param LoggerInterface $logger Logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param SupplierInvoiceChecks  $checks The one duplicate rule every channel uses (purchasing-supplier-invoice-intake REQ-PSII-003).
 	 *
 	 * @return void
 	 */
@@ -102,6 +104,7 @@ class SupplierInvoiceImportController extends Controller {
 		private readonly IUserSession $session,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly SupplierInvoiceChecks $checks,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 
@@ -188,11 +191,12 @@ class SupplierInvoiceImportController extends Controller {
 	 */
 	private function importUbl(string $administrationId, string $ublXml): JSONResponse {
 		try {
-			$parsed = $this->supplierInvoiceService->parseUblInvoice(ublXml: $ublXml);
-			$invoiceNumber = (string)($parsed['invoiceNumber'] ?? '');
-			$supplierId = (string)($parsed['supplierId'] ?? '');
+			$parsed = $this->supplierInvoiceService->resolveSupplier(
+				administrationId: $administrationId,
+				parsed: $this->supplierInvoiceService->parseUblInvoice(ublXml: $ublXml)
+			);
 
-			if ($this->duplicateExists($administrationId, $invoiceNumber, $supplierId) === true) {
+			if ($this->duplicateOf(administrationId: $administrationId, invoice: $parsed) !== null) {
 				return new JSONResponse(
 					['error' => 'This invoice number already exists for this supplier'],
 					Http::STATUS_CONFLICT
@@ -244,26 +248,26 @@ class SupplierInvoiceImportController extends Controller {
 		}
 
 		$imported = 0;
-		$skipped = 0;
+		$skippedRows = [];
 		$records = [];
 		foreach ($rows as $row) {
 			$invoiceNumber = trim((string)($row['invoiceNumber'] ?? ''));
-			$supplierId = trim((string)($row['supplier'] ?? ''));
+			$supplier = $this->csvSupplier(administrationId: $administrationId, value: trim((string)($row['supplier'] ?? '')));
 
-			if ($invoiceNumber === '' || $supplierId === '') {
-				$skipped++;
+			if ($invoiceNumber === '' || $supplier === []) {
+				$skippedRows[] = ['invoiceNumber' => $invoiceNumber, 'reason' => 'incomplete'];
 				continue;
 			}
 
-			if ($this->duplicateExists($administrationId, $invoiceNumber, $supplierId) === true) {
-				$skipped++;
+			$duplicate = $this->duplicateOf(administrationId: $administrationId, invoice: $supplier + ['invoiceNumber' => $invoiceNumber]);
+			if ($duplicate !== null) {
+				$skippedRows[] = ['invoiceNumber' => $invoiceNumber, 'reason' => 'duplicate', 'duplicateOfId' => $duplicate];
 				continue;
 			}
 
-			$record = [
+			$record = $supplier + [
 				'administrationId' => $administrationId,
 				'invoiceNumber' => $invoiceNumber,
-				'supplierId' => $supplierId,
 				'invoiceDate' => trim((string)($row['invoiceDate'] ?? '')),
 				'totalInclVat' => $this->toCents($row['amount'] ?? null),
 				'totalVat' => $this->toCents($row['vatAmount'] ?? null),
@@ -281,7 +285,8 @@ class SupplierInvoiceImportController extends Controller {
 		return new JSONResponse(
 			[
 				'imported' => $imported,
-				'skipped' => $skipped,
+				'skipped' => count($skippedRows),
+				'skippedRows' => $skippedRows,
 				'records' => $records,
 			],
 			Http::STATUS_OK
@@ -290,50 +295,59 @@ class SupplierInvoiceImportController extends Controller {
 	}//end importCsv()
 
 	/**
-	 * Pre-check for an existing SupplierInvoice with the same
-	 * (administrationId, invoiceNumber, supplierId) tuple (REQ-BIM-005).
+	 * The earlier invoice this one repeats, by the one rule every channel uses.
+	 *
+	 * A failed lookup counts as a possible duplicate (REQ-PSII-003).
+	 *
+	 * @param string              $administrationId Tenant scope.
+	 * @param array<string,mixed> $invoice          invoiceNumber and supplierId or supplierIdentifier.
+	 *
+	 * @return string|null The earlier record's id, or null.
+	 *
+	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-2.1
+	 */
+	private function duplicateOf(string $administrationId, array $invoice): ?string {
+		$number = (string)($invoice['invoiceNumber'] ?? '');
+		if (isset($invoice['supplierId']) === true) {
+			return $this->checks->duplicateOf(administrationId: $administrationId, supplierId: (string)$invoice['supplierId'], invoiceNumber: $number);
+		}
+
+		return $this->checks->duplicateOfUnresolved(
+			administrationId: $administrationId,
+			supplierIdentifier: (string)($invoice['supplierIdentifier'] ?? ''),
+			invoiceNumber: $number
+		);
+
+	}//end duplicateOf()
+
+	/**
+	 * The supplier of a CSV row: the payee it names (uuid or vendor number,
+	 * else KvK or VAT number), else the value as stated.
 	 *
 	 * @param string $administrationId Tenant scope.
-	 * @param string $invoiceNumber Invoice number.
-	 * @param string $supplierId Supplier id.
+	 * @param string $value            The row's supplier column.
 	 *
-	 * @return bool True when a matching record already exists.
+	 * @return array<string,string> supplierId and/or supplierIdentifier; empty for an empty value.
 	 *
-	 * @spec openspec/specs/shillinq-bill-import-modal/spec.md
+	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-2.1
 	 */
-	private function duplicateExists(string $administrationId, string $invoiceNumber, string $supplierId): bool {
-		if ($invoiceNumber === '') {
-			return false;
+	private function csvSupplier(string $administrationId, string $value): array {
+		if ($value === '') {
+			return [];
 		}
 
-		try {
-			$rows = $this->objectService
-				->setRegister(self::REGISTER_SLUG)
-				->setSchema(self::SUPPLIER_INVOICE_SCHEMA)
-				->findAll(
-					[
-						'filters' => [
-							'administrationId' => $administrationId,
-							'invoiceNumber' => $invoiceNumber,
-							'supplierId' => $supplierId,
-						],
-					]
-				);
-		} catch (\Throwable $e) {
-			// A lookup failure must not mask a real import; treat as "no
-			// duplicate" and let the service's own idempotency guard the
-			// write.
-			return false;
+		$payee = $this->checks->payee(supplierId: $value);
+		if ($payee === null) {
+			$payee = $this->checks->resolvePayee(administrationId: $administrationId, kvkNumber: $value, vatNumber: $value);
 		}
 
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				return true;
-			}
+		if ($payee === null || (string)($payee['id'] ?? '') === '') {
+			return ['supplierIdentifier' => $value];
 		}
 
-		return false;
-	}//end duplicateExists()
+		return ['supplierId' => (string)$payee['id'], 'supplierIdentifier' => $value];
+
+	}//end csvSupplier()
 
 	/**
 	 * Persist a SupplierInvoice via OR's real ObjectService API (saveObject).

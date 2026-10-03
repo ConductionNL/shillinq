@@ -148,7 +148,9 @@ class ReconciliationResolutionService {
 		$updated = $this->objectService
 			->setRegister($register)
 			->setSchema('ReconciliationMatch')
-			->updateObject(
+			// PatchObject merges; updateObject would replace the match with
+			// these four keys and erase its line, targets and amount.
+			->patchObject(
 				$matchId,
 				[
 					'reconId' => $reconId,

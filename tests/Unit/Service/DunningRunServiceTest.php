@@ -32,8 +32,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\Dunning\DunningChannelAdapterInterface;
 use OCA\Shillinq\Service\Dunning\DunningChannelSendResult;
+use OCA\Shillinq\Service\Dunning\DunningStageDispatcher;
 use OCA\Shillinq\Service\Dunning\IncassoBureauAdapterInterface;
+use OCA\Shillinq\Service\Dunning\LogDunningChannelAdapter;
 use OCA\Shillinq\Service\Dunning\PostNLAdapterInterface;
 use OCA\Shillinq\Service\DunningRunService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
@@ -59,10 +62,20 @@ final class DunningRunServiceTest extends TestCase {
 		InMemoryObjectService $os,
 		?IncassoBureauAdapterInterface $incasso = null,
 		?PostNLAdapterInterface $postnl = null,
+		?DunningChannelAdapterInterface $channel = null,
 	): DunningRunService {
 		$container = $this->createStub(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
-			static function (string $id) use ($os, $incasso, $postnl) {
+			static function (string $id) use ($os, $incasso, $postnl, $channel) {
+				if ($id === DunningStageDispatcher::class) {
+					// The real dispatcher over the production binding (Application.php:
+					// LogDunningChannelAdapter) unless a test supplies its own adapter.
+					$adapter = $channel;
+					if ($adapter === null) {
+						$adapter = new LogDunningChannelAdapter(logger: new NullLogger());
+					}
+					return new DunningStageDispatcher(adapter: $adapter, logger: new NullLogger());
+				}
 				if ($id === IncassoBureauAdapterInterface::class) {
 					return ($incasso !== null) ? $incasso : new class implements IncassoBureauAdapterInterface {
 						public function transfer(string $administrationId, string $invoiceId, array $dossier): DunningChannelSendResult {
@@ -98,6 +111,7 @@ final class DunningRunServiceTest extends TestCase {
 					'register' => 'shillinq',
 					'dunning.dispute_pause_hard_deadline_days' => '60',
 					'dunning.admin_error_lookback_days' => '90',
+					'dunning.template.stage_3' => 'tpl-deployment-stage3',
 				];
 				return $values[$key] ?? $default;
 			}
@@ -224,6 +238,227 @@ final class DunningRunServiceTest extends TestCase {
 		self::assertNotNull($persisted['executedOn']);
 
 	}//end testExecuteStagePersistsExecutedRun()
+
+	/**
+	 * Execute a run with no template anywhere, or with the given one.
+	 *
+	 * @param int         $stageNr    The stage.
+	 * @param string|null $templateId The caller's template, or none.
+	 *
+	 * @return array<string,mixed> The persisted run.
+	 */
+	private function runWithTemplate(int $stageNr, ?string $templateId): array {
+		$params = [
+			'invoiceId' => 'inv-1',
+			'ladderId' => 'ladder-1',
+			'stageNr' => $stageNr,
+			'channel' => 'EMAIL',
+			'recipientEmail' => 'klant@example.nl',
+		];
+		if ($templateId !== null) {
+			$params['templateId'] = $templateId;
+		}
+
+		return $this->makeService(os: new OpenRegisterFaithfulObjectService())->executeStage(administrationId: 'adm-1', params: $params);
+	}//end runWithTemplate()
+
+	/**
+	 * A run whose caller and stage name no template records the registry's
+	 * default for the stage (REQ-CCD-016).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/billing-inherited-defects/specs/bookkeeping-credit-control-dunning/spec.md (REQ-CCD-016)
+	 */
+	public function testAStageWithoutATemplateGetsTheRegistryDefault(): void {
+		self::assertSame('tpl-stage2-herinnering-nl', $this->runWithTemplate(stageNr: 2, templateId: null)['templateId']);
+		self::assertSame('tpl-stage1-vriendelijk-nl', $this->runWithTemplate(stageNr: 1, templateId: '')['templateId']);
+	}//end testAStageWithoutATemplateGetsTheRegistryDefault()
+
+	/**
+	 * The registry honours the deployment's app config override (REQ-CCD-016).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/billing-inherited-defects/specs/bookkeeping-credit-control-dunning/spec.md (REQ-CCD-016)
+	 */
+	public function testTheRegistryDefaultHonoursTheAppConfigOverride(): void {
+		self::assertSame('tpl-deployment-stage3', $this->runWithTemplate(stageNr: 3, templateId: null)['templateId']);
+	}//end testTheRegistryDefaultHonoursTheAppConfigOverride()
+
+	/**
+	 * A template the caller names wins over the registry (REQ-CCD-016).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/billing-inherited-defects/specs/bookkeeping-credit-control-dunning/spec.md (REQ-CCD-016)
+	 */
+	public function testANamedTemplateWinsOverTheRegistry(): void {
+		self::assertSame('tpl-custom', $this->runWithTemplate(stageNr: 2, templateId: 'tpl-custom')['templateId']);
+	}//end testANamedTemplateWinsOverTheRegistry()
+
+	/**
+	 * Issue #1687: executeStage() dispatches the run through the bound
+	 * DunningChannelAdapterInterface and records the adapter's outcome, not a
+	 * status the caller supplied (REQ-RAD-003, design D6).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
+	 */
+	public function testExecuteStageDispatchesThroughTheChannelAdapterAndRecordsItsOutcome(): void {
+		$os = new OpenRegisterFaithfulObjectService();
+		$adapter = $this->createMock(DunningChannelAdapterInterface::class);
+		$adapter->expects($this->once())
+			->method('send')
+			->with(
+				'EMAIL',
+				$this->callback(
+					static function (array $payload): bool {
+						return ($payload['invoiceId'] ?? null) === 'inv-1'
+							&& ($payload['administrationId'] ?? null) === 'adm-1'
+							&& ($payload['stageNr'] ?? null) === 1
+							&& ($payload['recipientEmail'] ?? null) === 'klant@example.nl'
+							&& ($payload['subject'] ?? null) === 'Reminder factuur'
+							&& ($payload['body'] ?? null) === 'Vriendelijk verzoek';
+					}
+				)
+			)
+			->willReturn(new DunningChannelSendResult(channel: 'EMAIL', deliveryStatus: 'FAILED', errorMessage: 'Mailbox unavailable'));
+		$service = $this->makeService(os: $os, channel: $adapter);
+
+		$persisted = $service->executeStage(administrationId: 'adm-1', params: [
+			'invoiceId' => 'inv-1',
+			'ladderId' => 'ladder-1',
+			'stageNr' => 1,
+			'templateId' => 'tpl-stage1',
+			'channel' => 'EMAIL',
+			'recipientEmail' => 'klant@example.nl',
+			'renderedSubject' => 'Reminder factuur',
+			'renderedBody' => 'Vriendelijk verzoek',
+			// A caller's claim is not evidence: the adapter's outcome wins.
+			'deliveryStatus' => 'DELIVERED',
+		]);
+
+		self::assertSame('FAILED', $persisted['deliveryStatus']);
+		self::assertSame('executed', $persisted['lifecycleState']);
+
+	}//end testExecuteStageDispatchesThroughTheChannelAdapterAndRecordsItsOutcome()
+
+	/**
+	 * Issue #1687: a delivered dispatch is recorded as delivered, with the
+	 * provider's postage evidence stamped on the run.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
+	 */
+	public function testExecuteStageRecordsTheAdaptersDeliveredStatusAndPostageEvidence(): void {
+		$os = new OpenRegisterFaithfulObjectService();
+		$adapter = $this->createMock(DunningChannelAdapterInterface::class);
+		$adapter->expects($this->once())
+			->method('send')
+			->with('REGISTERED_POST', $this->anything())
+			->willReturn(
+				new DunningChannelSendResult(
+					channel: 'REGISTERED_POST',
+					deliveryStatus: 'DELIVERED',
+					providerMessageId: 'postnl-1',
+					extras: ['barcode' => '3S0000000000001', 'trackingUrl' => 'https://postnl.nl/tracktrace/3S0000000000001'],
+				)
+			);
+		$service = $this->makeService(os: $os, channel: $adapter);
+
+		$persisted = $service->executeStage(administrationId: 'adm-1', params: [
+			'invoiceId' => 'inv-1',
+			'ladderId' => 'ladder-1',
+			'stageNr' => 4,
+			'templateId' => 'tpl-stage4',
+			'channel' => 'REGISTERED_POST',
+		]);
+
+		self::assertSame('DELIVERED', $persisted['deliveryStatus']);
+		self::assertSame('3S0000000000001', $persisted['postageStatus']['barcode']);
+
+	}//end testExecuteStageRecordsTheAdaptersDeliveredStatusAndPostageEvidence()
+
+	/**
+	 * Issue #1687: an adapter that throws leaves a FAILED run, never a run that
+	 * reads as sent.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
+	 */
+	public function testExecuteStageRecordsFailedWhenTheAdapterThrows(): void {
+		$os = new OpenRegisterFaithfulObjectService();
+		$adapter = $this->createMock(DunningChannelAdapterInterface::class);
+		$adapter->expects($this->once())
+			->method('send')
+			->willThrowException(new RuntimeException('SMTP connection refused'));
+		$service = $this->makeService(os: $os, channel: $adapter);
+
+		$persisted = $service->executeStage(administrationId: 'adm-1', params: [
+			'invoiceId' => 'inv-1',
+			'ladderId' => 'ladder-1',
+			'stageNr' => 1,
+			'templateId' => 'tpl-stage1',
+			'channel' => 'EMAIL',
+			'deliveryStatus' => 'DELIVERED',
+		]);
+
+		self::assertSame('FAILED', $persisted['deliveryStatus']);
+
+	}//end testExecuteStageRecordsFailedWhenTheAdapterThrows()
+
+	/**
+	 * Issue #1687: a paused invoice is refused before anything is dispatched.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
+	 */
+	public function testExecuteStageDispatchesNothingWhilePaused(): void {
+		$os = new OpenRegisterFaithfulObjectService();
+		$os->seed(schema: 'DunningPauseDispute', rows: [
+			['id' => 'pause-1', 'administrationId' => 'adm-1', 'invoiceId' => 'inv-1', 'lifecycleState' => 'active'],
+		]);
+		$adapter = $this->createMock(DunningChannelAdapterInterface::class);
+		$adapter->expects($this->never())->method('send');
+		$service = $this->makeService(os: $os, channel: $adapter);
+
+		$this->expectException(RuntimeException::class);
+		$service->executeStage(administrationId: 'adm-1', params: ['invoiceId' => 'inv-1', 'stageNr' => 1, 'channel' => 'EMAIL']);
+
+	}//end testExecuteStageDispatchesNothingWhilePaused()
+
+	/**
+	 * Issue #1687: the log-only production binding sends nothing, so a run it
+	 * handles never records DELIVERED (task 2.3: no channel that did not send
+	 * ever records delivered).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
+	 */
+	public function testTheLogOnlyChannelAdapterNeverRecordsDelivered(): void {
+		$os = new OpenRegisterFaithfulObjectService();
+		$service = $this->makeService(os: $os);
+
+		foreach (['EMAIL', 'eMAILPostRegistration', 'REGISTERED_POST', 'COLLECTION_AGENCY_API'] as $nr => $channel) {
+			$persisted = $service->executeStage(administrationId: 'adm-1', params: [
+				'invoiceId' => 'inv-1',
+				'ladderId' => 'ladder-1',
+				'stageNr' => ($nr + 1),
+				'templateId' => 'tpl',
+				'channel' => $channel,
+				'recipientEmail' => 'klant@example.nl',
+			]);
+			self::assertSame('PENDING', $persisted['deliveryStatus'], $channel . ' was recorded as delivered while nothing was sent');
+			self::assertNull($persisted['postageStatus'], $channel . ' carries postage evidence for a letter that was never posted');
+		}
+
+	}//end testTheLogOnlyChannelAdapterNeverRecordsDelivered()
 
 	/**
 	 * REQ-CCD-004: pause sets hardDeadlineEindigt at pauzeStart + 60 days.
@@ -956,5 +1191,252 @@ final class DunningRunServiceTest extends TestCase {
 		self::assertCount(1, (array)$pause['evidenceRefs']);
 
 	}//end testPauseAcceptsWellFormedEvidenceUri()
+
+	/**
+	 * A store with a three-stage ladder and one voluntary contribution invoice.
+	 *
+	 * @return OpenRegisterFaithfulObjectService The store.
+	 */
+	private function voluntaryStore(): OpenRegisterFaithfulObjectService {
+		$os = new OpenRegisterFaithfulObjectService();
+		$os->seed(schema: 'DunningLadder', rows: [
+			[
+				'id' => 'ladder-1',
+				'stages' => [
+					['nr' => 1, 'daysAfterExpiryDate' => 0,  'channel' => 'EMAIL', 'templateId' => 'tpl-friendly'],
+					['nr' => 2, 'daysAfterExpiryDate' => 14, 'channel' => 'EMAIL', 'templateId' => 'tpl-firm'],
+					['nr' => 3, 'daysAfterExpiryDate' => 60, 'channel' => 'REGISTERED_POST', 'templateId' => 'tpl-final'],
+				],
+			],
+		]);
+		$os->seed(schema: 'ARInvoice', rows: [$this->voluntaryInvoice()]);
+
+		return $os;
+	}//end voluntaryStore()
+
+	/**
+	 * A voluntary ouderbijdrage invoice, 60 days past due on 2026-12-31.
+	 *
+	 * @return array<string, mixed> The invoice.
+	 */
+	private function voluntaryInvoice(): array {
+		return [
+			'id' => 'inv-vol',
+			'dueDate' => '2026-11-01',
+			'grossAmount' => 60.0,
+			'customerId' => 'cm-1',
+			'lifecycleState' => 'overdue',
+			'contribution' => ['kind' => 'parental-contribution', 'voluntary' => true],
+		];
+	}//end voluntaryInvoice()
+
+	/**
+	 * A voluntary contribution 60 days late gets the first, friendly stage once,
+	 * without costs; a later tick runs nothing; stage 2 is refused even when
+	 * asked for directly; a compulsory invoice of the same age still reaches
+	 * stage 3 (REQ-SCON-008).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-008)
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-012)
+	 */
+	public function testAVoluntaryContributionGetsOneReminderAtMost(): void {
+		$os = $this->voluntaryStore();
+		$service = $this->makeService(os: $os);
+		$now = new \DateTimeImmutable('2026-12-31T12:00:00Z');
+
+		$first = $service->tickInvoice(
+			administrationId: 'adm-1',
+			invoice: $this->voluntaryInvoice(),
+			baseLadderId: 'ladder-1',
+			params: ['collectionCostAmount' => 40.0, 'interestAmount' => 1.5],
+			now: $now
+		);
+
+		self::assertNotNull($first);
+		self::assertSame(1, (int)$first['stageNr']);
+		// Its own letter, not the ladder's stage 1 template (REQ-SCON-012).
+		self::assertSame('tpl-dunning-voluntary-contribution-nl', $first['templateId']);
+		self::assertStringContainsString('vrijwillig', (string)$first['renderedBody']);
+		self::assertNull($first['collectionCostAmount']);
+		self::assertNull($first['interestAmount']);
+
+		$second = $service->tickInvoice(
+			administrationId: 'adm-1',
+			invoice: $this->voluntaryInvoice(),
+			baseLadderId: 'ladder-1',
+			params: [],
+			now: $now->modify('+30 days')
+		);
+		self::assertNull($second);
+		self::assertCount(1, $os->dump(schema: 'DunningRun'));
+
+		try {
+			$service->executeStage(administrationId: 'adm-1', params: ['invoiceId' => 'inv-vol', 'stageNr' => 2]);
+			self::fail('stage 2 ran for a voluntary contribution');
+		} catch (\RuntimeException $e) {
+			self::assertStringContainsString('one reminder at most', $e->getMessage());
+		}
+
+		self::assertCount(1, $os->dump(schema: 'DunningRun'));
+
+		$compulsory = $this->voluntaryInvoice();
+		$compulsory['id'] = 'inv-comp';
+		$compulsory['contribution']['voluntary'] = false;
+		$run = $service->tickInvoice(
+			administrationId: 'adm-1',
+			invoice: $compulsory,
+			baseLadderId: 'ladder-1',
+			params: [],
+			now: $now
+		);
+		self::assertSame(3, (int)$run['stageNr']);
+	}//end testAVoluntaryContributionGetsOneReminderAtMost()
+
+	/**
+	 * Asked directly, executeStage runs the first stage for a voluntary
+	 * contribution only once: a second first-stage run is refused too.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-008)
+	 */
+	public function testExecuteStageRefusesASecondReminderForAVoluntaryContribution(): void {
+		$service = $this->makeService(os: $this->voluntaryStore());
+
+		$run = $service->executeStage(
+			administrationId: 'adm-1',
+			params: ['invoiceId' => 'inv-vol', 'stageNr' => 1, 'collectionCostAmount' => 40.0]
+		);
+		self::assertNull($run['collectionCostAmount']);
+
+		$this->expectException(\RuntimeException::class);
+		$service->executeStage(administrationId: 'adm-1', params: ['invoiceId' => 'inv-vol', 'stageNr' => 1]);
+	}//end testExecuteStageRefusesASecondReminderForAVoluntaryContribution()
+
+	/**
+	 * A voluntary contribution is never handed to a collection agency: the
+	 * transfer is refused, the run stays unsealed and the agency adapter is
+	 * never called (REQ-SCON-008).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-008)
+	 */
+	public function testAVoluntaryContributionIsNeverHandedToACollectionAgency(): void {
+		$os = $this->voluntaryStore();
+		$os->seed(schema: 'DunningRun', rows: [
+			[
+				'id' => 'dr-vol',
+				'administrationId' => 'adm-1',
+				'invoiceId' => 'inv-vol',
+				'stageNr' => 1,
+				'lifecycleState' => 'executed',
+			],
+		]);
+		$agency = new class implements IncassoBureauAdapterInterface {
+			/**
+			 * Dossiers the agency received.
+			 *
+			 * @var int
+			 */
+			public int $calls = 0;
+
+			public function transfer(string $administrationId, string $invoiceId, array $dossier): DunningChannelSendResult {
+				$this->calls++;
+				return new DunningChannelSendResult(channel: 'COLLECTION_AGENCY_API', deliveryStatus: 'DELIVERED');
+			}
+		};
+		$service = $this->makeService(os: $os, incasso: $agency);
+
+		$result = $service->transferToIncasso(
+			administrationId: 'adm-1',
+			invoiceId: 'inv-vol',
+			dossier: ['invoiceId' => 'inv-vol'],
+			dunningRunId: 'dr-vol'
+		);
+
+		self::assertSame('FAILED', $result->deliveryStatus);
+		self::assertStringContainsString('collection agency', (string)$result->errorMessage);
+		self::assertSame(0, $agency->calls);
+		$runs = $os->dump(schema: 'DunningRun');
+		self::assertSame('executed', end($runs)['lifecycleState']);
+	}//end testAVoluntaryContributionIsNeverHandedToACollectionAgency()
+
+	/**
+	 * Asked directly with the generic stage 1 letter, executeStage still saves
+	 * the voluntary letter in the invoice's language; a compulsory invoice
+	 * keeps the template it was given (REQ-SCON-012).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-012)
+	 */
+	public function testExecuteStageAlwaysUsesTheVoluntaryTemplate(): void {
+		$os = $this->voluntaryStore();
+		$english = $this->voluntaryInvoice();
+		$english['id'] = 'inv-vol-en';
+		$english['contribution']['language'] = 'en';
+		$compulsory = $this->voluntaryInvoice();
+		$compulsory['id'] = 'inv-comp';
+		$compulsory['contribution']['voluntary'] = false;
+		$os->seed(schema: 'ARInvoice', rows: [$english, $compulsory]);
+		$service = $this->makeService(os: $os);
+		$generic = [
+			'stageNr' => 1,
+			'templateId' => 'tpl-dunning-stage1-nl',
+			'renderedSubject' => 'Vriendelijke herinnering',
+			'renderedBody' => 'Maak het bedrag over naar IBAN NL00BANK0123456789.',
+		];
+
+		$run = $service->executeStage(administrationId: 'adm-1', params: ['invoiceId' => 'inv-vol'] + $generic);
+		self::assertSame('tpl-dunning-voluntary-contribution-nl', $run['templateId']);
+		self::assertStringNotContainsString('IBAN', (string)$run['renderedBody']);
+		self::assertStringContainsString('Deze bijdrage is vrijwillig.', (string)$run['renderedBody']);
+		self::assertNotSame('Vriendelijke herinnering', $run['renderedSubject']);
+
+		$run = $service->executeStage(administrationId: 'adm-1', params: ['invoiceId' => 'inv-vol-en'] + $generic);
+		self::assertSame('tpl-dunning-voluntary-contribution-en', $run['templateId']);
+		self::assertStringContainsString('This contribution is voluntary.', (string)$run['renderedBody']);
+
+		$run = $service->executeStage(administrationId: 'adm-1', params: ['invoiceId' => 'inv-comp'] + $generic);
+		self::assertSame('tpl-dunning-stage1-nl', $run['templateId']);
+		self::assertStringContainsString('IBAN', (string)$run['renderedBody']);
+	}//end testExecuteStageAlwaysUsesTheVoluntaryTemplate()
+
+	/**
+	 * A contribution the parent declined is never reminded: the tick runs
+	 * nothing and a direct call is refused, so no run exists (REQ-SCON-014).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-014)
+	 */
+	public function testADeclinedContributionIsNeverReminded(): void {
+		$declined = $this->voluntaryInvoice();
+		$declined['lifecycleState'] = 'declined';
+		$os = $this->voluntaryStore();
+		$os->seed(schema: 'ARInvoice', rows: [array_merge($declined, ['id' => 'inv-declined'])]);
+		$service = $this->makeService(os: $os);
+
+		$tick = $service->tickInvoice(
+			administrationId: 'adm-1',
+			invoice: array_merge($declined, ['id' => 'inv-declined']),
+			baseLadderId: 'ladder-1',
+			params: [],
+			now: new \DateTimeImmutable('2026-12-31T12:00:00Z')
+		);
+		self::assertNull($tick);
+
+		try {
+			$service->executeStage(administrationId: 'adm-1', params: ['invoiceId' => 'inv-declined', 'stageNr' => 1]);
+			self::fail('a declined contribution was reminded');
+		} catch (RuntimeException $e) {
+			self::assertStringContainsString('will not pay', $e->getMessage());
+		}
+
+		self::assertSame([], $os->dump(schema: 'DunningRun'));
+	}//end testADeclinedContributionIsNeverReminded()
 
 }//end class

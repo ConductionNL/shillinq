@@ -102,6 +102,7 @@ import CashMinus from 'vue-material-design-icons/CashMinus.vue'
 import CashMultiple from 'vue-material-design-icons/CashMultiple.vue'
 import CashPlus from 'vue-material-design-icons/CashPlus.vue'
 import CashRefund from 'vue-material-design-icons/CashRefund.vue'
+import CashRegister from 'vue-material-design-icons/CashRegister.vue'
 import CashSync from 'vue-material-design-icons/CashSync.vue'
 import CertificateOutline from 'vue-material-design-icons/CertificateOutline.vue'
 import ChartBar from 'vue-material-design-icons/ChartBar.vue'
@@ -420,6 +421,7 @@ export default {
 	CashMultiple,
 	CashPlus,
 	CashRefund,
+	CashRegister,
 	CashSync,
 	CertificateOutline,
 	ChartBar,

@@ -40,8 +40,17 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
+use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\SupplierInvoiceService;
+use OCA\Shillinq\Service\Tax\VatNumberCheck;
+use OCA\Shillinq\Service\ViesService;
+use OCA\Shillinq\Tests\Unit\Service\Purchasing\SupplierInvoiceChecksTest;
+use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
+use OCP\Http\Client\IClient;
+use OCP\Http\Client\IClientService;
+use OCP\Http\Client\IResponse;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -87,6 +96,7 @@ final class SupplierInvoiceServiceTest extends TestCase {
 	 * @param array<string,array<int,array<string,mixed>>> $data Schema => rows.
 	 * @param array<int,array<string,mixed>> $saved Captured saves (by reference).
 	 * @param array<int,string> $accessibleAdministrations Tenants canAccess returns true for.
+	 * @param string|null $vies A VIES answer: the service then checks foreign sellers; null leaves the check out.
 	 *
 	 * @return SupplierInvoiceService
 	 */
@@ -94,6 +104,7 @@ final class SupplierInvoiceServiceTest extends TestCase {
 		array $data,
 		array &$saved,
 		array $accessibleAdministrations,
+		?string $vies=null,
 	): SupplierInvoiceService {
 		// ADR-084: this file's own duck-typed stub reached the service through a
 		// ContainerInterface mock, while `objectService:` got a bare createMock() —
@@ -110,11 +121,16 @@ final class SupplierInvoiceServiceTest extends TestCase {
 			}
 		);
 
+		$settings = $this->createStub(SettingsService::class);
+		$settings->method('getRegisterSlug')->willReturn('shillinq');
+
 		return new SupplierInvoiceService(
 			appConfig: $this->appConfig,
 			administrationContext: $administrationContext,
 			logger: $this->logger,
 			objectService: $stub,
+			checks: new SupplierInvoiceChecks($stub, $settings),
+			vatNumberCheck: $this->vatNumberCheck(store: $stub, settings: $settings, answer: $vies),
 		);
 
 	}//end buildService()
@@ -276,7 +292,10 @@ XML;
 		);
 
 		self::assertSame('INV-ERS-2026-00445', $persisted['invoiceNumber']);
-		self::assertSame('vendor-ers-001', $persisted['supplierId']);
+		// The party id names no payee, so it is kept as the identifier and
+		// supplierId stays empty: a raw id there fails the uuid format.
+		self::assertSame('vendor-ers-001', $persisted['supplierIdentifier']);
+		self::assertArrayNotHasKey('supplierId', $persisted);
 		self::assertSame('adm-1', $persisted['administrationId']);
 		self::assertSame('received', $persisted['statusCode']);
 		self::assertSame('ubl', $persisted['sourceFormat']);
@@ -576,4 +595,190 @@ XML;
 		);
 
 	}//end testSetStatusMasksCrossTenantAsNotFound()
+
+	/**
+	 * A UBL invoice naming the supplier by KvK and VAT number, with its IBAN.
+	 *
+	 * @param string $invoiceNumber The number.
+	 * @param string $iban          The IBAN in PaymentMeans.
+	 * @param string $kvk           The KvK number in PartyLegalEntity.
+	 *
+	 * @return string
+	 */
+	private function ublFromDrukkerij(string $invoiceNumber, string $iban, string $kvk='12345678'): string {
+		return <<<XML
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+         xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
+         xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2">
+    <cbc:ID>{$invoiceNumber}</cbc:ID>
+    <cbc:IssueDate>2026-09-01</cbc:IssueDate>
+    <cbc:DocumentCurrencyCode>EUR</cbc:DocumentCurrencyCode>
+    <cac:AccountingSupplierParty>
+        <cac:Party>
+            <cbc:EndpointID schemeID="0106">{$kvk}</cbc:EndpointID>
+            <cac:PartyTaxScheme>
+                <cbc:CompanyID>NL812345678B01</cbc:CompanyID>
+                <cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme>
+            </cac:PartyTaxScheme>
+            <cac:PartyLegalEntity>
+                <cbc:RegistrationName>Drukkerij Van der Meer B.V.</cbc:RegistrationName>
+                <cbc:CompanyID schemeID="0106">{$kvk}</cbc:CompanyID>
+            </cac:PartyLegalEntity>
+        </cac:Party>
+    </cac:AccountingSupplierParty>
+    <cac:PaymentMeans>
+        <cbc:PaymentMeansCode>58</cbc:PaymentMeansCode>
+        <cac:PayeeFinancialAccount><cbc:ID>{$iban}</cbc:ID></cac:PayeeFinancialAccount>
+    </cac:PaymentMeans>
+    <cac:TaxTotal><cbc:TaxAmount>210.00</cbc:TaxAmount></cac:TaxTotal>
+    <cac:LegalMonetaryTotal>
+        <cbc:LineExtensionAmount>1000.00</cbc:LineExtensionAmount>
+        <cbc:PayableAmount>1210.00</cbc:PayableAmount>
+    </cac:LegalMonetaryTotal>
+    <cac:InvoiceLine>
+        <cbc:ID>1</cbc:ID>
+        <cbc:InvoicedQuantity>1</cbc:InvoicedQuantity>
+        <cbc:LineExtensionAmount>1000.00</cbc:LineExtensionAmount>
+        <cac:Item><cbc:Description>Folders</cbc:Description><cac:ClassifiedTaxCategory><cbc:Percent>21</cbc:Percent></cac:ClassifiedTaxCategory></cac:Item>
+        <cac:Price><cbc:PriceAmount>1000.00</cbc:PriceAmount></cac:Price>
+    </cac:InvoiceLine>
+</Invoice>
+XML;
+
+	}//end ublFromDrukkerij()
+
+	/**
+	 * REQ-PSII-001: a UBL invoice finds its payee by KvK and keeps the IBAN it names.
+	 *
+	 * @return void
+	 */
+	public function testAUblInvoiceFindsItsSupplierByKvk(): void {
+		$saved = [];
+		$service = $this->buildService(data: SupplierInvoiceChecksTest::records(), saved: $saved, accessibleAdministrations: [SupplierInvoiceChecksTest::ADMIN]);
+
+		$persisted = $service->ingestUBLInvoice(administrationId: SupplierInvoiceChecksTest::ADMIN, ublXml: $this->ublFromDrukkerij('2026-0460', 'NL20INGB0001234567'));
+
+		self::assertSame(SupplierInvoiceChecksTest::DRUKKERIJ, $persisted['supplierId']);
+		self::assertSame('NL20INGB0001234567', $persisted['payeeIban']);
+		self::assertArrayNotHasKey('ibanMismatch', $persisted);
+		self::assertArrayNotHasKey('duplicateOfId', $persisted);
+		unset($persisted['id']);
+		self::assertSame([], RegisterSchema::errors('SupplierInvoice', $persisted));
+
+	}//end testAUblInvoiceFindsItsSupplierByKvk()
+
+	/**
+	 * An invoice from an unknown supplier is saved with the identifier it states.
+	 *
+	 * @return void
+	 */
+	public function testAnUnknownSupplierIsSavedWithItsIdentifier(): void {
+		$saved = [];
+		$service = $this->buildService(data: SupplierInvoiceChecksTest::records(), saved: $saved, accessibleAdministrations: [SupplierInvoiceChecksTest::ADMIN]);
+
+		$persisted = $service->ingestUBLInvoice(
+			administrationId: SupplierInvoiceChecksTest::ADMIN,
+			ublXml: str_replace('NL812345678B01', 'NL000000000B01', $this->ublFromDrukkerij('2026-0461', 'NL20INGB0001234567', '99999999'))
+		);
+
+		self::assertArrayNotHasKey('supplierId', $persisted);
+		self::assertSame('99999999', $persisted['supplierIdentifier']);
+		unset($persisted['id']);
+		self::assertSame([], RegisterSchema::errors('SupplierInvoice', $persisted));
+
+	}//end testAnUnknownSupplierIsSavedWithItsIdentifier()
+
+	/**
+	 * REQ-PSII-004: an imported invoice naming another IBAN carries the warning.
+	 *
+	 * @return void
+	 */
+	public function testAnImportedInvoiceWithAnotherIbanIsFlagged(): void {
+		$saved = [];
+		$service = $this->buildService(data: SupplierInvoiceChecksTest::records(), saved: $saved, accessibleAdministrations: [SupplierInvoiceChecksTest::ADMIN]);
+
+		$persisted = $service->ingestUBLInvoice(administrationId: SupplierInvoiceChecksTest::ADMIN, ublXml: $this->ublFromDrukkerij('2026-0456', 'NL02ABNA0123456789'));
+
+		self::assertSame('NL02ABNA0123456789 / NL20INGB0001234567', $persisted['ibanMismatch']);
+
+	}//end testAnImportedInvoiceWithAnotherIbanIsFlagged()
+
+	/**
+	 * VIES calls made by the check, as URLs.
+	 *
+	 * @var list<string>
+	 */
+	private array $viesCalls = [];
+
+	/**
+	 * The real VIES check over a stubbed HTTP client.
+	 *
+	 * @param InMemoryObjectServiceStub $store    The store.
+	 * @param SettingsService           $settings The settings.
+	 * @param string|null               $answer   The VIES answer, or null for no check at all.
+	 *
+	 * @return VatNumberCheck|null
+	 */
+	private function vatNumberCheck(InMemoryObjectServiceStub $store, SettingsService $settings, ?string $answer): ?VatNumberCheck {
+		if ($answer === null) {
+			return null;
+		}
+
+		$client = $this->createMock(IClient::class);
+		$client->method('get')->willReturnCallback(
+			function (string $url) use ($answer): IResponse {
+				$this->viesCalls[] = $url;
+				$response = $this->createMock(IResponse::class);
+				$response->method('getBody')->willReturn($answer);
+
+				return $response;
+			}
+		);
+		$clients = $this->createMock(IClientService::class);
+		$clients->method('newClient')->willReturn($client);
+
+		return new VatNumberCheck(new ViesService($this->appConfig, $clients, $this->logger, $store), $store, $settings, $this->logger);
+
+	}//end vatNumberCheck()
+
+	/**
+	 * Scenarios "A UBL invoice fills the seller's number" and "A Belgian bill arrives".
+	 *
+	 * @return void
+	 */
+	public function testABelgianBillCarriesTheSellersNumberAndItsCheck(): void {
+		$saved = [];
+		$service = $this->buildService(data: SupplierInvoiceChecksTest::records(), saved: $saved, accessibleAdministrations: [SupplierInvoiceChecksTest::ADMIN], vies: '{"valid": true, "name": "Softwarehuis BVBA"}');
+
+		$persisted = $service->ingestUBLInvoice(
+			administrationId: SupplierInvoiceChecksTest::ADMIN,
+			ublXml: str_replace('NL812345678B01', 'BE0000000000', $this->ublFromDrukkerij('SH-2026-118', 'BE68539007547034', '99999999'))
+		);
+
+		self::assertSame('BE0000000000', $persisted['sellerVatId']);
+		self::assertSame('valid', $persisted['sellerVatIdValidationStatus']);
+		self::assertCount(1, $this->viesCalls);
+		self::assertStringContainsString('/BE/vat/0000000000', $this->viesCalls[0]);
+		unset($persisted['id']);
+		self::assertSame([], RegisterSchema::errors('SupplierInvoice', $persisted));
+
+	}//end testABelgianBillCarriesTheSellersNumberAndItsCheck()
+
+	/**
+	 * A Dutch bill keeps the seller's number and is not sent to VIES.
+	 *
+	 * @return void
+	 */
+	public function testADutchBillKeepsTheNumberWithoutACheck(): void {
+		$saved = [];
+		$service = $this->buildService(data: SupplierInvoiceChecksTest::records(), saved: $saved, accessibleAdministrations: [SupplierInvoiceChecksTest::ADMIN], vies: '{"valid": true}');
+
+		$persisted = $service->ingestUBLInvoice(administrationId: SupplierInvoiceChecksTest::ADMIN, ublXml: $this->ublFromDrukkerij('2026-0470', 'NL20INGB0001234567'));
+
+		self::assertSame('NL812345678B01', $persisted['sellerVatId']);
+		self::assertArrayNotHasKey('sellerVatIdValidationStatus', $persisted);
+		self::assertSame([], $this->viesCalls);
+
+	}//end testADutchBillKeepsTheNumberWithoutACheck()
 }//end class

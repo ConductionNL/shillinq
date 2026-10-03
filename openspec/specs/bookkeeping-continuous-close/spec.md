@@ -22,7 +22,6 @@ This specification defines the requirements for bookkeeping continuous close in 
 
 @e2e exclude pure backend: soft-close flux logic — not browser-testable
 
-
 ### REQ-CLS-001: Period lifecycle SHALL enforce stage transitions and posting restrictions per stage
 
 The system MUST support a period lifecycle with five stages:
@@ -366,10 +365,6 @@ posting, and generated JournalEntry MUST carry:
 - **WHEN** an auditor inspects the resulting `AutoAccrualPosting`
 - **THEN** it MUST link to the source rule (ID + version), source data, posting user "SYSTEM:SoftCloseExecutor" and timestamps
 - **AND** any correction MUST preserve the original entry and post a separate reversal with an audit link
-
-## MODIFIED Requirements (if amending existing specs)
-
-None. This is an ADDED-only change.
 
 ## Regulatory & Standards References
 

@@ -67,20 +67,9 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // #[AuthorizedAdminSetting(Application::class)].
             ['name' => 'fxRateAdmin#status', 'url' => '/api/admin/fx-rate-import-status', 'verb' => 'GET'],
 
-        // The integration-config-to-openconnector change (formerly W8):
-        // read-only admin roster over the 15 dormant external-API
-        // adapter families (Digipoort/SBR, Salarisbureau, RvO, IB47,
-        // CBS x2, BZK SiSa, Mollie, Bunq, KvK, UWV, Treasury Rates,
-        // CCM Rule Engine, CSRD ESRS XBRL, DepositPayment). Drives the
-        // single ExternalAdaptersStatus.vue roster page — the 15
-        // per-adapter detail pages (and their #show deep-link target)
-        // are gone, so #show was removed as dead code (no browser
-        // caller left; ORCHESTRATOR RULING: dead surface once the
-        // per-adapter pages go). Gated by
-        // #[AuthorizedAdminSetting(Application::class)] — the
-        // per-row activation recipe reveals configuration keys which
-        // are admin-only data.
-            ['name' => 'externalAdaptersAdmin#index', 'url' => '/api/admin/external-adapters', 'verb' => 'GET'],
+        // No external-adapters roster route: adopt-connection-registry moved
+        // the External Connections page onto integriq's app_connection rows,
+        // declared in lib/Settings/connections.json.
 
         // Booking notification trigger configuration (organizer, per booking).
             ['name' => 'bookingNotification#getBookingTriggers',    'url' => '/api/bookings/{id}/notification-triggers', 'verb' => 'GET'],
@@ -99,6 +88,27 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // Both #[NoAdminRequired]; RBAC/multitenancy enforced by OR reads.
             ['name' => 'financialDashboard#series', 'url' => '/api/dashboard/financial-series', 'verb' => 'GET'],
             ['name' => 'financialDashboard#summary', 'url' => '/api/dashboard/financial-summary', 'verb' => 'GET'],
+            // banking-connected-accounts REQ-BCON-004: cash position per bank account and combined.
+            ['name' => 'financialDashboard#cashPosition', 'url' => '/api/v1/cash-position', 'verb' => 'GET'],
+            // reporting-relation-both-sides: links between a customer and a supplier record, and both sides of the relation.
+            // assets-method-change-and-reserve REQ-AMCR-001: an asset's missed depreciation, listed and posted on request.
+            ['name' => 'fixedAssetDepreciation#missed', 'url' => '/api/fixed-assets/{id}/missed-depreciation', 'verb' => 'GET'],
+            ['name' => 'fixedAssetDepreciation#postMissed', 'url' => '/api/fixed-assets/{id}/missed-depreciation', 'verb' => 'POST'],
+            // tax-vat-number-check REQ-TVNC-001: check a customer's or supplier's VAT number against VIES.
+            ['name' => 'vatNumberCheck#check', 'url' => '/api/vat-number-checks/{type}/{id}', 'verb' => 'POST'],
+            // sales-usage-billing: the Import readings action on the meter readings page.
+            ['name' => 'meterReadingImport#import', 'url' => '/api/meter-readings/import', 'verb' => 'POST'],
+            ['name' => 'relation#report', 'url' => '/api/relations/both-sides', 'verb' => 'GET'],
+            ['name' => 'relation#suggestions', 'url' => '/api/relations/suggestions', 'verb' => 'GET'],
+            ['name' => 'relation#dismiss', 'url' => '/api/relations/suggestions/dismiss', 'verb' => 'POST'],
+            ['name' => 'relation#link', 'url' => '/api/relations/links', 'verb' => 'POST'],
+            ['name' => 'relation#unlink', 'url' => '/api/relations/links/{customerId}', 'verb' => 'DELETE'],
+            ['name' => 'relation#payeeBothSides', 'url' => '/api/relations/payee/{payeeId}/both-sides', 'verb' => 'GET'],
+            ['name' => 'relation#bothSides', 'url' => '/api/relations/{customerId}/both-sides', 'verb' => 'GET'],
+            // platform-required-fields REQ-PRF-001: a requirement's record type fields.
+            ['name' => 'fieldRequirement#fields', 'url' => '/api/field-requirements/{id}/fields', 'verb' => 'GET'],
+            // reporting-custom-analysis REQ-RCA-002: the financial pivot.
+            ['name' => 'ledgerPivot#pivot', 'url' => '/api/analysis/pivot', 'verb' => 'GET'],
 
         // Subject cost (subject-cost-aggregation, ADR-081): the employer cost
         // of the hours booked against one domain object. The domain app
@@ -292,6 +302,12 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // ARInvoice: pre-send validation, NLCIUS UBL 2.1 + PDF/A-3 hybrid, Peppol
         // submit via the generalised transmission port, delivery-status queued.
             ['name' => 'aRInvoiceEInvoice#send', 'url' => '/api/ar-invoices/{invoiceNumber}/send-einvoice', 'verb' => 'POST'],
+
+            // Sales-down-payments (REQ-SDP-001, REQ-SDP-003, REQ-SDP-005): raise a
+            // down payment on an order, show the order's position, deduct on the final invoice.
+            ['name' => 'downPayment#create', 'url' => '/api/ar-invoices/down-payments', 'verb' => 'POST'],
+            ['name' => 'downPayment#show', 'url' => '/api/ar-invoices/{id}/down-payments', 'verb' => 'GET'],
+            ['name' => 'downPayment#deduct', 'url' => '/api/ar-invoices/{id}/down-payment-deductions', 'verb' => 'POST'],
 
         // Goods Receipt Note (slice 04 of bookkeeping-purchase-order-3way):
         // server-authoritative create / add-line / quality-check / accept /
@@ -750,6 +766,29 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // Symfony matches it first per ADR-016.
             ['name' => 'paymentRequestWebhook#handle', 'url' => '/api/v1/payment-requests/webhook/{gateway}', 'verb' => 'POST'],
 
+            // Payment-request panel actions (case-payment-requests, REQ-SOPR-004).
+            // The two verbs the render-surface leaf offers on a case: mail the
+            // payment link to the debtor, and record that the money arrived
+            // another way. #[NoAdminRequired] on both, gated INSIDE the
+            // controller on the payment.administer action — seeing a case is not
+            // the same right as settling its money.
+            ['name' => 'paymentRequestAction#send', 'url' => '/api/payment-requests/{id}/send', 'verb' => 'POST'],
+            ['name' => 'paymentRequestAction#settle', 'url' => '/api/payment-requests/{id}/settle', 'verb' => 'POST'],
+
+            // Raise the published leges for an object's type in one action
+            // (leges-at-intake, REQ-SOPR-008). The amount comes from the fee
+            // schedule, never from the request body: a desk clerk should not be
+            // retyping a tariff out of a verordening.
+            ['name' => 'paymentRequestAction#raiseLeges', 'url' => '/api/payment-requests/leges', 'verb' => 'POST'],
+
+            // School contributions raised in bulk (extracurricular-fee-to-shillinq,
+            // REQ-SCON-001). One chargeable in another app (a learniq fee item, a
+            // portaliq activity) and up to 200 guardians in, one issued invoice and
+            // one payment request per guardian out. #[NoAdminRequired], gated INSIDE
+            // the controller on the payment.request action. Static URL, declared
+            // before the SPA catch-all per ADR-016.
+            ['name' => 'contribution#raise', 'url' => '/api/contributions/raise', 'verb' => 'POST'],
+
             // Portal payment initiation (portal-payment-initiation, ADR-046 contract
             // v2 A6). Receives portaliq's server-to-server forward of the `pay`
             // endpoint-forward action declared on the customer manifest
@@ -758,6 +797,13 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // the authentication (PortalAssertionVerifier). Static URL, declared
             // before the SPA catch-all per ADR-016.
             ['name' => 'portalPaymentInitiation#initiate', 'url' => '/api/portal/payments/initiate', 'verb' => 'POST'],
+
+            // "I will not pay" (voluntary-contribution-reminder, REQ-SCON-013).
+            // Receives portaliq's server-to-server forward of the `decline`
+            // endpoint-forward action on the parent manifest. #[PublicPage]: the
+            // X-Portal-Subject assertion IS the authentication, exactly like the
+            // pay receiver above. Static URL, before the SPA catch-all (ADR-016).
+            ['name' => 'portalContributionDecline#decline', 'url' => '/api/portal/contributions/decline', 'verb' => 'POST'],
 
             // Reporting & Compliance consolidation (reporting-compliance-consolidation).
             // The HTTP surface behind the unified "Reporting & Compliance" section:
@@ -787,8 +833,38 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // (cross-tenant ids masked as 404). The {id} wildcard is preceded by the
             // static /export and /reconcile suffixes per Symfony route ordering, and
             // both are declared before the SPA catch-all per ADR-016.
+            // banking-payment-run REQ-BPR-002: draft a run from the invoices due.
+            // Static URL before the {id} routes and the SPA catch-all (ADR-016).
+            ['name' => 'paymentRun#propose', 'url' => '/api/v1/payment-runs/propose', 'verb' => 'POST'],
             ['name' => 'paymentRun#export', 'url' => '/api/v1/payment-runs/{id}/export', 'verb' => 'POST'],
             ['name' => 'paymentRun#reconcile', 'url' => '/api/v1/payment-runs/{id}/reconcile', 'verb' => 'POST'],
+
+            // banking-manual-match (REQ-BMM-001, REQ-BMM-002): pair a bank line
+            // with open invoices, or book it to a ledger account, by hand.
+            ['name' => 'manualMatch#match', 'url' => '/api/v1/bank-lines/{lineId}/match', 'verb' => 'POST'],
+
+            // receivables-payment-plans (REQ-RPPL-001, REQ-RPPL-003): draw up,
+            // activate, settle by hand and cancel a payment plan; the plans a
+            // bank line can pay and paying one from a line. Static URLs first.
+            ['name' => 'paymentPlan#create', 'url' => '/api/v1/payment-plans', 'verb' => 'POST'],
+            ['name' => 'paymentPlan#lineCandidates', 'url' => '/api/v1/bank-lines/{lineId}/payment-plans', 'verb' => 'GET'],
+            ['name' => 'paymentPlan#activate', 'url' => '/api/v1/payment-plans/{id}/activate', 'verb' => 'POST'],
+            ['name' => 'paymentPlan#settle', 'url' => '/api/v1/payment-plans/{id}/settle', 'verb' => 'POST'],
+            ['name' => 'paymentPlan#cancel', 'url' => '/api/v1/payment-plans/{id}/cancel', 'verb' => 'POST'],
+            ['name' => 'paymentPlan#payFromLine', 'url' => '/api/v1/payment-plans/{id}/bank-line', 'verb' => 'POST'],
+            // planning-budget-editing: type the budget into the grid, spread a year, the multi-year page, start next year.
+            ['name' => 'budgetEditing#lines', 'url' => '/api/v1/budget-editing/lines', 'verb' => 'GET'],
+            ['name' => 'budgetEditing#saveCell', 'url' => '/api/v1/budget-editing/cell', 'verb' => 'PUT'],
+            ['name' => 'budgetEditing#spread', 'url' => '/api/v1/budget-editing/spread', 'verb' => 'POST'],
+            ['name' => 'budgetEditing#multiYear', 'url' => '/api/v1/budget-editing/multi-year', 'verb' => 'GET'],
+            ['name' => 'budgetEditing#startNextYear', 'url' => '/api/v1/budget-editing/next-year', 'verb' => 'POST'],
+            // planning-commitment-year-end: carry open commitments to next year, mark the last invoice of an order.
+            ['name' => 'commitmentYearEnd#previewCarryOver', 'url' => '/api/v1/commitments/carry-over', 'verb' => 'GET'],
+            ['name' => 'commitmentYearEnd#carryOver', 'url' => '/api/v1/commitments/carry-over', 'verb' => 'POST'],
+            ['name' => 'commitmentYearEnd#previewLastInvoice', 'url' => '/api/v1/supplier-invoices/{id}/last-invoice', 'verb' => 'GET'],
+            ['name' => 'commitmentYearEnd#markLastInvoice', 'url' => '/api/v1/supplier-invoices/{id}/last-invoice', 'verb' => 'POST'],
+            // public-sector-reserves-and-interest REQ-PSRI-002: the multi-year reserve overview.
+            ['name' => 'reserveOverview#overview', 'url' => '/api/v1/public-sector/reserves/overview', 'verb' => 'GET'],
 
             // Compliance-deadline-calendar (REQ-CDC-006). Per-user category
             // toggles + reminder lead times for the deadline calendar. Both

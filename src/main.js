@@ -22,15 +22,37 @@ import { createApp, h, reactive } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
 import appIcons from './icons.js'
+import { registerContractLeaf } from './integrations/registerContractLeaf.js'
+import { registerPaymentRequestsLeaf } from './integrations/registerPaymentRequestsLeaf.js'
 import manifestShell from './manifest.d.shell.json'
 import bundledManifest from './manifest.json'
 import menuLayout from './menu-layout.json'
 import pinia from './pinia.js'
 import registry from './registry.js'
+import { openMissedDepreciation } from './utils/assetActions.js'
+import { classifyUnmatched, openBankLineMatch } from './utils/bankMatchActions.js'
+import { openCarryOverCommitments } from './utils/commitmentYearEndApi.js'
+import { openDownPaymentInvoice } from './utils/downPaymentActions.js'
+import { openIntegriqConnections } from './utils/integriqConnections.js'
 import {
 	buildPageFragmentIndex,
 	mergeFullFragmentIntoManifest,
 } from './utils/mergeFragmentIntoManifest.js'
+import { openProposePaymentRun } from './utils/paymentRunActions.js'
+import {
+	confirmRelationSuggestion,
+	dismissRelationSuggestion,
+	openPayeeRelation,
+	openRelationsExport,
+} from './utils/relationActions.js'
+import {
+	openMeterReadingImport,
+	rateMeterReadings,
+} from './utils/usageBillingActions.js'
+import {
+	checkCustomerVatNumber,
+	checkSupplierVatNumber,
+} from './utils/vatNumberCheck.js'
 
 // Must stay first: sets __webpack_public_path__ / __webpack_nonce__ before any
 // other module evaluates — see src/setPublicPath.js.
@@ -58,6 +80,15 @@ import './assets/app.css'
 installIntegrationRegistry()
 registerBuiltinIntegrations()
 registerLeafIntegrations()
+
+// `registerLeafIntegrations()` above registers the library's OWN 18 built-in
+// leaves from a hardcoded list; it knows nothing about a consuming app's
+// leaves and never reads the server capability. Shillinq's two finance panels
+// are its own, so shillinq registers them, here for its own pages and again in
+// src/integration-init.js for every other app's pages. The second registration
+// is a no-op: first one wins (ADR-019 AD-13).
+registerPaymentRequestsLeaf()
+registerContractLeaf()
 
 // Register the app's MDI icon set + lib translations once at bootstrap.
 // registerIcons() merges the given map into the lib's ICON_MAP registry;
@@ -287,11 +318,45 @@ const registryProp = { ...registry }
 // `actionsComponent: FinancialDashboardActions`) silently disappear. Flatten
 // ALL kinds (page + widget + …) so every name a manifest can reference resolves.
 // Mirrors the procest / docudesk / opencatalogi wiring.
-const customComponentsProp = Object.fromEntries(
-	Object.entries(registry)
-		.filter(([, entry]) => entry && entry.component)
-		.map(([name, entry]) => [name, entry.component]),
-)
+//
+// Function handlers ride the same map: CnIndexPage resolves a header action's
+// named `handler` against `customComponents`. The External Connections page's
+// Add integration action leaves for integriq (adopt-connection-registry).
+const customComponentsProp = {
+	...Object.fromEntries(
+		Object.entries(registry)
+			.filter(([, entry]) => entry && entry.component)
+			.map(([name, entry]) => [name, entry.component]),
+	),
+	openIntegriqConnections,
+	// banking-manual-match: the "Match by hand" row action and the
+	// unmatched items bulk classification.
+	openBankLineMatch,
+	classifyUnmatched,
+	// sales-down-payments: the "New down-payment invoice" header action on
+	// Accounts Receivable.
+	openDownPaymentInvoice,
+	// banking-payment-run: the "Propose payment run" header action on
+	// Payment runs.
+	openProposePaymentRun,
+	// planning-commitment-year-end: the "Carry open commitments to next year"
+	// header action on Commitments.
+	openCarryOverCommitments,
+	// assets-method-change-and-reserve: the fixed asset page's missed depreciation.
+	openMissedDepreciation,
+	// tax-vat-number-check: Check VAT number on the customer and supplier pages.
+	checkCustomerVatNumber,
+	checkSupplierVatNumber,
+	// sales-usage-billing: Import readings and Rate on Meter readings.
+	openMeterReadingImport,
+	rateMeterReadings,
+	// reporting-relation-both-sides: the suggestions' row actions, the report's
+	// export and the supplier page's way to the linked customer.
+	confirmRelationSuggestion,
+	dismissRelationSuggestion,
+	openRelationsExport,
+	openPayeeRelation,
+}
 
 // Vue 3 `mount()` renders INSIDE the matched element; Vue 2's `$mount()`
 // REPLACED it. The old host was `#content`, which is ALSO the id of

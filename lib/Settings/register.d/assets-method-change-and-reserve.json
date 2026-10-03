@@ -1,0 +1,165 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "assets-method-change-and-reserve",
+    "adr": "ADR-037 modular register fragment; ADR-031 declarative transitions revise, depreciateExtra and applyReinvestmentReserve with imperative action handlers that write schedule lines, imperative scheduled posting in DepreciationRunJob",
+    "description": "Depreciation reaches the ledger: DepreciationRunJob posts each ended month's schedule lines, revise replans the unposted months from a date, depreciateExtra posts one extra line and replans, and a disposal gain can form a ReinvestmentReserve that a replacement asset applies. The schedule is the authority for an asset's monthly depreciation and book value once it exists, so the two time-based calculations that assumed the first plan are switched off and the schedule service writes both fields.",
+    "spec": "openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md"
+  },
+  "components": {
+    "schemas": {
+      "FixedAsset": {
+        "properties": {
+          "revisedMethod": {"type": "string", "enum": ["linear", "degressive", "units-of-production"], "nullable": true, "title": "New depreciation method", "description": "The method from the revision date on. Leave empty to keep the current method.", "example": "linear"},
+          "revisedUsefulLifeMonths": {"type": "integer", "minimum": 1, "nullable": true, "title": "New useful life (months)", "description": "The total useful life in months from acquisition, after the revision. Leave empty to keep the current life.", "example": 90},
+          "revisionDate": {"type": "string", "format": "date", "nullable": true, "title": "Revision date", "description": "The first day the new method or life applies. Months already posted from this date block the revision.", "example": "2026-07-01"},
+          "revisionReason": {"type": "string", "nullable": true, "title": "Revision reason", "description": "Why the method or useful life changes. Kept on the new schedule lines.", "example": "slijtage door nachtproductie"},
+          "extraDepreciationAmount": {"type": "number", "minimum": 0, "nullable": true, "title": "Extra depreciation amount", "description": "A one-off depreciation, posted at once.", "example": 5000},
+          "extraDepreciationDate": {"type": "string", "format": "date", "nullable": true, "title": "Extra depreciation date", "description": "The date the extra depreciation is booked on.", "example": "2026-10-15"},
+          "extraDepreciationReason": {"type": "string", "nullable": true, "title": "Extra depreciation reason", "description": "Why the asset loses value at once.", "example": "waterschade"},
+          "disposalGainToReserve": {"type": "boolean", "default": false, "title": "Add the gain to a reinvestment reserve", "description": "On disposal, credit the gain to the reinvestment reserve account instead of profit, and keep it as a reserve for a replacement.", "example": true},
+          "reinvestmentReserveId": {"type": "string", "nullable": true, "title": "Reinvestment reserve", "description": "The open reinvestment reserve to apply to this asset.", "example": "4a1b2c3d-0000-4000-8000-000000000001"},
+          "reserveAmountApplied": {"type": "number", "minimum": 0, "nullable": true, "title": "Reserve amount applied", "description": "The part of the reserve applied to this asset. Leave empty to apply what is left of it, up to the asset's cost.", "example": 6000},
+          "fiscalCostBasis": {"type": "number", "nullable": true, "title": "Fiscal cost basis", "description": "The acquisition cost less the reinvestment reserves applied to it; fiscal depreciation starts from this amount.", "example": 36000}
+        },
+        "x-openregister-calculations": {
+          "monthlyDepreciation": {"enabled": false},
+          "currentBookValue": {"enabled": false}
+        },
+        "x-openregister-lifecycle": {
+          "transitions": {
+            "revise": {
+              "from": ["active"],
+              "to": "active",
+              "label": "Revise depreciation",
+              "description": "Change the method or useful life from a date. The unposted months from then on are planned again from the book value on that date; posted months stay as they are.",
+              "inputs": [
+                {"field": "revisionDate", "required": true},
+                {"field": "revisedMethod", "required": false},
+                {"field": "revisedUsefulLifeMonths", "required": false},
+                {"field": "revisionReason", "required": true}
+              ],
+              "actions": [
+                {"trigger": "x-openregister-lifecycle-action", "action": "OCA\\Shillinq\\Lifecycle\\Action\\ReviseDepreciationAction", "description": "Replan the unposted schedule lines from the revision date (ReviseDepreciationAction)."}
+              ]
+            },
+            "depreciateExtra": {
+              "from": ["active"],
+              "to": "active",
+              "label": "Extra depreciation",
+              "description": "Book a one-off depreciation at once, then plan the remaining months from the lower book value.",
+              "inputs": [
+                {"field": "extraDepreciationAmount", "required": true},
+                {"field": "extraDepreciationDate", "required": true},
+                {"field": "extraDepreciationReason", "required": true}
+              ],
+              "actions": [
+                {"trigger": "x-openregister-lifecycle-action", "action": "OCA\\Shillinq\\Lifecycle\\Action\\ExtraDepreciationAction", "description": "Post one extra schedule line and replan (ExtraDepreciationAction)."}
+              ]
+            },
+            "applyReinvestmentReserve": {
+              "from": ["active"],
+              "to": "active",
+              "label": "Apply reinvestment reserve",
+              "description": "Lower this asset's fiscal cost basis with an open reinvestment reserve and debit the reserve account.",
+              "inputs": [
+                {"field": "reinvestmentReserveId", "required": true},
+                {"field": "reserveAmountApplied", "required": false}
+              ],
+              "actions": [
+                {"trigger": "x-openregister-lifecycle-action", "action": "OCA\\Shillinq\\Lifecycle\\Action\\ApplyReinvestmentReserveAction", "description": "Apply the reserve and post its journal entry (ApplyReinvestmentReserveAction)."}
+              ]
+            },
+            "dispose": {
+              "inputs": [
+                {"field": "disposalDate", "required": true},
+                {"field": "salvageProceeds", "required": false},
+                {"field": "disposalGainToReserve", "required": false}
+              ]
+            }
+          }
+        }
+      },
+      "DepreciationSchedule": {
+        "properties": {
+          "status": {"type": "string", "enum": ["planned", "active", "completed", "posted"], "default": "planned", "title": "Status", "description": "planned: not yet in the ledger; posted: in the ledger through the journal entry in glTransactionRef.", "example": "posted"},
+          "rateType": {"type": "string", "enum": ["percentage", "fixed-amount", "units-per-year", "extra"], "title": "Rate Type", "description": "fixed-amount for a planned month, extra for a one-off extra depreciation.", "example": "fixed-amount"},
+          "reason": {"type": "string", "nullable": true, "title": "Reason", "description": "Why the line was planned again or booked extra.", "example": "slijtage door nachtproductie"}
+        },
+        "x-openregister-calculations": {
+          "depreciationAmount": {"enabled": false}
+        }
+      },
+      "ReinvestmentReserve": {
+        "slug": "ReinvestmentReserve",
+        "icon": "PiggyBankOutline",
+        "version": "0.1.0",
+        "title": "Reinvestment reserve",
+        "description": "The gain on a sold asset kept for a replacement (art. 3.54 Wet IB 2001), applied to the replacement's fiscal cost or released to profit when its term ends.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md",
+        "type": "object",
+        "required": ["administrationId", "formedOn", "amount", "expiresOn", "lifecycleState"],
+        "properties": {
+          "administrationId": {"type": "string", "title": "Administration ID", "description": "The administration the reserve belongs to.", "example": "adm-consultancy-nl"},
+          "disposedAssetRef": {"type": "string", "nullable": true, "title": "Sold asset", "description": "The asset whose disposal gain formed the reserve.", "example": "4a1b2c3d-0000-4000-8000-000000000002"},
+          "disposedAssetNumber": {"type": "string", "nullable": true, "title": "Sold asset number", "description": "The sold asset's number, kept for the overview.", "example": "FA-2019-004"},
+          "formedOn": {"type": "string", "format": "date", "title": "Formed on", "description": "The disposal date.", "example": "2026-03-31"},
+          "amount": {"type": "number", "minimum": 0, "title": "Amount", "description": "The gain added to the reserve.", "example": 6000},
+          "expiresOn": {"type": "string", "format": "date", "title": "Expires on", "description": "The end of the third year after the year the reserve was formed. An unused remainder is released to profit then.", "example": "2029-12-31"},
+          "appliedAmount": {"type": "number", "minimum": 0, "default": 0, "title": "Applied", "description": "The part applied to replacement assets.", "example": 0},
+          "remainder": {"type": "number", "nullable": true, "title": "Remainder", "description": "The amount less what was applied.", "example": 6000},
+          "applications": {"type": "array", "title": "Applications", "description": "Each replacement asset the reserve was applied to, with the amount and the journal entry.", "items": {"type": "object", "properties": {"assetRef": {"type": "string", "title": "Replacement asset", "description": "The asset the reserve was applied to."}, "assetNumber": {"type": "string", "title": "Asset number", "description": "The replacement asset's number."}, "amount": {"type": "number", "title": "Amount applied", "description": "The part of the reserve applied to this asset."}, "journalEntryId": {"type": "string", "title": "Journal entry", "description": "The journal entry that debited the reserve account."}, "appliedOn": {"type": "string", "format": "date", "title": "Applied on", "description": "The date the reserve was applied."}}}},
+          "reserveAccountNumber": {"type": "string", "nullable": true, "title": "Reserve account", "description": "The equity account the reserve is kept on.", "example": "0640"},
+          "releaseJournalEntryId": {"type": "string", "nullable": true, "title": "Release journal entry", "description": "The journal entry that released the remainder to profit.", "example": null},
+          "lifecycleState": {"type": "string", "enum": ["open", "applied", "released"], "x-enum-labels": {"open": "Open", "applied": "Applied", "released": "Released"}, "default": "open", "title": "State", "description": "open: still available; applied: fully applied; released: the remainder went to profit at expiry.", "example": "open"}
+        },
+        "x-openregister-calculations": {
+          "remainder": {"materialise": true, "type": "number", "targetField": "remainder", "description": "Declarative (ADR-031): the amount less what was applied.", "expression": {"-": [{"prop": "amount"}, {"prop": "appliedAmount"}]}}
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "open",
+          "states": {
+            "open": {"label": "Open", "description": "Available for a replacement asset."},
+            "applied": {"label": "Applied", "description": "Fully applied to replacement assets."},
+            "released": {"label": "Released", "description": "The remainder was released to profit at expiry."}
+          },
+          "transitions": {
+            "markApplied": {"from": ["open"], "to": "applied", "label": "Mark applied", "description": "Set by the application when nothing remains."},
+            "release": {"from": ["open"], "to": "released", "label": "Release", "description": "Set by the daily run when the reserve expires with a remainder."}
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {"permissions": ["read"]},
+            "controller": {"permissions": ["read", "update"]},
+            "auditor": {"permissions": ["read"]},
+            "admin": {"permissions": ["create", "read", "update", "delete"]}
+          },
+          "adminScope": {"field": "administrationId", "enforce": true}
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Who formed, applied or released a reinvestment reserve, and when."
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {"register": "shillinq", "schema": "ReinvestmentReserve", "slug": "rir-bakkerij-jansen-van-2026"},
+      "administrationId": "adm-consultancy-nl",
+      "disposedAssetNumber": "FA-2019-004",
+      "formedOn": "2026-03-31",
+      "amount": 6000,
+      "expiresOn": "2029-12-31",
+      "appliedAmount": 0,
+      "remainder": 6000,
+      "applications": [],
+      "reserveAccountNumber": "0640",
+      "lifecycleState": "open"
+    }
+  ]
+}

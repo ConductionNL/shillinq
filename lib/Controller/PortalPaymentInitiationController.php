@@ -39,6 +39,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Portal\PortalAssertionVerifier;
+use OCA\Shillinq\Service\Payment\PortalPaymentSessionResult;
 use OCA\Shillinq\Service\Payment\PortalPaymentSessionService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -58,10 +59,13 @@ use Throwable;
  */
 class PortalPaymentInitiationController extends Controller {
 	/**
-	 * The audience this receiver serves — any other audience is refused
-	 * before any OpenRegister read (REQ-SPPI-002).
+	 * The audiences this receiver serves: customers, and parents paying a
+	 * school contribution (REQ-SCON-010). Any other audience is refused before
+	 * any OpenRegister read (REQ-SPPI-002).
+	 *
+	 * @var array<int, string>
 	 */
-	private const AUDIENCE_CUSTOMER = 'customer';
+	private const PAYING_AUDIENCES = ['customer', 'parent'];
 
 	/**
 	 * Constructor.
@@ -87,7 +91,9 @@ class PortalPaymentInitiationController extends Controller {
 	 * Declared in `PortalContributionProvider` as endpoint-forward action
 	 * `pay`; portaliq forwards `POST /apps/shillinq/api/portal/payments/initiate`
 	 * with the portal client's JSON body `{"invoiceId": "<uuid-or-slug>"}` and
-	 * the signed assertion header.
+	 * the signed assertion header. A `requestPayments` row sends
+	 * `{"paymentRequestId": "<uuid>"}` instead (action `pay-request`), for a
+	 * payment request that stands without an invoice (REQ-SPPI-008).
 	 *
 	 * Response contract: 200 `{checkoutUrl}` on success; 401 missing/invalid
 	 * assertion; 403 wrong audience OR the target is foreign-owned,
@@ -99,6 +105,7 @@ class PortalPaymentInitiationController extends Controller {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002)
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
 	 * Rate limit: citizen-facing, and it starts a payment. Tighter than the
 	 * receivers because a human clicks this, and each call creates a payment
 	 * intent at the provider — real work, and real cost, per request.
@@ -114,7 +121,7 @@ class PortalPaymentInitiationController extends Controller {
 		}
 
 		// 2. Audience gate — before any OpenRegister read (REQ-SPPI-002).
-		if ((string)($claims['audience'] ?? '') !== self::AUDIENCE_CUSTOMER) {
+		if (in_array((string)($claims['audience'] ?? ''), self::PAYING_AUDIENCES, true) === false) {
 			return new JSONResponse(['error' => 'forbidden'], Http::STATUS_FORBIDDEN);
 		}
 
@@ -123,8 +130,12 @@ class PortalPaymentInitiationController extends Controller {
 			$invoiceId = '';
 		}
 
+		// A `requestPayments` row carries a payment request without an invoice
+		// (REQ-SPPI-008); an invoice id wins when both are sent.
+		$paymentRequestId = $this->request->getParam('paymentRequestId');
+
 		try {
-			$result = $this->sessionService->initiate(claims: $claims, target: $invoiceId);
+			$result = $this->startSession(claims: $claims, invoiceId: $invoiceId, paymentRequestId: $paymentRequestId);
 		} catch (Throwable $e) {
 			// Never leak internals from a #[PublicPage] endpoint (ADR-005).
 			$this->logger->error(
@@ -141,4 +152,24 @@ class PortalPaymentInitiationController extends Controller {
 			default => new JSONResponse(['error' => 'forbidden'], Http::STATUS_FORBIDDEN),
 		};
 	}//end initiate()
+
+	/**
+	 * Start the session for the target the body names: an invoice, or a
+	 * payment request without an invoice when no invoice id is sent.
+	 *
+	 * @param array<string, mixed> $claims The verified assertion claims.
+	 * @param string $invoiceId The body's invoiceId, '' when absent.
+	 * @param mixed $paymentRequestId The body's paymentRequestId.
+	 *
+	 * @return PortalPaymentSessionResult
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
+	 */
+	private function startSession(array $claims, string $invoiceId, mixed $paymentRequestId): PortalPaymentSessionResult {
+		if ($invoiceId === '' && is_string($paymentRequestId) === true && $paymentRequestId !== '') {
+			return $this->sessionService->initiateForRequest(claims: $claims, target: $paymentRequestId);
+		}
+
+		return $this->sessionService->initiate(claims: $claims, target: $invoiceId);
+	}//end startSession()
 }//end class

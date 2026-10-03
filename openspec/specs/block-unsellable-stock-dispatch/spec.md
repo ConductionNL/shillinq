@@ -18,7 +18,7 @@ booked as cost of goods sold. Enforcement is added at the dispatch code path
 than transitioning the lot/stock object — so a declarative lifecycle guard
 would never fire.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: REQ-BLK-001: A Delivery line MUST NOT be issued from unsellable stock
 

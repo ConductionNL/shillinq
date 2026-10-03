@@ -66,7 +66,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * - createPurchaseOrder(): validates requester + cost-center budget, generates a
  *   CBS-conform po_number server-side, materialises the approval chain and the
  *   ApprovalTask records, dispatches notifications, persists the PurchaseOrder
- *   with lifecycle "draft" (or "pending_approval" once tasks exist).
+ *   with statusCode "draft"; the approval chain carries the pending decisions.
  * - determineApprovalChain(): pure-logic threshold evaluation; returns an ordered
  *   list of approver-role descriptors. Used by createPurchaseOrder and by the
  *   service-layer guards. Independent of storage so it is trivially unit-tested.
@@ -237,7 +237,7 @@ class PurchaseOrderService {
 	 *  - the approval chain is computed from determineApprovalChain() and an
 	 *    ApprovalTask record is created for each required approver;
 	 *  - every approver is notified via the notification manager;
-	 *  - lifecycle starts at "pending_approval" (when an approval chain exists)
+	 *  - statusCode starts at "draft", the schema's initial state, also while the approval chain is pending
 	 *    or "draft" (no chain — defensive fallback that should not occur for
 	 *    positive totals).
 	 *
@@ -317,11 +317,6 @@ class PurchaseOrderService {
 		$approvalChain = $this->determineApprovalChain(amount: $totalAmount);
 		$poNumber = $this->generatePoNumber(administrationId: $administrationId);
 
-		$lifecycleState = 'draft';
-		if ($approvalChain !== []) {
-			$lifecycleState = 'pending_approval';
-		}
-
 		$purchaseOrder = [
 			'poNumber' => $poNumber,
 			'administrationId' => $administrationId,
@@ -335,7 +330,10 @@ class PurchaseOrderService {
 			'totalAmount' => $totalAmount,
 			'currency' => (string)($payload['currency'] ?? 'EUR'),
 			'approvalChain' => $this->initialiseApprovalChainEntries(chain: $approvalChain),
-			'lifecycleState' => $lifecycleState,
+			// The schema's lifecycle field (#1753). A PO waiting for its approval
+			// chain stays in `draft` (the lifecycle's initial state); the chain
+			// entries carry the pending decisions.
+			'statusCode' => 'draft',
 			'createdAt' => $this->nowIso(),
 			'notes' => trim((string)($payload['notes'] ?? '')),
 		];
@@ -400,8 +398,8 @@ class PurchaseOrderService {
 	 *
 	 * Server-authoritative: the Vue layer never grants the transition. The method
 	 * inspects the persisted PurchaseOrder, asserts every approval_chain entry has
-	 * status=approved + a non-empty signedAt timestamp, and on success persists
-	 * lifecycleState="sent" with a sentAt stamp. On failure the PO is left in its
+	 * decision=approved + a non-empty decidedAt timestamp, and on success persists
+	 * statusCode="sent" with a sentAt stamp. On failure the PO is left in its
 	 * current state and a RuntimeException is raised so the controller maps it to
 	 * a 409 Conflict (ADR-005, REQ-PO3W-001 send-block).
 	 *
@@ -412,6 +410,10 @@ class PurchaseOrderService {
 	 *
 	 * @throws \RuntimeException When the PO is missing, not approved, or the chain
 	 *                           is incomplete.
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) PurchaseOrderApprovalService::isApprovedEntry()
+	 *  is a pure check on one chain entry, shared with the approval service so the
+	 *  send check and the signing read one shape (#1716).
 	 *
 	 * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
 	 */
@@ -437,14 +439,12 @@ class PurchaseOrderService {
 		}
 
 		foreach ($chain as $entry) {
-			$status = (string)($entry['status'] ?? '');
-			$signedAt = trim((string)($entry['signedAt'] ?? ''));
-			if ($status !== 'approved' || $signedAt === '') {
+			if (PurchaseOrderApprovalService::isApprovedEntry(entry: $entry) === false) {
 				throw new RuntimeException('Purchase order cannot be sent: approval chain incomplete');
 			}
 		}
 
-		$po['lifecycleState'] = 'sent';
+		$po['statusCode'] = 'sent';
 		$po['sentAt'] = $this->nowIso();
 
 		return $this->saveObject(schema: 'PurchaseOrder', object: $po);
@@ -458,7 +458,7 @@ class PurchaseOrderService {
 	 * the guard stays single-sourced), resolves the supplier's Peppol participant
 	 * id via the adapter port, transforms the PO into a UBL 2.1 Order document
 	 * via PeppolBisOrderMapper, submits the document to the Peppol Access Point,
-	 * and persists `peppolMessageId` + `peppolSentAt` + `lifecycleState=sent`
+	 * and persists `peppolMessageId` + `peppolSentAt` + `statusCode=sent`
 	 * on the PurchaseOrder record (REQ-PO3W-002).
 	 *
 	 * Graceful fallback (REQ-PO3W-002 D2): when the supplier is not a Peppol
@@ -532,7 +532,7 @@ class PurchaseOrderService {
 		$po['peppolMessageId'] = $messageId;
 		$po['peppolSentAt'] = $this->nowIso();
 		$po['peppolFallbackReason'] = null;
-		$po['lifecycleState'] = 'sent';
+		$po['statusCode'] = 'sent';
 		$po['sentAt'] = $this->nowIso();
 
 		return $this->saveObject(schema: 'PurchaseOrder', object: $po);
@@ -582,7 +582,7 @@ class PurchaseOrderService {
 		);
 
 		$po['peppolFallbackReason'] = $reason;
-		$po['lifecycleState'] = 'sent';
+		$po['statusCode'] = 'sent';
 		$po['sentAt'] = $this->nowIso();
 
 		return $this->saveObject(schema: 'PurchaseOrder', object: $po);
@@ -602,6 +602,10 @@ class PurchaseOrderService {
 	 * @return array<string,mixed> The persisted PurchaseOrder record.
 	 *
 	 * @throws \RuntimeException When the PO is missing or the chain is incomplete.
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) PurchaseOrderApprovalService::isApprovedEntry()
+	 *  is a pure check on one chain entry, shared with the approval service so the
+	 *  send check and the signing read one shape (#1716).
 	 */
 	private function loadPurchaseOrderForTransmission(
 		string $administrationId,
@@ -628,9 +632,7 @@ class PurchaseOrderService {
 		}
 
 		foreach ($chain as $entry) {
-			$status = (string)($entry['status'] ?? '');
-			$signedAt = trim((string)($entry['signedAt'] ?? ''));
-			if ($status !== 'approved' || $signedAt === '') {
+			if (PurchaseOrderApprovalService::isApprovedEntry(entry: $entry) === false) {
 				throw new RuntimeException('Purchase order cannot be sent: approval chain incomplete');
 			}
 		}
@@ -828,9 +830,9 @@ class PurchaseOrderService {
 	/**
 	 * Project the approval-chain descriptor into the persisted PurchaseOrder shape.
 	 *
-	 * Each entry adds a status=pending stub and an empty signedAt; the controller
-	 * (or the matcher service in later slices) will set status=approved + signedAt
-	 * once the approver acts.
+	 * Each entry is written in the shape `PurchaseOrder.approvalChain` declares
+	 * and PurchaseOrderApprovalService::recordApprovalDecision() signs:
+	 * `decision: pending`, an empty `decidedAt` and `userId` (#1716).
 	 *
 	 * @param array<int,array{role:string,order:int}> $chain Chain returned by determineApprovalChain.
 	 *
@@ -842,9 +844,10 @@ class PurchaseOrderService {
 			$entries[] = [
 				'role' => $entry['role'],
 				'order' => $entry['order'],
-				'status' => 'pending',
-				'signedAt' => '',
-				'signedBy' => '',
+				'userId' => '',
+				'decision' => PurchaseOrderApprovalService::DECISION_PENDING,
+				// No `decidedAt` until a decision: the schema declares it a
+				// date-time and OpenRegister refuses an empty string (#1753).
 			];
 		}
 

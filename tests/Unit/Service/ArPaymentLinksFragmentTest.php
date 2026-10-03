@@ -173,14 +173,19 @@ final class ArPaymentLinksFragmentTest extends TestCase {
 	}//end testNoPciFields()
 
 	/**
-	 * Required fields per REQ-APL-001.
+	 * Required fields per REQ-APL-001, minus `invoiceReference`, which
+	 * `case-payment-requests` made conditional on `subjectKind = invoice`
+	 * (REQ-SOPR-001). The condition itself lives in
+	 * ObjectPaymentRequestValidator, because a flat `required` array cannot
+	 * express it and a register that demanded an invoice would refuse every
+	 * request standing on a case.
 	 *
 	 * @return void
 	 */
 	public function testRequiredFields(): void {
 		$schema = $this->fragment()['components']['schemas']['PaymentRequest'];
 		$required = $schema['required'];
-		foreach (['invoiceReference', 'amount', 'currency', 'paymentGateway', 'state'] as $field) {
+		foreach (['amount', 'currency', 'paymentGateway', 'state'] as $field) {
 			self::assertContains($field, $required, "$field must be required");
 		}
 
@@ -201,4 +206,106 @@ final class ArPaymentLinksFragmentTest extends TestCase {
 		self::assertContains('pending', $states);
 		self::assertContains('captured', $states);
 	}//end testSeedObjectsSpanStates()
+	/**
+	 * PaymentRequest carries the object-request properties, so a request can
+	 * stand on a case rather than an invoice (REQ-SOPR-001).
+	 *
+	 * @return void
+	 */
+	public function testPaymentRequestCarriesTheObjectRequestProperties(): void {
+		$properties = $this->fragment()['components']['schemas']['PaymentRequest']['properties'];
+
+		foreach (['subjectKind', 'subject', 'requestType', 'description', 'debtor', 'dueAt', 'revenueAccount'] as $property) {
+			self::assertArrayHasKey($property, $properties, $property . ' is missing from PaymentRequest');
+		}
+
+		self::assertSame(['invoice', 'object'], $properties['subjectKind']['enum']);
+		self::assertSame('invoice', $properties['subjectKind']['default']);
+		self::assertSame(['leges', 'dwangsom', 'deposit', 'other', 'contribution', 'event-fee'], $properties['requestType']['enum']);
+	}//end testPaymentRequestCarriesTheObjectRequestProperties()
+
+	/**
+	 * PaymentRequest carries the transfer reference, the invoice flag and the
+	 * receipt stamp, all optional (REQ-ORS-002, REQ-ORS-005).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-002)
+	 */
+	public function testPaymentRequestCarriesTheSettlementProperties(): void {
+		$schema = $this->fragment()['components']['schemas']['PaymentRequest'];
+		$properties = $schema['properties'];
+
+		self::assertSame('string', ($properties['paymentReference']['type'] ?? null));
+		self::assertSame(6, ($properties['paymentReference']['minLength'] ?? null));
+		self::assertSame('boolean', ($properties['invoiceRequested']['type'] ?? null));
+		self::assertFalse(($properties['invoiceRequested']['default'] ?? null));
+		self::assertSame('string', ($properties['receiptSentAt']['type'] ?? null));
+		self::assertSame('date-time', ($properties['receiptSentAt']['format'] ?? null));
+		self::assertTrue(($properties['receiptSentAt']['nullable'] ?? false));
+		foreach (['paymentReference', 'invoiceRequested', 'receiptSentAt'] as $property) {
+			self::assertNotContains($property, $schema['required']);
+		}
+	}//end testPaymentRequestCarriesTheSettlementProperties()
+
+	/**
+	 * The subject is a semantic reference (ADR-048): four parts, no app slug.
+	 *
+	 * @return void
+	 */
+	public function testTheSubjectIsASemanticReference(): void {
+		$subject = $this->fragment()['components']['schemas']['PaymentRequest']['properties']['subject'];
+
+		self::assertSame('object', $subject['type']);
+		foreach (['type', 'register', 'schema', 'id'] as $part) {
+			self::assertArrayHasKey($part, $subject['properties'], 'the subject does not name ' . $part);
+		}
+	}//end testTheSubjectIsASemanticReference()
+
+	/**
+	 * `invoiceReference` is no longer unconditionally required: an object request
+	 * has no invoice behind it, and a flat required list would refuse every one
+	 * of them at the register (REQ-SOPR-001).
+	 *
+	 * @return void
+	 */
+	public function testInvoiceReferenceIsNoLongerUnconditionallyRequired(): void {
+		$schema = $this->fragment()['components']['schemas']['PaymentRequest'];
+
+		self::assertNotContains('invoiceReference', $schema['required']);
+		self::assertContains('amount', $schema['required']);
+		self::assertContains('state', $schema['required']);
+	}//end testInvoiceReferenceIsNoLongerUnconditionallyRequired()
+
+	/**
+	 * A request without an invoice carries its debtor's customer as a flat,
+	 * globally unique reference, so the portal can scope it: portaliq compares
+	 * a flat row field and cannot reach `debtor.customerMasterId`
+	 * (REQ-SPPI-008). Seeded requests without an invoice that name a debtor
+	 * customer carry it; invoice-backed seeds do not.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
+	 */
+	public function testARequestWithoutAnInvoiceDeclaresItsCustomer(): void {
+		$fragment = $this->fragment();
+		$schema = $fragment['components']['schemas']['PaymentRequest'];
+		$customerId = ($schema['properties']['customerId'] ?? []);
+
+		self::assertSame('0.8.0', $schema['version']);
+		self::assertSame('string', ($customerId['type'] ?? null));
+		self::assertSame('uuid', ($customerId['format'] ?? null));
+		self::assertSame('CustomerMaster', ($customerId['$ref'] ?? null));
+		self::assertTrue(($customerId['nullable'] ?? false));
+		self::assertNotContains('customerId', $schema['required']);
+
+		foreach ((array)($fragment['components']['objects'] ?? []) as $object) {
+			if (($object['@self']['schema'] ?? '') !== 'PaymentRequest' || (string)($object['invoiceReference'] ?? '') === '') {
+				continue;
+			}
+
+			self::assertArrayNotHasKey('customerId', $object, $object['@self']['slug'] . ' is invoice-backed and must not carry customerId');
+		}
+	}//end testARequestWithoutAnInvoiceDeclaresItsCustomer()
 }//end class

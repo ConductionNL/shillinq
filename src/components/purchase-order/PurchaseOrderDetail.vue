@@ -38,7 +38,7 @@
 				<h2>{{ purchaseOrder.poNumber }}</h2>
 				<p>
 					<span class="po-detail__pill">{{
-						purchaseOrder.lifecycleState
+						purchaseOrder.statusCode
 					}}</span>
 					<span
 						>{{ t('shillinq', 'Supplier') }}:
@@ -102,16 +102,16 @@
 						</div>
 						<div class="po-detail__chain-status">
 							<span
-								:class="`po-detail__pill po-detail__pill--${entry.status}`">
-								{{ entry.status }}
+								:class="`po-detail__pill po-detail__pill--${entry.decision}`">
+								{{ entry.decision }}
 							</span>
 							<span
-								v-if="entry.signedAt"
+								v-if="entry.decidedAt"
 								class="po-detail__chain-timestamp">
 								{{ t('shillinq', 'Signed') }}:
-								{{ formatTimestamp(entry.signedAt) }}
-								<template v-if="entry.signedBy">
-									— {{ entry.signedBy }}
+								{{ formatTimestamp(entry.decidedAt) }}
+								<template v-if="entry.userId">
+									({{ entry.userId }})
 								</template>
 							</span>
 						</div>
@@ -215,7 +215,7 @@
 					}}
 				</NcButton>
 				<p
-					v-if="!canSend && purchaseOrder.lifecycleState !== 'sent'"
+					v-if="!canSend && purchaseOrder.statusCode !== 'sent'"
 					class="po-detail__send-hint">
 					{{
 						t(
@@ -225,7 +225,7 @@
 					}}
 				</p>
 				<p
-					v-else-if="purchaseOrder.lifecycleState === 'sent'"
+					v-else-if="purchaseOrder.statusCode === 'sent'"
 					class="po-detail__send-hint"
 					data-testid="po-detail-already-sent">
 					{{
@@ -286,12 +286,13 @@ export default {
 		 * button's disabled state, never permission.
 		 *
 		 * @return {boolean}
+		 * @spec openspec/changes/purchasing-approval-delegation/tasks.md
 		 */
 		canSend() {
 			if (!this.purchaseOrder) {
 				return false
 			}
-			if (this.purchaseOrder.lifecycleState === 'sent') {
+			if (this.purchaseOrder.statusCode === 'sent') {
 				return false
 			}
 			const chain = this.purchaseOrder.approvalChain || []
@@ -299,7 +300,7 @@ export default {
 				return false
 			}
 			return chain.every(
-				(entry) => entry.status === 'approved' && !!entry.signedAt,
+				(entry) => entry.decision === 'approved' && !!entry.decidedAt,
 			)
 		},
 	},

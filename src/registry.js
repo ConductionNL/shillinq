@@ -21,6 +21,7 @@
 //   registered as a `kind:"page"` custom component so the manifest router
 //   still owns the URL → component mapping.
 
+import ArDownPaymentPanel from './components/ar-invoice/ArDownPaymentPanel.vue'
 // add-invoice-pdf-export-with-ubl-peppol-support (REQ-EINV-007): the Send
 // e-invoice action + delivery-status indicator on the manifest-driven
 // ARInvoiceDetail page. Resolved as the page's `actionsComponent` (ADR-036 —
@@ -155,6 +156,7 @@ import InvoiceGenerator from './components/invoice/InvoiceGenerator.vue'
 // `header-actions` widget slot, which CnWidgetGrid resolves against THIS
 // registry before its built-in widget table.
 import RecurringInvoiceProfileLauncher from './components/invoice/RecurringInvoiceProfileLauncher.vue'
+import LedgerLinesGuidancePanel from './components/ledger/LedgerLinesGuidancePanel.vue'
 // bookkeeping-period-close (REQ-PC-005, REQ-PC-006, REQ-PC-007 / Task 9 + 10):
 // the PeriodCloseDetail page composes the FiscalPeriod metadata header, the
 // close-task checklist (AP / AR / bank / expense claims) with inline
@@ -178,6 +180,7 @@ import PurchaseOrderDetail from './components/purchase-order/PurchaseOrderDetail
 // components.
 import PurchaseOrderForm from './components/purchase-order/PurchaseOrderForm.vue'
 import PurchasingOverview from './components/purchasing/PurchasingOverview.vue'
+import FinancialPivot from './components/reporting/FinancialPivot.vue'
 import GeneratedReportsIndex from './components/reporting/GeneratedReportsIndex.vue'
 // reporting-compliance-consolidation: the Reporting & Compliance section is
 // two custom pages. The overview renders the static ReportCatalogue
@@ -233,6 +236,8 @@ import VendorPerformanceDetail from './components/vendor-performance/VendorPerfo
 // rate pills, score colour band and trend indicator are bespoke, so both
 // are registered as kind:"page" custom components.
 import VendorPerformanceIndex from './components/vendor-performance/VendorPerformanceIndex.vue'
+// receivables-payment-plans: Agree a payment plan, and the plan page's actions.
+import AgreePaymentPlanModal from './modals/AgreePaymentPlanModal.vue'
 import BillImportModal from './modals/BillImportModal.vue'
 // ADR-049 Phase-4 dissolution: modals formerly launched by the imperative
 // FinancialDashboardActions / PaymentRunDetailActions widgets. Those action
@@ -240,8 +245,11 @@ import BillImportModal from './modals/BillImportModal.vue'
 // each modal is registered here as a kind:"modal" so the manifest action's
 // `target` resolves it. Modal-isolated under src/modals/ (hydra gate-13).
 import InvoiceQuickDraftModal from './modals/InvoiceQuickDraftModal.vue'
+import PaymentBlockModal from './modals/PaymentBlockModal.vue'
+import PaymentPlanActionModal from './modals/PaymentPlanActionModal.vue'
 import PaymentRunReconcileModal from './modals/PaymentRunReconcileModal.vue'
 import RecurringInvoiceProfileModal from './modals/RecurringInvoiceProfileModal.vue'
+import RelationLinkDialog from './modals/RelationLinkDialog.vue'
 // accountant-portal: the multi-client dashboard composes a per-card status
 // (period-close state, BTW filing + deadline, missing documents, open items
 // from PeriodCloseAssistantService) plus a per-card "Download handover pack"
@@ -357,24 +365,8 @@ import BudgetScenarioComparison from './views/BudgetScenarioComparison.vue'
 // the strictly current-user-scoped /api/deadline-calendar/settings
 // endpoints; registered as a kind:"page" custom component per ADR-024.
 import DeadlineCalendarSettings from './views/DeadlineCalendarSettings.vue'
-// integration-config-to-openconnector (formerly Shillinq W8): the
-// External Connections page renders one roster row per external-API
-// adapter family (15 — Digipoort/SBR, Salarisbureau, RvO, IB47, CBS
-// Bestanden, CBS Iv3, BZK SiSa, Mollie, Bunq, KvK, UWV, Treasury
-// Rates, CCM Rule Engine, CSRD ESRS XBRL, DepositPayment), sourced
-// from /api/admin/external-adapters: dormancy badge + declared
-// sourceSlug + live openconnector-provisioning status + a deep link
-// to openconnector's Source admin. The per-family detail page +
-// route this file used to also register are gone — integration
-// configuration (credentials, endpoints, protocol mapping) lives in
-// openconnector per ADR-067/ADR-091/ADR-022; this app holds only the
-// slug reference, so there is nothing left for a per-adapter page to
-// render. Does not fit a built-in `index` / `detail` page type: the
-// data is not an OR register, it's an in-controller registry of
-// adapter metadata plus a live per-row provisioning lookup. kind:
-// "page" custom component per ADR-024 / ADR-036.
-import ExternalAdaptersStatus from './views/external-adapters/ExternalAdaptersStatus.vue'
 import FlowDetailSidebar from './views/flows/FlowDetailSidebar.vue'
+import ImportWizard from './views/import/ImportWizard.vue'
 import CountPage from './views/inventory/CountPage.vue'
 import MobileScannerHome from './views/inventory/MobileScannerHome.vue'
 import PickPage from './views/inventory/PickPage.vue'
@@ -411,6 +403,15 @@ export default {
 	InvoiceQuickDraftModal: { kind: 'modal', component: InvoiceQuickDraftModal },
 	BillImportModal: { kind: 'modal', component: BillImportModal },
 	PaymentRunReconcileModal: { kind: 'modal', component: PaymentRunReconcileModal },
+	// banking-payment-run REQ-BPR-003/004: Block payment / Release payment on
+	// APTransactionDetail and PayeeDetail.
+	PaymentBlockModal: { kind: 'modal', component: PaymentBlockModal },
+	// receivables-payment-plans REQ-RPPL-001/003: CustomerDetail, ARInvoiceDetail
+	// and PaymentPlanDetail header actions.
+	AgreePaymentPlanModal: { kind: 'modal', component: AgreePaymentPlanModal },
+	// reporting-relation-both-sides: link a customer to its supplier record.
+	RelationLinkDialog: { kind: 'modal', component: RelationLinkDialog },
+	PaymentPlanActionModal: { kind: 'modal', component: PaymentPlanActionModal },
 
 	StandardsPolicyEditor: { kind: 'page', component: StandardsPolicyEditor },
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
@@ -492,9 +493,6 @@ export default {
 	// compliance-deadline-calendar (REQ-CDC-006): deadline calendar settings.
 	DeadlineCalendarSettings: { kind: 'page', component: DeadlineCalendarSettings },
 
-	// integration-config-to-openconnector: External Connections roster page.
-	ExternalAdaptersStatus: { kind: 'page', component: ExternalAdaptersStatus },
-
 	// financial-dashboard-graphs (ADR-049 Phase-4): the only surviving custom
 	// financial widget. Cashflow merges realized GL lines with the 13-week
 	// forecast (two sources) into one chart — see the import docblock above.
@@ -529,6 +527,39 @@ export default {
 		_note: 'Renders all four /api/analytics/spend dimensions with four distinct states (loading / unavailable / no-rows / rows) and prints no figure for a view that did not answer. No built-in widget surfaces an endpoint error as anything but "no data" (CnChartWidget discards ep.error) or a bare em dash (CnStatWidget), which would report REQ-GLS-003\'s deliberate raise as a zero total.',
 	},
 
+	// sales-down-payments (REQ-SDP-003, REQ-SDP-005): the order's down
+	// payments on ARInvoiceDetail, through the slot widget-invoice-down-payments.
+	ArDownPaymentPanel: {
+		// @custom-widget-ratchet exclude the panel reads GET /api/ar-invoices/{id}/down-payments, a lookup across the customer's other invoices by the order reference inside their downPayment group, and writes the deduction through POST /api/ar-invoices/{id}/down-payment-deductions; no declarative widget filters on a nested field or posts a server-side recompute of an invoice's lines and totals.
+		kind: 'widget',
+		component: ArDownPaymentPanel,
+		_note: "Lists the down payments of the invoice's order across the customer's other invoices and deducts them through a server-side recompute of the lines and totals. An object-table widget filters top-level fields of one schema only and cannot post; the order reference lives inside the downPayment group.",
+	},
+
+	// ledger-booking-rules (REQ-LBR-003): the booking lines with each
+	// account's guidance, on JournalDetail and GeneralLedgerDetail through the
+	// slots widget-journal-lines and widget-transaction-lines.
+	JournalLinesGuidance: {
+		// @custom-widget-ratchet exclude the guidance is the description of the Account record a line names by number, per administration; no declarative widget joins an embedded line array (JournalEntry.lines) or a related GLLine row to a second schema by a non-id field.
+		kind: 'widget',
+		component: {
+			extends: LedgerLinesGuidancePanel,
+			name: 'JournalLinesGuidance',
+			props: { schema: { type: String, default: 'JournalEntry' } },
+		},
+		_note: "Lists a journal entry's lines with the account name, the account's guidance under it and a control-account mark. An object-table widget shows one schema's own fields and cannot look up the account behind a line.",
+	},
+	TransactionLinesGuidance: {
+		// @custom-widget-ratchet exclude same join as JournalLinesGuidance, over the GLLine rows of a GLTransaction.
+		kind: 'widget',
+		component: {
+			extends: LedgerLinesGuidancePanel,
+			name: 'TransactionLinesGuidance',
+			props: { schema: { type: String, default: 'GLTransaction' } },
+		},
+		_note: "Lists a ledger transaction's GLLine rows with the account name, the account's guidance under it and a control-account mark.",
+	},
+
 	// add-invoice-pdf-export-with-ubl-peppol-support (REQ-EINV-007).
 	AREInvoiceActions: {
 		kind: 'widget',
@@ -549,6 +580,7 @@ export default {
 	BankingCashflowOverview: { kind: 'page', component: BankingCashflowOverview },
 	TaxesOverview: { kind: 'page', component: TaxesOverview },
 	GeneratedReportsIndex: { kind: 'page', component: GeneratedReportsIndex },
+	FinancialPivot: { kind: 'page', component: FinancialPivot },
 	BankImportPage: { kind: 'page', component: BankImportPage },
 
 	// accountant-portal: scoped multi-client dashboard + handover-pack export.
@@ -570,4 +602,7 @@ export default {
 		kind: 'page',
 		component: ProductAttributeCatalogIndex,
 	},
+
+	// platform-administration-import: the six-step import wizard (REQ-AIW-002).
+	ImportWizard: { kind: 'page', component: ImportWizard },
 }

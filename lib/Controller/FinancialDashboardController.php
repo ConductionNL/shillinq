@@ -143,6 +143,45 @@ class FinancialDashboardController extends Controller {
 	}//end summary()
 
 	/**
+	 * GET /api/v1/cash-position?administrationId= : the cash position per bank
+	 * account and combined, for one administration the caller belongs to; the
+	 * active administration when the parameter is left out.
+	 *
+	 * @return JSONResponse `{accounts: [...], other, total}`, 400, 401 or a masked 404.
+	 *
+	 * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
+	 */
+	#[NoAdminRequired]
+	public function cashPosition(): JSONResponse {
+		if ($this->context->currentUserId() === null) {
+			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
+		}
+
+		// Without a parameter, the administration the user is working in.
+		$administrationId = trim((string)$this->request->getParam('administrationId', ''));
+		if ($administrationId === '') {
+			$administrationId = trim((string)($this->context->buildContext()['activeAdministrationId'] ?? ''));
+		}
+
+		if ($administrationId === '') {
+			return new JSONResponse(['error' => 'No administration selected'], Http::STATUS_BAD_REQUEST);
+		}
+
+		// ADR-005: an administration the caller is not a member of is masked as absent.
+		if ($this->context->canAccess(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		try {
+			return new JSONResponse($this->dashboard->cashPosition(administrationId: $administrationId));
+		} catch (\Throwable $e) {
+			$this->logger->error('FinancialDashboardController: cash position failed', ['exception' => $e->getMessage()]);
+			return new JSONResponse(['error' => 'Cash position unavailable'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+
+	}//end cashPosition()
+
+	/**
 	 * Shared request handling for both endpoints: authentication gate,
 	 * administration-membership gate, from/to validation, service dispatch
 	 * and the no-stack-trace 500 path.

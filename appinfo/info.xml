@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.4.7-unstable.20260911012003</version>
+    <version>0.5.3-unstable.20261002160000</version>
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
@@ -94,11 +94,15 @@ Vrij en open source onder de EUPL-1.2-licentie.
              third, non-canonical job directory shillinq shipped. -->
         <job>OCA\Shillinq\BackgroundJob\MandateDormancyExpiryJob</job>
         <job>OCA\Shillinq\BackgroundJob\DBAFlagGenerationJob</job>
+        <!-- reporting-data-delivery REQ-RDD-002: hourly, runs the due report schedules. -->
+        <job>OCA\Shillinq\BackgroundJob\ScheduledReportJob</job>
+        <!-- assets-method-change-and-reserve REQ-AMCR-001/005: daily, posts last month's depreciation and releases expired reinvestment reserves. -->
+        <job>OCA\Shillinq\BackgroundJob\DepreciationRunJob</job>
         <job>OCA\Shillinq\BackgroundJob\DBAPortfolioAggregationJob</job>
         <!-- Cashflow 13wk: daily bankfeed pull, daily crisis-mode refresh,
              monthly calibration. REQ-CF-010/012/013. Moved from lib/Cron/
              by background-job-consolidation (ADR-069 D1). -->
-        <job>OCA\Shillinq\BackgroundJob\BankfeedReconciliationJob</job>
+        <job>OCA\Shillinq\BackgroundJob\ContractCostRollupJob</job>
         <job>OCA\Shillinq\BackgroundJob\CrisisModeRefreshJob</job>
         <job>OCA\Shillinq\BackgroundJob\CalibrationBatchJob</job>
         <!-- inventory-lot-batch-expiry REQ-LOT-007: daily sweep raising
@@ -184,6 +188,14 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <job>OCA\Shillinq\BackgroundJob\TaxDeadlineReminderJob</job>
         <job>OCA\Shillinq\BackgroundJob\BookingReminderJob</job>
         <job>OCA\Shillinq\BackgroundJob\ViesOutageRetryJob</job>
+        <!-- adopt-connection-registry: once a day, tells integriq which adapter
+             answers for the three adapter families shillinq calls. Sends
+             nothing when integriq is not installed. -->
+        <job>OCA\Shillinq\BackgroundJob\ConnectionReportJob</job>
+        <!-- receivables-payment-plans REQ-RPPL-004/005: daily, instalments fall
+             due or are missed, a missed one breaks its plan and resumes dunning,
+             a fully paid plan completes. -->
+        <job>OCA\Shillinq\BackgroundJob\PaymentPlanMonitorJob</job>
     </background-jobs>
 
     <repair-steps>
@@ -236,6 +248,39 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Shillinq\Repair\BackfillGlLineFiscalYear</step>
             <step>OCA\Shillinq\Repair\BackfillFiscalPeriods</step>
             <step>OCA\Shillinq\Repair\PeriodCloseBackfill</step>
+            <!-- ledger-booking-rules (REQ-LBR-001). Marks the receivables, payables
+                 and VAT accounts the sub-ledgers book to as control accounts, on
+                 accounts that still carry the RGS MKB seed's name and have no role.
+                 After InitializeSettings, which imports Account.controlAccountFor.
+                 Idempotent; logs every account it sets. -->
+            <step>OCA\Shillinq\Repair\BackfillControlAccountRoles</step>
+            <!-- arinvoice-lines-and-portal-amounts (REQ-SPPI-008). A payment
+                 request without an invoice carries its debtor's customer in
+                 customerId so the customer portal lists it. Stamps requests
+                 raised before that existed; after InitializeSettings, which
+                 imports PaymentRequest 0.5.0. Idempotent; a fresh install has
+                 no such requests, so post-migration only. -->
+            <step>OCA\Shillinq\Repair\BackfillPaymentRequestCustomer</step>
+            <!-- reporting-segment-results (REQ-RSR-002, design Migration Plan).
+                 Stamps accountClass and countsInResult on the lines of
+                 transactions posted or reversed before GLLineResultStampListener
+                 existed; after InitializeSettings, which imports the GLLine
+                 fields. Idempotent; post-migration only. -->
+            <step>OCA\Shillinq\Repair\StampGlLineResults</step>
+            <!-- people-hours-budget (design Migration Plan). Sums the hours
+                 booked before AssignmentHoursListener existed into
+                 ProjectAssignment.loggedHours and the project totals; after
+                 InitializeSettings, which imports the fields. Idempotent. -->
+            <step>OCA\Shillinq\Repair\BackfillAssignmentHours</step>
+            <!-- tax-vat-number-check D3: a customer's VAT number lives in vatId only;
+                 copies the retired vatID where vatId is empty. Idempotent. -->
+            <step>OCA\Shillinq\Repair\FoldCustomerVatId</step>
+            <!-- arinvoice-field-backfill-and-bt10 (REQ-RIN-011, REQ-IQD-008).
+                 Fills recurringProfileId, billingPeriod, customerReference and
+                 line glAccount on invoices saved before ARInvoice 0.16.0, where
+                 the recurring profile or the quick draft's create audit entry
+                 gives them. After InitializeSettings; never overwrites; idempotent. -->
+            <step>OCA\Shillinq\Repair\BackfillArInvoiceProvenance</step>
             <step>OCA\Shillinq\Repair\LoadCbsSeedsStep</step>
             <step>OCA\Shillinq\Repair\LoadSbrXbrlSeedsStep</step>
             <step>OCA\Shillinq\Repair\LoadDbaSeedsStep</step>

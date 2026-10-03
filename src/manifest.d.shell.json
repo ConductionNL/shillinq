@@ -941,6 +941,26 @@
 		{
 			"menu": [
 				{
+					"id": "ReinvestmentReserves",
+					"label": "Reinvestment reserves",
+					"icon": "PiggyBankOutline",
+					"route": "ReinvestmentReserves",
+					"order": 31
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "assets-method-change-and-reserve",
+					"id": "ReinvestmentReserves",
+					"route": "/fixed-assets/reinvestment-reserves",
+					"type": "index",
+					"title": "Reinvestment reserves"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "BankImportPage",
 					"label": "Import bank statements",
 					"icon": "DatabaseImportOutline",
@@ -4327,7 +4347,13 @@
 					"label": "External Connections",
 					"icon": "TransitConnectionVariant",
 					"route": "ExternalAdaptersStatus",
-					"order": 46
+					"query": {
+						"app": "shillinq"
+					},
+					"order": 46,
+					"visibleIf": {
+						"appInstalled": "integriq"
+					}
 				}
 			],
 			"pages": [
@@ -4335,7 +4361,7 @@
 					"_fragment": "external-adapters-w8",
 					"id": "ExternalAdaptersStatus",
 					"route": "/external-adapters",
-					"type": "custom",
+					"type": "index",
 					"title": "External Connections"
 				}
 			]
@@ -4621,6 +4647,47 @@
 		{
 			"menu": [
 				{
+					"id": "PostingRestrictions",
+					"label": "Posting restrictions",
+					"icon": "Cancel",
+					"route": "PostingRestrictions",
+					"order": 45
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "ledger-booking-rules",
+					"id": "PostingRestrictions",
+					"route": "/settings/posting-restrictions",
+					"type": "index",
+					"title": "Posting restrictions"
+				},
+				{
+					"_fragment": "ledger-booking-rules",
+					"id": "PostingRestrictionDetail",
+					"route": "/settings/posting-restrictions/:id",
+					"type": "detail",
+					"title": "Posting restriction"
+				},
+				{
+					"_fragment": "ledger-booking-rules",
+					"id": "JournalDetail",
+					"route": "/journals/:id",
+					"type": "detail",
+					"title": "Journal Entry"
+				},
+				{
+					"_fragment": "ledger-booking-rules",
+					"id": "GeneralLedgerDetail",
+					"route": "/general-ledger/:id",
+					"type": "detail",
+					"title": "GL Transaction"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "Bookkeeping",
 					"route": "BookkeepingOverview"
 				},
@@ -4707,6 +4774,216 @@
 			]
 		},
 		{
+			"menu": [
+				{
+					"id": "Overheid",
+					"children": [
+						{
+							"id": "Begrotingswijzigingen",
+							"label": "Budget amendments",
+							"icon": "FileDocumentEditOutline",
+							"route": "Begrotingswijzigingen",
+							"order": 50
+						},
+						{
+							"id": "Meerjarenramingen",
+							"label": "Multi-year estimate",
+							"icon": "ChartTimelineVariant",
+							"route": "Meerjarenramingen",
+							"order": 55
+						},
+						{
+							"id": "MeerjarenBudgetten",
+							"label": "Multi-year budget lines",
+							"icon": "CalendarRangeOutline",
+							"route": "MeerjarenBudgetten",
+							"order": 56
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "planning-budget-editing",
+					"id": "Begrotingswijzigingen",
+					"route": "/overheid/begrotingswijzigingen",
+					"type": "index",
+					"title": "Budget amendments"
+				},
+				{
+					"_fragment": "planning-budget-editing",
+					"id": "BegrotingswijzigingDetail",
+					"route": "/overheid/begrotingswijzigingen/:id",
+					"type": "detail",
+					"title": "Budget amendment"
+				},
+				{
+					"_fragment": "planning-budget-editing",
+					"id": "Meerjarenramingen",
+					"route": "/overheid/meerjarenramingen",
+					"type": "index",
+					"title": "Multi-year estimate"
+				},
+				{
+					"_fragment": "planning-budget-editing",
+					"id": "MeerjarenramingDetail",
+					"route": "/overheid/meerjarenramingen/:id",
+					"type": "detail",
+					"title": "Multi-year estimate year"
+				},
+				{
+					"_fragment": "planning-budget-editing",
+					"id": "MeerjarenBudgetten",
+					"route": "/overheid/meerjarenbudgetten",
+					"type": "index",
+					"title": "Multi-year budget lines"
+				},
+				{
+					"_fragment": "planning-budget-editing",
+					"id": "MeerjarenBudgetDetail",
+					"route": "/overheid/meerjarenbudgetten/:id",
+					"type": "detail",
+					"title": "Multi-year budget line"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "RequiredFields",
+					"label": "Required fields",
+					"icon": "TextBoxCheckOutline",
+					"route": "RequiredFields",
+					"order": 46
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "platform-required-fields",
+					"id": "RequiredFields",
+					"route": "/settings/required-fields",
+					"type": "index",
+					"title": "Required fields"
+				},
+				{
+					"_fragment": "platform-required-fields",
+					"id": "RequiredFieldDetail",
+					"route": "/settings/required-fields/:id",
+					"type": "detail",
+					"title": "Required field"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Overheid",
+					"children": [
+						{
+							"id": "Reserves",
+							"label": "Reserves",
+							"icon": "PiggyBankOutline",
+							"route": "Reserves",
+							"order": 60
+						},
+						{
+							"id": "ReserveMutations",
+							"label": "Reserve mutations",
+							"icon": "SwapHorizontal",
+							"route": "ReserveMutations",
+							"order": 61
+						},
+						{
+							"id": "ReserveMultiYearOverview",
+							"label": "Reserves over the years",
+							"icon": "ChartTimelineVariant",
+							"route": "ReserveMultiYearOverview",
+							"order": 62
+						},
+						{
+							"id": "Investeringen",
+							"label": "Investments",
+							"icon": "OfficeBuildingOutline",
+							"route": "Investeringen",
+							"order": 63
+						},
+						{
+							"id": "InterestAllocationRuns",
+							"label": "Interest allocation",
+							"icon": "PercentOutline",
+							"route": "InterestAllocationRuns",
+							"order": 64
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "public-sector-reserves-and-interest",
+					"id": "Reserves",
+					"route": "/overheid/reserves",
+					"type": "index",
+					"title": "Reserves"
+				},
+				{
+					"_fragment": "public-sector-reserves-and-interest",
+					"id": "ReserveDetail",
+					"route": "/overheid/reserves/:id",
+					"type": "detail",
+					"title": "Reserve"
+				},
+				{
+					"_fragment": "public-sector-reserves-and-interest",
+					"id": "ReserveMutations",
+					"route": "/overheid/reserve-mutations",
+					"type": "index",
+					"title": "Reserve mutations"
+				},
+				{
+					"_fragment": "public-sector-reserves-and-interest",
+					"id": "ReserveMutationDetail",
+					"route": "/overheid/reserve-mutations/:id",
+					"type": "detail",
+					"title": "Reserve mutation"
+				},
+				{
+					"_fragment": "public-sector-reserves-and-interest",
+					"id": "ReserveMultiYearOverview",
+					"route": "/overheid/reserves/overview",
+					"type": "dashboard",
+					"title": "Reserves over the years"
+				},
+				{
+					"_fragment": "public-sector-reserves-and-interest",
+					"id": "Investeringen",
+					"route": "/overheid/investeringen",
+					"type": "index",
+					"title": "Investments"
+				},
+				{
+					"_fragment": "public-sector-reserves-and-interest",
+					"id": "InvesteringDetail",
+					"route": "/overheid/investeringen/:id",
+					"type": "detail",
+					"title": "Investment"
+				},
+				{
+					"_fragment": "public-sector-reserves-and-interest",
+					"id": "InterestAllocationRuns",
+					"route": "/overheid/interest-allocation",
+					"type": "index",
+					"title": "Interest allocation"
+				},
+				{
+					"_fragment": "public-sector-reserves-and-interest",
+					"id": "InterestAllocationRunDetail",
+					"route": "/overheid/interest-allocation/:id",
+					"type": "detail",
+					"title": "Interest allocation run"
+				}
+			]
+		},
+		{
 			"menu": [],
 			"pages": [
 				{
@@ -4715,6 +4992,33 @@
 					"route": "/inkoop/receipts/:id",
 					"type": "custom",
 					"title": "Receipt"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "PaymentPlans",
+					"label": "Payment plans",
+					"icon": "CalendarClock",
+					"route": "PaymentPlans",
+					"order": 24
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "receivables-payment-plans",
+					"id": "PaymentPlans",
+					"route": "/bookkeeping/payment-plans",
+					"type": "index",
+					"title": "Payment plans"
+				},
+				{
+					"_fragment": "receivables-payment-plans",
+					"id": "PaymentPlanDetail",
+					"route": "/bookkeeping/payment-plans/:id",
+					"type": "detail",
+					"title": "Payment plan"
 				}
 			]
 		},
@@ -4766,6 +5070,62 @@
 					"route": "/reporting-compliance/generated",
 					"type": "custom",
 					"title": "Generated reports"
+				}
+			]
+		},
+		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "reporting-custom-analysis",
+					"id": "FinancialPivot",
+					"route": "/reports/pivot",
+					"type": "custom",
+					"title": "Financial pivot"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "ReportingCompliance",
+					"children": [
+						{
+							"id": "ReportSchedules",
+							"label": "Report schedules",
+							"icon": "CalendarClock",
+							"route": "ReportSchedules",
+							"order": 90
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "reporting-data-delivery",
+					"id": "ReportSchedules",
+					"route": "/reports/schedules",
+					"type": "index",
+					"title": "Report schedules"
+				},
+				{
+					"_fragment": "reporting-data-delivery",
+					"id": "ReportScheduleDetail",
+					"route": "/reports/schedules/:id",
+					"type": "detail",
+					"title": "Report schedule"
+				}
+			]
+		},
+		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "reporting-relation-both-sides",
+					"id": "RelationsBothWays",
+					"route": "/reports/relations-both-ways",
+					"type": "dashboard",
+					"title": "Relations both ways"
 				}
 			]
 		},
@@ -4856,6 +5216,54 @@
 					"route": "/retainer-true-ups/:id",
 					"type": "detail",
 					"title": "True-Up"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "MeterReadings",
+					"label": "Meter readings",
+					"icon": "Counter",
+					"route": "MeterReadings",
+					"order": 40
+				},
+				{
+					"id": "UsageRatePlans",
+					"label": "Rate plans",
+					"icon": "TagOutline",
+					"route": "UsageRatePlans",
+					"order": 41
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "sales-usage-billing",
+					"id": "MeterReadings",
+					"route": "/sales/meter-readings",
+					"type": "index",
+					"title": "Meter readings"
+				},
+				{
+					"_fragment": "sales-usage-billing",
+					"id": "MeterReadingDetail",
+					"route": "/sales/meter-readings/:id",
+					"type": "detail",
+					"title": "Meter reading"
+				},
+				{
+					"_fragment": "sales-usage-billing",
+					"id": "UsageRatePlans",
+					"route": "/sales/rate-plans",
+					"type": "index",
+					"title": "Rate plans"
+				},
+				{
+					"_fragment": "sales-usage-billing",
+					"id": "UsageRatePlanDetail",
+					"route": "/sales/rate-plans/:id",
+					"type": "detail",
+					"title": "Rate plan"
 				}
 			]
 		},

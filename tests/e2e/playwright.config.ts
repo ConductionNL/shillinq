@@ -82,8 +82,7 @@
  *     `afterAll`, so two workers seeding `Account` objects concurrently cannot
  *     see each other's rows.
  *   - The only absolute-count assertions are on FIXED data, not on rows a
- *     sibling worker could add: `workflows/external-adapters-admin.spec.ts`
- *     counts the compiled-in adapter families, and `invoice-quick-draft` /
+ *     sibling worker could add: `invoice-quick-draft` /
  *     `recurring-invoicing` count draft lines inside a modal they opened
  *     themselves. `list-views-cndatatable.spec.ts` compares a row count to its
  *     OWN before-count within one test, on one worker.

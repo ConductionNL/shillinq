@@ -39,7 +39,13 @@
         (PhpOffice\PhpWord\*, OCP\Server). None of these represent the "hard
         dependency on a service that should be mocked" smell this rule targets.
 
-        (e) ObjectIdentifier (shillinq#526) is a pure function of its argument.
+        (e) DateWindow is a pure function of its four arguments, and the same
+        testable claim holds: it declares NO constructor, NO properties and NO
+        collaborators, so there is nothing the rule's "should be mocked" concern
+        can apply to. If a future edit gives it state or an injected dependency,
+        remove this entry rather than keep it.
+
+        (f) ObjectIdentifier (shillinq#526) is a pure function of its argument.
         The exemption's reason is a TESTABLE CLAIM about the class, not a claim
         about the world, so it cannot rot: the class declares NO constructor, NO
         properties and NO collaborators, so there is nothing the rule's
@@ -53,6 +59,7 @@
                 DateTimeImmutable,
                 OCP\Server,
                 OCA\Shillinq\Support\FleetAppId,
+                OCA\Shillinq\Support\DateWindow,
                 OCA\OpenRegister\Lifecycle\GuardResult,
                 OCA\OpenRegister\Service\Aggregation\AggregationQuery,
                 OCA\OpenRegister\AppHost\Observability\MetricSample,

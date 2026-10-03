@@ -142,13 +142,18 @@ class ReportGenerationService {
 	 * @param string $period Reporting period (e.g. '2026', '2026-Q1', '2026-03').
 	 * @param string $administrationId Administration the report is generated for.
 	 * @param string $format One of the report's catalogue formats.
+	 * @param string|null $asUserId The user the report is produced for when there
+	 *                              is no session (a scheduled run); null = the session user.
 	 *
 	 * @return array<string, mixed> The recorded GeneratedReport (incl. fileId + downloadPath),
 	 *                              or an `{ error: ... }` envelope when generation cannot proceed.
 	 *
 	 * @spec openspec/changes/reports-via-docudesk/specs/reports-via-docudesk/spec.md#req-rvd-005
+	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
 	 */
-	public function generate(string $reportType, string $period, string $administrationId, string $format): array {
+	public function generate(string $reportType, string $period, string $administrationId, string $format, ?string $asUserId=null): array {
+		$userId = ($asUserId ?? ($this->userSession->getUser()?->getUID() ?? ''));
+
 		$catalogue = ReportCatalogue::byId($reportType);
 		if ($catalogue === null) {
 			$this->logger->warning('ReportGenerationService: unknown report type', ['reportType' => $reportType]);
@@ -198,7 +203,7 @@ class ReportGenerationService {
 					'format' => $useFormat,
 					'status' => 'unavailable',
 					'generatedAt' => gmdate('Y-m-d\TH:i:s\Z'),
-					'generatedBy' => ($this->userSession->getUser()?->getUID() ?? ''),
+					'generatedBy' => $userId,
 				]
 			);
 
@@ -215,8 +220,6 @@ class ReportGenerationService {
 			);
 			return ['error' => 'generation-failed', 'reportType' => $reportType, 'message' => $e->getMessage()];
 		}
-
-		$userId = ($this->userSession->getUser()?->getUID() ?? '');
 
 		$stored = $this->storeFile($administrationId, $rendered, $userId);
 

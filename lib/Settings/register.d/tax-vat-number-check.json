@@ -1,0 +1,52 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "tax-vat-number-check",
+    "adr": "ADR-037 modular register fragment; ADR-031 declarative fields, the VIES call stays imperative in ViesService (external register)",
+    "description": "A supplier (Payee) carries the outcome of its last VIES check like a customer does, and a supplier invoice carries the seller's VAT number from the UBL invoice with the outcome of the check made when it arrived.",
+    "spec": "openspec/changes/tax-vat-number-check/specs/bookkeeping-icp-opgaaf/spec.md"
+  },
+  "components": {
+    "schemas": {
+      "Payee": {
+        "properties": {
+          "vatIdValidationStatus": {"type": "string", "enum": ["unchecked", "valid", "invalid", "vies_outage"], "default": "unchecked", "title": "VAT number check", "description": "The outcome of the last check of the VAT number against the EU VIES register: unchecked, valid, invalid, or vies_outage when VIES could not be reached.", "example": "valid"},
+          "vatIdValidatedAt": {"type": "string", "format": "date-time", "nullable": true, "title": "VAT number last valid on", "description": "When VIES last confirmed the VAT number as valid.", "example": "2026-09-20T09:00:00+00:00"},
+          "vatIdValidUntil": {"type": "string", "format": "date-time", "nullable": true, "title": "VAT number check valid until", "description": "Until when the last valid check is reused without asking VIES again.", "example": "2026-09-21T09:00:00+00:00"}
+        }
+      },
+      "SupplierInvoice": {
+        "properties": {
+          "sellerVatId": {"type": "string", "nullable": true, "title": "Seller VAT number", "description": "The seller's VAT number as the invoice states it, read from a UBL invoice or typed in.", "example": "BE0000000000"},
+          "sellerVatIdValidationStatus": {"type": "string", "enum": ["unchecked", "valid", "invalid", "vies_outage"], "default": "unchecked", "title": "Seller VAT number check", "description": "The outcome of the VIES check made when an invoice from another EU country arrived: unchecked, valid, invalid, or vies_outage when VIES could not be reached.", "example": "valid"},
+          "sellerVatIdValidatedAt": {"type": "string", "format": "date-time", "nullable": true, "title": "Seller VAT number last valid on", "description": "When VIES last confirmed the seller's VAT number as valid.", "example": "2026-09-28T09:00:00+00:00"}
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {"register": "shillinq", "schema": "CustomerMaster", "slug": "customer-master-kunstverlag-mueller"},
+      "customerId": "DEB-0107",
+      "legalName": "Kunstverlag Müller GmbH",
+      "email": "buchhaltung@kunstverlag-mueller.example",
+      "vatId": "DE000000000",
+      "vatIdValidationStatus": "invalid",
+      "administrationId": "adm-consultancy-nl",
+      "lifecycleState": "active"
+    },
+    {
+      "@self": {"register": "shillinq", "schema": "Payee", "slug": "payee-softwarehuis-bvba"},
+      "vendorNumber": "CRED-0042",
+      "name": "Softwarehuis BVBA",
+      "paymentTermDays": 30,
+      "vatNumber": "BE0000000000",
+      "vatIdValidationStatus": "valid",
+      "vatIdValidatedAt": "2026-09-20T09:00:00+00:00",
+      "vatIdValidUntil": "2026-10-20T09:00:00+00:00",
+      "administrationId": "adm-consultancy-nl",
+      "lifecycleState": "active"
+    }
+  ]
+}
