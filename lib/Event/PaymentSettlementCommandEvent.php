@@ -81,6 +81,8 @@ abstract class PaymentSettlementCommandEvent extends Event {
 	 * The app that asks.
 	 *
 	 * @return string The app id.
+	 *
+	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
 	 */
 	public function getSourceApp(): string {
 		return $this->sourceApp;
@@ -90,6 +92,8 @@ abstract class PaymentSettlementCommandEvent extends Event {
 	 * The request the command is about.
 	 *
 	 * @return string The PaymentRequest uuid.
+	 *
+	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
 	 */
 	public function getPaymentRequestId(): string {
 		return $this->paymentRequestId;
@@ -99,6 +103,8 @@ abstract class PaymentSettlementCommandEvent extends Event {
 	 * Why, in the asking app's words.
 	 *
 	 * @return string The reason.
+	 *
+	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
 	 */
 	public function getReason(): string {
 		return $this->reason;
@@ -108,6 +114,8 @@ abstract class PaymentSettlementCommandEvent extends Event {
 	 * The asking app's own id for this command.
 	 *
 	 * @return string The correlation id.
+	 *
+	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
 	 */
 	public function getCorrelationId(): string {
 		return $this->correlationId;
@@ -119,6 +127,8 @@ abstract class PaymentSettlementCommandEvent extends Event {
 	 * @param string $state The request's state after the command.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
 	 */
 	public function accept(string $state): void {
 		$this->error = null;
@@ -135,6 +145,8 @@ abstract class PaymentSettlementCommandEvent extends Event {
 	 * @param string $error Why.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
 	 */
 	public function refuse(string $error): void {
 		$this->result = null;
@@ -145,6 +157,8 @@ abstract class PaymentSettlementCommandEvent extends Event {
 	 * Whether a listener accepted the command.
 	 *
 	 * @return bool True when accepted.
+	 *
+	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
 	 */
 	public function isHandled(): bool {
 		return $this->result !== null;
@@ -154,6 +168,8 @@ abstract class PaymentSettlementCommandEvent extends Event {
 	 * The answer: contractVersion, paymentRequestId and state.
 	 *
 	 * @return array<string, mixed>|null The answer, or null when not accepted.
+	 *
+	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
 	 */
 	public function getResult(): ?array {
 		return $this->result;
@@ -163,6 +179,8 @@ abstract class PaymentSettlementCommandEvent extends Event {
 	 * Why the command was refused.
 	 *
 	 * @return string|null The reason, or null when not refused.
+	 *
+	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-001)
 	 */
 	public function getError(): ?string {
 		return $this->error;

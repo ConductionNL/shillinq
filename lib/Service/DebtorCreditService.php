@@ -129,7 +129,12 @@ class DebtorCreditService {
 		}
 
 		if ($revenue === '') {
-			throw new InvalidArgumentException(sprintf('No revenue account is mapped for request type "%s", so the income cannot be moved to credit.', (string)($request['requestType'] ?? '')));
+			throw new InvalidArgumentException(
+				sprintf(
+					'No revenue account is mapped for request type "%s", so the income cannot be moved to credit.',
+					(string)($request['requestType'] ?? '')
+				)
+			);
 		}
 
 		$requestId = (string)($request['id'] ?? '');

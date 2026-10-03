@@ -133,8 +133,12 @@ class ObjectRequestCommandService {
 			return 'Only a payment request on an object can be refunded or credited this way.';
 		}
 
-		if ($sourceApp === '' || self::ownedBy(request: $request, app: $sourceApp) === false) {
-			return sprintf('The payment request does not stand on an object of %s.', ($sourceApp === '' ? 'an unnamed app' : $sourceApp));
+		if ($sourceApp === '') {
+			return 'The payment request does not stand on an object of an unnamed app.';
+		}
+
+		if (self::ownedBy(request: $request, app: $sourceApp) === false) {
+			return sprintf('The payment request does not stand on an object of %s.', $sourceApp);
 		}
 
 		if (in_array((string)($request['state'] ?? ''), self::DONE_STATES, true) === true) {
