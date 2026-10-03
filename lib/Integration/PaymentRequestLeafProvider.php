@@ -40,6 +40,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Service\Integration\IntegrationProvider;
 use OCA\Shillinq\Service\FeeScheduleService;
 use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
+use OCA\Shillinq\Service\ObjectRequestInvoiceService;
 use OCA\Shillinq\Service\PaymentRequestPortalScope;
 use OCA\Shillinq\Service\PaymentActionAppGrant;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
@@ -87,6 +88,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	 * @param PaymentActionAppGrant $appGrant Whether a calling app carries payment.request (REQ-SOPR-010).
 	 * @param PaymentRequestFinder|null $finder Reads every page of requests on a subject; built on demand when absent.
 	 * @param PaymentRequestPortalScope $portalScope Gives a request without an invoice its portal scope.
+	 * @param ?ObjectRequestInvoiceService $invoices Issues the invoice a caller asks for at create (REQ-ORS-006).
 	 *
 	 * @return void
 	 */
@@ -100,6 +102,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 		private readonly PaymentActionAppGrant $appGrant,
 		private readonly ?PaymentRequestFinder $finder = null,
 		private readonly PaymentRequestPortalScope $portalScope = new PaymentRequestPortalScope(),
+		private readonly ?ObjectRequestInvoiceService $invoices = null,
 	) {
 	}//end __construct()
 
@@ -451,6 +454,11 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 			$request['invoiceRequested'] = ($payload['invoiceRequested'] === true);
 		}
 
+		$administrationId = trim((string)($payload['administrationId'] ?? ''));
+		if ($administrationId !== '') {
+			$request['administrationId'] = $administrationId;
+		}
+
 		// The customer portal lists a request without an invoice by its
 		// debtor's customer (REQ-SPPI-008).
 		$request = $this->portalScope->stamp(request: $request);
@@ -460,6 +468,22 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 			existing: $this->requestsOn(register: $register, schema: $schema, objectId: $objectId, asSystem: $asSystem),
 			referenceHolders: $this->finder()->withReference(reference: $reference, asSystem: true),
 		);
+
+		// An invoice asked for at create stands behind the request, so a
+		// capture settles it and books the income once (REQ-ORS-006). It is
+		// issued after the request is validated, so a refused request never
+		// leaves an invoice behind.
+		if (($request['invoiceRequested'] ?? false) === true) {
+			if ($this->invoices === null) {
+				throw new RuntimeException('An invoice was requested, but no invoice service is available.');
+			}
+
+			$request['invoiceReference'] = $this->invoices->issue(
+				request: $request,
+				administrationId: $administrationId,
+				today: gmdate('Y-m-d'),
+			);
+		}
 
 		$saved = $this->objectService->saveObject(
 			object: $request,

@@ -19,7 +19,7 @@
 
 ## 4. Invoice on request
 
-- [ ] 4.1 `ObjectRequestInvoiceService` called from `create()` when `invoiceRequested` is true: debtor's `CustomerMaster`, one issued `ARInvoice`, `invoiceReference` on the request (REQ-ORS-006). Verify: PHPUnit `ObjectRequestInvoiceServiceTest::testInvoiceStandsBehindTheRequest` and `PaymentReconciliationServiceTest::testCaptureSettlesTheInvoiceAndBooksNoObjectReceipt`.
+- [x] 4.1 `ObjectRequestInvoiceService` called from `create()` when `invoiceRequested` is true: debtor's `CustomerMaster`, one issued `ARInvoice`, `invoiceReference` on the request (REQ-ORS-006). Verify: PHPUnit `ObjectRequestInvoiceServiceTest::testInvoiceStandsBehindTheRequest` and `PaymentReconciliationServiceTest::testCaptureSettlesTheInvoiceAndBooksNoObjectReceipt`. (3 Oct 2026: built; the leaf issues the invoice after the request is validated, through the real `ContributionDebtorResolver`. The call also needs `administrationId`, which ARInvoice and CustomerMaster require; the leaf now keeps it on the request too. VAT from `paymentRequestVatRates`, default exempt. Extra tests: `testANamedCustomerIsBilledAsIs`, `testAMappedVatRateSplitsTheGross`, `testNoFlagNoInvoice`, `testAnInvoiceWithoutAnAdministrationWritesNothing`.)
 
 ## 5. Close
 
