@@ -1418,9 +1418,9 @@
       "ReconciliationMatch": {
         "slug": "ReconciliationMatch",
         "icon": "LinkVariant",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "Reconciliation Match",
-        "description": "A candidate or confirmed match between a bank statement line and an AR/AP invoice, journal, or suspense routing. Emitted by the matching aggregation (confidence=auto) or operator-created (confidence=manual); the operator confirms or rejects. Confirmed matches emit a `reconciliation-match-confirmed` event consumed by AR/AP invoice lifecycles.",
+        "description": "A candidate or confirmed match between a bank statement line and an AR/AP invoice, journal, or suspense routing. Emitted by the matching aggregation (confidence=auto) or operator-created (confidence=manual); the operator confirms or rejects. Confirmed matches emit a `reconciliation-match-confirmed` event consumed by AR/AP invoice lifecycles. V0.2.0 (receivables-object-request-settlement) adds matchType payment-request: a line that quotes an object payment request's paymentReference.",
         "x-schema-org": "schema:Action",
         "type": "object",
         "x-openregister-audit": true,
@@ -1473,7 +1473,8 @@
               "ap-invoice",
               "journal",
               "gl-transaction",
-              "suspense"
+              "suspense",
+              "payment-request"
             ],
             "description": "What the line matched against (alias: candidateType in legacy tasks docs).",
             "title": "Match Type"

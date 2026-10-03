@@ -242,6 +242,88 @@ class ManualMatchService {
 	}//end matchPaymentPlan()
 
 	/**
+	 * Match a line to the one object payment request it quotes and confirm it
+	 * (REQ-ORS-003). The confirm transition is what settles the request.
+	 *
+	 * @param array<string,mixed> $line    The line, with its id.
+	 * @param array<string,mixed> $request The pending PaymentRequest, with its id.
+	 * @param string              $actor   The confirming user id, or `system:bank-match`.
+	 *
+	 * @return array<string,mixed> The confirmed match.
+	 *
+	 * @throws ManualMatchRefusedException When the line cannot be matched.
+	 *
+	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
+	 */
+	public function matchPaymentRequest(array $line, array $request, string $actor): array {
+		$this->assertMatchable(line: $line);
+
+		return $this->writeConfirmedMatch(
+			line: $line,
+			type: 'payment-request',
+			targetIds: [(string)$request['id']],
+			matchedAmount: abs((float)($line['amount'] ?? 0)),
+			actor: $actor,
+			extra: self::paymentRequestExtra(request: $request)
+		);
+
+	}//end matchPaymentRequest()
+
+	/**
+	 * Propose a line as a candidate for an object payment request, for the
+	 * bookkeeper to confirm or reject; nothing is settled (REQ-ORS-003). The
+	 * same line and request are proposed once.
+	 *
+	 * @param array<string,mixed> $line    The line, with its id.
+	 * @param array<string,mixed> $request The pending PaymentRequest, with its id.
+	 *
+	 * @return array<string,mixed> The pending match, as stored.
+	 *
+	 * @throws ManualMatchRefusedException When the line cannot be matched.
+	 *
+	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-003)
+	 */
+	public function proposePaymentRequest(array $line, array $request): array {
+		$this->assertMatchable(line: $line);
+
+		$payload = self::buildMatch(
+			line: $line,
+			type: 'payment-request',
+			targetIds: [(string)$request['id']],
+			matchedAmount: abs((float)($line['amount'] ?? 0)),
+			extra: array_merge(
+				self::paymentRequestExtra(request: $request),
+				['confidence' => 'auto', 'matchAlgorithm' => 'exact', 'manualOverride' => false, 'resolutionStatus' => 'pending']
+			)
+		);
+		$existing = $this->scoped(schema: 'ReconciliationMatch')->findAll(['filters' => ['matchId' => $payload['matchId']], 'limit' => 1]);
+		$known = ObjectIdentifier::recordWithId(candidate: ($existing[0] ?? null));
+		if ($known !== null) {
+			return $known;
+		}
+
+		$saved = ObjectIdentifier::recordWithId(candidate: $this->scoped(schema: 'ReconciliationMatch')->saveObject($payload));
+		return ($saved ?? $payload);
+
+	}//end proposePaymentRequest()
+
+	/**
+	 * The fields a payment-request match carries beyond the common ones.
+	 *
+	 * @param array<string,mixed> $request The PaymentRequest.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function paymentRequestExtra(array $request): array {
+		return [
+			'isPartial' => false,
+			'partial' => false,
+			'resolutionReason' => sprintf('Reference %s quoted on the bank line.', (string)($request['paymentReference'] ?? '')),
+		];
+
+	}//end paymentRequestExtra()
+
+	/**
 	 * Book a line to a ledger account.
 	 *
 	 * @param array<string,mixed> $line   The line, from findLine().
@@ -286,6 +368,35 @@ class ManualMatchService {
 		return $match;
 
 	}//end bookToLedger()
+
+	/**
+	 * Post money received on a line to a revenue account, through a journal
+	 * entry and its declared postDirect transition, with the bank account of
+	 * the line's statement debited (REQ-ORS-004). Writes no match.
+	 *
+	 * @param array<string,mixed> $line        The bank line, money in.
+	 * @param string              $account     The account credited.
+	 * @param string              $description The posting text.
+	 *
+	 * @return string The journal entry id.
+	 *
+	 * @throws ManualMatchRefusedException When the bank account has no ledger account.
+	 *
+	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-004)
+	 */
+	public function postReceipt(array $line, string $account, string $description): string {
+		$journal = $this->buildJournalEntry(
+			line: $line,
+			bankAccount: $this->bankLedgerAccount(line: $line),
+			ledger: ['accountNumber' => $account, 'description' => $description]
+		);
+		$saved = ObjectIdentifier::recordWithId(candidate: $this->scoped(schema: 'JournalEntry')->saveObject($journal));
+		$journalId = (string)($saved['id'] ?? '');
+		$this->transitions->run(objectId: $journalId, action: 'postDirect');
+
+		return $journalId;
+
+	}//end postReceipt()
 
 	/**
 	 * The balanced journal entry for a ledger booking.
@@ -536,8 +647,10 @@ class ManualMatchService {
 	 * @return string
 	 *
 	 * @throws ManualMatchRefusedException When the bank account has no ledger account.
+	 *
+	 * @spec openspec/changes/receivables-object-request-settlement/specs/object-payment-requests/spec.md (REQ-ORS-004)
 	 */
-	private function bankLedgerAccount(array $line): string {
+	public function bankLedgerAccount(array $line): string {
 		$statement = ObjectIdentifier::findOne(
 			scoped: $this->scoped(schema: 'BankStatement'),
 			id: (string)($line['statementId'] ?? ''),

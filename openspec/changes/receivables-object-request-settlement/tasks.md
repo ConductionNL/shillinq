@@ -9,8 +9,8 @@
 
 ## 2. Bank match
 
-- [ ] 2.1 `ObjectRequestBankMatcher` and `BankLineObjectRequestListener` on `ObjectCreatedEvent` for `BankStatementLine`; add `payment-request` to `ReconciliationMatch.targetType` (REQ-ORS-003). Verify: PHPUnit `ObjectRequestBankMatcherTest` with one exact match, a partial amount, two requests and no reference.
-- [ ] 2.2 Settle the request on a confirmed `payment-request` match: `bank-transfer` settlement, `settledAt`, receipt booked against the bank account, or the invoice settled when one stands behind it (REQ-ORS-004). Verify: PHPUnit `BankLineObjectRequestListenerTest::testConfirmedMatchSettlesAndBooksOnce`.
+- [x] 2.1 `ObjectRequestBankMatcher` and `BankLineObjectRequestListener` on `ObjectCreatedEvent` for `BankStatementLine`; add `payment-request` to `ReconciliationMatch.targetType` (REQ-ORS-003). Verify: PHPUnit `ObjectRequestBankMatcherTest` with one exact match, a partial amount, two requests and no reference. (3 Oct 2026: built as `tests/Unit/Service/Bank/ObjectRequestBankMatchTest.php`, which drives the listener with real events; the match schema's fields are `matchType`/`targetType` and `status` pending/confirmed, so a candidate is a `pending` match. `payment-request` added to both enums, ReconciliationMatch 0.2.0.)
+- [x] 2.2 Settle the request on a confirmed `payment-request` match: `bank-transfer` settlement, `settledAt`, receipt booked against the bank account, or the invoice settled when one stands behind it (REQ-ORS-004). Verify: PHPUnit `BankLineObjectRequestListenerTest::testConfirmedMatchSettlesAndBooksOnce`. (3 Oct 2026: `ObjectRequestBankMatchTest::testConfirmedMatchSettlesAndBooksOnce` and `testARequestWithAnInvoiceSettlesTheInvoice`; the receipt is posted as a JournalEntry through `postDirect`, debit the statement's bank ledger account.)
 - [ ] 2.3 Live check: import a CAMT.053 file with a line quoting `WC26-0042` for the open amount. Verify: Playwright `tests/e2e/object-request-bank-match.spec.ts` "a quoted reference settles the request" and "a partial amount waits for the bookkeeper".
 
 ## 3. Receipt
