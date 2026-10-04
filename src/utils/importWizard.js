@@ -258,3 +258,37 @@ export function refusalMessage(error, fallback) {
 	const data = error?.response?.data
 	return String(data?.message || data?.error || fallback)
 }
+
+/**
+ * The wizard's address for one batch.
+ *
+ * @param {string} id The batch id.
+ * @return {string} The URL of the wizard opened on that batch.
+ * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ */
+export function wizardUrl(id) {
+	return (
+		generateUrl('/apps/shillinq/import/wizard')
+		+ '?batch='
+		+ encodeURIComponent(id)
+	)
+}
+
+/**
+ * Header action on an import batch: open the wizard on it, at the step its
+ * status belongs on, so a batch left at the mapping review can go on to the
+ * validation and the dry run (live pass S3).
+ *
+ * @param {{item?: object}} scope The page scope.
+ * @return {boolean} Whether the wizard was opened.
+ * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+ */
+export function openImportWizard(scope) {
+	const id =
+		scope?.item?.id || window.location.pathname.split('/').pop() || ''
+	if (!id) {
+		return false
+	}
+	window.location.assign(wizardUrl(id))
+	return true
+}

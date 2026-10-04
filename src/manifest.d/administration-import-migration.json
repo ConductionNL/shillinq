@@ -91,6 +91,16 @@
 					{"key": "owner", "label": "Owner", "type": "string"}
 				],
 				"lifecycleActions": true,
+				"headerActions": [
+					{
+						"id": "continue-in-wizard",
+						"label": "Continue in the wizard",
+						"type": "handler",
+						"handler": "openImportWizard",
+						"icon": "DatabaseImportOutline",
+						"description": "Open this batch in the import wizard, at the step it has reached, to validate it, run the dry run or post it."
+					}
+				],
 				"relatedCollections": [
 					{
 						"title": "Account mappings",

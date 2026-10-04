@@ -280,6 +280,7 @@ import {
 	confirmSuggestions,
 	createBatch,
 	formComplete,
+	loadBatch,
 	loadMappings,
 	openingTotals,
 	openMappings,
@@ -438,6 +439,10 @@ export default {
 
 	async mounted() {
 		await this.resolveAdministration()
+		const id = this.$route?.query?.batch
+		if (id) {
+			await this.resume(String(id))
+		}
 	},
 
 	methods: {
@@ -516,6 +521,7 @@ export default {
 		async start() {
 			await this.guarded(async () => {
 				const created = await createBatch(this.form)
+				this.remember(created.id)
 				this.batch = await runTransition(created.id, 'parse')
 				this.batch = await runTransition(this.batch.id, 'startMapping')
 				await this.show()
@@ -595,7 +601,49 @@ export default {
 			this.batch = null
 			this.mappings = []
 			this.step = 'upload'
+			this.remember(null)
 			await this.resolveAdministration()
+		},
+
+		/**
+		 * Open an existing batch on the step its status belongs on (live pass S3).
+		 *
+		 * @param {string} id The batch id.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 */
+		async resume(id) {
+			this.busy = true
+			this.error = ''
+			try {
+				this.batch = await loadBatch(id)
+				await this.show()
+			} catch {
+				this.batch = null
+				this.mappings = []
+				this.step = 'upload'
+				this.error = t(
+					'shillinq',
+					'The import batch {id} could not be opened.',
+					{ id },
+				)
+			} finally {
+				this.busy = false
+			}
+		},
+
+		/**
+		 * Keep the batch in the address, so leaving the page does not lose it.
+		 *
+		 * @param {string|null} id The batch id, or null for a new import.
+		 * @return {void}
+		 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+		 */
+		remember(id) {
+			if (!this.$router) {
+				return
+			}
+			this.$router.replace({ query: id ? { batch: id } : {} })
 		},
 
 		/**

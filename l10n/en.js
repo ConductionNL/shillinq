@@ -4143,7 +4143,10 @@ OC.L10N.register(
         "Requested": "Requested",
         "Bank reference": "Bank reference",
         "The reference of the bank payment that paid the refund.": "The reference of the bank payment that paid the refund.",
-        "Choose": "Choose"
+        "Choose": "Choose",
+        "The import batch {id} could not be opened.": "The import batch {id} could not be opened.",
+        "Continue in the wizard": "Continue in the wizard",
+        "Open this batch in the import wizard, at the step it has reached, to validate it, run the dry run or post it.": "Open this batch in the import wizard, at the step it has reached, to validate it, run the dry run or post it."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -241,6 +241,114 @@ describe('the import wizard', () => {
 	})
 })
 
+describe('coming back to a batch (live pass S3)', () => {
+	it('opens the batch the route names, on the step its status belongs on', async () => {
+		const state = register()
+		state.batch = { id: 'batch-1', status: 'mapping' }
+		const vm = wizard()
+		vm.$route = { query: { batch: 'batch-1' } }
+
+		await ImportWizard.mounted.call(vm)
+
+		expect(vm.batch.id).toBe('batch-1')
+		expect(vm.step).toBe('mapping')
+		expect(vm.mappings.map((row) => row.id)).toEqual(['map-1', 'map-2'])
+		expect(vm.open).toHaveLength(1)
+		expect(vm.form.administrationId).toBe('adm-new')
+	})
+
+	it('goes on from the mapping review after the rows were mapped elsewhere', async () => {
+		const state = register()
+		state.batch = { id: 'batch-1', status: 'mapping' }
+		state.mappings = state.mappings.map((row) => ({ ...row, confirmed: true }))
+		const vm = wizard()
+		vm.$route = { query: { batch: 'batch-1' } }
+		await ImportWizard.mounted.call(vm)
+
+		await vm.transition('validate')
+		await vm.transition('dryRun')
+
+		expect(state.transitions).toEqual(['validate', 'dryRun'])
+		expect(vm.step).toBe('dry-run')
+		expect(vm.totals).toEqual({ debit: 30000, credit: 30000, lines: 3 })
+	})
+
+	it('names a batch it cannot open and starts at the first step', async () => {
+		register()
+		axiosMock.get.mockImplementation(async (url) => {
+			if (url.includes('/ImportBatch/')) {
+				throw { response: { status: 404, data: { message: 'Object not found' } } }
+			}
+			return { data: { activeAdministrationId: 'adm-new' } }
+		})
+		const vm = wizard()
+		vm.$route = { query: { batch: 'gone' } }
+
+		await ImportWizard.mounted.call(vm)
+
+		expect(vm.batch).toBeNull()
+		expect(vm.step).toBe('upload')
+		expect(vm.error).not.toBe('')
+	})
+
+	it('puts the new batch in the address, so leaving the page does not lose it', async () => {
+		register()
+		const vm = wizard()
+		vm.$route = { query: {} }
+		vm.$router = { replace: vi.fn() }
+		await ImportWizard.mounted.call(vm)
+		vm.form.path = '/Migrations/auditfile-2025.xaf'
+		vm.form.migrationDate = '2026-01-01'
+
+		await vm.start()
+
+		expect(vm.$router.replace).toHaveBeenCalledWith({
+			query: { batch: 'batch-1' },
+		})
+
+		await vm.restart()
+		expect(vm.$router.replace).toHaveBeenLastCalledWith({ query: {} })
+	})
+
+	it('is offered on the batch page, through a registered handler', () => {
+		const manifest = JSON.parse(
+			fs.readFileSync(
+				path.join(ROOT, 'src/manifest.d/administration-import-migration.json'),
+				'utf8',
+			),
+		)
+		const detail = manifest.pages.find(
+			(candidate) => candidate.id === 'ImportBatchDetail',
+		)
+		const action = (detail.config.headerActions || []).find(
+			(candidate) => candidate.handler === 'openImportWizard',
+		)
+		expect(action).toBeTruthy()
+		expect(action.type).toBe('handler')
+
+		const main = fs.readFileSync(path.join(ROOT, 'src/main.js'), 'utf8')
+		expect(main).toMatch(/^\s+openImportWizard,$/m)
+		expect(typeof helpers.openImportWizard).toBe('function')
+	})
+
+	it('opens the wizard on the batch the page shows', () => {
+		const assign = vi.fn()
+		vi.stubGlobal('window', { location: { assign, pathname: '/apps/shillinq/import/batches/batch-9' } })
+		try {
+			expect(helpers.openImportWizard({ item: { id: 'batch-1' } })).toBe(true)
+			expect(assign).toHaveBeenLastCalledWith(
+				'/index.php/apps/shillinq/import/wizard?batch=batch-1',
+			)
+			helpers.openImportWizard({})
+			expect(assign).toHaveBeenLastCalledWith(
+				'/index.php/apps/shillinq/import/wizard?batch=batch-9',
+			)
+		} finally {
+			vi.unstubAllGlobals()
+		}
+	})
+})
+
 describe('the wizard helpers', () => {
 	it('puts each status on its step', () => {
 		expect(helpers.stepForBatch(null)).toBe('upload')
