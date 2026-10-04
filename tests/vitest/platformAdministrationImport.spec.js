@@ -277,7 +277,9 @@ describe('coming back to a batch (live pass S3)', () => {
 		register()
 		axiosMock.get.mockImplementation(async (url) => {
 			if (url.includes('/ImportBatch/')) {
-				throw { response: { status: 404, data: { message: 'Object not found' } } }
+				throw {
+					response: { status: 404, data: { message: 'Object not found' } },
+				}
 			}
 			return { data: { activeAdministrationId: 'adm-new' } }
 		})
@@ -313,7 +315,10 @@ describe('coming back to a batch (live pass S3)', () => {
 	it('is offered on the batch page, through a registered handler', () => {
 		const manifest = JSON.parse(
 			fs.readFileSync(
-				path.join(ROOT, 'src/manifest.d/administration-import-migration.json'),
+				path.join(
+					ROOT,
+					'src/manifest.d/administration-import-migration.json',
+				),
 				'utf8',
 			),
 		)
@@ -333,7 +338,9 @@ describe('coming back to a batch (live pass S3)', () => {
 
 	it('opens the wizard on the batch the page shows', () => {
 		const assign = vi.fn()
-		vi.stubGlobal('window', { location: { assign, pathname: '/apps/shillinq/import/batches/batch-9' } })
+		vi.stubGlobal('window', {
+			location: { assign, pathname: '/apps/shillinq/import/batches/batch-9' },
+		})
 		try {
 			expect(helpers.openImportWizard({ item: { id: 'batch-1' } })).toBe(true)
 			expect(assign).toHaveBeenLastCalledWith(

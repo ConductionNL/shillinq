@@ -284,8 +284,7 @@ export function wizardUrl(id) {
  * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
  */
 export function openImportWizard(scope) {
-	const id =
-		scope?.item?.id || window.location.pathname.split('/').pop() || ''
+	const id = scope?.item?.id || window.location.pathname.split('/').pop() || ''
 	if (!id) {
 		return false
 	}

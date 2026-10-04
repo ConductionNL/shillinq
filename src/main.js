@@ -33,8 +33,8 @@ import { openMissedDepreciation } from './utils/assetActions.js'
 import { classifyUnmatched, openBankLineMatch } from './utils/bankMatchActions.js'
 import { openCarryOverCommitments } from './utils/commitmentYearEndApi.js'
 import { openDownPaymentInvoice } from './utils/downPaymentActions.js'
-import { openIntegriqConnections } from './utils/integriqConnections.js'
 import { openImportWizard } from './utils/importWizard.js'
+import { openIntegriqConnections } from './utils/integriqConnections.js'
 import {
 	buildPageFragmentIndex,
 	mergeFullFragmentIntoManifest,
