@@ -1403,8 +1403,8 @@ class Application extends App implements IBootstrap {
 			schemas: ['GLTransaction', 'GLLine', 'GLTransactionLine']
 		);
 
-		// Bookkeeping-innovatiebox-administratie — append an immutable
-		// InnovatieboxAuditEvent per relevant lifecycle transition on the
+		// Bookkeeping-innovatiebox-administratie — record a row on the
+		// subject's OpenRegister audit trail per relevant transition on the
 		// three innovatiebox subject schemas (NexusCalculation,
 		// IBProfitAttribution, CarryForwardLoss). Captures *.created,
 		// IBProfitAttribution.finalized (vso_locked: false -> true) and
