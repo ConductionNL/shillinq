@@ -267,14 +267,14 @@ class ImportPipelineService {
 	public function resolveBatchMappings(array $batch, string $batchId): array {
 		$stagingPayload = ($batch['stagingPayload'] ?? []);
 		$accounts = ($stagingPayload['ledgerAccounts'] ?? []);
-		$targetByRgs = $this->loadTargetAccountsByRgs(administrationId: (string)($batch['administrationId'] ?? ''));
+		$chart = $this->loadTargetChart(administrationId: (string)($batch['administrationId'] ?? ''));
 		$profileMap = $this->loadMappingProfile(name: (string)($batch['mappingProfile'] ?? ''));
 
 		$mappings = [];
 		foreach ($accounts as $account) {
 			$mappings[] = $this->resolveOne(
 				account: $account,
-				targetByRgs: $targetByRgs,
+				chart: $chart,
 				profileMap: $profileMap,
 				administrationId: (string)($batch['administrationId'] ?? ''),
 				batchId: $batchId
@@ -294,8 +294,8 @@ class ImportPipelineService {
 	 * Resolve a single source account to a mapping row (REQ-AIM-004).
 	 *
 	 * @param array<string,mixed> $account Staged source account.
-	 * @param array<string,string> $targetByRgs RGS code → target account
-	 *                                          code.
+	 * @param array{byRgs:array<string,string>,numbers:array<string,string>} $chart The target chart:
+	 *                                          RGS code → account number, and every account number.
 	 * @param array<string,string> $profileMap Source code → target code from a saved
 	 *                                         profile.
 	 * @param string $administrationId Owning administration.
@@ -305,7 +305,7 @@ class ImportPipelineService {
 	 *
 	 * @spec openspec/changes/administration-import-migration/tasks.md#task-9
 	 */
-	private function resolveOne(array $account, array $targetByRgs, array $profileMap, string $administrationId, string $batchId): array {
+	private function resolveOne(array $account, array $chart, array $profileMap, string $administrationId, string $batchId): array {
 		$sourceCode = (string)($account['code'] ?? '');
 		$sourceName = (string)($account['name'] ?? '');
 		$rgs = (string)($account['rgsCode'] ?? '');
@@ -325,8 +325,8 @@ class ImportPipelineService {
 		];
 
 		// (1) RGS auto-match, pre-confirmed.
-		if ($rgs !== '' && isset($targetByRgs[$rgs]) === true) {
-			return array_merge($base, ['targetAccount' => $targetByRgs[$rgs], 'mappingSource' => 'rgs-auto', 'confirmed' => true]);
+		if ($rgs !== '' && isset($chart['byRgs'][$rgs]) === true) {
+			return array_merge($base, ['targetAccount' => $chart['byRgs'][$rgs], 'mappingSource' => 'rgs-auto', 'confirmed' => true]);
 		}
 
 		// (2) Saved profile hit, pre-confirmed.
@@ -335,7 +335,7 @@ class ImportPipelineService {
 		}
 
 		// (3) Code/name similarity suggestion — operator must confirm.
-		$suggested = $this->suggestByCodeOrName(sourceCode: $sourceCode, targetByRgs: $targetByRgs);
+		$suggested = $this->suggestByCodeOrName(sourceCode: $sourceCode, targetNumbers: $chart['numbers']);
 		if ($suggested !== null) {
 			return array_merge($base, ['targetAccount' => $suggested, 'mappingSource' => 'manual', 'confirmed' => false]);
 		}
@@ -347,25 +347,23 @@ class ImportPipelineService {
 	/**
 	 * Suggest a target account by exact code match (cheap similarity heuristic).
 	 *
-	 * @param string $sourceCode Source account code.
-	 * @param array<string,string> $targetByRgs RGS → target code (values are the candidate
-	 *                                          codes).
+	 * Looks among EVERY account of the target chart, with or without an RGS
+	 * code: a chart seeded without RGS codes still has the same numbers.
+	 *
+	 * @param string               $sourceCode    Source account code.
+	 * @param array<string,string> $targetNumbers Every account number of the target chart, keyed by itself.
 	 *
 	 * @return string|null Suggested target code, or null.
+	 *
+	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
 	 */
-	private function suggestByCodeOrName(string $sourceCode, array $targetByRgs): ?string {
+	private function suggestByCodeOrName(string $sourceCode, array $targetNumbers): ?string {
 		if ($sourceCode === '') {
 			return null;
 		}
 
 		// Exact code identity is the safe, deterministic suggestion.
-		foreach ($targetByRgs as $targetCode) {
-			if ($targetCode === $sourceCode) {
-				return $targetCode;
-			}
-		}
-
-		return null;
+		return ($targetNumbers[$sourceCode] ?? null);
 	}//end suggestByCodeOrName()
 
 	/**
@@ -1000,18 +998,22 @@ class ImportPipelineService {
 	}//end persistMapping()
 
 	/**
-	 * Load target accounts keyed by RGS code (for auto-mapping).
+	 * Load the target chart: accounts keyed by RGS code, and every account number.
 	 *
 	 * @param string $administrationId Administration.
 	 *
-	 * @return array<string,string> RGS code → target account code.
+	 * @return array{byRgs:array<string,string>,numbers:array<string,string>} RGS code → target account
+	 *         code (auto-mapping), and every account number keyed by itself (the code-identity suggestion).
+	 *
+	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
 	 */
-	private function loadTargetAccountsByRgs(string $administrationId): array {
+	private function loadTargetChart(string $administrationId): array {
 		$byRgs = [];
+		$numbers = [];
 		try {
 			$service = $this->objectService();
 			if ($service === null) {
-				return $byRgs;
+				return ['byRgs' => $byRgs, 'numbers' => $numbers];
 			}
 
 			$accounts = $service->setRegister($this->register())
@@ -1021,16 +1023,21 @@ class ImportPipelineService {
 				$row = $this->toArray(object: $account);
 				$rgs = (string)($row['rgsCode'] ?? '');
 				$code = (string)($row['accountNumber'] ?? ($row['code'] ?? ''));
-				if ($rgs !== '' && $code !== '') {
+				if ($code === '') {
+					continue;
+				}
+
+				$numbers[$code] = $code;
+				if ($rgs !== '') {
 					$byRgs[$rgs] = $code;
 				}
 			}
 		} catch (\Throwable $e) {
-			$this->logger->warning('ImportPipelineService: loadTargetAccountsByRgs degraded', ['exception' => $e->getMessage()]);
+			$this->logger->warning('ImportPipelineService: loadTargetChart degraded', ['exception' => $e->getMessage()]);
 		}
 
-		return $byRgs;
-	}//end loadTargetAccountsByRgs()
+		return ['byRgs' => $byRgs, 'numbers' => $numbers];
+	}//end loadTargetChart()
 
 	/**
 	 * Load a saved mapping profile as source code → target code.
