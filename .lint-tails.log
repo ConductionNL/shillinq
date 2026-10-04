@@ -1,0 +1,164 @@
+
+> shillinq@0.2.1 lint
+> eslint src tests scripts
+
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/App.vue
+  185:1  warning  Unexpected inline JSDoc tag. Did you mean to use {@nextcloud}, \@nextcloud, or `@nextcloud`?  jsdoc/escape-inline-tags
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/components/AdministratieSwitcher.vue
+  92:13  warning  Boolean prop should only be defaulted to false  vue/no-boolean-default
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/components/BudgetBBVMapping/BudgetBBVMappingDetail.vue
+  735:15  warning  The "navigate" event has been triggered but not declared on `emits` option  vue/require-explicit-emits
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/components/Dashboard/BBVComplianceDashboard.vue
+  327:15  warning  The "programme-click" event has been triggered but not declared on `emits` option  vue/require-explicit-emits
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/components/cashflow/CashflowDashboard.vue
+  144:15  warning  The "export-pdf" event has been triggered but not declared on `emits` option  vue/require-explicit-emits
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/components/cashflow/ScenarioCreator.vue
+  196:15  warning  The "create-scenario" event has been triggered but not declared on `emits` option  vue/require-explicit-emits
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/components/dashboard/financial/financialSeries.js
+  170:1  warning  Missing JSDoc @param "input.accounts" description        jsdoc/require-param-description
+  170:1  warning  Missing JSDoc @param "input.accounts" type               jsdoc/require-param-type
+  171:1  warning  Missing JSDoc @param "input.transactions" description    jsdoc/require-param-description
+  171:1  warning  Missing JSDoc @param "input.transactions" type           jsdoc/require-param-type
+  172:1  warning  Missing JSDoc @param "input.lines" description           jsdoc/require-param-description
+  172:1  warning  Missing JSDoc @param "input.lines" type                  jsdoc/require-param-type
+  173:1  warning  Missing JSDoc @param "input.months" description          jsdoc/require-param-description
+  173:1  warning  Missing JSDoc @param "input.months" type                 jsdoc/require-param-type
+  353:1  warning  Missing JSDoc @param "input.accounts" description        jsdoc/require-param-description
+  353:1  warning  Missing JSDoc @param "input.accounts" type               jsdoc/require-param-type
+  354:1  warning  Missing JSDoc @param "input.transactions" description    jsdoc/require-param-description
+  354:1  warning  Missing JSDoc @param "input.transactions" type           jsdoc/require-param-type
+  355:1  warning  Missing JSDoc @param "input.lines" description           jsdoc/require-param-description
+  355:1  warning  Missing JSDoc @param "input.lines" type                  jsdoc/require-param-type
+  356:1  warning  Missing JSDoc @param "input.arInvoices" description      jsdoc/require-param-description
+  356:1  warning  Missing JSDoc @param "input.arInvoices" type             jsdoc/require-param-type
+  357:1  warning  Missing JSDoc @param "input.apTransactions" description  jsdoc/require-param-description
+  357:1  warning  Missing JSDoc @param "input.apTransactions" type         jsdoc/require-param-type
+  358:1  warning  Missing JSDoc @param "input.hourEntries" description     jsdoc/require-param-description
+  358:1  warning  Missing JSDoc @param "input.hourEntries" type            jsdoc/require-param-type
+  433:1  warning  Missing JSDoc @param "now" description                   jsdoc/require-param-description
+  433:1  warning  Missing JSDoc @param "now" type                          jsdoc/require-param-type
+  460:1  warning  Missing JSDoc @param "input.accounts" description        jsdoc/require-param-description
+  460:1  warning  Missing JSDoc @param "input.accounts" type               jsdoc/require-param-type
+  461:1  warning  Missing JSDoc @param "input.transactions" description    jsdoc/require-param-description
+  461:1  warning  Missing JSDoc @param "input.transactions" type           jsdoc/require-param-type
+  462:1  warning  Missing JSDoc @param "input.lines" description           jsdoc/require-param-description
+  462:1  warning  Missing JSDoc @param "input.lines" type                  jsdoc/require-param-type
+  463:1  warning  Missing JSDoc @param "input.hourEntries" description     jsdoc/require-param-description
+  463:1  warning  Missing JSDoc @param "input.hourEntries" type            jsdoc/require-param-type
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/components/dashboard/financial/useFinancialData.js
+  75:1  warning  Prefer a more specific type to `Function`  jsdoc/reject-function-type
+  75:1  warning  Prefer a more specific type to `Function`  jsdoc/reject-function-type
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/components/goods-receipt-note/GoodsReceiptNoteForm.vue
+  147:10  warning  'photoInput' is defined as ref, but never used  vue/no-unused-refs
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/components/inventory/BarcodeScanner.vue
+  79:3  warning  'fallbackToManual' of property found, but never used  vue/no-unused-properties
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/components/invoice/InvoiceGenerator.vue
+  249:16  warning  The "draft-created" event has been triggered but not declared on `emits` option  vue/require-explicit-emits
+  266:16  warning  The "pdf-previewed" event has been triggered but not declared on `emits` option  vue/require-explicit-emits
+  278:16  warning  The "posted" event has been triggered but not declared on `emits` option         vue/require-explicit-emits
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/components/pipelinq/KlantbeeldTimeline.vue
+  178:15  warning  The "load-more" event has been triggered but not declared on `emits` option  vue/require-explicit-emits
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/components/three-way-match/ThreeWayMatchExceptionPanel.vue
+  387:3  warning  Missing JSDoc @param "poId" declaration   jsdoc/require-param
+  401:3  warning  Missing JSDoc @param "grnId" declaration  jsdoc/require-param
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/components/vendor-performance/VendorPerformanceDetail.vue
+  228:3  warning  'administrationId' of property found, but never used  vue/no-unused-properties
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/components/widget/WidgetEmbed.js
+  44:1  warning  Missing JSDoc @param "config" description     jsdoc/require-param-description
+  44:1  warning  Missing JSDoc @param "config" type            jsdoc/require-param-type
+  67:1  warning  Missing JSDoc @param "config" description     jsdoc/require-param-description
+  67:1  warning  Missing JSDoc @param "config" type            jsdoc/require-param-type
+  78:1  warning  Missing JSDoc @param "container" description  jsdoc/require-param-description
+  78:1  warning  Missing JSDoc @param "container" type         jsdoc/require-param-type
+  79:1  warning  Missing JSDoc @param "config" description     jsdoc/require-param-description
+  79:1  warning  Missing JSDoc @param "config" type            jsdoc/require-param-type
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/composables/useBarcodeScanner.js
+  162:1  warning  Prefer a more specific type to `Function`  jsdoc/reject-function-type
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/composables/useInventoryDb.js
+  107:1  warning  Prefer a more specific type to `*`  jsdoc/reject-any-type
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/composables/useInventorySync.js
+  179:1  warning  Prefer a more specific type to `Function`  jsdoc/reject-function-type
+  180:1  warning  Prefer a more specific type to `Function`  jsdoc/reject-function-type
+  181:1  warning  Prefer a more specific type to `Function`  jsdoc/reject-function-type
+  182:1  warning  Prefer a more specific type to `Function`  jsdoc/reject-function-type
+  182:1  warning  Prefer a more specific type to `Function`  jsdoc/reject-function-type
+  182:1  warning  Prefer a more specific type to `Function`  jsdoc/reject-function-type
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/modals/BankStatementWizard.vue
+   64:11  warning  'file' is defined as ref, but never used   vue/no-unused-refs
+  264:1   warning  Missing JSDoc @param "next" description    jsdoc/require-param-description
+  288:1   warning  Missing JSDoc @param "format" description  jsdoc/require-param-description
+  297:1   warning  Missing JSDoc @param "option" description  jsdoc/require-param-description
+  305:1   warning  Missing JSDoc @param "event" description   jsdoc/require-param-description
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/modals/BillImportModal.vue
+   75:11  warning  'fileInput' is defined as ref, but never used  vue/no-unused-refs
+  420:1   warning  Missing JSDoc @param "next" description        jsdoc/require-param-description
+  458:1   warning  Missing JSDoc @param "field" description       jsdoc/require-param-description
+  466:1   warning  Missing JSDoc @param "field" description       jsdoc/require-param-description
+  603:1   warning  Missing JSDoc @param "event" description       jsdoc/require-param-description
+  612:1   warning  Missing JSDoc @param "event" description       jsdoc/require-param-description
+  621:1   warning  Missing JSDoc @param "file" description        jsdoc/require-param-description
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/modals/InvoiceQuickDraftModal.vue
+  308:1  warning  Missing JSDoc @param "amount" description           jsdoc/require-param-description
+  319:1  warning  Missing JSDoc @param "line" description             jsdoc/require-param-description
+  387:1  warning  Missing JSDoc @param "option" description           jsdoc/require-param-description
+  416:1  warning  Missing JSDoc @param "customerOrEvent" description  jsdoc/require-param-description
+  429:1  warning  Missing JSDoc @param "line" description             jsdoc/require-param-description
+  430:1  warning  Missing JSDoc @param "option" description           jsdoc/require-param-description
+  443:1  warning  Missing JSDoc @param "idx" description              jsdoc/require-param-description
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/modals/RecurringInvoiceProfileModal.vue
+  366:1  warning  Missing JSDoc @param "next" description    jsdoc/require-param-description
+  401:1  warning  Missing JSDoc @param "amount" description  jsdoc/require-param-description
+  412:1  warning  Missing JSDoc @param "line" description    jsdoc/require-param-description
+  423:1  warning  Missing JSDoc @param "field" description   jsdoc/require-param-description
+  424:1  warning  Missing JSDoc @param "option" description  jsdoc/require-param-description
+  432:1  warning  Missing JSDoc @param "line" description    jsdoc/require-param-description
+  433:1  warning  Missing JSDoc @param "option" description  jsdoc/require-param-description
+  446:1  warning  Missing JSDoc @param "idx" description     jsdoc/require-param-description
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/modals/billImportModal.js
+  74:1  warning  Syntax error in type: function  jsdoc/valid-types
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/views/ReceiptCapture.vue
+  444:1  warning  Missing JSDoc @param "field" description  jsdoc/require-param-description
+  452:1  warning  Missing JSDoc @param "field" description  jsdoc/require-param-description
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/views/bookings/CalendarPage.vue
+  33:8  warning  'grid' is defined as ref, but never used  vue/no-unused-refs
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/views/bookkeeping/ChartOfAccountsView.vue
+  118:15  warning  The "add-account" event has been triggered but not declared on `emits` option  vue/require-explicit-emits
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/views/bookkeeping/DocumentsView.vue
+  197:15  warning  The "upload-document" event has been triggered but not declared on `emits` option  vue/require-explicit-emits
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/views/bookkeeping/TransactionsView.vue
+  202:15  warning  The "create-transaction" event has been triggered but not declared on `emits` option  vue/require-explicit-emits
+
+/home/rubenlinde/memcap-work/lq-lanes/sq-tails/src/views/settings/StandardsPolicyEditor.vue
+  292:1  warning  Missing JSDoc @param "saved" description  jsdoc/require-param-description
+
+✖ 98 problems (0 errors, 98 warnings)
+  0 errors and 2 warnings potentially fixable with the `--fix` option.
+

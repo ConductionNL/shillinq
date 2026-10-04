@@ -1,0 +1,6 @@
+
+> shillinq@0.2.1 test:l10n
+> node tests/l10n/check-l10n.js
+
+l10n-check [shillinq]: scanned 141 files, 1067 distinct literal keys used, 3186 keys in en.json
+l10n-check: OK — every used translation key is present in l10n/en.json
