@@ -437,6 +437,12 @@ export default {
 		},
 	},
 
+	/**
+	 * Resolve the target administration, then open the batch the address names.
+	 *
+	 * @return {Promise<void>}
+	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 */
 	async mounted() {
 		await this.resolveAdministration()
 		const id = this.$route?.query?.batch
