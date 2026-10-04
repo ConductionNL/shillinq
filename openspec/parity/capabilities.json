@@ -5919,7 +5919,7 @@
 				"state": "specified",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
-				"evidence": "lib/Lifecycle/AuditTrailGuard.php:9 keeps audit records insert-only; lib/Service/AuditExportService.php:31 and lib/Service/AccountantsdossierExportService.php:23 stamp a SHA-256 over exported packages so later tampering is detectable. Posted entries themselves are not hash-chained.",
+				"evidence": "lib/Settings/register.d/bookkeeping-single-audit-eu-fondsen.json declares the AuditTrail schema appendOnly, so OpenRegister keeps audit records insert-only; lib/Service/AuditExportService.php:31 and lib/Service/AccountantsdossierExportService.php:23 stamp a SHA-256 over exported packages so later tampering is detectable. Posted entries themselves are not hash-chained.",
 				"reachedOn": "BookkeepingAuditTrail /bookkeeping/audit-trail; export packages"
 			},
 			"evidence": {
