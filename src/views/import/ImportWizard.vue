@@ -490,6 +490,13 @@ export default {
 				)
 					.setMultiSelect(false)
 					.allowDirectories(false)
+					// @nextcloud/dialogs 7 starts a picker with no buttons, and a
+					// picker without one can never pick (live pass S1).
+					.addButton({
+						label: t('shillinq', 'Choose'),
+						variant: 'primary',
+						callback: () => {},
+					})
 					.build()
 					.pick()
 				this.form.path = Array.isArray(picked)
