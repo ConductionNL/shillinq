@@ -24,13 +24,17 @@ namespace OCA\Shillinq\Tests\Unit\Integration;
 
 use InvalidArgumentException;
 use OCA\Shillinq\Integration\PaymentRequestLeafProvider;
+use OCA\Shillinq\Service\DebtorCreditService;
 use OCA\Shillinq\Service\FeeScheduleService;
+use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
 use OCA\Shillinq\Service\PaymentActionAppGrant;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
+use OCA\Shillinq\Service\PaymentRevenueAccountResolver;
 use OCA\Shillinq\Service\PaymentSettlementService;
 use OCA\Shillinq\Tests\Unit\Fixtures\EffectiveRegisterFixture;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
+use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -739,4 +743,229 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 		self::assertSame([], $this->saved);
 		self::assertContains(false, $this->foundWithRbac, 'The existing requests are read as the system.');
 	}//end testAGrantedAppIsHeldToOneOpenRequestPerType()
+
+	/**
+	 * The leaf with the real credit service over one in-memory store (REQ-ORC-004).
+	 *
+	 * @param array<int, array<string, mixed>> $credits Stored DebtorCredit rows.
+	 * @param array<int, array{0: string, 1: string}> $runs Receives every journal transition run.
+	 * @param string $creditAccount The paymentCreditAccount setting.
+	 *
+	 * @return array{0: PaymentRequestLeafProvider, 1: InMemoryObjectServiceStub} The provider and its store.
+	 */
+	private function leafWithCredit(array $credits, array &$runs, string $creditAccount = '1850'): array {
+		$store = new InMemoryObjectServiceStub(data: ['DebtorCredit' => $credits]);
+
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = '') use ($creditAccount): string {
+				return match ($key) {
+					'register' => 'shillinq',
+					DebtorCreditService::CONFIG_KEY => $creditAccount,
+					PaymentRevenueAccountResolver::CONFIG_KEY => '{"event-fee":"8050"}',
+					default => $default,
+				};
+			}
+		);
+
+		$transitions = $this->createMock(ObjectTransitionRunner::class);
+		$transitions->method('run')->willReturnCallback(
+			static function (string $objectId, string $action) use (&$runs): void {
+				$runs[] = [$objectId, $action];
+			}
+		);
+
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('handler');
+		$session = $this->createMock(IUserSession::class);
+		$session->method('getUser')->willReturn($user);
+		$groups = $this->createMock(IGroupManager::class);
+		$groups->method('isAdmin')->willReturn(true);
+
+		$leaf = new PaymentRequestLeafProvider(
+			objectService: $store,
+			validator: new ObjectPaymentRequestValidator(),
+			appConfig: $appConfig,
+			authorizer: new PaymentActionAuthorizer(appConfig: $appConfig, userSession: $session, groupManager: $groups),
+			feeSchedules: new FeeScheduleService(objectService: $store, appConfig: $appConfig, logger: $this->createMock(LoggerInterface::class)),
+			settlements: new PaymentSettlementService(),
+			appGrant: new PaymentActionAppGrant(appConfig: $appConfig, appManager: $this->createMock(IAppManager::class)),
+			credits: new DebtorCreditService(
+				objectService: $store,
+				appConfig: $appConfig,
+				transitions: $transitions,
+				revenueAccounts: new PaymentRevenueAccountResolver(appConfig: $appConfig),
+			),
+		);
+
+		return [$leaf, $store];
+	}//end leafWithCredit()
+
+	/**
+	 * One open credit row for Joris.
+	 *
+	 * @param string $id The credit id.
+	 * @param float $remaining What is left of it.
+	 * @param string $created When OpenRegister created it.
+	 *
+	 * @return array<string, mixed> The row.
+	 */
+	private function openCredit(string $id, float $remaining, string $created): array {
+		return [
+			'id' => $id,
+			'debtorKey' => 'joris@example.nl',
+			'amount' => $remaining,
+			'remaining' => $remaining,
+			'currency' => 'EUR',
+			'sourcePaymentRequestId' => 'pr-old-' . $id,
+			'administrationId' => 'adm-larp-1',
+			'state' => 'open',
+			'@self' => ['created' => $created],
+		];
+	}//end openCredit()
+
+	/**
+	 * A new request for Joris, as larpinq sends it.
+	 *
+	 * @param float $amount The amount.
+	 *
+	 * @return array<string, mixed> The leaf payload.
+	 */
+	private function jorisRequest(float $amount): array {
+		return [
+			'requestType' => 'event-fee',
+			'amount' => $amount,
+			'subjectType' => 'registration',
+			'description' => 'Spring event 2027',
+			'administrationId' => 'adm-larp-1',
+			'debtor' => ['name' => 'Joris Bakker', 'email' => 'Joris@Example.nl'],
+		];
+	}//end jorisRequest()
+
+	/**
+	 * The last saved version of each object of a schema, by id.
+	 *
+	 * @param InMemoryObjectServiceStub $store The store.
+	 * @param string $schema The schema.
+	 *
+	 * @return array<string, array<string, mixed>> Id => object.
+	 */
+	private function lastSaved(InMemoryObjectServiceStub $store, string $schema): array {
+		$byId = [];
+		foreach ($store->saved as $save) {
+			if ($save['schema'] === $schema) {
+				$byId[(string)($save['object']['id'] ?? count($byId))] = $save['object'];
+			}
+		}
+
+		return $byId;
+	}//end lastSaved()
+
+	/**
+	 * Joris's 85.00 credit pays a 60.00 request whole, and 25.00 stays open (REQ-ORC-004).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-004)
+	 */
+	public function testCreditCoveringTheWholeAmountSettlesAtOnce(): void {
+		$runs = [];
+		[$leaf, $store] = $this->leafWithCredit(credits: [$this->openCredit(id: 'dc-1', remaining: 85.0, created: '2026-09-01T10:00:00Z')], runs: $runs);
+
+		$created = $leaf->create('larpinq', 'Registration', 'reg-77', $this->jorisRequest(amount: 60.0));
+
+		self::assertSame('credit', $created['settledVia'] ?? null);
+		self::assertNotSame('', (string)($created['settledAt'] ?? ''));
+		self::assertCount(1, $created['settlements']);
+		self::assertSame('credit', $created['settlements'][0]['method']);
+		self::assertSame(60.0, $created['settlements'][0]['amount']);
+		self::assertSame('paid', (new PaymentSettlementService())->report($created)['state']);
+
+		$credit = $this->lastSaved(store: $store, schema: 'DebtorCredit')['dc-1'];
+		self::assertSame(25.0, $credit['remaining']);
+		self::assertSame('open', $credit['state']);
+
+		$journals = array_values($this->lastSaved(store: $store, schema: 'JournalEntry'));
+		self::assertCount(1, $journals);
+		self::assertSame(['1850', 'debit', 60.0], [$journals[0]['lines'][0]['accountNumber'], $journals[0]['lines'][0]['side'], $journals[0]['lines'][0]['amount']]);
+		self::assertSame(['8050', 'credit', 60.0], [$journals[0]['lines'][1]['accountNumber'], $journals[0]['lines'][1]['side'], $journals[0]['lines'][1]['amount']]);
+		self::assertSame([[$journals[0]['id'], 'postDirect']], $runs);
+
+		foreach (['PaymentRequest' => $created, 'DebtorCredit' => $credit, 'JournalEntry' => $journals[0]] as $schema => $object) {
+			unset($object['id']);
+			self::assertSame([], RegisterSchema::errors(slug: $schema, object: $object), $schema . ' payload refused by the merged register');
+		}
+	}//end testCreditCoveringTheWholeAmountSettlesAtOnce()
+
+	/**
+	 * Credit pays the next request first, oldest credit first, and what it cannot cover stays due.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-004)
+	 */
+	public function testCreditPaysTheNextRequestFirst(): void {
+		$runs = [];
+		[$leaf, $store] = $this->leafWithCredit(
+			credits: [
+				$this->openCredit(id: 'dc-new', remaining: 30.0, created: '2026-09-20T10:00:00Z'),
+				$this->openCredit(id: 'dc-old', remaining: 20.0, created: '2026-08-01T10:00:00Z'),
+			],
+			runs: $runs
+		);
+
+		$created = $leaf->create('larpinq', 'Registration', 'reg-78', $this->jorisRequest(amount: 100.0));
+
+		$credits = $this->lastSaved(store: $store, schema: 'DebtorCredit');
+		self::assertSame(0.0, $credits['dc-old']['remaining']);
+		self::assertSame('used', $credits['dc-old']['state']);
+		self::assertSame(0.0, $credits['dc-new']['remaining']);
+		self::assertSame('used', $credits['dc-new']['state']);
+		self::assertArrayNotHasKey('@self', $credits['dc-old'], 'OpenRegister metadata is not written back');
+
+		self::assertSame(50.0, array_sum(array_column($created['settlements'], 'amount')));
+		self::assertSame('partly-paid', (new PaymentSettlementService())->report($created)['state']);
+		self::assertSame('', (string)($created['settledAt'] ?? ''), 'a request credit does not cover whole is not settled');
+		self::assertCount(2, $runs);
+		self::assertSame([], RegisterSchema::errors(slug: 'PaymentRequest', object: $created));
+	}//end testCreditPaysTheNextRequestFirst()
+
+	/**
+	 * Another debtor's credit, or credit in another administration, is not touched.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-004)
+	 */
+	public function testOnlyTheSameDebtorsCreditInTheSameAdministrationIsUsed(): void {
+		$runs = [];
+		$other = array_merge($this->openCredit(id: 'dc-2', remaining: 50.0, created: '2026-08-01T10:00:00Z'), ['debtorKey' => 'mila@example.nl']);
+		$elsewhere = array_merge($this->openCredit(id: 'dc-3', remaining: 50.0, created: '2026-08-01T10:00:00Z'), ['administrationId' => 'adm-other']);
+		$used = array_merge($this->openCredit(id: 'dc-4', remaining: 0.0, created: '2026-08-01T10:00:00Z'), ['state' => 'used']);
+		[$leaf, $store] = $this->leafWithCredit(credits: [$other, $elsewhere, $used], runs: $runs);
+
+		$created = $leaf->create('larpinq', 'Registration', 'reg-79', $this->jorisRequest(amount: 60.0));
+
+		self::assertArrayNotHasKey('settlements', $created);
+		self::assertSame([], $this->lastSaved(store: $store, schema: 'DebtorCredit'));
+		self::assertSame([], $runs);
+	}//end testOnlyTheSameDebtorsCreditInTheSameAdministrationIsUsed()
+
+	/**
+	 * Without a customer credit account the credit stays open and the request stays payable.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-004)
+	 */
+	public function testCreditStaysOpenWhenItCannotBeBooked(): void {
+		$runs = [];
+		[$leaf, $store] = $this->leafWithCredit(credits: [$this->openCredit(id: 'dc-1', remaining: 85.0, created: '2026-09-01T10:00:00Z')], runs: $runs, creditAccount: '');
+
+		$created = $leaf->create('larpinq', 'Registration', 'reg-80', $this->jorisRequest(amount: 60.0));
+
+		self::assertArrayNotHasKey('settlements', $created);
+		self::assertSame([], $this->lastSaved(store: $store, schema: 'DebtorCredit'));
+		self::assertSame([], $runs);
+	}//end testCreditStaysOpenWhenItCannotBeBooked()
 }//end class

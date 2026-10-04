@@ -38,6 +38,7 @@ namespace OCA\Shillinq\Integration;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Service\Integration\IntegrationProvider;
+use OCA\Shillinq\Service\DebtorCreditService;
 use OCA\Shillinq\Service\FeeScheduleService;
 use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
 use OCA\Shillinq\Service\ObjectRequestInvoiceService;
@@ -89,6 +90,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 	 * @param PaymentRequestFinder|null $finder Reads every page of requests on a subject; built on demand when absent.
 	 * @param PaymentRequestPortalScope $portalScope Gives a request without an invoice its portal scope.
 	 * @param ?ObjectRequestInvoiceService $invoices Issues the invoice a caller asks for at create (REQ-ORS-006).
+	 * @param ?DebtorCreditService $credits Pays a new request from the debtor's open credit first (REQ-ORC-004).
 	 *
 	 * @return void
 	 */
@@ -103,6 +105,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 		private readonly ?PaymentRequestFinder $finder = null,
 		private readonly PaymentRequestPortalScope $portalScope = new PaymentRequestPortalScope(),
 		private readonly ?ObjectRequestInvoiceService $invoices = null,
+		private readonly ?DebtorCreditService $credits = null,
 	) {
 	}//end __construct()
 
@@ -483,6 +486,11 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 				administrationId: $administrationId,
 				today: gmdate('Y-m-d'),
 			);
+		}
+
+		// The debtor's open credit pays the new request first (REQ-ORC-004).
+		if ($this->credits !== null) {
+			$request = $this->credits->applyOpenCredit(request: $request, actor: $requestedBy);
 		}
 
 		$saved = $this->objectService->saveObject(

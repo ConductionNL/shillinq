@@ -293,7 +293,7 @@ final class ArPaymentLinksFragmentTest extends TestCase {
 		$schema = $fragment['components']['schemas']['PaymentRequest'];
 		$customerId = ($schema['properties']['customerId'] ?? []);
 
-		self::assertSame('0.8.0', $schema['version']);
+		self::assertSame('0.9.0', $schema['version']);
 		self::assertSame('string', ($customerId['type'] ?? null));
 		self::assertSame('uuid', ($customerId['format'] ?? null));
 		self::assertSame('CustomerMaster', ($customerId['$ref'] ?? null));

@@ -137,3 +137,11 @@ before. Anything else comes back with an error and changes nothing.
   credit account set in `paymentCreditAccount`, records a `DebtorCredit` for
   the payer's customer record or, without one, their email address, and the
   request reads `credited`. A debtor with neither gets an error and no credit.
+
+Open credit pays the debtor's next request first. When your app raises a
+request for a debtor with open credit in the same administration (the same
+customer record, or the same email address), shillinq uses that credit, oldest
+first, up to the amount. The request then carries a settlement with method
+`credit`; when the credit covers it whole it is settled at once
+(`settledVia: credit`, `settledAt` stamped) and reaches your app as the same
+object event a payment does. What the credit does not cover stays due.
