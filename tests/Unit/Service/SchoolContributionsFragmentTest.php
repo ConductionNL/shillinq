@@ -223,7 +223,7 @@ final class SchoolContributionsFragmentTest extends TestCase {
 		self::assertArrayHasKey('app', $properties['subject']['properties']);
 		self::assertContains('contribution', $properties['requestType']['enum']);
 		self::assertSame(
-			['provider', 'cash', 'pin', 'bank-transfer', 'waived', 'other'],
+			['provider', 'cash', 'pin', 'bank-transfer', 'waived', 'other', 'credit'],
 			$properties['settledVia']['enum']
 		);
 		self::assertSame('date-time', $properties['settledAt']['format']);
