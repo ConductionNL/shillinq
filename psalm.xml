@@ -55,6 +55,12 @@
         <file name="tests/stubs/OpenRegister/Service/Integration/IntegrationProvider.php" />
         <file name="tests/stubs/OpenRegister/Service/Integration/LeafDescriptor.php" />
         <file name="tests/stubs/OpenRegister/Event/RegisterLeafProvidersEvent.php" />
+        <!--
+            OpenRegister's hash-chained audit trail, which the innovatiebox
+            listener writes its transitions to (gate 23). A stub for the same
+            reason as above: psalm then checks the createAuditTrailEntry() call.
+        -->
+        <file name="tests/stubs/OpenRegister/Db/AuditTrailMapper.php" />
     </stubs>
     <issueHandlers>
         <UndefinedDocblockClass errorLevel="suppress"/>

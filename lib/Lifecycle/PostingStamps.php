@@ -14,8 +14,8 @@
  *
  * `integrityVerified` records the controls a posted entry sits under: it is
  * locked, corrections go by reversal, and its audit rows are insert-only
- * (AuditTrailGuard). The hash chain of ledger-sealed-entries adds proof on
- * top of that.
+ * (OpenRegister's appendOnly on the AuditTrail schema). The hash chain of
+ * ledger-sealed-entries adds proof on top of that.
  *
  * @category Lifecycle
  * @package  OCA\Shillinq\Lifecycle
