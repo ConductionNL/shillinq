@@ -12,7 +12,7 @@
 
 ## 3. Refund
 
-- [ ] 3.1 `ObjectRequestRefundService` approve and mark-paid with their bookings and the `paymentRefundAccount` setting (REQ-ORC-002). Verify: PHPUnit `ObjectRequestRefundServiceTest::testApproveBooksTheReversal` and `testMarkPaidMovesToRefunded`.
+- [x] 3.1 `ObjectRequestRefundService` approve and mark-paid with their bookings and the `paymentRefundAccount` setting (REQ-ORC-002). Verify: PHPUnit `ObjectRequestRefundServiceTest::testApproveBooksTheReversal` and `testMarkPaidMovesToRefunded`. (4 Oct 2026: `ObjectRequestRefundService::approve()` books debit the revenue account, credit `paymentRefundAccount`; `markPaid()` books debit refunds payable, credit the bank account given, sets the refund `paid` with the bank reference and the request `refunded`; both through a draft JournalEntry and `postDirect`. Served by `ObjectRequestRefundController` at `POST /api/payment-requests/{id}/refund/approve` and `/refund/paid`, gated on `payment.administer`. Tests start from a request the real listener put in `refund_requested` and validate every save against the merged register.)
 - [ ] 3.2 "Refunds to pay" page and its two actions, gated on `payment.administer`. Verify: Playwright `tests/e2e/object-request-refund.spec.ts` "a finance user pays a refund and the request reads refunded".
 
 ## 4. Credit
