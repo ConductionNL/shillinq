@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Conduction B.V.
 //
 // assets-method-change-and-reserve: the fixed asset page's "Post missed
-// depreciation" header action. Resolved against `customComponents` in
-// src/main.js.
+// depreciation" header action. Registered in src/manifestActions.js, which
+// puts it where a detail page dispatches it (manifest.actions).
 
 import { spawnDialog } from '@nextcloud/vue/functions/dialog'
 import MissedDepreciationDialog from '../modals/MissedDepreciationDialog.vue'

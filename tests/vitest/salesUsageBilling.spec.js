@@ -94,7 +94,10 @@ describe('the Rate bulk action', () => {
 			),
 		)
 		const page = fragment.pages.find((p) => p.id === 'MeterReadings')
-		const mainJs = fs.readFileSync(path.join(ROOT, 'src/main.js'), 'utf8')
+		const mainJs = fs.readFileSync(
+			path.join(ROOT, 'src/manifestActions.js'),
+			'utf8',
+		)
 		for (const action of [
 			...page.config.bulkActions,
 			...page.config.headerActions,

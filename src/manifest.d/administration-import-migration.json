@@ -90,7 +90,18 @@
 					{"key": "mappingProfile", "label": "Mapping profile", "type": "string"},
 					{"key": "owner", "label": "Owner", "type": "string"}
 				],
-				"lifecycleActions": true,
+				"lifecycleActions": {
+					"field": "status",
+					"_note": "Declared, not fetched (live pass S5). OpenRegister's available-actions answer carries no label, so nextcloud-vue 2.57.1 put each transition's description on its button, and it offered the outcomes the pipeline records itself (staged, validation failed, posted, posting failed) as buttons too. Only the steps a person takes are listed; the labels match the wizard's. The server still checks every transition and its guard.",
+					"transitions": [
+						{"from": "draft", "to": "parsing", "action": "parse", "label": "Read the auditfile"},
+						{"from": "staged", "to": "mapping", "action": "startMapping", "label": "Review the mappings"},
+						{"from": "mapping", "to": "validated", "action": "validate", "label": "Validate"},
+						{"from": "validated", "to": "dry_run_complete", "action": "dryRun", "label": "Run the dry run"},
+						{"from": "dry_run_complete", "to": "posting", "action": "post", "label": "Post import"},
+						{"from": "posted", "to": "reversed", "action": "reverse", "label": "Reverse import"}
+					]
+				},
 				"headerActions": [
 					{
 						"id": "continue-in-wizard",
