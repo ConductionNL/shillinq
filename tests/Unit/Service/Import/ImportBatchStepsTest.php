@@ -372,6 +372,64 @@ final class ImportBatchStepsTest extends TestCase {
 	}//end testABalancedImportValidatesAndTheDryRunShowsTheOpeningBalance()
 
 	/**
+	 * A target chart without RGS codes still gets the same-number suggestion (live pass S2).
+	 *
+	 * The seeded bbv chart carries account numbers and no RGS code. The
+	 * suggestion by exact account number looked only among RGS-coded accounts,
+	 * so every row arrived unmapped and the wizard could never reach a dry run.
+	 *
+	 * @return void
+	 */
+	public function testAChartWithoutRgsCodesStillSuggestsTheSameAccountNumber(): void {
+		$accounts = [];
+		foreach (['0500', '1000', '1300', '1600', '8000'] as $number) {
+			$accounts[] = ['id' => 'bbv-' . $number, 'administrationId' => 'adm-new', 'accountNumber' => $number, 'name' => 'Rekening ' . $number];
+		}
+
+		$this->store = new InMemoryObjectServiceStub(['Account' => $accounts], $this->saved, findAllRendersEntities: true);
+
+		$action = $this->action();
+		$staged = $this->step(action: $action, batch: $this->batch(status: 'draft'), to: 'parsing', step: 'parse');
+		$this->step(action: $action, batch: $staged, to: 'mapping', step: 'startMapping');
+
+		$rows = $this->store->setSchema('ImportMapping')->findAll(['filters' => ['batchReference' => 'batch-1']]);
+		$this->assertCount(4, $rows);
+		foreach ($rows as $row) {
+			$mapping = $row->getObject();
+			$this->assertSame([], RegisterSchema::errors('ImportMapping', $mapping), 'a saved mapping row');
+			$this->assertSame($mapping['sourceCode'], $mapping['targetAccount'], 'source ' . $mapping['sourceCode'] . ' is suggested to the same number');
+			$this->assertSame('manual', $mapping['mappingSource']);
+			$this->assertFalse($mapping['confirmed'], 'a suggestion waits for the operator');
+		}
+	}//end testAChartWithoutRgsCodesStillSuggestsTheSameAccountNumber()
+
+	/**
+	 * A source account whose number the target chart does not have stays unmapped.
+	 *
+	 * @return void
+	 */
+	public function testANumberTheTargetChartLacksStaysUnmapped(): void {
+		$this->store = new InMemoryObjectServiceStub(
+			['Account' => [['id' => 'bbv-1000', 'administrationId' => 'adm-new', 'accountNumber' => '1000']]],
+			$this->saved,
+			findAllRendersEntities: true
+		);
+
+		$action = $this->action();
+		$staged = $this->step(action: $action, batch: $this->batch(status: 'draft'), to: 'parsing', step: 'parse');
+		$this->step(action: $action, batch: $staged, to: 'mapping', step: 'startMapping');
+
+		$bySource = [];
+		foreach ($this->store->setSchema('ImportMapping')->findAll(['filters' => ['batchReference' => 'batch-1']]) as $row) {
+			$bySource[$row->getObject()['sourceCode']] = $row->getObject();
+		}
+
+		$this->assertSame('1000', $bySource['1000']['targetAccount']);
+		$this->assertSame('unmapped', $bySource['1300']['mappingSource']);
+		$this->assertNull($bySource['1300']['targetAccount']);
+	}//end testANumberTheTargetChartLacksStaysUnmapped()
+
+	/**
 	 * An unbalanced opening entry moves the batch to validation failed, naming it.
 	 *
 	 * @return void

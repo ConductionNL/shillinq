@@ -33,6 +33,7 @@ import { openMissedDepreciation } from './utils/assetActions.js'
 import { classifyUnmatched, openBankLineMatch } from './utils/bankMatchActions.js'
 import { openCarryOverCommitments } from './utils/commitmentYearEndApi.js'
 import { openDownPaymentInvoice } from './utils/downPaymentActions.js'
+import { openImportWizard } from './utils/importWizard.js'
 import { openIntegriqConnections } from './utils/integriqConnections.js'
 import {
 	buildPageFragmentIndex,
@@ -356,6 +357,9 @@ const customComponentsProp = {
 	dismissRelationSuggestion,
 	openRelationsExport,
 	openPayeeRelation,
+	// platform-administration-import: the batch page's way back into the
+	// wizard (live pass S3).
+	openImportWizard,
 }
 
 // Vue 3 `mount()` renders INSIDE the matched element; Vue 2's `$mount()`
