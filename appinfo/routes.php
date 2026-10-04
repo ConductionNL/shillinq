@@ -775,6 +775,14 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'paymentRequestAction#send', 'url' => '/api/payment-requests/{id}/send', 'verb' => 'POST'],
             ['name' => 'paymentRequestAction#settle', 'url' => '/api/payment-requests/{id}/settle', 'verb' => 'POST'],
 
+            // Finance's half of a refund another app asked for
+            // (receivables-object-request-refund-and-credit, REQ-ORC-002):
+            // approve it (reverse the income into refunds payable), then mark it
+            // paid with the bank reference. #[NoAdminRequired], gated INSIDE the
+            // controller on the payment.administer action.
+            ['name' => 'objectRequestRefund#approve', 'url' => '/api/payment-requests/{id}/refund/approve', 'verb' => 'POST'],
+            ['name' => 'objectRequestRefund#markPaid', 'url' => '/api/payment-requests/{id}/refund/paid', 'verb' => 'POST'],
+
             // Raise the published leges for an object's type in one action
             // (leges-at-intake, REQ-SOPR-008). The amount comes from the fee
             // schedule, never from the request body: a desk clerk should not be

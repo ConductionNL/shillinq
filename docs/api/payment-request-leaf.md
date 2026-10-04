@@ -127,7 +127,12 @@ before. Anything else comes back with an error and changes nothing.
 
 - `PaymentRefundRequestedEvent`: the request moves to `refund_requested` with
   the full amount in `refunds`. Finance approves and pays it; the request then
-  reads `refunded`.
+  reads `refunded`. Approving (`POST /api/payment-requests/{id}/refund/approve`)
+  books the income back into the refunds payable account set in
+  `paymentRefundAccount`; marking it paid
+  (`POST /api/payment-requests/{id}/refund/paid` with `bankReference` and
+  `bankAccount`) clears that account against the bank. Both need the
+  `payment.administer` action.
 - `PaymentCreditRequestedEvent`: shillinq moves the income to the customer
   credit account set in `paymentCreditAccount`, records a `DebtorCredit` for
   the payer's customer record or, without one, their email address, and the
