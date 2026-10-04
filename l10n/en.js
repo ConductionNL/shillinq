@@ -4142,7 +4142,8 @@ OC.L10N.register(
         "Where the refund is: asked for, approved by finance, or paid.": "Where the refund is: asked for, approved by finance, or paid.",
         "Requested": "Requested",
         "Bank reference": "Bank reference",
-        "The reference of the bank payment that paid the refund.": "The reference of the bank payment that paid the refund."
+        "The reference of the bank payment that paid the refund.": "The reference of the bank payment that paid the refund.",
+        "Choose": "Choose"
     },
     "nplurals=2; plural=(n != 1);"
 )

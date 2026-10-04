@@ -6350,7 +6350,8 @@ OC.L10N.register(
         "Where the refund is: asked for, approved by finance, or paid.": "Waar de terugbetaling staat: gevraagd, goedgekeurd door financiën, of betaald.",
         "Requested": "Gevraagd",
         "Bank reference": "Bankreferentie",
-        "The reference of the bank payment that paid the refund.": "De referentie van de bankbetaling waarmee de terugbetaling is betaald."
+        "The reference of the bank payment that paid the refund.": "De referentie van de bankbetaling waarmee de terugbetaling is betaald.",
+        "Choose": "Kiezen"
     },
     "nplurals=2; plural=(n != 1);"
 )
