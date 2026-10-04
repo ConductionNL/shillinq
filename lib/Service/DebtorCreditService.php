@@ -178,6 +178,145 @@ class DebtorCreditService {
 	}//end credit()
 
 	/**
+	 * Pay a new request from the debtor's open credit first, oldest credit first (REQ-ORC-004).
+	 *
+	 * Called by the leaf after the request is validated and before it is saved.
+	 * Each credit used lowers its `remaining` (and reads `used` at zero) and is
+	 * booked debit the customer credit account, credit the new request's
+	 * revenue account. The request gets one settlement with method `credit` and
+	 * is stamped settled when the credit covers it whole. When the credit
+	 * cannot be booked (no customer credit account, no revenue account for the
+	 * request type) the credit stays open and the request stays payable: the
+	 * debtor pays as usual and keeps the credit.
+	 *
+	 * @param array<string, mixed> $request The request about to be saved.
+	 * @param string               $actor   Who raised it: a user id or `app:<appId>`.
+	 *
+	 * @return array<string, mixed> The request, with the credit settlement when credit was used.
+	 *
+	 * @throws RuntimeException When OpenRegister answers a save without an id.
+	 *
+	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-004)
+	 */
+	public function applyOpenCredit(array $request, string $actor): array {
+		$key = self::debtorKey(request: $request);
+		$due = round((float)($request['amount'] ?? 0), 2);
+		$administrationId = (string)($request['administrationId'] ?? '');
+		if ($key === '' || $due <= 0.0) {
+			return $request;
+		}
+
+		$creditAccount = trim($this->appConfig->getValueString('shillinq', self::CONFIG_KEY, ''));
+		$revenue = trim((string)($request['revenueAccount'] ?? ''));
+		if ($revenue === '') {
+			$revenue = (string)($this->revenueAccounts->resolve(requestType: (string)($request['requestType'] ?? '')) ?? '');
+		}
+
+		if ($creditAccount === '' || $revenue === '') {
+			return $request;
+		}
+
+		$used = 0.0;
+		$sources = [];
+		foreach ($this->openCredits(debtorKey: $key, administrationId: $administrationId) as $credit) {
+			$take = round(min((float)($credit['remaining'] ?? 0), ($due - $used)), 2);
+			if ($take <= 0.0) {
+				continue;
+			}
+
+			$description = sprintf('Open credit %s used for a new %s request', (string)$credit['id'], (string)($request['requestType'] ?? ''));
+			$journalId = $this->save(
+				schema: 'JournalEntry',
+				object: [
+					'journalNumber' => 'CU-' . substr(hash('sha256', (string)$credit['id'] . '|' . (string)($credit['remaining'] ?? '') . '|' . json_encode($request['subject'] ?? [])), 0, 12),
+					'entryDate' => gmdate('Y-m-d'),
+					'description' => $description,
+					'journalType' => 'manual',
+					'approvalState' => 'not-required',
+					'administrationId' => $administrationId,
+					'state' => 'draft',
+					'lines' => [
+						['accountNumber' => $creditAccount, 'side' => 'debit', 'amount' => $take, 'description' => $description],
+						['accountNumber' => $revenue, 'side' => 'credit', 'amount' => $take, 'description' => $description],
+					],
+				]
+			);
+			$this->transitions->run(objectId: $journalId, action: 'postDirect');
+
+			$credit['remaining'] = round(((float)$credit['remaining'] - $take), 2);
+			if ($credit['remaining'] <= 0.0) {
+				$credit['remaining'] = 0.0;
+				$credit['state'] = 'used';
+			}
+
+			$this->save(schema: 'DebtorCredit', object: $credit);
+			$used = round(($used + $take), 2);
+			$sources[] = (string)$credit['id'];
+			if ($used >= $due) {
+				break;
+			}
+		}//end foreach
+
+		if ($used <= 0.0) {
+			return $request;
+		}
+
+		$now = gmdate('Y-m-d\TH:i:s\Z');
+		$settlements = new PaymentSettlementService();
+		$request = $settlements->append(
+			request: $request,
+			settlement: [
+				'method' => 'credit',
+				'amount' => $used,
+				'reference' => implode(', ', $sources),
+				'actor' => $actor,
+				'settledAt' => $now,
+				'reason' => 'Paid from the debtor\'s open credit',
+			]
+		);
+
+		return $settlements->stampSettled(request: $request, settledAt: $now, via: 'credit');
+	}//end applyOpenCredit()
+
+	/**
+	 * The debtor's open credit in one administration, oldest first.
+	 *
+	 * @param string $debtorKey        The debtor key.
+	 * @param string $administrationId The administration.
+	 *
+	 * @return array<int, array<string, mixed>> The credit rows, without OpenRegister's metadata.
+	 */
+	private function openCredits(string $debtorKey, string $administrationId): array {
+		$rows = $this->objectService
+			->setRegister($this->registerSlug())
+			->setSchema('DebtorCredit')
+			->findAll(['filters' => ['debtorKey' => $debtorKey, 'administrationId' => $administrationId, 'state' => 'open']], _rbac: false, _multitenancy: false);
+
+		$credits = [];
+		foreach ($rows as $position => $row) {
+			$credit = ObjectIdentifier::recordWithId(candidate: $row);
+			if ($credit === null || (string)($credit['id'] ?? '') === '') {
+				continue;
+			}
+
+			$created = '';
+			if (is_array($credit['@self'] ?? null) === true) {
+				$created = (string)($credit['@self']['created'] ?? '');
+			}
+
+			unset($credit['@self']);
+			$credits[] = ['created' => $created, 'position' => $position, 'credit' => $credit];
+		}
+
+		usort(
+			$credits,
+			static fn (array $left, array $right): int => [$left['created'], $left['position']] <=> [$right['created'], $right['position']]
+		);
+
+		return array_column($credits, 'credit');
+	}//end openCredits()
+
+	/**
 	 * Save one object in shillinq's register and answer its uuid.
 	 *
 	 * @param string $schema The schema slug.
