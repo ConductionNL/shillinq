@@ -392,7 +392,7 @@
                     "other",
                     "credit"
                   ],
-                  "description": "How the money arrived, or that it was waived. `credit` is the debtor's open credit paying a new request at create (REQ-ORC-004); it is written by shillinq, never recorded by hand.",
+                  "description": "How the money arrived, or that it was waived.",
                   "example": "pin",
                   "title": "Method"
                 },

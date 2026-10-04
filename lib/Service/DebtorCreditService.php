@@ -225,10 +225,11 @@ class DebtorCreditService {
 			}
 
 			$description = sprintf('Open credit %s used for a new %s request', (string)$credit['id'], (string)($request['requestType'] ?? ''));
+			$numberSeed = (string)$credit['id'] . '|' . (string)($credit['remaining'] ?? '') . '|' . json_encode($request['subject'] ?? []);
 			$journalId = $this->save(
 				schema: 'JournalEntry',
 				object: [
-					'journalNumber' => 'CU-' . substr(hash('sha256', (string)$credit['id'] . '|' . (string)($credit['remaining'] ?? '') . '|' . json_encode($request['subject'] ?? [])), 0, 12),
+					'journalNumber' => 'CU-' . substr(hash('sha256', $numberSeed), 0, 12),
 					'entryDate' => gmdate('Y-m-d'),
 					'description' => $description,
 					'journalType' => 'manual',
@@ -290,7 +291,11 @@ class DebtorCreditService {
 		$rows = $this->objectService
 			->setRegister($this->registerSlug())
 			->setSchema('DebtorCredit')
-			->findAll(['filters' => ['debtorKey' => $debtorKey, 'administrationId' => $administrationId, 'state' => 'open']], _rbac: false, _multitenancy: false);
+			->findAll(
+				['filters' => ['debtorKey' => $debtorKey, 'administrationId' => $administrationId, 'state' => 'open']],
+				_rbac: false,
+				_multitenancy: false
+			);
 
 		$credits = [];
 		foreach ($rows as $position => $row) {
