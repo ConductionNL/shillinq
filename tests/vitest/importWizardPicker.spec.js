@@ -9,7 +9,7 @@
  * without addButton() renders no Choose button and nothing can ever be
  * picked (live pass S1, 3 Oct 2026).
  *
- * @spec openspec/changes/platform-administration-import/specs/platform-administration/spec.md
+ * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
