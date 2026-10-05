@@ -638,8 +638,10 @@ final class DunningRunServiceTest extends TestCase {
 			now: $now
 		);
 
+		// Stage 1 first, although 20 days also reach stage 2: stages escalate
+		// one at a time (receivables-automatic-dunning REQ-RAD-002).
 		self::assertNotNull($run);
-		self::assertSame(2, (int)$run['stageNr']);
+		self::assertSame(1, (int)$run['stageNr']);
 		self::assertSame('EMAIL', $run['channel']);
 		self::assertSame(8400.0, (float)$run['invoiceAmount']);
 		self::assertSame('executed', $run['lifecycleState']);
@@ -732,6 +734,254 @@ final class DunningRunServiceTest extends TestCase {
 		self::assertNull($result);
 
 	}//end testTickInvoiceSkipsWhenWithinTerms()
+
+	/**
+	 * The seeded "Standaard" ladder of receivables-automatic-dunning (design, Seed Data).
+	 *
+	 * @param string $id            The ladder id.
+	 * @param string $customerGroup The customer group.
+	 *
+	 * @return array<string, mixed> The ladder.
+	 */
+	private function standaardLadder(string $id = 'ladder-std', string $customerGroup = 'DEFAULT'): array {
+		return [
+			'id' => $id,
+			'administrationId' => 'adm-1',
+			'customerGroup' => $customerGroup,
+			'lifecycleState' => 'active',
+			'stages' => [
+				['nr' => 1, 'daysAfterExpiryDate' => 7, 'channel' => 'EMAIL'],
+				['nr' => 2, 'daysAfterExpiryDate' => 21, 'channel' => 'EMAIL'],
+				['nr' => 3, 'daysAfterExpiryDate' => 35, 'channel' => 'EMAIL', 'statutoryEffect' => '14_DAYS_BRIEF_BIK'],
+				['nr' => 4, 'daysAfterExpiryDate' => 56, 'channel' => 'REGISTERED_POST'],
+				['nr' => 5, 'daysAfterExpiryDate' => 70, 'channel' => 'COLLECTION_AGENCY_API', 'action' => 'TRANSFER_INCASSO'],
+			],
+		];
+	}//end standaardLadder()
+
+	/**
+	 * An invoice 120 days overdue at 2026-06-10 (due 2026-02-10).
+	 *
+	 * @param string $state The invoice's lifecycle state.
+	 *
+	 * @return array<string, mixed> The invoice.
+	 */
+	private function longOverdueInvoice(string $state = 'overdue'): array {
+		return [
+			'id' => 'inv-120',
+			'administrationId' => 'adm-1',
+			'dueDate' => '2026-02-10',
+			'grossAmount' => 1210.0,
+			'customerId' => 'cm-kade',
+			'lifecycleState' => $state,
+		];
+	}//end longOverdueInvoice()
+
+	/**
+	 * A 120-day invoice that never had a reminder gets stage 1, the friendly
+	 * reminder, not the collection-agency stage (REQ-RAD-002, design D3).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.1
+	 */
+	public function testALongOverdueInvoiceStartsAtTheFriendlyReminder(): void {
+		$os = new OpenRegisterFaithfulObjectService();
+		$os->seed(schema: 'DunningLadder', rows: [$this->standaardLadder()]);
+		$service = $this->makeService(os: $os);
+
+		$run = $service->tickInvoice(
+			administrationId: 'adm-1',
+			invoice: $this->longOverdueInvoice(),
+			baseLadderId: 'ladder-std',
+			now: new \DateTimeImmutable('2026-06-10T09:00:00Z')
+		);
+
+		self::assertNotNull($run);
+		self::assertSame(1, (int)$run['stageNr']);
+		self::assertSame('EMAIL', $run['channel']);
+	}//end testALongOverdueInvoiceStartsAtTheFriendlyReminder()
+
+	/**
+	 * Stage 2 waits until its threshold gap (21 - 7 = 14 days) has passed since
+	 * stage 1 went out, then goes (REQ-RAD-002).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.1
+	 */
+	public function testTheSecondStageWaitsForTheGapSinceTheFirst(): void {
+		$os = new OpenRegisterFaithfulObjectService();
+		$os->seed(schema: 'DunningLadder', rows: [$this->standaardLadder()]);
+		$os->seed(schema: 'DunningRun', rows: [
+			[
+				'administrationId' => 'adm-1',
+				'invoiceId' => 'inv-120',
+				'stageNr' => 1,
+				'lifecycleState' => 'executed',
+				'deliveryStatus' => 'DELIVERED',
+				'executedOn' => '2026-06-01T09:00:00+00:00',
+			],
+		]);
+		$service = $this->makeService(os: $os);
+
+		$tooEarly = $service->tickInvoice(
+			administrationId: 'adm-1',
+			invoice: $this->longOverdueInvoice(),
+			baseLadderId: 'ladder-std',
+			now: new \DateTimeImmutable('2026-06-10T09:00:00Z')
+		);
+		self::assertNull($tooEarly);
+		self::assertCount(1, $os->dump(schema: 'DunningRun'));
+
+		$onTime = $service->tickInvoice(
+			administrationId: 'adm-1',
+			invoice: $this->longOverdueInvoice(),
+			baseLadderId: 'ladder-std',
+			now: new \DateTimeImmutable('2026-06-15T09:00:00Z')
+		);
+		self::assertNotNull($onTime);
+		self::assertSame(2, (int)$onTime['stageNr']);
+	}//end testTheSecondStageWaitsForTheGapSinceTheFirst()
+
+	/**
+	 * A stage whose send failed has not been sent: the next run tries it again
+	 * (REQ-RAD-003), while a stage that went out is never sent twice.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.1
+	 */
+	public function testAFailedStageIsTriedAgain(): void {
+		$os = new OpenRegisterFaithfulObjectService();
+		$os->seed(schema: 'DunningLadder', rows: [$this->standaardLadder()]);
+		$os->seed(schema: 'DunningRun', rows: [
+			[
+				'administrationId' => 'adm-1',
+				'invoiceId' => 'inv-120',
+				'stageNr' => 1,
+				'lifecycleState' => 'executed',
+				'deliveryStatus' => 'FAILED',
+				'executedOn' => '2026-06-09T09:00:00+00:00',
+			],
+		]);
+		$service = $this->makeService(os: $os);
+
+		$run = $service->tickInvoice(
+			administrationId: 'adm-1',
+			invoice: $this->longOverdueInvoice(),
+			baseLadderId: 'ladder-std',
+			now: new \DateTimeImmutable('2026-06-10T09:00:00Z')
+		);
+
+		self::assertNotNull($run);
+		self::assertSame(1, (int)$run['stageNr']);
+	}//end testAFailedStageIsTriedAgain()
+
+	/**
+	 * A dry run answers the stage and channel the next run would send and
+	 * writes nothing (REQ-RAD-008).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.1
+	 */
+	public function testADryRunWritesNothing(): void {
+		$os = new OpenRegisterFaithfulObjectService();
+		$os->seed(schema: 'DunningLadder', rows: [$this->standaardLadder()]);
+		$service = $this->makeService(os: $os);
+
+		$preview = $service->tickInvoice(
+			administrationId: 'adm-1',
+			invoice: $this->longOverdueInvoice(),
+			baseLadderId: 'ladder-std',
+			now: new \DateTimeImmutable('2026-06-10T09:00:00Z'),
+			dryRun: true
+		);
+
+		self::assertSame(
+			['dryRun' => true, 'invoiceId' => 'inv-120', 'ladderId' => 'ladder-std', 'stageNr' => 1, 'channel' => 'EMAIL'],
+			array_intersect_key($preview, array_flip(['dryRun', 'invoiceId', 'ladderId', 'stageNr', 'channel']))
+		);
+		self::assertSame([], $os->dump(schema: 'DunningRun'));
+	}//end testADryRunWritesNothing()
+
+	/**
+	 * The customer's own ladder (dunningPolicyRef) wins over the
+	 * administration's default; without one the default ladder is used, an
+	 * active override still applies on top, and without any ladder the invoice
+	 * is skipped (REQ-RAD-004, design D4).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.2
+	 */
+	public function testTheLadderComesFromTheCustomerThenTheAdministration(): void {
+		$gentle = $this->standaardLadder(id: 'ladder-gentle', customerGroup: 'GOVERNMENT');
+		$gentle['stages'] = [['nr' => 1, 'daysAfterExpiryDate' => 7, 'channel' => 'eMAILPostRegistration']];
+		$os = new OpenRegisterFaithfulObjectService();
+		$os->seed(schema: 'DunningLadder', rows: [$this->standaardLadder(), $gentle]);
+		$os->seed(schema: 'CustomerMaster', rows: [
+			['id' => 'cm-gemeente', 'administrationId' => 'adm-1', 'dunningPolicyRef' => 'ladder-gentle'],
+			['id' => 'cm-kade', 'administrationId' => 'adm-1'],
+		]);
+		$service = $this->makeService(os: $os);
+		$now = new \DateTimeImmutable('2026-06-10T09:00:00Z');
+
+		$own = $this->longOverdueInvoice();
+		$own['id'] = 'inv-gemeente';
+		$own['customerId'] = 'cm-gemeente';
+		$run = $service->tickInvoice(administrationId: 'adm-1', invoice: $own, now: $now, dryRun: true);
+		self::assertSame('ladder-gentle', $run['ladderId']);
+		self::assertSame('eMAILPostRegistration', $run['channel']);
+
+		$run = $service->tickInvoice(administrationId: 'adm-1', invoice: $this->longOverdueInvoice(), now: $now, dryRun: true);
+		self::assertSame('ladder-std', $run['ladderId']);
+		self::assertSame('EMAIL', $run['channel']);
+
+		$os->seed(schema: 'KlantLadderOverride', rows: [
+			[
+				'customerId' => 'cm-kade',
+				'baseLadderId' => 'ladder-std',
+				'lifecycleState' => 'active',
+				'overrides' => ['stages' => [['nr' => 1, 'daysAfterExpiryDate' => 14, 'channel' => 'eMAILPostRegistration']]],
+			],
+		]);
+		$run = $service->tickInvoice(administrationId: 'adm-1', invoice: $this->longOverdueInvoice(), now: $now, dryRun: true);
+		self::assertSame('eMAILPostRegistration', $run['channel']);
+
+		$elsewhere = $this->longOverdueInvoice();
+		$elsewhere['id'] = 'inv-other';
+		self::assertNull($service->tickInvoice(administrationId: 'adm-2', invoice: $elsewhere, now: $now));
+		self::assertSame([], $os->dump(schema: 'DunningRun'));
+	}//end testTheLadderComesFromTheCustomerThenTheAdministration()
+
+	/**
+	 * The invoice is read again when the stage is sent: one paid, written off
+	 * or disputed since it was listed gets nothing (REQ-RAD-005).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.3
+	 */
+	public function testAnInvoiceSettledSinceItWasListedIsNotChased(): void {
+		foreach (['paid', 'written-off', 'disputed'] as $state) {
+			$os = new OpenRegisterFaithfulObjectService();
+			$os->seed(schema: 'DunningLadder', rows: [$this->standaardLadder()]);
+			$os->seed(schema: 'ARInvoice', rows: [$this->longOverdueInvoice(state: $state)]);
+			$service = $this->makeService(os: $os);
+
+			$run = $service->tickInvoice(
+				administrationId: 'adm-1',
+				invoice: $this->longOverdueInvoice(state: 'overdue'),
+				baseLadderId: 'ladder-std',
+				now: new \DateTimeImmutable('2026-06-10T09:00:00Z')
+			);
+
+			self::assertNull($run, $state);
+			self::assertSame([], $os->dump(schema: 'DunningRun'), $state);
+		}
+	}//end testAnInvoiceSettledSinceItWasListedIsNotChased()
 
 	/**
 	 * REQ-CCD-010 / task-26: writeOff materialises a balanced GLTransaction
@@ -1291,7 +1541,17 @@ final class DunningRunServiceTest extends TestCase {
 			params: [],
 			now: $now
 		);
-		self::assertSame(3, (int)$run['stageNr']);
+		// Dunned as before: stage 1 first, as every invoice (REQ-RAD-002), and
+		// not capped at it, so the next stage follows its gap.
+		self::assertSame(1, (int)$run['stageNr']);
+		$next = $service->tickInvoice(
+			administrationId: 'adm-1',
+			invoice: $compulsory,
+			baseLadderId: 'ladder-1',
+			params: [],
+			now: $now->modify('+14 days')
+		);
+		self::assertSame(2, (int)$next['stageNr']);
 	}//end testAVoluntaryContributionGetsOneReminderAtMost()
 
 	/**
