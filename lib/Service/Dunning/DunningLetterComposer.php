@@ -44,14 +44,57 @@ final class DunningLetterComposer {
 	 * @param VoluntaryContributionPolicy $voluntary The one-reminder cap on a voluntary contribution.
 	 * @param VoluntaryReminderTemplate $reminder The voluntary contribution's own reminder letter.
 	 * @param DunningTemplateRegistry|null $templates The default template per stage; built over $appConfig when absent.
+	 * @param DunningStageRenderer|null $renderer The stage's subject and body; built over the registry when absent.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly VoluntaryContributionPolicy $voluntary = new VoluntaryContributionPolicy(),
 		private readonly VoluntaryReminderTemplate $reminder = new VoluntaryReminderTemplate(),
 		private readonly ?DunningTemplateRegistry $templates = null,
+		private readonly ?DunningStageRenderer $renderer = null,
 	) {
 	}//end __construct()
+
+	/**
+	 * Address the stage to the customer and render its text.
+	 *
+	 * The recipient is the customer's email address and legal name unless the
+	 * caller named one. The subject and body are the stage's, in the
+	 * customer's language with the merge fields filled, unless the caller
+	 * already rendered them (the voluntary contribution's own letter does).
+	 *
+	 * @param array<string,mixed> $params   The prepared params.
+	 * @param array<string,mixed> $invoice  The invoice, or [] when it was not found.
+	 * @param array<string,mixed> $customer The CustomerMaster, or [] when unknown.
+	 * @param array<string,mixed> $stage    The ladder stage (nr, subject, body), or [] when unknown.
+	 *
+	 * @return array<string,mixed> The params with recipient and rendered text.
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
+	 */
+	public function address(array $params, array $invoice, array $customer, array $stage): array {
+		$params['recipientEmail'] = ($params['recipientEmail'] ?? ($customer['email'] ?? null));
+		$params['recipientName']  = ($params['recipientName'] ?? ($customer['legalName'] ?? ($customer['tradeName'] ?? null)));
+		if ((string)($params['renderedSubject'] ?? '') !== '' && (string)($params['renderedBody'] ?? '') !== '') {
+			return $params;
+		}
+
+		$stage['nr'] = (int)($params['stageNr'] ?? ($stage['nr'] ?? 1));
+		$renderer    = ($this->renderer ?? new DunningStageRenderer(registry: ($this->templates ?? new DunningTemplateRegistry(appConfig: $this->appConfig))));
+		$text        = $renderer->render(
+			stage: $stage,
+			invoice: $invoice,
+			customer: $customer,
+			values: [
+				'incassokosten' => ($params['collectionCostAmount'] ?? null),
+				'rente' => ($params['interestAmount'] ?? null),
+			]
+		);
+		$params['renderedSubject'] = $text['subject'];
+		$params['renderedBody']    = $text['body'];
+
+		return $params;
+	}//end address()
 
 	/**
 	 * Prepare the run's params for the invoice's letter.

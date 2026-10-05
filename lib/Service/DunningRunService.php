@@ -291,6 +291,7 @@ class DunningRunService {
 				'channel' => (string)($params['channel'] ?? ($stage['channel'] ?? 'EMAIL')),
 				'templateId' => (string)($params['templateId'] ?? ($stage['templateId'] ?? '')),
 				'invoiceAmount' => (float)($invoice['grossAmount'] ?? 0.0),
+				'stage' => $stage,
 			],
 			$params
 		);
@@ -451,16 +452,48 @@ class DunningRunService {
 		// voluntary cap and the template fallback live in the composer
 		// (REQ-SCON-012, REQ-CCD-016, REQ-CCD-017).
 		$letters = ($this->letters ?? new DunningLetterComposer(appConfig: $this->appConfig, voluntary: $this->voluntary));
+		$invoice = ($this->fetchById(schema: 'ARInvoice', id: $invoiceId) ?? []);
 		$params = $letters->prepare(
-			invoice: $this->fetchById(schema: 'ARInvoice', id: $invoiceId),
+			invoice: ($invoice !== [] ? $invoice : null),
 			params: $params,
 			runsSoFar: fn (): int => $this->runCount(administrationId: $administrationId, invoiceId: $invoiceId)
 		);
+		// Render the stage and address it to the customer (REQ-RAD-003, design D6).
+		$customerId = (string)($invoice['customerReference'] ?? ($invoice['customerId'] ?? ''));
+		$params = $letters->address(
+			params: $params,
+			invoice: $invoice,
+			customer: ($customerId !== '' ? ($this->fetchById(schema: 'CustomerMaster', id: $customerId) ?? []) : []),
+			stage: $this->stageOf(params: $params)
+		);
 		$record = $letters->compose(administrationId: $administrationId, invoiceId: $invoiceId, params: $params, now: new DateTimeImmutable());
 
-		$record = $this->container->get(DunningStageDispatcher::class)->dispatch(record: $record);
+		$record = $this->container->get(DunningStageDispatcher::class)->dispatch(record: $record, invoice: $invoice);
 		return $this->saveObject(schema: 'DunningRun', data: $record);
 	}//end executeStage()
+
+	/**
+	 * The ladder stage a run sends: the one the tick chose (an override's
+	 * stage included), else the stage of the named ladder, else [] so the
+	 * renderer falls back to the default text.
+	 *
+	 * @param array<string,mixed> $params The run's params.
+	 *
+	 * @return array<string,mixed> The stage.
+	 */
+	private function stageOf(array $params): array {
+		if (is_array($params['stage'] ?? null) === true) {
+			return $params['stage'];
+		}
+
+		$ladder = null;
+		if ((string)($params['ladderId'] ?? '') !== '') {
+			$ladder = $this->fetchById(schema: 'DunningLadder', id: (string)$params['ladderId'], fallbackProperty: 'slug');
+		}
+
+		$selector = new DunningStageSelector(logger: $this->logger);
+		return ($selector->definition(stages: (array)($ladder['stages'] ?? []), stageNr: (int)($params['stageNr'] ?? 1)) ?? []);
+	}//end stageOf()
 
 	/**
 	 * Create a DunningPauseDispute for an invoice (REQ-CCD-004).

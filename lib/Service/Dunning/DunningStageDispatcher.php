@@ -61,7 +61,7 @@ class DunningStageDispatcher {
 	 * @param array<string,mixed> $record  The DunningRun about to be saved.
 	 * @param array<string,mixed> $invoice The invoice the mail attaches; not part of the run.
 	 *
-	 * @return array<string,mixed> The run with deliveryStatus (and postageStatus) from the adapter.
+	 * @return array<string,mixed> The run with deliveryStatus, deliveryNote (and postageStatus) from the adapter.
 	 *
 	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
 	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.2
@@ -96,6 +96,8 @@ class DunningStageDispatcher {
 		}
 
 		$record['deliveryStatus'] = $result->deliveryStatus;
+		// Why a stage failed or waits for a person (REQ-RAD-003, REQ-RAD-006).
+		$record['deliveryNote'] = $result->errorMessage;
 		$postage = $result->postageStatus();
 		if ($postage !== null) {
 			$record['postageStatus'] = array_merge((array)($record['postageStatus'] ?? []), $postage);
