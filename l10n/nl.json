@@ -6357,7 +6357,22 @@
         "The import batch {id} could not be opened.": "De importbatch {id} kan niet worden geopend.",
         "Continue in the wizard": "Verder in de wizard",
         "Open this batch in the import wizard, at the step it has reached, to validate it, run the dry run or post it.": "Open deze batch in de importwizard, bij de stap die hij heeft bereikt, om hem te valideren, de proefronde te draaien of hem te boeken.",
-        "Review the mappings": "Koppelingen controleren"
+        "Review the mappings": "Koppelingen controleren",
+        "Approve this refund before you mark it paid.": "Keur deze terugbetaling goed voordat je haar als betaald markeert.",
+        "Fill in the bank reference and choose the bank account.": "Vul het bankkenmerk in en kies de bankrekening.",
+        "Mark paid": "Markeer betaald",
+        "Mark refund paid": "Terugbetaling als betaald markeren",
+        "Pay the refund by bank first. Then record the payment here.": "Betaal de terugbetaling eerst via de bank. Leg de betaling daarna hier vast.",
+        "Refund approved. Pay it by bank, then mark it paid.": "Terugbetaling goedgekeurd. Betaal haar via de bank en markeer haar daarna als betaald.",
+        "Refund marked paid.": "Terugbetaling gemarkeerd als betaald.",
+        "The ledger accounts could not be loaded.": "De grootboekrekeningen konden niet worden geladen.",
+        "The refund could not be approved.": "De terugbetaling kon niet worden goedgekeurd.",
+        "The refund could not be marked paid.": "De terugbetaling kon niet als betaald worden gemarkeerd.",
+        "This refund is already approved.": "Deze terugbetaling is al goedgekeurd.",
+        "Refunds to pay": "Terug te betalen",
+        "Refund requested": "Terugbetaling gevraagd",
+        "Refunded": "Terugbetaald",
+        "Credited": "Gecrediteerd"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
