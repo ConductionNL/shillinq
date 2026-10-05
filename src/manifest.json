@@ -12802,6 +12802,36 @@
 						]
 					}
 				],
+				"widgets": [
+					{
+						"id": "ladder-details",
+						"type": "data",
+						"title": "Ladder",
+						"icon": "StairsUp",
+						"content": { "columns": 2, "include": ["name", "customerGroup", "enterpriseId", "actief", "lifecycleState", "administrationId"] }
+					},
+					{
+						"id": "ladder-stages",
+						"type": "object-table",
+						"title": "Stages",
+						"icon": "EmailOutline",
+						"content": {
+							"endpointSource": { "url": "/apps/shillinq/api/dunning/ladders/@objectId/stages", "responsePath": "rows" },
+							"columns": [
+								{ "key": "nr", "label": "Stage" },
+								{ "key": "days", "label": "Days overdue" },
+								{ "key": "channelLabel", "label": "Channel" },
+								{ "key": "subject", "label": "Subject" },
+								{ "key": "body", "label": "Body" }
+							],
+							"emptyText": "This ladder has no stages."
+						}
+					}
+				],
+				"layout": [
+					{ "id": "1", "widgetId": "ladder-details", "gridX": 0, "gridY": 0, "gridWidth": 12, "gridHeight": 4 },
+					{ "id": "2", "widgetId": "ladder-stages", "gridX": 0, "gridY": 4, "gridWidth": 12, "gridHeight": 8 }
+				],
 				"auditTrail": true,
 				"schema": "DunningLadder",
 				"fields": [
@@ -13032,6 +13062,15 @@
 				"defaultSort": "executedOn",
 				"detailRoute": "DunningRunDetail",
 				"description": "Per-invoice per-stage execution log with evidence trail. Immutable post-execute.",
+				"headerActions": [
+					{
+						"id": "next-run",
+						"label": "Next run",
+						"icon": "CalendarClock",
+						"handler": "openDunningNextRun",
+						"description": "See which reminder each overdue invoice gets in the next daily run, and how the last run went. Nothing is sent."
+					}
+				],
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
 			}
 		},

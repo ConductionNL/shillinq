@@ -6380,7 +6380,27 @@ OC.L10N.register(
         "The text in English.": "De tekst in het Engels.",
         "Outcome of the dispatch attempt. MANUAL: a person sends this stage (a letter, the collection agency, or a customer without an email address).": "Uitkomst van de verzendpoging. MANUAL: een medewerker verstuurt deze stap (een brief, het incassobureau, of een klant zonder e-mailadres).",
         "Automatic payment reminders": "Automatische betalingsherinneringen",
-        "Send payment reminders for overdue invoices every day, by each customer's ladder.": "Stuur elke dag betalingsherinneringen voor vervallen facturen, volgens de ladder van elke klant."
+        "Send payment reminders for overdue invoices every day, by each customer's ladder.": "Stuur elke dag betalingsherinneringen voor vervallen facturen, volgens de ladder van elke klant.",
+        "Email and registered post": "E-mail en aangetekende post",
+        "Collection agency": "Incassobureau",
+        "The daily run has not run for this administration yet.": "De dagelijkse run is voor deze administratie nog niet gedraaid.",
+        "Last run {day}: skipped, another run was still busy.": "Laatste run {day}: overgeslagen, een andere run was nog bezig.",
+        "Last run {day}: {overdue} marked overdue, {sent} sent, {manual} to send by hand, {failed} failed, {skipped} with nothing due.": "Laatste run {day}: {overdue} op vervallen gezet, {sent} verstuurd, {manual} met de hand te versturen, {failed} mislukt, {skipped} zonder herinnering.",
+        "Loading the next run…": "Volgende run laden…",
+        "You have no administration to show.": "Je hebt geen administratie om te tonen.",
+        "Automatic reminders are on.": "Automatische herinneringen staan aan.",
+        "Automatic reminders are off. Nothing is sent until you switch them on.": "Automatische herinneringen staan uit. Er gaat niets weg tot je ze aanzet.",
+        "No invoice gets a reminder in the next run.": "Geen factuur krijgt een herinnering in de volgende run.",
+        "Reminders the next run would send": "Herinneringen die de volgende run zou versturen",
+        "Switch on reminders": "Herinneringen aanzetten",
+        "Check the next run, then switch reminders on": "Bekijk de volgende run en zet dan herinneringen aan",
+        "The next run could not be loaded.": "De volgende run kon niet worden geladen.",
+        "Reminders are on. The next daily run sends the list above.": "Herinneringen staan aan. De volgende dagelijkse run verstuurt de lijst hierboven.",
+        "Reminders could not be switched on.": "Herinneringen konden niet worden aangezet.",
+        "See which reminder each overdue invoice gets in the next daily run, and how the last run went. Nothing is sent.": "Zie welke herinnering elke vervallen factuur krijgt in de volgende dagelijkse run, en hoe de laatste run ging. Er wordt niets verstuurd.",
+        "Days overdue": "Dagen vervallen",
+        "This ladder has no stages.": "Deze ladder heeft geen stappen.",
+        "See which reminder each overdue invoice gets in the first run, then switch daily reminders on.": "Zie welke herinnering elke vervallen factuur krijgt in de eerste run, en zet dan dagelijkse herinneringen aan."
     },
     "nplurals=2; plural=(n != 1);"
 )

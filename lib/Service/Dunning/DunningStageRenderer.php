@@ -131,14 +131,18 @@ final class DunningStageRenderer {
 	}//end baseLanguage()
 
 	/**
-	 * The unfilled text of a stage in a language.
+	 * The unfilled text of a stage in a language: the stage's own text, then
+	 * its other language, then the default text of that stage. Also what the
+	 * ladder page shows (task 4.1), so the page and the letter agree.
 	 *
 	 * @param array<string, mixed> $stage    The stage.
 	 * @param string               $language `nl` or `en`.
 	 *
 	 * @return array{subject: string, body: string}
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
 	 */
-	private function textFor(array $stage, string $language): array {
+	public function textFor(array $stage, string $language): array {
 		$other = 'en';
 		if ($language === 'en') {
 			$other = 'nl';
