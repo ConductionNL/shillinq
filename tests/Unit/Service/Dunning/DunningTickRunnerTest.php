@@ -57,6 +57,7 @@ use OCP\Mail\IMailer;
 use OCP\Mail\IMessage;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use ReflectionMethod;
 use RuntimeException;
@@ -95,6 +96,13 @@ final class DunningTickRunnerTest extends TestCase {
 	private array $engineRefuses = [];
 
 	/**
+	 * Whether resolving the dispatcher fails, once, as a broken container would.
+	 *
+	 * @var bool
+	 */
+	private bool $dispatcherFailsOnce = false;
+
+	/**
 	 * App-config values written by the runner.
 	 *
 	 * @var array<string, string>
@@ -118,10 +126,12 @@ final class DunningTickRunnerTest extends TestCase {
 		$this->refused       = [];
 		$this->engineRefuses = [];
 		$this->config        = [];
+		$this->dispatcherFailsOnce = false;
 
 		$texts  = new DunningStageDefaultTexts();
 		$stages = [];
-		foreach ([1 => [7, 'EMAIL'], 2 => [21, 'EMAIL'], 3 => [35, 'EMAIL'], 4 => [56, 'REGISTERED_POST'], 5 => [70, 'COLLECTION_AGENCY_API']] as $nr => [$days, $channel]) {
+		$ladder = [1 => [7, 'EMAIL'], 2 => [21, 'EMAIL'], 3 => [35, 'EMAIL'], 4 => [56, 'REGISTERED_POST'], 5 => [70, 'COLLECTION_AGENCY_API']];
+		foreach ($ladder as $nr => [$days, $channel]) {
 			$nl       = $texts->for(stageNr: $nr, language: 'nl');
 			$en       = $texts->for(stageNr: $nr, language: 'en');
 			$stages[] = [
@@ -189,7 +199,15 @@ final class DunningTickRunnerTest extends TestCase {
 	 * @return array<string, mixed>
 	 */
 	private static function customer(string $id, string $name, string $email, string $administration): array {
-		return ['id' => $id, 'customerId' => strtoupper($id), 'administrationId' => $administration, 'legalName' => $name, 'email' => $email, 'kvkNumber' => '12345678', 'lifecycleState' => 'active'];
+		return [
+			'id' => $id,
+			'customerId' => strtoupper($id),
+			'administrationId' => $administration,
+			'legalName' => $name,
+			'email' => $email,
+			'kvkNumber' => '12345678',
+			'lifecycleState' => 'active',
+		];
 	}//end customer()
 
 	/**
@@ -222,6 +240,20 @@ final class DunningTickRunnerTest extends TestCase {
 			'invoiceLines' => [['itemName' => 'Advies september', 'quantity' => 1, 'unitPrice' => 1000.0, 'lineNetAmount' => 1000.0, 'vatRate' => 21]],
 		];
 	}//end invoice()
+
+	/**
+	 * Add an issued invoice of Molenaar Installatietechniek B.V. to Adviesbureau Kade B.V.
+	 *
+	 * @param string $id      The record id.
+	 * @param string $number  The invoice number.
+	 * @param string $dueDate The due date.
+	 *
+	 * @return void
+	 */
+	private function addInvoice(string $id, string $number, string $dueDate): void {
+		$invoice = self::invoice(id: $id, number: $number, dueDate: $dueDate, customer: 'cm-molen', administration: 'ADM-KADE');
+		$this->store->setSchema('ARInvoice')->saveObject($invoice);
+	}//end addInvoice()
 
 	/**
 	 * Nextcloud's mailer, recording each message and refusing the addresses in $this->refused.
@@ -266,7 +298,7 @@ final class DunningTickRunnerTest extends TestCase {
 	private function appConfig(): IAppConfig {
 		$appConfig = $this->createStub(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturnCallback(
-			fn (string $app, string $key, string $default = ''): string => (['register' => 'shillinq'] + $this->config)[$key] ?? $default
+			fn (string $app, string $key, string $default = ''): string => ($this->config + ['register' => 'shillinq'])[$key] ?? $default
 		);
 		$appConfig->method('setValueString')->willReturnCallback(
 			function (string $app, string $key, string $value): bool {
@@ -285,11 +317,29 @@ final class DunningTickRunnerTest extends TestCase {
 	 * @return DunningTickRunner
 	 */
 	private function runner(?ILockingProvider $locks = null): DunningTickRunner {
-		$adapter    = new MailDunningChannelAdapter(mailer: $this->mailer(), pdfGenerator: new InvoicePdfGenerator(), ublMapper: new ArInvoiceUblMapper(), logger: new NullLogger());
+		$adapter    = new MailDunningChannelAdapter(
+			mailer: $this->mailer(),
+			pdfGenerator: new InvoicePdfGenerator(),
+			ublMapper: new ArInvoiceUblMapper(),
+			logger: new NullLogger()
+		);
 		$dispatcher = new DunningStageDispatcher(adapter: $adapter, logger: new NullLogger());
 		$store      = $this->store;
 		$container  = $this->createStub(ContainerInterface::class);
-		$container->method('get')->willReturnCallback(static fn (string $id): object => ($id === DunningStageDispatcher::class ? $dispatcher : $store));
+		$container->method('get')->willReturnCallback(
+			function (string $id) use ($dispatcher, $store): object {
+				if ($id !== DunningStageDispatcher::class) {
+					return $store;
+				}
+
+				if ($this->dispatcherFailsOnce === true) {
+					$this->dispatcherFailsOnce = false;
+					throw new RuntimeException('The dispatcher could not be built.');
+				}
+
+				return $dispatcher;
+			}
+		);
 
 		$appConfig = $this->appConfig();
 		$dunning   = new DunningRunService(container: $container, appConfig: $appConfig, logger: new NullLogger(), objectService: $store);
@@ -363,7 +413,8 @@ final class DunningTickRunnerTest extends TestCase {
 	 * @return array<int, array<string, mixed>>
 	 */
 	private function runs(string $invoiceId): array {
-		return array_values(array_filter($this->store->setSchema('DunningRun')->findAll(), static fn (array $run): bool => $run['invoiceId'] === $invoiceId));
+		$runs = $this->store->setSchema('DunningRun')->findAll();
+		return array_values(array_filter($runs, static fn (array $run): bool => $run['invoiceId'] === $invoiceId));
 	}//end runs()
 
 	/**
@@ -389,7 +440,19 @@ final class DunningTickRunnerTest extends TestCase {
 		self::assertStringContainsString('2026-0412', $this->mails[0]['subject']);
 
 		self::assertCount(1, $reports, 'Only the administration with dunning on is run.');
-		self::assertSame(['administrationId' => 'ADM-KADE', 'markedOverdue' => 1, 'sent' => 1, 'failed' => 0, 'manual' => 0, 'skipped' => 0, 'errors' => 0, 'locked' => false], array_diff_key($reports[0], ['ranAt' => true]));
+		self::assertSame(
+			[
+				'administrationId' => 'ADM-KADE',
+				'markedOverdue' => 1,
+				'sent' => 1,
+				'failed' => 0,
+				'manual' => 0,
+				'skipped' => 0,
+				'errors' => 0,
+				'locked' => false,
+			],
+			array_diff_key($reports[0], ['ranAt' => true])
+		);
 	}//end testTheFirstReminderGoesOutWithoutAnyoneActing()
 
 	/**
@@ -416,8 +479,8 @@ final class DunningTickRunnerTest extends TestCase {
 	 * @return void
 	 */
 	public function testAFailingInvoiceDoesNotStopTheRun(): void {
-		$this->store->setSchema('ARInvoice')->saveObject(self::invoice(id: 'inv-0388', number: '2026-0388', dueDate: '2026-10-10', customer: 'cm-molen', administration: 'ADM-KADE'));
-		$this->store->setSchema('ARInvoice')->saveObject(self::invoice(id: 'inv-0399', number: '2026-0399', dueDate: '2026-10-12', customer: 'cm-molen', administration: 'ADM-KADE'));
+		$this->addInvoice(id: 'inv-0388', number: '2026-0388', dueDate: '2026-10-10');
+		$this->addInvoice(id: 'inv-0399', number: '2026-0399', dueDate: '2026-10-12');
 		$this->refused       = ['facturen@molenaar.nl'];
 		$this->engineRefuses = ['inv-0399'];
 
@@ -441,7 +504,7 @@ final class DunningTickRunnerTest extends TestCase {
 	 */
 	public function testEveryPageIsRead(): void {
 		for ($i = 1; $i <= 150; $i++) {
-			$this->store->setSchema('ARInvoice')->saveObject(self::invoice(id: sprintf('inv-p%03d', $i), number: sprintf('2026-1%03d', $i), dueDate: '2026-10-21', customer: 'cm-molen', administration: 'ADM-KADE'));
+			$this->addInvoice(id: sprintf('inv-p%03d', $i), number: sprintf('2026-1%03d', $i), dueDate: '2026-10-21');
 		}
 
 		$this->store->deleteObject('inv-0412', schema: 'ARInvoice');
@@ -533,6 +596,100 @@ final class DunningTickRunnerTest extends TestCase {
 		self::assertNotNull($property, 'Administration declares no dunningEnabled.');
 		self::assertSame('boolean', $property['type']);
 		self::assertFalse($property['default']);
-		self::assertSame([], RegisterSchema::errors('Administration', self::administration(code: 'ADM-KADE', name: 'Adviesbureau Kade B.V.', enabled: true)));
+		$kade = self::administration(code: 'ADM-KADE', name: 'Adviesbureau Kade B.V.', enabled: true);
+		self::assertSame([], RegisterSchema::errors('Administration', $kade));
 	}//end testTheAdministrationSchemaDeclaresTheSwitch()
+
+	/**
+	 * A customer without an email address is handed to a person: the run
+	 * reads MANUAL and the report counts it as manual.
+	 *
+	 * @return void
+	 */
+	public function testACustomerWithoutAnEmailAddressIsCountedManual(): void {
+		$customer          = $this->stored('CustomerMaster', 'cm-korenaar');
+		$customer['email'] = '';
+		$this->store->setSchema('CustomerMaster')->saveObject($customer);
+
+		$reports = $this->runner()->runAll(now: new DateTimeImmutable(self::TODAY));
+
+		self::assertSame('MANUAL', $this->runs('inv-0412')[0]['deliveryStatus']);
+		self::assertSame(1, $reports[0]['manual']);
+		self::assertSame(0, $reports[0]['sent']);
+		self::assertSame([], $this->mails);
+	}//end testACustomerWithoutAnEmailAddressIsCountedManual()
+
+	/**
+	 * An invoice whose sending throws is counted as failed and an error, and
+	 * the next invoice still gets its reminder.
+	 *
+	 * @return void
+	 */
+	public function testAnInvoiceWhoseSendingThrowsDoesNotStopTheRun(): void {
+		$this->addInvoice(id: 'inv-0388', number: '2026-0388', dueDate: '2026-10-10');
+		$this->dispatcherFailsOnce = true;
+
+		$reports = $this->runner()->runAll(now: new DateTimeImmutable(self::TODAY));
+
+		self::assertSame([], $this->runs('inv-0412'), 'The first invoice threw and saved no run.');
+		self::assertSame('DELIVERED', $this->runs('inv-0388')[0]['deliveryStatus']);
+		self::assertSame(1, $reports[0]['sent']);
+		self::assertSame(1, $reports[0]['failed']);
+		self::assertSame(1, $reports[0]['errors']);
+	}//end testAnInvoiceWhoseSendingThrowsDoesNotStopTheRun()
+
+	/**
+	 * An enabled administration without a code or an id has no invoices to
+	 * find: it is reported, with nothing done.
+	 *
+	 * @return void
+	 */
+	public function testAnAdministrationWithoutIdentifiersIsReportedEmpty(): void {
+		$this->store = new InMemoryObjectServiceStub(
+			data: ['Administration' => [['name' => 'Naamloos', 'dunningEnabled' => true]]],
+			idFiltersMatchNothing: true
+		);
+
+		$reports = $this->runner()->runAll(now: new DateTimeImmutable(self::TODAY));
+
+		self::assertCount(1, $reports);
+		self::assertSame('', $reports[0]['administrationId']);
+		self::assertSame(0, $reports[0]['markedOverdue'] + $reports[0]['sent'] + $reports[0]['skipped']);
+	}//end testAnAdministrationWithoutIdentifiersIsReportedEmpty()
+
+	/**
+	 * A stored report nobody can read is replaced by this run's, and an empty
+	 * register setting falls back to the shillinq register.
+	 *
+	 * @return void
+	 */
+	public function testAnUnreadableReportIsReplacedAndAnEmptyRegisterFallsBack(): void {
+		$this->config = ['dunning.job_report' => '{not json', 'register' => ''];
+
+		$runner = $this->runner();
+		$runner->runAll(now: new DateTimeImmutable(self::TODAY));
+
+		self::assertSame(['ADM-KADE'], array_keys($runner->lastReports()));
+		self::assertSame(1, $runner->lastReports()['ADM-KADE']['sent']);
+	}//end testAnUnreadableReportIsReplacedAndAnEmptyRegisterFallsBack()
+
+	/**
+	 * When the lock backend itself fails, the job logs the failed pass and
+	 * returns, so cron goes on with the next job.
+	 *
+	 * @return void
+	 */
+	public function testTheJobLogsAPassThatFails(): void {
+		$locks = $this->createMock(ILockingProvider::class);
+		$locks->method('acquireLock')->willThrowException(new RuntimeException('The lock backend is down.'));
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects(self::once())->method('error')->with('DunningTickJob: daily pass failed', ['exception' => 'The lock backend is down.']);
+		$time = $this->createMock(ITimeFactory::class);
+		$time->method('now')->willReturn(new DateTimeImmutable(self::TODAY));
+		$job = new DunningTickJob($time, $this->runner(locks: $locks), $logger);
+
+		(new ReflectionMethod($job, 'run'))->invoke($job, null);
+
+		self::assertSame('issued', $this->stored('ARInvoice', 'inv-0412')['lifecycleState']);
+	}//end testTheJobLogsAPassThatFails()
 }//end class
