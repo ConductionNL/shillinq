@@ -49,6 +49,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\Vat\VatLineStamper;
+use OCA\Shillinq\Service\Vat\VatReturnBox;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -374,6 +375,7 @@ class VATReturnService {
 			endDate: $endDate
 		);
 		$tariffs = new VatLineStamper(objectService: $this->objectService, register: $this->register());
+		$boxes = new VatReturnBox();
 
 		$declarationsByKey = [];
 		$totals = ['collected' => 0, 'paid' => 0, 'taxable' => 0];
@@ -386,8 +388,8 @@ class VATReturnService {
 			}
 
 			$box = (string)$line['vatReturnBox'];
-			$type = $this->boxType(box: $box);
-			$cents = $this->bookedCents(line: $line, box: $box, type: $type);
+			$type = $boxes->type(box: $box);
+			$cents = $boxes->bookedCents(line: $line, box: $box);
 			$code = (string)($line['vatTariffCode'] ?? '');
 			$taxRate = ($tariffs->ratePercentage(code: $code) ?? 0.0);
 
@@ -418,7 +420,7 @@ class VATReturnService {
 
 			$lineNumber++;
 			$totals['taxable'] += $baseCt;
-			$totals[$this->totalOf(box: $box)] += $vatCt;
+			$totals[$boxes->totalOf(box: $box)] += $vatCt;
 
 			$declarationsByKey[$box]['pendingLines'][] = [
 				'lineNumber' => $lineNumber,
@@ -454,72 +456,6 @@ class VATReturnService {
 		];
 
 	}//end scanRubrieken()
-
-	/**
-	 * The declaration type of a box: input VAT is paid, the boxes of a
-	 * reverse-charged purchase are reverse charge, every other box is
-	 * collected (owed).
-	 *
-	 * @param string $box The VAT return box.
-	 *
-	 * @return string One of collected | paid | reverse-charge.
-	 */
-	private function boxType(string $box): string {
-		if ($box === VatLineStamper::INPUT_VAT_BOX) {
-			return 'paid';
-		}
-
-		if (in_array($box, ['2a', '4a', '4b'], true) === true) {
-			return 'reverse-charge';
-		}
-
-		return 'collected';
-	}//end boxType()
-
-	/**
-	 * Which return total a box's VAT counts in: 5b is deductible, every
-	 * other box is owed.
-	 *
-	 * @param string $box The VAT return box.
-	 *
-	 * @return string `paid` or `collected`.
-	 */
-	private function totalOf(string $box): string {
-		if ($box === VatLineStamper::INPUT_VAT_BOX) {
-			return 'paid';
-		}
-
-		return 'collected';
-	}//end totalOf()
-
-	/**
-	 * A line's amount in cents, positive when it is booked on its box's own
-	 * side and negative when it is booked on the other side (a credit note).
-	 *
-	 * Input VAT and the base of a reverse-charged purchase are debits; sales,
-	 * their VAT and VAT owed on a reverse-charged purchase are credits.
-	 *
-	 * @param array<string,mixed> $line The GLLine.
-	 * @param string $box The line's box.
-	 * @param string $type The box's declaration type.
-	 *
-	 * @return int
-	 */
-	private function bookedCents(array $line, string $box, string $type): int {
-		$ownSide = 'credit';
-		if ($box === VatLineStamper::INPUT_VAT_BOX
-			|| ($type === 'reverse-charge' && $line['vatAmountKind'] === 'base')
-		) {
-			$ownSide = 'debit';
-		}
-
-		$cents = $this->toCents(amount: ($line['amount'] ?? 0));
-		if ((string)($line['side'] ?? '') !== $ownSide) {
-			return -$cents;
-		}
-
-		return $cents;
-	}//end bookedCents()
 
 	/**
 	 * Submit a VAT return (REQ-VAT-005) — draft → submitted with non-negative totals.
@@ -974,17 +910,6 @@ class VATReturnService {
 		);
 
 	}//end normaliseRow()
-
-	/**
-	 * Convert a money amount to integer cents.
-	 *
-	 * @param mixed $amount Money amount.
-	 *
-	 * @return int Whole cents.
-	 */
-	private function toCents(mixed $amount): int {
-		return (int)round((float)($amount ?? 0) * 100);
-	}//end toCents()
 
 	/**
 	 * Convert integer cents back to a 2-decimal float.
