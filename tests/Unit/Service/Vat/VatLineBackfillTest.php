@@ -177,6 +177,22 @@ final class VatLineBackfillTest extends TestCase {
 	}//end stampsOf()
 
 	/**
+	 * A VAT-applicable account of administration adm-1.
+	 *
+	 * @param string $number The account number.
+	 * @param string $type   The account type.
+	 * @param int    $rate   Its VAT rate.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function account(string $number, string $type, int $rate): array {
+		return [
+			'id' => 'acc-' . $number, 'accountNumber' => $number, 'accountType' => $type, 'vatApplicable' => true, 'vatRate' => $rate,
+			'administrationId' => 'adm-1',
+		];
+	}//end account()
+
+	/**
 	 * Lines posted while the tariffs were not there carry their tariff and
 	 * kind but no box. The backfill gives them the stamps the mapper writes
 	 * when the tariffs exist, and a second run writes nothing.
@@ -221,8 +237,8 @@ final class VatLineBackfillTest extends TestCase {
 		}
 
 		$rows['Account'] = [
-			['id' => 'acc-7000', 'accountNumber' => '7000', 'accountType' => 'expenses', 'vatApplicable' => true, 'vatRate' => 21, 'administrationId' => 'adm-1'],
-			['id' => 'acc-7010', 'accountNumber' => '7010', 'accountType' => 'expenses', 'vatApplicable' => true, 'vatRate' => 9, 'administrationId' => 'adm-1'],
+			$this->account('7000', 'expenses', 21),
+			$this->account('7010', 'expenses', 9),
 		];
 
 		$result = $this->backfill($rows)->run();
@@ -272,7 +288,7 @@ final class VatLineBackfillTest extends TestCase {
 		}
 
 		$rows['Account'] = [
-			['id' => 'acc-8000', 'accountNumber' => '8000', 'accountType' => 'revenue', 'vatApplicable' => true, 'vatRate' => 9, 'administrationId' => 'adm-1'],
+			$this->account('8000', 'revenue', 9),
 			['id' => 'acc-1100', 'accountNumber' => '1100', 'accountType' => 'assets', 'vatApplicable' => false, 'administrationId' => 'adm-1'],
 		];
 
@@ -310,7 +326,7 @@ final class VatLineBackfillTest extends TestCase {
 			],
 			'Account' => [
 				['id' => 'acc-8100', 'accountNumber' => '8100', 'accountType' => 'revenue', 'vatApplicable' => true, 'administrationId' => 'adm-1'],
-				['id' => 'acc-8000', 'accountNumber' => '8000', 'accountType' => 'revenue', 'vatApplicable' => true, 'vatRate' => 21, 'administrationId' => 'adm-1'],
+				$this->account('8000', 'revenue', 21),
 			],
 		];
 		$logger = $this->createMock(LoggerInterface::class);
