@@ -85,6 +85,12 @@ class DunningTickRunner {
 	/**
 	 * Run the pass for every administration with automatic reminders on.
 	 *
+	 * The pass runs as the system. Cron has no session user, and OpenRegister
+	 * treats a userless caller as the system only on the command line or
+	 * inside runAsSystem(): under AJAX or webcron every read that keeps
+	 * organisation scoping on (all of DunningRunService's, and the transition
+	 * engine's) answers nothing, so no ladder was found and nothing was sent.
+	 *
 	 * @param DateTimeImmutable $now The moment of the run.
 	 *
 	 * @return array<int,array<string,mixed>> One report per administration that was enabled.
@@ -92,14 +98,20 @@ class DunningTickRunner {
 	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-3.1
 	 */
 	public function runAll(DateTimeImmutable $now): array {
-		$reports = [];
-		foreach ($this->page(schema: 'Administration', filters: []) as $administration) {
-			if (($administration[self::ENABLED_PROPERTY] ?? false) !== true) {
-				continue;
-			}
+		$reports = $this->objectService->runAsSystem(
+			function () use ($now): array {
+				$reports = [];
+				foreach ($this->page(schema: 'Administration', filters: []) as $administration) {
+					if (($administration[self::ENABLED_PROPERTY] ?? false) !== true) {
+						continue;
+					}
 
-			$reports[] = $this->runAdministration(administration: $administration, now: $now);
-		}
+					$reports[] = $this->runAdministration(administration: $administration, now: $now);
+				}
+
+				return $reports;
+			}
+		);
 
 		$this->storeReports(reports: $reports);
 		return $reports;

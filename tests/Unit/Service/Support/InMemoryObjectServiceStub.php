@@ -56,8 +56,11 @@ use RuntimeException;
  *
  * @SuppressWarnings(PHPMD.TooManyPublicMethods) Mirrors the 25-method contract.
  * @SuppressWarnings(PHPMD.ExcessiveClassLength) Mirrors the 25-method contract.
+ *
+ * Not final: DunningTickRunnerTest extends it to answer reads as
+ * OpenRegister answers a caller with no session user.
  */
-final class InMemoryObjectServiceStub implements ObjectServiceInterface {
+class InMemoryObjectServiceStub implements ObjectServiceInterface {
 
 	/**
 	 * Schema => rows.
