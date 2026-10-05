@@ -389,7 +389,7 @@
       "DunningRun": {
         "slug": "DunningRun",
         "icon": "EmailFastOutline",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "Dunning Run",
         "description": "Per-invoice per-stage execution log with evidence trail (rendered subject/body, PDF SHA-256 hash, delivery status, optional digital signature, e-mail open tracking, PostNL barcode + delivery confirmation). Immutable once executed. Backs the proof-of-contact requirement of art. 6:96 BW.",
         "x-schema-org": "schema:Event",
@@ -492,9 +492,10 @@
               "PENDING",
               "DELIVERED",
               "BOUNCED",
-              "FAILED"
+              "FAILED",
+              "MANUAL"
             ],
-            "description": "Outcome of the dispatch attempt.",
+            "description": "Outcome of the dispatch attempt. MANUAL: a person sends this stage (a letter, the collection agency, or a customer without an email address).",
             "default": "PENDING",
             "title": "Delivery Status"
           },
