@@ -458,7 +458,7 @@ class DunningRunService {
 			params: $params,
 			runsSoFar: fn (): int => $this->runCount(administrationId: $administrationId, invoiceId: $invoiceId)
 		);
-		$params = $letters->address(params: $params, invoice: $invoice, find: $this->fetchById(...));
+		$params = $letters->address(params: $params, invoice: $invoice, find: $this->fetchById(...), findAll: $this->findAll(...));
 		$record = $letters->compose(administrationId: $administrationId, invoiceId: $invoiceId, params: $params, now: new DateTimeImmutable());
 
 		$record = $this->container->get(DunningStageDispatcher::class)->dispatch(record: $record, invoice: $invoice);
