@@ -6377,7 +6377,8 @@ OC.L10N.register(
         "The mail subject of this stage, in Dutch and English. Write merge fields as {klantNaam}, {factuurNummer} and so on. Without a subject the stage uses its default text.": "Het onderwerp van de mail voor deze stap, in het Nederlands en Engels. Schrijf samenvoegvelden als {klantNaam}, {factuurNummer} enzovoort. Zonder onderwerp gebruikt de stap de standaardtekst.",
         "The mail body of this stage, in Dutch and English, with the same merge fields as the subject.": "De tekst van de mail voor deze stap, in het Nederlands en Engels, met dezelfde samenvoegvelden als het onderwerp.",
         "The text in Dutch.": "De tekst in het Nederlands.",
-        "The text in English.": "De tekst in het Engels."
+        "The text in English.": "De tekst in het Engels.",
+        "Outcome of the dispatch attempt. MANUAL: a person sends this stage (a letter, the collection agency, or a customer without an email address).": "Uitkomst van de verzendpoging. MANUAL: een medewerker verstuurt deze stap (een brief, het incassobureau, of een klant zonder e-mailadres)."
     },
     "nplurals=2; plural=(n != 1);"
 )

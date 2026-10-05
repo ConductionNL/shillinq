@@ -92,9 +92,9 @@ use OCA\Shillinq\Service\Dunning\CreditScoreFetchAdapterInterface;
 use OCA\Shillinq\Service\Dunning\DunningChannelAdapterInterface;
 use OCA\Shillinq\Service\Dunning\IncassoBureauAdapterInterface;
 use OCA\Shillinq\Service\Dunning\LogCreditScoreFetchAdapter;
-use OCA\Shillinq\Service\Dunning\LogDunningChannelAdapter;
 use OCA\Shillinq\Service\Dunning\LogIncassoBureauAdapter;
 use OCA\Shillinq\Service\Dunning\LogPostNLAdapter;
+use OCA\Shillinq\Service\Dunning\MailDunningChannelAdapter;
 use OCA\Shillinq\Service\Dunning\PostNLAdapterInterface;
 use OCA\Shillinq\Service\External\Bunq\BunqBankConnectorAdapterInterface;
 use OCA\Shillinq\Service\External\Bunq\LogBunqBankConnectorAdapter;
@@ -475,7 +475,7 @@ class Application extends App implements IBootstrap {
 		// PostNL Track & Trace) swap these in production via the same
 		// registerService call.
 		$context->registerServiceAlias(CreditScoreFetchAdapterInterface::class, LogCreditScoreFetchAdapter::class);
-		$context->registerServiceAlias(DunningChannelAdapterInterface::class, LogDunningChannelAdapter::class);
+		$context->registerServiceAlias(DunningChannelAdapterInterface::class, MailDunningChannelAdapter::class);
 		$context->registerServiceAlias(IncassoBureauAdapterInterface::class, LogIncassoBureauAdapter::class);
 		$context->registerServiceAlias(PostNLAdapterInterface::class, LogPostNLAdapter::class);
 

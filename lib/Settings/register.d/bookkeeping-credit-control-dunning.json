@@ -389,7 +389,7 @@
       "DunningRun": {
         "slug": "DunningRun",
         "icon": "EmailFastOutline",
-        "version": "0.1.0",
+        "version": "0.3.0",
         "title": "Dunning Run",
         "description": "Per-invoice per-stage execution log with evidence trail (rendered subject/body, PDF SHA-256 hash, delivery status, optional digital signature, e-mail open tracking, PostNL barcode + delivery confirmation). Immutable once executed. Backs the proof-of-contact requirement of art. 6:96 BW.",
         "x-schema-org": "schema:Event",
@@ -492,11 +492,18 @@
               "PENDING",
               "DELIVERED",
               "BOUNCED",
-              "FAILED"
+              "FAILED",
+              "MANUAL"
             ],
-            "description": "Outcome of the dispatch attempt.",
+            "description": "Outcome of the dispatch attempt. MANUAL: a person sends this stage (a letter, the collection agency, or a customer without an email address).",
             "default": "PENDING",
             "title": "Delivery Status"
+          },
+          "deliveryNote": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the stage failed or waits for a person, as the channel reported it. Empty when the stage was delivered.",
+            "title": "Delivery note"
           },
           "openTracking": {
             "type": "object",
@@ -656,6 +663,39 @@
                 "as": "count"
               }
             ]
+          }
+        },
+        "x-openregister-notifications": {
+          "onManual": {
+            "trigger": {
+              "type": "created",
+              "filter": {
+                "field": "deliveryStatus",
+                "operator": "equals",
+                "value": "MANUAL"
+              }
+            },
+            "description": "Tell the credit controllers that a reminder stage waits for a person: a registered letter, the collection agency, or a customer without an email address.",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "groups",
+                "groups": [
+                  "ar-controller"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Verstuur stap {{stageNr}} van de herinneringen aan {{recipientName}} zelf",
+              "en": "Send reminder stage {{stageNr}} to {{recipientName}} yourself"
+            },
+            "message": {
+              "nl": "Open de herinnering om te zien waarom, en wat je verstuurt.",
+              "en": "Open the reminder to see why, and what to send."
+            }
           }
         },
         "x-openregister-rbac": {
