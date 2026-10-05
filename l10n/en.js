@@ -4160,7 +4160,10 @@ OC.L10N.register(
         "The refund could not be approved.": "The refund could not be approved.",
         "The refund could not be marked paid.": "The refund could not be marked paid.",
         "This refund is already approved.": "This refund is already approved.",
-        "Refunds to pay": "Refunds to pay"
+        "Refunds to pay": "Refunds to pay",
+        "Refund requested": "Refund requested",
+        "Refunded": "Refunded",
+        "Credited": "Credited"
     },
     "nplurals=2; plural=(n != 1);"
 )

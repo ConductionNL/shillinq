@@ -187,7 +187,14 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // Revise depreciation, Extra depreciation, Post missed depreciation and Apply
 // reinvestment reserve actions on the asset page, plus their menu entry.
 // Raised to 1,207,000: 6,330 B of headroom, 0.52%.
-const DEFAULT_BUDGET_BYTES = 1_207_000
+//
+// Re-measured 2026-10-05 (receivables-object-request-refund-and-credit 3.2):
+// development held 1,206,673 bytes, 327 B under the budget. This change adds
+// 742 B to ar-invoice-payment-links.json: the Refunds to pay menu entry (a
+// query lens on Payment requests, not a second index page), the Approve and
+// Mark paid row actions and three state filter options. 1,207,415 in all.
+// Raised to 1,213,500: 6,085 B of headroom, 0.50%.
+const DEFAULT_BUDGET_BYTES = 1_213_500
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),

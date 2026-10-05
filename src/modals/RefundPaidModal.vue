@@ -26,7 +26,12 @@
 		@closing="onClose">
 		<div class="rpm">
 			<p>
-				{{ t('shillinq', 'Pay the refund by bank first. Then record the payment here.') }}
+				{{
+					t(
+						'shillinq',
+						'Pay the refund by bank first. Then record the payment here.',
+					)
+				}}
 			</p>
 			<NcTextField
 				v-model="bankReference"
@@ -136,8 +141,7 @@ export default {
 						},
 					},
 				)
-				const rows =
-					response?.data?.results ?? response?.data?.objects ?? []
+				const rows = response?.data?.results ?? response?.data?.objects ?? []
 				this.accounts = Array.isArray(rows) ? rows : []
 			} catch (error) {
 				this.error = refundError(

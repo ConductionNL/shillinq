@@ -2,11 +2,12 @@
  * SPDX-License-Identifier: EUPL-1.2
  * Copyright (C) 2026 Conduction B.V.
  *
- * receivables-object-request-refund-and-credit 3.2: the "Refunds to pay"
- * page. An index page over PaymentRequest in state refund_requested, with
- * two row actions: Approve posts to /refund/approve, Mark paid opens
- * RefundPaidModal, which asks the bank reference and the bank account and
- * posts to /refund/paid.
+ * receivables-object-request-refund-and-credit 3.2: "Refunds to pay". A menu
+ * entry opens the Payment requests index filtered on state refund_requested
+ * (ADR-097 Decision 5: a lens on the one index over PaymentRequest, not a
+ * second index page). Two row actions show on a request in that state:
+ * Approve posts to /refund/approve, Mark paid opens RefundPaidModal, which
+ * asks the bank reference and the bank account and posts to /refund/paid.
  *
  * The row actions are dispatched through the INSTALLED library's own index
  * page dispatch (`dispatchAction`, which CnIndexPage's `mergedActions` runs on
@@ -48,36 +49,58 @@ vi.mock('@nextcloud/vue/functions/dialog', () => ({
 
 const ROOT = path.resolve(__dirname, '../..')
 const read = (file) => fs.readFileSync(path.join(ROOT, file), 'utf8')
-const FRAGMENT = 'src/manifest.d/receivables-refunds-to-pay.json'
+const FRAGMENT = 'src/manifest.d/ar-invoice-payment-links.json'
 
 const { manifestActions } = await import('../../src/manifestActions.js')
-const { dispatchAction } = await import(
-	'@conduction/nextcloud-vue/dist/esm/components/CnIndexPage/manifestActionDispatch.js'
-)
+const { dispatchAction } =
+	await import('@conduction/nextcloud-vue/dist/esm/components/CnIndexPage/manifestActionDispatch.js')
+const { evaluateVisibleWhenLocal, isLocallyDecidableVisibleWhen } =
+	await import('@conduction/nextcloud-vue/dist/esm/utils/visibleWhen.js')
 
 /**
- * The fragment, or an empty one when it does not exist yet.
+ * The payment requests fragment.
  *
  * @return {object} The parsed fragment.
  */
 function fragment() {
-	if (!fs.existsSync(path.join(ROOT, FRAGMENT))) {
-		return { menu: [], pages: [] }
-	}
 	return JSON.parse(read(FRAGMENT))
 }
 
 /**
- * The page, or an empty stand-in.
+ * The Payment requests index page.
  *
- * @return {object} The RefundsToPay page.
+ * @return {object} The page.
  */
 function page() {
-	return (
-		fragment().pages.find((candidate) => candidate.id === 'RefundsToPay') ?? {
-			config: { actions: [] },
-		}
+	return fragment().pages.find((candidate) => candidate.id === 'PaymentRequests')
+}
+
+/**
+ * Every page of the bundled manifest and its fragments.
+ *
+ * @return {Array<object>} The pages.
+ */
+function allPages() {
+	const files = ['src/manifest.json'].concat(
+		fs
+			.readdirSync(path.join(ROOT, 'src/manifest.d'))
+			.filter((name) => name.endsWith('.json'))
+			.map((name) => 'src/manifest.d/' + name),
 	)
+	return files.flatMap((file) => JSON.parse(read(file)).pages ?? [])
+}
+
+/**
+ * Whether the installed CnRowActions shows this action on this row: the
+ * local visibleWhen its menu filter evaluates.
+ *
+ * @param {object} action The declared action.
+ * @param {object} row The row.
+ * @return {boolean} Whether it is shown.
+ */
+function shownOn(action, row) {
+	expect(isLocallyDecidableVisibleWhen(action.visibleWhen)).toBe(true)
+	return evaluateVisibleWhenLocal(action.visibleWhen, row) !== false
 }
 
 /**
@@ -88,9 +111,7 @@ function page() {
  * @return {object} The action with its handler resolved, or stripped.
  */
 function resolvedAction(id) {
-	const declared = (page().config.actions ?? []).find(
-		(action) => action.id === id,
-	)
+	const declared = (page().config.actions ?? []).find((action) => action.id === id)
 	expect(declared, id).toBeTruthy()
 	return dispatchAction(declared, {
 		router: null,
@@ -137,25 +158,45 @@ afterEach(() => {
 	vi.restoreAllMocks()
 })
 
-describe('the Refunds to pay page', () => {
-	it('lists payment requests waiting for a refund, from the menu', () => {
-		const refunds = page()
-		expect(refunds.type).toBe('index')
-		expect(refunds.config.register).toBe('shillinq')
-		expect(refunds.config.schema).toBe('PaymentRequest')
-		expect(refunds.config.filter).toEqual({ state: 'refund_requested' })
-		expect(refunds.config.detailRoute).toBe('PaymentRequestDetail')
-		expect(refunds.config.showAdd).toBe(false)
-		const menu = fragment().menu.find((entry) => entry.route === 'RefundsToPay')
+describe('Refunds to pay', () => {
+	it('is a menu entry onto the payment requests waiting for a refund', () => {
+		const menu = fragment().menu.find((entry) => entry.id === 'RefundsToPay')
 		expect(menu.label).toBe('Refunds to pay')
-		expect(JSON.parse(read('src/menu-layout.json')).relocations.RefundsToPay).toBe(
-			'Sales',
+		expect(menu.route).toBe('PaymentRequests')
+		expect(menu.query).toEqual({ state: 'refund_requested' })
+		expect(
+			JSON.parse(read('src/menu-layout.json')).relocations.RefundsToPay,
+		).toBe('Sales')
+		const stateFilter = page().config.filters.find(
+			(filter) => filter.key === 'state',
 		)
+		expect(stateFilter.options.map((option) => option.value)).toContain(
+			'refund_requested',
+		)
+	})
+
+	it('adds no second index page over PaymentRequest', () => {
+		const indexes = allPages().filter(
+			(candidate) =>
+				candidate.type === 'index'
+				&& candidate.config?.schema === 'PaymentRequest',
+		)
+		expect(indexes.map((candidate) => candidate.id)).toEqual(['PaymentRequests'])
 	})
 
 	it('labels its actions with short labels, not descriptions', () => {
 		const labels = (page().config.actions ?? []).map((action) => action.label)
 		expect(labels).toEqual(['Approve', 'Mark paid'])
+	})
+
+	it('shows both actions on a request waiting for a refund, and on no other', () => {
+		for (const action of page().config.actions) {
+			expect(shownOn(action, requestRow('requested')), action.id).toBe(true)
+			expect(
+				shownOn(action, { ...requestRow('requested'), state: 'captured' }),
+				action.id,
+			).toBe(false)
+		}
 	})
 })
 
@@ -186,7 +227,9 @@ describe('Approve, through the index page dispatch', () => {
 		axiosMock.post.mockRejectedValue({
 			response: {
 				status: 403,
-				data: { error: 'Approving a refund needs the payment.administer action.' },
+				data: {
+					error: 'Approving a refund needs the payment.administer action.',
+				},
 			},
 		})
 		const approve = resolvedAction('approve-refund')
@@ -199,8 +242,9 @@ describe('Approve, through the index page dispatch', () => {
 
 describe('Mark paid, through the index page dispatch', () => {
 	it('opens the bank payment dialog for an approved refund', async () => {
-		const RefundPaidModal = (await import('../../src/modals/RefundPaidModal.vue'))
-			.default
+		const RefundPaidModal = (
+			await import('../../src/modals/RefundPaidModal.vue')
+		).default
 		const markPaid = resolvedAction('mark-refund-paid')
 		expect(typeof markPaid.handler).toBe('function')
 
@@ -228,16 +272,21 @@ describe('the bank payment dialog', () => {
 	 * @return {object} The instance.
 	 */
 	async function modal(data = {}) {
-		const RefundPaidModal = (await import('../../src/modals/RefundPaidModal.vue'))
-			.default
+		const RefundPaidModal = (
+			await import('../../src/modals/RefundPaidModal.vue')
+		).default
 		const instance = {
 			paymentRequest: requestRow('approved'),
 			$emit: vi.fn(),
 			...RefundPaidModal.data.call({}),
 			...data,
 		}
-		for (const [name, getter] of Object.entries(RefundPaidModal.computed ?? {})) {
-			Object.defineProperty(instance, name, { get: () => getter.call(instance) })
+		for (const [name, getter] of Object.entries(
+			RefundPaidModal.computed ?? {},
+		)) {
+			Object.defineProperty(instance, name, {
+				get: () => getter.call(instance),
+			})
 		}
 		for (const [name, method] of Object.entries(RefundPaidModal.methods)) {
 			instance[name] = method.bind(instance)
@@ -289,7 +338,7 @@ describe('the bank payment dialog', () => {
 		)
 		const controller = read('lib/Controller/ObjectRequestRefundController.php')
 		expect(controller).toContain(
-			'public function markPaid(string $id, string $bankReference = \'\', string $bankAccount = \'\')',
+			"public function markPaid(string $id, string $bankReference = '', string $bankAccount = '')",
 		)
 		expect(dialog.$emit).toHaveBeenCalledWith('close', {
 			state: 'refunded',

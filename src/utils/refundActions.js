@@ -50,10 +50,14 @@ export async function approveRefund(scope) {
 	}
 	try {
 		await axios.post(refundStepUrl(request.id, 'approve'))
-		showSuccess(t('shillinq', 'Refund approved. Pay it by bank, then mark it paid.'))
+		showSuccess(
+			t('shillinq', 'Refund approved. Pay it by bank, then mark it paid.'),
+		)
 		return true
 	} catch (error) {
-		showError(refundError(error, t('shillinq', 'The refund could not be approved.')))
+		showError(
+			refundError(error, t('shillinq', 'The refund could not be approved.')),
+		)
 		return false
 	}
 }

@@ -6367,7 +6367,10 @@ OC.L10N.register(
         "The refund could not be approved.": "De terugbetaling kon niet worden goedgekeurd.",
         "The refund could not be marked paid.": "De terugbetaling kon niet als betaald worden gemarkeerd.",
         "This refund is already approved.": "Deze terugbetaling is al goedgekeurd.",
-        "Refunds to pay": "Terug te betalen"
+        "Refunds to pay": "Terug te betalen",
+        "Refund requested": "Terugbetaling gevraagd",
+        "Refunded": "Terugbetaald",
+        "Credited": "Gecrediteerd"
     },
     "nplurals=2; plural=(n != 1);"
 )
