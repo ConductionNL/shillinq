@@ -6355,7 +6355,8 @@ OC.L10N.register(
         "The import batch {id} could not be opened.": "De importbatch {id} kan niet worden geopend.",
         "Continue in the wizard": "Verder in de wizard",
         "Open this batch in the import wizard, at the step it has reached, to validate it, run the dry run or post it.": "Open deze batch in de importwizard, bij de stap die hij heeft bereikt, om hem te valideren, de proefronde te draaien of hem te boeken.",
-        "Review the mappings": "Koppelingen controleren"
+        "Review the mappings": "Koppelingen controleren",
+        "Opening the import batch": "De importbatch wordt geopend"
     },
     "nplurals=2; plural=(n != 1);"
 )
