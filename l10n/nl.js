@@ -6354,7 +6354,8 @@ OC.L10N.register(
         "Choose": "Kiezen",
         "The import batch {id} could not be opened.": "De importbatch {id} kan niet worden geopend.",
         "Continue in the wizard": "Verder in de wizard",
-        "Open this batch in the import wizard, at the step it has reached, to validate it, run the dry run or post it.": "Open deze batch in de importwizard, bij de stap die hij heeft bereikt, om hem te valideren, de proefronde te draaien of hem te boeken."
+        "Open this batch in the import wizard, at the step it has reached, to validate it, run the dry run or post it.": "Open deze batch in de importwizard, bij de stap die hij heeft bereikt, om hem te valideren, de proefronde te draaien of hem te boeken.",
+        "Review the mappings": "Koppelingen controleren"
     },
     "nplurals=2; plural=(n != 1);"
 )

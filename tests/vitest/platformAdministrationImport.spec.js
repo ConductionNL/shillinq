@@ -331,8 +331,11 @@ describe('coming back to a batch (live pass S3)', () => {
 		expect(action).toBeTruthy()
 		expect(action.type).toBe('handler')
 
-		const main = fs.readFileSync(path.join(ROOT, 'src/main.js'), 'utf8')
-		expect(main).toMatch(/^\s+openImportWizard,$/m)
+		const handlers = fs.readFileSync(
+			path.join(ROOT, 'src/manifestActions.js'),
+			'utf8',
+		)
+		expect(handlers).toMatch(/^\s+openImportWizard,$/m)
 		expect(typeof helpers.openImportWizard).toBe('function')
 	})
 

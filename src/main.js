@@ -26,34 +26,14 @@ import { registerContractLeaf } from './integrations/registerContractLeaf.js'
 import { registerPaymentRequestsLeaf } from './integrations/registerPaymentRequestsLeaf.js'
 import manifestShell from './manifest.d.shell.json'
 import bundledManifest from './manifest.json'
+import { attachManifestActions, manifestActions } from './manifestActions.js'
 import menuLayout from './menu-layout.json'
 import pinia from './pinia.js'
 import registry from './registry.js'
-import { openMissedDepreciation } from './utils/assetActions.js'
-import { classifyUnmatched, openBankLineMatch } from './utils/bankMatchActions.js'
-import { openCarryOverCommitments } from './utils/commitmentYearEndApi.js'
-import { openDownPaymentInvoice } from './utils/downPaymentActions.js'
-import { openImportWizard } from './utils/importWizard.js'
-import { openIntegriqConnections } from './utils/integriqConnections.js'
 import {
 	buildPageFragmentIndex,
 	mergeFullFragmentIntoManifest,
 } from './utils/mergeFragmentIntoManifest.js'
-import { openProposePaymentRun } from './utils/paymentRunActions.js'
-import {
-	confirmRelationSuggestion,
-	dismissRelationSuggestion,
-	openPayeeRelation,
-	openRelationsExport,
-} from './utils/relationActions.js'
-import {
-	openMeterReadingImport,
-	rateMeterReadings,
-} from './utils/usageBillingActions.js'
-import {
-	checkCustomerVatNumber,
-	checkSupplierVatNumber,
-} from './utils/vatNumberCheck.js'
 
 // Must stay first: sets __webpack_public_path__ / __webpack_nonce__ before any
 // other module evaluates — see src/setPublicPath.js.
@@ -162,8 +142,12 @@ const RoutePageRenderer = { ...CnPageRenderer }
 // CnPageRenderer's reactive `resolvedProps` computed (it reads
 // `currentPage.config`; Vue 3's Proxy tracks the brand-new key too — see
 // src/utils/mergeFragmentIntoManifest.js for the full contract).
+// `attachManifestActions` puts the handler functions on `manifest.actions`,
+// where a detail page's header actions look them up (live pass S4).
 const mergedManifest = reactive(
-	buildManifest(bundledManifest, manifestShell.fragments, menuLayout),
+	attachManifestActions(
+		buildManifest(bundledManifest, manifestShell.fragments, menuLayout),
+	),
 )
 
 // pageId → fragment filename stem, built once from the shell-derived slim
@@ -321,45 +305,16 @@ const registryProp = { ...registry }
 // Mirrors the procest / docudesk / opencatalogi wiring.
 //
 // Function handlers ride the same map: CnIndexPage resolves a header action's
-// named `handler` against `customComponents`. The External Connections page's
-// Add integration action leaves for integriq (adopt-connection-registry).
+// named `handler` against `customComponents`.
 const customComponentsProp = {
 	...Object.fromEntries(
 		Object.entries(registry)
 			.filter(([, entry]) => entry && entry.component)
 			.map(([name, entry]) => [name, entry.component]),
 	),
-	openIntegriqConnections,
-	// banking-manual-match: the "Match by hand" row action and the
-	// unmatched items bulk classification.
-	openBankLineMatch,
-	classifyUnmatched,
-	// sales-down-payments: the "New down-payment invoice" header action on
-	// Accounts Receivable.
-	openDownPaymentInvoice,
-	// banking-payment-run: the "Propose payment run" header action on
-	// Payment runs.
-	openProposePaymentRun,
-	// planning-commitment-year-end: the "Carry open commitments to next year"
-	// header action on Commitments.
-	openCarryOverCommitments,
-	// assets-method-change-and-reserve: the fixed asset page's missed depreciation.
-	openMissedDepreciation,
-	// tax-vat-number-check: Check VAT number on the customer and supplier pages.
-	checkCustomerVatNumber,
-	checkSupplierVatNumber,
-	// sales-usage-billing: Import readings and Rate on Meter readings.
-	openMeterReadingImport,
-	rateMeterReadings,
-	// reporting-relation-both-sides: the suggestions' row actions, the report's
-	// export and the supplier page's way to the linked customer.
-	confirmRelationSuggestion,
-	dismissRelationSuggestion,
-	openRelationsExport,
-	openPayeeRelation,
-	// platform-administration-import: the batch page's way back into the
-	// wizard (live pass S3).
-	openImportWizard,
+	// The handlers a manifest action names (src/manifestActions.js): an index
+	// page resolves them here, a detail page on `manifest.actions`.
+	...manifestActions,
 }
 
 // Vue 3 `mount()` renders INSIDE the matched element; Vue 2's `$mount()`

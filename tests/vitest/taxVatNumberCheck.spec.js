@@ -14,7 +14,8 @@ import path from 'path'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const ROOT = path.resolve(__dirname, '../..')
-const mainJs = fs.readFileSync(path.join(ROOT, 'src/main.js'), 'utf8')
+// The handler map main.js hands to both lookups (live pass S4).
+const mainJs = fs.readFileSync(path.join(ROOT, 'src/manifestActions.js'), 'utf8')
 const routes = fs.readFileSync(path.join(ROOT, 'appinfo/routes.php'), 'utf8')
 
 vi.mock('@nextcloud/router', () => ({

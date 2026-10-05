@@ -82,7 +82,7 @@ describe('Where the actions sit', () => {
 			id: 'carry-over-commitments',
 			handler: 'openCarryOverCommitments',
 		})
-		expect(read('src/main.js')).toContain('openCarryOverCommitments,')
+		expect(read('src/manifestActions.js')).toContain('openCarryOverCommitments,')
 	})
 
 	it('offers Mark as last invoice on an approved supplier invoice', () => {

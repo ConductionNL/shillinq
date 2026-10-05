@@ -4146,7 +4146,8 @@ OC.L10N.register(
         "Choose": "Choose",
         "The import batch {id} could not be opened.": "The import batch {id} could not be opened.",
         "Continue in the wizard": "Continue in the wizard",
-        "Open this batch in the import wizard, at the step it has reached, to validate it, run the dry run or post it.": "Open this batch in the import wizard, at the step it has reached, to validate it, run the dry run or post it."
+        "Open this batch in the import wizard, at the step it has reached, to validate it, run the dry run or post it.": "Open this batch in the import wizard, at the step it has reached, to validate it, run the dry run or post it.",
+        "Review the mappings": "Review the mappings"
     },
     "nplurals=2; plural=(n != 1);"
 )

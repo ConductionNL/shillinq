@@ -107,9 +107,13 @@ describe('the External Connections page', () => {
 		expect(add.label).toBe('Add integration')
 		expect(add.handler).toBe('openIntegriqConnections')
 		expect(iconsSource).toMatch(new RegExp(`\\b${add.icon}\\b`))
-		// CnIndexPage resolves a named handler against `customComponents`.
+		// CnIndexPage resolves a named handler against `customComponents`,
+		// which spreads the handler map in.
 		expect(mainSource).toMatch(
-			/customComponentsProp = \{[\s\S]*openIntegriqConnections,/,
+			/customComponentsProp = \{[\s\S]*\.\.\.manifestActions,/,
+		)
+		expect(read('src', 'manifestActions.js')).toContain(
+			'\topenIntegriqConnections,',
 		)
 	})
 
