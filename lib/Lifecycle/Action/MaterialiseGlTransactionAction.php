@@ -73,6 +73,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use DateTimeImmutable;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\Vat\VatLineStamper;
 use OCA\Shillinq\Lifecycle\PostingStamps;
 use OCP\IAppConfig;
 use OCP\IUserSession;
@@ -163,6 +164,13 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 	 * @var list<string>
 	 */
 	public const SUPPORTED_SOURCES = ['JournalEntry', 'ARInvoice', 'APInvoice', 'APTransaction'];
+
+	/**
+	 * The tariff, box and VAT split, built on first use.
+	 *
+	 * @var VatLineStamper|null
+	 */
+	private ?VatLineStamper $vatStamper = null;
 
 	/**
 	 * Constructor.
@@ -328,6 +336,9 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 			$lines[] = $this->revenueLine(account: $revenue, amount: ($invoice['netAmount'] ?? 0), description: $label);
 		}
 
+		// Each line carries its tariff and box; the VAT is booked per tariff (REQ-VBTW-004).
+		$vat    = $this->vatStamper();
+		$groups = [];
 		foreach ($invoiceLines as $line) {
 			if (is_array($line) === true) {
 				// A deduction line takes a down payment off: its negative net releases the advance (REQ-SDP-003).
@@ -336,26 +347,51 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 					$lineAccount = $advances;
 				}
 
+				$code    = $vat->saleTariff(line: $line);
 				$lines[] = $this->revenueLine(
 					account: $lineAccount,
 					amount: ($line['netAmount'] ?? 0),
 					description: (string)($line['itemName'] ?? $label)
+				) + $vat->stamp(code: $code, kind: 'base', purchase: false);
+				$groups  = $this->addToVatGroup(
+					groups: $groups,
+					code: $code,
+					baseCents: $this->cents(amount: ($line['netAmount'] ?? 0)),
+					vatCents: $vat->vatCents(baseCents: $this->cents(amount: ($line['netAmount'] ?? 0)), rate: ($line['vatRate'] ?? null))
 				);
 			}
-		}
+		}//end foreach
 
 		if ($invoiceLines !== []) {
 			// Document-level charges add to revenue, allowances reduce it (EN 16931 BT-99 / BT-107).
-			$lines[] = $this->revenueLine(account: $revenue, amount: ($invoice['chargesTotal'] ?? 0), description: $label . ' charges');
-			$lines[] = $this->revenueLine(account: $revenue, amount: -(float)($invoice['allowancesTotal'] ?? 0), description: $label . ' allowances');
-		}
+			// With one tariff on the invoice they are at that tariff; with several no box is guessed.
+			$only = '';
+			if (count($groups) === 1) {
+				$only = (string)array_key_first($groups);
+			}
 
-		$lines[] = [
-			'accountNumber' => $this->account(key: self::CFG_OUTPUT_VAT_ACCOUNT),
-			'side' => 'credit',
-			'cents' => $this->cents(amount: ($invoice['vatAmount'] ?? 0)),
-			'description' => $label . ' VAT',
-		];
+			$documentLevel = [
+				$label . ' charges' => $this->cents(amount: ($invoice['chargesTotal'] ?? 0)),
+				$label . ' allowances' => -$this->cents(amount: ($invoice['allowancesTotal'] ?? 0)),
+			];
+			foreach ($documentLevel as $description => $cents) {
+				$lines[] = $this->revenueLine(account: $revenue, amount: ($cents / 100), description: $description)
+					+ $vat->stamp(code: $only, kind: 'base', purchase: false);
+				if ($only !== '') {
+					$groups[$only]['base'] += $cents;
+				}
+			}
+		}//end if
+
+		$groups = $this->applyVatBreakdown(groups: $groups, breakdown: (array)($invoice['vatBreakdown'] ?? []));
+		foreach ($vat->splitVat(groups: $groups, totalCents: $this->cents(amount: ($invoice['vatAmount'] ?? 0))) as $code => $cents) {
+			$lines[] = [
+				'accountNumber' => $this->account(key: self::CFG_OUTPUT_VAT_ACCOUNT),
+				'side' => 'credit',
+				'cents' => $cents,
+				'description' => $label . ' VAT',
+			] + $vat->stamp(code: (string)$code, kind: 'vat', purchase: false);
+		}
 
 		return [
 			'header' => [
@@ -380,26 +416,43 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 		$number = (string)($invoice['invoiceNumber'] ?? $sourceId);
 		$label = 'Purchase invoice ' . $number;
 
-		$lines = [];
+		$lines  = [];
+		$vat    = $this->vatStamper();
+		$groups = [];
 		foreach ((array)($invoice['lines'] ?? []) as $line) {
 			if (is_array($line) === false) {
 				throw new RuntimeException('A purchase invoice line is not an object.');
 			}
 
+			$code    = $vat->purchaseTariff(line: $line);
+			$cents   = $this->cents(amount: ($line['amount'] ?? 0));
 			$lines[] = [
 				'accountNumber' => (string)($line['accountNumber'] ?? ''),
 				'side' => 'debit',
-				'cents' => $this->cents(amount: ($line['amount'] ?? 0)),
+				'cents' => $cents,
 				'description' => (string)($line['description'] ?? $label),
-			];
-		}
+			] + $vat->stamp(code: $code, kind: 'base', purchase: true);
 
-		$lines[] = [
-			'accountNumber' => $this->account(key: self::CFG_INPUT_VAT_ACCOUNT),
-			'side' => 'debit',
-			'cents' => $this->cents(amount: ($invoice['taxAmount'] ?? 0)),
-			'description' => $label . ' VAT',
-		];
+			// A reverse-charged line's VAT is not on the supplier's invoice, so it takes no share of it.
+			if ($vat->isReverseCharge(code: $code) === false) {
+				$groups = $this->addToVatGroup(
+					groups: $groups,
+					code: $code,
+					baseCents: $cents,
+					vatCents: $vat->vatCents(baseCents: $cents, rate: $vat->ratePercentage(code: $code))
+				);
+			}
+		}//end foreach
+
+		// Input VAT per tariff, in box 5b (REQ-VBTW-004).
+		foreach ($vat->splitVat(groups: $groups, totalCents: $this->cents(amount: ($invoice['taxAmount'] ?? 0))) as $code => $cents) {
+			$lines[] = [
+				'accountNumber' => $this->account(key: self::CFG_INPUT_VAT_ACCOUNT),
+				'side' => 'debit',
+				'cents' => $cents,
+				'description' => $label . ' VAT',
+			] + $vat->stamp(code: (string)$code, kind: 'vat', purchase: true);
+		}
 		$lines[] = [
 			'accountNumber' => $this->account(key: self::CFG_AP_CONTROL_ACCOUNT),
 			'side' => 'credit',
@@ -419,6 +472,73 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 			'lines' => $lines,
 		];
 	}//end mapApInvoice()
+
+	/**
+	 * The tariff, box and VAT split for this posting.
+	 *
+	 * @return VatLineStamper
+	 */
+	private function vatStamper(): VatLineStamper {
+		if ($this->vatStamper === null) {
+			$this->vatStamper = new VatLineStamper(objectService: $this->objectService, register: $this->register());
+		}
+
+		return $this->vatStamper;
+	}//end vatStamper()
+
+	/**
+	 * Add a line's base and VAT to its tariff's group.
+	 *
+	 * @param array<string, array{base: int, vat: float|null}> $groups    The groups so far, in document order.
+	 * @param string                                           $code      The tariff code; empty for a line without one.
+	 * @param int                                              $baseCents The line's base.
+	 * @param float|null                                       $vatCents  The line's VAT, null when its rate is unknown.
+	 *
+	 * @return array<string, array{base: int, vat: float|null}>
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
+	 */
+	private function addToVatGroup(array $groups, string $code, int $baseCents, ?float $vatCents): array {
+		$group = ($groups[$code] ?? ['base' => 0, 'vat' => null]);
+		$group['base'] += $baseCents;
+		if ($vatCents !== null) {
+			$group['vat'] = (($group['vat'] ?? 0.0) + $vatCents);
+		}
+
+		$groups[$code] = $group;
+		return $groups;
+	}//end addToVatGroup()
+
+	/**
+	 * Take the VAT a sales invoice says it charged per tariff (EN 16931 BG-23)
+	 * over a recalculation.
+	 *
+	 * @param array<string, array{base: int, vat: float|null}> $groups    The groups.
+	 * @param array<int|string, mixed>                         $breakdown The invoice's vatBreakdown.
+	 *
+	 * @return array<string, array{base: int, vat: float|null}>
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
+	 */
+	private function applyVatBreakdown(array $groups, array $breakdown): array {
+		$charged = [];
+		foreach ($breakdown as $group) {
+			if (is_array($group) === false) {
+				continue;
+			}
+
+			$code = $this->vatStamper()->saleTariff(line: ['vatCategory' => ($group['category'] ?? ''), 'vatRate' => ($group['rate'] ?? null)]);
+			if ($code !== '' && isset($groups[$code]) === true) {
+				$charged[$code] = (($charged[$code] ?? 0) + $this->cents(amount: ($group['taxAmount'] ?? 0)));
+			}
+		}
+
+		foreach ($charged as $code => $cents) {
+			$groups[$code]['vat'] = (float)$cents;
+		}
+
+		return $groups;
+	}//end applyVatBreakdown()
 
 	/**
 	 * A revenue credit line.
@@ -544,6 +664,12 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 				foreach (['costCenterCode', 'projectCode'] as $dimension) {
 					if (isset($line[$dimension]) === true) {
 						$row[$dimension] = (string)$line[$dimension];
+					}
+				}
+
+				foreach (['vatTariffCode', 'vatReturnBox', 'vatAmountKind'] as $vatField) {
+					if (isset($line[$vatField]) === true) {
+						$row[$vatField] = (string)$line[$vatField];
 					}
 				}
 

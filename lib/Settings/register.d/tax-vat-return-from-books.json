@@ -1,0 +1,109 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "tax-vat-return-from-books",
+    "adr": "ADR-037 modular register fragment",
+    "description": "Task 1.1 (REQ-VBTW-004): a posted ledger line carries the VAT tariff it was booked at, the VAT return box of that tariff (the tariff's `section`) and whether its amount is the base or the VAT, stamped when it is posted. VAT declarations and VAT lines of a prepared return carry the box they belong to. None of the fields is required: lines posted before this change have none until the backfill (task 1.3) stamps them.",
+    "spec": "openspec/changes/tax-vat-return-from-books/specs/bookkeeping-vat-btw-filing/spec.md"
+  },
+  "components": {
+    "schemas": {
+      "GLLine": {
+        "version": "0.2.0",
+        "properties": {
+          "vatTariffCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "The VatTariff code this line was booked at (for example high, low, reverse-charge). Set when the line is posted from a document line that has a tariff.",
+            "example": "low",
+            "title": "VAT tariff"
+          },
+          "vatReturnBox": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "1a",
+              "1b",
+              "1c",
+              "1d",
+              "1e",
+              "2a",
+              "3a",
+              "3b",
+              "3c",
+              "4a",
+              "4b",
+              "5b"
+            ],
+            "description": "The box of the VAT return this line counts in: the tariff's section for sales and reverse-charged purchases, 5b for input VAT. Empty for a line that is in no box, such as the base of an ordinary purchase.",
+            "example": "1b",
+            "title": "VAT return box"
+          },
+          "vatAmountKind": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "base",
+              "vat"
+            ],
+            "description": "Whether this line's amount is the base the VAT is charged on (the revenue or cost line) or the VAT itself (the line on the output or input VAT account).",
+            "example": "base",
+            "title": "VAT amount kind"
+          }
+        }
+      },
+      "VATDeclaration": {
+        "version": "0.2.0",
+        "properties": {
+          "returnBox": {
+            "type": "string",
+            "enum": [
+              "1a",
+              "1b",
+              "1c",
+              "1d",
+              "1e",
+              "2a",
+              "3a",
+              "3b",
+              "3c",
+              "4a",
+              "4b",
+              "5b"
+            ],
+            "description": "The VAT return box this declaration totals.",
+            "example": "1b",
+            "title": "Return box"
+          }
+        }
+      },
+      "VATLine": {
+        "version": "0.2.0",
+        "properties": {
+          "returnBox": {
+            "type": "string",
+            "enum": [
+              "1a",
+              "1b",
+              "1c",
+              "1d",
+              "1e",
+              "2a",
+              "3a",
+              "3b",
+              "3c",
+              "4a",
+              "4b",
+              "5b"
+            ],
+            "description": "The VAT return box of the ledger line this VAT line was taken from.",
+            "example": "1b",
+            "title": "Return box"
+          }
+        }
+      }
+    }
+  },
+  "objects": []
+}

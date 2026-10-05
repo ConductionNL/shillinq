@@ -441,4 +441,213 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 		$transactionId = $this->store->savedOf('GLTransaction')[0]['id'];
 		self::assertContains(['GLTransaction', $transactionId], $this->store->deleted);
 	}//end testAFailedLineWithdrawsTheTransaction()
+
+	/**
+	 * The statutory tariffs as the seeder writes them, from the real seed file.
+	 *
+	 * @return void
+	 */
+	private function seedTariffs(): void {
+		$seed = json_decode((string)file_get_contents(__DIR__ . '/../../../../lib/Settings/seeds/btw-tariffs-2026.json'), true);
+		$this->store->rows['VatTariff'] = $seed['tariffs'];
+	}//end seedTariffs()
+
+	/**
+	 * The posted GL lines as [account, side, amount, tariff, box, kind].
+	 *
+	 * @return list<array{0: string, 1: string, 2: float, 3: string|null, 4: string|null, 5: string|null}>
+	 */
+	private function stampedLines(): array {
+		return array_map(
+			static fn (array $l): array => [
+				$l['accountNumber'],
+				$l['side'],
+				$l['amount'],
+				($l['vatTariffCode'] ?? null),
+				($l['vatReturnBox'] ?? null),
+				($l['vatAmountKind'] ?? null),
+			],
+			$this->store->savedOf('GLLine')
+		);
+	}//end stampedLines()
+
+	/**
+	 * REQ-VBTW-004: a sale at two rates books one VAT line per tariff, and
+	 * every revenue and VAT line carries its tariff, its return box and
+	 * whether it is the base or the VAT. The lines validate against the
+	 * merged register.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
+	 */
+	public function testASaleAtTwoRatesBooksVatPerTariffWithItsBox(): void {
+		$action = $this->action();
+		$this->seedTariffs();
+		$action->execute(
+			[
+				'id' => 'ar-9', 'invoiceNumber' => '2026-0090', 'invoiceDate' => '2026-08-12', 'periodId' => '2026-08',
+				'administrationId' => 'adm-1', 'currency' => 'EUR', 'grossAmount' => 1755.0, 'netAmount' => 1500.0, 'vatAmount' => 255.0,
+				'invoiceLines' => [
+					['itemName' => 'Taarten', 'netAmount' => 500.0, 'vatCategory' => 'S', 'vatRate' => 9],
+					['itemName' => 'Cursus', 'netAmount' => 1000.0, 'vatCategory' => 'S', 'vatRate' => 21],
+				],
+				'lifecycleState' => 'issued',
+			],
+			[],
+			['sourceSchema' => 'ARInvoice'],
+			MaterialiseGlTransactionAction::class
+		);
+
+		self::assertSame(
+			[
+				['1100', 'debit', 1755.0, null, null, null],
+				['8000', 'credit', 500.0, 'low', '1b', 'base'],
+				['8000', 'credit', 1000.0, 'high', '1a', 'base'],
+				['2110', 'credit', 45.0, 'low', '1b', 'vat'],
+				['2110', 'credit', 210.0, 'high', '1a', 'vat'],
+			],
+			$this->stampedLines()
+		);
+		foreach ($this->store->savedOf('GLLine') as $row) {
+			unset($row['id']);
+			// The store mints non-uuid ids; OpenRegister hands out uuids.
+			$row['transactionId'] = '0f8fad5b-d9cb-469f-a165-70867728950e';
+			self::assertSame([], RegisterSchema::errors(slug: 'GLLine', object: $row));
+		}
+	}//end testASaleAtTwoRatesBooksVatPerTariffWithItsBox()
+
+	/**
+	 * The invoice's own VAT breakdown is what was charged, so it wins over a
+	 * recalculation; a cent the per-tariff amounts do not account for goes to
+	 * the largest tariff, so the VAT booked equals the VAT invoiced.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
+	 */
+	public function testTheInvoicesVatBreakdownWinsAndAStrayCentGoesToTheLargestTariff(): void {
+		$action = $this->action();
+		$this->seedTariffs();
+		$action->execute(
+			[
+				'id' => 'ar-10', 'invoiceNumber' => '2026-0091', 'invoiceDate' => '2026-08-12', 'periodId' => '2026-08',
+				'administrationId' => 'adm-1', 'currency' => 'EUR', 'grossAmount' => 76.67, 'netAmount' => 66.66, 'vatAmount' => 10.01,
+				'invoiceLines' => [
+					['itemName' => 'A', 'netAmount' => 33.33, 'vatCategory' => 'S', 'vatRate' => 21],
+					['itemName' => 'B', 'netAmount' => 33.33, 'vatCategory' => 'S', 'vatRate' => 9],
+				],
+				'vatBreakdown' => [['category' => 'S', 'rate' => 21, 'taxableAmount' => 33.33, 'taxAmount' => 7.0]],
+				'lifecycleState' => 'issued',
+			],
+			[],
+			['sourceSchema' => 'ARInvoice'],
+			MaterialiseGlTransactionAction::class
+		);
+
+		$vat = array_values(array_filter($this->stampedLines(), static fn (array $l): bool => $l[5] === 'vat'));
+		self::assertSame([['2110', 'credit', 7.01, 'high', '1a', 'vat'], ['2110', 'credit', 3.0, 'low', '1b', 'vat']], $vat);
+	}//end testTheInvoicesVatBreakdownWinsAndAStrayCentGoesToTheLargestTariff()
+
+	/**
+	 * The design's Korenbloem purchases: EUR 4,000 at the high tariff and
+	 * EUR 2,000 at the low tariff book EUR 840 and EUR 180 input VAT, each on
+	 * its own line in box 5b. A purchase's base is in no box.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
+	 */
+	public function testASplitPurchaseBooksInputVatPerTariffInBox5b(): void {
+		$action = $this->action();
+		$this->seedTariffs();
+		$action->execute(
+			[
+				'id' => 'ap-9', 'invoiceNumber' => 'INK-90', 'invoiceDate' => '2026-08-02', 'administrationId' => 'adm-1',
+				'totalAmount' => 7020.0, 'taxAmount' => 1020.0,
+				'lines' => [
+					['accountNumber' => '7000', 'amount' => 4000.0, 'description' => 'Oven', 'taxCode' => 'BTW21'],
+					['accountNumber' => '7010', 'amount' => 2000.0, 'description' => 'Meel', 'taxCode' => 'low'],
+				],
+				'state' => 'posted',
+			],
+			[],
+			['sourceSchema' => 'APInvoice'],
+			MaterialiseGlTransactionAction::class
+		);
+
+		self::assertSame(
+			[
+				['7000', 'debit', 4000.0, 'high', null, 'base'],
+				['7010', 'debit', 2000.0, 'low', null, 'base'],
+				['1230', 'debit', 840.0, 'high', '5b', 'vat'],
+				['1230', 'debit', 180.0, 'low', '5b', 'vat'],
+				['2000', 'credit', 7020.0, null, null, null],
+			],
+			$this->stampedLines()
+		);
+	}//end testASplitPurchaseBooksInputVatPerTariffInBox5b()
+
+	/**
+	 * A reverse-charged purchase puts its base in the box of its tariff
+	 * (2a domestic, 4b from the EU, 4a from outside the EU).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
+	 */
+	public function testAReverseChargedPurchasePutsItsBaseInTheBoxOfItsTariff(): void {
+		$action = $this->action();
+		$this->seedTariffs();
+		$action->execute(
+			[
+				'id' => 'ap-10', 'invoiceNumber' => 'INK-91', 'invoiceDate' => '2026-08-03', 'administrationId' => 'adm-1',
+				'totalAmount' => 3000.0, 'taxAmount' => 0,
+				'lines' => [
+					['accountNumber' => '7100', 'amount' => 2000.0, 'description' => 'Onderaanneming', 'taxCode' => 'reverse-charge'],
+					['accountNumber' => '7110', 'amount' => 1000.0, 'description' => 'Machine uit Duitsland', 'taxCode' => 'intra-eu-acquisition'],
+				],
+				'state' => 'posted',
+			],
+			[],
+			['sourceSchema' => 'APInvoice'],
+			MaterialiseGlTransactionAction::class
+		);
+
+		self::assertSame(
+			[
+				['7100', 'debit', 2000.0, 'reverse-charge', '2a', 'base'],
+				['7110', 'debit', 1000.0, 'intra-eu-acquisition', '4b', 'base'],
+				['2000', 'credit', 3000.0, null, null, null],
+			],
+			$this->stampedLines()
+		);
+	}//end testAReverseChargedPurchasePutsItsBaseInTheBoxOfItsTariff()
+
+	/**
+	 * Without tariff records the lines still carry their tariff code and
+	 * kind, so a later check can name them, but no box is guessed.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
+	 */
+	public function testWithoutTariffRecordsNoBoxIsGuessed(): void {
+		$this->action()->execute(
+			[
+				'id' => 'ar-11', 'invoiceNumber' => '2026-0092', 'invoiceDate' => '2026-08-12', 'periodId' => '2026-08',
+				'administrationId' => 'adm-1', 'currency' => 'EUR', 'grossAmount' => 121.0, 'netAmount' => 100.0, 'vatAmount' => 21.0,
+				'invoiceLines' => [['itemName' => 'A', 'netAmount' => 100.0, 'vatCategory' => 'S', 'vatRate' => 21]],
+				'lifecycleState' => 'issued',
+			],
+			[],
+			['sourceSchema' => 'ARInvoice'],
+			MaterialiseGlTransactionAction::class
+		);
+
+		self::assertSame(
+			[['1100', 'debit', 121.0, null, null, null], ['8000', 'credit', 100.0, 'high', null, 'base'], ['2110', 'credit', 21.0, 'high', null, 'vat']],
+			$this->stampedLines()
+		);
+	}//end testWithoutTariffRecordsNoBoxIsGuessed()
 }//end class

@@ -594,7 +594,7 @@ class SettingsService {
 	}//end readDefaultAdministrationCode()
 
 	/**
-	 * Seed statutory BTW tariffs from vat-tariffs-2026.json, idempotently.
+	 * Seed statutory BTW tariffs from btw-tariffs-2026.json, idempotently.
 	 *
 	 * Imports the current Dutch VAT rates into the VatTariff schema. Deduplication
 	 * key is code. Idempotent on re-run; operator-added rates are preserved.
@@ -605,7 +605,7 @@ class SettingsService {
 	 */
 	public function seedBtwTariffs(): array {
 		return $this->seedGenericFile(
-			seedFileName: 'vat-tariffs-2026.json',
+			seedFileName: 'btw-tariffs-2026.json',
 			itemsKey: 'tariffs',
 			dedupeKey: 'code',
 			schema: 'VatTariff',
