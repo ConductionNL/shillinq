@@ -36,6 +36,7 @@ import {
 	checkCustomerVatNumber,
 	checkSupplierVatNumber,
 } from './utils/vatNumberCheck.js'
+import { openPrepareVatReturn } from './utils/vatReturnActions.js'
 
 export const manifestActions = Object.freeze({
 	// The External Connections page's Add integration action leaves for
@@ -79,6 +80,8 @@ export const manifestActions = Object.freeze({
 	// Switch on reminders on an administration.
 	openDunningNextRun,
 	openDunningSwitchOn,
+	// tax-vat-return-from-books 2.3: Prepare return on BTW returns.
+	openPrepareVatReturn,
 })
 
 /**

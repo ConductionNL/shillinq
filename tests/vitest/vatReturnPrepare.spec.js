@@ -99,20 +99,41 @@ describe('Prepare return', () => {
 		const { buildPrepareRequest, lastFinishedPeriod } =
 			await import('../../src/utils/vatReturnApi.js')
 		expect(
-			buildPrepareRequest({ administrationId: 'a', period: 'year', periodYear: 2025 }).periodNumber,
+			buildPrepareRequest({
+				administrationId: 'a',
+				period: 'year',
+				periodYear: 2025,
+			}).periodNumber,
 		).toBe(1)
 		const october = new Date(2026, 9, 5)
-		expect(lastFinishedPeriod('quarter', october)).toEqual({ periodYear: 2026, periodNumber: 3 })
-		expect(lastFinishedPeriod('month', october)).toEqual({ periodYear: 2026, periodNumber: 9 })
-		expect(lastFinishedPeriod('quarter', new Date(2026, 1, 1))).toEqual({ periodYear: 2025, periodNumber: 4 })
-		expect(lastFinishedPeriod('month', new Date(2026, 0, 9))).toEqual({ periodYear: 2025, periodNumber: 12 })
+		expect(lastFinishedPeriod('quarter', october)).toEqual({
+			periodYear: 2026,
+			periodNumber: 3,
+		})
+		expect(lastFinishedPeriod('month', october)).toEqual({
+			periodYear: 2026,
+			periodNumber: 9,
+		})
+		expect(lastFinishedPeriod('quarter', new Date(2026, 1, 1))).toEqual({
+			periodYear: 2025,
+			periodNumber: 4,
+		})
+		expect(lastFinishedPeriod('month', new Date(2026, 0, 9))).toEqual({
+			periodYear: 2025,
+			periodNumber: 12,
+		})
 	})
 
 	it('says why a period is refused', async () => {
 		const { prepareErrorText } = await import('../../src/utils/vatReturnApi.js')
 		expect(controller).toContain('Cannot create returns for future periods')
 		expect(
-			prepareErrorText({ response: { status: 400, data: { error: 'Cannot create returns for future periods' } } }),
+			prepareErrorText({
+				response: {
+					status: 400,
+					data: { error: 'Cannot create returns for future periods' },
+				},
+			}),
 		).toContain('has not ended yet')
 		expect(prepareErrorText({ response: { status: 403, data: {} } })).toContain(
 			'cannot prepare a return for this administration',
@@ -123,6 +144,8 @@ describe('Prepare return', () => {
 	it('links the prepared return to its page route', async () => {
 		const { vatReturnUrl } = await import('../../src/utils/vatReturnApi.js')
 		expect(page('VATReturnDetail').route).toBe('/vat-returns/:id')
-		expect(vatReturnUrl('ret 1')).toBe('/index.php/apps/shillinq/vat-returns/ret%201')
+		expect(vatReturnUrl('ret 1')).toBe(
+			'/index.php/apps/shillinq/vat-returns/ret%201',
+		)
 	})
 })
