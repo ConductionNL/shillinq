@@ -416,9 +416,10 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 		$number = (string)($invoice['invoiceNumber'] ?? $sourceId);
 		$label = 'Purchase invoice ' . $number;
 
-		$lines  = [];
-		$vat    = $this->vatStamper();
-		$groups = [];
+		$lines   = [];
+		$vat     = $this->vatStamper();
+		$groups  = [];
+		$reverse = [];
 		foreach ((array)($invoice['lines'] ?? []) as $line) {
 			if (is_array($line) === false) {
 				throw new RuntimeException('A purchase invoice line is not an object.');
@@ -434,6 +435,10 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 			] + $vat->stamp(code: $code, kind: 'base', purchase: true);
 
 			// A reverse-charged line's VAT is not on the supplier's invoice, so it takes no share of it.
+			if ($vat->isReverseCharge(code: $code) === true) {
+				$reverse[$code] = (($reverse[$code] ?? 0) + $cents);
+			}
+
 			if ($vat->isReverseCharge(code: $code) === false) {
 				$groups = $this->addToVatGroup(
 					groups: $groups,
@@ -453,6 +458,8 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 				'description' => $label . ' VAT',
 			] + $vat->stamp(code: (string)$code, kind: 'vat', purchase: true);
 		}
+
+		$lines   = array_merge($lines, $this->reverseChargePair(reverse: $reverse, label: $label));
 		$lines[] = [
 			'accountNumber' => $this->account(key: self::CFG_AP_CONTROL_ACCOUNT),
 			'side' => 'credit',
@@ -472,6 +479,51 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 			'lines' => $lines,
 		];
 	}//end mapApInvoice()
+
+	/**
+	 * The VAT a supplier did not charge on a reverse-charged purchase, booked
+	 * twice per tariff: deducted in 5b and owed in the tariff's own box (2a,
+	 * 4a or 4b), so the net is nil and the return shows both (REQ-VBTW-004,
+	 * design D1). Without a rate to book it at, nothing is booked and the
+	 * return's reverse-charge check names the purchase.
+	 *
+	 * @param array<string,int> $reverse The reverse-charged base in cents per tariff code.
+	 * @param string            $label   The document label.
+	 *
+	 * @return list<array<string,mixed>>
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
+	 */
+	private function reverseChargePair(array $reverse, string $label): array {
+		$vat  = $this->vatStamper();
+		$rate = $vat->reverseChargeRate();
+		if ($rate === null) {
+			return [];
+		}
+
+		$lines = [];
+		foreach ($reverse as $code => $baseCents) {
+			$cents = (int)round((float)$vat->vatCents(baseCents: $baseCents, rate: $rate));
+			if ($cents === 0) {
+				continue;
+			}
+
+			$lines[] = [
+				'accountNumber' => $this->account(key: self::CFG_INPUT_VAT_ACCOUNT),
+				'side' => 'debit',
+				'cents' => $cents,
+				'description' => $label . ' reverse-charged VAT deducted',
+			] + $vat->stamp(code: (string)$code, kind: 'vat', purchase: true);
+			$lines[] = [
+				'accountNumber' => $this->account(key: self::CFG_OUTPUT_VAT_ACCOUNT),
+				'side' => 'credit',
+				'cents' => $cents,
+				'description' => $label . ' reverse-charged VAT owed',
+			] + $vat->stampOwed(code: (string)$code);
+		}
+
+		return $lines;
+	}//end reverseChargePair()
 
 	/**
 	 * The tariff, box and VAT split for this posting.
