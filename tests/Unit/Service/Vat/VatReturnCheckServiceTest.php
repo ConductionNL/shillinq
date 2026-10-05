@@ -396,6 +396,7 @@ final class VatReturnCheckServiceTest extends TestCase {
 	 */
 	public function testTheGenericAuditWithoutFactsReportsNothing(): void {
 		self::assertSame([], RuleEngine::evaluate('BtwAangifte', ['id' => 'x'], ['jurisdiction' => 'NL']));
-		self::assertSame([], RuleEngine::evaluate('BtwAangifte', ['id' => 'x'], ['jurisdiction' => 'DE', 'vatReturnFacts' => ['drafts' => ['Sales invoice 1']]]));
+		$foreign = ['jurisdiction' => 'DE', 'vatReturnFacts' => ['drafts' => ['Sales invoice 1']]];
+		self::assertSame([], RuleEngine::evaluate('BtwAangifte', ['id' => 'x'], $foreign));
 	}//end testTheGenericAuditWithoutFactsReportsNothing()
 }//end class
