@@ -6,12 +6,12 @@
  * (live pass S4). The batch page's "Continue in the wizard" did nothing
  * because the handler was registered only in `customComponents`, which an
  * index page reads, while a detail page dispatches through CnPageRenderer's
- * `cnDispatchAction`, which reads `manifest.actions`. These tests pin that
- * lookup in the INSTALLED CnPageRenderer and dispatch through the installed
- * dispatcher with exactly the handlers map the renderer hands it, not
- * through the handler, so they see the lookup the page performs. (Importing
- * the renderer component itself pulls the whole library into a node run:
- * codemirror, colour pickers and draggable lists that need a real DOM.)
+ * `cnDispatchAction`, which reads `manifest.actions`. These tests
+ * dispatch through the INSTALLED CnPageRenderer's own `cnDispatchAction`
+ * (its `provide()`), not through the handler, so they see the lookup the page
+ * performs. The renderer's child components (grid, modals, editor button)
+ * are stubbed: they pull codemirror, colour pickers and draggable lists that
+ * need a real DOM, and the lookup does not touch them.
  *
  * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
  */
@@ -36,19 +36,47 @@ vi.mock('@nextcloud/dialogs', () => ({
 }))
 vi.mock('@nextcloud/vue/functions/dialog', () => ({ spawnDialog: vi.fn() }))
 
+// The renderer's child components; the dispatch lookup never renders them.
+vi.mock(
+	'../../node_modules/@conduction/nextcloud-vue/dist/esm/dialogs/CnPageConfigModal.vue.js',
+	() => ({ default: {} }),
+)
+vi.mock(
+	'../../node_modules/@conduction/nextcloud-vue/dist/esm/components/CnBuildiqEditButton/CnBuildiqEditButton.vue.js',
+	() => ({ default: {} }),
+)
+vi.mock(
+	'../../node_modules/@conduction/nextcloud-vue/dist/esm/components/CnDependencyMissing/CnDependencyMissing.vue.js',
+	() => ({ default: {} }),
+)
+vi.mock(
+	'../../node_modules/@conduction/nextcloud-vue/dist/esm/components/CnWidgetGrid/CnWidgetGrid.vue.js',
+	() => ({ default: {} }),
+)
+vi.mock(
+	'../../node_modules/@conduction/nextcloud-vue/dist/esm/components/CnMassExportDialog/CnMassExportDialog.vue.js',
+	() => ({ default: {} }),
+)
+vi.mock(
+	'../../node_modules/@conduction/nextcloud-vue/dist/esm/components/CnPageRenderer/pageTypes.js',
+	() => ({ defaultPageTypes: {} }),
+)
+vi.mock(
+	'../../node_modules/@conduction/nextcloud-vue/dist/esm/store/useObjectStore.js',
+	() => ({ useObjectStore: () => ({}) }),
+)
+vi.mock(
+	'../../node_modules/@conduction/nextcloud-vue/dist/esm/composables/useObjectSubscription.js',
+	() => ({ useObjectSubscription: () => ({}) }),
+)
+
 const ROOT = path.resolve(__dirname, '../..')
 
 const { attachManifestActions, manifestActions } =
 	await import('../../src/manifestActions.js')
-const { dispatchAction } =
-	await import('@conduction/nextcloud-vue/dist/esm/utils/actionsDispatcher.js')
-const RENDERER_SOURCE = fs.readFileSync(
-	path.join(
-		ROOT,
-		'node_modules/@conduction/nextcloud-vue/src/components/CnPageRenderer/CnPageRenderer.vue',
-	),
-	'utf8',
-)
+const CnPageRenderer = (
+	await import('@conduction/nextcloud-vue/dist/esm/components/CnPageRenderer/CnPageRenderer.vue2.js')
+).default
 
 /**
  * Every page of the bundled manifest and its fragments.
@@ -69,19 +97,29 @@ function allPages() {
 }
 
 /**
- * Dispatch an action the way a CnPageRenderer showing this manifest does:
- * the installed dispatcher, with the renderer's handlers map.
+ * Dispatch an action through the installed CnPageRenderer showing this
+ * manifest: the `cnDispatchAction` its `provide()` hands every header action
+ * and widget, with the renderer's own handler lookup.
  *
  * @param {object} manifest The manifest the renderer shows.
  * @param {object} action The header action.
  * @return {unknown} The dispatch result.
  */
 function dispatchAsRenderer(manifest, action) {
-	return dispatchAction(action, {
-		router: null,
-		registry: {},
-		handlers: manifest?.actions ?? {},
-	})
+	const renderer = {
+		manifest,
+		cnManifestSource: null,
+		cnManifest: null,
+		$router: null,
+		cnRegistry: {},
+		_cnOpenModal: () => {},
+	}
+	for (const [name, getter] of Object.entries(CnPageRenderer.computed)) {
+		Object.defineProperty(renderer, name, {
+			get: () => getter.call(renderer),
+		})
+	}
+	return CnPageRenderer.provide.call(renderer).cnDispatchAction(action)
 }
 
 afterEach(() => {
@@ -90,12 +128,6 @@ afterEach(() => {
 })
 
 describe('a detail page header action with a handler', () => {
-	it('is looked up on manifest.actions by the installed renderer', () => {
-		expect(RENDERER_SOURCE).toMatch(
-			/cnDispatchAction:[\s\S]{0,200}handlers: this\.effectiveManifest\?\.actions \?\? \{\}/,
-		)
-	})
-
 	it('opens the wizard from the import batch page through the renderer', () => {
 		const detail = allPages().find((page) => page.id === 'ImportBatchDetail')
 		const action = detail.config.headerActions.find(
@@ -170,9 +202,30 @@ describe('the import batch page lifecycle buttons', () => {
 	}
 
 	/**
-	 * The buttons the installed CnLifecycleActions draws for a batch in this state.
+	 * What OpenRegister's available-actions endpoint answers for a batch in this
+	 * state: the register's static transitions whose `from` holds the state, in
+	 * the shape TransitionEngine::availableActions builds (no `label`).
 	 *
-	 * @param {object} config The page's lifecycleActions config.
+	 * @param {string} status The batch status.
+	 * @return {Array<object>} The server's actions.
+	 */
+	function serverAnswer(status) {
+		return Object.entries(registerLifecycle().transitions)
+			.filter(([, spec]) => [].concat(spec.from ?? []).includes(status))
+			.map(([action, spec]) => ({
+				action,
+				to: spec.to ?? '',
+				requires: spec.requires ?? null,
+				description: spec.description ?? null,
+				inputs: [],
+			}))
+	}
+
+	/**
+	 * The buttons the installed CnLifecycleActions draws for a batch in this
+	 * state, after the server answered as OpenRegister does.
+	 *
+	 * @param {object|boolean} config The page's lifecycleActions config.
 	 * @param {string} status The batch status.
 	 * @return {Array<object>} The visible transitions.
 	 */
@@ -180,7 +233,11 @@ describe('the import batch page lifecycle buttons', () => {
 		const CnLifecycleActions = (
 			await import('@conduction/nextcloud-vue/dist/esm/components/CnLifecycleActions/CnLifecycleActions.vue2.js')
 		).default
-		const instance = { config, object: { status }, serverActions: [] }
+		const instance = {
+			config,
+			object: { status },
+			serverActions: serverAnswer(status),
+		}
 		for (const [name, getter] of Object.entries(CnLifecycleActions.computed)) {
 			Object.defineProperty(instance, name, {
 				get: () => getter.call(instance),
