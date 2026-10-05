@@ -196,6 +196,11 @@ Vrij en open source onder de EUPL-1.2-licentie.
              due or are missed, a missed one breaks its plan and resumes dunning,
              a fully paid plan completes. -->
         <job>OCA\Shillinq\BackgroundJob\PaymentPlanMonitorJob</job>
+        <!-- receivables-automatic-dunning REQ-RAD-001: daily, for every
+             administration with dunningEnabled on, issued invoices past their
+             due date move to overdue and each overdue invoice gets the ladder
+             stage that is due. Ships off for every administration. -->
+        <job>OCA\Shillinq\BackgroundJob\DunningTickJob</job>
     </background-jobs>
 
     <repair-steps>

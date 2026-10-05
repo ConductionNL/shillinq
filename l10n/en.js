@@ -4172,7 +4172,9 @@ OC.L10N.register(
         "The mail body of this stage, in Dutch and English, with the same merge fields as the subject.": "The mail body of this stage, in Dutch and English, with the same merge fields as the subject.",
         "The text in Dutch.": "The text in Dutch.",
         "The text in English.": "The text in English.",
-        "Outcome of the dispatch attempt. MANUAL: a person sends this stage (a letter, the collection agency, or a customer without an email address).": "Outcome of the dispatch attempt. MANUAL: a person sends this stage (a letter, the collection agency, or a customer without an email address)."
+        "Outcome of the dispatch attempt. MANUAL: a person sends this stage (a letter, the collection agency, or a customer without an email address).": "Outcome of the dispatch attempt. MANUAL: a person sends this stage (a letter, the collection agency, or a customer without an email address).",
+        "Automatic payment reminders": "Automatic payment reminders",
+        "Send payment reminders for overdue invoices every day, by each customer's ladder.": "Send payment reminders for overdue invoices every day, by each customer's ladder."
     },
     "nplurals=2; plural=(n != 1);"
 )

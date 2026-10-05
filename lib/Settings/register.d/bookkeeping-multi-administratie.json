@@ -11,7 +11,7 @@
       "Administration": {
         "slug": "Administration",
         "icon": "OfficeBuilding",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "Administration",
         "description": "A legally self-contained bookkeeping entity (juridisch-onafhankelijke boekhouding). The first-class multi-tenant isolation boundary: every financial record carries an administrationId FK to this schema. Each Administration owns its own chart-of-accounts, fiscal-year cycle, presentation currency and VAT regime independently of other administrations. Holding/werkmij structures link via parentAdministrationId / childAdministrationIds.",
         "x-schema-org": "schema:Organization",
@@ -285,6 +285,14 @@
             "default": "nl",
             "example": "nl",
             "title": "Default Language"
+          },
+          "dunningEnabled": {
+            "type": "boolean",
+            "description": "Send payment reminders for overdue invoices every day, by each customer's ladder.",
+            "default": false,
+            "example": false,
+            "title": "Automatic payment reminders",
+            "x-spec": "openspec/changes/receivables-automatic-dunning/specs/bookkeeping-credit-control-dunning/spec.md (REQ-RAD-001)"
           }
         },
         "x-openregister-lifecycle": {
