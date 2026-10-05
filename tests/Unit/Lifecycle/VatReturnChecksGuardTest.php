@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
+use OCA\Shillinq\AppInfo\LedgerPostingRegistration;
 use OCA\Shillinq\Lifecycle\RegisterRequiresGuardAdapter;
 use OCA\Shillinq\Lifecycle\VatReturnChecksGuard;
 use OCA\Shillinq\Service\Vat\VatReturnCheckService;
@@ -72,8 +73,13 @@ final class VatReturnChecksGuardTest extends TestCase {
 		$prepared = (new VATReturnService(appConfig: $this->defaultsConfig(), logger: new NullLogger(), objectService: $store))
 			->createReturn(administrationId: 'adm-kb', period: 'quarter', periodYear: 2026, periodNumber: 3, regime: 'standard');
 
-		$guard = new VatReturnChecksGuard(checks: new VatReturnCheckService(objectService: $store, appConfig: $this->defaultsConfig()));
-		$adapter = new RegisterRequiresGuardAdapter(guard: $guard, method: 'canSubmit', denyMessage: 'The return cannot be submitted.', logger: new NullLogger());
+		$checks = new VatReturnCheckService(objectService: $store, appConfig: $this->defaultsConfig());
+		$adapter = new RegisterRequiresGuardAdapter(
+			guard: new VatReturnChecksGuard(checks: $checks),
+			method: 'canSubmit',
+			denyMessage: 'The return cannot be submitted.',
+			logger: new NullLogger()
+		);
 
 		return [$adapter, $prepared];
 	}//end adapterFor()
@@ -117,14 +123,16 @@ final class VatReturnChecksGuardTest extends TestCase {
 		self::assertTrue($adapter->check($prepared, 'submit', 'alice')->isAllowed());
 
 		$rows = $this->posted([$this->sale(), $this->purchase()]);
-		$rows['ARInvoice'] = [['id' => 'ar-d1', 'invoiceNumber' => 'CONCEPT-1', 'invoiceDate' => '2026-09-20', 'administrationId' => 'adm-kb', 'lifecycleState' => 'draft']];
+		$rows['ARInvoice'] = [
+			['id' => 'ar-d1', 'invoiceNumber' => 'CONCEPT-1', 'invoiceDate' => '2026-09-20', 'administrationId' => 'adm-kb', 'lifecycleState' => 'draft'],
+		];
 		[$adapter, $prepared] = $this->adapterFor($rows);
 		self::assertTrue($adapter->check($prepared, 'submit', 'alice')->isAllowed());
 	}//end testACleanReturnOrAWarningOnlyMaySubmit()
 
 	/**
 	 * The guard is the requires of BtwAangifte.submit, and the app registers
-	 * that exact tag through the adapter.
+	 * that exact tag through the adapter (LedgerPostingRegistration).
 	 *
 	 * @return void
 	 *
@@ -135,8 +143,8 @@ final class VatReturnChecksGuardTest extends TestCase {
 		$submit = $fragment['components']['schemas']['BtwAangifte']['x-openregister-lifecycle']['transitions']['submit'];
 		self::assertSame(self::TAG, $submit['requires']);
 
+		self::assertSame([VatReturnChecksGuard::class, 'canSubmit'], array_slice(LedgerPostingRegistration::GUARDS[self::TAG], 0, 2));
 		$application = (string)file_get_contents(__DIR__ . '/../../../lib/AppInfo/Application.php');
-		self::assertStringContainsString("'" . self::TAG . "'", $application);
-		self::assertStringContainsString("guard: \$c->get(VatReturnChecksGuard::class),\n\t\t\t\t\tmethod: 'canSubmit',", $application);
+		self::assertStringContainsString('(new LedgerPostingRegistration())->register(context: $context);', $application);
 	}//end testTheGuardIsWiredOnSubmit()
 }//end class

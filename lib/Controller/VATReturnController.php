@@ -52,6 +52,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Lifecycle\PostingRefusedException;
+use OCA\Shillinq\Lifecycle\VatReturnChecksGuard;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\VATReturnService;
 use OCP\AppFramework\Controller;
@@ -86,6 +88,7 @@ class VATReturnController extends Controller {
 	 * @param AdministrationContextService $context RBAC guard — resolves the user's administration memberships.
 	 * @param LoggerInterface $logger Logger.
 	 * @param IL10N $l10n Localized strings for client-facing error messages (ADR-050).
+	 * @param VatReturnChecksGuard $checksGuard The submit precondition: no failing blocking VAT return check (REQ-TVRB-001).
 	 */
 	public function __construct(
 		IRequest $request,
@@ -95,6 +98,7 @@ class VATReturnController extends Controller {
 		private readonly AdministrationContextService $context,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
+		private readonly VatReturnChecksGuard $checksGuard,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -368,7 +372,14 @@ class VATReturnController extends Controller {
 				return new JSONResponse(['error' => 'VAT return not found'], Http::STATUS_NOT_FOUND);
 			}
 
+			// REQ-TVRB-001: a failing blocking check refuses the submit and names itself.
+			$this->checksGuard->canSubmit(returnOrId: $returnId);
 			$vatReturn = $this->service->submitReturn(returnId: $returnId, userId: $userId);
+		} catch (PostingRefusedException $e) {
+			return new JSONResponse(
+				['message' => $e->getMessage(), 'error' => 'vat-return-checks-failed'],
+				Http::STATUS_CONFLICT,
+			);
 		} catch (\RuntimeException $e) {
 			$this->logger->error(
 				'VATReturnController.submit failed',
