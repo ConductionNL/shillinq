@@ -51,16 +51,24 @@ describe('Checks tab on a BTW return', () => {
 		expect(tab).toBeDefined()
 		expect(tab.label).toBe('Checks')
 		expect(tab.widgets[0].type).toBe('VatReturnChecksPanel')
-		expect(registryJs).toMatch(/VatReturnChecksPanel: \{[^}]*kind: 'widget'/s)
+		const entry = registryJs.slice(
+			registryJs.indexOf('\tVatReturnChecksPanel: {'),
+		)
+		expect(entry.slice(0, entry.indexOf('\n\t},'))).toContain("kind: 'widget'")
 	})
 
 	it('asks the route the controller serves', async () => {
 		expect(routes).toContain(
 			"'vATReturn#checks', 'url' => '/api/vat-returns/{returnId}/checks', 'verb' => 'GET'",
 		)
-		expect(controller).toContain('public function checks(string $returnId): JSONResponse')
-		const { fetchVatReturnChecks } = await import('../../src/utils/vatReturnChecks.js')
-		axiosMock.get.mockResolvedValue({ data: { data: [{ id: 'x', passed: true }] } })
+		expect(controller).toContain(
+			'public function checks(string $returnId): JSONResponse',
+		)
+		const { fetchVatReturnChecks } =
+			await import('../../src/utils/vatReturnChecks.js')
+		axiosMock.get.mockResolvedValue({
+			data: { data: [{ id: 'x', passed: true }] },
+		})
 		const checks = await fetchVatReturnChecks('ret 1')
 		expect(axiosMock.get.mock.calls[0][0]).toBe(
 			'/index.php/apps/shillinq/api/vat-returns/ret%201/checks',
@@ -69,15 +77,33 @@ describe('Checks tab on a BTW return', () => {
 	})
 
 	it('names every check the server runs and writes out its state', async () => {
-		const { checkNames, checkRows } = await import('../../src/utils/vatReturnChecks.js')
-		const ids = [...provider.matchAll(/const [A-Z_]+ = '(nl-vat-return-[a-z-]+)'/g)].map((m) => m[1])
+		const { checkNames, checkRows } =
+			await import('../../src/utils/vatReturnChecks.js')
+		const ids = [
+			...provider.matchAll(/const [A-Z_]+ = '(nl-vat-return-[a-z-]+)'/g),
+		].map((m) => m[1])
 		expect(ids).toHaveLength(6)
 		expect(Object.keys(checkNames()).sort()).toEqual([...ids].sort())
 
 		const rows = checkRows([
-			{ id: 'nl-vat-return-line-box', passed: false, blocking: true, offenders: ['MEM-77'] },
-			{ id: 'nl-vat-return-no-drafts', passed: false, blocking: false, offenders: ['Sales invoice CONCEPT-1'] },
-			{ id: 'nl-vat-return-previous-filed', passed: true, blocking: true, offenders: [] },
+			{
+				id: 'nl-vat-return-line-box',
+				passed: false,
+				blocking: true,
+				offenders: ['MEM-77'],
+			},
+			{
+				id: 'nl-vat-return-no-drafts',
+				passed: false,
+				blocking: false,
+				offenders: ['Sales invoice CONCEPT-1'],
+			},
+			{
+				id: 'nl-vat-return-previous-filed',
+				passed: true,
+				blocking: true,
+				offenders: [],
+			},
 		])
 		expect(rows.map((r) => r.state)).toEqual(['blocking', 'warning', 'passed'])
 		expect(rows[0].name).toBe('Every VAT line has a box')
