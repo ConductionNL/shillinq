@@ -35,6 +35,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 use OCA\Shillinq\Service\Dunning\DunningChannelAdapterInterface;
 use OCA\Shillinq\Service\Dunning\DunningChannelSendResult;
 use OCA\Shillinq\Service\Dunning\DunningStageDispatcher;
+use OCA\Shillinq\Service\Dunning\DunningStageSelector;
 use OCA\Shillinq\Service\Dunning\IncassoBureauAdapterInterface;
 use OCA\Shillinq\Service\Dunning\LogDunningChannelAdapter;
 use OCA\Shillinq\Service\Dunning\PostNLAdapterInterface;
@@ -581,12 +582,12 @@ final class DunningRunServiceTest extends TestCase {
 	}//end testWriteOffPersistsRecord()
 
 	/**
-	 * Task-12: stageForOverdueDays picks the highest stage whose threshold has been reached.
+	 * Task-12: DunningStageSelector::highestReached (was stageForOverdueDays) picks the highest stage whose threshold has been reached.
 	 *
 	 * @return void
 	 */
 	public function testStageForOverdueDaysPicksHighestApplicable(): void {
-		$service = $this->makeService(os: new OpenRegisterFaithfulObjectService());
+		$service = new DunningStageSelector();
 		$stages = [
 			['nr' => 1, 'daysAfterExpiryDate' => 0,  'channel' => 'EMAIL'],
 			['nr' => 2, 'daysAfterExpiryDate' => 14, 'channel' => 'EMAIL'],
@@ -595,11 +596,11 @@ final class DunningRunServiceTest extends TestCase {
 			['nr' => 5, 'daysAfterExpiryDate' => 90, 'channel' => 'COLLECTION_AGENCY_API'],
 		];
 
-		self::assertSame(1, (int)$service->stageForOverdueDays(stages: $stages, daysInArrears: 0)['nr']);
-		self::assertSame(2, (int)$service->stageForOverdueDays(stages: $stages, daysInArrears: 20)['nr']);
-		self::assertSame(3, (int)$service->stageForOverdueDays(stages: $stages, daysInArrears: 45)['nr']);
-		self::assertSame(5, (int)$service->stageForOverdueDays(stages: $stages, daysInArrears: 200)['nr']);
-		self::assertNull($service->stageForOverdueDays(stages: $stages, daysInArrears: -1));
+		self::assertSame(1, (int)$service->highestReached(stages: $stages, daysInArrears: 0)['nr']);
+		self::assertSame(2, (int)$service->highestReached(stages: $stages, daysInArrears: 20)['nr']);
+		self::assertSame(3, (int)$service->highestReached(stages: $stages, daysInArrears: 45)['nr']);
+		self::assertSame(5, (int)$service->highestReached(stages: $stages, daysInArrears: 200)['nr']);
+		self::assertNull($service->highestReached(stages: $stages, daysInArrears: -1));
 
 	}//end testStageForOverdueDaysPicksHighestApplicable()
 
@@ -891,12 +892,11 @@ final class DunningRunServiceTest extends TestCase {
 		$os->seed(schema: 'DunningLadder', rows: [$this->standaardLadder()]);
 		$service = $this->makeService(os: $os);
 
-		$preview = $service->tickInvoice(
+		$preview = $service->previewInvoice(
 			administrationId: 'adm-1',
 			invoice: $this->longOverdueInvoice(),
 			baseLadderId: 'ladder-std',
-			now: new \DateTimeImmutable('2026-06-10T09:00:00Z'),
-			dryRun: true
+			now: new \DateTimeImmutable('2026-06-10T09:00:00Z')
 		);
 
 		self::assertSame(
@@ -931,11 +931,11 @@ final class DunningRunServiceTest extends TestCase {
 		$own = $this->longOverdueInvoice();
 		$own['id'] = 'inv-gemeente';
 		$own['customerId'] = 'cm-gemeente';
-		$run = $service->tickInvoice(administrationId: 'adm-1', invoice: $own, now: $now, dryRun: true);
+		$run = $service->previewInvoice(administrationId: 'adm-1', invoice: $own, now: $now);
 		self::assertSame('ladder-gentle', $run['ladderId']);
 		self::assertSame('eMAILPostRegistration', $run['channel']);
 
-		$run = $service->tickInvoice(administrationId: 'adm-1', invoice: $this->longOverdueInvoice(), now: $now, dryRun: true);
+		$run = $service->previewInvoice(administrationId: 'adm-1', invoice: $this->longOverdueInvoice(), now: $now);
 		self::assertSame('ladder-std', $run['ladderId']);
 		self::assertSame('EMAIL', $run['channel']);
 
@@ -947,7 +947,7 @@ final class DunningRunServiceTest extends TestCase {
 				'overrides' => ['stages' => [['nr' => 1, 'daysAfterExpiryDate' => 14, 'channel' => 'eMAILPostRegistration']]],
 			],
 		]);
-		$run = $service->tickInvoice(administrationId: 'adm-1', invoice: $this->longOverdueInvoice(), now: $now, dryRun: true);
+		$run = $service->previewInvoice(administrationId: 'adm-1', invoice: $this->longOverdueInvoice(), now: $now);
 		self::assertSame('eMAILPostRegistration', $run['channel']);
 
 		$elsewhere = $this->longOverdueInvoice();

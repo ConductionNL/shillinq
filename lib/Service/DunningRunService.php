@@ -51,6 +51,7 @@ use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\Dunning\DunningChannelSendResult;
 use OCA\Shillinq\Service\Dunning\DunningLetterComposer;
 use OCA\Shillinq\Service\Dunning\DunningStageDispatcher;
+use OCA\Shillinq\Service\Dunning\DunningStageSelector;
 use OCA\Shillinq\Service\Dunning\EvidenceRetentionEnforcer;
 use OCA\Shillinq\Service\Dunning\IncassoBureauAdapterInterface;
 use OCA\Shillinq\Service\Dunning\PostNLAdapterInterface;
@@ -121,48 +122,6 @@ class DunningRunService {
 	}//end __construct()
 
 	/**
-	 * Pick the highest ladder stage applicable to an invoice now.
-	 *
-	 * Given the resolved stages (base or override) and the number of days the
-	 * invoice has been overdue, walk the stages by ascending `dagenNaVervalDatum`
-	 * and return the last stage whose threshold has been reached. Returns null
-	 * when no stage applies yet (invoice is still within terms).
-	 *
-	 * @param array<int,array<string,mixed>> $stages Resolved stages.
-	 * @param int $daysInArrears Days the invoice has been overdue (>= 0).
-	 *
-	 * @return array<string,mixed>|null The applicable stage definition or null.
-	 *
-	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-12
-	 */
-	public function stageForOverdueDays(array $stages, int $daysInArrears): ?array {
-		if ($daysInArrears < 0) {
-			return null;
-		}
-
-		$sorted = $stages;
-		usort(
-			$sorted,
-			static function (array $a, array $b): int {
-				return (int)($a['daysAfterExpiryDate'] ?? 0) <=> (int)($b['daysAfterExpiryDate'] ?? 0);
-			}
-		);
-
-		$picked = null;
-		foreach ($sorted as $stage) {
-			$threshold = (int)($stage['daysAfterExpiryDate'] ?? 0);
-			if ($daysInArrears >= $threshold) {
-				$picked = $stage;
-				continue;
-			}
-
-			break;
-		}
-
-		return $picked;
-	}//end stageForOverdueDays()
-
-	/**
 	 * REQ-CCD-005 / task-12: tick the dunning ladder for one `Invoice` record.
 	 *
 	 * Walks the cross-app AR `Invoice` (from `bookkeeping-quote-order-invoice`)
@@ -185,11 +144,7 @@ class DunningRunService {
 	 * is the AR core's responsibility; it returns the picked stage so the
 	 * caller can mirror the transition upstream.
 	 *
-	 * Stage choice (receivables-automatic-dunning REQ-RAD-002, design D3): the
-	 * lowest-numbered stage not yet sent for the invoice whose threshold is
-	 * reached, and a later stage only once the gap between the two thresholds
-	 * has passed since the previous stage went out. A run whose send FAILED
-	 * does not count as sent, so the next tick tries that stage again.
+	 * The stage is DunningStageSelector's choice (REQ-RAD-002), one at a time.
 	 *
 	 * @param string $administrationId Administration scope.
 	 * @param array<string,mixed> $invoice The `Invoice` record (from `bookkeeping-quote-order-invoice`).
@@ -200,10 +155,8 @@ class DunningRunService {
 	 *                                    templateId, ontvangerEmail, ontvangerNaam,
 	 *                                    renderedSubject, renderedBody.
 	 * @param DateTimeImmutable|null $now Inject "now" for deterministic tests; defaults to wall-clock.
-	 * @param bool $dryRun Answer the stage the tick would send and write nothing (REQ-RAD-008).
 	 *
-	 * @return array<string,mixed>|null The materialised `DunningRun` (or, on a dry run, the
-	 *                                  preview), or null when the tick was a no-op.
+	 * @return array<string,mixed>|null The materialised `DunningRun`, or null when the tick was a no-op.
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-12
 	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-014)
@@ -217,216 +170,131 @@ class DunningRunService {
 		string $baseLadderId = '',
 		array $params = [],
 		?DateTimeImmutable $now = null,
-		bool $dryRun = false,
 	): ?array {
-		$now = ($now ?? new DateTimeImmutable());
-		$invoiceId = (string)($invoice['id'] ?? ($invoice['@self']['id'] ?? ''));
-		// A contribution the parent declined is never reminded (REQ-SCON-014).
-		if ($invoiceId === '' || $this->voluntary->isDeclined(invoice: $invoice) === true) {
-			return null;
-		}
-
-		$dueDateRaw = (string)($invoice['dueDate'] ?? '');
-		if ($dueDateRaw === '') {
-			return null;
-		}
-
-		try {
-			$dueDate = new DateTimeImmutable($dueDateRaw);
-		} catch (\Throwable $e) {
-			$this->logger->warning('Shillinq: tickInvoice malformed dueDate: ' . $dueDateRaw);
-			return null;
-		}
-
-		if ($now < $dueDate) {
-			return null;
-		}
-
-		$daysInArrears = (int)$dueDate->diff($now)->days;
-		$customerId = (string)($invoice['customerReference'] ?? ($invoice['customerId'] ?? ''));
-
-		if ($this->hasActivePause(administrationId: $administrationId, invoiceId: $invoiceId) === true) {
-			return null;
-		}
-
-		if ($baseLadderId === '') {
-			$baseLadderId = $this->baseLadderFor(administrationId: $administrationId, customerId: $customerId);
-			if ($baseLadderId === '') {
-				return null;
-			}
-		}
-
-		$resolved = $this->resolveLadderForKlant(
+		$choice = $this->chooseStage(
 			administrationId: $administrationId,
-			customerId: $customerId,
-			baseLadderId: $baseLadderId
+			invoice: $invoice,
+			baseLadderId: $baseLadderId,
+			params: $params,
+			now: ($now ?? new DateTimeImmutable())
 		);
-		$stage = $this->nextStage(
-			administrationId: $administrationId,
-			invoiceId: $invoiceId,
-			stages: $resolved['stages'],
-			daysInArrears: $daysInArrears,
-			now: $now
-		);
-		if ($stage === null) {
+		if ($choice === null) {
 			return null;
-		}
-
-		$stageNr = (int)($stage['nr'] ?? 1);
-
-		// A voluntary contribution gets the first stage once, without costs (REQ-SCON-008).
-		if ($this->voluntary->isVoluntary(invoice: $invoice) === true) {
-			if ($this->runCount(administrationId: $administrationId, invoiceId: $invoiceId) > 0) {
-				return null;
-			}
-
-			$stageNr = VoluntaryContributionPolicy::ONLY_STAGE;
-			$stage = ($this->stageDefinition(stages: $resolved['stages'], stageNr: $stageNr) ?? $stage);
-			$params = $this->voluntary->stripCosts(params: $params);
-		}
-
-		// Idempotency: skip when this stage has already gone out for this invoice.
-		if (in_array($stageNr, $this->sentStages(administrationId: $administrationId, invoiceId: $invoiceId), true) === true) {
-			return null;
-		}
-
-		$channel = (string)($params['channel'] ?? ($stage['channel'] ?? 'EMAIL'));
-		$tplId = (string)($params['templateId'] ?? ($stage['templateId'] ?? ''));
-
-		if ($dryRun === true) {
-			return [
-				'dryRun' => true,
-				'invoiceId' => $invoiceId,
-				'ladderId' => (string)$resolved['ladderId'],
-				'stageNr' => $stageNr,
-				'channel' => $channel,
-				'templateId' => $tplId,
-			];
 		}
 
 		// Read the invoice again at send time: a payment matched, a write-off or
 		// a dispute since it was listed stops the stage (REQ-RAD-005).
-		if ($this->settledSinceListed(invoice: $invoice, invoiceId: $invoiceId) === true) {
+		if ($this->settledSinceListed(invoice: $invoice, invoiceId: $choice['invoiceId']) === true) {
 			return null;
 		}
 
-		return $this->executeStage(
-			administrationId: $administrationId,
-			params: array_merge(
-				[
-					'invoiceId' => $invoiceId,
-					'ladderId' => (string)$resolved['ladderId'],
-					'stageNr' => $stageNr,
-					'channel' => $channel,
-					'templateId' => $tplId,
-					'invoiceAmount' => (float)($invoice['grossAmount'] ?? 0.0),
-				],
-				$params
-			)
-		);
-
+		return $this->executeStage(administrationId: $administrationId, params: $choice);
 	}//end tickInvoice()
 
 	/**
-	 * The stage the next tick sends: the lowest-numbered stage not yet sent
-	 * whose threshold is reached, held back until the gap between its threshold
-	 * and the previous sent stage's has passed since that stage went out.
+	 * The stage the next tick would send for an invoice, written nowhere
+	 * (REQ-RAD-008, the Next run preview): the same choice as tickInvoice().
 	 *
-	 * @param string                         $administrationId Administration scope.
-	 * @param string                         $invoiceId        The invoice.
-	 * @param array<int,array<string,mixed>> $stages           Resolved stages.
-	 * @param int                            $daysInArrears    Days overdue.
-	 * @param DateTimeImmutable              $now              Now.
+	 * @param string                 $administrationId Administration scope.
+	 * @param array<string,mixed>    $invoice          The invoice.
+	 * @param string                 $baseLadderId     The base ladder; empty resolves it (REQ-RAD-004).
+	 * @param DateTimeImmutable|null $now              Now; defaults to wall-clock.
 	 *
-	 * @return array<string,mixed>|null The stage, or null when none is due.
+	 * @return array<string,mixed>|null {dryRun, invoiceId, ladderId, stageNr, channel, templateId}, or null.
 	 *
 	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.1
 	 */
-	public function nextStage(string $administrationId, string $invoiceId, array $stages, int $daysInArrears, DateTimeImmutable $now): ?array {
-		$sorted = array_values(array_filter($stages, 'is_array'));
-		usort($sorted, static fn (array $a, array $b): int => (int)($a['nr'] ?? 0) <=> (int)($b['nr'] ?? 0));
+	public function previewInvoice(string $administrationId, array $invoice, string $baseLadderId = '', ?DateTimeImmutable $now = null): ?array {
+		$choice = $this->chooseStage(
+			administrationId: $administrationId,
+			invoice: $invoice,
+			baseLadderId: $baseLadderId,
+			params: [],
+			now: ($now ?? new DateTimeImmutable())
+		);
+		if ($choice === null) {
+			return null;
+		}
 
-		$sentOn = $this->sentStages(administrationId: $administrationId, invoiceId: $invoiceId, withDates: true);
-		$previous = null;
-		foreach ($sorted as $stage) {
-			$stageNr = (int)($stage['nr'] ?? 0);
-			if (array_key_exists($stageNr, $sentOn) === true) {
-				$previous = $stage;
-				continue;
-			}
+		return [
+			'dryRun' => true,
+			'invoiceId' => $choice['invoiceId'],
+			'ladderId' => $choice['ladderId'],
+			'stageNr' => $choice['stageNr'],
+			'channel' => $choice['channel'],
+			'templateId' => $choice['templateId'],
+		];
+	}//end previewInvoice()
 
-			$threshold = (int)($stage['daysAfterExpiryDate'] ?? 0);
-			if ($daysInArrears < $threshold) {
+	/**
+	 * Choose the stage the next tick sends, or null when none is due: the
+	 * invoice is overdue, not declined or paused, has a ladder, a stage is due
+	 * by DunningStageSelector, and that stage has not gone out yet.
+	 *
+	 * @param string              $administrationId Administration scope.
+	 * @param array<string,mixed> $invoice          The invoice.
+	 * @param string              $baseLadderId     The base ladder; empty resolves it.
+	 * @param array<string,mixed> $params           Dispatch overrides.
+	 * @param DateTimeImmutable   $now              Now.
+	 *
+	 * @return array<string,mixed>|null The executeStage() params.
+	 */
+	private function chooseStage(string $administrationId, array $invoice, string $baseLadderId, array $params, DateTimeImmutable $now): ?array {
+		$invoiceId = (string)($invoice['id'] ?? ($invoice['@self']['id'] ?? ''));
+		$selector = new DunningStageSelector(logger: $this->logger);
+		$daysInArrears = $selector->daysOverdue(invoice: $invoice, now: $now);
+		// A contribution the parent declined is never reminded (REQ-SCON-014).
+		if ($invoiceId === '' || $daysInArrears === null || $this->voluntary->isDeclined(invoice: $invoice) === true
+			|| $this->hasActivePause(administrationId: $administrationId, invoiceId: $invoiceId) === true
+		) {
+			return null;
+		}
+
+		$customerId = (string)($invoice['customerReference'] ?? ($invoice['customerId'] ?? ''));
+		if ($baseLadderId === '') {
+			$baseLadderId = $this->baseLadderFor(administrationId: $administrationId, customerId: $customerId);
+		}
+
+		if ($baseLadderId === '') {
+			return null;
+		}
+
+		$resolved = $this->resolveLadderForKlant(administrationId: $administrationId, customerId: $customerId, baseLadderId: $baseLadderId);
+		$runs = $this->findAll(schema: 'DunningRun', filters: ['administrationId' => $administrationId, 'invoiceId' => $invoiceId]);
+		$stage = $selector->next(stages: $resolved['stages'], runs: $runs, daysInArrears: $daysInArrears, now: $now);
+		if ($stage === null) {
+			return null;
+		}
+
+		// A voluntary contribution gets the first stage once, without costs (REQ-SCON-008).
+		if ($this->voluntary->isVoluntary(invoice: $invoice) === true) {
+			if ($runs !== []) {
 				return null;
 			}
 
-			if ($previous !== null && $this->gapHasPassed(previous: $previous, threshold: $threshold, sentOn: $sentOn, now: $now) === false) {
-				return null;
-			}
-
-			return $stage;
+			$stage = ($selector->definition(stages: $resolved['stages'], stageNr: VoluntaryContributionPolicy::ONLY_STAGE) ?? $stage);
+			$stage['nr'] = VoluntaryContributionPolicy::ONLY_STAGE;
+			$params = $this->voluntary->stripCosts(params: $params);
 		}
 
-		return null;
-	}//end nextStage()
-
-	/**
-	 * Whether the gap between two stages' thresholds has passed since the
-	 * previous stage went out. A run without a readable date does not hold
-	 * the next stage back.
-	 *
-	 * @param array<string,mixed>      $previous  The previous sent stage.
-	 * @param int                      $threshold The next stage's threshold.
-	 * @param array<int,string>        $sentOn    Sent stage number => executedOn.
-	 * @param DateTimeImmutable        $now       Now.
-	 *
-	 * @return bool True when the next stage may go.
-	 */
-	private function gapHasPassed(array $previous, int $threshold, array $sentOn, DateTimeImmutable $now): bool {
-		$gap = ($threshold - (int)($previous['daysAfterExpiryDate'] ?? 0));
-		$sentRaw = (string)($sentOn[(int)($previous['nr'] ?? 0)] ?? '');
-		if ($sentRaw === '') {
-			return true;
+		// Idempotency: never send a stage that already went out for this invoice.
+		$stageNr = (int)($stage['nr'] ?? 1);
+		if (array_key_exists($stageNr, $selector->sentOn(runs: $runs)) === true) {
+			return null;
 		}
 
-		try {
-			$sent = new DateTimeImmutable($sentRaw);
-		} catch (\Throwable $e) {
-			return true;
-		}
-
-		return ($sent <= $now && (int)$sent->diff($now)->days >= $gap);
-	}//end gapHasPassed()
-
-	/**
-	 * The stage numbers that went out for an invoice: every run but a FAILED one.
-	 *
-	 * @param string $administrationId Administration scope.
-	 * @param string $invoiceId        The invoice.
-	 * @param bool   $withDates        Key by stage number with the latest executedOn as value.
-	 *
-	 * @return array<int,int|string> Stage numbers, or stage number => executedOn.
-	 */
-	private function sentStages(string $administrationId, string $invoiceId, bool $withDates = false): array {
-		$sent = [];
-		foreach ($this->findAll(schema: 'DunningRun', filters: ['administrationId' => $administrationId, 'invoiceId' => $invoiceId]) as $run) {
-			if (strtoupper((string)($run['deliveryStatus'] ?? '')) === 'FAILED') {
-				continue;
-			}
-
-			$stageNr = (int)($run['stageNr'] ?? 0);
-			$executedOn = (string)($run['executedOn'] ?? '');
-			if (isset($sent[$stageNr]) === false || strcmp($executedOn, (string)$sent[$stageNr]) > 0) {
-				$sent[$stageNr] = $executedOn;
-			}
-		}
-
-		if ($withDates === true) {
-			return $sent;
-		}
-
-		return array_keys($sent);
-	}//end sentStages()
+		return array_merge(
+			[
+				'invoiceId' => $invoiceId,
+				'ladderId' => (string)$resolved['ladderId'],
+				'stageNr' => $stageNr,
+				'channel' => (string)($params['channel'] ?? ($stage['channel'] ?? 'EMAIL')),
+				'templateId' => (string)($params['templateId'] ?? ($stage['templateId'] ?? '')),
+				'invoiceAmount' => (float)($invoice['grossAmount'] ?? 0.0),
+			],
+			$params
+		);
+	}//end chooseStage()
 
 	/**
 	 * The base ladder of a customer: the DunningLadder its `dunningPolicyRef`
@@ -539,26 +407,6 @@ class DunningRunService {
 		];
 
 	}//end resolveLadderForKlant()
-
-	/**
-	 * Pick the stage definition for a given stageNr from a resolved ladder.
-	 *
-	 * @param array<int,array<string,mixed>> $stages Resolved stages.
-	 * @param int $stageNr Stage number to retrieve.
-	 *
-	 * @return array<string,mixed>|null Stage definition, null when no such stage exists.
-	 *
-	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-18
-	 */
-	public function stageDefinition(array $stages, int $stageNr): ?array {
-		foreach ($stages as $stage) {
-			if ((int)($stage['nr'] ?? 0) === $stageNr) {
-				return $stage;
-			}
-		}
-
-		return null;
-	}//end stageDefinition()
 
 	/**
 	 * Execute one DunningRun for a given invoice + stage.
