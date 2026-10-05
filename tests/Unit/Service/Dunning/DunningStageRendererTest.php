@@ -230,6 +230,33 @@ final class DunningStageRendererTest extends TestCase {
 	}//end testTheLanguageComesFromTheCustomer()
 
 	/**
+	 * A missing date or amount renders empty and an unreadable date renders
+	 * as given, so a letter never shows a wrong date.
+	 *
+	 * @covers \OCA\Shillinq\Service\Dunning\DunningStageRenderer
+	 * @uses   \OCA\Shillinq\Service\Dunning\DunningTemplateRegistry
+	 * @uses   \OCA\Shillinq\Service\Dunning\DunningStageDefaultTexts
+	 *
+	 * @return void
+	 */
+	public function testAMissingDateOrAmountRendersEmptyAndAnUnreadableDateAsGiven(): void {
+		$stage = [
+			'nr' => 3,
+			'subject' => ['nl' => 'Factuur {factuurNummer}'],
+			'body' => ['nl' => 'Factuurdatum [{invoiceDate}], vervaldatum [{expiryDate}], incassokosten [{incassokosten}].'],
+		];
+		$mail  = $this->renderer()->render(
+			stage: $stage,
+			invoice: self::invoice(['invoiceDate' => '', 'dueDate' => 'na levering']),
+			customer: [],
+			values: ['incassokosten' => 'nog te bepalen']
+		);
+
+		self::assertSame('Factuur 2026-0412', $mail['subject']);
+		self::assertSame('Factuurdatum [], vervaldatum [na levering], incassokosten [].', $mail['body']);
+	}//end testAMissingDateOrAmountRendersEmptyAndAnUnreadableDateAsGiven()
+
+	/**
 	 * Every placeholder in the seeded and default texts is one of the
 	 * registry's merge fields, so none reaches a customer unfilled.
 	 *

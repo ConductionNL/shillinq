@@ -225,6 +225,22 @@ final class MailDunningChannelAdapterTest extends TestCase {
 	 *
 	 * @return void
 	 */
+	public function testAnInvoiceThePdfCannotBeMadeForIsNotSent(): void {
+		$this->mailer->expects(self::never())->method('send');
+
+		$invoice = self::invoice();
+		$invoice['lifecycleState'] = 'draft';
+		$result = $this->adapter()->send(channel: 'EMAIL', payload: self::payload(['invoice' => $invoice]));
+
+		self::assertSame('FAILED', $result->deliveryStatus);
+		self::assertStringContainsString('invoice PDF', (string)$result->errorMessage);
+	}//end testAnInvoiceThePdfCannotBeMadeForIsNotSent()
+
+	/**
+	 * No invoice in the payload: nothing to attach, so nothing is sent.
+	 *
+	 * @return void
+	 */
 	public function testNoInvoiceMeansNoMail(): void {
 		$this->mailer->expects(self::never())->method('send');
 
