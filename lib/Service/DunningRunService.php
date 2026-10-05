@@ -291,6 +291,7 @@ class DunningRunService {
 				'channel' => (string)($params['channel'] ?? ($stage['channel'] ?? 'EMAIL')),
 				'templateId' => (string)($params['templateId'] ?? ($stage['templateId'] ?? '')),
 				'invoiceAmount' => (float)($invoice['grossAmount'] ?? 0.0),
+				'stage' => $stage,
 			],
 			$params
 		);
@@ -451,14 +452,16 @@ class DunningRunService {
 		// voluntary cap and the template fallback live in the composer
 		// (REQ-SCON-012, REQ-CCD-016, REQ-CCD-017).
 		$letters = ($this->letters ?? new DunningLetterComposer(appConfig: $this->appConfig, voluntary: $this->voluntary));
+		$invoice = ($this->fetchById(schema: 'ARInvoice', id: $invoiceId) ?? []);
 		$params = $letters->prepare(
-			invoice: $this->fetchById(schema: 'ARInvoice', id: $invoiceId),
+			invoice: $invoice,
 			params: $params,
 			runsSoFar: fn (): int => $this->runCount(administrationId: $administrationId, invoiceId: $invoiceId)
 		);
+		$params = $letters->address(params: $params, invoice: $invoice, find: $this->fetchById(...));
 		$record = $letters->compose(administrationId: $administrationId, invoiceId: $invoiceId, params: $params, now: new DateTimeImmutable());
 
-		$record = $this->container->get(DunningStageDispatcher::class)->dispatch(record: $record);
+		$record = $this->container->get(DunningStageDispatcher::class)->dispatch(record: $record, invoice: $invoice);
 		return $this->saveObject(schema: 'DunningRun', data: $record);
 	}//end executeStage()
 
