@@ -86,7 +86,7 @@ class DunningStageSelector {
 	 * Pick the highest ladder stage applicable to an invoice now.
 	 *
 	 * Given the resolved stages (base or override) and the number of days the
-	 * invoice has been overdue, walk the stages by ascending `dagenNaVervalDatum`
+	 * invoice has been overdue, walk the stages by ascending `daysAfterExpiryDate`
 	 * and return the last stage whose threshold has been reached. Returns null
 	 * when no stage applies yet (invoice is still within terms).
 	 *
