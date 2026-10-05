@@ -28,7 +28,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\VATReturnController;
+use OCA\Shillinq\Lifecycle\VatReturnChecksGuard;
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\Vat\VatReturnCheckService;
 use OCA\Shillinq\Service\VATReturnService;
 use OCP\AppFramework\Http;
 use OCP\IL10N;
@@ -134,6 +136,13 @@ final class VATReturnControllerTest extends TestCase {
 	private ?IUser $currentUser = null;
 
 	/**
+	 * The VAT return checks behind the submit guard.
+	 *
+	 * @var VatReturnCheckService&MockObject
+	 */
+	private VatReturnCheckService&MockObject $checks;
+
+	/**
 	 * Set up fixtures.
 	 *
 	 * @return void
@@ -156,6 +165,8 @@ final class VATReturnControllerTest extends TestCase {
 			fn (): array => $this->canAccess === true ? $this->accessible : []
 		);
 
+		$this->checks = $this->createMock(VatReturnCheckService::class);
+
 		$this->controller = new VATReturnController(
 			request: $this->request,
 			service: $this->service,
@@ -164,6 +175,7 @@ final class VATReturnControllerTest extends TestCase {
 			context: $this->context,
 			logger: $this->logger,
 			l10n: $this->l10n,
+			checksGuard: new VatReturnChecksGuard(checks: $this->checks),
 		);
 
 		// Bind the session once to a mutable reference; tests can override the
@@ -564,6 +576,38 @@ final class VATReturnControllerTest extends TestCase {
 		self::assertSame(Http::STATUS_CONFLICT, $response->getStatus());
 
 	}//end testSubmitReturns409OnConflict()
+
+	/**
+	 * submit() is refused while a blocking VAT return check fails, the answer
+	 * names the check and what to fix, and the return is not submitted
+	 * (REQ-TVRB-001).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-3.2
+	 */
+	public function testSubmitIsRefusedWhileABlockingCheckFails(): void {
+		$this->withUser(uid: 'alice');
+		$this->service->method('findReturn')
+			->willReturn(['id' => 'ret-1', 'administrationId' => 'adm-1', 'statusCode' => 'draft']);
+		$this->checks->method('blockingFailures')->with('ret-1')->willReturn(
+			[
+				[
+					'id' => 'nl-vat-return-line-box', 'source' => 'Shillinq VAT return check', 'blocking' => true, 'passed' => false,
+					'statement' => 'Every posted ledger line of the period on a VAT account, or carrying VAT, has a VAT return box.',
+					'offenders' => ['MEM-77'],
+				],
+			]
+		);
+		$this->service->expects($this->never())->method('submitReturn');
+
+		$response = $this->controller->submit(returnId: 'ret-1');
+
+		self::assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		self::assertSame('vat-return-checks-failed', $response->getData()['error']);
+		self::assertStringContainsString('has a VAT return box', $response->getData()['message']);
+		self::assertStringContainsString('MEM-77', $response->getData()['message']);
+	}//end testSubmitIsRefusedWhileABlockingCheckFails()
 
 	/**
 	 * rebase() returns 200 + the rebased return.
