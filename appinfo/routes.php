@@ -141,6 +141,9 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'dunning#transfer', 'url' => '/api/dunning/incasso/transfer', 'verb' => 'POST'],
             ['name' => 'dunning#writeOff', 'url' => '/api/dunning/writeoffs', 'verb' => 'POST'],
             ['name' => 'dunning#resumePause', 'url' => '/api/dunning/pauses/{pauseId}/resume', 'verb' => 'POST'],
+            // Automatic dunning (task 4.1): the Next run preview and a ladder's stage texts.
+            ['name' => 'dunningPreview#nextRun', 'url' => '/api/dunning/next-run', 'verb' => 'GET'],
+            ['name' => 'dunningPreview#ladderStages', 'url' => '/api/dunning/ladders/{id}/stages', 'verb' => 'GET'],
 
         // OSS (One-Stop-Shop, Tier 2): destination-country rate resolution + quarterly return generation.
             ['name' => 'oss#resolveRate', 'url' => '/api/oss/rate', 'verb' => 'GET'],

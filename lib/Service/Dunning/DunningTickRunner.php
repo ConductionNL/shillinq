@@ -182,6 +182,73 @@ class DunningTickRunner {
 	}//end lastReports()
 
 	/**
+	 * The last stored run report of one administration, found under its code
+	 * or its record id.
+	 *
+	 * @param array<string,mixed> $administration The Administration record.
+	 *
+	 * @return array<string,mixed>|null The report, or null when the job never ran it.
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+	 */
+	public function lastReportFor(array $administration): ?array {
+		$reports = $this->lastReports();
+		foreach ($this->administrationKeys(administration: $administration) as $key) {
+			if (is_array($reports[$key] ?? null) === true) {
+				return $reports[$key];
+			}
+		}
+
+		return null;
+	}//end lastReportFor()
+
+	/**
+	 * The Next run preview of one administration (REQ-RAD-008): per invoice
+	 * the next run would chase, the stage and channel it would send, by the
+	 * job's own choice. Reads the same invoices as the job (issued and past
+	 * due, and overdue) and writes nothing, whether dunning is on or not.
+	 *
+	 * @param array<string,mixed> $administration The Administration record.
+	 * @param DateTimeImmutable   $now            The moment to judge by.
+	 *
+	 * @return array<int,array<string,mixed>> invoiceId, invoiceNumber, customer, dueDate, amount, stageNr, channel, ladderId.
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
+	 */
+	public function previewAdministration(array $administration, DateTimeImmutable $now): array {
+		$today = $now->format('Y-m-d');
+		$rows  = [];
+		foreach ($this->administrationKeys(administration: $administration) as $key) {
+			foreach (['issued', 'overdue'] as $state) {
+				foreach ($this->page(schema: 'ARInvoice', filters: ['administrationId' => $key, 'lifecycleState' => $state]) as $invoice) {
+					$dueDate = substr((string)($invoice['dueDate'] ?? ''), 0, 10);
+					if ($state === 'issued' && ($dueDate === '' || $dueDate >= $today)) {
+						continue;
+					}
+
+					$next = $this->dunning->previewInvoice(administrationId: $key, invoice: $invoice, now: $now);
+					if ($next === null) {
+						continue;
+					}
+
+					$rows[] = [
+						'invoiceId' => (string)$next['invoiceId'],
+						'invoiceNumber' => (string)($invoice['invoiceNumber'] ?? ''),
+						'customer' => (string)($invoice['buyerName'] ?? ''),
+						'dueDate' => $dueDate,
+						'amount' => (float)($invoice['grossAmount'] ?? 0.0),
+						'stageNr' => (int)$next['stageNr'],
+						'channel' => (string)$next['channel'],
+						'ladderId' => (string)$next['ladderId'],
+					];
+				}//end foreach
+			}//end foreach
+		}//end foreach
+
+		return $rows;
+	}//end previewAdministration()
+
+	/**
 	 * The values invoices of this administration carry as `administrationId`.
 	 *
 	 * The app scopes financial records on the administration code (ADM-001)

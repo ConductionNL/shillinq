@@ -17,6 +17,7 @@ import { openMissedDepreciation } from './utils/assetActions.js'
 import { classifyUnmatched, openBankLineMatch } from './utils/bankMatchActions.js'
 import { openCarryOverCommitments } from './utils/commitmentYearEndApi.js'
 import { openDownPaymentInvoice } from './utils/downPaymentActions.js'
+import { openDunningNextRun, openDunningSwitchOn } from './utils/dunningActions.js'
 import { openImportWizard } from './utils/importWizard.js'
 import { openIntegriqConnections } from './utils/integriqConnections.js'
 import { openProposePaymentRun } from './utils/paymentRunActions.js'
@@ -74,6 +75,10 @@ export const manifestActions = Object.freeze({
 	// the Refunds to pay page.
 	approveRefund,
 	openRefundPaid,
+	// receivables-automatic-dunning 4.1: Next run on Dunning runs, and
+	// Switch on reminders on an administration.
+	openDunningNextRun,
+	openDunningSwitchOn,
 })
 
 /**

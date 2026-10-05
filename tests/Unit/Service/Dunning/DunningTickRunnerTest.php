@@ -854,4 +854,73 @@ final class DunningTickRunnerTest extends TestCase {
 		self::assertSame(1, (int)$runs[0]['stageNr']);
 		self::assertCount(1, $this->mails);
 	}//end testInAWebCronTheJobsReadsReturnRowsToo()
+
+	/**
+	 * REQ-RAD-008: before switching dunning on, the Next run panel lists per
+	 * invoice the stage and channel the job would send, by the job's own
+	 * choice, and writes nothing. De Loods has dunning off; its invoice due on
+	 * 1 October would get stage 1 by email.
+	 *
+	 * @return void
+	 */
+	public function testTheNextRunPreviewListsWhatTheJobWouldSendAndWritesNothing(): void {
+		$this->store->setSchema('ARInvoice')->saveObject(
+			self::invoice(id: 'inv-later', number: '2026-0099', dueDate: '2026-11-30', customer: 'cm-loods', administration: 'ADM-LOODS')
+		);
+		$loods = $this->store->setSchema('Administration')->findAll(['filters' => ['administrationCode' => 'ADM-LOODS']])[0];
+
+		$rows = $this->runner()->previewAdministration(administration: $loods, now: new DateTimeImmutable(self::TODAY));
+
+		self::assertSame(
+			[
+				[
+					'invoiceId' => 'inv-loods',
+					'invoiceNumber' => '2026-0077',
+					'customer' => 'Klant',
+					'dueDate' => '2026-10-01',
+					'amount' => 1210.0,
+					'stageNr' => 1,
+					'channel' => 'EMAIL',
+					'ladderId' => 'ladder-loods',
+				],
+			],
+			$rows
+		);
+		self::assertSame('issued', $this->stored('ARInvoice', 'inv-loods')['lifecycleState'], 'The preview moved an invoice.');
+		self::assertSame([], $this->runs('inv-loods'));
+		self::assertSame([], $this->mails);
+	}//end testTheNextRunPreviewListsWhatTheJobWouldSendAndWritesNothing()
+
+	/**
+	 * The preview names the stage the job will send next, not one already sent:
+	 * after the run sent stage 1, an invoice whose stage 2 is not due yet is
+	 * not listed.
+	 *
+	 * @return void
+	 */
+	public function testThePreviewLeavesOutAnInvoiceWhoseNextStageIsNotDue(): void {
+		$runner = $this->runner();
+		$runner->runAll(now: new DateTimeImmutable(self::TODAY));
+		$kade = $this->store->setSchema('Administration')->findAll(['filters' => ['administrationCode' => 'ADM-KADE']])[0];
+
+		self::assertSame([], $runner->previewAdministration(administration: $kade, now: new DateTimeImmutable(self::TODAY)));
+		self::assertCount(1, $this->runs('inv-0412'), 'The preview sent a stage.');
+	}//end testThePreviewLeavesOutAnInvoiceWhoseNextStageIsNotDue()
+
+	/**
+	 * The job report of the administration, found under the code or the id.
+	 *
+	 * @return void
+	 */
+	public function testTheLastReportIsFoundForTheAdministration(): void {
+		$runner = $this->runner();
+		$kade   = $this->store->setSchema('Administration')->findAll(['filters' => ['administrationCode' => 'ADM-KADE']])[0];
+		$loods  = $this->store->setSchema('Administration')->findAll(['filters' => ['administrationCode' => 'ADM-LOODS']])[0];
+		self::assertNull($runner->lastReportFor(administration: $kade));
+
+		$runner->runAll(now: new DateTimeImmutable(self::TODAY));
+
+		self::assertSame(1, $runner->lastReportFor(administration: $kade)['sent']);
+		self::assertNull($runner->lastReportFor(administration: $loods), 'De Loods has dunning off and never ran.');
+	}//end testTheLastReportIsFoundForTheAdministration()
 }//end class
