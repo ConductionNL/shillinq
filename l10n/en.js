@@ -4164,7 +4164,14 @@ OC.L10N.register(
         "Refund requested": "Refund requested",
         "Refunded": "Refunded",
         "Credited": "Credited",
-        "Opening the import batch": "Opening the import batch"
+        "Opening the import batch": "Opening the import batch",
+        "Body": "Body",
+        "Dutch": "Dutch",
+        "English": "English",
+        "The mail subject of this stage, in Dutch and English. Write merge fields as {klantNaam}, {factuurNummer} and so on. Without a subject the stage uses its default text.": "The mail subject of this stage, in Dutch and English. Write merge fields as {klantNaam}, {factuurNummer} and so on. Without a subject the stage uses its default text.",
+        "The mail body of this stage, in Dutch and English, with the same merge fields as the subject.": "The mail body of this stage, in Dutch and English, with the same merge fields as the subject.",
+        "The text in Dutch.": "The text in Dutch.",
+        "The text in English.": "The text in English."
     },
     "nplurals=2; plural=(n != 1);"
 )
