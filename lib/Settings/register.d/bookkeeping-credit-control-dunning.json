@@ -118,7 +118,7 @@
                 "subject": {
                   "type": "object",
                   "title": "Subject",
-                  "description": "The mail subject of this stage per language (nl, en). Merge fields are written {klantNaam}, {factuurNummer} and so on (receivables-automatic-dunning REQ-RAD-003). Without it the stage gets its default text.",
+                  "description": "The mail subject of this stage, in Dutch and English. Write merge fields as {klantNaam}, {factuurNummer} and so on. Without a subject the stage uses its default text.",
                   "properties": {
                     "nl": {
                       "type": "string",
@@ -135,7 +135,7 @@
                 "body": {
                   "type": "object",
                   "title": "Body",
-                  "description": "The mail body of this stage per language (nl, en), with the same merge fields as the subject.",
+                  "description": "The mail body of this stage, in Dutch and English, with the same merge fields as the subject.",
                   "properties": {
                     "nl": {
                       "type": "string",

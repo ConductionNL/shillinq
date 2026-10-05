@@ -6372,7 +6372,13 @@
         "Refunds to pay": "Terug te betalen",
         "Refund requested": "Terugbetaling gevraagd",
         "Refunded": "Terugbetaald",
-        "Credited": "Gecrediteerd"
+        "Credited": "Gecrediteerd",
+        "Dutch": "Nederlands",
+        "English": "Engels",
+        "The mail subject of this stage, in Dutch and English. Write merge fields as {klantNaam}, {factuurNummer} and so on. Without a subject the stage uses its default text.": "Het onderwerp van de mail voor deze stap, in het Nederlands en Engels. Schrijf samenvoegvelden als {klantNaam}, {factuurNummer} enzovoort. Zonder onderwerp gebruikt de stap de standaardtekst.",
+        "The mail body of this stage, in Dutch and English, with the same merge fields as the subject.": "De tekst van de mail voor deze stap, in het Nederlands en Engels, met dezelfde samenvoegvelden als het onderwerp.",
+        "The text in Dutch.": "De tekst in het Nederlands.",
+        "The text in English.": "De tekst in het Engels."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
