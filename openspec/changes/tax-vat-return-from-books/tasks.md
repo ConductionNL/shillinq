@@ -10,7 +10,7 @@
 
 ## 2. One derivation
 
-- [ ] 2.1 Rewrite `VATReturnService::scanRubrieken()` to sum stamped lines by box and kind as booked, writing declarations and lines with `returnBox` (REQ-VBTW-004). Verify: PHPUnit on the Korenbloem seed gives 1b EUR 10,000 and EUR 900, 5b EUR 1,020.
+- [x] 2.1 Rewrite `VATReturnService::scanRubrieken()` to sum stamped lines by box and kind as booked, writing declarations and lines with `returnBox` (REQ-VBTW-004). Verify: PHPUnit on the Korenbloem seed gives 1b EUR 10,000 and EUR 900, 5b EUR 1,020.
 - [ ] 2.2 Make `VatReturnReportGenerator` render from the return's declarations and remove `deriveFromInvoices()`; point its `@spec` at `bookkeeping-vat-btw-filing` now that the code follows REQ-VBTW-004 (REQ-VBTW-004). Verify: PHPUnit that the file equals the snapshot; hydra gate spec-coverage passes on the file.
 - [ ] 2.3 Add "Prepare return" to `VATReturns`, repoint the Taxes menu entry "BTW returns" to it, and remove `BtwAangiften` from the menu (REQ-VBTW-004). Verify: nav reachability gate passes; Playwright prepares Q3 2026.
 

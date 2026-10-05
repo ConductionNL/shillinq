@@ -270,7 +270,10 @@ final class VatSuppletieDetectionServiceTest extends TestCase {
 	 * GLTransaction per entry and its GLLine rows, stamped with tariff, box
 	 * and amount kind.
 	 *
-	 * @param array<string,array{0:string,1:list<array{0:string,1:string,2:float,3:string,4:string,5:string}>}> $entries Per transaction id: posting date and lines [account, side, amount, tariff, box, kind].
+	 * Per transaction id: its posting date and its lines as
+	 * [account, side, amount, tariff, box, kind].
+	 *
+	 * @param array<string,array{0:string,1:list<array{0:string,1:string,2:float,3:string,4:string,5:string}>}> $entries The entries.
 	 *
 	 * @return array{GLTransaction:list<array<string,mixed>>,GLLine:list<array<string,mixed>>}
 	 */
@@ -333,8 +336,14 @@ final class VatSuppletieDetectionServiceTest extends TestCase {
 				],
 			],
 			'VATLine' => [
-				['id' => 'line-1', 'returnId' => 'vat-1', 'returnBox' => '1a', 'type' => 'collected', 'taxRate' => 21.0, 'glAccountNumber' => '8000', 'taxableAmount' => 15000.0, 'vatAmount' => 0.0],
-				['id' => 'line-2', 'returnId' => 'vat-1', 'returnBox' => '1a', 'type' => 'collected', 'taxRate' => 21.0, 'glAccountNumber' => '2110', 'taxableAmount' => 0.0, 'vatAmount' => 3150.0],
+				[
+					'id' => 'line-1', 'returnId' => 'vat-1', 'returnBox' => '1a', 'type' => 'collected', 'taxRate' => 21.0,
+					'glAccountNumber' => '8000', 'taxableAmount' => 15000.0, 'vatAmount' => 0.0,
+				],
+				[
+					'id' => 'line-2', 'returnId' => 'vat-1', 'returnBox' => '1a', 'type' => 'collected', 'taxRate' => 21.0,
+					'glAccountNumber' => '2110', 'taxableAmount' => 0.0, 'vatAmount' => 3150.0,
+				],
 			],
 		];
 	}//end filedQ1()
@@ -398,14 +407,25 @@ final class VatSuppletieDetectionServiceTest extends TestCase {
 		$prepared = $detectionService->prepare(vatCorrectionId: (string)$correction['id']);
 
 		self::assertSame(
-			[['type' => 'collected', 'taxRate' => 21.0, 'returnBox' => '1a', 'deltaVATAmount' => 105.0, 'deltaTaxableAmount' => 500.0, 'glAccountNumber' => '2110']],
+			[
+				[
+					'type' => 'collected', 'taxRate' => 21.0, 'returnBox' => '1a', 'deltaVATAmount' => 105.0,
+					'deltaTaxableAmount' => 500.0, 'glAccountNumber' => '2110',
+				],
+			],
 			$prepared['categoryDeltas']
 		);
 		self::assertSame(105.0, $prepared['correctionAmount']);
 		self::assertFalse($prepared['thresholdExceeded']);
-		$vatAccountLine = array_values(array_filter($stub->dump('GLLine'), static fn (array $l): bool => ($l['transactionId'] ?? '') === $prepared['glCorrectionTransactionId'] && $l['accountNumber'] === '2110'));
+		$correctionId = $prepared['glCorrectionTransactionId'];
+		$vatAccountLine = array_values(
+			array_filter(
+				$stub->dump('GLLine'),
+				static fn (array $l): bool => ($l['transactionId'] ?? '') === $correctionId && $l['accountNumber'] === '2110'
+			)
+		);
 		self::assertSame('credit', $vatAccountLine[0]['side']);
-		self::assertSame(105.0, $vatAccountLine[0]['amount']);
+		self::assertEquals(105.0, $vatAccountLine[0]['amount']);
 
 	}//end testALateSaleShowsItsDeltaInItsBox()
 
@@ -429,7 +449,8 @@ final class VatSuppletieDetectionServiceTest extends TestCase {
 
 		self::assertSame(-210.0, $prepared['correctionAmount']);
 		self::assertSame('5b', $prepared['categoryDeltas'][0]['returnBox']);
-		self::assertSame('1230', $prepared['categoryDeltas'][0]['glAccountNumber'] ?? null);
+		// The filed return had no 5b line, so the posting falls back to the clearing account, as before boxes.
+		self::assertNull($prepared['categoryDeltas'][0]['glAccountNumber']);
 
 	}//end testLateInputVatLowersTheCorrection()
 
