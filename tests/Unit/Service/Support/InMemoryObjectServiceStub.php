@@ -207,7 +207,8 @@ final class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 *
 	 * Answers plain arrays by default; answers ObjectEntityInterface rows —
 	 * the shape the real engine returns — when the double was constructed
-	 * with `findAllRendersEntities: true`.
+	 * with `findAllRendersEntities: true`. A `limit` and `offset` page the
+	 * matches as the engine does, so a caller that reads in pages ends.
 	 *
 	 * @param array $config        Filters, limit, offset, sort and search.
 	 * @param bool  $_rbac         Apply register RBAC (ignored by the stub).
@@ -236,6 +237,15 @@ final class InMemoryObjectServiceStub implements ObjectServiceInterface {
 				}
 			)
 		);
+
+		if (isset($config['limit']) === true || isset($config['offset']) === true) {
+			$length  = null;
+			if (isset($config['limit']) === true) {
+				$length = (int)$config['limit'];
+			}
+
+			$matched = array_slice($matched, (int)($config['offset'] ?? 0), $length);
+		}
 
 		if ($this->findAllRendersEntities === false) {
 			return $matched;

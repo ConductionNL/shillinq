@@ -6378,7 +6378,9 @@ OC.L10N.register(
         "The mail body of this stage, in Dutch and English, with the same merge fields as the subject.": "De tekst van de mail voor deze stap, in het Nederlands en Engels, met dezelfde samenvoegvelden als het onderwerp.",
         "The text in Dutch.": "De tekst in het Nederlands.",
         "The text in English.": "De tekst in het Engels.",
-        "Outcome of the dispatch attempt. MANUAL: a person sends this stage (a letter, the collection agency, or a customer without an email address).": "Uitkomst van de verzendpoging. MANUAL: een medewerker verstuurt deze stap (een brief, het incassobureau, of een klant zonder e-mailadres)."
+        "Outcome of the dispatch attempt. MANUAL: a person sends this stage (a letter, the collection agency, or a customer without an email address).": "Uitkomst van de verzendpoging. MANUAL: een medewerker verstuurt deze stap (een brief, het incassobureau, of een klant zonder e-mailadres).",
+        "Automatic payment reminders": "Automatische betalingsherinneringen",
+        "Send payment reminders for overdue invoices every day, by each customer's ladder.": "Stuur elke dag betalingsherinneringen voor vervallen facturen, volgens de ladder van elke klant."
     },
     "nplurals=2; plural=(n != 1);"
 )
