@@ -59,42 +59,73 @@ final class DunningLetterComposer {
 	 * Address the stage to the customer and render its text.
 	 *
 	 * The recipient is the customer's email address and legal name unless the
-	 * caller named one. The subject and body are the stage's, in the
-	 * customer's language with the merge fields filled, unless the caller
-	 * already rendered them (the voluntary contribution's own letter does).
+	 * caller named one. The subject and body are the stage's (the one the tick
+	 * chose, else the named ladder's), in the customer's language with the
+	 * merge fields filled, unless the caller already rendered them (the
+	 * voluntary contribution's own letter does).
 	 *
-	 * @param array<string,mixed> $params   The prepared params.
-	 * @param array<string,mixed> $invoice  The invoice, or [] when it was not found.
-	 * @param array<string,mixed> $customer The CustomerMaster, or [] when unknown.
-	 * @param array<string,mixed> $stage    The ladder stage (nr, subject, body), or [] when unknown.
+	 * @param array<string,mixed> $params  The prepared params.
+	 * @param array<string,mixed> $invoice The invoice, or [] when it was not found.
+	 * @param callable(string, string, ?string): (array<string,mixed>|null) $find Looks up one record by schema, id and fallback property.
 	 *
 	 * @return array<string,mixed> The params with recipient and rendered text.
 	 *
 	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
 	 */
-	public function address(array $params, array $invoice, array $customer, array $stage): array {
+	public function address(array $params, array $invoice, callable $find): array {
+		$customerId = (string)($invoice['customerReference'] ?? ($invoice['customerId'] ?? ''));
+		$customer   = [];
+		if ($customerId !== '') {
+			$customer = ($find('CustomerMaster', $customerId, null) ?? []);
+		}
+
 		$params['recipientEmail'] = ($params['recipientEmail'] ?? ($customer['email'] ?? null));
 		$params['recipientName']  = ($params['recipientName'] ?? ($customer['legalName'] ?? ($customer['tradeName'] ?? null)));
 		if ((string)($params['renderedSubject'] ?? '') !== '' && (string)($params['renderedBody'] ?? '') !== '') {
 			return $params;
 		}
 
-		$stage['nr'] = (int)($params['stageNr'] ?? ($stage['nr'] ?? 1));
-		$renderer    = ($this->renderer ?? new DunningStageRenderer(registry: ($this->templates ?? new DunningTemplateRegistry(appConfig: $this->appConfig))));
-		$text        = $renderer->render(
+		$stage    = $this->stageOf(params: $params, find: $find);
+		$renderer = ($this->renderer ?? new DunningStageRenderer(registry: ($this->templates ?? new DunningTemplateRegistry(appConfig: $this->appConfig))));
+		$text     = $renderer->render(
 			stage: $stage,
 			invoice: $invoice,
 			customer: $customer,
-			values: [
-				'incassokosten' => ($params['collectionCostAmount'] ?? null),
-				'rente' => ($params['interestAmount'] ?? null),
-			]
+			values: ['incassokosten' => ($params['collectionCostAmount'] ?? null), 'rente' => ($params['interestAmount'] ?? null)]
 		);
 		$params['renderedSubject'] = $text['subject'];
 		$params['renderedBody']    = $text['body'];
 
 		return $params;
 	}//end address()
+
+	/**
+	 * The ladder stage a run sends: the one the tick chose (an override's
+	 * stage included), else the stage of the named ladder, else only its
+	 * number, so the renderer falls back to the default text.
+	 *
+	 * @param array<string,mixed> $params The run's params.
+	 * @param callable(string, string, ?string): (array<string,mixed>|null) $find Looks up one record by schema, id and fallback property.
+	 *
+	 * @return array<string,mixed> The stage.
+	 */
+	private function stageOf(array $params, callable $find): array {
+		$stageNr = (int)($params['stageNr'] ?? 1);
+		$stages  = [];
+		if (is_array($params['stage'] ?? null) === true) {
+			$stages = [$params['stage']];
+		} else if ((string)($params['ladderId'] ?? '') !== '') {
+			$stages = (array)(($find('DunningLadder', (string)$params['ladderId'], 'slug') ?? [])['stages'] ?? []);
+		}
+
+		foreach ($stages as $stage) {
+			if (is_array($stage) === true && (int)($stage['nr'] ?? 0) === $stageNr) {
+				return $stage;
+			}
+		}
+
+		return ['nr' => $stageNr];
+	}//end stageOf()
 
 	/**
 	 * Prepare the run's params for the invoice's letter.

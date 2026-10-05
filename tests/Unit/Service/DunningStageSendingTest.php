@@ -107,7 +107,14 @@ final class DunningStageSendingTest extends TestCase {
 
 		$texts  = new DunningStageDefaultTexts();
 		$stages = [];
-		foreach ([1 => [7, 'EMAIL'], 2 => [21, 'EMAIL'], 3 => [35, 'EMAIL'], 4 => [56, 'REGISTERED_POST'], 5 => [70, 'COLLECTION_AGENCY_API']] as $nr => [$days, $channel]) {
+		$ladder = [
+			1 => [7, 'EMAIL'],
+			2 => [21, 'EMAIL'],
+			3 => [35, 'EMAIL'],
+			4 => [56, 'REGISTERED_POST'],
+			5 => [70, 'COLLECTION_AGENCY_API'],
+		];
+		foreach ($ladder as $nr => [$days, $channel]) {
 			$nl       = $texts->for(stageNr: $nr, language: 'nl');
 			$en       = $texts->for(stageNr: $nr, language: 'en');
 			$stages[] = [
@@ -468,7 +475,10 @@ final class DunningStageSendingTest extends TestCase {
 	 * @return void
 	 */
 	public function testAStageForAnUnknownInvoiceSendsNothing(): void {
-		$run = $this->service()->executeStage(administrationId: 'adm-1', params: ['invoiceId' => 'inv-gone', 'ladderId' => 'ladder-std', 'stageNr' => 1, 'channel' => 'EMAIL']);
+		$run = $this->service()->executeStage(
+			administrationId: 'adm-1',
+			params: ['invoiceId' => 'inv-gone', 'ladderId' => 'ladder-std', 'stageNr' => 1, 'channel' => 'EMAIL']
+		);
 
 		self::assertSame([], $this->mails);
 		self::assertSame('MANUAL', $run['deliveryStatus']);
