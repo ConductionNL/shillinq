@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Automatic payment reminders (`receivables-automatic-dunning`). A daily job
+  marks issued invoices past their due date as overdue and sends each overdue
+  invoice the stage that is due on its customer's ladder, by email with the
+  invoice attached. Registered post, the collection agency and a customer
+  without an email address become manual stages and notify the
+  `ar-controller` group. **Reminders ship switched off**: nothing is sent
+  until an administrator chooses Switch on reminders on an administration.
+  See `docs/user-guide/bookkeeping/payment-reminders.md`.
 - An app granted `payment.request` in the `paymentActionApps` app config raises a
   payment request through the leaf with nobody signed in
   (`PaymentRequestLeafProvider::createAsApp`, shillinq#1836). See

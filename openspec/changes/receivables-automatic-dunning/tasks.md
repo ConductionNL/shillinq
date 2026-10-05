@@ -26,6 +26,6 @@
 ## 5. End to end and docs
 
 - [ ] 5.1 Live check: enable dunning on a seeded administration, run the job with `occ background-job:execute`, and confirm one delivered stage-1 mail and one manual stage-4 run. Verify: the run ids in the PR body.
-- [ ] 5.2 User guide page on automatic reminders, per-customer ladders and manual stages, and a release note stating dunning ships disabled. Verify: the page in `docs/` and the note in the PR body.
+- [x] 5.2 User guide page on automatic reminders, per-customer ladders and manual stages, and a release note stating dunning ships disabled. Verify: the page in `docs/` and the note in the PR body. (5 Oct 2026: `docs/user-guide/bookkeeping/payment-reminders.md` covers switching reminders on per administration, the two seeded ladders, which ladder a customer gets, the texts and their language, manual stages and the `ar-controller` notification, the consumer cost hold, the checks at send time and the Next run view. The release note is in `CHANGELOG.md` under Unreleased and in the PR body: reminders ship switched off.)
 
 Quality reminders (not tracked as tasks): `composer check:strict` once before push, `@spec openspec/changes/receivables-automatic-dunning/tasks.md#task-N` on every new method, English source strings with Dutch translations for every stage text.
