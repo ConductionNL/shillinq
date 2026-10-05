@@ -52,6 +52,11 @@
         "should be mocked" concern can apply to. If a future edit gives it state
         or an injected dependency, that claim becomes false and this entry must
         be removed rather than kept — check it before trusting this line.
+
+        (g) Standards\Checks\VatReturnChecks is a rule registry of category (b)
+        and holds pure functions of their arguments: it declares NO constructor,
+        NO properties and NO collaborators. If an edit gives it state or an
+        injected dependency, remove this entry.
     -->
     <rule ref="rulesets/cleancode.xml/StaticAccess">
         <properties>
@@ -65,6 +70,7 @@
                 OCA\OpenRegister\AppHost\Observability\MetricSample,
                 OCA\Shillinq\Standards\RuleEngine,
                 OCA\Shillinq\Standards\RuleCatalogue,
+                OCA\Shillinq\Standards\Checks\VatReturnChecks,
                 OCA\Shillinq\Reporting\ReportCatalogue,
                 OCA\Shillinq\Enums\DBAConstants,
                 OCA\Shillinq\Util\TokenValidator,

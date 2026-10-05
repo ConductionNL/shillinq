@@ -4223,7 +4223,21 @@ OC.L10N.register(
         "That period has not ended yet. Prepare a return for a period that is over.": "That period has not ended yet. Prepare a return for a period that is over.",
         "The return adds up the booked ledger lines of the period per box. It is saved as a draft that you check and submit on its own page.": "The return adds up the booked ledger lines of the period per box. It is saved as a draft that you check and submit on its own page.",
         "The return could not be prepared. Try again, or ask your administrator to check the log.": "The return could not be prepared. Try again, or ask your administrator to check the log.",
-        "You cannot prepare a return for this administration.": "You cannot prepare a return for this administration."
+        "You cannot prepare a return for this administration.": "You cannot prepare a return for this administration.",
+        "Checks": "Checks",
+        "Every VAT line has a box": "Every VAT line has a box",
+        "Failed, blocks submitting": "Failed, blocks submitting",
+        "Failed, warning only": "Failed, warning only",
+        "Nothing in the period is still a draft": "Nothing in the period is still a draft",
+        "Passed": "Passed",
+        "Posted VAT equals base times rate": "Posted VAT equals base times rate",
+        "Reverse-charge VAT is owed and deducted": "Reverse-charge VAT is owed and deducted",
+        "Running the checks…": "Running the checks…",
+        "The VAT accounts agree with the return": "The VAT accounts agree with the return",
+        "The checks could not be run.": "The checks could not be run.",
+        "The previous return is submitted": "The previous return is submitted",
+        "Unable to rebase VAT return": "Unable to rebase VAT return",
+        "Unable to submit VAT return": "Unable to submit VAT return"
     },
     "nplurals=2; plural=(n != 1);"
 )

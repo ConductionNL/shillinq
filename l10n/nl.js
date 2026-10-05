@@ -6425,7 +6425,21 @@ OC.L10N.register(
         "That period has not ended yet. Prepare a return for a period that is over.": "Die periode is nog niet voorbij. Stel een aangifte op voor een periode die is afgelopen.",
         "The return adds up the booked ledger lines of the period per box. It is saved as a draft that you check and submit on its own page.": "De aangifte telt de geboekte regels van de periode per rubriek op. Ze wordt bewaard als concept dat je op de eigen pagina controleert en indient.",
         "The return could not be prepared. Try again, or ask your administrator to check the log.": "De aangifte kon niet worden opgesteld. Probeer het opnieuw, of vraag je beheerder het logboek te bekijken.",
-        "You cannot prepare a return for this administration.": "Je kunt voor deze administratie geen aangifte opstellen."
+        "You cannot prepare a return for this administration.": "Je kunt voor deze administratie geen aangifte opstellen.",
+        "Checks": "Controles",
+        "Every VAT line has a box": "Elke btw-regel heeft een rubriek",
+        "Failed, blocks submitting": "Niet gehaald, blokkeert indienen",
+        "Failed, warning only": "Niet gehaald, alleen een waarschuwing",
+        "Nothing in the period is still a draft": "Niets in de periode is nog een concept",
+        "Passed": "Gehaald",
+        "Posted VAT equals base times rate": "Geboekte btw is grondslag maal tarief",
+        "Reverse-charge VAT is owed and deducted": "Verlegde btw is verschuldigd en afgetrokken",
+        "Running the checks…": "De controles lopen…",
+        "The VAT accounts agree with the return": "De btw-rekeningen sluiten aan op de aangifte",
+        "The checks could not be run.": "De controles konden niet worden uitgevoerd.",
+        "The previous return is submitted": "De vorige aangifte is ingediend",
+        "Unable to rebase VAT return": "De btw-aangifte kon niet worden heropend",
+        "Unable to submit VAT return": "De btw-aangifte kon niet worden ingediend"
     },
     "nplurals=2; plural=(n != 1);"
 )

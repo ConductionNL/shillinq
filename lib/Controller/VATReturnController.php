@@ -52,7 +52,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Lifecycle\PostingRefusedException;
+use OCA\Shillinq\Lifecycle\VatReturnChecksGuard;
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\Vat\VatReturnCheckService;
 use OCA\Shillinq\Service\VATReturnService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -86,6 +89,8 @@ class VATReturnController extends Controller {
 	 * @param AdministrationContextService $context RBAC guard — resolves the user's administration memberships.
 	 * @param LoggerInterface $logger Logger.
 	 * @param IL10N $l10n Localized strings for client-facing error messages (ADR-050).
+	 * @param VatReturnChecksGuard $checksGuard The submit precondition: no failing blocking VAT return check (REQ-TVRB-001).
+	 * @param VatReturnCheckService $checks The VAT return checks, for the Checks tab (REQ-TVRB-001).
 	 */
 	public function __construct(
 		IRequest $request,
@@ -95,6 +100,8 @@ class VATReturnController extends Controller {
 		private readonly AdministrationContextService $context,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
+		private readonly VatReturnChecksGuard $checksGuard,
+		private readonly VatReturnCheckService $checks,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -368,7 +375,14 @@ class VATReturnController extends Controller {
 				return new JSONResponse(['error' => 'VAT return not found'], Http::STATUS_NOT_FOUND);
 			}
 
+			// REQ-TVRB-001: a failing blocking check refuses the submit and names itself.
+			$this->checksGuard->canSubmit(returnOrId: $returnId);
 			$vatReturn = $this->service->submitReturn(returnId: $returnId, userId: $userId);
+		} catch (PostingRefusedException $e) {
+			return new JSONResponse(
+				['message' => $e->getMessage(), 'error' => 'vat-return-checks-failed'],
+				Http::STATUS_CONFLICT,
+			);
 		} catch (\RuntimeException $e) {
 			$this->logger->error(
 				'VATReturnController.submit failed',
@@ -390,6 +404,47 @@ class VATReturnController extends Controller {
 
 		return new JSONResponse(['data' => $vatReturn], Http::STATUS_OK);
 	}//end submit()
+
+	/**
+	 * Run the checks of a VAT return (REQ-TVRB-001): each with whether it
+	 * passed, whether it blocks submitting and what makes it fail.
+	 *
+	 * @param string $returnId The VATReturn id.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-3.3
+	 */
+	#[NoAdminRequired]
+	public function checks(string $returnId): JSONResponse {
+		if ($this->session->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
+
+		if ($this->validId(id: $returnId) === false) {
+			return new JSONResponse(['error' => 'returnId is required'], Http::STATUS_BAD_REQUEST);
+		}
+
+		try {
+			if ($this->mayAccessReturn(vatReturn: $this->service->findReturn(returnId: $returnId)) === false) {
+				return new JSONResponse(['error' => 'VAT return not found'], Http::STATUS_NOT_FOUND);
+			}
+
+			$checks = $this->checks->run(returnId: $returnId);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'VATReturnController: failed to run the VAT return checks',
+				['returnId' => $returnId, 'exception' => $e->getMessage()]
+			);
+
+			return new JSONResponse(
+				['message' => $this->l10n->t('The checks could not be run.'), 'error' => 'vat-return-checks-unavailable'],
+				Http::STATUS_INTERNAL_SERVER_ERROR,
+			);
+		}
+
+		return new JSONResponse(['data' => $checks], Http::STATUS_OK);
+	}//end checks()
 
 	/**
 	 * Rebase a submitted VAT return back to draft (REQ-VAT-008).

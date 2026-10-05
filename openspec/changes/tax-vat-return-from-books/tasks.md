@@ -16,7 +16,7 @@
 
 ## 3. Checks
 
-- [ ] 3.1 Add `lib/Standards/Checks/VatReturnChecks.php` with the six checks and their severities, registered for `BtwAangifte` (REQ-TVRB-001). Verify: PHPUnit per check, pass and fail.
+- [x] 3.1 Add `lib/Standards/Checks/VatReturnChecks.php` with the six checks and their severities, registered for `BtwAangifte` (REQ-TVRB-001). Verify: PHPUnit per check, pass and fail.
 - [ ] 3.2 Add `VatReturnChecksGuard` as the `requires` of `BtwAangifte.submit`, registered in `Application.php` (REQ-TVRB-001). Verify: PHPUnit with the real guard interface; a live submit with a failing check is refused.
 - [ ] 3.3 Add the Checks tab on `VATReturnDetail` (REQ-TVRB-001). Verify: Playwright shows a failed and a passed check on seed data.
 
