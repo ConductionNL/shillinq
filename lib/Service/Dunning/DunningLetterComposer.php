@@ -45,6 +45,7 @@ final class DunningLetterComposer {
 	 * @param VoluntaryReminderTemplate $reminder The voluntary contribution's own reminder letter.
 	 * @param DunningTemplateRegistry|null $templates The default template per stage; built over $appConfig when absent.
 	 * @param DunningStageRenderer|null $renderer The stage's subject and body; built over the registry when absent.
+	 * @param ConsumerCostHold $costHold Holds a consumer's collection costs back until the 14-day letter period passed.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
@@ -52,6 +53,7 @@ final class DunningLetterComposer {
 		private readonly VoluntaryReminderTemplate $reminder = new VoluntaryReminderTemplate(),
 		private readonly ?DunningTemplateRegistry $templates = null,
 		private readonly ?DunningStageRenderer $renderer = null,
+		private readonly ConsumerCostHold $costHold = new ConsumerCostHold(),
 	) {
 	}//end __construct()
 
@@ -67,12 +69,14 @@ final class DunningLetterComposer {
 	 * @param array<string,mixed> $params  The prepared params.
 	 * @param array<string,mixed> $invoice The invoice, or [] when it was not found.
 	 * @param callable(string, string, ?string): (array<string,mixed>|null) $find Looks up one record by schema, id and fallback property.
+	 * @param callable(string, array<string,mixed>): array<int,array<string,mixed>> $findAll Lists the records of a schema matching filters.
 	 *
 	 * @return array<string,mixed> The params with recipient and rendered text.
 	 *
 	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.4
 	 */
-	public function address(array $params, array $invoice, callable $find): array {
+	public function address(array $params, array $invoice, callable $find, callable $findAll): array {
 		$customerId = (string)($invoice['customerReference'] ?? ($invoice['customerId'] ?? ''));
 		$customer   = [];
 		if ($customerId !== '') {
@@ -81,6 +85,18 @@ final class DunningLetterComposer {
 
 		$params['recipientEmail'] = ($params['recipientEmail'] ?? ($customer['email'] ?? null));
 		$params['recipientName']  = ($params['recipientName'] ?? ($customer['legalName'] ?? ($customer['tradeName'] ?? null)));
+		// A consumer is charged collection costs only 15 days after the 14-day letter (REQ-RAD-007, design D7).
+		if ((float)($params['collectionCostAmount'] ?? 0.0) > 0.0) {
+			$params = $this->costHold->apply(
+				params: $params,
+				customer: $customer,
+				invoice: $invoice,
+				stages: $this->ladderStages(params: $params, find: $find),
+				runs: $findAll('DunningRun', ['invoiceId' => (string)($params['invoiceId'] ?? '')]),
+				now: new DateTimeImmutable()
+			);
+		}
+
 		if ((string)($params['renderedSubject'] ?? '') !== '' && (string)($params['renderedBody'] ?? '') !== '') {
 			return $params;
 		}
@@ -111,11 +127,9 @@ final class DunningLetterComposer {
 	 */
 	private function stageOf(array $params, callable $find): array {
 		$stageNr = (int)($params['stageNr'] ?? 1);
-		$stages  = [];
-		if (is_array($params['stage'] ?? null) === true) {
-			$stages = [$params['stage']];
-		} else if ((string)($params['ladderId'] ?? '') !== '') {
-			$stages = (array)(($find('DunningLadder', (string)$params['ladderId'], 'slug') ?? [])['stages'] ?? []);
+		$stages = [($params['stage'] ?? null)];
+		if (is_array($params['stage'] ?? null) === false) {
+			$stages = $this->ladderStages(params: $params, find: $find);
 		}
 
 		foreach ($stages as $stage) {
@@ -126,6 +140,22 @@ final class DunningLetterComposer {
 
 		return ['nr' => $stageNr];
 	}//end stageOf()
+
+	/**
+	 * The stages of the ladder the run names, [] when it names none.
+	 *
+	 * @param array<string,mixed> $params The run's params.
+	 * @param callable(string, string, ?string): (array<string,mixed>|null) $find Looks up one record by schema, id and fallback property.
+	 *
+	 * @return array<int,mixed> The stages.
+	 */
+	private function ladderStages(array $params, callable $find): array {
+		if ((string)($params['ladderId'] ?? '') === '') {
+			return [];
+		}
+
+		return (array)(($find('DunningLadder', (string)$params['ladderId'], 'slug') ?? [])['stages'] ?? []);
+	}//end ladderStages()
 
 	/**
 	 * Prepare the run's params for the invoice's letter.

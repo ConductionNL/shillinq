@@ -121,6 +121,7 @@ final class DunningStageSendingTest extends TestCase {
 				'nr' => $nr,
 				'daysAfterExpiryDate' => $days,
 				'channel' => $channel,
+				'statutoryEffect' => ([3 => '14_DAYS_BRIEF_BIK'][$nr] ?? null),
 				'subject' => ['nl' => $nl['subject'], 'en' => $en['subject']],
 				'body' => ['nl' => $nl['body'], 'en' => $en['body']],
 			];
@@ -484,4 +485,94 @@ final class DunningStageSendingTest extends TestCase {
 		self::assertSame('MANUAL', $run['deliveryStatus']);
 		self::assertNotEmpty($run['deliveryNote'] ?? null);
 	}//end testAStageForAnUnknownInvoiceSendsNothing()
+	/**
+	 * Send stage 4 with collection costs after the 14-day letter (stage 3)
+	 * went out a number of days ago.
+	 *
+	 * @param int                  $daysAgo  Days since the letter was delivered.
+	 * @param array<string, mixed> $customer Customer fields to replace.
+	 * @param string               $status   The letter run's delivery status.
+	 *
+	 * @return array<string, mixed> The saved stage 4 run.
+	 */
+	private function costsAfterLetter(int $daysAgo, array $customer = [], string $status = 'DELIVERED'): array {
+		$this->fresh(customer: $customer);
+		$this->os->seed(schema: 'DunningRun', rows: [[
+			'id' => 'run-3',
+			'administrationId' => 'adm-1',
+			'invoiceId' => 'inv-0412',
+			'ladderId' => 'ladder-std',
+			'stageNr' => 3,
+			'channel' => 'EMAIL',
+			'deliveryStatus' => $status,
+			'executedOn' => (new DateTimeImmutable('-' . $daysAgo . ' days'))->format(DATE_ATOM),
+		],
+		]);
+
+		return $this->service()->executeStage(administrationId: 'adm-1', params: [
+			'invoiceId' => 'inv-0412',
+			'ladderId' => 'ladder-std',
+			'stageNr' => 4,
+			'channel' => 'REGISTERED_POST',
+			'collectionCostAmount' => 181.5,
+		]);
+	}//end costsAfterLetter()
+
+	/**
+	 * REQ-RAD-007: a consumer whose 14-day letter went out 10 days ago is not
+	 * charged collection costs yet; the stage goes without them.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.4
+	 */
+	public function testAConsumerIsNotChargedCostsTenDaysAfterTheLetter(): void {
+		$run = $this->costsAfterLetter(daysAgo: 10);
+
+		self::assertNull($run['collectionCostAmount']);
+		self::assertStringNotContainsString('181,50', (string)$run['renderedBody']);
+		self::assertSame([], RegisterSchema::errors('DunningRun', self::withoutEntityColumns($run)));
+	}//end testAConsumerIsNotChargedCostsTenDaysAfterTheLetter()
+
+	/**
+	 * REQ-RAD-007: sixteen days after the letter the consumer's 14 days have
+	 * passed, and the costs are charged.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.4
+	 */
+	public function testAConsumerIsChargedCostsSixteenDaysAfterTheLetter(): void {
+		$run = $this->costsAfterLetter(daysAgo: 16);
+
+		self::assertSame(181.5, (float)$run['collectionCostAmount']);
+	}//end testAConsumerIsChargedCostsSixteenDaysAfterTheLetter()
+
+	/**
+	 * REQ-RAD-007: a letter that failed did not reach the consumer, so it does
+	 * not start the 14 days.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.4
+	 */
+	public function testAFailedLetterDoesNotStartTheConsumersPeriod(): void {
+		$run = $this->costsAfterLetter(daysAgo: 30, status: 'FAILED');
+
+		self::assertNull($run['collectionCostAmount']);
+	}//end testAFailedLetterDoesNotStartTheConsumersPeriod()
+
+	/**
+	 * REQ-RAD-007: a business debtor (a KvK number) is charged without the
+	 * consumer's waiting period.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.4
+	 */
+	public function testABusinessIsChargedCostsWithoutTheWait(): void {
+		$run = $this->costsAfterLetter(daysAgo: 10, customer: ['kvkNumber' => '12345678']);
+
+		self::assertSame(181.5, (float)$run['collectionCostAmount']);
+	}//end testABusinessIsChargedCostsWithoutTheWait()
 }//end class
