@@ -20,6 +20,7 @@ import { openDownPaymentInvoice } from './utils/downPaymentActions.js'
 import { openImportWizard } from './utils/importWizard.js'
 import { openIntegriqConnections } from './utils/integriqConnections.js'
 import { openProposePaymentRun } from './utils/paymentRunActions.js'
+import { approveRefund, openRefundPaid } from './utils/refundActions.js'
 import {
 	confirmRelationSuggestion,
 	dismissRelationSuggestion,
@@ -69,6 +70,10 @@ export const manifestActions = Object.freeze({
 	// platform-administration-import: the batch page's way back into the
 	// wizard (live pass S3, S4).
 	openImportWizard,
+	// receivables-object-request-refund-and-credit: Approve and Mark paid on
+	// the Refunds to pay page.
+	approveRefund,
+	openRefundPaid,
 })
 
 /**
