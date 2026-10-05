@@ -4164,6 +4164,7 @@ OC.L10N.register(
         "Refund requested": "Refund requested",
         "Refunded": "Refunded",
         "Credited": "Credited",
+        "Opening the import batch": "Opening the import batch",
         "Body": "Body",
         "Dutch": "Dutch",
         "English": "English",

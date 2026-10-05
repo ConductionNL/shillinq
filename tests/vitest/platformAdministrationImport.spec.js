@@ -38,10 +38,15 @@ const ImportWizard = (await import('../../src/views/import/ImportWizard.vue'))
 /**
  * A wizard instance: data, methods bound to it, computed as getters.
  *
+ * @param {object} [query] The route query, when the wizard has a route.
  * @return {object}
  */
-function wizard() {
-	const vm = { ...ImportWizard.data() }
+function wizard(query = undefined) {
+	const route = query === undefined ? undefined : { query }
+	const vm = { ...ImportWizard.data.call({ $route: route }) }
+	if (route !== undefined) {
+		vm.$route = route
+	}
 	for (const [name, method] of Object.entries(ImportWizard.methods)) {
 		vm[name] = method.bind(vm)
 	}
@@ -242,6 +247,69 @@ describe('the import wizard', () => {
 })
 
 describe('coming back to a batch (live pass S3)', () => {
+	/**
+	 * The wizard as Vue renders it for a route, before any request answered:
+	 * the installed Vue's server renderer over the compiled template, with
+	 * the @nextcloud/vue components standing in as empty tags.
+	 *
+	 * @param {object} query The route query.
+	 * @return {Promise<string>} The HTML.
+	 */
+	async function firstRender(query) {
+		const { createSSRApp, h } = await import('vue')
+		const { renderToString } = await import('vue/server-renderer')
+		const app = createSSRApp({ render: () => h(ImportWizard) })
+		app.config.globalProperties.$route = { query }
+		app.config.warnHandler = () => {}
+		for (const name of [
+			'NcButton',
+			'NcCheckboxRadioSwitch',
+			'NcLoadingIcon',
+			'NcNoteCard',
+			'NcSelect',
+		]) {
+			app.component(name, {
+				name,
+				render: () => h('span', { 'data-stub': name }),
+			})
+		}
+		return renderToString(app)
+	}
+
+	it('shows no step while it opens the batch the route names (live pass)', async () => {
+		const html = await firstRender({ batch: 'batch-1' })
+		expect(html).toContain('data-testid="import-wizard-opening"')
+		expect(html).not.toContain('data-testid="import-step-upload"')
+		expect(html).not.toContain('aria-current="step"')
+	})
+
+	it('starts a new import on the first step', async () => {
+		const html = await firstRender({})
+		expect(html).toContain('data-testid="import-step-upload"')
+		expect(html).not.toContain('data-testid="import-wizard-opening"')
+	})
+
+	it('lands on the batch step once the batch is read, and on the first step when it cannot be', async () => {
+		const state = register()
+		state.batch = { id: 'batch-1', status: 'mapping' }
+		const vm = wizard({ batch: 'batch-1' })
+		expect(vm.opening).toBe(true)
+		await ImportWizard.mounted.call(vm)
+		expect(vm.opening).toBe(false)
+		expect(vm.step).toBe('mapping')
+
+		axiosMock.get.mockImplementation(async (url) => {
+			if (url.includes('/ImportBatch/')) {
+				throw { response: { status: 404, data: {} } }
+			}
+			return { data: { activeAdministrationId: 'adm-new' } }
+		})
+		const gone = wizard({ batch: 'gone' })
+		await ImportWizard.mounted.call(gone)
+		expect(gone.opening).toBe(false)
+		expect(gone.step).toBe('upload')
+	})
+
 	it('opens the batch the route names, on the step its status belongs on', async () => {
 		const state = register()
 		state.batch = { id: 'batch-1', status: 'mapping' }
