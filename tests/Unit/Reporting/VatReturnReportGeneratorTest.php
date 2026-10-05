@@ -27,6 +27,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Reporting;
 
+use DOMDocument;
+use DOMXPath;
 use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
 use OCA\Shillinq\Reporting\Generator\VatReturnReportGenerator;
 use OCA\Shillinq\Service\VATReturnService;
@@ -167,17 +169,15 @@ final class VatReturnReportGeneratorTest extends TestCase {
 	 * @return array{0: string|null, 1: string}
 	 */
 	private function rubriek(string $content, string $code): array {
-		$xml = simplexml_load_string($content);
-		self::assertNotFalse($xml);
-		foreach ($xml->Rubriek as $rubriek) {
-			if ((string)$rubriek['code'] === $code) {
-				$base = null;
-				if (isset($rubriek->Bedrag) === true) {
-					$base = (string)$rubriek->Bedrag;
-				}
-
-				return [$base, (string)$rubriek->Omzetbelasting];
-			}
+		$dom = new DOMDocument();
+		self::assertTrue($dom->loadXML($content));
+		$xpath = new DOMXPath($dom);
+		$rubrieken = $xpath->query('/BTWAangifte/Rubriek[@code="' . $code . '"]');
+		self::assertNotFalse($rubrieken);
+		$rubriek = $rubrieken->item(0);
+		if ($rubriek !== null) {
+			$base = $xpath->query('Bedrag', $rubriek)->item(0);
+			return [$base?->textContent, (string)$xpath->query('Omzetbelasting', $rubriek)->item(0)?->textContent];
 		}
 
 		self::fail('No rubriek ' . $code);
