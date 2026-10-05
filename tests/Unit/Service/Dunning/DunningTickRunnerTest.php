@@ -110,6 +110,13 @@ final class DunningTickRunnerTest extends TestCase {
 	private array $config = [];
 
 	/**
+	 * The records the store starts with.
+	 *
+	 * @var array<string, array<int, array<string, mixed>>>
+	 */
+	private array $seed = [];
+
+	/**
 	 * The object store.
 	 *
 	 * @var InMemoryObjectServiceStub
@@ -144,28 +151,26 @@ final class DunningTickRunnerTest extends TestCase {
 			];
 		}
 
-		$this->store = new InMemoryObjectServiceStub(
-			data: [
-				'Administration' => [
-					self::administration(code: 'ADM-KADE', name: 'Adviesbureau Kade B.V.', enabled: true),
-					self::administration(code: 'ADM-LOODS', name: 'Werkplaats De Loods B.V.', enabled: false),
-				],
-				'DunningLadder' => [
-					['id' => 'ladder-std', 'administrationId' => 'ADM-KADE', 'customerGroup' => 'DEFAULT', 'lifecycleState' => 'active', 'stages' => $stages],
-					['id' => 'ladder-loods', 'administrationId' => 'ADM-LOODS', 'customerGroup' => 'DEFAULT', 'lifecycleState' => 'active', 'stages' => $stages],
-				],
-				'CustomerMaster' => [
-					self::customer(id: 'cm-korenaar', name: 'Bakkerij De Korenaar B.V.', email: 'administratie@korenaar.nl', administration: 'ADM-KADE'),
-					self::customer(id: 'cm-molen', name: 'Molenaar Installatietechniek B.V.', email: 'facturen@molenaar.nl', administration: 'ADM-KADE'),
-					self::customer(id: 'cm-loods', name: 'Garage Van Dijk', email: 'info@garagevandijk.nl', administration: 'ADM-LOODS'),
-				],
-				'ARInvoice' => [
-					self::invoice(id: 'inv-0412', number: '2026-0412', dueDate: '2026-10-15', customer: 'cm-korenaar', administration: 'ADM-KADE'),
-					self::invoice(id: 'inv-loods', number: '2026-0077', dueDate: '2026-10-01', customer: 'cm-loods', administration: 'ADM-LOODS'),
-				],
+		$this->seed = [
+			'Administration' => [
+				self::administration(code: 'ADM-KADE', name: 'Adviesbureau Kade B.V.', enabled: true),
+				self::administration(code: 'ADM-LOODS', name: 'Werkplaats De Loods B.V.', enabled: false),
 			],
-			idFiltersMatchNothing: true
-		);
+			'DunningLadder' => [
+				['id' => 'ladder-std', 'administrationId' => 'ADM-KADE', 'customerGroup' => 'DEFAULT', 'lifecycleState' => 'active', 'stages' => $stages],
+				['id' => 'ladder-loods', 'administrationId' => 'ADM-LOODS', 'customerGroup' => 'DEFAULT', 'lifecycleState' => 'active', 'stages' => $stages],
+			],
+			'CustomerMaster' => [
+				self::customer(id: 'cm-korenaar', name: 'Bakkerij De Korenaar B.V.', email: 'administratie@korenaar.nl', administration: 'ADM-KADE'),
+				self::customer(id: 'cm-molen', name: 'Molenaar Installatietechniek B.V.', email: 'facturen@molenaar.nl', administration: 'ADM-KADE'),
+				self::customer(id: 'cm-loods', name: 'Garage Van Dijk', email: 'info@garagevandijk.nl', administration: 'ADM-LOODS'),
+			],
+			'ARInvoice' => [
+				self::invoice(id: 'inv-0412', number: '2026-0412', dueDate: '2026-10-15', customer: 'cm-korenaar', administration: 'ADM-KADE'),
+				self::invoice(id: 'inv-loods', number: '2026-0077', dueDate: '2026-10-01', customer: 'cm-loods', administration: 'ADM-LOODS'),
+			],
+		];
+		$this->store = new InMemoryObjectServiceStub(data: $this->seed, idFiltersMatchNothing: true);
 	}//end setUp()
 
 	/**
@@ -396,7 +401,7 @@ final class DunningTickRunnerTest extends TestCase {
 	 * @return array<string, mixed>
 	 */
 	private function stored(string $schema, string $id): array {
-		foreach ($this->store->setSchema($schema)->findAll() as $row) {
+		foreach ($this->store->setSchema($schema)->findAll([], _rbac: false, _multitenancy: false) as $row) {
 			if ($row['id'] === $id) {
 				return $row;
 			}
@@ -413,7 +418,7 @@ final class DunningTickRunnerTest extends TestCase {
 	 * @return array<int, array<string, mixed>>
 	 */
 	private function runs(string $invoiceId): array {
-		$runs = $this->store->setSchema('DunningRun')->findAll();
+		$runs = $this->store->setSchema('DunningRun')->findAll([], _rbac: false, _multitenancy: false);
 		return array_values(array_filter($runs, static fn (array $run): bool => $run['invoiceId'] === $invoiceId));
 	}//end runs()
 
@@ -692,4 +697,161 @@ final class DunningTickRunnerTest extends TestCase {
 
 		self::assertSame('issued', $this->stored('ARInvoice', 'inv-0412')['lifecycleState']);
 	}//end testTheJobLogsAPassThatFails()
+
+	/**
+	 * The store as OpenRegister answers a caller with NO session user, as cron
+	 * runs the job (lane 35's open question).
+	 *
+	 * OpenRegister origin/development: a read with organisation scoping on
+	 * (`_multitenancy` true, the default) goes through
+	 * MagicOrganizationHandler::resolveOrganizationScope(). With no user it is a
+	 * system context only on the command line or inside runAsSystem()
+	 * (isSystemContext(), the same rule as
+	 * MagicRbacHandler::isTrustedSystemCaller()); otherwise a userless caller
+	 * has no active organisation, the scope is SCOPE_NONE, and the query gets
+	 * `1 = 0`. The dunning schemas declare no `authorization`, so
+	 * MagicSearchHandler::multitenancyApplies() keeps that filter on. A read
+	 * with `_multitenancy` false skips it, as the runner's own listing does.
+	 *
+	 * @param bool $commandLine Whether PHP runs under the CLI SAPI (system cron, occ) or a web request (AJAX or webcron).
+	 *
+	 * @return InMemoryObjectServiceStub
+	 */
+	private function userlessStore(bool $commandLine): InMemoryObjectServiceStub {
+		return new class ($this->seed, $commandLine) extends InMemoryObjectServiceStub {
+			/**
+			 * How deep the current call sits inside runAsSystem().
+			 *
+			 * @var int
+			 */
+			private int $system = 0;
+
+			/**
+			 * @param array<string,array<int,array<string,mixed>>> $seed        The records.
+			 * @param bool                                         $commandLine Whether PHP runs under the CLI SAPI.
+			 */
+			public function __construct(array $seed, private bool $commandLine) {
+				parent::__construct(data: $seed, idFiltersMatchNothing: true);
+			}
+
+			/**
+			 * Whether OpenRegister treats this userless caller as the system.
+			 *
+			 * @return bool
+			 */
+			private function trusted(): bool {
+				return $this->commandLine === true || $this->system > 0;
+			}
+
+			/**
+			 * @param callable $operation The operation.
+			 *
+			 * @return mixed
+			 */
+			public function runAsSystem(callable $operation) {
+				$this->system++;
+				try {
+					return $operation();
+				} finally {
+					$this->system--;
+				}
+			}
+
+			/**
+			 * @param array $config        The query.
+			 * @param bool  $_rbac         Register RBAC.
+			 * @param bool  $_multitenancy Organisation scoping.
+			 *
+			 * @return array
+			 */
+			public function findAll(array $config = [], bool $_rbac = true, bool $_multitenancy = true): array {
+				if ($_multitenancy === true && $this->trusted() === false) {
+					return [];
+				}
+
+				return parent::findAll($config, $_rbac, $_multitenancy);
+			}
+
+			/**
+			 * @param int|string      $id            The id.
+			 * @param array|null      $_extend       Extends.
+			 * @param bool            $files         Files.
+			 * @param string|int|null $register      Register.
+			 * @param string|int|null $schema        Schema.
+			 * @param bool            $_rbac         Register RBAC.
+			 * @param bool            $_multitenancy Organisation scoping.
+			 * @param bool            $_render       Render.
+			 * @param bool            $_audit        Audit.
+			 *
+			 * @return \OCA\OpenRegister\Contract\ObjectEntityInterface|null
+			 */
+			public function find(
+				int|string $id,
+				?array $_extend = [],
+				bool $files = false,
+				string|int|null $register = null,
+				string|int|null $schema = null,
+				bool $_rbac = true,
+				bool $_multitenancy = true,
+				bool $_render = true,
+				bool $_audit = true
+			): ?\OCA\OpenRegister\Contract\ObjectEntityInterface {
+				if ($_multitenancy === true && $this->trusted() === false) {
+					return null;
+				}
+
+				return parent::find($id, $_extend, $files, $register, $schema, $_rbac, $_multitenancy, $_render, $_audit);
+			}
+		};
+	}//end userlessStore()
+
+	/**
+	 * Run the daily job with no session user, as cron does.
+	 *
+	 * @param bool $commandLine Whether cron runs on the command line.
+	 *
+	 * @return void
+	 */
+	private function runJobWithoutAUser(bool $commandLine): void {
+		$this->store = $this->userlessStore(commandLine: $commandLine);
+		$time        = $this->createMock(ITimeFactory::class);
+		$time->method('now')->willReturn(new DateTimeImmutable(self::TODAY));
+		$job = new DunningTickJob($time, $this->runner(), new NullLogger());
+
+		(new ReflectionMethod($job, 'run'))->invoke($job, null);
+	}//end runJobWithoutAUser()
+
+	/**
+	 * System cron on the command line: OpenRegister treats a userless CLI
+	 * caller as the system, so the service's own reads (ladder, customer,
+	 * earlier runs, pauses) return rows and stage 1 goes out.
+	 *
+	 * @return void
+	 */
+	public function testOnTheCommandLineTheJobsReadsReturnRows(): void {
+		$this->runJobWithoutAUser(commandLine: true);
+
+		self::assertSame('overdue', $this->stored('ARInvoice', 'inv-0412')['lifecycleState']);
+		self::assertCount(1, $this->runs('inv-0412'));
+		self::assertCount(1, $this->mails);
+	}//end testOnTheCommandLineTheJobsReadsReturnRows()
+
+	/**
+	 * AJAX or webcron: cron runs in a web request with no user. The runner's
+	 * listing turns scoping off, but every read inside DunningRunService keeps
+	 * it on, so without a system context it found no ladder and sent nothing.
+	 * The pass now runs as the system, so the reads return rows in every cron
+	 * mode.
+	 *
+	 * @return void
+	 */
+	public function testInAWebCronTheJobsReadsReturnRowsToo(): void {
+		$this->runJobWithoutAUser(commandLine: false);
+
+		self::assertSame('overdue', $this->stored('ARInvoice', 'inv-0412')['lifecycleState']);
+		$runs = $this->runs('inv-0412');
+		self::assertCount(1, $runs, 'The service read no ladder: nothing was sent.');
+		self::assertSame(1, (int)$runs[0]['stageNr']);
+		self::assertCount(1, $this->mails);
+	}//end testInAWebCronTheJobsReadsReturnRowsToo()
 }//end class
