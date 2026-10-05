@@ -4163,7 +4163,8 @@ OC.L10N.register(
         "Refunds to pay": "Refunds to pay",
         "Refund requested": "Refund requested",
         "Refunded": "Refunded",
-        "Credited": "Credited"
+        "Credited": "Credited",
+        "Opening the import batch": "Opening the import batch"
     },
     "nplurals=2; plural=(n != 1);"
 )

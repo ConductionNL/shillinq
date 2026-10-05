@@ -22,7 +22,10 @@
 			</p>
 		</header>
 
-		<ol class="import-wizard__steps" :aria-label="t('shillinq', 'Import steps')">
+		<ol
+			v-if="!opening"
+			class="import-wizard__steps"
+			:aria-label="t('shillinq', 'Import steps')">
 			<li
 				v-for="(id, index) in steps"
 				:key="id"
@@ -40,7 +43,15 @@
 		</NcNoteCard>
 
 		<section
-			v-if="step === 'upload'"
+			v-if="opening"
+			class="import-wizard__panel"
+			data-testid="import-wizard-opening">
+			<NcLoadingIcon :size="32" />
+			<p>{{ t('shillinq', 'Opening the import batch') }}</p>
+		</section>
+
+		<section
+			v-else-if="step === 'upload'"
 			class="import-wizard__panel"
 			data-testid="import-step-upload">
 			<h3>{{ t('shillinq', 'Choose the auditfile') }}</h3>
@@ -270,6 +281,7 @@ import { translate as t } from '@nextcloud/l10n'
 import {
 	NcButton,
 	NcCheckboxRadioSwitch,
+	NcLoadingIcon,
 	NcNoteCard,
 	NcSelect,
 } from '@nextcloud/vue'
@@ -312,12 +324,16 @@ export default {
 		FindingList,
 		NcButton,
 		NcCheckboxRadioSwitch,
+		NcLoadingIcon,
 		NcNoteCard,
 		NcSelect,
 	},
 
 	data() {
 		return {
+			// A batch named in the address is read before any step shows, so
+			// the first step does not stand in for it while it loads.
+			opening: Boolean(this.$route?.query?.batch),
 			steps: WIZARD_STEPS,
 			step: 'upload',
 			form: emptyForm(),
@@ -446,8 +462,12 @@ export default {
 	async mounted() {
 		await this.resolveAdministration()
 		const id = this.$route?.query?.batch
-		if (id) {
-			await this.resume(String(id))
+		try {
+			if (id) {
+				await this.resume(String(id))
+			}
+		} finally {
+			this.opening = false
 		}
 	},
 

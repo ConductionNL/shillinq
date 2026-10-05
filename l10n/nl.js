@@ -6370,7 +6370,8 @@ OC.L10N.register(
         "Refunds to pay": "Terug te betalen",
         "Refund requested": "Terugbetaling gevraagd",
         "Refunded": "Terugbetaald",
-        "Credited": "Gecrediteerd"
+        "Credited": "Gecrediteerd",
+        "Opening the import batch": "De importbatch wordt geopend"
     },
     "nplurals=2; plural=(n != 1);"
 )
