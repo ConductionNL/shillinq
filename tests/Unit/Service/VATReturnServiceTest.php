@@ -473,8 +473,9 @@ final class VATReturnServiceTest extends TestCase {
 	}//end testTheVatIsTakenAsBookedAndNotRecalculatedFromARate()
 
 	/**
-	 * A reverse-charged purchase declares its base in the box of its tariff
-	 * (2a domestic, 4b from the EU), and its VAT lines say reverse charge.
+	 * A reverse-charged purchase declares its base and its VAT in the box of
+	 * its tariff (2a domestic, 4b from the EU) and the same VAT in 5b, and its
+	 * VAT lines say reverse charge.
 	 *
 	 * @return void
 	 *
@@ -511,14 +512,20 @@ final class VATReturnServiceTest extends TestCase {
 		);
 
 		$byBox = $this->declarationsByBox($stub);
-		self::assertSame(['2a', '4b'], array_keys($byBox));
+		ksort($byBox);
+		self::assertSame(['2a', '4b', '5b'], array_keys($byBox));
 		self::assertSame(2000.0, $byBox['2a']['totalTaxableAmount']);
 		self::assertSame(1000.0, $byBox['4b']['totalTaxableAmount']);
 		self::assertSame('reverse-charge', $byBox['2a']['type']);
+		// Task 1.2: the VAT is owed next to the base and deducted in 5b, so the net is nil.
+		self::assertSame(420.0, $byBox['2a']['totalVATAmount']);
+		self::assertSame(210.0, $byBox['4b']['totalVATAmount']);
+		self::assertSame(630.0, $byBox['5b']['totalVATAmount']);
+		self::assertSame(630.0, $totals['totalVATCollected']);
+		self::assertSame(630.0, $totals['totalVATPaid']);
 		self::assertSame(3000.0, $totals['totalTaxableAmount']);
 		foreach ($stub->dump('VATLine') as $line) {
 			self::assertTrue($line['reverseChargeApplicable']);
-			self::assertSame('7', substr((string)$line['glAccountNumber'], 0, 1));
 		}
 	}//end testAReverseChargedPurchaseDeclaresItsBaseInTheBoxOfItsTariff()
 
