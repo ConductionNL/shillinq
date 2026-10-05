@@ -268,7 +268,10 @@ describe('coming back to a batch (live pass S3)', () => {
 			'NcNoteCard',
 			'NcSelect',
 		]) {
-			app.component(name, { name, render: () => h('span', { 'data-stub': name }) })
+			app.component(name, {
+				name,
+				render: () => h('span', { 'data-stub': name }),
+			})
 		}
 		return renderToString(app)
 	}
