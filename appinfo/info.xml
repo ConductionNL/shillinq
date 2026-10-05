@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.5.4-unstable.20261005190000</version>
+    <version>0.5.5-unstable.20261005210000</version>
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
@@ -353,6 +353,13 @@ Vrij en open source onder de EUPL-1.2-licentie.
                 non-destructive, fail-soft.
             -->
             <step>OCA\Shillinq\Repair\RenameMandateCommitmentKinds</step>
+            <!-- tax-vat-return-from-books task 1.3: stamps the VAT tariff, return
+                 box and amount kind on posted ledger lines that lack them (posted
+                 before the mapper stamped them, or while the VAT tariffs were not
+                 seeded), from the line's tariff, else the account's VAT settings.
+                 After InitializeSettings, which seeds the tariffs. Logs the lines
+                 it cannot resolve. Idempotent, fail-soft. -->
+            <step>OCA\Shillinq\Repair\StampVatReturnBoxes</step>
         </post-migration>
 
         <!-- FRESH INSTALL. Nextcloud does NOT run `post-migration` on a first
