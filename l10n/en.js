@@ -4207,7 +4207,23 @@ OC.L10N.register(
         "Whether this line's amount is the base the VAT is charged on (the revenue or cost line) or the VAT itself (the line on the output or input VAT account).": "Whether this line's amount is the base the VAT is charged on (the revenue or cost line) or the VAT itself (the line on the output or input VAT account).",
         "Return box": "Return box",
         "The VAT return box this declaration totals.": "The VAT return box this declaration totals.",
-        "The VAT return box of the ledger line this VAT line was taken from.": "The VAT return box of the ledger line this VAT line was taken from."
+        "The VAT return box of the ledger line this VAT line was taken from.": "The VAT return box of the ledger line this VAT line was taken from.",
+        "Add up the booked ledger lines of a period per box and save them as a draft return.": "Add up the booked ledger lines of a period per box and save them as a draft return.",
+        "Choose a period kind, a year from 2020 and a period number that fits it.": "Choose a period kind, a year from 2020 and a period number that fits it.",
+        "Choose an administration first.": "Choose an administration first.",
+        "Draft return {number}: BTW collected EUR {collected}, input tax EUR {paid}.": "Draft return {number}: BTW collected EUR {collected}, input tax EUR {paid}.",
+        "Month (1 to 12)": "Month (1 to 12)",
+        "Open the return": "Open the return",
+        "Period kind": "Period kind",
+        "Prepare": "Prepare",
+        "Prepare return": "Prepare return",
+        "Quarter (1 to 4)": "Quarter (1 to 4)",
+        "Reverse charge": "Reverse charge",
+        "Small business scheme (KOR)": "Small business scheme (KOR)",
+        "That period has not ended yet. Prepare a return for a period that is over.": "That period has not ended yet. Prepare a return for a period that is over.",
+        "The return adds up the booked ledger lines of the period per box. It is saved as a draft that you check and submit on its own page.": "The return adds up the booked ledger lines of the period per box. It is saved as a draft that you check and submit on its own page.",
+        "The return could not be prepared. Try again, or ask your administrator to check the log.": "The return could not be prepared. Try again, or ask your administrator to check the log.",
+        "You cannot prepare a return for this administration.": "You cannot prepare a return for this administration."
     },
     "nplurals=2; plural=(n != 1);"
 )
