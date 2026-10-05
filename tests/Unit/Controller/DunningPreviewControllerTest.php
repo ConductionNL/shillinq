@@ -31,6 +31,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use DateTimeImmutable;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Controller\DunningPreviewController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Dunning\DunningStageDefaultTexts;
@@ -49,6 +50,7 @@ use OCP\Lock\ILockingProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
+use RuntimeException;
 
 /**
  * The Next run preview and the ladder stage texts, through the controller.
@@ -153,11 +155,12 @@ final class DunningPreviewControllerTest extends TestCase {
 	/**
 	 * The controller as the container builds it.
 	 *
-	 * @param string $language The caller's language.
+	 * @param string                      $language      The caller's language.
+	 * @param ObjectServiceInterface|null $objectService The controller's own object service; the store when null.
 	 *
 	 * @return DunningPreviewController
 	 */
-	private function controller(string $language = 'en'): DunningPreviewController {
+	private function controller(string $language = 'en', ?ObjectServiceInterface $objectService = null): DunningPreviewController {
 		$request = $this->createStub(IRequest::class);
 		$request->method('getParam')->willReturnCallback(
 			fn (string $key, mixed $default = null): mixed => ($this->params[$key] ?? $default)
@@ -205,7 +208,7 @@ final class DunningPreviewControllerTest extends TestCase {
 			context: $context,
 			runner: $runner,
 			renderer: new DunningStageRenderer(registry: new DunningTemplateRegistry(appConfig: $appConfig)),
-			objectService: $store,
+			objectService: ($objectService ?? $store),
 			appConfig: $appConfig,
 			time: $time,
 			l10n: $l10n,
@@ -329,4 +332,85 @@ final class DunningPreviewControllerTest extends TestCase {
 		self::assertSame(Http::STATUS_NOT_FOUND, $this->controller()->ladderStages('ladder-kade')->getStatus());
 		self::assertSame(Http::STATUS_NOT_FOUND, $this->controller()->ladderStages('no-such-ladder')->getStatus());
 	}//end testALadderOutsideTheCallersScopeIsNotFound()
+
+	/**
+	 * A membership can name an administration by its code and by its record id;
+	 * the list shows that administration once. A membership whose
+	 * administration no longer exists is left out instead of failing the page.
+	 *
+	 * @return void
+	 */
+	public function testTheListShowsEachAdministrationOnceAndSkipsAMissingOne(): void {
+		$this->memberOf = ['ADM-LOODS', 'uuid-adm-loods', 'ADM-GONE'];
+
+		$response = $this->controller()->nextRun();
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame(['uuid-adm-loods'], array_column($response->getData()['administrations'], 'id'));
+	}//end testTheListShowsEachAdministrationOnceAndSkipsAMissingOne()
+
+	/**
+	 * When the register cannot be opened the caller gets 404 for the one
+	 * administration or ladder asked for, and an empty list otherwise; the
+	 * error is logged, not shown.
+	 *
+	 * @return void
+	 */
+	public function testARegisterThatCannotBeOpenedAnswersNotFound(): void {
+		$broken = $this->createStub(ObjectServiceInterface::class);
+		$broken->method('setRegister')->willThrowException(new RuntimeException('Register shillinq not found'));
+
+		self::assertSame([], $this->controller(objectService: $broken)->nextRun()->getData()['administrations']);
+		self::assertSame(Http::STATUS_NOT_FOUND, $this->controller(objectService: $broken)->ladderStages('ladder-loods')->getStatus());
+
+		$this->params = ['administrationId' => 'ADM-LOODS'];
+		self::assertSame(Http::STATUS_NOT_FOUND, $this->controller(objectService: $broken)->nextRun()->getStatus());
+	}//end testARegisterThatCannotBeOpenedAnswersNotFound()
+
+	/**
+	 * Every channel a ladder stage can hold has a name in the table; an
+	 * unknown code is shown as it is stored.
+	 *
+	 * @return void
+	 */
+	public function testEveryStageChannelHasALabel(): void {
+		$channels = ['EMAIL', 'eMAILPostRegistration', 'REGISTERED_POST', 'COLLECTION_AGENCY_API', 'FAX'];
+		$stages   = [];
+		foreach ($channels as $index => $channel) {
+			$stages[] = ['nr' => ($index + 1), 'daysAfterExpiryDate' => (7 * ($index + 1)), 'channel' => $channel];
+		}
+
+		$this->store->setSchema('DunningLadder')->saveObject(
+			object: ['id' => 'ladder-channels', 'administrationId' => 'ADM-LOODS', 'stages' => $stages]
+		);
+
+		$rows = $this->controller()->ladderStages('ladder-channels')->getData()['rows'];
+
+		self::assertSame(
+			['Email', 'Email and registered post', 'Registered post', 'Collection agency', 'FAX'],
+			array_column($rows, 'channelLabel')
+		);
+	}//end testEveryStageChannelHasALabel()
+
+	/**
+	 * An empty register setting falls back to the shillinq register instead
+	 * of opening a register without a name.
+	 *
+	 * @return void
+	 */
+	public function testAnEmptyRegisterSettingFallsBackToShillinq(): void {
+		$this->config['register'] = '';
+		$opened    = [];
+		$recording = $this->createStub(ObjectServiceInterface::class);
+		$recording->method('setRegister')->willReturnCallback(
+			function (string|int $register) use (&$opened): never {
+				$opened[] = $register;
+				throw new RuntimeException('stop after the register is chosen');
+			}
+		);
+
+		$this->controller(objectService: $recording)->ladderStages('ladder-loods');
+
+		self::assertSame(['shillinq'], $opened);
+	}//end testAnEmptyRegisterSettingFallsBackToShillinq()
 }//end class
