@@ -88,7 +88,9 @@ the reminder.
 `tickInvoice()` picks the lowest-numbered stage whose threshold is reached and
 that has not fired for the invoice, and fires a later stage only when at least
 its threshold difference has passed since the previous stage fired. The
-existing `stageForOverdueDays()` stays for display.
+choice lives in `DunningStageSelector`, which does no I/O, so the tick and its
+preview ask the same question; the old "highest stage reached" rule stays
+there as `highestReached()` for display.
 
 Alternative considered: keep "highest stage reached". Rejected: on the first
 run a long-overdue invoice would skip the friendly reminder and the statutory

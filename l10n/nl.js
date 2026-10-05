@@ -6371,6 +6371,7 @@ OC.L10N.register(
         "Refund requested": "Terugbetaling gevraagd",
         "Refunded": "Terugbetaald",
         "Credited": "Gecrediteerd",
+        "Opening the import batch": "De importbatch wordt geopend",
         "Dutch": "Nederlands",
         "English": "Engels",
         "The mail subject of this stage, in Dutch and English. Write merge fields as {klantNaam}, {factuurNummer} and so on. Without a subject the stage uses its default text.": "Het onderwerp van de mail voor deze stap, in het Nederlands en Engels. Schrijf samenvoegvelden als {klantNaam}, {factuurNummer} enzovoort. Zonder onderwerp gebruikt de stap de standaardtekst.",
