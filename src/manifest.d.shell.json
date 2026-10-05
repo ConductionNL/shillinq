@@ -919,6 +919,16 @@
 					"icon": "CreditCardOutline",
 					"route": "PaymentRequests",
 					"order": 24
+				},
+				{
+					"id": "RefundsToPay",
+					"label": "Refunds to pay",
+					"icon": "CashRefund",
+					"route": "PaymentRequests",
+					"query": {
+						"state": "refund_requested"
+					},
+					"order": 25
 				}
 			],
 			"pages": [
