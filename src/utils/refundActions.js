@@ -22,7 +22,7 @@ import { refundError, refundStepUrl } from './refundApi.js'
  *
  * @param {object} request The payment request.
  * @return {string} The refund state, or '' when it has none.
- * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md
+ * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-refunds-and-credit/spec.md
  */
 export function newestRefundState(request) {
 	const refunds = Array.isArray(request?.refunds) ? request.refunds : []
@@ -37,7 +37,7 @@ export function newestRefundState(request) {
  *
  * @param {{item: object}} scope The row scope.
  * @return {Promise<boolean>} Whether the refund was approved.
- * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md
+ * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-refunds-and-credit/spec.md
  */
 export async function approveRefund(scope) {
 	const request = scope?.item
@@ -63,7 +63,7 @@ export async function approveRefund(scope) {
  *
  * @param {{item: object}} scope The row scope.
  * @return {Promise<unknown>|undefined} The dialog's close payload.
- * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md
+ * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-refunds-and-credit/spec.md
  */
 export function openRefundPaid(scope) {
 	const request = scope?.item

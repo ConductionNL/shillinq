@@ -132,7 +132,9 @@ before. Anything else comes back with an error and changes nothing.
   `paymentRefundAccount`; marking it paid
   (`POST /api/payment-requests/{id}/refund/paid` with `bankReference` and
   `bankAccount`) clears that account against the bank. Both need the
-  `payment.administer` action.
+  `payment.administer` action. Finance takes both steps on the Refunds to pay
+  page (`/bookkeeping/refunds-to-pay`), which lists every request in
+  `refund_requested`.
 - `PaymentCreditRequestedEvent`: shillinq moves the income to the customer
   credit account set in `paymentCreditAccount`, records a `DebtorCredit` for
   the payer's customer record or, without one, their email address, and the

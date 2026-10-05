@@ -13,7 +13,7 @@ import { generateUrl } from '@nextcloud/router'
  * @param {string} id The payment request id.
  * @param {string} step `approve` or `paid`.
  * @return {string} The URL.
- * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md
+ * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-refunds-and-credit/spec.md
  */
 export function refundStepUrl(id, step) {
 	return generateUrl(
@@ -27,7 +27,7 @@ export function refundStepUrl(id, step) {
  * @param {unknown} error The axios error.
  * @param {string} fallback The text when the server gave none.
  * @return {string} The reason.
- * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md
+ * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-refunds-and-credit/spec.md
  */
 export function refundError(error, fallback) {
 	const data = error?.response?.data
