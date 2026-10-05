@@ -176,6 +176,7 @@ final class VATReturnControllerTest extends TestCase {
 			logger: $this->logger,
 			l10n: $this->l10n,
 			checksGuard: new VatReturnChecksGuard(checks: $this->checks),
+			checks: $this->checks,
 		);
 
 		// Bind the session once to a mutable reference; tests can override the
@@ -608,6 +609,46 @@ final class VATReturnControllerTest extends TestCase {
 		self::assertStringContainsString('has a VAT return box', $response->getData()['message']);
 		self::assertStringContainsString('MEM-77', $response->getData()['message']);
 	}//end testSubmitIsRefusedWhileABlockingCheckFails()
+
+	/**
+	 * checks() answers the checks of a return the caller may see (REQ-TVRB-001,
+	 * the Checks tab).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-3.3
+	 */
+	public function testChecksAnswersTheChecksOfTheReturn(): void {
+		$this->withUser(uid: 'alice');
+		$this->service->method('findReturn')
+			->willReturn(['id' => 'ret-1', 'administrationId' => 'adm-1', 'statusCode' => 'draft']);
+		$rows = [['id' => 'nl-vat-return-no-drafts', 'blocking' => false, 'passed' => true, 'offenders' => []]];
+		$this->checks->expects($this->once())->method('run')->with('ret-1')->willReturn($rows);
+
+		$response = $this->controller->checks(returnId: 'ret-1');
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame($rows, $response->getData()['data']);
+	}//end testChecksAnswersTheChecksOfTheReturn()
+
+	/**
+	 * checks() tells a caller from another administration nothing.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-3.3
+	 */
+	public function testChecksIsNotFoundForAnotherAdministration(): void {
+		$this->withUser(uid: 'alice');
+		$this->canAccess = false;
+		$this->service->method('findReturn')
+			->willReturn(['id' => 'ret-1', 'administrationId' => 'adm-2', 'statusCode' => 'draft']);
+		$this->checks->expects($this->never())->method('run');
+
+		$response = $this->controller->checks(returnId: 'ret-1');
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+	}//end testChecksIsNotFoundForAnotherAdministration()
 
 	/**
 	 * rebase() returns 200 + the rebased return.
