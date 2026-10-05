@@ -13,7 +13,7 @@
 ## 3. Refund
 
 - [x] 3.1 `ObjectRequestRefundService` approve and mark-paid with their bookings and the `paymentRefundAccount` setting (REQ-ORC-002). Verify: PHPUnit `ObjectRequestRefundServiceTest::testApproveBooksTheReversal` and `testMarkPaidMovesToRefunded`. (4 Oct 2026: `ObjectRequestRefundService::approve()` books debit the revenue account, credit `paymentRefundAccount`; `markPaid()` books debit refunds payable, credit the bank account given, sets the refund `paid` with the bank reference and the request `refunded`; both through a draft JournalEntry and `postDirect`. Served by `ObjectRequestRefundController` at `POST /api/payment-requests/{id}/refund/approve` and `/refund/paid`, gated on `payment.administer`. Tests start from a request the real listener put in `refund_requested` and validate every save against the merged register.)
-- [ ] 3.2 "Refunds to pay" page and its two actions, gated on `payment.administer`. Verify: Playwright `tests/e2e/object-request-refund.spec.ts` "a finance user pays a refund and the request reads refunded".
+- [ ] 3.2 "Refunds to pay" page and its two actions, gated on `payment.administer`. Verify: Playwright `tests/e2e/object-request-refund.spec.ts` "a finance user pays a refund and the request reads refunded". (5 Oct 2026, built, Playwright owed on the live instance: a Refunds to pay menu entry under Sales onto the Payment requests index filtered on `state: refund_requested` (`src/manifest.d/ar-invoice-payment-links.json`; not a second index page, ADR-097 Decision 5), with the two row actions shown on requests in that state. Row handlers `approveRefund` (POST `/refund/approve`) and `openRefundPaid` (`src/modals/RefundPaidModal.vue`, bank reference + bank account, POST `/refund/paid`) in `src/utils/refundActions.js`, registered in `src/manifestActions.js`. The server gates both on `payment.administer`; the page shows its refusal as worded. Vitest `tests/vitest/refundsToPay.spec.js` resolves both through the installed library's index row dispatch. Left open until the Playwright test runs live.)
 
 ## 4. Credit
 
@@ -22,5 +22,5 @@
 
 ## 5. Close
 
-- [ ] 5.1 English and Dutch strings, docs on refunds and credit for other apps; run `openspec validate receivables-object-request-refund-and-credit --strict`.
+- [x] 5.1 English and Dutch strings, docs on refunds and credit for other apps; run `openspec validate receivables-object-request-refund-and-credit --strict`. (5 Oct 2026: English and Dutch strings for the page and dialog in `l10n/en.json` and `l10n/nl.json`; other apps read `docs/api/payment-request-leaf.md` "Refund or credit a settled request", which now names the page; finance reads `docs/user-guide/bookkeeping/refunds-to-pay.md`. `openspec validate --strict` valid.)
 - [ ] 5.2 Tell larpinq to dispatch these two events from `registration-cancel-transfer-refund` and to read `refunded` and `credited` from the object event.
