@@ -511,6 +511,8 @@ final class MaterialiseGlTransactionActionTest extends TestCase {
 		);
 		foreach ($this->store->savedOf('GLLine') as $row) {
 			unset($row['id']);
+			// The store mints non-uuid ids; OpenRegister hands out uuids.
+			$row['transactionId'] = '0f8fad5b-d9cb-469f-a165-70867728950e';
 			self::assertSame([], RegisterSchema::errors(slug: 'GLLine', object: $row));
 		}
 	}//end testASaleAtTwoRatesBooksVatPerTariffWithItsBox()

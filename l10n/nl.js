@@ -6400,7 +6400,16 @@ OC.L10N.register(
         "See which reminder each overdue invoice gets in the next daily run, and how the last run went. Nothing is sent.": "Zie welke herinnering elke vervallen factuur krijgt in de volgende dagelijkse run, en hoe de laatste run ging. Er wordt niets verstuurd.",
         "Days overdue": "Dagen vervallen",
         "This ladder has no stages.": "Deze ladder heeft geen stappen.",
-        "See which reminder each overdue invoice gets in the first run, then switch daily reminders on.": "Zie welke herinnering elke vervallen factuur krijgt in de eerste run, en zet dan dagelijkse herinneringen aan."
+        "See which reminder each overdue invoice gets in the first run, then switch daily reminders on.": "Zie welke herinnering elke vervallen factuur krijgt in de eerste run, en zet dan dagelijkse herinneringen aan.",
+        "VAT tariff": "Btw-tarief",
+        "The VatTariff code this line was booked at (for example high, low, reverse-charge). Set when the line is posted from a document line that has a tariff.": "De code van het btw-tarief waartegen deze regel is geboekt (bijvoorbeeld high, low, reverse-charge). Wordt gezet bij het boeken van een documentregel met een tarief.",
+        "VAT return box": "Rubriek btw-aangifte",
+        "The box of the VAT return this line counts in: the tariff's section for sales and reverse-charged purchases, 5b for input VAT. Empty for a line that is in no box, such as the base of an ordinary purchase.": "De rubriek van de btw-aangifte waarin deze regel meetelt: de rubriek van het tarief bij verkopen en verlegde inkopen, 5b bij voorbelasting. Leeg voor een regel die in geen rubriek valt, zoals de grondslag van een gewone inkoop.",
+        "VAT amount kind": "Soort btw-bedrag",
+        "Whether this line's amount is the base the VAT is charged on (the revenue or cost line) or the VAT itself (the line on the output or input VAT account).": "Of het bedrag van deze regel de grondslag is waarover btw wordt berekend (de omzet- of kostenregel) of de btw zelf (de regel op de rekening af te dragen of voorbelasting).",
+        "Return box": "Rubriek",
+        "The VAT return box this declaration totals.": "De rubriek van de btw-aangifte die deze opgave optelt.",
+        "The VAT return box of the ledger line this VAT line was taken from.": "De rubriek van de grootboekregel waaruit deze btw-regel is overgenomen."
     },
     "nplurals=2; plural=(n != 1);"
 )

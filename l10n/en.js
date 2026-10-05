@@ -4198,7 +4198,16 @@ OC.L10N.register(
         "Stages": "Stages",
         "Days overdue": "Days overdue",
         "This ladder has no stages.": "This ladder has no stages.",
-        "See which reminder each overdue invoice gets in the first run, then switch daily reminders on.": "See which reminder each overdue invoice gets in the first run, then switch daily reminders on."
+        "See which reminder each overdue invoice gets in the first run, then switch daily reminders on.": "See which reminder each overdue invoice gets in the first run, then switch daily reminders on.",
+        "VAT tariff": "VAT tariff",
+        "The VatTariff code this line was booked at (for example high, low, reverse-charge). Set when the line is posted from a document line that has a tariff.": "The VatTariff code this line was booked at (for example high, low, reverse-charge). Set when the line is posted from a document line that has a tariff.",
+        "VAT return box": "VAT return box",
+        "The box of the VAT return this line counts in: the tariff's section for sales and reverse-charged purchases, 5b for input VAT. Empty for a line that is in no box, such as the base of an ordinary purchase.": "The box of the VAT return this line counts in: the tariff's section for sales and reverse-charged purchases, 5b for input VAT. Empty for a line that is in no box, such as the base of an ordinary purchase.",
+        "VAT amount kind": "VAT amount kind",
+        "Whether this line's amount is the base the VAT is charged on (the revenue or cost line) or the VAT itself (the line on the output or input VAT account).": "Whether this line's amount is the base the VAT is charged on (the revenue or cost line) or the VAT itself (the line on the output or input VAT account).",
+        "Return box": "Return box",
+        "The VAT return box this declaration totals.": "The VAT return box this declaration totals.",
+        "The VAT return box of the ledger line this VAT line was taken from.": "The VAT return box of the ledger line this VAT line was taken from."
     },
     "nplurals=2; plural=(n != 1);"
 )

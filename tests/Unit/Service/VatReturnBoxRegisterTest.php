@@ -52,7 +52,7 @@ final class VatReturnBoxRegisterTest extends TestCase {
 	 */
 	public function testAGlLineCarriesItsTariffBoxAndKind(): void {
 		$line = [
-			'transactionId' => 'tx-1',
+			'transactionId' => '0f8fad5b-d9cb-469f-a165-70867728950e',
 			'lineNumber' => 2,
 			'accountNumber' => '8000',
 			'side' => 'credit',

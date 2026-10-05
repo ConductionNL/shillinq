@@ -8,6 +8,10 @@
         {
             "appVersion": "0.5.4-unstable.20261005130000",
             "versionsSha256": "91dd8f25f52bcf92c0aefc0b4fe9c6f757d695a6cf48bbd56fdbc6ab847d66a4"
+        },
+        {
+            "appVersion": "0.5.4-unstable.20261005190000",
+            "versionsSha256": "e713b19780c54b920ab586c819aa12bf3bfff29f0034c5f31f98c7495f53359a"
         }
     ],
     "versions": {
@@ -219,7 +223,7 @@
         "schema:FundsTransfer": "0.1.0",
         "schema:FxRate": "0.1.0",
         "schema:FxRevaluationPosting": "0.1.0",
-        "schema:GLLine": "0.1.0",
+        "schema:GLLine": "0.2.0",
         "schema:GLTransaction": "0.3.0",
         "schema:GRDeelnemer": "0.1.0",
         "schema:GRVerdeelsleutel": "0.1.0",
@@ -495,16 +499,16 @@
         "schema:UrencriteriumYear": "0.1.0",
         "schema:UsageRatePlan": "0.1.0",
         "schema:VATAuditRecord": "0.1.0",
-        "schema:VATDeclaration": "0.1.0",
+        "schema:VATDeclaration": "0.2.0",
         "schema:VATGLAccounts": "0.1.0",
-        "schema:VATLine": "0.1.0",
+        "schema:VATLine": "0.2.0",
         "schema:ValueChainActor": "0.1.0",
         "schema:VamilDepreciation": "0.1.0",
         "schema:VariableConsiderationAdjustment": "0.1.0",
         "schema:VatCorrection": "0.1.0",
         "schema:VatReturn": "0.1.0",
         "schema:VatReturnFiling": "0.3.0",
-        "schema:VatTariff": "0.1.0",
+        "schema:VatTariff": "0.3.0",
         "schema:VendorPerformance": "0.1.0",
         "schema:VerklaringDraft": "0.1.0",
         "schema:ViesValidation": "0.1.0",

@@ -566,7 +566,7 @@
       "VatTariff": {
         "slug": "VatTariff",
         "icon": "PercentOutline",
-        "version": "0.1.0",
+        "version": "0.3.0",
         "title": "BTW-tarief",
         "description": "VAT rate definition. Seeded from btw-tariffs-2026.json with the current statutory rates (21%, 9%, 0%, vrijgesteld, verlegd) and RGS account hints per Wet OB 1968.",
         "x-schema-org": "schema:DefinedTerm",
