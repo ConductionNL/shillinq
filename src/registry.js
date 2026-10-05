@@ -227,6 +227,7 @@ import ThreeWayMatchExceptionPanel from './components/three-way-match/ThreeWayMa
 // fit the built-in `index` page type, so the view is registered as a
 // kind:"page" custom component.
 import ThreeWayMatchIndex from './components/three-way-match/ThreeWayMatchIndex.vue'
+import VatReturnChecksPanel from './components/vat/VatReturnChecksPanel.vue'
 import VendorPerformanceDetail from './components/vendor-performance/VendorPerformanceDetail.vue'
 // bookkeeping-purchase-order-3way slice 10 (REQ-PO3W-008 / REQ-VP-001 /
 // REQ-VP-005): the VendorPerformance index + detail render the monthly
@@ -534,6 +535,15 @@ export default {
 		kind: 'widget',
 		component: ArDownPaymentPanel,
 		_note: "Lists the down payments of the invoice's order across the customer's other invoices and deducts them through a server-side recompute of the lines and totals. An object-table widget filters top-level fields of one schema only and cannot post; the order reference lives inside the downPayment group.",
+	},
+
+	// tax-vat-return-from-books 3.3 (REQ-TVRB-001): the Checks tab on
+	// VATReturnDetail's sidebar.
+	VatReturnChecksPanel: {
+		// @custom-widget-ratchet exclude the checks are computed on the server over the period's ledger lines, VAT accounts, drafts and earlier returns (GET /api/vat-returns/{id}/checks); no declarative widget runs a server-side rule evaluation or shows a per-check passed/blocking/warning state with the offenders it names.
+		kind: 'widget',
+		component: VatReturnChecksPanel,
+		_note: 'Shows each VAT return check as passed, failed and blocking, or failed as a warning, with the transactions, accounts or documents to fix. An object-table widget lists stored rows; these verdicts are computed per request and stored nowhere.',
 	},
 
 	// ledger-booking-rules (REQ-LBR-003): the booking lines with each
