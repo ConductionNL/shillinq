@@ -71,10 +71,10 @@ Vrij en open source onder de EUPL-1.2-licentie.
         itself currently declares min-version="28" (measured on its
         origin/development today), and is moving to 32 concurrently.
 
-        max-version stays 34, which is the fleet-wide value everywhere except
-        openconnector, which declares 35.
+        max-version is 35: the app uses no OCP API that changed or was removed
+        in Nextcloud 35, and the CI matrix is derived from this range.
         -->
-        <nextcloud min-version="32" max-version="34"/>
+        <nextcloud min-version="32" max-version="35"/>
     </dependencies>
 
     <background-jobs>
