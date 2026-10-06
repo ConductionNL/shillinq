@@ -155,24 +155,9 @@ jobs:
       app-name: shillinq
       php-version: "8.3"
       php-test-versions: '["8.3", "8.4"]'
-      # stable31 is REMOVED, not "dropped for coverage". `additional-apps` below
-      # installs openregister, which declares min-version="32" and therefore
-      # cannot install on NC31 — `occ app:enable openregister` fails with only a
-      # ::warning::, so the run continued WITHOUT its data layer and every
-      # /apps/openregister/... call returned Nextcloud's HTML 404 page. A stable31
-      # leg was testing an impossible configuration, so its red said nothing.
-      #
-      # Order mattered as much as membership: newman, playwright and
-      # journeydoc-capture all pin `fromJSON(inputs.nextcloud-test-refs)[0]`, so
-      # stable31 sitting FIRST meant all three ran entirely on the version
-      # openregister cannot load.
-      #
-      # THE LIST IS THE WHOLE DECLARED RANGE. appinfo/info.xml declares
-      # <nextcloud min-version="32" max-version="34"/>, so 32, 33 and 34 each get
-      # a leg. Adopting NC 34 by REPLACING the list left 32 and 33 advertised to
-      # the App Store with no job touching them — the declared floor became the
-      # untested end, which is the same drift as never testing 34, reversed.
-      nextcloud-test-refs: '["stable34", "stable32", "stable33"]'
+      # nextcloud-test-refs is deliberately not set: the shared quality.yml
+      # derives the Nextcloud matrix from appinfo/info.xml (min-version 32 to
+      # max-version 35), so the tested range follows the declared range.
       enable-psalm: true
       enable-phpstan: true
       enable-phpmetrics: true
