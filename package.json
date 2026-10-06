@@ -7,6 +7,8 @@
     "npm": "^11.0.0"
   },
   "scripts": {
+    "docs:standards": "node scripts/generate-standards-docs.cjs",
+    "check:standards-docs": "node scripts/generate-standards-docs.cjs --check",
     "prebuild": "node scripts/generate-manifest-shell.js",
     "build": "NODE_ENV=production webpack --config webpack.config.js --progress",
     "postbuild": "[ -d ../openregister/custom_apps/shillinq/js ] && cp -r js/. ../openregister/custom_apps/shillinq/js/ || true",

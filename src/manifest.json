@@ -19319,5 +19319,55 @@
 			"sidebarComponent": "FlowDetailSidebar",
 			"_note": "The shared CnFlowDetail canvas over the same single engine. Controls render in the NC app sidebar (sidebarComponent) so the canvas keeps full width; canvas and sidebar share useFlowStore. The _note claimed this before the field existed, so #/flows/new -- and every #/flows/:id -- rendered a bare canvas with no way to name, describe, trigger or step-edit the flow. Mirrors pipelinq#1490."
 		}
-	]
+	],
+	"discovery": {
+		"public": true,
+		"standards": [
+			{
+				"id": "ubl",
+				"name": "OASIS UBL Invoice (e-invoice output)",
+				"version": "2.1",
+				"role": "provides",
+				"access": "authenticated",
+				"specUrl": "https://docs.oasis-open.org/ubl/UBL-2.1.html"
+			},
+			{
+				"id": "en16931",
+				"name": "EN 16931 European e-invoicing semantic model",
+				"version": "2017",
+				"role": "provides",
+				"access": "authenticated"
+			},
+			{
+				"id": "nlcius",
+				"name": "NLCIUS (Dutch CIUS of EN 16931)",
+				"version": "1.0",
+				"role": "provides",
+				"access": "authenticated"
+			},
+			{
+				"id": "sepa",
+				"name": "SEPA Credit Transfer (ISO 20022 pain.001.001.03) payment-run export",
+				"version": "pain.001.001.03",
+				"role": "provides",
+				"access": "authenticated",
+				"specUrl": "https://www.europeanpaymentscouncil.eu/what-we-do/sepa-credit-transfer"
+			},
+			{
+				"id": "xaf",
+				"name": "XML Auditfile Financieel (XAF) export",
+				"version": "3.2",
+				"role": "provides",
+				"access": "authenticated"
+			},
+			{
+				"id": "icalendar",
+				"name": "iCalendar (RFC 5545) appointment confirmations",
+				"version": "2.0",
+				"role": "provides",
+				"access": "authenticated",
+				"specUrl": "https://www.rfc-editor.org/rfc/rfc5545"
+			}
+		]
+	}
 }

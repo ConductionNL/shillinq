@@ -121,6 +121,21 @@ composer check:strict
 
 We welcome contributions from the community. Please ensure code passes our quality standards before submitting pull requests.
 
+<!-- discovery:start -->
+## Standards & federation
+
+| Standard | Role | Access |
+|---|---|---|
+| [OASIS UBL Invoice (e-invoice output)](https://docs.oasis-open.org/ubl/UBL-2.1.html) 2.1 | Provides | Nextcloud login |
+| EN 16931 European e-invoicing semantic model 2017 | Provides | Nextcloud login |
+| NLCIUS (Dutch CIUS of EN 16931) 1.0 | Provides | Nextcloud login |
+| [SEPA Credit Transfer (ISO 20022 pain.001.001.03) payment-run export](https://www.europeanpaymentscouncil.eu/what-we-do/sepa-credit-transfer) pain.001.001.03 | Provides | Nextcloud login |
+| XML Auditfile Financieel (XAF) export 3.2 | Provides | Nextcloud login |
+| [iCalendar (RFC 5545) appointment confirmations](https://www.rfc-editor.org/rfc/rfc5545) 2.0 | Provides | Nextcloud login |
+
+Other servers can read this list without logging in, from the Nextcloud capabilities endpoint (published by OpenRegister). Details, federation and admin switches: [docs/standards-and-federation.md](docs/standards-and-federation.md).
+<!-- discovery:end -->
+
 ## License
 
 This project is licensed under the [European Union Public License 1.2 (EUPL-1.2)](LICENSE).
