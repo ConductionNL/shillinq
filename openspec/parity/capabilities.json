@@ -3177,7 +3177,7 @@
 				"evidence": "lib/Reporting/Generator/GeneralLedgerReportGenerator.php:129-173 writes per-account cards with a carried runningBalance, filtered by administration and period; plus the GeneralLedger index with sortable/filterable columns.",
 				"reachedOn": "ReportingComplianceOverview report card 'Grootboekkaarten' -> GenerateReportDialog; GeneralLedger /general-ledger (via menu Bookkeeping > General Ledger)",
 				"owner": "ConductionNL/shillinq",
-				"spec": "none"
+				"spec": "openspec/specs/reporting-report-library"
 			},
 			"evidence": {
 				"snelstart": "https://kennisplein.snelstart.nl/klanten/s/article/financi%C3%ABle-rapportages-in-versie-12 : 'De grootboekmutatiekaarten geven per grootboekrekening een overzicht van alle gemaakte boekingen in een aangegeven periode', with search, column filters and extra columns",
@@ -3191,7 +3191,7 @@
 			"feature": "report-library",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Filters in the generated report are period and administration only."
+			"note": "Filters in the generated report are period and administration only. Spec round part 2 (2026-10-07): described in openspec/specs/reporting-report-library (general ledger requirement); the running balance starts at zero per account, with no opening balance."
 		},
 		{
 			"id": "rep-dashboard",
@@ -3394,7 +3394,7 @@
 				"evidence": "Generic index pages render @conduction/nextcloud-vue CnIndexPage whose mass-export (showMassExport defaults true) calls OpenRegister's export leaf in CSV or Excel (nextcloud-vue src/components/CnIndexPage/selfModeActions.js handleMassExport); PDF comes from the report library (lib/Reporting/ReportCatalogue.php formats csv/pdf, GenerateReportDialog.vue -> /api/reporting/generate) and SegmentPnLDashboard.vue:435 exportCsv.",
 				"reachedOn": "any index page, e.g. GeneralLedger /general-ledger (select rows > Export); ReportingComplianceOverview /reporting-compliance report cards for PDF",
 				"owner": "ConductionNL/nextcloud-vue",
-				"spec": "none"
+				"spec": "openspec/specs/reporting-report-library"
 			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207111-facturen-exporteren : 'Exporteer facturen als PDF, UBL of Excel'; reports export to Excel (article 207266) and bank transactions 'exporteren naar Excel' (article 207257) Note: Excel rather than CSV for most lists",
@@ -3408,7 +3408,7 @@
 			"feature": "report-library",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "CSV export is the shared library's default mass action, verified against the local nextcloud-vue checkout, not the exact ^2.56 build shillinq pins."
+			"note": "CSV export is the shared library's default mass action, verified against the local nextcloud-vue checkout, not the exact ^2.56 build shillinq pins. Spec round part 2 (2026-10-07): shillinq's half (CSV and XML from its own generators, PDF through docudesk) is described in openspec/specs/reporting-report-library; list-page CSV and Excel export stays nextcloud-vue's and is not specified here."
 		},
 		{
 			"id": "rep-report-library",
@@ -3425,7 +3425,7 @@
 				"evidence": "lib/Reporting/ReportCatalogue.php:83-109 lists 17 report types; src/modals/GenerateReportDialog.vue:330 POSTs /api/reporting/generate, GeneratedReportsIndex lists results via /api/reporting/generated and download. lib/Reporting/Generator/* implements 12; icp-opgaaf, ib-aangifte, vpb-aangifte, sbr-xbrl and audit-trail have no generator (ReportGenerationService.php:160 logs 'no generator'), and document-kind reports need docudesk.",
 				"reachedOn": "ReportingComplianceOverview /reporting-compliance (via menu Reporting & compliance) report cards -> GenerateReportDialog",
 				"owner": "ConductionNL/shillinq",
-				"spec": "none"
+				"spec": "openspec/specs/reporting-report-library"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: reports sit per menu (Financial > Analysis & Results) but a single report library page is not described",
@@ -3439,7 +3439,7 @@
 			"feature": "report-library",
 			"featureConfidence": "medium",
 			"source": "own-code",
-			"note": "One place and on-demand generation work; 5 of 17 listed reports produce nothing."
+			"note": "One place and on-demand generation work; 5 of 17 listed reports produce nothing. Spec round part 2 (2026-10-07): after-the-fact main spec openspec/specs/reporting-report-library describes the catalogue, generation, storage and download as built, including the five entries with no generator."
 		},
 		{
 			"id": "pln-leases",
