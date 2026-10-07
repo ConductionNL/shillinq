@@ -23,6 +23,7 @@ without portaliq) declaring read-only OpenRegister collections scoped by
 verified UUID domain references and matched against per-app claims
 (`claims.shillinq.customerId` / `claims.shillinq.supplierId`). Wave 1 of the
 ADR-046 fleet rollout (tracking: Conduction/shillinq#365).
+
 ## Requirements
 
 Detailed requirements (REQ-SPC-001 … REQ-SPC-005) are defined in the active
@@ -305,3 +306,18 @@ filtering.
 - THEN every call returns `null`
 - @e2e exclude backend-only filter logic with no shillinq UI surface — covered by PHPUnit (tests/Unit/Portal/PortalContributionProviderTest.php)
 
+### Requirement: Every portal page names its menu group in Dutch
+The contribution MUST declare one page per listable collection for every audience, each with a `group`:
+"Bestellingen en facturen" (customer), "Schoolbijdragen" (parent), "Opdrachten en facturen" (supplier),
+"Administratie" (accountant). The contribution label MUST be that group, not the app name. Every collection,
+column and action label MUST be Dutch, and no two pages of one audience MAY share a name.
+
+#### Scenario: A supplier's menu
+- **GIVEN** a supplier signed in on the site
+- **WHEN** the site builds the menu
+- **THEN** "Inkooporders" and "Mijn facturen" MUST sit under "Opdrachten en facturen"
+
+#### Scenario: A parent declines a voluntary contribution
+- **GIVEN** a parent with a voluntary contribution invoice
+- **WHEN** they open "Mijn bijdragen"
+- **THEN** the action MUST read "Ik betaal niet", the name the reminder gives

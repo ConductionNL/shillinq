@@ -20,7 +20,9 @@ delivery, invoicing and payment. The core data model and guards
 `BudgetImpactEmitter`, drie-staps registratie, raamovereenkomsten, drie-weg-
 matching, BBV per-programma reporting) were delivered by the archived
 `bookkeeping-verplichtingenadministratie` change (REQ-VPL-001…009).
+
 ## Requirements
+
 ### Requirement: REQ-VPL-000 — Shillinq SHALL reserve budget on commitment and reconcile it through delivery, invoicing and payment
 
 The system SHALL record a `Verplichting` when the organisation becomes legally
@@ -101,30 +103,30 @@ commitment logic.
 
 ### Requirement: REQ-VPL-011 — Committed-vs-realised SHALL be reportable per budget line
 
-**Renamed 2026-08-20 by `budget-core-schema`:** the join target was `Budget`,
-which collided with an unrelated `Budget` declared by
-`bookkeeping-provincies-bbv-variant`; renamed to `CommitmentBudget`. This
-delta also records a positive-control finding surfaced while making that
-rename (see the finding below) — the "no bespoke reporting service" mandate
-below is conditioned on the declarative aggregation actually materialising.
-
-The system SHALL declare a per-budget-line committed-vs-realised aggregation via
-`x-openregister-aggregations`, grouping `VerplichtingRegel` records by budget
-coderingscombinatie (programma + kostenplaats + boekjaar + grootboekrekening) and
-joining through `CommitmentBudget`, exposing, per line, `geautoriseerd`,
-`verplicht` (openstaande verplichtingen,
-i.e. sum of `restant_verplicht`), `gerealiseerd` (sum of `gefactureerd_bedrag`),
-and `vrij` (`geautoriseerd − verplicht − gerealiseerd`). The UI SHALL provide a
-drilldown from a budget line to the underlying `Verplichting`s. This extends the
-per-programma BBV columns of REQ-VPL-009 to per-line granularity and MUST be
-declared declaratively (no bespoke reporting service) **provided the declarative
-aggregation actually materialises** — see the positive-control finding below.
+The system SHALL declare a per-budget-line committed-vs-realised aggregation
+via `x-openregister-aggregations`, grouping `VerplichtingRegel` records by
+budget coderingscombinatie (programma + kostenplaats + boekjaar +
+grootboekrekening) and joining through `CommitmentBudget` (renamed from
+`Budget` by `budget-core-schema`), exposing, per line, `geautoriseerd`,
+`verplicht` (openstaande verplichtingen, i.e. sum of `restant_verplicht`),
+`gerealiseerd` (sum of `gefactureerd_bedrag`), and `vrij`
+(`geautoriseerd − verplicht − gerealiseerd`). The UI SHALL provide a
+drilldown from a budget line to the underlying `Verplichting`s. This extends
+the per-programma BBV columns of REQ-VPL-009 to per-line granularity and
+MUST be declared declaratively (no bespoke reporting service) **provided the
+declarative aggregation actually materialises** — if the positive control
+below finds it silently discarded by the platform's `AggregationAnnotationValidator`
+hazard, this "no bespoke reporting service" mandate is unsatisfiable as
+written, and is flagged as an open question for whichever change next
+touches this requirement (openregister/foundation-repo fix, or a PHP
+fallback service analogous to `budget-core-schema`'s own
+`BudgetVsActualsReader`/`Calculator`) — not silently resolved by this delta.
 
 #### Scenario: Budget-line drilldown shows the four columns
 
 - @e2e src/views/**/BudgetLineCommitments*.spec.js
-- GIVEN a budget line (programma 5.1 / kostenplaats FAC-2026 / boekjaar 2026 /
-  grootboek 4400) with `geautoriseerd` EUR 500.000, one open commitment of
+- GIVEN a budget line (programma 5.1 / kostenplaats FAC-2026 / boekjaar 2026
+  / grootboek 4400) with `geautoriseerd` EUR 500.000, one open commitment of
   EUR 75.000 and EUR 25.000 already gefactureerd on it
 - WHEN a controller opens the committed-vs-realised drilldown for that line
 - THEN the line MUST display `geautoriseerd` 500.000, `verplicht` 75.000,
@@ -135,76 +137,53 @@ aggregation actually materialises** — see the positive-control finding below.
 
 - GIVEN the verplichtingenadministratie register configuration
 - WHEN scanned for the committed-vs-realised aggregation
-- THEN it MUST be declared under `x-openregister-aggregations` (per ADR-031),
-  joining through `CommitmentBudget`, with no parallel PHP reporting service
-  computing the same figures **unless the positive-control finding below
-  shows the declarative path is discarded, in which case this "no parallel
-  service" mandate is an open question, not silently resolved by this
-  rename**
+- THEN it MUST be declared under `x-openregister-aggregations` (per
+  ADR-031), joining through `CommitmentBudget`, with no parallel PHP
+  reporting service computing the same figures **unless the positive
+  control in the scenario below finds the declarative path silently
+  discarded, in which case this "no parallel service" mandate is the open
+  question this delta hands back (see "Why this delta exists" above)**
+
+@e2e exclude declarative-configuration check, no browser-visible surface —
+verified by inspecting the register configuration (carried over from this
+requirement's pre-existing scenario, unaffected by the rename itself)
 
 #### Scenario: The aggregation's join target is renamed, and its declarative status is verified, not assumed
 
-- **GIVEN** `budget-core-schema`'s rename of `join.through` from `Budget` to
+- **GIVEN** this change's rename of `join.through` from `Budget` to
   `CommitmentBudget` (`bookkeeping-verplichtingenadministratie.json:536`)
-- **WHEN** the positive control is run (grep `nextcloud.log` for `"annotation
-  on schema"`, query the aggregation endpoint directly)
-- **THEN** the measured outcome, recorded 2026-08-20:
-  1. **The platform hazard is real, confirmed live on the shared dev
-     instance** — `nextcloud.log` carries 40 occurrences of `"annotation on
-     schema"` warnings dated 2026-08-20, from `decidesk`'s schemas
-     (`meeting`, `decision`, `goal`, …), each discarding an
-     `x-openregister-aggregations`/`-calculations` block for exactly the
-     reason `AggregationAnnotationValidator`'s documented behaviour predicts.
-     This confirms the hazard class fires on THIS instance today, not merely
-     in theory.
-  2. **shillinq-specific dynamic verification could not be completed on the
-     shared instance**: it runs shillinq `0.2.1-unstable.20260818220149`,
-     which predates this change (`GET .../objects?schema=CommitmentBudget`
-     answers `"Schema not found"`) and exposes no working aggregation-proxy
-     route for `Verplichtingsregel`/`Budget` today (`GET
-     .../apps/shillinq/api/openregister/objects/.../aggregations/...`
-     resolves to the SPA fallback shell, HTTP 200 HTML, not JSON) — and
-     deploying this in-progress branch to the shared instance to force a
-     fresh import was judged out of scope (other engineers rely on that
-     instance; see this repo's own "no deploy to shared dev instance"
-     convention).
-  3. **Static analysis against the ACTUAL declared property lists** (not
-     assumed) stands in for the dynamic check:
-     - `CommitmentBudget.outstanding_commitments`'s `where` clause filters
-       on `programme` and `afgesloten` — **neither is a declared property of
-       `CommitmentBudget`** (only `programmeCode`, `administrationId`,
-       `financialYear`, `authorised_amount`, `realised_amount`,
-       `outstanding_commitments`, `free_capacity` are declared). Per
-       `AggregationAnnotationValidator`'s documented behaviour (checks
-       `where[].field` against the DECLARING schema), this annotation would
-       be discarded — **CONFIRMS** design.md finding #1, independent of this
-       rename.
-     - `committedVsRealisedPerBudgetLine`'s `groupBy`/`filter` fields
-       (`programme`, `costCentre`, `financialYear`, `generalLedgerAccount`,
-       `afgesloten`) **are all genuinely declared on `Verplichtingsregel`**
-       (the declaring schema) — this part would plausibly PASS the
-       declaring-schema check. **However**, its `join.select`
-       (`CommitmentBudget.geautoriseerd_bedrag`,
-       `CommitmentBudget.gerealiseerd_bedrag`) references field names that
-       do not exist on `CommitmentBudget` **under any name** — the schema's
-       real fields are `authorised_amount`/`realised_amount` (English), not
-       `geautoriseerd_bedrag`/`gerealiseerd_bedrag` (Dutch). This is a
-       genuine field-name defect independent of the declaring-vs-target
-       hazard theory: the join cannot resolve correctly regardless of which
-       schema the validator checks fields against. **New finding, not in
-       design.md's original two** — recorded here, not fixed (out of this
-       change's scope per REQ-BCS-011; owned by whichever change next
-       touches `committedVsRealisedPerBudgetLine`).
-  - **Net assessment**: both named aggregations are very likely discarded or
-    broken today — `outstanding_commitments` by the documented
-    declaring-schema hazard, `committedVsRealisedPerBudgetLine` by an
-    independent join-field-name defect — but this is inferred from static
-    inspection, not confirmed by a live materialised-vs-discarded
-    measurement. A live re-check once this branch (or an equivalent fix)
-    reaches a deployable instance is the outstanding follow-up (`design.md`
-    §11.2, handed to the orchestrator).
+- **WHEN** `nextcloud.log` is grepped for `"annotation on schema"` after a
+  fresh register import, and the aggregation endpoint is queried directly
+  for non-empty rows against seeded `VerplichtingRegel`/`CommitmentBudget`
+  data
+- **THEN** the measured outcome, recorded 2026-08-20 (full detail in
+  `openspec/specs/bookkeeping-verplichtingenadministratie/spec.md`'s
+  REQ-VPL-011 delta): the platform hazard is CONFIRMED live on the shared
+  dev instance (40 `"annotation on schema"` warnings from `decidesk`'s
+  schemas, dated 2026-08-20). A shillinq-specific DYNAMIC measurement could
+  not be completed — the shared instance runs a pre-rename shillinq build
+  with no working aggregation-proxy route, and deploying this in-progress
+  branch there to force it was out of scope. STATIC analysis against the
+  actual declared property lists stands in: `outstanding_commitments`'s
+  `where` filters on `programme`/`afgesloten`, neither declared on
+  `CommitmentBudget` — CONFIRMS the declaring-schema hazard independent of
+  this rename. `committedVsRealisedPerBudgetLine`'s `groupBy`/`filter`
+  fields ARE all declared on the declaring schema `Verplichtingsregel`, but
+  its `join.select` references `CommitmentBudget.geautoriseerd_bedrag`/
+  `.gerealiseerd_bedrag` — field names that do not exist on
+  `CommitmentBudget` under any name (the real fields are
+  `authorised_amount`/`realised_amount`) — a genuine, independent
+  join-field-name defect, newly found here, not one of design.md's original
+  two. **Net: both aggregations are very likely non-functional today**, one
+  confirmed by the documented hazard, one by an unrelated field-name bug —
+  but neither is confirmed by a live materialised-vs-discarded measurement.
+  Not fixed here (REQ-BCS-011 non-goal); handed to whichever change next
+  touches `committedVsRealisedPerBudgetLine` or gets this branch onto a
+  deployable instance for the outstanding live re-check.
 
-@e2e exclude platform-diagnostic finding, not a repeatable browser assertion
+@e2e exclude platform-diagnostic verification, not a repeatable browser
+assertion — see `budget-core-schema` design.md §6a/§11.2 and tasks.md group
+8 for the verification method and where the result is also recorded
 
 ### Requirement: REQ-VPL-012 — Auto-created commitments SHALL be fed into rechtmatigheid toetsing
 
@@ -274,14 +253,6 @@ and remains a deliberate imperative exception.
 - **GIVEN** this change adds only the declarative chain
 - **THEN** `MandaatEnforcer` MUST still exist
 - **AND** the `indienen` transition MUST still reference `MandaatEnforcer::requiresApproval`
-
-## Notes
-
-- Depended on by `bookkeeping-rechtmatigheidsverantwoording` (REQ-RV-008),
-  `bookkeeping-purchase-order-3way`, and `bookkeeping-programmabegroting`.
-- Declarative-first (ADR-031): budget blocking, lifecycle, aggregations and
-  notifications are declared; the only imperative surfaces are the fail-closed
-  guards and the thin materialisation glue.
 
 ### Requirement: A commitment's declared transitions resolve their guards and action (REQ-PCYE-001)
 
@@ -360,3 +331,48 @@ MUST NOT carry a line twice.
 - GIVEN the 2026 carry-over has run
 - WHEN the controller runs it again for 2026
 - THEN the preview shows no open lines and nothing is written
+
+### Requirement: The spending mandate is namespaced (REQ-VPA-035)
+
+The mandate schema slug SHALL be `SpendingMandate` and SHALL NOT be `Mandate`
+or `Mandaat`.
+
+A schema slug is global per organisation and `SchemaMapper::find()` matches
+`LOWER(slug)`, so a bare `Mandate` resolved to this app's spending ceiling or to
+dossiq's administrative-law mandaat depending on which row was reached first.
+The two share zero declared fields, so they are renamed apart rather than folded
+onto one owner.
+
+`RenameCommitmentSchemas` SHALL map BOTH `Mandaat` and `Mandate` to
+`SpendingMandate`. An install still on Dutch reaches the namespaced slug in one
+move; one already migrated to `Mandate` follows behind. Mapping only the Dutch
+source would strand every install that already ran the vocabulary pass.
+
+When both source slugs exist the step SHALL refuse rather than merge, because
+each may own objects.
+
+#### Scenario: A Dutch install lands on the namespaced slug
+
+- **GIVEN** an install carrying `Mandaat`
+- **WHEN** the repair step runs
+- **THEN** the row is renamed to `SpendingMandate`, keeping its schema id.
+
+#### Scenario: An already-English install follows behind
+
+- **GIVEN** an install carrying `Mandate`
+- **WHEN** the repair step runs
+- **THEN** the row is renamed to `SpendingMandate`.
+
+#### Scenario: The seeded mandates are actually checked
+
+- **WHEN** the seeded mandates are validated against the commitment kind enum
+- **THEN** at least one seeded mandate is checked, so the assertion cannot pass
+  by matching nothing.
+
+## Notes
+
+- Depended on by `bookkeeping-rechtmatigheidsverantwoording` (REQ-RV-008),
+  `bookkeeping-purchase-order-3way`, and `bookkeeping-programmabegroting`.
+- Declarative-first (ADR-031): budget blocking, lifecycle, aggregations and
+  notifications are declared; the only imperative surfaces are the fail-closed
+  guards and the thin materialisation glue.

@@ -23,6 +23,11 @@ to `RevenueContract`, ending the collision; `contract-lifecycle-management`'s
 `Contract` is unaffected and becomes the fleet's canonical ADR-051
 `ns#Contract` implementer.
 
+## RENAMED Requirements
+
+- FROM: `### Requirement: REQ-IFRS15-001 — Five-step revenue recognition model SHALL be implemented as ten core registers with explicit contract, PO, transaction-price, and allocation structure`
+- TO: `### Requirement: REQ-IFRS15-001 — Five-step revenue recognition model SHALL be implemented as ten core registers with explicit revenue contract, PO, transaction-price, and allocation structure`
+
 ## MODIFIED Requirements
 
 ### Requirement: REQ-IFRS15-001 — Five-step revenue recognition model SHALL be implemented as ten core registers with explicit revenue contract, PO, transaction-price, and allocation structure
@@ -70,7 +75,7 @@ lifecycle, modification history, and audit trail. Posting a
 `RevenueRecognitionEvent` MUST materialise exactly one balanced
 `GLTransaction` per the T1 pattern per REQ-IFRS15-007.
 
-#### Scenario: Schema validator accepts a simple one-PO revenue contract
+#### Scenario: Schema validator accepts a simple one-PO contract
 
 - **GIVEN** the schema
 - **WHEN** a draft `RevenueContract` with one point-in-time PO

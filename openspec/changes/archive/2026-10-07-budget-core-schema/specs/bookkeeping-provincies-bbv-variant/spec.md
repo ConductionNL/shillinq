@@ -96,4 +96,11 @@ MUST show no data (not all programmes).
 - **THEN** it lists 2023–2026 (auto-discovered from `BbvProgrammeBudget` +
   GL data), defaulting to the current fiscal year
 
+#### Scenario: Filter by single programme and year
+
+- **GIVEN** dashboard with `BbvProgrammeBudget` + GL data for 2025 and 2026
+- **WHEN** user selects Filter: Programme = `cultuur`, Fiscal Year = 2026
+- **THEN** KPI cards MUST show only 2026 `cultuur` budget vs. actuals; other
+  programmes hidden.
+
 @e2e exclude unbuilt UI: BBV variant pages not yet implemented

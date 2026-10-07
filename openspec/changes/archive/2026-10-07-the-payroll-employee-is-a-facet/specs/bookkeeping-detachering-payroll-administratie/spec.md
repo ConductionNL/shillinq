@@ -1,6 +1,6 @@
 # Bookkeeping detachering payroll administratie
 
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: The payroll employee is a facet of a person (REQ-DPA-020)
 
