@@ -492,7 +492,8 @@
 				"state": "built",
 				"evidence": "lib/Service/SettingsService.php:182 seedRgsTemplate() imports lib/Settings/seeds/rgs-3.5-mkb.json (143 accounts), rgs-3.5-zzp.json or rgs-bbv.json into Account; called from lib/Controller/SetupController.php:260 (setup wizard 'seed' action) and lib/Repair/InitializeSettings.php:1637.",
 				"reachedOn": "First-run setup wizard (src/manifest.json setup steps rgs-template + seed), result on ChartOfAccounts /chart-of-accounts (via menu Bookkeeping > Chart of Accounts)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-add-shillinq-chart-of-accounts"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-glaccounts-fingl-glaccmaprgst: \"Exact Online makes this process a lot easier for you by suggesting which RGS classification can be assigned to your G/L account\" Note: RGS is a mapping with suggestions on your own chart, templates for accountants.",
@@ -616,7 +617,8 @@
 				"state": "built",
 				"evidence": "Detail pages carry the openregister-audit-trail sidebar widget (src/manifest.json GeneralLedgerDetail/JournalDetail sidebarProps audit tab -> /apps/openregister/api/objects/shillinq/:schema/:id/audit-trails); BookkeepingAuditTrail and BookkeepingChangeHistory are `logs` pages reading /apps/openregister/api/audit-trails?objectTypes=Account,GLTransaction,... (src/manifest.json).",
 				"reachedOn": "BookkeepingAuditTrail /bookkeeping/audit-trail and BookkeepingChangeHistory /bookkeeping/change-history (via menu Bookkeeping > Audit Trail / Change history); Audit Trail tab on every financial detail page",
-				"owner": "ConductionNL/openregister"
+				"owner": "ConductionNL/openregister",
+				"change": "2026-06-14-add-shillinq-audit-trail"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-general-importexport-gen-impexp-expaudittrailrepexct: \"Voor iedere wijziging wordt vastgelegd wanneer en door wie de wijziging is gemaakt ... De huidige en vorige waardes worden weergegeven\" Note: Controlelijst covers master data subjects; processed entries cannot be edited.",
@@ -646,7 +648,8 @@
 				"state": "built",
 				"evidence": "Booking side works: lib/Listener/IntercompanyLinkListener.php (registered at lib/AppInfo/Application.php:337) mirrors an IntercompanyJournalEntry into the counter administration via lib/Service/IntercompanyLinkService.php:107. Eliminations: lib/Service/IntercompanyMatchingService.php:398 writes EliminationJournal, but its only runtime caller lib/Service/SoftCloseExecutor.php:469 calls matchForPeriod(), a method that does not exist (the service has matchRelationPeriod), so it silently returns 0; no page lists EliminationJournal.",
 				"reachedOn": "IntercompanyBoekingen /administratie/intercompany (via menu Bookkeeping > Intercompany journal entries); IntercompanyTransactions /financial-statements/intercompany-transactions (via menu Bookkeeping > Inter-Company Transactions); elimination output: nothing reaches it",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-bookkeeping-intercompany-elimination"
 			},
 			"evidence": {
 				"twinfield": "https://taasupportportal.wolterskluwer.com/nl/nl-nl/artikel/rekening-couran-3041106 and https://taasupportportal.wolterskluwer.com/nl/nl-nl/artikel/memoriaal-boeki-3062311: \"Bij gebruik van de functie 'Rekening-courant' bepaalt het veld 'Doel' in welke (doel)administratie de transactieregel wordt verwerkt\"; https://taasupportportal.wolterskluwer.com/nl/nl-nl/artikel/administratiegr-3041172: consolidated reports over an administration group Note: Intercompany posting and combined reports are documented; generated eliminations are not.",
@@ -707,7 +710,8 @@
 				"state": "built",
 				"evidence": "lib/Settings/register.d/bookkeeping-ifrs-rj-dual-gaap.json declares DualTransaction (rjJournalEntries, ifrsJournalEntries, divergenceAmount) and ReconciliationBridge (adjustments, totals via x-openregister-aggregations); only PHP is lib/Lifecycle/DualGaapGuard.php:95/147 (reconcile/election guards). No service derives the second-GAAP entries or computes the reconciling differences; they are typed in.",
 				"reachedOn": "AccountingFrameworks, ChartOfAccountsMappings, DualTransactions, ReconciliationBridges, FrameworkElections (via menu Bookkeeping > Framework Configuration / Chart of Accounts Mapping / Dual Ledger Explorer / Reconciliation Bridge / Framework Election)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-bookkeeping-ifrs-rj-dual-gaap"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/vooruitblik: \"Het HQ-grootboekrekeningschema in de Premium-edities van Exact Online ... Beheer een of meerdere HQ-schemas voor verschillende rapportagebehoeften (bijv. lokaal en IFRS)\" Note: Group reporting schemes mapped for local and IFRS reporting in Premium; parallel IFRS and Dutch GAAP ledgers with reconciling differences are not described.",
@@ -737,7 +741,8 @@
 				"state": "built",
 				"evidence": "RetentionRule records seeded by the setup 'seed' action (lib/Controller/SetupController.php:265 statutory retention rules); lib/BackgroundJob/DocumentArchiveCron.php (registered) archives WBSO Documents past seven years. But BewaartermijnenDashboard counts RetentionRule rows with daysUntilRetention_lt 90 (src/manifest.json), i.e. rules, not financial records due for destruction; BookkeepingDestructionReport is in menu-layout removals.",
 				"reachedOn": "Bewaartermijnen /administratie/bewaartermijnen and BewaartermijnenDashboard (via menu Reporting & compliance > Retention periods / Retention periods dashboard)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-bookkeeping-archiefwet-retention"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched the Exact knowledge base today: archived administrations stay readable and exact.com/nl/producten/overstappen advises keeping 7 years of auditfiles, but no retention schedule or destruction list is described",
@@ -767,7 +772,8 @@
 				"state": "built",
 				"evidence": "lib/BackgroundJob/SoftCloseJob.php (registered in appinfo/info.xml, INTERVAL_SECONDS=86400) runs lib/Service/SoftCloseExecutor.php:118 per administration (accruals, FX, cut-off, intercompany, trial balance, PeriodStatus soft-closed). Swing flagging lives in lib/Service/FluxService.php:133 classifyMateriality, reached only via POST /api/v2/flux-runs/execute (appinfo/routes.php:579), which no page calls and the nightly run does not invoke. Of the executor's sub-steps only accruals and FX revaluation run: it probes OCA\\Shillinq\\Service\\Ifrs15\\RevenueRecognitionService and Ifrs16\\LeasePostingService (classes that do not exist) and calls IntercompanyMatchingService::matchForPeriod and TrialBalanceService::generate (methods that do not exist), each silently skipped via container->has/method_exists (SoftCloseExecutor.php:418-494).",
 				"reachedOn": "ContinuousClose /bookkeeping/continuous-close (via menu Bookkeeping > Continuous Close, 'Run soft-close now' action); FluxAnalysis /bookkeeping/flux-analysis lists FluxRun records but nothing creates them from the UI",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-bookkeeping-soft-close-flux"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: Professional adds \"Automatisch afwijkingen signaleren\" and \"Continuous monitoring: Ontvang proactief signalen bij afwijkingen in je administratie\" Note: Deviations are flagged continuously; a nightly soft close run is not described.",
@@ -797,7 +803,8 @@
 				"state": "built",
 				"evidence": "lib/Reporting/Generator/XafAuditfileGenerator.php:118 writes XAF 3.2 (ns http://www.auditfiles.nl/XAF/3.2) from Account/GLTransaction/GLLine; SaftReportGenerator.php for SAF-T; both in lib/Reporting/ReportCatalogue.php:99-100; generated via src/modals/GenerateReportDialog.vue POST /api/reporting/generate.",
 				"reachedOn": "ReportingComplianceOverview /reporting-compliance (via menu Reporting & compliance) report card -> GenerateReportDialog",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-07-07-xaf-auditfile-export-generator"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-general-importexport-gen-impexp-auditt: \"Je kunt financiele transacties of salarisgegevens exporteren als auditfiles in xml-formaat (XAF of XAS) ... De belastingdienst en accountancybedrijven kunnen salaris-auditfiles gebruiken\"",
@@ -826,7 +833,8 @@
 				"state": "built",
 				"evidence": "src/views/ReceiptCapture.vue:500 and src/modals/BillImportModal.vue:549 POST /api/v1/extraction/drafts/{id}/suggest-account; lib/Controller/ExtractionRequestController.php suggestGlAccount proxies docudesk's ai-gl-account-suggestion with shillinq's chart; operator clicks 'Use suggestion'. The bank-line variant /api/v1/bank-rules/suggest-account (appinfo/routes.php:727) has no frontend caller.",
 				"reachedOn": "ReceiptDetail (ReceiptCapture) from Receipts /inkoop/receipts (via menu Purchasing > Receipts); BillImportModal on SupplierInvoices (via menu Purchasing > Supplier Invoices)",
-				"owner": "ConductionNL/filinq"
+				"owner": "ConductionNL/filinq",
+				"change": "2026-07-13-gl-account-suggestion-consume"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Purchase Agent ... doet slimme suggesties om transacties op de juiste grootboekrekening te plaatsen\"; Bank Agent links payments \"aan zowel inkoop- als verkoopfacturen en de juiste grootboekrekening\" Note: All plans list the AI agents.",
@@ -1230,7 +1238,8 @@
 				"state": "built",
 				"evidence": "RateSchedule carries tier (role), entityId (client), effectiveDate/expiryDate (lib/Settings/shillinq_register.json); RateCardTemplate/RateCardVersion versions; lib/Service/RateCardResolver.php resolves the rate for a date and is used by InvoiceGenerationService.php:528",
 				"reachedOn": "RateCards /beheer/rate-cards, RateSchedules /beheer/rate-schedules, RateAuditTrail /beheer/rate-audit-trail (via menu Sales > Rate Cards / Rate Schedules / Rate Audit Trail)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-rate-card-engine"
 			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207499-waarom-uren-registreren : 'Heb je met je klant een uurtarief afgesproken, dan vul je je tarief in. Moneybird berekent vervolgens het bedrag' Note: a rate is entered when billing hours (products carry prices); no rate card per client or role and no rate history stated",
@@ -1355,7 +1364,8 @@
 				"evidence": "lib/Portal/PortalContributionProvider.php contributes read-only ARInvoice and PaymentRequest collections to portaliq for the customer audience (Wave 2, scoped on claims.shillinq.customerMasterId); pay-now goes through /api/portal/payments/initiate -> lib/Service/Payment/PortalPaymentSessionService.php -> MolliePaymentProvider, whose adapter is LogMolliePaymentAdapter by default (lib/AppInfo/Application.php:497; connections.json mollie reportedOnly)",
 				"reachedOn": "portaliq external portal (not a shillinq page); nothing in shillinq's own UI",
 				"owner": "ConductionNL/portaliq",
-				"readOn": "2026-09-26"
+				"readOn": "2026-09-26",
+				"change": "2026-07-14-customer-invoice-portal-wave2"
 			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/account/controllers/portal.py:84 /my/invoices list and :153 /my/invoices/<id> with download; pay via addons/account_payment/controllers/portal.py",
@@ -1416,7 +1426,8 @@
 				"state": "built",
 				"evidence": "src/modals/InvoiceQuickDraftModal.vue posts an ARInvoice draft to /apps/openregister/api/objects/{register}/ARInvoice (:472) with customer, lines and VAT; the only trigger is the Dashboard headerActions 'create-invoice' in src/manifest.json:5166-5172",
 				"reachedOn": "Dashboard / header action 'Create invoice' (modal InvoiceQuickDraftModal)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-shillinq-invoice-quick-draft"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl pages and the Exact knowledge base today: not stated",
@@ -1692,7 +1703,8 @@
 				"state": "built",
 				"evidence": "lib/Service/SupplierInvoiceService.php:124 ALLOWED_TRANSITIONS received->matching->matched/exception->approved->paid, driven by ThreeWayMatchingEngine.php:1086; src/components/supplier-invoice/SupplierInvoiceDetail.vue:16 says transitions are not exposed in the UI; APTransaction approvalNeeded exists only as an x-openregister-notifications declaration (bookkeeping-accounts-payable-core.json)",
 				"reachedOn": "ThreeWayMatchIndex /inkoop/three-way-matches (menu Purchasing > Three-way matches) exception panel accept/reject; SupplierInvoiceDetail is read-only",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-bookkeeping-purchase-order-3way-06-matching-engine"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Vanaf Exact Online Boekhouden Plus kun je facturen opeenvolgend laten goedkeuren in max. vijf stappen\" Note: Plus and up; approval-only users are free.",
@@ -1722,7 +1734,8 @@
 				"state": "built",
 				"evidence": "lib/Service/ThreeWayMatchingEngine.php evaluateMatch + setStatus at :1086; src/components/three-way-match/ThreeWayMatchIndex.vue:312 POSTs /api/three-way-matches/evaluate; ThreeWayMatchExceptionPanel.vue calls /api/three-way-match/exceptions/*; lib/Listener/GRIRClearingListener.php (Application.php:309) posts the GR/IR settlement on SupplierInvoice matched; SupplierInvoice cannot reach approved/paid without matched or an accepted exception (SupplierInvoiceService.php:124)",
 				"reachedOn": "ThreeWayMatchIndex /inkoop/three-way-matches (menu Purchasing > Three-way matches); ThreeWayMatchDetail /inkoop/3way-matches/:id",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-bookkeeping-purchase-order-3way-06-matching-engine"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-wholesale-wd-crtgoodsrcptt?language=en_GB: goods receipts against purchase orders generate a purchase invoice \"with a proposed value\"; https://support.exactonline.com/community/s/article/All-All-HNO-Concept-purchase-purch-efcntprcspurinvc: for scanned invoices \"the Invoices to be received dialogue box will open, where you can select the purchase orders\" Note: Exact Online Handel or Productie; full 3-way-matching is marketed for the separate product Exact Proquro (https://www.exact.com/nl/producten/proquro).",
@@ -1751,7 +1764,8 @@
 				"state": "built",
 				"evidence": "lib/Service/RequisitionService.php:186 submit, :224 approve (only from submitted, BudgetBlocker check), :260 reject; RequisitionConversionService.php:100 convertToPurchaseOrder refuses unless approved; src/manifest.json:13215-13273 RequisitionDetail actions call /api/requisitions/@objectId/submit|approve|reject|convert",
 				"reachedOn": "Requisitions /inkoop/requisitions (menu Purchasing > Requisitions); RequisitionDetail /inkoop/requisitions/:id",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-07-14-purchase-requisition"
 			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/purchase_requisition/models/purchase_requisition.py:21 requisition_type is only 'blanket_order' or 'purchase_template' (agreements, not internal requests); PO approval by amount in addons/purchase/models/purchase_order.py:1251 _approval_allowed Note: Internal purchase requests that become RFQs need the Enterprise Approvals app (approvals_purchase), not public; in Community a draft RFQ plus two-step PO approval is the nearest path",
@@ -1843,7 +1857,8 @@
 				"state": "built",
 				"evidence": "lib/Service/VendorPerformanceAggregation.php:14-25 computes onTimeDelivery, quantityAccuracy, priceAccuracy, invoiceAccuracy and a weighted overallScore + trend from GRN/ThreeWayMatch/SupplierInvoice; VendorPerformanceAggregationJob registered in appinfo/info.xml",
 				"reachedOn": "VendorPerformanceIndex /inkoop/vendor-performance (menu Purchasing > Vendor performance); VendorPerformanceDetail /inkoop/vendor-performance/:id",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-bookkeeping-purchase-order-3way-10-vendor-performance"
 			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/purchase_stock/models/res_partner.py:14 on_time_rate per vendor computed from received quantities on time (:50-:64); addons/purchase_stock/report/vendor_delay_report.py:8 vendor delay report Note: On-time delivery and quantity only; no score for price or invoice accuracy found",
@@ -1873,7 +1888,8 @@
 				"state": "built",
 				"evidence": "lib/Service/PurchaseOrderService.php:307-312 calls FrameworkAgreementDrawdownGuard::assertWithinCeiling when the payload has frameworkAgreementId; src/components/purchase-order/PurchaseOrderForm.vue never sends frameworkAgreementId (grep empty)",
 				"reachedOn": "FrameworkAgreements /inkoop/framework-agreements (menu Purchasing > Framework Agreements); FrameworkAgreementDetail shows ceiling KPI and linked POs",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-07-15-procurement-governance"
 			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/purchase_requisition/models/purchase_requisition.py:22 'Blanket Order' agreement type; RFQs created against it take its prices (warning at :57 on open blanket order)",
@@ -1934,7 +1950,8 @@
 				"state": "built",
 				"evidence": "PurchaseOrderService::determineApprovalChain (PurchaseOrderController.php:184, called from PurchaseOrderForm.vue:337) materialises an amount-threshold chain and PurchaseOrderDetail.vue:223 blocks sending until every approver signs; the decision endpoint /api/purchase-orders/{id}/approval-decision (routes.php:365, PurchaseOrderApprovalService::recordApprovalDecision) is not called anywhere in src/ (absent from _lane/frontend-api-paths.txt) Corrections round 8 (2026-09-28), shillinq#1716: even a call to the decision endpoint cannot complete approval, because lib/Service/PurchaseOrderService.php:839-852 writes chain entries with status pending, lib/Service/PurchaseOrderApprovalService.php:217 skips every entry whose decision is not pending and :237 then throws Approval chain is fully signed, and the send checks at lib/Service/PurchaseOrderService.php:436-443 and :627-634 wait for status approved and a signedAt that nothing writes, at a165206.",
 				"reachedOn": "PurchaseOrders /inkoop/purchase-orders (menu Purchasing > Purchase Orders) shows the chain; nothing reaches the approve action: no button calls approval-decision",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-bookkeeping-purchase-order-3way-02-purchase-order-core"
 			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/purchase/models/purchase_order.py:1251 _approval_allowed: two_step orders at or above po_double_validation_amount need a purchase manager (settings addons/purchase/models/res_config_settings.py:12-14) Note: One amount threshold with one extra level; several thresholds need Studio approval rules (Enterprise)",
@@ -1964,7 +1981,8 @@
 				"state": "built",
 				"evidence": "lib/Service/SpendAnalyticsService.php spend-by-supplier (APTransaction vendorId), -by-category (GLLine accountNumber), -by-cost-centre, -by-period via OR AggregationRunner; src/components/spend-analytics/SpendAnalyticsPanel.vue:505 GETs /api/analytics/spend",
 				"reachedOn": "SpendAnalytics /reporting-compliance/spend-analytics (menu ReportingCompliance > Spend analysis)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-07-14-spend-analytics"
 			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/purchase/report/purchase_report.py:13 purchase.report with partner_id vendor (:28) and category_id product category (:40), pivot and graph views",
@@ -2056,7 +2074,8 @@
 				"state": "built",
 				"evidence": "CashflowRecurring schema (label, category, frequency, standardAmount, indexationRule, validFrom/To, accountNumberExpense) in shillinq_register.json; read by lib/Service/CashflowExportService.php:93 and lib/Service/BudgetScenarioEvaluator.php:21 as expected monthly costs",
 				"reachedOn": "CashflowRecurring /cashflow/recurring (settings gear > Recurring Costs)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-zzp-cashflow-13wk"
 			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207118-inkoopfactuur-of-bon-toevoegen : 'Ontvang je regelmatig dezelfde inkoopfactuur, bijvoorbeeld voor verzekeringskosten of abonnementen? Maak deze inkoopfactuur dan periodiek'",
@@ -2118,7 +2137,8 @@
 				"state": "built",
 				"evidence": "ReimbursementPolicy (expense-reimbursement-or-passthrough.json) holds a markup-approval threshold, read only by lib/Lifecycle/ExpenseReimbursementGuard.php:405, whose requires tags are not registered in Application.php; no spending-limit check on claims anywhere in lib/",
 				"reachedOn": "ReimbursementPolicies /reimbursement-policies (settings gear > Reimbursement Policies) keeps records only",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-expense-reimbursement-or-passthrough"
 			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/hr_expense/models/hr_expense.py:147 duplicate_expense_ids warns on duplicate claims (:720); categories can carry a fixed cost; https://www.odoo.com/documentation/19.0/applications/finance/expenses.html manager approval before payment Note: No configurable spending-limit policy found in Community hr_expense; checks are duplicate warnings, fixed-cost categories and manager approval",
@@ -2179,7 +2199,8 @@
 				"state": "built",
 				"evidence": "lib/Controller/BankStatementImportController.php:71 ALLOWED_FORMATS camt053/mt940/csv parsed by StatementParser and saved as BankStatement + BankStatementLine; src/modals/BankStatementWizard.vue:361 POSTs /api/v1/bank-statements/import",
 				"reachedOn": "BankImportPage /configuratie/bank-import (settings gear > Import bank statements) opens BankStatementWizard",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-15-shillinq-bank-statement-wizard"
 			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207567-transactiebestand-uploaden : 'Upload MT940 of CAMT.053 bestanden in Moneybird om banktransacties eenvoudig toe te voegen' Note: CSV is not listed; official MT940 and CAMT.053 only",
@@ -2273,7 +2294,8 @@
 				"state": "built",
 				"evidence": "bookkeeping-accounts-payable-core.json PaymentRun approve draft->approved requires FourEyesPaymentRunGuard, registered as a class at lib/AppInfo/Application.php:1026; lib/Lifecycle/FourEyesPaymentRunGuard.php denies when the approver is the preparer (from the OR audit trail), fail-closed; export is only offered when lifecycleState=approved",
 				"reachedOn": "PaymentRunDetail /bookkeeping/payment-runs/:id lifecycle actions (menu Purchasing > Payment Runs)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-07-14-payment-run-four-eyes"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-bank-finbnk-processpaymentst says \"You must still authorise the payment with your bank\"; a second approver inside Exact before export is not stated",
@@ -2365,7 +2387,8 @@
 				"state": "built",
 				"evidence": "lib/Service/Treasury/FxRevaluationService.php marks open FXPositions to the closing rate (TreasuryRateService snapshot, falling back to the position's manual spotRate) and posts the unrealised movement, called from lib/Service/SoftCloseExecutor.php delegateFxRevaluation; SoftCloseJob registered in info.xml and /api/v2/soft-close/{id}/execute-now is in the frontend",
 				"reachedOn": "soft-close run (SoftCloseJob, or execute-now from the soft-close page); positions on CurrencyBalances /bookkeeping/currency-balances (menu BankingCashflow > Currency Balances)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-07-13-fx-period-end-revaluation"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-currency-fincur-revaluationentriest?language=en_GB: \"In Exact Online, you can revalue foreign currency balances for customers (A/R), suppliers (A/P), and bank accounts\"",
@@ -2395,7 +2418,8 @@
 				"state": "built",
 				"evidence": "Leningen, Derivaten, CashPools, IntercompanyLoans, FXHedges index pages (bookkeeping-wet-fido-treasury.json, 30-treasury-ihb.json) keep records; TreasuryDashboard and GroupLiquidityDashboard widgets are stats-blocks with a static props.count 0 and no schema/aggregation",
 				"reachedOn": "TreasuryDashboard /treasury/dashboard, Loans /treasury/leningen, Derivatives /treasury/derivaten, Cash Pools /treasury/cash-pools (menu BankingCashflow)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-bookkeeping-treasury-ihb"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
@@ -2935,7 +2959,8 @@
 				"state": "built",
 				"evidence": "lib/BackgroundJob/DeadlineReminderJob.php and TaxDeadlineReminderJob.php, both registered in appinfo/info.xml:174 and :185; lib/Service/ComplianceDeadlineCalendarService.php publishes VEVENTs; src/views/DeadlineCalendarSettings.vue calls /api/deadline-calendar/settings",
 				"reachedOn": "DeadlineCalendarSettings /settings/deadline-calendar (settings gear) and the user's Nextcloud calendar",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-07-12-compliance-deadline-calendar"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Content-rn-whatsnewlandingpage?language=en_GB (February 2026): the Premium HQ start page shows \"VAT deadlines for all companies\"; https://www.exact.com/nl/producten/accountancy/fiscaal/features-en-prijzen: planning tool with \"De status van de aangifte, uitstel en inleverdatum\" Note: Deadlines are shown in the HQ page and the accountant planning tool; calendar reminders are not described.",
@@ -3119,7 +3144,8 @@
 				"state": "built",
 				"evidence": "lib/Reporting/Generator/TrialBalanceReportGenerator.php sums GLLine debit/credit per accountNumber filtered by administrationId + periodId (ReportDataTrait.php:129 lineFilters), native CSV/PDF, in ReportCatalogue.php:95. The TrialBalance/TrialBalanceLines index pages list objects nothing writes, and /api/trial-balance has no frontend caller.",
 				"reachedOn": "ReportingComplianceOverview /reporting-compliance (via menu Reporting & compliance) report card 'Proef- en saldibalans' -> GenerateReportDialog",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-bookkeeping-trial-balance"
 			},
 			"evidence": {
 				"odoo": "https://www.odoo.com/odoo-19-release-notes 'A default Annual Statements composite report ... combining the balance sheet, profit and loss, and trial balances' Note: Enterprise account_reports, rated from docs; old evidence pointed at consolidation, now at the standard trial balance",
@@ -3149,7 +3175,8 @@
 				"state": "built",
 				"evidence": "lib/Reporting/Generator/GeneralLedgerReportGenerator.php:129-173 writes per-account cards with a carried runningBalance, filtered by administration and period; plus the GeneralLedger index with sortable/filterable columns.",
 				"reachedOn": "ReportingComplianceOverview report card 'Grootboekkaarten' -> GenerateReportDialog; GeneralLedger /general-ledger (via menu Bookkeeping > General Ledger)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"spec": "none"
 			},
 			"evidence": {
 				"snelstart": "https://kennisplein.snelstart.nl/klanten/s/article/financi%C3%ABle-rapportages-in-versie-12 : 'De grootboekmutatiekaarten geven per grootboekrekening een overzicht van alle gemaakte boekingen in een aangegeven periode', with search, column filters and extra columns",
@@ -3179,7 +3206,8 @@
 				"state": "built",
 				"evidence": "lib/Service/FinancialDashboardService.php:167 summary() computes turnover, margin, openDebtors (ARInvoice), openCreditors, cashPosition from Account/GLLine/ARInvoice/APTransaction; src/manifest.json:5215-5333 Dashboard widgets fetch /api/dashboard/financial-summary and financial-series.",
 				"reachedOn": "Dashboard / (via menu Dashboard)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-financial-dashboard-graphs"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Financiele cockpit: Een compleet gevisualiseerd overzicht van belangrijke financiele cijfers zoals je omzet, resultaat, banksaldi en openstaande posten\"",
@@ -3208,7 +3236,8 @@
 				"state": "built",
 				"evidence": "lib/Controller/BudgetGridController.php (GET /api/budget-grid, called by src/views/BudgetGrid.vue) uses lib/Service/BudgetVsActualsReader.php + BudgetVsActualsCalculator.php to show actuals and deviation per ledger group for past periods; also /api/budget-charts/series (BudgetTrendChart.vue).",
 				"reachedOn": "BudgetGrid /begroting/grid (via menu Banking & Cashflow > Budget Grid)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "budget-grid-view"
 			},
 			"evidence": {
 				"twinfield": "https://taasupportportal.wolterskluwer.com/nl/nl-nl/artikel/budgetteren, -r-3041184 (Budgetteren - Rapportage): \"Budget : Selecteer het gewenste budget waarmee de werkelijke cijfers worden vergeleken\"",
@@ -3237,7 +3266,8 @@
 				"state": "built",
 				"evidence": "AnnualReport records with AnnualReportGuard (lib/Lifecycle/AnnualReportGuard.php) on Jaarrekening, and lib/Reporting/Generator/AnnualAccountsReportGenerator.php (document kind, docudesk) builds a Titel 9 document; it inherits the balance-sheet flaws (no as-of date, result not in equity), there is no cash flow statement, and filing is out: sbr-xbrl is in the catalogue with no generator and Digipoort SBR is log-only in lib/Settings/connections.json.",
 				"reachedOn": "Jaarrekening /bookkeeping/jaarrekening (via menu Bookkeeping > Annual accounts); report card 'Jaarrekening' on ReportingComplianceOverview",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-bookkeeping-titel-9-jaarrekening"
 			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207317-jaarrekening-indienen-via-moneybird : 'Moneybird stelt geen volledige jaarrekeningen samen. Je kunt de jaarrekening dan ook niet direct via Moneybird indienen'; balance sheet and P&L can be exported Note: a year-end closing entry exists (https://helpcenter.moneybird.nl/nl/articles/208002-jaarafsluiting) but no annual accounts",
@@ -3267,7 +3297,8 @@
 				"state": "built",
 				"evidence": "ConsolidationGroup/ConsolidationPeriod/ConsolidatedReport lists exist, but lib/Service/ConsolidationMappingService.php (applyMapping, shouldEliminate) has no caller outside itself, and the only elimination writer (IntercompanyMatchingService.php:398) is unreachable (SoftCloseExecutor.php:469 calls non-existent matchForPeriod). No code aggregates subsidiaries into group statements.",
 				"reachedOn": "ConsolidationGroups, ConsolidationPeriods, ConsolidatedReports (via menu Bookkeeping > Consolidation Groups / Consolidated Reports)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-bookkeeping-consolidation-commercial"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: Premium \"Multi-company ondersteuning ... direct inzicht in de financiele positie over administraties heen\"; https://support.exactonline.com/community/s/article/NL-AGSG-HNO-Task-ag-rg-agj-consolidatie4t: consolidated statements with eliminations in Jaarrekening Note: Group statements with eliminations only in the accountant product Exact Online Jaarrekening.",
@@ -3361,7 +3392,8 @@
 				"state": "built",
 				"evidence": "Generic index pages render @conduction/nextcloud-vue CnIndexPage whose mass-export (showMassExport defaults true) calls OpenRegister's export leaf in CSV or Excel (nextcloud-vue src/components/CnIndexPage/selfModeActions.js handleMassExport); PDF comes from the report library (lib/Reporting/ReportCatalogue.php formats csv/pdf, GenerateReportDialog.vue -> /api/reporting/generate) and SegmentPnLDashboard.vue:435 exportCsv.",
 				"reachedOn": "any index page, e.g. GeneralLedger /general-ledger (select rows > Export); ReportingComplianceOverview /reporting-compliance report cards for PDF",
-				"owner": "ConductionNL/nextcloud-vue"
+				"owner": "ConductionNL/nextcloud-vue",
+				"spec": "none"
 			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207111-facturen-exporteren : 'Exporteer facturen als PDF, UBL of Excel'; reports export to Excel (article 207266) and bank transactions 'exporteren naar Excel' (article 207257) Note: Excel rather than CSV for most lists",
@@ -3391,7 +3423,8 @@
 				"state": "built",
 				"evidence": "lib/Reporting/ReportCatalogue.php:83-109 lists 17 report types; src/modals/GenerateReportDialog.vue:330 POSTs /api/reporting/generate, GeneratedReportsIndex lists results via /api/reporting/generated and download. lib/Reporting/Generator/* implements 12; icp-opgaaf, ib-aangifte, vpb-aangifte, sbr-xbrl and audit-trail have no generator (ReportGenerationService.php:160 logs 'no generator'), and document-kind reports need docudesk.",
 				"reachedOn": "ReportingComplianceOverview /reporting-compliance (via menu Reporting & compliance) report cards -> GenerateReportDialog",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"spec": "none"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: reports sit per menu (Financial > Analysis & Results) but a single report library page is not described",
@@ -3421,7 +3454,8 @@
 				"state": "built",
 				"evidence": "LeaseRegister pages plus lib/Listener/LeaseActivationListener.php (registered Application.php:1273) persisting LeasePaymentSchedule rows via lib/Service/LeasePaymentScheduleService.php:143. Disclosures: lib/Service/LeaseDisclosureService.php:88 generateForPeriod is only reachable via GET /api/leases/disclosure (appinfo/routes.php:518), which no page calls, and it writes no LeaseDisclosureTable rows, so the LeaseDisclosures page lists nothing; reassessment POST endpoints (routes.php:524-527) are also uncalled; no GL posting of RoU/liability.",
 				"reachedOn": "LeaseRegister /ifrs-16/leases (via menu Bookkeeping > Lease Register); LeaseDisclosures /ifrs-16/disclosures (via menu Bookkeeping > Annual Disclosures) shows an unfilled list",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-bookkeeping-ifrs-16-lease"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today for IFRS 16 and lease registers: not stated",
@@ -3451,7 +3485,8 @@
 				"state": "built",
 				"evidence": "Contracts and ContractObligations lists; lib/Listener/ContractObligationTaskListener.php (registered Application.php:1255) calls lib/Service/ObligationTaskBridge.php to write a VTODO plus a deadline VEVENT for the renewal/opzegtermijn date (line 162) on obligation create/update; ContractCostRollupJob (registered) rolls up spend for ContractSpendDashboard.",
 				"reachedOn": "Contracts /contracts and ContractObligations /contracts/obligations (via menu Purchasing > Procurement Contracts / Obligations)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-15-contract-lifecycle-management"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/add-ons/contract-management: contract management add-on for recurring contracts and invoicing; https://www.exact.com/nl/producten/proquro: \"Contractmanagement stelt je in staat om alle soorten contracten eenvoudig en overzichtelijk vast te leggen en te bewaken\" Note: Add-on or separate Proquro product; obligations and renewal alerts are named only for Proquro.",
@@ -3545,7 +3580,8 @@
 				"state": "built",
 				"evidence": "src/views/BudgetScenarioComparison.vue:455 calls GET /api/v1/budget-scenarios/{id}/evaluate (lib/Controller/BudgetScenarioController.php:147, lib/Service/BudgetScenarioEvaluator.php) and lays scenario outcomes against the base per ledger group; BudgetScenarioModifiers define the deltas; promote endpoint sets the default.",
 				"reachedOn": "BudgetScenarioComparison /begroting/scenarios/compare (via menu Banking & Cashflow > Scenario Comparison); BudgetScenarios (menu Banking & Cashflow > Scenarios)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "budget-scenarios"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-budget-finbdgt-crtbdgtt?language=en_GB: \"After you create a budget scenario, you can create a budget\"; https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Budget geavanceerd: Genereer nieuwe budgetten op basis van bestaande budgetten ... die je vervolgens snel en gemakkelijk [kunt] vergelijken\" Note: Side by side comparison of two scenarios is not shown explicitly.",
@@ -3574,7 +3610,8 @@
 				"state": "built",
 				"evidence": "PensionPlan, ActuarialValuation and PensionDisclosureTable schemas (lib/Settings/register.d/bookkeeping-pension-ias19.json) with lib/Lifecycle/PensionIas19Guard.php; no service computes net interest, service cost or remeasurements, or posts IAS 19 entries (grep Pension/ActuarialValuation in lib/Service finds only PayrollCalculator and signing code).",
 				"reachedOn": "PensionPlans /pension/plans, ActuarialValuations, PensionDisclosureTables (via menu Bookkeeping > Pension plans (IAS 19) / Actuarial valuations / disclosure tables)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-bookkeeping-pension-ias19"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
@@ -3604,7 +3641,8 @@
 				"state": "built",
 				"evidence": "InventoryStock unique per (productId, locationCode, administrationId) (inventory-stock-tracking.json); InventoryMobileScannerService.php applyMutation 'transfer' decrements the source location and increments toLocation via mutateStock; /api/v1/inventory/sync + /locations called from src/composables/useInventorySync.js",
 				"reachedOn": "StockByLocation /inventory/stock-by-location (menu Purchasing > Stock by Location); MobileScannerTransfer /inventory/mobile/transfer (menu Purchasing > Mobile Scanner)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-inventory-multi-warehouse"
 			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/stock/models/stock_warehouse.py:24 stock.warehouse, each with its stock location (:46 lot_stock_id); internal transfers are stock.picking moves between locations",
@@ -3634,7 +3672,8 @@
 				"state": "built",
 				"evidence": "src/components/inventory/BarcodeScanner.vue (camera decode or manual entry) feeding ReceiveOp/PickOp/CountOp/TransferOp; lib/Service/InventoryMobileScannerService.php:179 uploadOperations applies receive/transfer/pick/count with role checks and an idempotent MobileScannerSyncBatch",
 				"reachedOn": "MobileScannerHome /inventory/mobile (menu Purchasing > Mobile Scanner) and its receive/pick/count/transfer pages",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-inventory-mobile-scanner"
 			},
 			"evidence": {
 				"odoo": "https://www.odoo.com/documentation/19.0/applications/inventory_and_mrp/barcode.html Barcode app for receiving, picking, inventory adjustments and transfers with scanners on mobile; odoo/odoo@19.0 addons/stock/models/res_config_settings.py:29 module_stock_barcode toggle Note: Enterprise module stock_barcode, not public, rated from docs",
@@ -3664,7 +3703,8 @@
 				"state": "built",
 				"evidence": "InventoryLot schema with expiryDate and lotStatus (inventory-lot-batch-expiry.json); lib/BackgroundJob/LotExpiryAlertJob.php (registered in info.xml) creates ExpiryAlert rows at 30/7 days and on expiry, idempotently",
 				"reachedOn": "InventoryLots /inventory/lots (menu Purchasing > Lots & Batches); ExpiryAlerts /inventory/expiry-alerts (menu Purchasing > Expiry Alerts)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-inventory-lot-batch-expiry"
 			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/product_expiry/models/production_lot.py:19 alert_date and :21 product_expiry_alert per lot; FEFO removal addons/product_expiry/models/stock_quant.py:26",
@@ -3756,7 +3796,8 @@
 				"state": "built",
 				"evidence": "lib/Service/ProductCatalogService.php reads pipelinq's product master (shillinq-pipelinq-product-vendor-integration.json contract) read-only, incl. variants[] (:470-485), merged with shillinq stock; ProductCatalogIndex calls /api/inventory/products and /api/inventory/product-attributes",
 				"reachedOn": "ProductCatalog /inventory/products (menu Purchasing > Products); ProductAttributeCatalog /inventory/product-attributes (menu Purchasing > Product Attributes)",
-				"owner": "ConductionNL/pipelinq"
+				"owner": "ConductionNL/pipelinq",
+				"change": "2026-06-14-inventory-product-catalog"
 			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/product/models/product_template.py:133 attribute_line_ids generate product variants from attribute values",
@@ -3786,7 +3827,8 @@
 				"state": "built",
 				"evidence": "lib/Service/SalesDispatchStockIssueService.php:171-215 asks LotSellabilityGuard and refuses to create the issue StockMove for quarantined/expired/exhausted lots, logging 'dispatch BLOCKED'; it runs inside DeliveryDispatchListener after the Delivery has already moved to confirmed (fail-soft), and scanner 'pick' (InventoryMobileScannerService) never consults lots",
 				"reachedOn": "no screen: runs when a Delivery is confirmed (Orders /orders, menu Sales)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-07-14-block-unsellable-stock-dispatch"
 			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/product_expiry/wizard/confirm_expiry.py:25 warns 'You are going to deliver some product expired lots' and lets the user continue (skip_expired, :41); FEFO removal in addons/product_expiry/models/stock_quant.py:26 Note: Warns and steers picking away from expired lots, does not hard-block; blocked stock can be kept in a non-sellable location",
@@ -3816,7 +3858,8 @@
 				"state": "built",
 				"evidence": "Public widget API lib/Controller/WidgetApiController.php:104-274 (services, slots, appointments; #[PublicPage], bearer API key via WidgetAuthService, keys managed on BookingWidgetKeys) and the embeddable bundle src/components/widget/WidgetEmbed.js -> widget.js (webpack.config.js:46-54). The controller sets no CORS headers and there is no OPTIONS/preflight route, so a browser on another origin sending the Authorization header is refused; the /widget/iframe URL in widget/README.md has no route in appinfo/routes.php",
 				"reachedOn": "BookingWidgetKeys /settings/booking-widget-keys (settings gear) to issue a key; the booking itself happens in the embedded widget on the customer's site",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-bookings-self-service-widget"
 			},
 			"evidence": {
 				"odoo": "https://www.odoo.com/documentation/19.0/applications/productivity/appointments.html 'self-service scheduling', online appointment booking on the website Note: Enterprise app appointment/website_appointment, not public, rated from docs",
@@ -3846,7 +3889,8 @@
 				"state": "built",
 				"evidence": "Service schema with duration and price (lib/Settings/register.d/10-bookings-create-appointment.json) plus basePrice/buffers/status (bookings-service-catalog.json); Diensten page (src/manifest.d/bookings-service-catalog.json); lib/Service/SlotService.php:125-160 uses the service duration to cut slots and the widget lists services",
 				"reachedOn": "Diensten /verkoop/diensten (via menu Sales > Sales > Services)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-bookings-service-catalog"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
@@ -3875,7 +3919,8 @@
 				"state": "built",
 				"evidence": "AvailabilityRule, ResourceBreak, BookingConstraint schemas and AvailabilityRules page (bookings-availability-rules.json, settingsSection in src/menu-layout.json), but no PHP file reads those schemas (grep 'AvailabilityRule'|'ResourceBreak'|'BookingConstraint' in lib: none); lib/Service/SlotService.php:136-160 uses only the resource's single openingTime/closingTime and existing appointments",
 				"reachedOn": "AvailabilityRules /verkoop/beschikbaarheidsregels (settings gear); Resources /bookings/resources (via menu Sales > Bookings > Resources)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-bookings-availability-rules"
 			},
 			"evidence": {
 				"odoo": "https://www.odoo.com/documentation/saas-19.3/applications/productivity/appointments/appointment_types.html Availabilities tab with hours per day of week, restricted per user, user-based or resource-based types Note: Enterprise, rated from docs",
@@ -3905,7 +3950,8 @@
 				"state": "built",
 				"evidence": "AppointmentCreatedListener (registered lib/AppInfo/Application.php:1242) issues a token via lib/Service/Booking/ConfirmationTokenService.php:160-174, whose dispatchEmail (:477) needs integriq 'Service\\NotificationDispatcher', a class integriq does not ship (openconnector/lib/Service has none), so the request only reaches the log; CancelUnconfirmedAppointments job (appinfo/info.xml) runs AppointmentConfirmationService::cancelExpired() and does cancel; confirmation portal /confirm/:appointmentId works",
 				"reachedOn": "BookingsPendingConfirmations /verkoop/openstaande-bevestigingen (via menu Sales > Sales > Pending confirmations); BookingsConfirmationPortal /confirm/:appointmentId for the customer",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-bookings-confirm-flow"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
@@ -3935,7 +3981,8 @@
 				"state": "built",
 				"evidence": "Confirmation/Reminder/Cancellation template pages and NotificationTriggers (bookings-email-templates.json, bookings-notification-triggers.json); BookingReminderJob is registered (appinfo/info.xml) and calls lib/Service/BookingNotificationService.php, whose sendViaOpenconnector (:600-640) POSTs to the relative URL '/openconnector/api/notifications/send' (:45), a route integriq does not have; ConfirmationMailer.php:148-157 calls integriq CallService::send(), which does not exist, and then logs 'queued' and returns true",
 				"reachedOn": "ConfirmationTemplates, ReminderTemplates, CancellationTemplates, NotificationTriggers, NotificationMonitor (via menu Sales > Communication)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-bookings-email-templates"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
@@ -3965,7 +4012,8 @@
 				"state": "built",
 				"evidence": "SmsReminderChannels page (bookings-sms-reminder-channel.json); lib/Service/Sms/SmsReminderDispatcher.php is referenced only in lib/AppInfo/Application.php (no job or listener calls it) and SmsProviderAdapterInterface is bound to LogSmsProviderAdapter (Application.php:452)",
 				"reachedOn": "SmsReminderChannels /communication/sms-reminder-channels (via menu Sales > Communication > SMS Reminder Channels)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-bookings-sms-reminder-channel"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
@@ -3995,7 +4043,8 @@
 				"state": "built",
 				"evidence": "lib/Controller/BookingDepthController.php:190 createSeries (POST /api/v1/appointment-series) generates a recurring series, but no file in src calls 'appointment-series' and no page offers a repeat option",
 				"reachedOn": "nothing reaches it: the endpoint has no page or button",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-07-14-bookings-depth"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: https://start.exactonline.nl/docs/HlpRestAPIResources.aspx has project/ProjectPlanningRecurring for recurring planning of employees, not customer appointments",
@@ -4025,7 +4074,8 @@
 				"state": "built",
 				"evidence": "src/views/bookings/CalendarPage.vue hosts CalendarView.vue, which loads /api/v2/calendars/{calendarId}/bookings (CalendarController listBookings) with month/week/day grid and click-to-book; page BookingsCalendarView /bookings/calendar/:calendarId (src/manifest.d/10-bookings-resource-calendar.json:294) is linked from no menu entry, card or detail action (its only mention elsewhere is a _note on BookingDetail)",
 				"reachedOn": "nothing reaches it: /bookings/calendar/:calendarId is routable only by typing the URL; BookingList /bookings/list (via menu Sales > Bookings > Bookings) shows bookings as a list",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-bookings-resource-calendar"
 			},
 			"evidence": {
 				"odoo": "https://www.odoo.com/documentation/saas-19.3/applications/productivity/appointments/appointment_types.html resource-based types 'meeting rooms or equipment'; bookings land as calendar events (odoo/odoo@19.0 addons/calendar) filterable per attendee or resource Note: Resource bookings are Enterprise appointment",
@@ -4146,7 +4196,8 @@
 				"state": "built",
 				"evidence": "lib/Controller/DBAController.php:126 scoreIntake / :155 saveIntake compute the authority/labour/financial/Deliveroo subtotals and store DBAIntake with actueleRisicoscore; src/manifest.json:17371 createAction POST:/api/dba/intake on the intake wizard; DBAFlagGenerationJob and DBAPortfolioAggregationJob are registered in appinfo/info.xml; evidence consent/upload endpoints feed DBAEvidenceBrowser.",
 				"reachedOn": "DBAIntakeWizard /dba/intake, DBAPortfolioDashboard, DBAEvidenceBrowser (via menu Reporting & compliance > DBA Intake Wizard / DBA Portfolio Dashboard / DBA Evidence Browser)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-dba-compliance-marker"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
@@ -4175,7 +4226,8 @@
 				"state": "built",
 				"evidence": "IB47Record list on IB47Jaarbatch (src/manifest.d/add-shillinq-detachering-payroll-administratie.json); no PHP aggregates payments to third parties into IB47 records or builds the statement (grep Ib47 in lib/*.php finds only the adapter interface and lib/Service/External/Ib47/LogIb47Adapter.php), and the IB47 connection is log-only per lib/Settings/connections.json. The report catalogue has no IB47 entry.",
 				"reachedOn": "IB47Jaarbatch /bookkeeping/detachering-payroll/ib47 (via menu Bookkeeping > IB47 annual batch)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-bookkeeping-detachering-payroll-administratie"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today for IB47 and uitbetaalde bedragen aan derden: not stated",
@@ -4237,7 +4289,8 @@
 				"state": "built",
 				"evidence": "src/views/AccountantPortalDashboard.vue calls /api/accountant/dashboard and /api/accountant/administrations (lib/Controller/AccountantPortalController.php)",
 				"reachedOn": "AccountantPortalDashboard /accountant-portal (menu Reporting & Compliance)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-07-13-accountant-portal"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Met Exact Online werk je online samen met je accountant of boekhouder. Je bepaalt zelf wat hij wel en niet kan doen in je boekhouding\"; FAQ: \"een koppeling met je accountant zit in alle abonnementen\"",
@@ -4267,7 +4320,8 @@
 				"state": "built",
 				"evidence": "Shillinq has no login of its own; every page sits behind Nextcloud authentication, whose two-factor providers apply (appinfo/info.xml navigation shillinq.dashboard.page)",
 				"reachedOn": "Nextcloud login, before any shillinq page",
-				"owner": "nextcloud/server"
+				"owner": "nextcloud/server",
+				"spec": "none"
 			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207562-twee-staps-verificatie-verplichten-voor-iedereen-in-jouw-administratie : 'kun je voor hen twee-staps-verificatie (2FA) verplichten'; authenticator app, Moneybird app and passkeys supported (articles 207555, 263740, 207550)",
@@ -4296,7 +4350,8 @@
 				"state": "built",
 				"evidence": "every page reads and writes through OpenRegister's REST API (/index.php/apps/openregister/api/objects/shillinq/..., e.g. src/manifest.json BtwAangifteDetail sidebar source); appinfo/routes.php adds 843 lines of app routes",
 				"reachedOn": "any client with Nextcloud credentials; no API documentation page is shipped in this repo",
-				"owner": "ConductionNL/openregister"
+				"owner": "ConductionNL/openregister",
+				"spec": "none"
 			},
 			"evidence": {
 				"exact-online": "https://start.exactonline.nl/docs/HlpRestAPIResources.aspx: \"Exact Online REST API - Reference documentation\" with 363 resource URIs, OAuth app access and sync and bulk endpoints",
@@ -4420,7 +4475,8 @@
 				"state": "built",
 				"evidence": "detail pages carry an openregister-file-references sidebar tab (e.g. src/manifest.json BtwAangifteDetail sidebarProps.tabs files)",
 				"reachedOn": "the Files tab on any detail page",
-				"owner": "ConductionNL/openregister"
+				"owner": "ConductionNL/openregister",
+				"change": "2026-06-14-add-shillinq-document-attachment-integration"
 			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/223803-bijlage : 'Wanneer je een factuur naar een klant stuurt, kun je ook een extra bijlage meesturen'; purchase documents carry their scan (article 207134)",
@@ -4480,7 +4536,8 @@
 				"state": "built",
 				"evidence": "l10n/ ships 25 languages (50 .js/.json files), including nl, en, de and fr",
 				"reachedOn": "every page, following the Nextcloud user language",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"spec": "none"
 			},
 			"evidence": {
 				"twinfield": "https://taasupportportal.wolterskluwer.com/nl/nl-nl/artikel/administratie-i-3041034: \"Standaardtaal : De voertaal voor de administratie\"; https://taasupportportal.wolterskluwer.com/nl/nl-nl/artikel/verkoopfactuur-3041176: invoice templates in several languages Note: Interface language options are not listed in today's pages.",
@@ -4573,7 +4630,8 @@
 				"state": "built",
 				"evidence": "appinfo/info.xml: a Nextcloud app under EUPL-1.2 with OpenRegister as its data layer, installed on the customer's own Nextcloud",
 				"reachedOn": "Nextcloud app store or a manual install",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"spec": "none"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/software/exact-online/tweestapsverificatie: \"Exact Online is een Saas bedrijfssoftware oplossing voor bedrijven en accountants\" Note: Exact sells separate on-premise products (Globe), not Exact Online.",
@@ -4634,7 +4692,8 @@
 				"state": "built",
 				"evidence": "lib/Settings/connections.json registers 15 connections with an honest available flag; lib/BackgroundJob/ConnectionReportJob.php (registered in appinfo/info.xml) reports them to integriq daily; the page reads integriq's app_connection schema",
 				"reachedOn": "ExternalAdaptersStatus /external-adapters (settings gear)",
-				"owner": "ConductionNL/integriq"
+				"owner": "ConductionNL/integriq",
+				"change": "adopt-connection-registry"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Content-rn-whatsnewlandingpage?language=en_GB (February 2026, Premium Editions): \"HQ: We've replaced the Companies Note: Overview page with a new HQ start page, showing key details such as pending invoices, bank connections, and VAT deadlines for all companies\"",
@@ -4694,7 +4753,8 @@
 				"state": "built",
 				"evidence": "lib/Reporting/Generator/Iv3ReportGenerator.php sums GL lines per taakveld into baten and lasten, XML or CSV, via the report dialog; sending to CBS is unavailable in lib/Settings/connections.json (cbs-iv3)",
 				"reachedOn": "ReportingComplianceOverview /reporting-compliance, report card IV3-rapportage",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-bookkeeping-iv3-reporting"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; Iv3 not stated",
@@ -4845,7 +4905,8 @@
 				"state": "built",
 				"evidence": "lib/BackgroundJob/EmuQuarterlyDraftJob.php, registered in appinfo/info.xml, calls EmuReportingService::generateQuarterlyDraft 5 to 7 working days after quarter end",
 				"reachedOn": "EmuRapportage /emu-rapportage (report card on /reporting-compliance)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-bookkeeping-emu-reporting"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; the EMU balance not stated",
@@ -4966,7 +5027,8 @@
 				"state": "built",
 				"evidence": "BudgetToProgrammeLinker /bbv-provincie/budget-to-programme with src/components/bbv-provincie filter bar calls /api/bbv-provincie/programme-budget-vs-actuals (lib/Controller/BbvProgrammeBudgetController.php); the programmabegroting exports /api/programmabegroting/* are uncalled",
 				"reachedOn": "BudgetToProgrammeLinker /bbv-provincie/budget-to-programme (settings gear)",
-				"owner": "ConductionNL/shillinq"
+				"owner": "ConductionNL/shillinq",
+				"change": "2026-06-14-add-shillinq-provincies-bbv-variant"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; programme budgets not stated",
@@ -6802,7 +6864,8 @@
 				"owner": "nextcloud/server",
 				"readOn": "2026-09-26",
 				"evidence": "Shillinq has no login of its own; Nextcloud authentication applies, and Nextcloud supports SAML and OpenID Connect through its user_saml and user_oidc apps.",
-				"reachedOn": "Nextcloud login, before any shillinq page"
+				"reachedOn": "Nextcloud login, before any shillinq page",
+				"spec": "none"
 			},
 			"evidence": {
 				"exact-online": "not checked: reason: searched exact.com/nl, the Exact knowledge base and What's New today: not stated; Exact uses its own One Exact Identity login with two-step verification",
