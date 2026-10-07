@@ -22,15 +22,7 @@ This specification defines the requirements for bookkeeping provincies bbv varia
 
 @e2e exclude unbuilt UI: BBV variant pages not yet implemented
 
-
-### REQ-BBC-001: BBV Compliance Dashboard SHALL display budget health by programme with traffic-light status
-
-**Renamed 2026-08-20 by `budget-core-schema`:** this requirement's schema
-was `Budget`, colliding with an unrelated `Budget` declared by
-`bookkeeping-verplichtingenadministratie` — the two merged into one
-franken-schema that silently refused every BBV-shaped create. Renamed to
-`BbvProgrammeBudget`; this requirement's substance (KPI cards, traffic-light
-rule) is unchanged.
+### Requirement: REQ-BBC-001 — BBV Compliance Dashboard SHALL display budget health by programme with traffic-light status
 
 The BBV Compliance Dashboard page MUST render a `CnDashboardPage` widget
 containing:
@@ -40,7 +32,8 @@ containing:
      matching the selected `programmaStructure` + fiscal year, displayed in
      EUR.
   2. **Committed** — sum of `GLLine.amount` where `status: "committed"` and
-     `programmaStructure` matches; includes active contracts and purchase orders.
+     `programmaStructure` matches; includes active contracts and purchase
+     orders.
   3. **Spent** — sum of `GLLine.amount` where `status: "posted"` and
      `programmaStructure` matches; GL transactions settled and booked.
   4. **Remaining** — Remaining = Total Budget − (Committed + Spent), shown
@@ -70,16 +63,20 @@ containing:
   - Spent: €600,000
   - Remaining: €200,000 (20% — Green status)
 
+@e2e exclude unbuilt UI: BBV variant pages not yet implemented (pre-existing
+exclusion carried over from this spec's own file, unaffected by this delta)
+
 #### Scenario: Overspend triggers red status
 
-- **GIVEN** a programme `water` with €500k `BbvProgrammeBudget`, €350k spent, €200k committed
+- **GIVEN** a programme `water` with €500k `BbvProgrammeBudget`, €350k
+  spent, €200k committed
 - **WHEN** dashboard is rendered
-- **THEN** status MUST be 🔴 Red (50k overspend); Remaining field MUST display
-  as negative (-€50,000).
+- **THEN** status MUST be 🔴 Red (50k overspend); Remaining field MUST
+  display as negative (-€50,000).
 
-### REQ-BBC-002: Dashboard filters SHALL support programme, fiscal year, and compliance status
+@e2e exclude unbuilt UI: BBV variant pages not yet implemented
 
-**Renamed 2026-08-20 by `budget-core-schema`:** schema `Budget` → `BbvProgrammeBudget` (see REQ-BBC-001's rename note); this requirement's substance is unchanged.
+### Requirement: REQ-BBC-002 — Dashboard filters SHALL support programme, fiscal year, and compliance status
 
 The dashboard `CnFilterBar` MUST include three filter controls:
 
@@ -92,6 +89,13 @@ The dashboard `CnFilterBar` MUST include three filter controls:
 Filters MUST be applied cumulatively (AND logic). Selecting no programme
 MUST show no data (not all programmes).
 
+#### Scenario: Fiscal-year filter discovers years from BbvProgrammeBudget data
+
+- **GIVEN** `BbvProgrammeBudget` records exist for fiscal years 2023–2026
+- **WHEN** the dashboard's Fiscal Year filter dropdown is opened
+- **THEN** it lists 2023–2026 (auto-discovered from `BbvProgrammeBudget` +
+  GL data), defaulting to the current fiscal year
+
 #### Scenario: Filter by single programme and year
 
 - **GIVEN** dashboard with `BbvProgrammeBudget` + GL data for 2025 and 2026
@@ -99,7 +103,9 @@ MUST show no data (not all programmes).
 - **THEN** KPI cards MUST show only 2026 `cultuur` budget vs. actuals; other
   programmes hidden.
 
-### REQ-BBC-003: Dashboard SHALL surface exception alerts for overspent programmes
+@e2e exclude unbuilt UI: BBV variant pages not yet implemented
+
+### Requirement: REQ-BBC-003 — Dashboard SHALL surface exception alerts for overspent programmes
 
 The dashboard MUST include an **Exceptions Alert** section below the charts:
 
@@ -116,7 +122,7 @@ The dashboard MUST include an **Exceptions Alert** section below the charts:
   message MUST show overspent amount and link to Budget-to-Programme Linker
   for remediation.
 
-### REQ-BBL-001: Budget-to-Programme Linker SHALL allow bulk assignment of GL lines to BBV programmes
+### Requirement: REQ-BBL-001 — Budget-to-Programme Linker SHALL allow bulk assignment of GL lines to BBV programmes
 
 The Budget-to-Programme Linker page (type: index+detail) MUST:
 
@@ -151,7 +157,7 @@ The Budget-to-Programme Linker page (type: index+detail) MUST:
   clicks "Link"
 - **THEN** all 10 lines MUST have `programmaStructure: "mobiliteit"` + `programmaAssignedAt: today` in OR; toast shows "Linked 10 GL lines to Mobiliteit"; page refreshes showing updated status
 
-### REQ-BBL-002: Linker SHALL validate programme assignments before saving
+### Requirement: REQ-BBL-002 — Linker SHALL validate programme assignments before saving
 
 On modal submit, the form MUST validate:
 
@@ -172,7 +178,7 @@ inline.
 - **THEN** validation MUST fail; modal MUST show error "Effective date cannot
   be in the future"; no GL lines MUST be updated.
 
-### REQ-BBL-003: Programme assignments SHALL be auditable via OpenRegister audit trail
+### Requirement: REQ-BBL-003 — Programme assignments SHALL be auditable via OpenRegister audit trail
 
 The system SHALL satisfy this requirement: Programme assignments SHALL be auditable via OpenRegister audit trail.
 
@@ -196,7 +202,7 @@ Audit trail MUST be queryable via standard `AuditTrailService` methods.
   1. null → mobiliteit (Linker, timestamp T1)
   2. mobiliteit → water (Manual Edit, timestamp T2)
 
-### REQ-BBL-004: Linker index MUST display summary of unmapped GL lines
+### Requirement: REQ-BBL-004 — Linker index MUST display summary of unmapped GL lines
 
 Index page header MUST show **Mapping Status** badge:
 
@@ -217,7 +223,7 @@ Badge color: 🔴 Red if P > 30%, 🟡 Yellow if 10–30%, 🟢 Green if < 10%.
 - **WHEN** Linker index loads
 - **THEN** badge MUST show "Unmapped GL lines: 15 of 100 (15%)" in Yellow.
 
-### REQ-BBL-005: Budget-to-Programme assignment MUST NOT permit circular or conflicting mappings
+### Requirement: REQ-BBL-005 — Budget-to-Programme assignment MUST NOT permit circular or conflicting mappings
 
 When assigning a GL line to a programme, validation MUST check:
 
@@ -235,7 +241,7 @@ For the warning case, allow operator to override (checkbox: "Accept overspend wa
 - **THEN** validation MUST reject with message "GL line already assigned to
   Mobiliteit; unmap first if reassignment intended".
 
-### REQ-BBC-004: Dashboard data refresh cadence SHALL be configurable via admin settings
+### Requirement: REQ-BBC-004 — Dashboard data refresh cadence SHALL be configurable via admin settings
 
 Admin Settings page MUST include:
 

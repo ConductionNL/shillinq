@@ -1,6 +1,6 @@
 # Bookkeeping verplichtingenadministratie
 
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: The spending mandate is namespaced (REQ-VPA-035)
 
