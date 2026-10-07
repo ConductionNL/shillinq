@@ -7209,12 +7209,13 @@
 				"reachedOn": "nothing reaches it",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-10-07",
-				"change": "2026-06-14-bookkeeping-cbcr-pillar2"
+				"change": "tax-cbcr-and-pillar2-returns",
+				"delivered": "2026-06-14-bookkeeping-cbcr-pillar2"
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"source": "spec-round-2026-10-07",
-			"note": "The change was archived with its schema and guard; the user-facing half was never built. Re-read 2026-10-07 (spec round part 2): stays specified, no. Missing for a user: any page on the 8 schemas, the threshold detection, the per-jurisdiction aggregation and ETR run (the calculations are declared, not shown to run), and the three XML exports. Needs Ruben: build that half under a new change, or decide no."
+			"note": "Decision 84 (Ruben, 7 Oct 2026): build the user-facing half. Spec: tax-cbcr-and-pillar2-returns (scope test over one and two-in-four years, figures per entity from the books summed per jurisdiction, CbC XML validated against OECD CbC XML Schema v2.0, GIR per the OECD GIR XML Schema of the January 2025 user guide as far as the schemas hold the data, NL QDMTT amount, three pages under Taxes). The archived change 2026-06-14-bookkeeping-cbcr-pillar2 delivered only the 8 schemas, their calculations and CbcrPillar2Guard; its threshold watcher, export targets and source feeds were declarations nothing reads."
 		}
 	],
 	"pending": [
