@@ -4415,7 +4415,7 @@
 				"evidence": "integriq's archived 2026-09-29-registry-backed-field-source shipped the provider side: integriq 5e903e546 lib/PropertySource/Provider/KvkPropertySource.php (id 'kvk', line 36) over the seeded kvk source, and openregister development reads the x-openregister-property-source key (lib/Service/Schemas/PropertySourceDeclaration.php). Shillinq declares the key on no schema property: git grep 'property-source|propertySource' over lib, src and appinfo finds nothing, and lib/Settings/connections.json:77-83 still lists kvk as available false ('Nothing reaches the KvK').",
 				"reachedOn": "nothing reaches it",
 				"owner": "ConductionNL/integriq",
-				"change": "integriq/2026-09-29-registry-backed-field-source",
+				"change": "contacts-kvk-lookup",
 				"readOn": "2026-10-07"
 			},
 			"evidence": {
@@ -4430,7 +4430,7 @@
 			"feature": "kvk-lookup",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Building: ConductionNL/integriq openspec/changes/registry-backed-field-source, an existing open change, covers it (integriq lane, OpenSpec pass 2026-09-27). Re-rated 2026-10-07 (spec round part 2): building to specified. integriq's provider and openregister's key both exist; what is missing is shillinq's half: a contact or relation property that declares x-openregister-property-source 'kvk', so the form offers the lookup, and the connections.json entry turned on. No shillinq change covers that yet."
+			"note": "Building: ConductionNL/integriq openspec/changes/registry-backed-field-source, an existing open change, covers it (integriq lane, OpenSpec pass 2026-09-27). Re-rated 2026-10-07 (spec round part 2): building to specified. integriq's provider and openregister's key both exist; what is missing is shillinq's half: a contact or relation property that declares x-openregister-property-source 'kvk', so the form offers the lookup, and the connections.json entry turned on. No shillinq change covers that yet. Spec round part 3 (2026-10-07): shillinq's half is specified in the open change contacts-kvk-lookup (the key with a fill map on CustomerMaster.kvkNumber and Payee.kvkNumber, the kvk connection switched on). The delivered provider half stays integriq/2026-09-29-registry-backed-field-source. Still needed outside shillinq: the nextcloud-vue form has to render a property that declares x-openregister-property-source as a type-ahead and apply the fill map."
 		},
 		{
 			"id": "plt-nl-query",
