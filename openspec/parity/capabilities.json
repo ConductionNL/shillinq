@@ -2158,18 +2158,19 @@
 			"id": "bnk-psd2",
 			"area": "banking",
 			"name": "Pull bank transactions in automatically through a PSD2 connection.",
-			"shillinq": "no",
+			"shillinq": "partial",
 			"exact-online": "yes",
 			"moneybird": "yes",
 			"snelstart": "yes",
 			"twinfield": "yes",
 			"odoo": "yes",
 			"built": {
-				"state": "building",
-				"evidence": "lib/Settings/connections.json 'bunq' available:false (log-only adapter lib/Service/External/Bunq/LogBunqBankConnectorAdapter.php); lib/BackgroundJob/BankfeedReconciliationJob.php:137 says 'The PSD2 fetch itself is performed by openconnector' and only reads existing BankStatement rows, counts matches and logs (writes nothing); grep psd2/nordigen/gocardless/ponto finds no other feed",
-				"reachedOn": "BankConnections /bank-connections (menu Bookkeeping > Bank Connections) keeps connection records only",
+				"state": "built",
+				"evidence": "Shillinq's half shipped in shillinq#1768 (archived 2026-09-28-banking-connected-accounts, 9 of 9 tasks): lib/AppInfo/Application.php:385-390 registers lib/Listener/BankfeedSyncedListener.php, which acts on integriq event objects of type nl.conduction.bankfeed.transactions.synced (line 53) and hands the data to lib/Service/Bank/BankfeedIntakeService.php:86 ingestSynced(), which reads the batch by batchUri, writes the lines as a bank statement and lets lib/Service/Bank/ExactMatchBooker.php book exact matches (line 132). BankAccounts carries a 'Connect a bank' header action (src/manifest.d/bookkeeping-multi-currency.json:50-54, handler openIntegriqConnections in src/utils/integriqConnections.js). The pull is integriq's (integriq 5e903e546 lib/Service/BankfeedSyncService.php:100 emits the event; resolveProvider() at :699-705 picks the GoCardless-shaped lib/Service/Psd2/RestPsd2AggregatorProvider.php only when the source says provider 'rest', and defaults to the log provider). Rated from a code read, not driven.",
+				"reachedOn": "Banking > Bank accounts (BankAccounts), header action 'Connect a bank' opens integriq's connections; arrived lines show on the bank statements",
 				"owner": "ConductionNL/integriq",
-				"change": "2026-09-28-banking-connected-accounts"
+				"change": "2026-09-28-banking-connected-accounts",
+				"readOn": "2026-10-07"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/bankkoppelingen/psd2 (Tarieven Exact PSD2-bankkoppelingen) and https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Exact Online biedt voor de meeste banken een bankkoppeling om je bankgegevens automatisch bij te laten werken\" Note: Number of bank links per plan: 1, 5 or unlimited.",
@@ -2183,7 +2184,7 @@
 			"feature": "bank-feed",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "No working pull of bank transactions exists in this tree. corrections round 9 (2026-09-28): integriq's archived openspec/changes/archive/2026-07-12-psd2-ais-bank-feed-connector carries the PSD2 half (integriq gap-decisions.json records bnk-psd2 as existing): at integriq development 93426b290f, lib/Controller/Psd2Controller.php runs the consent flow and lib/Service/BankfeedSyncService.php:498-510 emits nl.conduction.bankfeed.transactions.synced with a batchUri. The rating stays no, because at c92d70222 nothing in shillinq listens for that event (git grep in lib, src and appinfo finds none); that listener is shillinq's open openspec/changes/banking-connected-accounts (0 of 9 tasks). Spec round 2026-10-07: shillinq's half is the archived 2026-09-28-banking-connected-accounts (feed listener); the pull is integriq's archived 2026-07-12-psd2-ais-bank-feed-connector."
+			"note": "History, corrections round 9 (2026-09-28): integriq's archived openspec/changes/archive/2026-07-12-psd2-ais-bank-feed-connector carries the PSD2 half (integriq gap-decisions.json records bnk-psd2 as existing): at integriq development 93426b290f, lib/Controller/Psd2Controller.php runs the consent flow and lib/Service/BankfeedSyncService.php:498-510 emits nl.conduction.bankfeed.transactions.synced with a batchUri. The rating stays no, because at c92d70222 nothing in shillinq listens for that event (git grep in lib, src and appinfo finds none); that listener is shillinq's open openspec/changes/banking-connected-accounts (0 of 9 tasks). Spec round 2026-10-07: shillinq's half is the archived 2026-09-28-banking-connected-accounts (feed listener); the pull is integriq's archived 2026-07-12-psd2-ais-bank-feed-connector. Re-rated 2026-10-07 (spec round part 2): built, partial. Both halves ship, but a pull only reaches a bank once an admin sets integriq's PSD2 source to provider 'rest' with an aggregator credential; the default binding logs and fetches nothing, and nobody has driven the chain on an instance. lib/Settings/connections.json still lists the separate 'bunq' adapter as unavailable."
 		},
 		{
 			"id": "bnk-file-import",
@@ -4132,11 +4133,12 @@
 			"twinfield": "partial",
 			"odoo": "yes",
 			"built": {
-				"state": "building",
-				"evidence": "UrenRegistratie carries projectId, recognisedRate, personId (lib/Settings/shillinq_register.json); hours arrive from pipelinq's approved-time handoff via lib/Service/TimeIntakeService.php (BillingIntakeController). The only page, Urenregistratie, is visible only for administrationType zzp and shows columns workDate/category that are not schema fields (schema has date), with no project or rate column. openspec/changes/hours-to-humaniq moves hour recording to humaniq (ADR-107 decision 6).",
+				"state": "specified",
+				"evidence": "humaniq's archived 2026-07-14-time-entry-capture shipped a time entry with a project and a billable flag (humaniq 02eb0609 lib/Settings/register.d/hr-timesheet.json:79 projectId, :87 billable; MijnUren /mijn/uren books them) but no rate: hr-timesheet.json has no rate property, and humaniq's own row tim-billable-rates reads partial. In shillinq UrenRegistratie keeps projectId and recognisedRate (lib/Settings/shillinq_register.json), filled only by pipelinq's approved-time hand-off through lib/Service/TimeIntakeService.php; the Urenregistratie page shows ZZP administrations only and has no project or rate column.",
 				"reachedOn": "Urenregistratie /belastingen/urenregistratie (via menu Taxes > Time tracking, ZZP administrations only)",
 				"owner": "ConductionNL/humaniq",
-				"change": "humaniq/2026-07-14-time-entry-capture"
+				"change": "humaniq/2026-07-14-time-entry-capture",
+				"readOn": "2026-10-07"
 			},
 			"evidence": {
 				"moneybird": "https://www.moneybird.nl/functies/urenregistratie/ : 'In Moneybird kun je eenvoudig uren registreren ... Werk met het hele team aan een opdracht ... Zet de gewerkte uren in een druk op de knop om naar een factuur'; rates entered when billing (https://helpcenter.moneybird.nl/nl/articles/207499-waarom-uren-registreren) Note: 20 entries in Start, unlimited from Groei (pricing page)",
@@ -4150,7 +4152,7 @@
 			"feature": "time-billing",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Hours can be stored and billed from intake, but no page lets a user log project time at a rate. Spec round 2026-10-07: linked to humaniq's archived time-entry-capture (project and billable flag on a time entry; humaniq row tim-billable-rates is built). Shillinq's own half, moving hour recording out of shillinq, is the open change hours-to-humaniq."
+			"note": "Hours can be stored and billed from intake, but no page lets a user log project time at a rate. Spec round 2026-10-07: linked to humaniq's archived time-entry-capture (project and billable flag on a time entry; humaniq row tim-billable-rates is built). Shillinq's own half, moving hour recording out of shillinq, is the open change hours-to-humaniq. Re-rated 2026-10-07 (spec round part 2): building to specified. humaniq's change is archived and delivered project plus billable flag, not a billable rate; shillinq's own half, hours-to-humaniq, is open with 0 of 18 tasks. What is missing: a rate on humaniq's time entry, and the hand-off of rated hours into shillinq's billing (sales-time-and-expense-billing, open)."
 		},
 		{
 			"id": "ppl-timesheet-approval",
@@ -4409,11 +4411,12 @@
 			"twinfield": "unknown",
 			"odoo": "partial",
 			"built": {
-				"state": "building",
-				"evidence": "lib/Settings/connections.json key kvk: available false, 'Only a log-only adapter is bound, and no screen or service calls it yet. Nothing reaches the KvK.'",
+				"state": "specified",
+				"evidence": "integriq's archived 2026-09-29-registry-backed-field-source shipped the provider side: integriq 5e903e546 lib/PropertySource/Provider/KvkPropertySource.php (id 'kvk', line 36) over the seeded kvk source, and openregister development reads the x-openregister-property-source key (lib/Service/Schemas/PropertySourceDeclaration.php). Shillinq declares the key on no schema property: git grep 'property-source|propertySource' over lib, src and appinfo finds nothing, and lib/Settings/connections.json:77-83 still lists kvk as available false ('Nothing reaches the KvK').",
 				"reachedOn": "nothing reaches it",
 				"owner": "ConductionNL/integriq",
-				"change": "integriq/2026-09-29-registry-backed-field-source"
+				"change": "integriq/2026-09-29-registry-backed-field-source",
+				"readOn": "2026-10-07"
 			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207516-contacten-toevoegen : 'Moneybird zoekt automatisch naar gegevens wanneer je de bedrijfsnaam invoert. Klik op het zoekresultaat om de KVK-gegevens alvast in te vullen'",
@@ -4427,7 +4430,7 @@
 			"feature": "kvk-lookup",
 			"featureConfidence": "medium",
 			"source": "competitor",
-			"note": "Building: ConductionNL/integriq openspec/changes/registry-backed-field-source, an existing open change, covers it (integriq lane, OpenSpec pass 2026-09-27)."
+			"note": "Building: ConductionNL/integriq openspec/changes/registry-backed-field-source, an existing open change, covers it (integriq lane, OpenSpec pass 2026-09-27). Re-rated 2026-10-07 (spec round part 2): building to specified. integriq's provider and openregister's key both exist; what is missing is shillinq's half: a contact or relation property that declares x-openregister-property-source 'kvk', so the form offers the lookup, and the connections.json entry turned on. No shillinq change covers that yet."
 		},
 		{
 			"id": "plt-nl-query",
@@ -7202,7 +7205,7 @@
 			"odoo": "unknown",
 			"built": {
 				"state": "specified",
-				"evidence": "Only lib/Lifecycle/CbcrPillar2Guard.php and the register fragment shipped from the archived change; no page in src/manifest.json or src/manifest.d and no service computes the per-jurisdiction aggregation or ETR. Rated from a code read on 2026-10-07 (spec round), not driven on an instance.",
+				"evidence": "The archived change ticked all 35 tasks, but the tree holds only declarations and a guard: lib/Settings/register.d/bookkeeping-cbcr-pillar2.json declares 8 schemas (GroupEntityRegistry, CbcrJurisdictionSummary, Pillar2JurisdictionComputation, Pillar2SafeHarbour, QdmttReturn, GlobeInformationReturn, CbcrReturn, TaxTreatyOverview; three carry x-openregister-calculations) and lib/Lifecycle/CbcrPillar2Guard.php:99-229 guards four transitions. git grep -i 'cbcr|pillar2' over src/ finds no page, and lib/ has no service for the EUR 750M threshold, the per-jurisdiction aggregation or the CbCR, GIR and QDMTT XML exports.",
 				"reachedOn": "nothing reaches it",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-10-07",
@@ -7211,7 +7214,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"source": "spec-round-2026-10-07",
-			"note": "The change was archived with its schema and guard; the user-facing half was never built."
+			"note": "The change was archived with its schema and guard; the user-facing half was never built. Re-read 2026-10-07 (spec round part 2): stays specified, no. Missing for a user: any page on the 8 schemas, the threshold detection, the per-jurisdiction aggregation and ETR run (the calculations are declared, not shown to run), and the three XML exports. Needs Ruben: build that half under a new change, or decide no."
 		}
 	],
 	"pending": [
