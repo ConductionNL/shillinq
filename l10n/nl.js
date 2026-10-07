@@ -48,9 +48,7 @@ OC.L10N.register(
         "This import cannot be posted. Correct the auditfile or the mapping and start a new import.": "Deze import kan niet worden geboekt. Corrigeer de auditfile of de koppeling en start een nieuwe import.",
         "XAF auditfile (any package)": "XAF-auditfile (elk pakket)",
         "Load example data?": "Voorbeeldgegevens laden?",
-        "Example data fills the lists, detail pages and dashboards so you can see the app working straight away. Pick \"None\" on a production install.": "Voorbeeldgegevens vullen de lijsten, detailpagina’s en dashboards, zodat je de app meteen ziet werken. Kies \"Geen\" op een productieomgeving.",
-        "Load the example data": "Laad de voorbeeldgegevens",
-        "Loads what you picked. The data is obviously sample data, it is safe to run more than once, and you can delete it afterwards.": "Laadt wat je koos. De gegevens zijn herkenbaar voorbeeldgegevens, je kunt dit meer dan een keer uitvoeren en je kunt ze daarna verwijderen.",
+        "Example data fills the lists, detail pages and dashboards so you can see the app working straight away. Each card has its own Load button. Pick \"None\" on a production install.": "Voorbeeldgegevens vullen de lijsten, detailpagina’s en dashboards, zodat je de app meteen ziet werken. Elke kaart heeft een eigen knop Laden. Kies \"Geen\" op een productieomgeving.",
         "None, I will set this up myself": "Geen, ik richt dit zelf in",
         "Nothing is imported. You start with an empty app and add your own data.": "Er wordt niets geïmporteerd. Je begint met een lege app en voegt zelf gegevens toe.",
         "Example data": "Voorbeeldgegevens",
@@ -6425,7 +6423,10 @@ OC.L10N.register(
         "That period has not ended yet. Prepare a return for a period that is over.": "Die periode is nog niet voorbij. Stel een aangifte op voor een periode die is afgelopen.",
         "The return adds up the booked ledger lines of the period per box. It is saved as a draft that you check and submit on its own page.": "De aangifte telt de geboekte regels van de periode per rubriek op. Ze wordt bewaard als concept dat je op de eigen pagina controleert en indient.",
         "The return could not be prepared. Try again, or ask your administrator to check the log.": "De aangifte kon niet worden opgesteld. Probeer het opnieuw, of vraag je beheerder het logboek te bekijken.",
-        "You cannot prepare a return for this administration.": "Je kunt voor deze administratie geen aangifte opstellen."
+        "You cannot prepare a return for this administration.": "Je kunt voor deze administratie geen aangifte opstellen.",
+        "Example data fills the lists, detail pages and dashboards so you can see the app working straight away. Pick \"None\" on a production install.": "Voorbeeldgegevens vullen de lijsten, detailpagina’s en dashboards, zodat je de app meteen ziet werken. Kies \"Geen\" op een productieomgeving.",
+        "Load the example data": "Laad de voorbeeldgegevens",
+        "Loads what you picked. The data is obviously sample data, it is safe to run more than once, and you can delete it afterwards.": "Laadt wat je koos. De gegevens zijn herkenbaar voorbeeldgegevens, je kunt dit meer dan een keer uitvoeren en je kunt ze daarna verwijderen."
     },
     "nplurals=2; plural=(n != 1);"
 )
