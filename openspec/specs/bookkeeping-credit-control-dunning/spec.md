@@ -15,7 +15,6 @@ This specification defines the requirements for bookkeeping credit control dunni
 
 @e2e exclude unbuilt UI: dunning/credit control pages not yet implemented
 
-
 ### REQ-CCD-001: DunningLadder configuration SHALL be declared as `DunningLadder` + `KlantLadderOverride` registers
 
 Dunning ladders MUST be expressed as two new registers in `lib/Settings/shillinq_register.json` per ADR-024:
@@ -500,6 +499,57 @@ SHALL show the plans that cover them.
 - GIVEN twelve active plans
 - WHEN the credit controller opens the Payment plans page and filters on instalments due this month
 - THEN each plan with an instalment due this month is listed with its amount and whether it has been paid
+
+### Requirement: REQ-CCD-016: A run SHALL fall back to the stage's default template
+
+When neither the caller, the ladder stage nor the voluntary reminder letter names a
+template, `DunningRunService::executeStage()` SHALL record the template id
+`DunningTemplateRegistry::templateIdForStage()` gives for the stage, honouring the
+`dunning.template.stage_N` app config override. A named template SHALL win.
+
+#### Scenario: A stage without a template gets the registry default
+
+- GIVEN a stage 2 run with no template id anywhere
+- WHEN the stage is executed
+- THEN the run records `tpl-stage2-herinnering-nl`
+- @e2e exclude service; covered by `DunningRunServiceTest::testAStageWithoutATemplateGetsTheRegistryDefault`
+
+#### Scenario: A named template wins
+
+- GIVEN a run whose caller names template `tpl-custom`
+- WHEN the stage is executed
+- THEN the run records `tpl-custom`
+- @e2e exclude service; covered by `DunningRunServiceTest::testANamedTemplateWinsOverTheRegistry`
+
+### Requirement: REQ-CCD-017: The letter and record composition SHALL live in its own class
+
+`DunningLetterComposer` SHALL prepare a run's letter (a declined contribution
+refused, a voluntary one once, without costs, in its own letter) and compose the
+DunningRun record with the template fallback of REQ-CCD-016.
+`DunningRunService::executeStage()` SHALL delegate to it and keep the pause guard,
+the channel dispatch and the save. The run count SHALL only be read for a
+voluntary or declined contribution. Behaviour SHALL be unchanged.
+
+#### Scenario: An ordinary invoice passes through without counting runs
+
+- GIVEN an ordinary invoice
+- WHEN its run is prepared
+- THEN the params are unchanged and the run count is never read
+- @e2e exclude service; covered by `DunningLetterComposerTest::testAnOrdinaryInvoicePassesThroughWithoutCountingRuns`
+
+#### Scenario: A voluntary contribution gets its own letter once
+
+- GIVEN a voluntary contribution with no earlier run
+- WHEN its run is prepared
+- THEN the costs are cleared and the letter's template and body are set, and a second run is refused
+- @e2e exclude service; covered by `DunningLetterComposerTest::testAVoluntaryContributionGetsItsOwnLetterWithoutCosts`
+
+#### Scenario: The record falls back to the registry template
+
+- GIVEN runs with a named template, with none at stage 2, and with an empty one at stage 3 under an app config override
+- WHEN their records are composed
+- THEN they carry `tpl-custom`, `tpl-stage2-herinnering-nl` and the override
+- @e2e exclude service; covered by `DunningLetterComposerTest::testTheRecordFallsBackToTheRegistryTemplate` and `DunningRunServiceTest`
 
 ## Standards & Sources
 

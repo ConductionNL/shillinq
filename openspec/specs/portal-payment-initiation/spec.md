@@ -1,8 +1,10 @@
 # portal-payment-initiation Specification
 
 ## Purpose
-TBD - created by archiving change portal-payment-initiation. Update Purpose after archive.
+Lets a debtor pay an open invoice or payment request from the portal. A bearer-scoped endpoint returns an iDEAL checkout URL through the existing Mollie adapter for an invoice the debtor owns, the amount always comes from the server, and a signature-verified webhook settles the payment once and writes a confirmation the debtor can see. The customer manifest declares the pay action on the rows it can pay, and an operator sets where the checkout returns.
+
 ## Requirements
+
 ### Requirement: A payment-provider port drives iDEAL through the existing Mollie adapter (REQ-SPPI-001)
 
 Shillinq MUST expose a `PaymentProviderInterface` port whose shipped binding
@@ -125,24 +127,149 @@ by the caller: settlement reconciles the PSP event against the stored
 ### Requirement: The customer manifest declares a pay action as a rowAction on open invoices (REQ-SPPI-006)
 
 `OCA\Shillinq\Portal\PortalContributionProvider`'s `customer` manifest MUST
-declare exactly one contract-v2 `endpoint-forward` action `pay`
-(`{id, label, type: 'endpoint-forward', endpoint, method: 'POST', minTrust}`)
-whose `endpoint` is an instance-local RELATIVE path under
-`/apps/shillinq/api/portal/payments/` (leading slash, no scheme, no host, no
-`..`). The manifest MUST reference `pay` as a `rowAction` on the open-invoice
-rows of the `salesInvoices` and/or `paymentRequests` collections so portaliq
-renders a per-row pay-now control (a settled/non-payable row MUST NOT offer it).
-`minTrust` MUST track the AR surface. The `supplier` and `accountant` manifests'
-`actions` MUST remain empty. The provider MUST stay a plain, dependency-free
-class (no portaliq import, no `implements`, no constructor) — it only adds
-pure-data action + rowAction declarations.
+declare exactly two contract-v2 `endpoint-forward` actions: `pay` for an
+invoice and `pay-request` for a payment request without an invoice
+(REQ-SPPI-008), each `{id, label, type: 'endpoint-forward', endpoint, method:
+'POST', minTrust, rowField, rowWhen}` whose `endpoint` is an instance-local
+RELATIVE path under `/apps/shillinq/api/portal/payments/` (leading slash, no
+scheme, no host, no `..`). The manifest MUST reference `pay` as a `rowAction` on
+the `salesInvoices` collection only, gated by its `rowWhen` to payable rows
+(REQ-SPPI-009), and `pay-request` on the `requestPayments` collection, so
+portaliq renders a per-row pay-now control (a settled/non-payable row MUST NOT
+offer it). `minTrust` MUST track the AR surface. The `supplier` and
+`accountant` manifests' `actions` MUST remain empty. The provider MUST stay a
+plain, dependency-free class (no portaliq import, no `implements`, no
+constructor); it only adds pure-data action and rowAction declarations.
 
 #### Scenario: The customer manifest carries the pay action and rowAction
 
 - GIVEN a constructed `PortalContributionProvider` and a subject with `audience: 'customer'`
 - WHEN `getContribution($subject)` is called
-- THEN the returned manifest's `actions` contains exactly a `pay` action of type `endpoint-forward` with an instance-local relative `endpoint` under `/apps/shillinq/api/portal/payments/`, method `POST`, and a `minTrust` tracking the AR surface
-- AND the `salesInvoices` / `paymentRequests` collections reference `pay` as a `rowAction` gated to open/payable rows
+- THEN the returned manifest's `actions` are exactly `pay` and `pay-request`, both of type `endpoint-forward` with an instance-local relative `endpoint` under `/apps/shillinq/api/portal/payments/`, method `POST`, a `minTrust` tracking the AR surface, a `rowField` and a `rowWhen`
+- AND `salesInvoices` references `pay` as a `rowAction`, `requestPayments` references `pay-request`, and `paymentRequests` references none
 - AND the `supplier` and `accountant` manifests' `actions` stay empty
-- @e2e exclude e2e added in apply phase - spec-only PR
+- @e2e exclude manifest declaration; covered by `PortalContributionProviderTest::testCustomerManifestPayActionAndRowAction`
 
+### Requirement: The customer manifest names the fields ARInvoice declares (REQ-SPPI-007)
+
+Every field the customer and parent manifests list in a collection's `fields`,
+`detail.fields` or `columns` SHALL be a property the merged register declares on
+that collection's schema. The customer `salesInvoices` collection SHALL list
+`grossAmount`, `vatAmount`, `invoiceLines`, `lifecycleState` and `ublRef`, and
+SHALL NOT list `totalAmount`, `taxAmount`, `lines`, `state` or `ublXml`.
+
+#### Scenario: A customer sees the amount and status of an invoice
+
+- GIVEN the merged register and the customer manifest
+- WHEN every listed field of every collection is looked up on its schema
+- THEN each one is a declared property, and the invoice columns are invoice, date, due, `grossAmount` and `lifecycleState`
+- @e2e exclude manifest declaration; covered by `PortalContributionProviderTest::testEveryListedFieldIsADeclaredProperty`
+
+### Requirement: A request without an invoice is listed and paid in the portal (REQ-SPPI-008)
+
+`PaymentRequest` SHALL declare `customerId` (`format: uuid`, `$ref: CustomerMaster`,
+nullable). A request with no `invoiceReference` and a `debtor.customerMasterId`
+SHALL carry that value in `customerId`, written by the leaf API and the leges
+intake when they create the request, and by a repair step for requests that
+exist already. A request with an invoice SHALL NOT carry it. The customer
+manifest SHALL declare a `requestPayments` collection over `PaymentRequest`
+scoped by `customerId` against the `customerMasterId` claim, with the row action
+`pay-request`: an endpoint-forward action on the same pay endpoint that declares
+`rowField: paymentRequestId` and `rowWhen: {field: state, in: [pending]}`, so
+portaliq forwards the proven row id only for a pending request. The parent
+manifest SHALL carry neither. The pay endpoint SHALL accept `paymentRequestId`
+when no `invoiceId` is sent, read the request by uuid, and open a checkout for
+the request's own amount only when it names the subject's customer, carries no
+invoice and is `pending`; every other target SHALL get the same 403.
+
+#### Scenario: A citizen pays leges from the portal
+
+- GIVEN a pending leges request of 125 euro without an invoice, whose debtor is the subject's customer
+- WHEN the subject activates pay on it
+- THEN a checkout opens for exactly 125 euro and the provider's intent id is saved on that request
+- @e2e exclude needs a live provider round trip; covered by `PortalPaymentSessionServiceTest::testACitizenPaysARequestWithoutAnInvoice`
+
+#### Scenario: Another citizen's request, an invoice-backed one and a paid one are refused
+
+- GIVEN a request for another customer, a request with an `invoiceReference`, and a captured request
+- WHEN the subject activates pay on each
+- THEN each answer is forbidden and no provider session is opened
+- @e2e exclude security boundary; covered by `PortalPaymentSessionServiceTest::testOnlyTheSubjectsOwnPendingRequestWithoutAnInvoiceIsPayable`
+
+#### Scenario: The request carries its customer from the moment it is raised
+
+- GIVEN a leges request raised on a case with `debtor.customerMasterId`, and a contribution request with an invoice
+- WHEN each is stamped
+- THEN the leges request carries `customerId` and the contribution request does not
+- @e2e exclude write path; covered by `PaymentRequestPortalScopeTest`, `LegesIntakeStepServiceTest` and `PaymentRequestLeafProviderTest`
+
+#### Scenario: Requests raised before this change are back-filled
+
+- GIVEN an existing request without an invoice, with a debtor customer and no `customerId`, and an invoice-backed one
+- WHEN the repair step runs twice
+- THEN the first gets `customerId` once, the second is untouched, and the second run saves nothing
+- @e2e exclude repair step; covered by `BackfillPaymentRequestCustomerTest`
+
+### Requirement: The pay action names its row key and its payable rows (REQ-SPPI-009)
+
+The `pay` action SHALL declare `rowField: invoiceId` and `rowWhen: {field:
+lifecycleState, in: [issued, partially-paid, overdue]}`, the same states the pay
+receiver accepts. `rowWhen` SHALL name `lifecycleState`, the field an `ARInvoice`
+row carries; `state` is not an `ARInvoice` field. The parent `salesInvoices`
+collection SHALL declare `noticeField: invoiceNote`. The `paymentRequests`
+collection SHALL NOT name a row action in the customer or the parent manifest,
+because its row id is a payment request, not an invoice.
+
+#### Scenario: A guardian gets a Pay now button on an open contribution only
+
+- GIVEN the parent manifest
+- WHEN portaliq reads the `pay` action and the `salesInvoices` collection
+- THEN `pay` carries `rowField: invoiceId` and `rowWhen` on `lifecycleState` with issued, partially-paid and overdue, equal to the receiver's payable states
+- AND `salesInvoices` carries `noticeField: invoiceNote`, and `paymentRequests` names no row action
+- @e2e exclude manifest declaration; covered by `PortalContributionProviderTest::testThePayActionNamesItsRowKeyAndItsPayableRows`
+
+### Requirement: An operator sets where the checkout returns (REQ-SPPI-010)
+
+The settings API SHALL read and write `portal_payment_redirect_url`, and the
+admin settings form SHALL show it. A value SHALL be stored only when it is empty
+or an absolute `https` address; anything else SHALL be refused with a 400 and
+leave the stored value as it was. An empty value SHALL keep today's fallback,
+the instance root.
+
+#### Scenario: An operator points the checkout back at the portal
+
+- GIVEN an administrator on the settings page
+- WHEN they save `https://portaal.gemeente.example/betalen`
+- THEN the pay flow's return address is that value
+- @e2e exclude settings API; covered by `SettingsServiceTest::testThePortalReturnAddressIsStoredOnlyWhenHttps`
+
+#### Scenario: A non-https address is refused
+
+- GIVEN an administrator
+- WHEN they save `http://portaal.example` or `javascript:alert(1)`
+- THEN the answer is 400 and the stored value is unchanged
+- @e2e exclude settings API; covered by `SettingsServiceTest::testThePortalReturnAddressIsStoredOnlyWhenHttps` and `SettingsControllerWriteTest::testAnUnsafeReturnAddressIsRefusedWith400`
+
+### Requirement: REQ-SPPI-011: The invoice target SHALL be read by its uuid, then by its slug
+
+`PortalPaymentSessionService` SHALL read the target ARInvoice with `find()` by
+uuid and, only on a miss, with a `slug` property filter. It SHALL NOT filter
+`findAll()` on `id`. Ownership (`customerId`) and a payable `lifecycleState` SHALL
+be checked on the record; a foreign, non-payable or missing invoice SHALL give the
+same forbidden result. A read failure other than a miss SHALL be a downstream
+error.
+
+#### Scenario: A customer pays an invoice addressed by its uuid
+
+- GIVEN an issued invoice owned by the customer, addressed by its uuid
+- AND an object service that, like OpenRegister, matches nothing on an `id` filter
+- WHEN the customer initiates a payment
+- THEN a checkout URL is returned for the server amount
+- @e2e exclude service lookup; covered by `PortalPaymentSessionServiceTest::testHappyPathReturnsCheckoutUrl`
+
+#### Scenario: A customer pays an invoice addressed by its slug
+
+- GIVEN the same invoice carrying slug `inv-2026-0001`
+- WHEN the customer initiates a payment for `inv-2026-0001`
+- THEN a checkout URL is returned
+- @e2e exclude service lookup; covered by `PortalPaymentSessionServiceTest::testAnInvoiceAddressedBySlugResolves`
