@@ -398,6 +398,518 @@
 			"name_nl": "Overheidsfinancien"
 		}
 	],
+	"features": [
+		{
+			"slug": "general-ledger",
+			"title": "General ledger and trial balance",
+			"title_nl": "Grootboek en proefbalans",
+			"area": "ledger",
+			"overlay": "general-ledger",
+			"specs": [
+				"bookkeeping-general-ledger",
+				"gl-account-suggestion-consume",
+				"ledger-open-item-clearing",
+				"bookkeeping-trial-balance",
+				"reporting-report-library"
+			]
+		},
+		{
+			"slug": "period-close",
+			"title": "Period close and year end",
+			"title_nl": "Periodeafsluiting en jaareinde",
+			"area": "ledger",
+			"overlay": null,
+			"specs": [
+				"ledger-period-end",
+				"bookkeeping-aansluitingen"
+			]
+		},
+		{
+			"slug": "multi-administration-currency",
+			"title": "Multiple administrations and currencies",
+			"title_nl": "Meerdere administraties en valuta",
+			"area": "ledger",
+			"overlay": "multi-administration-currency",
+			"specs": [
+				"bookkeeping-multi-administratie",
+				"ledger-multi-administration",
+				"ledger-foreign-legislation",
+				"sales-invoice-document",
+				"banking-fx-at-booking"
+			]
+		},
+		{
+			"slug": "audit-trail",
+			"title": "Audit trail and controlespoor",
+			"title_nl": "Auditspoor en controlespoor",
+			"area": "ledger",
+			"overlay": "audit-trail",
+			"specs": [
+				"bookkeeping-audit-trail",
+				"ledger-sealed-entries",
+				"bookkeeping-archiefwet-retention"
+			]
+		},
+		{
+			"slug": "ifrs-and-dutch-gaap",
+			"title": "Consolidation, IFRS and Dutch GAAP",
+			"title_nl": "Consolidatie, IFRS en RJ",
+			"area": "ledger",
+			"overlay": null,
+			"specs": [
+				"bookkeeping-ifrs-rj-dual-gaap",
+				"bookkeeping-voorzieningen-claims",
+				"bookkeeping-ifrs15-revenue",
+				"bookkeeping-pension-ias19",
+				"bookkeeping-intercompany-elimination"
+			]
+		},
+		{
+			"slug": "lease-accounting",
+			"title": "Lease accounting (IFRS 16 and RJ)",
+			"title_nl": "Lease-administratie (IFRS 16 en RJ)",
+			"area": "planning",
+			"overlay": "lease-accounting",
+			"specs": [
+				"bookkeeping-lease-accounting"
+			]
+		},
+		{
+			"slug": "accountant-export",
+			"title": "Bookkeeping export for the accountant",
+			"title_nl": "Boekhoudexport voor de accountant",
+			"area": "ledger",
+			"overlay": "accountant-export",
+			"specs": [
+				"bookkeeping-sbr-xbrl-reporting",
+				"accountant-portal"
+			]
+		},
+		{
+			"slug": "sales-invoicing",
+			"title": "Sales invoices and receivables",
+			"title_nl": "Verkoopfacturen en debiteuren",
+			"area": "sales",
+			"overlay": "sales-invoicing",
+			"specs": [
+				"bookkeeping-accounts-receivable-core",
+				"sales-invoice-document",
+				"sales-invoice-issue-controls",
+				"sales-invoice-sending",
+				"shillinq-invoice-quick-draft",
+				"sales-cancellation"
+			]
+		},
+		{
+			"slug": "quote-to-cash",
+			"title": "Quotes, orders and down payments",
+			"title_nl": "Offertes, orders en aanbetalingen",
+			"area": "sales",
+			"overlay": null,
+			"specs": [
+				"sales-quote-and-order-to-invoice",
+				"sales-webshop-orders"
+			]
+		},
+		{
+			"slug": "time-and-expense-billing",
+			"title": "Billing time, expenses and usage",
+			"title_nl": "Uren, kosten en verbruik factureren",
+			"area": "sales",
+			"overlay": null,
+			"specs": [
+				"sales-time-and-expense-billing",
+				"sales-usage-billing",
+				"sales-billable-rate-per-hour"
+			]
+		},
+		{
+			"slug": "recurring-retainer-billing",
+			"title": "Recurring and retainer billing",
+			"title_nl": "Terugkerende en retainer-facturatie",
+			"area": "sales",
+			"overlay": "recurring-retainer-billing",
+			"specs": [
+				"recurring-invoicing",
+				"sales-cancellation"
+			]
+		},
+		{
+			"slug": "outbound-peppol-factur-x",
+			"title": "Outbound Peppol BIS 3.0 and Factur-X",
+			"title_nl": "Uitgaande Peppol BIS 3.0 en Factur-X",
+			"area": "sales",
+			"overlay": "outbound-peppol-factur-x",
+			"specs": [
+				"sales-einvoice-exchange"
+			]
+		},
+		{
+			"slug": "online-payments",
+			"title": "Payment links and online payments",
+			"title_nl": "Betaallinks en online betalen",
+			"area": "sales",
+			"overlay": null,
+			"specs": [
+				"receivables-payment-links",
+				"sales-invoice-document",
+				"receivables-provider-payouts"
+			]
+		},
+		{
+			"slug": "credit-control",
+			"title": "Payment reminders and credit control",
+			"title_nl": "Betalingsherinneringen en debiteurenbeheer",
+			"area": "receivables",
+			"overlay": null,
+			"specs": [
+				"receivables-automatic-dunning",
+				"receivables-sepa-direct-debit"
+			]
+		},
+		{
+			"slug": "bill-import-ubl-csv",
+			"title": "Import supplier bills (UBL and CSV)",
+			"title_nl": "Inkoopfacturen importeren (UBL en CSV)",
+			"area": "purchasing",
+			"overlay": "bill-import-ubl-csv",
+			"specs": [
+				"bookkeeping-accounts-payable-core"
+			]
+		},
+		{
+			"slug": "bill-ocr",
+			"title": "Supplier bills via OCR",
+			"title_nl": "Inkoopfacturen via OCR",
+			"area": "purchasing",
+			"overlay": "bill-ocr",
+			"specs": []
+		},
+		{
+			"slug": "supplier-invoice-approval",
+			"title": "Approving supplier invoices",
+			"title_nl": "Inkoopfacturen goedkeuren",
+			"area": "purchasing",
+			"overlay": null,
+			"specs": [
+				"purchasing-approval-delegation"
+			]
+		},
+		{
+			"slug": "purchase-order-3way-match",
+			"title": "Three-way matching for purchase orders",
+			"title_nl": "Drieweg-matching voor inkooporders",
+			"area": "purchasing",
+			"overlay": "purchase-order-3way-match",
+			"specs": [
+				"bookkeeping-purchase-order-3way",
+				"purchasing-order-dispatch-and-receipt",
+				"purchase-requisition"
+			]
+		},
+		{
+			"slug": "procurement",
+			"title": "Suppliers, contracts and tenders",
+			"title_nl": "Leveranciers, contracten en aanbestedingen",
+			"area": "purchasing",
+			"overlay": null,
+			"specs": [
+				"procurement-governance",
+				"spend-analytics",
+				"bookkeeping-tenderned-integratie"
+			]
+		},
+		{
+			"slug": "expense-claims",
+			"title": "Expenses and reimbursements",
+			"title_nl": "Onkosten en declaraties",
+			"area": "expenses",
+			"overlay": "expense-claims",
+			"specs": [
+				"expense-capture-core",
+				"expenses-category-mapping",
+				"expense-reimbursement-or-passthrough"
+			]
+		},
+		{
+			"slug": "psd2-bank-feeds",
+			"title": "PSD2 bank connection",
+			"title_nl": "PSD2-bankkoppeling",
+			"area": "banking",
+			"overlay": "psd2-bank-feeds",
+			"specs": [
+				"fees-payments-and-the-contract-register"
+			]
+		},
+		{
+			"slug": "bank-import-reconciliation",
+			"title": "Bank import and reconciliation (CAMT.053, MT940, CSV)",
+			"title_nl": "Bankimport en reconciliatie (CAMT.053, MT940, CSV)",
+			"area": "banking",
+			"overlay": "bank-import-reconciliation",
+			"specs": [
+				"bookkeeping-bank-reconciliation",
+				"shillinq-bank-statement-wizard"
+			]
+		},
+		{
+			"slug": "sepa-payment-runs",
+			"title": "SEPA payment batches (pain.001)",
+			"title_nl": "SEPA-betaalbatches (pain.001)",
+			"area": "banking",
+			"overlay": "sepa-payment-runs",
+			"specs": [
+				"payment-run-sepa-export",
+				"payment-run-four-eyes"
+			]
+		},
+		{
+			"slug": "cashflow-forecast",
+			"title": "Cash flow forecast and treasury",
+			"title_nl": "Liquiditeitsprognose en treasury",
+			"area": "banking",
+			"overlay": null,
+			"specs": [
+				"bookkeeping-treasury-ihb",
+				"public-sector-quarterly-returns"
+			]
+		},
+		{
+			"slug": "vat-filing",
+			"title": "VAT return, ICP, OSS and KOR",
+			"title_nl": "BTW-aangifte, ICP, OSS en KOR",
+			"area": "tax",
+			"overlay": "vat-filing",
+			"specs": [
+				"bookkeeping-vat-btw-filing",
+				"tax-vat-rates-and-deductibility",
+				"tax-vat-return-from-books",
+				"tax-digipoort-filing",
+				"tax-icp-and-reverse-charge",
+				"tax-vat-position-and-suppletie",
+				"tax-vat-number-check"
+			]
+		},
+		{
+			"slug": "corporate-and-income-tax",
+			"title": "Corporate and income tax",
+			"title_nl": "Vennootschaps- en inkomstenbelasting",
+			"area": "tax",
+			"overlay": null,
+			"specs": [
+				"tax-investment-deduction-claims",
+				"tax-cbcr-and-pillar2-returns",
+				"compliance-deadline-calendar"
+			]
+		},
+		{
+			"slug": "financial-statements",
+			"title": "Financial statements, segment results and annual accounts",
+			"title_nl": "Financiële overzichten, segmentresultaten en jaarrekening",
+			"area": "reporting",
+			"overlay": null,
+			"specs": [
+				"reporting-financial-statements",
+				"reporting-cash-flow-statement",
+				"bookkeeping-titel-9-jaarrekening"
+			]
+		},
+		{
+			"slug": "report-library",
+			"title": "Report library and data delivery",
+			"title_nl": "Rapportenbibliotheek en datalevering",
+			"area": "reporting",
+			"overlay": null,
+			"specs": [
+				"reporting-report-library",
+				"reporting-data-delivery"
+			]
+		},
+		{
+			"slug": "financial-dashboard",
+			"title": "Financial dashboard",
+			"title_nl": "Financieel dashboard",
+			"area": "reporting",
+			"overlay": "financial-dashboard",
+			"specs": [
+				"financial-dashboard-graphs"
+			]
+		},
+		{
+			"slug": "budgeting",
+			"title": "Budgets and commitments",
+			"title_nl": "Begrotingen en verplichtingen",
+			"area": "planning",
+			"overlay": null,
+			"specs": [
+				"budget-grid-view",
+				"budget-scenarios"
+			]
+		},
+		{
+			"slug": "fixed-assets",
+			"title": "Fixed assets and depreciation",
+			"title_nl": "Vaste activa en afschrijvingen",
+			"area": "planning",
+			"overlay": null,
+			"specs": [
+				"assets-method-change-and-reserve"
+			]
+		},
+		{
+			"slug": "inventory-fifo-valuation",
+			"title": "Inventory and FIFO valuation",
+			"title_nl": "Voorraad en FIFO-waardering",
+			"area": "inventory",
+			"overlay": "inventory-fifo-valuation",
+			"specs": [
+				"inventory-valuation-fifo-avg",
+				"inventory-multi-warehouse",
+				"inventory-mobile-scanner",
+				"inventory-lot-batch-expiry",
+				"inventory-receipt-cost-layers",
+				"inventory-product-catalog",
+				"block-unsellable-stock-dispatch",
+				"inventory-reorder-automation",
+				"inventory-cycle-count"
+			]
+		},
+		{
+			"slug": "bookings-appointments",
+			"title": "Appointments and bookings",
+			"title_nl": "Afspraken en boekingen",
+			"area": "bookings",
+			"overlay": "bookings-appointments",
+			"specs": [
+				"bookings",
+				"bookings-self-service-widget",
+				"bookings-service-catalog",
+				"bookings-availability-rules",
+				"bookings-confirm-flow",
+				"bookings-deposits"
+			]
+		},
+		{
+			"slug": "payroll",
+			"title": "Payroll and freelancer checks",
+			"title_nl": "Salarisadministratie en toetsing van zzp-inhuur",
+			"area": "people",
+			"overlay": null,
+			"specs": [
+				"bookkeeping-detachering-payroll-administratie",
+				"dba-compliance-marker"
+			]
+		},
+		{
+			"slug": "self-hosted-open-source",
+			"title": "Self-hosted and open source (EUPL-1.2)",
+			"title_nl": "Zelf gehost en open source (EUPL-1.2)",
+			"area": "platform",
+			"overlay": "self-hosted-open-source",
+			"specs": []
+		},
+		{
+			"slug": "mobile-and-interface",
+			"title": "Mobile app, offline work, languages and themes",
+			"title_nl": "Mobiele app, offline werken, talen en thema's",
+			"area": "platform",
+			"overlay": null,
+			"specs": [
+				"platform-mobile-pwa"
+			]
+		},
+		{
+			"slug": "access-control",
+			"title": "Users, roles and sign-in",
+			"title_nl": "Gebruikers, rollen en inloggen",
+			"area": "platform",
+			"overlay": null,
+			"specs": [
+				"platform-required-fields"
+			]
+		},
+		{
+			"slug": "external-connections-integration-config",
+			"title": "External regulatory, bank and payment connections",
+			"title_nl": "Externe koppelingen met overheid, bank en betaalprovider",
+			"area": "platform",
+			"overlay": "external-connections-integration-config",
+			"specs": [
+				"bookkeeping-bank-connectors",
+				"adopt-connection-registry",
+				"contacts-kvk-lookup",
+				"platform-integration-catalogue"
+			]
+		},
+		{
+			"slug": "api-and-automation",
+			"title": "API, imports and automation",
+			"title_nl": "API, imports en automatisering",
+			"area": "platform",
+			"overlay": null,
+			"specs": [
+				"mcp-action-tool-surface",
+				"platform-administration-import"
+			]
+		},
+		{
+			"slug": "ai-assistance",
+			"title": "AI assistant for the books",
+			"title_nl": "AI-assistent voor de boekhouding",
+			"area": "platform",
+			"overlay": null,
+			"specs": [
+				"mcp-action-tool-surface",
+				"platform-help-agent"
+			]
+		},
+		{
+			"slug": "custom-fields-and-documents",
+			"title": "Custom fields, record types and documents",
+			"title_nl": "Eigen velden, recordtypen en documenten",
+			"area": "platform",
+			"overlay": null,
+			"specs": [
+				"platform-custom-record-types",
+				"shillinq-delegate-signing"
+			]
+		},
+		{
+			"slug": "bbv-compliance",
+			"title": "Dutch BBV compliance for governments",
+			"title_nl": "BBV-compliance voor overheden",
+			"area": "public-sector",
+			"overlay": "bbv-compliance",
+			"specs": [
+				"bookkeeping-bbv-compliance",
+				"public-sector-task-field-allocation"
+			]
+		},
+		{
+			"slug": "emu-sisa-bcf-reporting",
+			"title": "EMU balance, SiSa and BCF for governments",
+			"title_nl": "EMU-saldo, SiSa en BCF voor overheden",
+			"area": "public-sector",
+			"overlay": "emu-sisa-bcf-reporting",
+			"specs": [
+				"bookkeeping-emu-reporting",
+				"public-sector-grant-accountability",
+				"public-sector-quarterly-returns",
+				"bookkeeping-iv3-reporting"
+			]
+		},
+		{
+			"slug": "public-accountability",
+			"title": "Grants, lawfulness and audit for governments",
+			"title_nl": "Subsidies, rechtmatigheid en controle voor overheden",
+			"area": "public-sector",
+			"overlay": null,
+			"specs": [
+				"public-sector-council-and-auditor-statements",
+				"public-sector-grant-accountability"
+			]
+		}
+	],
 	"providers": [
 		{
 			"key": "shillinq",
@@ -473,8 +985,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "ledger-core",
-			"featureConfidence": "medium",
+			"feature": "general-ledger",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "The balance invariant is real PHP; the user-facing post path dies on an unregistered declared lifecycle action (fail-loud executor). Built 2026-09-29 by ledger-posting-path."
 		},
@@ -504,8 +1016,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "ledger-core",
-			"featureConfidence": "medium",
+			"feature": "general-ledger",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "MKB seed holds 143 RGS 3.5 accounts, a subset of the full RGS scheme."
 		},
@@ -536,7 +1048,7 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "dimensions-segment-reporting",
+			"feature": "financial-statements",
 			"featureConfidence": "medium",
 			"source": "competitor",
 			"note": "Tagging works; the report sums amount without side or account-type sign. Specified 2026-09-27 in openspec/changes/reporting-segment-results (OpenSpec pass)."
@@ -568,7 +1080,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "period-close",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "The checklist panel always shows 'No checklist items yet.' Specified 2026-09-27 in openspec/changes/ledger-period-end (OpenSpec pass)."
 		},
@@ -598,8 +1110,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "multi-administration",
-			"featureConfidence": "medium",
+			"feature": "multi-administration-currency",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Several books can be kept; the switch does not stick and lists are not scoped. Specified 2026-09-27 in openspec/changes/ledger-multi-administration (OpenSpec pass)."
 		},
@@ -630,7 +1142,7 @@
 			"provider": "openregister",
 			"providerHow": "read-from-code",
 			"feature": "audit-trail",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Who/when/before-values come from OpenRegister's audit trail."
 		},
@@ -660,8 +1172,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "intercompany-consolidation",
-			"featureConfidence": "medium",
+			"feature": "ifrs-and-dutch-gaap",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Mirror booking is real; elimination generation is dead code behind a method-name mismatch."
 		},
@@ -691,8 +1203,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "continuous-close",
-			"featureConfidence": "medium",
+			"feature": "period-close",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Accrual amounts are computed and recorded; nothing books or releases a deferral. Specified 2026-09-27 in openspec/changes/ledger-period-end (OpenSpec pass)."
 		},
@@ -722,8 +1234,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "dual-gaap",
-			"featureConfidence": "medium",
+			"feature": "ifrs-and-dutch-gaap",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "Keep-a-list of dual postings and bridges; no parallel ledger is produced."
 		},
@@ -753,8 +1265,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "retention",
-			"featureConfidence": "medium",
+			"feature": "audit-trail",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "Seven-year rules are kept; no page lists the ledger records now due for destruction."
 		},
@@ -784,8 +1296,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "continuous-close",
-			"featureConfidence": "medium",
+			"feature": "period-close",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "Nightly soft close runs but three of its five delegate steps silently no-op; flux swing flagging has no caller."
 		},
@@ -815,7 +1327,7 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "report-library",
+			"feature": "accountant-export",
 			"featureConfidence": "medium",
 			"source": "own-code"
 		},
@@ -845,8 +1357,8 @@
 			},
 			"provider": "docudesk",
 			"providerHow": "read-from-code",
-			"feature": "gl-account-suggestion",
-			"featureConfidence": "medium",
+			"feature": "general-ledger",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Works for receipts and supplier bills when docudesk is installed; not on bank lines."
 		},
@@ -876,7 +1388,7 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "sales-invoice-document",
+			"feature": "sales-invoicing",
 			"featureConfidence": "medium",
 			"source": "competitor",
 			"note": "An invoice and its PDF exist, but the layout is hard-coded: no logo, colours or layout choice, and no docudesk template is used for invoices. Specified 2026-09-27 in openspec/changes/sales-invoice-document (OpenSpec pass)."
@@ -907,8 +1419,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "sales-invoice-numbering",
-			"featureConfidence": "medium",
+			"feature": "sales-invoicing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Automatic number on the time-and-expense invoice only, derived from a record count, so gaps and duplicates are possible; the AR invoice number is typed by hand. Specified 2026-09-27 in openspec/changes/sales-invoice-issue-controls (OpenSpec pass)."
 		},
@@ -939,8 +1451,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "sales-invoice-delivery",
-			"featureConfidence": "medium",
+			"feature": "sales-invoicing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "The PDF can be opened (/api/v1/invoices/{id}/pdf) but not emailed from the app. Specified 2026-09-27 in openspec/changes/sales-invoice-sending (OpenSpec pass). Corrected 2026-09-27 (OpenSpec pass, code read of batch 2): the invoice PDF that could be opened is HTML, and only for time-and-expense invoices."
 		},
@@ -971,7 +1483,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "quote-to-cash",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Quotes belong to pipelinq per openspec/changes/shillinq-product-vendor-to-pipelinq; shillinq has no path from an accepted quote to invoice lines."
 		},
@@ -1001,8 +1513,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "invoice-payment-links",
-			"featureConfidence": "medium",
+			"feature": "online-payments",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "A payment request can be kept and a link mailed if one is filled in, but no provider creates the iDEAL/card link and it is not printed on the invoice. Specified 2026-09-27 in openspec/changes/receivables-payment-links (OpenSpec pass)."
 		},
@@ -1032,8 +1544,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "invoice-payment-links",
-			"featureConfidence": "medium",
+			"feature": "online-payments",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Specified 2026-09-27 in openspec/changes/sales-invoice-document (OpenSpec pass)."
 		},
@@ -1064,7 +1576,7 @@
 			},
 			"provider": "integriq",
 			"providerHow": "read-from-code",
-			"feature": "einvoicing-ubl-peppol",
+			"feature": "outbound-peppol-factur-x",
 			"featureConfidence": "medium",
 			"source": "competitor",
 			"note": "The UBL is built and the invoice goes to 'queued', but the hand-off to integriq uses a different event channel than integriq listens on, so nothing is transmitted. Specified 2026-09-27 in openspec/changes/sales-einvoice-exchange (OpenSpec pass). Corrected 2026-09-27 (OpenSpec pass, code read of batch 2): integriq registration line is :268, and the artefact store is a placeholder. Corrections round 8 (2026-09-28): integriq's Peppol consumer now refuses every outbound request, its own included, because it compares slugs with numeric ids, so the live check the evidence asked for is settled, integriq#1222; rating kept at partial because the UBL is still built and the invoice queued, and nothing is transmitted."
@@ -1095,7 +1607,7 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "sales-invoice-document",
+			"feature": "sales-invoicing",
 			"featureConfidence": "medium",
 			"source": "competitor",
 			"note": "Specified 2026-09-27 in openspec/changes/sales-invoice-document (OpenSpec pass)."
@@ -1126,8 +1638,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "invoice-from-time-and-expense",
-			"featureConfidence": "medium",
+			"feature": "time-and-expense-billing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "The conversion works, but the user must paste record ids; there is no picker or list of unbilled hours and expenses. Specified 2026-09-27 in openspec/changes/sales-time-and-expense-billing (OpenSpec pass)."
 		},
@@ -1158,8 +1670,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "usage-metered-billing",
-			"featureConfidence": "medium",
+			"feature": "time-and-expense-billing",
+			"featureConfidence": "high",
 			"source": "own-code"
 		},
 		{
@@ -1188,8 +1700,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "sales-invoice-approval",
-			"featureConfidence": "medium",
+			"feature": "sales-invoicing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Approval chains exist for purchase orders (PurchaseOrderApprovalService), not for sales invoices. Specified 2026-09-27 in openspec/changes/sales-invoice-issue-controls (OpenSpec pass)."
 		},
@@ -1219,8 +1731,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "sales-invoice-delivery",
-			"featureConfidence": "medium",
+			"feature": "sales-invoicing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Specified 2026-09-27 in openspec/changes/sales-invoice-sending (OpenSpec pass)."
 		},
@@ -1250,8 +1762,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "rate-cards",
-			"featureConfidence": "medium",
+			"feature": "time-and-expense-billing",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "Rate changes over time show as dated schedule versions plus an audit list of resolved rates."
 		},
@@ -1282,8 +1794,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "customer-master",
-			"featureConfidence": "medium",
+			"feature": "sales-invoicing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Only defaultMandateId and peppolParticipantId exist per customer; payment terms live per invoice. Specified 2026-09-27 in openspec/changes/sales-invoice-sending (OpenSpec pass). Corrected 2026-09-27 (OpenSpec pass, code read of batch 2): more broken customer fields than the note named."
 		},
@@ -1313,8 +1825,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "webshop-sync",
-			"featureConfidence": "medium",
+			"feature": "quote-to-cash",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Specified 2026-09-27 in openspec/changes/sales-webshop-orders (OpenSpec pass)."
 		},
@@ -1345,7 +1857,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "quote-to-cash",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "A customer order can be recorded as a generic order, but it cannot be followed through to an invoice."
 		},
@@ -1376,8 +1888,8 @@
 			},
 			"provider": "portaliq",
 			"providerHow": "read-from-code",
-			"feature": "customer-invoice-portal",
-			"featureConfidence": "medium",
+			"feature": "online-payments",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Viewing works only when portaliq is installed; paying depends on a Mollie adapter that is log-only by default, and no invoice PDF download was found in the contribution. Provider is portaliq, which renders the portal; shillinq only contributes the invoice and payment-request collections (lib/Portal/PortalContributionProvider.php). Folded on 2026-09-26 into portaliq's row cmp-cas-pay: portaliq src/portal/App.jsx:225-238 onAction() forwards through lib/Service/PortalActionForwarder.php:89 to shillinq appinfo/routes.php:764 portalPaymentInitiation#initiate; the portal side of this capability is rated on portaliq's row cmp-cas-pay."
 		},
@@ -1407,8 +1919,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "multi-currency",
-			"featureConfidence": "medium",
+			"feature": "multi-administration-currency",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "The AR record and e-invoice honour the currency, the PDF and the time-and-expense generator do not. Specified 2026-09-27 in openspec/changes/sales-invoice-document (OpenSpec pass)."
 		},
@@ -1438,8 +1950,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "sales-invoice-quick-draft",
-			"featureConfidence": "medium",
+			"feature": "sales-invoicing",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "The few-field draft works, but it opens from the dashboard only, not from anywhere in the app."
 		},
@@ -1470,8 +1982,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "credit-control-dunning",
-			"featureConfidence": "medium",
+			"feature": "credit-control",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Escalating ladders can be defined and runs listed, but nothing sends a reminder automatically: no job, no page calling the run endpoint, log-only channel. Specified 2026-09-27 in openspec/changes/receivables-automatic-dunning (OpenSpec pass). Corrected 2026-09-27 (OpenSpec pass, code read of batch 2): the channel adapter is never called, not only log-only."
 		},
@@ -1501,8 +2013,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "credit-control-dunning",
-			"featureConfidence": "medium",
+			"feature": "credit-control",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "The per-customer override can be kept; it only matters once dunning actually runs, which nothing triggers. Specified 2026-09-27 in openspec/changes/receivables-automatic-dunning (OpenSpec pass)."
 		},
@@ -1532,8 +2044,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "sepa-direct-debit",
-			"featureConfidence": "medium",
+			"feature": "credit-control",
+			"featureConfidence": "high",
 			"source": "own-code"
 		},
 		{
@@ -1561,8 +2073,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "cashflow-13wk",
-			"featureConfidence": "medium",
+			"feature": "cashflow-forecast",
+			"featureConfidence": "high",
 			"source": "competitor"
 		},
 		{
@@ -1591,8 +2103,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "invoice-payment-links",
-			"featureConfidence": "medium",
+			"feature": "online-payments",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Specified 2026-09-27 in openspec/changes/receivables-provider-payouts (OpenSpec pass)."
 		},
@@ -1622,8 +2134,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "case-payment-requests",
-			"featureConfidence": "medium",
+			"feature": "online-payments",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "The request, its mail and a manual 'paid' record work; online payment and automatic paid status need a real provider adapter that is not bound. Specified 2026-09-27 in openspec/changes/receivables-payment-links (OpenSpec pass)."
 		},
@@ -1652,8 +2164,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "credit-control-dunning",
-			"featureConfidence": "medium",
+			"feature": "credit-control",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Decided no 2026-09-28 (build-all pass, defer retired): single competitor, no demand: only exact-online rates it yes and no demand row names it. Reversible when demand appears."
 		},
@@ -1684,7 +2196,7 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "supplier-invoice-capture",
+			"feature": "bill-import-ubl-csv",
 			"featureConfidence": "medium",
 			"source": "competitor",
 			"note": "Import without typing works; 'book it' only happens for PO-backed invoices after a 3-way match, a non-PO invoice is never posted automatically. Built 2026-09-29 by purchasing-supplier-invoice-intake."
@@ -1716,7 +2228,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "supplier-invoice-approval",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "One approval gate (match or accepted exception), no multi-step approver chain for supplier invoices."
 		},
@@ -1746,8 +2258,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "purchase-order-3way",
-			"featureConfidence": "medium",
+			"feature": "purchase-order-3way-match",
+			"featureConfidence": "high",
 			"source": "competitor"
 		},
 		{
@@ -1776,8 +2288,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "purchase-requisition",
-			"featureConfidence": "medium",
+			"feature": "purchase-order-3way-match",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "approve does not check approver differs from requester."
 		},
@@ -1807,8 +2319,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "purchase-order",
-			"featureConfidence": "medium",
+			"feature": "purchase-order-3way-match",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Raising the PO works; 'send to supplier' marks it sent but both Peppol and PDF+email are log-only adapters, nothing reaches the supplier. Specified 2026-09-27 in openspec/changes/purchasing-order-dispatch-and-receipt (OpenSpec pass)."
 		},
@@ -1838,8 +2350,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "purchase-order-3way",
-			"featureConfidence": "medium",
+			"feature": "purchase-order-3way-match",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Goods including partial deliveries: yes; services: API only, no screen reaches it. Specified 2026-09-27 in openspec/changes/purchasing-order-dispatch-and-receipt (OpenSpec pass)."
 		},
@@ -1869,8 +2381,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "vendor-performance",
-			"featureConfidence": "medium",
+			"feature": "procurement",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Scores only suppliers that go through PO + GRN + 3-way match."
 		},
@@ -1900,8 +2412,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "procurement-governance",
-			"featureConfidence": "medium",
+			"feature": "procurement",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Agreements can be kept; ordering against one (ceiling drawdown) has no field in the PO form, and only the spend ceiling is enforced, not agreed prices."
 		},
@@ -1931,7 +2443,7 @@
 			},
 			"provider": "docudesk",
 			"providerHow": "read-from-code",
-			"feature": "supplier-invoice-capture",
+			"feature": "bill-ocr",
 			"featureConfidence": "medium",
 			"source": "competitor",
 			"note": "AI suggests a GL account per draft; no agent processes or books invoices on its own. Specified in ConductionNL/filinq openspec/changes/extraction-receipt-photo-and-invoice-agent (filinq lane, OpenSpec pass 2026-09-27)."
@@ -1962,8 +2474,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "purchase-order",
-			"featureConfidence": "medium",
+			"feature": "purchase-order-3way-match",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Thresholds route the PO, but an approver has no screen to sign, so a chained PO can never be sent. Corrections round 8 (2026-09-28): approval cannot complete even once a screen calls the decision endpoint, since the chain writes status and the decision code reads decision, shillinq#1716; rating kept because the amount thresholds still build the approval chain, the half that partial records."
 		},
@@ -1993,8 +2505,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "spend-analytics",
-			"featureConfidence": "medium",
+			"feature": "procurement",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "GL-backed views refuse (500) until the GLLine administration backfill repair step has proven complete (SpendAnalyticsService.php:303); no supplier x category cross-tab."
 		},
@@ -2024,8 +2536,8 @@
 			},
 			"provider": "docudesk",
 			"providerHow": "read-from-code",
-			"feature": "receipt-extraction",
-			"featureConfidence": "medium",
+			"feature": "expense-claims",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "The photo is taken and read in docudesk/filinq; shillinq only shows and corrects the extracted draft. Specified in ConductionNL/filinq openspec/changes/extraction-receipt-photo-and-invoice-agent (filinq lane, OpenSpec pass 2026-09-27)."
 		},
@@ -2056,7 +2568,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "expense-claims",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "The nearest thing is the per-draft AI GL-account suggestion from docudesk (GlAccountSuggestionClient), which is a suggestion, not a mapping. Specified 2026-09-27 in openspec/changes/expenses-category-mapping (OpenSpec pass)."
 		},
@@ -2086,8 +2598,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "cashflow-13wk",
-			"featureConfidence": "medium",
+			"feature": "cashflow-forecast",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "No supplier link field; KnownCostReader/KnownCostBudgetWriter (budget-known-costs) have no caller."
 		},
@@ -2118,8 +2630,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "invoice-from-time-and-expense",
-			"featureConfidence": "medium",
+			"feature": "time-and-expense-billing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Passing an expense on at cost works by typing its id; markup rules are kept but never applied. Specified 2026-09-27 in openspec/changes/sales-time-and-expense-billing (OpenSpec pass). Corrected 2026-09-27 (OpenSpec pass, code read of batch 2): the markup rule is read by an uncalled SettlementGuard method, not only by ExpenseReimbursementGuard."
 		},
@@ -2150,7 +2662,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "expense-claims",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Policy records can be kept; nothing checks a claim against them."
 		},
@@ -2181,8 +2693,8 @@
 			},
 			"provider": "integriq",
 			"providerHow": "read-from-code",
-			"feature": "bank-feed",
-			"featureConfidence": "medium",
+			"feature": "psd2-bank-feeds",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "History, corrections round 9 (2026-09-28): integriq's archived openspec/changes/archive/2026-07-12-psd2-ais-bank-feed-connector carries the PSD2 half (integriq gap-decisions.json records bnk-psd2 as existing): at integriq development 93426b290f, lib/Controller/Psd2Controller.php runs the consent flow and lib/Service/BankfeedSyncService.php:498-510 emits nl.conduction.bankfeed.transactions.synced with a batchUri. The rating stays no, because at c92d70222 nothing in shillinq listens for that event (git grep in lib, src and appinfo finds none); that listener is shillinq's open openspec/changes/banking-connected-accounts (0 of 9 tasks). Spec round 2026-10-07: shillinq's half is the archived 2026-09-28-banking-connected-accounts (feed listener); the pull is integriq's archived 2026-07-12-psd2-ais-bank-feed-connector. Re-rated 2026-10-07 (spec round part 2): built, partial. Both halves ship, but a pull only reaches a bank once an admin sets integriq's PSD2 source to provider 'rest' with an aggregator credential; the default binding logs and fetches nothing, and nobody has driven the chain on an instance. lib/Settings/connections.json still lists the separate 'bunq' adapter as unavailable."
 		},
@@ -2212,7 +2724,7 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "bank-reconciliation",
+			"feature": "bank-import-reconciliation",
 			"featureConfidence": "medium",
 			"source": "competitor",
 			"note": "Every imported line lands unmatched (controller :190); matching is a separate step."
@@ -2244,7 +2756,7 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "bank-reconciliation",
+			"feature": "bank-import-reconciliation",
 			"featureConfidence": "medium",
 			"source": "competitor",
 			"note": "Unmatched items can be classified, not matched by hand; the bulk-action URLs lack the /apps/shillinq prefix used elsewhere, worth a live check. Specified 2026-09-27 in openspec/changes/banking-manual-match (OpenSpec pass)."
@@ -2276,8 +2788,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "payment-run-sepa-export",
-			"featureConfidence": "medium",
+			"feature": "sepa-payment-runs",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "The SEPA file is real; the batch lines are typed by hand, not selected from the invoices due. Built 2026-09-29 by banking-payment-run."
 		},
@@ -2307,8 +2819,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "payment-run-sepa-export",
-			"featureConfidence": "medium",
+			"feature": "sepa-payment-runs",
+			"featureConfidence": "high",
 			"source": "own-code"
 		},
 		{
@@ -2338,8 +2850,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "bank-feed",
-			"featureConfidence": "medium",
+			"feature": "psd2-bank-feeds",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Accounts are kept and a combined GL cash position is shown; accounts cannot be connected. Specified 2026-09-27 in openspec/changes/banking-connected-accounts (OpenSpec pass)."
 		},
@@ -2369,8 +2881,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "multi-currency",
-			"featureConfidence": "medium",
+			"feature": "multi-administration-currency",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Rates can be kept (by hand) and are used for realised FX on settlement; the rate at booking is not applied automatically. Specified 2026-09-27 in openspec/changes/banking-fx-at-booking (OpenSpec pass)."
 		},
@@ -2400,8 +2912,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "multi-currency",
-			"featureConfidence": "medium",
+			"feature": "multi-administration-currency",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Closing rates come from manually kept spot rates while the treasury-rates feed is dormant."
 		},
@@ -2431,8 +2943,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "treasury",
-			"featureConfidence": "medium",
+			"feature": "cashflow-forecast",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "The records exist; the 'one view' dashboard shows hard-coded zeros."
 		},
@@ -2462,8 +2974,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "vat-return",
-			"featureConfidence": "medium",
+			"feature": "vat-filing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Per-line VAT works on the generated invoice, but the rates are a code constant, not configurable. Specified 2026-09-27 in openspec/changes/tax-vat-rates-and-deductibility (OpenSpec pass)."
 		},
@@ -2493,8 +3005,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "vat-return",
-			"featureConfidence": "medium",
+			"feature": "vat-filing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "The file can be produced from sales invoices; input VAT from purchases is not derived, and the VATReturns page totals rest on x-openregister-aggregations. Its own spec REQ-VBTW-004 forbids this derivation (issue #525). Specified 2026-09-27 in openspec/changes/tax-vat-return-from-books (OpenSpec pass)."
 		},
@@ -2524,8 +3036,8 @@
 			},
 			"provider": "integriq",
 			"providerHow": "read-from-code",
-			"feature": "vat-return",
-			"featureConfidence": "medium",
+			"feature": "vat-filing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Specified 2026-09-27 in openspec/changes/tax-digipoort-filing (OpenSpec pass)."
 		},
@@ -2555,8 +3067,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "vat-return",
-			"featureConfidence": "medium",
+			"feature": "vat-filing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "The statement can be kept by hand; computing it from the ledger and filing it are not reachable."
 		},
@@ -2586,8 +3098,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "vat-return",
-			"featureConfidence": "medium",
+			"feature": "vat-filing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Corrections can be recorded; detecting and filing the supplementary return is not reachable."
 		},
@@ -2617,8 +3129,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "vat-return",
-			"featureConfidence": "medium",
+			"feature": "vat-filing",
+			"featureConfidence": "high",
 			"source": "competitor"
 		},
 		{
@@ -2646,8 +3158,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "kor",
-			"featureConfidence": "medium",
+			"feature": "vat-filing",
+			"featureConfidence": "high",
 			"source": "competitor"
 		},
 		{
@@ -2675,8 +3187,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "vat-return",
-			"featureConfidence": "medium",
+			"feature": "vat-filing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Decided no 2026-09-28 (build-all pass, defer retired): single competitor, no demand: only snelstart rates it yes and no demand row names it. Reversible when demand appears."
 		},
@@ -2706,8 +3218,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "vat-return",
-			"featureConfidence": "medium",
+			"feature": "vat-filing",
+			"featureConfidence": "high",
 			"source": "competitor"
 		},
 		{
@@ -2735,8 +3247,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "oss",
-			"featureConfidence": "medium",
+			"feature": "vat-filing",
+			"featureConfidence": "high",
 			"source": "own-code"
 		},
 		{
@@ -2764,8 +3276,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "vpb",
-			"featureConfidence": "medium",
+			"feature": "corporate-and-income-tax",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "Records of payments and deadlines can be kept; the return itself is not computed."
 		},
@@ -2794,8 +3306,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "ib-zzp",
-			"featureConfidence": "medium",
+			"feature": "corporate-and-income-tax",
+			"featureConfidence": "high",
 			"source": "own-code"
 		},
 		{
@@ -2823,8 +3335,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "ib-zzp",
-			"featureConfidence": "medium",
+			"feature": "corporate-and-income-tax",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "Hours can be listed; the 1,225-hour tally and alerts have no caller."
 		},
@@ -2853,8 +3365,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "deferred-tax",
-			"featureConfidence": "medium",
+			"feature": "corporate-and-income-tax",
+			"featureConfidence": "high",
 			"source": "own-code"
 		},
 		{
@@ -2882,8 +3394,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "wbso",
-			"featureConfidence": "medium",
+			"feature": "corporate-and-income-tax",
+			"featureConfidence": "high",
 			"source": "own-code"
 		},
 		{
@@ -2911,8 +3423,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "innovation-box",
-			"featureConfidence": "medium",
+			"feature": "corporate-and-income-tax",
+			"featureConfidence": "high",
 			"source": "own-code"
 		},
 		{
@@ -2941,8 +3453,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "investment-deduction",
-			"featureConfidence": "medium",
+			"feature": "corporate-and-income-tax",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "corrections round 9 (2026-09-28): no change carries this row at c92d70222, so the state is none. The archived 2026-06-14-bookkeeping-investeringsaftrek (34 of 34 tasks ticked) and 2026-06-14-add-shillinq-investeringsaftrek shipped the register fragment, the 2026 seeds, lib/Guard/KiaSchalenLookup.php and lib/Guard/InvesteringsaftrekEligibilityGuard.php, but nothing calls either guard and no page shows a deduction, so they shipped without the capability; no open change and no gap-decisions entry covers it. Specified 2026-09-28 (build-all pass) in openspec/changes/tax-investment-deduction-claims."
 		},
@@ -2972,8 +3484,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "deadline-calendar",
-			"featureConfidence": "medium",
+			"feature": "corporate-and-income-tax",
+			"featureConfidence": "high",
 			"source": "own-code"
 		},
 		{
@@ -3002,8 +3514,8 @@
 			},
 			"provider": "integriq",
 			"providerHow": "read-from-code",
-			"feature": "sbr",
-			"featureConfidence": "medium",
+			"feature": "vat-filing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Specified 2026-09-27 in openspec/changes/tax-digipoort-filing (OpenSpec pass)."
 		},
@@ -3034,7 +3546,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "financial-statements",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "A P&L statement exists but has no comparative columns; only headline KPIs compare periods. Specified 2026-09-27 in openspec/changes/reporting-financial-statements (OpenSpec pass)."
 		},
@@ -3065,7 +3577,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "financial-statements",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "A GL transaction detail shows its own lines, but no figure-to-transactions path exists. Specified 2026-09-27 in openspec/changes/reporting-financial-statements (OpenSpec pass)."
 		},
@@ -3096,7 +3608,7 @@
 			"provider": "docudesk",
 			"providerHow": "read-from-code",
 			"feature": "financial-statements",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "No as-of date filter, and the unclosed year result is left out of equity. Specified 2026-09-27 in openspec/changes/reporting-financial-statements (OpenSpec pass)."
 		},
@@ -3127,7 +3639,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "financial-statements",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "corrections round 9 (2026-09-28): no change carries this row at c92d70222, so the state is none. The open openspec/changes/reporting-financial-statements puts a cash flow statement out of scope (proposal.md:71), and the archived 2026-06-14-bookkeeping-titel-9-jaarrekening declared the CashFlowStatement schema but marks its generation task DEFERRED (tasks.md:81-83), so it shipped without the capability. Specified 2026-09-28 (build-all pass) in openspec/changes/reporting-cash-flow-statement."
 		},
@@ -3157,7 +3669,7 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "report-library",
+			"feature": "general-ledger",
 			"featureConfidence": "medium",
 			"source": "own-code",
 			"note": "Works as a generated file; the menu pages Trial Balance / Trial Balance (by account) stay empty."
@@ -3188,7 +3700,7 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "report-library",
+			"feature": "general-ledger",
 			"featureConfidence": "medium",
 			"source": "competitor",
 			"note": "Filters in the generated report are period and administration only. Spec round part 2 (2026-10-07): described in openspec/specs/reporting-report-library (general ledger requirement); the running balance starts at zero per account, with no opening balance."
@@ -3220,7 +3732,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "financial-dashboard",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "competitor"
 		},
 		{
@@ -3250,7 +3762,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "budgeting",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "competitor"
 		},
 		{
@@ -3280,7 +3792,7 @@
 			"provider": "docudesk",
 			"providerHow": "read-from-code",
 			"feature": "financial-statements",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "A draft document can be produced; it is not filing-ready and cannot be filed."
 		},
@@ -3310,8 +3822,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "intercompany-consolidation",
-			"featureConfidence": "medium",
+			"feature": "ifrs-and-dutch-gaap",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Consolidation runs can be recorded; nothing computes a consolidated statement."
 		},
@@ -3342,7 +3854,7 @@
 			},
 			"provider": "openregister",
 			"providerHow": "read-from-code",
-			"feature": "dimensions-segment-reporting",
+			"feature": "financial-statements",
 			"featureConfidence": "medium",
 			"source": "competitor",
 			"note": "Page and grouping work; the aggregation does not sign by side or restrict to P&L accounts. Specified 2026-09-27 in openspec/changes/reporting-segment-results (OpenSpec pass)."
@@ -3375,7 +3887,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "financial-dashboard",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Specified 2026-09-27 in openspec/changes/reporting-custom-analysis (OpenSpec pass)."
 		},
@@ -3406,7 +3918,7 @@
 			"provider": "openregister",
 			"providerHow": "read-from-code",
 			"feature": "report-library",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "CSV export is the shared library's default mass action, verified against the local nextcloud-vue checkout, not the exact ^2.56 build shillinq pins. Spec round part 2 (2026-10-07): shillinq's half (CSV and XML from its own generators, PDF through docudesk) is described in openspec/specs/reporting-report-library; list-page CSV and Excel export stays nextcloud-vue's and is not specified here."
 		},
@@ -3437,7 +3949,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "report-library",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "One place and on-demand generation work; 5 of 17 listed reports produce nothing. Spec round part 2 (2026-10-07): after-the-fact main spec openspec/specs/reporting-report-library describes the catalogue, generation, storage and download as built, including the five entries with no generator."
 		},
@@ -3467,8 +3979,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "ifrs16-leases",
-			"featureConfidence": "medium",
+			"feature": "lease-accounting",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "Register and amortisation schedule are real; disclosures and remeasurement have no UI path."
 		},
@@ -3498,8 +4010,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "contracts",
-			"featureConfidence": "medium",
+			"feature": "procurement",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "The renewal alert is a Nextcloud calendar/task item; it degrades silently when no calendar backend exists."
 		},
@@ -3530,7 +4042,7 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "commitments",
+			"feature": "budgeting",
 			"featureConfidence": "medium",
 			"source": "own-code",
 			"note": "Corrected 2026-09-26: spending authority and budget checks are not enforced, they abort. MandateEnforcer::requiresApproval (lib/Settings/register.d/bookkeeping-verplichtingenadministratie.json:275) and BudgetBlocker::canCommit (:282, :301) are declared as lifecycle guards on unregistered guard tags, and the aangaan transition also declares the unhandled action record-mutatie (:286)."
@@ -3563,7 +4075,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "budgeting",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "A budget per ledger group can be built, but row by row, not by typing into the grid. Specified 2026-09-27 in openspec/changes/planning-budget-editing (OpenSpec pass)."
 		},
@@ -3594,7 +4106,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "budgeting",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "own-code"
 		},
 		{
@@ -3623,8 +4135,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "ias19-pensions",
-			"featureConfidence": "medium",
+			"feature": "ifrs-and-dutch-gaap",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "Actuary inputs and disclosure rows are typed in; nothing is calculated or booked."
 		},
@@ -3654,8 +4166,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "inventory-mobile-scanner",
-			"featureConfidence": "medium",
+			"feature": "inventory-fifo-valuation",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Scanner transfers edit InventoryStock directly and write no StockMove, so the stock ledger does not show them."
 		},
@@ -3685,8 +4197,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "inventory-mobile-scanner",
-			"featureConfidence": "medium",
+			"feature": "inventory-fifo-valuation",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Scanner receives/picks bypass the StockMove ledger, valuation and COGS."
 		},
@@ -3716,8 +4228,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "inventory-lots",
-			"featureConfidence": "medium",
+			"feature": "inventory-fifo-valuation",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "The warning is an ExpiryAlert record on a page, not a push notification."
 		},
@@ -3747,8 +4259,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "inventory-valuation",
-			"featureConfidence": "medium",
+			"feature": "inventory-fifo-valuation",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "FIFO/average engines and GL posting exist, but goods received through a GRN never reach them; only hand-made draft->posted moves do. Worth a live check. Specified 2026-09-27 in openspec/changes/inventory-receipt-cost-layers (OpenSpec pass)."
 		},
@@ -3778,8 +4290,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "inventory-valuation",
-			"featureConfidence": "medium",
+			"feature": "inventory-fifo-valuation",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "The trigger and posting are wired; the cost figure depends on receipt layers that GRN receipts never create. Specified 2026-09-27 in openspec/changes/inventory-receipt-cost-layers (OpenSpec pass)."
 		},
@@ -3809,8 +4321,8 @@
 			},
 			"provider": "pipelinq",
 			"providerHow": "read-from-code",
-			"feature": "product-catalog",
-			"featureConfidence": "medium",
+			"feature": "inventory-fifo-valuation",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Products and variants are authored in pipelinq; shillinq only displays them."
 		},
@@ -3840,8 +4352,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "inventory-lots",
-			"featureConfidence": "medium",
+			"feature": "inventory-fifo-valuation",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "Stock movement and COGS are blocked, but the delivery itself is not stopped and the user sees only a log line."
 		},
@@ -3871,8 +4383,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "bookings-self-service-widget",
-			"featureConfidence": "medium",
+			"feature": "bookings-appointments",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Services, slots and booking creation are real, but the documented iframe route is missing and cross-origin script embedding lacks CORS, so embedding on a separate website is not shown to work."
 		},
@@ -3902,8 +4414,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "bookings-service-catalog",
-			"featureConfidence": "medium",
+			"feature": "bookings-appointments",
+			"featureConfidence": "high",
 			"source": "own-code"
 		},
 		{
@@ -3932,8 +4444,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "bookings-availability",
-			"featureConfidence": "medium",
+			"feature": "bookings-appointments",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Rules, breaks and constraints can be kept, but slot calculation ignores them and uses one opening window per resource."
 		},
@@ -3963,8 +4475,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "bookings-confirm-flow",
-			"featureConfidence": "medium",
+			"feature": "bookings-appointments",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "Unconfirmed appointments are cancelled automatically, but the customer never receives the confirm request, so every self-booked appointment would lapse."
 		},
@@ -3994,8 +4506,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "bookings-notifications",
-			"featureConfidence": "medium",
+			"feature": "bookings-appointments",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "Templates and triggers are kept and the reminder job runs, but every mail path ends in a missing integriq endpoint or method, so no email leaves."
 		},
@@ -4025,8 +4537,8 @@
 			},
 			"provider": "integriq",
 			"providerHow": "read-from-code",
-			"feature": "bookings-notifications",
-			"featureConfidence": "medium",
+			"feature": "bookings-appointments",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "An SMS channel can be configured, but nothing calls the dispatcher and the provider is log-only."
 		},
@@ -4056,8 +4568,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "bookings-recurring-series",
-			"featureConfidence": "medium",
+			"feature": "bookings-appointments",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "Backend exists, UI does not."
 		},
@@ -4087,8 +4599,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "bookings-resource-calendar",
-			"featureConfidence": "medium",
+			"feature": "bookings-appointments",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "The calendar per resource works, but no navigation leads to it."
 		},
@@ -4117,8 +4629,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "payroll-nl",
-			"featureConfidence": "medium",
+			"feature": "payroll",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "A payroll engine exists in code with no page or job that runs it; payslips cannot be issued. Decided no 2026-09-27 (OpenSpec pass): Payroll runs in humaniq: humaniq matrix pay-run is yes and built with owner humaniq, and hydra ADR-107 decisions 4 and 6 give payroll and the wage base to humaniq; a second payroll engine in shillinq is not built."
 		},
@@ -4149,8 +4661,8 @@
 			},
 			"provider": "humaniq",
 			"providerHow": "read-from-code",
-			"feature": "time-billing",
-			"featureConfidence": "medium",
+			"feature": "time-and-expense-billing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Hours can be stored and billed from intake, but no page lets a user log project time at a rate. Spec round 2026-10-07: linked to humaniq's archived time-entry-capture (project and billable flag on a time entry; humaniq row tim-billable-rates is built). Shillinq's own half, moving hour recording out of shillinq, is the open change hours-to-humaniq. Re-rated 2026-10-07 (spec round part 2): building to specified. humaniq's change is archived and delivered project plus billable flag, not a billable rate; shillinq's own half, hours-to-humaniq, is open with 0 of 18 tasks. What is missing: a rate on humaniq's time entry, and the hand-off of rated hours into shillinq's billing (sales-time-and-expense-billing, open). Spec round part 3 (2026-10-07): the billable rate is a sell price and belongs to shillinq (ADR-107 gives humaniq the hour and the cost rate only), so humaniq's TimeEntry keeps no rate. The missing part is specified in shillinq's open change sales-billable-rate-per-hour (rate per hour by tier from the assignment's rate card, no EUR 100 fallback, rated hours on the project page), on top of hours-to-humaniq and sales-time-and-expense-billing. The delivered part stays humaniq/2026-07-14-time-entry-capture."
 		},
@@ -4179,8 +4691,8 @@
 			},
 			"provider": "humaniq",
 			"providerHow": "read-from-code",
-			"feature": "time-billing",
-			"featureConfidence": "medium",
+			"feature": "time-and-expense-billing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Rate humaniq for this row; shillinq only receives approved hours."
 		},
@@ -4210,8 +4722,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "dba-compliance",
-			"featureConfidence": "medium",
+			"feature": "payroll",
+			"featureConfidence": "high",
 			"source": "own-code"
 		},
 		{
@@ -4240,8 +4752,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "payroll-nl",
-			"featureConfidence": "medium",
+			"feature": "payroll",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "IB47 rows can be typed in; nothing produces or files them."
 		},
@@ -4272,8 +4784,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "payroll-nl",
-			"featureConfidence": "medium",
+			"feature": "payroll",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "The journal is computed in code with no caller, and nothing posts it. Built 2026-09-29 by ledger-posting-path."
 		},
@@ -4303,8 +4815,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "accountant-access",
-			"featureConfidence": "medium",
+			"feature": "accountant-export",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Read on the code only; whether the accountant can correct entries depends on OpenRegister permissions not checked here."
 		},
@@ -4335,7 +4847,7 @@
 			"provider": "nextcloud",
 			"providerHow": "read-from-code",
 			"feature": "access-control",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "competitor"
 		},
 		{
@@ -4364,7 +4876,7 @@
 			},
 			"provider": "openregister",
 			"providerHow": "read-from-code",
-			"feature": "api",
+			"feature": "api-and-automation",
 			"featureConfidence": "medium",
 			"source": "competitor",
 			"note": "The API exists; a published reference for integrators was not found in the repo."
@@ -4395,8 +4907,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "mobile",
-			"featureConfidence": "medium",
+			"feature": "mobile-and-interface",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "No iOS or Android app of its own. Specified 2026-09-27 in openspec/changes/platform-mobile-pwa (OpenSpec pass)."
 		},
@@ -4427,8 +4939,8 @@
 			},
 			"provider": "integriq",
 			"providerHow": "read-from-code",
-			"feature": "kvk-lookup",
-			"featureConfidence": "medium",
+			"feature": "external-connections-integration-config",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Building: ConductionNL/integriq openspec/changes/registry-backed-field-source, an existing open change, covers it (integriq lane, OpenSpec pass 2026-09-27). Re-rated 2026-10-07 (spec round part 2): building to specified. integriq's provider and openregister's key both exist; what is missing is shillinq's half: a contact or relation property that declares x-openregister-property-source 'kvk', so the form offers the lookup, and the connections.json entry turned on. No shillinq change covers that yet. Spec round part 3 (2026-10-07): shillinq's half is specified in the open change contacts-kvk-lookup (the key with a fill map on CustomerMaster.kvkNumber and Payee.kvkNumber, the kvk connection switched on). The delivered provider half stays integriq/2026-09-29-registry-backed-field-source. Still needed outside shillinq: the nextcloud-vue form has to render a property that declares x-openregister-property-source as a type-ahead and apply the fill map."
 		},
@@ -4460,7 +4972,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "ai-assistance",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "An outside AI client could ask through the MCP surface, which is itself pending. Corrected 2026-09-27 (OpenSpec pass): the matrix read found no question box, but the shell mounts the hermiq companion. Specified 2026-09-27 by the existing change openspec/changes/mcp-action-tool-surface (OpenSpec pass)."
 		},
@@ -4490,8 +5002,8 @@
 			},
 			"provider": "openregister",
 			"providerHow": "read-from-code",
-			"feature": "documents",
-			"featureConfidence": "medium",
+			"feature": "custom-fields-and-documents",
+			"featureConfidence": "high",
 			"source": "competitor"
 		},
 		{
@@ -4520,8 +5032,8 @@
 			},
 			"provider": "openregister",
 			"providerHow": "read-from-code",
-			"feature": "customisation",
-			"featureConfidence": "medium",
+			"feature": "custom-fields-and-documents",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Specified in ConductionNL/openregister openspec/changes/fields-a-user-adds-and-choices-a-record-narrows (openregister lane, OpenSpec pass 2026-09-27)."
 		},
@@ -4551,8 +5063,8 @@
 			},
 			"provider": "nextcloud",
 			"providerHow": "read-from-code",
-			"feature": "localisation",
-			"featureConfidence": "medium",
+			"feature": "mobile-and-interface",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Several page titles in src/manifest.json are still Dutch in the English source strings."
 		},
@@ -4582,7 +5094,7 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "integrations",
+			"feature": "external-connections-integration-config",
 			"featureConfidence": "medium",
 			"source": "competitor",
 			"note": "Specified 2026-09-27 in openspec/changes/platform-integration-catalogue (OpenSpec pass)."
@@ -4614,8 +5126,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "migration",
-			"featureConfidence": "medium",
+			"feature": "api-and-automation",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "The wizard imports the chart, the opening balance and customers from an XAF auditfile and can reverse it; open items and suppliers are not imported yet, so partial."
 		},
@@ -4645,8 +5157,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "deployment",
-			"featureConfidence": "medium",
+			"feature": "self-hosted-open-source",
+			"featureConfidence": "high",
 			"source": "competitor"
 		},
 		{
@@ -4677,7 +5189,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "ai-assistance",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Corrected 2026-09-27 (OpenSpec pass): the matrix read found no assistant, but the shell mounts the hermiq companion. Specified 2026-09-27 in openspec/changes/platform-help-agent (OpenSpec pass)."
 		},
@@ -4707,7 +5219,7 @@
 			},
 			"provider": "integriq",
 			"providerHow": "read-from-code",
-			"feature": "integrations",
+			"feature": "external-connections-integration-config",
 			"featureConfidence": "medium",
 			"source": "own-code"
 		},
@@ -4737,8 +5249,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "bbv",
-			"featureConfidence": "medium",
+			"feature": "bbv-compliance",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "The dashboard's figures come from x-openregister-aggregations materialisation."
 		},
@@ -4768,8 +5280,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "iv3",
-			"featureConfidence": "medium",
+			"feature": "emu-sisa-bcf-reporting",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "Covers taakveld totals only, not the economic categories, and cannot be submitted."
 		},
@@ -4799,8 +5311,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "sisa",
-			"featureConfidence": "medium",
+			"feature": "emu-sisa-bcf-reporting",
+			"featureConfidence": "high",
 			"source": "own-code"
 		},
 		{
@@ -4829,8 +5341,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "rechtmatigheid",
-			"featureConfidence": "medium",
+			"feature": "public-accountability",
+			"featureConfidence": "high",
 			"source": "own-code"
 		},
 		{
@@ -4859,8 +5371,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "bcf",
-			"featureConfidence": "medium",
+			"feature": "emu-sisa-bcf-reporting",
+			"featureConfidence": "high",
 			"source": "own-code"
 		},
 		{
@@ -4889,8 +5401,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "treasury-public",
-			"featureConfidence": "medium",
+			"feature": "cashflow-forecast",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "Whether the Treasury services feed the dashboard was not traced to a caller."
 		},
@@ -4920,8 +5432,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "emu",
-			"featureConfidence": "medium",
+			"feature": "emu-sisa-bcf-reporting",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "Produces the draft; submission to CBS is not wired."
 		},
@@ -4951,8 +5463,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "gr",
-			"featureConfidence": "medium",
+			"feature": "bbv-compliance",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "Participants and allocation keys can be kept; no service found that applies the keys."
 		},
@@ -4982,8 +5494,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "market-separation",
-			"featureConfidence": "medium",
+			"feature": "bbv-compliance",
+			"featureConfidence": "high",
 			"source": "own-code"
 		},
 		{
@@ -5012,8 +5524,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "ensia",
-			"featureConfidence": "medium",
+			"feature": "public-accountability",
+			"featureConfidence": "high",
 			"source": "own-code"
 		},
 		{
@@ -5042,8 +5554,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "bbv",
-			"featureConfidence": "medium",
+			"feature": "bbv-compliance",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "Linking and budget-versus-actuals work; the closing-budget check and exports have no page."
 		},
@@ -5073,8 +5585,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "subsidies",
-			"featureConfidence": "medium",
+			"feature": "public-accountability",
+			"featureConfidence": "high",
 			"source": "own-code"
 		},
 		{
@@ -5103,8 +5615,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "eu-funds",
-			"featureConfidence": "medium",
+			"feature": "public-accountability",
+			"featureConfidence": "high",
 			"source": "own-code"
 		},
 		{
@@ -5133,8 +5645,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "audit-protocol",
-			"featureConfidence": "medium",
+			"feature": "public-accountability",
+			"featureConfidence": "high",
 			"source": "own-code"
 		},
 		{
@@ -5164,7 +5676,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "supplier-invoice-approval",
-			"featureConfidence": "low",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "tender",
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/416109",
@@ -5201,8 +5713,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "dimensions-segment-reporting",
-			"featureConfidence": "low",
+			"feature": "general-ledger",
+			"featureConfidence": "medium",
 			"source": "competitor",
 			"origin": "tender",
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/416109",
@@ -5239,8 +5751,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "ledger-core",
-			"featureConfidence": "low",
+			"feature": "general-ledger",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "tender",
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/416109",
@@ -5277,7 +5789,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "period-close",
-			"featureConfidence": "low",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "tender",
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/416109",
@@ -5314,8 +5826,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "supplier-invoice-capture",
-			"featureConfidence": "low",
+			"feature": "bill-import-ubl-csv",
+			"featureConfidence": "medium",
 			"source": "competitor",
 			"origin": "tender",
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/416109",
@@ -5351,8 +5863,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "supplier-invoice-capture",
-			"featureConfidence": "low",
+			"feature": "bill-import-ubl-csv",
+			"featureConfidence": "medium",
 			"source": "competitor",
 			"origin": "tender",
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/416109",
@@ -5388,8 +5900,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "commitments",
-			"featureConfidence": "low",
+			"feature": "purchase-order-3way-match",
+			"featureConfidence": "medium",
 			"source": "competitor",
 			"origin": "tender",
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/416109",
@@ -5425,8 +5937,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "commitments",
-			"featureConfidence": "low",
+			"feature": "budgeting",
+			"featureConfidence": "medium",
 			"source": "competitor",
 			"origin": "tender",
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/416109",
@@ -5463,8 +5975,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "payment-run-sepa-export",
-			"featureConfidence": "low",
+			"feature": "sepa-payment-runs",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "tender",
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/416109",
@@ -5501,8 +6013,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "credit-control-dunning",
-			"featureConfidence": "low",
+			"feature": "credit-control",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "tender",
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/416109",
@@ -5539,8 +6051,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "bbv",
-			"featureConfidence": "low",
+			"feature": "bbv-compliance",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "tender",
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/416109",
@@ -5577,8 +6089,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "bbv",
-			"featureConfidence": "low",
+			"feature": "bbv-compliance",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "tender",
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/416109",
@@ -5617,7 +6129,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "budgeting",
-			"featureConfidence": "low",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "tender",
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/416109",
@@ -5655,7 +6167,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "budgeting",
-			"featureConfidence": "low",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "tender",
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/416109",
@@ -5695,7 +6207,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "report-library",
-			"featureConfidence": "low",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "tender",
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/416109",
@@ -5731,8 +6243,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "api",
-			"featureConfidence": "low",
+			"feature": "report-library",
+			"featureConfidence": "medium",
 			"source": "competitor",
 			"origin": "tender",
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/416109",
@@ -5769,7 +6281,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "report-library",
-			"featureConfidence": "low",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "tender",
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/416109",
@@ -5805,8 +6317,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "time-billing",
-			"featureConfidence": "low",
+			"feature": "time-and-expense-billing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "tender",
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/416109",
@@ -5844,7 +6356,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "fixed-assets",
-			"featureConfidence": "low",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "tender",
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/416109",
@@ -5881,8 +6393,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "bank-feed",
-			"featureConfidence": "low",
+			"feature": "psd2-bank-feeds",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-20-release-notes",
@@ -5914,7 +6426,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "expense-claims",
-			"featureConfidence": "low",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-19-release-notes",
@@ -5946,8 +6458,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "vat-return",
-			"featureConfidence": "low",
+			"feature": "vat-filing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-19-release-notes",
@@ -5979,7 +6491,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "financial-statements",
-			"featureConfidence": "low",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-19-release-notes",
@@ -6012,8 +6524,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "ledger-core",
-			"featureConfidence": "low",
+			"feature": "general-ledger",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-19-release-notes",
@@ -6047,7 +6559,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "audit-trail",
-			"featureConfidence": "low",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-19-release-notes",
@@ -6078,8 +6590,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "credit-control-dunning",
-			"featureConfidence": "low",
+			"feature": "credit-control",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-19-release-notes",
@@ -6111,8 +6623,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "vat-return",
-			"featureConfidence": "low",
+			"feature": "vat-filing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-19-release-notes",
@@ -6146,7 +6658,7 @@
 			"provider": "docudesk",
 			"providerHow": "read-from-code",
 			"feature": "ai-assistance",
-			"featureConfidence": "low",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-19-release-notes",
@@ -6179,8 +6691,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "integrations",
-			"featureConfidence": "low",
+			"feature": "mobile-and-interface",
+			"featureConfidence": "medium",
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-20-release-notes",
@@ -6212,8 +6724,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "invoice-payment-links",
-			"featureConfidence": "low",
+			"feature": "online-payments",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.moneybird.nl/changelog/laat-je-klant-contactloos-betalen/",
@@ -6246,8 +6758,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "bank-feed",
-			"featureConfidence": "low",
+			"feature": "psd2-bank-feeds",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.moneybird.nl/changelog/ideal-voor-de-moneybird-betaalrekening/",
@@ -6279,8 +6791,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "recurring-billing",
-			"featureConfidence": "low",
+			"feature": "recurring-retainer-billing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.moneybird.nl/changelog/ontdek-waarom-klanten-hun-abonnement-stopzetten/",
@@ -6313,8 +6825,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "sales-invoice-document",
-			"featureConfidence": "low",
+			"feature": "sales-invoicing",
+			"featureConfidence": "medium",
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.moneybird.nl/changelog/herroepingsknop-voor-online-verkopen/",
@@ -6347,8 +6859,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "api",
-			"featureConfidence": "low",
+			"feature": "api-and-automation",
+			"featureConfidence": "medium",
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.moneybird.nl/changelog/read-only-api-tokens/",
@@ -6379,8 +6891,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "vat-return",
-			"featureConfidence": "low",
+			"feature": "vat-filing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.moneybird.nl/changelog/extra-informatie-over-betaalkenmerken/",
@@ -6414,7 +6926,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "fixed-assets",
-			"featureConfidence": "low",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.moneybird.nl/changelog/herinvesteringsreserve/",
@@ -6447,8 +6959,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "multi-administration",
-			"featureConfidence": "low",
+			"feature": "multi-administration-currency",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.moneybird.nl/changelog/sjabloon-administraties-in-mijn-kantoor/",
@@ -6480,8 +6992,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "bank-reconciliation",
-			"featureConfidence": "low",
+			"feature": "general-ledger",
+			"featureConfidence": "medium",
 			"source": "competitor",
 			"origin": "roadmap",
 			"originUrl": "https://helpcenter.moneybird.nl/nl/articles/549560-afletteren-in-beta",
@@ -6513,8 +7025,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "vat-return",
-			"featureConfidence": "low",
+			"feature": "vat-filing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "roadmap",
 			"originUrl": "https://www.snelstart.nl/boekhouders-en-accountants/functies/fiscaal",
@@ -6547,8 +7059,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "einvoicing-ubl-peppol",
-			"featureConfidence": "low",
+			"feature": "vat-filing",
+			"featureConfidence": "medium",
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.snelstart.nl/productnieuws/snelstart-polaris-release-notes-30-oktober-snelstart",
@@ -6581,8 +7093,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "payment-run-sepa-export",
-			"featureConfidence": "low",
+			"feature": "sepa-payment-runs",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.moneybird.nl/changelog/slim-plannen-van-betalingen/",
@@ -6613,8 +7125,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "payroll-nl",
-			"featureConfidence": "low",
+			"feature": "payroll",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "roadmap",
 			"originUrl": "https://www.snelstart.nl/boekhouders-en-accountants/functies/salarisadministratie",
@@ -6647,8 +7159,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "sales-invoice-document",
-			"featureConfidence": "low",
+			"feature": "outbound-peppol-factur-x",
+			"featureConfidence": "medium",
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://support.exactonline.com/community/s/article/All-All-HNO-Content-rn-whatsnewlandingpage?language=en_GB",
@@ -6681,8 +7193,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "einvoicing-ubl-peppol",
-			"featureConfidence": "low",
+			"feature": "outbound-peppol-factur-x",
+			"featureConfidence": "medium",
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://support.exactonline.com/community/s/article/All-All-HNO-Content-rn-whatsnewlandingpage?language=en_GB",
@@ -6714,8 +7226,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "multi-administration",
-			"featureConfidence": "low",
+			"feature": "multi-administration-currency",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "roadmap",
 			"originUrl": "https://www.exact.com/nl/vooruitblik",
@@ -6747,8 +7259,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "multi-administration",
-			"featureConfidence": "low",
+			"feature": "multi-administration-currency",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "roadmap",
 			"originUrl": "https://www.exact.com/nl/vooruitblik",
@@ -6780,8 +7292,8 @@
 			},
 			"provider": "nextcloud",
 			"providerHow": "read-from-code",
-			"feature": "integrations",
-			"featureConfidence": "low",
+			"feature": "mobile-and-interface",
+			"featureConfidence": "medium",
 			"source": "competitor",
 			"origin": "roadmap",
 			"originUrl": "https://www.exact.com/nl/vooruitblik",
@@ -6813,8 +7325,8 @@
 			},
 			"provider": "openregister",
 			"providerHow": "read-from-code",
-			"feature": "integrations",
-			"featureConfidence": "low",
+			"feature": "custom-fields-and-documents",
+			"featureConfidence": "medium",
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://support.exactonline.com/community/s/article/All-All-HNO-Content-rn-whatsnewlandingpage?language=en_GB",
@@ -6846,7 +7358,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "ai-assistance",
-			"featureConfidence": "low",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "roadmap",
 			"originUrl": "https://www.exact.com/nl/vooruitblik",
@@ -6880,7 +7392,7 @@
 			"provider": "nextcloud",
 			"providerHow": "read-from-code",
 			"feature": "access-control",
-			"featureConfidence": "low",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://taasupportportal.wolterskluwer.com/nl/nl-nl/release-notes/twinfield-boekh-3087730",
@@ -6913,8 +7425,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "vat-return",
-			"featureConfidence": "low",
+			"feature": "vat-filing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://taasupportportal.wolterskluwer.com/nl/nl-nl/release-notes/twinfield-boekh-3041276",
@@ -6948,7 +7460,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "access-control",
-			"featureConfidence": "low",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "tender",
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/416109",
@@ -6986,7 +7498,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "quote-to-cash",
-			"featureConfidence": "low",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"origin": "changelog",
 			"originUrl": "https://www.odoo.com/odoo-19-release-notes",
@@ -7012,6 +7524,7 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
+			"feature": "bookings-appointments",
 			"source": "spec-round-2026-10-07",
 			"note": "Also specified by 2026-06-14-bookings-deposit-to-invoice (spec bookings-deposit-to-invoice). Collecting the money needs the payment provider adapter, which is log-only by default (see sal-pay-link)."
 		},
@@ -7035,6 +7548,7 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
+			"feature": "period-close",
 			"source": "spec-round-2026-10-07"
 		},
 		{
@@ -7057,6 +7571,7 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
+			"feature": "ifrs-and-dutch-gaap",
 			"source": "spec-round-2026-10-07"
 		},
 		{
@@ -7079,6 +7594,7 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
+			"feature": "inventory-fifo-valuation",
 			"source": "spec-round-2026-10-07"
 		},
 		{
@@ -7101,6 +7617,7 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
+			"feature": "inventory-fifo-valuation",
 			"source": "spec-round-2026-10-07"
 		},
 		{
@@ -7123,6 +7640,7 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
+			"feature": "recurring-retainer-billing",
 			"source": "spec-round-2026-10-07"
 		},
 		{
@@ -7145,6 +7663,7 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
+			"feature": "ifrs-and-dutch-gaap",
 			"source": "spec-round-2026-10-07",
 			"note": "Recurring revenue on sales orders is specified by 2026-07-22-order-revenue-recognition-engine (spec recurring-revenue-recognition)."
 		},
@@ -7168,6 +7687,7 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
+			"feature": "procurement",
 			"source": "spec-round-2026-10-07"
 		},
 		{
@@ -7190,6 +7710,7 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
+			"feature": "custom-fields-and-documents",
 			"source": "spec-round-2026-10-07",
 			"note": "Later reshaped by 2026-07-22-shillinq-signing-via-events."
 		},
@@ -7214,6 +7735,7 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
+			"feature": "corporate-and-income-tax",
 			"source": "spec-round-2026-10-07",
 			"note": "Decision 84 (Ruben, 7 Oct 2026): build the user-facing half. Spec: tax-cbcr-and-pillar2-returns (scope test over one and two-in-four years, figures per entity from the books summed per jurisdiction, CbC XML validated against OECD CbC XML Schema v2.0, GIR per the OECD GIR XML Schema of the January 2025 user guide as far as the schemas hold the data, NL QDMTT amount, three pages under Taxes). The archived change 2026-06-14-bookkeeping-cbcr-pillar2 delivered only the 8 schemas, their calculations and CbcrPillar2Guard; its threshold watcher, export targets and source feeds were declarations nothing reads."
 		}
@@ -7245,8 +7767,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "ledger-core",
-			"featureConfidence": "medium",
+			"feature": "general-ledger",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "A journal can be drafted with lines; the post into the ledger is declaration-only.",
 			"pendingReason": "Posting rests on the declared lifecycle action materialise-gl-transaction, which has no handler; the entry can be kept but not posted to the GL."
@@ -7278,7 +7800,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "period-close",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "A period can be marked closed and audit-locked, but nothing stops a post into it.",
 			"pendingReason": "Blocking posts into a closed period rests only on `preconditions` declarations OpenRegister does not execute."
@@ -7310,7 +7832,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "period-close",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "Closing entries can be recorded by hand and moved through states; no ledger posting follows.",
 			"pendingReason": "Generating and posting the result-to-equity entries rests on a declared lifecycle action with no handler."
@@ -7341,8 +7863,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "sales-invoice-status",
-			"featureConfidence": "medium",
+			"feature": "sales-invoicing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "A status is shown, but there is no 'opened' tracking, overdue is not set by any shillinq code, and the paid write uses the wrong field name ('state').",
 			"pendingReason": "The automatic overdue move rests only on the declared x-openregister-lifecycle transition 'mark-overdue' and a declared scheduled notification."
@@ -7373,8 +7895,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "sales-credit-note",
-			"featureConfidence": "medium",
+			"feature": "sales-invoicing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "A credit-note record can be kept against an invoice, but the reversal booking is not made by any code.",
 			"pendingReason": "GL posting on issue is only described in the declared ARInvoice x-openregister-lifecycle 'issue' transition; no shillinq code books it or its reversal."
@@ -7405,8 +7927,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "recurring-invoicing",
-			"featureConfidence": "medium",
+			"feature": "recurring-retainer-billing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "The profile can be kept and the generator is real code, but nothing in shillinq itself triggers it.",
 			"pendingReason": "Automatic generation rests only on x-openregister-scheduled-workflows calling RecurringInvoiceGenerator::runScheduled; whether OpenRegister executes it is not shown in this tree."
@@ -7437,8 +7959,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "retainer-billing",
-			"featureConfidence": "medium",
+			"feature": "recurring-retainer-billing",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "The retainer records can be kept and a retainer fee billed, but drawdown, rollover and true-up are hand-entered, not calculated.",
 			"pendingReason": "The remaining pool balance rests on declared x-openregister-aggregations on RetainerPool."
@@ -7469,8 +7991,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "credit-control-dunning",
-			"featureConfidence": "medium",
+			"feature": "credit-control",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "A collection-cost record can be typed in; the statutory calculation is not reachable from a page and is not added to the invoice.",
 			"pendingReason": "The record's totalDue rests on declared x-openregister-aggregations; the real calculator is only behind an uncalled endpoint."
@@ -7501,8 +8023,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "credit-control-dunning",
-			"featureConfidence": "medium",
+			"feature": "credit-control",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "The write-off can be recorded, but the loss is booked only by an endpoint no page calls.",
 			"pendingReason": "The loss booking from the page path would rest on the declared ARInvoice x-openregister-lifecycle write-off transition."
@@ -7533,8 +8055,8 @@
 			},
 			"provider": "openregister",
 			"providerHow": "read-from-code",
-			"feature": "ar-aging",
-			"featureConfidence": "medium",
+			"feature": "credit-control",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Reachable, but the age buckets depend on OpenRegister executing a declared aggregation.",
 			"pendingReason": "The bucket grouping rests only on the declared arAging x-openregister-aggregations; without it the page is a list of open invoices with due dates."
@@ -7565,7 +8087,7 @@
 			},
 			"provider": "docudesk",
 			"providerHow": "read-from-code",
-			"feature": "supplier-invoice-capture",
+			"feature": "bill-ocr",
 			"featureConfidence": "medium",
 			"source": "competitor",
 			"note": "The read itself happens in docudesk (filinq); shillinq only prefills a draft from docudesk's extraction event and cannot start OCR from its own upload.",
@@ -7597,8 +8119,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "procurement-governance",
-			"featureConfidence": "medium",
+			"feature": "procurement",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "A record and a status can be kept; the PO gate is off unless an admin sets an appconfig key by occ.",
 			"pendingReason": "The qualify step is an x-openregister-lifecycle transition executed by OpenRegister; the documented 'all documents present and unexpired' check lives in SupplierQualificationService, which nothing calls."
@@ -7629,8 +8151,8 @@
 			},
 			"provider": "integriq",
 			"providerHow": "read-from-code",
-			"feature": "tenderned-integration",
-			"featureConfidence": "medium",
+			"feature": "procurement",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "The follow-up (award -> commitment, completion status back) is built; the pull from TenderNed is not in this tree.",
 			"pendingReason": "Could not confirm an integriq TenderNed source exists that feeds TenderNedProcurement; without it the page only holds hand-entered dossiers."
@@ -7661,8 +8183,8 @@
 			},
 			"provider": "openregister",
 			"providerHow": "read-from-code",
-			"feature": "accounts-payable-core",
-			"featureConfidence": "medium",
+			"feature": "sepa-payment-runs",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Covers APTransaction only; SupplierInvoice records from the purchasing flow are not in the aging.",
 			"pendingReason": "The by-due-date view rests entirely on an x-openregister-aggregations declaration executed by OpenRegister; two of three variants are declared inert."
@@ -7694,7 +8216,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "expense-claims",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Claims can be kept as records; submit/approve/reimburse is not a working path.",
 			"pendingReason": "Approval and reimbursement exist only as x-openregister-lifecycle transitions; the guarded ones cannot resolve their requires tag."
@@ -7726,7 +8248,7 @@
 			"provider": "openregister",
 			"providerHow": "read-from-code",
 			"feature": "expense-claims",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Mileage entries can be logged; turning them into a claimable expense depends on the claim flow, which does not run (see exp-claim).",
 			"pendingReason": "The rate lookup and amount rest only on an x-openregister-calculations/-references declaration executed by OpenRegister."
@@ -7757,7 +8279,7 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "bank-reconciliation",
+			"feature": "bank-import-reconciliation",
 			"featureConfidence": "medium",
 			"source": "competitor",
 			"note": "Payment-run reconciliation works; matching general bank lines to open AR/AP invoices has no executing code in this tree.",
@@ -7789,8 +8311,8 @@
 			},
 			"provider": "openregister",
 			"providerHow": "read-from-code",
-			"feature": "bank-rules",
-			"featureConfidence": "medium",
+			"feature": "bank-import-reconciliation",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"pendingReason": "Applying saved rules to bank lines rests only on a declared x-openregister aggregation; no shillinq code books a line from a rule."
 		},
@@ -7820,8 +8342,8 @@
 			},
 			"provider": "openregister",
 			"providerHow": "read-from-code",
-			"feature": "cashflow-13wk",
-			"featureConfidence": "medium",
+			"feature": "cashflow-forecast",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "TreasuryDashboard/CashflowForecast (treasury) stat tiles are static count 0.",
 			"pendingReason": "The weekly figures rest only on x-openregister-aggregations, and nothing derives the projection rows from receivable/payable due dates."
@@ -7852,8 +8374,8 @@
 			},
 			"provider": "openregister",
 			"providerHow": "read-from-code",
-			"feature": "cashflow-13wk",
-			"featureConfidence": "medium",
+			"feature": "cashflow-forecast",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"pendingReason": "The 13-week saldo, scenarios and buffer check are computed only by declared OR aggregations; no shillinq code computes them."
 		},
@@ -7883,8 +8405,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "csrd-esrs",
-			"featureConfidence": "medium",
+			"feature": "financial-statements",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "Records and approval workflow work; calculation and filing do not in code.",
 			"pendingReason": "GHG inventory totals rest only on x-openregister-calculations/aggregations declarations; the XBRL filing half is a log-only adapter."
@@ -7916,7 +8438,7 @@
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "fixed-assets",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Register and disposal posting work; automatic depreciation posting does not exist.",
 			"pendingReason": "Depreciation figures rest on x-openregister-calculations; nothing posts periodic depreciation to the ledger."
@@ -7947,8 +8469,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "provisions",
-			"featureConfidence": "medium",
+			"feature": "ifrs-and-dutch-gaap",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "A provisions register with approval guard; no accounting entries.",
 			"pendingReason": "The roll-forward arithmetic rests only on x-openregister-calculations declarations."
@@ -7979,8 +8501,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "ifrs15-revenue",
-			"featureConfidence": "medium",
+			"feature": "ifrs-and-dutch-gaap",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "Contracts and obligations can be recorded; recognition is not computed.",
 			"pendingReason": "Waterfall and allocation figures rest only on x-openregister-aggregations declarations."
@@ -8011,8 +8533,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "project-profitability",
-			"featureConfidence": "medium",
+			"feature": "time-and-expense-billing",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Per-project figures appear only if OpenRegister materialises the declared aggregations.",
 			"pendingReason": "Project cost, revenue and margin rest only on x-openregister-aggregations/derived declarations."
@@ -8044,8 +8566,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "inventory-stock-ledger",
-			"featureConfidence": "medium",
+			"feature": "inventory-fifo-valuation",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Movements are recorded; the stock level shown is not updated by buying, selling or the mobile scanner (corrected 2026-09-26).",
 			"pendingReason": "Stock per product following purchases and sales rests only on a declared OR aggregation; the snapshot a user sees on Stock Levels is not updated by any buy/sell code."
@@ -8076,8 +8598,8 @@
 			},
 			"provider": "openregister",
 			"providerHow": "read-from-code",
-			"feature": "inventory-reorder",
-			"featureConfidence": "medium",
+			"feature": "inventory-fifo-valuation",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "Rules can be kept; no auto-reorder exists.",
 			"pendingReason": "The low-stock trigger, alert and reorder point rest only on x-openregister declarations; and the stock quantity they watch is not updated by buy/sell code (see inv-stock-levels)."
@@ -8108,8 +8630,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "inventory-cycle-count",
-			"featureConfidence": "medium",
+			"feature": "inventory-fifo-valuation",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"note": "An ad-hoc scanner count books the difference on the stock row (no GL, no StockMove); scheduled partial counts do not run.",
 			"pendingReason": "Scheduled count batches and variance posting run only through x-openregister-lifecycle transitions whose requires tags cannot resolve."
@@ -8140,8 +8662,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "inventory-stock-ledger",
-			"featureConfidence": "medium",
+			"feature": "inventory-fifo-valuation",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "A reserved quantity can be typed on the stock row; no order reserves stock.",
 			"pendingReason": "Reservation rests only on x-openregister-lifecycle guard hooks whose '::' tags are unregistered, so nothing reserves or enforces."
@@ -8172,8 +8694,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "bookings-cancellation",
-			"featureConfidence": "medium",
+			"feature": "bookings-appointments",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "The policy can be kept; no page applies a late-cancellation fee and the payment adapter is log-only.",
 			"pendingReason": "The credit note on cancellation rests on the declared BookingOrder x-openregister-lifecycle outcome."
@@ -8204,8 +8726,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "bookings-deposits",
-			"featureConfidence": "medium",
+			"feature": "bookings-appointments",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"note": "A deposit record can be kept; collecting it needs a real payment adapter and the deduction is only declared.",
 			"pendingReason": "Deducting the deposit on the final invoice rests on the declared lifecycle in bookings-deposit-to-invoice.json."
@@ -8237,7 +8759,7 @@
 			"provider": "openregister",
 			"providerHow": "read-from-code",
 			"feature": "access-control",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"pendingReason": "Role permissions rest on x-openregister-rbac declarations; nothing in this tree shows OpenRegister enforcing them for shillinq's schemas. Settle by signing in as an auditor role and trying to edit a VAT return."
 		},
@@ -8267,7 +8789,7 @@
 			},
 			"provider": "openregister",
 			"providerHow": "read-from-code",
-			"feature": "api",
+			"feature": "api-and-automation",
 			"featureConfidence": "medium",
 			"source": "competitor",
 			"pendingReason": "Whether OpenRegister's webhooks fire on shillinq objects was not settled from this tree."
@@ -8299,7 +8821,7 @@
 			"provider": "openregister",
 			"providerHow": "read-from-code",
 			"feature": "ai-assistance",
-			"featureConfidence": "medium",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"pendingReason": "Rests entirely on the x-openregister-mcp declaration; nothing here shows OpenRegister serving it. Settle by listing the MCP tools on an instance."
 		},
@@ -8329,8 +8851,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "controls-monitoring",
-			"featureConfidence": "medium",
+			"feature": "audit-trail",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"pendingReason": "Findings only appear if OpenRegister executes the scheduled-workflow declaration; the PHP engine has no caller. Settle by booking a transaction that breaks a rule and waiting a night."
 		},
@@ -8360,8 +8882,8 @@
 			},
 			"provider": "openregister",
 			"providerHow": "read-from-code",
-			"feature": "automation",
-			"featureConfidence": "medium",
+			"feature": "api-and-automation",
+			"featureConfidence": "high",
 			"source": "competitor",
 			"pendingReason": "The authoring screen is reachable; whether OpenRegister's flow engine runs a shillinq flow was not settled from this tree."
 		},
@@ -8391,8 +8913,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "treasury-public",
-			"featureConfidence": "medium",
+			"feature": "cashflow-forecast",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"pendingReason": "The position rests on dashboard widgets over declared aggregations; no service computes the threshold. Settle by loading balances and reading the widget."
 		},
@@ -8422,8 +8944,8 @@
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
-			"feature": "controls-monitoring",
-			"featureConfidence": "medium",
+			"feature": "audit-trail",
+			"featureConfidence": "high",
 			"source": "own-code",
 			"pendingReason": "Segregation checks run only if OpenRegister executes the register's scheduled-workflow declaration."
 		}
