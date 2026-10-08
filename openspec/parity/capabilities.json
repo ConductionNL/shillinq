@@ -410,7 +410,11 @@
 				"gl-account-suggestion-consume",
 				"ledger-open-item-clearing",
 				"bookkeeping-trial-balance",
-				"reporting-report-library"
+				"reporting-report-library",
+				"bookkeeping-chart-of-accounts",
+				"bookkeeping-journal-entries",
+				"bookkeeping-rule-engine",
+				"bookkeeping-rules"
 			]
 		},
 		{
@@ -421,7 +425,11 @@
 			"overlay": null,
 			"specs": [
 				"ledger-period-end",
-				"bookkeeping-aansluitingen"
+				"bookkeeping-aansluitingen",
+				"bookkeeping-continuous-close",
+				"bookkeeping-period-close",
+				"bookkeeping-reconciliation-reports",
+				"bookkeeping-year-end-close"
 			]
 		},
 		{
@@ -435,7 +443,9 @@
 				"ledger-multi-administration",
 				"ledger-foreign-legislation",
 				"sales-invoice-document",
-				"banking-fx-at-booking"
+				"banking-fx-at-booking",
+				"bookkeeping-multi-currency",
+				"first-time-setup"
 			]
 		},
 		{
@@ -447,7 +457,8 @@
 			"specs": [
 				"bookkeeping-audit-trail",
 				"ledger-sealed-entries",
-				"bookkeeping-archiefwet-retention"
+				"bookkeeping-archiefwet-retention",
+				"bookkeeping-ccm-rule-engine"
 			]
 		},
 		{
@@ -461,7 +472,8 @@
 				"bookkeeping-voorzieningen-claims",
 				"bookkeeping-ifrs15-revenue",
 				"bookkeeping-pension-ias19",
-				"bookkeeping-intercompany-elimination"
+				"bookkeeping-intercompany-elimination",
+				"accounting-standards-policy"
 			]
 		},
 		{
@@ -471,7 +483,11 @@
 			"area": "planning",
 			"overlay": "lease-accounting",
 			"specs": [
-				"bookkeeping-lease-accounting"
+				"bookkeeping-lease-accounting",
+				"bookkeeping-lease-contracts",
+				"bookkeeping-lease-disclosures",
+				"bookkeeping-lease-exemptions",
+				"bookkeeping-lease-reassessment"
 			]
 		},
 		{
@@ -497,7 +513,8 @@
 				"sales-invoice-issue-controls",
 				"sales-invoice-sending",
 				"shillinq-invoice-quick-draft",
-				"sales-cancellation"
+				"sales-cancellation",
+				"school-contributions"
 			]
 		},
 		{
@@ -508,7 +525,8 @@
 			"overlay": null,
 			"specs": [
 				"sales-quote-and-order-to-invoice",
-				"sales-webshop-orders"
+				"sales-webshop-orders",
+				"semantic-invoice-consume"
 			]
 		},
 		{
@@ -520,7 +538,12 @@
 			"specs": [
 				"sales-time-and-expense-billing",
 				"sales-usage-billing",
-				"sales-billable-rate-per-hour"
+				"sales-billable-rate-per-hour",
+				"bookkeeping-consultancy-project-accounting",
+				"invoice-from-time-and-expense",
+				"rate-card-management",
+				"time-expense-invoice-intake",
+				"usage-metered-billing"
 			]
 		},
 		{
@@ -531,7 +554,9 @@
 			"overlay": "recurring-retainer-billing",
 			"specs": [
 				"recurring-invoicing",
-				"sales-cancellation"
+				"sales-cancellation",
+				"recurring-revenue-recognition",
+				"retainer-billing-management"
 			]
 		},
 		{
@@ -541,7 +566,8 @@
 			"area": "sales",
 			"overlay": "outbound-peppol-factur-x",
 			"specs": [
-				"sales-einvoice-exchange"
+				"sales-einvoice-exchange",
+				"bookkeeping-einvoicing-ubl-peppol"
 			]
 		},
 		{
@@ -553,7 +579,11 @@
 			"specs": [
 				"receivables-payment-links",
 				"sales-invoice-document",
-				"receivables-provider-payouts"
+				"receivables-provider-payouts",
+				"ar-invoice-payment-links",
+				"object-payment-requests",
+				"portal-contribution",
+				"portal-payment-initiation"
 			]
 		},
 		{
@@ -564,7 +594,9 @@
 			"overlay": null,
 			"specs": [
 				"receivables-automatic-dunning",
-				"receivables-sepa-direct-debit"
+				"receivables-sepa-direct-debit",
+				"bookkeeping-credit-control-dunning",
+				"bookkeeping-sepa-direct-debit"
 			]
 		},
 		{
@@ -574,7 +606,8 @@
 			"area": "purchasing",
 			"overlay": "bill-import-ubl-csv",
 			"specs": [
-				"bookkeeping-accounts-payable-core"
+				"bookkeeping-accounts-payable-core",
+				"shillinq-bill-import-modal"
 			]
 		},
 		{
@@ -583,7 +616,9 @@
 			"title_nl": "Inkoopfacturen via OCR",
 			"area": "purchasing",
 			"overlay": "bill-ocr",
-			"specs": []
+			"specs": [
+				"receipt-extraction-consume"
+			]
 		},
 		{
 			"slug": "supplier-invoice-approval",
@@ -604,7 +639,8 @@
 			"specs": [
 				"bookkeeping-purchase-order-3way",
 				"purchasing-order-dispatch-and-receipt",
-				"purchase-requisition"
+				"purchase-requisition",
+				"grir-accrual-wiring"
 			]
 		},
 		{
@@ -660,7 +696,8 @@
 			"overlay": "sepa-payment-runs",
 			"specs": [
 				"payment-run-sepa-export",
-				"payment-run-four-eyes"
+				"payment-run-four-eyes",
+				"payment-control-guards"
 			]
 		},
 		{
@@ -671,7 +708,10 @@
 			"overlay": null,
 			"specs": [
 				"bookkeeping-treasury-ihb",
-				"public-sector-quarterly-returns"
+				"public-sector-quarterly-returns",
+				"bookkeeping-cashflow-13wk",
+				"bookkeeping-schatkistbankieren",
+				"bookkeeping-wet-fido-treasury"
 			]
 		},
 		{
@@ -687,7 +727,10 @@
 				"tax-digipoort-filing",
 				"tax-icp-and-reverse-charge",
 				"tax-vat-position-and-suppletie",
-				"tax-vat-number-check"
+				"tax-vat-number-check",
+				"bookkeeping-btw-oss-eu",
+				"bookkeeping-icp-opgaaf",
+				"bookkeeping-kor-kleine-ondernemersregeling"
 			]
 		},
 		{
@@ -699,7 +742,18 @@
 			"specs": [
 				"tax-investment-deduction-claims",
 				"tax-cbcr-and-pillar2-returns",
-				"compliance-deadline-calendar"
+				"compliance-deadline-calendar",
+				"bookkeeping-cbcr-pillar2",
+				"bookkeeping-deferred-tax",
+				"bookkeeping-ib-aangifte-zzp",
+				"bookkeeping-innovatiebox-administratie",
+				"bookkeeping-investeringsaftrek",
+				"bookkeeping-r-d-subsidies-mkb",
+				"bookkeeping-vpb-corporate-tax",
+				"bookkeeping-wbso-sno-administratie",
+				"bookkeeping-zzp-tax-regime",
+				"wbso-uren-tagging-and-export",
+				"zzp-urencriterium-tracker"
 			]
 		},
 		{
@@ -711,7 +765,9 @@
 			"specs": [
 				"reporting-financial-statements",
 				"reporting-cash-flow-statement",
-				"bookkeeping-titel-9-jaarrekening"
+				"bookkeeping-titel-9-jaarrekening",
+				"bookkeeping-cost-centers-dimensions",
+				"bookkeeping-financial-statements"
 			]
 		},
 		{
@@ -743,7 +799,8 @@
 			"overlay": null,
 			"specs": [
 				"budget-grid-view",
-				"budget-scenarios"
+				"budget-scenarios",
+				"bookkeeping-verplichtingenadministratie"
 			]
 		},
 		{
@@ -753,7 +810,8 @@
 			"area": "planning",
 			"overlay": null,
 			"specs": [
-				"assets-method-change-and-reserve"
+				"assets-method-change-and-reserve",
+				"bookkeeping-fixed-assets-depreciation"
 			]
 		},
 		{
@@ -771,7 +829,13 @@
 				"inventory-product-catalog",
 				"block-unsellable-stock-dispatch",
 				"inventory-reorder-automation",
-				"inventory-cycle-count"
+				"inventory-cycle-count",
+				"inventory-accounting-correctness",
+				"inventory-barcode-sku",
+				"inventory-cogs-posting",
+				"inventory-sales-issue-cogs-trigger",
+				"inventory-stock-movement-ledger",
+				"inventory-stock-tracking"
 			]
 		},
 		{
@@ -786,7 +850,14 @@
 				"bookings-service-catalog",
 				"bookings-availability-rules",
 				"bookings-confirm-flow",
-				"bookings-deposits"
+				"bookings-deposits",
+				"bookings-cancellation-rules",
+				"bookings-create-appointment",
+				"bookings-deposit-to-invoice",
+				"bookings-notification-triggers",
+				"bookings-recurring-series",
+				"notification-booking-email-templates",
+				"notification-booking-sms-reminders"
 			]
 		},
 		{
@@ -797,7 +868,8 @@
 			"overlay": null,
 			"specs": [
 				"bookkeeping-detachering-payroll-administratie",
-				"dba-compliance-marker"
+				"dba-compliance-marker",
+				"subject-cost-aggregation"
 			]
 		},
 		{
@@ -806,7 +878,9 @@
 			"title_nl": "Zelf gehost en open source (EUPL-1.2)",
 			"area": "platform",
 			"overlay": "self-hosted-open-source",
-			"specs": []
+			"specs": [
+				"docs"
+			]
 		},
 		{
 			"slug": "mobile-and-interface",
@@ -849,7 +923,8 @@
 			"overlay": null,
 			"specs": [
 				"mcp-action-tool-surface",
-				"platform-administration-import"
+				"platform-administration-import",
+				"shillinq-mcp-tool-surface"
 			]
 		},
 		{
@@ -871,7 +946,8 @@
 			"overlay": null,
 			"specs": [
 				"platform-custom-record-types",
-				"shillinq-delegate-signing"
+				"shillinq-delegate-signing",
+				"bookkeeping-document-attachment-integration"
 			]
 		},
 		{
@@ -882,7 +958,12 @@
 			"overlay": "bbv-compliance",
 			"specs": [
 				"bookkeeping-bbv-compliance",
-				"public-sector-task-field-allocation"
+				"public-sector-task-field-allocation",
+				"bookkeeping-gr-consolidation",
+				"bookkeeping-market-government-separation",
+				"bookkeeping-programmabegroting",
+				"bookkeeping-provincies-bbv-variant",
+				"bookkeeping-waterschappen-bbv-variant"
 			]
 		},
 		{
@@ -895,7 +976,10 @@
 				"bookkeeping-emu-reporting",
 				"public-sector-grant-accountability",
 				"public-sector-quarterly-returns",
-				"bookkeeping-iv3-reporting"
+				"bookkeeping-iv3-reporting",
+				"bookkeeping-bcf-vat-compensation",
+				"bookkeeping-cbs-bestanden-extended",
+				"bookkeeping-sisa-reporting"
 			]
 		},
 		{
@@ -906,9 +990,43 @@
 			"overlay": null,
 			"specs": [
 				"public-sector-council-and-auditor-statements",
-				"public-sector-grant-accountability"
+				"public-sector-grant-accountability",
+				"bookkeeping-bado-controleprotocol",
+				"bookkeeping-ensia-zelfevaluatie",
+				"bookkeeping-rechtmatigheidsverantwoording",
+				"bookkeeping-rekenkamer-audit-pack",
+				"bookkeeping-subsidie-verantwoording"
 			]
 		}
+	],
+	"internalSpecs": [
+		"accounts-payable-consolidation",
+		"app-administration",
+		"apphost-adoption",
+		"background-job-consolidation",
+		"budget-core-schema",
+		"consume-platform-abstractions",
+		"contracts-single-home",
+		"declarative-calc-layer",
+		"declarative-calc-refs",
+		"declarative-object-references",
+		"frontend-bundle-hygiene",
+		"governance-compliance-settings",
+		"list-views-cndatatable",
+		"manifest-boot-performance",
+		"missing-lifecycle-guards",
+		"nav-reachability",
+		"object-store-retirement",
+		"realtime-updates",
+		"reports-via-docudesk",
+		"revive-gl-tax-capabilities",
+		"schema-consolidation",
+		"security-endpoint-guards",
+		"segregation-control-real-check",
+		"semantic-schema-markers",
+		"shillinq-nav-ia-cleanup",
+		"shillinq-product-vendor-to-pipelinq",
+		"templates-notifications-settings"
 	],
 	"providers": [
 		{
@@ -976,6 +1094,10 @@
 				"readOn": "2026-09-29",
 				"change": "2026-09-29-ledger-posting-path"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShMemoriaal"
+			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Reference-financial-glaccounts-fingl-createdgltransr (G/L account transactions created by activity): every activity posts paired debit and credit G/L transactions; search snippet of the account types article: \"voor elke boeking die je aanmaakt ... transacties die in balans zijn\" Note: All Boekhouden plans.",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207163-een-memoriaalboeking-maken : 'Per regel selecteer je een categorie ... en een debet of credit bedrag. De bedragen dienen aan de credit en aan de debet zijde in balans te zijn'; other documents post journal entries automatically",
@@ -1006,6 +1128,10 @@
 				"reachedOn": "First-run setup wizard (src/manifest.json setup steps rgs-template + seed), result on ChartOfAccounts /chart-of-accounts (via menu Bookkeeping > Chart of Accounts)",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-add-shillinq-chart-of-accounts"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShGrootboek"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-glaccounts-fingl-glaccmaprgst: \"Exact Online makes this process a lot easier for you by suggesting which RGS classification can be assigned to your G/L account\" Note: RGS is a mapping with suggestions on your own chart, templates for accountants.",
@@ -1039,6 +1165,10 @@
 				"evidence": "GLLine.signedAmount (credit positive) and the accountClass and countsInResult stamps written by GLLineResultStampListener when a transaction posts or is reversed (lib/Settings/register.d/reporting-segment-results.json, lib/Service/Ledger/GlLineResultStamps.php); the cost centre, hierarchy, cost object and project aggregations count only posted profit and loss lines and return revenue, costs and result (lib/Settings/register.d/bookkeeping-cost-centers-dimensions.json); the dashboard shows the three per segment for a fiscal period (tests/Unit/Service/Ledger/GlLineResultStampsTest.php, tests/vitest/reportingSegmentResults.spec.js).",
 				"change": "2026-09-29-reporting-segment-results"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShGrootboek"
+			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Kostenplaatsen en -dragers ... Boek kosten en opbrengsten op afdeling of vestiging (kostenplaatsen) of op producten of diensten (kostendragers)\" Note: Listed under extra financial options of Boekhouden.",
 				"snelstart": "https://kennisplein.snelstart.nl/snelstartpolaris/wat-kan-ik-met-een-kostenplaats : 'In SnelStart Polaris kun je vanaf het pakket inZicht werken maken van kostenplaatsen ... kosten en opbrengsten koppelen aan een eenheid, afdeling, project of bedrijfsonderdeel' Note: from package inZicht (EUR 54/month) upward; package table https://www.snelstart.nl/ondernemer/inzicht lists 'Werken met kostenplaatsen' from inZicht",
@@ -1069,6 +1199,10 @@
 				"reachedOn": "PeriodCloseDetail /bookkeeping/period-close/:id (via menu Bookkeeping > Period Close); YearEndCloseChecklist /bookkeeping/year-end-close-checklist is only a FiscalYear list filtered to open/closing",
 				"owner": "ConductionNL/shillinq",
 				"change": "ledger-period-end"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShAfsluiten"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Smart Closing is een geintegreerd checklist die over meerdere administraties heen automatische controles uitvoert ... voor je maandafsluiting\"; https://support.exactonline.com/community/s/article/All-All-HNO-Task-general-smartclosing-smartclosing-1checklisttempt: \"Create and monitor checklists\" Note: Premium plan (Slimme periode- en jaarafsluiting); also in the accountancy suite.",
@@ -1101,6 +1235,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "ledger-multi-administration"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShAdministraties"
+			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: plans include 1 to 2 administraties with \"Extra administratie\" at 20 to 38 euro p/m; FAQ: \"Wanneer je voor meerdere bedrijven de boekhouding wilt doen, dan heb je meerdere administraties nodig\" Note: Essentials is limited to 1 administration; Plus and up can add more.",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207450-meerdere-bedrijven-in-een-moneybird-account : 'Als je meerdere administraties wilt beheren, kan dat in Moneybird binnen één account ... wissel je tussen je administraties'",
@@ -1131,6 +1269,10 @@
 				"reachedOn": "BookkeepingAuditTrail /bookkeeping/audit-trail and BookkeepingChangeHistory /bookkeeping/change-history (via menu Bookkeeping > Audit Trail / Change history); Audit Trail tab on every financial detail page",
 				"owner": "ConductionNL/openregister",
 				"change": "2026-06-14-add-shillinq-audit-trail"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVerkoopfactuur"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-general-importexport-gen-impexp-expaudittrailrepexct: \"Voor iedere wijziging wordt vastgelegd wanneer en door wie de wijziging is gemaakt ... De huidige en vorige waardes worden weergegeven\" Note: Controlelijst covers master data subjects; processed entries cannot be edited.",
@@ -1163,6 +1305,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookkeeping-intercompany-elimination"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShAdministraties"
+			},
 			"evidence": {
 				"twinfield": "https://taasupportportal.wolterskluwer.com/nl/nl-nl/artikel/rekening-couran-3041106 and https://taasupportportal.wolterskluwer.com/nl/nl-nl/artikel/memoriaal-boeki-3062311: \"Bij gebruik van de functie 'Rekening-courant' bepaalt het veld 'Doel' in welke (doel)administratie de transactieregel wordt verwerkt\"; https://taasupportportal.wolterskluwer.com/nl/nl-nl/artikel/administratiegr-3041172: consolidated reports over an administration group Note: Intercompany posting and combined reports are documented; generated eliminations are not.",
 				"odoo": "https://www.odoo.com/documentation/19.0/applications/general/companies/multi_company.html inter-company rules 'Automatically create a bill/refund when a company confirms an invoice/credit note'; https://www.odoo.com/documentation/19.0/applications/finance/accounting/get_started/consolidation.html consolidation through account mapping and 'consolidation adjustment journals', no automatic elimination described Note: Enterprise module account_inter_company_rules (toggle at odoo/odoo@19.0 addons/account/models/res_config_settings.py module_account_inter_company_rules), not public, rated from docs. Transactions yes, eliminations are manual adjustment entries, not generated Driven 2026-09-26 on 19.0-20260908 Community: Settings offers the toggle module_account_inter_company_rules, which installs account_inter_company_rules; that module is absent in the public 19.0 addons, so in Community the toggle is the edition boundary (Enterprise only).",
@@ -1193,6 +1339,10 @@
 				"reachedOn": "AccrualRules /bookkeeping/accrual-rules (settings gear > Accrual Rules); results on ContinuousClose /bookkeeping/continuous-close",
 				"owner": "ConductionNL/shillinq",
 				"change": "ledger-period-end"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShAfsluiten"
 			},
 			"evidence": {
 				"odoo": "https://www.odoo.com/documentation/19.0/applications/finance/accounting/customer_invoices/deferred_revenues.html 'Odoo can automatically create deferral entries upon invoice validation' or grouped at month end; Community only has the manual cut-off wizard odoo/odoo@19.0 addons/account/wizard/account_automatic_entry_wizard.py:20 action 'change_period' Note: Automatic spreading is Enterprise (account_accountant), not public, rated from docs",
@@ -1225,6 +1375,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookkeeping-ifrs-rj-dual-gaap"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVerslaggeving"
+			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/vooruitblik: \"Het HQ-grootboekrekeningschema in de Premium-edities van Exact Online ... Beheer een of meerdere HQ-schemas voor verschillende rapportagebehoeften (bijv. lokaal en IFRS)\" Note: Group reporting schemes mapped for local and IFRS reporting in Premium; parallel IFRS and Dutch GAAP ledgers with reconciling differences are not described.",
 				"moneybird": "not checked: searched helpcenter and site for IFRS and GAAP: no hits; small business Dutch GAAP tool, parallel ledgers not stated",
@@ -1255,6 +1409,10 @@
 				"reachedOn": "Bewaartermijnen /administratie/bewaartermijnen and BewaartermijnenDashboard (via menu Reporting & compliance > Retention periods / Retention periods dashboard)",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookkeeping-archiefwet-retention"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShRapporten"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched the Exact knowledge base today: archived administrations stay readable and exact.com/nl/producten/overstappen advises keeping 7 years of auditfiles, but no retention schedule or destruction list is described",
@@ -1287,6 +1445,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookkeeping-soft-close-flux"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShAfsluiten"
+			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: Professional adds \"Automatisch afwijkingen signaleren\" and \"Continuous monitoring: Ontvang proactief signalen bij afwijkingen in je administratie\" Note: Deviations are flagged continuously; a nightly soft close run is not described.",
 				"moneybird": "not checked: searched helpcenter and changelog: a control report warns when a checked category changes after review (https://helpcenter.moneybird.nl/nl/articles/742478-controlerapport), but no nightly soft close or swing detection stated",
@@ -1318,6 +1480,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-07-07-xaf-auditfile-export-generator"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShRapporten"
+			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-general-importexport-gen-impexp-auditt: \"Je kunt financiele transacties of salarisgegevens exporteren als auditfiles in xml-formaat (XAF of XAS) ... De belastingdienst en accountancybedrijven kunnen salaris-auditfiles gebruiken\"",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207972-auditfile : 'Ga naar Instellingen > Boekhouding > Boekhouding exporteren ... Je kunt kiezen uit een auditfile, een export van de grootboekkaarten in Excel of een RGS Brugstaat'; changelog https://www.moneybird.nl/changelog/auditfile-financieel-4-0/ (11 november 2025) adds Auditfile Financieel 4.0",
@@ -1347,6 +1513,10 @@
 				"reachedOn": "ReceiptDetail (ReceiptCapture) from Receipts /inkoop/receipts (via menu Purchasing > Receipts); BillImportModal on SupplierInvoices (via menu Purchasing > Supplier Invoices)",
 				"owner": "ConductionNL/filinq",
 				"change": "2026-07-13-gl-account-suggestion-consume"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShFactuurImporteren"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Purchase Agent ... doet slimme suggesties om transacties op de juiste grootboekrekening te plaatsen\"; Bank Agent links payments \"aan zowel inkoop- als verkoopfacturen en de juiste grootboekrekening\" Note: All plans list the AI agents.",
@@ -1379,6 +1549,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "sales-invoice-document"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVerkoopfactuur"
+			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Maak en verstuur verkoopfacturen voorzien van een professionele lay-out\"; https://support.exactonline.com/community/s/article/All-All-HNO-Concept-general-layout-gen-layt-aboutlayeditc: advanced layout editor for sales invoice layouts",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/223823-huisstijl-instellen : 'Per huisstijl stel je in: je bedrijfslogo, het lettertype en de lettergrootte ... de indeling van je facturen'; CSS styling also possible (article 223843)",
@@ -1409,6 +1583,10 @@
 				"reachedOn": "BillableInvoiceGenerate /invoice/generate (via menu Sales > Invoices > Generate invoice); AccountsReceivable /bookkeeping/accounts-receivable (via menu Sales > Accounts Receivable) has a hand-typed number",
 				"owner": "ConductionNL/shillinq",
 				"change": "sales-invoice-issue-controls"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVerkoopfacturen"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-sales-invoices-slsinv-detslsinvnrt: \"Wanneer je een factuur aanmaakt, wordt het factuurnummer automatisch toegewezen ... volgens het eerste beschikbare boekstuknummer van je verkoopboek\"",
@@ -1442,6 +1620,10 @@
 				"readOn": "2026-09-27",
 				"change": "sales-invoice-sending"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVerkoopfactuur"
+			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-sales-invoices-slsinv-trackslsinvt: \"Met Verzend en volgen kun je een verkoopfactuur per e-mail naar een klant verzenden en kun je volgen of de klant de factuur heeft gelezen\"",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207868-verzenden-per-e-mail : invoices sent by email from @deliver.moneybird.com or your own domain, subject 'Factuur [nummer] van [bedrijfsnaam]', with PDF attachment",
@@ -1472,6 +1654,10 @@
 				"reachedOn": "nothing reaches it: no page for Quote in src/manifest.json or src/manifest.d",
 				"owner": "ConductionNL/shillinq",
 				"change": "sales-quote-and-order-to-invoice"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShOrders"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Met Exact Online kun je offertes opstellen en goedkeuren. Het is zelfs mogelijk om offertes direct om te zetten in een factuur\"",
@@ -1504,6 +1690,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "receivables-payment-links"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVerkoopfactuur"
+			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Met Exact Online voeg je eenvoudig en kosteloos een betaallink toe aan je verkoopfacturen en de begeleidende email\"",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207092-directe-betaallink-in-de-e-mail-van-de-factuur : with Moneybird Online Betaalmethoden or Mollie the email links to the online invoice with a pay button; pricing https://www.moneybird.nl/prijzen/ lists iDEAL EUR 0,29 and creditcard 1% tot 5%",
@@ -1534,6 +1724,10 @@
 				"reachedOn": "nothing reaches it: no QR on any invoice output",
 				"owner": "ConductionNL/shillinq",
 				"change": "sales-invoice-document"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVerkoopfactuur"
 			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207915-qr-code-op-je-facturen : 'Zet een betaal QR-code op je facturen ... Zodra je klant de QR-code scant, vult de bank-app automatisch de factuurgegevens in'; enabled per huisstijl",
@@ -1567,6 +1761,10 @@
 				"readOn": "2026-09-27",
 				"change": "sales-einvoice-exchange"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVerkoopfactuur"
+			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Met Exact Online is het mogelijk om elektronische verkoopfacturen te verzenden via het Peppol-netwerk\"; supported formats \"UBL, Peppol BISv3 en SI-UBL 2.0\"",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/227719-facturen-versturen-via-peppol : 'Via Peppol stuur je een factuur ... rechtstreeks naar het boekhoudprogramma van je klant' using btw, KVK or OIN number; pricing page lists 'Versturen via Peppol: Ja' in every package",
@@ -1598,6 +1796,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "sales-invoice-document"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVerkoopfactuur"
+			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207102-facturen-versturen-in-andere-talen : a workflow per language sets the invoice language ('Deze taal zal alle vaste teksten ... op de factuur wijzigen') and the email texts, so 'je klant ook de e-mails in de goede taal krijgt'",
 				"exact-online": "not checked: searched the Exact knowledge base today (relation maintenance, layout editor, invoice sending articles): layouts per invoice are described but a per-customer language for invoice and email is not stated",
@@ -1628,6 +1830,10 @@
 				"reachedOn": "BillableInvoiceGenerate /invoice/generate (via menu Sales > Invoices > Generate invoice)",
 				"owner": "ConductionNL/shillinq",
 				"change": "sales-time-and-expense-billing"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShFactuurGenereren"
 			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207503-geregistreerde-uren-factureren : 'via Uren > Rapportage uren een factuur genereren door op Factuur toevoegen te klikken ... zoekt Moneybird naar de uren waarvoor nog geen factuur gemaakt is'",
@@ -1661,6 +1867,10 @@
 				"evidence": "POST /api/meter-readings/import (MeterReadingImportController, lib/Service/Usage/MeterReadingImportService.php) creates unrated readings and refuses a row by number; MeterReading's rate transition runs RateMeterReadingAction and keeps ratedAmount; InvoiceGenerationService bills the selected rated readings as usage lines, refuses an invoiced one and moves each billed reading to invoiced with the invoice id (tests/Unit/Service/Usage/SalesUsageBillingTest.php, tests/Unit/Controller/MeterReadingImportControllerTest.php, tests/vitest/salesUsageBilling.spec.js).",
 				"change": "sales-usage-billing"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShFactuurGenereren"
+			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/benl/blog/product-nieuws/exact-online/terugkerende-facturatie-met-exact: \"Voor meer complexe abonnementsvormen kunt u Exact koppelen met partners zoals Younium ... Zo factureert u bijvoorbeeld op basis van verbruik\" Note: Only through a partner app (Younium); native Abonnementenbeheer bills fixed recurring lines.",
 				"moneybird": "https://developer.moneybird.com/integration/managing-subscriptions : '4. Add Usage-Based or Additional Charges ... add charges that will be billed with the next subscription invoice'; helpcenter https://helpcenter.moneybird.nl/nl/articles/223980-extra-abonnementskosten-toevoegen: 'Via de Moneybird API kunnen eenmalige extra kosten ... worden toegevoegd aan een abonnement' Note: usage charges only through the API; in the app a separate invoice is needed",
@@ -1690,6 +1900,10 @@
 				"reachedOn": "nothing reaches it: no approve step on any sales invoice page",
 				"owner": "ConductionNL/shillinq",
 				"change": "sales-invoice-issue-controls"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVerkoopfacturen"
 			},
 			"evidence": {
 				"twinfield": "not checked: searched the Twinfield support portal (help articles and site search) today: approval is documented for payment runs and VAT returns, not for sales invoices before sending; the April citation described purchase approval",
@@ -1722,6 +1936,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "sales-invoice-sending"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVerkoopfacturen"
+			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/account/wizard/account_move_send_batch_wizard.py:9 account.move.send.batch.wizard takes many move_ids (:13) and sends them in one go; sale order list action _create_invoices(grouped) in addons/sale/models/sale_order.py:1552",
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-sales-orders-slsord-invoicet?language=en_GB: \"You can also create multiple invoices at once\"; https://support.exactonline.com/community/s/article/All-All-HNO-Task-sales-invoices-slsinv-trackslsinvt: \"Selecteer een of meerdere facturen ... Klik op Verzenden\"",
@@ -1752,6 +1970,10 @@
 				"reachedOn": "RateCards /beheer/rate-cards, RateSchedules /beheer/rate-schedules, RateAuditTrail /beheer/rate-audit-trail (via menu Sales > Rate Cards / Rate Schedules / Rate Audit Trail)",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-rate-card-engine"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShFactuurGenereren"
 			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207499-waarom-uren-registreren : 'Heb je met je klant een uurtarief afgesproken, dan vul je je tarief in. Moneybird berekent vervolgens het bedrag' Note: a rate is entered when billing hours (products carry prices); no rate card per client or role and no rate history stated",
@@ -1785,6 +2007,10 @@
 				"readOn": "2026-09-27",
 				"change": "sales-invoice-sending"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShKlant"
+			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207517-instellingen-bij-contacten : per contact a fixed 'Verzendmethode' and a standard invoice workflow, where 'In de workflow bepaal je het vervaltermijn, de teksten op de factuur en de betaalopties'",
 				"odoo": "odoo/odoo@19.0 addons/account/models/partner.py:559 property_payment_term_id and :577 invoice_sending_method per customer",
@@ -1816,6 +2042,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "sales-webshop-orders"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShOrders"
+			},
 			"evidence": {
 				"moneybird": "https://www.moneybird.nl/product/koppelingen/webshops/ : 'Koppel je webshop aan Moneybird en laat bestellingen, facturen en betalingen automatisch in je administratie belanden ... van WooCommerce en Shopify tot CCV Shop en Magento' Note: through partner connectors such as Webwinkelfacturen.nl and Combidesk",
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden: \"Koppelingen maken met andere systemen, zoals webshop of kassa\"; https://www.exact.com/nl/producten/e-commerce: order processing for web shops in Exact Online E-commerce Note: Through App Store connectors or the separate E-commerce product.",
@@ -1846,6 +2076,10 @@
 				"reachedOn": "Orders /orders (via menu Sales > Orders)",
 				"owner": "ConductionNL/shillinq",
 				"change": "sales-quote-and-order-to-invoice"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShOrders"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-sales-orders-slsord-invoicet?language=en_GB: \"After you have made a sale and created the sales order, you can start invoicing. This can be done before or after you deliver it\" Note: Exact Online Handel or Productie.",
@@ -1879,6 +2113,10 @@
 				"readOn": "2026-09-26",
 				"change": "2026-07-14-customer-invoice-portal-wave2"
 			},
+			"screen": {
+				"board": null,
+				"reason": "The customer portal is drawn as a portaliq screen; shillinq only contributes its sections."
+			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/account/controllers/portal.py:84 /my/invoices list and :153 /my/invoices/<id> with download; pay via addons/account_payment/controllers/portal.py",
 				"exact-online": "not checked: searched exact.com/nl and the Exact knowledge base today: invoices go by email, Peppol or digital mailbox, and the client portal pages are for accountancy clients; a customer invoice portal is not stated",
@@ -1910,6 +2148,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "sales-invoice-document"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVerkoopfacturen"
+			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Met Exact Online boek je bijvoorbeeld inkoopfacturen in Amerikaanse dollars en verstuur je verkoopfacturen in Britse ponden\"",
 				"twinfield": "https://taasupportportal.wolterskluwer.com/nl/nl-nl/artikel/hoe-je-een-verk-3041126: \"Valuta : Is de valuta anders dan 'euro', selecteer dan een andere valuta uit de keuzelijst\"; https://taasupportportal.wolterskluwer.com/nl/nl-nl/artikel/valuta-s-3041130 manages currencies and rates",
@@ -1940,6 +2182,10 @@
 				"reachedOn": "Dashboard / header action 'Create invoice' (modal InvoiceQuickDraftModal)",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-shillinq-invoice-quick-draft"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShDashboard"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl pages and the Exact knowledge base today: not stated",
@@ -1973,6 +2219,10 @@
 				"readOn": "2026-09-27",
 				"change": "receivables-automatic-dunning"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShDebiteurenbeheer"
+			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Met Exact Online kun je betalingsherinneringen automatisch laten versturen. De software bepaalt zelf het aantal contactmomenten, de timing en de boodschap\" Note: Debtor Agent from Plus.",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207926-automatisch-een-factuur-herinnering-versturen : 'Of en wanneer je herinneringen verstuurt, bepaal je in de workflow. Per stap stel je in welke tekst bij de herinnering wordt verstuurd en wanneer ... Herinnering automatisch verzenden'",
@@ -2004,6 +2254,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "receivables-automatic-dunning"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShKlant"
+			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: Debtor Agent \"helpt je het juiste communicatieprofiel te kiezen voor elke klant, zodat betalingsherinneringen automatisch en in de juiste tone of voice verstuurd worden\" Note: Plus and up.",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207517-instellingen-bij-contacten : 'stel dan een standaard factuur- en offerte-workflow in bij het contact'; the workflow holds the reminder steps and timing (https://helpcenter.moneybird.nl/nl/articles/207926-automatisch-een-factuur-herinnering-versturen)",
@@ -2034,6 +2288,10 @@
 				"reachedOn": "nothing reaches it: no page for SEPA mandates or collection batches",
 				"owner": "ConductionNL/shillinq",
 				"change": "receivables-sepa-direct-debit"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShKlant"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Exact Online ondersteunt Europese incasso om betalingen van klanten uit andere landen te incasseren, conform de SEPA-standaarden\"; https://start.exactonline.nl/docs/HlpRestAPIResources.aspx lists cashflow/DirectDebitMandates",
@@ -2094,6 +2352,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "receivables-provider-payouts"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShDebiteurenbeheer"
+			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/208040-uitbetalingen-van-mollie-automatisch-verwerken-in-je-administratie : 'Met de Mollie-koppeling verwerkt Moneybird je uitbetalingen automatisch. Moneybird koppelt de juiste facturen aan elke uitbetaling en verwerkt ook de transactiekosten, chargebacks en refunds' Note: also for payouts of Moneybird Online Betaalmethoden (article 207642)",
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Concept-sales-invoices-slsinv-mtchmolliepayc?language=en_GB: \"If you have enabled automatic import of Mollie statements, you can skip the process in this article and match your imported statements right away ... The Mollie file contains the payments from your customers and the transaction fees\" Note: Mollie as payment provider.",
@@ -2124,6 +2386,10 @@
 				"reachedOn": "PaymentRequests /bookkeeping/payment-requests (via menu Sales > Payment requests); panel on the case in dossiq via the shillinq-payment-requests leaf",
 				"owner": "ConductionNL/shillinq",
 				"change": "receivables-payment-links"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShDebiteurenbeheer"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Geintegreerde betaallink van Exact ... voeg je eenvoudig en kosteloos een betaallink toe aan je verkoopfacturen\" Note: A pay link on an invoice; a standalone payment request for a case or intake is not described.",
@@ -2187,6 +2453,10 @@
 				"readOn": "2026-09-29",
 				"change": "2026-09-29-purchasing-supplier-invoice-intake"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShFactuurImporteren"
+			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207121-ubl-facturen-verwerken : 'Wanneer je een UBL factuur ontvangt en het bestand upload ... of e-mailt naar je Moneybird administratie, worden alle gegevens' read; 'Moneybird ondersteunt UBL 2.1'; also received via Peppol",
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Met Exact Online kun je elektronische facturen inlezen en aanmaken. Wij ondersteunen tal van formats, waaronder UBL, Peppol BISv3 en SI-UBL 2.0\"",
@@ -2217,6 +2487,10 @@
 				"reachedOn": "ThreeWayMatchIndex /inkoop/three-way-matches (menu Purchasing > Three-way matches) exception panel accept/reject; SupplierInvoiceDetail is read-only",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookkeeping-purchase-order-3way-06-matching-engine"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShInkoopfacturen"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Vanaf Exact Online Boekhouden Plus kun je facturen opeenvolgend laten goedkeuren in max. vijf stappen\" Note: Plus and up; approval-only users are free.",
@@ -2249,6 +2523,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookkeeping-purchase-order-3way-06-matching-engine"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShInkooporder"
+			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-wholesale-wd-crtgoodsrcptt?language=en_GB: goods receipts against purchase orders generate a purchase invoice \"with a proposed value\"; https://support.exactonline.com/community/s/article/All-All-HNO-Concept-purchase-purch-efcntprcspurinvc: for scanned invoices \"the Invoices to be received dialogue box will open, where you can select the purchase orders\" Note: Exact Online Handel or Productie; full 3-way-matching is marketed for the separate product Exact Proquro (https://www.exact.com/nl/producten/proquro).",
 				"odoo": "odoo/odoo@19.0 addons/purchase/models/res_config_settings.py:17 module_account_3way_match '3-way matching: purchases, receptions and bills'; https://www.odoo.com/documentation/19.0/applications/inventory_and_mrp/purchase/manage_deals/control_bills.html 'Should Be Paid' shows Yes, No or Exception Note: Enterprise module account_3way_match, not public, rated from docs; Community has the received-quantities bill control policy Driven 2026-09-26 on 19.0-20260908 Community: Settings offers the toggle module_account_3way_match, which installs account_3way_match; that module is absent in the public 19.0 addons, so in Community the toggle is the edition boundary (Enterprise only).",
@@ -2278,6 +2556,10 @@
 				"reachedOn": "Requisitions /inkoop/requisitions (menu Purchasing > Requisitions); RequisitionDetail /inkoop/requisitions/:id",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-07-14-purchase-requisition"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShInkooporder"
 			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/purchase_requisition/models/purchase_requisition.py:21 requisition_type is only 'blanket_order' or 'purchase_template' (agreements, not internal requests); PO approval by amount in addons/purchase/models/purchase_order.py:1251 _approval_allowed Note: Internal purchase requests that become RFQs need the Enterprise Approvals app (approvals_purchase), not public; in Community a draft RFQ plus two-step PO approval is the nearest path",
@@ -2310,6 +2592,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "purchasing-order-dispatch-and-receipt"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShInkooporder"
+			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-psa-purchase-psapurch-crtpurorderst?language=en_GB: \"Go to Purchase > Orders > Purchase orders > Create\" (Plus, Professional or Premium); https://start.exactonline.nl/docs/HlpRestAPIResources.aspx lists purchaseorder/PurchaseOrders Note: Project Plus and up, Handel and Productie.",
 				"odoo": "odoo/odoo@19.0 addons/purchase/models/purchase_order.py:545 action_rfq_send mails the RFQ/PO to the vendor, :625 button_confirm",
@@ -2340,6 +2626,10 @@
 				"reachedOn": "GoodsReceiptNoteForm /inkoop/goods-receipt-notes/new (menu Purchasing > Receive goods); GoodsReceipts /inkoop/goods-receipts (menu Purchasing > Goods Receipts)",
 				"owner": "ConductionNL/shillinq",
 				"change": "purchasing-order-dispatch-and-receipt"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShInkooporder"
 			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/purchase_stock/models/purchase_order_line.py:14 qty_received per line; addons/stock/models/stock_picking.py:133 create_backorder handles partial receipts; services via manual qty_received",
@@ -2372,6 +2662,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookkeeping-purchase-order-3way-10-vendor-performance"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShLeveranciers"
+			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/purchase_stock/models/res_partner.py:14 on_time_rate per vendor computed from received quantities on time (:50-:64); addons/purchase_stock/report/vendor_delay_report.py:8 vendor delay report Note: On-time delivery and quantity only; no score for price or invoice accuracy found",
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
@@ -2402,6 +2696,10 @@
 				"reachedOn": "FrameworkAgreements /inkoop/framework-agreements (menu Purchasing > Framework Agreements); FrameworkAgreementDetail shows ceiling KPI and linked POs",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-07-15-procurement-governance"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShLeveranciers"
 			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/purchase_requisition/models/purchase_requisition.py:22 'Blanket Order' agreement type; RFQs created against it take its prices (warning at :57 on open blanket order)",
@@ -2434,6 +2732,10 @@
 				"owner": "ConductionNL/filinq",
 				"change": "filinq/extraction-receipt-photo-and-invoice-agent"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShFactuurImporteren"
+			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Purchase Agent: Automatische verwerking van inkoopfacturen. Herkent afwijkingen in inkoopfacturen en doet slimme suggesties om transacties op de juiste grootboekrekening te plaatsen\"",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/677276-de-inkoopworkflow-instellen : 'Slim en volledig analyseren: ... leest Moneybird de bijlage en zet het document zo volledig mogelijk klaar'; 'Automatisch opslaan' of recurring documents and of contacts whose last five documents scored 95% or higher",
@@ -2464,6 +2766,10 @@
 				"reachedOn": "PurchaseOrders /inkoop/purchase-orders (menu Purchasing > Purchase Orders) shows the chain; nothing reaches the approve action: no button calls approval-decision",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookkeeping-purchase-order-3way-02-purchase-order-core"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShInkooporder"
 			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/purchase/models/purchase_order.py:1251 _approval_allowed: two_step orders at or above po_double_validation_amount need a purchase manager (settings addons/purchase/models/res_config_settings.py:12-14) Note: One amount threshold with one extra level; several thresholds need Studio approval rules (Enterprise)",
@@ -2496,6 +2802,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-07-14-spend-analytics"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShLeveranciers"
+			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/purchase/report/purchase_report.py:13 purchase.report with partner_id vendor (:28) and category_id product category (:40), pivot and graph views",
 				"exact-online": "https://www.exact.com/nl/producten/proquro: \"rapportages gebaseerd op analyses van je inkoop, uitgaven, contracten en budgetten\" Note: In Exact Proquro; for Exact Online through Power BI Connector (Premium).",
@@ -2526,6 +2836,10 @@
 				"reachedOn": "Receipts /inkoop/receipts (menu Purchasing > Receipts); ReceiptDetail /inkoop/receipts/:id (ReceiptCapture)",
 				"owner": "ConductionNL/filinq",
 				"change": "filinq/extraction-receipt-photo-and-invoice-agent"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShDeclaraties"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/scan-herken: \"Met Scan & Herken scan je in een handomdraai bonnen en facturen met je smartphone of tablet via app of e-mail\" Note: Automatic processing beyond 3 documents per month is paid per volume.",
@@ -2558,6 +2872,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "expenses-category-mapping"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShDeclaraties"
+			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207276-categorie-toevoegen : 'In Moneybird gebruiken we de term Categorieen in plaats van grootboekrekeningen. Je categoriseert factuurregels'; booking rules post recurring lines automatically (article 207582 boekingsregels-instellen)",
 				"snelstart": "package table https://www.snelstart.nl/ondernemer/inzicht : 'Grootboekrekening koppelen aan inkoopfacturen' from inKaart; booking proposals learn the account per description (https://kennisplein.snelstart.nl/snelstartpolaris/boekingsvoorstellen-aan-of-uitzetten-in-snelstart-polaris)",
@@ -2588,6 +2906,10 @@
 				"reachedOn": "CashflowRecurring /cashflow/recurring (settings gear > Recurring Costs)",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-zzp-cashflow-13wk"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShLiquiditeit"
 			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207118-inkoopfactuur-of-bon-toevoegen : 'Ontvang je regelmatig dezelfde inkoopfactuur, bijvoorbeeld voor verzekeringskosten of abonnementen? Maak deze inkoopfactuur dan periodiek'",
@@ -2621,6 +2943,10 @@
 				"readOn": "2026-09-27",
 				"change": "sales-time-and-expense-billing"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShFactuurGenereren"
+			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/sale/models/product_template.py:22 expense_policy (at cost or sales price) and addons/sale_expense/models/account_move_line.py:16 adds the expense to the customer's sales order; markup through the sales price policy",
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Content-rn-whatsnewlandingpage (Nieuwe functionaliteit, September): \"Je kunt nu inkoopboekingen doorbelasten om projectgerelateerde kosten aan een klant door te berekenen via projectfacturatie\" Note: Projectadministratie; markup not stated.",
@@ -2651,6 +2977,10 @@
 				"reachedOn": "ReimbursementPolicies /reimbursement-policies (settings gear > Reimbursement Policies) keeps records only",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-expense-reimbursement-or-passthrough"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShDeclaraties"
 			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/hr_expense/models/hr_expense.py:147 duplicate_expense_ids warns on duplicate claims (:720); categories can carry a fixed cost; https://www.odoo.com/documentation/19.0/applications/finance/expenses.html manager approval before payment Note: No configurable spending-limit policy found in Community hr_expense; checks are duplicate warnings, fixed-cost categories and manager approval",
@@ -2684,6 +3014,10 @@
 				"change": "2026-09-28-banking-connected-accounts",
 				"readOn": "2026-10-07"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBank"
+			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/bankkoppelingen/psd2 (Tarieven Exact PSD2-bankkoppelingen) and https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Exact Online biedt voor de meeste banken een bankkoppeling om je bankgegevens automatisch bij te laten werken\" Note: Number of bank links per plan: 1, 5 or unlimited.",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/223966-psd2-vergunning : external business accounts are linked 'via Ponto', plus legacy direct links with ING, Rabobank and bunq; pricing https://www.moneybird.nl/prijzen/ : 'Koppel je bankrekening van één van 1.700+ Europese banken' Note: external bank links from package Groei (5 accounts) upward; Start has manual import only",
@@ -2714,6 +3048,10 @@
 				"reachedOn": "BankImportPage /configuratie/bank-import (settings gear > Import bank statements) opens BankStatementWizard",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-15-shillinq-bank-statement-wizard"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBank"
 			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207567-transactiebestand-uploaden : 'Upload MT940 of CAMT.053 bestanden in Moneybird om banktransacties eenvoudig toe te voegen' Note: CSV is not listed; official MT940 and CAMT.053 only",
@@ -2747,6 +3085,10 @@
 				"change": "2026-09-28-banking-manual-match",
 				"readOn": "2026-09-28"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBank"
+			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Concept-purchase-purch-efcntprcspurinvc?language=en_GB: \"Matching is the process of completing your outstanding items with your bank statements. This can be done manually or automatically\"",
 				"snelstart": "https://kennisplein.snelstart.nl/klanten/s/article/boekhouden-handmatig-bankafschriften-inboeken : in the bank daybook 'In het scherm kun je de factuur zoeken op factuurnummer, klant, leverancier ... Selecteer de juiste factuur en klik op Plaats de orders/facturen' Note: SnelStart 12 from inKaart",
@@ -2779,6 +3121,10 @@
 				"readOn": "2026-09-29",
 				"change": "2026-09-29-banking-payment-run"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBetaalrun"
+			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-bank-finbnk-processpaymentst?language=en_GB: \"You process payments to generate a payment file, which you can send to your bank\"; batch payments via https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-matching-fin-mtch-batchpaymentst",
 				"snelstart": "https://kennisplein.snelstart.nl/snelstartpolaris/betaalopdrachten-maken : 'vanaf het pakket inBalans betaalopdrachten maken om deze vervolgens in je bankomgeving te uploaden ... in een betaalbestand verschijnen standaard je inkoopfacturen'",
@@ -2809,6 +3155,10 @@
 				"reachedOn": "PaymentRunDetail /bookkeeping/payment-runs/:id lifecycle actions (menu Purchasing > Payment Runs)",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-07-14-payment-run-four-eyes"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBetaalrun"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-bank-finbnk-processpaymentst says \"You must still authorise the payment with your bank\"; a second approver inside Exact before export is not stated",
@@ -2841,6 +3191,10 @@
 				"change": "2026-09-28-banking-connected-accounts",
 				"readOn": "2026-09-28"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBank"
+			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: Professional and Premium have \"Bankkoppelingen: onbeperkt\"; \"Financiele cockpit: Een compleet gevisualiseerd overzicht van belangrijke financiele cijfers zoals je omzet, resultaat, banksaldi en openstaande posten\"",
 				"moneybird": "pricing https://www.moneybird.nl/prijzen/ : 'Externe rekening koppelen' 5 accounts in Groei and 'Onbeperkt' in Compleet; https://helpcenter.moneybird.nl/nl/articles/207201-eindsaldo-en-het-rekeningsaldo-in-statistieken shows balances per account; the overview page shows the bank position (https://helpcenter.moneybird.nl/nl/articles/752966-de-overzichtspagina-in-moneybird)",
@@ -2871,6 +3225,10 @@
 				"reachedOn": "FXRates /bookkeeping/multi-currency/fx-rates and FxRatesAdmin (menu BankingCashflow > FX Rates / FX Rates (Admin))",
 				"owner": "ConductionNL/shillinq",
 				"change": "banking-fx-at-booking"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBank"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Kies zelf of je met vaste of variabele [koersen werkt]\"; https://start.exactonline.nl/docs/HlpRestAPIResources.aspx lists financial/ExchangeRates",
@@ -2903,6 +3261,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-07-13-fx-period-end-revaluation"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShAfsluiten"
+			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-currency-fincur-revaluationentriest?language=en_GB: \"In Exact Online, you can revalue foreign currency balances for customers (A/R), suppliers (A/P), and bank accounts\"",
 				"twinfield": "https://taasupportportal.wolterskluwer.com/nl/nl-nl/artikel/rollen, -het-fu-3204940 lists the function \"Valutaherwaardering\"; https://taasupportportal.wolterskluwer.com/nl/nl-nl/artikel/dagboeken-3041094: system journal \"Herwaardering\"; help section https://taasupportportal.wolterskluwer.com/nl/nl-nl/hoofdpagina/twinfield-boekhouden/twinfield/product-hulp/valutaherwaardering",
@@ -2933,6 +3295,10 @@
 				"reachedOn": "TreasuryDashboard /treasury/dashboard, Loans /treasury/leningen, Derivatives /treasury/derivaten, Cash Pools /treasury/cash-pools (menu BankingCashflow)",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookkeeping-treasury-ihb"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShLiquiditeit"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
@@ -2965,6 +3331,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "tax-vat-rates-and-deductibility"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVerkoopfactuur"
+			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-masterdata-finmd-crtedtlnkvatcodest?language=en_GB: \"You can create VAT codes so that Exact Online can automatically register your VAT amounts when you create financial entries\"",
 				"odoo": "odoo/odoo@19.0 addons/account/models/account_tax.py:4975 compute_all and :1137 _get_tax_details per line from configurable account.tax records; Dutch rates in addons/l10n_nl/data/template/account.tax-nl.csv Driven 2026-09-26 on 19.0-20260908 Community: an invoice line of 200 in NL Company produced 42 VAT on 'Deferred VAT high rate' from the product's 21% tax.",
@@ -2995,6 +3365,10 @@
 				"reachedOn": "ReportingComplianceOverview /reporting-compliance, report card BTW-aangifte, Genereer",
 				"owner": "ConductionNL/shillinq",
 				"change": "tax-vat-return-from-books"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBtwAangifte"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Met Exact Online kun je je btw-aangifte en opgaaf ICP opstellen, goedkeuren en digitaal indienen\"",
@@ -3027,6 +3401,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "tax-digipoort-filing"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBtwAangifte"
+			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"opstellen, goedkeuren en digitaal indienen\"; https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-taxes-vat-fintax-sendvatrett (Btw-aangifte indienen via Exact Online)",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/223650-de-btw-aangifte-indienen : 'Vanuit Moneybird kun je je btw-aangifte rechtstreeks bij de Belastingdienst indienen'; requires a verified company and package Start or higher (not Compact); pricing lists 'Elektronische btw-aangifte' from Start",
@@ -3057,6 +3435,10 @@
 				"reachedOn": "IcpOpgaaf /belastingen/icp-opgaaf (menu Taxes) lists IcpStatement records only",
 				"owner": "ConductionNL/shillinq",
 				"change": "tax-icp-and-reverse-charge"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBelastingen"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Btw/ICP-aangiftes\" in Essentials; \"Met Exact Online kun je je btw-aangifte en opgaaf ICP opstellen, goedkeuren en digitaal indienen\"",
@@ -3089,6 +3471,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "tax-vat-position-and-suppletie"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBtwAangifte"
+			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-taxes-vat-fintax-crtvatreturnt (Btw-aangiften en suppleties aanmaken, search snippet read today): \"Klik op Suppletie aanmaken ... Aangifte definitief maken\"",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/223663-btw-correcties-suppletie : 'Via Moneybird kun je ook correcties en suppleties indienen ... Moneybird herkent automatisch correcties in je administratie'; corrections under EUR 1.000 go into the regular return",
@@ -3119,6 +3505,10 @@
 				"reachedOn": "nothing reaches the invoice mention; the regime is a filter value on VATReturns /vat-returns",
 				"owner": "ConductionNL/shillinq",
 				"change": "tax-icp-and-reverse-charge"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVerkoopfactuur"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-masterdata-finmd-crtedtlnkvatcodest (search snippet read today): in the Financial section of a VAT code \"Btw verlegd\" can be ticked",
@@ -3208,6 +3598,10 @@
 				"reachedOn": "VATReports /vat-reports (menu Taxes)",
 				"owner": "ConductionNL/shillinq",
 				"change": "tax-vat-position-and-suppletie"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBtwAangifte"
 			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207263-btw-overzicht : 'houdt Moneybird de btw automatisch bij in een btw-rapport ... Per btw-tarief zie je het totaalbedrag ... en de btw die daarover is berekend' for any chosen period",
@@ -3444,6 +3838,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "tax-investment-deduction-claims"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShActief"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today for KIA, EIA and MIA: not stated",
 				"moneybird": "not checked: asset register exists (bezittingen) but KIA, EIA or MIA calculation is not stated in helpcenter",
@@ -3475,6 +3873,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-07-12-compliance-deadline-calendar"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBelastingen"
+			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Content-rn-whatsnewlandingpage?language=en_GB (February 2026): the Premium HQ start page shows \"VAT deadlines for all companies\"; https://www.exact.com/nl/producten/accountancy/fiscaal/features-en-prijzen: planning tool with \"De status van de aangifte, uitstel en inleverdatum\" Note: Deadlines are shown in the HQ page and the accountant planning tool; calendar reminders are not described.",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/223650-de-btw-aangifte-indienen : 'Moneybird dient de aangifte in bij de Belastingdienst, maar de betaling doe je zelf. Moneybird en de Belastingdienst sturen hier geen herinnering voor' Note: no payment reminder; a calendar of filing deadlines is not stated either",
@@ -3504,6 +3906,10 @@
 				"reachedOn": "nothing reaches a submission; SbrXbrlFilings /sbr-xbrl-filings lists records",
 				"owner": "ConductionNL/shillinq",
 				"change": "tax-digipoort-filing"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBelastingen"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/accountancy/fiscaal/features-en-prijzen: VAT, Vpb and IB returns are filed digitally; https://www.exact.com/nl/producten/accountancy/jaarrekening/features-en-prijzen: \"Kredietrapportage ondersteunt de beperkte rapportage. Zie https://sbrnexus.nl/jaarrekening\" Note: KvK filing through Exact Online Jaarrekening (accountant product).",
@@ -3536,6 +3942,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "reporting-financial-statements"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShWinstEnVerlies"
+			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-yearend-finbnk-closefinyeart: \"Ook kun je het resultaat van het huidige jaar vergelijken met dat van het vorige jaar. Hiervoor ga je naar Financieel > Analyse en resultaten > Resultaten > Balans / Winst & Verlies\"",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207262-resultatenrekening : 'De resultatenrekening kun je opvragen voor elke willekeurige periode en je kunt meerdere periodes naast elkaar zetten ... Vergelijk kolommen'",
@@ -3566,6 +3976,10 @@
 				"reachedOn": "nothing reaches it: no report figure links to GLTransaction/GLLine rows",
 				"owner": "ConductionNL/shillinq",
 				"change": "reporting-financial-statements"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShWinstEnVerlies"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-glaccounts-fingl-glgenbalsheetplt?language=en_GB (Balance sheet / profit and loss statement) with G/L transaction reports https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-glaccounts-fingl-glgengltranslistt; search snippet of the balance sheet troubleshooting article describes clicking through to G/L cards Note: Drill-down wording is implicit in the KB today.",
@@ -3598,6 +4012,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "reporting-financial-statements"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShRapporten"
+			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-glaccounts-fingl-glgenbalsheetplt?language=en_GB: \"Get insight into your Balance sheet / profit and loss statement\" per financial year and period",
 				"snelstart": "https://kennisplein.snelstart.nl/klanten/s/article/financi%C3%ABle-rapportages-in-versie-12 : 'De kolommenbalans geeft een overzicht in kolomvorm van de balans en de winst- en verliesrekening' and 'De periodebalans' (from inZicht)",
@@ -3628,6 +4046,10 @@
 				"reachedOn": "nothing reaches it: no page or report card for a cash flow statement",
 				"owner": "ConductionNL/shillinq",
 				"change": "reporting-cash-flow-statement"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShRapporten"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Concept-financial-glaccounts-fingl-gencashflowc?language=en_GB: \"Go to Financial > Banking & Cash > Cash entries > Cash flow statement to generate a cash flow report ... Transactions in the cash flow report are grouped into three activities\"",
@@ -3660,6 +4082,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookkeeping-trial-balance"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShRapporten"
+			},
 			"evidence": {
 				"odoo": "https://www.odoo.com/odoo-19-release-notes 'A default Annual Statements composite report ... combining the balance sheet, profit and loss, and trial balances' Note: Enterprise account_reports, rated from docs; old evidence pointed at consolidation, now at the standard trial balance",
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-costanalysis-finrep-baltranslistt?language=en_GB: \"View and generate a balance or transaction list ... specify the accounts, financial year, and period\", exported as PDF or Excel",
@@ -3690,6 +4116,10 @@
 				"reachedOn": "ReportingComplianceOverview report card 'Grootboekkaarten' -> GenerateReportDialog; GeneralLedger /general-ledger (via menu Bookkeeping > General Ledger)",
 				"owner": "ConductionNL/shillinq",
 				"spec": "openspec/specs/reporting-report-library"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShGrootboek"
 			},
 			"evidence": {
 				"snelstart": "https://kennisplein.snelstart.nl/klanten/s/article/financi%C3%ABle-rapportages-in-versie-12 : 'De grootboekmutatiekaarten geven per grootboekrekening een overzicht van alle gemaakte boekingen in een aangegeven periode', with search, column filters and extra columns",
@@ -3722,6 +4152,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-financial-dashboard-graphs"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShDashboard"
+			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Financiele cockpit: Een compleet gevisualiseerd overzicht van belangrijke financiele cijfers zoals je omzet, resultaat, banksaldi en openstaande posten\"",
 				"moneybird": "https://www.moneybird.nl/changelog/vernieuwde-rapportenpagina/ (1 mei 2026): 'Op de rapportenoverzichtspagina worden de zes rapporten nu als grafieken getoond' (P&L, balance, VAT, cash flow, debtors, creditors); https://helpcenter.moneybird.nl/nl/articles/752966-de-overzichtspagina-in-moneybird : overview shows 'Saldo', 'Te ontvangen' and 'Te betalen' Note: reports update as soon as something is booked (https://www.moneybird.nl/functies/rapporten/)",
@@ -3751,6 +4185,10 @@
 				"reachedOn": "BudgetGrid /begroting/grid (via menu Banking & Cashflow > Budget Grid)",
 				"owner": "ConductionNL/shillinq",
 				"change": "budget-grid-view"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShWinstEnVerlies"
 			},
 			"evidence": {
 				"twinfield": "https://taasupportportal.wolterskluwer.com/nl/nl-nl/artikel/budgetteren, -r-3041184 (Budgetteren - Rapportage): \"Budget : Selecteer het gewenste budget waarmee de werkelijke cijfers worden vergeleken\"",
@@ -3782,6 +4220,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookkeeping-titel-9-jaarrekening"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShRapporten"
+			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207317-jaarrekening-indienen-via-moneybird : 'Moneybird stelt geen volledige jaarrekeningen samen. Je kunt de jaarrekening dan ook niet direct via Moneybird indienen'; balance sheet and P&L can be exported Note: a year-end closing entry exists (https://helpcenter.moneybird.nl/nl/articles/208002-jaarafsluiting) but no annual accounts",
 				"snelstart": "https://kennisplein.snelstart.nl/snelstartpolaris/jaarrekeningen-in-accountant-pro : 'hoe je in Accountant Pro een jaarrekening maakt ... exporteert of deponeert bij de KvK. Deze functionaliteit is beschikbaar met het pakket Accountant Pro' Note: only in Accountant Pro for bookkeepers, micro and small entities; not in the entrepreneur packages",
@@ -3812,6 +4254,10 @@
 				"reachedOn": "ConsolidationGroups, ConsolidationPeriods, ConsolidatedReports (via menu Bookkeeping > Consolidation Groups / Consolidated Reports)",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookkeeping-consolidation-commercial"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShAdministraties"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: Premium \"Multi-company ondersteuning ... direct inzicht in de financiele positie over administraties heen\"; https://support.exactonline.com/community/s/article/NL-AGSG-HNO-Task-ag-rg-agj-consolidatie4t: consolidated statements with eliminations in Jaarrekening Note: Group statements with eliminations only in the accountant product Exact Online Jaarrekening.",
@@ -3845,6 +4291,10 @@
 				"evidence": "GLLine.signedAmount (credit positive) and the accountClass and countsInResult stamps written by GLLineResultStampListener when a transaction posts or is reversed (lib/Settings/register.d/reporting-segment-results.json, lib/Service/Ledger/GlLineResultStamps.php); the cost centre, hierarchy, cost object and project aggregations count only posted profit and loss lines and return revenue, costs and result (lib/Settings/register.d/bookkeeping-cost-centers-dimensions.json); the dashboard shows the three per segment for a fiscal period (tests/Unit/Service/Ledger/GlLineResultStampsTest.php, tests/vitest/reportingSegmentResults.spec.js).",
 				"change": "2026-09-29-reporting-segment-results"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShWinstEnVerlies"
+			},
 			"evidence": {
 				"twinfield": "https://taasupportportal.wolterskluwer.com/nl/nl-nl/artikel/rapporten-3041146: \"Details weergeven van : ... (relatie, kostenplaats, project, activum en/of activiteit)\" and dimension ranges per report",
 				"odoo": "https://www.odoo.com/documentation/19.0/applications/finance/accounting/reporting.html reports have 'an analytic filter'; Community odoo/odoo@19.0 addons/account/views/account_menuitem.xml:42 Analytic Report on analytic lines per plan (cost centre, project)",
@@ -3877,6 +4327,10 @@
 				"evidence": "Five IAPIWidgetV2 widgets (lib/Dashboard/*Widget.php, registered by lib/AppInfo/DashboardWidgetRegistration.php) show FinancialDashboardService::widgetFigures() for the user's administration and say so when there is none; GET /api/analysis/pivot (lib/Controller/LedgerPivotController.php, lib/Service/Pivot/LedgerPivotService.php) sums signedAmount of posted profit and loss lines over two of account, account group, month, quarter, cost centre, project and customer, caps each axis at 200 groups and says so; the FinancialPivot page exports CSV and Excel (tests/Unit/Service/Pivot/LedgerPivotServiceTest.php, tests/Unit/Dashboard/FinancialWidgetsTest.php, tests/vitest/reportingFinancialPivot.spec.js).",
 				"change": "2026-09-30-reporting-custom-analysis"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShDashboard"
+			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Power BI Connector: Krijg direct toegang tot al je data, zodat je deze met Microsoft Power BI kunt omzetten naar heldere en gevisualiseerde rapportages\" Note: Premium; Power BI licence not included.",
 				"odoo": "odoo/odoo@19.0 addons/spreadsheet_dashboard (Community) spreadsheet dashboards with ODOO.BALANCE formulas (addons/spreadsheet_dashboard_account/data/files/invoicing_dashboard.json); pivot and graph views on journal items and invoice analysis (addons/account/report/account_invoice_report.py) Note: Editing your own spreadsheets from pivots is Enterprise (Documents/Spreadsheet); Community gives pivots and shipped dashboards",
@@ -3907,6 +4361,10 @@
 				"reachedOn": "any index page, e.g. GeneralLedger /general-ledger (select rows > Export); ReportingComplianceOverview /reporting-compliance report cards for PDF",
 				"owner": "ConductionNL/nextcloud-vue",
 				"spec": "openspec/specs/reporting-report-library"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVerkoopfacturen"
 			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207111-facturen-exporteren : 'Exporteer facturen als PDF, UBL of Excel'; reports export to Excel (article 207266) and bank transactions 'exporteren naar Excel' (article 207257) Note: Excel rather than CSV for most lists",
@@ -3939,6 +4397,10 @@
 				"owner": "ConductionNL/shillinq",
 				"spec": "openspec/specs/reporting-report-library"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShRapporten"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: reports sit per menu (Financial > Analysis & Results) but a single report library page is not described",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207260-rapporten : the Rapporten tab holds resultatenrekening, balans, btw-overzicht, kasstroomoverzicht, debiteuren- en crediteurenoverzicht, kolommenbalans and revenue per contact, project and product",
@@ -3970,6 +4432,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookkeeping-ifrs-16-lease"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVerslaggeving"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today for IFRS 16 and lease registers: not stated",
 				"moneybird": "not checked: helpcenter only explains booking operational and financial lease (articles 207994, 207997); an IFRS 16 lease register with disclosures is not stated",
@@ -4000,6 +4466,10 @@
 				"reachedOn": "Contracts /contracts and ContractObligations /contracts/obligations (via menu Purchasing > Procurement Contracts / Obligations)",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-15-contract-lifecycle-management"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShLeveranciers"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/add-ons/contract-management: contract management add-on for recurring contracts and invoicing; https://www.exact.com/nl/producten/proquro: \"Contractmanagement stelt je in staat om alle soorten contracten eenvoudig en overzichtelijk vast te leggen en te bewaken\" Note: Add-on or separate Proquro product; obligations and renewal alerts are named only for Proquro.",
@@ -4033,6 +4503,10 @@
 				"readOn": "2026-09-29",
 				"change": "2026-09-29-planning-commitment-year-end"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShInkooporder"
+			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/proquro: \"Je voorkomt ongeoorloofde verplichtingen als je vooraf een [bestelling goedkeurt]\"; budget holders see budget use Note: Only in the separate Exact Proquro product.",
 				"moneybird": "not checked: no budgets or commitments in helpcenter; payment rights and daily limits govern payments only (article 224052)",
@@ -4065,6 +4539,10 @@
 				"readOn": "2026-09-29",
 				"change": "2026-09-29-planning-budget-editing"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBegroting"
+			},
 			"evidence": {
 				"twinfield": "https://taasupportportal.wolterskluwer.com/nl/nl-nl/artikel/budgetteren-3041182 (Budgetteren): budget lines per ledger account and period with spreading \"Gelijk\" or by template; https://api.accounting.twinfield.com/Api/swagger/docs/open-v1 exposes budgeting/budgets/annual \"Get annual budget view\"",
 				"odoo": "https://www.odoo.com/documentation/19.0/applications/finance/accounting/reporting/budget.html financial budgets on general ledger accounts, entered from the Profit and Loss report, and periodic budgets generated monthly, quarterly or yearly Note: Enterprise, rated from docs Driven 2026-09-26 on 19.0-20260908 Community: Settings offers the toggle module_account_budget, which installs account_budget; that module is absent in the public 19.0 addons, so in Community the toggle is the edition boundary (Enterprise only).",
@@ -4096,6 +4574,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "budget-scenarios"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBegroting"
+			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-budget-finbdgt-crtbdgtt?language=en_GB: \"After you create a budget scenario, you can create a budget\"; https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Budget geavanceerd: Genereer nieuwe budgetten op basis van bestaande budgetten ... die je vervolgens snel en gemakkelijk [kunt] vergelijken\" Note: Side by side comparison of two scenarios is not shown explicitly.",
 				"moneybird": "not checked: not stated in helpcenter",
@@ -4125,6 +4607,10 @@
 				"reachedOn": "PensionPlans /pension/plans, ActuarialValuations, PensionDisclosureTables (via menu Bookkeeping > Pension plans (IAS 19) / Actuarial valuations / disclosure tables)",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookkeeping-pension-ias19"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVerslaggeving"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
@@ -4157,6 +4643,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-inventory-multi-warehouse"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVoorraad"
+			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/stock/models/stock_warehouse.py:24 stock.warehouse, each with its stock location (:46 lot_stock_id); internal transfers are stock.picking moves between locations",
 				"exact-online": "https://www.exact.com/nl/producten/handel/features-en-prijzen: \"Met meerdere magazijnen kun je onderscheid maken tussen verschillende magazijnen en leg je precies vast hoeveel voorraad je hebt in ieder magazijn\"; \"Magazijnverplaatsingen\" Note: Exact Online Handel.",
@@ -4187,6 +4677,10 @@
 				"reachedOn": "MobileScannerHome /inventory/mobile (menu Purchasing > Mobile Scanner) and its receive/pick/count/transfer pages",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-inventory-mobile-scanner"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVoorraad"
 			},
 			"evidence": {
 				"odoo": "https://www.odoo.com/documentation/19.0/applications/inventory_and_mrp/barcode.html Barcode app for receiving, picking, inventory adjustments and transfers with scanners on mobile; odoo/odoo@19.0 addons/stock/models/res_config_settings.py:29 module_stock_barcode toggle Note: Enterprise module stock_barcode, not public, rated from docs",
@@ -4219,6 +4713,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-inventory-lot-batch-expiry"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVoorraad"
+			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/product_expiry/models/production_lot.py:19 alert_date and :21 product_expiry_alert per lot; FEFO removal addons/product_expiry/models/stock_quant.py:26",
 				"exact-online": "https://www.exact.com/nl/producten/handel/features-en-prijzen: \"Door vast te leggen welke serienummers of batchnummer je op voorraad hebt liggen kun je altijd terugvinden wat een klant heeft ontvangen\" Note: Batch numbers are tracked (Handel Plus and up); expiry dates with warnings are not stated today.",
@@ -4249,6 +4747,10 @@
 				"reachedOn": "InventoryValuation /inventory/valuation (menu Purchasing > Valuation) lists InventoryValuation records",
 				"owner": "ConductionNL/shillinq",
 				"change": "inventory-receipt-cost-layers"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVoorraad"
 			},
 			"evidence": {
 				"snelstart": "https://kennisplein.snelstart.nl/snelstartpolaris/uitgebreid-voorraadbeheer : 'vanaf het pakket inZicht ook werken met financieel voorraadbeheer ... Selecteer bij Voorraadsysteem Fifo of LiFo'; purchases booked on a voorraadrekening Note: FIFO or LIFO, inZicht and up",
@@ -4281,6 +4783,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "inventory-receipt-cost-layers"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVoorraad"
+			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/l10n_nl/models/template_nl.py anglo_saxon_accounting True with account_stock_expense_id 7000, so delivered stock posts cost of goods sold via stock_account",
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Reference-financial-glaccounts-fingl-createdgltransr?language=en_GB: \"Cost of goods sold is affected four times ... Delivery - Cost of goods sold\"",
@@ -4311,6 +4817,10 @@
 				"reachedOn": "ProductCatalog /inventory/products (menu Purchasing > Products); ProductAttributeCatalog /inventory/product-attributes (menu Purchasing > Product Attributes)",
 				"owner": "ConductionNL/pipelinq",
 				"change": "2026-06-14-inventory-product-catalog"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVoorraad"
 			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/product/models/product_template.py:133 attribute_line_ids generate product variants from attribute values",
@@ -4343,6 +4853,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-07-14-block-unsellable-stock-dispatch"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShOrders"
+			},
 			"evidence": {
 				"odoo": "odoo/odoo@19.0 addons/product_expiry/wizard/confirm_expiry.py:25 warns 'You are going to deliver some product expired lots' and lets the user continue (skip_expired, :41); FEFO removal in addons/product_expiry/models/stock_quant.py:26 Note: Warns and steers picking away from expired lots, does not hard-block; blocked stock can be kept in a non-sellable location",
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today for blocked or expired batches on delivery: not stated",
@@ -4373,6 +4887,10 @@
 				"reachedOn": "BookingWidgetKeys /settings/booking-widget-keys (settings gear) to issue a key; the booking itself happens in the embedded widget on the customer's site",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookings-self-service-widget"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShInstellingen"
 			},
 			"evidence": {
 				"odoo": "https://www.odoo.com/documentation/19.0/applications/productivity/appointments.html 'self-service scheduling', online appointment booking on the website Note: Enterprise app appointment/website_appointment, not public, rated from docs",
@@ -4405,6 +4923,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookings-service-catalog"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShAfspraken"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
 				"moneybird": "not checked: products can carry a period for subscriptions (article 207605) but a bookable service catalogue with durations is not stated",
@@ -4434,6 +4956,10 @@
 				"reachedOn": "AvailabilityRules /verkoop/beschikbaarheidsregels (settings gear); Resources /bookings/resources (via menu Sales > Bookings > Resources)",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookings-availability-rules"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShAfspraken"
 			},
 			"evidence": {
 				"odoo": "https://www.odoo.com/documentation/saas-19.3/applications/productivity/appointments/appointment_types.html Availabilities tab with hours per day of week, restricted per user, user-based or resource-based types Note: Enterprise, rated from docs",
@@ -4466,6 +4992,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookings-confirm-flow"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShAfspraken"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
 				"moneybird": "not checked: not stated",
@@ -4496,6 +5026,10 @@
 				"reachedOn": "ConfirmationTemplates, ReminderTemplates, CancellationTemplates, NotificationTriggers, NotificationMonitor (via menu Sales > Communication)",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookings-email-templates"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShInstellingen"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
@@ -4528,6 +5062,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookings-sms-reminder-channel"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShInstellingen"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
 				"moneybird": "not checked: not stated",
@@ -4559,6 +5097,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-07-14-bookings-depth"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShAfspraken"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: https://start.exactonline.nl/docs/HlpRestAPIResources.aspx has project/ProjectPlanningRecurring for recurring planning of employees, not customer appointments",
 				"moneybird": "not checked: not stated",
@@ -4589,6 +5131,10 @@
 				"reachedOn": "nothing reaches it: /bookings/calendar/:calendarId is routable only by typing the URL; BookingList /bookings/list (via menu Sales > Bookings > Bookings) shows bookings as a list",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookings-resource-calendar"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShAfspraken"
 			},
 			"evidence": {
 				"odoo": "https://www.odoo.com/documentation/saas-19.3/applications/productivity/appointments/appointment_types.html resource-based types 'meeting rooms or equipment'; bookings land as calendar events (odoo/odoo@19.0 addons/calendar) filterable per attendee or resource Note: Resource bookings are Enterprise appointment",
@@ -4652,6 +5198,10 @@
 				"change": "sales-billable-rate-per-hour",
 				"readOn": "2026-10-07"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShFactuurGenereren"
+			},
 			"evidence": {
 				"moneybird": "https://www.moneybird.nl/functies/urenregistratie/ : 'In Moneybird kun je eenvoudig uren registreren ... Werk met het hele team aan een opdracht ... Zet de gewerkte uren in een druk op de knop om naar een factuur'; rates entered when billing (https://helpcenter.moneybird.nl/nl/articles/207499-waarom-uren-registreren) Note: 20 entries in Start, unlimited from Groei (pricing page)",
 				"odoo": "odoo/odoo@19.0 addons/hr_timesheet timesheets per project and task; billable via addons/sale_timesheet/models/sale_order_line.py:11 and per-person rates addons/sale_timesheet/models/project_sale_line_employee_map.py:8",
@@ -4713,6 +5263,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-dba-compliance-marker"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShControle"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
 				"moneybird": "not checked: searched helpcenter for DBA and schijnzelfstandigheid: not stated",
@@ -4742,6 +5296,10 @@
 				"reachedOn": "IB47Jaarbatch /bookkeeping/detachering-payroll/ib47 (via menu Bookkeeping > IB47 annual batch)",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookkeeping-detachering-payroll-administratie"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShControle"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today for IB47 and uitbetaalde bedragen aan derden: not stated",
@@ -4775,6 +5333,10 @@
 				"change": "2026-09-29-ledger-posting-path",
 				"readOn": "2026-09-29"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShMemoriaal"
+			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/salaris/features-en-prijzen: \"De journaalposten vanuit Exact HR Salaris Plus kunnen eenvoudig ingelezen worden in Exact Online\"; integrated Salaris posts to the linked administration Note: Salaris module or Exact HR Salaris Plus.",
 				"moneybird": "https://www.moneybird.nl/product/koppelingen/salarisadministratie/ : 'boek loonkosten automatisch in je administratie - met koppelingen zoals Employes en Nmbrs'; manual route via memoriaal in https://helpcenter.moneybird.nl/nl/articles/232266-loon-verwerken",
@@ -4805,6 +5367,10 @@
 				"reachedOn": "AccountantPortalDashboard /accountant-portal (menu Reporting & Compliance)",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-07-13-accountant-portal"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShAccountant"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Met Exact Online werk je online samen met je accountant of boekhouder. Je bepaalt zelf wat hij wel en niet kan doen in je boekhouding\"; FAQ: \"een koppeling met je accountant zit in alle abonnementen\"",
@@ -4837,6 +5403,10 @@
 				"owner": "nextcloud/server",
 				"spec": "none"
 			},
+			"screen": {
+				"board": null,
+				"reason": "Handled by the Nextcloud login before any shillinq page opens."
+			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207562-twee-staps-verificatie-verplichten-voor-iedereen-in-jouw-administratie : 'kun je voor hen twee-staps-verificatie (2FA) verplichten'; authenticator app, Moneybird app and passkeys supported (articles 207555, 263740, 207550)",
 				"exact-online": "https://support.exactonline.com/community/s/article/NL-AGSG-HNO-Task-ag-aggeneral-agg-tweestapsauthenticatiet: \"Na het invullen van je wachtwoord vragen wij om een tijdelijk gegenereerde code ... De code wordt gegenereerd door een externe applicatie op je telefoon of tablet\"; https://support.exactonline.com/community/s/article/All-All-HNO-Task-general-security-gen-auth-totplogt (Verificatie in twee stappen)",
@@ -4866,6 +5436,10 @@
 				"reachedOn": "any client with Nextcloud credentials; no API documentation page is shipped in this repo",
 				"owner": "ConductionNL/openregister",
 				"spec": "none"
+			},
+			"screen": {
+				"board": null,
+				"reason": "An API for other software, used by machines rather than on a screen."
 			},
 			"evidence": {
 				"exact-online": "https://start.exactonline.nl/docs/HlpRestAPIResources.aspx: \"Exact Online REST API - Reference documentation\" with 363 resource URIs, OAuth app access and sync and bulk endpoints",
@@ -4897,6 +5471,10 @@
 				"reachedOn": "MobileScannerHome /inventory/mobile; Receipts /inkoop/receipts",
 				"owner": "ConductionNL/shillinq",
 				"change": "platform-mobile-pwa"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShDeclaraties"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Mobiele app: Maak gratis gebruik van de mobiele app voor smartphone en tablet. Beschikbaar voor IOS en Android\"; https://www.exact.com/nl/producten/boekhouden/scan-herken: scan receipts and invoices with the app",
@@ -4930,6 +5508,10 @@
 				"change": "contacts-kvk-lookup",
 				"readOn": "2026-10-07"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShKlant"
+			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207516-contacten-toevoegen : 'Moneybird zoekt automatisch naar gegevens wanneer je de bedrijfsnaam invoert. Klik op het zoekresultaat om de KVK-gegevens alvast in te vullen'",
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Relaties aanmaken via KVK: Via onze directe koppeling met de Kamer van Koophandel maak je met een druk op de knop nieuwe relaties o.b.v. de laatste gegevens\"",
@@ -4962,6 +5544,10 @@
 				"readOn": "2026-09-27",
 				"change": "mcp-action-tool-surface"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShDashboard"
+			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/nieuws/nieuwe-ai-agent-brengt-financieel-professionals-sneller-van-cijfers-naar-beslissingen (3 September 2026): \"De Financial Agent begrijpt financiele context, zoals de balans en winst- en verliesrekening, en analyseert prestaties op basis van ruim 60 financiele KPI's\" Note: New in September 2026; edition not stated.",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/396511-ai-koppeling : 'Met een AI-koppeling verbind je een AI-tool zoals ChatGPT, Cursor, Mistral of Claude met je administratie. Je stelt dan vragen over je administratie in gewone taal' Note: through an external AI assistant over MCP, not a built-in chat",
@@ -4993,6 +5579,10 @@
 				"owner": "ConductionNL/openregister",
 				"change": "2026-06-14-add-shillinq-document-attachment-integration"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVerkoopfactuur"
+			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/223803-bijlage : 'Wanneer je een factuur naar een klant stuurt, kun je ook een extra bijlage meesturen'; purchase documents carry their scan (article 207134)",
 				"odoo": "odoo/odoo@19.0 addons/account/models/account_move.py:7432 message_main_attachment_id shown beside invoices and bills; chatter attachments on hr.expense (mail.thread) in addons/hr_expense/models/hr_expense.py",
@@ -5022,6 +5612,10 @@
 				"reachedOn": "nothing reaches it",
 				"owner": "ConductionNL/openregister",
 				"change": "openregister/fields-a-user-adds-and-choices-a-record-narrows"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShKlant"
 			},
 			"evidence": {
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/223860-extra-velden-instellen : 'Met extra velden voeg je eigen informatie toe aan je facturen, offertes en contacten', type Tekst or Lijst",
@@ -5054,6 +5648,10 @@
 				"owner": "ConductionNL/shillinq",
 				"spec": "none"
 			},
+			"screen": {
+				"board": null,
+				"reason": "Follows the Nextcloud user language on every page, no screen of its own."
+			},
 			"evidence": {
 				"twinfield": "https://taasupportportal.wolterskluwer.com/nl/nl-nl/artikel/administratie-i-3041034: \"Standaardtaal : De voertaal voor de administratie\"; https://taasupportportal.wolterskluwer.com/nl/nl-nl/artikel/verkoopfactuur-3041176: invoice templates in several languages Note: Interface language options are not listed in today's pages.",
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: the knowledge base is offered in several languages but the pages read today do not state the interface languages",
@@ -5084,6 +5682,10 @@
 				"reachedOn": "ExternalAdaptersStatus /external-adapters (settings gear)",
 				"owner": "ConductionNL/shillinq",
 				"change": "platform-integration-catalogue"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShInstellingen"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"In de Exact Online App Store kun je zakelijke software van derde partijen vinden die je direct kunt koppelen aan Exact Online\"; https://apps.exactonline.com",
@@ -5117,6 +5719,10 @@
 				"reachedOn": "Import & migration > Import wizard (/import/wizard); batches at /import/batches",
 				"change": "platform-administration-import"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShAdministraties"
+			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/overstappen: \"Of je nu al een Exact-pakket gebruikt ... of de overstap maakt vanaf een ander softwarepakket ... onze consultants staan voor je klaar\" and conversion tools; https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Importeer en exporteer data in XML en CSV\"",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207241-overstappen-naar-moneybird : 'Het is niet mogelijk om je oude boekhouding in één keer te importeren. Je kunt op twee manieren starten ... met een beginbalans, of door je oude gegevens met terugwerkende kracht' (PDF uploads, MT940/CAMT files); contacts import from Excel (changelog 'contacten-importeren-vanuit-excel')",
@@ -5147,6 +5753,10 @@
 				"reachedOn": "Nextcloud app store or a manual install",
 				"owner": "ConductionNL/shillinq",
 				"spec": "none"
+			},
+			"screen": {
+				"board": null,
+				"reason": "Hosting: installed from the Nextcloud app store on your own server, no screen in the app."
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/software/exact-online/tweestapsverificatie: \"Exact Online is een Saas bedrijfssoftware oplossing voor bedrijven en accountants\" Note: Exact sells separate on-premise products (Globe), not Exact Online.",
@@ -5179,6 +5789,10 @@
 				"readOn": "2026-09-27",
 				"change": "platform-help-agent"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShDashboard"
+			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"De Support Agent in Exact AI Assistant staat 24/7 voor je klaar om al jouw how-to vragen te beantwoorden\"",
 				"moneybird": "https://www.moneybird.nl/helpcentrum/ : 'Snel antwoord op je vraag? Gebruik onze AI-bot die meteen met je meedenkt'; help widget in the app searches all knowledge base articles (https://helpcenter.moneybird.nl/nl/articles/361728-de-helpwidget)",
@@ -5210,6 +5824,10 @@
 				"owner": "ConductionNL/integriq",
 				"change": "adopt-connection-registry"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShInstellingen"
+			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Content-rn-whatsnewlandingpage?language=en_GB (February 2026, Premium Editions): \"HQ: We've replaced the Companies Note: Overview page with a new HQ start page, showing key details such as pending invoices, bank connections, and VAT deadlines for all companies\"",
 				"moneybird": "https://www.moneybird.nl/changelog/altijd-een-e-mail-als-je-ponto-koppeling-verloopt/ (2 september 2026): 'Je ontvangt voortaan altijd een e-mail wanneer je Ponto-koppeling bijna verloopt'; webhook delivery problems are documented (article 605079 webhooks-en-onbereikbare-servers) Note: expiry warnings for bank links; a status overview of all connections is not stated",
@@ -5239,6 +5857,10 @@
 				"reachedOn": "BbvMapping /overheid/bbv-mapping (settings gear); BBVComplianceDashboard /bbv-dashboard",
 				"owner": "ConductionNL/shillinq",
 				"change": "public-sector-task-field-allocation"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShOverheid"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; BBV and task fields not stated",
@@ -5271,6 +5893,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookkeeping-iv3-reporting"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShOverheid"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; Iv3 not stated",
 				"moneybird": "not checked: searched helpcenter.moneybird.nl (573 articles), feature pages and API reference for BBV, Iv3, SiSa, BCF, Fido, EMU, gemeente and related public-sector terms: no hits; Moneybird targets entrepreneurs (https://helpcenter.moneybird.nl/nl/articles/207349-voor-welke-bedrijven-is-moneybird-geschikt) and does not state public-sector support or its absence",
@@ -5302,6 +5928,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "public-sector-grant-accountability"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShOverheid"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; SiSa not stated",
 				"moneybird": "not checked: searched helpcenter.moneybird.nl (573 articles), feature pages and API reference for BBV, Iv3, SiSa, BCF, Fido, EMU, gemeente and related public-sector terms: no hits; Moneybird targets entrepreneurs (https://helpcenter.moneybird.nl/nl/articles/207349-voor-welke-bedrijven-is-moneybird-geschikt) and does not state public-sector support or its absence",
@@ -5331,6 +5961,10 @@
 				"reachedOn": "Rechtmatigheidstoetsing /rechtmatigheid/toetsing (menu Reporting & Compliance)",
 				"owner": "ConductionNL/shillinq",
 				"change": "public-sector-council-and-auditor-statements"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShControle"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; the lawfulness statement not stated",
@@ -5362,6 +5996,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "public-sector-quarterly-returns"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShOverheid"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; the BCF not stated",
 				"moneybird": "not checked: searched helpcenter.moneybird.nl (573 articles), feature pages and API reference for BBV, Iv3, SiSa, BCF, Fido, EMU, gemeente and related public-sector terms: no hits; Moneybird targets entrepreneurs (https://helpcenter.moneybird.nl/nl/articles/207349-voor-welke-bedrijven-is-moneybird-geschikt) and does not state public-sector support or its absence",
@@ -5391,6 +6029,10 @@
 				"reachedOn": "TreasuryDashboard /treasury/dashboard (menu Banking & Cashflow)",
 				"owner": "ConductionNL/shillinq",
 				"change": "public-sector-quarterly-returns"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShLiquiditeit"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; Wet Fido not stated",
@@ -5423,6 +6065,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-bookkeeping-emu-reporting"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShOverheid"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; the EMU balance not stated",
 				"moneybird": "not checked: searched helpcenter.moneybird.nl (573 articles), feature pages and API reference for BBV, Iv3, SiSa, BCF, Fido, EMU, gemeente and related public-sector terms: no hits; Moneybird targets entrepreneurs (https://helpcenter.moneybird.nl/nl/articles/207349-voor-welke-bedrijven-is-moneybird-geschikt) and does not state public-sector support or its absence",
@@ -5453,6 +6099,10 @@
 				"reachedOn": "GRDeelnemers /gr/deelnemers (menu Bookkeeping)",
 				"owner": "ConductionNL/shillinq",
 				"change": "public-sector-task-field-allocation"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShOverheid"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; joint arrangements not stated",
@@ -5485,6 +6135,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "public-sector-task-field-allocation"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShOverheid"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; market separation and integral cost prices not stated",
 				"moneybird": "not checked: searched helpcenter.moneybird.nl (573 articles), feature pages and API reference for BBV, Iv3, SiSa, BCF, Fido, EMU, gemeente and related public-sector terms: no hits; Moneybird targets entrepreneurs (https://helpcenter.moneybird.nl/nl/articles/207349-voor-welke-bedrijven-is-moneybird-geschikt) and does not state public-sector support or its absence",
@@ -5515,6 +6169,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "public-sector-council-and-auditor-statements"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShControle"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; ENSIA not stated",
 				"moneybird": "not checked: searched helpcenter.moneybird.nl (573 articles), feature pages and API reference for BBV, Iv3, SiSa, BCF, Fido, EMU, gemeente and related public-sector terms: no hits; Moneybird targets entrepreneurs (https://helpcenter.moneybird.nl/nl/articles/207349-voor-welke-bedrijven-is-moneybird-geschikt) and does not state public-sector support or its absence",
@@ -5544,6 +6202,10 @@
 				"reachedOn": "BudgetToProgrammeLinker /bbv-provincie/budget-to-programme (settings gear)",
 				"owner": "ConductionNL/shillinq",
 				"change": "2026-06-14-add-shillinq-provincies-bbv-variant"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBegroting"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; programme budgets not stated",
@@ -5576,6 +6238,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "public-sector-grant-accountability"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShControle"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; a grants register not stated",
 				"moneybird": "not checked: searched helpcenter for subsidie: no hits; a register of grants given and received with reclaims is not stated",
@@ -5605,6 +6271,10 @@
 				"reachedOn": "EuProjecten /eu-fondsen/projecten (menu Reporting & Compliance)",
 				"owner": "ConductionNL/shillinq",
 				"change": "public-sector-grant-accountability"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShControle"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; EU fund declarations not stated",
@@ -5636,6 +6306,10 @@
 				"owner": "ConductionNL/shillinq",
 				"change": "public-sector-council-and-auditor-statements"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShControle"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages (including /nl/branche/overheid, which lists only the generic business and accountancy products) and the Exact knowledge base today: no Dutch public sector function is described; Exact Online targets businesses and accountants; audit protocols with samples not stated",
 				"moneybird": "not checked: searched helpcenter.moneybird.nl (573 articles), feature pages and API reference for BBV, Iv3, SiSa, BCF, Fido, EMU, gemeente and related public-sector terms: no hits; Moneybird targets entrepreneurs (https://helpcenter.moneybird.nl/nl/articles/207349-voor-welke-bedrijven-is-moneybird-geschikt) and does not state public-sector support or its absence",
@@ -5665,6 +6339,10 @@
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing",
 				"change": "purchasing-approval-delegation"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShInkoopfacturen"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: https://support.exactonline.com/community/s/article/All-All-HNO-Task-purchase-invoices-purch-seqapprflwt describes approvers, limits and flows but no stand-in during absence",
@@ -5704,6 +6382,10 @@
 				"evidence": "PostingRestriction (lib/Settings/register.d/ledger-booking-rules.json: accountPattern prefix, costCenterCode, projectCode, reason, validFrom, validTo, lifecycle active/retired) per administration; lib/Lifecycle/PostingRestrictionGuard.php refuses a person's posting whose line matches an active restriction on the posting date, naming the reason. Journal lines carry costCenterCode and projectCode into the GL line (MaterialiseGlTransactionAction).",
 				"change": "2026-09-29-ledger-booking-rules"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShMemoriaal"
+			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-costanalysis-costcenter-fincctr-linkglacctt?language=en_GB: \"From a G/L account: Specify which cost centres or cost units an employee can or must select when they enter a transaction for that G/L account\" Note: Allowed cost centres per account; combinations with projects are not described.",
 				"moneybird": "not checked: not stated in helpcenter",
@@ -5742,6 +6424,10 @@
 				"evidence": "lib/Lifecycle/PostingRestrictionGuard.php refuses a journal entry or GL transaction a person posts when a line is on an account with Account.controlAccountFor set (lib/Settings/register.d/ledger-booking-rules.json), naming the account and its role; JournalEntryGuard::canPost and RuleComplianceGuard::validateTransaction delegate to it and RegisterRequiresGuardAdapter shows the refusal. Sub-ledger postings pass: MaterialiseGlTransactionAction writes them directly, GR/IR drafts carry journalCode, a bank booking (sourceApp bank) may post its VAT line. The RGS MKB seed and lib/Repair/BackfillControlAccountRoles.php mark 1100, 2000, 1230 and 2110 (shillinq PR ledger-booking-rules).",
 				"change": "2026-09-29-ledger-booking-rules"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShMemoriaal"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: blocking G/L accounts for all future bookings exists (search snippet of https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-glaccounts-fingl-crtglaccountst) but blocking only manual postings on control accounts is not stated",
 				"moneybird": "not checked: some categories are restricted for certain transactions (e.g. https://helpcenter.moneybird.nl/nl/articles/207307-categorie-for-naam-kan-niet-gebruikt-worden-bij-transactie-uitbetaling) but a general block on manual posting to VAT, receivables and payables accounts is not stated",
@@ -5778,6 +6464,10 @@
 				"evidence": "Posting goes through the same guard and actions in any FiscalYear in state open (lib/Lifecycle/RuleComplianceGuard.php, lib/Lifecycle/Action/MaterialiseGlTransactionAction.php periodId); nothing limits how many FiscalYear records are open at once (lib/Settings/shillinq_register.json FiscalYear lifecycle) (shillinq#1775).",
 				"reachedOn": "FiscalYears /bookkeeping/fiscal-years (settings gear); GeneralLedgerDetail /general-ledger/:id, Post transaction",
 				"change": "2026-09-29-ledger-posting-path"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShAfsluiten"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Concept-endofyear-finyend-yrendprcssc: for \"De overstap van 2025 naar 2026\" you create the new fiscal year before closing the old one; https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-yearend-finbnk-closefinperiodt: periods stay open until closed",
@@ -5817,6 +6507,10 @@
 				"reachedOn": "SupplierInvoiceDetail field Same number as; SupplierInvoices column; bill import dialog (409 for UBL, skippedRows for CSV)",
 				"change": "2026-09-29-purchasing-supplier-invoice-intake"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShFactuurImporteren"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: the Purchase Agent \"Herkent afwijkingen in inkoopfacturen\" (https://www.exact.com/nl/producten/boekhouden/features-en-prijzen) but a duplicate invoice number warning is not stated",
 				"moneybird": "https://www.moneybird.nl/changelog/waarschuwing-bij-documenten-met-hetzelfde-kenmerk/ (6 januari 2026): 'Moneybird waarschuwt je nu ook op het overzicht Inkomend voor documenten van hetzelfde contact met dubbele kenmerken'; auto-save skips a document when 'Er staat al een ander document van hetzelfde soort met hetzelfde factuurnummer en hetzelfde contact' (https://helpcenter.moneybird.nl/nl/articles/677276-de-inkoopworkflow-instellen) Note: older helpcenter article 207125 still says Moneybird does not check invoice numbers; the 2026 changelog supersedes it",
@@ -5853,6 +6547,10 @@
 				"reachedOn": "SupplierInvoiceDetail field IBAN differs from supplier record; the AP transaction's payment block",
 				"evidence": "SupplierInvoiceChecks::ibanMismatch compares the invoice IBAN, without spaces and case, with Payee.bankAccount.iban and SupplierQualification.iban; booking needs ibanAcknowledgedReason and HandToAccountsPayableAction writes the APTransaction payment blocked with reason 'IBAN on invoice differs from supplier record', which banking-payment-run keeps out of every run.",
 				"change": "2026-09-29-purchasing-supplier-invoice-intake"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShInkoopfacturen"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: supplier bank accounts can be blocked (https://support.exactonline.com/community/s/article/All-All-HNO-Task-accounts-finacc-wrkbnkacct) but a mismatch warning on incoming invoices is not stated",
@@ -5891,6 +6589,10 @@
 				"evidence": "An approved supplier invoice lowers the commitment of its order (lib/Listener/InvoiceCommitmentListener.php, lib/Service/Commitment/CommitmentInvoicing.php); SupplierInvoice.isLastInvoice or Mark as last invoice closes it through afsluiten, releasing the remainder to the budget with a closed movement.",
 				"change": "2026-09-29-planning-commitment-year-end"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShInkooporder"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
 				"moneybird": "not checked: no purchase orders or commitments in Moneybird; not stated",
@@ -5927,6 +6629,10 @@
 				"reachedOn": "CommitmentsRegister /commitments, Carry open commitments to next year",
 				"evidence": "lib/Service/Commitment/CommitmentCarryOverService.php previews every open line of a year with the next year's shortfall per programme and carries it into a new line of the next year under the same commitment number (carriedFromLine), closing the old one and moving the outstanding amount between the budgets; a second run writes nothing.",
 				"change": "2026-09-29-planning-commitment-year-end"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBegroting"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
@@ -5966,6 +6672,10 @@
 				"evidence": "APTransaction and Payee carry paymentBlocked and paymentBlockReason (lib/Settings/register.d/bookkeeping-accounts-payable-core.json), set through src/modals/PaymentBlockModal.vue; lib/PaymentRun/PaymentBlockChecker.php is the one check the proposal, the export guard (lib/Lifecycle/PaymentRunDuplicateGuard.php) and the export service use, so a block set after approval refuses the export naming the invoice.",
 				"change": "2026-09-29-banking-payment-run"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShInkoopfacturen"
+			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-accounts-finacc-wrkbnkacct?language=en_GB: \"Select or deselect Block\" on a supplier bank account; https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-bank-fin-bnkpymt-editsplitpymntt: \"Postpone to enter a period to postpone the payments\" Note: Blocking a bank account or postponing payments; a payment block flag on a supplier or invoice is not stated.",
 				"moneybird": "not checked: searched helpcenter for blokkeren and niet betalen on supplier invoices: not stated",
@@ -6003,6 +6713,10 @@
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-29",
 				"change": "2026-09-29-receivables-payment-plans"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVerkoopfactuur"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Content-rn-whatsnewlandingpage?language=en_GB (June 2026): \"we've enhanced the standard layout editor so you can edit and create Debtor Statement and Payment arrangement layouts\"; https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-bank-fin-bnkpymt-editsplitpymntt?language=en_GB: split a payment into several payment terms Note: Payment arrangement letters and split terms; instalment follow-up is not described.",
@@ -6042,6 +6756,10 @@
 				"evidence": "InterestAllocationRun with calculate and post (lib/Lifecycle/Action/InterestAllocationAction.php over lib/Service/PublicSector/InterestAllocationService.php): the pooled rate over each investment's book value on 1 January charged to its task field, and over reserves marked for interest; one journal entry crediting Treasury task field 0.5 (tests/Unit/PublicSector/PublicSectorReservesAndInterestTest.php, seed figures EUR 54,000 and EUR 9,600).",
 				"change": "2026-09-29-public-sector-reserves-and-interest"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShOverheid"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: no Dutch public sector function is described",
 				"moneybird": "not checked: public-sector capability; not stated in helpcenter",
@@ -6079,6 +6797,10 @@
 				"reachedOn": "Reserves /overheid/reserves, Reserve mutations /overheid/reserve-mutations (Realise), Reserves over the years /overheid/reserves/overview (menu Government)",
 				"evidence": "ReserveMutation (planned or realised) in lib/Settings/register.d/public-sector-reserves-and-interest.json; realise posts the journal entry between the reserve account and the result account (lib/Lifecycle/Action/RealiseReserveMutationAction.php over lib/Service/PublicSector/ReserveBalances.php); the multi-year overview GET /api/v1/public-sector/reserves/overview chains opening to closing with floor and ceiling flags (tests/Unit/PublicSector/PublicSectorReservesAndInterestTest.php).",
 				"change": "2026-09-29-public-sector-reserves-and-interest"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShOverheid"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: no Dutch public sector function is described",
@@ -6119,6 +6841,10 @@
 				"reachedOn": "BudgetGrid /begroting/grid, section Multi-year budget; Meerjarenramingen /overheid/meerjarenramingen and MeerjarenBudgetten /overheid/meerjarenbudgetten under Government",
 				"change": "2026-09-29-planning-budget-editing"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBegroting"
+			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-budget-finbdgt-crtbdgtt?language=en_GB: budgets per scenario over a future period; https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Beheer meerdere budgetten tegelijk\"",
 				"moneybird": "not checked: no financial budgets in Moneybird; not stated",
@@ -6156,6 +6882,10 @@
 				"reachedOn": "Begrotingswijzigingen /overheid/begrotingswijzigingen (menu Government > Budget amendments)",
 				"evidence": "Begrotingswijziging has index and detail pages with its number, reason, amounts, council resolution and status, the vaststellen transition as Determine (BegrotingswijzigingGuard requires the resolution), the OpenRegister files tab for attachments and the audit trail tab for history (src/manifest.d/planning-budget-editing.json).",
 				"change": "2026-09-29-planning-budget-editing"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBegroting"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
@@ -6197,6 +6927,10 @@
 				"evidence": "ReportSchedule with an active and paused lifecycle (lib/Settings/register.d/reporting-data-delivery.json); ScheduledReportJob runs hourly and ScheduledReportRunner produces each due report as the schedule owner (refused when the owner cannot reach the administration), ScheduledReportDelivery files it in the folder shared with the recipients and notifies them, a failed run records lastError and notifies the owner (tests/Unit/Reporting/Schedule/*, tests/vitest/reportingDataDelivery.spec.js).",
 				"change": "reporting-data-delivery"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShRapporten"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
 				"moneybird": "https://www.moneybird.nl/changelog/frequentie-van-de-dagelijkse-update-is-instelbaar/ (1 mei 2026): 'per administratie kiezen of je de dagelijkse update-e-mail dagelijks, wekelijks of tweewekelijks wilt ontvangen' Note: a fixed update email; scheduling an arbitrary report is not stated",
@@ -6233,6 +6967,10 @@
 				"evidence": "OpenRegister's REST object API exposes every shillinq schema to an outside tool that pulls it (see plt-api), and index pages export CSV or Excel; there is no push feed, OData endpoint or BI connector. Built half: lib/Settings/feeds.json declares four read-only datasets (ledger-lines, accounts, periods, relations), each bound to one administration, validated by FeedDeclarationValidator. Missing half: integriq serves the declaration with its own credentials (ADR-091), drafted to integriq, not yet filed.",
 				"reachedOn": "OpenRegister API /apps/openregister/api/objects (machine surface)",
 				"change": "reporting-data-delivery"
+			},
+			"screen": {
+				"board": null,
+				"reason": "A data feed through the OpenRegister API to an outside BI tool, no screen in the app."
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Power BI Connector: Krijg direct toegang tot al je data, zodat je deze met Microsoft Power BI kunt omzetten naar heldere en gevisualiseerde rapportages\"; https://start.exactonline.nl/docs/HlpRestAPIResources.aspx sync and bulk endpoints Note: Premium for the connector.",
@@ -6271,6 +7009,10 @@
 				"evidence": "CustomerMaster.payeeId, payeeLink and dismissedPayeeSuggestions (lib/Settings/register.d/reporting-relation-both-sides.json); RelationLinkService suggests pairs with an equal normalised KvK or VAT number and links only on confirmation, one to one; RelationBothSidesService lists ARInvoice, APTransaction and not-yet-booked SupplierInvoice rows with invoiced sales, invoiced purchases, open receivable, open payable and net, credit notes negative, each side only for a role that may read it; RelationController serves both sides, the report and its CSV (tests/Unit/Service/Relation/*, tests/Unit/Controller/RelationControllerTest.php, tests/vitest/reportingRelationBothSides.spec.js).",
 				"change": "2026-09-30-reporting-relation-both-sides"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShKlant"
+			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Reference-accounts-finacc-mntresultsr?language=en_GB: \"If you select a debtor in the report you can easily compare your sales per debtor. If you select a creditor ... your purchases per creditor\" Note: Per side; one combined view for a relation that is both is not described.",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207977-omzet-per-contact-en-kosten-per-contact : 'Omzet per contact' and 'Kosten per contact' for the same contact, as one contact record serves customers and suppliers ('klanten ... en leveranciers') Note: one contact holds both sides; a single combined list is not stated",
@@ -6307,6 +7049,10 @@
 				"evidence": "ProjectAssignment.loggedHours, remainingHours, hoursUsedPercent (declared calculation), hoursWarnedAt80/100 and two x-openregister-notifications to projectOwner (lib/Settings/register.d/people-hours-budget.json); AssignmentHoursListener re-sums an assignment when an UrenRegistratie is created, changed or deleted and re-arms the warnings when the estimate changes, AssignmentHours writes the project totals and hoursOverBudget, BackfillAssignmentHours sums history (tests/Unit/Listener/AssignmentHoursListenerTest.php).",
 				"reachedOn": "Projects > a project (/bookkeeping/dimensions/projects/:id): Hours budget and Hours per assignment; Projects list filter Over hours budget",
 				"change": "2026-09-30-people-hours-budget"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShFactuurGenereren"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/projectadministratie/features-en-prijzen: \"Gebudgetteerde uren & kosten per project bewaken\" and \"Uren & kosten budgetteren (WBS)\" Note: Projectadministratie; the form of the warning is not described.",
@@ -6346,6 +7092,10 @@
 				"evidence": "DepreciationRunJob posts the month that ended last per administration through JournalEntry postDirect and marks each DepreciationSchedule line posted (lib/Service/Asset/DepreciationScheduleService.php); the revise transition replans the unposted months from the book value on its date and refuses a date before a posted month (ReviseDepreciationAction); depreciateExtra posts one extra line at once and replans (ExtraDepreciationAction); straight line, degressive and units of production (tests/Unit/Asset/AssetsMethodChangeAndReserveTest.php).",
 				"change": "assets-method-change-and-reserve"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShActief"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-asset-finasst-depasstt covers depreciation plans; changing method part way is not stated",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207294-bezitting-lineair-afschrijven : 'opties voor willekeurig en volledig afschrijven ... Via Acties kun je zelf afschrijvingen toevoegen'; https://helpcenter.moneybird.nl/nl/articles/207293-bezitting-toevoegen : 'Na de eerste afschrijving ... De aanschafwaarde, gebruiksduur en restwaarde zijn dan niet meer te wijzigen' Note: extra depreciation can be booked; changing life or method after the first depreciation cannot",
@@ -6383,6 +7133,10 @@
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing",
 				"change": "fees-payments-and-the-contract-register"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBetaalrun"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/features-en-prijzen: \"Betalen met de Exact Online app: Betaal je openstaande inkoopfacturen snel en gemakkelijk met de mobiele app van Exact Online. Alleen beschikbaar voor enkelvoudige betalingen\"; https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-bank-finbnk-processpaymentst: payment files upload automatically for Rabobank and ING, \"You must still authorise the payment with your bank\"",
@@ -6448,6 +7202,10 @@
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing",
 				"change": "tax-vat-return-from-books"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBtwAangifte"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Reference-financial-taxes-vat-fintax-vatchcklistr?language=en_GB: \"You can use the VAT checklist before you create a VAT return to ensure that there are no inconsistencies\"; https://www.exact.com/nl/producten/boekhouden/features-en-prijzen \"Controle op btw-aansluiting\"",
@@ -6515,6 +7273,10 @@
 				"reachedOn": "JournalDetail /journals/:id and GeneralLedgerDetail /general-ledger/:id, Lines panel",
 				"change": "2026-09-29-ledger-booking-rules"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShMemoriaal"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
 				"moneybird": "not checked: not stated; categories carry an RGS code and name only in the helpcenter articles read",
@@ -6548,6 +7310,10 @@
 				"evidence": "lib/Settings/register.d/bookkeeping-single-audit-eu-fondsen.json declares the AuditTrail schema appendOnly, so OpenRegister keeps audit records insert-only; lib/Service/AuditExportService.php:31 and lib/Service/AccountantsdossierExportService.php:23 stamp a SHA-256 over exported packages so later tampering is detectable. Posted entries themselves are not hash-chained.",
 				"reachedOn": "BookkeepingAuditTrail /bookkeeping/audit-trail; export packages",
 				"change": "ledger-sealed-entries"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShGrootboek"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: processed entries cannot be changed (https://support.exactonline.com/community/s/article/All-All-HNO-Task-general-importexport-gen-impexp-auditt) but a proof of tampering is not described",
@@ -6614,6 +7380,10 @@
 				"reachedOn": "nothing",
 				"change": "tax-vat-rates-and-deductibility"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBtwAangifte"
+			},
 			"evidence": {
 				"exact-online": "https://start.exactonline.nl/docs/HlpRestAPIResources.aspx lists financial/DeductibilityPercentages Note: A resource for deductibility percentages exists; the user flow is not described in pages read today.",
 				"moneybird": "https://www.moneybird.nl/changelog/verdeel-zakelijke-en-privekosten-automatisch/ (29 april 2026): 'Met fiscale verdelingen splitst Moneybird dit automatisch voor je. Het privédeel boeken we direct op een rekening zoals Privé-opnames'; https://helpcenter.moneybird.nl/nl/articles/207671-btw-van-kosten-niet-of-maar-gedeeltelijk-terugvragen",
@@ -6647,6 +7417,10 @@
 				"evidence": "Extraction drafts from docudesk fill supplier invoice and receipt fields, and the operator accepts them (src/modals/BillImportModal.vue:549, src/views/ReceiptCapture.vue:500, lib/Service/Extraction/GlAccountSuggestionClient.php).",
 				"reachedOn": "Dashboard Import bill -> BillImportModal; ReceiptCapture",
 				"change": "filinq/extraction-model-filled-fields"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShFactuurImporteren"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/boekhouden/scan-herken: invoices, PDFs and receipts are processed automatically; https://www.exact.com/nl/producten/boekhouden/features-en-prijzen Purchase Agent \"doet slimme suggesties\" Note: Fields are filled from an attached document for purchase invoices; filling from a free prompt is not described.",
@@ -6682,6 +7456,10 @@
 				"reachedOn": "inventory mobile scanner (src/registry.js:15)",
 				"change": "platform-mobile-pwa"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVoorraad"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
 				"moneybird": "not checked: not stated; the app and web need a connection per the helpcenter articles read",
@@ -6714,6 +7492,10 @@
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing",
 				"change": "receivables-provider-payouts"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVerkoopfactuur"
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
@@ -6749,6 +7531,10 @@
 				"change": "2026-09-28-banking-connected-accounts",
 				"evidence": "A connected account books its payments on arrival: BankfeedIntakeService writes each integriq pull as a statement and ExactMatchBooker confirms a line that can only mean one open invoice as system:bankfeed, which settles the invoice (shillinq#1768). Shillinq holds no money; the account is the bank, connected through integriq."
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBank"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: bank links and invoice financing are described, a payment account inside Exact Online is not",
 				"moneybird": "https://www.moneybird.nl/prijzen/ : 'De Moneybird Betaalrekening ... Realtime gesynchroniseerd met je administratie, Geld verdelen over potjes' (EUR 7 per month after 12 free months); changelog 14 januari 2026 adds iDEAL payments from the account",
@@ -6781,6 +7567,10 @@
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing",
 				"change": "sales-cancellation"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShKlant"
 			},
 			"evidence": {
 				"exact-online": "https://start.exactonline.nl/docs/HlpRestAPIResources.aspx lists subscription/SubscriptionReasonCodes next to Subscriptions and SubscriptionLines Note: Reason codes on subscriptions exist; asking the customer and a reasons overview are not described.",
@@ -6816,6 +7606,10 @@
 				"evidence": "No withdrawal function in lib/ or src/. Shillinq does serve an online consumer surface: the embeddable booking widget (webpack.config.js:42-54, REQ-WSW-004, POST /api/widget/appointments at appinfo/routes.php:153), which has no withdrawal button.",
 				"change": "sales-cancellation"
 			},
+			"screen": {
+				"board": null,
+				"reason": "Lives on the seller's own web shop page, outside the bookkeeping app."
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
 				"moneybird": "https://www.moneybird.nl/changelog/herroepingsknop-voor-online-verkopen/ (14 juli 2026): 'Webshops zijn sinds kort verplicht consumenten een herroepingsknop te bieden. Je kunt deze nu per huisstijl inschakelen voor je Online verkopen-pagina's'",
@@ -6849,6 +7643,10 @@
 				"evidence": "lib/Settings/register.d/zzz-mcp-tool-surface.json exposes a read-only MCP surface (search and get only) on 12 curated schemas; whether the installed OpenRegister executes x-openregister-mcp is the open question of plt-mcp. Nextcloud app passwords give API access but not a read-only scope.",
 				"reachedOn": "OpenRegister MCP surface (machine)",
 				"change": "mcp-action-tool-surface"
+			},
+			"screen": {
+				"board": null,
+				"reason": "Machine access through the OpenRegister MCP surface, no screen in the app."
 			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: user rights and profiles exist (https://support.exactonline.com/community/s/article/All-All-HNO-Task-general-users-gen-usrs-usrprflst) and API resources carry scopes per area (https://start.exactonline.nl/docs/HlpRestAPIResources.aspx), but read-only access for an integration is not stated",
@@ -6916,6 +7714,10 @@
 				"evidence": "FixedAssetDisposalService credits the gain to the reserve account instead of profit and forms a ReinvestmentReserve expiring at the end of the third year (lib/Settings/register.d/assets-method-change-and-reserve.json); applyReinvestmentReserve lowers the replacement's fiscalCostBasis and debits the reserve account, partly or fully; the daily run releases an expired remainder to profit (lib/Service/Asset/ReinvestmentReserves.php, tests/Unit/Asset/AssetsMethodChangeAndReserveTest.php, tests/Unit/Listener/FixedAssetDisposalListenerTest.php).",
 				"change": "assets-method-change-and-reserve"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShActief"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today: not stated",
 				"moneybird": "https://www.moneybird.nl/changelog/herinvesteringsreserve/ (3 juni 2026): 'Je kan nu de winst van gedesinvesteerde bezittingen naar de herinvesteringsreserve boeken via acties. Vervolgens kan je deze herinvesteringsreserve ook gebruiken' for new assets",
@@ -6950,6 +7752,10 @@
 				"reachedOn": "First-run setup wizard, template step",
 				"change": "ledger-multi-administration"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShAdministraties"
+			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-general-companies-gen-comp-cremaintcompt: \"Als je een Accountancy-abonnement hebt, kun je ervoor kiezen om de stamgegevens en instellingen van een tem[plate-administratie over te nemen]\"; https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-glaccounts-fingl-glaccmaprgst: accountants map G/L accounts to RGS \"in templates that you use for your client companies\"",
 				"moneybird": "https://www.moneybird.nl/changelog/sjabloon-administraties-in-mijn-kantoor/ (17 februari 2026): 'Als gebruiker van Mijn Kantoor is het mogelijk om een sjabloon-administraties aan te maken ... waarbij je een categorieënschema (rekeningschema)' prepares for clients",
@@ -6983,6 +7789,10 @@
 				"reachedOn": "nothing",
 				"change": "ledger-open-item-clearing"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShGrootboek"
+			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Concept-financial-glaccounts-fingl-intercomptransactionsc: with Boekhouden, Accountancy, Professional or Premium \"kun je ook openstaande posten afletteren\" on rekening-courant accounts Note: Matching on current accounts is described; a report of groups that do not net to zero is not.",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/549560-afletteren-in-beta : 'Met het afletter-systeem zie je snel welke balanscategorieën niet op nul uitkomen en kun je journaalposten automatisch of handmatig afletteren'; beta, limited to some journal types",
@@ -7015,6 +7825,10 @@
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing",
 				"change": "tax-vat-return-from-books"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBtwAangifte"
 			},
 			"evidence": {
 				"exact-online": "not checked: reason: searched exact.com/nl, the Exact knowledge base and What's New today: not stated for a VAT fiscal unity in Boekhouden; the accountant product Fiscaal files corporate tax for a fiscal unity (https://www.exact.com/nl/producten/accountancy/fiscaal/features-en-prijzen)",
@@ -7050,6 +7864,10 @@
 				"evidence": "POST /api/vat-number-checks/{type}/{id} (VatNumberCheckController) validates the customer's vatId or the supplier's vatNumber through ViesService and writes valid, invalid or vies_outage with the last valid date onto the record (lib/Service/Tax/VatNumberCheck.php); SupplierInvoiceService keeps the UBL seller VAT number as sellerVatId and checks a number from another EU country on arrival (tests/Unit/Service/Tax/VatNumberCheckTest.php, tests/Unit/Service/SupplierInvoiceServiceTest.php).",
 				"change": "tax-vat-number-check"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShKlant"
+			},
 			"evidence": {
 				"exact-online": "not checked: searched exact.com/nl product pages and the Exact knowledge base today for VIES: not stated",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207677-icp-aangifte-doen-vanuit-moneybird : 'Moneybird zal automatisch het ingevulde btw nummer voor je controleren'",
@@ -7083,6 +7901,10 @@
 				"evidence": "PaymentRun.paymentLines[].requestedExecutionDate; lib/PaymentRun/Generator/SepaPain001Generator.php writes one PmtInf block per requested date with its own ReqdExctnDt, so each payment asks the bank for its own day.",
 				"reachedOn": "PaymentRuns Propose payment run, option Pay each invoice on its due date; PaymentRunDetail paymentLines",
 				"change": "2026-09-29-banking-payment-run"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBetaalrun"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-bank-fin-bnkpymt-editsplitpymntt?language=en_GB: \"This is the date the payment will be made. You can select Fixed: Date to enter a new date for all the payments or Postpone\"",
@@ -7150,6 +7972,10 @@
 				"reachedOn": "nothing reaches it",
 				"change": "sales-einvoice-exchange"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShInkoopfacturen"
+			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Content-rn-whatsnewlandingpage?language=en_GB (December 2025): \"Easily receive self-billed invoices from your customers\"",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207147-selfbilling-in-moneybird : a received self-billing invoice is entered 'Als negatieve inkoopfactuur op het tabblad Inkomend ... Deze creditfactuur bevat inkomsten die onder omzet vallen' Note: workaround booking; Moneybird lists selfbilling among situations where it is only partly suitable (article 207349)",
@@ -7184,6 +8010,10 @@
 				"reachedOn": "nothing reaches it",
 				"change": "sales-einvoice-exchange"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVerkoopfactuur"
+			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Content-rn-whatsnewlandingpage?language=en_GB (May 2026): \"Now receive email notifications for rejected sales invoices sent via Peppol to stay updated and take timely action\"",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/227729-problemen-oplossen-met-peppol : covers 'foutmelding bij het versturen via Peppol, of wordt je factuur niet geaccepteerd'; https://helpcenter.moneybird.nl/nl/articles/223920-melding-als-een-factuur-of-offerte-niet-goed-is-verzonden Note: send failures are notified; a Peppol business-level rejection message from the customer is not stated",
@@ -7217,6 +8047,10 @@
 				"reachedOn": "nothing",
 				"change": "ledger-foreign-legislation"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShAdministraties"
+			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/vooruitblik: \"Vanaf april kun je als Early Adopter, gebruik maken van de Multi-legislation functionaliteit binnen de nieuwe Premium Plus edities ... een volledige Belgische administratie voeren volgens de Belgische wet en regelgeving\". Early adopter only, Belgium only.",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207351-boekhouden-voor-niet-nederlandse-ondernemers : 'Wanneer je een account aanmaakt in Moneybird, kies je het land ... Aan de hand van het gekozen land worden de juiste btw-tarieven toegevoegd'; Belgian administrations have their own offering; several administrations share one login (article 207450) Note: country per administration with VAT rates; full local legislation for other countries is not stated",
@@ -7249,6 +8083,10 @@
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing",
 				"change": "ledger-multi-administration"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShAdministraties"
 			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/vooruitblik: \"Met MDM worden financiele stamgegevens automatisch gesynchroniseerd tussen meerdere administraties ... Een geselecteerde groep klanten kan nu al deelnemen via een controlled release\". Controlled release in Premium Plus.",
@@ -7316,6 +8154,10 @@
 				"reachedOn": "nothing",
 				"change": "platform-custom-record-types"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShInstellingen"
+			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Content-rn-whatsnewlandingpage?language=en_GB (July 2026, Premium Editions): \"Flex: The Custom entity feature is now available in the Premium editions of Exact Online. You can now define and manage your own business-specific entities\"",
 				"moneybird": "not checked: only custom fields on contacts, invoices and quotes (https://helpcenter.moneybird.nl/nl/articles/223860-extra-velden-instellen); own record types are not stated",
@@ -7382,6 +8224,10 @@
 				"reachedOn": "Nextcloud login, before any shillinq page",
 				"spec": "none"
 			},
+			"screen": {
+				"board": null,
+				"reason": "Handled by the Nextcloud login before any shillinq page opens."
+			},
 			"evidence": {
 				"exact-online": "not checked: reason: searched exact.com/nl, the Exact knowledge base and What's New today: not stated; Exact uses its own One Exact Identity login with two-step verification",
 				"moneybird": "not checked: helpcenter documents passwords, 2FA and passkeys (articles 207539, 207550); organisational single sign-on is not stated",
@@ -7416,6 +8262,10 @@
 				"reachedOn": "Administraties settings",
 				"change": "tax-vat-return-from-books"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBelastingen"
+			},
 			"evidence": {
 				"exact-online": "not checked: reason: searched exact.com/nl, the Exact knowledge base and What's New today: not stated",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207318-gebroken-boekjaar-instellen-in-moneybird : 'Het is niet mogelijk om een gebroken- of verlengd boekjaar in te stellen in Moneybird' Note: VAT periods themselves are calendar quarters; reports can be filtered per period",
@@ -7449,6 +8299,10 @@
 				"reachedOn": "Settings > Required fields (/settings/required-fields): the administration's required fields; a required field's page lists every field of its record type as always, in this administration, or no",
 				"evidence": "FieldRequirement records per administration (lib/Settings/register.d/platform-required-fields.json); FieldRequirementListener on ObjectCreatingEvent and ObjectUpdatingEvent refuses a person's save through the object API that leaves an active requirement empty, keyed by field with the reason, skips system writes and other administrations, and refuses a requirement on an unknown or always-required field (tests/Unit/Listener/FieldRequirementListenerTest.php, tests/vitest/platformRequiredFields.spec.js). The form marking the field before the save waits on nextcloud-vue (task 2.2).",
 				"change": "platform-required-fields"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShInstellingen"
 			},
 			"evidence": {
 				"exact-online": "https://support.exactonline.com/community/s/article/All-All-HNO-Task-financial-costanalysis-costcenter-fincctr-linkglacctt?language=en_GB: which cost centres an employee \"can or must select\" per G/L account; https://www.exact.com/nl/producten/boekhouden/features-en-prijzen Flex adds free fields (Premium) Note: Required dimensions per account; general required-field rules are not described.",
@@ -7488,6 +8342,10 @@
 				"change": "2026-09-29-sales-down-payments",
 				"readOn": "2026-09-29"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVerkoopfacturen"
+			},
 			"evidence": {
 				"exact-online": "https://www.exact.com/nl/producten/projectadministratie/features-en-prijzen: \"Voorschotten & uurbundels\"; fixed price projects billed in terms Note: Advances in Projectadministratie; deduction on a final order invoice is not described.",
 				"moneybird": "https://helpcenter.moneybird.nl/nl/articles/207189-factureren-van-een-offerte : 'Factureer een offerte in één keer, of in delen met een deelfactuur en een eindfactuur'; https://helpcenter.moneybird.nl/nl/articles/207923-aanbetalen-van-facturen : 'Kies dan op de offerte voor Meer factuuropties > Deelfactuur maken'; changelog 'offertes-in-delen-factureren' (September 2026)",
@@ -7522,6 +8380,10 @@
 				"readOn": "2026-10-07",
 				"change": "2026-06-14-bookings-deposits"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShAfspraken"
+			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "bookings-appointments",
@@ -7546,6 +8408,10 @@
 				"readOn": "2026-10-07",
 				"change": "2026-07-14-bookkeeping-aansluitingen"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShAfsluiten"
+			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "period-close",
@@ -7568,6 +8434,10 @@
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-10-07",
 				"change": "2026-06-14-bookkeeping-voorzieningen-claims"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVerslaggeving"
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
@@ -7592,6 +8462,10 @@
 				"readOn": "2026-10-07",
 				"change": "2026-06-14-inventory-reorder-automation"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVoorraad"
+			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "inventory-fifo-valuation",
@@ -7614,6 +8488,10 @@
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-10-07",
 				"change": "2026-06-14-inventory-cycle-count"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVoorraad"
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
@@ -7638,6 +8516,10 @@
 				"readOn": "2026-10-07",
 				"change": "2026-06-14-retainer-billing-engine"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShFactuurGenereren"
+			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "recurring-retainer-billing",
@@ -7660,6 +8542,10 @@
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-10-07",
 				"change": "2026-06-14-bookkeeping-ifrs15-revenue"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVerslaggeving"
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
@@ -7685,6 +8571,10 @@
 				"readOn": "2026-10-07",
 				"change": "2026-06-14-bookkeeping-tenderned-integratie"
 			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShLeveranciers"
+			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
 			"feature": "procurement",
@@ -7707,6 +8597,10 @@
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-10-07",
 				"change": "2026-06-14-shillinq-delegate-signing"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShVerkoopfactuur"
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
@@ -7732,6 +8626,10 @@
 				"readOn": "2026-10-07",
 				"change": "tax-cbcr-and-pillar2-returns",
 				"delivered": "2026-06-14-bookkeeping-cbcr-pillar2"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShBelastingen"
 			},
 			"provider": "shillinq",
 			"providerHow": "read-from-code",
@@ -8949,5 +9847,639 @@
 			"source": "own-code",
 			"pendingReason": "Segregation checks run only if OpenRegister executes the register's scheduled-workflow declaration."
 		}
-	]
+	],
+	"specScreens": {
+		"accounting-standards-policy": {
+			"board": [
+				"ShVerslaggeving"
+			]
+		},
+		"accounts-payable-consolidation": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"app-administration": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"apphost-adoption": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"ar-invoice-payment-links": {
+			"board": [
+				"ShVerkoopfactuur",
+				"ShDebiteurenbeheer"
+			]
+		},
+		"background-job-consolidation": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"bookings": {
+			"board": [
+				"ShAfspraken"
+			]
+		},
+		"bookings-cancellation-rules": {
+			"board": [
+				"ShAfspraken"
+			]
+		},
+		"bookings-create-appointment": {
+			"board": [
+				"ShAfspraken"
+			]
+		},
+		"bookings-deposit-to-invoice": {
+			"board": [
+				"ShAfspraken"
+			]
+		},
+		"bookings-notification-triggers": {
+			"board": [
+				"ShAfspraken"
+			]
+		},
+		"bookings-recurring-series": {
+			"board": [
+				"ShAfspraken"
+			]
+		},
+		"bookkeeping-accounts-payable-core": {
+			"board": [
+				"ShInkoopfacturen",
+				"ShFactuurImporteren"
+			]
+		},
+		"bookkeeping-accounts-receivable-core": {
+			"board": [
+				"ShVerkoopfacturen",
+				"ShVerkoopfactuur"
+			]
+		},
+		"bookkeeping-audit-trail": {
+			"board": [
+				"ShVerkoopfactuur",
+				"ShMemoriaal"
+			]
+		},
+		"bookkeeping-bado-controleprotocol": {
+			"board": [
+				"ShControle"
+			]
+		},
+		"bookkeeping-bank-connectors": {
+			"board": [
+				"ShBank",
+				"ShInstellingen"
+			]
+		},
+		"bookkeeping-bank-reconciliation": {
+			"board": [
+				"ShBank"
+			]
+		},
+		"bookkeeping-bbv-compliance": {
+			"board": [
+				"ShOverheid"
+			]
+		},
+		"bookkeeping-bcf-vat-compensation": {
+			"board": [
+				"ShOverheid"
+			]
+		},
+		"bookkeeping-btw-oss-eu": {
+			"board": [
+				"ShBtwAangifte"
+			]
+		},
+		"bookkeeping-cashflow-13wk": {
+			"board": [
+				"ShLiquiditeit"
+			]
+		},
+		"bookkeeping-cbcr-pillar2": {
+			"board": [
+				"ShBelastingen"
+			]
+		},
+		"bookkeeping-cbs-bestanden-extended": {
+			"board": [
+				"ShOverheid"
+			]
+		},
+		"bookkeeping-ccm-rule-engine": {
+			"board": [
+				"ShAfsluiten"
+			]
+		},
+		"bookkeeping-chart-of-accounts": {
+			"board": [
+				"ShGrootboek"
+			]
+		},
+		"bookkeeping-consultancy-project-accounting": {
+			"board": [
+				"ShFactuurGenereren"
+			]
+		},
+		"bookkeeping-continuous-close": {
+			"board": [
+				"ShAfsluiten"
+			]
+		},
+		"bookkeeping-cost-centers-dimensions": {
+			"board": [
+				"ShWinstEnVerlies"
+			]
+		},
+		"bookkeeping-credit-control-dunning": {
+			"board": [
+				"ShDebiteurenbeheer"
+			]
+		},
+		"bookkeeping-deferred-tax": {
+			"board": [
+				"ShBelastingen"
+			]
+		},
+		"bookkeeping-document-attachment-integration": {
+			"board": [
+				"ShVerkoopfactuur"
+			]
+		},
+		"bookkeeping-einvoicing-ubl-peppol": {
+			"board": [
+				"ShVerkoopfactuur"
+			]
+		},
+		"bookkeeping-ensia-zelfevaluatie": {
+			"board": [
+				"ShControle"
+			]
+		},
+		"bookkeeping-financial-statements": {
+			"board": [
+				"ShWinstEnVerlies"
+			]
+		},
+		"bookkeeping-fixed-assets-depreciation": {
+			"board": [
+				"ShActief"
+			]
+		},
+		"bookkeeping-general-ledger": {
+			"board": [
+				"ShGrootboek",
+				"ShMemoriaal"
+			]
+		},
+		"bookkeeping-gr-consolidation": {
+			"board": [
+				"ShOverheid"
+			]
+		},
+		"bookkeeping-ib-aangifte-zzp": {
+			"board": [
+				"ShBelastingen"
+			]
+		},
+		"bookkeeping-icp-opgaaf": {
+			"board": [
+				"ShBtwAangifte"
+			]
+		},
+		"bookkeeping-innovatiebox-administratie": {
+			"board": [
+				"ShBelastingen"
+			]
+		},
+		"bookkeeping-investeringsaftrek": {
+			"board": [
+				"ShBelastingen"
+			]
+		},
+		"bookkeeping-journal-entries": {
+			"board": [
+				"ShMemoriaal"
+			]
+		},
+		"bookkeeping-kor-kleine-ondernemersregeling": {
+			"board": [
+				"ShBtwAangifte"
+			]
+		},
+		"bookkeeping-lease-accounting": {
+			"board": [
+				"ShVerslaggeving"
+			]
+		},
+		"bookkeeping-lease-contracts": {
+			"board": [
+				"ShVerslaggeving"
+			]
+		},
+		"bookkeeping-lease-disclosures": {
+			"board": [
+				"ShVerslaggeving"
+			]
+		},
+		"bookkeeping-lease-exemptions": {
+			"board": [
+				"ShVerslaggeving"
+			]
+		},
+		"bookkeeping-lease-reassessment": {
+			"board": [
+				"ShVerslaggeving"
+			]
+		},
+		"bookkeeping-market-government-separation": {
+			"board": [
+				"ShOverheid"
+			]
+		},
+		"bookkeeping-multi-administratie": {
+			"board": [
+				"ShAdministraties"
+			]
+		},
+		"bookkeeping-multi-currency": {
+			"board": [
+				"ShBank",
+				"ShVerkoopfacturen"
+			]
+		},
+		"bookkeeping-period-close": {
+			"board": [
+				"ShAfsluiten"
+			]
+		},
+		"bookkeeping-programmabegroting": {
+			"board": [
+				"ShOverheid"
+			]
+		},
+		"bookkeeping-provincies-bbv-variant": {
+			"board": [
+				"ShOverheid"
+			]
+		},
+		"bookkeeping-purchase-order-3way": {
+			"board": [
+				"ShInkooporder"
+			]
+		},
+		"bookkeeping-r-d-subsidies-mkb": {
+			"board": [
+				"ShBelastingen"
+			]
+		},
+		"bookkeeping-rechtmatigheidsverantwoording": {
+			"board": [
+				"ShControle"
+			]
+		},
+		"bookkeeping-reconciliation-reports": {
+			"board": [
+				"ShAfsluiten"
+			]
+		},
+		"bookkeeping-rekenkamer-audit-pack": {
+			"board": [
+				"ShControle"
+			]
+		},
+		"bookkeeping-rule-engine": {
+			"board": [
+				"ShMemoriaal"
+			]
+		},
+		"bookkeeping-rules": {
+			"board": [
+				"ShMemoriaal"
+			]
+		},
+		"bookkeeping-sbr-xbrl-reporting": {
+			"board": [
+				"ShBelastingen",
+				"ShRapporten"
+			]
+		},
+		"bookkeeping-schatkistbankieren": {
+			"board": [
+				"ShLiquiditeit"
+			]
+		},
+		"bookkeeping-sepa-direct-debit": {
+			"board": [
+				"ShKlant",
+				"ShDebiteurenbeheer"
+			]
+		},
+		"bookkeeping-sisa-reporting": {
+			"board": [
+				"ShOverheid"
+			]
+		},
+		"bookkeeping-subsidie-verantwoording": {
+			"board": [
+				"ShControle"
+			]
+		},
+		"bookkeeping-vat-btw-filing": {
+			"board": [
+				"ShBtwAangifte"
+			]
+		},
+		"bookkeeping-verplichtingenadministratie": {
+			"board": [
+				"ShBegroting"
+			]
+		},
+		"bookkeeping-vpb-corporate-tax": {
+			"board": [
+				"ShBelastingen"
+			]
+		},
+		"bookkeeping-waterschappen-bbv-variant": {
+			"board": [
+				"ShOverheid"
+			]
+		},
+		"bookkeeping-wbso-sno-administratie": {
+			"board": [
+				"ShBelastingen"
+			]
+		},
+		"bookkeeping-wet-fido-treasury": {
+			"board": [
+				"ShLiquiditeit"
+			]
+		},
+		"bookkeeping-year-end-close": {
+			"board": [
+				"ShAfsluiten"
+			]
+		},
+		"bookkeeping-zzp-tax-regime": {
+			"board": [
+				"ShBelastingen"
+			]
+		},
+		"budget-core-schema": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"consume-platform-abstractions": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"contracts-single-home": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"declarative-calc-layer": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"declarative-calc-refs": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"declarative-object-references": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"docs": {
+			"board": null,
+			"reason": "The product documentation is a website outside the app; the Documentatie menu item links to it."
+		},
+		"expense-capture-core": {
+			"board": [
+				"ShDeclaraties"
+			]
+		},
+		"first-time-setup": {
+			"board": [
+				"ShAdministraties"
+			]
+		},
+		"frontend-bundle-hygiene": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"governance-compliance-settings": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"grir-accrual-wiring": {
+			"board": [
+				"ShInkooporder"
+			]
+		},
+		"inventory-accounting-correctness": {
+			"board": [
+				"ShVoorraad"
+			]
+		},
+		"inventory-barcode-sku": {
+			"board": [
+				"ShVoorraad"
+			]
+		},
+		"inventory-cogs-posting": {
+			"board": [
+				"ShVoorraad"
+			]
+		},
+		"inventory-sales-issue-cogs-trigger": {
+			"board": [
+				"ShVoorraad"
+			]
+		},
+		"inventory-stock-movement-ledger": {
+			"board": [
+				"ShVoorraad"
+			]
+		},
+		"inventory-stock-tracking": {
+			"board": [
+				"ShVoorraad"
+			]
+		},
+		"inventory-valuation-fifo-avg": {
+			"board": [
+				"ShVoorraad"
+			]
+		},
+		"invoice-from-time-and-expense": {
+			"board": [
+				"ShFactuurGenereren"
+			]
+		},
+		"list-views-cndatatable": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"manifest-boot-performance": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"missing-lifecycle-guards": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"nav-reachability": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"notification-booking-email-templates": {
+			"board": [
+				"ShAfspraken"
+			]
+		},
+		"notification-booking-sms-reminders": {
+			"board": [
+				"ShAfspraken"
+			]
+		},
+		"object-payment-requests": {
+			"board": [
+				"ShDebiteurenbeheer"
+			]
+		},
+		"object-store-retirement": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"payment-control-guards": {
+			"board": [
+				"ShBetaalrun"
+			]
+		},
+		"payment-run-sepa-export": {
+			"board": [
+				"ShBetaalrun"
+			]
+		},
+		"portal-contribution": {
+			"board": null,
+			"reason": "Contributes sections to the portaliq portal, which is drawn as a portaliq screen."
+		},
+		"portal-payment-initiation": {
+			"board": null,
+			"reason": "Payment starts from the portaliq portal, which is drawn as a portaliq screen."
+		},
+		"rate-card-management": {
+			"board": [
+				"ShFactuurGenereren"
+			]
+		},
+		"realtime-updates": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"receipt-extraction-consume": {
+			"board": [
+				"ShFactuurImporteren"
+			]
+		},
+		"recurring-invoicing": {
+			"board": [
+				"ShKlant"
+			]
+		},
+		"recurring-revenue-recognition": {
+			"board": [
+				"ShVerslaggeving"
+			]
+		},
+		"reports-via-docudesk": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"retainer-billing-management": {
+			"board": [
+				"ShFactuurGenereren"
+			]
+		},
+		"revive-gl-tax-capabilities": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"schema-consolidation": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"school-contributions": {
+			"board": [
+				"ShVerkoopfacturen"
+			]
+		},
+		"security-endpoint-guards": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"segregation-control-real-check": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"semantic-invoice-consume": {
+			"board": [
+				"ShOrders"
+			]
+		},
+		"semantic-schema-markers": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"shillinq-bill-import-modal": {
+			"board": [
+				"ShFactuurImporteren"
+			]
+		},
+		"shillinq-mcp-tool-surface": {
+			"board": null,
+			"reason": "Machine access for AI tools through the MCP surface, no screen in the app."
+		},
+		"shillinq-nav-ia-cleanup": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"shillinq-product-vendor-to-pipelinq": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"subject-cost-aggregation": {
+			"board": null,
+			"reason": "The cost shows on the case in the domain app (dossiq); shillinq computes it without a screen of its own."
+		},
+		"templates-notifications-settings": {
+			"board": null,
+			"reason": "Engineering work (refactor, plumbing, test or gate) with no screen of its own."
+		},
+		"time-expense-invoice-intake": {
+			"board": [
+				"ShFactuurGenereren"
+			]
+		},
+		"usage-metered-billing": {
+			"board": [
+				"ShFactuurGenereren"
+			]
+		},
+		"wbso-uren-tagging-and-export": {
+			"board": [
+				"ShBelastingen"
+			]
+		},
+		"zzp-urencriterium-tracker": {
+			"board": [
+				"ShBelastingen"
+			]
+		}
+	}
 }
