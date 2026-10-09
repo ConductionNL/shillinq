@@ -72,6 +72,8 @@ class ComputeBcfClaimAction implements LifecycleActionInterface {
 
 		$computed = $this->claims->computeClaim(administrationId: $administrationId, claimQuarter: $claimQuarter);
 		$objectData['totalCompensableAmount'] = $computed['totalCompensableAmount'];
+		// BcfSubmissionGuard holds totalClaimAmount against the approval threshold.
+		$objectData['totalClaimAmount'] = $computed['totalCompensableAmount'];
 		$objectData['breakdown'] = $computed['breakdown'];
 
 		return $objectData;

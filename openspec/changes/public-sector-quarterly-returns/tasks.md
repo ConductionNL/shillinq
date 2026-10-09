@@ -5,7 +5,7 @@
 ## 1. BCF
 
 - [x] 1.1 `compute` action on `BcfClaim` (REQ-BCF-010). Done 9 Oct 2026: `lib/Lifecycle/Action/ComputeBcfClaimAction.php`, transition `compute` (draft to draft) in bookkeeping-bcf-vat-compensation.json (BcfClaim 0.2.0, info.xml 0.5.6-unstable.20261009090000, lock recorded); tests/Unit/Lifecycle/Action/ComputeBcfClaimActionTest.php validates the saved claim against the merged schema. Verify: PHPUnit red first with the real service and calculator; the patched payload validates against the real fragment.
-- [ ] 1.2 Claim page breakdown (REQ-BCF-010). Verify: vitest; `check:manifest`.
+- [x] 1.2 Claim page breakdown (REQ-BCF-010). Done 9 Oct 2026: BcfClaimDetail shows claim quarter, compensable VAT and the breakdown per account; compute also sets totalClaimAmount for the threshold guard; tests/vitest/bcfClaimBreakdown.spec.js. Verify: vitest; `check:manifest`.
 
 ## 2. Fido
 

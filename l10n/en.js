@@ -4229,7 +4229,11 @@ OC.L10N.register(
         "Fee schedule": "Fee schedule",
         "Case type": "Case type",
         "Basis in force from": "Basis in force from",
-        "Pay at intake": "Pay at intake"
+        "Pay at intake": "Pay at intake",
+        "Claim quarter": "Claim quarter",
+        "Compensable VAT": "Compensable VAT",
+        "Breakdown per account": "Breakdown per account",
+        "Compute claim": "Compute claim"
     },
     "nplurals=2; plural=(n != 1);"
 )

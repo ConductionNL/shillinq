@@ -89,6 +89,8 @@ final class ComputeBcfClaimActionTest extends TestCase {
 		$saved = $this->action($os)->execute($claim, $claim, [], 'compute');
 
 		self::assertSame(23100.0, $saved['totalCompensableAmount']);
+		// The approval-threshold guard on submit reads totalClaimAmount.
+		self::assertSame(23100.0, $saved['totalClaimAmount']);
 		self::assertSame(['4300', '4310'], array_column($saved['breakdown'], 'accountNumber'));
 		self::assertSame('draft', $saved['state']);
 		self::assertSame([], RegisterSchema::errors('BcfClaim', $saved));

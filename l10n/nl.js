@@ -6432,7 +6432,11 @@ OC.L10N.register(
         "Fee schedule": "Legestarief",
         "Case type": "Zaaktype",
         "Basis in force from": "Grondslag geldig vanaf",
-        "Pay at intake": "Betalen bij aanvraag"
+        "Pay at intake": "Betalen bij aanvraag",
+        "Claim quarter": "Claimkwartaal",
+        "Compensable VAT": "Compensabele btw",
+        "Breakdown per account": "Uitsplitsing per rekening",
+        "Compute claim": "Claim berekenen"
     },
     "nplurals=2; plural=(n != 1);"
 )

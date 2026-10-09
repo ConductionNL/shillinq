@@ -15,8 +15,15 @@ import path from 'path'
 import { describe, expect, it } from 'vitest'
 
 const ROOT = path.resolve(__dirname, '../..')
-const fragment = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/manifest.d/fee-schedules.json'), 'utf8'))
-const register = JSON.parse(fs.readFileSync(path.join(ROOT, 'lib/Settings/register.d/leges-at-intake.json'), 'utf8'))
+const fragment = JSON.parse(
+	fs.readFileSync(path.join(ROOT, 'src/manifest.d/fee-schedules.json'), 'utf8'),
+)
+const register = JSON.parse(
+	fs.readFileSync(
+		path.join(ROOT, 'lib/Settings/register.d/leges-at-intake.json'),
+		'utf8',
+	),
+)
 
 describe('Fee schedule page', () => {
 	const index = fragment.pages.find((p) => p.id === 'FeeSchedules')
@@ -48,6 +55,8 @@ describe('Fee schedule page', () => {
 	it('is reachable from the Government menu', () => {
 		const gov = fragment.menu.find((m) => m.id === 'Overheid')
 		expect(gov.children.map((c) => c.route)).toContain('FeeSchedules')
-		expect(fragment.pages.find((p) => p.id === index.config.detailRoute).type).toBe('detail')
+		expect(
+			fragment.pages.find((p) => p.id === index.config.detailRoute).type,
+		).toBe('detail')
 	})
 })
