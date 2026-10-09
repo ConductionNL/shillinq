@@ -12,6 +12,10 @@
         {
             "appVersion": "0.5.4-unstable.20261005190000",
             "versionsSha256": "e713b19780c54b920ab586c819aa12bf3bfff29f0034c5f31f98c7495f53359a"
+        },
+        {
+            "appVersion": "0.5.6-unstable.20261009090000",
+            "versionsSha256": "02c841130f2970e600ccde7e56c9fa6206a80c255a54a1a215f2821f428674c1"
         }
     ],
     "versions": {
@@ -67,7 +71,7 @@
         "schema:BbvProgrammeBudget": "0.1.0",
         "schema:BbvStatement": "0.1.0",
         "schema:BbvTaakveld": "0.1.0",
-        "schema:BcfClaim": "0.1.0",
+        "schema:BcfClaim": "0.2.0",
         "schema:Begrotingswijziging": "0.1.0",
         "schema:Belastingplichtige": "0.1.0",
         "schema:BeleidsIndicator": "0.1.0",
