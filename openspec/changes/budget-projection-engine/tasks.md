@@ -104,7 +104,7 @@
       delegates rather than computes.
 
 ## 6. Cross-reference finding, recorded not fixed (REQ-BPE-009's design.md §7a note)
-- [ ] Record, in this change's PR description, the cross-check finding
+- [x] (9 Oct 2026: recorded in the build/openspecs-1 PR description) Record, in this change's PR description, the cross-check finding
       that `budget-core-schema design.md` §6b describes its
       `BudgetVsActualsReader` as resolving actuals "from
       `TrialBalanceLine`" as though it held queryable historical rows,
