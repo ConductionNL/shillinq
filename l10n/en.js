@@ -4238,7 +4238,12 @@ OC.L10N.register(
         "Cash limit": "Cash limit",
         "Net floating debt": "Net floating debt",
         "Headroom": "Headroom",
-        "Headroom per year": "Headroom per year"
+        "Headroom per year": "Headroom per year",
+        "Base budget": "Base budget",
+        "Scenario: {name}": "Scenario: {name}",
+        "Scenario not found.": "Scenario not found.",
+        "Scenario not found": "Scenario not found",
+        "scenarioId must be a valid identifier": "scenarioId must be a valid identifier"
     },
     "nplurals=2; plural=(n != 1);"
 )

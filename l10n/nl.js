@@ -6441,7 +6441,12 @@ OC.L10N.register(
         "Cash limit": "Kasgeldlimiet",
         "Net floating debt": "Netto vlottende schuld",
         "Headroom": "Ruimte",
-        "Headroom per year": "Ruimte per jaar"
+        "Headroom per year": "Ruimte per jaar",
+        "Base budget": "Basisbegroting",
+        "Scenario: {name}": "Scenario: {name}",
+        "Scenario not found.": "Scenario niet gevonden.",
+        "Scenario not found": "Scenario niet gevonden",
+        "scenarioId must be a valid identifier": "scenarioId moet een geldige identificatie zijn"
     },
     "nplurals=2; plural=(n != 1);"
 )
