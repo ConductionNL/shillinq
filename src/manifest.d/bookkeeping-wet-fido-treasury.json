@@ -62,24 +62,27 @@
 					{
 						"id": "kasgeld-headroom",
 						"title": "Cash limit headroom",
-						"type": "stats-block",
-						"iconClass": "icon-quota",
-						"props": {
-							"count": 0,
-							"countLabel": "EUR headroom",
-							"variant": "primary"
-						}
+						"type": "table",
+						"dataSource": { "register": "shillinq", "schema": "KasgeldLimiet", "sort": "-auditYear", "limit": 1 },
+						"columns": [
+							{ "key": "auditYear", "label": "Year" },
+							{ "key": "calculatedCeiling", "label": "Cash limit" },
+							{ "key": "currentExposure", "label": "Net floating debt" },
+							{ "key": "headroom", "label": "Headroom" },
+							{ "key": "status", "label": "Status" }
+						]
 					},
 					{
 						"id": "rente-risico-headroom",
 						"title": "Interest rate risk norm headroom",
-						"type": "stats-block",
-						"iconClass": "icon-quota",
-						"props": {
-							"count": 0,
-							"countLabel": "EUR headroom",
-							"variant": "primary"
-						}
+						"type": "table",
+						"dataSource": { "register": "shillinq", "schema": "RenteRisicoNorm", "sort": "-auditYear", "limit": 1 },
+						"columns": [
+							{ "key": "auditYear", "label": "Year" },
+							{ "key": "calculatedCeiling", "label": "Norm" },
+							{ "key": "headroomPerYear", "label": "Headroom per year" },
+							{ "key": "status", "label": "Status" }
+						]
 					},
 					{
 						"id": "schatkist-saldo",
@@ -105,10 +108,10 @@
 					}
 				],
 				"layout": [
-					{ "id": "layout-kasgeld-headroom", "widgetId": "kasgeld-headroom", "gridX": 0, "gridY": 0, "gridWidth": 3, "gridHeight": 2 },
-					{ "id": "layout-rente-risico-headroom", "widgetId": "rente-risico-headroom", "gridX": 3, "gridY": 0, "gridWidth": 3, "gridHeight": 2 },
-					{ "id": "layout-schatkist-saldo", "widgetId": "schatkist-saldo", "gridX": 6, "gridY": 0, "gridWidth": 3, "gridHeight": 2 },
-					{ "id": "layout-open-alerts", "widgetId": "open-alerts", "gridX": 9, "gridY": 0, "gridWidth": 3, "gridHeight": 2 }
+					{ "id": "layout-kasgeld-headroom", "widgetId": "kasgeld-headroom", "gridX": 0, "gridY": 2, "gridWidth": 6, "gridHeight": 3 },
+					{ "id": "layout-rente-risico-headroom", "widgetId": "rente-risico-headroom", "gridX": 6, "gridY": 2, "gridWidth": 6, "gridHeight": 3 },
+					{ "id": "layout-schatkist-saldo", "widgetId": "schatkist-saldo", "gridX": 0, "gridY": 0, "gridWidth": 6, "gridHeight": 2 },
+					{ "id": "layout-open-alerts", "widgetId": "open-alerts", "gridX": 6, "gridY": 0, "gridWidth": 6, "gridHeight": 2 }
 				]
 			}
 		},

@@ -4233,7 +4233,12 @@ OC.L10N.register(
         "Claim quarter": "Claim quarter",
         "Compensable VAT": "Compensable VAT",
         "Breakdown per account": "Breakdown per account",
-        "Compute claim": "Compute claim"
+        "Compute claim": "Compute claim",
+        "Compute quarter": "Compute quarter",
+        "Cash limit": "Cash limit",
+        "Net floating debt": "Net floating debt",
+        "Headroom": "Headroom",
+        "Headroom per year": "Headroom per year"
     },
     "nplurals=2; plural=(n != 1);"
 )

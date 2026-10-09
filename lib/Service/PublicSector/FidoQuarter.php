@@ -250,7 +250,7 @@ class FidoQuarter {
 
 		$report = $this->first(
 			schema: 'QuartaalrapportageFido',
-			filters: ['organisationId' => $organisationId, 'auditYear' => $year, 'quarter' => $previous]
+			filters: ['organisationId' => $organisationId, 'auditYear' => $year, 'quarter' => 'Q' . $previous]
 		);
 
 		return (string)($report['cashStatus']['status'] ?? '');

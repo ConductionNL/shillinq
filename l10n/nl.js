@@ -6436,7 +6436,12 @@ OC.L10N.register(
         "Claim quarter": "Claimkwartaal",
         "Compensable VAT": "Compensabele btw",
         "Breakdown per account": "Uitsplitsing per rekening",
-        "Compute claim": "Claim berekenen"
+        "Compute claim": "Claim berekenen",
+        "Compute quarter": "Kwartaal berekenen",
+        "Cash limit": "Kasgeldlimiet",
+        "Net floating debt": "Netto vlottende schuld",
+        "Headroom": "Ruimte",
+        "Headroom per year": "Ruimte per jaar"
     },
     "nplurals=2; plural=(n != 1);"
 )

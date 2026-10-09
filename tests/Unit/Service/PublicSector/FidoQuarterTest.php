@@ -171,7 +171,7 @@ final class FidoQuarterTest extends TestCase {
 		$os = $this->store();
 		$this->loan($os, 'kasgeld', 9000000.0, '2026-06-01', '2026-12-01');
 		$os->setSchema('QuartaalrapportageFido')->saveObject(
-			['auditYear' => 2026, 'quarter' => 2, 'organisationId' => 'gem-1', 'cashStatus' => ['status' => 'overschrijding-1-kwartaal']]
+			['auditYear' => 2026, 'quarter' => 'Q2', 'organisationId' => 'gem-1', 'cashStatus' => ['status' => 'overschrijding-1-kwartaal']]
 		);
 
 		$result = $this->service($os)->compute(organisationId: 'gem-1', year: '2026', quarter: 3);

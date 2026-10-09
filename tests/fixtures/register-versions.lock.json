@@ -16,6 +16,10 @@
         {
             "appVersion": "0.5.6-unstable.20261009090000",
             "versionsSha256": "02c841130f2970e600ccde7e56c9fa6206a80c255a54a1a215f2821f428674c1"
+        },
+        {
+            "appVersion": "0.5.6-unstable.20261009100000",
+            "versionsSha256": "26b5df713031cc4b29c9ae08d9b3345d9be9f5352f8df73b26dd5dd3b16dad4d"
         }
     ],
     "versions": {
@@ -393,7 +397,7 @@
         "schema:PurchaseOrderLine": "0.1.0",
         "schema:QdmttReturn": "0.1.0",
         "schema:QualifyingAsset": "0.1.0",
-        "schema:QuartaalrapportageFido": "0.1.0",
+        "schema:QuartaalrapportageFido": "0.2.0",
         "schema:QuarterlyTaxStatement": "0.1.0",
         "schema:Quote": "0.1.0",
         "schema:QuoteLine": "0.1.0",
