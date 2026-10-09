@@ -556,6 +556,12 @@ final class VatSuppletieDetectionServiceTest extends TestCase {
 
 		self::assertEqualsWithDelta($debitTotal, $creditTotal, 0.001, 'GL correction posting must balance');
 
+		// REQ-GLS-001: the delta lines and the clearing line carry the parent's administration.
+		self::assertNotEmpty($glLines);
+		foreach ($glLines as $line) {
+			self::assertSame('adm-1', $line['administrationId'] ?? null);
+		}
+
 	}//end testPrepareFlagsAboveGrensWithDeadlineAndPosting()
 
 	/**
