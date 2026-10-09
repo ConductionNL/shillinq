@@ -4379,6 +4379,38 @@
 		{
 			"menu": [
 				{
+					"id": "Overheid",
+					"children": [
+						{
+							"id": "FeeSchedules",
+							"label": "Fee schedules",
+							"icon": "CashMultiple",
+							"route": "FeeSchedules",
+							"order": 70
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "fee-schedules",
+					"id": "FeeSchedules",
+					"route": "/overheid/fee-schedules",
+					"type": "index",
+					"title": "Fee schedules"
+				},
+				{
+					"_fragment": "fee-schedules",
+					"id": "FeeScheduleDetail",
+					"route": "/overheid/fee-schedules/:id",
+					"type": "detail",
+					"title": "Fee schedule"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "Inventory",
 					"label": "Inventory",
 					"icon": "Warehouse",

@@ -11989,7 +11989,10 @@
 						"key": "state",
 						"label": "Status",
 						"type": "string"
-					}
+					},
+					{ "key": "claimQuarter", "label": "Claim quarter", "type": "string" },
+					{ "key": "totalCompensableAmount", "label": "Compensable VAT", "type": "number" },
+					{ "key": "breakdown", "label": "Breakdown per account", "type": "array" }
 				],
 				"indexRoute": "BcfClaims",
 				"sidebarProps": {

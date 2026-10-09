@@ -4225,7 +4225,22 @@
         "That period has not ended yet. Prepare a return for a period that is over.": "That period has not ended yet. Prepare a return for a period that is over.",
         "The return adds up the booked ledger lines of the period per box. It is saved as a draft that you check and submit on its own page.": "The return adds up the booked ledger lines of the period per box. It is saved as a draft that you check and submit on its own page.",
         "The return could not be prepared. Try again, or ask your administrator to check the log.": "The return could not be prepared. Try again, or ask your administrator to check the log.",
-        "You cannot prepare a return for this administration.": "You cannot prepare a return for this administration."
+        "You cannot prepare a return for this administration.": "You cannot prepare a return for this administration.",
+        "View trend of {name}": "View trend of {name}",
+        "Fee schedules": "Fee schedules",
+        "Fee schedule": "Fee schedule",
+        "Case type": "Case type",
+        "Basis in force from": "Basis in force from",
+        "Pay at intake": "Pay at intake",
+        "Claim quarter": "Claim quarter",
+        "Compensable VAT": "Compensable VAT",
+        "Breakdown per account": "Breakdown per account",
+        "Compute claim": "Compute claim",
+        "Compute quarter": "Compute quarter",
+        "Cash limit": "Cash limit",
+        "Net floating debt": "Net floating debt",
+        "Headroom": "Headroom",
+        "Headroom per year": "Headroom per year"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

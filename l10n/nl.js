@@ -6426,7 +6426,22 @@ OC.L10N.register(
         "You cannot prepare a return for this administration.": "Je kunt voor deze administratie geen aangifte opstellen.",
         "Example data fills the lists, detail pages and dashboards so you can see the app working straight away. Pick \"None\" on a production install.": "Voorbeeldgegevens vullen de lijsten, detailpagina’s en dashboards, zodat je de app meteen ziet werken. Kies \"Geen\" op een productieomgeving.",
         "Load the example data": "Laad de voorbeeldgegevens",
-        "Loads what you picked. The data is obviously sample data, it is safe to run more than once, and you can delete it afterwards.": "Laadt wat je koos. De gegevens zijn herkenbaar voorbeeldgegevens, je kunt dit meer dan een keer uitvoeren en je kunt ze daarna verwijderen."
+        "Loads what you picked. The data is obviously sample data, it is safe to run more than once, and you can delete it afterwards.": "Laadt wat je koos. De gegevens zijn herkenbaar voorbeeldgegevens, je kunt dit meer dan een keer uitvoeren en je kunt ze daarna verwijderen.",
+        "View trend of {name}": "Trend van {name} bekijken",
+        "Fee schedules": "Legestarieven",
+        "Fee schedule": "Legestarief",
+        "Case type": "Zaaktype",
+        "Basis in force from": "Grondslag geldig vanaf",
+        "Pay at intake": "Betalen bij aanvraag",
+        "Claim quarter": "Claimkwartaal",
+        "Compensable VAT": "Compensabele btw",
+        "Breakdown per account": "Uitsplitsing per rekening",
+        "Compute claim": "Claim berekenen",
+        "Compute quarter": "Kwartaal berekenen",
+        "Cash limit": "Kasgeldlimiet",
+        "Net floating debt": "Netto vlottende schuld",
+        "Headroom": "Ruimte",
+        "Headroom per year": "Ruimte per jaar"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -11,7 +11,7 @@
       "BcfClaim": {
         "slug": "BcfClaim",
         "icon": "BankTransfer",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "BCF VAT Compensation Claim",
         "description": "A quarterly Btw-compensatiefonds (BCF) claim through which a Dutch public body recovers non-recoverable VAT. The compensable total and per-account breakdown are computed server-side by BcfClaimService from the general ledger; operators never author the derived figures directly. The claim follows a draft → submitted → accepted → settled lifecycle.",
         "x-schema-org": "schema:MonetaryAmount",
@@ -152,6 +152,19 @@
             }
           },
           "transitions": {
+            "compute": {
+              "from": "draft",
+              "to": "draft",
+              "label": "Compute claim",
+              "description": "Compute the compensable VAT of the claim quarter from the posted GL lines, and keep the total and the breakdown per account on the claim (REQ-BCF-010).",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\ComputeBcfClaimAction",
+                  "description": "Compute the total and the breakdown (ComputeBcfClaimAction)."
+                }
+              ]
+            },
             "submit": {
               "from": "draft",
               "to": "submitted",

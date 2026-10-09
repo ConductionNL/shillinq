@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-projection-engine/specs/budget-projection-engine/spec.md#req-bpe-010
+ * @spec openspec/specs/budget-projection-engine/spec.md#req-bpe-010
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -37,7 +37,7 @@ use InvalidArgumentException;
  * Orchestrates {@see BudgetProjectionReader} + {@see BudgetProjectionCalculator}
  * into per-account and per-`LedgerGroup` trend/cumulative series (REQ-BPE-010).
  *
- * @spec openspec/changes/budget-projection-engine/specs/budget-projection-engine/spec.md#req-bpe-010
+ * @spec openspec/specs/budget-projection-engine/spec.md#req-bpe-010
  */
 class BudgetProjectionService {
 	/**
@@ -75,7 +75,7 @@ class BudgetProjectionService {
 	 *
 	 * @throws InvalidArgumentException When the account is not found in the loaded context.
 	 *
-	 * @spec openspec/changes/budget-projection-engine/specs/budget-projection-engine/spec.md#req-bpe-010
+	 * @spec openspec/specs/budget-projection-engine/spec.md#req-bpe-010
 	 */
 	public function projectAccount(string $administrationId, string $accountNumber, array $months): array {
 		$context = $this->reader->loadContext(administrationId: $administrationId, includeLedgerGroups: false);
@@ -101,7 +101,7 @@ class BudgetProjectionService {
 	 *
 	 * @throws InvalidArgumentException When the group is not found in the loaded context.
 	 *
-	 * @spec openspec/changes/budget-projection-engine/specs/budget-projection-engine/spec.md#req-bpe-007
+	 * @spec openspec/specs/budget-projection-engine/spec.md#req-bpe-007
 	 */
 	public function projectGroup(string $administrationId, string $ledgerGroupKey, array $months): array {
 		$context = $this->reader->loadContext(administrationId: $administrationId, includeLedgerGroups: true);

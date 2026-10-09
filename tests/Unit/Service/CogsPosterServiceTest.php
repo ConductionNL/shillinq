@@ -139,6 +139,11 @@ final class CogsPosterServiceTest extends TestCase {
 		self::assertSame('1300', $credit['accountNumber']);
 		self::assertSame(445.0, (float)$credit['amount']);
 
+		// REQ-GLS-001: both COGS legs carry the parent's administration.
+		self::assertSame('adm-1', $txnRows[0]['administrationId']);
+		self::assertSame('adm-1', $debit['administrationId']);
+		self::assertSame('adm-1', $credit['administrationId']);
+
 	}//end testBalancedTransactionWhenAccountsConfigured()
 
 	/**

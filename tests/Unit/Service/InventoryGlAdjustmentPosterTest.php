@@ -98,6 +98,10 @@ final class InventoryGlAdjustmentPosterTest extends TestCase {
 		self::assertSame(123.45, $lines[1]['amount']);
 		self::assertNotSame($lines[0]['side'], $lines[1]['side']);
 
+		// REQ-GLS-001: both adjustment legs carry the parent's administration.
+		self::assertSame('adm-1', $lines[0]['administrationId']);
+		self::assertSame('adm-1', $lines[1]['administrationId']);
+
 	}//end testPostsBalancedTwoLineTransaction()
 
 	/**
