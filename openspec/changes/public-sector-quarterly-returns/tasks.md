@@ -9,7 +9,7 @@
 
 ## 2. Fido
 
-- [ ] 2.1 `FidoQuarter::compute` (REQ-FDO-010). Verify: PHPUnit red first; a EUR 100 million budget at 8.5 percent gives a EUR 8.5 million limit; payloads validate against the real fragment.
+- [x] 2.1 `FidoQuarter::compute` (REQ-FDO-010). Done 9 Oct 2026: `lib/Service/PublicSector/FidoQuarter.php` (cash limit, average month-end net floating debt, ladder from the previous report, interest risk norm for the year and three after); tests/Unit/Service/PublicSector/FidoQuarterTest.php with the saved KasgeldLimiet and RenteRisicoNorm validated against the merged schema. Reads the organisation's GL as the administration with the same id (Q-shillinq-3). Verify: PHPUnit red first; a EUR 100 million budget at 8.5 percent gives a EUR 8.5 million limit; payloads validate against the real fragment.
 - [ ] 2.2 `compute` action on the quarterly report and the dashboard figures (REQ-FDO-011). Verify: PHPUnit; vitest on the dashboard.
 
 ## 3. Strings and live check
