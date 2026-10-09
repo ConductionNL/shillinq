@@ -6429,7 +6429,12 @@
         "Example data fills the lists, detail pages and dashboards so you can see the app working straight away. Pick \"None\" on a production install.": "Voorbeeldgegevens vullen de lijsten, detailpagina’s en dashboards, zodat je de app meteen ziet werken. Kies \"Geen\" op een productieomgeving.",
         "Load the example data": "Laad de voorbeeldgegevens",
         "Loads what you picked. The data is obviously sample data, it is safe to run more than once, and you can delete it afterwards.": "Laadt wat je koos. De gegevens zijn herkenbaar voorbeeldgegevens, je kunt dit meer dan een keer uitvoeren en je kunt ze daarna verwijderen.",
-        "View trend of {name}": "Trend van {name} bekijken"
+        "View trend of {name}": "Trend van {name} bekijken",
+        "Fee schedules": "Legestarieven",
+        "Fee schedule": "Legestarief",
+        "Case type": "Zaaktype",
+        "Basis in force from": "Grondslag geldig vanaf",
+        "Pay at intake": "Betalen bij aanvraag"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

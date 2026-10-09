@@ -4224,7 +4224,12 @@ OC.L10N.register(
         "The return adds up the booked ledger lines of the period per box. It is saved as a draft that you check and submit on its own page.": "The return adds up the booked ledger lines of the period per box. It is saved as a draft that you check and submit on its own page.",
         "The return could not be prepared. Try again, or ask your administrator to check the log.": "The return could not be prepared. Try again, or ask your administrator to check the log.",
         "You cannot prepare a return for this administration.": "You cannot prepare a return for this administration.",
-        "View trend of {name}": "View trend of {name}"
+        "View trend of {name}": "View trend of {name}",
+        "Fee schedules": "Fee schedules",
+        "Fee schedule": "Fee schedule",
+        "Case type": "Case type",
+        "Basis in force from": "Basis in force from",
+        "Pay at intake": "Pay at intake"
     },
     "nplurals=2; plural=(n != 1);"
 )
