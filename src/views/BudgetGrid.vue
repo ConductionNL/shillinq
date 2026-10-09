@@ -451,8 +451,15 @@ export default {
 			}
 			try {
 				const { data } = await axios.get(
-					generateUrl('/apps/openregister/api/objects/shillinq/BudgetScenario'),
-					{ params: { administrationId: this.administrationId, limit: 500 } },
+					generateUrl(
+						'/apps/openregister/api/objects/shillinq/BudgetScenario',
+					),
+					{
+						params: {
+							administrationId: this.administrationId,
+							limit: 500,
+						},
+					},
 				)
 				const rows = data?.results ?? data?.objects ?? data ?? []
 				this.scenarios = Array.isArray(rows) ? rows : []
