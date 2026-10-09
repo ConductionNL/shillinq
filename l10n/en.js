@@ -4223,7 +4223,8 @@ OC.L10N.register(
         "That period has not ended yet. Prepare a return for a period that is over.": "That period has not ended yet. Prepare a return for a period that is over.",
         "The return adds up the booked ledger lines of the period per box. It is saved as a draft that you check and submit on its own page.": "The return adds up the booked ledger lines of the period per box. It is saved as a draft that you check and submit on its own page.",
         "The return could not be prepared. Try again, or ask your administrator to check the log.": "The return could not be prepared. Try again, or ask your administrator to check the log.",
-        "You cannot prepare a return for this administration.": "You cannot prepare a return for this administration."
+        "You cannot prepare a return for this administration.": "You cannot prepare a return for this administration.",
+        "View trend of {name}": "View trend of {name}"
     },
     "nplurals=2; plural=(n != 1);"
 )
