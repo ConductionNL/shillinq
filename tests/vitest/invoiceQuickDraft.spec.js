@@ -8,6 +8,8 @@
  * localStorage preference round-trip with TTL expiry.
  */
 
+import { readdirSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
 	buildInvoicePayload,
@@ -75,7 +77,7 @@ describe('invoiceQuickDraft — payment terms + due date', () => {
 })
 
 describe('invoiceQuickDraft — payload', () => {
-	it('always builds a draft ARInvoice with normalised lines', () => {
+	it('builds a draft ARInvoice whose lines are the declared invoiceLines', () => {
 		const payload = buildInvoicePayload({
 			customerId: 'cust-1',
 			invoiceDate: '2026-02-01',
@@ -99,15 +101,39 @@ describe('invoiceQuickDraft — payload', () => {
 		expect(payload.netAmount).toBe(200)
 		expect(payload.vatAmount).toBe(42)
 		expect(payload.grossAmount).toBe(242)
-		expect(payload.lines).toHaveLength(1)
-		expect(payload.lines[0]).toEqual({
-			lineNumber: 1,
-			description: 'Consulting',
+		// ARInvoice declares its lines as `invoiceLines` (EN 16931 BG-25);
+		// OpenRegister drops an undeclared `lines`, so the draft lost them.
+		expect(payload).not.toHaveProperty('lines')
+		expect(payload.invoiceLines).toHaveLength(1)
+		expect(payload.invoiceLines[0]).toEqual({
+			lineId: '1',
+			itemName: 'Consulting',
 			quantity: 2,
-			unitPrice: 100,
+			unitCode: 'C62',
+			netPrice: 100,
+			netAmount: 200,
 			vatRate: 21,
+			vatCategory: 'S',
 			glAccount: '8000',
 		})
+	})
+
+	it('marks a zero-rate line Z and rounds the line amount to cents', () => {
+		const payload = buildInvoicePayload({
+			customerId: 'cust-1',
+			invoiceDate: '2026-02-01',
+			dueDate: '2026-03-03',
+			lines: [
+				{
+					description: 'Training',
+					quantity: 3,
+					unitPrice: 33.337,
+					vatRate: 0,
+				},
+			],
+		})
+		expect(payload.invoiceLines[0].vatCategory).toBe('Z')
+		expect(payload.invoiceLines[0].netAmount).toBe(100.01)
 	})
 
 	it('always supplies the schema-required invoiceNumber, administrationId and periodId', () => {
@@ -135,6 +161,98 @@ describe('invoiceQuickDraft — payload', () => {
 		})
 		expect(payload.invoiceNumber).toBe('F2026-007')
 		expect(payload.periodId).toBe('2026-Q1')
+	})
+})
+
+/**
+ * The effective ARInvoice schema: the monolith plus every register.d fragment,
+ * merged in file-name order the way SettingsService merges them.
+ *
+ * @return {object} The merged ARInvoice schema.
+ */
+function effectiveArInvoice() {
+	const root = join(__dirname, '../../lib/Settings')
+	const merge = (base, overlay) => {
+		for (const [key, value] of Object.entries(overlay)) {
+			if (
+				value
+				&& typeof value === 'object'
+				&& base[key]
+				&& typeof base[key] === 'object'
+			) {
+				base[key] =
+					Array.isArray(value) && Array.isArray(base[key])
+						? [...base[key], ...value]
+						: merge(base[key], value)
+			} else {
+				base[key] = value
+			}
+		}
+		return base
+	}
+	let merged = JSON.parse(
+		readFileSync(join(root, 'shillinq_register.json'), 'utf8'),
+	)
+	for (const file of readdirSync(join(root, 'register.d'))
+		.filter((f) => f.endsWith('.json'))
+		.sort()) {
+		merged = merge(
+			merged,
+			JSON.parse(readFileSync(join(root, 'register.d', file), 'utf8')),
+		)
+	}
+	return merged.components.schemas.ARInvoice
+}
+
+describe('invoiceQuickDraft — only declared fields (REQ-IQD-007)', () => {
+	it('writes every key and line key as a declared ARInvoice property', () => {
+		const schema = effectiveArInvoice()
+		const payload = buildInvoicePayload({
+			customerId: 'cust-1',
+			invoiceDate: '2026-02-01',
+			dueDate: '2026-03-03',
+			reference: 'PO-42',
+			glAccount: '8000',
+			administrationId: 'adm-1',
+			lines: [
+				{
+					description: 'Consulting',
+					quantity: 1,
+					unitPrice: 100,
+					vatRate: 21,
+				},
+			],
+		})
+		const declared = Object.keys(schema.properties)
+		expect(Object.keys(payload).filter((k) => !declared.includes(k))).toEqual([])
+		const lineDeclared = Object.keys(
+			schema.properties.invoiceLines.items.properties,
+		)
+		expect(
+			Object.keys(payload.invoiceLines[0]).filter(
+				(k) => !lineDeclared.includes(k),
+			),
+		).toEqual([])
+		expect(payload.customerReference).toBe('PO-42')
+		expect(payload.invoiceLines[0].glAccount).toBe('8000')
+	})
+
+	it('keeps a line its own GL account over the default', () => {
+		const payload = buildInvoicePayload({
+			customerId: 'cust-1',
+			invoiceDate: '2026-02-01',
+			glAccount: '8000',
+			lines: [
+				{
+					description: 'Hosting',
+					quantity: 1,
+					unitPrice: 10,
+					vatRate: 21,
+					glAccount: '8100',
+				},
+			],
+		})
+		expect(payload.invoiceLines[0].glAccount).toBe('8100')
 	})
 })
 

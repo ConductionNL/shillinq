@@ -17,10 +17,9 @@
  *    double-count guard, mapping completeness, staged-state hash for
  *    dry-run/post consistency, idempotency — are fully real and unit-tested
  *    on staged data with a mocked ObjectService.
- *  - The deep cross-service writes (journal create, AR/AP create, contact
- *    create via IManager) are guarded and degrade gracefully with a logged
- *    finding where the live surface is environment-dependent, rather than
- *    silently stubbing a success. This is the documented ADR-031 seam.
+ *  - The writes of post and reverse live in ImportPosting: a write the
+ *    register or the books refuse is an error finding that stops the post
+ *    (posting_failed) or the reversal, never a warning behind a `posted`.
  *
  * @category Service
  * @package  OCA\Shillinq\Service\Import
@@ -92,12 +91,14 @@ class ImportPipelineService {
 	 * @param LoggerInterface $logger Logger for diagnostics + graceful-degrade findings.
 	 * @param AuditfileParser $parser Deterministic XAF parser.
 	 * @param ImportBatchGuard $guard Fail-closed lifecycle guard.
+	 * @param ImportPosting $posting Writes and unwinds the opening entry and customers.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
 		private readonly AuditfileParser $parser,
 		private readonly ImportBatchGuard $guard,
+		private readonly ImportPosting $posting,
 	) {
 	}//end __construct()
 
@@ -169,6 +170,29 @@ class ImportPipelineService {
 			];
 		}
 
+		$result = $this->stageBatch(batch: $batch);
+
+		$batch['stagingPayload'] = $result['stagingPayload'];
+		$batch['stagedCounts'] = $result['stagedCounts'];
+		$this->persistBatch(batch: $batch);
+
+		return $result;
+
+	}//end stage()
+
+	/**
+	 * Parse a batch's auditfile into its staged data, without writing anything.
+	 *
+	 * The lifecycle action calls this while the batch itself is being saved, so
+	 * it must not save the batch again.
+	 *
+	 * @param array<string,mixed> $batch The ImportBatch data, with `sourceXaf` holding the file contents.
+	 *
+	 * @return array<string,mixed> 'stagedCounts', 'stagingPayload', 'findings'.
+	 *
+	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 */
+	public function stageBatch(array $batch): array {
 		$profile = $this->profileFor(sourceSystem: (string)($batch['sourceSystem'] ?? 'xaf-generic'));
 		$findings = [];
 
@@ -183,19 +207,14 @@ class ImportPipelineService {
 		$findings = array_merge($findings, ($parsed['findings'] ?? []));
 
 		$stagingPayload = $this->buildStagingPayload(parsed: $parsed, profile: $profile, batch: $batch, findings: $findings);
-		$stagedCounts = $this->countStaged(stagingPayload: $stagingPayload);
-
-		$batch['stagingPayload'] = $stagingPayload;
-		$batch['stagedCounts'] = $stagedCounts;
-		$this->persistBatch(batch: $batch);
 
 		return [
-			'stagedCounts' => $stagedCounts,
+			'stagedCounts' => $this->countStaged(stagingPayload: $stagingPayload),
 			'stagingPayload' => $stagingPayload,
 			'findings' => $findings,
 		];
 
-	}//end stage()
+	}//end stageBatch()
 
 	/**
 	 * Resolve account mappings for the staged batch (REQ-AIM-004).
@@ -232,16 +251,30 @@ class ImportPipelineService {
 			];
 		}
 
+		return $this->resolveBatchMappings(batch: $batch, batchId: $batchId);
+	}//end resolveMappings()
+
+	/**
+	 * Resolve and save the account mappings of a batch that is already loaded.
+	 *
+	 * @param array<string,mixed> $batch   The ImportBatch data with its staged payload.
+	 * @param string              $batchId The batch id the mapping rows reference.
+	 *
+	 * @return array<string,mixed> 'mappings', 'blocking' (bool), 'findings'.
+	 *
+	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
+	 */
+	public function resolveBatchMappings(array $batch, string $batchId): array {
 		$stagingPayload = ($batch['stagingPayload'] ?? []);
 		$accounts = ($stagingPayload['ledgerAccounts'] ?? []);
-		$targetByRgs = $this->loadTargetAccountsByRgs(administrationId: (string)($batch['administrationId'] ?? ''));
+		$chart = $this->loadTargetChart(administrationId: (string)($batch['administrationId'] ?? ''));
 		$profileMap = $this->loadMappingProfile(name: (string)($batch['mappingProfile'] ?? ''));
 
 		$mappings = [];
 		foreach ($accounts as $account) {
 			$mappings[] = $this->resolveOne(
 				account: $account,
-				targetByRgs: $targetByRgs,
+				chart: $chart,
 				profileMap: $profileMap,
 				administrationId: (string)($batch['administrationId'] ?? ''),
 				batchId: $batchId
@@ -255,14 +288,14 @@ class ImportPipelineService {
 		$blocking = $this->mappingsBlock(mappings: $mappings);
 
 		return ['mappings' => $mappings, 'blocking' => $blocking, 'findings' => []];
-	}//end resolveMappings()
+	}//end resolveBatchMappings()
 
 	/**
 	 * Resolve a single source account to a mapping row (REQ-AIM-004).
 	 *
 	 * @param array<string,mixed> $account Staged source account.
-	 * @param array<string,string> $targetByRgs RGS code → target account
-	 *                                          code.
+	 * @param array{byRgs:array<string,string>,numbers:array<string,string>} $chart The target chart:
+	 *                                          RGS code → account number, and every account number.
 	 * @param array<string,string> $profileMap Source code → target code from a saved
 	 *                                         profile.
 	 * @param string $administrationId Owning administration.
@@ -272,7 +305,7 @@ class ImportPipelineService {
 	 *
 	 * @spec openspec/changes/administration-import-migration/tasks.md#task-9
 	 */
-	private function resolveOne(array $account, array $targetByRgs, array $profileMap, string $administrationId, string $batchId): array {
+	private function resolveOne(array $account, array $chart, array $profileMap, string $administrationId, string $batchId): array {
 		$sourceCode = (string)($account['code'] ?? '');
 		$sourceName = (string)($account['name'] ?? '');
 		$rgs = (string)($account['rgsCode'] ?? '');
@@ -292,8 +325,8 @@ class ImportPipelineService {
 		];
 
 		// (1) RGS auto-match, pre-confirmed.
-		if ($rgs !== '' && isset($targetByRgs[$rgs]) === true) {
-			return array_merge($base, ['targetAccount' => $targetByRgs[$rgs], 'mappingSource' => 'rgs-auto', 'confirmed' => true]);
+		if ($rgs !== '' && isset($chart['byRgs'][$rgs]) === true) {
+			return array_merge($base, ['targetAccount' => $chart['byRgs'][$rgs], 'mappingSource' => 'rgs-auto', 'confirmed' => true]);
 		}
 
 		// (2) Saved profile hit, pre-confirmed.
@@ -302,7 +335,7 @@ class ImportPipelineService {
 		}
 
 		// (3) Code/name similarity suggestion — operator must confirm.
-		$suggested = $this->suggestByCodeOrName(sourceCode: $sourceCode, targetByRgs: $targetByRgs);
+		$suggested = $this->suggestByCodeOrName(sourceCode: $sourceCode, targetNumbers: $chart['numbers']);
 		if ($suggested !== null) {
 			return array_merge($base, ['targetAccount' => $suggested, 'mappingSource' => 'manual', 'confirmed' => false]);
 		}
@@ -314,25 +347,23 @@ class ImportPipelineService {
 	/**
 	 * Suggest a target account by exact code match (cheap similarity heuristic).
 	 *
-	 * @param string $sourceCode Source account code.
-	 * @param array<string,string> $targetByRgs RGS → target code (values are the candidate
-	 *                                          codes).
+	 * Looks among EVERY account of the target chart, with or without an RGS
+	 * code: a chart seeded without RGS codes still has the same numbers.
+	 *
+	 * @param string               $sourceCode    Source account code.
+	 * @param array<string,string> $targetNumbers Every account number of the target chart, keyed by itself.
 	 *
 	 * @return string|null Suggested target code, or null.
+	 *
+	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
 	 */
-	private function suggestByCodeOrName(string $sourceCode, array $targetByRgs): ?string {
+	private function suggestByCodeOrName(string $sourceCode, array $targetNumbers): ?string {
 		if ($sourceCode === '') {
 			return null;
 		}
 
 		// Exact code identity is the safe, deterministic suggestion.
-		foreach ($targetByRgs as $targetCode) {
-			if ($targetCode === $sourceCode) {
-				return $targetCode;
-			}
-		}
-
-		return null;
+		return ($targetNumbers[$sourceCode] ?? null);
 	}//end suggestByCodeOrName()
 
 	/**
@@ -617,11 +648,10 @@ class ImportPipelineService {
 	 *  - Dry-run consistency: refuses to post (returns posting_failed) when the
 	 *    current staged hash differs from the dry-run's recorded stagedHash.
 	 *  - Balance guard re-checked before any write.
-	 * Then composes existing surfaces — one balanced opening journal, AR/AP
-	 * open items, relations as contacts + masters — through the real OR
-	 * ObjectService API and IManager. Each cross-service write degrades
-	 * gracefully with a logged finding (documented ADR-031 seam) rather than a
-	 * silent stub.
+	 * Then ImportPosting writes the customers and posts the opening entry
+	 * through the JournalEntry lifecycle. A write the register or the books
+	 * refuse removes what the post wrote and returns posting_failed with an
+	 * error finding; staged open items are refused before any write.
 	 *
 	 * @param array<string,mixed> $batch The ImportBatch object data.
 	 *
@@ -630,8 +660,6 @@ class ImportPipelineService {
 	 * @spec openspec/changes/administration-import-migration/tasks.md#task-13
 	 */
 	public function post(array $batch): array {
-		$findings = [];
-
 		// Idempotency (REQ-AIM-009): an already-posted key is a no-op.
 		$existingRefs = ($batch['postingRefs'] ?? null);
 		if (($batch['status'] ?? '') === 'posted' && is_array($existingRefs) === true && $existingRefs !== []) {
@@ -675,56 +703,26 @@ class ImportPipelineService {
 			];
 		}
 
-		$postingRefs = [
-			'openingJournalId' => null,
-			'arItemIds' => [],
-			'apItemIds' => [],
-			'contactIds' => [],
-			'masterIds' => [],
-		];
-
-		$report = $this->dryRun(batch: $batch);
-
-		// Compose existing surfaces. Each call degrades gracefully (logged
-		// finding) where the live surface is environment-dependent.
-		$postingRefs['openingJournalId'] = $this->createOpeningJournal(batch: $batch, journal: $report['openingJournal'], findings: $findings);
-		$postingRefs['arItemIds'] = $this->createOpenItems(
-			batch: $batch,
-			items: ($report['arOpenItems'] ?? []),
-			side: 'ar',
-			findings: $findings
-		);
-		$postingRefs['apItemIds'] = $this->createOpenItems(
-			batch: $batch,
-			items: ($report['apOpenItems'] ?? []),
-			side: 'ap',
-			findings: $findings
-		);
-		[$contactIds, $masterIds] = $this->createRelations(batch: $batch, contacts: ($report['contacts'] ?? []), findings: $findings);
-		$postingRefs['contactIds'] = $contactIds;
-		$postingRefs['masterIds'] = $masterIds;
-
-		if ($this->hasErrors(findings: $findings) === true) {
+		$written = $this->posting->post(batch: $batch, report: $this->dryRun(batch: $batch));
+		$status  = 'posted';
+		if ($written['failed'] === true) {
 			$status = 'posting_failed';
-		} else {
-			$status = 'posted';
 		}
 
-		return ['status' => $status, 'postingRefs' => $postingRefs, 'findings' => $findings, 'idempotent' => false];
+		return ['status' => $status, 'postingRefs' => $written['postingRefs'], 'findings' => $written['findings'], 'idempotent' => false];
 	}//end post()
 
 	/**
 	 * Reverse a posted batch (REQ-AIM-009).
 	 *
 	 * Guarded by ImportBatchGuard::canReverse (posted + open period). Posts the
-	 * reversing journal, soft-deletes the imported open items + master rows,
-	 * marks the batch reversed; contacts are reported (never deleted). Blocked
-	 * when the period is closed.
+	 * reversing entry and deletes the customers the import wrote; a refused
+	 * write keeps the batch's status with a reversal-refused error finding.
 	 *
 	 * @param array<string,mixed> $batch The ImportBatch object data.
 	 * @param bool $periodOpen Whether the target period is open.
 	 *
-	 * @return array<string,mixed> 'status', 'reversalRefs', 'reportedContacts', 'findings'.
+	 * @return array<string,mixed> 'status', 'reversalRefs', 'findings'.
 	 *
 	 * @spec openspec/changes/administration-import-migration/tasks.md#task-14
 	 */
@@ -743,147 +741,15 @@ class ImportPipelineService {
 			];
 		}
 
-		$findings = [];
-		$postingRefs = ($batch['postingRefs'] ?? []);
-		$reversalRefs = [
-			'reversingJournalId' => $this->createReversingJournal(
-				batch: $batch,
-				openingJournalId: ($postingRefs['openingJournalId'] ?? null),
-				findings: $findings
-			),
-			'softDeletedItemIds' => $this->softDeleteAll(
-				ids: array_merge(($postingRefs['arItemIds'] ?? []), ($postingRefs['apItemIds'] ?? [])),
-				schema: 'ARInvoice',
-				findings: $findings
-			),
-			'softDeletedMasterIds' => $this->softDeleteAll(ids: ($postingRefs['masterIds'] ?? []), schema: 'CustomerMaster', findings: $findings),
-		];
-
-		return [
-			'status' => 'reversed',
-			'reversalRefs' => $reversalRefs,
-			'reportedContacts' => ($postingRefs['contactIds'] ?? []),
-			'findings' => $findings,
-		];
-
-	}//end reverse()
-
-	// ------------------------------------------------------------------
-	// Cross-service composition seams (ADR-031). Each degrades gracefully.
-	// ------------------------------------------------------------------
-
-	/**
-	 * Create the single balanced opening journal via the existing journal surface.
-	 *
-	 * @param array<string,mixed> $batch Batch data.
-	 * @param array<string,mixed> $journal Would-be opening journal from the dry-run.
-	 * @param array<int,mixed> $findings Findings accumulator (by reference).
-	 *
-	 * @return string|null Created journal id, or null when the surface is unavailable.
-	 */
-	private function createOpeningJournal(array $batch, array $journal, array &$findings): ?string {
-		try {
-			$service = $this->objectService();
-			if ($service === null) {
-				$findings[] = $this->finding(
-					severity: self::SEVERITY_WARNING,
-					code: 'journal-surface-unavailable',
-					message: 'Journal-entry surface unavailable; opening journal not written.',
-					context: []
-				);
-				return null;
-			}
-
-			$created = $service->setRegister($this->register())->setSchema('JournalEntry')->saveObject(
-				[
-					'type' => 'opening-balance',
-					'date' => ($journal['date'] ?? null),
-					'administrationId' => ($batch['administrationId'] ?? null),
-					'sourceBatch' => ($batch['id'] ?? ($batch['@self']['id'] ?? null)),
-					'lines' => ($journal['lines'] ?? []),
-				]
-			);
-
-			return $this->extractId(created: $created);
-		} catch (\Throwable $e) {
-			$findings[] = $this->finding(
-				severity: self::SEVERITY_WARNING,
-				code: 'journal-write-degraded',
-				message: 'Opening journal write degraded gracefully.',
-				context: ['detail' => $e->getMessage()]
-			);
-			$this->logger->warning('ImportPipelineService: opening journal write degraded', ['exception' => $e->getMessage()]);
-			return null;
-		}//end try
-
-	}//end createOpeningJournal()
-
-	/**
-	 * Create imported open items via the existing AR/AP surfaces.
-	 *
-	 * Original source numbers preserved verbatim, flagged importedOpenItem,
-	 * lifecycle state derived from the due date (overdue when past), never
-	 * consuming the no-gap invoice sequence (REQ-AIM-006).
-	 *
-	 * @param array<string,mixed> $batch Batch data.
-	 * @param array<int,array<string,mixed>> $items Open-item rows.
-	 * @param string $side 'ar' or 'ap'.
-	 * @param array<int,mixed> $findings Findings accumulator (by reference).
-	 *
-	 * @return array<int,string> Created object ids.
-	 */
-	private function createOpenItems(array $batch, array $items, string $side, array &$findings): array {
-		$ids = [];
-		if ($side === 'ar') {
-			$schema = 'ARInvoice';
-		} else {
-			$schema = 'APTransaction';
+		$result = $this->posting->reverse(batch: $batch);
+		$status = 'reversed';
+		if ($this->hasErrors(findings: $result['findings']) === true) {
+			$status = (string)($batch['status'] ?? '');
 		}
 
-		try {
-			$service = $this->objectService();
-			if ($service === null) {
-				if ($items !== []) {
-					$findings[] = $this->finding(
-						severity: self::SEVERITY_WARNING,
-						code: $side . '-surface-unavailable',
-						message: strtoupper($side) . ' surface unavailable; open items not written.',
-						context: []
-					);
-				}
+		return ['status' => $status, 'reversalRefs' => $result['reversalRefs'], 'findings' => $result['findings']];
 
-				return $ids;
-			}
-
-			foreach ($items as $item) {
-				$state = $this->openItemStateForDueDate(dueDate: (string)($item['dueDate'] ?? ''));
-				$created = $service->setRegister($this->register())->setSchema($schema)->saveObject(
-					array_merge(
-						$item,
-						[
-							'administrationId' => ($batch['administrationId'] ?? null),
-							'importedOpenItem' => true,
-							'state' => $state,
-						]
-					)
-				);
-				$id = $this->extractId(created: $created);
-				if ($id !== null) {
-					$ids[] = $id;
-				}
-			}
-		} catch (\Throwable $e) {
-			$findings[] = $this->finding(
-				severity: self::SEVERITY_WARNING,
-				code: $side . '-write-degraded',
-				message: strtoupper($side) . ' open-item write degraded gracefully.',
-				context: ['detail' => $e->getMessage()]
-			);
-			$this->logger->warning('ImportPipelineService: open-item write degraded', ['side' => $side, 'exception' => $e->getMessage()]);
-		}//end try
-
-		return $ids;
-	}//end createOpenItems()
+	}//end reverse()
 
 	/**
 	 * Derive the open-item lifecycle state from its due date (REQ-AIM-006).
@@ -910,182 +776,6 @@ class ImportPipelineService {
 
 		return 'issued';
 	}//end openItemStateForDueDate()
-
-	/**
-	 * Create / link relations as NC contacts + financial masters (REQ-AIM-007).
-	 *
-	 * Identity fields → NC addressbook contact via OCP\Contacts\IManager;
-	 * financial fields → CustomerMaster referencing the contact. Dedupe by
-	 * KvK → BTW → email; an existing match links instead of creating and never
-	 * overwrites existing contact data. Where IManager is environment-dependent
-	 * the call degrades gracefully with a logged finding.
-	 *
-	 * @param array<string,mixed> $batch Batch data.
-	 * @param array<int,array<string,mixed>> $contacts Contact preview rows.
-	 * @param array<int,mixed> $findings Findings accumulator (by reference).
-	 *
-	 * @return array{0:array<int,string>,1:array<int,string>} [contactIds, masterIds].
-	 */
-	private function createRelations(array $batch, array $contacts, array &$findings): array {
-		$contactIds = [];
-		$masterIds = [];
-
-		$manager = null;
-		try {
-			if ($this->container->has('OCP\Contacts\IManager') === true) {
-				$manager = $this->container->get('OCP\Contacts\IManager');
-			}
-		} catch (\Throwable $e) {
-			$manager = null;
-		}
-
-		if ($manager === null) {
-			if ($contacts !== []) {
-				$findings[] = $this->finding(
-					severity: self::SEVERITY_WARNING,
-					code: 'contacts-manager-unavailable',
-					message: 'NC contacts manager unavailable; relations not written to the addressbook (degraded gracefully).',
-					context: ['count' => count($contacts)]
-				);
-				$this->logger->warning('ImportPipelineService: contacts manager unavailable; relations degraded', ['count' => count($contacts)]);
-			}
-
-			return [$contactIds, $masterIds];
-		}
-
-		// Live IManager path: create the master rows referencing the contact.
-		// The contact create/dedupe itself is performed through IManager by the
-		// addressbook integration; here we record the master rows.
-		try {
-			$service = $this->objectService();
-			foreach ($contacts as $contact) {
-				$contactId = (string)($contact['kvk'] ?? ($contact['email'] ?? $contact['name'] ?? ''));
-				$contactIds[] = $contactId;
-				if ($service !== null) {
-					$created = $service->setRegister($this->register())->setSchema('CustomerMaster')->saveObject(
-						[
-							'administrationId' => ($batch['administrationId'] ?? null),
-							'contactRef' => $contactId,
-							'name' => ($contact['name'] ?? ''),
-							'importedOpenItem' => true,
-						]
-					);
-					$masterId = $this->extractId(created: $created);
-					if ($masterId !== null) {
-						$masterIds[] = $masterId;
-					}
-				}
-			}
-		} catch (\Throwable $e) {
-			$findings[] = $this->finding(
-				severity: self::SEVERITY_WARNING,
-				code: 'relations-write-degraded',
-				message: 'Relation/master write degraded gracefully.',
-				context: ['detail' => $e->getMessage()]
-			);
-			$this->logger->warning('ImportPipelineService: relation write degraded', ['exception' => $e->getMessage()]);
-		}//end try
-
-		return [$contactIds, $masterIds];
-	}//end createRelations()
-
-	/**
-	 * Post the reversing journal for the opening journal (REQ-AIM-009).
-	 *
-	 * @param array<string,mixed> $batch Batch data.
-	 * @param string|null $openingJournalId The opening journal id to reverse.
-	 * @param array<int,mixed> $findings Findings accumulator (by reference).
-	 *
-	 * @return string|null Reversing journal id, or null when unavailable.
-	 */
-	private function createReversingJournal(array $batch, ?string $openingJournalId, array &$findings): ?string {
-		if ($openingJournalId === null) {
-			$findings[] = $this->finding(
-				severity: self::SEVERITY_WARNING,
-				code: 'no-opening-journal',
-				message: 'No opening journal id on record; reversing journal skipped.',
-				context: []
-			);
-			return null;
-		}
-
-		try {
-			$service = $this->objectService();
-			if ($service === null) {
-				$findings[] = $this->finding(
-					severity: self::SEVERITY_WARNING,
-					code: 'journal-surface-unavailable',
-					message: 'Journal surface unavailable; reversing journal not written.',
-					context: []
-				);
-				return null;
-			}
-
-			$created = $service->setRegister($this->register())->setSchema('JournalEntry')->saveObject(
-				[
-					'type' => 'opening-balance-reversal',
-					'date' => ($batch['migrationDate'] ?? null),
-					'administrationId' => ($batch['administrationId'] ?? null),
-					'reverses' => $openingJournalId,
-				]
-			);
-
-			return $this->extractId(created: $created);
-		} catch (\Throwable $e) {
-			$findings[] = $this->finding(
-				severity: self::SEVERITY_WARNING,
-				code: 'reversing-journal-degraded',
-				message: 'Reversing journal write degraded gracefully.',
-				context: ['detail' => $e->getMessage()]
-			);
-			$this->logger->warning('ImportPipelineService: reversing journal degraded', ['exception' => $e->getMessage()]);
-			return null;
-		}//end try
-
-	}//end createReversingJournal()
-
-	/**
-	 * Soft-delete a list of objects via the existing OR delete surface.
-	 *
-	 * @param array<int,string> $ids Object ids.
-	 * @param string $schema Schema name.
-	 * @param array<int,mixed> $findings Findings accumulator (by reference).
-	 *
-	 * @return array<int,string> Ids that were soft-deleted.
-	 */
-	private function softDeleteAll(array $ids, string $schema, array &$findings): array {
-		$done = [];
-		try {
-			$service = $this->objectService();
-			if ($service === null) {
-				if ($ids !== []) {
-					$findings[] = $this->finding(
-						severity: self::SEVERITY_WARNING,
-						code: 'delete-surface-unavailable',
-						message: 'Delete surface unavailable; soft-delete skipped.',
-						context: ['schema' => $schema]
-					);
-				}
-
-				return $done;
-			}
-
-			foreach ($ids as $id) {
-				$service->setRegister($this->register())->setSchema($schema)->deleteObject($id);
-				$done[] = $id;
-			}
-		} catch (\Throwable $e) {
-			$findings[] = $this->finding(
-				severity: self::SEVERITY_WARNING,
-				code: 'soft-delete-degraded',
-				message: 'Soft-delete degraded gracefully.',
-				context: ['schema' => $schema, 'detail' => $e->getMessage()]
-			);
-			$this->logger->warning('ImportPipelineService: soft-delete degraded', ['schema' => $schema, 'exception' => $e->getMessage()]);
-		}//end try
-
-		return $done;
-	}//end softDeleteAll()
 
 	// ------------------------------------------------------------------
 	// Internal helpers.
@@ -1308,18 +998,22 @@ class ImportPipelineService {
 	}//end persistMapping()
 
 	/**
-	 * Load target accounts keyed by RGS code (for auto-mapping).
+	 * Load the target chart: accounts keyed by RGS code, and every account number.
 	 *
 	 * @param string $administrationId Administration.
 	 *
-	 * @return array<string,string> RGS code → target account code.
+	 * @return array{byRgs:array<string,string>,numbers:array<string,string>} RGS code → target account
+	 *         code (auto-mapping), and every account number keyed by itself (the code-identity suggestion).
+	 *
+	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
 	 */
-	private function loadTargetAccountsByRgs(string $administrationId): array {
+	private function loadTargetChart(string $administrationId): array {
 		$byRgs = [];
+		$numbers = [];
 		try {
 			$service = $this->objectService();
 			if ($service === null) {
-				return $byRgs;
+				return ['byRgs' => $byRgs, 'numbers' => $numbers];
 			}
 
 			$accounts = $service->setRegister($this->register())
@@ -1329,16 +1023,21 @@ class ImportPipelineService {
 				$row = $this->toArray(object: $account);
 				$rgs = (string)($row['rgsCode'] ?? '');
 				$code = (string)($row['accountNumber'] ?? ($row['code'] ?? ''));
-				if ($rgs !== '' && $code !== '') {
+				if ($code === '') {
+					continue;
+				}
+
+				$numbers[$code] = $code;
+				if ($rgs !== '') {
 					$byRgs[$rgs] = $code;
 				}
 			}
 		} catch (\Throwable $e) {
-			$this->logger->warning('ImportPipelineService: loadTargetAccountsByRgs degraded', ['exception' => $e->getMessage()]);
+			$this->logger->warning('ImportPipelineService: loadTargetChart degraded', ['exception' => $e->getMessage()]);
 		}
 
-		return $byRgs;
-	}//end loadTargetAccountsByRgs()
+		return ['byRgs' => $byRgs, 'numbers' => $numbers];
+	}//end loadTargetChart()
 
 	/**
 	 * Load a saved mapping profile as source code → target code.
@@ -1407,30 +1106,6 @@ class ImportPipelineService {
 
 		return [];
 	}//end toArray()
-
-	/**
-	 * Extract the id from a saved OR object.
-	 *
-	 * @param mixed $created The saved object.
-	 *
-	 * @return string|null
-	 */
-	private function extractId($created): ?string {
-		$arr = $this->toArray(object: $created);
-		if (isset($arr['id']) === true) {
-			return (string)$arr['id'];
-		}
-
-		if (isset($arr['@self']['id']) === true) {
-			return (string)$arr['@self']['id'];
-		}
-
-		if (is_object($created) === true && method_exists($created, 'getId') === true) {
-			return (string)$created->getId();
-		}
-
-		return null;
-	}//end extractId()
 
 	/**
 	 * Build a structured finding.

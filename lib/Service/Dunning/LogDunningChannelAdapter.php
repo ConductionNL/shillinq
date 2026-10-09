@@ -4,14 +4,16 @@
  * Log-backed dunning channel adapter.
  *
  * Default production binding: writes the dispatch attempt to the logger and
- * reports the result as DELIVERED with a synthetic provider message id. The
- * real HTTP adapters (PostNL Track & Trace, incasso-bureau API, SMTP) bind
- * to this interface and replace the log adapter via the DI container
- * (see lib/AppInfo/Application.php).
+ * reports the result as PENDING with a synthetic provider message id. It
+ * sends nothing, so it never reports DELIVERED: since executeStage() records
+ * the adapter's outcome on the DunningRun (issue #1687), a DELIVERED here
+ * would mark reminders as sent that no customer received. The real adapters
+ * (mail, PostNL Track & Trace, incasso-bureau API) bind to this interface and
+ * replace the log adapter via the DI container (see lib/AppInfo/Application.php).
  *
- * Until the openconnector outbound mappings are configured, this stub keeps
- * the lifecycle moving and the audit trail intact (logs are forwarded to the
- * Nextcloud audit-log infrastructure already used by other Shillinq services).
+ * Until a real adapter is bound, this stub keeps the audit trail intact (logs
+ * are forwarded to the Nextcloud audit-log infrastructure already used by
+ * other Shillinq services).
  *
  * @category Service
  * @package  OCA\Shillinq\Service\Dunning
@@ -51,7 +53,7 @@ class LogDunningChannelAdapter implements DunningChannelAdapterInterface {
 	}//end __construct()
 
 	/**
-	 * Synthesise a DELIVERED send result + log the dispatch attempt.
+	 * Log the dispatch attempt and report it PENDING: nothing was sent.
 	 *
 	 * @param string $channel One of EMAIL / EMAIL+POSTREGISTRATIE / AANGETEKENDE_POST / INCASSOBUREAU_API.
 	 * @param array<string,mixed> $payload Channel-specific payload.
@@ -64,6 +66,7 @@ class LogDunningChannelAdapter implements DunningChannelAdapterInterface {
 		$sanitised = $payload;
 		// Redact rendered body in log lines — keep the log focused on metadata.
 		unset($sanitised['renderedBody']);
+		unset($sanitised['body']);
 		unset($sanitised['renderedPdfBytes']);
 
 		$this->logger->info(
@@ -74,23 +77,12 @@ class LogDunningChannelAdapter implements DunningChannelAdapterInterface {
 			]
 		);
 
-		$messageId = 'dunning-log-' . bin2hex(random_bytes(8));
-		$extras = [];
-		if ($channel === 'REGISTERED_POST') {
-			// Synthetic PostNL Track & Trace barcode (3S + 13 digits) for evidence-trail.
-			$extras['barcode'] = '3S' . str_pad((string)random_int(1, 9999999999999), 13, '0', STR_PAD_LEFT);
-			$extras['trackingUrl'] = 'https://postnl.nl/tracktrace/' . $extras['barcode'];
-		}
-
-		if ($channel === 'COLLECTION_AGENCY_API') {
-			$extras['dossierId'] = 'dossier-stub-' . bin2hex(random_bytes(6));
-		}
-
+		// No extras: a made-up PostNL barcode or dossier id would be stamped on
+		// the DunningRun as evidence of a letter or handover that never happened.
 		return new DunningChannelSendResult(
 			channel: $channel,
-			deliveryStatus: 'DELIVERED',
-			providerMessageId: $messageId,
-			extras: $extras,
+			deliveryStatus: 'PENDING',
+			providerMessageId: 'dunning-log-' . bin2hex(random_bytes(8)),
 		);
 
 	}//end send()

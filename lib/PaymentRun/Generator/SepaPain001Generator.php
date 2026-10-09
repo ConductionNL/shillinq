@@ -96,51 +96,34 @@ final class SepaPain001Generator implements PaymentRunGeneratorInterface {
 		// End InitgPty.
 		$writer->endElement();
 		// End GrpHdr.
-		// --- PmtInf ---.
-		$paymentInfoId = 'PMT';
-		if ($runNumber !== '') {
-			$paymentInfoId = $runNumber;
-		}
+		// --- PmtInf: one block per requested execution date (REQ-BPR-006) ---.
+		$groups = $this->groupByExecutionDate(lines: $lines, runDate: $executionDt);
+		$blockIndex = 0;
+		foreach ($groups as $date => $groupLines) {
+			$blockIndex++;
+			$paymentInfoId = 'PMT';
+			if ($runNumber !== '') {
+				$paymentInfoId = $runNumber;
+			}
 
-		$writer->startElement('PmtInf');
-		$writer->writeElement('PmtInfId', $paymentInfoId);
-		$writer->writeElement('PmtMtd', 'TRF');
-		$writer->writeElement('BtchBookg', 'true');
-		$writer->writeElement('NbOfTxs', $txCount);
-		$writer->writeElement('CtrlSum', $controlSum);
-		$writer->writeElement('ReqdExctnDt', $executionDt);
+			if (count($groups) > 1) {
+				$paymentInfoId .= '-' . $blockIndex;
+			}
 
-		$writer->startElement('Dbtr');
-		$writer->writeElement('Nm', $initiator);
-		$writer->endElement();
-
-		$debtorIban = (string)($paymentRun['debtorAccountIban'] ?? '');
-		$writer->startElement('DbtrAcct');
-		$writer->startElement('Id');
-		$writer->writeElement('IBAN', $debtorIban);
-		$writer->endElement();
-		$writer->endElement();
-		// End DbtrAcct.
-		$writer->startElement('DbtrAgt');
-		$writer->startElement('FinInstnId');
-		$writer->writeElement('Othr', 'NOTPROVIDED');
-		$writer->endElement();
-		$writer->endElement();
-		// End DbtrAgt.
-		$index = 0;
-		foreach ($lines as $line) {
-			$index++;
-			$this->writeTransaction(
+			$this->writePaymentBlock(
 				writer: $writer,
+				block: [
+					'id' => $paymentInfoId,
+					'date' => (string)$date,
+					'lines' => $groupLines,
+					'initiator' => $initiator,
+					'debtorIban' => (string)($paymentRun['debtorAccountIban'] ?? ''),
+				],
 				runNumber: $runNumber,
-				index: $index,
-				line: $line,
 				currency: $currency
 			);
-		}
+		}//end foreach
 
-		$writer->endElement();
-		// End PmtInf.
 		$writer->endElement();
 		// End CstmrCdtTrfInitn.
 		$writer->endElement();
@@ -342,4 +325,86 @@ final class SepaPain001Generator implements PaymentRunGeneratorInterface {
 
 		return (float)($value ?? 0);
 	}//end toFloat()
+
+	/**
+	 * Group the lines by requested execution date, in first-seen order.
+	 *
+	 * A line without a requested date takes the run's date, so a run whose
+	 * lines share one date renders one block, as before.
+	 *
+	 * @param array<int, array<string, mixed>> $lines   The payment lines.
+	 * @param string                           $runDate The run's execution date.
+	 *
+	 * @return array<string, array<int, array{index: int, line: array<string, mixed>}>>
+	 */
+	private function groupByExecutionDate(array $lines, string $runDate): array {
+		$groups = [];
+		foreach ($lines as $position => $line) {
+			$date = trim((string)($line['requestedExecutionDate'] ?? ''));
+			if ($date === '') {
+				$date = $runDate;
+			}
+
+			$groups[$date][] = ['index' => ($position + 1), 'line' => $line];
+		}
+
+		return $groups;
+	}//end groupByExecutionDate()
+
+	/**
+	 * Write one PmtInf block with its own count, control sum and date.
+	 *
+	 * @param XMLWriter            $writer    The open writer.
+	 * @param array<string, mixed> $block     id, date, lines (index + line), initiator, debtorIban.
+	 * @param string               $runNumber The run number for end-to-end ids.
+	 * @param string               $currency  The run currency.
+	 *
+	 * @return void
+	 */
+	private function writePaymentBlock(XMLWriter $writer, array $block, string $runNumber, string $currency): void {
+		$sum = 0.0;
+		foreach ($block['lines'] as $entry) {
+			$sum += $this->toFloat(value: ($entry['line']['amount'] ?? 0));
+		}
+
+		$writer->startElement('PmtInf');
+		$writer->writeElement('PmtInfId', (string)$block['id']);
+		$writer->writeElement('PmtMtd', 'TRF');
+		$writer->writeElement('BtchBookg', 'true');
+		$writer->writeElement('NbOfTxs', (string)count($block['lines']));
+		$writer->writeElement('CtrlSum', $this->money(value: round($sum, 2)));
+		$writer->writeElement('ReqdExctnDt', (string)$block['date']);
+
+		$writer->startElement('Dbtr');
+		$writer->writeElement('Nm', (string)$block['initiator']);
+		$writer->endElement();
+
+		$writer->startElement('DbtrAcct');
+		$writer->startElement('Id');
+		$writer->writeElement('IBAN', (string)$block['debtorIban']);
+		$writer->endElement();
+		$writer->endElement();
+		// End DbtrAcct.
+		// pain.001.001.03 wants Othr/Id; a bare Othr text node fails the XSD.
+		$writer->startElement('DbtrAgt');
+		$writer->startElement('FinInstnId');
+		$writer->startElement('Othr');
+		$writer->writeElement('Id', 'NOTPROVIDED');
+		$writer->endElement();
+		$writer->endElement();
+		$writer->endElement();
+		// End DbtrAgt.
+		foreach ($block['lines'] as $entry) {
+			$this->writeTransaction(
+				writer: $writer,
+				runNumber: $runNumber,
+				index: (int)$entry['index'],
+				line: $entry['line'],
+				currency: $currency
+			);
+		}
+
+		$writer->endElement();
+		// End PmtInf.
+	}//end writePaymentBlock()
 }//end class

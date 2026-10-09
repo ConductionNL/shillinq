@@ -29,6 +29,10 @@ foreach (spl_autoload_functions() as $loader) {
 		// When run inside a deployed NC tree with OpenRegister installed,
 		// base.php below provides the real classes and this entry is shadowed.
 		$loader[0]->addPsr4('OCA\\OpenRegister\\', __DIR__ . '/stubs/OpenRegister/');
+		// Integriq's connection-registry event (adopt-connection-registry).
+		// ConnectionReportService names it by string and sends it only when
+		// the class exists; the stub mirrors integriq's real constructor.
+		$loader[0]->addPsr4('OCA\\Integriq\\', __DIR__ . '/stubs/Integriq/');
 		break;
 	}
 }

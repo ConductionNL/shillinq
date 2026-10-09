@@ -35,6 +35,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
+use DateTimeImmutable;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Standards\RuleEngine;
 use OCP\IAppConfig;
@@ -51,12 +52,15 @@ class RuleComplianceGuard {
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for violations + fail-closed diagnostics.
 	 * @param BalanceGuard $balanceGuard Existing double-entry balance guard (reused).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
+	 * @param PostingRestrictionGuard $restrictions The booking rules (ledger-booking-rules).
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly BalanceGuard $balanceGuard,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly PostingRestrictionGuard $restrictions,
 	) {
 
 	}//end __construct()
@@ -64,13 +68,25 @@ class RuleComplianceGuard {
 	/**
 	 * Allow ARInvoice.issue only when no mandatory invoice rule is violated.
 	 *
-	 * @param string $id The ARInvoice id being issued.
+	 * Takes either the invoice id or the invoice object itself. The object
+	 * form is what RegisterRequiresGuardAdapter passes on the transition
+	 * (#1103): it is the payload being issued, so it is evaluated as it
+	 * stands rather than re-read from the store.
+	 *
+	 * @param string|array<string,mixed> $invoiceOrId The ARInvoice id, or the ARInvoice being issued.
 	 *
 	 * @return bool True to allow the transition.
+	 *
+	 * @spec openspec/specs/bookkeeping-general-ledger/spec.md
 	 */
-	public function validateInvoice(string $id): bool {
+	public function validateInvoice(string|array $invoiceOrId): bool {
+		$id = $this->idOf(objectOrId: $invoiceOrId);
 		try {
-			$invoice = $this->loadObject('ARInvoice', $id);
+			$invoice = $invoiceOrId;
+			if (is_array($invoice) === false) {
+				$invoice = $this->loadObject('ARInvoice', $id);
+			}
+
 			if ($invoice === null) {
 				return false;
 			}
@@ -93,17 +109,35 @@ class RuleComplianceGuard {
 	 * violated. Balance is delegated to BalanceGuard so existing behaviour is
 	 * preserved exactly; the engine adds completeness + sequential-numbering.
 	 *
-	 * @param string $id The GLTransaction id being posted.
+	 * Takes either the transaction id or the transaction object itself, the
+	 * form RegisterRequiresGuardAdapter passes on the transition (#1103). The
+	 * lines and the balance are read from the stored GLLine rows either way.
+	 *
+	 * @param string|array<string,mixed> $transactionOrId The GLTransaction id, or the GLTransaction being posted.
 	 *
 	 * @return bool True to allow the transition.
+	 *
+	 * @throws PostingRefusedException When a line breaks a booking rule, naming it.
+	 *
+	 * @spec openspec/specs/bookkeeping-general-ledger/spec.md
 	 */
-	public function validateTransaction(string $id): bool {
+	public function validateTransaction(string|array $transactionOrId): bool {
+		$id = $this->idOf(objectOrId: $transactionOrId);
 		try {
-			$transaction = $this->loadObject('GLTransaction', $id);
-			if ($transaction === null) {
+			$transaction = $transactionOrId;
+			if (is_array($transaction) === false) {
+				$transaction = $this->loadObject('GLTransaction', $id);
+			}
+
+			if ($transaction === null || $id === '') {
 				return false;
 			}
 
+			// The page sends the draft with its state moved to posted. The lock,
+			// retention, integrity and audit-trail fields are what the post
+			// itself gives the entry (StampPostingAction persists them), so the
+			// entry is judged as the post leaves it (REQ-LPP-001, #516).
+			$transaction = (new PostingStamps())->apply(transaction: $transaction, user: 'system', now: new DateTimeImmutable());
 			$transaction['lines'] = $this->loadLines($transaction);
 
 			$violations = RuleEngine::evaluate('GLTransaction', $transaction, $this->context($transaction));
@@ -112,7 +146,25 @@ class RuleComplianceGuard {
 			}
 
 			$this->logViolations('GLTransaction', $id, $violations);
-			return RuleEngine::hasMandatory($violations) === false;
+			if (RuleEngine::hasMandatory($violations) === true) {
+				return false;
+			}
+
+			// A person's posting is checked against the booking rules. A
+			// transaction a sub-ledger prepared carries its journal code (the
+			// GR/IR and inventory posters) or the journal entry it books, which
+			// JournalEntryGuard already checked (ledger-booking-rules D2).
+			if ($this->fromSubLedger(transaction: $transaction) === false) {
+				$this->restrictions->assertAllowed(
+					lines: $transaction['lines'],
+					administrationId: (string)($transaction['administrationId'] ?? ''),
+					postingDate: (string)($transaction['postingDate'] ?? '')
+				);
+			}
+
+			return true;
+		} catch (PostingRefusedException $e) {
+			throw $e;
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'RuleComplianceGuard: transaction validation failed — denying post (fail-closed)',
@@ -122,6 +174,33 @@ class RuleComplianceGuard {
 		}//end try
 
 	}//end validateTransaction()
+
+	/**
+	 * Whether a transaction was prepared by a sub-ledger rather than a person.
+	 *
+	 * @param array<string,mixed> $transaction The GL transaction.
+	 *
+	 * @return bool
+	 */
+	private function fromSubLedger(array $transaction): bool {
+		return (string)($transaction['journalEntryId'] ?? '') !== ''
+			|| (string)($transaction['journalCode'] ?? '') !== '';
+	}//end fromSubLedger()
+
+	/**
+	 * The id of an object passed either as its id or as the object array.
+	 *
+	 * @param string|array<string,mixed> $objectOrId The id, or the object.
+	 *
+	 * @return string The id, '' when the object carries none.
+	 */
+	private function idOf(string|array $objectOrId): string {
+		if (is_array($objectOrId) === false) {
+			return $objectOrId;
+		}
+
+		return (string)($objectOrId['id'] ?? ($objectOrId['@self']['id'] ?? ''));
+	}//end idOf()
 
 	/**
 	 * Build the evaluation context. Jurisdiction drives which rules apply; it

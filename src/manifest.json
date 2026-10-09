@@ -10,8 +10,7 @@
 		"completionConfigKey": "setup_completed_version",
 		"steps": [
 			{ "id": "welcome", "type": "info", "title": "Welcome to Shillinq", "body": "First choose the country (legal region) and organisation type, then the chart-of-accounts template, and create the administration. Finally you can load the chart of accounts and the reference data." },
-			{ "id": "demo-data", "type": "choice", "display": "cards", "optionsSource": "datasets", "configKey": "demo_dataset", "title": "Load example data?", "required": false, "body": "Example data fills the lists, detail pages and dashboards so you can see the app working straight away. Pick \"None\" on a production install." },
-			{ "id": "load-demo-data", "type": "run-action", "action": "load-demo-data", "title": "Load the example data", "required": false, "body": "Loads what you picked. The data is obviously sample data, it is safe to run more than once, and you can delete it afterwards." },
+			{ "id": "demo-data", "type": "choice", "display": "cards", "optionsSource": "datasets", "configKey": "demo_dataset", "loadAction": "load-demo-data", "title": "Load example data?", "required": false, "body": "Example data fills the lists, detail pages and dashboards so you can see the app working straight away. Each card has its own Load button. Pick \"None\" on a production install." },
 			{ "id": "country", "type": "choice", "title": "Legal region (country)", "body": "In which country is this organisation legally established? This determines the available organisation types and standards.", "configKey": "legal_country", "required": true, "options": [ { "value": "nl", "label": "Netherlands" }, { "value": "be", "label": "Belgium" }, { "value": "de", "label": "Germany" } ] },
 			{ "id": "organisation", "type": "choice", "title": "Organisation type", "configKey": "legal_region", "required": true, "dependsOn": "legal_country", "optionsByParent": { "nl": [ { "value": "municipality", "label": "Municipality" }, { "value": "provincie", "label": "Province" }, { "value": "waterschap", "label": "Water authority" }, { "value": "zzp", "label": "ZZP" }, { "value": "mkb", "label": "MKB" } ], "be": [ { "value": "vzw", "label": "VZW" }, { "value": "bv", "label": "Besloten Vennootschap (BV)" }, { "value": "eenmanszaak", "label": "Eenmanszaak" } ], "de": [ { "value": "gmbh", "label": "GmbH" }, { "value": "verein", "label": "Verein" }, { "value": "einzelunternehmen", "label": "Einzelunternehmen" } ] } },
 			{ "id": "rgs-template", "type": "choice", "title": "Chart of accounts (RGS)", "body": "A chart of accounts (RGS, Referentie GrootboekSchema) is the standardised layout of ledger accounts your balance sheet and profit-and-loss statement are based on. Based on your organisation type, a matching template is already suggested. You can adjust it.", "configKey": "rgs_template", "required": true, "suggestFrom": "legal_region", "suggestMap": { "municipality": "bbv", "provincie": "bbv", "waterschap": "bbv", "zzp": "zzp", "mkb": "mkb", "vzw": "mkb", "bv": "mkb", "eenmanszaak": "zzp", "gmbh": "mkb", "verein": "mkb", "einzelunternehmen": "zzp" }, "options": [ { "value": "mkb", "label": "MKB" }, { "value": "zzp", "label": "ZZP" }, { "value": "bbv", "label": "BBV (government)" } ] },
@@ -246,6 +245,13 @@
 					"label": "Unmatched Items",
 					"icon": "HelpRhombusOutline",
 					"route": "UnmatchedItems",
+					"order": 29
+				},
+				{
+					"id": "UnmatchedBankLines",
+					"label": "Unmatched bank lines",
+					"icon": "BankTransfer",
+					"route": "UnmatchedBankLines",
 					"order": 29
 				},
 				{
@@ -1024,7 +1030,7 @@
 			"label": "Reports",
 			"icon": "ChartBoxOutline",
 			"route": "Reports",
-			"section": "footer",
+			"section": "settings",
 			"order": 95
 		},
 		{
@@ -2235,10 +2241,21 @@
 						"key": "lifecycleState",
 						"label": "Status",
 						"sortable": true
+					},
+					{
+						"key": "hoursOverBudget",
+						"label": "Over hours budget",
+						"sortable": true
 					}
 				],
 				"defaultSort": "code",
 				"detailRoute": "ProjectDetail",
+				"filters": [
+					{
+						"key": "hoursOverBudget",
+						"label": "Over hours budget"
+					}
+				],
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/dimensions"
 			}
 		},
@@ -2249,133 +2266,192 @@
 			"title": "Project",
 			"config": {
 				"register": "shillinq",
-				"_note": "Project detail — a project costing dimension with contract value, WIP and revenue-recognition (RJ 270). Assignments and WIP history are listed (existing related lists); segment P&L aggregation and audit trail evidence recognition method changes.",
+				"_note": "Project detail — a project costing dimension with contract value, WIP and revenue-recognition (RJ 270). Hours budget per assignment and in total (people-hours-budget), assignments and WIP history are listed; segment P&L aggregation and audit trail evidence recognition method changes.",
 				"auditTrail": true,
 				"schema": "engagement",
-				"fields": [
+				"widgets": [
 					{
-						"key": "code",
-						"label": "Code",
-						"type": "string"
+						"id": "project-identity",
+						"type": "data",
+						"title": "Project",
+						"icon": "BriefcaseOutline",
+						"content": {
+							"columns": 2,
+							"include": [
+								"code",
+								"name",
+								"projectNumber",
+								"customerId",
+								"parentCode",
+								"responsibleUser",
+								"state",
+								"lifecycleState",
+								"administrationId",
+								"timeBookingEnabled",
+								"startDate",
+								"endDate"
+							]
+						}
 					},
 					{
-						"key": "name",
-						"label": "Name",
-						"type": "string"
+						"id": "project-hours",
+						"type": "data",
+						"title": "Hours budget",
+						"icon": "ClockOutline",
+						"content": {
+							"columns": 2,
+							"include": [
+								"estimatedHoursTotal",
+								"loggedHoursTotal",
+								"remainingHoursTotal",
+								"hoursOverBudget"
+							]
+						}
 					},
 					{
-						"key": "parentCode",
-						"label": "Parent Project",
-						"type": "string"
+						"id": "project-finance",
+						"type": "data",
+						"title": "Revenue recognition",
+						"icon": "CashMultiple",
+						"content": {
+							"columns": 2,
+							"include": [
+								"recognitionMethod",
+								"recognitionStage",
+								"totalContractValue",
+								"totalEstimatedCosts",
+								"costsIncurredToDate",
+								"recognisedRevenue",
+								"billedRevenue",
+								"wipBalance",
+								"currency"
+							]
+						}
 					},
 					{
-						"key": "responsibleUser",
-						"label": "Responsible User",
-						"type": "string"
+						"id": "project-assignments",
+						"type": "object-list",
+						"title": "Hours per assignment",
+						"icon": "AccountGroupOutline",
+						"content": {
+							"register": "shillinq",
+							"schema": "ProjectAssignment",
+							"filter": {
+								"projectId": "@objectId"
+							},
+							"limit": 50,
+							"columns": [
+								{
+									"key": "personId",
+									"label": "Person"
+								},
+								{
+									"key": "estimatedHours",
+									"label": "Estimated hours"
+								},
+								{
+									"key": "loggedHours",
+									"label": "Logged hours"
+								},
+								{
+									"key": "remainingHours",
+									"label": "Remaining hours"
+								},
+								{
+									"key": "hoursUsedPercent",
+									"label": "Hours used (%)"
+								},
+								{
+									"key": "state",
+									"label": "Status"
+								}
+							],
+							"emptyText": "No one is assigned to this project yet."
+						}
 					},
 					{
-						"key": "timeBookingEnabled",
-						"label": "Time Booking (WBSO)",
-						"type": "boolean"
+						"id": "project-wip",
+						"type": "object-list",
+						"title": "WIP history",
+						"icon": "History",
+						"content": {
+							"register": "shillinq",
+							"schema": "WipBalance",
+							"filter": {
+								"projectId": "@objectId"
+							},
+							"limit": 24,
+							"columns": [
+								{
+									"key": "periodId",
+									"label": "Period"
+								},
+								{
+									"key": "costsIncurredToDate",
+									"label": "Costs incurred"
+								},
+								{
+									"key": "recognisedRevenue",
+									"label": "Recognised revenue"
+								},
+								{
+									"key": "billedRevenue",
+									"label": "Invoiced revenue"
+								},
+								{
+									"key": "wipBalance",
+									"label": "WIP balance"
+								}
+							],
+							"emptyText": "No WIP balance recorded yet."
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "project-identity",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5
 					},
 					{
-						"key": "lifecycleState",
-						"label": "Status",
-						"type": "string"
+						"id": "2",
+						"widgetId": "project-hours",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5
 					},
 					{
-						"key": "administrationId",
-						"label": "Administration",
-						"type": "string"
+						"id": "3",
+						"widgetId": "project-assignments",
+						"gridX": 0,
+						"gridY": 5,
+						"gridWidth": 12,
+						"gridHeight": 5
 					},
 					{
-						"key": "projectNumber",
-						"label": "Project number",
-						"type": "string"
+						"id": "4",
+						"widgetId": "project-finance",
+						"gridX": 0,
+						"gridY": 10,
+						"gridWidth": 12,
+						"gridHeight": 4
 					},
 					{
-						"key": "customerId",
-						"label": "Customer",
-						"type": "string"
-					},
-					{
-						"key": "state",
-						"label": "Status",
-						"type": "string"
-					},
-					{
-						"key": "recognitionMethod",
-						"label": "Accountability method",
-						"type": "string"
-					},
-					{
-						"key": "recognitionStage",
-						"label": "Phase (RJ 270)",
-						"type": "string"
-					},
-					{
-						"key": "totalContractValue",
-						"label": "Contract value",
-						"type": "number"
-					},
-					{
-						"key": "totalEstimatedCosts",
-						"label": "Estimated costs",
-						"type": "number"
-					},
-					{
-						"key": "costsIncurredToDate",
-						"label": "Costs incurred",
-						"type": "number"
-					},
-					{
-						"key": "recognisedRevenue",
-						"label": "Recognised revenue",
-						"type": "number"
-					},
-					{
-						"key": "billedRevenue",
-						"label": "Invoiced revenue",
-						"type": "number"
-					},
-					{
-						"key": "wipBalance",
-						"label": "WIP balance",
-						"type": "number"
-					},
-					{
-						"key": "currency",
-						"label": "Currency",
-						"type": "string"
-					},
-					{
-						"key": "startDate",
-						"label": "Start date",
-						"type": "date"
-					},
-					{
-						"key": "endDate",
-						"label": "End date",
-						"type": "date"
+						"id": "5",
+						"widgetId": "project-wip",
+						"gridX": 0,
+						"gridY": 14,
+						"gridWidth": 12,
+						"gridHeight": 4
 					}
 				],
 				"lifecycleActions": true,
 				"aggregation": "segmentPnl",
 				"indexRoute": "Projects",
-				"relatedLists": [
-					{
-						"id": "assignments",
-						"title": "Project assignments",
-						"schema": "ProjectAssignment",
-						"foreignKey": "projectId"
-					},
-					{
-						"id": "wip-history",
-						"title": "WIP-historie",
-						"schema": "WipBalance",
-						"foreignKey": "projectId"
-					}
-				],
 				"sidebarProps": {
 					"tabs": [
 						{
@@ -2585,6 +2661,22 @@
 						"icon": "TrendingUp",
 						"category": "financial",
 						"route": "VarianceReport"
+					},
+					{
+						"id": "RelationsBothWays",
+						"label": "Relations both ways",
+						"description": "Customers that are also suppliers, and who owes whom.",
+						"icon": "ScaleBalance",
+						"category": "financial",
+						"route": "RelationsBothWays"
+					},
+					{
+						"id": "FinancialPivot",
+						"label": "Financial pivot",
+						"description": "The result by account, period, cost centre, project or customer, on two axes you choose.",
+						"icon": "TableLarge",
+						"category": "financial",
+						"route": "FinancialPivot"
 					},
 					{
 						"id": "GeneratedReportsIndex",
@@ -5098,6 +5190,11 @@
 						"type": "number"
 					},
 					{
+						"key": "fiscalCostBasis",
+						"label": "Fiscal cost basis",
+						"type": "number"
+					},
+					{
 						"key": "disposalDate",
 						"label": "Disposal Date",
 						"type": "string"
@@ -5117,6 +5214,9 @@
 						"label": "Administration",
 						"type": "string"
 					}
+				],
+				"headerActions": [
+					{"id": "post-missed-depreciation", "label": "Post missed depreciation", "type": "handler", "handler": "openMissedDepreciation", "icon": "CalendarClock", "description": "List the months that ended without their depreciation posted, with the amounts, and post them."}
 				],
 				"lifecycleActions": true,
 				"indexRoute": "FixedAssets",
@@ -7593,7 +7693,7 @@
 				"schema": "CustomerMaster",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/customers",
 				"indexRoute": "Customers",
-				"_note": "Debtor master archetype — a customer that gets invoiced. Body leads with the schema-driven Data widget (legalName/tradeName, kvkNumber, vatID, iban, creditLimit, dunningPolicyRef — real CustomerMaster fields; the legacy page listed fabricated keys like customerNumber/name/tradingName/btwNumber/paymentTermDays/peppolEndpoint/phone that do not exist on this schema, fixed here) beside a Related panel. The AR position is the customer's whole reason to be here, so its invoices (ARInvoice filtered customerId=@objectId, rowRoute to ARInvoiceDetail) are the primary body list, with outstanding/open-invoice totals as summaryAggregates KPI chips. No comms leaves — CustomerMaster carries no email/talk linkedType beyond the plain email/telephone fields already in the Data widget. Audit trail evidences master-data changes (credit limit, IBAN) and stays in the sidebar per policy.",
+				"_note": "Debtor master archetype — a customer that gets invoiced. Body leads with the schema-driven Data widget (legalName/tradeName, kvkNumber, vatId with its VIES check, iban, creditLimit, dunningPolicyRef — real CustomerMaster fields; the legacy page listed fabricated keys like customerNumber/name/tradingName/btwNumber/paymentTermDays/peppolEndpoint/phone that do not exist on this schema, fixed here) beside a Related panel. The AR position is the customer's whole reason to be here, so its invoices (ARInvoice filtered customerId=@objectId, rowRoute to ARInvoiceDetail) are the primary body list, with outstanding/open-invoice totals as summaryAggregates KPI chips. No comms leaves — CustomerMaster carries no email/talk linkedType beyond the plain email/telephone fields already in the Data widget. Audit trail evidences master-data changes (credit limit, IBAN) and stays in the sidebar per policy.",
 				"widgets": [
 					{
 						"id": "customer-identity",
@@ -7607,7 +7707,9 @@
 								"legalName",
 								"tradeName",
 								"kvkNumber",
-								"vatID",
+								"vatId",
+								"vatIdValidationStatus",
+								"vatIdValidatedAt",
 								"email",
 								"telephone"
 							]
@@ -7746,6 +7848,186 @@
 							},
 							"emptyText": "No invoices yet for this customer."
 						}
+					},
+					{
+						"id": "customer-payment-plans",
+						"type": "object-list",
+						"title": "Payment plans",
+						"icon": "CalendarClock",
+						"content": {
+							"register": "shillinq",
+							"schema": "PaymentPlan",
+							"filter": {
+								"customerId": "@objectId"
+							},
+							"limit": 20,
+							"columns": [
+								{
+									"key": "planNumber",
+									"label": "Plan"
+								},
+								{
+									"key": "totalAmount",
+									"label": "Total"
+								},
+								{
+									"key": "paidAmount",
+									"label": "Paid"
+								},
+								{
+									"key": "nextDueDate",
+									"label": "Next due"
+								},
+								{
+									"key": "lifecycleState",
+									"label": "State"
+								}
+							],
+							"rowRoute": "PaymentPlanDetail",
+							"emptyText": "No payment plans for this customer."
+						}
+					},
+					{
+						"id": "customer-both-sides-open-receivable",
+						"title": "Open receivable",
+						"type": "stat",
+						"content": {
+							"label": "Open receivable",
+							"icon": "ScaleBalance",
+							"format": {
+								"style": "currency",
+								"currency": "EUR",
+								"decimals": 2
+							},
+							"endpointSource": {
+								"url": "/apps/shillinq/api/relations/@objectId/both-sides"
+							},
+							"valueField": "totals.openReceivable"
+						}
+					},
+					{
+						"id": "customer-both-sides-open-payable",
+						"title": "Open payable",
+						"type": "stat",
+						"content": {
+							"label": "Open payable",
+							"icon": "ScaleBalance",
+							"format": {
+								"style": "currency",
+								"currency": "EUR",
+								"decimals": 2
+							},
+							"endpointSource": {
+								"url": "/apps/shillinq/api/relations/@objectId/both-sides"
+							},
+							"valueField": "totals.openPayable"
+						}
+					},
+					{
+						"id": "customer-both-sides-net",
+						"title": "Net position",
+						"type": "stat",
+						"content": {
+							"label": "Net position",
+							"icon": "ScaleBalance",
+							"format": {
+								"style": "currency",
+								"currency": "EUR",
+								"decimals": 2
+							},
+							"endpointSource": {
+								"url": "/apps/shillinq/api/relations/@objectId/both-sides"
+							},
+							"valueField": "totals.net"
+						}
+					},
+					{
+						"id": "customer-both-sides-sent",
+						"title": "Invoices sent",
+						"type": "object-table",
+						"content": {
+							"endpointSource": {
+								"url": "/apps/shillinq/api/relations/@objectId/both-sides",
+								"responsePath": "sent.rows"
+							},
+							"columns": [
+								{
+									"key": "number",
+									"label": "Invoice"
+								},
+								{
+									"key": "date",
+									"label": "Date"
+								},
+								{
+									"key": "state",
+									"label": "Status"
+								},
+								{
+									"key": "amount",
+									"label": "Amount",
+									"formatter": "currency",
+									"formatterOptions": {
+										"currency": "EUR",
+										"decimals": 2
+									}
+								},
+								{
+									"key": "open",
+									"label": "Still open",
+									"formatter": "currency",
+									"formatterOptions": {
+										"currency": "EUR",
+										"decimals": 2
+									}
+								}
+							],
+							"emptyText": "No sales invoices this year, or none linked."
+						}
+					},
+					{
+						"id": "customer-both-sides-received",
+						"title": "Invoices received",
+						"type": "object-table",
+						"content": {
+							"endpointSource": {
+								"url": "/apps/shillinq/api/relations/@objectId/both-sides",
+								"responsePath": "received.rows"
+							},
+							"columns": [
+								{
+									"key": "number",
+									"label": "Invoice"
+								},
+								{
+									"key": "date",
+									"label": "Date"
+								},
+								{
+									"key": "state",
+									"label": "Status"
+								},
+								{
+									"key": "amount",
+									"label": "Amount",
+									"formatter": "currency",
+									"formatterOptions": {
+										"currency": "EUR",
+										"decimals": 2
+									}
+								},
+								{
+									"key": "open",
+									"label": "Still open",
+									"formatter": "currency",
+									"formatterOptions": {
+										"currency": "EUR",
+										"decimals": 2
+									}
+								}
+							],
+							"emptyText": "No purchase invoices this year, the customer is not linked to a supplier, or your role may not read purchases."
+						}
 					}
 				],
 				"layout": [
@@ -7804,7 +8086,79 @@
 						"gridY": 10,
 						"gridWidth": 12,
 						"gridHeight": 5
+					},
+					{
+						"id": "6",
+						"widgetId": "customer-payment-plans",
+						"gridX": 0,
+						"gridY": 15,
+						"gridWidth": 12,
+						"gridHeight": 4
+					},
+					{
+						"id": "7-1",
+						"widgetId": "customer-both-sides-open-receivable",
+						"gridX": 0,
+						"gridY": 19,
+						"gridWidth": 4,
+						"gridHeight": 2
+					},
+					{
+						"id": "7-2",
+						"widgetId": "customer-both-sides-open-payable",
+						"gridX": 4,
+						"gridY": 19,
+						"gridWidth": 4,
+						"gridHeight": 2
+					},
+					{
+						"id": "7-3",
+						"widgetId": "customer-both-sides-net",
+						"gridX": 8,
+						"gridY": 19,
+						"gridWidth": 4,
+						"gridHeight": 2
+					},
+					{
+						"id": "8",
+						"widgetId": "customer-both-sides-sent",
+						"gridX": 0,
+						"gridY": 21,
+						"gridWidth": 6,
+						"gridHeight": 5
+					},
+					{
+						"id": "9",
+						"widgetId": "customer-both-sides-received",
+						"gridX": 6,
+						"gridY": 21,
+						"gridWidth": 6,
+						"gridHeight": 5
 					}
+				],
+				"headerActions": [
+					{
+						"id": "agree-payment-plan",
+						"label": "Agree a payment plan",
+						"type": "open-modal",
+						"target": "AgreePaymentPlanModal",
+						"icon": "CalendarClock",
+						"props": {
+							"open": true,
+							"from": "customer"
+						}
+					},
+					{
+						"id": "link-supplier",
+						"label": "Link to a supplier",
+						"type": "open-modal",
+						"target": "RelationLinkDialog",
+						"icon": "LinkVariant",
+						"props": {
+							"open": true
+						}
+					},
+					{"id": "check-vat-number", "label": "Check VAT number", "type": "handler", "handler": "checkCustomerVatNumber", "icon": "CheckDecagramOutline", "description": "Check the VAT number against the EU VIES register and keep the outcome on this record."}
 				],
 				"lifecycleActions": true,
 				"sidebar": {
@@ -7863,7 +8217,16 @@
 				],
 				"defaultSort": "dueDate",
 				"detailRoute": "ARInvoiceDetail",
-				"documentationUrl": "https://shillinq.conduction.nl/guides/create-invoices"
+				"documentationUrl": "https://shillinq.conduction.nl/guides/create-invoices",
+				"headerActions": [
+					{
+						"id": "new-down-payment-invoice",
+						"label": "New down-payment invoice",
+						"icon": "CashPlus",
+						"handler": "openDownPaymentInvoice",
+						"description": "Invoice part of an order up front. It is booked as an advance received and taken off the final invoice."
+					}
+				]
 			}
 		},
 		{
@@ -7894,7 +8257,8 @@
 								"periodId",
 								"lifecycleState",
 								"ublRef",
-								"sourceDocumentUri"
+								"sourceDocumentUri",
+							"paymentPlanId"
 							]
 						}
 					},
@@ -8133,6 +8497,24 @@
 						"gridY": 16,
 						"gridWidth": 12,
 						"gridHeight": 3
+					}
+				],
+				"headerActions": [
+					{
+						"id": "agree-payment-plan",
+						"label": "Agree a payment plan",
+						"type": "open-modal",
+						"target": "AgreePaymentPlanModal",
+						"icon": "CalendarClock",
+						"props": {
+							"open": true,
+							"from": "invoice"
+						},
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"op": "eq",
+							"value": "overdue"
+						}
 					}
 				],
 				"lifecycleActions": true,
@@ -11607,7 +11989,10 @@
 						"key": "state",
 						"label": "Status",
 						"type": "string"
-					}
+					},
+					{ "key": "claimQuarter", "label": "Claim quarter", "type": "string" },
+					{ "key": "totalCompensableAmount", "label": "Compensable VAT", "type": "number" },
+					{ "key": "breakdown", "label": "Breakdown per account", "type": "array" }
 				],
 				"indexRoute": "BcfClaims",
 				"sidebarProps": {
@@ -12419,6 +12804,36 @@
 						]
 					}
 				],
+				"widgets": [
+					{
+						"id": "ladder-details",
+						"type": "data",
+						"title": "Ladder",
+						"icon": "StairsUp",
+						"content": { "columns": 2, "include": ["name", "customerGroup", "enterpriseId", "actief", "lifecycleState", "administrationId"] }
+					},
+					{
+						"id": "ladder-stages",
+						"type": "object-table",
+						"title": "Stages",
+						"icon": "EmailOutline",
+						"content": {
+							"endpointSource": { "url": "/apps/shillinq/api/dunning/ladders/@objectId/stages", "responsePath": "rows" },
+							"columns": [
+								{ "key": "nr", "label": "Stage" },
+								{ "key": "days", "label": "Days overdue" },
+								{ "key": "channelLabel", "label": "Channel" },
+								{ "key": "subject", "label": "Subject" },
+								{ "key": "body", "label": "Body" }
+							],
+							"emptyText": "This ladder has no stages."
+						}
+					}
+				],
+				"layout": [
+					{ "id": "1", "widgetId": "ladder-details", "gridX": 0, "gridY": 0, "gridWidth": 12, "gridHeight": 4 },
+					{ "id": "2", "widgetId": "ladder-stages", "gridX": 0, "gridY": 4, "gridWidth": 12, "gridHeight": 8 }
+				],
 				"auditTrail": true,
 				"schema": "DunningLadder",
 				"fields": [
@@ -12649,6 +13064,15 @@
 				"defaultSort": "executedOn",
 				"detailRoute": "DunningRunDetail",
 				"description": "Per-invoice per-stage execution log with evidence trail. Immutable post-execute.",
+				"headerActions": [
+					{
+						"id": "next-run",
+						"label": "Next run",
+						"icon": "CalendarClock",
+						"handler": "openDunningNextRun",
+						"description": "See which reminder each overdue invoice gets in the next daily run, and how the last run went. Nothing is sent."
+					}
+				],
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
 			}
 		},
@@ -13733,6 +14157,16 @@
 						"key": "statusCode",
 						"label": "Status",
 						"sortable": true
+					},
+					{
+						"key": "duplicateOfId",
+						"label": "Same number as",
+						"sortable": false
+					},
+					{
+						"key": "ibanMismatch",
+						"label": "IBAN differs",
+						"sortable": false
 					}
 				],
 				"defaultSort": "dueDate",
@@ -13793,6 +14227,41 @@
 					{
 						"key": "supplierId",
 						"label": "Supplier",
+						"type": "string"
+					},
+					{
+						"key": "supplierIdentifier",
+						"label": "Supplier as stated on the invoice",
+						"type": "string"
+					},
+					{
+						"key": "payeeIban",
+						"label": "Invoice IBAN",
+						"type": "string"
+					},
+					{
+						"key": "duplicateOfId",
+						"label": "Same number as",
+						"type": "string"
+					},
+					{
+						"key": "duplicateAcknowledgedReason",
+						"label": "Reason to book the repeated number",
+						"type": "string"
+					},
+					{
+						"key": "ibanMismatch",
+						"label": "IBAN differs from supplier record",
+						"type": "string"
+					},
+					{
+						"key": "ibanAcknowledgedReason",
+						"label": "Reason to book the other IBAN",
+						"type": "string"
+					},
+					{
+						"key": "apTransactionId",
+						"label": "AP transaction",
 						"type": "string"
 					},
 					{
@@ -17136,44 +17605,89 @@
 					}
 				],
 				"defaultSort": "reconId",
+				"actions": [
+					{
+						"id": "match-by-hand",
+						"label": "Match by hand",
+						"icon": "LinkVariant",
+						"handler": "openBankLineMatch",
+						"description": "Pair the bank line of this item with the invoices it pays, or book it to a ledger account."
+					}
+				],
 				"bulkActions": [
 					{
 						"id": "bulk-classify-timing",
-						"label": "Classify as Timing",
+						"label": "Classify as timing",
 						"icon": "ClockOutline",
-						"type": "api-call",
-						"method": "POST",
-						"url": "/api/reconciliations/:reconId/matches/bulk-resolve",
-						"payload": {
-							"resolutionStatus": "timing"
-						},
+						"handler": "classifyUnmatched",
 						"description": "Classify every selected item as a timing difference, using one reason for the whole selection."
 					},
 					{
 						"id": "bulk-classify-pending",
-						"label": "Classify as Pending",
+						"label": "Classify as pending",
 						"icon": "TimerSandEmpty",
-						"type": "api-call",
-						"method": "POST",
-						"url": "/api/reconciliations/:reconId/matches/bulk-resolve",
-						"payload": {
-							"resolutionStatus": "pending"
-						}
+						"handler": "classifyUnmatched"
 					},
 					{
 						"id": "bulk-classify-adjustment",
-						"label": "Classify as Adjustment",
+						"label": "Classify as adjustment",
 						"icon": "TuneVariant",
-						"type": "api-call",
-						"method": "POST",
-						"url": "/api/reconciliations/:reconId/matches/bulk-resolve",
-						"payload": {
-							"resolutionStatus": "adjustment"
-						}
+						"handler": "classifyUnmatched"
 					}
 				],
 				"description": "Unresolved items across all open reconciliations, grouped by session. Bulk-classify multiple items at once with a shared reason.",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/year-end"
+			}
+		},
+		{
+			"id": "UnmatchedBankLines",
+			"route": "/bookkeeping/bank-lines/unmatched",
+			"type": "index",
+			"title": "Unmatched bank lines",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankStatementLine",
+				"filter": {
+					"status": "unmatched"
+				},
+				"columns": [
+					{
+						"key": "valueDate",
+						"label": "Value date",
+						"sortable": true
+					},
+					{
+						"key": "counterpartyName",
+						"label": "Counterparty",
+						"sortable": true
+					},
+					{
+						"key": "amount",
+						"label": "Amount (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "remittanceInfo",
+						"label": "Reference",
+						"sortable": false
+					},
+					{
+						"key": "statementId",
+						"label": "Statement",
+						"sortable": true
+					}
+				],
+				"defaultSort": "valueDate",
+				"actions": [
+					{
+						"id": "match-by-hand",
+						"label": "Match by hand",
+						"icon": "LinkVariant",
+						"handler": "openBankLineMatch",
+						"description": "Pair this bank line with the invoices it pays, or book it to a ledger account."
+					}
+				],
+				"description": "Bank lines no rule has matched yet. Pair a line with the invoices it pays, or book it to a ledger account."
 			}
 		},
 		{

@@ -6,9 +6,13 @@
 	},
 	"_relocations_nav_six_clusters_note": "nav-six-clusters (2026-08-20): the 29 pre-restructure top-level groups fold into Dashboard + 6 clusters (Bookkeeping, Sales, Purchasing, BankingCashflow, Taxes, ReportingCompliance — the last two are RENAMED ids, formerly Belastingen/Compliance, edited directly in src/manifest.json since REQ-NAVC-001 scenario 2 requires the OLD ids not survive as top-level entries). Any existing relocation whose TARGET was itself a folding id (BankingTreasury, Payroll, PublicSector, Subsidies — all had children:[] in the base and existed only to receive these) is retargeted DIRECTLY to the final cluster id rather than chained through the folding id, per design.md §5/REQ-NAVC-006's own 140-orphan lesson: applyMenuRelocations resolves a single hop per id per pass, so `X -> FoldingId` plus `FoldingId -> Cluster` in the SAME relocations map races the pass in which FoldingId itself dissolves and orphans X at the top level for good (verified against this repo's own buildManifest.js — the dissolving group is removed from the top-level array during the SAME scan pass that discovers X's move, so `menu.find(target)` fails and X falls back to a bare top-level push, and once FoldingId is gone it never reappears for a later pass to retry against).",
 	"relocations": {
+		"ReinvestmentReserves": "Bookkeeping",
+		"MeterReadings": "Sales",
+		"UsageRatePlans": "Sales",
 		"Treasury": "BankingCashflow",
 		"BankReconciliation": "BankingCashflow",
 		"UnmatchedItems": "BankingCashflow",
+		"UnmatchedBankLines": "BankingCashflow",
 		"BankAccounts": "BankingCashflow",
 		"CurrencyBalances": "BankingCashflow",
 		"FXRates": "BankingCashflow",
@@ -30,6 +34,8 @@
 		"Orders": "Sales",
 		"RecurringInvoicing": "Sales",
 		"PaymentRequests": "Sales",
+		"PaymentPlans": "Sales",
+		"RefundsToPay": "Sales",
 		"ARAging": "Sales",
 		"GoodsReceiptNotes": "Purchasing",
 		"Inventory": "Purchasing",
@@ -91,6 +97,8 @@
 		"TaxConfiguration",
 		"CashflowRecurring",
 		"InventoryGLConfig",
+		"PostingRestrictions",
+		"RequiredFields",
 		"CostCenters",
 		"CashflowBufferPolicy",
 		"EliminationRules",
@@ -120,13 +128,15 @@
 		"ImportMappings"
 	],
 	"_removals_note": "ADR-112: a report is a card on the Reporting & Compliance page OR a menu entry, never both. All six pages stay routable — deep links, e2e specs and the cards address them by route name — only their menu entries go. Five were already declared as cards in src/components/reporting/reportViews.js when that file was written from the menu-IA audit; BookkeepingDestructionReport was missed there, so it is added as a card in the same change that retires its entry. Retiring an entry whose card did not exist would have removed the report from the product rather than moving it.",
+	"_removals_btw_note": "#1717: the Taxes menu showed two VAT return pages. BtwAangiften lists VatReturn records, whose rubrieken aggregation can never compute, while VATReturnService files BtwAangifte records, which VATReturns lists. The menu keeps VATReturns only (tax-vat-return-from-books task 2.3, REQ-VBTW-004). BtwAangiften stays routable so an existing VatReturn record still opens by URL.",
 	"removals": [
 		"EmuRapportage",
 		"VarianceReport",
 		"ConsolidatedReport",
 		"BookkeepingDestructionReport",
 		"Iv3Rapportages",
-		"SisaRapportages"
+		"SisaRapportages",
+		"BtwAangiften"
 	],
 	"removalsReplacedBy": {
 		"EmuRapportage": "ReportingComplianceOverview",
@@ -134,6 +144,7 @@
 		"ConsolidatedReport": "ReportingComplianceOverview",
 		"BookkeepingDestructionReport": "ReportingComplianceOverview",
 		"Iv3Rapportages": "ReportingComplianceOverview",
-		"SisaRapportages": "ReportingComplianceOverview"
+		"SisaRapportages": "ReportingComplianceOverview",
+		"BtwAangiften": "VATReturns"
 	}
 }

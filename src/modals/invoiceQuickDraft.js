@@ -134,6 +134,8 @@ export function provisionalInvoiceNumber(invoiceDate, now = new Date()) {
  * The invoice is always created in lifecycleState `draft` (REQ-IQD-003).
  *
  * @spec openspec/changes/shillinq-invoice-quick-draft/proposal.md
+ * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/shillinq-invoice-quick-draft/spec.md (REQ-IQD-006)
+ * @spec openspec/changes/billing-inherited-defects/specs/shillinq-invoice-quick-draft/spec.md (REQ-IQD-007)
  * @param {object} input The collected form values.
  * @param {string} input.customerId Selected customer id.
  * @param {string} input.invoiceDate Invoice date.
@@ -148,19 +150,32 @@ export function provisionalInvoiceNumber(invoiceDate, now = new Date()) {
  */
 export function buildInvoicePayload(input) {
 	const totals = computeTotals(input.lines)
-	const lines = (input.lines || [])
+	// ARInvoice declares its lines as `invoiceLines` in the EN 16931 BG-25
+	// shape. OpenRegister drops an undeclared property, so the former `lines`
+	// (with lineNumber/description/unitPrice/glAccount) never reached the
+	// invoice (REQ-IQD-006). The line declares `glAccount` since ARInvoice
+	// 0.16.0: a line's own account, else the draft's default (REQ-IQD-007).
+	const invoiceLines = (input.lines || [])
 		.filter(
 			(l) =>
 				(l.description || '').trim().length > 0 || Number(l.unitPrice) > 0,
 		)
-		.map((l, idx) => ({
-			lineNumber: idx + 1,
-			description: (l.description || '').trim(),
-			quantity: Number(l.quantity) || 0,
-			unitPrice: Number(l.unitPrice) || 0,
-			vatRate: Number(l.vatRate) || 0,
-			glAccount: input.glAccount || '',
-		}))
+		.map((l, idx) => {
+			const quantity = Number(l.quantity) || 0
+			const netPrice = Number(l.unitPrice) || 0
+			const vatRate = Number(l.vatRate) || 0
+			return {
+				lineId: String(idx + 1),
+				itemName: (l.description || '').trim(),
+				quantity,
+				unitCode: 'C62',
+				netPrice,
+				netAmount: round2(quantity * netPrice),
+				vatRate,
+				vatCategory: vatRate > 0 ? 'S' : 'Z',
+				glAccount: l.glAccount || input.glAccount || null,
+			}
+		})
 	return {
 		invoiceNumber:
 			input.invoiceNumber || provisionalInvoiceNumber(input.invoiceDate),
@@ -175,7 +190,7 @@ export function buildInvoicePayload(input) {
 		grossAmount: totals.gross,
 		lifecycleState: 'draft',
 		customerReference: input.reference || '',
-		lines,
+		invoiceLines,
 	}
 }
 

@@ -11,6 +11,9 @@
 
 const axios = {
 	get: async () => ({ data: {} }),
+	// The finance leaf panels POST their two actions; the tests replace this
+	// with a vi.fn() per case, exactly as they do with `get`.
+	post: async () => ({ data: {} }),
 }
 
 export default axios

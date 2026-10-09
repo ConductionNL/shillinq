@@ -41,10 +41,12 @@ use OCA\Shillinq\Guard\SubsidieRepaymentGuard;
 use OCA\Shillinq\Guard\VatSubmissionGuard;
 use OCA\Shillinq\Lifecycle\AnnualBudgetDefaultGuard;
 use OCA\Shillinq\Lifecycle\APGuard;
+use OCA\Shillinq\Listener\InvoiceCommitmentListener;
 use OCA\Shillinq\Lifecycle\FiscalYearGuard;
 use OCA\Shillinq\Lifecycle\FourEyesPaymentRunGuard;
 use OCA\Shillinq\Lifecycle\GLReversalGuard;
 use OCA\Shillinq\Lifecycle\PaymentRunDuplicateGuard;
+use OCA\Shillinq\PaymentRun\PaymentBlockChecker;
 use OCA\Shillinq\Lifecycle\PeriodCloseGuard;
 use OCA\Shillinq\Lifecycle\RegisterRequiresGuardAdapter;
 use OCA\Shillinq\Lifecycle\WBSOExportValidationGuard;
@@ -55,6 +57,7 @@ use OCA\Shillinq\Listener\BookingLifecycleTransitionListener;
 use OCA\Shillinq\Listener\CommitmentMaterialisationListener;
 use OCA\Shillinq\Listener\CommitmentTransitionListener;
 use OCA\Shillinq\Listener\ContractObligationTaskListener;
+use OCA\Shillinq\Listener\SupplierInvoiceWarningListener;
 use OCA\Shillinq\Listener\DbaInvoiceMonitorListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Listener\DeliveryDispatchListener;
@@ -62,11 +65,16 @@ use OCA\Shillinq\Listener\ExtractionCompletedListener;
 use OCA\Shillinq\Listener\FixedAssetDisposalListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
 use OCA\Shillinq\Listener\GRIRClearingListener;
+use OCA\Shillinq\Listener\ReconciliationMatchSettlementListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
+use OCA\Shillinq\Listener\IntegriqCloudEventListener;
+use OCA\Shillinq\Listener\BankfeedSyncedListener;
 use OCA\Shillinq\Listener\IntercompanyLinkListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
+use OCA\Shillinq\Listener\FeeScheduleValidationListener;
 use OCA\Shillinq\Listener\OrderFulfilmentTransitionListener;
 use OCA\Shillinq\Listener\OssPaymentReconciliationListener;
+use OCA\Shillinq\Listener\PaymentRequestLeafRegistrationListener;
 use OCA\Shillinq\Listener\PeppolDeliveryStatusListener;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
 use OCA\Shillinq\Listener\PosStockDecrementListener;
@@ -74,6 +82,7 @@ use OCA\Shillinq\Listener\ReconciliationMatchToReportListener;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Listener\TenderNedAwardDetectedListener;
 use OCA\Shillinq\Notification\DeadlineReminderNotifier;
+use OCA\Shillinq\Notification\EInvoiceNotifier;
 use OCA\Shillinq\Notification\PosStockUnmatchedLineNotifier;
 use OCA\Shillinq\Notification\RoleFallbackResolver;
 use OCA\Shillinq\Repair\DbValueMigrationPort;
@@ -83,9 +92,9 @@ use OCA\Shillinq\Service\Dunning\CreditScoreFetchAdapterInterface;
 use OCA\Shillinq\Service\Dunning\DunningChannelAdapterInterface;
 use OCA\Shillinq\Service\Dunning\IncassoBureauAdapterInterface;
 use OCA\Shillinq\Service\Dunning\LogCreditScoreFetchAdapter;
-use OCA\Shillinq\Service\Dunning\LogDunningChannelAdapter;
 use OCA\Shillinq\Service\Dunning\LogIncassoBureauAdapter;
 use OCA\Shillinq\Service\Dunning\LogPostNLAdapter;
+use OCA\Shillinq\Service\Dunning\MailDunningChannelAdapter;
 use OCA\Shillinq\Service\Dunning\PostNLAdapterInterface;
 use OCA\Shillinq\Service\External\Bunq\BunqBankConnectorAdapterInterface;
 use OCA\Shillinq\Service\External\Bunq\LogBunqBankConnectorAdapter;
@@ -137,6 +146,7 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
+use OCP\Util;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -199,8 +209,8 @@ class Application extends App implements IBootstrap {
 		// of it. The old-slug case is the quiet one: OpenRegister finds no
 		// register, matches no rows, and returns an empty set that is byte for byte
 		// what a healthy empty register returns. No exception, no 404, no log line.
-		// This app read Integriq's connector register that way, from
-		// ExternalAdaptersAdminController.
+		// This app once read Integriq's connector register that way, from the
+		// external-adapters roster that adopt-connection-registry removed.
 		//
 		// Verified against this container, not assumed: OpenRegister registers the
 		// resolver in its OWN container, so nothing of that registration reaches
@@ -249,6 +259,17 @@ class Application extends App implements IBootstrap {
 			listener: DeepLinkRegistrationListener::class
 		);
 
+		// Spec case-payment-requests REQ-SOPR-003 / REQ-SOPR-004 — contribute the
+		// payment-request leaves to OpenRegister's catalogue, so a case app can
+		// ask for money on its own object without shillinq knowing the app.
+		// Guarded on the event class: shillinq boots without OpenRegister.
+		if (class_exists('OCA\\OpenRegister\\Event\\RegisterLeafProvidersEvent') === true) {
+			$context->registerEventListener(
+				event: \OCA\OpenRegister\Event\RegisterLeafProvidersEvent::class,
+				listener: PaymentRequestLeafRegistrationListener::class
+			);
+		}
+
 		// Inventory-valuation-fifo-avg REQ-INV-003 / REQ-INV-004 / REQ-INV-007
 		// — dispatch posted StockMove records into the valuation engine
 		// (FIFO or moving-average per the InventoryValuation.valuationMethod)
@@ -295,6 +316,21 @@ class Application extends App implements IBootstrap {
 			listener: GRIRClearingListener::class
 		);
 
+		// Banking-manual-match REQ-BMM-003: a confirmed ReconciliationMatch,
+		// by a person, a rule or the bank feed, moves the invoices it names to
+		// paid through their own declared transitions.
+		$context->registerEventListener(
+			event: ObjectTransitionedEvent::class,
+			listener: ReconciliationMatchSettlementListener::class
+		);
+
+		// Planning-commitment-year-end REQ-PCYE-002/003: an approved supplier
+		// invoice lowers the commitment of its order, and the last one closes it.
+		$context->registerEventListener(
+			event: ObjectTransitionedEvent::class,
+			listener: InvoiceCommitmentListener::class
+		);
+
 		// Revive-gl-tax-capabilities (shillinq#417/#446) REQ-GLTAX-001 — the
 		// missing fixed-asset disposal trigger. DisposalJournalEmitter fully
 		// implements the closing GLTransaction for a retired FixedAsset and
@@ -324,16 +360,33 @@ class Application extends App implements IBootstrap {
 		);
 
 		// Change add-invoice-pdf-export-with-ubl-peppol-support REQ-EINV-005 — consume
-		// the cross-app `nl.conduction.peppol.delivery.status` cloud event
-		// openconnector's Peppol access point emits and advance
-		// ARInvoice.deliveryStatus (REQ-AR-011). Registered against the literal
-		// event-name STRING (IRegistrationContext::registerEventListener()
-		// accepts string|class-string<T> — mirrors the emit side in
-		// BudgetImpactEmitter, which dispatches plain string event names via
-		// IEventDispatcher::dispatch()).
+		// the `nl.conduction.peppol.delivery.status` CloudEvent integriq's Peppol
+		// access point emits and advance ARInvoice.deliveryStatus (REQ-AR-011).
+		// integriq dispatches no Nextcloud event by that name: it saves the
+		// CloudEvent as an OpenRegister object (register `integriq`, schema
+		// `event`), so the listener hears ObjectCreatedEvent and matches the
+		// type itself (#1111).
 		$context->registerEventListener(
-			event: PeppolDeliveryStatusListener::EVENT_NAME,
+			event: ObjectCreatedEvent::class,
 			listener: PeppolDeliveryStatusListener::class
+		);
+
+		// Change receivables-payment-links design D3 / REQ-RPL-003 (#1681): integriq
+		// saves every CloudEvent as an OpenRegister object in register
+		// `integriq`, schema `event`, and dispatches no Nextcloud event of its
+		// own. So a `nl.conduction.payment.status` outcome reaches shillinq's
+		// reconciliation through ObjectCreatedEvent, matched by slug.
+		$context->registerEventListener(
+			event: ObjectCreatedEvent::class,
+			listener: IntegriqCloudEventListener::class
+		);
+
+		// Banking-connected-accounts REQ-BCON-002: integriq's bank feed pull
+		// arrives the same way, as an `integriq` / `event` object of type
+		// nl.conduction.bankfeed.transactions.synced.
+		$context->registerEventListener(
+			event: ObjectCreatedEvent::class,
+			listener: BankfeedSyncedListener::class
 		);
 
 		// Bookings-pipelinq-customer-bridge slice 07 — when a new
@@ -422,7 +475,7 @@ class Application extends App implements IBootstrap {
 		// PostNL Track & Trace) swap these in production via the same
 		// registerService call.
 		$context->registerServiceAlias(CreditScoreFetchAdapterInterface::class, LogCreditScoreFetchAdapter::class);
-		$context->registerServiceAlias(DunningChannelAdapterInterface::class, LogDunningChannelAdapter::class);
+		$context->registerServiceAlias(DunningChannelAdapterInterface::class, MailDunningChannelAdapter::class);
 		$context->registerServiceAlias(IncassoBureauAdapterInterface::class, LogIncassoBureauAdapter::class);
 		$context->registerServiceAlias(PostNLAdapterInterface::class, LogPostNLAdapter::class);
 
@@ -648,6 +701,22 @@ class Application extends App implements IBootstrap {
 
 		// REQ-004 bewijsstuk-required completion gate, both halves.
 		(new OrderFulfilmentGateRegistration())->register(context: $context);
+		// #516/#1103: the ledger posting guards; then the reporting listeners.
+		(new LedgerPostingRegistration())->register(context: $context);
+		(new ReportingRegistration())->register(context: $context);
+		(new FieldRequirementRegistration())->register(context: $context);
+
+		// REQ-SOPR-006 fee-schedule rules on the write path. No controller in
+		// this app writes a FeeSchedule: they go straight into OpenRegister, so
+		// the pre-save veto is the only place the overlap, legal-basis and
+		// default-amount rules can run at all. Until this listener existed
+		// FeeScheduleService::assertNoOverlap() had tests and no caller.
+		foreach (['OCA\\OpenRegister\\Event\\ObjectCreatingEvent', 'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent'] as $preSaveEvent) {
+			$context->registerEventListener(
+				event: $preSaveEvent,
+				listener: FeeScheduleValidationListener::class
+			);
+		}
 
 		// REQ-SIGN-001/005/006 — the decidesk DECISION and docudesk DOCUMENT
 		// signing request+outcome listeners, registered as one unit.
@@ -725,6 +794,11 @@ class Application extends App implements IBootstrap {
 		// notifications would be discarded at display time.
 		$context->registerNotifierService(DeadlineReminderNotifier::class);
 
+		// REQ-EINV-005 (#1111) — render the rejection notice
+		// PeppolDeliveryStatusListener raises when the Peppol network refuses an
+		// e-invoice. Without a registered INotifier it is discarded at display time.
+		$context->registerNotifierService(EInvoiceNotifier::class);
+
 		// Change inventory-pos-decrement (shillinq#504) — render the
 		// `pos_stock_unmatched_line` notifications PosStockDecrementListener
 		// raises for a POS-sale line that could not be matched to a shillinq
@@ -752,11 +826,13 @@ class Application extends App implements IBootstrap {
 		//
 		// This is deliberately scoped to the 17 guards + PeriodCloseGuard
 		// method shillinq#425 covers. Dozens of pre-existing guards
-		// (MandateEnforcer, BudgetBlocker, PeriodCloseGuard's other three
+		// (PeriodCloseGuard's other three
 		// methods, InventoryPostingGuard, KorThresholdGuard, ...) reference
 		// tags shaped the same way and are NOT registered — every one of
 		// those transitions also hard-fails today. That fleet-wide gap is
 		// filed separately as shillinq#433 and intentionally not fixed here.
+		// The commitment (REQ-PCYE-001) and import batch guard tags.
+		(new GuardTagServices())->register(context: $context);
 		$context->registerService(
 			'OCA\Shillinq\Guard\Iv3XmlValidationGuard::requireValidXml',
 			static function ($c): RegisterRequiresGuardAdapter {
@@ -1021,6 +1097,7 @@ class Application extends App implements IBootstrap {
 					container: $c->get(ContainerInterface::class),
 					appConfig: $c->get(IAppConfig::class),
 					logger: $c->get(LoggerInterface::class),
+					blockChecker: $c->get(PaymentBlockChecker::class),
 				);
 			}
 		);
@@ -1184,9 +1261,24 @@ class Application extends App implements IBootstrap {
 	 * @param IBootContext $context The boot context
 	 *
 	 * @return void
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) OCP\Util exposes script registration
+	 * (addInitScript) as a static method only. Nextcloud ships no injectable
+	 * service for it, and boot() is the only place an app-wide init script can
+	 * be registered, so a seam class would relocate the identical static call
+	 * rather than remove it. Verified against nextcloud lib/public/Util.php.
 	 */
 	public function boot(IBootContext $context): void {
 		$dispatcher = $context->getServerContainer()->get(IEventDispatcher::class);
+
+		// Put shillinq's two finance panels on every page, not just shillinq's
+		// own (ADR-019 / ADR-066, REQ-SOPR-004 and REQ-FPCR-006). The leaves
+		// are meant to be read on ANOTHER app's object: a case, a record, a
+		// contract party. Nextcloud loads an app's bundle only on that app's
+		// routes, so a leaf registered from src/main.js alone never reaches the
+		// page it exists for. This tiny entry registers the two descriptors and
+		// nothing else; the panels load their data only once mounted.
+		Util::addInitScript(self::APP_ID, self::APP_ID.'-integration-init');
 
 		// Bookings-confirm-flow REQ-BCF-001/010 — issue a ConfirmationToken
 		// + dispatch the confirmation email when a new Appointment record is
@@ -1203,6 +1295,14 @@ class Application extends App implements IBootstrap {
 			event: ObjectCreatedEvent::class,
 			listener: AppointmentCreatedListener::class,
 			schemas: ['Appointment']
+		);
+
+		// Every saved supplier invoice gets its duplicate and IBAN warnings
+		// (purchasing-supplier-invoice-intake REQ-PSII-003/004).
+		$this->registerFilteredObjectWriteListener(
+			dispatcher: $dispatcher,
+			listener: SupplierInvoiceWarningListener::class,
+			schemas: ['SupplierInvoice']
 		);
 
 		// --- gate-57 region: ContractObligation task trigger (REQ-CDC-005).
@@ -1303,8 +1403,8 @@ class Application extends App implements IBootstrap {
 			schemas: ['GLTransaction', 'GLLine', 'GLTransactionLine']
 		);
 
-		// Bookkeeping-innovatiebox-administratie — append an immutable
-		// InnovatieboxAuditEvent per relevant lifecycle transition on the
+		// Bookkeeping-innovatiebox-administratie — record a row on the
+		// subject's OpenRegister audit trail per relevant transition on the
 		// three innovatiebox subject schemas (NexusCalculation,
 		// IBProfitAttribution, CarryForwardLoss). Captures *.created,
 		// IBProfitAttribution.finalized (vso_locked: false -> true) and

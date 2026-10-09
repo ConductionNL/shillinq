@@ -35,7 +35,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-projection-engine/specs/budget-projection-engine/spec.md
+ * @spec openspec/specs/budget-projection-engine/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -50,7 +50,7 @@ use InvalidArgumentException;
 /**
  * Pure growth-rate, extrapolation, seam and roll-up arithmetic (REQ-BPE-001..010).
  *
- * @spec openspec/changes/budget-projection-engine/specs/budget-projection-engine/spec.md
+ * @spec openspec/specs/budget-projection-engine/spec.md
  *
  * @SuppressWarnings(PHPMD.ShortVariable) `extrapolate()`'s `$v0` parameter
  * name is the literal public surface `tasks.md`/`design.md` §2g mandate
@@ -93,7 +93,7 @@ class BudgetProjectionCalculator {
 	 *
 	 * @throws InvalidArgumentException When `$accountType` is not one of the five declared values.
 	 *
-	 * @spec openspec/changes/budget-projection-engine/specs/budget-projection-engine/spec.md#req-bpe-001
+	 * @spec openspec/specs/budget-projection-engine/spec.md#req-bpe-001
 	 */
 	public function projectionMetric(string $accountType): string {
 		return match ($accountType) {
@@ -124,7 +124,7 @@ class BudgetProjectionCalculator {
 	 *
 	 * @return list<int> The metric series, same length and order as the input.
 	 *
-	 * @spec openspec/changes/budget-projection-engine/specs/budget-projection-engine/spec.md#req-bpe-001
+	 * @spec openspec/specs/budget-projection-engine/spec.md#req-bpe-001
 	 */
 	public function metricSeries(array $orderedNetMovementCents, string $metric): array {
 		if ($metric === 'netMovement') {
@@ -172,8 +172,8 @@ class BudgetProjectionCalculator {
 	 *         actual valid-step count — NEVER a fabricated rate
 	 *         (REQ-BPE-004).
 	 *
-	 * @spec openspec/changes/budget-projection-engine/specs/budget-projection-engine/spec.md#req-bpe-002
-	 * @spec openspec/changes/budget-projection-engine/specs/budget-projection-engine/spec.md#req-bpe-004
+	 * @spec openspec/specs/budget-projection-engine/spec.md#req-bpe-002
+	 * @spec openspec/specs/budget-projection-engine/spec.md#req-bpe-004
 	 */
 	public function growthRate(array $values): array {
 		$steps = [];
@@ -241,7 +241,7 @@ class BudgetProjectionCalculator {
 	 *
 	 * @return integer The projected value, in integer EUR cents, rounded half-away-from-zero.
 	 *
-	 * @spec openspec/changes/budget-projection-engine/specs/budget-projection-engine/spec.md#req-bpe-005
+	 * @spec openspec/specs/budget-projection-engine/spec.md#req-bpe-005
 	 */
 	public function extrapolate(int $v0, float $rate, int $k): int {
 		return (int)round($v0 * ((1.0 + $rate) ** $k));
@@ -270,7 +270,7 @@ class BudgetProjectionCalculator {
 	 *
 	 * @return string One of `actual`, `projected`, `unprojectable`.
 	 *
-	 * @spec openspec/changes/budget-projection-engine/specs/budget-projection-engine/spec.md#req-bpe-006
+	 * @spec openspec/specs/budget-projection-engine/spec.md#req-bpe-006
 	 */
 	public function seam(bool $hasActual, string $month, ?string $lastActualMonth): string {
 		if ($hasActual === true) {
@@ -310,7 +310,7 @@ class BudgetProjectionCalculator {
 	 *
 	 * @return list<int> The cumulative series, in EUR cents, same length and order as `$trend`.
 	 *
-	 * @spec openspec/changes/budget-projection-engine/specs/budget-projection-engine/spec.md#req-bpe-008
+	 * @spec openspec/specs/budget-projection-engine/spec.md#req-bpe-008
 	 */
 	public function cumulative(array $trend, string $accountType): array {
 		$metric = $this->projectionMetric(accountType: $accountType);
@@ -353,7 +353,7 @@ class BudgetProjectionCalculator {
 	 *
 	 * @return array{kind:string,amount?:int,partial?:bool,reason?:string} The group's own typed result for that month.
 	 *
-	 * @spec openspec/changes/budget-projection-engine/specs/budget-projection-engine/spec.md#req-bpe-007
+	 * @spec openspec/specs/budget-projection-engine/spec.md#req-bpe-007
 	 */
 	public function groupProjected(array $members): array {
 		if ($members === []) {
@@ -391,7 +391,7 @@ class BudgetProjectionCalculator {
 	 *
 	 * @return string The next bucket.
 	 *
-	 * @spec openspec/changes/budget-projection-engine/specs/budget-projection-engine/spec.md#req-bpe-005
+	 * @spec openspec/specs/budget-projection-engine/spec.md#req-bpe-005
 	 */
 	public function nextMonth(string $month): string {
 		$year = (int)substr($month, 0, 4);
@@ -417,7 +417,7 @@ class BudgetProjectionCalculator {
 	 *
 	 * @return integer The number of whole months `$toMonth` is after `$fromMonth` (may be negative).
 	 *
-	 * @spec openspec/changes/budget-projection-engine/specs/budget-projection-engine/spec.md#req-bpe-005
+	 * @spec openspec/specs/budget-projection-engine/spec.md#req-bpe-005
 	 */
 	public function monthOffset(string $fromMonth, string $toMonth): int {
 		$fromYear = (int)substr($fromMonth, 0, 4);

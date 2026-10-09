@@ -56,6 +56,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\Asset\ReinvestmentReserves;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -125,6 +126,7 @@ class FixedAssetDisposalService {
 	 * @param AdministrationContextService $administrationContext IDOR + tenant scope (ADR-005).
 	 * @param LoggerInterface $logger Logger (no sensitive payloads).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param ReinvestmentReserves|null $reserves Forms a reinvestment reserve from the gain when the asset asks for it.
 	 *
 	 * @SuppressWarnings(PHPMD.LongVariable) administrationContext is the
 	 * canonical name fleet-wide.
@@ -135,6 +137,7 @@ class FixedAssetDisposalService {
 		private readonly AdministrationContextService $administrationContext,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly ?ReinvestmentReserves $reserves = null,
 	) {
 
 	}//end __construct()
@@ -181,10 +184,16 @@ class FixedAssetDisposalService {
 			asset: $normalised
 		);
 
+		$toReserve = ($this->reserves !== null && filter_var(($normalised['disposalGainToReserve'] ?? false), FILTER_VALIDATE_BOOLEAN) === true);
+		$accounts = $this->accounts();
+		if ($toReserve === true) {
+			$accounts['gainAccountNumber'] = $this->reserves->reserveAccount();
+		}
+
 		$journal = $this->emitter->emit(
 			asset: $normalised,
 			disposal: $disposal,
-			accounts: $this->accounts(),
+			accounts: $accounts,
 			bookValue: $bookValue
 		);
 
@@ -200,11 +209,18 @@ class FixedAssetDisposalService {
 			];
 		}
 
-		return $this->persist(
+		$result = $this->persist(
 			administrationId: $administrationId,
 			journal: $journal,
 			asset: $normalised
 		);
+
+		// REQ-AMCR-004: the gain went to the reserve account; keep it as a reserve for a replacement.
+		if ($toReserve === true && (float)($journal['gain'] ?? 0) > 0) {
+			$result['reserve'] = $this->reserves->form(asset: $normalised, gain: (float)$journal['gain'], formedOn: $disposal['disposalDate']);
+		}
+
+		return $result;
 
 	}//end postDisposalJournal()
 

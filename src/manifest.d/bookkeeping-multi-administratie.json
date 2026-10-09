@@ -119,7 +119,19 @@
 					{ "key": "status", "label": "Status", "type": "string" },
 					{ "key": "backupSchedule", "label": "Backup schedule", "type": "string" },
 					{ "key": "dataRetentionYears", "label": "Data retention (years)", "type": "number" },
-					{ "key": "defaultLanguage", "label": "Default language", "type": "string" }
+					{ "key": "defaultLanguage", "label": "Default language", "type": "string" },
+					{ "key": "dunningEnabled", "label": "Automatic payment reminders", "type": "boolean" }
+				],
+				"headerActions": [
+					{
+						"id": "switch-on-reminders",
+						"label": "Switch on reminders",
+						"type": "handler",
+						"handler": "openDunningSwitchOn",
+						"icon": "BellRingOutline",
+						"description": "See which reminder each overdue invoice gets in the first run, then switch daily reminders on.",
+						"visibleWhen": { "field": "dunningEnabled", "op": "neq", "value": true }
+					}
 				],
 				"relatedObjects": [
 					{

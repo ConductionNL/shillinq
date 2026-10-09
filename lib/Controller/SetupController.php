@@ -71,11 +71,10 @@ class SetupController extends Controller {
 	/**
 	 * App-config key holding the dataset the operator picked.
 	 *
-	 * The wizard's `choice` step writes it through `POST /api/setup/config`, and
-	 * the `run-action` step that follows reads it back. Two steps rather than
-	 * one because `CnSetupWizard::runAction()` posts to
-	 * `/api/setup/action/{action}` with no body: an action cannot carry the
-	 * answer, so the answer has to be stored before the action runs.
+	 * The wizard's `choice` step writes it through `POST /api/setup/config`.
+	 * Each card's Load button posts `{ dataset }` to the `load-demo-data`
+	 * action, which stores the same key once the load succeeds, so both routes
+	 * land in one place (`loadAction` on the step, wizard-dataset-card-load).
 	 *
 	 * @var string
 	 */
@@ -106,6 +105,7 @@ class SetupController extends Controller {
 	 * @return DataResponse `{ version, completed, steps: { <id>: { done } } }`.
 	 *
 	 * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
+	 * @spec openspec/changes/wizard-dataset-card-load/specs/first-time-setup/spec.md
 	 */
 	#[AuthorizedAdminSetting(AdminSettings::class)]
 	public function status(): DataResponse {
@@ -133,18 +133,19 @@ class SetupController extends Controller {
 				// `optionsSource: datasets` and no options of its own, so a
 				// dataset missing from this list is a dataset nobody can pick.
 				'datasets' => $this->demoDataService->listChoices(),
+				// Exactly the ids of `manifest.setup.steps`: a step the server
+				// never reports stays open and reopens the wizard.
 				'steps' => [
-					'demo-data' => ['done' => ($pickedDataset !== '')],
-					// "None" is an ANSWER, so the load step is finished the
-					// moment it is chosen: there is nothing left to run.
-					'load-demo-data' => [
-						'done' => ($demoDecided === true || $pickedDataset === DemoDataService::NONE_DATASET),
-					],
+					'welcome' => ['done' => true],
+					// A pick without a load still counts: a wizard that
+					// predates `loadAction` can only record the pick.
+					'demo-data' => ['done' => ($demoDecided === true || $pickedDataset !== '')],
 					'country' => ['done' => $countryDone],
 					'organisation' => ['done' => $regionDone],
 					'rgs-template' => ['done' => $rgsDone],
 					'administration' => ['done' => $adminDone],
 					'seed' => ['done' => $seedDone],
+					'done' => ['done' => $requiredDone],
 				],
 			]
 		);
@@ -212,7 +213,7 @@ class SetupController extends Controller {
 		}
 
 		if ($actionId === 'install-demo-data') {
-			return $this->installDemoData();
+			return $this->installDemoData(dataset: DemoDataService::DEMO_DATASET);
 		}
 
 		if ($actionId === 'skip-demo-data') {
@@ -275,14 +276,29 @@ class SetupController extends Controller {
 	}//end runAction()
 
 	/**
-	 * Install the shipped demo dataset (ADR-111 rule 4).
+	 * Install the dataset a card's Load button posted as `dataset`, or the
+	 * stored pick when nothing is posted (ADR-111 rule 4).
 	 *
 	 * @return DataResponse The outcome, carrying the counts.
 	 *
-	 * @spec exclude Demo-data install action (ADR-111 rule 4); no per-app openspec change yet.
+	 * @spec openspec/changes/wizard-dataset-card-load/specs/first-time-setup/spec.md
 	 */
 	private function loadDataset(): DataResponse {
 		$picked = $this->config(key: self::DATASET_KEY);
+
+		// The card's Load button names its dataset in the body. An older wizard
+		// posts nothing and relies on the pick stored a step earlier. Nothing is
+		// stored before the load succeeds: a failed load must leave the step
+		// open for an operator who asked for data and got none.
+		$posted = $this->request->getParam('dataset');
+		if ($posted !== null) {
+			$refusal = $this->refuseDataset(value: $posted);
+			if ($refusal !== null) {
+				return $refusal;
+			}
+
+			$picked = (string)$posted;
+		}
 
 		// 🔴 NO SILENT DEFAULT. Importing here because the operator clicked Run
 		// one step early would plant example objects nobody asked for.
@@ -291,21 +307,53 @@ class SetupController extends Controller {
 		}
 
 		if ($picked === DemoDataService::NONE_DATASET) {
+			$this->appConfig->setValueString(Application::APP_ID, self::DATASET_KEY, DemoDataService::NONE_DATASET);
 			$this->appConfig->setValueString(Application::APP_ID, self::DEMO_DATA_DECIDED_KEY, 'skipped');
 
 			return new DataResponse(['success' => true, 'message' => 'No example data was loaded.']);
 		}
 
-		return $this->installDemoData();
+		return $this->installDemoData(dataset: $picked);
 
 	}//end loadDataset()
 
 	/**
+	 * Refuse a posted dataset id no dataset answers to.
+	 *
+	 * @param mixed $value The posted value.
+	 *
+	 * @return DataResponse|null The refusal, or null when the dataset is known.
+	 *
+	 * @spec openspec/changes/wizard-dataset-card-load/specs/first-time-setup/spec.md
+	 */
+	private function refuseDataset(mixed $value): ?DataResponse {
+		$named = 'that';
+		if (is_scalar($value) === true) {
+			$named = (string)$value;
+		}
+
+		$known = array_column($this->demoDataService->listChoices(), 'id');
+		if (is_scalar($value) === true && in_array($named, $known, true) === true) {
+			return null;
+		}
+
+		return new DataResponse(
+			['success' => false, 'message' => 'No dataset is called "' . $named . '".'],
+			Http::STATUS_BAD_REQUEST,
+		);
+	}//end refuseDataset()
+
+	/**
 	 * Import the dataset this app ships.
 	 *
+	 * @param string $dataset The dataset id, recorded as the pick once the
+	 *                        import succeeded.
+	 *
 	 * @return DataResponse `{ success, message }`.
+	 *
+	 * @spec openspec/changes/wizard-dataset-card-load/specs/first-time-setup/spec.md
 	 */
-	private function installDemoData(): DataResponse {
+	private function installDemoData(string $dataset): DataResponse {
 		try {
 			$imported = $this->demoDataService->install();
 		} catch (\Throwable $e) {
@@ -314,6 +362,8 @@ class SetupController extends Controller {
 
 		// Recorded only after the import actually returned. Marking it first
 		// would let a failed install present as a finished step.
+		// Loading IS choosing the set, so the pick is recorded too.
+		$this->appConfig->setValueString(Application::APP_ID, self::DATASET_KEY, $dataset);
 		$this->appConfig->setValueString(Application::APP_ID, self::DEMO_DATA_DECIDED_KEY, 'installed');
 
 		// 🔴 THE COUNTS, ALWAYS. "Demo data installed" with no numbers cannot be
@@ -343,10 +393,8 @@ class SetupController extends Controller {
 	 * @spec exclude Demo-data skip action (ADR-111 rule 4); no per-app openspec change yet.
 	 */
 	private function skipDemoData(): DataResponse {
-		// 🔴 IT ANSWERS *BOTH* STEPS. The wizard now has a choice step and a
-		// run-action step; closing only the second leaves the first
-		// outstanding, and CnAppRoot opens the wizard while ANY optional step
-		// is outstanding.
+		// Skipping IS choosing "None", so both keys are written: an older
+		// runbook may read either one.
 		$this->appConfig->setValueString(Application::APP_ID, self::DATASET_KEY, DemoDataService::NONE_DATASET);
 		$this->appConfig->setValueString(Application::APP_ID, self::DEMO_DATA_DECIDED_KEY, 'skipped');
 

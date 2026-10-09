@@ -2,7 +2,7 @@
 	"_meta": {
 		"spdx-license": "EUPL-1.2",
 		"spdx-copyright": "2026 Conduction B.V.",
-		"description": "Openconnector source registry for Shillinq. Sources are referenced by slug from docudesk template output-channel declarations per ADR-019, and by the 15 external-adapter families declared in ExternalAdaptersAdminController:ADAPTERS (openspec/changes/integration-config-to-openconnector). Credentials and protocol mapping are managed entirely in openconnector; Shillinq holds only the source slug reference.",
+		"description": "Openconnector source registry for Shillinq. Sources are referenced by slug from docudesk template output-channel declarations per ADR-019, and by the 15 external-adapter families declared in lib/Settings/connections.json (openspec/changes/integration-config-to-openconnector, openspec/changes/adopt-connection-registry). Credentials and protocol mapping are managed entirely in openconnector; Shillinq holds only the source slug reference.",
 		"imported": "2026-08-20T00:00:00Z"
 	},
 	"sources": [

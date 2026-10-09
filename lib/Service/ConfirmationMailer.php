@@ -3,12 +3,20 @@
 /**
  * Confirmation Mailer
  *
- * Builds and dispatches the appointment confirmation email — confirmation
+ * Builds and sends the appointment confirmation email: the confirmation
  * details, the ICS calendar attachment, a fallback web link and the customer's
- * local timezone — through the shared openconnector email channel per ADR-022.
+ * local timezone (REQ-BCF-003). It sends through Nextcloud's IMailer, the way
+ * PaymentRequestActionController::send() mails a payment link.
+ *
+ * It used to hand the mail to integriq's CallService::send(), a method that
+ * class never had, and then answered true after "logged for resend", so no
+ * confirmation ever left the instance while the caller was told it had
+ * (issue #1680). integriq has since decided plain mail is not its job
+ * (ConductionNL/integriq#2221).
+ *
  * Delivery is best-effort: failures are logged (never thrown) because the
  * ConfirmationToken already exists and the customer can request a resend
- * (REQ-BCF-003, REQ-BCF-009).
+ * (REQ-BCF-009). send() answers true only when the mailer accepted the mail.
  *
  * @category Service
  * @package  OCA\Shillinq\Service
@@ -30,14 +38,15 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Support\FleetAppId;
 use OCP\IURLGenerator;
-use Psr\Container\ContainerInterface;
+use OCP\Mail\IMailer;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
- * Delivers the appointment confirmation email via openconnector.
+ * Sends the appointment confirmation email through Nextcloud's mailer.
+ *
+ * @spec openspec/specs/bookings-confirm-flow/spec.md
  */
 class ConfirmationMailer {
 	/**
@@ -50,13 +59,13 @@ class ConfirmationMailer {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface $container DI container for the openconnector CallService.
+	 * @param IMailer $mailer Nextcloud's mailer.
 	 * @param IURLGenerator $urlGenerator For building the confirmation web link.
 	 * @param IcsService $icsService ICS calendar generator.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
-		private ContainerInterface $container,
+		private IMailer $mailer,
 		private IURLGenerator $urlGenerator,
 		private IcsService $icsService,
 		private LoggerInterface $logger,
@@ -69,9 +78,9 @@ class ConfirmationMailer {
 	 * @param array<string,mixed> $appointment The appointment object array.
 	 * @param string $rawToken The raw token string.
 	 *
-	 * @return bool True when handed off to a channel, false otherwise.
+	 * @return bool True when the mailer accepted the email, false when nothing was sent.
 	 *
-	 * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-12
+	 * @spec openspec/specs/bookings-confirm-flow/spec.md
 	 */
 	public function send(array $appointment, string $rawToken): bool {
 		$email = (string)($appointment['customerEmail'] ?? '');
@@ -82,17 +91,19 @@ class ConfirmationMailer {
 
 		$payload = $this->buildPayload(appointment: $appointment, rawToken: $rawToken, email: $email);
 
-		return $this->dispatch(payload: $payload, email: $email);
+		return $this->dispatch(payload: $payload);
 	}//end send()
 
 	/**
-	 * Build the email payload (subject, web link, timezone, ICS attachment).
+	 * Build the email payload (subject, body, web link, timezone, ICS attachment).
 	 *
 	 * @param array<string,mixed> $appointment The appointment object array.
 	 * @param string $rawToken The raw token string.
 	 * @param string $email The recipient email.
 	 *
-	 * @return array<string,mixed> The channel payload.
+	 * @return array<string,mixed> The email payload.
+	 *
+	 * @spec openspec/specs/bookings-confirm-flow/spec.md
 	 */
 	private function buildPayload(array $appointment, string $rawToken, string $email): array {
 		$webLink = $this->urlGenerator->linkToRouteAbsolute(
@@ -116,12 +127,15 @@ class ConfirmationMailer {
 			context: $context,
 		);
 
+		$timezone = (string)($appointment['customerTimezone'] ?? self::DEFAULT_TZID);
+
 		return [
 			'to' => $email,
 			'subject' => '[Bookings] Confirmation needed: ' . ($appointment['serviceName'] ?? '') . ' on '
 				. ($appointment['startTime'] ?? ''),
+			'body' => $this->buildBody(appointment: $appointment, webLink: $webLink, timezone: $timezone),
 			'webLink' => $webLink,
-			'timezone' => (string)($appointment['customerTimezone'] ?? self::DEFAULT_TZID),
+			'timezone' => $timezone,
 			'attachments' => [
 				[
 					'filename' => 'appointment.ics',
@@ -133,35 +147,78 @@ class ConfirmationMailer {
 	}//end buildPayload()
 
 	/**
-	 * Dispatch the payload through openconnector when available, else log it.
+	 * The plain-text body: the appointment, the time zone and the link to confirm.
 	 *
-	 * @param array<string,mixed> $payload The channel payload.
-	 * @param string $email The recipient email.
+	 * @param array<string,mixed> $appointment The appointment object array.
+	 * @param string $webLink The confirmation web link.
+	 * @param string $timezone The customer's time zone.
 	 *
-	 * @return bool True when handed off (or logged for resend).
+	 * @return string The body.
+	 *
+	 * @spec openspec/specs/bookings-confirm-flow/spec.md
 	 */
-	private function dispatch(array $payload, string $email): bool {
-		// Resolved across every namespace integriq has shipped under: bound to
-		// 'OCA\OpenConnector\...' alone this get() throws on any current
-		// instance, and the catch below turns that into "channel unavailable"
-		// — a confirmation email that is logged for resend and never sent.
-		$callService = FleetAppId::getService($this->container, 'integriq', 'Service\CallService');
+	private function buildBody(array $appointment, string $webLink, string $timezone): string {
+		$lines = [
+			'Please confirm your appointment.',
+			'',
+			'Service: ' . (string)($appointment['serviceName'] ?? ''),
+			'Start: ' . (string)($appointment['startTime'] ?? ''),
+			'Your time zone: ' . $timezone,
+		];
+		$location = (string)($appointment['location'] ?? '');
+		if ($location !== '') {
+			$lines[] = 'Location: ' . $location;
+		}
 
+		$lines[] = '';
+		$lines[] = 'Confirm your appointment here: ' . $webLink;
+		$lines[] = '';
+		$lines[] = 'Open the attached appointment.ics to add the appointment to your calendar.';
+
+		return implode("\n", $lines) . "\n";
+	}//end buildBody()
+
+	/**
+	 * Send the payload through Nextcloud's mailer.
+	 *
+	 * @param array<string,mixed> $payload The email payload.
+	 *
+	 * @return bool True when the mailer accepted the email for every recipient, false otherwise.
+	 *
+	 * @spec openspec/specs/bookings-confirm-flow/spec.md
+	 */
+	private function dispatch(array $payload): bool {
 		try {
-			if ($callService !== null && method_exists($callService, 'send') === true) {
-				$callService->send($payload);
-				return true;
+			$message = $this->mailer->createMessage();
+			$message->setTo([(string)$payload['to']]);
+			$message->setSubject((string)$payload['subject']);
+			$message->setPlainBody((string)$payload['body']);
+			foreach ((array)$payload['attachments'] as $attachment) {
+				$message->attach(
+					$this->mailer->createAttachment(
+						$attachment['content'],
+						$attachment['filename'],
+						$attachment['contentType']
+					)
+				);
 			}
 
-			$this->logger->info(
-				'Shillinq: confirmation email queued (openconnector channel unavailable, logged for resend)',
-				['action' => 'confirmation_email_sent', 'to' => $email]
-			);
-
-			return true;
+			$failedRecipients = $this->mailer->send($message);
 		} catch (Throwable $e) {
-			$this->logger->error('Shillinq: confirmation email delivery failed: ' . $e->getMessage());
+			$this->logger->error('Shillinq: confirmation email could not be sent: ' . $e->getMessage());
 			return false;
-		}//end try
+		}
+
+		if ($failedRecipients !== []) {
+			$this->logger->warning(
+				'Shillinq: the mail server refused the confirmation email',
+				['failedRecipients' => count($failedRecipients)]
+			);
+			return false;
+		}
+
+		$this->logger->info('Shillinq: confirmation email sent', ['action' => 'confirmation_email_sent']);
+
+		return true;
 	}//end dispatch()
 }//end class

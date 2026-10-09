@@ -12,8 +12,33 @@
 					:placeholder="t('shillinq', 'OpenRegister register ID')" />
 			</div>
 
+			<div class="form-group">
+				<label for="portal-return-address">{{
+					t('shillinq', 'Portal return address')
+				}}</label>
+				<input
+					id="portal-return-address"
+					v-model="form.portal_payment_redirect_url"
+					type="url"
+					inputmode="url"
+					autocomplete="url"
+					aria-describedby="portal-return-address-hint" />
+				<p id="portal-return-address-hint" class="hint">
+					{{
+						t(
+							'shillinq',
+							'Where the checkout sends a person back after paying. Use the address of your portal, starting with https://. Leave it empty to send them to Nextcloud.',
+						)
+					}}
+				</p>
+			</div>
+
 			<div v-if="successMessage" class="success-message">
 				{{ successMessage }}
+			</div>
+
+			<div v-if="errorMessage" class="error-message" role="alert">
+				{{ errorMessage }}
 			</div>
 
 			<NcButton variant="primary" type="submit" :disabled="saving">
@@ -39,10 +64,12 @@ export default {
 		return {
 			form: {
 				register: '',
+				portal_payment_redirect_url: '',
 			},
 
 			saving: false,
 			successMessage: '',
+			errorMessage: '',
 		}
 	},
 
@@ -55,22 +82,31 @@ export default {
 	created() {
 		const settingsStore = useSettingsStore()
 		this.form.register = settingsStore.settings?.register || ''
+		this.form.portal_payment_redirect_url =
+			settingsStore.settings?.portal_payment_redirect_url || ''
 	},
 
 	methods: {
 		/**
 		 * Persist the configuration form via the settings store and show a
-		 * success message.
+		 * success or a failure message.
 		 *
 		 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-1
+		 * @spec openspec/changes/portal-pay-row-action-keys/specs/portal-payment-initiation/spec.md (REQ-SPPI-010)
 		 */
 		async save() {
 			this.saving = true
 			this.successMessage = ''
+			this.errorMessage = ''
 			const settingsStore = useSettingsStore()
 			const result = await settingsStore.saveSettings(this.form)
 			if (result) {
 				this.successMessage = t('shillinq', 'Settings saved successfully')
+			} else {
+				this.errorMessage = t(
+					'shillinq',
+					'The settings were not saved. Check that the portal return address starts with https://.',
+				)
 			}
 			this.saving = false
 		},
@@ -91,6 +127,16 @@ export default {
 
 .success-message {
 	color: var(--color-success);
+	margin-bottom: 8px;
+}
+
+.hint {
+	color: var(--color-text-maxcontrast);
+	margin-top: 4px;
+}
+
+.error-message {
+	color: var(--color-error);
 	margin-bottom: 8px;
 }
 </style>

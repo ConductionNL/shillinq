@@ -56,8 +56,11 @@ use RuntimeException;
  *
  * @SuppressWarnings(PHPMD.TooManyPublicMethods) Mirrors the 25-method contract.
  * @SuppressWarnings(PHPMD.ExcessiveClassLength) Mirrors the 25-method contract.
+ *
+ * Not final: DunningTickRunnerTest extends it to answer reads as
+ * OpenRegister answers a caller with no session user.
  */
-final class InMemoryObjectServiceStub implements ObjectServiceInterface {
+class InMemoryObjectServiceStub implements ObjectServiceInterface {
 
 	/**
 	 * Schema => rows.
@@ -103,6 +106,13 @@ final class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	private bool $findAllRendersEntities = false;
 
 	/**
+	 * Whether a filter on `id` or `uuid` matches nothing, as in OpenRegister.
+	 *
+	 * @var boolean
+	 */
+	private bool $idFiltersMatchNothing = false;
+
+	/**
 	 * Constructor.
 	 *
 	 * ## `$findAllRendersEntities` — modelling what the engine really returns
@@ -136,14 +146,22 @@ final class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 * @param bool                                         $findAllRendersEntities Answer `findAll()` with
 	 *                                                                             ObjectEntityInterface rows,
 	 *                                                                             as the real engine does.
+	 * @param bool                                         $idFiltersMatchNothing  Answer a `filters` map naming
+	 *                                                                             `id` or `uuid` with no rows:
+	 *                                                                             those are entity columns, not
+	 *                                                                             properties, so OpenRegister
+	 *                                                                             matches none (see
+	 *                                                                             OpenRegisterFaithfulObjectService).
 	 */
 	public function __construct(
 		array $data = [],
 		?array &$saveSink = null,
-		bool $findAllRendersEntities = false
+		bool $findAllRendersEntities = false,
+		bool $idFiltersMatchNothing = false
 	) {
 		$this->data = $data;
 		$this->findAllRendersEntities = $findAllRendersEntities;
+		$this->idFiltersMatchNothing  = $idFiltersMatchNothing;
 		if ($saveSink !== null) {
 			$this->saved = &$saveSink;
 		}
@@ -192,7 +210,8 @@ final class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 *
 	 * Answers plain arrays by default; answers ObjectEntityInterface rows —
 	 * the shape the real engine returns — when the double was constructed
-	 * with `findAllRendersEntities: true`.
+	 * with `findAllRendersEntities: true`. A `limit` and `offset` page the
+	 * matches as the engine does, so a caller that reads in pages ends.
 	 *
 	 * @param array $config        Filters, limit, offset, sort and search.
 	 * @param bool  $_rbac         Apply register RBAC (ignored by the stub).
@@ -203,6 +222,9 @@ final class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	public function findAll(array $config = [], bool $_rbac = true, bool $_multitenancy = true): array {
 		$rows = ($this->data[$this->schema] ?? []);
 		$filters = ($config['filters'] ?? []);
+		if ($this->idFiltersMatchNothing === true && (array_key_exists('id', $filters) === true || array_key_exists('uuid', $filters) === true)) {
+			return [];
+		}
 
 		$matched = array_values(
 			array_filter(
@@ -218,6 +240,15 @@ final class InMemoryObjectServiceStub implements ObjectServiceInterface {
 				}
 			)
 		);
+
+		if (isset($config['limit']) === true || isset($config['offset']) === true) {
+			$length  = null;
+			if (isset($config['limit']) === true) {
+				$length = (int)$config['limit'];
+			}
+
+			$matched = array_slice($matched, (int)($config['offset'] ?? 0), $length);
+		}
 
 		if ($this->findAllRendersEntities === false) {
 			return $matched;
@@ -393,7 +424,7 @@ final class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	}//end searchObjects()
 
 	/**
-	 * Not modelled.
+	 * Removes the row with that id from the schema, as OpenRegister deletes it.
 	 *
 	 * @param string          $uuid            The object UUID.
 	 * @param string|int|null $register        Register id, UUID or slug.
@@ -416,7 +447,20 @@ final class InMemoryObjectServiceStub implements ObjectServiceInterface {
 		?IUser $currentUser = null,
 		bool $permanent = false
 	): bool {
-		$this->unsupported(method: 'deleteObject');
+		$target = $this->schema;
+		if ($schema !== null) {
+			$target = (string)$schema;
+		}
+
+		foreach (($this->data[$target] ?? []) as $index => $row) {
+			if ((string)($row['id'] ?? '') === $uuid) {
+				unset($this->data[$target][$index]);
+				$this->data[$target] = array_values($this->data[$target]);
+				return true;
+			}
+		}
+
+		return false;
 
 	}//end deleteObject()
 
@@ -744,7 +788,9 @@ final class InMemoryObjectServiceStub implements ObjectServiceInterface {
 		bool $_multitenancy = true,
 		?IUser $currentUser = null
 	): ObjectEntityInterface {
-		$existing = $this->find(id: $objectId);
+		// The schema argument is honoured as OpenRegister honours it: a patch
+		// made while another schema is active must land on the named one.
+		$existing = $this->find(id: $objectId, schema: $schema);
 		$merged   = $data;
 		if ($existing !== null) {
 			$merged = array_merge($existing->getObject(), $data);
@@ -752,7 +798,7 @@ final class InMemoryObjectServiceStub implements ObjectServiceInterface {
 
 		$merged['id'] = $objectId;
 
-		return $this->saveObject(object: $merged);
+		return $this->saveObject(object: $merged, schema: $schema);
 
 	}//end patchObject()
 

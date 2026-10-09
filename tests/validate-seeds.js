@@ -94,7 +94,7 @@ const FRAGMENT_DIR = path.join(REPO_ROOT, 'lib', 'Settings', 'register.d')
 // The 9th change in that range is a rename with no effect on the count:
 // `1 x Verplichting — missing: kind` is now `1 x Commitment — missing: kind`.
 // It still fails, and is still counted here.
-const BASELINE = 53
+const BASELINE = 51
 
 const asArray = (value) => (Array.isArray(value) ? value : [])
 

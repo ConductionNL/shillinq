@@ -9406,7 +9406,7 @@
         "lifecycleState": "active",
         "tradeName": "Voorbeeld Tradename 1",
         "kvkNumber": "Voorbeeld Kvknumber 1",
-        "vatID": "Voorbeeld Vatid 1",
+        "vatId": "Voorbeeld Vatid 1",
         "telephone": "Voorbeeld Telephone 1",
         "iban": "Voorbeeld Iban 1",
         "creditLimit": 1.0,
@@ -9436,7 +9436,7 @@
         "lifecycleState": "blocked",
         "tradeName": "Voorbeeld Tradename 2",
         "kvkNumber": "Voorbeeld Kvknumber 2",
-        "vatID": "Voorbeeld Vatid 2",
+        "vatId": "Voorbeeld Vatid 2",
         "telephone": "Voorbeeld Telephone 2",
         "iban": "Voorbeeld Iban 2",
         "creditLimit": 2.0,
@@ -9466,7 +9466,7 @@
         "lifecycleState": "archived",
         "tradeName": "Voorbeeld Tradename 3",
         "kvkNumber": "Voorbeeld Kvknumber 3",
-        "vatID": "Voorbeeld Vatid 3",
+        "vatId": "Voorbeeld Vatid 3",
         "telephone": "Voorbeeld Telephone 3",
         "iban": "Voorbeeld Iban 3",
         "creditLimit": 3.0,
@@ -33614,6 +33614,48 @@
         "civilServantsCount": 2,
         "lastUpdatedAt": "2026-03-03",
         "denominatorStaleWarning": true
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "DebtorCredit",
+          "slug": "debtorcredit-debtorcredit-1-1"
+        },
+        "debtorKey": "joris@example.nl",
+        "amount": 85.0,
+        "remaining": 85.0,
+        "currency": "EUR",
+        "sourcePaymentRequestId": "Voorbeeld Sourcepaymentrequestid 1",
+        "administrationId": "Voorbeeld Administrationid 1",
+        "state": "open"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "DebtorCredit",
+          "slug": "debtorcredit-debtorcredit-2-2"
+        },
+        "debtorKey": "cm-demo-customer-1",
+        "amount": 45.0,
+        "remaining": 20.0,
+        "currency": "EUR",
+        "sourcePaymentRequestId": "Voorbeeld Sourcepaymentrequestid 2",
+        "administrationId": "Voorbeeld Administrationid 2",
+        "state": "open"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "DebtorCredit",
+          "slug": "debtorcredit-debtorcredit-3-3"
+        },
+        "debtorKey": "anna@example.nl",
+        "amount": 30.0,
+        "remaining": 0.0,
+        "currency": "EUR",
+        "sourcePaymentRequestId": "Voorbeeld Sourcepaymentrequestid 3",
+        "administrationId": "Voorbeeld Administrationid 3",
+        "state": "used"
       }
     ]
   }

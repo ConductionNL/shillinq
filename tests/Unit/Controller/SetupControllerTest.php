@@ -139,7 +139,7 @@ final class SetupControllerTest extends TestCase {
 
 		$this->assertSame(['none', 'demo'], array_column($data['datasets'], 'id'));
 		$this->assertSame(8, $data['datasets'][1]['objectCount']);
-		$this->assertArrayHasKey('load-demo-data', $data['steps']);
+		$this->assertArrayNotHasKey('load-demo-data', $data['steps'], 'the cards load themselves');
 
 	}//end testStatusCarriesTheOptionListTheChoiceStepReads()
 
@@ -153,16 +153,16 @@ final class SetupControllerTest extends TestCase {
 	 *
 	 * @return void
 	 */
-	public function testChoosingNoneClosesBothStepsWithoutRunningAnything(): void {
+	public function testChoosingNoneClosesTheStepWithoutRunningAnything(): void {
 		$this->stubConfig(['demo_dataset' => 'none']);
 		$this->demoDataService->method('listChoices')->willReturn([]);
 
 		$steps = $this->controller->status()->getData()['steps'];
 
 		$this->assertTrue($steps['demo-data']['done']);
-		$this->assertTrue($steps['load-demo-data']['done']);
+		$this->assertArrayNotHasKey('load-demo-data', $steps);
 
-	}//end testChoosingNoneClosesBothStepsWithoutRunningAnything()
+	}//end testChoosingNoneClosesTheStepWithoutRunningAnything()
 
 	/**
 	 * An unknown dataset is refused rather than stored.
@@ -357,12 +357,21 @@ final class SetupControllerTest extends TestCase {
 			->method('install')
 			->willReturn(['objects' => 1497, 'schemas' => 499]);
 
-		$this->appConfig->expects($this->once())
-			->method('setValueString')
-			->with('shillinq', 'demo_data_decided', 'installed');
+		$written = [];
+		$this->appConfig->method('setValueString')
+			->willReturnCallback(
+				static function (string $app, string $key, string $value) use (&$written): bool {
+					$written[$key] = $value;
+
+					return true;
+				}
+			);
 
 		$response = $this->controller->runAction('install-demo-data');
 		$data = $response->getData();
+
+		// The legacy id names the shipped set, so that set is recorded as the pick.
+		self::assertSame(['demo_dataset' => 'demo', 'demo_data_decided' => 'installed'], $written);
 
 		self::assertTrue($data['success']);
 		self::assertStringContainsString('1497', $data['message']);
@@ -552,4 +561,138 @@ final class SetupControllerTest extends TestCase {
 		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
 
 	}//end testRunActionUnknownActionReturnsNotFound()
+
+	/**
+	 * Build a controller whose request carries the given body params.
+	 *
+	 * @param array<string, mixed> $params The posted body.
+	 *
+	 * @return SetupController
+	 */
+	private function controllerPosting(array $params): SetupController {
+		$request = $this->createMock(IRequest::class);
+		$request->method('getParams')->willReturn($params);
+		$request->method('getParam')
+			->willReturnCallback(static fn (string $key, $default = null) => ($params[$key] ?? $default));
+
+		return new SetupController(
+			appName: 'shillinq',
+			request: $request,
+			appConfig: $this->appConfig,
+			demoDataService: $this->demoDataService,
+			settingsService: $this->settingsService,
+		);
+
+	}//end controllerPosting()
+
+	/**
+	 * Record every app-config write into the returned array.
+	 *
+	 * @return \ArrayObject<string, string>
+	 */
+	private function recordWrites(): \ArrayObject {
+		$written = new \ArrayObject();
+		$this->appConfig->method('setValueString')
+			->willReturnCallback(
+				static function (string $app, string $key, string $value) use ($written): bool {
+					$written[$key] = $value;
+
+					return true;
+				}
+			);
+
+		return $written;
+
+	}//end recordWrites()
+
+	/**
+	 * Every manifest step id is reported, and nothing else.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/wizard-dataset-card-load/specs/first-time-setup/spec.md
+	 */
+	public function testStatusReportsEveryManifestStepId(): void {
+		$this->stubConfig([]);
+		$this->demoDataService->method('listChoices')->willReturn([]);
+
+		$manifest = json_decode((string)file_get_contents(__DIR__ . '/../../../src/manifest.json'), true);
+		$declared = array_column($manifest['setup']['steps'], 'id');
+		$reported = array_keys($this->controller->status()->getData()['steps']);
+		sort($declared);
+		sort($reported);
+
+		self::assertSame($declared, $reported);
+		self::assertSame('load-demo-data', array_column($manifest['setup']['steps'], null, 'id')['demo-data']['loadAction'] ?? null);
+
+	}//end testStatusReportsEveryManifestStepId()
+
+	/**
+	 * The card's Load button posts `{ dataset }`; the load records the pick.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/wizard-dataset-card-load/specs/first-time-setup/spec.md
+	 */
+	public function testTheCardPostsItsDatasetAndTheLoadRecordsTheChoice(): void {
+		$this->stubConfig([]);
+		$this->demoDataService->method('listChoices')->willReturn(
+			[
+				['id' => 'none', 'label' => 'None', 'description' => '', 'objectCount' => 0, 'icon' => ''],
+				['id' => 'demo', 'label' => 'Example data', 'description' => '', 'objectCount' => 8, 'icon' => ''],
+			]
+		);
+		$this->demoDataService->expects($this->once())->method('install')->willReturn(['objects' => 8, 'schemas' => 3]);
+		$written = $this->recordWrites();
+
+		$data = $this->controllerPosting(['dataset' => 'demo'])->runAction('load-demo-data')->getData();
+
+		self::assertTrue($data['success']);
+		self::assertSame(['demo_dataset' => 'demo', 'demo_data_decided' => 'installed'], $written->getArrayCopy());
+
+	}//end testTheCardPostsItsDatasetAndTheLoadRecordsTheChoice()
+
+	/**
+	 * A posted dataset no card offers is refused, and nothing loads.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/wizard-dataset-card-load/specs/first-time-setup/spec.md
+	 */
+	public function testAnUnknownPostedDatasetIsRefusedAndNothingLoads(): void {
+		$this->stubConfig(['demo_dataset' => 'demo']);
+		$this->demoDataService->method('listChoices')->willReturn(
+			[['id' => 'demo', 'label' => 'Example data', 'description' => '', 'objectCount' => 8, 'icon' => '']]
+		);
+		$this->demoDataService->expects($this->never())->method('install');
+		$written = $this->recordWrites();
+
+		$response = $this->controllerPosting(['dataset' => 'atlantis'])->runAction('load-demo-data');
+
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		self::assertSame([], $written->getArrayCopy());
+
+	}//end testAnUnknownPostedDatasetIsRefusedAndNothingLoads()
+
+	/**
+	 * A failed card load stores neither the pick nor the decision.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/wizard-dataset-card-load/specs/first-time-setup/spec.md
+	 */
+	public function testAFailedCardLoadStoresNothing(): void {
+		$this->stubConfig([]);
+		$this->demoDataService->method('listChoices')->willReturn(
+			[['id' => 'demo', 'label' => 'Example data', 'description' => '', 'objectCount' => 8, 'icon' => '']]
+		);
+		$this->demoDataService->method('install')->willThrowException(new \RuntimeException('openregister is not installed'));
+		$written = $this->recordWrites();
+
+		$data = $this->controllerPosting(['dataset' => 'demo'])->runAction('load-demo-data')->getData();
+
+		self::assertFalse($data['success']);
+		self::assertSame([], $written->getArrayCopy());
+
+	}//end testAFailedCardLoadStoresNothing()
 }//end class

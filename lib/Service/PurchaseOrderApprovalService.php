@@ -13,8 +13,8 @@
  * user (NEVER the request body) as `userId`, the supplied decision and
  * the deterministic ISO `decidedAt` timestamp on the next pending
  * approval-chain entry. When the chain becomes fully approved the PO
- * lifecycleState is advanced to `approved`; a `rejected` decision sends
- * it to `rejected`. The state-machine itself stays in OR — this service
+ * statusCode is advanced to `approved`; a `rejected` decision sends
+ * it to `cancelled`, the schema's terminal state (#1753). The state-machine itself stays in OR — this service
  * only writes the canonical record so OR's audit-trail-immutable
  * abstraction captures it.
  *
@@ -62,8 +62,8 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * Public method:
  *  - recordApprovalDecision(): stamp userId + decision + decidedAt on
- *    the next pending entry; advance lifecycleState to approved when
- *    the chain is fully approved or rejected when a single rejection
+ *    the next pending entry; advance statusCode to approved when
+ *    the chain is fully approved or cancelled when a single rejection
  *    is recorded.
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
@@ -78,7 +78,7 @@ class PurchaseOrderApprovalService {
 	public const DECISION_APPROVED = 'approved';
 
 	/**
-	 * Decision rejected — terminal: the PO advances to lifecycleState=rejected.
+	 * Decision rejected — terminal: the PO advances to statusCode=cancelled.
 	 *
 	 * @var string
 	 */
@@ -90,6 +90,13 @@ class PurchaseOrderApprovalService {
 	 * @var string
 	 */
 	public const DECISION_DELEGATED = 'delegated';
+
+	/**
+	 * Decision pending: the slot waits for its approver.
+	 *
+	 * @var string
+	 */
+	public const DECISION_PENDING = 'pending';
 
 	/**
 	 * Schema slug for PurchaseOrder records (slice 01).
@@ -148,8 +155,8 @@ class PurchaseOrderApprovalService {
 	 * authenticated user session (NEVER from the request body), the
 	 * `decision` from the (validated) input and a deterministic
 	 * `decidedAt` ISO timestamp. When the chain becomes fully approved
-	 * the PO lifecycleState advances to `approved`; any rejection
-	 * advances it to `rejected`. Delegated does not advance the
+	 * the PO statusCode advances to `approved`; any rejection
+	 * advances it to `cancelled`. Delegated does not advance the
 	 * lifecycle (the slot remains pending under a different role —
 	 * outside slice 11 scope).
 	 *
@@ -158,7 +165,7 @@ class PurchaseOrderApprovalService {
 	 *  - the poId is re-loaded from OR so a forged POST cannot pivot to
 	 *    a cross-tenant record;
 	 *  - the decision is validated against {@see ALLOWED_DECISIONS};
-	 *  - the PO must currently be in `pending_approval` — calling on an
+	 *  - the PO must currently be in `draft` (waiting for its chain) — calling on an
 	 *    already-approved or terminated PO throws a RuntimeException;
 	 *  - the chain must carry at least one pending entry — calling on
 	 *    a fully-signed chain throws a RuntimeException.
@@ -196,8 +203,10 @@ class PurchaseOrderApprovalService {
 			purchaseOrderId: $purchaseOrderId
 		);
 
-		$lifecycleState = (string)($purchaseOrder['lifecycleState'] ?? '');
-		if ($lifecycleState !== 'pending_approval') {
+		// A PO waiting for approval is in the schema's `draft` state (#1753);
+		// the chain check below refuses one with nothing left to sign.
+		$lifecycleState = (string)($purchaseOrder['statusCode'] ?? '');
+		if ($lifecycleState !== 'draft') {
 			throw new RuntimeException('Purchase order is not pending approval');
 		}
 
@@ -214,10 +223,13 @@ class PurchaseOrderApprovalService {
 				continue;
 			}
 
-			if ((string)($entry['decision'] ?? '') !== 'pending') {
+			if (self::isPendingEntry(entry: $entry) === false) {
 				continue;
 			}
 
+			// An entry written before #1716 carries status/signedAt/signedBy;
+			// signing it moves it onto the one shape the schema declares.
+			unset($entry['status'], $entry['signedAt'], $entry['signedBy']);
 			$entry['userId'] = $userId;
 			$entry['decision'] = $decision;
 			$entry['decidedAt'] = $decidedAt;
@@ -238,7 +250,7 @@ class PurchaseOrderApprovalService {
 		}
 
 		$purchaseOrder['approvalChain'] = $chain;
-		$purchaseOrder['lifecycleState'] = $this->nextLifecycleState(
+		$purchaseOrder['statusCode'] = $this->nextLifecycleState(
 			decision: $decision,
 			chain: $chain,
 			current: $lifecycleState
@@ -276,22 +288,66 @@ class PurchaseOrderApprovalService {
 	}//end recordApprovalDecision()
 
 	/**
-	 * Determine the next PO lifecycleState after a decision.
+	 * Whether an approval-chain entry still waits for its approver.
 	 *
-	 * - rejected → rejected (terminal for this slice; cancels payment chain)
+	 * The chain has one shape, the one `PurchaseOrder.approvalChain` declares:
+	 * `userId`, `decision`, `decidedAt`, `comment`. An entry written before
+	 * #1716 carries `status: pending` instead of a decision, and still counts
+	 * as pending so a purchase order created then can be approved.
+	 *
+	 * @param array<string,mixed> $entry One approval-chain entry.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
+	 */
+	public static function isPendingEntry(array $entry): bool {
+		$decision = (string)($entry['decision'] ?? '');
+		if ($decision !== '') {
+			return $decision === self::DECISION_PENDING;
+		}
+
+		return (string)($entry['status'] ?? '') === self::DECISION_PENDING;
+	}//end isPendingEntry()
+
+	/**
+	 * Whether an approval-chain entry is approved and stamped with its time.
+	 *
+	 * The send check and the Peppol transmission read this, so they read what
+	 * recordApprovalDecision() writes (#1716).
+	 *
+	 * @param mixed $entry One approval-chain entry.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+	 */
+	public static function isApprovedEntry(mixed $entry): bool {
+		if (is_array($entry) === false) {
+			return false;
+		}
+
+		return (string)($entry['decision'] ?? '') === self::DECISION_APPROVED
+			&& trim((string)($entry['decidedAt'] ?? '')) !== '';
+	}//end isApprovedEntry()
+
+	/**
+	 * Determine the next PO statusCode after a decision.
+	 *
+	 * - rejected → cancelled (the schema's terminal state; the chain entry keeps the rejection)
 	 * - approved + every chain entry approved → approved
-	 * - approved + chain still has pending entries → pending_approval
-	 * - delegated → pending_approval (the slot is re-routed; outside this slice)
+	 * - approved + chain still has pending entries → draft
+	 * - delegated → draft (the slot is re-routed; outside this slice)
 	 *
 	 * @param string $decision The decision recorded.
 	 * @param array<int,mixed> $chain The updated approval chain.
-	 * @param string $current Current lifecycle (always `pending_approval`).
+	 * @param string $current Current statusCode (always `draft`).
 	 *
 	 * @return string
 	 */
 	private function nextLifecycleState(string $decision, array $chain, string $current): string {
 		if ($decision === self::DECISION_REJECTED) {
-			return 'rejected';
+			return 'cancelled';
 		}
 
 		if ($decision === self::DECISION_DELEGATED) {

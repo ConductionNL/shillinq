@@ -513,7 +513,12 @@
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
-                  "action": "evaluate-allocation-rules",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\StampPostingAction",
+                  "description": "Stamp the posted entry: postingLocked, retentionUntil (31 December of the posting year plus 10), integrityVerified and the post on the auditTrail with the posting user. RuleComplianceGuard judges the entry as these stamps leave it (ledger-posting-path REQ-LPP-001)."
+                },
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\EvaluateAllocationRulesAction",
                   "description": "Evaluate all active AllocationRule records with cadence=per-posting whose sourceAccountPattern matches a line in this transaction. Emits additional balanced GLLine rows distributing source amounts per the rule targets.",
                   "actionParameters": {
                     "register": "shillinq",
@@ -10010,9 +10015,10 @@
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
-                  "action": "materialise-gl-transaction",
-                  "description": "Emit one balanced GLTransaction: debit per expense line (Receipt→expense account/CC, MileageEntry→mileage-reimbursement account/CC, PerDiem→per-diem account/CC), credit to expense-payable account (Account.isExpenseControlAccount=true). Sets glTransactionId back-reference.",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\MaterialiseGlTransactionAction",
+                  "description": "Emit one balanced GLTransaction: debit per expense line (Receipt→expense account/CC, MileageEntry→mileage-reimbursement account/CC, PerDiem→per-diem account/CC), credit to expense-payable account (Account.controlAccountFor=expense-claims). Sets glTransactionId back-reference.",
                   "actionParameters": {
+                    "sourceSchema": "ExpenseClaimEntry",
                     "register": "shillinq",
                     "targetSchema": "GLTransaction",
                     "debitSources": [
@@ -10038,7 +10044,7 @@
                         "accountLookup": "Account[isExpensePerDiemAccount=true].accountNumber"
                       }
                     ],
-                    "creditMapping": "Account[isExpenseControlAccount=true].accountNumber",
+                    "creditMapping": "Account[controlAccountFor=expense-claims].accountNumber",
                     "subLedgerType": "expense",
                     "subLedgerRefField": "id",
                     "keepBalanced": true
@@ -16461,7 +16467,8 @@
             "enum": [
               "ap-invoice",
               "ar-invoice",
-              "gl-transaction"
+              "gl-transaction",
+              "payment-request"
             ],
             "example": "ar-invoice",
             "title": "Target Type"
@@ -21249,13 +21256,14 @@
             "actions": [
               {
                 "trigger": "x-openregister-lifecycle-action",
-                "action": "materialise-gl-transaction",
-                "description": "Emit one balanced GLTransaction with debit to expense accounts per lines and credit to AP control account (Account.isAPControlAccount = true) per T1 pattern. Sets glTransactionId back-reference.",
+                "action": "OCA\\Shillinq\\Lifecycle\\Action\\MaterialiseGlTransactionAction",
+                "description": "Emit one balanced GLTransaction with debit to expense accounts per lines and credit to AP control account (Account.controlAccountFor=payables) per T1 pattern. Sets glTransactionId back-reference.",
                 "actionParameters": {
+                  "sourceSchema": "APInvoice",
                   "register": "shillinq",
                   "targetSchema": "GLTransaction",
                   "debitMapping": "lines[].accountNumber",
-                  "creditMapping": "Account[isAPControlAccount=true].accountNumber",
+                  "creditMapping": "Account[controlAccountFor=payables].accountNumber",
                   "subLedgerType": "ap",
                   "subLedgerRefField": "id",
                   "keepBalanced": true
@@ -25002,7 +25010,7 @@
       "name": "Demo Klant BV",
       "legalName": "Demo Klant B.V.",
       "kvkNumber": "87654321",
-      "vatID": "NL876543210B01",
+      "vatId": "NL876543210B01",
       "defaultGlAccount": "8000",
       "email": "facturen@democonsult.nl",
       "administrationId": "adm-consultancy-nl",

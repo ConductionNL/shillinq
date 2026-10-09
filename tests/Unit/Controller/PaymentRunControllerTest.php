@@ -23,7 +23,12 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\PaymentRunController;
+use OCA\Shillinq\PaymentRun\PaymentBlockChecker;
 use OCA\Shillinq\PaymentRun\PaymentRunExportService;
+use OCA\Shillinq\PaymentRun\PaymentRunProposalService;
+use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Tests\Unit\PaymentRun\PaymentRunFixture;
+use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\PaymentRun\PaymentRunReconciliationService;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
@@ -96,6 +101,7 @@ class PaymentRunControllerTest extends TestCase {
 		PaymentRunExportService $export,
 		PaymentRunReconciliationService $reconcile,
 		?IRequest $request = null,
+		?PaymentRunProposalService $proposal = null,
 	): PaymentRunController {
 		$objects   = $this->objectServiceReturning($run);
 		$container = $this->createMock(ContainerInterface::class);
@@ -117,6 +123,7 @@ class PaymentRunControllerTest extends TestCase {
 			$session,
 			$this->createMock(LoggerInterface::class),
 			objectService: new DuckObjectServiceAdapter($objects),
+			proposalService: ($proposal ?? $this->proposalOver([])),
 		);
 	}//end controller()
 
@@ -245,4 +252,102 @@ class PaymentRunControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
 		$this->assertSame('reconciled', $response->getData()['lifecycleState']);
 	}//end testAuthorisedReconcileSucceeds()
+
+	/**
+	 * A real proposal service over in-memory records.
+	 *
+	 * @param array<string, list<array<string, mixed>>> $records Records by schema.
+	 *
+	 * @return PaymentRunProposalService
+	 */
+	private function proposalOver(array $records): PaymentRunProposalService {
+		$store = new InMemoryObjectServiceStub($records);
+		$settings = $this->createMock(SettingsService::class);
+		$settings->method('getRegisterSlug')->willReturn('shillinq');
+
+		return new PaymentRunProposalService($store, $settings, new PaymentBlockChecker($store, $settings));
+	}//end proposalOver()
+
+	/**
+	 * A request carrying the proposal form.
+	 *
+	 * @param string $administrationId The administration asked for.
+	 * @param string $dueOnOrBefore    The due date asked for.
+	 *
+	 * @return IRequest
+	 */
+	private function proposalRequest(string $administrationId, string $dueOnOrBefore): IRequest {
+		$params = [
+			'administrationId' => $administrationId,
+			'dueOnOrBefore' => $dueOnOrBefore,
+			'debtorAccountIban' => 'NL91ABNA0417164300',
+			'executionDate' => '2026-09-30',
+			'payOnDueDate' => false,
+		];
+		$request = $this->createMock(IRequest::class);
+		$request->method('getParam')->willReturnCallback(static fn (string $key, mixed $default = null): mixed => ($params[$key] ?? $default));
+
+		return $request;
+	}//end proposalRequest()
+
+	/**
+	 * REQ-BPR-002: an authorised proposal writes a draft run and names what it skipped.
+	 *
+	 * @return void
+	 */
+	public function testAProposalWritesADraftRun(): void {
+		$controller = $this->controller(
+			null,
+			true,
+			$this->createMock(PaymentRunExportService::class),
+			$this->createMock(PaymentRunReconciliationService::class),
+			$this->proposalRequest(PaymentRunFixture::ADMIN, '2026-10-01'),
+			$this->proposalOver(PaymentRunFixture::records()),
+		);
+
+		$response = $controller->propose();
+
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+		$this->assertSame('draft', $response->getData()['paymentRun']['lifecycleState']);
+		$this->assertCount(5, $response->getData()['skipped']);
+	}//end testAProposalWritesADraftRun()
+
+	/**
+	 * A caller outside the administration gets nothing and nothing is written.
+	 *
+	 * @return void
+	 */
+	public function testAProposalForAnotherAdministrationIsRefused(): void {
+		$controller = $this->controller(
+			null,
+			false,
+			$this->createMock(PaymentRunExportService::class),
+			$this->createMock(PaymentRunReconciliationService::class),
+			$this->proposalRequest(PaymentRunFixture::ADMIN, '2026-10-01'),
+			$this->proposalOver(PaymentRunFixture::records()),
+		);
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $controller->propose()->getStatus());
+	}//end testAProposalForAnotherAdministrationIsRefused()
+
+	/**
+	 * Nothing due answers 422 with the skipped list, and writes no run.
+	 *
+	 * @return void
+	 */
+	public function testAProposalWithNothingDueSaysSo(): void {
+		$controller = $this->controller(
+			null,
+			true,
+			$this->createMock(PaymentRunExportService::class),
+			$this->createMock(PaymentRunReconciliationService::class),
+			$this->proposalRequest(PaymentRunFixture::ADMIN, '2026-08-01'),
+			$this->proposalOver(PaymentRunFixture::records()),
+		);
+
+		$response = $controller->propose();
+
+		$this->assertSame(Http::STATUS_UNPROCESSABLE_ENTITY, $response->getStatus());
+		$this->assertNull($response->getData()['paymentRun']);
+	}//end testAProposalWithNothingDueSaysSo()
 }//end class

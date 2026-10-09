@@ -119,7 +119,7 @@ class InvoiceApiController extends Controller {
 			if (str_contains($message, 'Conflict') === true) {
 				return new JSONResponse(
 					[
-						'message' => 'One or more time entries or expenses are already invoiced.',
+						'message' => 'One or more time entries, expenses or meter readings are already invoiced.',
 						'error' => 'invoice-generate-conflict',
 					],
 					Http::STATUS_CONFLICT

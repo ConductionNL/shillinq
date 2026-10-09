@@ -3,8 +3,8 @@
     "spdx-license": "EUPL-1.2",
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "add-invoice-pdf-export-with-ubl-peppol-support",
-    "adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
-    "description": "REQ-EINV-007 — adds the 'Send e-invoice' action + Peppol delivery-status indicator to the existing ARInvoiceDetail page (owned by bookkeeping-accounts-receivable-core). CAUTION for future editors: buildManifest()'s mergePages() replaces a page WHOLESALE by id (no deep merge, see nextcloud-vue/src/utils/buildManifest.js) — this fragment therefore carries a FULL COPY of ARInvoiceDetail's base definition from src/manifest.json plus two additive changes: (1) 'actionsComponent': 'AREInvoiceActions' resolves the Send action + status chip into the page header's actions slot (registry.js, kind:'widget', any kind is eligible for actionsComponent resolution per ADR-036); (2) the delivery-status fields (deliveryStatus/transmissionId/payloadFileUri/deliveryDetail) are appended to the 'invoice-document' data widget's include list so they render read-only alongside the rest of the invoice. If bookkeeping-accounts-receivable-core's owning fragment/base page changes, this copy MUST be re-synced or the later-wins overlay will silently drop those changes."
+    "adr": "ADR-037 modular manifest fragment \u2014 never edit src/manifest.json",
+    "description": "REQ-EINV-007 \u2014 adds the 'Send e-invoice' action + Peppol delivery-status indicator to the existing ARInvoiceDetail page (owned by bookkeeping-accounts-receivable-core). CAUTION for future editors: buildManifest()'s mergePages() replaces a page WHOLESALE by id (no deep merge, see nextcloud-vue/src/utils/buildManifest.js) \u2014 this fragment therefore carries a FULL COPY of ARInvoiceDetail's base definition from src/manifest.json plus two additive changes: (1) 'actionsComponent': 'AREInvoiceActions' resolves the Send action + status chip into the page header's actions slot (registry.js, kind:'widget', any kind is eligible for actionsComponent resolution per ADR-036); (2) the delivery-status fields (deliveryStatus/transmissionId/payloadFileUri/deliveryDetail) are appended to the 'invoice-document' data widget's include list so they render read-only alongside the rest of the invoice. If bookkeeping-accounts-receivable-core's owning fragment/base page changes, this copy MUST be re-synced or the later-wins overlay will silently drop those changes."
   },
   "menu": [],
   "pages": [
@@ -14,12 +14,15 @@
       "type": "detail",
       "title": "AR Invoice",
       "actionsComponent": "AREInvoiceActions",
+      "slots": {
+        "widget-invoice-down-payments": "ArDownPaymentPanel"
+      },
       "config": {
         "register": "shillinq",
         "schema": "ARInvoice",
         "documentationUrl": "https://shillinq.conduction.nl/guides/create-invoices",
         "indexRoute": "AccountsReceivable",
-        "_note": "Billing-document archetype — a receivable invoice sent to a customer. Body leads with the invoice's own fields (schema-driven Data widget: number, type, dates, EN 16931 party/tax fields, the folded dunning/writeOff summary groups, GL link, and — added by add-invoice-pdf-export-with-ubl-peppol-support — the Peppol deliveryStatus/transmissionId/payloadFileUri/deliveryDetail fields) beside a Related panel for the customerId FK. Dunning history uses the real credit-control schema DunningRun (filter factuurId=@objectId, rowRoute to the existing DunningRunDetail page). Totals surface as summaryAggregates KPI chips (gross/due/paid, all sums over the invoice's own field via filter id=@objectId, the established self-value idiom) plus a dunning-run count. The header actionsComponent (AREInvoiceActions) renders the Send e-invoice action + delivery-status chip (REQ-EINV-007).",
+        "_note": "Billing-document archetype \u2014 a receivable invoice sent to a customer. Body leads with the invoice's own fields (schema-driven Data widget: number, type, dates, EN 16931 party/tax fields, the folded dunning/writeOff summary groups, GL link, and \u2014 added by add-invoice-pdf-export-with-ubl-peppol-support \u2014 the Peppol deliveryStatus/transmissionId/payloadFileUri/deliveryDetail fields) beside a Related panel for the customerId FK. Dunning history uses the real credit-control schema DunningRun (filter factuurId=@objectId, rowRoute to the existing DunningRunDetail page). Totals surface as summaryAggregates KPI chips (gross/due/paid, all sums over the invoice's own field via filter id=@objectId, the established self-value idiom) plus a dunning-run count. The header actionsComponent (AREInvoiceActions) renders the Send e-invoice action + delivery-status chip (REQ-EINV-007).",
         "widgets": [
           {
             "id": "invoice-document",
@@ -148,6 +151,13 @@
             }
           },
           {
+            "id": "invoice-down-payments",
+            "type": "custom",
+            "title": "Down payments",
+            "icon": "CashPlus",
+            "_note": "sales-down-payments REQ-SDP-003 and REQ-SDP-005, rendered through the page slot widget-invoice-down-payments -> ArDownPaymentPanel. It shows the order's down payments with their paid state and the invoice that deducted each, and on a draft invoice offers to deduct a customer's open down payments. Custom because it reads GET /api/ar-invoices/{id}/down-payments, a cross-invoice lookup no declarative widget can express, and writes the deduction through POST .../down-payment-deductions."
+          },
+          {
             "id": "invoice-related",
             "type": "related",
             "title": "Customer",
@@ -266,10 +276,18 @@
             "gridHeight": 4
           },
           {
+            "id": "4-1",
+            "widgetId": "invoice-down-payments",
+            "gridX": 0,
+            "gridY": 12,
+            "gridWidth": 12,
+            "gridHeight": 4
+          },
+          {
             "id": "5",
             "widgetId": "invoice-dunning",
             "gridX": 0,
-            "gridY": 12,
+            "gridY": 16,
             "gridWidth": 12,
             "gridHeight": 4
           },
@@ -277,7 +295,7 @@
             "id": "6",
             "widgetId": "invoice-files",
             "gridX": 0,
-            "gridY": 16,
+            "gridY": 20,
             "gridWidth": 12,
             "gridHeight": 3
           }

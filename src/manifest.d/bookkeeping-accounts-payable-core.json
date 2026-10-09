@@ -87,6 +87,8 @@
 					{"key": "tradingName", "label": "Trading Name", "type": "string"},
 					{"key": "kvkNumber", "label": "KvK Number", "type": "string"},
 					{"key": "vatNumber", "label": "BTW Number", "type": "string"},
+					{"key": "vatIdValidationStatus", "label": "VAT number check", "type": "string"},
+					{"key": "vatIdValidatedAt", "label": "VAT number last valid on", "type": "datetime"},
 					{"key": "payeeType", "label": "Payee Type", "type": "string"},
 					{"key": "bankAccount.iban", "label": "IBAN", "type": "string"},
 					{"key": "bankAccount.bic", "label": "BIC / SWIFT", "type": "string"},
@@ -99,7 +101,15 @@
 					{"key": "email", "label": "Email", "type": "string"},
 					{"key": "phone", "label": "Phone", "type": "string"},
 					{"key": "lifecycleState", "label": "Status", "type": "string"},
+					{"key": "paymentBlocked", "label": "Payment blocked", "type": "boolean"},
+					{"key": "paymentBlockReason", "label": "Payment block reason", "type": "string"},
 					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"headerActions": [
+					{"id": "block-payment", "label": "Block payment", "type": "open-modal", "target": "PaymentBlockModal", "icon": "CashLock", "props": {"open": true, "schema": "Payee", "mode": "block"}, "visibleWhen": {"field": "paymentBlocked", "op": "neq", "value": true}},
+					{"id": "release-payment", "label": "Release payment", "type": "open-modal", "target": "PaymentBlockModal", "icon": "CashCheck", "props": {"open": true, "schema": "Payee", "mode": "release"}, "visibleWhen": {"field": "paymentBlocked", "op": "eq", "value": true}},
+					{"id": "check-vat-number", "label": "Check VAT number", "type": "handler", "handler": "checkSupplierVatNumber", "icon": "CheckDecagramOutline", "description": "Check the VAT number against the EU VIES register and keep the outcome on this record."},
+					{"id": "open-customer-relation", "label": "Both sides", "type": "handler", "handler": "openPayeeRelation", "icon": "ScaleBalance", "description": "Open the linked customer, where the invoices sent to and received from this relation are shown together."}
 				],
 				"lifecycleActions": true,
 				"indexRoute": "Payees",
@@ -202,7 +212,13 @@
 					{"key": "writeOffReason", "label": "Write-off Reason", "type": "string"},
 					{"key": "writeOffGlTransactionId", "label": "Write-off GL Transaction", "type": "string"},
 					{"key": "periodId", "label": "Fiscal Period", "type": "string"},
+					{"key": "paymentBlocked", "label": "Payment blocked", "type": "boolean"},
+					{"key": "paymentBlockReason", "label": "Payment block reason", "type": "string"},
 					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"headerActions": [
+					{"id": "block-payment", "label": "Block payment", "type": "open-modal", "target": "PaymentBlockModal", "icon": "CashLock", "props": {"open": true, "schema": "APTransaction", "mode": "block"}, "visibleWhen": {"field": "paymentBlocked", "op": "neq", "value": true}},
+					{"id": "release-payment", "label": "Release payment", "type": "open-modal", "target": "PaymentBlockModal", "icon": "CashCheck", "props": {"open": true, "schema": "APTransaction", "mode": "release"}, "visibleWhen": {"field": "paymentBlocked", "op": "eq", "value": true}}
 				],
 				"lifecycleActions": true,
 				"indexRoute": "APTransactions",
@@ -413,7 +429,10 @@
 					{"key": "lifecycleState", "label": "Lifecycle", "sortable": true}
 				],
 				"defaultSort": "runNumber",
-				"detailRoute": "PaymentRunDetail"
+				"detailRoute": "PaymentRunDetail",
+				"headerActions": [
+					{"id": "propose-payment-run", "label": "Propose payment run", "icon": "CashFast", "handler": "openProposePaymentRun", "description": "Put every open supplier invoice due by a date on a draft run. Blocked, disputed and already batched invoices stay off it."}
+				]
 			}
 		},
 		{

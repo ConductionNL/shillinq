@@ -49,9 +49,13 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\Dunning\DunningChannelSendResult;
+use OCA\Shillinq\Service\Dunning\DunningLetterComposer;
+use OCA\Shillinq\Service\Dunning\DunningStageDispatcher;
+use OCA\Shillinq\Service\Dunning\DunningStageSelector;
 use OCA\Shillinq\Service\Dunning\EvidenceRetentionEnforcer;
 use OCA\Shillinq\Service\Dunning\IncassoBureauAdapterInterface;
 use OCA\Shillinq\Service\Dunning\PostNLAdapterInterface;
+use OCA\Shillinq\Service\Dunning\VoluntaryContributionPolicy;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -104,56 +108,18 @@ class DunningRunService {
 	 * @param IAppConfig $appConfig App config.
 	 * @param LoggerInterface $logger Logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param VoluntaryContributionPolicy $voluntary The one-reminder cap on a voluntary contribution.
+	 * @param DunningLetterComposer|null $letters The letter and record composition; built over $appConfig when absent.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly VoluntaryContributionPolicy $voluntary = new VoluntaryContributionPolicy(),
+		private readonly ?DunningLetterComposer $letters = null,
 	) {
 	}//end __construct()
-
-	/**
-	 * Pick the highest ladder stage applicable to an invoice now.
-	 *
-	 * Given the resolved stages (base or override) and the number of days the
-	 * invoice has been overdue, walk the stages by ascending `dagenNaVervalDatum`
-	 * and return the last stage whose threshold has been reached. Returns null
-	 * when no stage applies yet (invoice is still within terms).
-	 *
-	 * @param array<int,array<string,mixed>> $stages Resolved stages.
-	 * @param int $daysInArrears Days the invoice has been overdue (>= 0).
-	 *
-	 * @return array<string,mixed>|null The applicable stage definition or null.
-	 *
-	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-12
-	 */
-	public function stageForOverdueDays(array $stages, int $daysInArrears): ?array {
-		if ($daysInArrears < 0) {
-			return null;
-		}
-
-		$sorted = $stages;
-		usort(
-			$sorted,
-			static function (array $a, array $b): int {
-				return (int)($a['daysAfterExpiryDate'] ?? 0) <=> (int)($b['daysAfterExpiryDate'] ?? 0);
-			}
-		);
-
-		$picked = null;
-		foreach ($sorted as $stage) {
-			$threshold = (int)($stage['daysAfterExpiryDate'] ?? 0);
-			if ($daysInArrears >= $threshold) {
-				$picked = $stage;
-				continue;
-			}
-
-			break;
-		}
-
-		return $picked;
-	}//end stageForOverdueDays()
 
 	/**
 	 * REQ-CCD-005 / task-12: tick the dunning ladder for one `Invoice` record.
@@ -178,9 +144,13 @@ class DunningRunService {
 	 * is the AR core's responsibility; it returns the picked stage so the
 	 * caller can mirror the transition upstream.
 	 *
+	 * The stage is DunningStageSelector's choice (REQ-RAD-002), one at a time.
+	 *
 	 * @param string $administrationId Administration scope.
 	 * @param array<string,mixed> $invoice The `Invoice` record (from `bookkeeping-quote-order-invoice`).
-	 * @param string $baseLadderId The base DunningLadder slug to resolve from.
+	 * @param string $baseLadderId The base DunningLadder id or slug; empty resolves the
+	 *                             customer's `dunningPolicyRef`, else the administration's
+	 *                             default ladder (REQ-RAD-004).
 	 * @param array<string,mixed> $params Optional dispatch overrides — kanaal,
 	 *                                    templateId, ontvangerEmail, ontvangerNaam,
 	 *                                    renderedSubject, renderedBody.
@@ -189,88 +159,192 @@ class DunningRunService {
 	 * @return array<string,mixed>|null The materialised `DunningRun`, or null when the tick was a no-op.
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-12
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-014)
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.1
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.2
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.3
 	 */
 	public function tickInvoice(
 		string $administrationId,
 		array $invoice,
-		string $baseLadderId,
+		string $baseLadderId = '',
 		array $params = [],
 		?DateTimeImmutable $now = null,
 	): ?array {
-		$now = ($now ?? new DateTimeImmutable());
-		$invoiceId = (string)($invoice['id'] ?? ($invoice['@self']['id'] ?? ''));
-		if ($invoiceId === '') {
-			return null;
-		}
-
-		$dueDateRaw = (string)($invoice['dueDate'] ?? '');
-		if ($dueDateRaw === '') {
-			return null;
-		}
-
-		try {
-			$dueDate = new DateTimeImmutable($dueDateRaw);
-		} catch (\Throwable $e) {
-			$this->logger->warning('Shillinq: tickInvoice malformed dueDate: ' . $dueDateRaw);
-			return null;
-		}
-
-		if ($now < $dueDate) {
-			return null;
-		}
-
-		$daysInArrears = (int)$dueDate->diff($now)->days;
-		$customerId = (string)($invoice['customerReference'] ?? ($invoice['customerId'] ?? ''));
-
-		if ($this->hasActivePause(administrationId: $administrationId, invoiceId: $invoiceId) === true) {
-			return null;
-		}
-
-		$resolved = $this->resolveLadderForKlant(
+		$choice = $this->chooseStage(
 			administrationId: $administrationId,
-			customerId: $customerId,
-			baseLadderId: $baseLadderId
+			invoice: $invoice,
+			baseLadderId: $baseLadderId,
+			params: $params,
+			now: ($now ?? new DateTimeImmutable())
 		);
-		$stage = $this->stageForOverdueDays(stages: $resolved['stages'], daysInArrears: $daysInArrears);
+		if ($choice === null) {
+			return null;
+		}
+
+		// Read the invoice again at send time: a payment matched, a write-off or
+		// a dispute since it was listed stops the stage (REQ-RAD-005).
+		if ($this->settledSinceListed(invoice: $invoice, invoiceId: $choice['invoiceId']) === true) {
+			return null;
+		}
+
+		return $this->executeStage(administrationId: $administrationId, params: $choice);
+	}//end tickInvoice()
+
+	/**
+	 * The stage the next tick would send for an invoice, written nowhere
+	 * (REQ-RAD-008, the Next run preview): the same choice as tickInvoice().
+	 *
+	 * @param string                 $administrationId Administration scope.
+	 * @param array<string,mixed>    $invoice          The invoice.
+	 * @param string                 $baseLadderId     The base ladder; empty resolves it (REQ-RAD-004).
+	 * @param DateTimeImmutable|null $now              Now; defaults to wall-clock.
+	 *
+	 * @return array<string,mixed>|null {dryRun, invoiceId, ladderId, stageNr, channel, templateId}, or null.
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.1
+	 */
+	public function previewInvoice(string $administrationId, array $invoice, string $baseLadderId = '', ?DateTimeImmutable $now = null): ?array {
+		$choice = $this->chooseStage(
+			administrationId: $administrationId,
+			invoice: $invoice,
+			baseLadderId: $baseLadderId,
+			params: [],
+			now: ($now ?? new DateTimeImmutable())
+		);
+		if ($choice === null) {
+			return null;
+		}
+
+		return [
+			'dryRun' => true,
+			'invoiceId' => $choice['invoiceId'],
+			'ladderId' => $choice['ladderId'],
+			'stageNr' => $choice['stageNr'],
+			'channel' => $choice['channel'],
+			'templateId' => $choice['templateId'],
+		];
+	}//end previewInvoice()
+
+	/**
+	 * Choose the stage the next tick sends, or null when none is due: the
+	 * invoice is overdue, not declined or paused, has a ladder, a stage is due
+	 * by DunningStageSelector, and that stage has not gone out yet.
+	 *
+	 * @param string              $administrationId Administration scope.
+	 * @param array<string,mixed> $invoice          The invoice.
+	 * @param string              $baseLadderId     The base ladder; empty resolves it.
+	 * @param array<string,mixed> $params           Dispatch overrides.
+	 * @param DateTimeImmutable   $now              Now.
+	 *
+	 * @return array<string,mixed>|null The executeStage() params.
+	 */
+	private function chooseStage(string $administrationId, array $invoice, string $baseLadderId, array $params, DateTimeImmutable $now): ?array {
+		$invoiceId = (string)($invoice['id'] ?? ($invoice['@self']['id'] ?? ''));
+		$selector = new DunningStageSelector(logger: $this->logger);
+		$daysInArrears = $selector->daysOverdue(invoice: $invoice, now: $now);
+		// A contribution the parent declined is never reminded (REQ-SCON-014).
+		if ($invoiceId === '' || $daysInArrears === null || $this->voluntary->isDeclined(invoice: $invoice) === true
+			|| $this->hasActivePause(administrationId: $administrationId, invoiceId: $invoiceId) === true
+		) {
+			return null;
+		}
+
+		$customerId = (string)($invoice['customerReference'] ?? ($invoice['customerId'] ?? ''));
+		if ($baseLadderId === '') {
+			$baseLadderId = $this->baseLadderFor(administrationId: $administrationId, customerId: $customerId);
+		}
+
+		if ($baseLadderId === '') {
+			return null;
+		}
+
+		$resolved = $this->resolveLadderForKlant(administrationId: $administrationId, customerId: $customerId, baseLadderId: $baseLadderId);
+		$runs = $this->findAll(schema: 'DunningRun', filters: ['administrationId' => $administrationId, 'invoiceId' => $invoiceId]);
+		$stage = $selector->next(stages: $resolved['stages'], runs: $runs, daysInArrears: $daysInArrears, now: $now);
 		if ($stage === null) {
 			return null;
 		}
 
-		$stageNr = (int)($stage['nr'] ?? 1);
+		// A voluntary contribution gets the first stage once, without costs (REQ-SCON-008).
+		if ($this->voluntary->isVoluntary(invoice: $invoice) === true) {
+			if ($runs !== []) {
+				return null;
+			}
 
-		// Idempotency: skip when this stage has already fired for this invoice.
-		$existing = $this->findAll(
-			schema: 'DunningRun',
-			filters: [
-				'administrationId' => $administrationId,
-				'invoiceId' => $invoiceId,
-				'stageNr' => (string)$stageNr,
-			]
-		);
-		if ($existing !== []) {
+			$stage = ($selector->definition(stages: $resolved['stages'], stageNr: VoluntaryContributionPolicy::ONLY_STAGE) ?? $stage);
+			$stage['nr'] = VoluntaryContributionPolicy::ONLY_STAGE;
+			$params = $this->voluntary->stripCosts(params: $params);
+		}
+
+		// Idempotency: never send a stage that already went out for this invoice.
+		$stageNr = (int)($stage['nr'] ?? 1);
+		if (array_key_exists($stageNr, $selector->sentOn(runs: $runs)) === true) {
 			return null;
 		}
 
-		$channel = (string)($params['channel'] ?? ($stage['channel'] ?? 'EMAIL'));
-		$tplId = (string)($params['templateId'] ?? ($stage['templateId'] ?? ''));
-
-		return $this->executeStage(
-			administrationId: $administrationId,
-			params: array_merge(
-				[
-					'invoiceId' => $invoiceId,
-					'ladderId' => (string)$resolved['ladderId'],
-					'stageNr' => $stageNr,
-					'channel' => $channel,
-					'templateId' => $tplId,
-					'invoiceAmount' => (float)($invoice['grossAmount'] ?? 0.0),
-					'deliveryStatus' => 'PENDING',
-				],
-				$params
-			)
+		return array_merge(
+			[
+				'invoiceId' => $invoiceId,
+				'ladderId' => (string)$resolved['ladderId'],
+				'stageNr' => $stageNr,
+				'channel' => (string)($params['channel'] ?? ($stage['channel'] ?? 'EMAIL')),
+				'templateId' => (string)($params['templateId'] ?? ($stage['templateId'] ?? '')),
+				'invoiceAmount' => (float)($invoice['grossAmount'] ?? 0.0),
+				'stage' => $stage,
+			],
+			$params
 		);
+	}//end chooseStage()
 
-	}//end tickInvoice()
+	/**
+	 * The base ladder of a customer: the DunningLadder its `dunningPolicyRef`
+	 * names, else the administration's active ladder for customer group
+	 * DEFAULT (REQ-RAD-004, design D4).
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $customerId       The customer.
+	 *
+	 * @return string The ladder id, or '' when there is none.
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.2
+	 */
+	public function baseLadderFor(string $administrationId, string $customerId): string {
+		$customer = null;
+		if ($customerId !== '') {
+			$customer = $this->fetchById(schema: 'CustomerMaster', id: $customerId);
+		}
+
+		$ref = trim((string)($customer['dunningPolicyRef'] ?? ''));
+		if ($ref !== '' && $this->fetchById(schema: 'DunningLadder', id: $ref, fallbackProperty: 'slug') !== null) {
+			return $ref;
+		}
+
+		$default = $this->fetchOne(
+			schema: 'DunningLadder',
+			filters: ['administrationId' => $administrationId, 'customerGroup' => 'DEFAULT', 'lifecycleState' => 'active']
+		);
+		if ($default === null) {
+			return '';
+		}
+
+		return (string)($default['id'] ?? ($default['@self']['id'] ?? ''));
+	}//end baseLadderFor()
+
+	/**
+	 * Whether the invoice, read again now, is paid, written off or disputed.
+	 *
+	 * @param array<string,mixed> $invoice   The invoice as it was listed.
+	 * @param string              $invoiceId Its id.
+	 *
+	 * @return bool True when no stage may go out for it.
+	 *
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-1.3
+	 */
+	private function settledSinceListed(array $invoice, string $invoiceId): bool {
+		$current = ($this->fetchById(schema: 'ARInvoice', id: $invoiceId) ?? $invoice);
+		return in_array((string)($current['lifecycleState'] ?? ''), ['paid', 'written-off', 'disputed'], true);
+	}//end settledSinceListed()
 
 	/**
 	 * Apply the appropriate KlantLadderOverride on top of the base DunningLadder.
@@ -336,26 +410,6 @@ class DunningRunService {
 	}//end resolveLadderForKlant()
 
 	/**
-	 * Pick the stage definition for a given stageNr from a resolved ladder.
-	 *
-	 * @param array<int,array<string,mixed>> $stages Resolved stages.
-	 * @param int $stageNr Stage number to retrieve.
-	 *
-	 * @return array<string,mixed>|null Stage definition, null when no such stage exists.
-	 *
-	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-18
-	 */
-	public function stageDefinition(array $stages, int $stageNr): ?array {
-		foreach ($stages as $stage) {
-			if ((int)($stage['nr'] ?? 0) === $stageNr) {
-				return $stage;
-			}
-		}
-
-		return null;
-	}//end stageDefinition()
-
-	/**
 	 * Execute one DunningRun for a given invoice + stage.
 	 *
 	 * Performs three things in one transaction-equivalent block:
@@ -365,37 +419,24 @@ class DunningRunService {
 	 *   3. Transition the run to lifecycleState = executed (immutable per
 	 *      REQ-CCD-002).
 	 *
-	 * The kanaal dispatch itself is delegated to the channel hooks
-	 * (EMAIL / EMAIL+POSTREGISTRATIE / AANGETEKENDE_POST / INCASSOBUREAU_API);
-	 * this method records the outcome but does not own the SMTP/PostNL/
-	 * incasso-bureau wiring (those land on dedicated handlers seeded via
-	 * openconnector per REQ-CCD-008 / REQ-CCD-009).
+	 * The stage is sent through the bound channel adapter by DunningStageDispatcher
+	 * before the run is saved, and the run records the adapter's outcome. A
+	 * caller-supplied `deliveryStatus` is ignored: it is not evidence that
+	 * anything left (issue #1687, design D6 of receivables-automatic-dunning).
 	 *
 	 * @param string $administrationId Administration scope.
-	 * @param array<string,mixed> $params {
-	 *                                    factuurId,
-	 *                                    ladderId,
-	 *                                    stageNr,
-	 *                                    kanaal,
-	 *                                    templateId,
-	 *                                    ontvangerEmail,
-	 *                                    ontvangerNaam,
-	 *                                    ontvangerAdres,
-	 *                                    renderedSubject,
-	 *                                    renderedBody,
-	 *                                    renderedPdfHash,
-	 *                                    factuurBedrag,
-	 *                                    incassokostenBedrag,
-	 *                                    renteBedrag,
-	 *                                    deliveryStatus,
-	 *                                    postageStatus,
-	 *                                    openTracking,
-	 *                                    digitalSignature
-	 *                                    }
+	 * @param array<string,mixed> $params The run's params: invoiceId, and the keys
+	 *                                    DunningLetterComposer::compose() reads (ladderId,
+	 *                                    stageNr, channel, templateId, recipient, rendered
+	 *                                    letter, amounts and evidence).
 	 *
 	 * @return array<string,mixed> The executed DunningRun record.
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
+	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.3
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-012)
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-014)
+	 * @spec openspec/changes/arinvoice-field-backfill-and-bt10/specs/bookkeeping-credit-control-dunning/spec.md (REQ-CCD-017)
 	 */
 	public function executeStage(string $administrationId, array $params): array {
 		$invoiceId = (string)($params['invoiceId'] ?? '');
@@ -407,32 +448,20 @@ class DunningRunService {
 			throw new RuntimeException(sprintf('Cannot execute DunningRun: invoice %s is paused.', $invoiceId));
 		}
 
-		$now = new DateTimeImmutable();
+		// Every route to a run passes here, the HTTP one included, so the
+		// voluntary cap and the template fallback live in the composer
+		// (REQ-SCON-012, REQ-CCD-016, REQ-CCD-017).
+		$letters = ($this->letters ?? new DunningLetterComposer(appConfig: $this->appConfig, voluntary: $this->voluntary));
+		$invoice = ($this->fetchById(schema: 'ARInvoice', id: $invoiceId) ?? []);
+		$params = $letters->prepare(
+			invoice: $invoice,
+			params: $params,
+			runsSoFar: fn (): int => $this->runCount(administrationId: $administrationId, invoiceId: $invoiceId)
+		);
+		$params = $letters->address(params: $params, invoice: $invoice, find: $this->fetchById(...), findAll: $this->findAll(...));
+		$record = $letters->compose(administrationId: $administrationId, invoiceId: $invoiceId, params: $params, now: new DateTimeImmutable());
 
-		$record = [
-			'invoiceId' => $invoiceId,
-			'ladderId' => (string)($params['ladderId'] ?? ''),
-			'stageNr' => (int)($params['stageNr'] ?? 1),
-			'executedOn' => $now->format(DATE_ATOM),
-			'channel' => (string)($params['channel'] ?? 'EMAIL'),
-			'recipientEmail' => ($params['recipientEmail'] ?? null),
-			'recipientName' => ($params['recipientName'] ?? null),
-			'recipientAddress' => ($params['recipientAddress'] ?? null),
-			'templateId' => (string)($params['templateId'] ?? ''),
-			'renderedSubject' => ($params['renderedSubject'] ?? null),
-			'renderedBody' => ($params['renderedBody'] ?? null),
-			'renderedPdfHash' => ($params['renderedPdfHash'] ?? null),
-			'deliveryStatus' => (string)($params['deliveryStatus'] ?? 'PENDING'),
-			'openTracking' => ($params['openTracking'] ?? null),
-			'postageStatus' => ($params['postageStatus'] ?? null),
-			'digitalSignature' => ($params['digitalSignature'] ?? null),
-			'invoiceAmount' => (float)($params['invoiceAmount'] ?? 0.0),
-			'collectionCostAmount' => ($params['collectionCostAmount'] ?? null),
-			'interestAmount' => ($params['interestAmount'] ?? null),
-			'administrationId' => $administrationId,
-			'lifecycleState' => 'executed',
-		];
-
+		$record = $this->container->get(DunningStageDispatcher::class)->dispatch(record: $record, invoice: $invoice);
 		return $this->saveObject(schema: 'DunningRun', data: $record);
 	}//end executeStage()
 
@@ -449,10 +478,13 @@ class DunningRunService {
 	 * @param string $details Free-text details.
 	 * @param string $pausedBy Operator id.
 	 * @param array<int,string>|null $evidenceRefs Optional evidence refs.
+	 * @param DateTimeImmutable|null $hardDeadline Optional deadline; a payment plan sets its last due date plus grace
+	 *                                             (receivables-payment-plans design.md D2). Default: start plus the configured days.
 	 *
 	 * @return array<string,mixed> The created pause record.
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-17
+	 * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-2.1
 	 */
 	public function pause(
 		string $administrationId,
@@ -461,10 +493,11 @@ class DunningRunService {
 		string $details,
 		string $pausedBy,
 		?array $evidenceRefs = null,
+		?DateTimeImmutable $hardDeadline = null,
 	): array {
 		$hardDeadlineDays = max(1, (int)$this->appConfig->getValueString(Application::APP_ID, self::CFG_DISPUTE_PAUSE_DAYS, '60'));
 		$pauseStart = new DateTimeImmutable();
-		$hardDeadline = $pauseStart->modify('+' . $hardDeadlineDays . ' days');
+		$hardDeadline = ($hardDeadline ?? $pauseStart->modify('+' . $hardDeadlineDays . ' days'));
 
 		$refs = ($evidenceRefs ?? []);
 		if ($refs !== []) {
@@ -995,6 +1028,11 @@ class DunningRunService {
 		array $dossier,
 		string $dunningRunId,
 	): DunningChannelSendResult {
+		// 0. A voluntary contribution is never handed to a collection agency (REQ-SCON-008).
+		if ($this->voluntary->isVoluntary(invoice: $this->fetchById(schema: 'ARInvoice', id: $invoiceId)) === true) {
+			return new DunningChannelSendResult(channel: self::INCASSO_CHANNEL, deliveryStatus: 'FAILED', errorMessage: VoluntaryContributionPolicy::REFUSAL);
+		}
+
 		// 1. Resolve the run BEFORE anything leaves the building. A dossier
 		// dispatched against a run this app cannot find is a dossier with no
 		// evidence trail and no re-dispatch guard, so absent = refuse.
@@ -1195,6 +1233,18 @@ class DunningRunService {
 	private function resolvePostNlAdapter(): PostNLAdapterInterface {
 		return $this->container->get(PostNLAdapterInterface::class);
 	}//end resolvePostNlAdapter()
+
+	/**
+	 * How many dunning runs an invoice already had (REQ-SCON-008).
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $invoiceId Invoice FK.
+	 *
+	 * @return int The number of runs.
+	 */
+	private function runCount(string $administrationId, string $invoiceId): int {
+		return count($this->findAll(schema: 'DunningRun', filters: ['administrationId' => $administrationId, 'invoiceId' => $invoiceId]));
+	}//end runCount()
 
 	/**
 	 * Whether the invoice has an active DunningPauseDispute.

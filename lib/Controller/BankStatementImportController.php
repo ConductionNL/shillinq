@@ -38,10 +38,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use DateTimeImmutable;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Lifecycle\StatementParser;
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\Bank\StatementIntakeService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -50,7 +50,6 @@ use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * HTTP API for importing a bank statement file into BankStatement + lines.
@@ -71,13 +70,6 @@ class BankStatementImportController extends Controller {
 	private const ALLOWED_FORMATS = ['camt053', 'mt940', 'csv'];
 
 	/**
-	 * Register slug all shillinq objects live in.
-	 *
-	 * @var string
-	 */
-	private const REGISTER_SLUG = 'shillinq';
-
-	/**
 	 * Construct the controller.
 	 *
 	 * @param IRequest $request Request.
@@ -85,8 +77,8 @@ class BankStatementImportController extends Controller {
 	 * @param AdministrationContextService $administrationContext Server-resolved tenant scope.
 	 * @param IUserSession $session User session.
 	 * @param LoggerInterface $logger Logger.
-	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param IL10N $l10n Translation service for error-response messages (ADR-050).
+	 * @param StatementIntakeService $intake Writes the statement and its lines (REQ-BCON-002).
 	 */
 	public function __construct(
 		IRequest $request,
@@ -94,8 +86,8 @@ class BankStatementImportController extends Controller {
 		private readonly AdministrationContextService $administrationContext,
 		private readonly IUserSession $session,
 		private readonly LoggerInterface $logger,
-		private readonly ObjectServiceInterface $objectService,
 		private readonly IL10N $l10n,
+		private readonly StatementIntakeService $intake,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 
@@ -153,39 +145,19 @@ class BankStatementImportController extends Controller {
 			}
 
 
-			$transactionCount = count($parsed);
-			$statement = $this->objectService
-				->setRegister(self::REGISTER_SLUG)
-				->setSchema('BankStatement')
-				->saveObject(
-					[
-						'bankConnectionId' => 'manual-import',
-						'statementFormat' => $format,
-						'statementDate' => (new DateTimeImmutable())->format('Y-m-d'),
-						'transactionCount' => $transactionCount,
-						'administrationId' => $admin,
-						'glAccountId' => $glAccountId,
-					]
-				);
-
-			// ADR-084: saveObject() returns an ObjectEntityInterface, and that
-			// interface extends JsonSerializable ONLY -- it does not implement
-			// ArrayAccess. The previous `$statement['id'] ?? $statement['uuid']`
-			// therefore raised `Error: Cannot use object of type … as array`,
-			// which `??` cannot suppress, and the surrounding catch (\Throwable)
-			// turned it into a bare HTTP 500 on EVERY import. getObject() is
-			// declared on the contract and returns the body as an array.
-			$statementBody = $statement->getObject();
-			$statementId   = (string)($statementBody['id'] ?? $statement->getUuid() ?? '');
-
-			$lineNumber = 0;
-			foreach ($parsed as $line) {
-				$lineNumber++;
-				$this->objectService
-					->setRegister(self::REGISTER_SLUG)
-					->setSchema('BankStatementLine')
-					->saveObject($this->mapLine(line: $line, statementId: $statementId, admin: $admin, lineNumber: $lineNumber));
-			}
+			// One intake for files and the bank feed (banking-connected-accounts
+			// REQ-BCON-002): it writes every field the merged register requires,
+			// which the old inline loop did not (lineId, status, a date-time
+			// statementDate), and skips lines already on file for the account.
+			$iban = trim((string)$this->request->getParam('bankAccountIban', ''));
+			$result = $this->intake->ingest(
+				administrationId: $admin,
+				iban: $iban,
+				lines: $parsed,
+				meta: ['source' => 'file', 'format' => $format, 'glAccountId' => $glAccountId]
+			);
+			$statementId = $result['statementId'];
+			$transactionCount = count($result['written']);
 
 			// Honest counts: auto-matching runs later on the reconciliation
 			// page, so every freshly-imported line is unmatched.
@@ -219,39 +191,6 @@ class BankStatementImportController extends Controller {
 		}//end try
 
 	}//end import()
-
-	/**
-	 * Map a parser line map onto the BankStatementLine schema field shape.
-	 *
-	 * The parser emits remittanceInfo/endToEndRef/status; the schema fields are
-	 * narrative/reference/matchState. This is where that translation happens.
-	 *
-	 * @param array<string,mixed> $line One normalised parser line.
-	 * @param string $statementId The owning BankStatement id.
-	 * @param string $admin Server-resolved administration id.
-	 * @param int $lineNumber 1-based sequential line number.
-	 *
-	 * @return array<string,mixed> The BankStatementLine payload.
-	 *
-	 * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
-	 */
-	private function mapLine(array $line, string $statementId, string $admin, int $lineNumber): array {
-		return [
-			'statementId' => $statementId,
-			'lineNumber' => $lineNumber,
-			'valueDate' => (string)($line['valueDate'] ?? ''),
-			'amount' => (float)($line['amount'] ?? 0),
-			'currency' => (string)($line['currency'] ?? 'EUR'),
-			'matchState' => (string)($line['status'] ?? 'unmatched'),
-			'administrationId' => $admin,
-			'counterpartyName' => (string)($line['counterpartyName'] ?? ''),
-			'counterpartyIban' => (string)($line['counterpartyIban'] ?? ''),
-			'reference' => (string)($line['endToEndRef'] ?? ''),
-			'narrative' => (string)($line['remittanceInfo'] ?? ''),
-			'rawPayload' => json_encode($line),
-		];
-
-	}//end mapLine()
 
 	/**
 	 * Read the import payload from a multipart upload or a JSON/raw body.

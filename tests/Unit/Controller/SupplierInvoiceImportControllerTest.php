@@ -26,6 +26,8 @@ use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Controller\SupplierInvoiceImportController;
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
+use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\SupplierInvoiceService;
 use OCA\Shillinq\Tests\Unit\Service\Support\ObjectEntityStub;
 use OCP\AppFramework\Http;
@@ -115,6 +117,7 @@ final class SupplierInvoiceImportControllerTest extends TestCase {
 		parent::setUp();
 		$this->request = $this->createMock(IRequest::class);
 		$this->service = $this->createMock(SupplierInvoiceService::class);
+		$this->service->method('resolveSupplier')->willReturnArgument(1);
 		$this->administrationContext = $this->createMock(AdministrationContextService::class);
 		$this->session = $this->createMock(IUserSession::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
@@ -140,7 +143,8 @@ final class SupplierInvoiceImportControllerTest extends TestCase {
 			administrationContext: $this->administrationContext,
 			session: $this->session,
 			logger: $this->logger,
-			objectService: $this->makeObjectServiceStub(),
+			objectService: $objectService = $this->makeObjectServiceStub(),
+			checks: $this->checksOver($objectService),
 		);
 
 	}//end setUp()
@@ -162,8 +166,23 @@ final class SupplierInvoiceImportControllerTest extends TestCase {
 		$objectService->method('setSchema')->willReturnSelf();
 		$objectService->method('findAll')->willReturnCallback(
 			function (array $config = []): array {
-				$this->recordFilters((array)($config['filters'] ?? []));
-				return $this->stubRowsForTest();
+				$filters = (array)($config['filters'] ?? []);
+				$this->recordFilters($filters);
+				// Answer only rows that match every filter, as OpenRegister does.
+				return array_values(
+					array_filter(
+						$this->stubRowsForTest(),
+						static function (array $row) use ($filters): bool {
+							foreach ($filters as $key => $value) {
+								if (($row[$key] ?? null) !== $value) {
+									return false;
+								}
+							}
+
+							return true;
+						}
+					)
+				);
 			}
 		);
 		$objectService->method('saveObject')->willReturnCallback(
@@ -239,6 +258,7 @@ final class SupplierInvoiceImportControllerTest extends TestCase {
 			session: $session,
 			logger: $this->logger,
 			objectService: $this->createMock(ObjectServiceInterface::class),
+			checks: $this->checksOver($this->createMock(ObjectServiceInterface::class)),
 		);
 
 		$response = $controller->import();
@@ -288,7 +308,7 @@ final class SupplierInvoiceImportControllerTest extends TestCase {
 			['invoiceNumber' => 'INV-DUP', 'supplierId' => 'SUP-1']
 		);
 		// The pre-check finds an existing record.
-		$this->stubRows = [['id' => 'existing', 'invoiceNumber' => 'INV-DUP', 'supplierId' => 'SUP-1']];
+		$this->stubRows = [['id' => 'existing', 'invoiceNumber' => 'INV-DUP', 'supplierId' => 'SUP-1', 'administrationId' => 'adm-1']];
 		$this->service->expects(self::never())->method('ingestUBLInvoice');
 
 		$response = $this->controller->import();
@@ -391,8 +411,8 @@ final class SupplierInvoiceImportControllerTest extends TestCase {
 		$csv = "supplier,invoiceNumber,invoiceDate,amount,vatAmount\n"
 			. "SUP-1,INV-DUP,2026-01-01,121.00,21.00\n";
 		$this->withJsonBody($csv, 'csv');
-		// Pre-check finds the row already exists.
-		$this->stubRows = [['id' => 'existing']];
+		// Pre-check finds the row already exists: same number, same stated supplier.
+		$this->stubRows = [['id' => 'existing', 'invoiceNumber' => 'INV-DUP', 'supplierIdentifier' => 'SUP-1', 'administrationId' => 'adm-1']];
 
 		$response = $this->controller->import();
 		self::assertSame(Http::STATUS_OK, $response->getStatus());
@@ -400,6 +420,8 @@ final class SupplierInvoiceImportControllerTest extends TestCase {
 		$data = $response->getData();
 		self::assertSame(0, $data['imported']);
 		self::assertSame(1, $data['skipped']);
+		// REQ-PSII-003: the skipped row is reported by its number.
+		self::assertSame([['invoiceNumber' => 'INV-DUP', 'reason' => 'duplicate', 'duplicateOfId' => 'existing']], $data['skippedRows']);
 
 	}//end testCsvImportSkipsDuplicateRow()
 
@@ -416,4 +438,18 @@ final class SupplierInvoiceImportControllerTest extends TestCase {
 
 	}//end testEmptyUploadReturns422()
 
+	/**
+	 * The shared checks over the controller's object service stub.
+	 *
+	 * @param ObjectServiceInterface $objectService The stub.
+	 *
+	 * @return SupplierInvoiceChecks
+	 */
+	private function checksOver(ObjectServiceInterface $objectService): SupplierInvoiceChecks {
+		$settings = $this->createStub(SettingsService::class);
+		$settings->method('getRegisterSlug')->willReturn('shillinq');
+
+		return new SupplierInvoiceChecks($objectService, $settings);
+
+	}//end checksOver()
 }//end class
