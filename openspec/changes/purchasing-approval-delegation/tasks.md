@@ -4,7 +4,7 @@
 
 ## 1. Approval on OpenRegister
 
-- [ ] 1.1 Add the `purchase-order-approval` `x-openregister-approval-chains` block on `PurchaseOrder.approve` with the three tiers and separation of duties, and create the three groups in the setup wizard (REQ-PAD-001). Verify: a contract test like `VerplichtingApprovalChainFragmentTest` against the OpenRegister shape; a live re-import provisions the steps for a seed order.
+- [ ] 1.1 Add the `purchase-order-approval` `x-openregister-approval-chains` block on `PurchaseOrder.approve` with the three tiers and separation of duties, and create the three groups in the setup wizard (REQ-PAD-001). Verify: a contract test like `VerplichtingApprovalChainFragmentTest` against the OpenRegister shape; a live re-import provisions the steps for a seed order. Built: block in the fragment, `PurchaseOrderApprovalTiers`, groups in the setup seed action, `totalExclVat` written on create; tests `tests/Unit/Settings/PurchaseOrderApprovalChainFragmentTest.php`, `tests/Unit/Service/Purchasing/PurchaseOrderApprovalTiersTest.php`, `SetupControllerTest`, `PurchaseOrderRegisterSchemaTest`. (not run: the live re-import, owed to the live pass)
 - [ ] 1.2 Replace the chain display in `PurchaseOrderDetail.vue` with an approval panel on OpenRegister's steps, with Approve and Reject for a user who may decide (REQ-PAD-001). Verify: Playwright approves PO-2026-040 as Karin de Wit and sees the requester refused on PO-2026-041.
 - [ ] 1.3 Remove `PurchaseOrderApprovalService`, its controller and route, `determineApprovalChain()`, `initialiseApprovalChainEntries()`, `blockSendUntilApproved()` and the `delegated` value; point `previewApprovalChain()` at the schema tiers and `send()` at `statusCode`; add the repair step for `pending_approval` orders (REQ-PAD-001). Verify: hydra gates orphan-auth and route-reachability pass; the repair step is idempotent on a local instance; a live approval of a seed order materialises its `Commitment`.
 
@@ -18,7 +18,7 @@
 
 ## 4. Platform request
 
-- [ ] 4.1 Open an issue on ConductionNL/openregister for a standing delegation on the task performer model (a person's dated rule routing their tasks in a scope to a stand-in), linking this change and the tender row. Verify: the issue link is in the PR body; the issue text is shown to Ruben before it is posted.
+- [x] 4.1 Open an issue on ConductionNL/openregister for a standing delegation on the task performer model (a person's dated rule routing their tasks in a scope to a stand-in), linking this change and the tender row. Verify: the issue link is in the PR body; the issue text is shown to Ruben before it is posted. Done: Ruben approved the text (Q-shillinq-4) and it is https://github.com/ConductionNL/openregister/issues/4527 .
 
 ## 5. Docs
 
