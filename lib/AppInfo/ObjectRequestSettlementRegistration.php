@@ -29,9 +29,11 @@ namespace OCA\Shillinq\AppInfo;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
+use OCA\Shillinq\Event\InvoiceIngestRequestedEvent;
 use OCA\Shillinq\Event\PaymentCreditRequestedEvent;
 use OCA\Shillinq\Event\PaymentRefundRequestedEvent;
 use OCA\Shillinq\Listener\BankLineObjectRequestListener;
+use OCA\Shillinq\Listener\InvoiceIngestRequestedListener;
 use OCA\Shillinq\Listener\PaymentCreditRequestedListener;
 use OCA\Shillinq\Listener\PaymentRefundRequestedListener;
 use OCA\Shillinq\Listener\ObjectRequestSettledListener;
@@ -74,6 +76,11 @@ final class ObjectRequestSettlementRegistration {
 		$context->registerEventListener(
 			event: PaymentCreditRequestedEvent::class,
 			listener: PaymentCreditRequestedListener::class
+		);
+		// A sibling app's customer month becomes a draft invoice (REQ-UMB-005, decision 174).
+		$context->registerEventListener(
+			event: InvoiceIngestRequestedEvent::class,
+			listener: InvoiceIngestRequestedListener::class
 		);
 	}//end register()
 }//end class

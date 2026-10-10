@@ -20,6 +20,10 @@
         {
             "appVersion": "0.5.6-unstable.20261009100000",
             "versionsSha256": "26b5df713031cc4b29c9ae08d9b3345d9be9f5352f8df73b26dd5dd3b16dad4d"
+        },
+        {
+            "appVersion": "0.5.6-unstable.20261010170000",
+            "versionsSha256": "c22f763196016303af27247f9e50909a11dc0144b85676da22a0f4e53a22a1b8"
         }
     ],
     "versions": {
@@ -164,7 +168,7 @@
         "schema:CreditNote": "0.1.0",
         "schema:CreditScore": "0.1.0",
         "schema:CurrencyBalance": "0.1.0",
-        "schema:CustomerMaster": "0.2.0",
+        "schema:CustomerMaster": "0.3.0",
         "schema:DBAEvidenceDossier": "0.1.0",
         "schema:DBAIntake": "0.1.0",
         "schema:DBAModelovereenkomst": "0.1.0",
