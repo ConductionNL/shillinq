@@ -1,3 +1,3 @@
 # Screens
 
-- No board found yet (decision 150)
+- No screen: Server-side four-eyes control on payment run approval; the run screen is ShBetaalrun

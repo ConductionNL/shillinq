@@ -1,3 +1,3 @@
 # Screens
 
-- No board found yet (decision 150)
+- No screen: Bank line matching and receipt mail for object requests run in the background; no screen

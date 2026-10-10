@@ -1,3 +1,3 @@
 # Screens
 
-- No board found yet (decision 150)
+- No screen: Administration scoping of ledger lines and spend queries on the server; no screen changes

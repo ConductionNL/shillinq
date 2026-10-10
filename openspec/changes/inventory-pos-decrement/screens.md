@@ -1,3 +1,3 @@
 # Screens
 
-- No board found yet (decision 150)
+- No screen: Stock decrement and COGS posting triggered by a pipelinq sale; machine-to-machine, no screen

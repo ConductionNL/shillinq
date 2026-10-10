@@ -1,3 +1,3 @@
 # Screens
 
-- No board found yet (decision 150)
+- No screen: Hours booking moves to humaniq; shillinq only receives cost allocations

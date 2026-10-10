@@ -1,3 +1,3 @@
 # Screens
 
-- No board found yet (decision 150)
+- No screen: The leges request is part of the portal intake journey, drawn as a portaliq screen
