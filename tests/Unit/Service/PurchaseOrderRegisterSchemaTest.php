@@ -244,6 +244,9 @@ final class PurchaseOrderRegisterSchemaTest extends TestCase {
 
 		self::assertSame([], $this->invalidPurchaseOrderSaves());
 		self::assertSame('draft', $purchaseOrder['statusCode'] ?? null);
+		// The declared approval chain routes on this field (task 1.1): it must
+		// be written, as integer cents, or every order lands in no tier.
+		self::assertSame(50000, $purchaseOrder['totalExclVat'] ?? null);
 	}//end testCreatedPurchaseOrderValidatesAgainstRegisterSchema()
 
 	/**

@@ -36,6 +36,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\DemoDataService;
+use OCA\Shillinq\Service\Purchasing\PurchaseOrderApprovalTiers;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Settings\AdminSettings;
 use OCP\AppFramework\Controller;
@@ -43,6 +44,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\IAppConfig;
+use OCP\IGroupManager;
 use OCP\IRequest;
 
 /**
@@ -95,6 +97,7 @@ class SetupController extends Controller {
 		private readonly IAppConfig $appConfig,
 		private readonly DemoDataService $demoDataService,
 		private readonly SettingsService $settingsService,
+		private readonly IGroupManager $groupManager,
 	) {
 		parent::__construct($appName, $request);
 	}//end __construct()
@@ -202,6 +205,9 @@ class SetupController extends Controller {
 	 * @return DataResponse `{ success, message, detail }`.
 	 *
 	 * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
+	 * @spec openspec/changes/purchasing-approval-delegation/tasks.md#task-1.1
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) PurchaseOrderApprovalTiers::fromDeclaration() reads the shipped declaration.
 	 */
 	#[AuthorizedAdminSetting(AdminSettings::class)]
 	public function runAction(string $actionId): DataResponse {
@@ -265,6 +271,10 @@ class SetupController extends Controller {
 			// and re-running here matters when OpenRegister was enabled AFTER shillinq
 			// so the install-time repair step never seeded it (ADR-042 recovery path).
 			$this->settingsService->seedSelectielijst();
+			// The Nextcloud groups the purchase order approval chain routes its
+			// steps to; without them nobody may decide a step
+			// (purchasing-approval-delegation task 1.1). Existing groups stay.
+			PurchaseOrderApprovalTiers::fromDeclaration()->ensureGroups(groupManager: $this->groupManager);
 			$this->appConfig->setValueString(Application::APP_ID, 'setup_seed_done', '1');
 			return new DataResponse(['success' => true, 'message' => 'Chart of accounts and reference data seeded.']);
 		}//end if

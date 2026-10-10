@@ -6451,7 +6451,8 @@
         "scenarioId must be a valid identifier": "scenarioId moet een geldige identificatie zijn",
         "Revenue Task Field": "Taakveld van de opbrengstrekening",
         "The BBV task field (taakveld) of the revenue account, copied from the account when the schedule is saved. Read-only: change it on the account.": "Het BBV-taakveld van de opbrengstrekening, overgenomen van de rekening bij het opslaan van het tarief. Alleen-lezen: pas het aan op de rekening.",
-        "The BBV task field (taakveld) this account books to, for example 8.3. Read by the IV3 report and shown on the fee schedule page.": "Het BBV-taakveld waarop deze rekening boekt, bijvoorbeeld 8.3. Gelezen door het IV3-rapport en getoond op de pagina met legestarieven."
+        "The BBV task field (taakveld) this account books to, for example 8.3. Read by the IV3 report and shown on the fee schedule page.": "Het BBV-taakveld waarop deze rekening boekt, bijvoorbeeld 8.3. Gelezen door het IV3-rapport en getoond op de pagina met legestarieven.",
+        "Load the chosen chart of accounts (ledger accounts), the VAT rates, and, for government bodies, the BBV task fields into the administration, and create the three purchase order approval groups (teamleider, facility_manager, procurement_manager). This may take a while. Click \"Run\" to start.": "Laad het gekozen rekeningschema (grootboekrekeningen), de btw-tarieven en, voor overheidsorganisaties, de BBV-taakvelden in de administratie, en maak de drie goedkeuringsgroepen voor inkooporders aan (teamleider, facility_manager, procurement_manager). Dit kan even duren. Klik op \"Uitvoeren\" om te starten."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

@@ -4248,7 +4248,8 @@
         "scenarioId must be a valid identifier": "scenarioId must be a valid identifier",
         "Revenue Task Field": "Revenue Task Field",
         "The BBV task field (taakveld) of the revenue account, copied from the account when the schedule is saved. Read-only: change it on the account.": "The BBV task field (taakveld) of the revenue account, copied from the account when the schedule is saved. Read-only: change it on the account.",
-        "The BBV task field (taakveld) this account books to, for example 8.3. Read by the IV3 report and shown on the fee schedule page.": "The BBV task field (taakveld) this account books to, for example 8.3. Read by the IV3 report and shown on the fee schedule page."
+        "The BBV task field (taakveld) this account books to, for example 8.3. Read by the IV3 report and shown on the fee schedule page.": "The BBV task field (taakveld) this account books to, for example 8.3. Read by the IV3 report and shown on the fee schedule page.",
+        "Load the chosen chart of accounts (ledger accounts), the VAT rates, and, for government bodies, the BBV task fields into the administration, and create the three purchase order approval groups (teamleider, facility_manager, procurement_manager). This may take a while. Click \"Run\" to start.": "Load the chosen chart of accounts (ledger accounts), the VAT rates, and, for government bodies, the BBV task fields into the administration, and create the three purchase order approval groups (teamleider, facility_manager, procurement_manager). This may take a while. Click \"Run\" to start."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

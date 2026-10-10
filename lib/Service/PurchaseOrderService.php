@@ -328,6 +328,9 @@ class PurchaseOrderService {
 			'frameworkAgreementId' => $frameworkAgreementId,
 			'lines' => $lines,
 			'totalAmount' => $totalAmount,
+			// The declared approval chain's amountField (integer cents);
+			// OpenRegister resolves the approver tiers from it.
+			'totalExclVat' => $totalCent,
 			'currency' => (string)($payload['currency'] ?? 'EUR'),
 			'approvalChain' => $this->initialiseApprovalChainEntries(chain: $approvalChain),
 			// The schema's lifecycle field (#1753). A PO waiting for its approval
