@@ -4,10 +4,10 @@
  * Integration tests for PurchaseOrderService (member 02 of bookkeeping-purchase-order-3way).
  *
  * Exercises the full create-and-send loop end-to-end:
- *  - createPurchaseOrder materialises the approval chain + ApprovalTask records
- *    + notifications;
- *  - blockSendUntilApproved is refused while pending and accepted once every
- *    approver has signed with a timestamp;
+ *  - createPurchaseOrder writes a draft order with totalExclVat in cents and
+ *    no in-object chain;
+ *  - markSent is refused until OpenRegister's approval chain has moved the
+ *    order to approved (purchasing-approval-delegation REQ-PAD-001);
  *  - the manifest fragment that ships with this slice exposes the
  *    PurchaseOrderForm + PurchaseOrderDetail pages so the Vue layer can reach
  *    the API surface added here.
@@ -32,54 +32,37 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\PurchaseOrderApprovalService;
 use OCA\Shillinq\Service\PurchaseOrderService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
-use OCP\IUser;
-use OCP\IUserSession;
-use OCP\Notification\IManager as INotificationManager;
-use OCP\Notification\INotification;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
- * End-to-end PO create → notify → send flow over an in-memory ObjectService.
+ * End-to-end PO create → approve → send flow over an in-memory ObjectService.
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 final class PurchaseOrderIntegrationTest extends TestCase {
 
 	/**
-	 * Per-notification mock state-bag (spl_object_id => stdClass).
-	 *
-	 * @var array<int,object>
-	 */
-	private array $notificationState = [];
-
-	/**
-	 * End-to-end: create a €18,500 PO, materialise the two-approver chain,
-	 * verify both approvers receive a notification, refuse the send before
-	 * every approver signs, then signature-by-signature drive the PO to "sent".
+	 * End-to-end: create a EUR 18,500 PO in draft, refuse the send, then send
+	 * once the order is approved. The approval itself is OpenRegister's: its
+	 * chain advances the `approve` transition, which the stub stands in for by
+	 * setting statusCode, the only thing shillinq reads.
 	 *
 	 * @return void
 	 */
 	public function testCreateThenSendEndToEnd(): void {
 		$data = [
-			'AdministrationMembership' => [
-				['administrationId' => 'adm-1', 'role' => 'teamleider', 'userId' => 'teamleider-1'],
-				['administrationId' => 'adm-1', 'role' => 'facility_manager', 'userId' => 'facility-1'],
-			],
 			'PurchaseOrder' => [],
-			'ApprovalTask' => [],
 		];
 
 		$saved = [];
-		$notifications = [];
 		$stub = $this->buildObjectServiceStub($data, $saved);
 
-		$service = $this->buildService($stub, $saved, 'inkoper-1', ['adm-1'], $notifications);
+		$service = $this->buildService($stub, $saved, 'inkoper-1', ['adm-1']);
 
 		$po = $service->createPurchaseOrder(
 			administrationId: 'adm-1',
@@ -93,151 +76,32 @@ final class PurchaseOrderIntegrationTest extends TestCase {
 			]
 		);
 
-		self::assertSame(18500.00, $po['totalAmount']);
+		self::assertSame(1850000, $po['totalExclVat']);
 		self::assertSame('draft', $po['statusCode']);
-		self::assertCount(2, $po['approvalChain']);
-		self::assertCount(2, $notifications);
+		self::assertArrayNotHasKey('approvalChain', $po);
 
-		// Stub records every save back into its in-memory store, so the PO is
-		// already findable for the next step.
 		$poId = (string)($po['id'] ?? '');
 		self::assertNotEmpty($poId);
 
-		// Step 1: still pending → send refused.
 		try {
-			$service->blockSendUntilApproved(administrationId: 'adm-1', purchaseOrderId: $poId);
-			self::fail('Expected blockSendUntilApproved to refuse incomplete chain');
+			$service->markSent(administrationId: 'adm-1', purchaseOrderId: $poId);
+			self::fail('Expected markSent to refuse a draft order');
 		} catch (\RuntimeException $e) {
-			self::assertSame('Purchase order cannot be sent: approval chain incomplete', $e->getMessage());
+			self::assertSame('Purchase order cannot be sent: it is not approved', $e->getMessage());
 		}
 
-		// Step 2: approver-by-approver signs. Mutating the in-memory row reflects
-		// through the stub on subsequent reads.
 		$stub->mutate(
 			'PurchaseOrder',
 			$poId,
 			static function (array &$row) {
-				$row['approvalChain'][0]['decision'] = 'approved';
-				$row['approvalChain'][0]['decidedAt'] = '2026-06-01T12:00:00+00:00';
-				$row['approvalChain'][0]['userId'] = 'teamleider-1';
+				$row['statusCode'] = 'approved';
 			}
 		);
 
-		// Only one of two signed — still refused.
-		try {
-			$service->blockSendUntilApproved(administrationId: 'adm-1', purchaseOrderId: $poId);
-			self::fail('Expected blockSendUntilApproved to still refuse');
-		} catch (\RuntimeException $e) {
-			self::assertSame('Purchase order cannot be sent: approval chain incomplete', $e->getMessage());
-		}
-
-		// Second approver signs.
-		$stub->mutate(
-			'PurchaseOrder',
-			$poId,
-			static function (array &$row) {
-				$row['approvalChain'][1]['decision'] = 'approved';
-				$row['approvalChain'][1]['decidedAt'] = '2026-06-02T09:00:00+00:00';
-				$row['approvalChain'][1]['userId'] = 'facility-1';
-			}
-		);
-
-		$updated = $service->blockSendUntilApproved(administrationId: 'adm-1', purchaseOrderId: $poId);
+		$updated = $service->markSent(administrationId: 'adm-1', purchaseOrderId: $poId);
 		self::assertSame('sent', $updated['statusCode']);
 		self::assertNotEmpty($updated['sentAt']);
-
 	}//end testCreateThenSendEndToEnd()
-
-	/**
-	 * The approval service signs the chain the purchase order service created,
-	 * and the send check reads what the approval service wrote (#1716).
-	 *
-	 * The chain used to be created with `status` / `signedAt` and signed on
-	 * `decision` / `decidedAt`, so the first decision threw "Approval chain is
-	 * fully signed" and the send check waited for fields nothing wrote. The
-	 * end-to-end test above sets the chain fields by hand, which is how it
-	 * stayed green. This one drives both real services over the same store.
-	 *
-	 * @return void
-	 */
-	public function testTheApprovalDecisionsSignTheChainTheServiceCreatedAndUnblockTheSend(): void {
-		$data = [
-			'AdministrationMembership' => [
-				['administrationId' => 'adm-1', 'role' => 'teamleider', 'userId' => 'teamleider-1'],
-				['administrationId' => 'adm-1', 'role' => 'facility_manager', 'userId' => 'facility-1'],
-			],
-			'PurchaseOrder' => [],
-			'ApprovalTask' => [],
-		];
-
-		$saved = [];
-		$notifications = [];
-		$stub = $this->buildObjectServiceStub($data, $saved);
-		$service = $this->buildService($stub, $saved, 'inkoper-1', ['adm-1'], $notifications);
-
-		$po = $service->createPurchaseOrder(
-			administrationId: 'adm-1',
-			payload: [
-				'supplierId' => 'sup-coffee',
-				'costCenter' => 'FAC-2026',
-				'currency' => 'EUR',
-				'lines' => [
-					['productCode' => 'COFFEE-PRO-1', 'quantity' => 1, 'unitPrice' => 18500.00, 'vatRate' => 0.21, 'glAccount' => '4400'],
-				],
-			]
-		);
-		$poId = (string)$po['id'];
-		self::assertCount(2, $po['approvalChain']);
-
-		$approvals = $this->buildApprovalService($stub, 'teamleider-1');
-		$afterFirst = $approvals->recordApprovalDecision(administrationId: 'adm-1', purchaseOrderId: $poId, decision: 'approved');
-		self::assertSame('draft', $afterFirst['statusCode']);
-		self::assertSame('approved', $afterFirst['approvalChain'][0]['decision']);
-		self::assertSame('teamleider-1', $afterFirst['approvalChain'][0]['userId']);
-
-		try {
-			$service->blockSendUntilApproved(administrationId: 'adm-1', purchaseOrderId: $poId);
-			self::fail('One of two approvers signed: the send must still be refused.');
-		} catch (\RuntimeException $e) {
-			self::assertSame('Purchase order cannot be sent: approval chain incomplete', $e->getMessage());
-		}
-
-		$afterSecond = $this->buildApprovalService($stub, 'facility-1')
-			->recordApprovalDecision(administrationId: 'adm-1', purchaseOrderId: $poId, decision: 'approved');
-		self::assertSame('approved', $afterSecond['statusCode']);
-
-		$sent = $service->blockSendUntilApproved(administrationId: 'adm-1', purchaseOrderId: $poId);
-		self::assertSame('sent', $sent['statusCode']);
-	}//end testTheApprovalDecisionsSignTheChainTheServiceCreatedAndUnblockTheSend()
-
-	/**
-	 * The real approval service over the shared store, acting as $userId.
-	 *
-	 * @param object $stub The in-memory store.
-	 * @param string $userId The signed-in approver.
-	 *
-	 * @return PurchaseOrderApprovalService
-	 */
-	private function buildApprovalService(object $stub, string $userId): PurchaseOrderApprovalService {
-		$appConfig = $this->createMock(IAppConfig::class);
-		$appConfig->method('getValueString')->willReturn('shillinq');
-
-		$administrationContext = $this->createMock(AdministrationContextService::class);
-		$administrationContext->method('canAccess')->willReturn(true);
-
-		$user = $this->createMock(IUser::class);
-		$user->method('getUID')->willReturn($userId);
-		$session = $this->createMock(IUserSession::class);
-		$session->method('getUser')->willReturn($user);
-
-		return new PurchaseOrderApprovalService(
-			appConfig: $appConfig,
-			administrationContext: $administrationContext,
-			userSession: $session,
-			logger: $this->createMock(LoggerInterface::class),
-			objectService: new DuckObjectServiceAdapter($stub),
-		);
-	}//end buildApprovalService()
 
 	/**
 	 * The standalone PurchaseOrderForm/PurchaseOrderDetail pages were retired into
@@ -438,7 +302,6 @@ final class PurchaseOrderIntegrationTest extends TestCase {
 	 * @param array<int,array<string,mixed>> $saved Captured saves (by reference).
 	 * @param string $userId Authenticated uid.
 	 * @param array<int,string> $accessibleAdministrations Tenants the caller may access.
-	 * @param array<int,array{user:string,subject:string,object:string}> $notifications Captured notifications (by reference).
 	 *
 	 * @return PurchaseOrderService
 	 */
@@ -447,7 +310,6 @@ final class PurchaseOrderIntegrationTest extends TestCase {
 		array &$saved,
 		string $userId,
 		array $accessibleAdministrations,
-		array &$notifications,
 	): PurchaseOrderService {
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturn($stub);
@@ -465,54 +327,9 @@ final class PurchaseOrderIntegrationTest extends TestCase {
 			}
 		);
 
-		$manager = $this->createMock(INotificationManager::class);
-		$manager->method('createNotification')->willReturnCallback(
-			function () use (&$notifications): INotification {
-				$state = (object)['user' => '', 'subject' => '', 'object' => ''];
-
-				$notification = $this->createMock(INotification::class);
-				$notification->method('setApp')->willReturnSelf();
-				$notification->method('setDateTime')->willReturnSelf();
-				$notification->method('setUser')->willReturnCallback(
-					function (string $user) use ($notification, $state): INotification {
-						$state->user = $user;
-						return $notification;
-					}
-				);
-				$notification->method('setObject')->willReturnCallback(
-					function (string $type, string $id) use ($notification, $state): INotification {
-						$state->object = $type . ':' . $id;
-						return $notification;
-					}
-				);
-				$notification->method('setSubject')->willReturnCallback(
-					function (string $subject) use ($notification, $state): INotification {
-						$state->subject = $subject;
-						return $notification;
-					}
-				);
-
-				$this->notificationState[spl_object_id($notification)] = $state;
-				return $notification;
-			}
-		);
-		$manager->method('notify')->willReturnCallback(
-			function (INotification $notification) use (&$notifications): void {
-				$state = ($this->notificationState[spl_object_id($notification)] ?? null);
-				if ($state !== null) {
-					$notifications[] = [
-						'user' => $state->user,
-						'subject' => $state->subject,
-						'object' => $state->object,
-					];
-				}
-			}
-		);
-
 		return new PurchaseOrderService(
 			appConfig: $appConfig,
 			administrationContext: $administrationContext,
-			notificationManager: $manager,
 			logger: $logger,
 			objectService: new DuckObjectServiceAdapter($stub),
 		);

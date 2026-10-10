@@ -29,6 +29,31 @@ SHALL be valid per tuple on a given day.
 - THEN validation refuses it and names the overlapping schedule
 - @e2e exclude validity-window invariant; covered by PHPUnit on the register import
 
+### Requirement: The fee schedule page shows the revenue account's task field (REQ-SOPR-011)
+
+Decided by Ruben on 9 Oct (Q-shillinq-2). `Account` SHALL carry an
+optional `taskField`: the BBV task field (taakveld, for example `8.3`)
+the account books to. When a fee schedule is saved, shillinq SHALL copy
+the task field of its `revenueAccount` into the schedule's read-only
+`revenueTaskField`, and the fee schedule page SHALL show it as a column.
+An account without a task field, or a schedule without a revenue account,
+leaves the column empty; nothing is guessed. The IV3 generator SHALL read
+the same `Account.taskField` when a ledger line carries none.
+
+#### Scenario: A schedule shows where its leges land
+
+- GIVEN account 8300 with task field 8.3
+- WHEN a fee schedule with revenue account 8300 is saved
+- THEN the schedule's task field reads 8.3 on the fee schedule page
+- @e2e exclude derived on save by a listener; covered by PHPUnit (FeeScheduleValidationListenerTest)
+
+#### Scenario: An account without a task field leaves the column empty
+
+- GIVEN account 8300 without a task field
+- WHEN a fee schedule with revenue account 8300 is saved
+- THEN the schedule's task field is empty
+- @e2e exclude derived on save by a listener; covered by PHPUnit (FeeScheduleValidationListenerTest)
+
 ### Requirement: The journey raises the request and renders the checkout (REQ-SOPR-007)
 
 A journey step of kind `payment` with provider `shillinq` SHALL, after the

@@ -3,11 +3,11 @@
 
 <!--
  Purchase Order detail view (slice 02 of bookkeeping-purchase-order-3way).
- Renders the PO header, line items, the materialised approval chain with
- per-approver status + signature timestamps, and the (initially empty) lists
+ Renders the PO header, line items, the approval panel on OpenRegister's
+ approval steps (purchasing-approval-delegation), and the (initially empty) lists
  of related GoodsReceiptNotes + ThreeWayMatches that future slices (04, 06)
- will populate. The "Send to supplier" button stays disabled while any chain
- entry is still pending — the server enforces this guard too (ADR-005).
+ will populate. The send buttons stay disabled until the order is approved;
+ the server enforces this guard too (ADR-005).
 
  Slice 03 (bookkeeping-purchase-order-3way-03-peppol-transmission) replaces
  the generic "Send to supplier" action with a paired "Send via Peppol /
@@ -90,39 +90,9 @@
 				</table>
 			</section>
 
-			<section class="po-detail__chain" data-testid="po-detail-chain">
-				<h3>{{ t('shillinq', 'Approval chain') }}</h3>
-				<ol class="po-detail__chain-list">
-					<li
-						v-for="entry in purchaseOrder.approvalChain || []"
-						:key="entry.role">
-						<div class="po-detail__chain-role">
-							<strong>#{{ entry.order }}</strong>
-							{{ roleLabel(entry.role) }}
-						</div>
-						<div class="po-detail__chain-status">
-							<span
-								:class="`po-detail__pill po-detail__pill--${entry.decision}`">
-								{{ entry.decision }}
-							</span>
-							<span
-								v-if="entry.decidedAt"
-								class="po-detail__chain-timestamp">
-								{{ t('shillinq', 'Signed') }}:
-								{{ formatTimestamp(entry.decidedAt) }}
-								<template v-if="entry.userId">
-									({{ entry.userId }})
-								</template>
-							</span>
-						</div>
-					</li>
-				</ol>
-				<p
-					v-if="!(purchaseOrder.approvalChain || []).length"
-					class="po-detail__chain-empty">
-					{{ t('shillinq', 'No approval chain required.') }}
-				</p>
-			</section>
+			<PurchaseOrderApprovalPanel
+				:purchaseOrder="purchaseOrder"
+				@decided="loadPurchaseOrder" />
 
 			<section class="po-detail__related">
 				<h3>{{ t('shillinq', 'Related records') }}</h3>
@@ -220,7 +190,7 @@
 					{{
 						t(
 							'shillinq',
-							'Sending is blocked until every approver signs.',
+							'Sending is blocked until the order is approved.',
 						)
 					}}
 				</p>
@@ -247,6 +217,7 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton } from '@nextcloud/vue'
+import PurchaseOrderApprovalPanel from './PurchaseOrderApprovalPanel.vue'
 
 const REGISTER_SLUG = 'shillinq'
 
@@ -254,6 +225,7 @@ export default {
 	name: 'PurchaseOrderDetail',
 	components: {
 		NcButton,
+		PurchaseOrderApprovalPanel,
 	},
 
 	props: {
@@ -289,19 +261,9 @@ export default {
 		 * @spec openspec/changes/purchasing-approval-delegation/tasks.md
 		 */
 		canSend() {
-			if (!this.purchaseOrder) {
-				return false
-			}
-			if (this.purchaseOrder.statusCode === 'sent') {
-				return false
-			}
-			const chain = this.purchaseOrder.approvalChain || []
-			if (chain.length === 0) {
-				return false
-			}
-			return chain.every(
-				(entry) => entry.decision === 'approved' && !!entry.decidedAt,
-			)
+			// OpenRegister's approval chain is the only way into `approved`
+			// (REQ-PAD-001); the old in-object chain is history.
+			return this.purchaseOrder?.statusCode === 'approved'
 		},
 	},
 
@@ -415,15 +377,6 @@ export default {
 				return iso
 			}
 		},
-
-		roleLabel(role) {
-			const labels = {
-				teamleider: this.t('shillinq', 'Team lead'),
-				facility_manager: this.t('shillinq', 'Facility Manager'),
-				procurement_manager: this.t('shillinq', 'Procurement Manager'),
-			}
-			return labels[role] || role
-		},
 	},
 }
 </script>
@@ -469,23 +422,6 @@ export default {
 	padding: 4px 8px;
 	border-bottom: 1px solid var(--color-border, #ddd);
 	text-align: left;
-}
-
-.po-detail__chain-list {
-	list-style: none;
-	padding: 0;
-}
-
-.po-detail__chain-list li {
-	display: flex;
-	gap: 16px;
-	padding: 8px 0;
-	border-bottom: 1px solid var(--color-border, #ddd);
-}
-
-.po-detail__chain-timestamp {
-	margin-left: 8px;
-	color: var(--color-text-maxcontrast, #666);
 }
 
 .po-detail__error {

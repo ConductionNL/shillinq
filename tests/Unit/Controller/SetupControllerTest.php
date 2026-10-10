@@ -34,6 +34,7 @@ use OCA\Shillinq\Service\DemoDataService;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Http;
 use OCP\IAppConfig;
+use OCP\IGroupManager;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -76,6 +77,13 @@ final class SetupControllerTest extends TestCase {
 	 */
 	private DemoDataService&MockObject $demoDataService;
 
+	/**
+	 * Mock group manager.
+	 *
+	 * @var IGroupManager&MockObject
+	 */
+	private IGroupManager&MockObject $groupManager;
+
 	private SetupController $controller;
 
 	/**
@@ -90,6 +98,7 @@ final class SetupControllerTest extends TestCase {
 		$this->appConfig = $this->createMock(IAppConfig::class);
 		$this->settingsService = $this->createMock(SettingsService::class);
 		$this->demoDataService = $this->createMock(DemoDataService::class);
+		$this->groupManager = $this->createMock(IGroupManager::class);
 
 		$this->controller = new SetupController(
 			appName: 'shillinq',
@@ -97,6 +106,7 @@ final class SetupControllerTest extends TestCase {
 			appConfig: $this->appConfig,
 			demoDataService: $this->demoDataService,
 			settingsService: $this->settingsService,
+			groupManager: $this->groupManager,
 		);
 
 	}//end setUp()
@@ -538,6 +548,17 @@ final class SetupControllerTest extends TestCase {
 		$this->settingsService->expects($this->once())->method('seedBbvTaakvelden');
 		$this->settingsService->expects($this->once())->method('seedSelectielijst');
 
+		// The three purchase order approver groups the declared chain routes
+		// its steps to (purchasing-approval-delegation task 1.1).
+		$created = [];
+		$this->groupManager->method('groupExists')->willReturn(false);
+		$this->groupManager->method('createGroup')->willReturnCallback(
+			function (string $gid) use (&$created) {
+				$created[] = $gid;
+				return null;
+			}
+		);
+
 		$this->appConfig->expects($this->once())
 			->method('setValueString')
 			->with('shillinq', 'setup_seed_done', '1');
@@ -546,6 +567,7 @@ final class SetupControllerTest extends TestCase {
 
 		self::assertTrue($response->getData()['success']);
 		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame(['teamleider', 'facility_manager', 'procurement_manager'], $created);
 
 	}//end testRunActionSeedRunsWhenRequiredStepsAreSet()
 
@@ -581,6 +603,7 @@ final class SetupControllerTest extends TestCase {
 			appConfig: $this->appConfig,
 			demoDataService: $this->demoDataService,
 			settingsService: $this->settingsService,
+			groupManager: $this->groupManager,
 		);
 
 	}//end controllerPosting()

@@ -11,7 +11,7 @@
       "FeeSchedule": {
         "slug": "FeeSchedule",
         "icon": "CashRegister",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "title": "Fee Schedule",
         "description": "What a case type costs. One row per (targetApp, register, schema, typeProperty, typeValue, intakeChannel) and validity window, so a fee change is a new row with a new validFrom rather than an edit that loses what was charged last year. At most one schedule is valid per tuple on a given day: FeeScheduleService refuses an overlap and names the schedule it overlaps with, because two valid fees for one case type is a question nothing can answer. V0.2.0 (fees-payments-and-the-contract-register) makes the legal basis a structured citation and required, and moves the amount into `amounts`, one entry per intake channel with at most one default.",
         "x-openregister-audit-trail": {
@@ -141,6 +141,13 @@
             "example": "8300",
             "title": "Revenue Account",
             "description": "The general-ledger account the receipt books against, overriding the requestType mapping for this type when set."
+          },
+          "revenueTaskField": {
+            "type": "string",
+            "nullable": true,
+            "title": "Revenue Task Field",
+            "description": "The BBV task field (taakveld) of the revenue account, copied from the account when the schedule is saved. Read-only: change it on the account.",
+            "example": "8.3"
           },
           "payAtIntake": {
             "type": "string",

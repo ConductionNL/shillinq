@@ -15,7 +15,7 @@
 			{ "id": "organisation", "type": "choice", "title": "Organisation type", "configKey": "legal_region", "required": true, "dependsOn": "legal_country", "optionsByParent": { "nl": [ { "value": "municipality", "label": "Municipality" }, { "value": "provincie", "label": "Province" }, { "value": "waterschap", "label": "Water authority" }, { "value": "zzp", "label": "ZZP" }, { "value": "mkb", "label": "MKB" } ], "be": [ { "value": "vzw", "label": "VZW" }, { "value": "bv", "label": "Besloten Vennootschap (BV)" }, { "value": "eenmanszaak", "label": "Eenmanszaak" } ], "de": [ { "value": "gmbh", "label": "GmbH" }, { "value": "verein", "label": "Verein" }, { "value": "einzelunternehmen", "label": "Einzelunternehmen" } ] } },
 			{ "id": "rgs-template", "type": "choice", "title": "Chart of accounts (RGS)", "body": "A chart of accounts (RGS, Referentie GrootboekSchema) is the standardised layout of ledger accounts your balance sheet and profit-and-loss statement are based on. Based on your organisation type, a matching template is already suggested. You can adjust it.", "configKey": "rgs_template", "required": true, "suggestFrom": "legal_region", "suggestMap": { "municipality": "bbv", "provincie": "bbv", "waterschap": "bbv", "zzp": "zzp", "mkb": "mkb", "vzw": "mkb", "bv": "mkb", "eenmanszaak": "zzp", "gmbh": "mkb", "verein": "mkb", "einzelunternehmen": "zzp" }, "options": [ { "value": "mkb", "label": "MKB" }, { "value": "zzp", "label": "ZZP" }, { "value": "bbv", "label": "BBV (government)" } ] },
 			{ "id": "administration", "type": "run-action", "title": "Create administration", "body": "Create the default administration. This registers your organisation as an administration in OpenRegister, so bookings, invoices and reports can be linked to it. Click \"Run\" to create the administration.", "action": "init-administration", "required": true },
-			{ "id": "seed", "type": "run-action", "title": "Load chart of accounts and reference data", "body": "Load the chosen chart of accounts (ledger accounts), the VAT rates, and, for government bodies, the BBV task fields into the administration. This may take a while. Click \"Run\" to start.", "action": "seed", "required": false },
+			{ "id": "seed", "type": "run-action", "title": "Load chart of accounts and reference data", "body": "Load the chosen chart of accounts (ledger accounts), the VAT rates, and, for government bodies, the BBV task fields into the administration, and create the three purchase order approval groups (teamleider, facility_manager, procurement_manager). This may take a while. Click \"Run\" to start.", "action": "seed", "required": false },
 			{ "id": "done", "type": "summary", "title": "Done", "body": "Review your choices below and complete the installation.", "healthCheck": true }
 		]
 	},
@@ -13922,6 +13922,18 @@
 				"indexRoute": "PurchaseOrders",
 				"sidebarProps": {
 					"tabs": [
+						{
+							"id": "approval",
+							"label": "Approval",
+							"icon": "CheckDecagramOutline",
+							"order": 10,
+							"widgets": [
+								{
+									"type": "PurchaseOrderApprovalPanel",
+									"props": {}
+								}
+							]
+						},
 						{
 							"id": "audit",
 							"label": "Audit Trail",

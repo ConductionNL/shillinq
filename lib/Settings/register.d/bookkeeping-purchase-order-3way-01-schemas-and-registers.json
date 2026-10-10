@@ -11,9 +11,9 @@
       "PurchaseOrder": {
         "slug": "PurchaseOrder",
         "icon": "ClipboardListOutline",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "Purchase Order",
-        "description": "Purchase order issued to a supplier. Lifecycle draft → approved → sent → partial_received → fully_received → invoiced → closed, with cancelled terminal state. Approval chain is operator-driven; Peppol metadata is populated by the transmission engine in member 03. cost_center + project_code propagate to lines, receipts, invoices and matches for dimensional reporting.",
+        "description": "Purchase order issued to a supplier. Lifecycle draft → approved → sent → partial_received → fully_received → invoiced → closed, with cancelled terminal state. Approval runs on the declared OpenRegister approval chain (x-openregister-approval-chains); Peppol metadata is populated by the transmission engine in member 03. cost_center + project_code propagate to lines, receipts, invoices and matches for dimensional reporting.",
         "x-schema-org": "schema:Order",
         "x-spec": "openspec/changes/bookkeeping-purchase-order-3way-01-schemas-and-registers/specs/bookkeeping-purchase-order-3way-schemas/spec.md",
         "type": "object",
@@ -127,7 +127,7 @@
           },
           "approvalChain": {
             "type": "array",
-            "description": "Ordered list of approvers traversed for this order. Operator-driven; downstream members 02 wire the routing.",
+            "description": "History only: the approval chain this order carried before purchase order approval moved to OpenRegister (purchasing-approval-delegation). Nothing writes it any more; the steps, deciders and on-behalf-of records now live on OpenRegister's approval tasks for this order.",
             "nullable": true,
             "items": {
               "type": "object",
@@ -146,8 +146,7 @@
                   "enum": [
                     "pending",
                     "approved",
-                    "rejected",
-                    "delegated"
+                    "rejected"
                   ],
                   "description": "Decision recorded by the approver.",
                   "title": "Decision"
@@ -303,6 +302,33 @@
               "to": "cancelled",
               "label": "Annuleren"
             }
+          }
+        },
+        "x-openregister-approval-chains": {
+          "purchase-order-approval": {
+            "description": "Approval chain that gates the PurchaseOrder draft -> approved `approve` transition (purchasing-approval-delegation REQ-PAD-001). Cumulative tiers on totalExclVat (euro cents): a teamleider for every order, plus a facility_manager from EUR 10,000 and a procurement_manager from EUR 50,000, decided in that order. Separation of duties: the user who submitted the order cannot decide any step, also not as a delegate. Each step is an OpenRegister task for the role's Nextcloud group; an approver can hand it to a colleague with a mandate through the task delegate verb. On completion the approve transition advances by itself. Declarative only: shillinq keeps no approval engine.",
+            "transition": "approve",
+            "amountField": "totalExclVat",
+            "tiers": "cumulative",
+            "separationOfDuties": true,
+            "approvers": [
+              {
+                "role": "teamleider",
+                "min": 1,
+                "minAmount": 1
+              },
+              {
+                "role": "facility_manager",
+                "min": 1,
+                "minAmount": 1000000
+              },
+              {
+                "role": "procurement_manager",
+                "min": 1,
+                "minAmount": 5000000
+              }
+            ],
+            "onApprove": "advanceTransition"
           }
         }
       },

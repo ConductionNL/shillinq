@@ -54,7 +54,7 @@ use Psr\Log\LoggerInterface;
  *
  * Each `emit*()` method maps to one row of the REQ-RAP-006 event-types
  * table. Callers are services that effect the lifecycle transition —
- * e.g. `PurchaseOrderApprovalService::recordDecision()` calls
+ * e.g. a service that records an approval decision calls
  * `emitApprovalApproved()` or `emitApprovalRejected()`.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
