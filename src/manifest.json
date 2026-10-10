@@ -13923,6 +13923,18 @@
 				"sidebarProps": {
 					"tabs": [
 						{
+							"id": "approval",
+							"label": "Approval",
+							"icon": "CheckDecagramOutline",
+							"order": 10,
+							"widgets": [
+								{
+									"type": "PurchaseOrderApprovalPanel",
+									"props": {}
+								}
+							]
+						},
+						{
 							"id": "audit",
 							"label": "Audit Trail",
 							"icon": "History",

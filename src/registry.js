@@ -169,6 +169,7 @@ import LedgerLinesGuidancePanel from './components/ledger/LedgerLinesGuidancePan
 // declarative `detail` page type — so the page is registered as a
 // kind:"page" custom component per ADR-024 / ADR-036.
 import PeriodCloseDetail from './components/period-close/PeriodCloseDetail.vue'
+import PurchaseOrderApprovalPanel from './components/purchase-order/PurchaseOrderApprovalPanel.vue'
 import PurchaseOrderDetail from './components/purchase-order/PurchaseOrderDetail.vue'
 // bookkeeping-purchase-order-3way slice 02 (REQ-PO3W-001): the create form
 // previews the server-determined approval chain as the line total changes
@@ -433,6 +434,13 @@ export default {
 
 	PurchaseOrderForm: { kind: 'page', component: PurchaseOrderForm },
 	PurchaseOrderDetail: { kind: 'page', component: PurchaseOrderDetail },
+	// purchasing-approval-delegation REQ-PAD-001/002: the Approval tab on the
+	// PurchaseOrderDetail sidebar, on OpenRegister's approval tasks.
+	PurchaseOrderApprovalPanel: {
+		kind: 'widget',
+		component: PurchaseOrderApprovalPanel,
+		_note: 'Reads and decides OpenRegister approval tasks (claim, complete, delegate) for the order; no declarative widget can call task verbs.',
+	},
 
 	GoodsReceiptNoteForm: { kind: 'page', component: GoodsReceiptNoteForm },
 	GoodsReceiptNoteDetail: { kind: 'page', component: GoodsReceiptNoteDetail },
