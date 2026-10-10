@@ -36,6 +36,7 @@ namespace OCA\Shillinq\Controller;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\PurchaseOrderService;
+use OCA\Shillinq\Service\Purchasing\PurchaseOrderApprovalTiers;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -168,17 +169,21 @@ class PurchaseOrderController extends Controller {
 	 *
 	 * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
 	 *
+	 * @spec openspec/changes/purchasing-approval-delegation/tasks.md#task-1.3
+	 *
 	 * @no-admin-idor-exempt Stateless policy calculator — reads no storage and takes no
 	 *     object reference. The only input is a numeric amount; it goes to
-	 *     PurchaseOrderService::determineApprovalChain(), whose body compares the amount
-	 *     in cents against two class constants and returns role NAMES
-	 *     (teamleider / facility_manager / procurement_manager) with an order index. No
-	 *     ObjectService call, no mapper, no PurchaseOrder is loaded, and no administration
-	 *     appears in the call at all — the neighbouring create() and send() methods, which
-	 *     DO reach storage, carry the canAccess() 404-masking guard. The response reveals
-	 *     only the app-global approval thresholds, which are the same for every tenant and
-	 *     are documented in the spec; substituting any amount reaches no one else's data.
-	 *     Verify by reading lib/Service/PurchaseOrderService.php::determineApprovalChain().
+	 *     PurchaseOrderApprovalTiers::rolesFor(), which compares the amount in cents
+	 *     against the tiers declared on the shipped PurchaseOrder schema and returns role
+	 *     NAMES (teamleider / facility_manager / procurement_manager) with an order index.
+	 *     No ObjectService call, no mapper, no PurchaseOrder is loaded, and no
+	 *     administration appears in the call at all — the neighbouring create() and send()
+	 *     methods, which DO reach storage, carry the canAccess() 404-masking guard. The
+	 *     response reveals only the app-global approval thresholds, the same for every
+	 *     tenant; substituting any amount reaches no one else's data.
+	 *     Verify by reading lib/Service/Purchasing/PurchaseOrderApprovalTiers.php.
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) PurchaseOrderApprovalTiers::fromDeclaration() reads the shipped declaration.
 	 */
 	#[NoAdminRequired]
 	public function previewApprovalChain(): JSONResponse {
@@ -191,7 +196,7 @@ class PurchaseOrderController extends Controller {
 			$amount = 0.0;
 		}
 
-		$chain = $this->purchaseOrderService->determineApprovalChain(amount: $amount);
+		$chain = PurchaseOrderApprovalTiers::fromDeclaration()->rolesFor(cents: (int)round($amount * 100));
 
 		return new JSONResponse(['chain' => $chain], Http::STATUS_OK);
 	}//end previewApprovalChain()
@@ -201,16 +206,18 @@ class PurchaseOrderController extends Controller {
 	 *
 	 * POST /api/purchase-orders/{id}/send
 	 * Body: administrationId.
-	 * Server refuses the transition until every required approver has signed
-	 * (REQ-PO3W-001 send-block). The Vue layer never grants the transition.
+	 * Server refuses the transition until OpenRegister's approval chain has
+	 * approved the order (statusCode `approved`, REQ-PAD-001). The Vue layer
+	 * never grants the transition.
 	 *
 	 * @param string $id The PO id (path parameter).
 	 *
 	 * @return JSONResponse 200 with the updated PO; 400 on validation; 401
 	 *                      anonymous; 404 on cross-tenant / missing PO; 409 when
-	 *                      approval-chain incomplete; 500 without stack trace.
+	 *                      the order is not approved; 500 without stack trace.
 	 *
 	 * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+	 * @spec openspec/changes/purchasing-approval-delegation/tasks.md#task-1.3
 	 */
 	#[NoAdminRequired]
 	public function send(string $id): JSONResponse {
@@ -232,12 +239,12 @@ class PurchaseOrderController extends Controller {
 		}
 
 		try {
-			$po = $this->purchaseOrderService->blockSendUntilApproved(
+			$po = $this->purchaseOrderService->markSent(
 				administrationId: $administrationId,
 				purchaseOrderId: $id
 			);
 		} catch (\RuntimeException $e) {
-			// Distinguish missing PO (404) from incomplete chain (409).
+			// Distinguish missing PO (404) from an order that is not approved (409).
 			$message = $e->getMessage();
 			if (str_contains($message, 'not found') === true) {
 				return new JSONResponse(['error' => $message], Http::STATUS_NOT_FOUND);
@@ -271,7 +278,7 @@ class PurchaseOrderController extends Controller {
 	 *
 	 * @return JSONResponse 200 with the updated PO; 400 on validation; 401
 	 *                      anonymous; 404 on cross-tenant / missing PO; 409 when
-	 *                      approval-chain incomplete; 500 without stack trace.
+	 *                      the order is not approved; 500 without stack trace.
 	 *
 	 * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
 	 */
@@ -330,7 +337,7 @@ class PurchaseOrderController extends Controller {
 	 *
 	 * @return JSONResponse 200 with the updated PO; 400 on validation; 401
 	 *                      anonymous; 404 on cross-tenant / missing PO; 409 when
-	 *                      approval-chain incomplete; 500 without stack trace.
+	 *                      the order is not approved; 500 without stack trace.
 	 *
 	 * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
 	 */

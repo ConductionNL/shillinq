@@ -360,6 +360,11 @@ Vrij en open source onder de EUPL-1.2-licentie.
                  After InitializeSettings, which seeds the tariffs. Logs the lines
                  it cannot resolve. Idempotent, fail-soft. -->
             <step>OCA\Shillinq\Repair\StampVatReturnBoxes</step>
+            <!-- purchasing-approval-delegation task 1.3: orders parked in the
+                 undeclared lifecycleState pending_approval go back to statusCode
+                 draft, so their next submit opens OpenRegister's approval steps.
+                 Idempotent, fail-soft. -->
+            <step>OCA\Shillinq\Repair\MovePendingApprovalOrdersToDraft</step>
         </post-migration>
 
         <!-- FRESH INSTALL. Nextcloud does NOT run `post-migration` on a first

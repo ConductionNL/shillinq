@@ -27,8 +27,6 @@ use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\PurchaseOrderService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\IAppConfig;
-use OCP\Notification\IManager as INotificationManager;
-use OCP\Notification\INotification;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -75,23 +73,9 @@ final class PurchaseOrderGovernanceGuardTest extends TestCase {
 			static fn (string $administrationId): bool => $administrationId === 'adm-1'
 		);
 
-		$notificationManager = $this->createMock(INotificationManager::class);
-		$notificationManager->method('createNotification')->willReturnCallback(
-			function (): INotification {
-				$notification = $this->createMock(INotification::class);
-				$notification->method('setApp')->willReturnSelf();
-				$notification->method('setUser')->willReturnSelf();
-				$notification->method('setDateTime')->willReturnSelf();
-				$notification->method('setObject')->willReturnSelf();
-				$notification->method('setSubject')->willReturnSelf();
-				return $notification;
-			}
-		);
-
 		return new PurchaseOrderService(
 			appConfig: $appConfig,
 			administrationContext: $administrationContext,
-			notificationManager: $notificationManager,
 			logger: $this->createMock(LoggerInterface::class),
 			objectService: $stub,
 		);

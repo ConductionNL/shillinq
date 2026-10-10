@@ -9,8 +9,7 @@
  * timestamp:
  *
  *  1. createPurchaseOrder (slice 02) — materialises the approval chain
- *  2. PurchaseOrderApprovalService::recordApprovalDecision (slice 11) —
- *     stamps approver identity + decidedAt on each chain entry
+ *  2. an order approved by "bob" (in-object chain history)
  *  3. simulate Peppol send (peppolSentAt)
  *  4. simulate GRN receipt + acceptance
  *  5. simulate SupplierInvoice receipt
@@ -48,7 +47,6 @@ use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\AuditExportService;
 use OCA\Shillinq\Service\ExceptionResolutionService;
 use OCA\Shillinq\Service\PurchaseOrder\CreditNoteRequestAdapterInterface;
-use OCA\Shillinq\Service\PurchaseOrderApprovalService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use OCP\IUser;
@@ -86,9 +84,11 @@ final class AuditTrailIntegrationTest extends TestCase {
 					'currency' => 'EUR',
 					'costCenter' => 'FAC-2026',
 					'projectCode' => 'PRJ-A',
-					'statusCode' => 'draft',
+					// Approved before approval moved to OpenRegister: the
+					// in-object chain is history the export still reads.
+					'statusCode' => 'approved',
 					'approvalChain' => [
-						['userId' => '', 'decision' => 'pending'],
+						['userId' => 'bob', 'decision' => 'approved', 'decidedAt' => '2026-02-02T09:00:00+00:00', 'comment' => 'within budget'],
 					],
 				],
 			],
@@ -138,22 +138,7 @@ final class AuditTrailIntegrationTest extends TestCase {
 		$saved = [];
 		$stub = $this->objectServiceStub(data: $data, saved: $saved);
 
-		// ---- Step 1: approval decision (slice 11) by user "bob" ----
-		$approvalService = $this->buildApprovalService(
-			stub: $stub,
-			accessibleAdministrations: ['admin-1'],
-			userId: 'bob'
-		);
-
-		$purchaseOrder = $approvalService->recordApprovalDecision(
-			administrationId: 'admin-1',
-			purchaseOrderId: 'po-100',
-			decision: PurchaseOrderApprovalService::DECISION_APPROVED,
-			comment: 'within budget'
-		);
-		self::assertSame('approved', $purchaseOrder['statusCode']);
-		self::assertSame('bob', $purchaseOrder['approvalChain'][0]['userId']);
-		self::assertNotEmpty($purchaseOrder['approvalChain'][0]['decidedAt']);
+		$purchaseOrder = $stub->setSchema('PurchaseOrder')->findAll(['filters' => ['id' => 'po-100']])[0];
 
 		// ---- Step 2: simulate Peppol send + PO statusCode=sent ----
 		$purchaseOrder['statusCode'] = 'sent';
@@ -251,50 +236,6 @@ final class AuditTrailIntegrationTest extends TestCase {
 		@unlink($envelope['zipPath']);
 
 	}//end testFullLifecycleAuditTrailExport()
-
-	/**
-	 * Build PurchaseOrderApprovalService sharing the same OR stub.
-	 *
-	 * @param object $stub OR stub.
-	 * @param array<int,string> $accessibleAdministrations Tenants canAccess returns true for.
-	 * @param string $userId UID returned by the session.
-	 *
-	 * @return PurchaseOrderApprovalService
-	 */
-	private function buildApprovalService(
-		object $stub,
-		array $accessibleAdministrations,
-		string $userId,
-	): PurchaseOrderApprovalService {
-		$container = $this->createMock(ContainerInterface::class);
-		$container->method('get')->willReturn($stub);
-
-		$appConfig = $this->createMock(IAppConfig::class);
-		$appConfig->method('getValueString')->willReturn('shillinq');
-
-		$logger = $this->createMock(LoggerInterface::class);
-
-		$user = $this->createMock(IUser::class);
-		$user->method('getUID')->willReturn($userId);
-		$userSession = $this->createMock(IUserSession::class);
-		$userSession->method('getUser')->willReturn($user);
-
-		$administrationContext = $this->createMock(AdministrationContextService::class);
-		$administrationContext->method('canAccess')->willReturnCallback(
-			static function (string $administrationId) use ($accessibleAdministrations): bool {
-				return in_array($administrationId, $accessibleAdministrations, true);
-			}
-		);
-
-		return new PurchaseOrderApprovalService(
-			appConfig: $appConfig,
-			administrationContext: $administrationContext,
-			userSession: $userSession,
-			logger: $logger,
-			objectService: new DuckObjectServiceAdapter($stub),
-		);
-
-	}//end buildApprovalService()
 
 	/**
 	 * Build ExceptionResolutionService sharing the same OR stub.

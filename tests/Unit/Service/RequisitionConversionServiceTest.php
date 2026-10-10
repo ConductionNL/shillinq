@@ -28,8 +28,6 @@ use OCA\Shillinq\Service\PurchaseOrderService;
 use OCA\Shillinq\Service\RequisitionConversionService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
-use OCP\Notification\IManager as INotificationManager;
-use OCP\Notification\INotification;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -61,14 +59,6 @@ final class RequisitionConversionServiceTest extends TestCase {
 	private LoggerInterface&MockObject $logger;
 
 	/**
-	 * Per-notification mock state-bag (spl_object_id => stdClass), mirrors
-	 * PurchaseOrderServiceTest's notificationManagerCapturing() precedent.
-	 *
-	 * @var array<int,object>
-	 */
-	private array $notificationState = [];
-
-	/**
 	 * Set up shared mocks.
 	 *
 	 * @return void
@@ -80,35 +70,6 @@ final class RequisitionConversionServiceTest extends TestCase {
 		$this->logger = $this->createMock(LoggerInterface::class);
 
 	}//end setUp()
-
-	/**
-	 * A lenient notification manager: createNotification() returns a mock
-	 * whose fluent setters return itself; notify() is a no-op. Notifications
-	 * are not the focus of these tests — only that PurchaseOrderService's
-	 * real dispatch path does not throw.
-	 *
-	 * @return INotificationManager
-	 */
-	private function lenientNotificationManager(): INotificationManager {
-		$manager = $this->createMock(INotificationManager::class);
-
-		$manager->method('createNotification')->willReturnCallback(
-			function (): INotification {
-				$notification = $this->createMock(INotification::class);
-				foreach (['setApp', 'setDateTime', 'setUser', 'setObject', 'setSubject'] as $method) {
-					$notification->method($method)->willReturnSelf();
-				}
-
-				return $notification;
-			}
-		);
-		$manager->method('notify')->willReturnCallback(
-			function (INotification $notification): void {
-			}
-		);
-
-		return $manager;
-	}//end lenientNotificationManager()
 
 	/**
 	 * Build an in-memory ObjectService stub honouring equality filters and
@@ -280,7 +241,6 @@ final class RequisitionConversionServiceTest extends TestCase {
 		$purchaseOrderService = new PurchaseOrderService(
 			appConfig: $this->appConfig,
 			administrationContext: $administrationContext,
-			notificationManager: $this->lenientNotificationManager(),
 			logger: $this->logger,
 			objectService: new DuckObjectServiceAdapter($stub),
 		);

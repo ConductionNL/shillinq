@@ -36,7 +36,6 @@ use OCA\Shillinq\Service\PurchaseOrder\PurchaseOrderMailerInterface;
 use OCA\Shillinq\Service\PurchaseOrderService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
-use OCP\Notification\IManager as INotificationManager;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
@@ -186,9 +185,11 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 	 * @return void
 	 */
 	public function testSendToPeppolRefusesWhenApprovalIncomplete(): void {
+		// A draft order is not approved, even when its old in-object chain
+		// reads fully signed: that chain is history and no longer opens the send.
 		$po = $this->approvedPo();
-		$po['approvalChain'][1]['decision'] = 'pending';
-		$po['approvalChain'][1]['decidedAt'] = '';
+		$po['statusCode'] = 'draft';
+		$po['approvalChain'] = [['role' => 'teamleider', 'order' => 1, 'decision' => 'approved', 'decidedAt' => '2026-06-01T12:00:00+00:00', 'userId' => 'teamleider-1']];
 		$data = [
 			'PurchaseOrder' => [$po],
 		];
@@ -206,9 +207,9 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 
 		try {
 			$service->sendToPeppol(administrationId: 'adm-1', purchaseOrderId: 'po-1');
-			self::fail('sendToPeppol must refuse to advance an incomplete chain');
+			self::fail('sendToPeppol must refuse an order that is not approved');
 		} catch (\RuntimeException $e) {
-			self::assertSame('Purchase order cannot be sent: approval chain incomplete', $e->getMessage());
+			self::assertSame('Purchase order cannot be sent: it is not approved', $e->getMessage());
 		}
 
 		// Nothing was persisted — no PurchaseOrder save touched the store.
@@ -296,7 +297,8 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 			'projectCode' => 'P-FAC',
 			'totalAmount' => 18500.00,
 			'notes' => 'Coffee machine refresh.',
-			'statusCode' => 'draft',
+			// Approved by OpenRegister's approval chain (REQ-PAD-001).
+			'statusCode' => 'approved',
 			'lines' => [
 				[
 					'lineNumber' => 1,
@@ -307,22 +309,6 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 					'vatRate' => 0.21,
 					'vatAmount' => 3885.00,
 					'glAccount' => '4400',
-				],
-			],
-			'approvalChain' => [
-				[
-					'role' => 'teamleider',
-					'order' => 1,
-					'decision' => 'approved',
-					'decidedAt' => '2026-06-01T12:00:00+00:00',
-					'userId' => 'teamleider-1',
-				],
-				[
-					'role' => 'facility_manager',
-					'order' => 2,
-					'decision' => 'approved',
-					'decidedAt' => '2026-06-02T09:00:00+00:00',
-					'userId' => 'facility-1',
 				],
 			],
 		];
@@ -581,13 +567,11 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase {
 			}
 		);
 
-		$notificationManager = $this->createMock(INotificationManager::class);
 		$logger = new NullLogger();
 
 		return new PurchaseOrderService(
 			appConfig: $appConfig,
 			administrationContext: $administrationContext,
-			notificationManager: $notificationManager,
 			logger: $logger,
 			peppolAdapter: $adapter,
 			purchaseOrderMailer: $mailer,

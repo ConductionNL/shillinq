@@ -13,6 +13,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+ * @spec openspec/changes/purchasing-approval-delegation/tasks.md#task-1.3
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -26,8 +27,6 @@ use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\PurchaseOrderService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
-use OCP\Notification\IManager as INotificationManager;
-use OCP\Notification\INotification;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -36,12 +35,11 @@ use Psr\Log\LoggerInterface;
 /**
  * Tests the OpenRegister-backed purchase-order service.
  *
- * Covers REQ-PO3W-001 across the three core service surfaces:
- *  - determineApprovalChain at €5k / €10k / €50k thresholds (pure logic);
- *  - createPurchaseOrder end-to-end (chain materialised, ApprovalTask records
- *    written, notifications dispatched);
- *  - blockSendUntilApproved (rejected while pending, allowed once every approver
- *    has signed with a timestamp).
+ * Covers REQ-PO3W-001 on the service surfaces that remain after approval
+ * moved to OpenRegister's declared chain (purchasing-approval-delegation):
+ *  - createPurchaseOrder starts in draft, writes totalExclVat in cents, and
+ *    writes no in-object chain, no ApprovalTask and no notification;
+ *  - markSent refuses an order that is not approved and sends one that is.
  *
  * The OpenRegister ObjectService is stubbed with an in-memory schema-keyed store
  * that honours equality filters so cross-administration data never leaks.
@@ -85,83 +83,12 @@ final class PurchaseOrderServiceTest extends TestCase {
 	}//end setUp()
 
 	/**
-	 * Construct a notification manager mock that captures every notify() call.
-	 *
-	 * Uses PHPUnit's createMock(INotification::class) so every interface method
-	 * is stubbed without us re-declaring 30+ methods (and we don't drift when
-	 * the interface adds new methods like setPriorityNotification).
-	 *
-	 * @param array<int,array{user:string,subject:string,object:string}> $captured Captured calls.
-	 *
-	 * @return INotificationManager
-	 */
-	private function notificationManagerCapturing(array &$captured): INotificationManager {
-		$manager = $this->createMock(INotificationManager::class);
-
-		$manager->method('createNotification')->willReturnCallback(
-			function () use (&$captured): INotification {
-				$state = (object)['user' => '', 'subject' => '', 'object' => ''];
-
-				$notification = $this->createMock(INotification::class);
-				$notification->method('setApp')->willReturnSelf();
-				$notification->method('setDateTime')->willReturnSelf();
-				$notification->method('setUser')->willReturnCallback(
-					function (string $user) use ($notification, $state): INotification {
-						$state->user = $user;
-						return $notification;
-					}
-				);
-				$notification->method('setObject')->willReturnCallback(
-					function (string $type, string $id) use ($notification, $state): INotification {
-						$state->object = $type . ':' . $id;
-						return $notification;
-					}
-				);
-				$notification->method('setSubject')->willReturnCallback(
-					function (string $subject) use ($notification, $state): INotification {
-						$state->subject = $subject;
-						return $notification;
-					}
-				);
-				// Stash the state-bag on the mock via a side-channel array so
-				// notify() can retrieve it deterministically by identity.
-				$this->notificationState[spl_object_id($notification)] = $state;
-
-				return $notification;
-			}
-		);
-
-		$manager->method('notify')->willReturnCallback(
-			function (INotification $notification) use (&$captured): void {
-				$state = ($this->notificationState[spl_object_id($notification)] ?? null);
-				if ($state !== null) {
-					$captured[] = [
-						'user' => $state->user,
-						'subject' => $state->subject,
-						'object' => $state->object,
-					];
-				}
-			}
-		);
-
-		return $manager;
-	}//end notificationManagerCapturing()
-
-	/**
-	 * Per-notification mock state-bag (spl_object_id => stdClass).
-	 *
-	 * @var array<int,object>
-	 */
-	private array $notificationState = [];
-
-	/**
 	 * Build the service over an in-memory ObjectService stub.
 	 *
 	 * @param array<string,array<int,array<string,mixed>>> $data Schema => rows.
 	 * @param array<int,array<string,mixed>> $saved Captured saves (by reference).
 	 * @param string $userId Authenticated uid.
 	 * @param array<int,string> $accessibleAdministrations Tenants canAccess returns true for.
-	 * @param array<int,array{user:string,subject:string,object:string}> $notifications Captured notifications (by reference).
 	 *
 	 * @return PurchaseOrderService
 	 */
@@ -170,7 +97,6 @@ final class PurchaseOrderServiceTest extends TestCase {
 		array &$saved,
 		string $userId,
 		array $accessibleAdministrations,
-		array &$notifications,
 	): PurchaseOrderService {
 		$stub = new class($data, $saved) {
 
@@ -299,12 +225,9 @@ final class PurchaseOrderServiceTest extends TestCase {
 			}
 		);
 
-		$notificationManager = $this->notificationManagerCapturing($notifications);
-
 		return new PurchaseOrderService(
 			appConfig: $this->appConfig,
 			administrationContext: $administrationContext,
-			notificationManager: $notificationManager,
 			logger: $this->logger,
 			objectService: new DuckObjectServiceAdapter($stub),
 		);
@@ -312,123 +235,13 @@ final class PurchaseOrderServiceTest extends TestCase {
 	}//end buildService()
 
 	/**
-	 * A 5k PO needs only one approver (Teamleider).
+	 * Exercises createPurchaseOrder: a draft order with its total in cents and no
+	 * approval engine of shillinq's own (REQ-PAD-001).
 	 *
 	 * @return void
 	 */
-	public function testDetermineApprovalChainFiveThousand(): void {
+	public function testCreatePurchaseOrderStartsInDraftWithoutAnInObjectChain(): void {
 		$saved = [];
-		$notifications = [];
-		$service = $this->buildService(
-			data: [],
-			saved: $saved,
-			userId: 'inkoper-1',
-			accessibleAdministrations: ['adm-1'],
-			notifications: $notifications
-		);
-
-		$chain = $service->determineApprovalChain(amount: 5000.00);
-
-		self::assertSame(
-			[
-				['role' => 'teamleider', 'order' => 1],
-			],
-			$chain
-		);
-
-	}//end testDetermineApprovalChainFiveThousand()
-
-	/**
-	 * A 10k PO needs Teamleider + Facility Manager.
-	 *
-	 * @return void
-	 */
-	public function testDetermineApprovalChainTenThousand(): void {
-		$saved = [];
-		$notifications = [];
-		$service = $this->buildService(
-			data: [],
-			saved: $saved,
-			userId: 'inkoper-1',
-			accessibleAdministrations: ['adm-1'],
-			notifications: $notifications
-		);
-
-		$chain = $service->determineApprovalChain(amount: 10000.00);
-
-		self::assertSame(
-			[
-				['role' => 'teamleider', 'order' => 1],
-				['role' => 'facility_manager', 'order' => 2],
-			],
-			$chain
-		);
-
-	}//end testDetermineApprovalChainTenThousand()
-
-	/**
-	 * The €18,500 fraud-prevention scenario falls into the double-approver tier
-	 * (Teamleider + Facility Manager).
-	 *
-	 * @return void
-	 */
-	public function testDetermineApprovalChainEighteenThousandFiveHundred(): void {
-		$saved = [];
-		$notifications = [];
-		$service = $this->buildService(
-			data: [],
-			saved: $saved,
-			userId: 'inkoper-1',
-			accessibleAdministrations: ['adm-1'],
-			notifications: $notifications
-		);
-
-		$chain = $service->determineApprovalChain(amount: 18500.00);
-
-		self::assertCount(2, $chain);
-		self::assertSame('teamleider', $chain[0]['role']);
-		self::assertSame('facility_manager', $chain[1]['role']);
-
-	}//end testDetermineApprovalChainEighteenThousandFiveHundred()
-
-	/**
-	 * A 50k PO escalates to the procurement manager (three-approver tier).
-	 *
-	 * @return void
-	 */
-	public function testDetermineApprovalChainFiftyThousand(): void {
-		$saved = [];
-		$notifications = [];
-		$service = $this->buildService(
-			data: [],
-			saved: $saved,
-			userId: 'inkoper-1',
-			accessibleAdministrations: ['adm-1'],
-			notifications: $notifications
-		);
-
-		$chain = $service->determineApprovalChain(amount: 50000.00);
-
-		self::assertSame(
-			[
-				['role' => 'teamleider', 'order' => 1],
-				['role' => 'facility_manager', 'order' => 2],
-				['role' => 'procurement_manager', 'order' => 3],
-			],
-			$chain
-		);
-
-	}//end testDetermineApprovalChainFiftyThousand()
-
-	/**
-	 * Exercises createPurchaseOrder: materialises the chain, persists tasks and
-	 * dispatches notifications (integration of service surfaces).
-	 *
-	 * @return void
-	 */
-	public function testCreatePurchaseOrderMaterialisesChain(): void {
-		$saved = [];
-		$notifications = [];
 		$data = [
 			'AdministrationMembership' => [
 				['administrationId' => 'adm-1', 'role' => 'teamleider', 'userId' => 'teamleider-1'],
@@ -436,7 +249,6 @@ final class PurchaseOrderServiceTest extends TestCase {
 				['administrationId' => 'adm-1', 'role' => 'procurement_manager', 'userId' => 'procurement-1'],
 			],
 			'PurchaseOrder' => [],
-			'ApprovalTask' => [],
 		];
 
 		$service = $this->buildService(
@@ -444,7 +256,6 @@ final class PurchaseOrderServiceTest extends TestCase {
 			saved: $saved,
 			userId: 'inkoper-1',
 			accessibleAdministrations: ['adm-1'],
-			notifications: $notifications
 		);
 
 		$po = $service->createPurchaseOrder(
@@ -467,22 +278,17 @@ final class PurchaseOrderServiceTest extends TestCase {
 		);
 
 		self::assertSame(18500.00, $po['totalAmount']);
+		self::assertSame(1850000, $po['totalExclVat']);
 		self::assertSame('draft', $po['statusCode']);
-		self::assertCount(2, $po['approvalChain']);
+		self::assertArrayNotHasKey('approvalChain', $po);
 		self::assertSame('inkoper-1', $po['requesterId']);
 		self::assertNotEmpty($po['poNumber']);
 
-		// Two ApprovalTask + 1 PurchaseOrder = three saves; two notifications
-		// (one per approver).
-		$tasks = array_values(array_filter($saved, static fn (array $row): bool => $row['schema'] === 'ApprovalTask'));
-		self::assertCount(2, $tasks);
+		// One save, the order itself: OpenRegister's approval chain opens the
+		// steps and notifies the approvers on submit, not shillinq on create.
+		self::assertSame(['PurchaseOrder'], array_column($saved, 'schema'));
 
-		self::assertCount(2, $notifications);
-		$users = array_map(static fn (array $n): string => $n['user'], $notifications);
-		self::assertContains('teamleider-1', $users);
-		self::assertContains('facility-1', $users);
-
-	}//end testCreatePurchaseOrderMaterialisesChain()
+	}//end testCreatePurchaseOrderStartsInDraftWithoutAnInObjectChain()
 
 	/**
 	 * Exercises createPurchaseOrder: rejects a cross-tenant caller (IDOR).
@@ -491,13 +297,11 @@ final class PurchaseOrderServiceTest extends TestCase {
 	 */
 	public function testCreatePurchaseOrderRejectsCrossTenant(): void {
 		$saved = [];
-		$notifications = [];
 		$service = $this->buildService(
 			data: [],
 			saved: $saved,
 			userId: 'inkoper-1',
 			accessibleAdministrations: ['adm-1'],
-			notifications: $notifications
 		);
 
 		$this->expectException(\RuntimeException::class);
@@ -517,74 +321,49 @@ final class PurchaseOrderServiceTest extends TestCase {
 	}//end testCreatePurchaseOrderRejectsCrossTenant()
 
 	/**
-	 * Exercises blockSendUntilApproved: refuses to advance while any approver is
-	 * pending, succeeds once every approver has signed with a timestamp.
+	 * Exercises markSent: a draft order is refused even when its old in-object
+	 * chain reads fully signed; an approved order is sent.
 	 *
 	 * @return void
 	 */
-	public function testBlockSendUntilApprovedGuard(): void {
+	public function testMarkSentRequiresAnApprovedOrder(): void {
 		$saved = [];
-		$notifications = [];
-
-		$data = [
-			'PurchaseOrder' => [
-				[
-					'id' => 'po-1',
-					'administrationId' => 'adm-1',
-					'poNumber' => 'PO-2026-adm-1-000001',
-					'statusCode' => 'draft',
-					'approvalChain' => [
-						[
-							'role' => 'teamleider',
-							'order' => 1,
-							'decision' => 'approved',
-							'decidedAt' => '2026-06-01T12:00:00+00:00',
-							'userId' => 'teamleider-1',
-						],
-						[
-							'role' => 'facility_manager',
-							'order' => 2,
-							'decision' => 'pending',
-							'decidedAt' => '',
-							'userId' => '',
-						],
-					],
-				],
+		$order = [
+			'id' => 'po-1',
+			'administrationId' => 'adm-1',
+			'poNumber' => 'PO-2026-adm-1-000001',
+			'statusCode' => 'draft',
+			'approvalChain' => [
+				['role' => 'teamleider', 'order' => 1, 'decision' => 'approved', 'decidedAt' => '2026-06-01T12:00:00+00:00', 'userId' => 'teamleider-1'],
 			],
 		];
 
 		$service = $this->buildService(
-			data: $data,
+			data: ['PurchaseOrder' => [$order]],
 			saved: $saved,
 			userId: 'inkoper-1',
 			accessibleAdministrations: ['adm-1'],
-			notifications: $notifications
 		);
 
-		// First attempt: only one of two approvals signed.
 		try {
-			$service->blockSendUntilApproved(administrationId: 'adm-1', purchaseOrderId: 'po-1');
-			self::fail('Expected blockSendUntilApproved to refuse incomplete chain');
+			$service->markSent(administrationId: 'adm-1', purchaseOrderId: 'po-1');
+			self::fail('Expected markSent to refuse a draft order');
 		} catch (\RuntimeException $e) {
-			self::assertSame('Purchase order cannot be sent: approval chain incomplete', $e->getMessage());
+			self::assertSame('Purchase order cannot be sent: it is not approved', $e->getMessage());
 		}
 
-		// Second attempt: both signed.
-		$data['PurchaseOrder'][0]['approvalChain'][1]['decision'] = 'approved';
-		$data['PurchaseOrder'][0]['approvalChain'][1]['decidedAt'] = '2026-06-02T09:00:00+00:00';
-		$data['PurchaseOrder'][0]['approvalChain'][1]['userId'] = 'facility-1';
+		self::assertSame([], $saved);
 
-		$service2 = $this->buildService(
-			data: $data,
+		$order['statusCode'] = 'approved';
+		$approved = $this->buildService(
+			data: ['PurchaseOrder' => [$order]],
 			saved: $saved,
 			userId: 'inkoper-1',
 			accessibleAdministrations: ['adm-1'],
-			notifications: $notifications
 		);
 
-		$po = $service2->blockSendUntilApproved(administrationId: 'adm-1', purchaseOrderId: 'po-1');
+		$po = $approved->markSent(administrationId: 'adm-1', purchaseOrderId: 'po-1');
 		self::assertSame('sent', $po['statusCode']);
 		self::assertNotEmpty($po['sentAt']);
-
-	}//end testBlockSendUntilApprovedGuard()
+	}//end testMarkSentRequiresAnApprovedOrder()
 }//end class

@@ -281,7 +281,7 @@ final class PurchaseOrderControllerTest extends TestCase {
 		$this->withParams(['administrationId' => 'adm-1']);
 		$po = ['id' => 'po-1', 'status' => 'sent'];
 		$this->purchaseOrderService->expects($this->once())
-			->method('blockSendUntilApproved')
+			->method('markSent')
 			->willReturnCallback(
 				static function (string $administrationId, string $purchaseOrderId) use ($po): array {
 					self::assertSame('adm-1', $administrationId);
@@ -307,7 +307,7 @@ final class PurchaseOrderControllerTest extends TestCase {
 		$this->administrationContext = $this->createMock(AdministrationContextService::class);
 		$this->administrationContext->method('canAccess')->willReturn(false);
 		$this->withParams(['administrationId' => 'adm-other']);
-		$this->purchaseOrderService->expects($this->never())->method('blockSendUntilApproved');
+		$this->purchaseOrderService->expects($this->never())->method('markSent');
 
 		$response = $this->controller()->send('po-1');
 
@@ -323,7 +323,7 @@ final class PurchaseOrderControllerTest extends TestCase {
 	public function testSendAnonymousReturns401(): void {
 		$this->anonymous();
 		$this->withParams(['administrationId' => 'adm-1']);
-		$this->purchaseOrderService->expects($this->never())->method('blockSendUntilApproved');
+		$this->purchaseOrderService->expects($this->never())->method('markSent');
 
 		$response = $this->controller()->send('po-1');
 
@@ -339,43 +339,26 @@ final class PurchaseOrderControllerTest extends TestCase {
 	 */
 	public function testPreviewApprovalChainReturns200WithChain(): void {
 		$this->withParams(['amount' => '18500']);
-		$chain = [
-			['role' => 'budget_holder', 'threshold' => 5000.0],
-			['role' => 'finance_manager', 'threshold' => 25000.0],
-		];
-		$this->purchaseOrderService->expects($this->once())
-			->method('determineApprovalChain')
-			->willReturnCallback(
-				static function (float $amount) use ($chain): array {
-					self::assertSame(18500.0, $amount);
-					return $chain;
-				}
-			);
 
 		$response = $this->controller()->previewApprovalChain();
 
 		self::assertInstanceOf(JSONResponse::class, $response);
 		self::assertSame(Http::STATUS_OK, $response->getStatus());
-		self::assertSame(['chain' => $chain], $response->getData());
+		// The tiers declared on the PurchaseOrder schema (task 1.3).
+		self::assertSame(
+			['chain' => [['role' => 'teamleider', 'order' => 1], ['role' => 'facility_manager', 'order' => 2]]],
+			$response->getData()
+		);
 
 	}//end testPreviewApprovalChainReturns200WithChain()
 
 	/**
-	 * A negative amount is clamped to 0.0 server-side rather than reaching the
-	 * service as a negative threshold input.
+	 * A negative amount is clamped to 0.0 server-side and needs nobody.
 	 *
 	 * @return void
 	 */
 	public function testPreviewApprovalChainClampsNegativeAmount(): void {
 		$this->withParams(['amount' => '-9999']);
-		$this->purchaseOrderService->expects($this->once())
-			->method('determineApprovalChain')
-			->willReturnCallback(
-				static function (float $amount): array {
-					self::assertSame(0.0, $amount);
-					return [];
-				}
-			);
 
 		$response = $this->controller()->previewApprovalChain();
 
@@ -392,7 +375,6 @@ final class PurchaseOrderControllerTest extends TestCase {
 	public function testPreviewApprovalChainAnonymousReturns401(): void {
 		$this->anonymous();
 		$this->withParams(['amount' => '100']);
-		$this->purchaseOrderService->expects($this->never())->method('determineApprovalChain');
 
 		$response = $this->controller()->previewApprovalChain();
 

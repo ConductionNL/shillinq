@@ -9,7 +9,8 @@
  * `required`, and knows neither state. OpenRegister refused every create
  * ("The required property (statusCode) is missing") and the unit tests stayed
  * green, because none of them looked at the schema. This test drives the real
- * services over one in-memory store (create, approve, send, reject) and
+ * service over one in-memory store (create, approve as OpenRegister's chain
+ * would, send) and
  * validates every PurchaseOrder they hand to saveObject() against the REAL
  * schema: shillinq_register.json merged with every register.d fragment by
  * SettingsService::deepMergeConfig(), the merge the app runs at install time,
@@ -35,15 +36,11 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\PurchaseOrderApprovalService;
 use OCA\Shillinq\Service\PurchaseOrderService;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\IAppConfig;
 use OCP\IUser;
-use OCP\IUserSession;
-use OCP\Notification\IManager as INotificationManager;
-use OCP\Notification\INotification;
 use Opis\JsonSchema\Errors\ErrorFormatter;
 use Opis\JsonSchema\Validator;
 use PHPUnit\Framework\TestCase;
@@ -155,9 +152,9 @@ final class PurchaseOrderRegisterSchemaTest extends TestCase {
 	}//end schemaErrors()
 
 	/**
-	 * Build both services over the shared store.
+	 * Build the service over the shared store.
 	 *
-	 * @return array{PurchaseOrderService, PurchaseOrderApprovalService}
+	 * @return array{PurchaseOrderService}
 	 */
 	private function services(): array {
 		$this->store = new InMemoryObjectServiceStub();
@@ -177,37 +174,12 @@ final class PurchaseOrderRegisterSchemaTest extends TestCase {
 			static fn (string $administrationId): bool => $administrationId === 'ADM-001'
 		);
 
-		$notificationManager = $this->createMock(INotificationManager::class);
-		$notificationManager->method('createNotification')->willReturnCallback(
-			function (): INotification {
-				$notification = $this->createMock(INotification::class);
-				foreach (['setApp', 'setUser', 'setDateTime', 'setObject', 'setSubject'] as $setter) {
-					$notification->method($setter)->willReturnSelf();
-				}
-
-				return $notification;
-			}
-		);
-
-		$user = $this->createMock(IUser::class);
-		$user->method('getUID')->willReturn('approver-1');
-		$userSession = $this->createMock(IUserSession::class);
-		$userSession->method('getUser')->willReturn($user);
-
 		$logger = $this->createMock(LoggerInterface::class);
 
 		return [
 			new PurchaseOrderService(
 				appConfig: $appConfig,
 				administrationContext: $administrationContext,
-				notificationManager: $notificationManager,
-				logger: $logger,
-				objectService: $this->store,
-			),
-			new PurchaseOrderApprovalService(
-				appConfig: $appConfig,
-				administrationContext: $administrationContext,
-				userSession: $userSession,
 				logger: $logger,
 				objectService: $this->store,
 			),
@@ -250,43 +222,26 @@ final class PurchaseOrderRegisterSchemaTest extends TestCase {
 	}//end testCreatedPurchaseOrderValidatesAgainstRegisterSchema()
 
 	/**
-	 * Create, approve every entry of a two-step chain, send: every save validates.
+	 * Create, approve as OpenRegister's chain does (statusCode approved), send:
+	 * every save validates.
 	 *
 	 * @return void
 	 */
 	public function testApprovedAndSentPurchaseOrderValidatesAgainstRegisterSchema(): void {
-		[$purchaseOrders, $approvals] = $this->services();
+		[$purchaseOrders] = $this->services();
 
 		$created = $purchaseOrders->createPurchaseOrder(administrationId: 'ADM-001', payload: self::payload(unitPrice: 12000.0));
-		self::assertCount(2, $created['approvalChain']);
+		self::assertSame(1200000, $created['totalExclVat']);
 
-		$afterFirst = $approvals->recordApprovalDecision(administrationId: 'ADM-001', purchaseOrderId: $created['id'], decision: 'approved');
-		self::assertSame('draft', $afterFirst['statusCode'] ?? null);
+		$approved = $created;
+		$approved['statusCode'] = 'approved';
+		$this->store->saveObject(object: $approved, schema: 'PurchaseOrder');
 
-		$afterSecond = $approvals->recordApprovalDecision(administrationId: 'ADM-001', purchaseOrderId: $created['id'], decision: 'approved');
-		self::assertSame('approved', $afterSecond['statusCode'] ?? null);
-
-		$sent = $purchaseOrders->blockSendUntilApproved(administrationId: 'ADM-001', purchaseOrderId: $created['id']);
+		$sent = $purchaseOrders->markSent(administrationId: 'ADM-001', purchaseOrderId: $created['id']);
 		self::assertSame('sent', $sent['statusCode'] ?? null);
 
 		self::assertSame([], $this->invalidPurchaseOrderSaves());
 	}//end testApprovedAndSentPurchaseOrderValidatesAgainstRegisterSchema()
-
-	/**
-	 * A rejected purchase order ends in the schema's terminal state and validates.
-	 *
-	 * @return void
-	 */
-	public function testRejectedPurchaseOrderValidatesAgainstRegisterSchema(): void {
-		[$purchaseOrders, $approvals] = $this->services();
-
-		$created = $purchaseOrders->createPurchaseOrder(administrationId: 'ADM-001', payload: self::payload(unitPrice: 500.0));
-		$rejected = $approvals->recordApprovalDecision(administrationId: 'ADM-001', purchaseOrderId: $created['id'], decision: 'rejected', comment: 'Not budgeted');
-
-		self::assertSame('cancelled', $rejected['statusCode'] ?? null);
-		self::assertSame('rejected', $rejected['approvalChain'][0]['decision']);
-		self::assertSame([], $this->invalidPurchaseOrderSaves());
-	}//end testRejectedPurchaseOrderValidatesAgainstRegisterSchema()
 
 	/**
 	 * Control: the schema does refuse a purchase order without statusCode, so the green above means something.
