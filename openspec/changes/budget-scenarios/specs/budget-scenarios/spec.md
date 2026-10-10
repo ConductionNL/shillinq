@@ -246,10 +246,44 @@ with no field added or reinterpreted. This change MUST NOT seed any other
 
 @e2e exclude diff inspection, no browser-visible behaviour
 
+### Requirement: REQ-BSC-011 — The begroting grid MUST offer a read-only scenario selector that swaps its budget column
+
+Decided by Ruben on 9 Oct (Q-shillinq-1). `BudgetGrid.vue` MUST offer a
+scenario selector listing the administration's `BudgetScenario`s, with
+"Basis" (no scenario) as the default. Choosing a scenario MUST swap every
+budget figure in the grid (rows, computed rows, TOTAAL) to that scenario's
+figures: the year's default-budget `BudgetLine`s plus the scenario's own
+modifiers, computed by the same `BudgetScenarioEvaluator` the comparison
+page uses. Actuals MUST NOT change. The grid MUST show a "Scenario: <name>"
+label while a scenario is chosen, and MUST stay read-only: nothing is
+written. `GET /api/budget-grid` MUST accept an optional `scenarioId`; a
+scenario that is not in the requested administration MUST answer 404.
+
+#### Scenario: Choosing a scenario swaps the budget column
+
+- **GIVEN** a 2027 default budget with Omzet budgeted at 50,000 in January
+- **AND** scenario "Krimp" with a `LEDGER_AMOUNT_DELTA` of -10,000 on Omzet effective 2027-01-01
+- **WHEN** the grid is requested with `scenarioId` of "Krimp"
+- **THEN** Omzet's January budget reads 40,000 and its actual is unchanged
+- **AND** the response names the scenario so the page shows "Scenario: Krimp"
+
+#### Scenario: A scenario of another administration is not found
+
+- **GIVEN** a scenario id that belongs to another administration
+- **WHEN** the grid is requested with that `scenarioId`
+- **THEN** the endpoint answers 404 and no grid is returned
+
+#### Scenario: Without a scenario the grid shows the default budget
+
+- **WHEN** the grid is requested without `scenarioId`
+- **THEN** the budget column shows the default budget and no scenario label is shown
+
+@e2e budget-scenarios::grid-scenario-selector
+
 ### Requirement: REQ-BSC-010 — Non-goals
 
-This change MUST NOT implement the spreadsheet-grid UI or its
-scenario-selector embedding (`budget-grid-view`), projection/growth-rate
+This change MUST NOT implement the spreadsheet-grid UI itself
+(`budget-grid-view`; the selector on it is REQ-BSC-011), projection/growth-rate
 math (`budget-projection-engine`), charts (`budget-charts`), any HR/payroll
 concept, a fix to `CashflowScenario`'s missing `result` producer or
 `ScenarioCreator.vue`'s dead-code status, or a restoration of
@@ -261,7 +295,7 @@ beyond the one leaf named in REQ-BSC-009. It MUST NOT write
 
 - **GIVEN** this change's implementation diff
 - **WHEN** it is inspected
-- **THEN** no spreadsheet-grid component or grid-embedded selector, no
+- **THEN** no spreadsheet-grid component (beyond the REQ-BSC-011 selector), no
   projection-math service, no chart component, no employee/payroll schema
   or field, no edit to `CashflowScenario`/`ScenarioCreator.vue`, no
   `BudgetLine` writer, and no balance-sheet `LedgerGroup` seed beyond

@@ -46,6 +46,8 @@ use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\BudgetGridCalculator;
 use OCA\Shillinq\Service\BudgetGridReader;
+use OCA\Shillinq\Service\BudgetGridScenarioOverlay;
+use OCA\Shillinq\Service\BudgetScenarioReader;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -124,6 +126,8 @@ class BudgetGridController extends Controller {
 	 * @param BudgetGridCalculator $calculator Pure arithmetic over the reader's bundle.
 	 * @param AdministrationContextService $administrationContext IDOR guard (REQ-MA-001).
 	 * @param IUserSession $userSession Session.
+	 * @param BudgetScenarioReader $scenarioReader Loads the administration's scenarios and modifiers.
+	 * @param BudgetGridScenarioOverlay $scenarioOverlay Swaps the budget column to one scenario (REQ-BSC-011).
 	 */
 	public function __construct(
 		IRequest $request,
@@ -133,19 +137,25 @@ class BudgetGridController extends Controller {
 		private readonly BudgetGridCalculator $calculator,
 		private readonly AdministrationContextService $administrationContext,
 		private readonly IUserSession $userSession,
+		private readonly BudgetScenarioReader $scenarioReader,
+		private readonly BudgetGridScenarioOverlay $scenarioOverlay,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 
 	}//end __construct()
 
 	/**
-	 * GET /api/budget-grid?administrationId=...&startPeriod=YYYY-MM&endPeriod=YYYY-MM&granularity=month|quarter|year
+	 * GET /api/budget-grid?administrationId=...&startPeriod=YYYY-MM&endPeriod=YYYY-MM&granularity=month|quarter|year[&scenarioId=...]
+	 *
+	 * With `scenarioId` the budget figures are the scenario's (base plus its
+	 * modifiers) and the envelope names the scenario; actuals never change.
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-001
 	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
 	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-003
+	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
@@ -173,6 +183,11 @@ class BudgetGridController extends Controller {
 			return new JSONResponse(['error' => $this->l10n->t('startPeriod and endPeriod must be YYYY-MM')], Http::STATUS_BAD_REQUEST);
 		}
 
+		$scenarioId = trim((string)$this->request->getParam('scenarioId', ''));
+		if ($scenarioId !== '' && preg_match(self::ID_PATTERN, $scenarioId) !== 1) {
+			return new JSONResponse(['error' => $this->l10n->t('scenarioId must be a valid identifier')], Http::STATUS_BAD_REQUEST);
+		}
+
 		try {
 			$grid = $this->reader->loadGrid(
 				administrationId: $administrationId,
@@ -185,7 +200,34 @@ class BudgetGridController extends Controller {
 			return new JSONResponse(['error' => $this->l10n->t('Could not load the begroting grid')], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
-		return new JSONResponse($this->buildEnvelope(grid: $grid));
+		$scenario = null;
+		if ($scenarioId !== '') {
+			try {
+				$scenarioContext = $this->scenarioReader->loadContext(administrationId: $administrationId, annualBudgetIds: []);
+				$scenarioRow = $this->scenarioOverlay->findScenario(scenarioContext: $scenarioContext, scenarioId: $scenarioId);
+				if ($scenarioRow === null) {
+					// Absent from THIS administration's scenarios: another
+					// administration's id reads exactly like a missing one.
+					return new JSONResponse(['error' => $this->l10n->t('Scenario not found')], Http::STATUS_NOT_FOUND);
+				}
+
+				$grid['budgetLinesByFiscalYear'] = $this->scenarioOverlay->apply(
+					budgetLinesByFiscalYear: $grid['budgetLinesByFiscalYear'],
+					scenarioContext: $scenarioContext,
+					scenarioId: $scenarioId
+				);
+			} catch (Throwable $e) {
+				$this->logger->error('BudgetGridController: failed to apply scenario', ['exception' => $e->getMessage()]);
+				return new JSONResponse(['error' => $this->l10n->t('Could not load the begroting grid')], Http::STATUS_INTERNAL_SERVER_ERROR);
+			}
+
+			$scenario = ['id' => $scenarioId, 'name' => (string)($scenarioRow['name'] ?? '')];
+		}//end if
+
+		$envelope = $this->buildEnvelope(grid: $grid);
+		$envelope['scenario'] = $scenario;
+
+		return new JSONResponse($envelope);
 
 	}//end index()
 

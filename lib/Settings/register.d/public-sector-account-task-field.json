@@ -1,0 +1,20 @@
+{
+  "x-shillinq-fragment": "public-sector-account-task-field",
+  "components": {
+    "schemas": {
+      "Account": {
+        "version": "0.4.0",
+        "properties": {
+          "taskField": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^[0-9]{1,2}\\.[0-9]{1,2}$",
+            "title": "Task Field",
+            "description": "The BBV task field (taakveld) this account books to, for example 8.3. Read by the IV3 report and shown on the fee schedule page.",
+            "example": "8.3"
+          }
+        }
+      }
+    }
+  }
+}
