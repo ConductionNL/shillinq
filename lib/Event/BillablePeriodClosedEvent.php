@@ -1,12 +1,14 @@
 <?php
 
 /**
- * Invoice Ingest Requested Event
+ * Billable Period Closed Event
  *
- * The command another app raises when one of its customers' months is ready
- * to bill: "draft an invoice for whoever carries this reference, with these
- * lines". Dossiq raises it for a SaaS tenant's month (decision 174). The
- * asking app dispatches it with `IEventDispatcher::dispatchTyped()` and reads
+ * Any app raises this when a billable period of one of its accounts closes:
+ * "this period of the account you know by this reference is over, these are
+ * its priced lines". Shillinq answers by drafting an invoice for the customer
+ * that carries the reference. Nothing in it is specific to one app or one
+ * kind of account (decision 182); dossiq raises it for a SaaS tenant's month
+ * (decision 174). The raising app dispatches it with `IEventDispatcher::dispatchTyped()` and reads
  * the answer from the same object: `isHandled()` with `getResult()`, or
  * `getError()` (ADR-041: the target app defines the typed event).
  *
@@ -19,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/tenant-month-invoice-from-dossiq/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+ * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,11 +34,11 @@ namespace OCA\Shillinq\Event;
 use OCP\EventDispatcher\Event;
 
 /**
- * Draft an invoice for the customer that carries a sibling app's reference.
+ * A billable period of an account closed; answered with a draft invoice or a refusal.
  *
- * @spec openspec/changes/tenant-month-invoice-from-dossiq/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+ * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
  */
-final class InvoiceIngestRequestedEvent extends Event {
+final class BillablePeriodClosedEvent extends Event {
 
 	/**
 	 * The version of the answer's shape.
@@ -85,7 +87,7 @@ final class InvoiceIngestRequestedEvent extends Event {
 	 *
 	 * @return string The app id.
 	 *
-	 * @spec openspec/changes/tenant-month-invoice-from-dossiq/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function getSourceApp(): string {
 		return $this->sourceApp;
@@ -96,7 +98,7 @@ final class InvoiceIngestRequestedEvent extends Event {
 	 *
 	 * @return string The reference.
 	 *
-	 * @spec openspec/changes/tenant-month-invoice-from-dossiq/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function getExternalReference(): string {
 		return $this->externalReference;
@@ -107,7 +109,7 @@ final class InvoiceIngestRequestedEvent extends Event {
 	 *
 	 * @return string `YYYY-MM`.
 	 *
-	 * @spec openspec/changes/tenant-month-invoice-from-dossiq/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function getPeriod(): string {
 		return $this->period;
@@ -118,7 +120,7 @@ final class InvoiceIngestRequestedEvent extends Event {
 	 *
 	 * @return array<int, array<string, mixed>> The lines.
 	 *
-	 * @spec openspec/changes/tenant-month-invoice-from-dossiq/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function getLines(): array {
 		return $this->lines;
@@ -129,7 +131,7 @@ final class InvoiceIngestRequestedEvent extends Event {
 	 *
 	 * @return string The correlation id.
 	 *
-	 * @spec openspec/changes/tenant-month-invoice-from-dossiq/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function getCorrelationId(): string {
 		return $this->correlationId;
@@ -143,7 +145,7 @@ final class InvoiceIngestRequestedEvent extends Event {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/tenant-month-invoice-from-dossiq/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function accept(string $invoiceId, string $invoiceNumber): void {
 		$this->error  = null;
@@ -164,7 +166,7 @@ final class InvoiceIngestRequestedEvent extends Event {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/tenant-month-invoice-from-dossiq/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function acceptDuplicate(string $invoiceId, string $invoiceNumber): void {
 		$this->accept(invoiceId: $invoiceId, invoiceNumber: $invoiceNumber);
@@ -178,7 +180,7 @@ final class InvoiceIngestRequestedEvent extends Event {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/tenant-month-invoice-from-dossiq/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function refuse(string $error): void {
 		$this->result = null;
@@ -190,7 +192,7 @@ final class InvoiceIngestRequestedEvent extends Event {
 	 *
 	 * @return bool True when accepted.
 	 *
-	 * @spec openspec/changes/tenant-month-invoice-from-dossiq/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function isHandled(): bool {
 		return $this->result !== null;
@@ -201,7 +203,7 @@ final class InvoiceIngestRequestedEvent extends Event {
 	 *
 	 * @return array<string, mixed>|null The answer, or null when not accepted.
 	 *
-	 * @spec openspec/changes/tenant-month-invoice-from-dossiq/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function getResult(): ?array {
 		return $this->result;
@@ -212,7 +214,7 @@ final class InvoiceIngestRequestedEvent extends Event {
 	 *
 	 * @return string|null The reason, or null when not refused.
 	 *
-	 * @spec openspec/changes/tenant-month-invoice-from-dossiq/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function getError(): ?string {
 		return $this->error;

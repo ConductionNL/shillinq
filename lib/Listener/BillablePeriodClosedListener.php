@@ -3,7 +3,7 @@
 /**
  * Invoice Ingest Requested Listener
  *
- * Answers InvoiceIngestRequestedEvent: a sibling app's customer month becomes
+ * Answers BillablePeriodClosedEvent: a sibling app's customer month becomes
  * a draft invoice, or a refusal the asking app records (decision 174).
  *
  * @category Listener
@@ -15,7 +15,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/tenant-month-invoice-from-dossiq/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+ * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -25,29 +25,29 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Listener;
 
-use OCA\Shillinq\Event\InvoiceIngestRequestedEvent;
-use OCA\Shillinq\Service\InvoiceIngestService;
+use OCA\Shillinq\Event\BillablePeriodClosedEvent;
+use OCA\Shillinq\Service\BillablePeriodInvoiceService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 
 /**
- * Answers InvoiceIngestRequestedEvent.
+ * Answers BillablePeriodClosedEvent.
  *
  * @template-implements IEventListener<Event>
  *
- * @spec openspec/changes/tenant-month-invoice-from-dossiq/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+ * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
  */
-class InvoiceIngestRequestedListener implements IEventListener {
+class BillablePeriodClosedListener implements IEventListener {
 
 	/**
 	 * Constructor.
 	 *
-	 * @param InvoiceIngestService $ingest Drafts or refuses.
+	 * @param BillablePeriodInvoiceService $ingest Drafts or refuses.
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private readonly InvoiceIngestService $ingest,
+		private readonly BillablePeriodInvoiceService $ingest,
 	) {
 	}//end __construct()
 
@@ -58,13 +58,13 @@ class InvoiceIngestRequestedListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/tenant-month-invoice-from-dossiq/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
 	public function handle(Event $event): void {
-		if ($event instanceof InvoiceIngestRequestedEvent === false) {
+		if ($event instanceof BillablePeriodClosedEvent === false) {
 			return;
 		}
 
-		$this->ingest->ingest(event: $event);
+		$this->ingest->invoicePeriod(event: $event);
 	}//end handle()
 }//end class

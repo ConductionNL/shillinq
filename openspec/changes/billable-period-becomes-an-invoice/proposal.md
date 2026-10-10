@@ -1,4 +1,4 @@
-# A dossiq tenant's month becomes a draft invoice
+# A closed billable period becomes a draft invoice
 
 ## Why
 
@@ -11,10 +11,11 @@ carries the dossiq tenant id as its external reference.
 
 - `CustomerMaster` gains `externalReference`: the id of this customer in a sibling app, such as
   a dossiq tenant id.
-- Shillinq defines `InvoiceIngestRequestedEvent`, a command an app raises in the same process
-  (ADR-041: the target app defines the typed event). Dossiq raises it when a tenant's month is
-  invoiced.
-- `InvoiceIngestRequestedListener` drafts a `BillableInvoice` for the customer that carries the
+- Shillinq defines `BillablePeriodClosedEvent`, a generic event any app raises in the same process
+  when a billable period of one of its accounts closes (ADR-041: the target app defines the typed
+  event; decision 182: nothing in it is specific to one app or one kind of account). Dossiq is the
+  first app to raise it, for a tenant's month.
+- `BillablePeriodClosedListener` drafts a `BillableInvoice` for the customer that carries the
   reference. It goes through the path the time intake already uses: it writes the source rows
   (one `MeterReading` per line, priced by a flat `UsageRatePlan` found or created for that line's
   price) and calls the unchanged `InvoiceGenerationService::draftInvoice()` with the `usage`

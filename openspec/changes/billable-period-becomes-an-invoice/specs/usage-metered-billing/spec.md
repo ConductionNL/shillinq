@@ -1,8 +1,8 @@
 ## ADDED Requirements
 
-### Requirement: REQ-UMB-005: A sibling app's month MUST become a draft invoice for the customer that carries its reference
+### Requirement: REQ-UMB-005: A closed billable period MUST become a draft invoice for the customer that carries its account reference
 
-Shillinq SHALL answer `InvoiceIngestRequestedEvent` (sourceApp, externalReference, period
+Shillinq SHALL answer `BillablePeriodClosedEvent` (sourceApp, externalReference, period
 `YYYY-MM`, lines with description, quantity and unit price) by drafting one `BillableInvoice`
 for the single `CustomerMaster` whose `externalReference` equals the event's reference, in that
 customer's administration. Each line SHALL become a `MeterReading` rated by a flat
@@ -20,7 +20,7 @@ with a reason and write nothing.
 - **THEN** shillinq SHALL draft one usage invoice for `cust-9001` in `adm-1` with two lines
 - **AND** the event SHALL be accepted with that invoice's id and number
 
-@e2e exclude A same-process event between two apps has no browser surface; the listener and service are covered in tests/Unit/Service/InvoiceIngestServiceTest.php and the live pass is task 1.5.
+@e2e exclude A same-process event between two apps has no browser surface; the listener and service are covered in tests/Unit/Service/BillablePeriodInvoiceServiceTest.php and the live pass is task 1.5.
 
 #### Scenario: The same month twice
 
@@ -29,7 +29,7 @@ with a reason and write nothing.
 - **THEN** the event SHALL be accepted with the same invoice and `duplicated: true`
 - **AND** no second invoice SHALL be drafted
 
-@e2e exclude A same-process event between two apps has no browser surface; the listener and service are covered in tests/Unit/Service/InvoiceIngestServiceTest.php and the live pass is task 1.5.
+@e2e exclude A same-process event between two apps has no browser surface; the listener and service are covered in tests/Unit/Service/BillablePeriodInvoiceServiceTest.php and the live pass is task 1.5.
 
 #### Scenario: No customer carries the tenant
 
@@ -38,4 +38,4 @@ with a reason and write nothing.
 - **THEN** the event SHALL be refused naming the reference
 - **AND** nothing SHALL be written
 
-@e2e exclude A same-process event between two apps has no browser surface; the listener and service are covered in tests/Unit/Service/InvoiceIngestServiceTest.php and the live pass is task 1.5.
+@e2e exclude A same-process event between two apps has no browser surface; the listener and service are covered in tests/Unit/Service/BillablePeriodInvoiceServiceTest.php and the live pass is task 1.5.

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Tests for InvoiceIngestRequestedEvent's answer in place.
+ * Tests for BillablePeriodClosedEvent's answer in place.
  *
  * @category Tests
  * @package  OCA\Shillinq\Tests\Unit\Event
@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/tenant-month-invoice-from-dossiq/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+ * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -22,13 +22,13 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Event;
 
-use OCA\Shillinq\Event\InvoiceIngestRequestedEvent;
+use OCA\Shillinq\Event\BillablePeriodClosedEvent;
 use PHPUnit\Framework\TestCase;
 
 /**
  * The event carries the request and holds one answer.
  */
-final class InvoiceIngestRequestedEventTest extends TestCase {
+final class BillablePeriodClosedEventTest extends TestCase {
 
 	/**
 	 * The request reads back; accept and refuse replace each other.
@@ -37,7 +37,7 @@ final class InvoiceIngestRequestedEventTest extends TestCase {
 	 */
 	public function testCarriesTheRequestAndOneAnswer(): void {
 		$lines = [['description' => 'case.created', 'quantity' => 1, 'unitPrice' => 1]];
-		$event = new InvoiceIngestRequestedEvent(sourceApp: 'dossiq', externalReference: 't-42', period: '2026-09', lines: $lines, correlationId: 'run-7');
+		$event = new BillablePeriodClosedEvent(sourceApp: 'dossiq', externalReference: 't-42', period: '2026-09', lines: $lines, correlationId: 'run-7');
 
 		$this->assertSame('dossiq', $event->getSourceApp());
 		$this->assertSame('t-42', $event->getExternalReference());

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Tests for InvoiceIngestService: a sibling app's month becomes a draft invoice.
+ * Tests for BillablePeriodInvoiceService: a sibling app's month becomes a draft invoice.
  *
  * @category Tests
  * @package  OCA\Shillinq\Tests\Unit\Service
@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/tenant-month-invoice-from-dossiq/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+ * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -22,10 +22,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\Shillinq\Event\InvoiceIngestRequestedEvent;
+use OCA\Shillinq\Event\BillablePeriodClosedEvent;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Service\InvoiceGenerationService;
-use OCA\Shillinq\Service\InvoiceIngestService;
+use OCA\Shillinq\Service\BillablePeriodInvoiceService;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -36,7 +36,7 @@ use RuntimeException;
 /**
  * REQ-UMB-005 scenarios on the real event and an in-memory register.
  */
-final class InvoiceIngestServiceTest extends TestCase {
+final class BillablePeriodInvoiceServiceTest extends TestCase {
 
 	/**
 	 * Requests the fake draftInvoice() received.
@@ -74,13 +74,13 @@ final class InvoiceIngestServiceTest extends TestCase {
 	 *
 	 * @param InMemoryObjectServiceStub $store The register.
 	 *
-	 * @return InvoiceIngestService
+	 * @return BillablePeriodInvoiceService
 	 */
-	private function service(InMemoryObjectServiceStub $store): InvoiceIngestService {
+	private function service(InMemoryObjectServiceStub $store): BillablePeriodInvoiceService {
 		$settings = $this->createMock(SettingsService::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 
-		return new InvoiceIngestService(
+		return new BillablePeriodInvoiceService(
 			objectService: $store,
 			invoices: $this->invoices,
 			settings: $settings,
@@ -109,10 +109,10 @@ final class InvoiceIngestServiceTest extends TestCase {
 	 *
 	 * @param array<int, array<string, mixed>>|null $lines Lines to use instead.
 	 *
-	 * @return InvoiceIngestRequestedEvent
+	 * @return BillablePeriodClosedEvent
 	 */
-	private function event(?array $lines=null, string $reference='t-42'): InvoiceIngestRequestedEvent {
-		return new InvoiceIngestRequestedEvent(
+	private function event(?array $lines=null, string $reference='t-42'): BillablePeriodClosedEvent {
+		return new BillablePeriodClosedEvent(
 			sourceApp: 'dossiq',
 			externalReference: $reference,
 			period: '2026-09',
@@ -132,7 +132,7 @@ final class InvoiceIngestServiceTest extends TestCase {
 		$store = $this->storeWithCustomer();
 		$event = $this->event();
 
-		$this->service(store: $store)->ingest(event: $event);
+		$this->service(store: $store)->invoicePeriod(event: $event);
 
 		$this->assertTrue($event->isHandled(), (string)$event->getError());
 		$this->assertSame('inv-1', $event->getResult()['invoiceId']);
@@ -169,10 +169,10 @@ final class InvoiceIngestServiceTest extends TestCase {
 		$store = $this->storeWithCustomer();
 		$store->setSchema('BillableInvoice')->saveObject(['id' => 'inv-1', 'invoiceNumber' => 'BIL-2026-0001']);
 		$service = $this->service(store: $store);
-		$service->ingest(event: $this->event());
+		$service->invoicePeriod(event: $this->event());
 
 		$again = $this->event();
-		$service->ingest(event: $again);
+		$service->invoicePeriod(event: $again);
 
 		$this->assertTrue($again->isHandled(), (string)$again->getError());
 		$this->assertTrue($again->getResult()['duplicated']);
@@ -190,10 +190,10 @@ final class InvoiceIngestServiceTest extends TestCase {
 	public function testTheSameMonthWithOtherLinesIsRefused(): void {
 		$store   = $this->storeWithCustomer();
 		$service = $this->service(store: $store);
-		$service->ingest(event: $this->event());
+		$service->invoicePeriod(event: $this->event());
 
 		$changed = $this->event(lines: [['description' => 'case.created', 'quantity' => 13, 'unitPrice' => 0.5]]);
-		$service->ingest(event: $changed);
+		$service->invoicePeriod(event: $changed);
 
 		$this->assertFalse($changed->isHandled());
 		$this->assertStringContainsString('different lines', (string)$changed->getError());
@@ -209,7 +209,7 @@ final class InvoiceIngestServiceTest extends TestCase {
 		$store = $this->storeWithCustomer();
 		$event = $this->event(reference: 't-77');
 
-		$this->service(store: $store)->ingest(event: $event);
+		$this->service(store: $store)->invoicePeriod(event: $event);
 
 		$this->assertFalse($event->isHandled());
 		$this->assertStringContainsString('"t-77"', (string)$event->getError());
@@ -234,7 +234,7 @@ final class InvoiceIngestServiceTest extends TestCase {
 		);
 		$event = $this->event();
 
-		$this->service(store: $store)->ingest(event: $event);
+		$this->service(store: $store)->invoicePeriod(event: $event);
 
 		$this->assertFalse($event->isHandled());
 		$this->assertStringContainsString('2 shillinq customers', (string)$event->getError());
@@ -250,7 +250,7 @@ final class InvoiceIngestServiceTest extends TestCase {
 		$store = $this->storeWithCustomer();
 		$event = $this->event(lines: [['description' => 'case.created', 'quantity' => 2, 'unitPrice' => 0.5], ['description' => 'x', 'quantity' => 1]]);
 
-		$this->service(store: $store)->ingest(event: $event);
+		$this->service(store: $store)->invoicePeriod(event: $event);
 
 		$this->assertFalse($event->isHandled());
 		$this->assertSame('Line 2 has no readable quantity or unit price.', $event->getError());
@@ -264,13 +264,13 @@ final class InvoiceIngestServiceTest extends TestCase {
 	 */
 	public function testAMalformedRequestIsRefused(): void {
 		$service = $this->service(store: $this->storeWithCustomer());
-		$noMonth = new InvoiceIngestRequestedEvent(sourceApp: 'dossiq', externalReference: 't-42', period: '2026-13', lines: [['quantity' => 1, 'unitPrice' => 1]]);
-		$noLines = new InvoiceIngestRequestedEvent(sourceApp: 'dossiq', externalReference: 't-42', period: '2026-09', lines: []);
+		$noMonth = new BillablePeriodClosedEvent(sourceApp: 'dossiq', externalReference: 't-42', period: '2026-13', lines: [['quantity' => 1, 'unitPrice' => 1]]);
+		$noLines = new BillablePeriodClosedEvent(sourceApp: 'dossiq', externalReference: 't-42', period: '2026-09', lines: []);
 		$foreign = $this->event(lines: [['description' => 'a', 'quantity' => 1, 'unitPrice' => 1, 'currency' => 'USD']]);
 
-		$service->ingest(event: $noMonth);
-		$service->ingest(event: $noLines);
-		$service->ingest(event: $foreign);
+		$service->invoicePeriod(event: $noMonth);
+		$service->invoicePeriod(event: $noLines);
+		$service->invoicePeriod(event: $foreign);
 
 		$this->assertStringContainsString('not a month', (string)$noMonth->getError());
 		$this->assertSame('The invoice request carries no lines.', $noLines->getError());
@@ -288,7 +288,7 @@ final class InvoiceIngestServiceTest extends TestCase {
 			['id' => 'plan-x', 'administrationId' => 'adm-1', 'resourceType' => 'case.created', 'ratingMethod' => 'flat', 'unitPriceCents' => 50]
 		);
 
-		$this->service(store: $store)->ingest(event: $this->event());
+		$this->service(store: $store)->invoicePeriod(event: $this->event());
 
 		$this->assertCount(2, $store->setSchema('UsageRatePlan')->findAll());
 		$this->assertSame('plan-x', $store->setSchema('MeterReading')->findAll()[0]['ratePlanId']);
@@ -305,7 +305,7 @@ final class InvoiceIngestServiceTest extends TestCase {
 		$this->invoices = $invoices;
 		$event = $this->event();
 
-		$this->service(store: $this->storeWithCustomer())->ingest(event: $event);
+		$this->service(store: $this->storeWithCustomer())->invoicePeriod(event: $event);
 
 		$this->assertFalse($event->isHandled());
 		$this->assertStringContainsString('VAT table missing', (string)$event->getError());

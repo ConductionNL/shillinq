@@ -3,7 +3,7 @@
 /**
  * Invoice Ingest Service
  *
- * Answers InvoiceIngestRequestedEvent: another app's customer month becomes a
+ * Answers BillablePeriodClosedEvent: another app's customer month becomes a
  * draft BillableInvoice for the one CustomerMaster that carries that app's
  * reference (decision 174: a dossiq tenant bills under the customer whose
  * `externalReference` is the tenant id).
@@ -29,7 +29,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/tenant-month-invoice-from-dossiq/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+ * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,17 +41,17 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Event\InvoiceIngestRequestedEvent;
+use OCA\Shillinq\Event\BillablePeriodClosedEvent;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
- * Drafts the invoice an InvoiceIngestRequestedEvent asks for, or refuses it.
+ * Drafts the invoice an BillablePeriodClosedEvent asks for, or refuses it.
  *
- * @spec openspec/changes/tenant-month-invoice-from-dossiq/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+ * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
  */
-class InvoiceIngestService {
+class BillablePeriodInvoiceService {
 
 	/**
 	 * The only currency this path bills in.
@@ -79,33 +79,33 @@ class InvoiceIngestService {
 	/**
 	 * Answer the event: accept it with the drafted invoice, or refuse it.
 	 *
-	 * @param InvoiceIngestRequestedEvent $event The command.
+	 * @param BillablePeriodClosedEvent $event The command.
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/tenant-month-invoice-from-dossiq/specs/usage-metered-billing/spec.md (REQ-UMB-005)
+	 * @spec openspec/changes/billable-period-becomes-an-invoice/specs/usage-metered-billing/spec.md (REQ-UMB-005)
 	 */
-	public function ingest(InvoiceIngestRequestedEvent $event): void {
+	public function invoicePeriod(BillablePeriodClosedEvent $event): void {
 		try {
 			$this->answer(event: $event);
 		} catch (InvalidArgumentException $e) {
 			$event->refuse(error: $e->getMessage());
 		} catch (Throwable $e) {
-			$this->logger->error('InvoiceIngestService: drafting failed: ' . $e->getMessage());
+			$this->logger->error('BillablePeriodInvoiceService: drafting failed: ' . $e->getMessage());
 			$event->refuse(error: 'Shillinq could not draft the invoice: ' . $e->getMessage());
 		}
-	}//end ingest()
+	}//end invoicePeriod()
 
 	/**
 	 * Check, then draft or replay.
 	 *
-	 * @param InvoiceIngestRequestedEvent $event The command.
+	 * @param BillablePeriodClosedEvent $event The command.
 	 *
 	 * @return void
 	 *
 	 * @throws InvalidArgumentException When the command is refused.
 	 */
-	private function answer(InvoiceIngestRequestedEvent $event): void {
+	private function answer(BillablePeriodClosedEvent $event): void {
 		$sourceApp = trim($event->getSourceApp());
 		$reference = trim($event->getExternalReference());
 		$period    = $event->getPeriod();
@@ -227,7 +227,7 @@ class InvoiceIngestService {
 	/**
 	 * Answer a repeat from the ledger.
 	 *
-	 * @param InvoiceIngestRequestedEvent $event The command.
+	 * @param BillablePeriodClosedEvent $event The command.
 	 * @param array<string, mixed> $batch The stored ledger row.
 	 * @param string $payloadHash The hash of this request's lines.
 	 *
@@ -235,7 +235,7 @@ class InvoiceIngestService {
 	 *
 	 * @throws InvalidArgumentException When the same month arrives with different lines, or never got an invoice.
 	 */
-	private function replay(InvoiceIngestRequestedEvent $event, array $batch, string $payloadHash): void {
+	private function replay(BillablePeriodClosedEvent $event, array $batch, string $payloadHash): void {
 		if ((string)($batch['payloadHash'] ?? '') !== $payloadHash) {
 			throw new InvalidArgumentException(
 				sprintf('This month (%s) was drafted before with different lines. Credit or change that invoice instead.', (string)$batch['batchId'])
