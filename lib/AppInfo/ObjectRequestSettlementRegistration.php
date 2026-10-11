@@ -29,9 +29,11 @@ namespace OCA\Shillinq\AppInfo;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
+use OCA\Shillinq\Event\PayableRaisedEvent;
 use OCA\Shillinq\Event\PaymentCreditRequestedEvent;
 use OCA\Shillinq\Event\PaymentRefundRequestedEvent;
 use OCA\Shillinq\Listener\BankLineObjectRequestListener;
+use OCA\Shillinq\Listener\PayableRaisedListener;
 use OCA\Shillinq\Listener\PaymentCreditRequestedListener;
 use OCA\Shillinq\Listener\PaymentRefundRequestedListener;
 use OCA\Shillinq\Listener\ObjectRequestSettledListener;
@@ -74,6 +76,11 @@ final class ObjectRequestSettlementRegistration {
 		$context->registerEventListener(
 			event: PaymentCreditRequestedEvent::class,
 			listener: PaymentCreditRequestedListener::class
+		);
+		// A payout another app owes someone (inbound-payable-from-another-app, REQ-IPY-001).
+		$context->registerEventListener(
+			event: PayableRaisedEvent::class,
+			listener: PayableRaisedListener::class
 		);
 	}//end register()
 }//end class
