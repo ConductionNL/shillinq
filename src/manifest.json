@@ -7653,24 +7653,30 @@
 				"schema": "CustomerMaster",
 				"columns": [
 					{
-						"key": "customerNumber",
-						"label": "Customer #",
-						"sortable": true
-					},
-					{
-						"key": "name",
+						"key": "legalName",
 						"label": "Name",
+						"sortable": true,
+						"secondary": "{tradeName}"
+					},
+					{
+						"key": "kvkNumber",
+						"label": "KvK Number",
 						"sortable": true
 					},
 					{
-						"key": "paymentTermDays",
-						"label": "Payment Terms (days)",
+						"key": "legalForm",
+						"label": "Legal form",
 						"sortable": true
 					},
 					{
-						"key": "creditLimit",
-						"label": "Credit Limit (EUR)",
-						"sortable": true
+						"key": "address.city",
+						"label": "City",
+						"sortable": false
+					},
+					{
+						"key": "email",
+						"label": "Email",
+						"sortable": false
 					},
 					{
 						"key": "lifecycleState",
@@ -7678,9 +7684,35 @@
 						"sortable": true
 					}
 				],
-				"defaultSort": "customerNumber",
+				"defaultSort": "legalName",
 				"detailRoute": "CustomerDetail",
-				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/customers"
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/customers",
+				"look": "board",
+				"showTitle": true,
+				"countText": "{shown} of {total} customers",
+				"rowIcon": "OfficeBuildingOutline",
+				"headerButtons": [
+					{
+						"action": "export"
+					},
+					{
+						"action": "actions-menu"
+					}
+				],
+				"quickFilters": [
+					{
+						"label": "All",
+						"filter": {}
+					},
+					{
+						"label": "Also a supplier",
+						"filter": {"payeeId": "IS NOT NULL"}
+					},
+					{
+						"label": "Blocked",
+						"filter": {"lifecycleState": "blocked"}
+					}
+				]
 			}
 		},
 		{
@@ -7693,109 +7725,42 @@
 				"schema": "CustomerMaster",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/customers",
 				"indexRoute": "Customers",
-				"_note": "Debtor master archetype — a customer that gets invoiced. Body leads with the schema-driven Data widget (legalName/tradeName, kvkNumber, vatId with its VIES check, iban, creditLimit, dunningPolicyRef — real CustomerMaster fields; the legacy page listed fabricated keys like customerNumber/name/tradingName/btwNumber/paymentTermDays/peppolEndpoint/phone that do not exist on this schema, fixed here) beside a Related panel. The AR position is the customer's whole reason to be here, so its invoices (ARInvoice filtered customerId=@objectId, rowRoute to ARInvoiceDetail) are the primary body list, with outstanding/open-invoice totals as summaryAggregates KPI chips. No comms leaves — CustomerMaster carries no email/talk linkedType beyond the plain email/telephone fields already in the Data widget. Audit trail evidences master-data changes (credit limit, IBAN) and stays in the sidebar per policy.",
+				"_note": "Debtor master on the shared organisation page (nextcloud-vue screens-relation-pages, board ShKlant): the board look, a breadcrumb to Customers, one tab strip (Overview stack of details, agreements and open invoices; Invoices; Payment plans; Also a supplier with the both-sides figures; History last) and a side column with the SEPA mandate, the contact person, the address, the links and the History card. Every widget the page had stays, now placed through the tabs or the side column.",
 				"widgets": [
 					{
 						"id": "customer-identity",
 						"type": "data",
-						"title": "Company identity",
+						"title": "Details",
 						"icon": "OfficeBuilding",
-						"content": {
-							"columns": 2,
-							"include": [
-								"customerId",
-								"legalName",
-								"tradeName",
-								"kvkNumber",
-								"vatId",
-								"vatIdValidationStatus",
-								"vatIdValidatedAt",
-								"email",
-								"telephone"
-							]
-						}
+						"content": {"columns": 3, "include": ["legalName", "tradeName", "kvkNumber", "legalForm", "address", "vatId", "vatIdValidationStatus", "contactPerson", "email", "telephone", "customerId"]}
 					},
 					{
 						"id": "customer-stats-open-invoices",
 						"type": "stats-block",
 						"title": "Open invoices",
 						"icon": "ChartBar",
-						"content": {
-							"entries": [
-								{
-									"title": "Open invoices",
-									"register": "shillinq",
-									"schema": "ARInvoice",
-									"metric": "count",
-									"filter": {
-										"customerId": "@objectId",
-										"lifecycleState": "issued"
-									},
-									"route": "AccountsReceivable"
-								}
-							]
-						}
+						"content": {"entries": [{"title": "Open invoices", "register": "shillinq", "schema": "ARInvoice", "metric": "count", "filter": {"customerId": "@objectId", "lifecycleState": "issued"}, "route": "AccountsReceivable"}]}
 					},
 					{
 						"id": "customer-stats-overdue-invoices",
 						"type": "stats-block",
 						"title": "Overdue invoices",
 						"icon": "ChartBar",
-						"content": {
-							"entries": [
-								{
-									"title": "Overdue invoices",
-									"register": "shillinq",
-									"schema": "ARInvoice",
-									"metric": "count",
-									"filter": {
-										"customerId": "@objectId",
-										"lifecycleState": "overdue"
-									},
-									"route": "AccountsReceivable"
-								}
-							]
-						}
+						"content": {"entries": [{"title": "Overdue invoices", "register": "shillinq", "schema": "ARInvoice", "metric": "count", "filter": {"customerId": "@objectId", "lifecycleState": "overdue"}, "route": "AccountsReceivable"}]}
 					},
 					{
 						"id": "customer-stats-outstanding-gross",
 						"type": "stats-block",
 						"title": "Outstanding (gross)",
 						"icon": "ChartBar",
-						"content": {
-							"entries": [
-								{
-									"title": "Outstanding (gross)",
-									"register": "shillinq",
-									"schema": "ARInvoice",
-									"metric": "sum",
-									"field": "grossAmount",
-									"filter": {
-										"customerId": "@objectId",
-										"lifecycleState": "overdue"
-									},
-									"format": "currency"
-								}
-							]
-						}
+						"content": {"entries": [{"title": "Outstanding (gross)", "register": "shillinq", "schema": "ARInvoice", "metric": "sum", "field": "grossAmount", "filter": {"customerId": "@objectId", "lifecycleState": "overdue"}, "format": "currency"}]}
 					},
 					{
 						"id": "customer-finance",
 						"type": "data",
-						"title": "Finance & compliance",
+						"title": "Agreements",
 						"icon": "CurrencyEur",
-						"content": {
-							"columns": 2,
-							"include": [
-								"iban",
-								"creditLimit",
-								"dunningPolicyRef",
-								"defaultGlAccount",
-								"lifecycleState",
-								"administrationId",
-								"ublDebtorRef"
-							]
-						}
+						"content": {"columns": 2, "include": ["iban", "creditLimit", "dunningPolicyRef", "defaultGlAccount", "lifecycleState", "administrationId", "ublDebtorRef"]}
 					},
 					{
 						"id": "customer-related",
@@ -7808,332 +7773,71 @@
 						"type": "object-list",
 						"title": "Invoices",
 						"icon": "FileDocument",
-						"content": {
-							"register": "shillinq",
-							"schema": "ARInvoice",
-							"filter": {
-								"customerId": "@objectId"
-							},
-							"sort": {
-								"field": "dueDate",
-								"dir": "desc"
-							},
-							"limit": 20,
-							"columns": [
-								{
-									"key": "invoiceNumber",
-									"label": "Invoice #"
-								},
-								{
-									"key": "invoiceDate",
-									"label": "Date"
-								},
-								{
-									"key": "dueDate",
-									"label": "Due"
-								},
-								{
-									"key": "grossAmount",
-									"label": "Total (EUR)"
-								},
-								{
-									"key": "lifecycleState",
-									"label": "Status"
-								}
-							],
-							"rowRoute": "ARInvoiceDetail",
-							"viewAllRoute": "AccountsReceivable",
-							"viewAllQuery": {
-								"customerId": "@objectId"
-							},
-							"emptyText": "No invoices yet for this customer."
-						}
+						"content": {"register": "shillinq", "schema": "ARInvoice", "filter": {"customerId": "@objectId"}, "sort": {"field": "dueDate", "dir": "desc"}, "limit": 20, "columns": [{"key": "invoiceNumber", "label": "Invoice #"}, {"key": "invoiceDate", "label": "Date"}, {"key": "dueDate", "label": "Due"}, {"key": "grossAmount", "label": "Total (EUR)"}, {"key": "lifecycleState", "label": "Status"}], "rowRoute": "ARInvoiceDetail", "viewAllRoute": "AccountsReceivable", "viewAllQuery": {"customerId": "@objectId"}, "emptyText": "No invoices yet for this customer."}
 					},
 					{
 						"id": "customer-payment-plans",
 						"type": "object-list",
 						"title": "Payment plans",
 						"icon": "CalendarClock",
-						"content": {
-							"register": "shillinq",
-							"schema": "PaymentPlan",
-							"filter": {
-								"customerId": "@objectId"
-							},
-							"limit": 20,
-							"columns": [
-								{
-									"key": "planNumber",
-									"label": "Plan"
-								},
-								{
-									"key": "totalAmount",
-									"label": "Total"
-								},
-								{
-									"key": "paidAmount",
-									"label": "Paid"
-								},
-								{
-									"key": "nextDueDate",
-									"label": "Next due"
-								},
-								{
-									"key": "lifecycleState",
-									"label": "State"
-								}
-							],
-							"rowRoute": "PaymentPlanDetail",
-							"emptyText": "No payment plans for this customer."
-						}
+						"content": {"register": "shillinq", "schema": "PaymentPlan", "filter": {"customerId": "@objectId"}, "limit": 20, "columns": [{"key": "planNumber", "label": "Plan"}, {"key": "totalAmount", "label": "Total"}, {"key": "paidAmount", "label": "Paid"}, {"key": "nextDueDate", "label": "Next due"}, {"key": "lifecycleState", "label": "State"}], "rowRoute": "PaymentPlanDetail", "emptyText": "No payment plans for this customer."}
 					},
 					{
 						"id": "customer-both-sides-open-receivable",
 						"title": "Open receivable",
 						"type": "stat",
-						"content": {
-							"label": "Open receivable",
-							"icon": "ScaleBalance",
-							"format": {
-								"style": "currency",
-								"currency": "EUR",
-								"decimals": 2
-							},
-							"endpointSource": {
-								"url": "/apps/shillinq/api/relations/@objectId/both-sides"
-							},
-							"valueField": "totals.openReceivable"
-						}
+						"content": {"label": "Open receivable", "icon": "ScaleBalance", "format": {"style": "currency", "currency": "EUR", "decimals": 2}, "endpointSource": {"url": "/apps/shillinq/api/relations/@objectId/both-sides"}, "valueField": "totals.openReceivable"}
 					},
 					{
 						"id": "customer-both-sides-open-payable",
 						"title": "Open payable",
 						"type": "stat",
-						"content": {
-							"label": "Open payable",
-							"icon": "ScaleBalance",
-							"format": {
-								"style": "currency",
-								"currency": "EUR",
-								"decimals": 2
-							},
-							"endpointSource": {
-								"url": "/apps/shillinq/api/relations/@objectId/both-sides"
-							},
-							"valueField": "totals.openPayable"
-						}
+						"content": {"label": "Open payable", "icon": "ScaleBalance", "format": {"style": "currency", "currency": "EUR", "decimals": 2}, "endpointSource": {"url": "/apps/shillinq/api/relations/@objectId/both-sides"}, "valueField": "totals.openPayable"}
 					},
 					{
 						"id": "customer-both-sides-net",
 						"title": "Net position",
 						"type": "stat",
-						"content": {
-							"label": "Net position",
-							"icon": "ScaleBalance",
-							"format": {
-								"style": "currency",
-								"currency": "EUR",
-								"decimals": 2
-							},
-							"endpointSource": {
-								"url": "/apps/shillinq/api/relations/@objectId/both-sides"
-							},
-							"valueField": "totals.net"
-						}
+						"content": {"label": "Net position", "icon": "ScaleBalance", "format": {"style": "currency", "currency": "EUR", "decimals": 2}, "endpointSource": {"url": "/apps/shillinq/api/relations/@objectId/both-sides"}, "valueField": "totals.net"}
 					},
 					{
 						"id": "customer-both-sides-sent",
 						"title": "Invoices sent",
 						"type": "object-table",
-						"content": {
-							"endpointSource": {
-								"url": "/apps/shillinq/api/relations/@objectId/both-sides",
-								"responsePath": "sent.rows"
-							},
-							"columns": [
-								{
-									"key": "number",
-									"label": "Invoice"
-								},
-								{
-									"key": "date",
-									"label": "Date"
-								},
-								{
-									"key": "state",
-									"label": "Status"
-								},
-								{
-									"key": "amount",
-									"label": "Amount",
-									"formatter": "currency",
-									"formatterOptions": {
-										"currency": "EUR",
-										"decimals": 2
-									}
-								},
-								{
-									"key": "open",
-									"label": "Still open",
-									"formatter": "currency",
-									"formatterOptions": {
-										"currency": "EUR",
-										"decimals": 2
-									}
-								}
-							],
-							"emptyText": "No sales invoices this year, or none linked."
-						}
+						"content": {"endpointSource": {"url": "/apps/shillinq/api/relations/@objectId/both-sides", "responsePath": "sent.rows"}, "columns": [{"key": "number", "label": "Invoice"}, {"key": "date", "label": "Date"}, {"key": "state", "label": "Status"}, {"key": "amount", "label": "Amount", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2}}, {"key": "open", "label": "Still open", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2}}], "emptyText": "No sales invoices this year, or none linked."}
 					},
 					{
 						"id": "customer-both-sides-received",
 						"title": "Invoices received",
 						"type": "object-table",
-						"content": {
-							"endpointSource": {
-								"url": "/apps/shillinq/api/relations/@objectId/both-sides",
-								"responsePath": "received.rows"
-							},
-							"columns": [
-								{
-									"key": "number",
-									"label": "Invoice"
-								},
-								{
-									"key": "date",
-									"label": "Date"
-								},
-								{
-									"key": "state",
-									"label": "Status"
-								},
-								{
-									"key": "amount",
-									"label": "Amount",
-									"formatter": "currency",
-									"formatterOptions": {
-										"currency": "EUR",
-										"decimals": 2
-									}
-								},
-								{
-									"key": "open",
-									"label": "Still open",
-									"formatter": "currency",
-									"formatterOptions": {
-										"currency": "EUR",
-										"decimals": 2
-									}
-								}
-							],
-							"emptyText": "No purchase invoices this year, the customer is not linked to a supplier, or your role may not read purchases."
-						}
+						"content": {"endpointSource": {"url": "/apps/shillinq/api/relations/@objectId/both-sides", "responsePath": "received.rows"}, "columns": [{"key": "number", "label": "Invoice"}, {"key": "date", "label": "Date"}, {"key": "state", "label": "Status"}, {"key": "amount", "label": "Amount", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2}}, {"key": "open", "label": "Still open", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2}}], "emptyText": "No purchase invoices this year, the customer is not linked to a supplier, or your role may not read purchases."}
+					},
+					{
+						"id": "customer-open-invoices",
+						"type": "record-list",
+						"title": "Open invoices",
+						"content": {"register": "shillinq", "schema": "ARInvoice", "filter": {"customerId": "@objectId", "lifecycleState": "issued"}, "sort": {"field": "dueDate", "dir": "asc"}, "limit": 5, "presentation": "rows", "title": "{invoiceNumber}", "meta": "Invoice date {invoiceDate|date}", "pill": {"field": "lifecycleState", "colorMap": {"issued": "warning", "overdue": "error", "paid": "success"}}, "trailing": ["Due {dueDate|date}"], "rowRoute": "ARInvoiceDetail", "headerLink": {"label": "View all {total} open invoices", "route": "AccountsReceivable", "query": {"customerId": "@objectId"}}, "emptyText": "No open invoices for this customer."}
+					},
+					{
+						"id": "customer-history",
+						"type": "audit-trail",
+						"title": "History"
+					},
+					{
+						"id": "customer-panels",
+						"type": "tabs",
+						"title": "Customer",
+						"content": {"tabs": [{"widgetIds": ["customer-identity", "customer-finance", "customer-open-invoices"], "label": "Overview"}, {"widgetIds": ["customer-stats-open-invoices", "customer-stats-overdue-invoices", "customer-stats-outstanding-gross", "customer-invoices"], "label": "Invoices", "countFrom": "widget"}, {"widgetId": "customer-payment-plans", "label": "Payment plans", "countFrom": "widget"}, {"widgetIds": ["customer-both-sides-open-receivable", "customer-both-sides-open-payable", "customer-both-sides-net", "customer-both-sides-sent", "customer-both-sides-received"], "label": "Also a supplier"}, {"widgetId": "customer-history", "label": "History"}]}
 					}
 				],
 				"layout": [
 					{
 						"id": "1",
-						"widgetId": "customer-identity",
+						"widgetId": "customer-panels",
 						"gridX": 0,
 						"gridY": 0,
-						"gridWidth": 8,
-						"gridHeight": 4
-					},
-					{
-						"id": "2-1",
-						"widgetId": "customer-stats-open-invoices",
-						"gridX": 8,
-						"gridY": 0,
-						"gridWidth": 4,
-						"gridHeight": 2
-					},
-					{
-						"id": "2-2",
-						"widgetId": "customer-stats-overdue-invoices",
-						"gridX": 8,
-						"gridY": 2,
-						"gridWidth": 4,
-						"gridHeight": 2
-					},
-					{
-						"id": "2-3",
-						"widgetId": "customer-stats-outstanding-gross",
-						"gridX": 8,
-						"gridY": 4,
-						"gridWidth": 4,
-						"gridHeight": 2
-					},
-					{
-						"id": "3",
-						"widgetId": "customer-finance",
-						"gridX": 0,
-						"gridY": 6,
-						"gridWidth": 8,
-						"gridHeight": 4
-					},
-					{
-						"id": "4",
-						"widgetId": "customer-related",
-						"gridX": 8,
-						"gridY": 6,
-						"gridWidth": 4,
-						"gridHeight": 4
-					},
-					{
-						"id": "5",
-						"widgetId": "customer-invoices",
-						"gridX": 0,
-						"gridY": 10,
 						"gridWidth": 12,
-						"gridHeight": 5
-					},
-					{
-						"id": "6",
-						"widgetId": "customer-payment-plans",
-						"gridX": 0,
-						"gridY": 15,
-						"gridWidth": 12,
-						"gridHeight": 4
-					},
-					{
-						"id": "7-1",
-						"widgetId": "customer-both-sides-open-receivable",
-						"gridX": 0,
-						"gridY": 19,
-						"gridWidth": 4,
-						"gridHeight": 2
-					},
-					{
-						"id": "7-2",
-						"widgetId": "customer-both-sides-open-payable",
-						"gridX": 4,
-						"gridY": 19,
-						"gridWidth": 4,
-						"gridHeight": 2
-					},
-					{
-						"id": "7-3",
-						"widgetId": "customer-both-sides-net",
-						"gridX": 8,
-						"gridY": 19,
-						"gridWidth": 4,
-						"gridHeight": 2
-					},
-					{
-						"id": "8",
-						"widgetId": "customer-both-sides-sent",
-						"gridX": 0,
-						"gridY": 21,
-						"gridWidth": 6,
-						"gridHeight": 5
-					},
-					{
-						"id": "9",
-						"widgetId": "customer-both-sides-received",
-						"gridX": 6,
-						"gridY": 21,
-						"gridWidth": 6,
-						"gridHeight": 5
+						"gridHeight": 18
 					}
 				],
 				"headerActions": [
@@ -8143,10 +7847,7 @@
 						"type": "open-modal",
 						"target": "AgreePaymentPlanModal",
 						"icon": "CalendarClock",
-						"props": {
-							"open": true,
-							"from": "customer"
-						}
+						"props": {"open": true, "from": "customer"}
 					},
 					{
 						"id": "link-supplier",
@@ -8154,25 +7855,63 @@
 						"type": "open-modal",
 						"target": "RelationLinkDialog",
 						"icon": "LinkVariant",
-						"props": {
-							"open": true
-						}
+						"props": {"open": true}
 					},
-					{"id": "check-vat-number", "label": "Check VAT number", "type": "handler", "handler": "checkCustomerVatNumber", "icon": "CheckDecagramOutline", "description": "Check the VAT number against the EU VIES register and keep the outcome on this record."}
+					{
+						"id": "check-vat-number",
+						"label": "Check VAT number",
+						"type": "handler",
+						"handler": "checkCustomerVatNumber",
+						"icon": "CheckDecagramOutline",
+						"description": "Check the VAT number against the EU VIES register and keep the outcome on this record."
+					}
 				],
 				"lifecycleActions": true,
 				"sidebar": {
 					"enabled": true,
 					"showMetadata": true,
 					"tabs": [
-						{
-							"id": "audit",
-							"label": "History",
-							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
-						}
+						{"id": "audit", "label": "History", "icon": "History", "widgets": [{"type": "audit"}]}
 					]
-				}
+				},
+				"look": "board",
+				"breadcrumb": {
+					"label": "Customers",
+					"route": "Customers"
+				},
+				"statusPill": {
+					"field": "payeeLink.matchedOn",
+					"labels": {
+						"kvk": "Also a supplier",
+						"vat": "Also a supplier",
+						"manual": "Also a supplier"
+					},
+					"variant": "purple"
+				},
+				"identifierField": "customerId",
+				"tabsLabel": "Customer parts",
+				"sideColumn": [
+					{
+						"id": "side-sepa",
+						"type": "facts",
+						"title": "SEPA mandate",
+						"content": {"source": {"register": "shillinq", "schema": "SepaMandate", "id": "@object.defaultMandateId"}, "fields": [{"as": "pill", "path": "status", "variantMap": {"active": "success", "cancelled": "error", "suspended": "warning", "pending": "info", "expired": "default"}}, {"label": "Mandate", "path": "mandateReference"}, {"label": "IBAN", "path": "debtorIban", "copy": true}, {"label": "Signed", "path": "signedAt", "format": "date"}], "emptyText": "No SEPA mandate"}
+					},
+					{
+						"id": "side-contact",
+						"type": "facts",
+						"title": "Contact person",
+						"content": {"fields": [{"as": "lead", "key": "contact", "initialsPath": "contactPerson.name", "title": "contactPerson.name", "subtitle": "contactPerson.role"}, {"icon": "EmailOutline", "label": "Email", "path": "contactPerson.email", "format": "email", "copy": true}, {"icon": "Phone", "label": "Telephone", "path": "contactPerson.telephone", "format": "phone"}], "emptyText": "No contact person yet"}
+					},
+					{
+						"id": "side-address",
+						"type": "facts",
+						"title": "Address",
+						"content": {"fields": [{"as": "text", "key": "street", "parts": ["address.street", "address.houseNumber"], "separator": " "}, {"as": "text", "key": "city", "parts": ["address.postcode", "address.city"], "separator": " "}], "emptyText": "No address yet"}
+					},
+					"customer-related",
+					"customer-history"
+				]
 			}
 		},
 		{

@@ -61,15 +61,71 @@
 				"register": "shillinq",
 				"schema": "Payee",
 				"columns": [
-					{"key": "vendorNumber", "label": "Vendor #", "sortable": true},
-					{"key": "name", "label": "Name", "sortable": true},
-					{"key": "bankAccount.iban", "label": "IBAN", "sortable": false},
-					{"key": "paymentTermDays", "label": "Payment Terms (days)", "sortable": true},
-					{"key": "email", "label": "Email", "sortable": false},
-					{"key": "lifecycleState", "label": "Status", "sortable": true}
+					{
+						"key": "name",
+						"label": "Supplier",
+						"sortable": true,
+						"secondary": "{tradingName}"
+					},
+					{
+						"key": "kvkNumber",
+						"label": "KvK Number",
+						"sortable": true
+					},
+					{
+						"key": "payeeType",
+						"label": "Payee Type",
+						"sortable": true
+					},
+					{
+						"key": "address.city",
+						"label": "City",
+						"sortable": false
+					},
+					{
+						"key": "paymentTermDays",
+						"label": "Payment Terms (days)",
+						"sortable": true
+					},
+					{
+						"key": "apBalance",
+						"label": "Open AP Balance",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
 				],
-				"defaultSort": "vendorNumber",
-				"detailRoute": "PayeeDetail"
+				"defaultSort": "name",
+				"detailRoute": "PayeeDetail",
+				"look": "board",
+				"showTitle": true,
+				"countText": "{shown} of {total} suppliers",
+				"rowIcon": "OfficeBuildingOutline",
+				"headerButtons": [
+					{
+						"action": "export"
+					},
+					{
+						"action": "actions-menu"
+					}
+				],
+				"quickFilters": [
+					{
+						"label": "All",
+						"filter": {}
+					},
+					{
+						"label": "Payment blocked",
+						"filter": {"paymentBlocked": true}
+					},
+					{
+						"label": "Freelancers",
+						"filter": {"payeeType": "freelancer"}
+					}
+				]
 			}
 		},
 		{
