@@ -147,7 +147,7 @@ class InboundPayableService {
 		);
 		$payable['state'] = 'approved';
 		$payable['approvedAt'] = gmdate('Y-m-d\TH:i:s\Z');
-		$payable['journalEntryIds'] = [...($payable['journalEntryIds'] ?? []), $journalId];
+		$payable['journalEntryIds'] = self::withEntry(payable: $payable, journalId: $journalId);
 
 		return $this->saveAndCallBack(payable: $payable);
 	}//end approve()
@@ -193,7 +193,7 @@ class InboundPayableService {
 		$payable['state'] = 'paid';
 		$payable['paidOn'] = $paidOn;
 		$payable['bankReference'] = $bankReference;
-		$payable['journalEntryIds'] = [...($payable['journalEntryIds'] ?? []), $journalId];
+		$payable['journalEntryIds'] = self::withEntry(payable: $payable, journalId: $journalId);
 
 		return $this->saveAndCallBack(payable: $payable);
 	}//end markPaid()
@@ -448,6 +448,25 @@ class InboundPayableService {
 	}//end book()
 
 	/**
+	 * The payable's journal entry ids with one more.
+	 *
+	 * @param array<string, mixed> $payable   The payable.
+	 * @param string               $journalId The new entry.
+	 *
+	 * @return list<string> The ids.
+	 */
+	private static function withEntry(array $payable, string $journalId): array {
+		$ids = $payable['journalEntryIds'] ?? [];
+		if (is_array($ids) === false) {
+			$ids = [];
+		}
+
+		$ids = array_values(array_map(static fn ($id): string => (string)$id, $ids));
+		$ids[] = $journalId;
+		return $ids;
+	}//end withEntry()
+
+	/**
 	 * How the payable is named in a posting text.
 	 *
 	 * @param array<string, mixed> $payable The payable.
@@ -490,7 +509,7 @@ class InboundPayableService {
 
 		$remainder = 0;
 		foreach (str_split($digits, 7) as $chunk) {
-			$remainder = (int)(($remainder . $chunk) % 97);
+			$remainder = ((int)($remainder . $chunk) % 97);
 		}
 
 		return $remainder === 1;
