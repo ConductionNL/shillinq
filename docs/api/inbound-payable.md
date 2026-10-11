@@ -81,5 +81,33 @@ Without a secret for your app shillinq sends nothing, and the payable records
 why in `callbackError`. A callback that fails does not undo the step; the
 payable keeps `callbackError` until the next step reaches you.
 
+## Withdrawing a payout
+
+While finance has not acted on a payable, your app can withdraw it, for
+example because the decision behind the payout is under objection:
+
+```php
+use OCA\Shillinq\Event\PayableCancelRequestedEvent;
+
+$event = new PayableCancelRequestedEvent(
+    sourceApp: 'dossiq',
+    reference: 'DWS-2026-0042',
+    reason: 'Bezwaar ingediend tegen de beschikking',
+);
+$dispatcher->dispatchTyped($event);
+if ($event->isHandled() === false) {
+    // $event->getError() says why: no payable under that reference, no reason,
+    // or finance already approved, paid or rejected it.
+}
+```
+
+A withdrawn payable reads `cancelled` with `cancelledAt` and `cancelledReason`.
+Nothing is booked and no callback is sent, because your app asked. Asking again
+answers the same payable. An approved payable has its expense booked, so only
+finance can undo it, and the command is refused.
+
+A withdrawn reference stays spent. To pay out again, for example with the
+amount the objection decided, raise a new payable under a new reference.
+
 Next: add a route in your app that verifies the signature and updates your own
 record from `status`.

@@ -6472,7 +6472,13 @@ OC.L10N.register(
         "App told at": "App ingelicht op",
         "When the last step reached the app's callback.": "Wanneer de laatste stap bij de terugmelding van de app aankwam.",
         "Callback problem": "Probleem met terugmelding",
-        "Why the last step did not reach the app, if it did not.": "Waarom de laatste stap de app niet bereikte, als dat zo is."
+        "Why the last step did not reach the app, if it did not.": "Waarom de laatste stap de app niet bereikte, als dat zo is.",
+        "Withdrawn": "Ingetrokken",
+        "Withdrawn at": "Ingetrokken op",
+        "When the raising app withdrew the payable.": "Wanneer de aanvragende app de uitbetaling introk.",
+        "Reason for withdrawing": "Reden van intrekken",
+        "Why the raising app withdrew the payable.": "Waarom de aanvragende app de uitbetaling introk.",
+        "Requested until finance approves or rejects it or the app withdraws it, approved until it is paid.": "Aangevraagd tot financiën de uitbetaling goedkeurt of afwijst of de app haar intrekt, goedgekeurd tot ze is betaald."
     },
     "nplurals=2; plural=(n != 1);"
 )

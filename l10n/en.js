@@ -4273,7 +4273,13 @@ OC.L10N.register(
         "App told at": "App told at",
         "When the last step reached the app's callback.": "When the last step reached the app's callback.",
         "Callback problem": "Callback problem",
-        "Why the last step did not reach the app, if it did not.": "Why the last step did not reach the app, if it did not."
+        "Why the last step did not reach the app, if it did not.": "Why the last step did not reach the app, if it did not.",
+        "Withdrawn": "Withdrawn",
+        "Withdrawn at": "Withdrawn at",
+        "When the raising app withdrew the payable.": "When the raising app withdrew the payable.",
+        "Reason for withdrawing": "Reason for withdrawing",
+        "Why the raising app withdrew the payable.": "Why the raising app withdrew the payable.",
+        "Requested until finance approves or rejects it or the app withdraws it, approved until it is paid.": "Requested until finance approves or rejects it or the app withdraws it, approved until it is paid."
     },
     "nplurals=2; plural=(n != 1);"
 )

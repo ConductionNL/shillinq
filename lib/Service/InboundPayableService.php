@@ -30,6 +30,7 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Event\PayableCancelRequestedEvent;
 use OCA\Shillinq\Event\PayableRaisedEvent;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -222,6 +223,66 @@ class InboundPayableService {
 
 		return $this->saveAndCallBack(payable: $payable);
 	}//end reject()
+
+	/**
+	 * Answer a cancel command from the raising app: a requested payable is
+	 * withdrawn, nothing is booked and no callback is sent (the app asked).
+	 *
+	 * Asking again for a payable already withdrawn answers it again. A payable
+	 * finance approved, paid or rejected is refused and keeps its state: an
+	 * approved payout has its expense booked, so only finance can undo it.
+	 *
+	 * @param PayableCancelRequestedEvent $event The command.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
+	 */
+	public function cancel(PayableCancelRequestedEvent $event): void {
+		$app = $event->getSourceApp();
+		$reference = $event->getReference();
+		$reason = $event->getReason();
+		if ($reason === '') {
+			$event->refuse(error: 'Withdrawing a payout needs a reason finance can read.');
+			return;
+		}
+
+		$payable = null;
+		if ($app !== '' && $reference !== '') {
+			$payable = $this->findByReference(app: $app, reference: $reference);
+		}
+
+		if ($payable === null) {
+			$event->refuse(error: sprintf('%s raised no payable under reference %s.', $app, $reference));
+			return;
+		}
+
+		$state = (string)($payable['state'] ?? '');
+		if ($state === 'cancelled') {
+			$event->accept(payableId: (string)$payable['id'], state: 'cancelled');
+			return;
+		}
+
+		if ($state !== 'requested') {
+			$event->refuse(
+				error: sprintf('The payable under reference %s is %s, so only finance can undo it.', $reference, $state)
+			);
+			return;
+		}
+
+		$payable['state'] = 'cancelled';
+		$payable['cancelledAt'] = gmdate('Y-m-d\TH:i:s\Z');
+		$payable['cancelledReason'] = $reason;
+		try {
+			$this->save(schema: self::SCHEMA, object: $payable);
+		} catch (Throwable $e) {
+			$this->logger->error('Shillinq: a payable could not be withdrawn', ['exception' => $e->getMessage()]);
+			$event->refuse(error: 'The payable could not be withdrawn: ' . $e->getMessage());
+			return;
+		}
+
+		$event->accept(payableId: (string)$payable['id'], state: 'cancelled');
+	}//end cancel()
 
 	/**
 	 * Why a payout command is refused, or null.
