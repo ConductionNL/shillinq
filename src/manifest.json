@@ -7911,7 +7911,8 @@
 					},
 					"customer-related",
 					"customer-history"
-				]
+				],
+				"follow": false
 			}
 		},
 		{
