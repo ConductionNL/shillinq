@@ -1,0 +1,56 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "screens-relation-pages",
+    "adr": "ADR-037 modular register fragment: never edit shillinq_register.json or other fragments.",
+    "description": "Gives a customer its postal address, its legal form and the contact person at the customer, the three facts the customer page (ShKlant) shows beside the KvK and VAT numbers. Same address shape as a supplier (Payee), so the shared organisation page reads both the same way. Decided by Ruben, 11 Oct 2026.",
+    "spec": "nextcloud-vue openspec/changes/screens-relation-pages"
+  },
+  "info": {
+    "version": "0.1.0-customer-address-legal-form-contact"
+  },
+  "components": {
+    "schemas": {
+      "CustomerMaster": {
+        "version": "0.4.0",
+        "properties": {
+          "address": {
+            "type": "object",
+            "nullable": true,
+            "title": "Address",
+            "description": "Postal address of the customer.",
+            "properties": {
+              "street": { "type": "string", "title": "Street", "description": "The street." },
+              "houseNumber": { "type": "string", "title": "House Number", "description": "The house number, with any addition." },
+              "postcode": { "type": "string", "title": "Postcode", "description": "The postcode, such as 3312 AB." },
+              "city": { "type": "string", "title": "City", "description": "The city." },
+              "country": { "type": "string", "title": "Country", "description": "ISO 3166-1 alpha-2 country code.", "default": "NL" }
+            },
+            "example": { "street": "Lindelaan", "houseNumber": "14", "postcode": "3312 AB", "city": "Zuiddrecht", "country": "NL" }
+          },
+          "legalForm": {
+            "type": "string",
+            "nullable": true,
+            "title": "Legal form",
+            "description": "The legal form as the trade register names it: Stichting, Vereniging, BV, Eenmanszaak.",
+            "example": "Stichting"
+          },
+          "contactPerson": {
+            "type": "object",
+            "nullable": true,
+            "title": "Contact person",
+            "description": "The person at the customer we deal with about invoices.",
+            "properties": {
+              "name": { "type": "string", "title": "Name", "description": "Full name." },
+              "role": { "type": "string", "title": "Role", "description": "Their role at the customer, such as penningmeester." },
+              "email": { "type": "string", "format": "email", "title": "Email", "description": "Email address." },
+              "telephone": { "type": "string", "title": "Telephone", "description": "Telephone number." }
+            },
+            "example": { "name": "Sanne de Vries", "role": "penningmeester", "email": "penningmeester@buurtwerk.nl", "telephone": "078 612 33 10" }
+          }
+        }
+      }
+    }
+  }
+}
