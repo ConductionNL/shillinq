@@ -4256,7 +4256,27 @@ OC.L10N.register(
         "{shown} of {total} customers": "{shown} of {total} customers",
         "{shown} of {total} suppliers": "{shown} of {total} suppliers",
         "City": "City",
-        "Freelancers": "Freelancers"
+        "Freelancers": "Freelancers",
+        "Trade Name": "Trade name",
+        "VAT ID Validation Status": "VAT check",
+        "Default GL Account": "Default ledger account",
+        "Dunning Policy Ref": "Reminder schedule",
+        "Lifecycle State": "Status",
+        "Ubl Debtor Ref": "UBL debtor reference",
+        "unchecked": "not checked",
+        "valid": "valid",
+        "invalid": "invalid",
+        "vies_outage": "VIES unavailable",
+        "supplier": "supplier",
+        "vendor": "supplier",
+        "freelancer": "freelancer",
+        "contractor": "contractor",
+        "government": "government",
+        "Payment terms": "Payment terms",
+        "Open balance": "Open balance",
+        "New supplier": "New supplier",
+        "Outstanding": "Outstanding",
+        "VAT ID": "VAT number"
     },
     "nplurals=2; plural=(n != 1);"
 )

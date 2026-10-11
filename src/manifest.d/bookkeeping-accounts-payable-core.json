@@ -74,7 +74,7 @@
 					},
 					{
 						"key": "payeeType",
-						"label": "Payee Type",
+						"label": "Type",
 						"sortable": true
 					},
 					{
@@ -84,12 +84,12 @@
 					},
 					{
 						"key": "paymentTermDays",
-						"label": "Payment Terms (days)",
+						"label": "Payment terms",
 						"sortable": true
 					},
 					{
 						"key": "apBalance",
-						"label": "Open AP Balance",
+						"label": "Open balance",
 						"sortable": true
 					},
 					{
@@ -110,6 +110,11 @@
 					},
 					{
 						"action": "actions-menu"
+					},
+					{
+						"action": "add",
+						"variant": "primary",
+						"label": "New supplier"
 					}
 				],
 				"quickFilters": [

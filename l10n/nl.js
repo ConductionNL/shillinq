@@ -6459,7 +6459,27 @@ OC.L10N.register(
         "{shown} of {total} customers": "{shown} van {total} klanten",
         "{shown} of {total} suppliers": "{shown} van {total} leveranciers",
         "City": "Plaats",
-        "Freelancers": "Zzp’ers"
+        "Freelancers": "Zzp’ers",
+        "Trade Name": "Handelsnaam",
+        "VAT ID Validation Status": "Btw-validatie",
+        "Default GL Account": "Standaard grootboekrekening",
+        "Dunning Policy Ref": "Herinneringsschema",
+        "Lifecycle State": "Status",
+        "Ubl Debtor Ref": "UBL-debiteurreferentie",
+        "unchecked": "niet gecontroleerd",
+        "valid": "geldig",
+        "invalid": "ongeldig",
+        "vies_outage": "VIES niet bereikbaar",
+        "supplier": "leverancier",
+        "vendor": "leverancier",
+        "freelancer": "zzp’er",
+        "contractor": "onderaannemer",
+        "government": "overheid",
+        "Payment terms": "Betaaltermijn",
+        "Open balance": "Openstaand",
+        "New supplier": "Nieuwe leverancier",
+        "Outstanding": "Open",
+        "VAT ID": "Btw-nummer"
     },
     "nplurals=2; plural=(n != 1);"
 )

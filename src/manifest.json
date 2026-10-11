@@ -7816,7 +7816,7 @@
 						"id": "customer-open-invoices",
 						"type": "record-list",
 						"title": "Open invoices",
-						"content": {"register": "shillinq", "schema": "ARInvoice", "filter": {"customerId": "@objectId", "lifecycleState": "issued"}, "sort": {"field": "dueDate", "dir": "asc"}, "limit": 5, "presentation": "rows", "title": "{invoiceNumber}", "meta": "Invoice date {invoiceDate|date}", "pill": {"field": "lifecycleState", "colorMap": {"issued": "warning", "overdue": "error", "paid": "success"}}, "trailing": ["Due {dueDate|date}"], "rowRoute": "ARInvoiceDetail", "headerLink": {"label": "View all {total} open invoices", "route": "AccountsReceivable", "query": {"customerId": "@objectId"}}, "emptyText": "No open invoices for this customer."}
+						"content": {"register": "shillinq", "schema": "ARInvoice", "filter": {"customerId": "@objectId", "lifecycleState": "issued"}, "sort": {"field": "dueDate", "dir": "asc"}, "limit": 5, "presentation": "rows", "title": "{invoiceNumber}", "meta": "Invoice date {invoiceDate|date}", "pill": {"field": "lifecycleState", "labels": {"issued": "Outstanding", "overdue": "Overdue", "paid": "Paid"}, "colorMap": {"issued": "warning", "overdue": "error", "paid": "success"}}, "trailing": ["Due {dueDate|date}"], "rowRoute": "ARInvoiceDetail", "headerLink": {"label": "View all {total} open invoices", "route": "AccountsReceivable", "query": {"customerId": "@objectId"}}, "emptyText": "No open invoices for this customer."}
 					},
 					{
 						"id": "customer-history",
