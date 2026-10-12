@@ -6512,7 +6512,8 @@
         "Open balance": "Openstaand",
         "New supplier": "Nieuwe leverancier",
         "Outstanding": "Open",
-        "VAT ID": "Btw-nummer"
+        "VAT ID": "Btw-nummer",
+        "Customer details": "Gegevens"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

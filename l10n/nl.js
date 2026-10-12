@@ -6510,7 +6510,8 @@ OC.L10N.register(
         "Open balance": "Openstaand",
         "New supplier": "Nieuwe leverancier",
         "Outstanding": "Open",
-        "VAT ID": "Btw-nummer"
+        "VAT ID": "Btw-nummer",
+        "Customer details": "Gegevens"
     },
     "nplurals=2; plural=(n != 1);"
 )

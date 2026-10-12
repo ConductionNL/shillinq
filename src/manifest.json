@@ -7731,8 +7731,7 @@
 					{
 						"id": "customer-identity",
 						"type": "data",
-						"title": "Details",
-						"icon": "OfficeBuilding",
+						"title": "Customer details",
 						"content": {"columns": 3, "include": ["legalName", "tradeName", "kvkNumber", "legalForm", "address", "vatId", "vatIdValidationStatus", "contactPerson", "email", "telephone", "customerId"]}
 					},
 					{
@@ -7760,7 +7759,6 @@
 						"id": "customer-finance",
 						"type": "data",
 						"title": "Agreements",
-						"icon": "CurrencyEur",
 						"content": {"columns": 2, "include": ["iban", "creditLimit", "dunningPolicyRef", "defaultGlAccount", "lifecycleState", "administrationId", "ublDebtorRef"]}
 					},
 					{
@@ -7897,18 +7895,6 @@
 						"type": "facts",
 						"title": "SEPA mandate",
 						"content": {"source": {"register": "shillinq", "schema": "SepaMandate", "id": "@object.defaultMandateId"}, "fields": [{"as": "pill", "path": "status", "variantMap": {"active": "success", "cancelled": "error", "suspended": "warning", "pending": "info", "expired": "default"}}, {"label": "Mandate", "path": "mandateReference"}, {"label": "IBAN", "path": "debtorIban", "copy": true}, {"label": "Signed", "path": "signedAt", "format": "date"}], "emptyText": "No SEPA mandate"}
-					},
-					{
-						"id": "side-contact",
-						"type": "facts",
-						"title": "Contact person",
-						"content": {"fields": [{"as": "lead", "key": "contact", "initialsPath": "contactPerson.name", "title": "contactPerson.name", "subtitle": "contactPerson.role"}, {"icon": "EmailOutline", "label": "Email", "path": "contactPerson.email", "format": "email", "copy": true}, {"icon": "Phone", "label": "Telephone", "path": "contactPerson.telephone", "format": "phone"}], "emptyText": "No contact person yet"}
-					},
-					{
-						"id": "side-address",
-						"type": "facts",
-						"title": "Address",
-						"content": {"fields": [{"as": "text", "key": "street", "parts": ["address.street", "address.houseNumber"], "separator": " "}, {"as": "text", "key": "city", "parts": ["address.postcode", "address.city"], "separator": " "}], "emptyText": "No address yet"}
 					},
 					"customer-related",
 					"customer-history"
