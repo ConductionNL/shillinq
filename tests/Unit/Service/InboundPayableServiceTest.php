@@ -65,6 +65,12 @@ final class InboundPayableServiceTest extends TestCase {
 	private InMemoryObjectServiceStub $store;
 
 	/**
+	 * Whether the store refuses the next save.
+	 * @var bool
+	 */
+	private bool $storeRefusesSaves = false;
+
+	/**
 	 * The transitions the bookings ran.
 	 * @var list<array{0: string, 1: string}>
 	 */
@@ -83,7 +89,32 @@ final class InboundPayableServiceTest extends TestCase {
 	 * @return InboundPayableService The service.
 	 */
 	private function service(array $config = [], array $installed = ['dossiq']): InboundPayableService {
-		$this->store = new InMemoryObjectServiceStub(data: ['InboundPayable' => []]);
+		$refuses = fn (): bool => $this->storeRefusesSaves;
+		$this->store = new class($refuses) extends InMemoryObjectServiceStub {
+
+			/**
+			 * Constructor.
+			 * @param \Closure(): bool $refuses Whether the next save is refused.
+			 */
+			public function __construct(
+				private readonly \Closure $refuses,
+			) {
+				parent::__construct(data: ['InboundPayable' => []]);
+			}//end __construct()
+
+			/**
+			 * Save, or refuse as OpenRegister does when the write fails.
+			 * @param mixed ...$arguments The arguments of saveObject.
+			 * @return \OCA\OpenRegister\Contract\ObjectEntityInterface The saved object.
+			 */
+			public function saveObject(...$arguments): \OCA\OpenRegister\Contract\ObjectEntityInterface {
+				if (($this->refuses)() === true) {
+					throw new \RuntimeException('The register is locked.');
+				}
+
+				return parent::saveObject(...$arguments);
+			}//end saveObject()
+		};
 		$config += [
 			'register' => 'shillinq',
 			InboundPayableService::CONFIG_PAYABLE_ACCOUNT => '1610',
@@ -481,4 +512,46 @@ final class InboundPayableServiceTest extends TestCase {
 
 		self::assertSame([], $this->store->saved);
 	}//end testWithdrawingIsRefusedOnceFinanceActed()
+
+	/**
+	 * A withdrawal the register refuses to write is answered as refused, with
+	 * the register's reason, and the payable stays requested (REQ-IPY-005).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
+	 */
+	public function testAWithdrawalTheRegisterRefusesIsAnsweredAsRefused(): void {
+		$service = $this->service();
+		self::dispatch(service: $service, event: self::raised());
+		$this->store->saved = [];
+		$this->storeRefusesSaves = true;
+
+		$event = self::cancel(service: $service);
+
+		self::assertFalse($event->isHandled());
+		self::assertNull($event->getResult());
+		self::assertStringContainsString('The register is locked.', (string)$event->getError());
+		self::assertSame([], $this->store->saved);
+
+		$this->storeRefusesSaves = false;
+		self::assertTrue(self::cancel(service: $service)->isHandled(), 'the payable was still requested');
+	}//end testAWithdrawalTheRegisterRefusesIsAnsweredAsRefused()
+
+	/**
+	 * The withdrawal listener leaves any other event alone.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/inbound-payable-from-another-app/specs/inbound-payables/spec.md (REQ-IPY-005)
+	 */
+	public function testTheWithdrawalListenerLeavesOtherEventsAlone(): void {
+		$service = $this->service();
+		$raised = self::raised();
+
+		(new PayableCancelRequestedListener(payables: $service))->handle(event: $raised);
+
+		self::assertFalse($raised->isHandled());
+		self::assertSame([], $this->store->saved);
+	}//end testTheWithdrawalListenerLeavesOtherEventsAlone()
 }//end class
