@@ -69,6 +69,20 @@ vi.mock(
 	'../../node_modules/@conduction/nextcloud-vue/dist/esm/composables/useObjectSubscription.js',
 	() => ({ useObjectSubscription: () => ({}) }),
 )
+// The lifecycle buttons' dialogs and write feedback (nextcloud-vue 2.79):
+// the button list never opens them, and their imports need a DOM.
+vi.mock(
+	'../../node_modules/@conduction/nextcloud-vue/dist/esm/dialogs/CnTransitionInputDialog.vue.js',
+	() => ({ default: {} }),
+)
+vi.mock(
+	'../../node_modules/@conduction/nextcloud-vue/dist/esm/dialogs/CnWriteConfirmDialog.vue.js',
+	() => ({ default: {} }),
+)
+vi.mock(
+	'../../node_modules/@conduction/nextcloud-vue/dist/esm/composables/useWriteFeedback.js',
+	() => ({ useWriteFeedback: () => ({}) }),
+)
 
 const ROOT = path.resolve(__dirname, '../..')
 
