@@ -11,4 +11,5 @@
 ## 2. Follow-up
 
 - [ ] 2.1 "Payouts to pay" menu entry on the InboundPayable index with the three row actions. Verify: Playwright on the live instance.
+- [x] 2.3 `PayableCancelRequestedEvent`, `PayableCancelRequestedListener`, `InboundPayableService::cancel()`: the raising app withdraws a requested payable; schema 0.2.0 adds `cancelled`, `cancelledAt`, `cancelledReason` (REQ-IPY-005). Verify: `testTheAppWithdrawsARequestedPayable`, `testWithdrawingIsRefusedOnceFinanceActed`, `testStepsNeedTheAdministerActionAndTheListenerIsWired`.
 - [ ] 2.2 Tell dossiq to raise its dwangsom payout through `PayableRaisedEvent` (refactor lane R3, C16 part 2).

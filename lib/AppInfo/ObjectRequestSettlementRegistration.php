@@ -29,10 +29,12 @@ namespace OCA\Shillinq\AppInfo;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
+use OCA\Shillinq\Event\PayableCancelRequestedEvent;
 use OCA\Shillinq\Event\PayableRaisedEvent;
 use OCA\Shillinq\Event\PaymentCreditRequestedEvent;
 use OCA\Shillinq\Event\PaymentRefundRequestedEvent;
 use OCA\Shillinq\Listener\BankLineObjectRequestListener;
+use OCA\Shillinq\Listener\PayableCancelRequestedListener;
 use OCA\Shillinq\Listener\PayableRaisedListener;
 use OCA\Shillinq\Event\BillablePeriodClosedEvent;
 use OCA\Shillinq\Listener\BillablePeriodClosedListener;
@@ -83,6 +85,11 @@ final class ObjectRequestSettlementRegistration {
 		$context->registerEventListener(
 			event: PayableRaisedEvent::class,
 			listener: PayableRaisedListener::class
+		);
+		// The raising app withdraws a payout finance has not acted on (REQ-IPY-005).
+		$context->registerEventListener(
+			event: PayableCancelRequestedEvent::class,
+			listener: PayableCancelRequestedListener::class
 		);
 		// A sibling app's customer month becomes a draft invoice (REQ-UMB-005, decision 174).
 		$context->registerEventListener(

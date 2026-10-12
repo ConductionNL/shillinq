@@ -51,3 +51,19 @@ After approve, mark paid and reject, shillinq SHALL post `{contractVersion, paya
 - GIVEN a secret for dossiq
 - WHEN the payable is marked paid
 - THEN dossiq's callback receives status `paid`, the date and the bank reference, signed with dossiq's secret
+
+### Requirement: The raising app withdraws a payable finance has not acted on (REQ-IPY-005)
+
+The app that raised a payable SHALL be able to withdraw it with `PayableCancelRequestedEvent` (source app, reference, reason) while it is `requested`, which moves it to `cancelled` with `cancelledAt` and `cancelledReason`, books nothing and sends no callback. Withdrawing a `cancelled` payable SHALL answer it again. An `approved`, `paid` or `rejected` payable, an unknown reference or an empty reason SHALL be refused and change nothing.
+
+#### Scenario: Dossiq withdraws a penalty payout under objection
+
+- GIVEN dossiq raised payable DWS-2026-0042 and finance has not acted on it
+- WHEN dossiq sends the cancel command with reason "Bezwaar ingediend"
+- THEN the payable reads `cancelled` with that reason, and no journal entry and no callback follow
+
+#### Scenario: Finance already approved it
+
+- GIVEN finance approved payable DWS-2026-0042
+- WHEN dossiq sends the cancel command
+- THEN the command is refused naming the state `approved`, and the payable stays approved
