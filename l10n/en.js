@@ -4311,7 +4311,8 @@ OC.L10N.register(
         "Open balance": "Open balance",
         "New supplier": "New supplier",
         "Outstanding": "Outstanding",
-        "VAT ID": "VAT number"
+        "VAT ID": "VAT number",
+        "Customer details": "Customer details"
     },
     "nplurals=2; plural=(n != 1);"
 )
