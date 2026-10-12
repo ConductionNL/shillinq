@@ -19,6 +19,8 @@
 		:registry="registry"
 		appId="shillinq"
 		:translate="translateForApp"
+		:notificationLabels="notificationLabels"
+		:userSettingsSections="userSettingsSections"
 		:permissions="permissions">
 		<!--
 		 Per-object integration sidebar (Files / Contacts / Audit trail / …).
@@ -55,6 +57,7 @@
 import { CnAppRoot, CnObjectSidebar } from '@conduction/nextcloud-vue'
 import { translate as ncT } from '@nextcloud/l10n'
 import { reactive } from 'vue'
+import notificationRuleWording from './notificationLabels.js'
 import { initializeStores } from './store/store.js'
 
 export default {
@@ -148,6 +151,30 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The wording of every notification rule in the person's language, for
+		 * the Personal settings dialog.
+		 *
+		 * @spec exclude Shell glue: l10n wording only, no rule or default changes.
+		 * @return {object} Labels keyed `<schema>.<rule>`.
+		 */
+		notificationLabels() {
+			return Object.fromEntries(
+				Object.entries(notificationRuleWording).map(([key, text]) => [key, ncT('shillinq', text)]),
+			)
+		},
+
+		/**
+		 * The sections of the Personal settings dialog, in the board's order
+		 * (ShPersoonlijkeInstellingen): notifications, credentials, integrations.
+		 *
+		 * @spec exclude Shell glue: section order of the library dialog.
+		 * @return {string[]} Section keys.
+		 */
+		userSettingsSections() {
+			return ['notifications', 'credentials', 'integrations']
+		},
+
 		/**
 		 * Current user's Nextcloud permissions, passed through to CnAppRoot.
 		 *
