@@ -5590,7 +5590,7 @@
 						"gridX": 0,
 						"gridY": 4,
 						"gridWidth": 6,
-						"gridHeight": 4,
+						"gridHeight": 5,
 						"dateChip": true
 					},
 					{
@@ -5599,32 +5599,32 @@
 						"gridX": 6,
 						"gridY": 4,
 						"gridWidth": 6,
-						"gridHeight": 4,
+						"gridHeight": 5,
 						"dateChip": true
 					},
 					{
 						"id": "layout-cashflow-chart",
 						"widgetId": "cashflow-chart",
 						"gridX": 0,
-						"gridY": 8,
+						"gridY": 9,
 						"gridWidth": 6,
-						"gridHeight": 4,
+						"gridHeight": 5,
 						"dateChip": true
 					},
 					{
 						"id": "layout-billable-hours-chart",
 						"widgetId": "billable-hours-chart",
 						"gridX": 6,
-						"gridY": 8,
+						"gridY": 9,
 						"gridWidth": 6,
-						"gridHeight": 4,
+						"gridHeight": 5,
 						"dateChip": true
 					},
 					{
 						"id": "layout-open-debtors",
 						"widgetId": "open-debtors",
 						"gridX": 0,
-						"gridY": 12,
+						"gridY": 14,
 						"gridWidth": 6,
 						"gridHeight": 5
 					},
@@ -5632,7 +5632,7 @@
 						"id": "layout-open-creditors",
 						"widgetId": "open-creditors",
 						"gridX": 6,
-						"gridY": 12,
+						"gridY": 14,
 						"gridWidth": 6,
 						"gridHeight": 5
 					}
