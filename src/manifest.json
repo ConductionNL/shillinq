@@ -7896,6 +7896,7 @@
 						"title": "SEPA mandate",
 						"content": {"source": {"register": "shillinq", "schema": "SepaMandate", "id": "@object.defaultMandateId"}, "fields": [{"as": "pill", "path": "status", "variantMap": {"active": "success", "cancelled": "error", "suspended": "warning", "pending": "info", "expired": "default"}}, {"label": "Mandate", "path": "mandateReference"}, {"label": "IBAN", "path": "debtorIban", "copy": true}, {"label": "Signed", "path": "signedAt", "format": "date"}], "emptyText": "No SEPA mandate"}
 					},
+					"customer-related",
 					"customer-history"
 				],
 				"follow": false
