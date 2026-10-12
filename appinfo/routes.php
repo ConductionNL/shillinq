@@ -785,6 +785,11 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // controller on the payment.administer action.
             ['name' => 'objectRequestRefund#approve', 'url' => '/api/payment-requests/{id}/refund/approve', 'verb' => 'POST'],
             ['name' => 'objectRequestRefund#markPaid', 'url' => '/api/payment-requests/{id}/refund/paid', 'verb' => 'POST'],
+            // Finance's half of a payout another app raised
+            // (inbound-payable-from-another-app, REQ-IPY-002, REQ-IPY-003).
+            ['name' => 'inboundPayable#approve', 'url' => '/api/inbound-payables/{id}/approve', 'verb' => 'POST'],
+            ['name' => 'inboundPayable#markPaid', 'url' => '/api/inbound-payables/{id}/paid', 'verb' => 'POST'],
+            ['name' => 'inboundPayable#reject', 'url' => '/api/inbound-payables/{id}/reject', 'verb' => 'POST'],
 
             // Raise the published leges for an object's type in one action
             // (leges-at-intake, REQ-SOPR-008). The amount comes from the fee

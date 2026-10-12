@@ -245,6 +245,7 @@
                     "ImportMapping",
                     "IncassoKostenBerekening",
                     "IncomeStatement",
+                    "InboundPayable",
                     "Indicator",
                     "Innovatiebox",
                     "InnovatieboxAuditEvent",

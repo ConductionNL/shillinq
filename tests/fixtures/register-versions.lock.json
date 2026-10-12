@@ -24,6 +24,10 @@
         {
             "appVersion": "0.5.6-unstable.20261010170000",
             "versionsSha256": "c22f763196016303af27247f9e50909a11dc0144b85676da22a0f4e53a22a1b8"
+        },
+        {
+            "appVersion": "0.5.6-unstable.20261011120000",
+            "versionsSha256": "64f80e7cc940afda6000e822c165546bfcd62d15084d91f2c2d82f82d1dcaacd"
         }
     ],
     "versions": {
@@ -270,6 +274,7 @@
         "schema:IcpSupply": "0.1.0",
         "schema:ImportBatch": "0.3.0",
         "schema:ImportMapping": "0.1.0",
+        "schema:InboundPayable": "0.1.0",
         "schema:IncassoKostenBerekening": "0.2.0",
         "schema:IncomeStatement": "0.1.0",
         "schema:Indicator": "0.1.0",
