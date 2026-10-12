@@ -701,7 +701,7 @@ OC.L10N.register(
         "Customer ID": "Klant ID",
         "Customer Link": "Klantkoppeling",
         "Customer account is suspended": "Klantaccount is geschorst",
-        "Customers": "Afnemers",
+        "Customers": "Klanten",
         "Customers & Bookings": "Klanten & Boekingen",
         "Customers, bookings, invoicing, retainers, accounts receivable and orders.": "Klanten, boekingen, facturatie, retainers, debiteuren en orders.",
         "Cycle Status": "Cyclusstatus",
@@ -4297,7 +4297,7 @@ OC.L10N.register(
         "Sent at": "Verzonden op",
         "Attempts in this dispatch group": "Pogingen in deze verzendgroep",
         "Service catalogue": "Dienstencatalogus",
-        "Payees": "Crediteuren",
+        "Payees": "Leveranciers",
         "AP Invoices": "Crediteurenfacturen",
         "Dunning Notices": "Aanmaningen",
         "Vendor #": "Leveranciersnr.",
@@ -6516,7 +6516,8 @@ OC.L10N.register(
         "Open balance": "Openstaand",
         "New supplier": "Nieuwe leverancier",
         "Outstanding": "Open",
-        "VAT ID": "Btw-nummer"
+        "VAT ID": "Btw-nummer",
+        "Customer details": "Gegevens"
     },
     "nplurals=2; plural=(n != 1);"
 )
