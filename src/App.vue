@@ -166,13 +166,13 @@ export default {
 
 		/**
 		 * The sections of the Personal settings dialog, in the board's order
-		 * (ShPersoonlijkeInstellingen): notifications, credentials, integrations.
+		 * (ShPersoonlijkeInstellingen): notifications, credentials, integrations, then the walkthrough replay.
 		 *
 		 * @spec exclude Shell glue: section order of the library dialog.
 		 * @return {string[]} Section keys.
 		 */
 		userSettingsSections() {
-			return ['notifications', 'credentials', 'integrations']
+			return ['notifications', 'credentials', 'integrations', 'walkthrough']
 		},
 
 		/**
