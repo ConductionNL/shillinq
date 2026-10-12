@@ -61,7 +61,6 @@ const pair = {
 	number: 'NL812345678B01',
 }
 
-
 /**
  * The widget ids a detail page places: its layout cells, the tabs of a
  * placed tabs widget (`widgetId` and the `widgetIds` stack), and its side
