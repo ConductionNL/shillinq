@@ -6623,7 +6623,9 @@ OC.L10N.register(
         "Cash": "Contant",
         "Card": "Kaart",
         "Reminders": "Herinneringen",
-        "Invoice parts": "Onderdelen van de factuur"
+        "Invoice parts": "Onderdelen van de factuur",
+        "{total} orders": "{total} orders",
+        "New order": "Nieuwe order"
     },
     "nplurals=2; plural=(n != 1);"
 )

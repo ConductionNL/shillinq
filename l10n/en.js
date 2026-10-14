@@ -4428,7 +4428,9 @@ OC.L10N.register(
         "Cash": "Cash",
         "Card": "Card",
         "Reminders": "Reminders",
-        "Invoice parts": "Invoice parts"
+        "Invoice parts": "Invoice parts",
+        "{total} orders": "{total} orders",
+        "New order": "New order"
     },
     "nplurals=2; plural=(n != 1);"
 )
