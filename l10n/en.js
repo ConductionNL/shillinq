@@ -4419,7 +4419,9 @@ OC.L10N.register(
         "Balance sheet": "Balance sheet",
         "Profit and loss": "Profit and loss",
         "Control accounts": "Control accounts",
-        "New account": "New account"
+        "New account": "New account",
+        "{total} orders": "{total} orders",
+        "New order": "New order"
     },
     "nplurals=2; plural=(n != 1);"
 )

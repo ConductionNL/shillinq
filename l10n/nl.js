@@ -6614,7 +6614,9 @@ OC.L10N.register(
         "Balance sheet": "Balans",
         "Profit and loss": "Winst en verlies",
         "Control accounts": "Controlerekeningen",
-        "New account": "Nieuwe rekening"
+        "New account": "Nieuwe rekening",
+        "{total} orders": "{total} orders",
+        "New order": "Nieuwe order"
     },
     "nplurals=2; plural=(n != 1);"
 )

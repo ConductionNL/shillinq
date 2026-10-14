@@ -6616,7 +6616,9 @@
         "Balance sheet": "Balans",
         "Profit and loss": "Winst en verlies",
         "Control accounts": "Controlerekeningen",
-        "New account": "Nieuwe rekening"
+        "New account": "Nieuwe rekening",
+        "{total} orders": "{total} orders",
+        "New order": "Nieuwe order"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
