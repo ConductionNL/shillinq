@@ -6614,7 +6614,16 @@ OC.L10N.register(
         "Balance sheet": "Balans",
         "Profit and loss": "Winst en verlies",
         "Control accounts": "Controlerekeningen",
-        "New account": "Nieuwe rekening"
+        "New account": "Nieuwe rekening",
+        "Customer number": "Klantnummer",
+        "No customer linked": "Geen klant gekoppeld",
+        "Payment": "Betaling",
+        "Payment method": "Betaalwijze",
+        "Direct debit": "Automatische incasso",
+        "Cash": "Contant",
+        "Card": "Kaart",
+        "Reminders": "Herinneringen",
+        "Invoice parts": "Onderdelen van de factuur"
     },
     "nplurals=2; plural=(n != 1);"
 )

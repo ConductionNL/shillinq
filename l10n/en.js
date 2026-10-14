@@ -4419,7 +4419,16 @@ OC.L10N.register(
         "Balance sheet": "Balance sheet",
         "Profit and loss": "Profit and loss",
         "Control accounts": "Control accounts",
-        "New account": "New account"
+        "New account": "New account",
+        "Customer number": "Customer number",
+        "No customer linked": "No customer linked",
+        "Payment": "Payment",
+        "Payment method": "Payment method",
+        "Direct debit": "Direct debit",
+        "Cash": "Cash",
+        "Card": "Card",
+        "Reminders": "Reminders",
+        "Invoice parts": "Invoice parts"
     },
     "nplurals=2; plural=(n != 1);"
 )
