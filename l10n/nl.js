@@ -6597,7 +6597,18 @@ OC.L10N.register(
         "Closing the books": "Afsluiten",
         "Budgeting": "Begroting",
         "Help and guidance": "Hulp en uitleg",
-        "All modules": "Alle onderdelen"
+        "All modules": "Alle onderdelen",
+        "{total} invoices · numbered without gaps": "{total} facturen · doorlopend genummerd",
+        "Search by number, customer or amount": "Zoek op nummer, klant of bedrag",
+        "New invoice": "Nieuwe factuur",
+        "Generate invoices": "Facturen genereren",
+        "From hours, costs, meter readings and retainers": "Uit uren, kosten, meterstanden en retainers",
+        "{total} purchase invoices": "{total} inkoopfacturen",
+        "Supplier and invoice": "Leverancier en factuur",
+        "{total} claims": "{total} declaraties",
+        "Awaiting approval": "Ter goedkeuring",
+        "Reimbursed": "Uitbetaald",
+        "New claim": "Nieuwe declaratie"
     },
     "nplurals=2; plural=(n != 1);"
 )

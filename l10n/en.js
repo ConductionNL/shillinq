@@ -4402,7 +4402,18 @@ OC.L10N.register(
         "Closing the books": "Closing the books",
         "Budgeting": "Budgeting",
         "Help and guidance": "Help and guidance",
-        "All modules": "All modules"
+        "All modules": "All modules",
+        "{total} invoices · numbered without gaps": "{total} invoices · numbered without gaps",
+        "Search by number, customer or amount": "Search by number, customer or amount",
+        "New invoice": "New invoice",
+        "Generate invoices": "Generate invoices",
+        "From hours, costs, meter readings and retainers": "From hours, costs, meter readings and retainers",
+        "{total} purchase invoices": "{total} purchase invoices",
+        "Supplier and invoice": "Supplier and invoice",
+        "{total} claims": "{total} claims",
+        "Awaiting approval": "Awaiting approval",
+        "Reimbursed": "Reimbursed",
+        "New claim": "New claim"
     },
     "nplurals=2; plural=(n != 1);"
 )
