@@ -71,7 +71,7 @@ final class PortalContributionDeclineControllerTest extends TestCase {
 
 		return new PortalContributionDeclineController(
 			request: $request,
-			verifier: new PortalAssertionVerifier(config: null, secretOverride: self::SECRET),
+			verifier: new PortalAssertionVerifier(secretOverride: self::SECRET),
 			declineService: $this->service,
 			logger: new NullLogger(),
 		);
