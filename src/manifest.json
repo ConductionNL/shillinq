@@ -5308,7 +5308,7 @@
 			"id": "Dashboard",
 			"route": "/",
 			"type": "dashboard",
-			"title": "Financial overview",
+			"title": "Dashboard",
 			"slots": {
 				"widget-cashflow-chart": "CashflowChartWidget"
 			},
@@ -5330,7 +5330,8 @@
 						"type": "open-modal",
 						"target": "InvoiceQuickDraftModal",
 						"icon": "FileDocumentPlus",
-						"props": { "open": true }
+						"props": { "open": true },
+						"variant": "primary"
 					}
 				],
 				"dateRange": {
@@ -5592,7 +5593,7 @@
 						"widgetId": "turnover",
 						"gridX": 0,
 						"gridY": 0,
-						"gridWidth": 4,
+						"gridWidth": 3,
 						"gridHeight": 2,
 						"showTitle": false,
 						"dateChip": true
@@ -5600,9 +5601,9 @@
 					{
 						"id": "layout-margin",
 						"widgetId": "margin",
-						"gridX": 4,
+						"gridX": 3,
 						"gridY": 0,
-						"gridWidth": 4,
+						"gridWidth": 3,
 						"gridHeight": 2,
 						"showTitle": false,
 						"dateChip": true
@@ -5610,9 +5611,18 @@
 					{
 						"id": "layout-debtors",
 						"widgetId": "debtors",
-						"gridX": 8,
+						"gridX": 6,
 						"gridY": 0,
-						"gridWidth": 4,
+						"gridWidth": 3,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "layout-cash",
+						"widgetId": "cash",
+						"gridX": 9,
+						"gridY": 0,
+						"gridWidth": 3,
 						"gridHeight": 2,
 						"showTitle": false
 					},
@@ -5621,28 +5631,19 @@
 						"widgetId": "creditors",
 						"gridX": 0,
 						"gridY": 2,
-						"gridWidth": 4,
+						"gridWidth": 6,
 						"gridHeight": 2,
 						"showTitle": false
 					},
 					{
 						"id": "layout-billable",
 						"widgetId": "billable",
-						"gridX": 4,
+						"gridX": 6,
 						"gridY": 2,
-						"gridWidth": 4,
+						"gridWidth": 6,
 						"gridHeight": 2,
 						"showTitle": false,
 						"dateChip": true
-					},
-					{
-						"id": "layout-cash",
-						"widgetId": "cash",
-						"gridX": 8,
-						"gridY": 2,
-						"gridWidth": 4,
-						"gridHeight": 2,
-						"showTitle": false
 					},
 					{
 						"id": "layout-turnover-chart",
@@ -5654,8 +5655,8 @@
 						"dateChip": true
 					},
 					{
-						"id": "layout-margin-chart",
-						"widgetId": "margin-chart",
+						"id": "layout-cashflow-chart",
+						"widgetId": "cashflow-chart",
 						"gridX": 6,
 						"gridY": 4,
 						"gridWidth": 6,
@@ -5663,8 +5664,8 @@
 						"dateChip": true
 					},
 					{
-						"id": "layout-cashflow-chart",
-						"widgetId": "cashflow-chart",
+						"id": "layout-margin-chart",
+						"widgetId": "margin-chart",
 						"gridX": 0,
 						"gridY": 9,
 						"gridWidth": 6,
