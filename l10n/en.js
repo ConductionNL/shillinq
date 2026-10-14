@@ -4413,7 +4413,13 @@ OC.L10N.register(
         "{total} claims": "{total} claims",
         "Awaiting approval": "Awaiting approval",
         "Reimbursed": "Reimbursed",
-        "New claim": "New claim"
+        "New claim": "New claim",
+        "{total} accounts": "{total} accounts",
+        "All accounts": "All accounts",
+        "Balance sheet": "Balance sheet",
+        "Profit and loss": "Profit and loss",
+        "Control accounts": "Control accounts",
+        "New account": "New account"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -4605,20 +4605,21 @@
 			"id": "ChartOfAccounts",
 			"route": "/chart-of-accounts",
 			"type": "index",
-			"title": "Chart of Accounts",
+			"title": "General Ledger",
 			"config": {
 				"register": "shillinq",
 				"schema": "Account",
 				"columns": [
 					{
-						"key": "accountNumber",
-						"label": "Account Number",
+						"key": "rgsCode",
+						"label": "RGS code",
 						"sortable": true
 					},
 					{
-						"key": "name",
-						"label": "Name",
-						"sortable": true
+						"key": "accountNumber",
+						"label": "Account",
+						"sortable": true,
+						"secondary": "{name}"
 					},
 					{
 						"key": "accountType",
@@ -4633,7 +4634,65 @@
 				],
 				"defaultSort": "accountNumber",
 				"detailRoute": "ChartOfAccountsDetail",
-				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/chart-of-accounts"
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/chart-of-accounts",
+				"_boardNote": "Board ShGrootboek is the chart of accounts: title, count line, Download / Actions / New account, chips for balance sheet, profit and loss and control accounts, the RGS code first and the account with its type under it. The board balance column waits on data: an account carries no balance.",
+				"showTitle": true,
+				"countSubtitle": "{total} accounts",
+				"showCount": false,
+				"quickFilters": [
+					{
+						"label": "All accounts",
+						"filter": {},
+						"default": true,
+						"showCount": true
+					},
+					{
+						"label": "Balance sheet",
+						"filter": {
+							"accountType": [
+								"assets",
+								"liabilities",
+								"equity"
+							]
+						},
+						"showCount": true
+					},
+					{
+						"label": "Profit and loss",
+						"filter": {
+							"accountType": [
+								"revenue",
+								"expenses"
+							]
+						},
+						"showCount": true
+					},
+					{
+						"label": "Control accounts",
+						"filter": {
+							"controlAccountFor": "IS NOT NULL"
+						},
+						"showCount": true
+					}
+				],
+				"headerButtons": [
+					{
+						"action": "export"
+					},
+					{
+						"action": "actions-menu",
+						"items": [
+							"import",
+							"refresh",
+							"documentation"
+						]
+					},
+					{
+						"action": "add",
+						"variant": "primary",
+						"label": "New account"
+					}
+				]
 			}
 		},
 		{

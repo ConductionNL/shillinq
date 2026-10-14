@@ -6608,7 +6608,13 @@ OC.L10N.register(
         "{total} claims": "{total} declaraties",
         "Awaiting approval": "Ter goedkeuring",
         "Reimbursed": "Uitbetaald",
-        "New claim": "Nieuwe declaratie"
+        "New claim": "Nieuwe declaratie",
+        "{total} accounts": "{total} rekeningen",
+        "All accounts": "Alle rekeningen",
+        "Balance sheet": "Balans",
+        "Profit and loss": "Winst en verlies",
+        "Control accounts": "Controlerekeningen",
+        "New account": "Nieuwe rekening"
     },
     "nplurals=2; plural=(n != 1);"
 )
