@@ -238,6 +238,7 @@ import VendorPerformanceDetail from './components/vendor-performance/VendorPerfo
 import VendorPerformanceIndex from './components/vendor-performance/VendorPerformanceIndex.vue'
 // receivables-payment-plans: Agree a payment plan, and the plan page's actions.
 import AgreePaymentPlanModal from './modals/AgreePaymentPlanModal.vue'
+import BankStatementWizard from './modals/BankStatementWizard.vue'
 import BillImportModal from './modals/BillImportModal.vue'
 // ADR-049 Phase-4 dissolution: modals formerly launched by the imperative
 // FinancialDashboardActions / PaymentRunDetailActions widgets. Those action
@@ -412,6 +413,8 @@ export default {
 	// reporting-relation-both-sides: link a customer to its supplier record.
 	RelationLinkDialog: { kind: 'modal', component: RelationLinkDialog },
 	PaymentPlanActionModal: { kind: 'modal', component: PaymentPlanActionModal },
+	// Import statement on the Bank and payments page.
+	BankStatementWizard: { kind: 'modal', component: BankStatementWizard },
 
 	StandardsPolicyEditor: { kind: 'page', component: StandardsPolicyEditor },
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },

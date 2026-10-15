@@ -220,7 +220,13 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // with their reminder step and the payment requests): development held
 // 1,228,532 bytes. This change adds 8,037 B. 1,236,569 in all.
 // Raised to 1,242,800: 6,231 B of headroom, 0.50%.
-const DEFAULT_BUDGET_BYTES = 1_242_800
+//
+// Re-measured 2026-10-15 (bank board, screens round 10: board ShBank, the new
+// bank-and-payments-board.json fragment with the Bank and payments page, its
+// key figures and four views): development held 1,236,569 bytes. This change
+// adds 9,601 B. 1,246,170 in all.
+// Raised to 1,252,500: 6,330 B of headroom, 0.51%.
+const DEFAULT_BUDGET_BYTES = 1_252_500
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),
