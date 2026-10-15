@@ -209,12 +209,18 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // the four totals tiles. 1,219,802 in all.
 // Raised to 1,226,000: 6,198 B of headroom, 0.51%.
 //
+// Re-measured 2026-10-15 (liquidity board, screens round 10: board
+// ShLiquiditeit on the cashflow dashboard, four key figures, the forecast
+// chart, the Wet Fido norms, recurring costs and treasury counts): development
+// held 1,220,469 bytes. This change adds 8,088 B. 1,228,557 in all.
+// Raised to 1,234,700: 6,143 B of headroom, 0.50%.
+//
 // Re-measured 2026-10-15 (receivables board, screens round 10: board
 // ShDebiteurenbeheer on the ar-aging page, five age tiles, the open invoices
 // with their reminder step and the payment requests): development held
-// 1,220,469 bytes. This change adds 8,037 B. 1,228,506 in all.
-// Raised to 1,234,700: 6,194 B of headroom, 0.50%.
-const DEFAULT_BUDGET_BYTES = 1_234_700
+// 1,228,557 bytes. This change adds 8,037 B. 1,236,594 in all.
+// Raised to 1,242,800: 6,206 B of headroom, 0.50%.
+const DEFAULT_BUDGET_BYTES = 1_242_800
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),
