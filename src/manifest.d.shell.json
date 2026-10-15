@@ -4827,7 +4827,7 @@
 					"id": "NavLedger",
 					"label": "General Ledger",
 					"icon": "BookOutline",
-					"route": "GeneralLedger",
+					"route": "ChartOfAccounts",
 					"order": 14
 				},
 				{

@@ -4605,20 +4605,21 @@
 			"id": "ChartOfAccounts",
 			"route": "/chart-of-accounts",
 			"type": "index",
-			"title": "Chart of Accounts",
+			"title": "General Ledger",
 			"config": {
 				"register": "shillinq",
 				"schema": "Account",
 				"columns": [
 					{
-						"key": "accountNumber",
-						"label": "Account Number",
+						"key": "rgsCode",
+						"label": "RGS code",
 						"sortable": true
 					},
 					{
-						"key": "name",
-						"label": "Name",
-						"sortable": true
+						"key": "accountNumber",
+						"label": "Account",
+						"sortable": true,
+						"secondary": "{name}"
 					},
 					{
 						"key": "accountType",
@@ -4633,7 +4634,65 @@
 				],
 				"defaultSort": "accountNumber",
 				"detailRoute": "ChartOfAccountsDetail",
-				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/chart-of-accounts"
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/chart-of-accounts",
+				"_boardNote": "Board ShGrootboek is the chart of accounts: title, count line, Download / Actions / New account, chips for balance sheet, profit and loss and control accounts, the RGS code first and the account with its type under it. The board balance column waits on data: an account carries no balance.",
+				"showTitle": true,
+				"countSubtitle": "{total} accounts",
+				"showCount": false,
+				"quickFilters": [
+					{
+						"label": "All accounts",
+						"filter": {},
+						"default": true,
+						"showCount": true
+					},
+					{
+						"label": "Balance sheet",
+						"filter": {
+							"accountType": [
+								"assets",
+								"liabilities",
+								"equity"
+							]
+						},
+						"showCount": true
+					},
+					{
+						"label": "Profit and loss",
+						"filter": {
+							"accountType": [
+								"revenue",
+								"expenses"
+							]
+						},
+						"showCount": true
+					},
+					{
+						"label": "Control accounts",
+						"filter": {
+							"controlAccountFor": "IS NOT NULL"
+						},
+						"showCount": true
+					}
+				],
+				"headerButtons": [
+					{
+						"action": "export"
+					},
+					{
+						"action": "actions-menu",
+						"items": [
+							"import",
+							"refresh",
+							"documentation"
+						]
+					},
+					{
+						"action": "add",
+						"variant": "primary",
+						"label": "New account"
+					}
+				]
 			}
 		},
 		{
@@ -7907,40 +7966,51 @@
 			"id": "AccountsReceivable",
 			"route": "/bookkeeping/accounts-receivable",
 			"type": "index",
-			"title": "Accounts Receivable",
+			"title": "Sales invoices",
 			"config": {
 				"register": "shillinq",
 				"schema": "ARInvoice",
 				"columns": [
 					{
 						"key": "invoiceNumber",
-						"label": "Invoice #",
+						"label": "Invoice number",
 						"sortable": true
 					},
 					{
 						"key": "customerId",
 						"label": "Customer",
-						"sortable": true
+						"sortable": true,
+						"labelField": "legalName"
 					},
 					{
-						"key": "invoiceDate",
-						"label": "Invoice Date",
-						"sortable": true
-					},
-					{
-						"key": "dueDate",
-						"label": "Due Date",
+						"key": "currency",
+						"label": "Currency",
 						"sortable": true
 					},
 					{
 						"key": "grossAmount",
-						"label": "Total (EUR)",
+						"label": "Amount",
+						"sortable": true,
+						"format": {
+							"style": "currency",
+							"currencyField": "currency"
+						}
+					},
+					{
+						"key": "dueDate",
+						"label": "Due date",
 						"sortable": true
 					},
 					{
 						"key": "lifecycleState",
 						"label": "Status",
 						"sortable": true
+					},
+					{
+						"key": "invoiceDate",
+						"label": "Invoice date",
+						"sortable": true,
+						"hidden": true
 					}
 				],
 				"defaultSort": "dueDate",
@@ -7953,6 +8023,61 @@
 						"icon": "CashPlus",
 						"handler": "openDownPaymentInvoice",
 						"description": "Invoice part of an order up front. It is booked as an advance received and taken off the final invoice."
+					},
+					{
+						"id": "generate-invoices",
+						"label": "Generate invoices",
+						"icon": "FileDocumentMultipleOutline",
+						"handler": "navigate",
+						"route": "BillableInvoiceGenerate",
+						"description": "From hours, costs, meter readings and retainers"
+					}
+				],
+				"_boardNote": "Board ShVerkoopfacturen: title, count line, Download / Actions / New invoice, status chips with counts, Currency and Amount in the invoice currency. The invoice date stays as a column the reader can switch on.",
+				"showTitle": true,
+				"countSubtitle": "{total} invoices · numbered without gaps",
+				"showCount": false,
+				"quickFilters": [
+					{
+						"label": "All",
+						"filter": {},
+						"default": true,
+						"showCount": true
+					},
+					{
+						"label": "Draft",
+						"filter": {
+							"lifecycleState": "draft"
+						},
+						"showCount": true
+					},
+					{
+						"label": "Sent",
+						"filter": {
+							"lifecycleState": "issued"
+						},
+						"showCount": true
+					},
+					{
+						"label": "Overdue",
+						"filter": {
+							"lifecycleState": "overdue"
+						},
+						"showCount": true
+					}
+				],
+				"searchPlaceholder": "Search by number, customer or amount",
+				"headerButtons": [
+					{
+						"action": "export"
+					},
+					{
+						"action": "actions-menu"
+					},
+					{
+						"action": "add",
+						"variant": "primary",
+						"label": "New invoice"
 					}
 				]
 			}
@@ -10134,7 +10259,7 @@
 			"id": "ExpenseClaims",
 			"route": "/inkoop/expense-claims",
 			"type": "index",
-			"title": "Expense Claims",
+			"title": "Claims",
 			"config": {
 				"register": "shillinq",
 				"schema": "ExpenseClaimEntry",
@@ -10217,7 +10342,51 @@
 					}
 				],
 				"detailRoute": "ExpenseClaimDetail",
-				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/overview"
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/overview",
+				"_boardNote": "Board ShDeclaraties: title, count line, Download / Actions / New claim, chips with counts on the approval and payment state.",
+				"showTitle": true,
+				"countSubtitle": "{total} claims",
+				"showCount": false,
+				"quickFilters": [
+					{
+						"label": "All",
+						"filter": {},
+						"default": true,
+						"showCount": true
+					},
+					{
+						"label": "Awaiting approval",
+						"filter": {
+							"approvalState": "pending"
+						},
+						"showCount": true
+					},
+					{
+						"label": "Reimbursed",
+						"filter": {
+							"state": "reimbursed"
+						},
+						"showCount": true
+					}
+				],
+				"headerButtons": [
+					{
+						"action": "export"
+					},
+					{
+						"action": "actions-menu",
+						"items": [
+							"import",
+							"refresh",
+							"documentation"
+						]
+					},
+					{
+						"action": "add",
+						"variant": "primary",
+						"label": "New claim"
+					}
+				]
 			}
 		},
 		{
@@ -13849,7 +14018,7 @@
 			"id": "SupplierInvoices",
 			"route": "/inkoop/supplier-invoices",
 			"type": "index",
-			"title": "Supplier Invoices",
+			"title": "Purchase invoices",
 			"config": {
 				"register": "shillinq",
 				"schema": "SupplierInvoice",
@@ -13857,19 +14026,23 @@
 				"rowRoute": "SupplierInvoiceDetail",
 				"columns": [
 					{
-						"key": "invoiceNumber",
-						"label": "Invoice #",
-						"sortable": true
+						"key": "supplierId",
+						"label": "Supplier and invoice",
+						"sortable": true,
+						"labelField": "name",
+						"secondary": "{invoiceNumber}"
 					},
 					{
-						"key": "supplierId",
-						"label": "Supplier",
-						"sortable": true
+						"key": "invoiceNumber",
+						"label": "Invoice #",
+						"sortable": true,
+						"hidden": true
 					},
 					{
 						"key": "invoiceDate",
 						"label": "Invoice Date",
-						"sortable": true
+						"sortable": true,
+						"hidden": true
 					},
 					{
 						"key": "dueDate",
@@ -13901,7 +14074,58 @@
 				"detailRoute": "SupplierInvoiceDetail",
 				"_note_rowRoute_overlay": "See the Receipts index — `rowRoute` is the key CnPageRenderer reads; SupplierInvoiceDetail is `type:\"custom\"`, so without it these rows are dead on click.",
 				"description": "Read-only stub at slice-01. Member 05 owns UBL/Peppol/OCR ingestion.",
-				"documentationUrl": "https://shillinq.conduction.nl/guides/import-bills"
+				"documentationUrl": "https://shillinq.conduction.nl/guides/import-bills",
+				"_boardNote": "Board ShInkoopfacturen: title, count line, Download / Actions, chips with counts on the match status, the supplier by name with the invoice number under it. The board primary button imports a purchase invoice; an index header action cannot open a registered modal yet (library), so the primary button creates one.",
+				"showTitle": true,
+				"countSubtitle": "{total} purchase invoices",
+				"showCount": false,
+				"quickFilters": [
+					{
+						"label": "All",
+						"filter": {},
+						"default": true,
+						"showCount": true
+					},
+					{
+						"label": "Exceptions",
+						"filter": {
+							"statusCode": "exception"
+						},
+						"showCount": true
+					},
+					{
+						"label": "Approved",
+						"filter": {
+							"statusCode": "approved"
+						},
+						"showCount": true
+					},
+					{
+						"label": "IBAN differs",
+						"filter": {
+							"ibanMismatch": true
+						},
+						"showCount": true
+					}
+				],
+				"headerButtons": [
+					{
+						"action": "export"
+					},
+					{
+						"action": "actions-menu",
+						"items": [
+							"import",
+							"refresh",
+							"documentation"
+						]
+					},
+					{
+						"action": "add",
+						"variant": "primary",
+						"label": "New purchase invoice"
+					}
+				]
 			}
 		},
 		{

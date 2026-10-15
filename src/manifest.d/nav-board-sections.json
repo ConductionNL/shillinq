@@ -15,7 +15,7 @@
 		{"id":"NavBankAndPayments","label":"Bank and payments","icon":"BankOutline","route":"BankingCashflowOverview","order":13},
 		{"id":"NavLiquidity","label":"Liquidity","icon":"ChartLine","route":"CashflowDashboard","order":13},
 		{"id":"NavAccountingCaption","label":"Accounting","type":"caption","order":14},
-		{"id":"NavLedger","label":"General Ledger","icon":"BookOutline","route":"GeneralLedger","order":14},
+		{"id":"NavLedger","label":"General Ledger","icon":"BookOutline","route":"ChartOfAccounts","order":14},
 		{"id":"NavPeriodClose","label":"Closing the books","icon":"CalendarLock","route":"PeriodClose","order":14},
 		{"id":"NavTaxes","label":"Taxes","icon":"PercentOutline","route":"TaxesOverview","order":14},
 		{"id":"NavReports","label":"Reports","icon":"ChartBoxOutline","route":"Reports","order":14},
