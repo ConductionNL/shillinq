@@ -4433,7 +4433,15 @@ OC.L10N.register(
         "Invoice parts": "Invoice parts",
         "{total} orders": "{total} orders",
         "New order": "New order",
-        "New purchase invoice": "New purchase invoice"
+        "New purchase invoice": "New purchase invoice",
+        "Choose which fields must be filled in before a record is saved.": "Choose which fields must be filled in before a record is saved.",
+        "Manage required fields": "Manage required fields",
+        "Connections": "Connections",
+        "See which connections work before you rely on them.": "See which connections work before you rely on them.",
+        "Open the connections": "Open the connections",
+        "Online booking: the key the booking widget on your website uses.": "Online booking: the key the booking widget on your website uses.",
+        "Manage widget keys": "Manage widget keys",
+        "Appointments": "Appointments"
     },
     "nplurals=2; plural=(n != 1);"
 )

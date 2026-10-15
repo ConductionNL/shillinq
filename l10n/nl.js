@@ -6628,7 +6628,14 @@ OC.L10N.register(
         "Invoice parts": "Onderdelen van de factuur",
         "{total} orders": "{total} orders",
         "New order": "Nieuwe order",
-        "New purchase invoice": "Nieuwe inkoopfactuur"
+        "New purchase invoice": "Nieuwe inkoopfactuur",
+        "Choose which fields must be filled in before a record is saved.": "Kies zelf welke velden ingevuld moeten zijn voordat een record wordt opgeslagen.",
+        "Manage required fields": "Verplichte velden beheren",
+        "Connections": "Koppelingen",
+        "See which connections work before you rely on them.": "Zie welke koppelingen werken voordat je erop vertrouwt.",
+        "Open the connections": "Koppelingen openen",
+        "Online booking: the key the booking widget on your website uses.": "Online boeken: de sleutel die het boekingswidget op je website gebruikt.",
+        "Manage widget keys": "Widget-sleutels beheren"
     },
     "nplurals=2; plural=(n != 1);"
 )
