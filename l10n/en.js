@@ -4441,7 +4441,18 @@ OC.L10N.register(
         "Open the connections": "Open the connections",
         "Online booking: the key the booking widget on your website uses.": "Online booking: the key the booking widget on your website uses.",
         "Manage widget keys": "Manage widget keys",
-        "Appointments": "Appointments"
+        "Appointments": "Appointments",
+        "Your accounts, statements and the bank lines still waiting for a match": "Your accounts, statements and the bank lines still waiting for a match",
+        "all accounts together": "all accounts together",
+        "Accounts": "Accounts",
+        "Statements": "Statements",
+        "Not matched": "Not matched",
+        "Exchange rates": "Exchange rates",
+        "No bank accounts yet. Connect a bank or add an account.": "No bank accounts yet. Connect a bank or add an account.",
+        "Last statement": "Last statement",
+        "No statements imported yet": "No statements imported yet",
+        "Every bank line is matched": "Every bank line is matched",
+        "No exchange rates yet": "No exchange rates yet"
     },
     "nplurals=2; plural=(n != 1);"
 )

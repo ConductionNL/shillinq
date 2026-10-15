@@ -6635,7 +6635,18 @@ OC.L10N.register(
         "See which connections work before you rely on them.": "Zie welke koppelingen werken voordat je erop vertrouwt.",
         "Open the connections": "Koppelingen openen",
         "Online booking: the key the booking widget on your website uses.": "Online boeken: de sleutel die het boekingswidget op je website gebruikt.",
-        "Manage widget keys": "Widget-sleutels beheren"
+        "Manage widget keys": "Widget-sleutels beheren",
+        "Your accounts, statements and the bank lines still waiting for a match": "Je rekeningen, afschriften en de bankregels die nog op een match wachten",
+        "all accounts together": "alle rekeningen samen",
+        "Accounts": "Rekeningen",
+        "Statements": "Afschriften",
+        "Not matched": "Niet gematcht",
+        "Exchange rates": "Valutakoersen",
+        "No bank accounts yet. Connect a bank or add an account.": "Nog geen bankrekeningen. Koppel een bank of voeg een rekening toe.",
+        "Last statement": "Laatste afschrift",
+        "No statements imported yet": "Nog geen afschriften geïmporteerd",
+        "Every bank line is matched": "Alle bankregels zijn gematcht",
+        "No exchange rates yet": "Nog geen valutakoersen"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -208,7 +208,13 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // the invoice page's tab strip, side column cards, pill and breadcrumb, less
 // the four totals tiles. 1,219,802 in all.
 // Raised to 1,226,000: 6,198 B of headroom, 0.51%.
-const DEFAULT_BUDGET_BYTES = 1_226_000
+//
+// Re-measured 2026-10-15 (bank board, screens round 10: board ShBank, the new
+// bank-and-payments-board.json fragment with the Bank and payments page, its
+// key figures and four views): development held 1,220,469 bytes. This change
+// adds 9,601 B. 1,230,070 in all.
+// Raised to 1,236,300: 6,230 B of headroom, 0.51%.
+const DEFAULT_BUDGET_BYTES = 1_236_300
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),
