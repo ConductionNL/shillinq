@@ -1,5 +1,6 @@
 <template>
 	<CnSettingsSection
+		wide
 		:name="t('shillinq', 'Pipelinq integration')"
 		:description="
 			t(
