@@ -6625,7 +6625,8 @@ OC.L10N.register(
         "Reminders": "Herinneringen",
         "Invoice parts": "Onderdelen van de factuur",
         "{total} orders": "{total} orders",
-        "New order": "Nieuwe order"
+        "New order": "Nieuwe order",
+        "New purchase invoice": "Nieuwe inkoopfactuur"
     },
     "nplurals=2; plural=(n != 1);"
 )

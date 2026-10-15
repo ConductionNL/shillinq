@@ -4430,7 +4430,8 @@ OC.L10N.register(
         "Reminders": "Reminders",
         "Invoice parts": "Invoice parts",
         "{total} orders": "{total} orders",
-        "New order": "New order"
+        "New order": "New order",
+        "New purchase invoice": "New purchase invoice"
     },
     "nplurals=2; plural=(n != 1);"
 )
