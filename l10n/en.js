@@ -4441,7 +4441,22 @@ OC.L10N.register(
         "Open the connections": "Open the connections",
         "Online booking: the key the booking widget on your website uses.": "Online booking: the key the booking widget on your website uses.",
         "Manage widget keys": "Manage widget keys",
-        "Appointments": "Appointments"
+        "Appointments": "Appointments",
+        "Open sales invoices by age, the reminder step they are in and the payment requests that are out": "Open sales invoices by age, the reminder step they are in and the payment requests that are out",
+        "Reminder runs": "Reminder runs",
+        "Start round": "Start round",
+        "Not overdue": "Not overdue",
+        "1 to 30 days": "1 to 30 days",
+        "31 to 60 days": "31 to 60 days",
+        "61 to 90 days": "61 to 90 days",
+        "More than 90 days": "More than 90 days",
+        "{count} invoices": "{count} invoices",
+        "no invoices": "no invoices",
+        "Next step": "Next step",
+        "No open invoices. Everything is paid.": "No open invoices. Everything is paid.",
+        "All sales invoices": "All sales invoices",
+        "No payment requests yet": "No payment requests yet",
+        "All payment requests": "All payment requests"
     },
     "nplurals=2; plural=(n != 1);"
 )

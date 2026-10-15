@@ -6635,7 +6635,22 @@ OC.L10N.register(
         "See which connections work before you rely on them.": "Zie welke koppelingen werken voordat je erop vertrouwt.",
         "Open the connections": "Koppelingen openen",
         "Online booking: the key the booking widget on your website uses.": "Online boeken: de sleutel die het boekingswidget op je website gebruikt.",
-        "Manage widget keys": "Widget-sleutels beheren"
+        "Manage widget keys": "Widget-sleutels beheren",
+        "Open sales invoices by age, the reminder step they are in and the payment requests that are out": "Openstaande verkoopfacturen naar ouderdom, hun herinneringsstap en de uitstaande betaalverzoeken",
+        "Reminder runs": "Herinneringsrondes",
+        "Start round": "Ronde starten",
+        "Not overdue": "Niet vervallen",
+        "1 to 30 days": "1 tot 30 dagen",
+        "31 to 60 days": "31 tot 60 dagen",
+        "61 to 90 days": "61 tot 90 dagen",
+        "More than 90 days": "Meer dan 90 dagen",
+        "{count} invoices": "{count} facturen",
+        "no invoices": "geen facturen",
+        "Next step": "Volgende stap",
+        "No open invoices. Everything is paid.": "Geen openstaande facturen. Alles is betaald.",
+        "All sales invoices": "Alle verkoopfacturen",
+        "No payment requests yet": "Nog geen betaalverzoeken",
+        "All payment requests": "Alle betaalverzoeken"
     },
     "nplurals=2; plural=(n != 1);"
 )

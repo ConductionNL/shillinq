@@ -208,7 +208,13 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // the invoice page's tab strip, side column cards, pill and breadcrumb, less
 // the four totals tiles. 1,219,802 in all.
 // Raised to 1,226,000: 6,198 B of headroom, 0.51%.
-const DEFAULT_BUDGET_BYTES = 1_226_000
+//
+// Re-measured 2026-10-15 (receivables board, screens round 10: board
+// ShDebiteurenbeheer on the ar-aging page, five age tiles, the open invoices
+// with their reminder step and the payment requests): development held
+// 1,220,469 bytes. This change adds 8,037 B. 1,228,506 in all.
+// Raised to 1,234,700: 6,194 B of headroom, 0.50%.
+const DEFAULT_BUDGET_BYTES = 1_234_700
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),
