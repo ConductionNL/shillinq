@@ -374,7 +374,20 @@
       "reference": "INV-2026-001",
       "description": "Waste-collection service provided by Gemeente Amsterdam to Gemeente Utrecht.",
       "isManualOverride": false,
-      "eliminationStatus": "pending"
+      "eliminationStatus": "pending",
+      "administrationId": "adm-gemeente-amsterdam",
+      "sourceAdministrationId": "adm-gemeente-amsterdam",
+      "fromAdministrationId": "adm-gemeente-amsterdam",
+      "toAdministrationId": "adm-gemeente-utrecht",
+      "sourceJournalEntryId": "INV-2026-001",
+      "sourceLineNumber": 1,
+      "bookingDate": "2026-05-10",
+      "postingDate": "2026-05-10",
+      "glAccount": "4000",
+      "detectionMethod": "explicitly-marked",
+      "detectionConfidence": "high",
+      "movementType": "settlement",
+      "state": "posted"
     }
   ]
 }

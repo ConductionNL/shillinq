@@ -227,7 +227,7 @@ final class CostCentersDimensionsFragmentTest extends TestCase {
 		// Two analytical dimensions: REGION (flat string) + PRODUCT_LINE (hierarchical).
 		$region = $byKey($objects, 'AnalyticalDimension', 'dim-region');
 		self::assertIsArray($region, 'REGION dimension seed MUST be present');
-		self::assertSame('REGION', $region['code']);
+		self::assertSame('region', $region['code']);
 		self::assertSame('string', $region['dataType']);
 		self::assertFalse($region['isHierarchical']);
 

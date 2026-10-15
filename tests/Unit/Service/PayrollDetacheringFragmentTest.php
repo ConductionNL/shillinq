@@ -169,7 +169,8 @@ final class PayrollDetacheringFragmentTest extends TestCase {
 		$employee = $this->fragment()['components']['schemas']['payrollEmployee'];
 		$bsn = $employee['properties']['bsn'];
 
-		self::assertTrue(($bsn['pii'] ?? false), 'BSN must be flagged pii');
+		self::assertSame('bsn', ($bsn['x-pii'] ?? null), 'BSN must be flagged pii');
+		self::assertSame('bsn', ($bsn['format'] ?? null), 'BSN must pass the 11-proef');
 		self::assertTrue(($bsn['nullable'] ?? false), 'BSN must be nullable (B2B contractors have none)');
 		self::assertSame('active', $employee['x-openregister-lifecycle']['initialState']);
 	}//end testEmployeeBsnIsPiiFlagged()

@@ -2,8 +2,8 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Shillinq Register",
-    "description": "Shillinq register v0.7.0: retires the scaffold `example` schema and renames the `Project` slug to `engagement`. Planninq owns `project` as a container for tasks and kanban columns; this one is a consultancy engagement with RJ 270 percentage-of-completion revenue recognition, which is a different entity wearing the same word. Slugs are global on a shared OpenRegister. The schema KEY stays `Project`, so the register.d fragments that extend it by key are unaffected. PREVIOUSLY: Register containing all schemas for the Shillinq application. V0.6.4: re-authored 31 Dutch schema-level titles (entity display names) to English so manifest-driven UI labels are English-authored; Dutch display is now carried via l10n/nl.json per ADR i18n rule. Previous v0.6.3. Re-authored 254 Dutch schema-property titles (and none renamed keys) to English so manifest-driven UI labels are English-authored; Dutch display is now carried via l10n/nl.json per ADR i18n rule. Previous v0.6.2. Register containing all schemas for the Shillinq application.",
-    "version": "0.7.0"
+    "description": "Shillinq register v0.7.1: every schema imports on a fresh instance (payrollEmployee.bsn validates with the bsn format, ApprovalStep.status keeps its note as $comment) and the seed objects a fresh install skipped carry their required fields and name the objects they reference by uuid. PREVIOUSLY: v0.7.0: retires the scaffold `example` schema and renames the `Project` slug to `engagement`. Planninq owns `project` as a container for tasks and kanban columns; this one is a consultancy engagement with RJ 270 percentage-of-completion revenue recognition, which is a different entity wearing the same word. Slugs are global on a shared OpenRegister. The schema KEY stays `Project`, so the register.d fragments that extend it by key are unaffected. PREVIOUSLY: Register containing all schemas for the Shillinq application. V0.6.4: re-authored 31 Dutch schema-level titles (entity display names) to English so manifest-driven UI labels are English-authored; Dutch display is now carried via l10n/nl.json per ADR i18n rule. Previous v0.6.3. Re-authored 254 Dutch schema-property titles (and none renamed keys) to English so manifest-driven UI labels are English-authored; Dutch display is now carried via l10n/nl.json per ADR i18n rule. Previous v0.6.2. Register containing all schemas for the Shillinq application.",
+    "version": "0.7.1"
   },
   "x-openregister": {
     "type": "application",
@@ -23675,7 +23675,9 @@
       "termEnd": "2026-12-31",
       "status": "active",
       "currency": "EUR",
-      "contractId": "CONTRACT-2026-0001"
+      "contractId": "CONTRACT-2026-0001",
+      "orderNumber": "SO-2026-0001",
+      "customerReference": "KLANT-ACME-CONSULTING"
     },
     {
       "@self": {
@@ -23694,7 +23696,8 @@
       "recognitionDate": null,
       "termStart": null,
       "termEnd": null,
-      "accountNumber": "8100"
+      "accountNumber": "8100",
+      "salesOrder": "sales-order-2026-0001"
     },
     {
       "@self": {
@@ -23713,7 +23716,8 @@
       "recognitionDate": "2026-01-15",
       "termStart": null,
       "termEnd": null,
-      "accountNumber": "8200"
+      "accountNumber": "8200",
+      "salesOrder": "sales-order-2026-0001"
     },
     {
       "@self": {
@@ -23732,7 +23736,8 @@
       "recognitionDate": null,
       "termStart": null,
       "termEnd": null,
-      "accountNumber": "8100"
+      "accountNumber": "8100",
+      "salesOrder": "sales-order-2026-0001"
     },
     {
       "@self": {
@@ -23754,7 +23759,8 @@
       "@self": {
         "register": "shillinq",
         "schema": "GLTransaction",
-        "slug": "gl-txn-2026-q1-payroll"
+        "slug": "gl-txn-2026-q1-payroll",
+        "id": "996949f7-b9fb-5194-ae0b-7efdd5af0a40"
       },
       "transactionNumber": "GL-2026-0002",
       "postingDate": "2026-01-31",
@@ -23768,7 +23774,8 @@
       "@self": {
         "register": "shillinq",
         "schema": "GLTransaction",
-        "slug": "gl-txn-2026-q1-bank-recon"
+        "slug": "gl-txn-2026-q1-bank-recon",
+        "id": "a648e583-f21d-5692-88ed-e55ee68f9cab"
       },
       "transactionNumber": "GL-2026-0003",
       "postingDate": "2026-01-31",
@@ -23829,7 +23836,7 @@
         "schema": "GLLine",
         "slug": "gl-line-payroll-1-debit-salaries"
       },
-      "transactionId": "gl-txn-2026-q1-payroll",
+      "transactionId": "996949f7-b9fb-5194-ae0b-7efdd5af0a40",
       "lineNumber": 1,
       "accountNumber": "4100",
       "side": "debit",
@@ -23843,7 +23850,7 @@
         "schema": "GLLine",
         "slug": "gl-line-payroll-2-credit-net"
       },
-      "transactionId": "gl-txn-2026-q1-payroll",
+      "transactionId": "996949f7-b9fb-5194-ae0b-7efdd5af0a40",
       "lineNumber": 2,
       "accountNumber": "2000",
       "side": "credit",
@@ -23857,7 +23864,7 @@
         "schema": "GLLine",
         "slug": "gl-line-payroll-3-credit-tax"
       },
-      "transactionId": "gl-txn-2026-q1-payroll",
+      "transactionId": "996949f7-b9fb-5194-ae0b-7efdd5af0a40",
       "lineNumber": 3,
       "accountNumber": "1520",
       "side": "credit",
@@ -23871,7 +23878,7 @@
         "schema": "GLLine",
         "slug": "gl-line-bankrecon-1-debit"
       },
-      "transactionId": "gl-txn-2026-q1-bank-recon",
+      "transactionId": "a648e583-f21d-5692-88ed-e55ee68f9cab",
       "lineNumber": 1,
       "accountNumber": "1100",
       "side": "debit",
@@ -23885,7 +23892,7 @@
         "schema": "GLLine",
         "slug": "gl-line-bankrecon-2-credit"
       },
-      "transactionId": "gl-txn-2026-q1-bank-recon",
+      "transactionId": "a648e583-f21d-5692-88ed-e55ee68f9cab",
       "lineNumber": 2,
       "accountNumber": "1300",
       "side": "credit",

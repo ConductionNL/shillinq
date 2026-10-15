@@ -565,7 +565,7 @@ final class RenameDutchValuesTest extends TestCase
         self::assertContains('in_behandeling', $enum, 'the enum must stay Dutch, not be half-renamed');
         self::assertContains('afgewezen', $enum);
         self::assertNotEmpty(
-            ($schemas['ApprovalStep']['properties']['status']['_note'] ?? ''),
+            ($schemas['ApprovalStep']['properties']['status']['$comment'] ?? ''),
             'the deliberate exception must be recorded next to the enum it applies to'
         );
 

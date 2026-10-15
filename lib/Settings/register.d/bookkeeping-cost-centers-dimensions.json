@@ -594,7 +594,7 @@
         "schema": "AnalyticalDimension",
         "slug": "dim-region"
       },
-      "code": "REGION",
+      "code": "region",
       "name": "Region",
       "description": "Geographic region (e.g. Noord-Holland, Zuid-Holland). Surfaces regional P&L per municipality / branch.",
       "dimensionType": "custom",
@@ -610,7 +610,7 @@
         "schema": "AnalyticalDimension",
         "slug": "dim-productline"
       },
-      "code": "PRODUCT_LINE",
+      "code": "product-line",
       "name": "Product Line",
       "description": "Product line (e.g. Hosting, Consulting, Training). Surfaces product-mix P&L for revenue-side analytics.",
       "dimensionType": "custom",
@@ -626,7 +626,7 @@
         "schema": "AnalyticalDimension",
         "slug": "cc-admin-amsterdam"
       },
-      "code": "CC-ADM-AMS",
+      "code": "cc-adm-ams",
       "name": "Administratie Amsterdam",
       "description": "Administrative back-office, Amsterdam location.",
       "dimensionType": "cost-center",
@@ -634,7 +634,8 @@
       "organizationId": "org-conduction-bv",
       "responsibleUser": "manager.admin@conduction.nl",
       "lifecycleState": "active",
-      "administrationId": "adm-default"
+      "administrationId": "adm-default",
+      "dataType": "string"
     },
     {
       "@self": {
@@ -642,7 +643,7 @@
         "schema": "AnalyticalDimension",
         "slug": "cc-sales-utrecht"
       },
-      "code": "CC-SLS-UTR",
+      "code": "cc-sls-utr",
       "name": "Sales Utrecht",
       "description": "Sales team based in Utrecht (Randstad-Oost coverage).",
       "dimensionType": "cost-center",
@@ -650,7 +651,8 @@
       "organizationId": "org-conduction-bv",
       "responsibleUser": "manager.sales@conduction.nl",
       "lifecycleState": "active",
-      "administrationId": "adm-default"
+      "administrationId": "adm-default",
+      "dataType": "string"
     },
     {
       "@self": {
@@ -658,7 +660,7 @@
         "schema": "AnalyticalDimension",
         "slug": "cc-logistics-rotterdam"
       },
-      "code": "CC-LOG-RTM",
+      "code": "cc-log-rtm",
       "name": "Logistics Rotterdam",
       "description": "Logistics + fulfilment hub in Rotterdam.",
       "dimensionType": "cost-center",
@@ -666,7 +668,8 @@
       "organizationId": "org-conduction-bv",
       "responsibleUser": "manager.logistics@conduction.nl",
       "lifecycleState": "active",
-      "administrationId": "adm-default"
+      "administrationId": "adm-default",
+      "dataType": "string"
     },
     {
       "@self": {
@@ -680,7 +683,14 @@
       "responsibleUser": "manager.engineering@conduction.nl",
       "timeBookingEnabled": true,
       "lifecycleState": "active",
-      "administrationId": "adm-default"
+      "administrationId": "adm-default",
+      "customerId": "internal",
+      "state": "active",
+      "totalContractValue": 0,
+      "totalEstimatedCosts": 60000,
+      "recognitionMethod": "completed-contract",
+      "recognitionStage": "execution",
+      "currency": "EUR"
     },
     {
       "@self": {
@@ -694,7 +704,14 @@
       "responsibleUser": "manager.rnd@conduction.nl",
       "timeBookingEnabled": true,
       "lifecycleState": "active",
-      "administrationId": "adm-default"
+      "administrationId": "adm-default",
+      "customerId": "rvo-wbso",
+      "state": "active",
+      "totalContractValue": 120000,
+      "totalEstimatedCosts": 95000,
+      "recognitionMethod": "percentage-of-completion-cost-to-cost",
+      "recognitionStage": "execution",
+      "currency": "EUR"
     }
   ]
 }

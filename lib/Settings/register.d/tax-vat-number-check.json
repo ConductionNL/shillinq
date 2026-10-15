@@ -37,7 +37,12 @@
       "lifecycleState": "active"
     },
     {
-      "@self": {"register": "shillinq", "schema": "Payee", "slug": "payee-softwarehuis-bvba"},
+      "@self": {
+        "register": "shillinq",
+        "schema": "Payee",
+        "slug": "payee-softwarehuis-bvba",
+        "id": "eb92b364-6b97-5e53-9f85-2fe326959820"
+      },
       "vendorNumber": "CRED-0042",
       "name": "Softwarehuis BVBA",
       "paymentTermDays": 30,

@@ -94,7 +94,10 @@ const FRAGMENT_DIR = path.join(REPO_ROOT, 'lib', 'Settings', 'register.d')
 // The 9th change in that range is a rename with no effect on the count:
 // `1 x Verplichting — missing: kind` is now `1 x Commitment — missing: kind`.
 // It still fails, and is still counted here.
-const BASELINE = 51
+// Lowered 51 -> 33 on 2026-10-15: the seeds a fresh install skipped now carry
+// their required fields (sales order, deposits, BCF claims, cost centres,
+// projects, intercompany, invoices, balance sheet, commitment).
+const BASELINE = 33
 
 const asArray = (value) => (Array.isArray(value) ? value : [])
 

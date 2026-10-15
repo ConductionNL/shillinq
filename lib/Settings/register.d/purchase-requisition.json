@@ -338,7 +338,8 @@
       "@self": {
         "register": "shillinq",
         "schema": "Requisition",
-        "slug": "requisition-2026-0001"
+        "slug": "requisition-2026-0001",
+        "id": "a00f38ea-1cd5-5170-a5e1-febf9411eb7e"
       },
       "administrationId": "adm-demo",
       "requisitionNumber": "REQ-2026-adm-demo-000001",
@@ -358,7 +359,7 @@
         "slug": "requisition-2026-0001-line-1"
       },
       "administrationId": "adm-demo",
-      "requisitionId": "REQ-2026-adm-demo-000001",
+      "requisitionId": "a00f38ea-1cd5-5170-a5e1-febf9411eb7e",
       "lineNumber": 1,
       "description": "ThinkPad T14 Gen 5",
       "quantity": 1,
@@ -370,7 +371,8 @@
       "@self": {
         "register": "shillinq",
         "schema": "Requisition",
-        "slug": "requisition-2026-0002"
+        "slug": "requisition-2026-0002",
+        "id": "a19b709d-41ae-51a6-80c4-a202ec753934"
       },
       "administrationId": "adm-demo",
       "requisitionNumber": "REQ-2026-adm-demo-000002",
@@ -390,7 +392,7 @@
         "slug": "requisition-2026-0002-line-1"
       },
       "administrationId": "adm-demo",
-      "requisitionId": "REQ-2026-adm-demo-000002",
+      "requisitionId": "a19b709d-41ae-51a6-80c4-a202ec753934",
       "lineNumber": 1,
       "description": "Adjustable standing desk",
       "quantity": 10,
@@ -402,7 +404,8 @@
       "@self": {
         "register": "shillinq",
         "schema": "Requisition",
-        "slug": "requisition-2026-0003"
+        "slug": "requisition-2026-0003",
+        "id": "05f58073-2f3d-5d5f-a198-f8898e18697b"
       },
       "administrationId": "adm-demo",
       "requisitionNumber": "REQ-2026-adm-demo-000003",
@@ -412,7 +415,7 @@
       "neededByDate": "2026-07-30",
       "justification": "Annual software licence renewal for the design team.",
       "kind": "inkoop",
-      "preferredSupplierId": "vendor-001",
+      "preferredSupplierId": "eb92b364-6b97-5e53-9f85-2fe326959820",
       "total_amount_excl_vat": 240000,
       "statusCode": "approved",
       "approvedBy": "controller-01",
@@ -425,7 +428,7 @@
         "slug": "requisition-2026-0003-line-1"
       },
       "administrationId": "adm-demo",
-      "requisitionId": "REQ-2026-adm-demo-000003",
+      "requisitionId": "05f58073-2f3d-5d5f-a198-f8898e18697b",
       "lineNumber": 1,
       "description": "Design suite annual licence (10 seats)",
       "quantity": 10,
