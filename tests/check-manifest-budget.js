@@ -214,7 +214,13 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // chart, the Wet Fido norms, recurring costs and treasury counts): development
 // held 1,220,469 bytes. This change adds 8,088 B. 1,228,557 in all.
 // Raised to 1,234,700: 6,143 B of headroom, 0.50%.
-const DEFAULT_BUDGET_BYTES = 1_234_700
+//
+// Re-measured 2026-10-15 (receivables board, screens round 10: board
+// ShDebiteurenbeheer on the ar-aging page, five age tiles, the open invoices
+// with their reminder step and the payment requests): development held
+// 1,228,532 bytes. This change adds 8,037 B. 1,236,569 in all.
+// Raised to 1,242,800: 6,231 B of headroom, 0.50%.
+const DEFAULT_BUDGET_BYTES = 1_242_800
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),
