@@ -4478,7 +4478,27 @@ OC.L10N.register(
         "Cash pools": "Cash pools",
         "Intercompany loans": "Intercompany loans",
         "Add scenario": "Add scenario",
-        "13-week forecast from open items, recurring costs and the budget": "13-week forecast from open items, recurring costs and the budget"
+        "13-week forecast from open items, recurring costs and the budget": "13-week forecast from open items, recurring costs and the budget",
+        "{context}, step {step} of {total}": "{context}, step {step} of {total}",
+        "Post to sales invoices": "Post to sales invoices",
+        "Project {project}": "Project {project}",
+        "Bill": "Bill",
+        "_%n line chosen, becomes one draft invoice_::_%n lines chosen, become one draft invoice_": ["%n line chosen, becomes one draft invoice","%n lines chosen, become one draft invoice"],
+        "On posting": "On posting",
+        "The draft is saved. Post it to send it to sales invoices, or close and post it later.": "The draft is saved. Post it to send it to sales invoices, or close and post it later.",
+        "Choose lines": "Choose lines",
+        "Review": "Review",
+        "Period {from} to {to}": "Period {from} to {to}",
+        "No hours in this period.": "No hours in this period.",
+        "Costs passed on": "Costs passed on",
+        "No costs passed on to this customer in this period.": "No costs passed on to this customer in this period.",
+        "The customers could not be loaded.": "The customers could not be loaded.",
+        "Choose a customer and a period first.": "Choose a customer and a period first.",
+        "Invoice posted to sales invoices": "Invoice posted to sales invoices",
+        "The invoice could not be posted.": "The invoice could not be posted.",
+        "%n line chosen, becomes one draft invoice": "%n line chosen, becomes one draft invoice",
+        "%n lines chosen, become one draft invoice": "%n lines chosen, become one draft invoice",
+        "Loading the lines …": "Loading the lines …"
     },
     "nplurals=2; plural=(n != 1);"
 )

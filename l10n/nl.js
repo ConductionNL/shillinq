@@ -6672,7 +6672,27 @@ OC.L10N.register(
         "Cash pools": "Cash pools",
         "Intercompany loans": "Leningen binnen de groep",
         "Add scenario": "Scenario toevoegen",
-        "13-week forecast from open items, recurring costs and the budget": "Prognose 13 weken op basis van open posten, terugkerende kosten en begroting"
+        "13-week forecast from open items, recurring costs and the budget": "Prognose 13 weken op basis van open posten, terugkerende kosten en begroting",
+        "{context}, step {step} of {total}": "{context}, stap {step} van {total}",
+        "Post to sales invoices": "Naar verkoopfacturen boeken",
+        "Project {project}": "Project {project}",
+        "Bill": "Factureren",
+        "_%n line chosen, becomes one draft invoice_::_%n lines chosen, become one draft invoice_": ["%n regel gekozen, wordt 1 conceptfactuur","%n regels gekozen, worden 1 conceptfactuur"],
+        "On posting": "Bij boeken",
+        "The draft is saved. Post it to send it to sales invoices, or close and post it later.": "Het concept is opgeslagen. Boek het naar de verkoopfacturen, of sluit en boek het later.",
+        "Choose lines": "Regels kiezen",
+        "Review": "Controleren",
+        "Period {from} to {to}": "Periode {from} tot en met {to}",
+        "No hours in this period.": "Geen uren in deze periode.",
+        "Costs passed on": "Doorbelaste kosten",
+        "No costs passed on to this customer in this period.": "Geen doorbelaste kosten voor deze klant in deze periode.",
+        "The customers could not be loaded.": "De klanten konden niet worden geladen.",
+        "Choose a customer and a period first.": "Kies eerst een klant en een periode.",
+        "Invoice posted to sales invoices": "Factuur geboekt naar verkoopfacturen",
+        "The invoice could not be posted.": "De factuur kon niet worden geboekt.",
+        "%n line chosen, becomes one draft invoice": "%n regel gekozen, wordt 1 conceptfactuur",
+        "%n lines chosen, become one draft invoice": "%n regels gekozen, worden 1 conceptfactuur",
+        "Loading the lines …": "Regels laden …"
     },
     "nplurals=2; plural=(n != 1);"
 )
