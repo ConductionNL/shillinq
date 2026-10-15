@@ -8029,8 +8029,7 @@
 						"id": "generate-invoices",
 						"label": "Generate invoices",
 						"icon": "FileDocumentMultipleOutline",
-						"handler": "navigate",
-						"route": "BillableInvoiceGenerate",
+						"handler": "openInvoiceGenerateWizard",
 						"description": "From hours, costs, meter readings and retainers"
 					}
 				],

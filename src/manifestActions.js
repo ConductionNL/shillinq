@@ -20,6 +20,7 @@ import { openDownPaymentInvoice } from './utils/downPaymentActions.js'
 import { openDunningNextRun, openDunningSwitchOn } from './utils/dunningActions.js'
 import { openImportWizard } from './utils/importWizard.js'
 import { openIntegriqConnections } from './utils/integriqConnections.js'
+import { openInvoiceGenerateWizard } from './utils/invoiceGenerateWizard.js'
 import { openProposePaymentRun } from './utils/paymentRunActions.js'
 import { approveRefund, openRefundPaid } from './utils/refundActions.js'
 import {
@@ -49,6 +50,8 @@ export const manifestActions = Object.freeze({
 	// sales-down-payments: the "New down-payment invoice" header action on
 	// Accounts Receivable.
 	openDownPaymentInvoice,
+	// Generate invoices on Sales invoices (board ShFactuurGenereren).
+	openInvoiceGenerateWizard,
 	// banking-payment-run: the "Propose payment run" header action on
 	// Payment runs.
 	openProposePaymentRun,
