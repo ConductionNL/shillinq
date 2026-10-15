@@ -152,7 +152,9 @@ class PeriodCloseGuard {
 	/**
 	 * Returns true iff total posted debits equal total posted credits for the
 	 * period (REQ-TB-003), computed directly from GLLine records (`side` +
-	 * `amount`) filtered by the period's business `periodId`. A period with
+	 * `amount`) filtered by the period's business `periodId`. When the period
+	 * carries an administrationId, only lines whose parent GLTransaction belongs
+	 * to that administration count. A period with
 	 * no posted lines yet is trivially balanced (0 === 0) and permitted to
 	 * begin closing, mirroring periodOpen()'s "no scope, allow" convention.
 	 * Fail-closed on any error.
@@ -175,6 +177,15 @@ class PeriodCloseGuard {
 				return true;
 			}
 
+			$transactionIds = null;
+			$administrationId = (string)($resolved['administrationId'] ?? '');
+			if ($administrationId !== '') {
+				$transactionIds = $this->transactionIds(administrationId: $administrationId, periodId: $periodId);
+				if ($transactionIds === []) {
+					return true;
+				}
+			}
+
 			$lines = $this->objectService
 				->setRegister($this->register())
 				->setSchema('GLLine')
@@ -186,7 +197,14 @@ class PeriodCloseGuard {
 
 			$debitCents = 0;
 			$creditCents = 0;
-			foreach ($lines as $line) {
+			foreach ($lines as $rawLine) {
+				$line = $this->asArray(row: $rawLine);
+				if ($transactionIds !== null
+					&& isset($transactionIds[(string)($line['transactionId'] ?? '')]) === false
+				) {
+					continue;
+				}
+
 				$amountCents = (int)round(((float)($line['amount'] ?? 0)) * 100);
 				if ((string)($line['side'] ?? '') === 'debit') {
 					$debitCents += $amountCents;
@@ -366,7 +384,7 @@ class PeriodCloseGuard {
 			->findAll(['filters' => ['id' => $transaction], 'limit' => 1]);
 
 		if ($found !== []) {
-			return (array)$found[0];
+			return $this->asArray(row: $found[0]);
 		}
 
 		return [];
@@ -390,7 +408,7 @@ class PeriodCloseGuard {
 			->findAll(['filters' => ['id' => $period], 'limit' => 1]);
 
 		if ($found !== []) {
-			return (array)$found[0];
+			return $this->asArray(row: $found[0]);
 		}
 
 		return null;
@@ -416,11 +434,62 @@ class PeriodCloseGuard {
 			->findAll(['filters' => $filters, 'limit' => 1]);
 
 		if ($found !== []) {
-			return (array)$found[0];
+			return $this->asArray(row: $found[0]);
 		}
 
 		return null;
 	}//end findPeriod()
+
+	/**
+	 * Collect the ids of the GLTransactions posted in a period for one administration.
+	 *
+	 * GLTransaction.administrationId is the source of truth for a line's
+	 * administration, so lines are scoped through their parent transaction.
+	 *
+	 * @param string $administrationId The administration scope.
+	 * @param string $periodId         The period identifier.
+	 *
+	 * @return array<string,true> Transaction id => true.
+	 */
+	private function transactionIds(string $administrationId, string $periodId): array {
+		$transactions = $this->objectService
+			->setRegister($this->register())
+			->setSchema('GLTransaction')
+			->findAll(['filters' => ['administrationId' => $administrationId, 'periodId' => $periodId]]);
+
+		$ids = [];
+		foreach ($transactions as $rawTransaction) {
+			$transaction = $this->asArray(row: $rawTransaction);
+			$id = ($transaction['id'] ?? ($transaction['@self']['id'] ?? null));
+			if ($id !== null) {
+				$ids[(string)$id] = true;
+			}
+		}
+
+		return $ids;
+	}//end transactionIds()
+
+	/**
+	 * Normalise an OpenRegister row (ObjectEntity or array) to a plain array.
+	 *
+	 * @param mixed $row The row returned by ObjectService::findAll().
+	 *
+	 * @return array<string,mixed> The row's data, or [] when it has none.
+	 */
+	private function asArray(mixed $row): array {
+		if (is_array($row) === true) {
+			return $row;
+		}
+
+		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+			$out = $row->jsonSerialize();
+			if (is_array($out) === true) {
+				return $out;
+			}
+		}
+
+		return [];
+	}//end asArray()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
