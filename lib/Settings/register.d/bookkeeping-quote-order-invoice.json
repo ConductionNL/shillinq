@@ -1942,7 +1942,12 @@
         "netAmount": 7500,
         "vatAmount": 0,
         "grossAmount": 7500,
-        "status": "draft"
+        "status": "draft",
+        "administrationId": "adm-1",
+        "invoiceId": "inv-2026-0003",
+        "customerId": "qoi-sample-customer-industrial",
+        "sourceDocumentUri": "urn:nextcloud:booking:order:ord-2026-0003",
+        "state": "issued"
       },
       {
         "@self": {
@@ -1988,7 +1993,13 @@
         "totalAmount": 588.06,
         "reason": "return",
         "notes": "Customer returned 6 defective widgets.",
-        "status": "issued"
+        "status": "issued",
+        "administrationId": "adm-1",
+        "creditNoteId": "cn-2026-0001",
+        "linkedInvoiceId": "qoi-sample-invoice-retail-delivery1",
+        "customerId": "qoi-sample-customer-retail",
+        "grossAmount": 58806,
+        "state": "issued"
       }
     ]
   }

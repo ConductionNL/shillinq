@@ -62,7 +62,7 @@
           },
           "taxIdentificationNumber": {
             "type": "string",
-            "pattern": "^NL[0-9]{10}B[0-9]{2}$",
+            "pattern": "^NL[0-9]{9}B[0-9]{2}$",
             "description": "Dutch VAT/BTW identification number.",
             "example": "NL814022818B01",
             "title": "Tax Identification Number"
@@ -395,7 +395,8 @@
       "@self": {
         "register": "shillinq",
         "schema": "CBSSubmission",
-        "slug": "cbs-sub-2025-org-001"
+        "slug": "cbs-sub-2025-org-001",
+        "id": "57aa5284-f2e0-5cf6-952b-01602a235fdc"
       },
       "submissionNumber": "CBS-2025-001",
       "reportingPeriodStartDate": "2025-01-01",
@@ -451,7 +452,7 @@
         "schema": "CBSLine",
         "slug": "cbs-line-2025-001-revenue"
       },
-      "cbsSubmissionId": "cbs-sub-2025-org-001",
+      "cbsSubmissionId": "57aa5284-f2e0-5cf6-952b-01602a235fdc",
       "cbsLineClassification": "Revenue",
       "cbsLineNumber": "1000",
       "accountRangeStart": "8000",
@@ -467,7 +468,7 @@
         "schema": "CBSLine",
         "slug": "cbs-line-2025-001-costs"
       },
-      "cbsSubmissionId": "cbs-sub-2025-org-001",
+      "cbsSubmissionId": "57aa5284-f2e0-5cf6-952b-01602a235fdc",
       "cbsLineClassification": "OperatingCosts",
       "cbsLineNumber": "2000",
       "accountRangeStart": "5000",
@@ -483,7 +484,7 @@
         "schema": "CBSLine",
         "slug": "cbs-line-2025-001-depreciation"
       },
-      "cbsSubmissionId": "cbs-sub-2025-org-001",
+      "cbsSubmissionId": "57aa5284-f2e0-5cf6-952b-01602a235fdc",
       "cbsLineClassification": "Depreciation",
       "cbsLineNumber": "3000",
       "accountRangeStart": "6000",

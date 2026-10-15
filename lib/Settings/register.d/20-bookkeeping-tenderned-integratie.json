@@ -718,7 +718,8 @@
         }
       ],
       "administrationId": "adm-consultancy-nl",
-      "status": "active"
+      "status": "active",
+      "kind": "purchase_order"
     }
   ]
 }
