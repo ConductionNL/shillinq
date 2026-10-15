@@ -4392,7 +4392,9 @@ OC.L10N.register(
         "Spending limit exceeded": "Spending limit exceeded",
         "On final": "On final",
         "On budget overshoot": "On budget overshoot",
-        "On schatkist negatief": "On schatkist negatief"
+        "On schatkist negatief": "On schatkist negatief",
+        "Administration settings": "Administration settings",
+        "only for administrators, each section saves on its own": "only for administrators, each section saves on its own"
     },
     "nplurals=2; plural=(n != 1);"
 )

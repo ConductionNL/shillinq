@@ -6587,7 +6587,9 @@ OC.L10N.register(
         "Spending limit exceeded": "Bestedingslimiet overschreden",
         "On final": "Bij definitief",
         "On budget overshoot": "Bij overschrijding van het budget",
-        "On schatkist negatief": "Bij negatieve schatkistpositie"
+        "On schatkist negatief": "Bij negatieve schatkistpositie",
+        "Administration settings": "Beheerinstellingen",
+        "only for administrators, each section saves on its own": "alleen voor beheerders, elke sectie slaat apart op"
     },
     "nplurals=2; plural=(n != 1);"
 )
