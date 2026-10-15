@@ -6589,7 +6589,17 @@
         "Spending limit exceeded": "Bestedingslimiet overschreden",
         "On final": "Bij definitief",
         "On budget overshoot": "Bij overschrijding van het budget",
-        "On schatkist negatief": "Bij negatieve schatkistpositie"
+        "On schatkist negatief": "Bij negatieve schatkistpositie",
+        "Sales invoices": "Verkoopfacturen",
+        "Receivables management": "Debiteurenbeheer",
+        "Purchase invoices": "Inkoopfacturen",
+        "Bank and payments": "Bank en betalingen",
+        "Liquidity": "Liquiditeit",
+        "Accounting": "Boekhouding",
+        "Closing the books": "Afsluiten",
+        "Budgeting": "Begroting",
+        "Help and guidance": "Hulp en uitleg",
+        "All modules": "Alle onderdelen"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

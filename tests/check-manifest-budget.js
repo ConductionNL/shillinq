@@ -194,7 +194,14 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // query lens on Payment requests, not a second index page), the Approve and
 // Mark paid row actions and three state filter options. 1,207,415 in all.
 // Raised to 1,213,500: 6,085 B of headroom, 0.50%.
-const DEFAULT_BUDGET_BYTES = 1_213_500
+//
+// Re-measured 2026-10-14 (board navigation, screens round 10): development
+// held 1,211,152 bytes. This change adds 2,531 B: the nav-board-sections.json
+// fragment (the Verkoop, Inkoop, Bank and Boekhouding headings with their 15
+// entries, and the All modules heading) and the root `nav` block (New booking,
+// Help and guidance, footer order). 1,213,683 in all.
+// Raised to 1,219,700: 6,017 B of headroom, 0.50%.
+const DEFAULT_BUDGET_BYTES = 1_219_700
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),

@@ -4392,7 +4392,17 @@ OC.L10N.register(
         "Spending limit exceeded": "Spending limit exceeded",
         "On final": "On final",
         "On budget overshoot": "On budget overshoot",
-        "On schatkist negatief": "On schatkist negatief"
+        "On schatkist negatief": "On schatkist negatief",
+        "Sales invoices": "Sales invoices",
+        "Receivables management": "Receivables management",
+        "Purchase invoices": "Purchase invoices",
+        "Bank and payments": "Bank and payments",
+        "Liquidity": "Liquidity",
+        "Accounting": "Accounting",
+        "Closing the books": "Closing the books",
+        "Budgeting": "Budgeting",
+        "Help and guidance": "Help and guidance",
+        "All modules": "All modules"
     },
     "nplurals=2; plural=(n != 1);"
 )

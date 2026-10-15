@@ -2,6 +2,7 @@
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
 	"version": "1.4.0",
 	"look": "board",
+	"nav": {"primaryAction": {"id": "new-booking", "label": "New Booking", "icon": "Plus", "solid": true, "action": {"id": "new-booking", "label": "New Booking", "type": "open-form", "register": "shillinq", "schema": "JournalEntry"}}, "help": {"label": "Help and guidance", "href": "https://shillinq.conduction.nl"}, "footer": ["help", "settings"]},
 	"dependencies": [
 		"openregister"
 	],
