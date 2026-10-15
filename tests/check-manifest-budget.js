@@ -201,7 +201,14 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // entries, and the All modules heading) and the root `nav` block (New booking,
 // Help and guidance, footer order). 1,213,683 in all.
 // Raised to 1,219,700: 6,017 B of headroom, 0.50%.
-const DEFAULT_BUDGET_BYTES = 1_219_700
+//
+// Re-measured 2026-10-14 (sales invoice board, screens round 10): the branch
+// it stacks on held 1,218,823 bytes after the sales, purchase and claims list
+// headers. This change adds 979 B to add-shillinq-einvoicing-ubl-peppol.json:
+// the invoice page's tab strip, side column cards, pill and breadcrumb, less
+// the four totals tiles. 1,219,802 in all.
+// Raised to 1,226,000: 6,198 B of headroom, 0.51%.
+const DEFAULT_BUDGET_BYTES = 1_226_000
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),

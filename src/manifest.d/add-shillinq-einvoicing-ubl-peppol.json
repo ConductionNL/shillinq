@@ -25,6 +25,35 @@
         "_note": "Billing-document archetype \u2014 a receivable invoice sent to a customer. Body leads with the invoice's own fields (schema-driven Data widget: number, type, dates, EN 16931 party/tax fields, the folded dunning/writeOff summary groups, GL link, and \u2014 added by add-invoice-pdf-export-with-ubl-peppol-support \u2014 the Peppol deliveryStatus/transmissionId/payloadFileUri/deliveryDetail fields) beside a Related panel for the customerId FK. Dunning history uses the real credit-control schema DunningRun (filter factuurId=@objectId, rowRoute to the existing DunningRunDetail page). Totals surface as summaryAggregates KPI chips (gross/due/paid, all sums over the invoice's own field via filter id=@objectId, the established self-value idiom) plus a dunning-run count. The header actionsComponent (AREInvoiceActions) renders the Send e-invoice action + delivery-status chip (REQ-EINV-007).",
         "widgets": [
           {
+            "id": "invoice-panels",
+            "type": "tabs",
+            "title": "Invoice",
+            "content": {
+              "tabs": [
+                {
+                  "widgetIds": [
+                    "invoice-document",
+                    "invoice-money"
+                  ],
+                  "label": "Overview"
+                },
+                {
+                  "widgetId": "invoice-dunning",
+                  "label": "Reminders",
+                  "countFrom": "widget"
+                },
+                {
+                  "widgetId": "invoice-files",
+                  "label": "Files"
+                },
+                {
+                  "widgetId": "invoice-history",
+                  "label": "History"
+                }
+              ]
+            }
+          },
+          {
             "id": "invoice-document",
             "type": "data",
             "title": "Document",
@@ -45,89 +74,6 @@
                 "transmissionId",
                 "payloadFileUri",
                 "deliveryDetail"
-              ]
-            }
-          },
-          {
-            "id": "invoice-stats-gross-amount",
-            "type": "stats-block",
-            "title": "Gross amount",
-            "icon": "ChartBar",
-            "content": {
-              "entries": [
-                {
-                  "title": "Gross amount",
-                  "register": "shillinq",
-                  "schema": "ARInvoice",
-                  "metric": "sum",
-                  "field": "grossAmount",
-                  "filter": {
-                    "id": "@objectId"
-                  },
-                  "format": "currency"
-                }
-              ]
-            }
-          },
-          {
-            "id": "invoice-stats-amount-due",
-            "type": "stats-block",
-            "title": "Amount due",
-            "icon": "ChartBar",
-            "content": {
-              "entries": [
-                {
-                  "title": "Amount due",
-                  "register": "shillinq",
-                  "schema": "ARInvoice",
-                  "metric": "sum",
-                  "field": "amountDue",
-                  "filter": {
-                    "id": "@objectId"
-                  },
-                  "format": "currency"
-                }
-              ]
-            }
-          },
-          {
-            "id": "invoice-stats-paid-amount",
-            "type": "stats-block",
-            "title": "Paid amount",
-            "icon": "ChartBar",
-            "content": {
-              "entries": [
-                {
-                  "title": "Paid amount",
-                  "register": "shillinq",
-                  "schema": "ARInvoice",
-                  "metric": "sum",
-                  "field": "paidAmount",
-                  "filter": {
-                    "id": "@objectId"
-                  },
-                  "format": "currency"
-                }
-              ]
-            }
-          },
-          {
-            "id": "invoice-stats-dunning-runs",
-            "type": "stats-block",
-            "title": "Dunning runs",
-            "icon": "ChartBar",
-            "content": {
-              "entries": [
-                {
-                  "title": "Dunning runs",
-                  "register": "shillinq",
-                  "schema": "DunningRun",
-                  "metric": "count",
-                  "filter": {
-                    "invoiceId": "@objectId"
-                  },
-                  "route": "DunningRuns"
-                }
               ]
             }
           },
@@ -156,12 +102,6 @@
             "title": "Down payments",
             "icon": "CashPlus",
             "_note": "sales-down-payments REQ-SDP-003 and REQ-SDP-005, rendered through the page slot widget-invoice-down-payments -> ArDownPaymentPanel. It shows the order's down payments with their paid state and the invoice that deducted each, and on a draft invoice offers to deduct a customer's open down payments. Custom because it reads GET /api/ar-invoices/{id}/down-payments, a cross-invoice lookup no declarative widget can express, and writes the deduction through POST .../down-payment-deductions."
-          },
-          {
-            "id": "invoice-related",
-            "type": "related",
-            "title": "Customer",
-            "icon": "LinkVariant"
           },
           {
             "id": "invoice-dunning",
@@ -216,88 +156,114 @@
             "integrationId": "files",
             "title": "Invoice PDF & attachments",
             "icon": "FileDocument"
+          },
+          {
+            "id": "invoice-history",
+            "type": "audit-trail",
+            "title": "History"
+          },
+          {
+            "id": "invoice-customer",
+            "type": "facts",
+            "title": "Customer",
+            "content": {
+              "source": {
+                "register": "shillinq",
+                "schema": "CustomerMaster",
+                "id": "@object.customerId"
+              },
+              "fields": [
+                {
+                  "as": "title",
+                  "path": "legalName",
+                  "route": {
+                    "name": "CustomerDetail",
+                    "params": {
+                      "id": "@source.id"
+                    }
+                  }
+                },
+                {
+                  "label": "Email",
+                  "path": "email",
+                  "format": "email"
+                },
+                {
+                  "label": "Customer number",
+                  "path": "customerId"
+                }
+              ],
+              "emptyText": "No customer linked"
+            }
+          },
+          {
+            "id": "invoice-payment",
+            "type": "facts",
+            "title": "Payment",
+            "content": {
+              "fields": [
+                {
+                  "as": "pill",
+                  "path": "lifecycleState",
+                  "map": {
+                    "draft": "Draft",
+                    "issued": "Outstanding",
+                    "paid": "Paid",
+                    "overdue": "Overdue",
+                    "disputed": "Disputed",
+                    "written-off": "Written off"
+                  },
+                  "variantMap": {
+                    "draft": "default",
+                    "issued": "warning",
+                    "paid": "success",
+                    "overdue": "error",
+                    "disputed": "warning",
+                    "written-off": "default"
+                  }
+                },
+                {
+                  "label": "Payment method",
+                  "path": "paymentMethod",
+                  "map": {
+                    "bank_transfer": "Bank transfer",
+                    "direct_debit": "Direct debit",
+                    "cash": "Cash",
+                    "card": "Card",
+                    "other": "Other"
+                  }
+                },
+                {
+                  "label": "Due date",
+                  "path": "dueDate",
+                  "format": "date"
+                }
+              ]
+            }
+          },
+          {
+            "id": "invoice-related",
+            "type": "related",
+            "title": "Links",
+            "icon": "LinkVariant"
           }
         ],
         "layout": [
           {
             "id": "1",
-            "widgetId": "invoice-document",
+            "widgetId": "invoice-panels",
             "gridX": 0,
             "gridY": 0,
-            "gridWidth": 8,
-            "gridHeight": 6
+            "gridWidth": 12,
+            "gridHeight": 10
           },
           {
-            "id": "2-1",
-            "widgetId": "invoice-stats-gross-amount",
-            "gridX": 8,
-            "gridY": 0,
-            "gridWidth": 4,
-            "gridHeight": 2
-          },
-          {
-            "id": "2-2",
-            "widgetId": "invoice-stats-amount-due",
-            "gridX": 8,
-            "gridY": 2,
-            "gridWidth": 4,
-            "gridHeight": 2
-          },
-          {
-            "id": "2-3",
-            "widgetId": "invoice-stats-paid-amount",
-            "gridX": 8,
-            "gridY": 4,
-            "gridWidth": 4,
-            "gridHeight": 2
-          },
-          {
-            "id": "2-4",
-            "widgetId": "invoice-stats-dunning-runs",
-            "gridX": 8,
-            "gridY": 6,
-            "gridWidth": 4,
-            "gridHeight": 2
-          },
-          {
-            "id": "3",
-            "widgetId": "invoice-money",
-            "gridX": 0,
-            "gridY": 8,
-            "gridWidth": 8,
-            "gridHeight": 4
-          },
-          {
-            "id": "4",
-            "widgetId": "invoice-related",
-            "gridX": 8,
-            "gridY": 8,
-            "gridWidth": 4,
-            "gridHeight": 4
-          },
-          {
-            "id": "4-1",
+            "id": "2",
             "widgetId": "invoice-down-payments",
             "gridX": 0,
-            "gridY": 12,
+            "gridY": 10,
             "gridWidth": 12,
             "gridHeight": 4
-          },
-          {
-            "id": "5",
-            "widgetId": "invoice-dunning",
-            "gridX": 0,
-            "gridY": 16,
-            "gridWidth": 12,
-            "gridHeight": 4
-          },
-          {
-            "id": "6",
-            "widgetId": "invoice-files",
-            "gridX": 0,
-            "gridY": 20,
-            "gridWidth": 12,
-            "gridHeight": 3
           }
         ],
         "lifecycleActions": true,
@@ -316,7 +282,57 @@
               ]
             }
           ]
-        }
+        },
+        "sideColumn": [
+          "invoice-payment",
+          "invoice-customer",
+          "invoice-related"
+        ],
+        "breadcrumb": {
+          "label": "Sales invoices",
+          "route": "AccountsReceivable"
+        },
+        "identifierField": "invoiceNumber",
+        "statusPill": {
+          "field": "lifecycleState",
+          "labels": {
+            "draft": "Draft",
+            "issued": "Sent",
+            "paid": "Paid",
+            "overdue": "Overdue",
+            "disputed": "Disputed",
+            "written-off": "Written off"
+          },
+          "colorMap": {
+            "draft": "default",
+            "issued": "info",
+            "paid": "success",
+            "overdue": "error",
+            "disputed": "warning",
+            "written-off": "default"
+          }
+        },
+        "headerMeta": "Due {dueDate|date}",
+        "tabsLabel": "Invoice parts",
+        "headerActions": [
+          {
+            "id": "agree-payment-plan",
+            "label": "Agree a payment plan",
+            "type": "open-modal",
+            "target": "AgreePaymentPlanModal",
+            "icon": "CalendarClock",
+            "props": {
+              "open": true,
+              "from": "invoice"
+            },
+            "visibleWhen": {
+              "field": "lifecycleState",
+              "op": "eq",
+              "value": "overdue"
+            }
+          }
+        ],
+        "_boardNote": "Board ShVerkoopfactuur. The four totals tiles read 0 (a sum over a filter on the invoice id); the Money card keeps the amounts and the Reminders tab the count. Agree a payment plan is restored: this fragment replaces the base page whole."
       }
     }
   ]
