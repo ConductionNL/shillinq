@@ -14075,7 +14075,7 @@
 				"_note_rowRoute_overlay": "See the Receipts index — `rowRoute` is the key CnPageRenderer reads; SupplierInvoiceDetail is `type:\"custom\"`, so without it these rows are dead on click.",
 				"description": "Read-only stub at slice-01. Member 05 owns UBL/Peppol/OCR ingestion.",
 				"documentationUrl": "https://shillinq.conduction.nl/guides/import-bills",
-				"_boardNote": "Board ShInkoopfacturen: title, count line, Download / Actions, chips with counts on the match status, the supplier by name with the invoice number under it. The board primary button (import a purchase invoice) waits on a library gap: an index header action cannot open a registered modal yet.",
+				"_boardNote": "Board ShInkoopfacturen: title, count line, Download / Actions, chips with counts on the match status, the supplier by name with the invoice number under it. The board primary button imports a purchase invoice; an index header action cannot open a registered modal yet (library), so the primary button creates one.",
 				"showTitle": true,
 				"countSubtitle": "{total} purchase invoices",
 				"showCount": false,
@@ -14119,6 +14119,11 @@
 							"refresh",
 							"documentation"
 						]
+					},
+					{
+						"action": "add",
+						"variant": "primary",
+						"label": "New purchase invoice"
 					}
 				]
 			}

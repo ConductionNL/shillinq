@@ -4421,7 +4421,8 @@ OC.L10N.register(
         "Control accounts": "Control accounts",
         "New account": "New account",
         "{total} orders": "{total} orders",
-        "New order": "New order"
+        "New order": "New order",
+        "New purchase invoice": "New purchase invoice"
     },
     "nplurals=2; plural=(n != 1);"
 )

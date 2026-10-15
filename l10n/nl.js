@@ -6616,7 +6616,8 @@ OC.L10N.register(
         "Control accounts": "Controlerekeningen",
         "New account": "Nieuwe rekening",
         "{total} orders": "{total} orders",
-        "New order": "Nieuwe order"
+        "New order": "Nieuwe order",
+        "New purchase invoice": "Nieuwe inkoopfactuur"
     },
     "nplurals=2; plural=(n != 1);"
 )
