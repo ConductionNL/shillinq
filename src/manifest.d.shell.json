@@ -969,6 +969,18 @@
 			]
 		},
 		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "bank-and-payments-board",
+					"id": "BankAndPayments",
+					"route": "/bank",
+					"type": "dashboard",
+					"title": "Bank and payments"
+				}
+			]
+		},
+		{
 			"menu": [
 				{
 					"id": "BankImportPage",
@@ -4807,7 +4819,7 @@
 					"id": "NavBankAndPayments",
 					"label": "Bank and payments",
 					"icon": "BankOutline",
-					"route": "BankingCashflowOverview",
+					"route": "BankAndPayments",
 					"order": 13
 				},
 				{
