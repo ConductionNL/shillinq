@@ -11,7 +11,7 @@
       "DunningLadder": {
         "slug": "DunningLadder",
         "icon": "StairsUp",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "Dunning Ladder",
         "description": "Configuration of a multi-stage dunning ladder per ondernemer or per klantgroep (DEFAULT, OVERHEID, VIP, AGGRESSIVE). Each stage declares dagenNaVervalDatum, kanaal (EMAIL / EMAIL+POSTREGISTRATIE / AANGETEKENDE_POST / INCASSOBUREAU_API), template reference (docudesk), and optional wettelijkEffect marker (14_DAGEN_BRIEF_BIK or VERZUIM_INTREDEN). One ondernemer MAY define multiple ladders. The active flag determines whether the ladder participates in automated dunning runs.",
         "x-schema-org": "schema:Service",
@@ -114,6 +114,40 @@
                   "nullable": true,
                   "description": "Optional terminal action (e.g. TRANSFER_INCASSO at the overdraft stage).",
                   "title": "Actie"
+                },
+                "subject": {
+                  "type": "object",
+                  "title": "Subject",
+                  "description": "The mail subject of this stage, in Dutch and English. Write merge fields as {klantNaam}, {factuurNummer} and so on. Without a subject the stage uses its default text.",
+                  "properties": {
+                    "nl": {
+                      "type": "string",
+                      "title": "Dutch",
+                      "description": "The text in Dutch."
+                    },
+                    "en": {
+                      "type": "string",
+                      "title": "English",
+                      "description": "The text in English."
+                    }
+                  }
+                },
+                "body": {
+                  "type": "object",
+                  "title": "Body",
+                  "description": "The mail body of this stage, in Dutch and English, with the same merge fields as the subject.",
+                  "properties": {
+                    "nl": {
+                      "type": "string",
+                      "title": "Dutch",
+                      "description": "The text in Dutch."
+                    },
+                    "en": {
+                      "type": "string",
+                      "title": "English",
+                      "description": "The text in English."
+                    }
+                  }
                 }
               }
             },
@@ -355,7 +389,7 @@
       "DunningRun": {
         "slug": "DunningRun",
         "icon": "EmailFastOutline",
-        "version": "0.1.0",
+        "version": "0.3.0",
         "title": "Dunning Run",
         "description": "Per-invoice per-stage execution log with evidence trail (rendered subject/body, PDF SHA-256 hash, delivery status, optional digital signature, e-mail open tracking, PostNL barcode + delivery confirmation). Immutable once executed. Backs the proof-of-contact requirement of art. 6:96 BW.",
         "x-schema-org": "schema:Event",
@@ -458,11 +492,18 @@
               "PENDING",
               "DELIVERED",
               "BOUNCED",
-              "FAILED"
+              "FAILED",
+              "MANUAL"
             ],
-            "description": "Outcome of the dispatch attempt.",
+            "description": "Outcome of the dispatch attempt. MANUAL: a person sends this stage (a letter, the collection agency, or a customer without an email address).",
             "default": "PENDING",
             "title": "Delivery Status"
+          },
+          "deliveryNote": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the stage failed or waits for a person, as the channel reported it. Empty when the stage was delivered.",
+            "title": "Delivery note"
           },
           "openTracking": {
             "type": "object",
@@ -622,6 +663,39 @@
                 "as": "count"
               }
             ]
+          }
+        },
+        "x-openregister-notifications": {
+          "onManual": {
+            "trigger": {
+              "type": "created",
+              "filter": {
+                "field": "deliveryStatus",
+                "operator": "equals",
+                "value": "MANUAL"
+              }
+            },
+            "description": "Tell the credit controllers that a reminder stage waits for a person: a registered letter, the collection agency, or a customer without an email address.",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "groups",
+                "groups": [
+                  "ar-controller"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Verstuur stap {{stageNr}} van de herinneringen aan {{recipientName}} zelf",
+              "en": "Send reminder stage {{stageNr}} to {{recipientName}} yourself"
+            },
+            "message": {
+              "nl": "Open de herinnering om te zien waarom, en wat je verstuurt.",
+              "en": "Open the reminder to see why, and what to send."
+            }
           }
         },
         "x-openregister-rbac": {
@@ -1403,7 +1477,14 @@
           "name": "Vriendelijke reminder",
           "channel": "EMAIL",
           "templateId": "tpl-dunning-stage1-nl",
-          "statutoryEffect": null
+          "subject": {
+            "nl": "Vriendelijke herinnering: factuur {factuurNummer}",
+            "en": "Friendly reminder: invoice {factuurNummer}"
+          },
+          "body": {
+            "nl": "Beste {klantNaam},\n\nMisschien is het u ontgaan. Factuur {factuurNummer} van {invoiceDate} is nog niet betaald. Het openstaande bedrag is {outstandingAmount}. De vervaldatum was {expiryDate}.\n\nWilt u het bedrag overmaken naar {iban}? Vermeld daarbij het factuurnummer.\n\nHeeft u al betaald? Dan kunt u deze herinnering negeren.\n\nMet vriendelijke groet",
+            "en": "Dear {klantNaam},\n\nPerhaps this slipped your mind. Invoice {factuurNummer} of {invoiceDate} is still unpaid. The amount due is {outstandingAmount}. It was due on {expiryDate}.\n\nPlease transfer the amount to {iban} and quote the invoice number.\n\nAlready paid? Then you can ignore this reminder.\n\nKind regards"
+          }
         },
         {
           "nr": 2,
@@ -1411,7 +1492,14 @@
           "name": "Herinnering",
           "channel": "EMAIL",
           "templateId": "tpl-dunning-stage2-nl",
-          "statutoryEffect": null
+          "subject": {
+            "nl": "Tweede herinnering: factuur {factuurNummer}",
+            "en": "Second reminder: invoice {factuurNummer}"
+          },
+          "body": {
+            "nl": "Beste {klantNaam},\n\nFactuur {factuurNummer} van {invoiceDate} staat nog open. Het openstaande bedrag is {outstandingAmount}. De vervaldatum was {expiryDate}.\n\nWij vragen u het bedrag binnen {betalingstermijn} dagen over te maken naar {iban}. Vermeld daarbij het factuurnummer.\n\nKlopt er iets niet aan de factuur? Laat het ons dan weten.\n\nMet vriendelijke groet",
+            "en": "Dear {klantNaam},\n\nInvoice {factuurNummer} of {invoiceDate} is still open. The amount due is {outstandingAmount}. It was due on {expiryDate}.\n\nPlease transfer the amount to {iban} within {betalingstermijn} days and quote the invoice number.\n\nIs something wrong with the invoice? Then please let us know.\n\nKind regards"
+          }
         },
         {
           "nr": 3,
@@ -1419,7 +1507,15 @@
           "name": "Aanmaning + 14d-brief",
           "channel": "eMAILPostRegistration",
           "templateId": "tpl-dunning-stage3-nl",
-          "statutoryEffect": "14_DAYS_BRIEF_BIK"
+          "statutoryEffect": "14_DAYS_BRIEF_BIK",
+          "subject": {
+            "nl": "Aanmaning: betaal binnen 14 dagen om incassokosten te voorkomen",
+            "en": "Final notice: pay within 14 days to avoid collection costs"
+          },
+          "body": {
+            "nl": "Geachte {klantNaam},\n\nFactuur {factuurNummer} van {invoiceDate} is nog steeds niet betaald. Het openstaande bedrag is {outstandingAmount}. De vervaldatum was {expiryDate}.\n\nU krijgt nog 14 dagen om te betalen, vanaf de dag na ontvangst van deze aanmaning. Binnen die termijn betaalt u geen extra kosten.\n\nBetaalt u niet binnen 14 dagen? Dan brengen wij {incassokosten} incassokosten in rekening. Daarnaast bent u dan wettelijke rente verschuldigd, nu {rente}.\n\nMaak het bedrag over naar {iban} en vermeld het factuurnummer.\n\nMet vriendelijke groet",
+            "en": "Dear {klantNaam},\n\nInvoice {factuurNummer} of {invoiceDate} is still unpaid. The amount due is {outstandingAmount}. It was due on {expiryDate}.\n\nYou have 14 more days to pay, counted from the day after you receive this notice. Within that period you pay no extra costs.\n\nIf you do not pay within 14 days, we will charge {incassokosten} in collection costs. Statutory interest is then also due, currently {rente}.\n\nPlease transfer the amount to {iban} and quote the invoice number.\n\nKind regards"
+          }
         },
         {
           "nr": 4,
@@ -1427,7 +1523,15 @@
           "name": "Ingebrekestelling",
           "channel": "REGISTERED_POST",
           "templateId": "tpl-dunning-stage4-nl",
-          "statutoryEffect": "DEFAULT_ENTRY"
+          "statutoryEffect": "DEFAULT_ENTRY",
+          "subject": {
+            "nl": "Ingebrekestelling: factuur {factuurNummer}",
+            "en": "Notice of default: invoice {factuurNummer}"
+          },
+          "body": {
+            "nl": "Geachte {klantNaam},\n\nOndanks onze herinneringen is factuur {factuurNummer} van {invoiceDate} niet betaald. Het openstaande bedrag is {outstandingAmount}. De vervaldatum was {expiryDate}.\n\nMet deze brief stellen wij u in gebreke. Betaal het bedrag binnen {betalingstermijn} dagen. Daarbij komen {incassokosten} incassokosten en {rente} wettelijke rente.\n\nMaak het totaal over naar {iban} en vermeld het factuurnummer. Betaalt u niet op tijd? Dan dragen wij de vordering over aan een incassobureau.\n\nHoogachtend",
+            "en": "Dear {klantNaam},\n\nDespite our reminders, invoice {factuurNummer} of {invoiceDate} is unpaid. The amount due is {outstandingAmount}. It was due on {expiryDate}.\n\nWith this letter we give you notice of default. Pay the amount within {betalingstermijn} days. Collection costs of {incassokosten} and statutory interest of {rente} are added.\n\nPlease transfer the total to {iban} and quote the invoice number. If you do not pay in time, we will hand the claim to a collection agency.\n\nYours faithfully"
+          }
         },
         {
           "nr": 5,
@@ -1435,7 +1539,15 @@
           "name": "Overdracht incasso",
           "channel": "COLLECTION_AGENCY_API",
           "templateId": "tpl-dunning-stage5-nl",
-          "action": "TRANSFER_INCASSO"
+          "action": "TRANSFER_INCASSO",
+          "subject": {
+            "nl": "Overdracht aan incassobureau: factuur {factuurNummer}",
+            "en": "Claim handed to a collection agency: invoice {factuurNummer}"
+          },
+          "body": {
+            "nl": "Geachte {klantNaam},\n\nFactuur {factuurNummer} van {invoiceDate} is ondanks onze ingebrekestelling niet betaald. Het openstaande bedrag is {outstandingAmount}.\n\nWij hebben de vordering overgedragen aan een incassobureau. Het incassobureau neemt contact met u op. Betaal vanaf nu via het incassobureau.\n\nHoogachtend",
+            "en": "Dear {klantNaam},\n\nDespite our notice of default, invoice {factuurNummer} of {invoiceDate} is unpaid. The amount due is {outstandingAmount}.\n\nWe have handed the claim to a collection agency. The agency will contact you. From now on, please pay through the agency.\n\nYours faithfully"
+          }
         }
       ],
       "actief": true,
@@ -1456,28 +1568,60 @@
           "daysAfterExpiryDate": 0,
           "name": "Reminder",
           "channel": "EMAIL",
-          "templateId": "tpl-dunning-stage1-nl"
+          "templateId": "tpl-dunning-stage1-nl",
+          "subject": {
+            "nl": "Vriendelijke herinnering: factuur {factuurNummer}",
+            "en": "Friendly reminder: invoice {factuurNummer}"
+          },
+          "body": {
+            "nl": "Beste {klantNaam},\n\nMisschien is het u ontgaan. Factuur {factuurNummer} van {invoiceDate} is nog niet betaald. Het openstaande bedrag is {outstandingAmount}. De vervaldatum was {expiryDate}.\n\nWilt u het bedrag overmaken naar {iban}? Vermeld daarbij het factuurnummer.\n\nHeeft u al betaald? Dan kunt u deze herinnering negeren.\n\nMet vriendelijke groet",
+            "en": "Dear {klantNaam},\n\nPerhaps this slipped your mind. Invoice {factuurNummer} of {invoiceDate} is still unpaid. The amount due is {outstandingAmount}. It was due on {expiryDate}.\n\nPlease transfer the amount to {iban} and quote the invoice number.\n\nAlready paid? Then you can ignore this reminder.\n\nKind regards"
+          }
         },
         {
           "nr": 2,
           "daysAfterExpiryDate": 30,
           "name": "Herinnering (overheid 30d)",
           "channel": "EMAIL",
-          "templateId": "tpl-dunning-stage2-nl"
+          "templateId": "tpl-dunning-stage2-nl",
+          "subject": {
+            "nl": "Tweede herinnering: factuur {factuurNummer}",
+            "en": "Second reminder: invoice {factuurNummer}"
+          },
+          "body": {
+            "nl": "Beste {klantNaam},\n\nFactuur {factuurNummer} van {invoiceDate} staat nog open. Het openstaande bedrag is {outstandingAmount}. De vervaldatum was {expiryDate}.\n\nWij vragen u het bedrag binnen {betalingstermijn} dagen over te maken naar {iban}. Vermeld daarbij het factuurnummer.\n\nKlopt er iets niet aan de factuur? Laat het ons dan weten.\n\nMet vriendelijke groet",
+            "en": "Dear {klantNaam},\n\nInvoice {factuurNummer} of {invoiceDate} is still open. The amount due is {outstandingAmount}. It was due on {expiryDate}.\n\nPlease transfer the amount to {iban} within {betalingstermijn} days and quote the invoice number.\n\nIs something wrong with the invoice? Then please let us know.\n\nKind regards"
+          }
         },
         {
           "nr": 3,
           "daysAfterExpiryDate": 60,
           "name": "Aanmaning",
           "channel": "EMAIL",
-          "templateId": "tpl-dunning-stage3-nl"
+          "templateId": "tpl-dunning-stage3-nl",
+          "subject": {
+            "nl": "Aanmaning: factuur {factuurNummer}",
+            "en": "Final reminder: invoice {factuurNummer}"
+          },
+          "body": {
+            "nl": "Geachte {klantNaam},\n\nFactuur {factuurNummer} van {invoiceDate} is nog steeds niet betaald. Het openstaande bedrag is {outstandingAmount}. De vervaldatum was {expiryDate}.\n\nWij verzoeken u het bedrag binnen {betalingstermijn} dagen over te maken naar {iban}. Vermeld daarbij het factuurnummer.\n\nIs de factuur nog in behandeling? Laat ons dan weten wanneer wij de betaling kunnen verwachten.\n\nMet vriendelijke groet",
+            "en": "Dear {klantNaam},\n\nInvoice {factuurNummer} of {invoiceDate} is still unpaid. The amount due is {outstandingAmount}. It was due on {expiryDate}.\n\nPlease transfer the amount to {iban} within {betalingstermijn} days and quote the invoice number.\n\nIs the invoice still being processed? Then please tell us when we can expect payment.\n\nKind regards"
+          }
         },
         {
           "nr": 4,
           "daysAfterExpiryDate": 90,
           "name": "Escalatie naar account-manager",
           "channel": "EMAIL",
-          "templateId": "tpl-dunning-stage4-nl"
+          "templateId": "tpl-dunning-stage4-nl",
+          "subject": {
+            "nl": "Factuur {factuurNummer} staat nog open",
+            "en": "Invoice {factuurNummer} is still open"
+          },
+          "body": {
+            "nl": "Beste {klantNaam},\n\nFactuur {factuurNummer} van {invoiceDate} staat nog open sinds {expiryDate}. Het openstaande bedrag is {outstandingAmount}.\n\nOnze accountmanager neemt contact met u op om de betaling af te stemmen.\n\nMet vriendelijke groet",
+            "en": "Dear {klantNaam},\n\nInvoice {factuurNummer} of {invoiceDate} has been open since {expiryDate}. The amount due is {outstandingAmount}.\n\nOur account manager will contact you to arrange the payment.\n\nKind regards"
+          }
         }
       ],
       "actief": true,

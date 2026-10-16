@@ -247,8 +247,8 @@ class CBSExportService {
 		}
 
 		$taxId = (string)($submission['taxIdentificationNumber'] ?? '');
-		if (preg_match('/^NL[0-9]{10}B[0-9]{2}$/', $taxId) !== 1) {
-			$errors[] = 'taxIdentificationNumber must match the pattern ^NL[0-9]{10}B[0-9]{2}$';
+		if (preg_match('/^NL[0-9]{9}B[0-9]{2}$/', $taxId) !== 1) {
+			$errors[] = 'taxIdentificationNumber must match the pattern ^NL[0-9]{9}B[0-9]{2}$';
 		}
 
 		$submissionId = (string)($submission['id'] ?? '');

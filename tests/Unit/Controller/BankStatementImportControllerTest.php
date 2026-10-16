@@ -25,7 +25,10 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 use OCA\Shillinq\Controller\BankStatementImportController;
 use OCA\Shillinq\Lifecycle\StatementParser;
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\Bank\StatementIntakeService;
+use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
+use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
@@ -186,7 +189,8 @@ class BankStatementImportControllerTest extends TestCase {
 			 */
 			public function saveObject(array $data): array {
 				$this->seq++;
-				$saved = array_merge(['id' => 'obj-' . $this->seq], $data);
+				// OpenRegister answers uuids; statementId on a line must be one.
+				$saved = array_merge(['id' => sprintf('00000000-0000-4000-8000-%012d', $this->seq)], $data);
 				$this->saved[$this->schema][] = $saved;
 				return $saved;
 			}//end saveObject()
@@ -205,8 +209,12 @@ class BankStatementImportControllerTest extends TestCase {
 			administrationContext: $this->adminContext,
 			session: $this->session,
 			logger: $this->logger,
-			objectService: new DuckObjectServiceAdapter($this->objectService),
 			l10n: $this->l10n,
+			intake: new StatementIntakeService(
+				objectService: new DuckObjectServiceAdapter($this->objectService),
+				settings: $this->createConfiguredMock(SettingsService::class, ['getRegisterSlug' => 'shillinq']),
+				logger: $this->logger,
+			),
 		);
 	}//end controller()
 
@@ -294,7 +302,7 @@ class BankStatementImportControllerTest extends TestCase {
 		self::assertCount(1, $this->objectService->saved['BankStatement']);
 		$statement = $this->objectService->saved['BankStatement'][0];
 		self::assertSame('admin-7', $statement['administrationId']);
-		self::assertSame('camt053', $statement['statementFormat']);
+		self::assertSame('camt053', $statement['importFormat']);
 		self::assertSame(2, $statement['transactionCount']);
 
 		// Two BankStatementLine rows, mapped parser keys → schema fields.
@@ -308,6 +316,13 @@ class BankStatementImportControllerTest extends TestCase {
 		$line2 = $this->objectService->saved['BankStatementLine'][1];
 		self::assertSame(2, $line2['lineNumber']);
 		self::assertSame('NL00BANK0987654321', $line2['counterpartyIban']);
+
+		// Every payload is one the merged register accepts: the old inline loop
+		// sent no lineId or status and a plain date for a date-time field.
+		self::assertSame([], RegisterSchema::errors(slug: 'BankStatement', object: $statement));
+		foreach ($this->objectService->saved['BankStatementLine'] as $line) {
+			self::assertSame([], RegisterSchema::errors(slug: 'BankStatementLine', object: $line));
+		}
 
 	}//end testValidImportCreatesStatementAndLines()
 

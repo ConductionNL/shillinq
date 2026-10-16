@@ -13,7 +13,7 @@
  *        Body: administrationId, decision, comment (optional).
  *        → 200 with the updated PurchaseOrder; 400 on validation;
  *          401 anonymous; 404 cross-tenant or missing PO; 409 when the
- *          PO is not in pending_approval; 500 without stack trace.
+ *          PO is not waiting for approval; 500 without stack trace.
  *
  * Every endpoint is #[NoAdminRequired] (admin posture is the NC
  * SecurityMiddleware default — controllers without the attribute are

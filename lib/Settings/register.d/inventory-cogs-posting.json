@@ -142,7 +142,7 @@
           "glTransactionId": {
             "type": "string",
             "nullable": true,
-            "description": "Back-reference to the materialised GLTransaction.id produced by the most recent lifecycle posting action (postCOGS, postReceipt, postVariance). Enables drill-down from the inventory snapshot to its GL impact (D5). Same pattern as APInvoice.glTransactionId.",
+            "description": "Back-reference to a GLTransaction.id booked for this valuation, where one exists. Sale dispatch COGS is booked per stock move by CogsPosterService and referenced from the move.",
             "example": "glt-2026-0001",
             "title": "GL Transaction ID"
           },
@@ -155,119 +155,8 @@
               "countVariance",
               "returnDispatch"
             ],
-            "description": "The stock-movement event that drove the most recent GL posting. Used by the lifecycle action to dispatch to postCOGS / postReceipt / postVariance. returnDispatch reverses a prior saleDispatch (reversal scenario).",
+            "description": "The stock-movement event behind the valuation's most recent change. Informational: sale dispatch is booked per stock move by CogsPosterService (StockMove.post), not by a transition on this snapshot; goods receipt and count variance are not booked to the ledger yet.",
             "title": "Posting Event"
-          }
-        },
-        "x-openregister-lifecycle": {
-          "transitions": {
-            "postCOGS": {
-              "from": "active",
-              "to": "active",
-              "label": "Post COGS on sale dispatch",
-              "labelNl": "COGS boeken bij verkoopafgifte",
-              "description": "When an InventoryValuation snapshot decreases by a saleDispatch event, materialise a balanced GLTransaction with Dr InventoryGLConfig.cogsAccountNumber / Cr InventoryGLConfig.inventoryAssetAccountNumber for delta_quantity * unitCost. Guard: unitCost != null AND active InventoryGLConfig with isActive=true exists for administrationId. Skips with structured warning (reasons: 'unitCost_missing', 'posting_disabled', 'config_missing') without writing partial GL entries.",
-              "requires": "OCA\\Shillinq\\Lifecycle\\InventoryPostingGuard::canPost",
-              "actions": [
-                {
-                  "trigger": "x-openregister-lifecycle-action",
-                  "action": "materialise-gl-transaction",
-                  "condition": "@self.postingEvent == 'saleDispatch'",
-                  "description": "Declarative GL posting. Dr COGS / Cr Inventory Asset. journalCode='inkoop'; subLedgerType='inventory'; subLedgerRef=@self.id.",
-                  "actionParameters": {
-                    "register": "shillinq",
-                    "targetSchema": "GLTransaction",
-                    "linesSchema": "GLLine",
-                    "keepBalanced": true,
-                    "backReferenceField": "glTransactionId",
-                    "idempotencyKey": "id",
-                    "journalCode": "inkoop",
-                    "subLedgerType": "inventory",
-                    "subLedgerRefField": "id",
-                    "accountRouting": {
-                      "saleDispatch": {
-                        "debit": "@config.InventoryGLConfig.cogsAccountNumber",
-                        "credit": "@config.InventoryGLConfig.inventoryAssetAccountNumber"
-                      }
-                    },
-                    "descriptionTemplate": "COGS verkoop {{deltaQuantity}}x {{productId}}"
-                  }
-                }
-              ]
-            },
-            "postReceipt": {
-              "from": "active",
-              "to": "active",
-              "label": "Post inventory asset on goods receipt",
-              "labelNl": "Voorraad boeken bij goederenontvangst",
-              "description": "When an InventoryValuation snapshot increases by a goodsReceipt event, materialise a balanced GLTransaction with Dr InventoryGLConfig.inventoryAssetAccountNumber / Cr InventoryGLConfig.grIrClearingAccountNumber for received_quantity * unitCost. GR/IR clearing is subsequently settled by the AP invoice posting per bookkeeping-accounts-payable-core (two-step pattern; avoids double-posting). Same skip conditions as postCOGS (skip scenario).",
-              "requires": "OCA\\Shillinq\\Lifecycle\\InventoryPostingGuard::canPost",
-              "actions": [
-                {
-                  "trigger": "x-openregister-lifecycle-action",
-                  "action": "materialise-gl-transaction",
-                  "condition": "@self.postingEvent == 'goodsReceipt'",
-                  "description": "Declarative GL posting. Dr Inventory Asset / Cr GR/IR clearing. journalCode='inkoop'; subLedgerType='inventory'; subLedgerRef=@self.id.",
-                  "actionParameters": {
-                    "register": "shillinq",
-                    "targetSchema": "GLTransaction",
-                    "linesSchema": "GLLine",
-                    "keepBalanced": true,
-                    "backReferenceField": "glTransactionId",
-                    "idempotencyKey": "id",
-                    "journalCode": "inkoop",
-                    "subLedgerType": "inventory",
-                    "subLedgerRefField": "id",
-                    "accountRouting": {
-                      "goodsReceipt": {
-                        "debit": "@config.InventoryGLConfig.inventoryAssetAccountNumber",
-                        "credit": "@config.InventoryGLConfig.grIrClearingAccountNumber"
-                      }
-                    },
-                    "descriptionTemplate": "Ontvangst {{deltaQuantity}}x {{productId}} van leverancier"
-                  }
-                }
-              ]
-            },
-            "postVariance": {
-              "from": "active",
-              "to": "active",
-              "label": "Post count variance",
-              "labelNl": "Telverschil boeken",
-              "description": "On a non-zero count-variance event, materialise a balanced GLTransaction whose Dr/Cr direction reflects the sign of (actualQuantity - bookQuantity). Positive variance: Dr Inventory Asset / Cr Inventory Adjustment. Negative variance: Dr Inventory Adjustment / Cr Inventory Asset. journalCode='memo'. ADR-031 exception (D4): direction is resolved by InventoryPostingGuard:direction(int) because the declarative DSL cannot express sign conditionals inline today. Zero variance is a strict no-op (no GLTransaction). Same skip conditions as postCOGS.",
-              "requires": "OCA\\Shillinq\\Lifecycle\\InventoryPostingGuard::canPostVariance",
-              "actions": [
-                {
-                  "trigger": "x-openregister-lifecycle-action",
-                  "action": "materialise-gl-transaction",
-                  "condition": "@self.postingEvent == 'countVariance'",
-                  "description": "Declarative GL posting (direction from PHP guard per ADR-031 exception). journalCode='memo'; subLedgerType='inventory'; subLedgerRef=@self.id. Zero-delta skipped by canPostVariance guard.",
-                  "actionParameters": {
-                    "register": "shillinq",
-                    "targetSchema": "GLTransaction",
-                    "linesSchema": "GLLine",
-                    "keepBalanced": true,
-                    "backReferenceField": "glTransactionId",
-                    "idempotencyKey": "id",
-                    "journalCode": "memo",
-                    "subLedgerType": "inventory",
-                    "subLedgerRefField": "id",
-                    "directionResolver": "OCA\\Shillinq\\Lifecycle\\InventoryPostingGuard::direction",
-                    "accountRouting": {
-                      "positiveVariance": {
-                        "debit": "@config.InventoryGLConfig.inventoryAssetAccountNumber",
-                        "credit": "@config.InventoryGLConfig.inventoryAdjustmentAccountNumber"
-                      },
-                      "negativeVariance": {
-                        "debit": "@config.InventoryGLConfig.inventoryAdjustmentAccountNumber",
-                        "credit": "@config.InventoryGLConfig.inventoryAssetAccountNumber"
-                      }
-                    },
-                    "descriptionTemplate": "Telkorting/telmeerdering {{absDeltaQuantity}}x {{productId}}"
-                  }
-                }
-              ]
-            }
           }
         }
       },

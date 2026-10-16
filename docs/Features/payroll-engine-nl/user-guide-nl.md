@@ -208,11 +208,3 @@ Aan het einde van het kalenderjaar (vaak januari–februari):
 ## Verwante hand-off services
 
 - `PayrollSbrConversionService` — LHAfdracht → SBR/XBRL LA-XX-2026
-- `PayrollApArHandoffService` — LHAfdracht → AP transacties
-  (Belastingdienst, UWV)
-- `PayrollUpaHandoffService` — LoonStrook.pensioen →
-  UPA-monthly-submission per pensioenuitvoerder
-- `PayrollWkrHandoffService` — LoonStrook → loonsom-totaal voor
-  WKR-budget-tracking
-- `PayrollLivLkvHandoffService` — Werknemer.inkomenniveau +
-  fiscaalLoon → LIV/LKV eligibility

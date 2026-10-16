@@ -5,9 +5,12 @@
  *
  * Listens to OpenRegister `ObjectCreatedEvent` + `ObjectUpdatedEvent` on the
  * three immutable / sensitive innovatiebox schemas — `NexusCalculation`,
- * `IBProfitAttribution`, and `CarryForwardLoss` — and appends one immutable
- * `InnovatieboxAuditEvent` per business-relevant lifecycle transition
- * (REQ-IBA-008 + REQ-IBA-009).
+ * `IBProfitAttribution`, and `CarryForwardLoss` — and records one row per
+ * business-relevant lifecycle transition on the subject object's own
+ * OpenRegister audit trail, through `AuditTrailMapper::createAuditTrailEntry()`
+ * (hash-chained and immutable; REQ-IBA-008 asks for exactly that, ADR-022).
+ * The action is the event type below; the context carries the fields an
+ * app-local `InnovatieboxAuditEvent` row carried until gate 23 moved it.
  *
  * Mapping (subject schema -> audit event):
  *
@@ -48,6 +51,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Listener;
 
+use OCA\OpenRegister\Db\AuditTrailMapper;
+use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\Shillinq\Service\InnovatieboxAuditEventLogger;
@@ -59,8 +64,8 @@ use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
- * Append an InnovatieboxAuditEvent for every relevant innovatiebox lifecycle
- * transition (REQ-IBA-008 + REQ-IBA-009).
+ * Record every relevant innovatiebox lifecycle transition on the subject
+ * object's OpenRegister audit trail (REQ-IBA-008 + REQ-IBA-009).
  *
  * @implements IEventListener<Event>
  *
@@ -91,13 +96,15 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 	/**
 	 * Construct the listener.
 	 *
-	 * @param InnovatieboxAuditEventLogger $logger Append-only audit event writer.
+	 * @param AuditTrailMapper $auditTrail OpenRegister's hash-chained audit trail: every
+	 *                                     innovatiebox transition is recorded on the subject
+	 *                                     object's own trail (REQ-IBA-008, ADR-022).
 	 * @param VsoLockingValidator $vsoValidator VSO year-lock checker (task 4.3).
 	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface $psrLogger Psr logger for fail-soft.
 	 */
 	public function __construct(
-		private readonly InnovatieboxAuditEventLogger $logger,
+		private readonly AuditTrailMapper $auditTrail,
 		private readonly VsoLockingValidator $vsoValidator,
 		private readonly ListenerSchemaResolver $schemaResolver,
 		private readonly LoggerInterface $psrLogger,
@@ -151,7 +158,8 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 		$data = $this->extractObjectArray(entity: $entity);
 
 		if ($schema === self::SCHEMA_NEXUS) {
-			$this->logger->record(
+			$this->append(
+				entity: $entity,
 				options: [
 					'event_type' => InnovatieboxAuditEventLogger::EVENT_NEXUS_CALCULATED,
 					'administrationId' => (string)($data['administrationId'] ?? ''),
@@ -176,7 +184,8 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 		}//end if
 
 		if ($schema === self::SCHEMA_PROFIT) {
-			$this->logger->record(
+			$this->append(
+				entity: $entity,
 				options: [
 					'event_type' => InnovatieboxAuditEventLogger::EVENT_PROFIT_CREATED,
 					'administrationId' => (string)($data['administrationId'] ?? ''),
@@ -207,7 +216,8 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 			if ($this->isForfaitairCapHit(data: $data) === true) {
 				$kwalifFor = (float)($data['qualifying_profit_for_nexus'] ?? 0);
 				$kwalifAfter = (float)($data['qualifying_profit_after_nexus'] ?? 0);
-				$this->logger->record(
+				$this->append(
+					entity: $entity,
 					options: [
 						'event_type' => InnovatieboxAuditEventLogger::EVENT_FORFAITAIR_CAP_APPLIED,
 						'administrationId' => (string)($data['administrationId'] ?? ''),
@@ -230,7 +240,8 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 		}//end if
 
 		if ($schema === self::SCHEMA_LOSS) {
-			$this->logger->record(
+			$this->append(
+				entity: $entity,
 				options: [
 					'event_type' => InnovatieboxAuditEventLogger::EVENT_LOSS_CREATED,
 					'administrationId' => (string)($data['administrationId'] ?? ''),
@@ -280,7 +291,8 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 		// here means OR allowed an amendment that should not have happened —
 		// record it as a blocked-attempt-style audit event for the defence.
 		if ($schema === self::SCHEMA_NEXUS) {
-			$this->logger->record(
+			$this->append(
+				entity: $entity,
 				options: [
 					'event_type' => InnovatieboxAuditEventLogger::EVENT_PROFIT_AMENDMENT_BLOCKED,
 					'administrationId' => (string)($next['administrationId'] ?? ''),
@@ -299,18 +311,19 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 	/**
 	 * Branch profit-attribution update events into finalised / blocked.
 	 *
-	 * @param object $entity Entity wrapper (for uuid).
+	 * @param ObjectEntity $entity The subject object (its own audit trail gets the row).
 	 * @param array<string,mixed> $next Next-state payload.
 	 * @param array<string,mixed> $prior Prior-state payload (best-effort).
 	 *
 	 * @return void
 	 */
-	private function handleProfitUpdated(object $entity, array $next, array $prior): void {
+	private function handleProfitUpdated(ObjectEntity $entity, array $next, array $prior): void {
 		$priorLocked = (bool)($prior['vso_locked'] ?? false);
 		$nextLocked = (bool)($next['vso_locked'] ?? false);
 
 		if ($priorLocked === false && $nextLocked === true) {
-			$this->logger->record(
+			$this->append(
+				entity: $entity,
 				options: [
 					'event_type' => InnovatieboxAuditEventLogger::EVENT_PROFIT_FINALIZED,
 					'administrationId' => (string)($next['administrationId'] ?? ''),
@@ -337,7 +350,8 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 		}
 
 		if ($alreadyLocked === true) {
-			$this->logger->record(
+			$this->append(
+				entity: $entity,
 				options: [
 					'event_type' => InnovatieboxAuditEventLogger::EVENT_PROFIT_AMENDMENT_BLOCKED,
 					'administrationId' => $administrationId,
@@ -357,13 +371,13 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 	 * Handle a CarryForwardLoss update — emit an offset-applied event when
 	 * the `verrekend_boekjaar` array grew.
 	 *
-	 * @param object $entity Entity wrapper (for uuid).
+	 * @param ObjectEntity $entity The subject object (its own audit trail gets the row).
 	 * @param array<string,mixed> $next Next-state payload.
 	 * @param array<string,mixed> $prior Prior-state payload (best-effort).
 	 *
 	 * @return void
 	 */
-	private function handleLossUpdated(object $entity, array $next, array $prior): void {
+	private function handleLossUpdated(ObjectEntity $entity, array $next, array $prior): void {
 		$priorEntries = (array)($prior['settled_financial_year'] ?? []);
 		$nextEntries = (array)($next['settled_financial_year'] ?? []);
 		if (count($nextEntries) <= count($priorEntries)) {
@@ -372,7 +386,8 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 
 		$newEntries = array_slice($nextEntries, count($priorEntries));
 
-		$this->logger->record(
+		$this->append(
+			entity: $entity,
 			options: [
 				'event_type' => InnovatieboxAuditEventLogger::EVENT_LOSS_OFFSET_APPLIED,
 				'administrationId' => (string)($next['administrationId'] ?? ''),
@@ -389,6 +404,46 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 		);
 
 	}//end handleLossUpdated()
+
+	/**
+	 * Record one innovatiebox transition on the subject object's own
+	 * OpenRegister audit trail. The action is the event type (for example
+	 * `IBProfitAttribution.finalized`), the context carries the same fields an
+	 * InnovatieboxAuditEvent row carried; OpenRegister stamps the actor, the
+	 * time and the hash chain. A row without an event type or administration
+	 * is refused, and a failed write is logged, never thrown: the subject
+	 * record is the legal truth and OpenRegister's write path must not break.
+	 *
+	 * @param ObjectEntity $entity The subject object.
+	 * @param array<string,mixed> $options The event fields (event_type, administrationId, ...).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
+	 */
+	private function append(ObjectEntity $entity, array $options): void {
+		$eventType = (string)($options['event_type'] ?? '');
+		if ($eventType === '' || (string)($options['administrationId'] ?? '') === '') {
+			$this->psrLogger->warning(
+				'InnovatieboxAuditTrailListener: missing event_type or administrationId, no audit row written',
+				['options' => $options]
+			);
+			return;
+		}
+
+		$context = array_filter(
+			array_diff_key($options, ['event_type' => true]),
+			static fn (mixed $value): bool => $value !== null
+		);
+		try {
+			$this->auditTrail->createAuditTrailEntry(object: $entity, action: $eventType, context: $context);
+		} catch (Throwable $e) {
+			$this->psrLogger->warning(
+				'InnovatieboxAuditTrailListener: failed to write the audit row',
+				['event_type' => $eventType, 'exception' => $e->getMessage()]
+			);
+		}
+	}//end append()
 
 	/**
 	 * Normalise an OR schema identifier to a lowercase slug (also strips a

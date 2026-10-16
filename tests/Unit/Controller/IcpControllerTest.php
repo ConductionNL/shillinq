@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Controller\IcpController;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\ArInvoiceIcpPdfRenderer;
 use OCA\Shillinq\Service\IcpFilingService;
 use OCA\Shillinq\Service\IcpService;
@@ -151,6 +152,7 @@ final class IcpControllerTest extends TestCase {
 			userSession: $this->userSession,
 			logger: $this->logger,
 			objectService: $this->objectService,
+			administrations: $this->memberOfEverything(),
 		);
 
 	}//end setUp()
@@ -457,6 +459,22 @@ final class IcpControllerTest extends TestCase {
 	}//end seedObjects()
 
 	/**
+	 * A membership service that lets the caller into every administration.
+	 *
+	 * The refusal of a non-member is measured in IcpControllerMembershipTest
+	 * over the real service; these tests are about input and failure handling.
+	 *
+	 * @return AdministrationContextService
+	 */
+	private function memberOfEverything(): AdministrationContextService {
+		$administrations = $this->createMock(AdministrationContextService::class);
+		$administrations->method('canAccess')->willReturn(true);
+
+		return $administrations;
+
+	}//end memberOfEverything()
+
+	/**
 	 * Build a second controller bound to an anonymous session.
 	 *
 	 * @return IcpController The controller with no signed-in user.
@@ -474,6 +492,7 @@ final class IcpControllerTest extends TestCase {
 			userSession: $session,
 			logger: $this->logger,
 			objectService: $this->objectService,
+			administrations: $this->memberOfEverything(),
 		);
 
 	}//end anonymousController()

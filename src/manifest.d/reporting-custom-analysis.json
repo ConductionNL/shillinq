@@ -1,0 +1,19 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "reporting-custom-analysis",
+    "adr": "ADR-037 modular manifest fragment",
+    "description": "The financial pivot: the result of posted ledger lines over two axes the user picks, with totals and CSV and Excel export. Opened from the Financial pivot card on the Reports page (ADR-112). The Nextcloud dashboard widgets of the same change need no manifest entry."
+  },
+  "pages": [
+    {
+      "id": "FinancialPivot",
+      "route": "/reports/pivot",
+      "type": "custom",
+      "title": "Financial pivot",
+      "component": "FinancialPivot",
+      "_note": "Two axis pickers over a cross table with row and column totals and an export of exactly what is shown. No typed archetype fits: an index lists records of one schema, a detail shows one record, a dashboard lays out widgets; a pivot is a table whose rows AND columns are chosen by the user (reporting-custom-analysis design D3)."
+    }
+  ]
+}

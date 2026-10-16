@@ -1,0 +1,239 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "reporting-data-delivery",
+    "adr": "ADR-037 modular register fragment; ADR-031 declarative lifecycle (active, paused), imperative scheduled bulk work in ScheduledReportJob",
+    "description": "ReportSchedule: a catalogue report that ScheduledReportJob produces on its own, files in a folder of the schedule owner's storage shared with the recipients, and announces with a notification. The owner is the object's OpenRegister owner, never a payload field, and a run is refused when the owner cannot reach the administration."
+  },
+  "components": {
+    "schemas": {
+      "ReportSchedule": {
+        "slug": "ReportSchedule",
+        "icon": "CalendarClock",
+        "version": "0.1.0",
+        "title": "Report schedule",
+        "description": "A report from the report library that is produced and delivered on its own, weekly, monthly or quarterly.",
+        "x-schema-org": "schema:Schedule",
+        "x-spec": "openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "reportType",
+          "format",
+          "frequency",
+          "runDay",
+          "periodRule",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "The administration the report is produced for.",
+            "title": "Administration ID",
+            "example": "adm-gemeente-voorbeeld"
+          },
+          "name": {
+            "type": "string",
+            "description": "A name for the schedule, for lists.",
+            "title": "Name",
+            "nullable": true,
+            "example": "Maandrapportage budget versus realisatie"
+          },
+          "reportType": {
+            "type": "string",
+            "description": "The report library entry to produce, by its id in the report catalogue.",
+            "title": "Report",
+            "example": "budget-vs-actual"
+          },
+          "format": {
+            "type": "string",
+            "description": "The file format to produce. A format the report cannot produce falls back to its first format.",
+            "title": "Format",
+            "example": "pdf"
+          },
+          "frequency": {
+            "type": "string",
+            "enum": [
+              "weekly",
+              "monthly",
+              "quarterly"
+            ],
+            "x-enum-labels": {
+              "weekly": "Weekly",
+              "monthly": "Monthly",
+              "quarterly": "Quarterly"
+            },
+            "description": "How often the report is produced.",
+            "title": "Frequency",
+            "example": "monthly"
+          },
+          "runDay": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 28,
+            "description": "The day it runs: a day of the month (1 to 28) for a monthly or quarterly schedule, a weekday (1 Monday to 7 Sunday) for a weekly one. A quarterly schedule runs in the first month of each quarter.",
+            "title": "Run day",
+            "example": 5
+          },
+          "periodRule": {
+            "type": "string",
+            "enum": [
+              "previous-period",
+              "year-to-date"
+            ],
+            "x-enum-labels": {
+              "previous-period": "Previous period",
+              "year-to-date": "Year to date"
+            },
+            "description": "The period each run reports on: the week's month, month or quarter before the run, or the year up to the run.",
+            "title": "Period",
+            "example": "previous-period"
+          },
+          "recipients": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "A user as user:<id> or a group as group:<id>.",
+              "title": "Recipient",
+              "example": "group:controllers"
+            },
+            "description": "Who receives the file and a notification: users as user:<id>, groups as group:<id>.",
+            "title": "Recipients",
+            "example": [
+              "group:controllers"
+            ]
+          },
+          "folderPath": {
+            "type": "string",
+            "description": "The folder in the schedule owner's files the reports are filed in.",
+            "title": "Folder",
+            "nullable": true,
+            "example": "/Rapportages/Maand"
+          },
+          "nextRunAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the schedule runs next.",
+            "title": "Next run",
+            "nullable": true,
+            "example": "2026-10-05T00:00:00+00:00"
+          },
+          "lastRunAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the schedule last ran.",
+            "title": "Last run",
+            "nullable": true,
+            "example": "2026-09-05T00:00:00+00:00"
+          },
+          "lastPeriod": {
+            "type": "string",
+            "description": "The period the last run reported on.",
+            "title": "Last period",
+            "nullable": true,
+            "example": "2026-08"
+          },
+          "lastFilePath": {
+            "type": "string",
+            "description": "Where the last report was filed.",
+            "title": "Last file",
+            "nullable": true,
+            "example": "/Rapportages/Maand/budget-vs-actual-2026-08.pdf"
+          },
+          "lastError": {
+            "type": "string",
+            "description": "Why the last run failed. Empty after a run that worked.",
+            "title": "Last error",
+            "nullable": true,
+            "example": "docudesk-unavailable"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "paused"
+            ],
+            "x-enum-labels": {
+              "active": "Active",
+              "paused": "Paused"
+            },
+            "default": "active",
+            "description": "Active schedules run; paused ones wait until resumed.",
+            "title": "Status",
+            "example": "active"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "The schedule runs on its run day."
+            },
+            "paused": {
+              "label": "Paused",
+              "description": "The schedule does not run until it is resumed."
+            }
+          },
+          "transitions": {
+            "pause": {
+              "from": "active",
+              "to": "paused",
+              "label": "Pause",
+              "description": "Stop producing the report until it is resumed."
+            },
+            "resume": {
+              "from": "paused",
+              "to": "active",
+              "label": "Resume",
+              "description": "Produce the report again from the next run day."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "controller": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          },
+          "adminScope": {
+            "field": "administrationId",
+            "enforce": true
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Who created, changed, paused and resumed each schedule, and when."
+        }
+      }
+    }
+  },
+  "objects": []
+}

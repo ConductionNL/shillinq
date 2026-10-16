@@ -164,4 +164,105 @@ class SepaPain001GeneratorTest extends TestCase {
 		$this->assertSame('2', (string)$xml->CstmrCdtTrfInitn->GrpHdr->NbOfTxs);
 		$this->assertSame('1497.50', (string)$xml->CstmrCdtTrfInitn->GrpHdr->CtrlSum);
 	}//end testControlSumFallsBackToLineSum()
+
+	/**
+	 * Validate a rendered document against the ISO 20022 pain.001.001.03 XSD.
+	 *
+	 * @param string $xml The rendered document.
+	 *
+	 * @return list<string> The schema errors, empty when valid.
+	 */
+	private function xsdErrors(string $xml): array {
+		$previous = libxml_use_internal_errors(true);
+		$document = new \DOMDocument();
+		$document->loadXML($xml);
+		$document->schemaValidate(__DIR__ . '/fixtures/pain.001.001.03.xsd');
+		$errors = array_map(static fn (\LibXMLError $error): string => trim($error->message), libxml_get_errors());
+		libxml_clear_errors();
+		libxml_use_internal_errors($previous);
+
+		return $errors;
+	}//end xsdErrors()
+
+	/**
+	 * The run with a requested date on each line: two on 2026-10-01, one on
+	 * 2026-10-15, one without (so it takes the run's 2026-07-01).
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function runWithDates(): array {
+		$run = $this->paymentRun();
+		$run['paymentLines'][0]['requestedExecutionDate'] = '2026-10-01';
+		$run['paymentLines'][1]['requestedExecutionDate'] = '2026-10-15';
+		$run['paymentLines'][] = [
+			'payeeName' => 'Drukkerij Van der Meer B.V.',
+			'creditorIban' => 'NL20INGB0001234567',
+			'amount' => 1815.00,
+			'remittanceInfo' => '2026-0412',
+			'apTransactionRef' => 'ap-0412',
+			'requestedExecutionDate' => '2026-10-01',
+		];
+		$run['paymentLines'][] = [
+			'payeeName' => 'Office Centre Nederland B.V.',
+			'creditorIban' => 'NL00TEST0333333333',
+			'amount' => 100.00,
+			'remittanceInfo' => 'OC-1',
+			'apTransactionRef' => 'ap-oc-1',
+		];
+		unset($run['totalAmount']);
+
+		return $run;
+	}//end runWithDates()
+
+	/**
+	 * REQ-BPR-006: one payment information block per requested date, each
+	 * with its own count, control sum and date; the header keeps the totals.
+	 *
+	 * @return void
+	 */
+	public function testEachRequestedDateGetsItsOwnPaymentBlock(): void {
+		$xml = $this->load((new SepaPain001Generator())->render($this->runWithDates())->content);
+
+		$this->assertSame('4', (string)$xml->CstmrCdtTrfInitn->GrpHdr->NbOfTxs);
+		$this->assertSame('3412.50', (string)$xml->CstmrCdtTrfInitn->GrpHdr->CtrlSum);
+
+		$blocks = [];
+		foreach ($xml->CstmrCdtTrfInitn->PmtInf as $block) {
+			$blocks[(string)$block->ReqdExctnDt] = [(string)$block->NbOfTxs, (string)$block->CtrlSum, count($block->CdtTrfTxInf)];
+		}
+
+		ksort($blocks);
+		$this->assertSame(
+			[
+				'2026-07-01' => ['1', '100.00', 1],
+				'2026-10-01' => ['2', '2707.50', 2],
+				'2026-10-15' => ['1', '605.00', 1],
+			],
+			$blocks
+		);
+	}//end testEachRequestedDateGetsItsOwnPaymentBlock()
+
+	/**
+	 * A run whose lines share one date still renders exactly one block.
+	 *
+	 * @return void
+	 */
+	public function testOneDateStillRendersOneBlock(): void {
+		$xml = $this->load((new SepaPain001Generator())->render($this->paymentRun())->content);
+
+		$this->assertCount(1, $xml->CstmrCdtTrfInitn->PmtInf);
+		$this->assertSame('PR-2026-001', (string)$xml->CstmrCdtTrfInitn->PmtInf->PmtInfId);
+	}//end testOneDateStillRendersOneBlock()
+
+	/**
+	 * The file a bank receives is valid pain.001.001.03, for one date and for three.
+	 *
+	 * @return void
+	 */
+	public function testTheFileValidatesAgainstTheXsd(): void {
+		$generator = new SepaPain001Generator();
+
+		$this->assertSame([], $this->xsdErrors($generator->render($this->paymentRun())->content));
+		$this->assertSame([], $this->xsdErrors($generator->render($this->runWithDates())->content));
+	}//end testTheFileValidatesAgainstTheXsd()
 }//end class

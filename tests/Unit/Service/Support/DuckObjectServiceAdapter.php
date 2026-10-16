@@ -940,7 +940,7 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 	}//end deleteObjects()
 
 	/**
-	 * Not modelled.
+	 * Forwarded when the double models it; refused otherwise.
 	 *
 	 * @param string $uuid          The object UUID.
 	 * @param array  $filters       Equality filters.
@@ -950,7 +950,15 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 	 * @return array
 	 */
 	public function getLogs(string $uuid, array $filters = [], bool $_rbac = true, bool $_multitenancy = true): array {
-		$this->unsupported(method: 'getLogs');
+		return (array)$this->invokeInner(
+			method: 'getLogs',
+			primary: $uuid,
+			named: [
+				'filters'       => $filters,
+				'_rbac'         => $_rbac,
+				'_multitenancy' => $_multitenancy,
+			]
+		);
 
 	}//end getLogs()
 

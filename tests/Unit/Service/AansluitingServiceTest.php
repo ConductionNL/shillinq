@@ -294,17 +294,22 @@ final class AansluitingServiceTest extends TestCase {
 						'administrationId' => 'adm-1',
 					],
 				],
-				'Account' => [
-					['accountNumber' => '4000', 'accountType' => 'revenue', 'vatApplicable' => true, 'administrationId' => 'adm-1'],
-				],
 				'GLTransaction' => [
 					[
 						'id' => 'gltx-1',
 						'administrationId' => 'adm-1',
-						'transactionDate' => '2026-06-15',
-						'lines' => [
-							['accountNumber' => '4000', 'taxableAmount' => 20000.0, 'taxRate' => 21.0],
-						],
+						'postingDate' => '2026-06-15',
+						'state' => 'posted',
+					],
+				],
+				'GLLine' => [
+					[
+						'id' => 'glline-1', 'transactionId' => 'gltx-1', 'administrationId' => 'adm-1', 'accountNumber' => '8000',
+						'side' => 'credit', 'amount' => 20000.0, 'vatTariffCode' => 'high', 'vatReturnBox' => '1a', 'vatAmountKind' => 'base',
+					],
+					[
+						'id' => 'glline-2', 'transactionId' => 'gltx-1', 'administrationId' => 'adm-1', 'accountNumber' => '2110',
+						'side' => 'credit', 'amount' => 4200.0, 'vatTariffCode' => 'high', 'vatReturnBox' => '1a', 'vatAmountKind' => 'vat',
 					],
 				],
 				'BtwAangifte' => [
@@ -323,6 +328,7 @@ final class AansluitingServiceTest extends TestCase {
 					[
 						'id' => 'vd-1',
 						'returnId' => 'vatret-1',
+						'returnBox' => '1a',
 						'type' => 'collected',
 						'taxRate' => 21.0,
 						'totalVATAmount' => 4450.0,
@@ -348,9 +354,9 @@ final class AansluitingServiceTest extends TestCase {
 		}
 
 		self::assertArrayHasKey('TOTAL', $byKey);
-		self::assertArrayHasKey('collected:21.00', $byKey);
-		self::assertSame(4200.0, $byKey['collected:21.00']['sourceAAmount']);
-		self::assertSame(4450.0, $byKey['collected:21.00']['sourceBAmount']);
+		self::assertArrayHasKey('1a', $byKey);
+		self::assertSame(4200.0, $byKey['1a']['sourceAAmount']);
+		self::assertSame(4450.0, $byKey['1a']['sourceBAmount']);
 
 	}//end testComputeBtwLedgerAangifteReportsOpenDrift()
 
@@ -374,17 +380,22 @@ final class AansluitingServiceTest extends TestCase {
 						'administrationId' => 'adm-1',
 					],
 				],
-				'Account' => [
-					['accountNumber' => '4000', 'accountType' => 'revenue', 'vatApplicable' => true, 'administrationId' => 'adm-1'],
-				],
 				'GLTransaction' => [
 					[
 						'id' => 'gltx-1',
 						'administrationId' => 'adm-1',
-						'transactionDate' => '2026-06-15',
-						'lines' => [
-							['accountNumber' => '4000', 'taxableAmount' => 20000.0, 'taxRate' => 21.0],
-						],
+						'postingDate' => '2026-06-15',
+						'state' => 'posted',
+					],
+				],
+				'GLLine' => [
+					[
+						'id' => 'glline-1', 'transactionId' => 'gltx-1', 'administrationId' => 'adm-1', 'accountNumber' => '8000',
+						'side' => 'credit', 'amount' => 20000.0, 'vatTariffCode' => 'high', 'vatReturnBox' => '1a', 'vatAmountKind' => 'base',
+					],
+					[
+						'id' => 'glline-2', 'transactionId' => 'gltx-1', 'administrationId' => 'adm-1', 'accountNumber' => '2110',
+						'side' => 'credit', 'amount' => 4200.0, 'vatTariffCode' => 'high', 'vatReturnBox' => '1a', 'vatAmountKind' => 'vat',
 					],
 				],
 				'BtwAangifte' => [
@@ -403,6 +414,7 @@ final class AansluitingServiceTest extends TestCase {
 					[
 						'id' => 'vd-1',
 						'returnId' => 'vatret-1',
+						'returnBox' => '1a',
 						'type' => 'collected',
 						'taxRate' => 21.0,
 						'totalVATAmount' => 4450.0,

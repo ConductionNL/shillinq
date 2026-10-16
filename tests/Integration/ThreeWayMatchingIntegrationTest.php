@@ -42,6 +42,7 @@ namespace OCA\Shillinq\Tests\Integration;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
 use OCA\Shillinq\Service\SupplierInvoiceService;
 use OCA\Shillinq\Service\ThreeWayMatchingEngine;
 use OCA\Shillinq\Service\ToleranceProfileService;
@@ -232,6 +233,7 @@ final class ThreeWayMatchingIntegrationTest extends TestCase {
 			administrationContext: $administrationContext,
 			logger:                $logger,
 			objectService: $this->createMock(ObjectServiceInterface::class),
+			checks: $this->createStub(SupplierInvoiceChecks::class),
 		);
 
 		return new ThreeWayMatchingEngine(

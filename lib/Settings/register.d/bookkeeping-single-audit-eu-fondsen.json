@@ -1403,7 +1403,8 @@
       "AuditTrail": {
         "slug": "AuditTrail",
         "icon": "History",
-        "version": "0.1.0",
+        "version": "0.2.0",
+        "appendOnly": true,
         "title": "Audit-trail",
         "description": "Onveranderlijk append-only event-log voor alle EU-fondsen state-transities (boeking → declaratie → certificering → betaling → correctie → audit) met before/after-state en bewijs-URI (art 69 + 82 CPR). Maakt 5+ year reconstructie na project-sluiting mogelijk.",
         "x-schema-org": "schema:Action",
@@ -1507,7 +1508,7 @@
           "field": "eventType",
           "initialState": "booking",
           "append-only": true,
-          "description": "Append-only: AuditTrail-records mogen alleen worden aangemaakt, nooit gewijzigd of verwijderd. Onveranderlijkheid afgedwongen door AuditTrailGuard.",
+          "description": "Append-only: AuditTrail-records mogen alleen worden aangemaakt, nooit gewijzigd of verwijderd. Onveranderlijkheid afgedwongen door OpenRegister (appendOnly: een wijziging of verwijdering krijgt SCHEMA_APPEND_ONLY, 405).",
           "states": {
             "booking": {
               "label": "Boeking",

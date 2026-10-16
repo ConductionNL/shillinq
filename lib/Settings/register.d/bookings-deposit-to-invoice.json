@@ -783,9 +783,11 @@
       "orderId": "ord-1001",
       "amount": 7500,
       "currency": "EUR",
-      "arInvoiceId": "inv-deposit-1500",
+      "arInvoiceId": null,
       "refundPolicy": "manual",
-      "state": "authorized"
+      "state": "authorized",
+      "bookingTypeId": "bt-001",
+      "currencyCode": "EUR"
     }
   ]
 }

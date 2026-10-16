@@ -249,7 +249,10 @@ class ViesService {
 		$best = null;
 		$bestTs = -1;
 		foreach ($records as $record) {
-			if ((bool)($record['valid'] ?? false) !== true) {
+			// A result reused during an outage is not fresh evidence: counting it
+			// would date the last valid check to the outage and renew the reuse
+			// window on every outage (tax-vat-number-check).
+			if ((bool)($record['valid'] ?? false) !== true || (bool)($record['outage'] ?? false) === true) {
 				continue;
 			}
 

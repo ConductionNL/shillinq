@@ -99,6 +99,13 @@
                   "nullable": true,
                   "example": "tw-1",
                   "title": "Linked Match ID"
+                },
+                "accountNumber": {
+                  "type": "string",
+                  "description": "Expense account this line is booked on when the invoice is booked without an order; empty takes the supplier's default expense account (purchasing-supplier-invoice-intake REQ-PSII-002).",
+                  "nullable": true,
+                  "example": "4300",
+                  "title": "Expense account"
                 }
               }
             },

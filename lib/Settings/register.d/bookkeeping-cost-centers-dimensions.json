@@ -383,13 +383,16 @@
       "GLLine": {
         "x-openregister-aggregations": {
           "byCostCenter": {
-            "description": "Per-cost-center roll-up of posted GL amounts within an administration. Surfaces segment P&L per AnalyticalDimension[dimensionType=cost-center].code (joined to name for drill-down). Declared declaratively per ADR-031: no PHP SegmentReportService. Re-targeted from CostCenter to AnalyticalDimension.",
+            "description": "Per-cost-center roll-up of posted GL amounts within an administration. Surfaces segment P&L per AnalyticalDimension[dimensionType=cost-center].code (joined to name for drill-down). Declared declaratively per ADR-031: no PHP SegmentReportService. Re-targeted from CostCenter to AnalyticalDimension. Result figures (reporting-segment-results REQ-RSR-002): only posted profit and loss lines count (filter accountClass pnl, countsInResult true, stamped by GLLineResultStampListener), revenue is the credit amount, costs the debit amount and result the sum of signedAmount.",
             "metric": "sum",
-            "field": "amount",
+            "field": "signedAmount",
             "groupBy": [
               "costCenterCode"
             ],
-            "filter": {},
+            "filter": {
+              "accountClass": "pnl",
+              "countsInResult": true
+            },
             "join": {
               "through": "AnalyticalDimension",
               "on": "AnalyticalDimension.code",
@@ -400,16 +403,42 @@
                 "AnalyticalDimension.name",
                 "AnalyticalDimension.parentCode"
               ]
-            }
+            },
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "credit"
+                },
+                "as": "revenue"
+              },
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "debit"
+                },
+                "as": "costs"
+              },
+              {
+                "metric": "sum",
+                "field": "signedAmount",
+                "as": "result"
+              }
+            ]
           },
           "byCostCenterHierarchy": {
-            "description": "Hierarchical roll-up of GL amounts per AnalyticalDimension[dimensionType=cost-center].parentCode tree. Child cost-center sums propagate to parents through the self-relation; drives drill-down navigation. Declarative (ADR-031). Re-targeted from CostCenter to AnalyticalDimension.",
+            "description": "Hierarchical roll-up of GL amounts per AnalyticalDimension[dimensionType=cost-center].parentCode tree. Child cost-center sums propagate to parents through the self-relation; drives drill-down navigation. Declarative (ADR-031). Re-targeted from CostCenter to AnalyticalDimension. Result figures (reporting-segment-results REQ-RSR-002): only posted profit and loss lines count (filter accountClass pnl, countsInResult true, stamped by GLLineResultStampListener), revenue is the credit amount, costs the debit amount and result the sum of signedAmount.",
             "groupBy": [
               "AnalyticalDimension.parentCode"
             ],
-            "filter": {},
+            "filter": {
+              "accountClass": "pnl",
+              "countsInResult": true
+            },
             "metric": "sum",
-            "field": "amount",
+            "field": "signedAmount",
             "join": {
               "through": "AnalyticalDimension",
               "on": {
@@ -423,18 +452,41 @@
                 "AnalyticalDimension.name"
               ]
             },
-            "sum": [
-              "amount"
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "credit"
+                },
+                "as": "revenue"
+              },
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "debit"
+                },
+                "as": "costs"
+              },
+              {
+                "metric": "sum",
+                "field": "signedAmount",
+                "as": "result"
+              }
             ]
           },
           "byCostObject": {
-            "description": "Per-cost-object (kostendrager) roll-up of posted GL amounts. Replaces the retired KostenDrager.segmentPnl. Joins GLLine.kostenDragerCode to AnalyticalDimension[dimensionType=cost-object].code. Declarative (ADR-031).",
+            "description": "Per-cost-object (kostendrager) roll-up of posted GL amounts. Replaces the retired KostenDrager.segmentPnl. Joins GLLine.kostenDragerCode to AnalyticalDimension[dimensionType=cost-object].code. Declarative (ADR-031). Result figures (reporting-segment-results REQ-RSR-002): only posted profit and loss lines count (filter accountClass pnl, countsInResult true, stamped by GLLineResultStampListener), revenue is the credit amount, costs the debit amount and result the sum of signedAmount.",
             "metric": "sum",
-            "field": "amount",
+            "field": "signedAmount",
             "groupBy": [
               "costCarrierCode"
             ],
-            "filter": {},
+            "filter": {
+              "accountClass": "pnl",
+              "countsInResult": true
+            },
             "join": {
               "through": "AnalyticalDimension",
               "on": "AnalyticalDimension.code",
@@ -445,16 +497,42 @@
                 "AnalyticalDimension.name",
                 "AnalyticalDimension.parentCode"
               ]
-            }
+            },
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "credit"
+                },
+                "as": "revenue"
+              },
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "debit"
+                },
+                "as": "costs"
+              },
+              {
+                "metric": "sum",
+                "field": "signedAmount",
+                "as": "result"
+              }
+            ]
           },
           "byProject": {
-            "description": "Per-project roll-up of posted GL amounts within an administration. Surfaces project P&L for consultancy and grant-funded work. Declarative (ADR-031).",
+            "description": "Per-project roll-up of posted GL amounts within an administration. Surfaces project P&L for consultancy and grant-funded work. Declarative (ADR-031). Result figures (reporting-segment-results REQ-RSR-002): only posted profit and loss lines count (filter accountClass pnl, countsInResult true, stamped by GLLineResultStampListener), revenue is the credit amount, costs the debit amount and result the sum of signedAmount.",
             "metric": "sum",
-            "field": "amount",
+            "field": "signedAmount",
             "groupBy": [
               "projectCode"
             ],
-            "filter": {},
+            "filter": {
+              "accountClass": "pnl",
+              "countsInResult": true
+            },
             "join": {
               "through": "engagement",
               "on": "Project.code",
@@ -462,7 +540,30 @@
                 "Project.name",
                 "Project.parentCode"
               ]
-            }
+            },
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "credit"
+                },
+                "as": "revenue"
+              },
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "debit"
+                },
+                "as": "costs"
+              },
+              {
+                "metric": "sum",
+                "field": "signedAmount",
+                "as": "result"
+              }
+            ]
           },
           "byAnalyticalDimension": {
             "description": "Per-custom-dimension roll-up of posted GL amounts. Each registered AnalyticalDimension[dimensionType=custom] contributes a group-by key drawn from GLLine.dimensions[code]. Drives the operator-extensible segment P&L surface; new custom dimensions appear automatically without PHP/Vue edits. Scoped dimensionType = custom.",
@@ -493,7 +594,7 @@
         "schema": "AnalyticalDimension",
         "slug": "dim-region"
       },
-      "code": "REGION",
+      "code": "region",
       "name": "Region",
       "description": "Geographic region (e.g. Noord-Holland, Zuid-Holland). Surfaces regional P&L per municipality / branch.",
       "dimensionType": "custom",
@@ -509,7 +610,7 @@
         "schema": "AnalyticalDimension",
         "slug": "dim-productline"
       },
-      "code": "PRODUCT_LINE",
+      "code": "product-line",
       "name": "Product Line",
       "description": "Product line (e.g. Hosting, Consulting, Training). Surfaces product-mix P&L for revenue-side analytics.",
       "dimensionType": "custom",
@@ -525,7 +626,7 @@
         "schema": "AnalyticalDimension",
         "slug": "cc-admin-amsterdam"
       },
-      "code": "CC-ADM-AMS",
+      "code": "cc-adm-ams",
       "name": "Administratie Amsterdam",
       "description": "Administrative back-office, Amsterdam location.",
       "dimensionType": "cost-center",
@@ -533,7 +634,8 @@
       "organizationId": "org-conduction-bv",
       "responsibleUser": "manager.admin@conduction.nl",
       "lifecycleState": "active",
-      "administrationId": "adm-default"
+      "administrationId": "adm-default",
+      "dataType": "string"
     },
     {
       "@self": {
@@ -541,7 +643,7 @@
         "schema": "AnalyticalDimension",
         "slug": "cc-sales-utrecht"
       },
-      "code": "CC-SLS-UTR",
+      "code": "cc-sls-utr",
       "name": "Sales Utrecht",
       "description": "Sales team based in Utrecht (Randstad-Oost coverage).",
       "dimensionType": "cost-center",
@@ -549,7 +651,8 @@
       "organizationId": "org-conduction-bv",
       "responsibleUser": "manager.sales@conduction.nl",
       "lifecycleState": "active",
-      "administrationId": "adm-default"
+      "administrationId": "adm-default",
+      "dataType": "string"
     },
     {
       "@self": {
@@ -557,7 +660,7 @@
         "schema": "AnalyticalDimension",
         "slug": "cc-logistics-rotterdam"
       },
-      "code": "CC-LOG-RTM",
+      "code": "cc-log-rtm",
       "name": "Logistics Rotterdam",
       "description": "Logistics + fulfilment hub in Rotterdam.",
       "dimensionType": "cost-center",
@@ -565,7 +668,8 @@
       "organizationId": "org-conduction-bv",
       "responsibleUser": "manager.logistics@conduction.nl",
       "lifecycleState": "active",
-      "administrationId": "adm-default"
+      "administrationId": "adm-default",
+      "dataType": "string"
     },
     {
       "@self": {
@@ -579,7 +683,14 @@
       "responsibleUser": "manager.engineering@conduction.nl",
       "timeBookingEnabled": true,
       "lifecycleState": "active",
-      "administrationId": "adm-default"
+      "administrationId": "adm-default",
+      "customerId": "internal",
+      "state": "active",
+      "totalContractValue": 0,
+      "totalEstimatedCosts": 60000,
+      "recognitionMethod": "completed-contract",
+      "recognitionStage": "execution",
+      "currency": "EUR"
     },
     {
       "@self": {
@@ -593,7 +704,14 @@
       "responsibleUser": "manager.rnd@conduction.nl",
       "timeBookingEnabled": true,
       "lifecycleState": "active",
-      "administrationId": "adm-default"
+      "administrationId": "adm-default",
+      "customerId": "rvo-wbso",
+      "state": "active",
+      "totalContractValue": 120000,
+      "totalEstimatedCosts": 95000,
+      "recognitionMethod": "percentage-of-completion-cost-to-cost",
+      "recognitionStage": "execution",
+      "currency": "EUR"
     }
   ]
 }

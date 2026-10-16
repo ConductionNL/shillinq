@@ -56,7 +56,10 @@
 					{"key": "mandate_applied", "label": "Mandate", "sortable": true}
 				],
 				"defaultSort": "commitmentNumber",
-				"detailRoute": "CommitmentDetail"
+				"detailRoute": "CommitmentDetail",
+				"headerActions": [
+					{"id": "carry-over-commitments", "label": "Carry open commitments to next year", "icon": "CalendarSync", "handler": "openCarryOverCommitments", "description": "At year end, continue every open commitment line in the next year under the same number, and see which budgets fall short."}
+				]
 			}
 		},
 		{

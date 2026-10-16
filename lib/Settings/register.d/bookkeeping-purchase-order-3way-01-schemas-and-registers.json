@@ -761,7 +761,6 @@
         "type": "object",
         "required": [
           "invoiceNumber",
-          "supplierId",
           "invoiceDate",
           "currency",
           "statusCode",
@@ -854,6 +853,48 @@
             "example": null,
             "title": "Ocr Confidence Score"
           },
+          "supplierIdentifier": {
+            "type": "string",
+            "nullable": true,
+            "description": "The supplier party identifier as the invoice states it (KvK, VAT or endpoint id). Kept when no payee matches, so the page can say which supplier it does not recognise (purchasing-supplier-invoice-intake REQ-PSII-001).",
+            "title": "Supplier identifier"
+          },
+          "payeeIban": {
+            "type": "string",
+            "nullable": true,
+            "description": "The IBAN the invoice asks to be paid on (UBL PaymentMeans/PayeeFinancialAccount/ID), compared with the supplier record (REQ-PSII-004).",
+            "title": "Invoice IBAN"
+          },
+          "duplicateOfId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Set when another supplier invoice or AP transaction of this supplier has the same number: its id, or lookup-failed when the check could not run (REQ-PSII-003).",
+            "title": "Same number as"
+          },
+          "duplicateAcknowledgedReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why this invoice is booked although its number was already used for this supplier.",
+            "title": "Reason to book the repeated number"
+          },
+          "ibanMismatch": {
+            "type": "string",
+            "nullable": true,
+            "description": "The invoice IBAN and the IBAN the supplier record knows, when they differ (REQ-PSII-004).",
+            "title": "IBAN differs from supplier record"
+          },
+          "ibanAcknowledgedReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why this invoice is booked although its IBAN differs from the supplier record. Its AP transaction stays payment blocked until someone releases it.",
+            "title": "Reason to book the other IBAN"
+          },
+          "apTransactionId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The AP transaction this invoice was booked as without an order (REQ-PSII-002).",
+            "title": "AP transaction"
+          },
           "costCenter": {
             "type": "string",
             "description": "Dimensional cost-centre tag inherited from the matched PO.",
@@ -888,6 +929,12 @@
             "description": "FK to the administration this invoice belongs to.",
             "example": "adm-1",
             "title": "Administration ID"
+          },
+          "isLastInvoice": {
+            "type": "boolean",
+            "default": false,
+            "title": "Last invoice",
+            "description": "The last invoice of its order: when it is approved, or when it is marked after approval, the commitment of the order is closed and what remains goes back to the budget (planning-commitment-year-end, REQ-PCYE-003)."
           }
         },
         "x-openregister-lifecycle": {
@@ -958,6 +1005,20 @@
               "from": "received",
               "to": "rejected",
               "label": "Afwijzen"
+            },
+            "bookWithoutOrder": {
+              "from": "received",
+              "to": "approved",
+              "label": "Book without order",
+              "description": "Book an invoice that no purchase order backs through accounts payable: write one AP transaction, receive and issue it so the ledger shows the expense, the input VAT and the creditor, and link it here. Refused when a line links to a purchase order, the supplier is not recognised, a line has no expense account, or a duplicate or IBAN warning has no reason (purchasing-supplier-invoice-intake REQ-PSII-002).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\SupplierInvoiceBookingGuard",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\HandToAccountsPayableAction",
+                  "description": "Write and issue the AP transaction, payment blocked when the IBAN differs, and set apTransactionId."
+                }
+              ]
             },
             "rejectException": {
               "from": "exception",

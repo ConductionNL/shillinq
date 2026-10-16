@@ -40,6 +40,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\MultiPoConsolidationService;
+use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
 use OCA\Shillinq\Service\SupplierInvoiceService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
@@ -265,6 +266,7 @@ final class MultiPoConsolidationServiceTest extends TestCase {
 			administrationContext: $administrationContext,
 			logger: $this->logger,
 			objectService: new DuckObjectServiceAdapter($stub),
+			checks: $this->createStub(SupplierInvoiceChecks::class),
 		);
 
 		return new MultiPoConsolidationService(

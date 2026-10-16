@@ -7,7 +7,8 @@
  * initiation chain"). Given a VERIFIED assertion's claims and a client-chosen
  * opaque target id, this service:
  *
- *   1. resolves the subject's `customerMasterId` scope claim server-side by
+ *   1. resolves the subject's `customerMasterId` scope claim server-side
+ *      (PortalSubjectResolver, shared with the decline receiver) by
  *      reading portaliq's OWN `portalAccount` register the same way
  *      portaliq's `PortalObjectReader::resolveClaim()` does (design.md Open
  *      Q1) — the frozen A6 assertion carries only `sub`/`audience`/
@@ -53,10 +54,14 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Payment;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Portal\PortalSubjectResolver;
+use OCA\Shillinq\Util\ObjectIdentifier;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -82,17 +87,6 @@ class PortalPaymentSessionService {
 	private const REGISTER = 'shillinq';
 
 	/**
-	 * Portaliq's own register slug — read cross-app to resolve the subject's
-	 * claims, never written.
-	 */
-	private const PORTALIQ_REGISTER = 'portaliq';
-
-	/**
-	 * The portalAccount schema, carrying the server-managed `claims` map.
-	 */
-	private const SCHEMA_PORTAL_ACCOUNT = 'portalAccount';
-
-	/**
 	 * The AR invoice schema.
 	 */
 	private const SCHEMA_AR_INVOICE = 'ARInvoice';
@@ -110,21 +104,13 @@ class PortalPaymentSessionService {
 	private const PAYABLE_STATES = ['issued', 'partially-paid', 'overdue'];
 
 	/**
-	 * The claim namespace this app's own scope claim lives under
-	 * (`claims.shillinq.customerMasterId`, contract v2 A4 addressing).
+	 * The audiences this flow serves: customers, and parents paying a school
+	 * contribution (REQ-SCON-010). Any other assertion is refused upstream by
+	 * the controller, and the service re-checks defensively.
+	 *
+	 * @var array<int, string>
 	 */
-	private const CLAIM_APP_ID = 'shillinq';
-
-	/**
-	 * The claim name resolved from the subject's portalAccount.
-	 */
-	private const CLAIM_NAME = 'customerMasterId';
-
-	/**
-	 * The audience this flow serves — a non-customer assertion is refused
-	 * upstream by the controller, but the service re-checks defensively.
-	 */
-	private const AUDIENCE_CUSTOMER = 'customer';
+	private const PAYING_AUDIENCES = ['customer', 'parent'];
 
 	/**
 	 * The webhook route name (shillinq.paymentRequestWebhook.handle) — an
@@ -152,6 +138,7 @@ class PortalPaymentSessionService {
 	 * @param IURLGenerator $urlGenerator Builds the webhook + default redirect URL.
 	 * @param IAppConfig $appConfig App config for the redirect-URL override.
 	 * @param LoggerInterface $logger Logger (never receives PSP/PII detail).
+	 * @param PortalSubjectResolver $subjects The ownership chain shared with the decline receiver.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
@@ -159,6 +146,7 @@ class PortalPaymentSessionService {
 		private readonly IURLGenerator $urlGenerator,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly PortalSubjectResolver $subjects = new PortalSubjectResolver(),
 	) {
 	}//end __construct()
 
@@ -171,14 +159,65 @@ class PortalPaymentSessionService {
 	 * @return PortalPaymentSessionResult
 	 *
 	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002, REQ-SPPI-003, REQ-SPPI-004)
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-010)
 	 */
 	public function initiate(array $claims, string $target): PortalPaymentSessionResult {
+		return $this->openSession(
+			claims: $claims,
+			target: $target,
+			prepare: fn (object $objectService, string $id, string $customerMasterId): ?array => $this->prepareInvoice(
+				objectService: $objectService,
+				target: $id,
+				customerMasterId: $customerMasterId,
+			),
+		);
+	}//end initiate()
+
+	/**
+	 * Initiate a payment session for the subject's own payment request that
+	 * stands without an invoice, such as leges on a case (REQ-SOPR-005). The
+	 * request's own amount is charged; nothing is minted.
+	 *
+	 * @param array<string, mixed> $claims The VERIFIED assertion claims.
+	 * @param string $target The client-supplied opaque payment request id.
+	 *
+	 * @return PortalPaymentSessionResult
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
+	 */
+	public function initiateForRequest(array $claims, string $target): PortalPaymentSessionResult {
+		return $this->openSession(
+			claims: $claims,
+			target: $target,
+			prepare: fn (object $objectService, string $id, string $customerMasterId): ?array => $this->prepareRequest(
+				objectService: $objectService,
+				target: $id,
+				customerMasterId: $customerMasterId,
+			),
+		);
+	}//end initiateForRequest()
+
+	/**
+	 * The chain both targets share: the target shape, the audience, the
+	 * subject's customer, the target-specific preparation, the provider call
+	 * and the saved intent id.
+	 *
+	 * @param array<string, mixed> $claims The VERIFIED assertion claims.
+	 * @param string $target The client-supplied opaque id.
+	 * @param callable $prepare Resolves the owned, payable target from (object service, id,
+	 *                          customer): ['request' => row, 'session' => PaymentSessionRequest] or null.
+	 *
+	 * @return PortalPaymentSessionResult
+	 *
+	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002, REQ-SPPI-003)
+	 */
+	private function openSession(array $claims, string $target, callable $prepare): PortalPaymentSessionResult {
 		$target = trim($target);
-		if ($this->isOpaqueId(target: $target) === false) {
+		if ($this->subjects->isOpaqueId(target: $target) === false) {
 			return PortalPaymentSessionResult::forbidden();
 		}
 
-		if ((string)($claims['audience'] ?? '') !== self::AUDIENCE_CUSTOMER) {
+		if (in_array((string)($claims['audience'] ?? ''), self::PAYING_AUDIENCES, true) === false) {
 			return PortalPaymentSessionResult::forbidden();
 		}
 
@@ -191,7 +230,7 @@ class PortalPaymentSessionService {
 
 		$session = null;
 		try {
-			$customerMasterId = $this->resolveCustomerMasterId(
+			$customerMasterId = $this->subjects->customerMasterId(
 				objectService: $objectService,
 				subjectRef: (string)($claims['sub'] ?? ''),
 				audience: (string)($claims['audience'] ?? ''),
@@ -200,24 +239,16 @@ class PortalPaymentSessionService {
 				return PortalPaymentSessionResult::forbidden();
 			}
 
-			$invoice = $this->findOwnedPayableInvoice(
-				objectService: $objectService,
-				target: $target,
-				customerMasterId: $customerMasterId,
-			);
-			if ($invoice === null) {
+			$prepared = $prepare($objectService, $target, $customerMasterId);
+			if ($prepared === null) {
 				return PortalPaymentSessionResult::forbidden();
 			}
 
-			$paymentRequest = $this->mintOrReusePaymentRequest(objectService: $objectService, invoice: $invoice);
-
-			$session = $this->provider->createSession(
-				$this->buildSessionRequest(invoice: $invoice, paymentRequest: $paymentRequest)
-			);
+			$session = $this->provider->createSession($prepared['session']);
 
 			$this->persistPaymentIntentId(
 				objectService: $objectService,
-				paymentRequest: $paymentRequest,
+				paymentRequest: $prepared['request'],
 				paymentIntentId: $session->paymentIntentId,
 			);
 		} catch (Throwable $e) {
@@ -230,103 +261,121 @@ class PortalPaymentSessionService {
 		}
 
 		return PortalPaymentSessionResult::success(checkoutUrl: $session->checkoutUrl);
-	}//end initiate()
+	}//end openSession()
 
 	/**
-	 * SSRF hardening (REQ-SPPI-003): the target is used ONLY as an opaque
-	 * OpenRegister object id/slug, never to build an outbound request. Reject
-	 * anything that looks like a URL, an absolute/relative path, or a parent
-	 * traversal.
-	 *
-	 * @param string $target The client-supplied target id.
-	 *
-	 * @return bool True when the target is safe to use as an opaque id.
-	 *
-	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-003)
-	 */
-	private function isOpaqueId(string $target): bool {
-		if ($target === '') {
-			return false;
-		}
-
-		if (str_contains($target, '://') === true) {
-			return false;
-		}
-
-		if (str_starts_with($target, '/') === true || str_starts_with($target, '\\') === true) {
-			return false;
-		}
-
-		if (str_contains($target, '..') === true) {
-			return false;
-		}
-
-		return true;
-	}//end isOpaqueId()
-
-	/**
-	 * Resolve `claims.shillinq.customerMasterId` from the subject's OWN
-	 * portalAccount row — mirrors portaliq's
-	 * `PortalObjectReader::resolveClaim()` (design.md Open Q1): the frozen A6
-	 * assertion carries only `sub`/`audience`/`organisation`/`trust`/`jti`,
-	 * never an app-specific scope claim, so this app resolves it itself by
-	 * reading portaliq's own register cross-app (read-only).
+	 * The invoice target: the owned payable invoice, its minted or reused
+	 * request, and the session for the invoice amount.
 	 *
 	 * @param object $objectService OpenRegister's ObjectService.
-	 * @param string $subjectRef The verified assertion's `sub` claim.
-	 * @param string $audience The verified assertion's `audience` claim.
+	 * @param string $target The opaque invoice id or slug.
+	 * @param string $customerMasterId The verified owner.
 	 *
-	 * @return string|null The resolved customerMasterId, or null when absent/malformed.
+	 * @return array{request: array<string, mixed>, session: PaymentSessionRequest}|null Null when not payable by this subject.
 	 *
-	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002)
+	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-003, REQ-SPPI-004)
 	 */
-	private function resolveCustomerMasterId(object $objectService, string $subjectRef, string $audience): ?string {
-		if ($subjectRef === '' || $audience === '') {
+	private function prepareInvoice(object $objectService, string $target, string $customerMasterId): ?array {
+		$invoice = $this->findOwnedPayableInvoice(objectService: $objectService, target: $target, customerMasterId: $customerMasterId);
+		if ($invoice === null) {
 			return null;
 		}
 
-		$rows = $objectService
-			->setRegister(self::PORTALIQ_REGISTER)
-			->setSchema(self::SCHEMA_PORTAL_ACCOUNT)
-			->findAll(
-				config: [
-					'filters' => [
-						'subjectRef' => $subjectRef,
-						'audience' => $audience,
-					],
-					'limit' => 2,
-				],
+		$paymentRequest = $this->mintOrReusePaymentRequest(objectService: $objectService, invoice: $invoice);
+
+		return [
+			'request' => $paymentRequest,
+			'session' => $this->buildSessionRequest(invoice: $invoice, paymentRequest: $paymentRequest),
+		];
+	}//end prepareInvoice()
+
+	/**
+	 * The request target: the subject's own pending request without an
+	 * invoice, and the session for its own amount (REQ-SOPR-005).
+	 *
+	 * Read with `find()` by uuid: a `findAll()` filter on `id` addresses a JSON
+	 * property and matches nothing. A foreign, invoice-backed, settled or
+	 * missing request collapses to the same null (no existence oracle).
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param string $target The opaque payment request id.
+	 * @param string $customerMasterId The verified owner.
+	 *
+	 * @return array{request: array<string, mixed>, session: PaymentSessionRequest}|null Null when not payable by this subject.
+	 *
+	 * @throws RuntimeException When the request carries no chargeable amount.
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
+	 */
+	private function prepareRequest(object $objectService, string $target, string $customerMasterId): ?array {
+		try {
+			$found = $objectService->find(
+				id: $target,
+				register: self::REGISTER,
+				schema: self::SCHEMA_PAYMENT_REQUEST,
 				_rbac: false,
 				_multitenancy: false,
 			);
-
-		if (is_array($rows) === false || empty($rows) === true) {
+		} catch (Throwable $notFound) {
 			return null;
 		}
 
-		$claims = ($rows[0]['claims'] ?? null);
-		if (is_array($claims) === false) {
+		$request = ObjectIdentifier::recordWithId(candidate: $found);
+		if ($request === null) {
 			return null;
 		}
 
-		$appClaims = ($claims[self::CLAIM_APP_ID] ?? null);
-		if (is_array($appClaims) === false) {
+		if ((string)($request['id'] ?? '') === '') {
+			$request['id'] = $target;
+		}
+
+		$owner = (string)($request['customerId'] ?? ($request['debtor']['customerMasterId'] ?? ''));
+		if ($owner !== $customerMasterId
+			|| (string)($request['invoiceReference'] ?? '') !== ''
+			|| (string)($request['state'] ?? '') !== 'pending'
+		) {
 			return null;
 		}
 
-		$value = ($appClaims[self::CLAIM_NAME] ?? null);
-		if (is_string($value) === false || $value === '') {
-			return null;
+		$amount = ($request['amount'] ?? null);
+		if (is_bool($amount) === true || is_numeric($amount) === false || (float)$amount <= 0.0) {
+			throw new RuntimeException('This payment request carries no amount that can be charged, so no payment session was opened.');
 		}
 
-		return $value;
-	}//end resolveCustomerMasterId()
+		$description = trim((string)($request['description'] ?? ''));
+		if ($description === '') {
+			$description = 'Payment request';
+		}
+
+		return [
+			'request' => $request,
+			'session' => new PaymentSessionRequest(
+				amount: (float)$amount,
+				currency: (string)($request['currency'] ?? 'EUR'),
+				description: $description,
+				redirectUrl: $this->resolveRedirectUrl(),
+				webhookUrl: $this->urlGenerator->linkToRouteAbsolute(self::WEBHOOK_ROUTE, ['gateway' => self::GATEWAY]),
+				method: 'ideal',
+				metadata: [
+					'paymentRequestId' => (string)$request['id'],
+					'administrationId' => (string)($request['administrationId'] ?? ''),
+					'correlationId' => (string)$request['id'],
+				],
+			),
+		];
+	}//end prepareRequest()
 
 	/**
-	 * Resolve the target ARInvoice — id/slug match AND owned by the
-	 * verified customerMasterId AND in a payable state. A foreign owner, a
-	 * non-payable state and a non-existent id all collapse to the SAME null
-	 * (no existence oracle, REQ-SPPI-003).
+	 * Resolve the target ARInvoice: id/slug match AND owned by the verified
+	 * customerMasterId AND in a payable state. A foreign owner, a non-payable
+	 * state and a non-existent id all collapse to the SAME null (no existence
+	 * oracle, REQ-SPPI-003).
+	 *
+	 * The id is read with `find()`: a `findAll()` filter on `id` addresses a
+	 * JSON property, matches nothing in OpenRegister, and made every invoice
+	 * addressed by its uuid unpayable. A miss (DoesNotExistException) falls
+	 * through to the `slug` property; any other read failure propagates as a
+	 * downstream error.
 	 *
 	 * @param object $objectService OpenRegister's ObjectService.
 	 * @param string $target The client-supplied opaque id/slug.
@@ -335,16 +384,32 @@ class PortalPaymentSessionService {
 	 * @return array<string, mixed>|null
 	 *
 	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-003)
+	 * @spec openspec/changes/billing-inherited-defects/specs/portal-payment-initiation/spec.md (REQ-SPPI-011)
 	 */
 	private function findOwnedPayableInvoice(object $objectService, string $target, string $customerMasterId): ?array {
-		foreach (['id', 'slug'] as $key) {
+		$invoice = null;
+		try {
+			$invoice = ObjectIdentifier::recordWithId(
+				candidate: $objectService->find(
+					id: $target,
+					register: self::REGISTER,
+					schema: self::SCHEMA_AR_INVOICE,
+					_rbac: false,
+					_multitenancy: false,
+				)
+			);
+		} catch (DoesNotExistException $notFound) {
+			$invoice = null;
+		}
+
+		if ($invoice === null) {
 			$rows = $objectService
 				->setRegister(self::REGISTER)
 				->setSchema(self::SCHEMA_AR_INVOICE)
 				->findAll(
 					config: [
 						'filters' => [
-							$key => $target,
+							'slug' => $target,
 							'customerId' => $customerMasterId,
 						],
 						'limit' => 1,
@@ -352,19 +417,30 @@ class PortalPaymentSessionService {
 					_rbac: false,
 					_multitenancy: false,
 				);
-
 			if (is_array($rows) === true && empty($rows) === false) {
-				$invoice = $rows[0];
-				if (in_array((string)($invoice['state'] ?? ''), self::PAYABLE_STATES, true) === true) {
-					return $invoice;
-				}
-
-				// Matched by id/slug but foreign/non-payable — do not also
-				// try the other key with the same raw string (it already
-				// resolved to a concrete, non-payable row).
-				return null;
+				$invoice = ObjectIdentifier::recordWithId(candidate: $rows[0]);
 			}
-		}//end foreach
+		}
+
+		if ($invoice === null) {
+			return null;
+		}
+
+		if ((string)($invoice['id'] ?? '') === '') {
+			$invoice['id'] = $target;
+		}
+
+		if ((string)($invoice['customerId'] ?? '') !== $customerMasterId) {
+			return null;
+		}
+
+		// ARInvoice's lifecycle field is `lifecycleState`; `state` is not a
+		// property it declares, so reading only `state` found no invoice
+		// payable at all (REQ-SCON-010).
+		$state = (string)($invoice['lifecycleState'] ?? ($invoice['state'] ?? ''));
+		if (in_array($state, self::PAYABLE_STATES, true) === true) {
+			return $invoice;
+		}
 
 		return null;
 	}//end findOwnedPayableInvoice()
@@ -380,6 +456,7 @@ class PortalPaymentSessionService {
 	 * @return array<string, mixed> The (possibly newly persisted) PaymentRequest row.
 	 *
 	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002, REQ-SPPI-004)
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-010)
 	 */
 	private function mintOrReusePaymentRequest(object $objectService, array $invoice): array {
 		$invoiceKey = (string)($invoice['id'] ?? '');
@@ -403,14 +480,44 @@ class PortalPaymentSessionService {
 			return $pending[0];
 		}
 
+		// 🔴 NEVER MINT A REQUEST FOR AN AMOUNT NOBODY COULD READ. The cast
+		// below used to turn a missing or malformed `totalAmount` into 0.00,
+		// and the citizen was sent to a checkout for nothing. A payment page
+		// for zero euro is worse than a page that says the payment could not
+		// be started, because the person believes they have paid.
+		// ARInvoice declares `grossAmount`; `totalAmount` is kept first for the
+		// rows that carry it (REQ-SCON-010).
+		$amount = ($invoice['totalAmount'] ?? ($invoice['grossAmount'] ?? null));
+		if (is_bool($amount) === true || is_numeric($amount) === false || (float)$amount <= 0.0) {
+			throw new RuntimeException(
+				'This invoice carries no amount that can be charged, so no payment session was opened.'
+			);
+		}
+
 		$paymentRequest = [
 			'invoiceReference' => $invoiceKey,
-			'amount' => (float)($invoice['totalAmount'] ?? 0.0),
+			'amount' => (float)$amount,
 			'currency' => (string)($invoice['currency'] ?? 'EUR'),
 			'paymentGateway' => self::GATEWAY,
 			'state' => 'pending',
 			'administrationId' => (string)($invoice['administrationId'] ?? ''),
 		];
+
+		// A fresh request for a school contribution (the raised one failed or
+		// expired) keeps the reference to the chargeable, or the settled signal
+		// would no longer name the owning app (REQ-SCON-010).
+		$contribution = ($invoice['contribution'] ?? null);
+		if (is_array($contribution) === true && is_array($contribution['chargeable'] ?? null) === true) {
+			$paymentRequest += [
+				'subjectKind' => 'object',
+				'subject' => $contribution['chargeable'],
+				'beneficiary' => ($contribution['beneficiary'] ?? null),
+				'requestType' => 'contribution',
+				'voluntary' => (($contribution['voluntary'] ?? false) === true),
+				'raiseBatchId' => (string)($contribution['raiseBatchId'] ?? ''),
+				'debtor' => ['customerMasterId' => (string)($invoice['customerId'] ?? '')],
+			];
+		}
 
 		$saved = $objectService->saveObject(
 			object: $paymentRequest,

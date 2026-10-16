@@ -1,0 +1,114 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "receivables-object-request-refund-and-credit",
+    "adr": "ADR-037 modular register fragment",
+    "description": "DebtorCredit: money a payer chose to keep with shillinq instead of a refund, held per debtor (their customer record, or their email address) and spent on their next payment request first (REQ-ORC-003, REQ-ORC-004)."
+  },
+  "components": {
+    "schemas": {
+      "DebtorCredit": {
+        "slug": "DebtorCredit",
+        "icon": "WalletOutline",
+        "version": "0.1.0",
+        "title": "Debtor credit",
+        "description": "Money kept for a payer from a settled request, to pay their next request first.",
+        "x-spec": "openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every credit and every spend of it is recorded, so the balance can be traced back to the request it came from."
+        },
+        "type": "object",
+        "required": [
+          "debtorKey",
+          "amount",
+          "remaining",
+          "currency",
+          "sourcePaymentRequestId",
+          "administrationId",
+          "state"
+        ],
+        "properties": {
+          "debtorKey": {
+            "type": "string",
+            "title": "Debtor",
+            "description": "Whose credit this is: their customer record, or their email address in lower case."
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 0,
+            "title": "Amount",
+            "description": "How much credit was kept."
+          },
+          "remaining": {
+            "type": "number",
+            "minimum": 0,
+            "title": "Remaining",
+            "description": "How much of the credit is still open."
+          },
+          "currency": {
+            "type": "string",
+            "default": "EUR",
+            "title": "Currency",
+            "description": "The currency of the credit."
+          },
+          "sourcePaymentRequestId": {
+            "type": "string",
+            "title": "From request",
+            "description": "The paid request the credit was kept from."
+          },
+          "administrationId": {
+            "type": "string",
+            "title": "Administration",
+            "description": "The administration that holds the credit."
+          },
+          "journalEntryId": {
+            "type": "string",
+            "nullable": true,
+            "title": "Booking",
+            "description": "The journal entry that booked the credit."
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "open",
+              "used"
+            ],
+            "x-enum-labels": {
+              "open": "Open",
+              "used": "Used"
+            },
+            "default": "open",
+            "title": "State",
+            "description": "Open while some credit remains, used once it is spent."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "controller": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}
