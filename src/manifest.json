@@ -8462,20 +8462,20 @@
 									}
 								}
 							},
-							"caption": "{count} invoices",
+							"caption": "{ratio}% of open",
 							"captionSource": {
-								"metric": "count",
-								"filter": {
-									"lifecycleState": [
-										"issued",
-										"overdue",
-										"disputed"
-									],
-									"dueDate": {
-										"gte": "@today"
+								"kind": "ratio",
+								"denominator": {
+									"metric": "sum",
+									"field": "grossAmount",
+									"filter": {
+										"lifecycleState": [
+											"issued",
+											"overdue",
+											"disputed"
+										]
 									}
-								},
-								"zeroText": "no invoices"
+								}
 							}
 						}
 					},
@@ -8507,21 +8507,20 @@
 									}
 								}
 							},
-							"caption": "{count} invoices",
+							"caption": "{ratio}% of open",
 							"captionSource": {
-								"metric": "count",
-								"filter": {
-									"lifecycleState": [
-										"issued",
-										"overdue",
-										"disputed"
-									],
-									"dueDate": {
-										"gte": "@today-30d",
-										"lt": "@today"
+								"kind": "ratio",
+								"denominator": {
+									"metric": "sum",
+									"field": "grossAmount",
+									"filter": {
+										"lifecycleState": [
+											"issued",
+											"overdue",
+											"disputed"
+										]
 									}
-								},
-								"zeroText": "no invoices"
+								}
 							}
 						}
 					},
@@ -8553,21 +8552,20 @@
 									}
 								}
 							},
-							"caption": "{count} invoices",
+							"caption": "{ratio}% of open",
 							"captionSource": {
-								"metric": "count",
-								"filter": {
-									"lifecycleState": [
-										"issued",
-										"overdue",
-										"disputed"
-									],
-									"dueDate": {
-										"gte": "@today-60d",
-										"lt": "@today-30d"
+								"kind": "ratio",
+								"denominator": {
+									"metric": "sum",
+									"field": "grossAmount",
+									"filter": {
+										"lifecycleState": [
+											"issued",
+											"overdue",
+											"disputed"
+										]
 									}
-								},
-								"zeroText": "no invoices"
+								}
 							}
 						}
 					},
@@ -8599,21 +8597,20 @@
 									}
 								}
 							},
-							"caption": "{count} invoices",
+							"caption": "{ratio}% of open",
 							"captionSource": {
-								"metric": "count",
-								"filter": {
-									"lifecycleState": [
-										"issued",
-										"overdue",
-										"disputed"
-									],
-									"dueDate": {
-										"gte": "@today-90d",
-										"lt": "@today-60d"
+								"kind": "ratio",
+								"denominator": {
+									"metric": "sum",
+									"field": "grossAmount",
+									"filter": {
+										"lifecycleState": [
+											"issued",
+											"overdue",
+											"disputed"
+										]
 									}
-								},
-								"zeroText": "no invoices"
+								}
 							}
 						}
 					},
@@ -8644,20 +8641,20 @@
 									}
 								}
 							},
-							"caption": "{count} invoices",
+							"caption": "{ratio}% of open",
 							"captionSource": {
-								"metric": "count",
-								"filter": {
-									"lifecycleState": [
-										"issued",
-										"overdue",
-										"disputed"
-									],
-									"dueDate": {
-										"lt": "@today-90d"
+								"kind": "ratio",
+								"denominator": {
+									"metric": "sum",
+									"field": "grossAmount",
+									"filter": {
+										"lifecycleState": [
+											"issued",
+											"overdue",
+											"disputed"
+										]
 									}
-								},
-								"zeroText": "no invoices"
+								}
 							}
 						}
 					},
@@ -8687,7 +8684,12 @@
 								{
 									"key": "customerId",
 									"label": "Customer",
-									"labelField": "legalName"
+									"labelField": "legalName",
+									"resolve": {
+										"register": "shillinq",
+										"schema": "CustomerMaster",
+										"labelField": "legalName"
+									}
 								},
 								{
 									"key": "invoiceNumber",

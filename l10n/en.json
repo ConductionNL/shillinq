@@ -4553,7 +4553,8 @@
         "_{total} purchase invoice_::_{total} purchase invoices_": [
             "{total} purchase invoice",
             "{total} purchase invoices"
-        ]
+        ],
+        "{ratio}% of open": "{ratio}% of open"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
