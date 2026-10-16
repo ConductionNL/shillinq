@@ -32,11 +32,15 @@
         {
             "appVersion": "0.5.6-unstable.20261011210000",
             "versionsSha256": "aca53deae3e0c9aa6cf56e4e28683faab557c5d3974abe6ac9d245c793eac96a"
+        },
+        {
+            "appVersion": "0.5.6-unstable.20261016120000",
+            "versionsSha256": "41c9f70396b77d1324d29f683dd2eee36efee43e54e0a07c07f04e588099bf4e"
         }
     ],
     "versions": {
         "info": "0.1.0-zzp-cashflow-13wk",
-        "register:shillinq": "0.7.0",
+        "register:shillinq": "0.7.1",
         "schema:ACMReport": "0.1.0",
         "schema:APInvoice": "0.1.0",
         "schema:APTransaction": "0.3.0",
@@ -197,6 +201,7 @@
         "schema:DirectDebitBatch": "0.1.0",
         "schema:DirectDebitCollection": "0.1.0",
         "schema:DirectorReport": "0.1.0",
+        "schema:DocumentRetention": "0.1.0",
         "schema:DualTransaction": "0.1.0",
         "schema:DunningLadder": "0.2.0",
         "schema:DunningNotice": "0.1.0",
@@ -447,7 +452,9 @@
         "schema:RetainerRollover": "0.1.0",
         "schema:RetainerSchedule": "0.1.0",
         "schema:RetainerTrueUp": "0.1.0",
+        "schema:RetentionPolicy": "0.1.0",
         "schema:RetentionRule": "0.1.0",
+        "schema:RetentionSchedule": "0.1.0",
         "schema:RevenueContract": "0.1.0",
         "schema:RevenueRecognitionEvent": "0.1.0",
         "schema:RevenueWaterfall": "0.1.0",

@@ -6,7 +6,7 @@
                 "slug": "shillinq",
                 "title": "Shillinq Register",
                 "description": "Shillinq: open-source business administration suite for Dutch SMB, ZZP, and government. Holds every ledger, invoice, bank, VAT, payroll, project, inventory, treasury, consolidation, tax and reporting object the app reads and writes.",
-                "version": "0.7.0",
+                "version": "0.7.1",
                 "schemas": [
                     "ACMReport",
                     "APTransaction",
@@ -484,6 +484,9 @@
                     "Commitment",
                     "CommitmentMovement",
                     "CommitmentLine",
+                    "DocumentRetention",
+                    "RetentionPolicy",
+                    "RetentionSchedule",
                     "ViesValidation",
                     "VolumeDiscount",
                     "VoorlopigeAanslag",
