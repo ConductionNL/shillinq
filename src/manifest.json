@@ -8410,7 +8410,7 @@
 			"config": {
 				"description": "Open sales invoices by age, the reminder step they are in and the payment requests that are out",
 				"documentationUrl": "https://shillinq.conduction.nl/guides/create-invoices",
-				"_boardNote": "Board ShDebiteurenbeheer. This page was an index over ARInvoice with the columns agingBucket, count and totalAmount, which an invoice does not carry (and an `aggregation` key the index never read), so every row showed the customer id and three dashes. The age buckets are now five tiles over the open invoices (issued, overdue, disputed) by due date, the list shows each open invoice with its reminder step from ARInvoice.dunning, and the payment requests sit beside it. Not drawn, no data: the provider payouts card (no payout schema) and the Next step this week / Paused chips (no paused flag on an invoice).",
+				"_boardNote": "Board ShDebiteurenbeheer. This page was an index over ARInvoice with the columns agingBucket, count and totalAmount, which an invoice does not carry (and an `aggregation` key the index never read), so every row showed the customer id and three dashes. The age buckets are now five tiles over the open invoices (issued, overdue, disputed) by due date. The board's tab strip is a tabs widget: Open balance (each open invoice with its reminder step from ARInvoice.dunning), Reminder runs (the DunningRun log, counted) and Payment requests (counted); the payment requests card stays below it. Not drawn, no data: the Provider payouts tab and card (no payout schema) and the Next step this week / Paused chips (no paused flag on an invoice).",
 				"headerActions": [
 					{
 						"id": "dunning-runs",
@@ -8659,6 +8659,31 @@
 						}
 					},
 					{
+						"id": "receivables-tabs",
+						"title": "Receivables",
+						"type": "tabs",
+						"content": {
+							"tabs": [
+								{
+									"widgetId": "open-invoices",
+									"label": "Open balance"
+								},
+								{
+									"widgetId": "reminder-runs",
+									"label": "Reminder runs",
+									"countFrom": "widget"
+								},
+								{
+									"widgetId": "payment-request-table",
+									"label": "Payment requests",
+									"countFrom": "widget"
+								}
+							],
+							"showActions": false
+						},
+						"showTitle": false
+					},
+					{
 						"id": "open-invoices",
 						"title": "Open invoices",
 						"type": "object-table",
@@ -8729,6 +8754,110 @@
 						}
 					},
 					{
+						"id": "reminder-runs",
+						"title": "Reminder runs",
+						"type": "object-table",
+						"content": {
+							"source": {
+								"register": "shillinq",
+								"schema": "DunningRun",
+								"order": {
+									"executedOn": "desc"
+								},
+								"limit": 20
+							},
+							"rowRoute": "DunningRunDetail",
+							"emptyText": "No reminders sent yet",
+							"columns": [
+								{
+									"key": "recipientName",
+									"label": "Customer"
+								},
+								{
+									"key": "invoiceId",
+									"label": "Invoice"
+								},
+								{
+									"key": "invoiceAmount",
+									"label": "Outstanding",
+									"formatter": "currency",
+									"formatterOptions": {
+										"currency": "EUR",
+										"decimals": 2
+									}
+								},
+								{
+									"key": "stageNr",
+									"label": "Step"
+								},
+								{
+									"key": "channel",
+									"label": "Channel"
+								},
+								{
+									"key": "deliveryStatus",
+									"label": "Delivery",
+									"widget": "badge"
+								},
+								{
+									"key": "executedOn",
+									"label": "Sent",
+									"formatter": "date"
+								}
+							]
+						},
+						"headerLink": {
+							"label": "All reminder runs",
+							"route": "DunningRuns"
+						}
+					},
+					{
+						"id": "payment-request-table",
+						"title": "Payment requests",
+						"type": "object-table",
+						"content": {
+							"source": {
+								"register": "shillinq",
+								"schema": "PaymentRequest",
+								"limit": 20
+							},
+							"rowRoute": "PaymentRequestDetail",
+							"emptyText": "No payment requests yet",
+							"columns": [
+								{
+									"key": "description",
+									"label": "Description"
+								},
+								{
+									"key": "invoiceReference",
+									"label": "Invoice"
+								},
+								{
+									"key": "amount",
+									"label": "Amount",
+									"format": {
+										"style": "currency",
+										"currencyField": "currency"
+									}
+								},
+								{
+									"key": "state",
+									"label": "Status",
+									"widget": "badge"
+								},
+								{
+									"key": "capturedAt",
+									"label": "Paid on",
+									"formatter": "date"
+								}
+							]
+						},
+						"headerLink": {
+							"label": "All payment requests",
+							"route": "PaymentRequests"
+						}
+					},
+					{
 						"id": "payment-requests",
 						"title": "Payment requests",
 						"type": "record-list",
@@ -8761,18 +8890,18 @@
 				],
 				"layout": [
 					{
-						"id": "layout-open-invoices",
-						"widgetId": "open-invoices",
+						"id": "layout-receivables-tabs",
+						"widgetId": "receivables-tabs",
 						"gridX": 0,
 						"gridY": 0,
 						"gridWidth": 12,
-						"gridHeight": 5
+						"gridHeight": 6
 					},
 					{
 						"id": "layout-payment-requests",
 						"widgetId": "payment-requests",
 						"gridX": 0,
-						"gridY": 5,
+						"gridY": 6,
 						"gridWidth": 6,
 						"gridHeight": 4
 					}

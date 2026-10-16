@@ -6738,7 +6738,9 @@ OC.L10N.register(
         "_{total} invoice · numbered without gaps_::_{total} invoices · numbered without gaps_": ["{total} factuur · doorlopend genummerd","{total} facturen · doorlopend genummerd"],
         "_{total} purchase invoice_::_{total} purchase invoices_": ["{total} inkoopfactuur","{total} inkoopfacturen"],
         "Balance per week": "Saldo per week",
-        "{ratio}% of open": "{ratio}% van open"
+        "{ratio}% of open": "{ratio}% van open",
+        "No reminders sent yet": "Nog geen herinneringen verstuurd",
+        "All reminder runs": "Alle herinneringsrondes"
     },
     "nplurals=2; plural=(n != 1);"
 )

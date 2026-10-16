@@ -4544,7 +4544,9 @@ OC.L10N.register(
         "_{total} invoice · numbered without gaps_::_{total} invoices · numbered without gaps_": ["{total} invoice · numbered without gaps","{total} invoices · numbered without gaps"],
         "_{total} purchase invoice_::_{total} purchase invoices_": ["{total} purchase invoice","{total} purchase invoices"],
         "Balance per week": "Balance per week",
-        "{ratio}% of open": "{ratio}% of open"
+        "{ratio}% of open": "{ratio}% of open",
+        "No reminders sent yet": "No reminders sent yet",
+        "All reminder runs": "All reminder runs"
     },
     "nplurals=2; plural=(n != 1);"
 )

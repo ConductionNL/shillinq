@@ -4555,7 +4555,9 @@
             "{total} purchase invoices"
         ],
         "Balance per week": "Balance per week",
-        "{ratio}% of open": "{ratio}% of open"
+        "{ratio}% of open": "{ratio}% of open",
+        "No reminders sent yet": "No reminders sent yet",
+        "All reminder runs": "All reminder runs"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
