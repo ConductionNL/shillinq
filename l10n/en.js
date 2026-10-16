@@ -4540,7 +4540,8 @@ OC.L10N.register(
         "Free-text justification for the exception.": "Free-text justification for the exception.",
         "Issuing authority (e.g. 'District Court Amsterdam').": "Issuing authority (e.g. 'District Court Amsterdam').",
         "When the exception was applied.": "When the exception was applied.",
-        "When the exception was cleared (null while active).": "When the exception was cleared (null while active)."
+        "When the exception was cleared (null while active).": "When the exception was cleared (null while active).",
+        "Balance per week": "Balance per week"
     },
     "nplurals=2; plural=(n != 1);"
 )
