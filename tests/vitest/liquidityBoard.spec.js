@@ -27,6 +27,9 @@ const registerText = fs
 	)
 	.join('\n')
 const routes = fs.readFileSync(path.join(ROOT, 'appinfo/routes.php'), 'utf8')
+const nl = JSON.parse(
+	fs.readFileSync(path.join(ROOT, 'l10n/nl.json'), 'utf8'),
+).translations
 
 /**
  * Every register/schema pair a widget reads.
@@ -53,6 +56,12 @@ describe('Liquidity board', () => {
 			page.config.layout.find((l) => l.id === 'layout-chart').widgetId,
 		).toBe('cashflow-13week-chart')
 		expect(widgets['buffer-status']).toBeDefined()
+	})
+
+	it('puts the board line above the forecast title', () => {
+		const chart = widgets['cashflow-13week-chart']
+		expect(chart.eyebrow).toBe('Balance per week')
+		expect(nl['Balance per week']).toBe('Saldo per week')
 	})
 
 	it('draws the four key figures as a row', () => {
