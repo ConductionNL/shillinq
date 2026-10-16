@@ -101,11 +101,16 @@
         },
         "x-openregister-aggregations": {
           "countByDocumentType": {
-            "field": "documentType",
-            "operation": "count",
-            "groupBy": "documentType",
+            "groupBy": [
+              "documentType"
+            ],
+            "metric": "count",
             "description": "Number of retention policies per documentType, surfaces coverage gaps in the Retention Dashboard per REQ-RET-006."
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "OpenRegister's immutable audit trail records every create, update, lifecycle transition and delete of this retention record, with actor and timestamp (REQ-RET-007)."
         }
       },
       "RetentionSchedule": {
@@ -221,6 +226,10 @@
             },
             "description": "30 days before retentionEndDate: the Archiefwet review before disposal (REQ-RET-002, REQ-RET-004). JSON-AST: dateAdd(dateAdd(startDate, retentionYears, years), -30, days)."
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "OpenRegister's immutable audit trail records every create, update, lifecycle transition and delete of this retention record, with actor and timestamp (REQ-RET-007)."
         }
       },
       "DocumentRetention": {
@@ -430,24 +439,31 @@
           }
         },
         "x-openregister-aggregations": {
-          "overdueReviewCount": {
-            "field": "id",
-            "operation": "count",
-            "filter": "status != 'deleted' AND reviewDueDate < today",
-            "description": "Count of DocumentRetention records whose review is overdue (REQ-RET-006). Powers the Overdue Reviews KPI on the Retention Dashboard."
-          },
           "activeLegalHoldCount": {
-            "field": "id",
-            "operation": "count",
-            "filter": "legalHold = true",
+            "filter": {
+              "legalHold": true
+            },
+            "metric": "count",
             "description": "Count of documents currently under a legal hold (REQ-RET-006)."
           },
           "pendingDisposalCount": {
-            "field": "id",
-            "operation": "count",
-            "filter": "status = 'scheduled-for-deletion'",
+            "filter": {
+              "status": "scheduled-for-deletion"
+            },
+            "metric": "count",
             "description": "Count of documents queued for disposal authorisation (REQ-RET-006)."
+          },
+          "countByStatus": {
+            "groupBy": [
+              "status"
+            ],
+            "metric": "count",
+            "description": "Number of documents per retention state, for the Retention Dashboard (REQ-RET-006)."
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "OpenRegister's immutable audit trail records every create, update, lifecycle transition and delete of this retention record, with actor and timestamp (REQ-RET-007)."
         }
       }
     }
