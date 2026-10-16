@@ -40,6 +40,10 @@
         {
             "appVersion": "0.5.6-unstable.20261016170000",
             "versionsSha256": "3ded71b4ec3f07d37a1f573552285af538029ed9cdf2de5cb93d0c769766cc58"
+        },
+        {
+            "appVersion": "0.5.6-unstable.20261016190000",
+            "versionsSha256": "3f175d840807693570662bed868d2c84f1695f29bce5901e4a63b272a2889f28"
         }
     ],
     "versions": {
@@ -410,6 +414,7 @@
         "schema:Programmabegroting": "0.1.0",
         "schema:ProjectAssignment": "0.1.0",
         "schema:ProjectBudget": "0.1.0",
+        "schema:ProviderPayout": "0.1.0",
         "schema:ProvincialeFondsPosting": "0.1.0",
         "schema:Provision": "0.1.0",
         "schema:ProvisionDisclosureTabel": "0.1.0",
