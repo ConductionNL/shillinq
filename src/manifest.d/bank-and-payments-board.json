@@ -146,11 +146,8 @@
 							"trailing": "{ledgerBalance|currency}",
 							"rowRoute": "BankAccountDetail",
 							"rowIdField": "bankAccountId",
-							"emptyText": "No bank accounts yet. Connect a bank or add an account."
-						},
-						"headerLink": {
-							"label": "All accounts",
-							"route": "BankAccounts"
+							"emptyText": "No bank accounts yet. Connect a bank or add an account.",
+							"presentation": "cards"
 						}
 					},
 					{
@@ -375,7 +372,9 @@
 						"gridX": 0,
 						"gridY": 0,
 						"gridWidth": 12,
-						"gridHeight": 4
+						"gridHeight": 4,
+						"borderless": true,
+						"showTitle": false
 					},
 					{
 						"id": "layout-bank-tabs",
