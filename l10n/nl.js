@@ -6735,6 +6735,8 @@ OC.L10N.register(
         "Issuing authority (e.g. 'District Court Amsterdam').": "Instantie die de uitzondering oplegde (bijvoorbeeld 'Rechtbank Amsterdam').",
         "When the exception was applied.": "Wanneer de uitzondering inging.",
         "When the exception was cleared (null while active).": "Wanneer de uitzondering werd opgeheven (leeg zolang ze geldt).",
+        "_{total} invoice · numbered without gaps_::_{total} invoices · numbered without gaps_": ["{total} factuur · doorlopend genummerd","{total} facturen · doorlopend genummerd"],
+        "_{total} purchase invoice_::_{total} purchase invoices_": ["{total} inkoopfactuur","{total} inkoopfacturen"],
         "Balance per week": "Saldo per week"
     },
     "nplurals=2; plural=(n != 1);"

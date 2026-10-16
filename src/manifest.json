@@ -8031,11 +8031,23 @@
 						"icon": "FileDocumentMultipleOutline",
 						"handler": "openInvoiceGenerateWizard",
 						"description": "From hours, costs, meter readings and retainers"
+					},
+					{
+						"id": "new-invoice",
+						"label": "New invoice",
+						"type": "open-form",
+						"register": "shillinq",
+						"schema": "arInvoice",
+						"icon": "Plus"
 					}
 				],
-				"_boardNote": "Board ShVerkoopfacturen: title, count line, Download / Actions / New invoice, status chips with counts, Currency and Amount in the invoice currency. The invoice date stays as a column the reader can switch on.",
+				"_boardNote": "Board ShVerkoopfacturen: title, count line, Download / Actions / New invoice, status chips with counts, Currency and Amount in the invoice currency. The invoice date stays as a column the reader can switch on. New invoice names its schema as the slug arInvoice: the create form kebab-cases ARInvoice to ar-invoice, which OpenRegister does not know, and a slug matches case-insensitively.",
 				"showTitle": true,
-				"countSubtitle": "{total} invoices · numbered without gaps",
+				"showAdd": false,
+				"countSubtitle": {
+					"singular": "{total} invoice · numbered without gaps",
+					"plural": "{total} invoices · numbered without gaps"
+				},
 				"showCount": false,
 				"quickFilters": [
 					{
@@ -8072,12 +8084,17 @@
 						"action": "export"
 					},
 					{
-						"action": "actions-menu"
+						"action": "actions-menu",
+						"items": [
+							"new-down-payment-invoice",
+							"generate-invoices"
+						]
 					},
 					{
-						"action": "add",
+						"action": "new-invoice",
 						"variant": "primary",
-						"label": "New invoice"
+						"label": "New invoice",
+						"icon": "Plus"
 					}
 				]
 			}
@@ -14766,9 +14783,13 @@
 				"_note_rowRoute_overlay": "See the Receipts index — `rowRoute` is the key CnPageRenderer reads; SupplierInvoiceDetail is `type:\"custom\"`, so without it these rows are dead on click.",
 				"description": "Read-only stub at slice-01. Member 05 owns UBL/Peppol/OCR ingestion.",
 				"documentationUrl": "https://shillinq.conduction.nl/guides/import-bills",
-				"_boardNote": "Board ShInkoopfacturen: title, count line, Download / Actions, chips with counts on the match status, the supplier by name with the invoice number under it. The board primary button imports a purchase invoice; an index header action cannot open a registered modal yet (library), so the primary button creates one.",
+				"_boardNote": "Board ShInkoopfacturen: title, count line, Download / Actions, chips with counts on the match status, the supplier by name with the invoice number under it. The primary button imports a purchase invoice (BillImportModal); New purchase invoice stays in the Actions menu, its schema written as the slug supplierInvoice for the same reason as New invoice on Sales invoices.",
 				"showTitle": true,
-				"countSubtitle": "{total} purchase invoices",
+				"showAdd": false,
+				"countSubtitle": {
+					"singular": "{total} purchase invoice",
+					"plural": "{total} purchase invoices"
+				},
 				"showCount": false,
 				"quickFilters": [
 					{
@@ -14806,15 +14827,37 @@
 					{
 						"action": "actions-menu",
 						"items": [
+							"new-purchase-invoice",
 							"import",
 							"refresh",
 							"documentation"
 						]
 					},
 					{
-						"action": "add",
+						"action": "import-bill",
 						"variant": "primary",
-						"label": "New purchase invoice"
+						"label": "Import bill",
+						"icon": "Plus"
+					}
+				],
+				"headerActions": [
+					{
+						"id": "import-bill",
+						"label": "Import bill",
+						"type": "open-modal",
+						"target": "BillImportModal",
+						"icon": "InboxArrowDown",
+						"props": {
+							"open": true
+						}
+					},
+					{
+						"id": "new-purchase-invoice",
+						"label": "New purchase invoice",
+						"type": "open-form",
+						"register": "shillinq",
+						"schema": "supplierInvoice",
+						"icon": "Plus"
 					}
 				]
 			}

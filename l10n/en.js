@@ -4541,6 +4541,8 @@ OC.L10N.register(
         "Issuing authority (e.g. 'District Court Amsterdam').": "Issuing authority (e.g. 'District Court Amsterdam').",
         "When the exception was applied.": "When the exception was applied.",
         "When the exception was cleared (null while active).": "When the exception was cleared (null while active).",
+        "_{total} invoice · numbered without gaps_::_{total} invoices · numbered without gaps_": ["{total} invoice · numbered without gaps","{total} invoices · numbered without gaps"],
+        "_{total} purchase invoice_::_{total} purchase invoices_": ["{total} purchase invoice","{total} purchase invoices"],
         "Balance per week": "Balance per week"
     },
     "nplurals=2; plural=(n != 1);"
