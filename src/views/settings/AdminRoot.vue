@@ -26,6 +26,9 @@
 				:name="section.name"
 				:description="section.description"
 				:data-testid="`admin-section-${section.id}`">
+				<CnToggleTableWidget
+					v-if="section.widget"
+					:content="section.widget.content" />
 				<NcButton :href="section.href">
 					{{ section.linkLabel }}
 				</NcButton>
@@ -35,12 +38,17 @@
 </template>
 
 <script>
-import { CnAdminSettingsShell, CnSettingsSection } from '@conduction/nextcloud-vue'
+import {
+	CnAdminSettingsShell,
+	CnSettingsSection,
+	CnToggleTableWidget,
+} from '@conduction/nextcloud-vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton } from '@nextcloud/vue'
 import PipelinqIntegration from './PipelinqIntegration.vue'
 import Settings from './Settings.vue'
+import requiredFieldsFragment from '../../manifest.d/platform-required-fields.json'
 import { initializeStores } from '../../store/store.js'
 
 export default {
@@ -48,9 +56,23 @@ export default {
 	components: {
 		CnAdminSettingsShell,
 		CnSettingsSection,
+		CnToggleTableWidget,
 		NcButton,
 		Settings,
 		PipelinqIntegration,
+	},
+
+	/**
+	 * Library widgets on this page translate their manifest labels through
+	 * the app's catalogue.
+	 *
+	 * @return {{cnTranslate: Function}}
+	 * @spec openspec/changes/required-field-switch/specs/app-administration/spec.md
+	 */
+	provide() {
+		return {
+			cnTranslate: (text) => this.t('shillinq', text),
+		}
 	},
 
 	data() {
@@ -67,9 +89,11 @@ export default {
 		/**
 		 * Board ShInstellingen's sections whose settings live on their own
 		 * app page: each is a tab that names what it holds and opens that page.
+		 * A section whose manifest fragment declares an `adminTab` widget draws
+		 * that widget above the link.
 		 *
-		 * @return {Array<{id: string, name: string, description: string, linkLabel: string, href: string}>}
-		 * @spec exclude board sections that link to existing app pages, display only
+		 * @return {Array<{id: string, name: string, description: string, linkLabel: string, href: string, widget?: object}>}
+		 * @spec openspec/changes/required-field-switch/specs/app-administration/spec.md
 		 */
 		pageSections() {
 			return [
@@ -83,6 +107,7 @@ export default {
 
 					linkLabel: this.t('shillinq', 'Manage required fields'),
 					href: generateUrl('/apps/shillinq/settings/required-fields'),
+					widget: requiredFieldsFragment.adminTab.widget,
 				},
 				{
 					id: 'connections',

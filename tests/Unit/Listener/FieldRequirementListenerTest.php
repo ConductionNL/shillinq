@@ -286,6 +286,75 @@ class FieldRequirementListenerTest extends TestCase {
 	}//end testASaveWithTheFieldGoesThrough()
 
 	/**
+	 * REQ-RFS-001: a requirement switched off asks for nothing until it is switched on again.
+	 *
+	 * @return void
+	 */
+	public function testASwitchedOffRequirementIsNotChecked(): void {
+		$this->store = new InMemoryObjectServiceStub(
+			[
+				'FieldRequirement' => [
+					array_merge(
+						$this->requirement(id: 'fr-1', administration: self::GEMEENTE, schema: 'SupplierInvoice', field: 'costCenter'),
+						['enabled' => false]
+					),
+				],
+			]
+		);
+		$event = new ObjectCreatingEvent($this->entity('SupplierInvoice', $this->invoice(self::GEMEENTE)));
+		$this->listener($this->request('POST', '/apps/openregister/api/objects/shillinq/SupplierInvoice'))->handle($event);
+
+		$this->assertFalse($event->isPropagationStopped());
+
+		$this->store = new InMemoryObjectServiceStub(
+			[
+				'FieldRequirement' => [
+					array_merge(
+						$this->requirement(id: 'fr-1', administration: self::GEMEENTE, schema: 'SupplierInvoice', field: 'costCenter'),
+						['enabled' => true]
+					),
+				],
+			]
+		);
+		$event = new ObjectCreatingEvent($this->entity('SupplierInvoice', $this->invoice(self::GEMEENTE)));
+		$this->listener($this->request('POST', '/apps/openregister/api/objects/shillinq/SupplierInvoice'))->handle($event);
+
+		$this->assertTrue($event->isPropagationStopped());
+
+	}//end testASwitchedOffRequirementIsNotChecked()
+
+	/**
+	 * REQ-RFS-001: the list holds the active requirements of the given administrations, on and off, each titled by field and record type.
+	 *
+	 * @return void
+	 */
+	public function testTheListHoldsActiveRequirementsSwitchedOnAndOff(): void {
+		$this->store = new InMemoryObjectServiceStub(
+			[
+				'FieldRequirement' => [
+					$this->requirement(id: 'fr-1', administration: self::GEMEENTE, schema: 'SupplierInvoice', field: 'costCenter'),
+					array_merge(
+						$this->requirement(id: 'fr-2', administration: self::GEMEENTE, schema: 'SupplierInvoice', field: 'projectCode'),
+						['enabled' => false]
+					),
+					array_merge(
+						$this->requirement(id: 'fr-3', administration: self::GEMEENTE, schema: 'SupplierInvoice', field: 'description'),
+						['lifecycleState' => 'retired']
+					),
+					$this->requirement(id: 'fr-4', administration: self::VAN_DIJK, schema: 'CustomerMaster', field: 'kvkNumber'),
+				],
+			]
+		);
+
+		$rows = $this->requirements()->listed(administrationIds: [self::GEMEENTE]);
+
+		$this->assertSame(['fr-1' => true, 'fr-2' => false], array_column($rows, 'enabled', 'id'));
+		$this->assertStringContainsString('Cost Center on ', (string)$rows[0]['title']);
+		$this->assertSame([], $this->requirements()->listed(administrationIds: ['']));
+
+	}//end testTheListHoldsActiveRequirementsSwitchedOnAndOff()
+
+	/**
 	 * REQ-PRF-002 scenario: another administration is not affected.
 	 *
 	 * @return void

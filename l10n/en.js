@@ -4546,7 +4546,11 @@ OC.L10N.register(
         "Balance per week": "Balance per week",
         "{ratio}% of open": "{ratio}% of open",
         "No reminders sent yet": "No reminders sent yet",
-        "All reminder runs": "All reminder runs"
+        "All reminder runs": "All reminder runs",
+        "On": "On",
+        "Switched off, the requirement is kept but no save is checked against it until it is switched on again.": "Switched off, the requirement is kept but no save is checked against it until it is switched on again.",
+        "%1$s on %2$s": "%1$s on %2$s",
+        "No required fields yet.": "No required fields yet."
     },
     "nplurals=2; plural=(n != 1);"
 )

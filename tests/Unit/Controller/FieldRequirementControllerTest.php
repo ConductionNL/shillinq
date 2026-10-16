@@ -45,6 +45,7 @@ class FieldRequirementControllerTest extends TestCase {
 		$context = $this->createStub(AdministrationContextService::class);
 		$context->method('currentUserId')->willReturn($userId);
 		$context->method('canAccess')->willReturnCallback(static fn (string $id): bool => $id === 'adm-gov-1');
+		$context->method('accessibleAdministrationIds')->willReturn(['adm-gov-1']);
 
 		$requirements = $this->createStub(FieldRequirements::class);
 		$requirements->method('find')->willReturnCallback(
@@ -53,11 +54,34 @@ class FieldRequirementControllerTest extends TestCase {
 				'fr-vd' => ['id' => 'fr-vd', 'administrationId' => 'adm-consultancy-nl', 'schema' => 'CustomerMaster', 'field' => 'kvkNumber'],
 			][$id] ?? null
 		);
+		$requirements->method('listed')->willReturnCallback(
+			static fn (array $ids): array => array_map(
+				static fn (string $id): array => ['id' => 'fr-1', 'administrationId' => $id, 'title' => 'Cost Center on Supplier invoice', 'enabled' => false],
+				$ids
+			)
+		);
 		$requirements->method('formFields')->willReturn([['field' => 'costCenter', 'title' => 'Cost Center', 'required' => 'administration']]);
 
 		return new FieldRequirementController($this->createStub(IRequest::class), $context, $requirements);
 
 	}//end controller()
+
+	/**
+	 * REQ-RFS-001: the caller's administrations' requirements are listed with their switch; anonymous callers get 401.
+	 *
+	 * @return void
+	 */
+	public function testTheRequirementsOfTheCallersAdministrationsAreListed(): void {
+		$response = $this->controller()->index();
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$rows = $response->getData()['rows'];
+		$this->assertSame(['adm-gov-1'], array_column($rows, 'administrationId'));
+		$this->assertFalse($rows[0]['enabled']);
+
+		$this->assertSame(Http::STATUS_UNAUTHORIZED, $this->controller(userId: null)->index()->getStatus());
+
+	}//end testTheRequirementsOfTheCallersAdministrationsAreListed()
 
 	/**
 	 * The requirement's own administration sees the field list.
