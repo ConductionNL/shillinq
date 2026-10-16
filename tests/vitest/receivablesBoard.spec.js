@@ -3,7 +3,8 @@
  * Copyright (C) 2026 Conduction B.V.
  *
  * Board ShDebiteurenbeheer: Receivables management. The page keeps its id and
- * route, the five age tiles split the open invoices without overlap, and the
+ * route, the five age tiles split the open invoices without overlap, the board
+ * tabs are a tabs widget with a count on the lists that have one, and the
  * list and the cards read fields the schemas carry.
  *
  * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
@@ -72,6 +73,45 @@ describe('Receivables management board', () => {
 		)
 		expect(start.handler).toBe('openDunningNextRun')
 		expect(actions).toContain('openDunningNextRun,')
+	})
+
+	it('draws the board tabs as a tabs widget over the three lists', () => {
+		const tabs = widgets['receivables-tabs']
+		expect(tabs.type).toBe('tabs')
+		expect(tabs.content.tabs.map((t) => [t.widgetId, t.label])).toEqual([
+			['open-invoices', 'Open balance'],
+			['reminder-runs', 'Reminder runs'],
+			['payment-request-table', 'Payment requests'],
+		])
+		for (const tab of tabs.content.tabs) {
+			expect(widgets[tab.widgetId].type).toBe('object-table')
+		}
+		expect(tabs.content.tabs[0].countFrom).toBeUndefined()
+		expect(tabs.content.tabs.slice(1).map((t) => t.countFrom)).toEqual([
+			'widget',
+			'widget',
+		])
+	})
+
+	it('counts the reminder runs and the payment requests from their schemas', () => {
+		expect(widgets['reminder-runs'].content.source).toMatchObject({
+			register: 'shillinq',
+			schema: 'DunningRun',
+		})
+		expect(widgets['reminder-runs'].content.rowRoute).toBe('DunningRunDetail')
+		expect(widgets['payment-request-table'].content.source).toMatchObject({
+			register: 'shillinq',
+			schema: 'PaymentRequest',
+		})
+		expect(widgets['payment-request-table'].content.rowRoute).toBe(
+			'PaymentRequestDetail',
+		)
+	})
+
+	it('keeps the payment requests card below the tabs', () => {
+		const placed = page.config.layout.map((l) => l.widgetId)
+		expect(placed).toEqual(['receivables-tabs', 'payment-requests'])
+		expect(widgets['payment-requests'].type).toBe('record-list')
 	})
 
 	it('places every grid widget once, inside 12 columns', () => {
