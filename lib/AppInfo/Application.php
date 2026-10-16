@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\AppInfo;
 
+use OCA\OpenRegister\AppHost\Bootstrap;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Contract\RegisterSlugResolverInterface;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
@@ -1248,7 +1249,43 @@ class Application extends App implements IBootstrap {
 			}
 		);
 
+		$this->bindStoreController(context: $context);
+
 	}//end registerAppHostGenerics()
+
+	/**
+	 * Alias `Controller\StoreController` to OpenRegister's generic store
+	 * controller, which serves the `store#search` and `store#install` routes
+	 * that `Routes::standard()` declares.
+	 *
+	 * The class_exists() guard stays in this method: psalm relies on it to
+	 * accept the Bootstrap call and does not carry that narrowing across a call.
+	 *
+	 * @param IRegistrationContext $context The registration context.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md
+	 */
+	private function bindStoreController(IRegistrationContext $context): void {
+		// Gate-64: apphost-prelude exclude OpenRegisterAutoloader::register() below is the prelude.
+		OpenRegisterAutoloader::register();
+
+		if (class_exists(Bootstrap::class) === true) {
+			try {
+				Bootstrap::aliasStoreController(
+					context: $context,
+					appId: self::APP_ID,
+					controllerNs: 'OCA\\Shillinq\\Controller'
+				);
+			} catch (\Throwable) {
+				// An OpenRegister older than the helper, or present but
+				// unloadable: the store routes stay unbound and every other
+				// registration still runs.
+			}
+		}
+
+	}//end bindStoreController()
 
 	/**
 	 * Boot the application.
