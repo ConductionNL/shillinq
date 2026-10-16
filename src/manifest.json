@@ -8678,7 +8678,8 @@
 									"label": "Payment requests",
 									"countFrom": "widget"
 								}
-							]
+							],
+							"showActions": false
 						},
 						"showTitle": false
 					},

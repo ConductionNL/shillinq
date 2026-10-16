@@ -86,6 +86,8 @@ describe('Receivables management board', () => {
 		for (const tab of tabs.content.tabs) {
 			expect(widgets[tab.widgetId].type).toBe('object-table')
 		}
+		expect(tabs.content.showActions).toBe(false)
+		expect(widgets['open-invoices'].headerLink.route).toBe('AccountsReceivable')
 		expect(tabs.content.tabs[0].countFrom).toBeUndefined()
 		expect(tabs.content.tabs.slice(1).map((t) => t.countFrom)).toEqual([
 			'widget',
