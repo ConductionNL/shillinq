@@ -12852,6 +12852,7 @@
 					{
 						"id": "cashflow-13week-chart",
 						"title": "Forecast 13 weeks",
+						"eyebrow": "Balance per week",
 						"type": "chart",
 						"content": {
 							"chartKind": "bar",

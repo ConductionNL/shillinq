@@ -6748,6 +6748,7 @@
             "{total} inkoopfactuur",
             "{total} inkoopfacturen"
         ],
+        "Balance per week": "Saldo per week",
         "{ratio}% of open": "{ratio}% van open"
     },
     "plurals": "",
