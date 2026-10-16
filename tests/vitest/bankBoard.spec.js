@@ -4,8 +4,8 @@
  *
  * Board ShBank: the Bank and payments page. The board navigation opens it,
  * the Banking & Cashflow landing page keeps its own route and menu group,
- * each board tab is a view with its own table, and the actions reach what they
- * name (the statement wizard in the registry, the bank connection handler).
+ * the accounts read the cash position endpoint, the board tabs are a tabs
+ * widget with a count each, and the actions reach what they name (the statement wizard in the registry, the bank connection handler).
  *
  * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
  */
@@ -23,11 +23,7 @@ const registry = read('src/registry.js')
 const actions = read('src/manifestActions.js')
 const routes = read('appinfo/routes.php')
 const page = fragment.pages[0]
-const widgets = Object.fromEntries(
-	[...page.config.widgets, ...page.config.views.flatMap((v) => v.widgets)].map(
-		(w) => [w.id, w],
-	),
-)
+const widgets = Object.fromEntries(page.config.widgets.map((w) => [w.id, w]))
 
 describe('Bank and payments board', () => {
 	it('is the page the board navigation opens', () => {
@@ -64,21 +60,35 @@ describe('Bank and payments board', () => {
 		expect(actions).toContain('openIntegriqConnections,')
 	})
 
-	it('draws the board tabs as views, one table each', () => {
-		expect(page.config.views.map((v) => v.id)).toEqual([
-			'accounts',
-			'statements',
-			'unmatched',
-			'fx-rates',
+	it('draws the board tabs as a tabs widget with a count on each tab', () => {
+		expect(page.config.views).toBeUndefined()
+		const tabs = widgets['bank-tabs'].content.tabs
+		expect(tabs.map((t) => t.widgetId)).toEqual([
+			'bank-accounts',
+			'bank-statements',
+			'bank-unmatched',
+			'bank-fx-rates',
 		])
-		for (const view of page.config.views) {
-			expect(view.widgets).toHaveLength(1)
-			expect(view.widgets[0].type).toBe('object-table')
-			expect(view.layout[0].widgetId).toBe(view.widgets[0].id)
+		for (const tab of tabs) {
+			expect(widgets[tab.widgetId].type).toBe('object-table')
+			expect(tab.countFrom).toBeTruthy()
 		}
+		const placed = page.config.layout.map((l) => l.widgetId)
+		expect(placed).toEqual(['bank-account-cards', 'bank-tabs'])
 		expect(page.config.kpiRow.every((id) => widgets[id]?.type === 'stat')).toBe(
 			true,
 		)
+	})
+
+	it('lists the accounts with their ledger balance from the cash position', () => {
+		const cards = widgets['bank-account-cards']
+		expect(cards.type).toBe('record-list')
+		expect(cards.content.endpointSource).toEqual({
+			url: '/apps/shillinq/api/v1/cash-position',
+			responsePath: 'accounts',
+		})
+		expect(cards.content.trailing).toBe('{ledgerBalance|currency}')
+		expect(cards.content.rowIdField).toBe('bankAccountId')
 	})
 
 	it('reads the account balances from the cash position endpoint', () => {
