@@ -226,7 +226,12 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // key figures and four views): development held 1,236,569 bytes. This change
 // adds 9,601 B. 1,246,170 in all.
 // Raised to 1,252,500: 6,330 B of headroom, 0.51%.
-const DEFAULT_BUDGET_BYTES = 1_252_500
+//
+// Re-measured 2026-10-16 (provider payouts, board ShDebiteurenbeheer: the
+// fourth tab of the receivables tab strip and its payouts table):
+// development held 1,251,745 bytes. This change adds 1,393 B. 1,253,138 in all.
+// Raised to 1,259,400: 6,262 B of headroom, 0.50%.
+const DEFAULT_BUDGET_BYTES = 1_259_400
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),

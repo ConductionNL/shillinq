@@ -8410,7 +8410,7 @@
 			"config": {
 				"description": "Open sales invoices by age, the reminder step they are in and the payment requests that are out",
 				"documentationUrl": "https://shillinq.conduction.nl/guides/create-invoices",
-				"_boardNote": "Board ShDebiteurenbeheer. This page was an index over ARInvoice with the columns agingBucket, count and totalAmount, which an invoice does not carry (and an `aggregation` key the index never read), so every row showed the customer id and three dashes. The age buckets are now five tiles over the open invoices (issued, overdue, disputed) by due date. The board's tab strip is a tabs widget: Open balance (each open invoice with its reminder step from ARInvoice.dunning), Reminder runs (the DunningRun log, counted) and Payment requests (counted); the payment requests card stays below it. Not drawn, no data: the Provider payouts tab and card (no payout schema) and the Next step this week / Paused chips (no paused flag on an invoice).",
+				"_boardNote": "Board ShDebiteurenbeheer. This page was an index over ARInvoice with the columns agingBucket, count and totalAmount, which an invoice does not carry (and an `aggregation` key the index never read), so every row showed the customer id and three dashes. The age buckets are now five tiles over the open invoices (issued, overdue, disputed) by due date. The board's tab strip is a tabs widget: Open balance (each open invoice with its reminder step from ARInvoice.dunning), Reminder runs (the DunningRun log, counted), Payment requests (counted) and Provider payouts (ProviderPayout, counted); the payment requests card stays below it. Not drawn: the latest-payout card beside the payment requests card, and the Next step this week / Paused chips (no paused flag on an invoice).",
 				"headerActions": [
 					{
 						"id": "dunning-runs",
@@ -8677,6 +8677,11 @@
 									"widgetId": "payment-request-table",
 									"label": "Payment requests",
 									"countFrom": "widget"
+								},
+								{
+									"widgetId": "provider-payouts",
+									"label": "Provider payouts",
+									"countFrom": "widget"
 								}
 							],
 							"showActions": false
@@ -8855,6 +8860,62 @@
 						"headerLink": {
 							"label": "All payment requests",
 							"route": "PaymentRequests"
+						}
+					},
+					{
+						"id": "provider-payouts",
+						"title": "Provider payouts",
+						"type": "object-table",
+						"content": {
+							"source": {
+								"register": "shillinq",
+								"schema": "ProviderPayout",
+								"order": {
+									"settledAt": "desc"
+								},
+								"limit": 20
+							},
+							"emptyText": "No payouts from a payment provider yet",
+							"columns": [
+								{
+									"key": "provider",
+									"label": "Provider"
+								},
+								{
+									"key": "settledAt",
+									"label": "Paid out on",
+									"formatter": "date"
+								},
+								{
+									"key": "amountNet",
+									"label": "Paid out",
+									"format": {
+										"style": "currency",
+										"currencyField": "currency"
+									}
+								},
+								{
+									"key": "amountFees",
+									"label": "Fees",
+									"format": {
+										"style": "currency",
+										"currencyField": "currency"
+									}
+								},
+								{
+									"key": "matchedLineCount",
+									"label": "Matched"
+								},
+								{
+									"key": "unmatchedLineCount",
+									"label": "Open"
+								},
+								{
+									"key": "state",
+									"label": "State",
+									"widget": "badge"
+								}
+							]
 						}
 					},
 					{

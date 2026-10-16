@@ -5,7 +5,7 @@
 ## 1. Contract
 
 - [ ] 1.1 Open the integriq issues for the settlement CloudEvent (data of design.md D1) and for a point-of-sale payment on a registered device; link them in the PR body (REQ-RPPO-001, REQ-RPPO-005). Verify: both issue links in the PR body.
-- [ ] 1.2 Add `ProviderPayout` (with its lifecycle and unmatched notification), `PaymentDevice`, the `provider-payout` match target and the fee and bank posting settings in `lib/Settings/register.d/receivables-provider-payouts.json` (REQ-RPPO-001, REQ-RPPO-004). Verify: `npm run check:registers`.
+- [ ] 1.2 Add `ProviderPayout` (with its lifecycle and unmatched notification), `PaymentDevice`, the `provider-payout` match target and the fee and bank posting settings in `lib/Settings/register.d/receivables-provider-payouts.json` (REQ-RPPO-001, REQ-RPPO-004). Verify: `npm run check:registers`. The `ProviderPayout` schema itself landed with `receivables-payouts-tab`; the lifecycle, notification, `PaymentDevice`, match target and posting settings remain.
 
 ## 2. Payouts
 

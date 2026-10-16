@@ -75,13 +75,14 @@ describe('Receivables management board', () => {
 		expect(actions).toContain('openDunningNextRun,')
 	})
 
-	it('draws the board tabs as a tabs widget over the three lists', () => {
+	it('draws the board tabs as a tabs widget over the four lists', () => {
 		const tabs = widgets['receivables-tabs']
 		expect(tabs.type).toBe('tabs')
 		expect(tabs.content.tabs.map((t) => [t.widgetId, t.label])).toEqual([
 			['open-invoices', 'Open balance'],
 			['reminder-runs', 'Reminder runs'],
 			['payment-request-table', 'Payment requests'],
+			['provider-payouts', 'Provider payouts'],
 		])
 		for (const tab of tabs.content.tabs) {
 			expect(widgets[tab.widgetId].type).toBe('object-table')
@@ -92,6 +93,35 @@ describe('Receivables management board', () => {
 		expect(tabs.content.tabs.slice(1).map((t) => t.countFrom)).toEqual([
 			'widget',
 			'widget',
+			'widget',
+		])
+	})
+
+	it('lists the provider payouts from fields ProviderPayout carries', () => {
+		const fragment = JSON.parse(
+			fs.readFileSync(
+				path.join(ROOT, 'lib/Settings/register.d/receivables-provider-payouts.json'),
+				'utf8',
+			),
+		)
+		const schema = fragment.components.schemas.ProviderPayout
+		const table = widgets['provider-payouts'].content
+		expect(table.source).toMatchObject({
+			register: 'shillinq',
+			schema: 'ProviderPayout',
+			order: { settledAt: 'desc' },
+		})
+		for (const column of table.columns) {
+			expect(Object.keys(schema.properties)).toContain(column.key)
+		}
+		expect(table.columns.map((c) => c.key)).toEqual([
+			'provider',
+			'settledAt',
+			'amountNet',
+			'amountFees',
+			'matchedLineCount',
+			'unmatchedLineCount',
+			'state',
 		])
 	})
 
