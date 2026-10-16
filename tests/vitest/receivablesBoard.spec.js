@@ -35,7 +35,15 @@ describe('Receivables management board', () => {
 			expect(source.metric).toBe('sum')
 			expect(source.field).toBe('grossAmount')
 			expect(source.filter.lifecycleState).toEqual(OPEN)
-			expect(widgets[id].content.captionSource.filter).toEqual(source.filter)
+			expect(widgets[id].content.caption).toBe('{ratio}% of open')
+			expect(widgets[id].content.captionSource).toEqual({
+				kind: 'ratio',
+				denominator: {
+					metric: 'sum',
+					field: 'grossAmount',
+					filter: { lifecycleState: OPEN },
+				},
+			})
 			return source.filter.dueDate
 		})
 		expect(dues).toEqual([
@@ -52,6 +60,10 @@ describe('Receivables management board', () => {
 		expect(table.source.filter.lifecycleState).toEqual(OPEN)
 		expect(table.columns.map((c) => c.key)).toContain('dunning.currentStage')
 		expect(table.rowRoute).toBe('ARInvoiceDetail')
+		expect(table.columns[0]).toMatchObject({
+			key: 'customerId',
+			resolve: { register: 'shillinq', schema: 'CustomerMaster' },
+		})
 	})
 
 	it('starts a round through a handler shillinq provides', () => {
