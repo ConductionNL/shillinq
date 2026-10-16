@@ -36,6 +36,10 @@
         {
             "appVersion": "0.5.6-unstable.20261016120000",
             "versionsSha256": "41c9f70396b77d1324d29f683dd2eee36efee43e54e0a07c07f04e588099bf4e"
+        },
+        {
+            "appVersion": "0.5.6-unstable.20261016170000",
+            "versionsSha256": "3ded71b4ec3f07d37a1f573552285af538029ed9cdf2de5cb93d0c769766cc58"
         }
     ],
     "versions": {
@@ -233,7 +237,7 @@
         "schema:FXContract": "0.1.0",
         "schema:FXPosition": "0.1.0",
         "schema:FeeSchedule": "0.2.0",
-        "schema:FieldRequirement": "0.1.0",
+        "schema:FieldRequirement": "0.2.0",
         "schema:FinancialStatement": "0.1.0",
         "schema:FiscalPeriod": "0.3.0",
         "schema:FiscalYear": "0.1.0",

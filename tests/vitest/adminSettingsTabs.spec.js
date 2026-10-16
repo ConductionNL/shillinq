@@ -52,6 +52,31 @@ describe('admin settings tabs', () => {
 		})
 	})
 
+	it('draws a switch per required field on the Required fields tab', () => {
+		const sections = instance().pageSections
+		const widget = sections.find((s) => s.id === 'required-fields').widget
+		expect(widget.type).toBe('toggle-table')
+		expect(widget.content.source).toMatchObject({
+			url: '/apps/shillinq/api/field-requirements',
+			path: 'rows',
+			key: 'id',
+		})
+		expect(widget.content.bind).toEqual({
+			mode: 'each',
+			field: 'enabled',
+			register: 'shillinq',
+			schema: 'FieldRequirement',
+		})
+		expect(sections.filter((s) => s.widget).map((s) => s.id)).toEqual([
+			'required-fields',
+		])
+	})
+
+	it('translates the widget labels through the app catalogue', () => {
+		const vm = { t: (app, text) => `${app}:${text}` }
+		expect(AdminRoot.provide.call(vm).cnTranslate('On')).toBe('shillinq:On')
+	})
+
 	it('names the open tab in the last crumb, General for an unknown one', () => {
 		const crumbs = (state) => instance(state).breadcrumbs.map((c) => c.label)
 		expect(crumbs({ activeTab: 'connections' })[2]).toBe('Connections')

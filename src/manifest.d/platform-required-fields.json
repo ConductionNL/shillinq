@@ -6,6 +6,28 @@
 		"adr": "ADR-037 modular manifest fragment, never edit src/manifest.json",
 		"description": "Required fields settings pages (REQ-PRF-001): the administration's FieldRequirement records, and on each one the fields of its record type, marked always required, required in this administration, or not required."
 	},
+	"adminTab": {
+		"id": "required-fields",
+		"_note": "Board ShInstellingen, tab Verplichte velden: one switch per active requirement of the caller's administrations. A switch writes the requirement's enabled field at once.",
+		"widget": {
+			"type": "toggle-table",
+			"content": {
+				"source": {
+					"url": "/apps/shillinq/api/field-requirements",
+					"path": "rows",
+					"key": "id",
+					"label": "title"
+				},
+				"bind": {
+					"mode": "each",
+					"field": "enabled",
+					"register": "shillinq",
+					"schema": "FieldRequirement"
+				},
+				"emptyText": "No required fields yet."
+			}
+		}
+	},
 	"menu": [
 		{
 			"id": "RequiredFields",

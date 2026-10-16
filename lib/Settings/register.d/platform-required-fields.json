@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "platform-required-fields",
     "adr": "ADR-037 modular register fragment; ADR-031 configuration as records, imperative pre-save check in FieldRequirementListener",
-    "description": "FieldRequirement: a field an administration requires on a record type on top of the fields the app always requires. FieldRequirementListener refuses a person's save through the object API that leaves an active requirement empty, and refuses a requirement on a field the record type does not have or already always requires.",
+    "description": "FieldRequirement: a field an administration requires on a record type on top of the fields the app always requires. FieldRequirementListener refuses a person's save through the object API that leaves an active, switched-on requirement empty, and refuses a requirement on a field the record type does not have or already always requires.",
     "spec": "openspec/changes/platform-required-fields/specs/app-administration/spec.md"
   },
   "components": {
@@ -12,7 +12,7 @@
       "FieldRequirement": {
         "slug": "FieldRequirement",
         "icon": "TextBoxCheckOutline",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "Required field",
         "description": "A field that must be filled in on a record type in one administration, with the reason.",
         "x-schema-org": "schema:PropertyValueSpecification",
@@ -49,6 +49,13 @@
             "title": "Reason",
             "description": "Why the field is required. Shown to the person whose save is refused.",
             "example": "Elke inkoopfactuur wordt op een kostenplaats verantwoord"
+          },
+          "enabled": {
+            "type": "boolean",
+            "default": true,
+            "title": "On",
+            "description": "Switched off, the requirement is kept but no save is checked against it until it is switched on again.",
+            "example": true
           },
           "lifecycleState": {
             "type": "string",
@@ -104,6 +111,7 @@
       "schema": "SupplierInvoice",
       "field": "costCenter",
       "reason": "Elke inkoopfactuur wordt op een kostenplaats verantwoord",
+      "enabled": true,
       "lifecycleState": "active"
     },
     {
@@ -116,6 +124,7 @@
       "schema": "CustomerMaster",
       "field": "kvkNumber",
       "reason": "Elke zakelijke klant staat in het Handelsregister",
+      "enabled": true,
       "lifecycleState": "active"
     }
   ]

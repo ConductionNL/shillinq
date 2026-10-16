@@ -6740,7 +6740,11 @@ OC.L10N.register(
         "Balance per week": "Saldo per week",
         "{ratio}% of open": "{ratio}% van open",
         "No reminders sent yet": "Nog geen herinneringen verstuurd",
-        "All reminder runs": "Alle herinneringsrondes"
+        "All reminder runs": "Alle herinneringsrondes",
+        "On": "Aan",
+        "Switched off, the requirement is kept but no save is checked against it until it is switched on again.": "Uitgezet blijft de eis bewaard, maar wordt geen opslag ertegen gecontroleerd tot hij weer aan staat.",
+        "%1$s on %2$s": "%1$s op %2$s",
+        "No required fields yet.": "Nog geen verplichte velden."
     },
     "nplurals=2; plural=(n != 1);"
 )
