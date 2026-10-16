@@ -223,6 +223,18 @@
                   }
                 },
                 {
+                  "label": "Amount due",
+                  "path": "amountDue",
+                  "format": "currency",
+                  "currencyField": "currency"
+                },
+                {
+                  "label": "Total",
+                  "path": "grossAmount",
+                  "format": "currency",
+                  "currencyField": "currency"
+                },
+                {
                   "label": "Payment method",
                   "path": "paymentMethod",
                   "map": {
@@ -293,6 +305,7 @@
           "route": "AccountsReceivable"
         },
         "identifierField": "invoiceNumber",
+        "titleField": "invoiceNumber",
         "statusPill": {
           "field": "lifecycleState",
           "labels": {
