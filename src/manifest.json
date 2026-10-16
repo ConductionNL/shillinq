@@ -13211,8 +13211,17 @@
 						"id": "buffer-status",
 						"title": "Buffer Status",
 						"type": "stats-block",
-						"schema": "CashflowBufferPolicy",
-						"register": "shillinq",
+						"content": {
+							"dataSource": {
+								"register": "shillinq",
+								"schema": "CashflowWeek",
+								"filter": {
+									"bufferStatus": { "ne": "ABOVE_BUFFER" },
+									"weekEnd": { "gte": "@today" },
+									"weekStart": { "lte": "@today+91d" }
+								}
+							}
+						},
 						"props": {
 							"countLabel": "weeks under buffer",
 							"variant": "warning"
