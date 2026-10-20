@@ -40,6 +40,9 @@ export const contractsPanelDescriptor = {
 	order: 51,
 	surfaces: ['detail-page', 'single-entity'],
 	renderMode: 'mount',
+	// No card of its own: a detail page hosts it in the library card and hands
+	// it `onHeader`; a "linked" card hands it `onSummary`.
+	chrome: 'card',
 	mount: pair.mount,
 	unmount: pair.unmount,
 	defaultSize: { w: 4, h: 3 },

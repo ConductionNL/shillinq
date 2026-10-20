@@ -5408,6 +5408,8 @@
         "That did not go through.": "Dat is niet gelukt.",
         "This panel needs a record to stand on.": "Dit paneel werkt alleen op een record.",
         "This record is not handled under a contract.": "Dit record valt niet onder een contract.",
+        "fees and payments": "leges en betalingen",
+        "contract": "contract",
         "The contract could not be read.": "Het contract kon niet worden gelezen.",
         "With {party}": "Met {party}",
         "Runs from {from}": "Loopt vanaf {from}",

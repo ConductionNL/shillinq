@@ -3168,6 +3168,8 @@ OC.L10N.register(
         "The remaining value has not been rolled up yet.": "The remaining value has not been rolled up yet.",
         "This panel needs a record to stand on.": "This panel needs a record to stand on.",
         "This record is not handled under a contract.": "This record is not handled under a contract.",
+        "fees and payments": "fees and payments",
+        "contract": "contract",
         "Waived": "Waived",
         "What the bank statement will show": "What the bank statement will show",
         "With {party}": "With {party}",

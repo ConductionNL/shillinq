@@ -16,7 +16,7 @@
  stop work that is in fact funded (REQ-FPCR-005).
 -->
 <template>
-	<div class="shillinq-contract-panel" data-testid="shillinq-contract-panel">
+	<div v-if="!summarised" class="shillinq-contract-panel" data-testid="shillinq-contract-panel">
 		<NcLoadingIcon v-if="loading" :size="24" />
 
 		<div v-else-if="error" class="shillinq-leaf__error" role="alert">
@@ -24,13 +24,13 @@
 		</div>
 
 		<p
-			v-else-if="contracts.length === 0"
+			v-else-if="contracts.length === 0 && !carded"
 			class="shillinq-leaf__empty"
 			data-testid="shillinq-contract-empty">
 			{{ emptyLabel }}
 		</p>
 
-		<ul v-else class="shillinq-leaf__list">
+		<ul v-else-if="contracts.length > 0" class="shillinq-leaf__list">
 			<li
 				v-for="contract in contracts"
 				:key="contract.id"
@@ -83,6 +83,7 @@ import {
 	isResolvable,
 	readLeaf,
 } from './leafApi.js'
+import { leafReportMixin } from './leafReport.js'
 
 /**
  * The contract panel mounted by the `shillinq-contracts-panel` leaf. See the
@@ -94,6 +95,8 @@ export default {
 	components: {
 		NcLoadingIcon,
 	},
+
+	mixins: [leafReportMixin],
 
 	props: {
 		/** OpenRegister register id of the host object. */
@@ -115,6 +118,21 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * What this leaf reports to a carding host or a "linked" card.
+		 *
+		 * @return {object} The report.
+		 * @spec openspec/changes/leaves-library-card/specs/leaves-library-card/spec.md#requirement-the-finance-leaves-report-to-the-library-card-and-the-linked-card
+		 */
+		leafReport() {
+			return {
+				count: this.contracts.length,
+				emptyLabel: this.emptyLabel,
+				noun: t('shillinq', 'contract'),
+				rows: this.contracts.map((contract) => ({ label: this.titleOf(contract), icon: 'FileDocumentOutline' })),
+			}
+		},
+
 		/** @spec openspec/changes/fees-payments-and-the-contract-register/specs/fees-payments-and-the-contract-register/spec.md (REQ-FPCR-006) */
 		emptyLabel() {
 			return t('shillinq', 'This record is not handled under a contract.')
