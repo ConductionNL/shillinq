@@ -17,6 +17,7 @@
 -->
 <template>
 	<div
+		v-if="!summarised"
 		class="shillinq-payment-requests-panel"
 		data-testid="shillinq-payment-requests-panel">
 		<NcLoadingIcon v-if="loading" :size="24" />
@@ -31,13 +32,13 @@
 			</p>
 
 			<p
-				v-if="requests.length === 0"
+				v-if="requests.length === 0 && !carded"
 				class="shillinq-leaf__empty"
 				data-testid="shillinq-payment-requests-empty">
 				{{ emptyLabel }}
 			</p>
 
-			<ul v-else class="shillinq-leaf__list">
+			<ul v-else-if="requests.length > 0" class="shillinq-leaf__list">
 				<li
 					v-for="request in requests"
 					:key="request.id"
@@ -149,6 +150,7 @@ import {
 	sendPaymentLink,
 	settleByOtherMeans,
 } from './leafApi.js'
+import { leafReportMixin } from './leafReport.js'
 
 /**
  * The payment-request panel mounted by the `shillinq-payment-requests-panel`
@@ -161,6 +163,8 @@ export default {
 		NcButton,
 		NcLoadingIcon,
 	},
+
+	mixins: [leafReportMixin],
 
 	props: {
 		/** OpenRegister register id of the host object. */
@@ -191,6 +195,24 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * What this leaf reports to a carding host or a "linked" card.
+		 *
+		 * @return {object} The report.
+		 * @spec openspec/changes/leaves-library-card/specs/leaves-library-card/spec.md#requirement-the-finance-leaves-report-to-the-library-card-and-the-linked-card
+		 */
+		leafReport() {
+			return {
+				count: this.requests.length,
+				emptyLabel: this.emptyLabel,
+				noun: t('shillinq', 'fees and payments'),
+				rows: this.requests.map((request) => ({
+					label: [this.amountOf(request), this.stateOf(request)].filter((part) => part !== '').join(' · '),
+					icon: 'CashMultiple',
+				})),
+			}
+		},
+
 		/** @spec openspec/changes/case-payment-requests/specs/object-payment-requests/spec.md (REQ-SOPR-004) */
 		emptyLabel() {
 			return t(
