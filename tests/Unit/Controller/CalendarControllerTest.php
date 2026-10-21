@@ -376,6 +376,89 @@ class CalendarControllerTest extends TestCase {
 	}//end testShowReturns404WhenMissing()
 
 	/**
+	 * A user outside the calendar's administration cannot read it: the
+	 * answer is the same 404 as for a calendar that does not exist.
+	 *
+	 * @return void
+	 */
+	public function testShowRefusesCallerOutsideTheAdministration(): void {
+		$response = $this->buildControllerFor(uid: 'mallory', memberOf: 'adm-2', isAdmin: false)->show('cal-001');
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		$this->assertArrayNotHasKey('id', $response->getData());
+	}//end testShowRefusesCallerOutsideTheAdministration()
+
+	/**
+	 * A user outside the calendar's administration cannot list its bookings
+	 * (and so its attendees).
+	 *
+	 * @return void
+	 */
+	public function testListBookingsRefusesCallerOutsideTheAdministration(): void {
+		$this->params['start'] = '2026-05-21';
+		$this->params['end'] = '2026-05-22';
+		$response = $this->buildControllerFor(uid: 'mallory', memberOf: 'adm-2', isAdmin: false)->listBookings('cal-001');
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		$this->assertArrayNotHasKey('bookings', $response->getData());
+	}//end testListBookingsRefusesCallerOutsideTheAdministration()
+
+	/**
+	 * Asking the index for another administration's calendars is refused.
+	 *
+	 * @return void
+	 */
+	public function testIndexRefusesAnAdministrationTheCallerIsNotIn(): void {
+		$this->params['organization'] = 'adm-1';
+		$response = $this->buildControllerFor(uid: 'mallory', memberOf: 'adm-2', isAdmin: false)->index();
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$this->assertArrayNotHasKey('calendars', $response->getData());
+	}//end testIndexRefusesAnAdministrationTheCallerIsNotIn()
+
+	/**
+	 * A Nextcloud admin reads any calendar, as for booking.
+	 *
+	 * @return void
+	 */
+	public function testShowByAdminBypassesMembershipCheck(): void {
+		$response = $this->buildControllerFor(uid: 'admin', memberOf: '', isAdmin: true)->show('cal-001');
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame('cal-001', $response->getData()['id']);
+	}//end testShowByAdminBypassesMembershipCheck()
+
+	/**
+	 * Build a controller for another caller with one membership.
+	 *
+	 * @param string $uid      The caller's user id.
+	 * @param string $memberOf The one administration the caller is a member of ('' for none).
+	 * @param bool   $isAdmin  Whether the caller is a Nextcloud admin.
+	 *
+	 * @return CalendarController
+	 */
+	private function buildControllerFor(string $uid, string $memberOf, bool $isAdmin): CalendarController {
+		$context = $this->createMock(AdministrationContextService::class);
+		$context->method('currentUserId')->willReturn($uid);
+		$context->method('buildContext')->willReturn([
+			'userId' => $uid,
+			'administrations' => $memberOf === '' ? [] : [['administrationId' => $memberOf]],
+			'activeAdministrationId' => $memberOf === '' ? null : $memberOf,
+		]);
+		$context->method('canAccess')->willReturnCallback(
+			static fn (string $administrationId): bool => $memberOf !== '' && $administrationId === $memberOf
+		);
+
+		return new CalendarController(
+			$this->request,
+			$this->container,
+			$this->settings,
+			$this->conflicts,
+			$context,
+			$this->guard,
+			$this->createMock(LoggerInterface::class),
+			$this->buildL10n(),
+			$this->buildGroupManager($isAdmin),
+		);
+	}//end buildControllerFor()
+
+	/**
 	 * GET /bookings returns only bookings inside the date range and sorts ascending.
 	 *
 	 * @return void

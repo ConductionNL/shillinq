@@ -105,6 +105,7 @@ class CalendarController extends Controller {
 	 *  - status       (optional) filter by status (active|inactive|archived).
 	 *
 	 * @return JSONResponse 200 with `{calendars: [...]}`; 401 when anonymous;
+	 *                      403 for an administration the caller is not in;
 	 *                      503 when OpenRegister is unavailable.
 	 *
 	 * @spec openspec/changes/bookings-resource-calendar/tasks.md#task-3
@@ -123,6 +124,10 @@ class CalendarController extends Controller {
 		$resourceFilter = trim((string)$this->request->getParam('resource', ''));
 		$orgFilter = trim((string)$this->request->getParam('organization', ''));
 		$statusFilter = trim((string)$this->request->getParam('status', ''));
+
+		if ($orgFilter !== '' && $this->callerMayUseAdministration(administrationId: $orgFilter) === false) {
+			return new JSONResponse(['error' => 'Not authorized for this administration'], Http::STATUS_FORBIDDEN);
+		}
 
 		$filters = ['administrationId' => $this->resolveAdministrationId(requested: $orgFilter)];
 		if ($resourceFilter !== '') {
@@ -167,7 +172,8 @@ class CalendarController extends Controller {
 	 *
 	 * @param string $calendarId Logical calendar identifier.
 	 *
-	 * @return JSONResponse 200 with the calendar; 401 when anonymous; 404 when missing.
+	 * @return JSONResponse 200 with the calendar; 401 when anonymous; 404 when
+	 *                      missing or outside the caller's administrations.
 	 *
 	 * @spec openspec/changes/bookings-resource-calendar/tasks.md#task-3
 	 */
@@ -183,7 +189,7 @@ class CalendarController extends Controller {
 			return new JSONResponse(['error' => 'calendarId is required'], Http::STATUS_BAD_REQUEST);
 		}
 
-		$record = $this->loadCalendar(calendarId: $calendarId);
+		$record = $this->loadReadableCalendar(calendarId: $calendarId);
 		if ($record === null) {
 			return new JSONResponse(['error' => 'Calendar not found'], Http::STATUS_NOT_FOUND);
 		}
@@ -202,7 +208,8 @@ class CalendarController extends Controller {
 	 *
 	 * @param string $calendarId Logical calendar identifier.
 	 *
-	 * @return JSONResponse 200 with `{bookings: [...]}`; 404 when calendar missing.
+	 * @return JSONResponse 200 with `{bookings: [...]}`; 404 when the calendar is
+	 *                      missing or outside the caller's administrations.
 	 *
 	 * @spec openspec/changes/bookings-resource-calendar/tasks.md#task-3
 	 */
@@ -218,7 +225,7 @@ class CalendarController extends Controller {
 			return new JSONResponse(['error' => 'calendarId is required'], Http::STATUS_BAD_REQUEST);
 		}
 
-		$calendar = $this->loadCalendar(calendarId: $calendarId);
+		$calendar = $this->loadReadableCalendar(calendarId: $calendarId);
 		if ($calendar === null) {
 			return new JSONResponse(['error' => 'Calendar not found'], Http::STATUS_NOT_FOUND);
 		}
@@ -446,10 +453,7 @@ class CalendarController extends Controller {
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 */
 	private function authorizeBookingCreation(array $calendarRow): ?JSONResponse {
-		$callerUid = (string)($this->context->currentUserId() ?? '');
-		$callerIsAdmin = ($callerUid !== '' && $this->groupManager->isAdmin($callerUid) === true);
-		$calendarAdministrationId = (string)($calendarRow['administrationId'] ?? '');
-		if ($callerIsAdmin === false && $this->context->canAccess($calendarAdministrationId) === false) {
+		if ($this->callerMayUseAdministration(administrationId: (string)($calendarRow['administrationId'] ?? '')) === false) {
 			return new JSONResponse(
 				['error' => 'calendar-booking-forbidden', 'message' => 'Not authorized to book this calendar'],
 				Http::STATUS_FORBIDDEN,
@@ -458,6 +462,45 @@ class CalendarController extends Controller {
 
 		return null;
 	}//end authorizeBookingCreation()
+
+	/**
+	 * Whether the caller may read or book in an administration: a member of
+	 * it, or a Nextcloud admin.
+	 *
+	 * @param string $administrationId The administration id.
+	 *
+	 * @return bool
+	 */
+	private function callerMayUseAdministration(string $administrationId): bool {
+		$callerUid = (string)($this->context->currentUserId() ?? '');
+		if ($callerUid !== '' && $this->groupManager->isAdmin($callerUid) === true) {
+			return true;
+		}
+
+		return $this->context->canAccess($administrationId);
+	}//end callerMayUseAdministration()
+
+	/**
+	 * Load a calendar the caller may read. A calendar outside the caller's
+	 * administrations reads as missing, so its existence does not leak.
+	 *
+	 * @param string $calendarId Logical calendar id.
+	 *
+	 * @return mixed The calendar record, or null.
+	 */
+	private function loadReadableCalendar(string $calendarId): mixed {
+		$record = $this->loadCalendar(calendarId: $calendarId);
+		if ($record === null) {
+			return null;
+		}
+
+		$row = $this->toArray(object: $record);
+		if ($this->callerMayUseAdministration(administrationId: (string)($row['administrationId'] ?? '')) === false) {
+			return null;
+		}
+
+		return $record;
+	}//end loadReadableCalendar()
 
 	/**
 	 * Parse and validate the `createBooking()` request body: required
@@ -530,10 +573,9 @@ class CalendarController extends Controller {
 	}//end requireAuth()
 
 	/**
-	 * Resolve the administration id to scope reads to. When the caller
-	 * provides an explicit organization filter, the context service vets
-	 * that the user has a membership there; otherwise the user's current
-	 * session administration is used.
+	 * Resolve the administration id to scope reads to: the caller's explicit
+	 * organization filter (index() has vetted the membership), otherwise the
+	 * caller's active administration.
 	 *
 	 * @param string $requested Caller-supplied organization/administration id (may be empty).
 	 *
