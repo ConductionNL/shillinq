@@ -233,18 +233,18 @@ export default {
 		async postBooking(force) {
 			this.submitting = true
 			try {
-				const url =
-					generateUrl(
-						'/apps/shillinq/api/v2/calendars/{calendarId}/bookings',
-						{ calendarId: this.calendarId },
-					) + (force ? '?force=1' : '')
+				const url = generateUrl(
+					'/apps/shillinq/api/v2/calendars/{calendarId}/bookings',
+					{ calendarId: this.calendarId },
+				)
 
 				const payload = {
 					title: this.form.title,
 					startTime: this.toUtcIso(this.form.startTime),
 					endTime: this.toUtcIso(this.form.endTime),
 					attendee: this.form.attendee,
-					status: this.form.status,
+					confirm: this.form.status === 'confirmed',
+					overrideConflict: force === true,
 				}
 
 				const response = await fetch(url, {
