@@ -446,11 +446,12 @@ final class ConfirmationApiControllerTest extends TestCase {
 			}
 
 			/**
-			 * @param array<string,mixed> $_filters Ignored.
+			 * @param array<string,mixed> $config Ignored.
+			 * @param bool                $_rbac  Ignored.
 			 *
 			 * @return array<int,array<string,mixed>>
 			 */
-			public function findAll(array $_filters = []): array {
+			public function findAll(array $config = [], bool $_rbac = true): array {
 				return $this->records;
 			}
 
@@ -460,10 +461,11 @@ final class ConfirmationApiControllerTest extends TestCase {
 			 * @param array<string,mixed> $object Object payload.
 			 * @param string $register Register slug.
 			 * @param string $schema Schema slug.
+			 * @param bool   $_rbac  Ignored.
 			 *
 			 * @return array<string,mixed>
 			 */
-			public function saveObject(array $object, string $register, string $schema): array {
+			public function saveObject(array $object, string $register, string $schema, bool $_rbac = true): array {
 				$this->saved[] = $object;
 				return $object;
 			}
