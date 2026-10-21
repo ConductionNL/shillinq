@@ -430,6 +430,19 @@ class CalendarControllerTest extends TestCase {
 	}//end testIndexRefusesAnAdministrationTheCallerIsNotIn()
 
 	/**
+	 * A caller with no administration lists no calendars, not even one that
+	 * has no administration either.
+	 *
+	 * @return void
+	 */
+	public function testIndexWithoutAnAdministrationListsNothing(): void {
+		$this->fakeObjectService->records['Calendar'][] = ['id' => 'cal-orphan', 'name' => 'Orphan'];
+		$response = $this->buildControllerFor(uid: 'newcomer', memberOf: '', isAdmin: false)->index();
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame([], $response->getData()['calendars']);
+	}//end testIndexWithoutAnAdministrationListsNothing()
+
+	/**
 	 * A Nextcloud admin reads any calendar, as for booking.
 	 *
 	 * @return void

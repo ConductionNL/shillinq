@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\BackgroundJob;
 
+use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
@@ -45,6 +46,7 @@ use Throwable;
  * @spec openspec/changes/zzp-cashflow-13wk/tasks.md#task-22
  */
 class CalibrationBatchJob extends TimedJob {
+	use RunsJobAsSystem;
 
 	/**
 	 * Monthly interval in seconds (30 days).
@@ -75,6 +77,21 @@ class CalibrationBatchJob extends TimedJob {
 	}//end __construct()
 
 	/**
+	 * Run the job inside OpenRegister's system context.
+	 *
+	 * @param mixed $argument The job argument.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/specs/schema-authorization/spec.md
+	 */
+	protected function run($argument): void {
+		$this->asSystem(work: function () use ($argument): void {
+			$this->runAsJob(argument: $argument);
+		});
+	}//end run()
+
+	/**
 	 * Generate one calibration report per active horizon.
 	 *
 	 * @param mixed $argument Job argument (unused).
@@ -86,7 +103,7 @@ class CalibrationBatchJob extends TimedJob {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
 	 *     TimedJob::run()'s signature; this job takes no argument.
 	 */
-	protected function run($argument): void {
+	private function runAsJob($argument): void {
 		if ($this->settingsService->isOpenRegisterAvailable() === false) {
 			$this->logger->info('CalibrationBatchJob: OR unavailable, skipping.');
 			return;
@@ -167,7 +184,7 @@ class CalibrationBatchJob extends TimedJob {
 			);
 		}//end try
 
-	}//end run()
+	}//end runAsJob()
 
 	/**
 	 * Defensive field extractor.

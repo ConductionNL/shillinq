@@ -38,6 +38,7 @@ namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
@@ -54,6 +55,7 @@ use Throwable;
  * @spec openspec/specs/inventory-lot-batch-expiry/spec.md
  */
 class LotExpiryAlertJob extends TimedJob {
+	use RunsJobAsSystem;
 
 	/**
 	 * Daily interval in seconds (24h).
@@ -100,6 +102,21 @@ class LotExpiryAlertJob extends TimedJob {
 	}//end __construct()
 
 	/**
+	 * Run the job inside OpenRegister's system context.
+	 *
+	 * @param mixed $argument The job argument.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/specs/schema-authorization/spec.md
+	 */
+	protected function run($argument): void {
+		$this->asSystem(work: function () use ($argument): void {
+			$this->runAsJob(argument: $argument);
+		});
+	}//end run()
+
+	/**
 	 * Sweep all active/quarantined InventoryLot records and raise alerts.
 	 *
 	 * @param mixed $argument Job argument (unused).
@@ -111,7 +128,7 @@ class LotExpiryAlertJob extends TimedJob {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
 	 *     TimedJob::run()'s signature; this job takes no argument.
 	 */
-	protected function run($argument): void {
+	private function runAsJob($argument): void {
 		if ($this->settings->isOpenRegisterAvailable() === false) {
 			$this->logger->info('LotExpiryAlertJob: OpenRegister not available, skipping.');
 			return;
@@ -153,7 +170,7 @@ class LotExpiryAlertJob extends TimedJob {
 			);
 		}//end try
 
-	}//end run()
+	}//end runAsJob()
 
 	/**
 	 * Inspect one lot and raise any missing threshold or expired alerts.

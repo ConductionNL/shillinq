@@ -126,13 +126,18 @@ final class IbAangifteZzpFragmentTest extends TestCase {
 		self::assertSame('CONCEPT', $taxReturn['x-openregister-lifecycle']['initialState']);
 		self::assertArrayHasKey('INGEDIEND', $taxReturn['x-openregister-lifecycle']['states']);
 
-		self::assertArrayHasKey('x-openregister-rbac', $taxReturn);
-		$roles = $taxReturn['x-openregister-rbac']['roles'];
+		self::assertArrayHasKey('authorization', $taxReturn);
+		$authorization = $taxReturn['authorization'];
 		// Auditors and bookkeepers are read-only.
-		self::assertSame(['read'], $roles['auditor']['permissions']);
-		self::assertSame(['read'], $roles['bookkeeper']['permissions']);
+		foreach (['shillinq_auditor', 'shillinq_bookkeeper'] as $group) {
+			self::assertContains($group, $authorization['read']);
+			self::assertNotContains($group, ($authorization['update'] ?? []));
+		}
+
 		// The ondernemer can create/read/update.
-		self::assertContains('create', $roles['ib-ondernemer']['permissions']);
+		foreach (['create', 'read', 'update'] as $action) {
+			self::assertContains('shillinq_ib_ondernemer', $authorization[$action]);
+		}
 	}//end testHeaderDeclaresLifecycleAndRbac()
 
 	/**

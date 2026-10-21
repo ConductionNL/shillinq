@@ -247,28 +247,6 @@
               "reconciliationStatus": "closed"
             }
           }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "verifier": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
         }
       },
       "ReconciliationMatch": {
@@ -482,24 +460,12 @@
             "groupBy": ["administrationId"]
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "verifier": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_verifier",
+            "shillinq_auditor"
+          ]
         }
       }
     }
