@@ -4588,7 +4588,14 @@ OC.L10N.register(
         "Bank statement line": "Bank statement line",
         "The bank statement line the payout arrived as.": "The bank statement line the payout arrived as.",
         "The journal entry that booked the payout.": "The journal entry that booked the payout.",
-        "No payouts from a payment provider yet": "No payouts from a payment provider yet"
+        "No payouts from a payment provider yet": "No payouts from a payment provider yet",
+        "Choose an administration before drafting an invoice.": "Choose an administration before drafting an invoice.",
+        "This customer is not part of your administration.": "This customer is not part of your administration.",
+        "Enter a valid invoice date.": "Enter a valid invoice date.",
+        "Add at least one line with a description and a price.": "Add at least one line with a description and a price.",
+        "Every line needs a number for quantity, price and VAT rate.": "Every line needs a number for quantity, price and VAT rate.",
+        "A VAT rate lies between 0 and 100 percent.": "A VAT rate lies between 0 and 100 percent.",
+        "No free draft number was found. Try again.": "No free draft number was found. Try again."
     },
     "nplurals=2; plural=(n != 1);"
 )
