@@ -117,6 +117,7 @@ final class AuditTrailIntegrationTest extends TestCase {
 					'totalInclVat' => 188760,
 					'currency' => 'EUR',
 					'ublFileId' => 'file-200',
+					'@self' => ['owner' => 'peppol-intake'],
 				],
 			],
 			'ThreeWayMatch' => [
@@ -131,7 +132,14 @@ final class AuditTrailIntegrationTest extends TestCase {
 					'divergenceDetails' => [['field' => 'totalInclVat', 'delta' => 1260]],
 				],
 			],
-			'AdministrationMembership' => [],
+			'AdministrationMembership' => [
+				[
+					'id' => 'mem-100',
+					'administrationId' => 'admin-1',
+					'role' => ExceptionResolutionService::ROLE_CREDITEUREN_ADMIN,
+					'userId' => 'carol',
+				],
+			],
 			'ToleranceProfile' => [],
 		];
 

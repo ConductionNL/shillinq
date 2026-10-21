@@ -299,6 +299,7 @@ class ExceptionResolutionService {
 		$this->assertExceptionStatus(match: $match);
 
 		$resolvedBy = $this->currentUserId();
+		$this->assertMayAccept(administrationId: $administrationId, match: $match, actor: $resolvedBy);
 		$resolvedAt = $this->nowIso();
 
 		$match['resolutionAction'] = self::ACTION_ACCEPTED;
@@ -628,6 +629,41 @@ class ExceptionResolutionService {
 		}
 
 	}//end dispatchDispute()
+
+	/**
+	 * Only a member of the exception's approver role may accept it, and never
+	 * the person who entered the invoice. Fails closed when the invoice or
+	 * its creator cannot be read.
+	 *
+	 * @param string              $administrationId Tenant scope.
+	 * @param array<string,mixed> $match            ThreeWayMatch record.
+	 * @param string              $actor            The accepting user.
+	 *
+	 * @return void
+	 *
+	 * @throws ForbiddenActionException When the actor may not accept.
+	 */
+	private function assertMayAccept(string $administrationId, array $match, string $actor): void {
+		$role = $this->resolveAlertRole(administrationId: $administrationId, match: $match);
+		if (in_array($actor, $this->findRoleMembers(administrationId: $administrationId, role: $role), true) === false) {
+			throw new ForbiddenActionException('Only the approver role for this exception can accept it.');
+		}
+
+		$invoice = null;
+		$invoiceId = trim((string)($match['invoiceId'] ?? ''));
+		if ($invoiceId !== '') {
+			$invoice = $this->findOne(
+				schema: self::SCHEMA_SUPPLIER_INVOICE,
+				filters: ['id' => $invoiceId, 'administrationId' => $administrationId]
+			);
+		}
+
+		$creator = trim((string)($invoice['@self']['owner'] ?? ($invoice['owner'] ?? '')));
+		if ($creator === '' || $creator === $actor) {
+			throw new ForbiddenActionException('The person who entered the invoice cannot accept its exception.');
+		}
+
+	}//end assertMayAccept()
 
 	/**
 	 * Resolve the membership role that should receive the exception
@@ -992,6 +1028,10 @@ class ExceptionResolutionService {
 
 		$result = [];
 		foreach ($rows as $row) {
+			if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+				$row = $row->jsonSerialize();
+			}
+
 			if (is_array($row) === true) {
 				$result[] = $row;
 			}

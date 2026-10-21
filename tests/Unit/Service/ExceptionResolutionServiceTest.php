@@ -50,6 +50,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\ExceptionResolutionService;
+use OCA\Shillinq\Service\ForbiddenActionException;
 use OCA\Shillinq\Service\PurchaseOrder\CreditNoteRequestAdapterInterface;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
@@ -409,6 +410,7 @@ final class ExceptionResolutionServiceTest extends TestCase {
 					'totalInclVat' => 1925000,
 					'statusCode' => 'exception',
 					'administrationId' => 'adm-1',
+					'@self' => ['owner' => 'clerk-carl'],
 				],
 			],
 			'ToleranceProfile' => [],
@@ -442,7 +444,8 @@ final class ExceptionResolutionServiceTest extends TestCase {
 		$service = $this->buildService(
 			data: $this->baselineSeed(),
 			saved: $saved,
-			accessibleAdministrations: ['adm-1']
+			accessibleAdministrations: ['adm-1'],
+			userId: 'creditadmin'
 		);
 
 		$result = $service->acceptWithMotivation(
@@ -453,7 +456,7 @@ final class ExceptionResolutionServiceTest extends TestCase {
 
 		self::assertSame('twm-1', $result['id']);
 		self::assertSame(ExceptionResolutionService::ACTION_ACCEPTED, $result['resolutionAction']);
-		self::assertSame('alice', $result['resolvedBy']);
+		self::assertSame('creditadmin', $result['resolvedBy']);
 		self::assertNotSame('', (string)$result['resolvedAt']);
 		self::assertSame(
 			'Verschil binnen jaarcontract tolerantie — alsnog akkoord.',
@@ -809,4 +812,94 @@ final class ExceptionResolutionServiceTest extends TestCase {
 		self::assertCount(0, $defaultQueue);
 
 	}//end testNotifyOnExceptionHonoursToleranceProfileRouting()
+	/**
+	 * F2-S6: a user outside the exception's approver role cannot accept it.
+	 *
+	 * @return void
+	 */
+	public function testAcceptRefusesAUserOutsideTheApproverRole(): void {
+		$saved = [];
+		$service = $this->buildService(data: $this->baselineSeed(), saved: $saved, accessibleAdministrations: ['adm-1'], userId: 'inkoper-bob');
+
+		try {
+			$service->acceptWithMotivation(administrationId: 'adm-1', matchId: 'twm-1', resolutionNotes: 'ok');
+			self::fail('A user outside the approver role must be refused.');
+		} catch (ForbiddenActionException $e) {
+			self::assertSame('Only the approver role for this exception can accept it.', $e->getMessage());
+		}
+
+		self::assertSame([], $saved, 'Nothing is written, so payment stays blocked.');
+
+	}//end testAcceptRefusesAUserOutsideTheApproverRole()
+
+	/**
+	 * F2-S6: the person who entered the invoice cannot accept its exception, even in the role.
+	 *
+	 * @return void
+	 */
+	public function testAcceptRefusesTheInvoiceCreator(): void {
+		$seed = $this->baselineSeed();
+		$seed['SupplierInvoice'][0]['@self']['owner'] = 'creditadmin';
+		$saved = [];
+		$service = $this->buildService(data: $seed, saved: $saved, accessibleAdministrations: ['adm-1'], userId: 'creditadmin');
+
+		$this->expectException(ForbiddenActionException::class);
+		$this->expectExceptionMessage('The person who entered the invoice cannot accept its exception.');
+
+		$service->acceptWithMotivation(administrationId: 'adm-1', matchId: 'twm-1', resolutionNotes: 'ok');
+
+	}//end testAcceptRefusesTheInvoiceCreator()
+
+	/**
+	 * F2-S6: an invoice whose creator cannot be read is refused (fail closed).
+	 *
+	 * @return void
+	 */
+	public function testAcceptFailsClosedWithoutAKnownCreator(): void {
+		$seed = $this->baselineSeed();
+		unset($seed['SupplierInvoice'][0]['@self']);
+		$saved = [];
+		$service = $this->buildService(data: $seed, saved: $saved, accessibleAdministrations: ['adm-1'], userId: 'creditadmin');
+
+		$this->expectException(ForbiddenActionException::class);
+
+		$service->acceptWithMotivation(administrationId: 'adm-1', matchId: 'twm-1', resolutionNotes: 'ok');
+
+	}//end testAcceptFailsClosedWithoutAKnownCreator()
+
+	/**
+	 * F2-S6: with exceptionRouting set, only that role accepts; the default queue does not.
+	 *
+	 * @return void
+	 */
+	public function testAcceptFollowsTheToleranceProfileRouting(): void {
+		$seed = $this->baselineSeed();
+		$seed['ThreeWayMatch'][0]['divergenceDetails'][0]['toleranceProfileId'] = 'TP-CONTROLLER';
+		$seed['ToleranceProfile'][] = [
+			'id' => 'tp-1',
+			'profileId' => 'TP-CONTROLLER',
+			'exceptionRouting' => 'controller_approval',
+			'administrationId' => 'adm-1',
+		];
+		$seed['AdministrationMembership'][] = [
+			'id' => 'mem-3',
+			'administrationId' => 'adm-1',
+			'role' => 'controller_approval',
+			'userId' => 'controller-claire',
+		];
+
+		$saved = [];
+		$refused = $this->buildService(data: $seed, saved: $saved, accessibleAdministrations: ['adm-1'], userId: 'creditadmin');
+		try {
+			$refused->acceptWithMotivation(administrationId: 'adm-1', matchId: 'twm-1', resolutionNotes: 'ok');
+			self::fail('The default queue must not accept a routed exception.');
+		} catch (ForbiddenActionException $e) {
+			self::assertSame([], $saved);
+		}
+
+		$accepted = $this->buildService(data: $seed, saved: $saved, accessibleAdministrations: ['adm-1'], userId: 'controller-claire')
+			->acceptWithMotivation(administrationId: 'adm-1', matchId: 'twm-1', resolutionNotes: 'Within contract');
+		self::assertSame('controller-claire', $accepted['resolvedBy']);
+
+	}//end testAcceptFollowsTheToleranceProfileRouting()
 }//end class
