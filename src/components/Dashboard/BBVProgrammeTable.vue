@@ -201,15 +201,10 @@ export default {
 		openRow(row) {
 			this.$emit('row-click', row)
 			if (this.$router && row.programmeCode) {
-				try {
-					this.$router.push({
-						name: 'BudgetMappingDetail',
-						params: { id: row.programmeCode },
-					})
-				} catch (_e) {
-					// Slice 04 may not have landed yet — fall through silently
-					// so the click still emits row-click for embedders.
-				}
+				this.$router.push({
+					name: 'BudgetBBVMappings',
+					query: { programmeCode: row.programmeCode },
+				})
 			}
 		},
 

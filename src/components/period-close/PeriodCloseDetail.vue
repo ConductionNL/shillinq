@@ -279,12 +279,12 @@
 				<h3>{{ t('shillinq', 'Related views') }}</h3>
 				<ul>
 					<li>
-						<a
+						<router-link
 							class="period-close-detail__link"
 							data-testid="period-close-detail-trial-balance-link"
-							:href="trialBalanceLink">
+							:to="{ name: 'TrialBalance' }">
 							{{ t('shillinq', 'Trial balance preview') }}
-						</a>
+						</router-link>
 					</li>
 				</ul>
 			</section>
@@ -409,11 +409,6 @@ export default {
 				return ''
 			}
 			return this.period.name || this.period.periodId || ''
-		},
-
-		trialBalanceLink() {
-			const periodId = encodeURIComponent(this.period?.periodId || '')
-			return generateUrl(`/apps/shillinq/trial-balance?periodId=${periodId}`)
 		},
 	},
 

@@ -214,8 +214,8 @@
 					{
 						"id": "trial-balance-preview",
 						"label": "Trial balance preview",
-						"description": "Open the trial balance filtered to this period. It is the operator's pre-close preview link.",
-						"route": "/bookkeeping/trial-balance?periodId=:periodId",
+						"description": "Open the trial balance. It is the operator's pre-close preview link.",
+						"route": "/financial-statements/trial-balance",
 						"target": "TrialBalance",
 						"visibleWhen": {
 							"state": [

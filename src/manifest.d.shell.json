@@ -3724,13 +3724,6 @@
 					"route": "/budget-mappings/:id",
 					"type": "custom",
 					"title": "Budget Mapping"
-				},
-				{
-					"_fragment": "bookkeeping-waterschappen-bbv-variant-07-mapping-detail",
-					"id": "BudgetMappingDetail",
-					"route": "/budget-mappings/by-programme/:id",
-					"type": "custom",
-					"title": "Budget Mapping"
 				}
 			]
 		},

@@ -69,10 +69,7 @@ import BudgetTrendChart from './components/budget-charts/BudgetTrendChart.vue'
 // dialog. None of those concerns fit the built-in `detail` page type
 // slice 04 declared, so the page is re-registered as a kind:"page"
 // custom component. Slice 07's manifest fragment overlays slice 04's
-// detail page entry to point at this component id, and a second
-// legacy id (`BudgetMappingDetail`) is wired to the same component so
-// the slice-05 BBVProgrammeTable row drill-through continues to
-// resolve.
+// detail page entry to point at this component id.
 import BudgetBBVMappingDetail from './components/BudgetBBVMapping/BudgetBBVMappingDetail.vue'
 // bookkeeping-waterschappen-bbv-variant slice 06 (REQ-BBVW-004): the
 // Budget Mapping index page wraps CnIndexPage with bespoke filter
@@ -457,7 +454,6 @@ export default {
 	BudgetBBVMappingIndex: { kind: 'page', component: BudgetBBVMappingIndex },
 
 	BudgetBBVMappingDetail: { kind: 'page', component: BudgetBBVMappingDetail },
-	BudgetMappingDetail: { kind: 'page', component: BudgetBBVMappingDetail },
 
 	// bookkeeping-provincies-bbv-variant (#866/#862, REQ-BBL-001).
 	BbvLinkerFilterBar: {

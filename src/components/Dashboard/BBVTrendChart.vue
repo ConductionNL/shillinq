@@ -9,9 +9,8 @@
  plotting cumulative YTD spend (cents → euros). The cumulative series
  is sourced from the monthly ytdTimeline rows the parent dashboard
  fetches against the GL transactions (slice 04 route returns this
- envelope); when the parent supplies an empty timeline the widget falls
- back to the single-point current-YTD value carried on each BBVProgramme
- row, so the chart still renders before the timeline endpoint lands.
+ envelope). An empty timeline shows an empty state: no series is
+ drawn from figures that were not measured per month.
 
  ADR-031: this widget does NOT compute spend totals; it only plots what
  the slice-02 aggregation (ytdSpend on BBVProgramme) materialised. The
@@ -22,7 +21,14 @@
 -->
 <template>
 	<div class="bbv-trend-chart" data-testid="bbv-trend-chart">
+		<p
+			v-if="series.length === 0"
+			class="bbv-trend-chart__empty"
+			data-testid="bbv-trend-chart-empty">
+			{{ t('shillinq', 'No monthly spend has been recorded for these programmes yet.') }}
+		</p>
 		<CnChartWidget
+			v-else
 			type="line"
 			:series="series"
 			:categories="categories"
@@ -65,8 +71,7 @@ export default {
 		 * Monthly cumulative timeline rows from the slice-04 dashboard
 		 * route. Each row carries:
 		 *   { programmeCode: string, month: number 1..12, cumulativeSpendCents: integer }
-		 * When omitted, the widget falls back to a single-point series
-		 * derived from each programme's ytdSpend.
+		 * When empty, the widget shows an empty state.
 		 */
 		timeline: {
 			type: Array,
@@ -80,10 +85,10 @@ export default {
 		},
 
 		series() {
-			if (this.timeline.length > 0) {
-				return this.seriesFromTimeline()
+			if (this.timeline.length === 0) {
+				return []
 			}
-			return this.seriesFromCurrentYtd()
+			return this.seriesFromTimeline()
 		},
 
 		chartOptions() {
@@ -135,32 +140,8 @@ export default {
 				const data = grouped.get(code) || new Array(12).fill(0)
 				out.push({
 					name: programme.programmeName
-						? `${code} — ${programme.programmeName}`
+						? `${code} ${programme.programmeName}`
 						: code,
-					data,
-				})
-			}
-			return out
-		},
-
-		seriesFromCurrentYtd() {
-			// Fallback used before the timeline route is wired (slice 04).
-			// Each programme contributes one flat line representing the
-			// current YTD spend as a single end-of-most-recent-month value.
-			const out = []
-			const today = new Date()
-			const monthIndex = Math.max(0, Math.min(11, today.getMonth()))
-			for (const programme of this.programmes) {
-				const cents = Number(programme.ytdSpend || 0)
-				const value = Number.isFinite(cents) ? cents / 100 : 0
-				const data = new Array(12).fill(null)
-				for (let i = 0; i <= monthIndex; i += 1) {
-					data[i] = value * ((i + 1) / (monthIndex + 1))
-				}
-				out.push({
-					name: programme.programmeName
-						? `${programme.programmeCode} — ${programme.programmeName}`
-						: programme.programmeCode,
 					data,
 				})
 			}
@@ -173,7 +154,7 @@ export default {
 				|| cents === undefined
 				|| !Number.isFinite(Number(cents))
 			) {
-				return '—'
+				return ''
 			}
 			return new Intl.NumberFormat('nl-NL', {
 				style: 'currency',
@@ -186,6 +167,10 @@ export default {
 </script>
 
 <style scoped>
+.bbv-trend-chart__empty {
+	color: var(--color-text-maxcontrast);
+}
+
 .bbv-trend-chart {
 	width: 100%;
 	min-height: 320px;

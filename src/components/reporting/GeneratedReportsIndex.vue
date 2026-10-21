@@ -157,27 +157,27 @@
 			data-testid="generated-reports-table"
 			:columns="columns"
 			:rows="filteredRows"
-			:emptyLabel="
+			:emptyText="
 				t('shillinq', 'No generated reports match the current filters.')
 			">
-			<template #cell-reportType="{ row }">
+			<template #column-reportType="{ row }">
 				{{ reportLabel(row) }}
 			</template>
-			<template #cell-category="{ row }">
+			<template #column-category="{ row }">
 				{{ categoryLabel(row.category) }}
 			</template>
-			<template #cell-generatedAt="{ row }">
+			<template #column-generatedAt="{ row }">
 				{{ formatDate(row.generatedAt) }}
 			</template>
-			<template #cell-format="{ row }">
+			<template #column-format="{ row }">
 				<span class="generated-reports__format">{{
 					(row.format || '').toUpperCase()
 				}}</span>
 			</template>
-			<template #cell-administrationId="{ row }">
+			<template #column-administrationId="{ row }">
 				{{ administrationLabel(row.administrationId) }}
 			</template>
-			<template #cell-download="{ row }">
+			<template #column-download="{ row }">
 				<a
 					class="generated-reports__download"
 					:href="downloadUrl(row)"

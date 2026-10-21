@@ -6782,7 +6782,8 @@ OC.L10N.register(
         "Bank statement line": "Regel bankafschrift",
         "The bank statement line the payout arrived as.": "De regel op het bankafschrift waarmee de uitbetaling binnenkwam.",
         "The journal entry that booked the payout.": "De journaalpost die de uitbetaling boekte.",
-        "No payouts from a payment provider yet": "Nog geen uitbetalingen van een betaalprovider"
+        "No payouts from a payment provider yet": "Nog geen uitbetalingen van een betaalprovider",
+        "No monthly spend has been recorded for these programmes yet.": "Voor deze programma's is nog geen maandelijkse besteding vastgelegd."
     },
     "nplurals=2; plural=(n != 1);"
 )

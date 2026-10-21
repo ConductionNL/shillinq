@@ -19,19 +19,6 @@
 				"schema": "BudgetBBVMapping",
 				"indexRoute": "BudgetBBVMappings"
 			}
-		},
-		{
-			"id": "BudgetMappingDetail",
-			"route": "/budget-mappings/by-programme/:id",
-			"type": "custom",
-			"title": "Budget Mapping",
-			"component": "BudgetBBVMappingDetail",
-			"_note": "Backward-compat alias (slice-05 BBVProgrammeTable drill-through navigates by router name). Same bespoke component as BudgetBBVMappingDetail; resolved against registry.js kind:page.",
-			"config": {
-				"register": "shillinq",
-				"schema": "BudgetBBVMapping",
-				"indexRoute": "BudgetBBVMappings"
-			}
 		}
 	]
 }
