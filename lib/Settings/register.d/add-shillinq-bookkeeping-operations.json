@@ -228,27 +228,6 @@
               "en": "VAT return for {{periodYear}} was submitted through Digipoort"
             }
           }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "vat-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
         }
       },
       "IcpStatement": {
@@ -379,27 +358,6 @@
             "sum": [
               "credit"
             ]
-          }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "vat-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
           }
         }
       },
@@ -540,27 +498,6 @@
               "description": "Acknowledgement received."
             }
           }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "vat-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
         }
       },
       "VatTariff": {
@@ -626,27 +563,6 @@
             "nullable": true,
             "description": "Citation, e.g. Wet OB 1968 art. 9.",
             "title": "Legal Basis"
-          }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "vat-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
           }
         }
       },
@@ -991,26 +907,23 @@
             }
           }
         },
-        "x-openregister-rbac": {
+        "authorization": {
           "roles": {
-            "bcf-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+            "bcf-administrator": [
+              "shillinq_bcf_administrator"
+            ]
+          },
+          "create": [
+            "shillinq_bcf_administrator"
+          ],
+          "read": [
+            "shillinq_bcf_administrator",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bcf_administrator"
+          ]
         }
       },
       "ZzpDeduction": {
@@ -1104,27 +1017,6 @@
             "description": "zelfstandigenaftrek + (startersaftrek if qualifiesStarters) + mkbWinstvrijstelling.",
             "expr": "@self.zelfstandigenaftrek + (@self.qualifiesStarters ? @self.startersaftrek : 0) + @self.mkbWinstvrijstelling"
           }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "zzp-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
         }
       },
       "IbAangifteExport": {
@@ -1194,27 +1086,6 @@
           "taxableIncome": {
             "description": "totalIncome minus allowableDeductions.",
             "expr": "@self.totalIncome - @self.allowableDeductions"
-          }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "zzp-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
           }
         }
       },
