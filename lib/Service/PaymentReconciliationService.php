@@ -281,10 +281,12 @@ class PaymentReconciliationService {
 				->setRegister($registerSlug)
 				->setSchema($candidateSchema)
 				->findAll(
-					[
+					config: [
 						'filters' => ['paymentIntentId' => $paymentIntentId],
 						'limit' => 1,
-					]
+					],
+					// Callers are signed gateway webhooks and integriq events, not a user session.
+					_rbac: false,
 				);
 
 			if (empty($matches) === false) {
@@ -357,6 +359,7 @@ class PaymentReconciliationService {
 					object: $record,
 					register: $registerSlug,
 					schema: $schema,
+					_rbac: false,
 				);
 				return ['result' => self::RESULT_UNAPPLIED, 'schema' => $schema];
 			}
@@ -375,6 +378,7 @@ class PaymentReconciliationService {
 					object: $record,
 					register: $registerSlug,
 					schema: $schema,
+					_rbac: false,
 				);
 				return ['result' => self::RESULT_UNAPPLIED, 'schema' => $schema];
 			}
@@ -390,6 +394,7 @@ class PaymentReconciliationService {
 			object: $record,
 			register: $registerSlug,
 			schema: $schema,
+			_rbac: false,
 		);
 
 		return ['result' => self::RESULT_APPLIED, 'schema' => $schema];
@@ -432,7 +437,8 @@ class PaymentReconciliationService {
 				scoped: $objectService
 					->setRegister($registerSlug)
 					->setSchema('ARInvoice'),
-				id: $invoiceRef
+				id: $invoiceRef,
+				rbac: false
 			);
 			$invoices = [];
 			if ($byId !== null) {
@@ -444,10 +450,11 @@ class PaymentReconciliationService {
 					->setRegister($registerSlug)
 					->setSchema('ARInvoice')
 					->findAll(
-						[
+						config: [
 							'filters' => ['slug' => $invoiceRef],
 							'limit' => 1,
-						]
+						],
+						_rbac: false,
 					);
 			}
 
@@ -492,6 +499,7 @@ class PaymentReconciliationService {
 				object: $invoice,
 				register: $registerSlug,
 				schema: 'ARInvoice',
+				_rbac: false,
 			);
 
 			// Post the realised FX gain/loss when the invoice was issued in a
@@ -624,6 +632,7 @@ class PaymentReconciliationService {
 				object: $journal,
 				register: $registerSlug,
 				schema: 'JournalEntry',
+				_rbac: false,
 			);
 			$journalId = ObjectIdentifier::resolve(saved: $saved);
 			if ($journalId === '') {
@@ -769,11 +778,12 @@ class PaymentReconciliationService {
 					->setRegister($registerSlug)
 					->setSchema($schema)
 					->findAll(
-						[
+						config: [
 							'filters' => ['state' => 'pending'],
 							'limit' => $pageSize,
 							'offset' => (($page - 1) * $pageSize),
-						]
+						],
+						_rbac: false,
 					);
 				$batchSize = count($batch);
 

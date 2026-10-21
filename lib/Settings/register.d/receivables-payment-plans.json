@@ -321,40 +321,26 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "ar-controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_admin",
+            "shillinq_ar_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_admin",
+            "shillinq_ar_controller",
+            "shillinq_auditor",
+            "shillinq_bookkeeper"
+          ],
+          "update": [
+            "shillinq_admin",
+            "shillinq_ar_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_admin"
+          ]
         },
         "x-openregister-audit-trail": {
           "enabled": true,
@@ -523,40 +509,26 @@
             "years": 7
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "ar-controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_admin",
+            "shillinq_ar_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_admin",
+            "shillinq_ar_controller",
+            "shillinq_auditor",
+            "shillinq_bookkeeper"
+          ],
+          "update": [
+            "shillinq_admin",
+            "shillinq_ar_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_admin"
+          ]
         },
         "x-openregister-audit-trail": {
           "enabled": true,
