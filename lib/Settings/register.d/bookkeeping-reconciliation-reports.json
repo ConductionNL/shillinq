@@ -344,6 +344,12 @@
             "description": "Operator-supplied reason for the resolution classification (audit-trailed). Required when resolutionStatus is set.",
             "title": "Resolution Reason"
           },
+          "resolvedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "User who set the resolution classification. Written by the resolve endpoints.",
+            "title": "Resolved by"
+          },
           "arInvoiceId": {
             "type": "string",
             "nullable": true,

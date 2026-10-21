@@ -446,4 +446,44 @@ final class ReconciliationResolutionControllerTest extends TestCase {
 	}//end testBulkResolveWithoutSessionIsForbidden()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
+	/**
+	 * F2-S4: match ids alone go to the service in one call, de-duplicated,
+	 * and failures come back as safe messages.
+	 *
+	 * @return void
+	 */
+	public function testBulkResolveMatchesTakesMatchIdsOnly(): void {
+		$this->withParams(
+			[
+				'matchIds' => ['a', ' b ', '', 'a'],
+				'resolutionStatus' => 'timing',
+				'resolutionReason' => 'Betaling onderweg',
+			]
+		);
+		$this->service->expects(self::once())->method('resolveMatches')
+			->with(['a', 'b'], 'timing', 'Betaling onderweg', 'alice')
+			->willReturn(['applied' => 1, 'failed' => ['b' => new \OutOfBoundsException('reconciliation recon-9 not found')]]);
+
+		$response = $this->controller()->bulkResolveMatches();
+
+		self::assertSame(200, $response->getStatus());
+		self::assertSame(
+			['applied' => 1, 'failed' => ['b' => 'Unable to find the reconciliation match']],
+			$response->getData()
+		);
+
+	}//end testBulkResolveMatchesTakesMatchIdsOnly()
+
+	/**
+	 * The match-id bulk call needs a reason.
+	 *
+	 * @return void
+	 */
+	public function testBulkResolveMatchesRequiresAReason(): void {
+		$this->withParams(['matchIds' => ['a'], 'resolutionStatus' => 'timing', 'resolutionReason' => ' ']);
+		$this->service->expects(self::never())->method('resolveMatches');
+
+		self::assertSame(400, $this->controller()->bulkResolveMatches()->getStatus());
+
+	}//end testBulkResolveMatchesRequiresAReason()
 }//end class

@@ -103,14 +103,10 @@ describe('classifyUnmatchedItems', () => {
 		axiosMock.post.mockReset()
 	})
 
-	it('posts one call per reconciliation with the matches and the reason', async () => {
-		const recon = { a: 'recon-1', b: 'recon-2', c: 'recon-1' }
-		axiosMock.get.mockImplementation((url) =>
-			Promise.resolve({ data: { reconId: recon[url.split('/').pop()] } }),
-		)
-		axiosMock.post.mockImplementation((url, body) =>
-			Promise.resolve({ data: { applied: body.matchIds.length, failed: {} } }),
-		)
+	it('posts the selected matches and the reason in one call, reading nothing first', async () => {
+		axiosMock.post.mockResolvedValue({
+			data: { applied: 2, failed: { c: 'Unable to find the reconciliation match' } },
+		})
 
 		const { classifyUnmatchedItems } =
 			await import('../../src/utils/bankMatchApi.js')
@@ -120,33 +116,16 @@ describe('classifyUnmatchedItems', () => {
 			'Betaling onderweg',
 		)
 
-		expect(result).toEqual({ applied: 3, failed: 0 })
+		expect(result).toEqual({ applied: 2, failed: 1 })
+		expect(axiosMock.get).not.toHaveBeenCalled()
+		expect(axiosMock.post).toHaveBeenCalledTimes(1)
 		expect(axiosMock.post).toHaveBeenCalledWith(
-			'/index.php/apps/shillinq/api/reconciliations/recon-1/matches/bulk-resolve',
+			'/index.php/apps/shillinq/api/reconciliation-matches/bulk-resolve',
 			{
-				matchIds: ['a', 'c'],
+				matchIds: ['a', 'b', 'c'],
 				resolutionStatus: 'timing',
 				resolutionReason: 'Betaling onderweg',
 			},
 		)
-		expect(axiosMock.post).toHaveBeenCalledWith(
-			'/index.php/apps/shillinq/api/reconciliations/recon-2/matches/bulk-resolve',
-			{
-				matchIds: ['b'],
-				resolutionStatus: 'timing',
-				resolutionReason: 'Betaling onderweg',
-			},
-		)
-	})
-
-	it('counts a match without a reconciliation as failed', async () => {
-		axiosMock.get.mockResolvedValue({ data: { reconId: '' } })
-		const { classifyUnmatchedItems } =
-			await import('../../src/utils/bankMatchApi.js')
-		expect(await classifyUnmatchedItems(['x'], 'pending', 'r')).toEqual({
-			applied: 0,
-			failed: 1,
-		})
-		expect(axiosMock.post).not.toHaveBeenCalled()
 	})
 })

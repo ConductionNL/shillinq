@@ -6,8 +6,9 @@
  * T4 bookkeeping-reconciliation-reports — encapsulates the
  * REQ-REC-004 unmatched-item resolution write path used by
  * ReconciliationResolutionController. Pre-checks the parent
- * BankReconciliation is open (not closed/cancelled), persists the
- * resolution classification + reason onto the ReconciliationMatch via
+ * BankReconciliation is open (not closed/cancelled) and belongs to an
+ * administration the caller can access, persists the resolution
+ * classification, reason and actor onto the ReconciliationMatch via
  * OpenRegister's ObjectService, and emits an audit-trail event so the
  * resolution is permanently traceable per ADR-022.
  *
@@ -52,6 +53,7 @@ class ReconciliationResolutionService {
 	 * @param ObjectServiceInterface $objectService OpenRegister's published
 	 *                                             object surface (ADR-084),
 	 *                                             aliased in Application.php.
+	 * @param AdministrationContextService $administrations The caller's administrations.
 	 *
 	 * @return void
 	 */
@@ -59,6 +61,7 @@ class ReconciliationResolutionService {
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly AdministrationContextService $administrations,
 	) {
 	}//end __construct()
 
@@ -107,7 +110,9 @@ class ReconciliationResolutionService {
 			);
 		}
 
-		if ($parent === null) {
+		if ($parent === null
+			|| $this->administrations->canAccess(administrationId: (string)($parent['administrationId'] ?? '')) === false
+		) {
 			throw new OutOfBoundsException('reconciliation ' . $reconId . ' not found');
 		}
 
@@ -139,7 +144,7 @@ class ReconciliationResolutionService {
 
 		// Verify the match belongs to the recon (REQ-REC-004 + IDOR guard).
 		$matchReconId = (string)($match['reconId'] ?? '');
-		if ($matchReconId !== '' && $matchReconId !== $reconId) {
+		if ($matchReconId !== $reconId) {
 			throw new OutOfBoundsException(
 				'match ' . $matchId . ' does not belong to reconciliation ' . $reconId
 			);
@@ -153,9 +158,9 @@ class ReconciliationResolutionService {
 			->patchObject(
 				$matchId,
 				[
-					'reconId' => $reconId,
 					'resolutionStatus' => $resolutionStatus,
 					'resolutionReason' => $resolutionReason,
+					'resolvedBy' => $actor,
 					'matchedAt' => gmdate('Y-m-d\TH:i:s\Z'),
 				]
 			);
@@ -172,6 +177,74 @@ class ReconciliationResolutionService {
 
 		return $this->toArray(result: $updated) ?? [];
 	}//end resolveMatch()
+
+	/**
+	 * Resolve several matches, each under the reconciliation it belongs to.
+	 *
+	 * The caller sends match ids only; the reconciliation is read from each
+	 * match, so a selection may span reconciliations. A match without a
+	 * reconciliation is refused, not adopted.
+	 *
+	 * @param list<string> $matchIds         The ReconciliationMatch ids.
+	 * @param string       $resolutionStatus One of matched/timing/pending/adjustment.
+	 * @param string       $resolutionReason The shared reason.
+	 * @param string       $actor            Nextcloud UID of the operator.
+	 *
+	 * @return array{applied: int, failed: array<string, \Throwable>}
+	 *
+	 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-004)
+	 */
+	public function resolveMatches(array $matchIds, string $resolutionStatus, string $resolutionReason, string $actor): array {
+		$applied = 0;
+		$failed  = [];
+		foreach ($matchIds as $matchId) {
+			try {
+				$this->resolveMatch(
+					reconId: $this->reconIdOf(matchId: $matchId),
+					matchId: $matchId,
+					resolutionStatus: $resolutionStatus,
+					resolutionReason: $resolutionReason,
+					actor: $actor,
+				);
+				$applied++;
+			} catch (\Throwable $e) {
+				$failed[$matchId] = $e;
+			}
+		}
+
+		return ['applied' => $applied, 'failed' => $failed];
+
+	}//end resolveMatches()
+
+	/**
+	 * Return the reconciliation a match belongs to.
+	 *
+	 * @param string $matchId The ReconciliationMatch id.
+	 *
+	 * @return string The BankReconciliation id.
+	 *
+	 * @throws OutOfBoundsException When the match is missing or has no reconciliation.
+	 */
+	private function reconIdOf(string $matchId): string {
+		try {
+			$match = $this->toArray(
+				result: $this->objectService
+					->setRegister($this->getRegisterSlug())
+					->setSchema('ReconciliationMatch')
+					->find($matchId)
+			);
+		} catch (\Throwable $e) {
+			throw new OutOfBoundsException('match ' . $matchId . ' not found', 0, $e);
+		}
+
+		$reconId = trim((string)($match['reconId'] ?? ''));
+		if ($reconId === '') {
+			throw new OutOfBoundsException('match ' . $matchId . ' not found');
+		}
+
+		return $reconId;
+
+	}//end reconIdOf()
 
 	/**
 	 * Return the configured register slug, falling back to 'shillinq'.
