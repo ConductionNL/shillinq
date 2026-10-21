@@ -15,7 +15,7 @@ use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\Shillinq\Lifecycle\PurchaseOrderApprovalGuard;
 use OCA\Shillinq\Lifecycle\SupplierInvoiceExceptionApprovalGuard;
 use OCA\Shillinq\Lifecycle\SupplierInvoicePayGuard;
-use OCA\Shillinq\Listener\PurchaseOrderApprovalChainListener;
+use OCA\Shillinq\Listener\PurchaseOrderDecisionLockListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\ServerWriteAuthority;
 use OCA\Shillinq\Service\SettingsService;
@@ -114,12 +114,12 @@ final class PurchasingGuardsTest extends TestCase {
 		self::assertFalse($guard->check([], 'pay', 'ann')->isAllowed());
 	}
 
-	private function chainListener(bool $withUser = true): PurchaseOrderApprovalChainListener {
+	private function chainListener(bool $withUser = true): PurchaseOrderDecisionLockListener {
 		$resolver = $this->createMock(ListenerSchemaResolver::class);
 		$resolver->method('matchesSchema')->willReturn(true);
 		$session = $this->createMock(IUserSession::class);
 		$session->method('getUser')->willReturn($withUser === true ? $this->createMock(IUser::class) : null);
-		return new PurchaseOrderApprovalChainListener($resolver, new ServerWriteAuthority(), $session);
+		return new PurchaseOrderDecisionLockListener($resolver, new ServerWriteAuthority(), $session);
 	}
 
 	private function po(array $chain): ObjectEntity {
@@ -132,7 +132,7 @@ final class PurchasingGuardsTest extends TestCase {
 	public function testCreatingAnOrderWithADecidedEntryIsRefused(): void {
 		$event = new ObjectCreatingEvent($this->po([self::SIGNED]));
 		$this->chainListener()->handle($event);
-		self::assertSame(PurchaseOrderApprovalChainListener::MESSAGE, $event->getErrors()['message'] ?? null);
+		self::assertSame(PurchaseOrderDecisionLockListener::MESSAGE, $event->getErrors()['message'] ?? null);
 
 		$event = new ObjectCreatingEvent($this->po([['decision' => 'pending', 'userId' => '']]));
 		$this->chainListener()->handle($event);

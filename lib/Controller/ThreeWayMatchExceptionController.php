@@ -108,7 +108,7 @@ class ThreeWayMatchExceptionController extends Controller {
 	 * Body: administrationId, matchId, resolutionNotes.
 	 *
 	 * @return JSONResponse 200 with the updated ThreeWayMatch; 400 on
-	 *                      validation; 401 anonymous; 403 without the approver or controller role; 404 cross-tenant or
+	 *                      validation; 401 anonymous; 404 cross-tenant or
 	 *                      missing match; 500 without stack trace.
 	 *
 	 * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
@@ -330,10 +330,6 @@ class ThreeWayMatchExceptionController extends Controller {
 	 */
 	private function mapRuntimeException(\RuntimeException $exception): JSONResponse {
 		$message = $exception->getMessage();
-		if ($message === ExceptionResolutionService::MESSAGE_NOT_APPROVER) {
-			return new JSONResponse(['error' => $message], Http::STATUS_FORBIDDEN);
-		}
-
 		if (str_contains($message, 'not found') === true) {
 			return new JSONResponse(['error' => $message], Http::STATUS_NOT_FOUND);
 		}

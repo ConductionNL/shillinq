@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Purchase Order Approval Chain Listener
+ * Purchase Order Decision Lock Listener
  *
  * Keeps a purchase order's approval chain in the hands of the approval
  * service. A new order may only carry undecided entries, and an existing
@@ -46,7 +46,7 @@ use OCP\IUserSession;
  *
  * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.4
  */
-class PurchaseOrderApprovalChainListener implements IEventListener {
+class PurchaseOrderDecisionLockListener implements IEventListener {
 
 	/**
 	 * Refusal shown to the caller.

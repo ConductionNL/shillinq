@@ -27,7 +27,7 @@ namespace OCA\Shillinq\AppInfo;
 
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
-use OCA\Shillinq\Listener\PurchaseOrderApprovalChainListener;
+use OCA\Shillinq\Listener\PurchaseOrderDecisionLockListener;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**
@@ -48,7 +48,7 @@ final class PurchasingControlsRegistration {
 	 */
 	public function register(IRegistrationContext $context): void {
 		foreach ([ObjectCreatingEvent::class, ObjectUpdatingEvent::class] as $event) {
-			$context->registerEventListener(event: $event, listener: PurchaseOrderApprovalChainListener::class);
+			$context->registerEventListener(event: $event, listener: PurchaseOrderDecisionLockListener::class);
 		}
 	}//end register()
 }//end class

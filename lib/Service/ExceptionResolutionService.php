@@ -98,20 +98,6 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 class ExceptionResolutionService {
 
 	/**
-	 * Roles that may accept an out-of-tolerance three-way match and release its invoice.
-	 *
-	 * @var array<int, string>
-	 */
-	public const EXCEPTION_APPROVER_ROLES = ['approver', 'controller'];
-
-	/**
-	 * Refusal for a caller without an exception approver role.
-	 *
-	 * @var string
-	 */
-	public const MESSAGE_NOT_APPROVER = 'Only an approver or controller can accept a three-way-match exception and release the invoice for payment.';
-
-	/**
 	 * Resolution action recorded for accept-with-motivation. The enum value
 	 * mirrors the slice-01 ThreeWayMatch.resolutionAction enum.
 	 *
@@ -247,7 +233,6 @@ class ExceptionResolutionService {
 	 *                                                                  so the orchestration code
 	 *                                                                  is testable without
 	 *                                                                  openconnector wired.
-	 * @param RoleMembership|null $roleMembership Resolves the exception approver roles; without it nobody may accept.
 	 * @param ServerWriteAuthority $writeAuthority Grants the invoice release for the acceptance save.
 	 *
 	 * @return void
@@ -260,7 +245,6 @@ class ExceptionResolutionService {
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 		?CreditNoteRequestAdapterInterface $creditNoteAdapter = null,
-		private readonly ?RoleMembership $roleMembership = null,
 		private readonly ServerWriteAuthority $writeAuthority = new ServerWriteAuthority(),
 	) {
 		$this->creditNoteAdapter = ($creditNoteAdapter ?? new LogCreditNoteRequestAdapter(logger: $logger));
@@ -312,12 +296,6 @@ class ExceptionResolutionService {
 		$notes = trim($resolutionNotes);
 		if ($notes === '') {
 			throw new RuntimeException('resolutionNotes is required');
-		}
-
-		if ($this->roleMembership === null
-			|| $this->roleMembership->callerHoldsAny(roles: self::EXCEPTION_APPROVER_ROLES) === false
-		) {
-			throw new RuntimeException(self::MESSAGE_NOT_APPROVER);
 		}
 
 		$match = $this->loadMatch(administrationId: $administrationId, matchId: $matchId);

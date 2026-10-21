@@ -1088,12 +1088,7 @@
               "from": "exception",
               "to": "approved",
               "label": "Handmatig goedkeuren",
-              "requires": "OCA\\Shillinq\\Lifecycle\\SupplierInvoiceExceptionApprovalGuard",
-              "authorization": [
-                {
-                  "role": "exception_approver"
-                }
-              ]
+              "requires": "OCA\\Shillinq\\Lifecycle\\SupplierInvoiceExceptionApprovalGuard"
             },
             "pay": {
               "from": "approved",
@@ -1128,12 +1123,6 @@
           }
         },
         "authorization": {
-          "roles": {
-            "exception_approver": [
-              "shillinq_approver",
-              "shillinq_controller"
-            ]
-          },
           "create": [
             "shillinq_procurement_officer",
             "shillinq_bookkeeper",
