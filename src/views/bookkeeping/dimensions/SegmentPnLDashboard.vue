@@ -195,12 +195,10 @@ import {
 import {
 	normaliseSegmentRows,
 	periodOptions,
-	SEGMENT_AGGREGATION,
 	segmentQuery,
+	SEGMENTS,
 	segmentTotals,
 } from '../../../utils/segmentResults.js'
-
-const REGISTER_SLUG = 'shillinq'
 
 export default {
 	name: 'SegmentPnLDashboard',
@@ -219,7 +217,6 @@ export default {
 			activeSegment: 'costCenter',
 			rows: [],
 			analyticalDimensions: [],
-			administrationId: '',
 			periodId: '',
 			periods: [],
 		}
@@ -286,71 +283,9 @@ export default {
 
 	methods: {
 		/**
-		 * Load the administration's fiscal periods for the period filter.
-		 *
-		 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
-		 */
-		async loadPeriods() {
-			try {
-				const { data } = await axios.get(
-					generateUrl(
-						`/apps/openregister/api/objects/${REGISTER_SLUG}/FiscalPeriod`,
-					),
-					{
-						params: {
-							administrationId: this.administrationId,
-							_limit: 500,
-						},
-					},
-				)
-				this.periods = periodOptions(data)
-			} catch {
-				this.periods = []
-			}
-		},
-
-		/**
-		 * Resolve the caller's active administration.
-		 *
-		 * These aggregations used to declare
-		 * `administrationId: "@self.administrationId"`. That is not a
-		 * placeholder OpenRegister implements — PlaceholderResolver only acts on
-		 * values beginning with `$` — so it was left LITERAL and the filter
-		 * matched nothing, which is why this dashboard returned zero rows over
-		 * live data (#1216, swept in #1255).
-		 *
-		 * An administration is a shillinq layer over OpenRegister's organisation
-		 * tenancy, so it is a normal property, and the scope comes from the
-		 * CALLER as a narrowing filter (openregister#2852) — which can add a
-		 * constraint but never relax one.
-		 *
-		 * Returns '' when the context cannot be read, and loadSegment() then
-		 * REFUSES to query. That matters more here than it looks: the declared
-		 * filter is gone, so an unscoped call would roll up EVERY
-		 * administration's P&L into one plausible-looking total.
-		 *
-		 * @return {Promise<string>} The active administration id, or ''.
-		 * @spec openspec/changes/bookkeeping-cost-centers-dimensions/tasks.md#task-14
-		 */
-		async resolveAdministrationId() {
-			try {
-				const { data } = await axios.get(
-					generateUrl('/apps/shillinq/api/administrations/context'),
-				)
-				return (
-					data?.activeAdministrationId
-					|| data?.administrations?.[0]?.administrationId
-					|| ''
-				)
-			} catch {
-				return ''
-			}
-		},
-
-		/**
 		 * Switch the dashboard to another segment and reload it.
 		 *
-		 * @param {string} segment One of SEGMENT_AGGREGATION's keys.
+		 * @param {string} segment One of SEGMENTS.
 		 * @spec openspec/changes/bookkeeping-cost-centers-dimensions/tasks.md#task-14
 		 */
 		selectSegment(segment) {
@@ -362,10 +297,10 @@ export default {
 		},
 
 		/**
-		 * Load one segment's revenue, costs and result, scoped to the caller's
-		 * administration and narrowed to the chosen period.
+		 * Load one segment's revenue, costs and result for the chosen period.
+		 * The server picks and checks the administration.
 		 *
-		 * @param {string} segment One of SEGMENT_AGGREGATION's keys.
+		 * @param {string} segment One of SEGMENTS.
 		 * @spec openspec/changes/bookkeeping-cost-centers-dimensions/tasks.md#task-14
 		 */
 		async loadSegment(segment) {
@@ -373,49 +308,27 @@ export default {
 			this.errorMessage = ''
 			this.rows = []
 
-			const aggregationName = SEGMENT_AGGREGATION[segment]
-			if (!aggregationName) {
+			if (!SEGMENTS.includes(segment)) {
 				this.errorMessage = this.t('shillinq', 'Unknown segment selected.')
 				this.loading = false
 				return
 			}
 
 			try {
-				this.administrationId = await this.resolveAdministrationId()
-				if (!this.administrationId) {
-					// Deliberately not a fallback to an unscoped call: the
-					// declaration no longer carries administrationId, so omitting
-					// it here would roll up every administration the register
-					// holds into one total that looks entirely reasonable.
+				const { data } = await axios.get(
+					generateUrl('/apps/shillinq/api/segment-results'),
+					{ params: segmentQuery(segment, this.periodId) },
+				)
+				this.periods = periodOptions(data?.periods)
+				this.rows = this.normaliseRows(data, segment)
+			} catch (error) {
+				const status = error?.response?.status
+				if (status === 400) {
 					this.errorMessage = this.t(
 						'shillinq',
 						'No active administration, so the segment P&L cannot be scoped.',
 					)
-					return
-				}
-
-				if (!this.periods.length) {
-					await this.loadPeriods()
-				}
-
-				const url = generateUrl(
-					`/apps/openregister/api/objects/aggregations/${REGISTER_SLUG}/GLLine/`
-						+ encodeURIComponent(aggregationName),
-				)
-				const { data } = await axios.get(url, {
-					params: segmentQuery(this.administrationId, this.periodId),
-				})
-				this.rows = this.normaliseRows(data, segment)
-			} catch (error) {
-				const status = error?.response?.status
-				if (status === 404 || status === 501) {
-					// Older OR builds without the aggregation endpoint —
-					// keep the dashboard navigable instead of breaking.
-					this.errorMessage = this.t(
-						'shillinq',
-						'Aggregation endpoint unavailable on this OpenRegister build. Upgrade OR to read segment P&L roll-ups.',
-					)
-				} else if (status === 401 || status === 403) {
+				} else if (status === 401 || status === 403 || status === 404) {
 					this.errorMessage = this.t(
 						'shillinq',
 						'Permission required to read segment P&L data.',
