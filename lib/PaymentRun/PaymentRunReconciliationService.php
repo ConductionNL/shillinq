@@ -42,6 +42,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\PaymentRun;
 
+use OCA\Shillinq\Lifecycle\PaymentRunReconcileGuard;
+use OCA\Shillinq\Service\ServerWriteAuthority;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -98,6 +100,8 @@ class PaymentRunReconciliationService {
 	 *                              matchedCount, totalLines, unmatchedLines,
 	 *                              reconciledAt?, lifecycleState, mismatchNote? }`
 	 *                              or `{ error: ... }` on rejection.
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.3
 	 */
 	public function reconcile(array $paymentRun, string $contents): array {
 		$state = (string)($paymentRun['lifecycleState'] ?? $paymentRun['status'] ?? '');
@@ -162,7 +166,11 @@ class PaymentRunReconciliationService {
 			]
 		);
 
-		$saved = $this->saveRun(run: $update);
+		$saved = (new ServerWriteAuthority())->during(
+			purpose: PaymentRunReconcileGuard::PURPOSE,
+			objectId: (string)($paymentRun['id'] ?? ($paymentRun['@self']['id'] ?? '')),
+			work: fn (): array => $this->saveRun(run: $update)
+		);
 
 		return [
 			'result' => 'full',

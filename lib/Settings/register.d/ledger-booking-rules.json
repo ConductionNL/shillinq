@@ -182,38 +182,24 @@
 						}
 					}
 				},
-				"x-openregister-rbac": {
-					"roles": {
-						"administrator": {
-							"permissions": [
-								"create",
-								"read",
-								"update",
-								"delete"
-							]
-						},
-						"controller": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"bookkeeper": {
-							"permissions": [
-								"read"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					},
-					"adminScope": {
-						"field": "administrationId",
-						"enforce": true
-					}
+				"authorization": {
+					"create": [
+						"shillinq_admin",
+						"shillinq_controller"
+					],
+					"read": [
+						"shillinq_admin",
+						"shillinq_controller",
+						"shillinq_bookkeeper",
+						"shillinq_auditor"
+					],
+					"update": [
+						"shillinq_admin",
+						"shillinq_controller"
+					],
+					"delete": [
+						"shillinq_admin"
+					]
 				}
 			}
 		}
