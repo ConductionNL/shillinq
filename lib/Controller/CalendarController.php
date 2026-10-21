@@ -305,7 +305,8 @@ class CalendarController extends Controller {
 	 * @return JSONResponse 201 with the booking; 400 on validation;
 	 *                      403 when the caller has no booking rights on the
 	 *                      calendar's administration; 404 when calendar
-	 *                      missing; 409 on conflict; 503 when OR unavailable.
+	 *                      missing; 409 on conflict; 422 when the calendar
+	 *                      has no administration; 503 when OR unavailable.
 	 *
 	 * @spec openspec/changes/bookings-resource-calendar/tasks.md#task-3
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
@@ -333,6 +334,14 @@ class CalendarController extends Controller {
 		$authError = $this->authorizeBookingCreation(calendarRow: $calendarRow);
 		if ($authError !== null) {
 			return $authError;
+		}
+
+		$administrationId = (string)($calendarRow['administrationId'] ?? '');
+		if ($administrationId === '') {
+			return new JSONResponse(
+				['error' => 'calendar-without-administration', 'message' => 'This calendar belongs to no administration, so it cannot take bookings.'],
+				Http::STATUS_UNPROCESSABLE_ENTITY,
+			);
 		}
 
 		$parsed = $this->parseBookingRequest();
@@ -380,7 +389,7 @@ class CalendarController extends Controller {
 			$bookingId = $this->generateBookingId();
 			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
 			$payload = [
-				'administrationId' => (string)($calendarRow['administrationId'] ?? 'adm-1'),
+				'administrationId' => $administrationId,
 				'bookingId' => $bookingId,
 				'calendar' => $calendarId,
 				'resource' => $resourceId,

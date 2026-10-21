@@ -326,7 +326,8 @@ class WidgetService {
 		// unresolvable catalogue denies rather than permits.
 		$service = $this->findPublicService(
 			objectService: $objectService,
-			serviceId: $serviceId
+			serviceId: $serviceId,
+			administrationId: $administrationId
 		);
 		if ($service === null) {
 			return ['code' => 404, 'error' => 'service_not_found'];
@@ -440,16 +441,17 @@ class WidgetService {
 	 *
 	 * Fail-closed: an unresolvable catalogue denies rather than permits.
 	 *
-	 * @param string $serviceId The service to check.
+	 * @param string $serviceId        The service to check.
+	 * @param string $administrationId The administration the service must belong to.
 	 *
-	 * @return bool True when the service is public and active.
+	 * @return bool True when the service is public, active and in that administration.
 	 *
 	 * @psalm-return   bool
 	 * @phpstan-return bool
 	 *
 	 * @spec openspec/specs/bookings-self-service-widget/spec.md
 	 */
-	public function isPubliclyBookable(string $serviceId): bool {
+	public function isPubliclyBookable(string $serviceId, string $administrationId): bool {
 		$objectService = $this->getObjectService();
 		if ($objectService === null) {
 			return false;
@@ -457,7 +459,8 @@ class WidgetService {
 
 		return $this->findPublicService(
 			objectService: $objectService,
-			serviceId: $serviceId
+			serviceId: $serviceId,
+			administrationId: $administrationId
 		) !== null;
 
 	}//end isPubliclyBookable()
@@ -472,12 +475,16 @@ class WidgetService {
 	 * caller who knew any serviceId could book a service the business never
 	 * published.
 	 *
-	 * @param object $objectService OR ObjectService.
-	 * @param string $serviceId The service to resolve.
+	 * A service of another administration than the widget key's is not
+	 * bookable either.
+	 *
+	 * @param object $objectService    OR ObjectService.
+	 * @param string $serviceId        The service to resolve.
+	 * @param string $administrationId The administration the service must belong to.
 	 *
 	 * @return array<string,mixed>|null The service row, or null when not bookable.
 	 */
-	private function findPublicService(object $objectService, string $serviceId): ?array {
+	private function findPublicService(object $objectService, string $serviceId, string $administrationId): ?array {
 		try {
 			$records = $objectService
 				->setRegister($this->getRegisterSlug())
@@ -507,6 +514,10 @@ class WidgetService {
 			}
 
 			if ((string)($row['status'] ?? '') !== 'active') {
+				return null;
+			}
+
+			if ($administrationId === '' || (string)($row['administrationId'] ?? '') !== $administrationId) {
 				return null;
 			}
 
