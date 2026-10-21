@@ -105,40 +105,26 @@
             "title": "Rejection Reason"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "warehouse_manager": {
-              "permissions": [
-                "create",
-                "read"
-              ]
-            },
-            "inventory_operator": {
-              "permissions": [
-                "create",
-                "read"
-              ]
-            },
-            "counter": {
-              "permissions": [
-                "create",
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_admin",
+            "shillinq_warehouse_manager",
+            "shillinq_inventory_operator",
+            "shillinq_counter"
+          ],
+          "read": [
+            "shillinq_admin",
+            "shillinq_auditor",
+            "shillinq_warehouse_manager",
+            "shillinq_inventory_operator",
+            "shillinq_counter"
+          ],
+          "update": [
+            "shillinq_admin"
+          ],
+          "delete": [
+            "shillinq_admin"
+          ]
         }
       },
       "GoodsReceipt": {
@@ -198,6 +184,29 @@
             "description": "Client transactionId that produced this receipt (for cross-referencing the sync batch).",
             "title": "Transaction ID"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "InventoryTransfer": {
@@ -264,6 +273,26 @@
             "description": "Client transactionId that produced this transfer.",
             "title": "Transaction ID"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_warehouse_manager",
+            "shillinq_warehouse_operator"
+          ],
+          "read": [
+            "shillinq_warehouse_manager",
+            "shillinq_warehouse_operator",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_warehouse_manager",
+            "shillinq_warehouse_operator"
+          ],
+          "delete": [
+            "shillinq_warehouse_manager"
+          ]
         }
       },
       "OrderPick": {
@@ -330,6 +359,26 @@
             "description": "Client transactionId that produced this pick.",
             "title": "Transaction ID"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_warehouse_manager",
+            "shillinq_warehouse_operator"
+          ],
+          "read": [
+            "shillinq_warehouse_manager",
+            "shillinq_warehouse_operator",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_warehouse_manager",
+            "shillinq_warehouse_operator"
+          ],
+          "delete": [
+            "shillinq_warehouse_manager"
+          ]
         }
       },
       "InventoryCount": {
@@ -409,6 +458,26 @@
             "description": "Client transactionId that produced this count.",
             "title": "Transaction ID"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_warehouse_manager",
+            "shillinq_warehouse_operator"
+          ],
+          "read": [
+            "shillinq_warehouse_manager",
+            "shillinq_warehouse_operator",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_warehouse_manager",
+            "shillinq_warehouse_operator"
+          ],
+          "delete": [
+            "shillinq_warehouse_manager"
+          ]
         }
       }
     }

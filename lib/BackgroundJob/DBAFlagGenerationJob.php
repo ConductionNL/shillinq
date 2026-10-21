@@ -30,6 +30,7 @@ namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
 use OCA\Shillinq\Enums\DBAConstants;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
@@ -48,6 +49,7 @@ use Throwable;
  * @spec openspec/specs/dba-compliance-marker/spec.md
  */
 class DBAFlagGenerationJob extends TimedJob {
+	use RunsJobAsSystem;
 	/**
 	 * Interval between job runs: 86400 seconds = 24 hours.
 	 */
@@ -257,6 +259,21 @@ class DBAFlagGenerationJob extends TimedJob {
 	}//end detectHerbeoordelingOverdue()
 
 	/**
+	 * Run the job inside OpenRegister's system context.
+	 *
+	 * @param mixed $argument The job argument.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/specs/schema-authorization/spec.md
+	 */
+	protected function run(mixed $argument): void {
+		$this->asSystem(work: function () use ($argument): void {
+			$this->runAsJob(argument: $argument);
+		});
+	}//end run()
+
+	/**
 	 * Execute the flag-generation pass.
 	 *
 	 * @param mixed $argument Not used; required by TimedJob.
@@ -268,7 +285,7 @@ class DBAFlagGenerationJob extends TimedJob {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 */
-	protected function run(mixed $argument): void {
+	private function runAsJob(mixed $argument): void {
 		$this->logger->info('Shillinq: DBAFlagGenerationJob started');
 
 		try {
@@ -379,7 +396,7 @@ class DBAFlagGenerationJob extends TimedJob {
 		$this->logger->info(
 			sprintf('Shillinq DBAFlagGenerationJob: generated %d flags', $generated)
 		);
-	}//end run()
+	}//end runAsJob()
 
 	/**
 	 * Coerce an entity (array or hydratable object) into a plain array.

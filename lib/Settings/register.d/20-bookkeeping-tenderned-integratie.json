@@ -192,36 +192,24 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "contractmanager": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "inkoper": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "salesmanager": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a TenderNed Aanbesteding is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_contractmanager"
+          ],
+          "read": [
+            "shillinq_contractmanager",
+            "shillinq_inkoper",
+            "shillinq_salesmanager",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_contractmanager",
+            "shillinq_inkoper"
+          ]
         }
       },
       "Commitment": {
@@ -414,36 +402,32 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "contractmanager": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "finance-medewerker": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "salesmanager": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Commitment is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "roles": {
+            "commitment-administrator": [
+              "shillinq_commitment_administrator"
+            ],
+            "finance-director": [
+              "shillinq_finance_director"
+            ]
+          },
+          "create": [
+            "shillinq_contractmanager"
+          ],
+          "read": [
+            "shillinq_contractmanager",
+            "shillinq_finance_medewerker",
+            "shillinq_salesmanager",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_contractmanager",
+            "shillinq_finance_medewerker"
+          ]
         }
       },
       "OrderFulfilment": {
@@ -585,36 +569,24 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "contractmanager": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "finance-medewerker": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "salesmanager": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Opdracht Uitvoering is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_contractmanager"
+          ],
+          "read": [
+            "shillinq_contractmanager",
+            "shillinq_finance_medewerker",
+            "shillinq_salesmanager",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_contractmanager",
+            "shillinq_salesmanager"
+          ]
         }
       }
     }

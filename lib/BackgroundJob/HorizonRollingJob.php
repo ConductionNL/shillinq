@@ -38,6 +38,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -51,6 +52,7 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/changes/zzp-cashflow-13wk/tasks.md#task-19
  */
 class HorizonRollingJob extends TimedJob {
+	use RunsJobAsSystem;
 
 	/**
 	 * Interval between runs: 604800 seconds = 7 days (weekly Monday roll).
@@ -104,6 +106,21 @@ class HorizonRollingJob extends TimedJob {
 	}//end getRegisterSlug()
 
 	/**
+	 * Run the job inside OpenRegister's system context.
+	 *
+	 * @param mixed $argument The job argument.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/specs/schema-authorization/spec.md
+	 */
+	protected function run(mixed $argument): void {
+		$this->asSystem(work: function () use ($argument): void {
+			$this->runAsJob(argument: $argument);
+		});
+	}//end run()
+
+	/**
 	 * Roll all active horizons forward by one week.
 	 *
 	 * @param mixed $argument Not used; required by TimedJob interface.
@@ -114,7 +131,7 @@ class HorizonRollingJob extends TimedJob {
 	 *
 	 * @spec openspec/changes/zzp-cashflow-13wk/tasks.md#task-19
 	 */
-	protected function run(mixed $argument): void {
+	private function runAsJob(mixed $argument): void {
 		$this->logger->info('Shillinq: HorizonRollingJob started');
 
 		try {
@@ -170,7 +187,7 @@ class HorizonRollingJob extends TimedJob {
 			)
 		);
 
-	}//end run()
+	}//end runAsJob()
 
 	/**
 	 * Return the ISO date (YYYY-MM-DD) of the Monday of the current week, UTC.

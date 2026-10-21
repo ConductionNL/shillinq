@@ -141,7 +141,8 @@ final class VendorPerformanceAggregationJobTest extends TestCase {
 	 */
 	public function testRunSkipsWhenOpenRegisterUnavailable(): void {
 		$this->settings->method('isOpenRegisterAvailable')->willReturn(false);
-		$this->container->expects(self::never())->method('get');
+		// The only container lookup is the system-context wrapper's ObjectService.
+		$this->container->expects(self::atMost(1))->method('get')->with('OCA\OpenRegister\Service\ObjectService');
 		$this->aggregation->expects(self::never())->method('aggregateAdministrationForPeriod');
 
 		$this->invokeRun($this->makeJob());
