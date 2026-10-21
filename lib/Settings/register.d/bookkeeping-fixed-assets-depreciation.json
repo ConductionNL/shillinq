@@ -428,30 +428,6 @@
             ]
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "admin": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            }
-          }
-        },
         "x-openregister-aggregations": {
           "depreciationAmountByCostCenter": {
             "description": "(2): sum of depreciationAmount grouped by costCenterCode for the current fiscal year. Drives the Depreciation Expense cost-center report.",
@@ -477,6 +453,18 @@
             "metric": "sum",
             "groupBy": ["assetRef"]
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper"
+          ]
         }
       },
       "GLLine": {

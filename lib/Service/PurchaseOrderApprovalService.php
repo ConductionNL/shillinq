@@ -49,6 +49,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Lifecycle\PurchaseOrderApprovalGuard;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -134,6 +135,7 @@ class PurchaseOrderApprovalService {
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param ApprovalActivityEmitter|null $activityEmitter Optional emitter for
 	 *                                                      approval activity events.
+	 * @param ServerWriteAuthority $writeAuthority Grants the approve transition for the decision save.
 	 *
 	 * @return void
 	 */
@@ -144,6 +146,7 @@ class PurchaseOrderApprovalService {
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 		private readonly ?ApprovalActivityEmitter $activityEmitter = null,
+		private readonly ServerWriteAuthority $writeAuthority = new ServerWriteAuthority(),
 	) {
 
 	}//end __construct()
@@ -256,7 +259,11 @@ class PurchaseOrderApprovalService {
 			current: $lifecycleState
 		);
 
-		$saved = $this->saveObject(schema: self::SCHEMA_PURCHASE_ORDER, object: $purchaseOrder);
+		$saved = $this->writeAuthority->during(
+			purpose: PurchaseOrderApprovalGuard::PURPOSE,
+			objectId: $purchaseOrderId,
+			work: fn (): array => $this->saveObject(schema: self::SCHEMA_PURCHASE_ORDER, object: $purchaseOrder)
+		);
 
 		// Emit a Nextcloud Activity event per REQ-RAP-006 so the
 		// BookkeepingActivityFeed manifest entry surfaces the decision

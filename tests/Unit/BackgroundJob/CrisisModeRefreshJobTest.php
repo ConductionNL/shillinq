@@ -104,7 +104,8 @@ final class CrisisModeRefreshJobTest extends TestCase {
 	 */
 	public function testRunSkipsWhenOpenRegisterUnavailable(): void {
 		$this->settings->method('isOpenRegisterAvailable')->willReturn(false);
-		$this->container->expects(self::never())->method('get');
+		// The only container lookup is the system-context wrapper's ObjectService.
+		$this->container->expects(self::atMost(1))->method('get')->with('OCA\\OpenRegister\\Service\\ObjectService');
 
 		$this->invokeRun($this->makeJob());
 		$this->addToAssertionCount(1);
