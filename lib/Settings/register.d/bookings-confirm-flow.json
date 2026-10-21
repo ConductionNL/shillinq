@@ -171,27 +171,17 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "scheduler": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "customer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "description": "Tokens are server-issued (system actor or scheduler resend). Customers can read but not create/update. Auditors are read-only for audit trail traceability."
+        "authorization": {
+          "create": [
+            "shillinq_scheduler"
+          ],
+          "read": [
+            "shillinq_auditor",
+            "shillinq_scheduler"
+          ],
+          "update": [
+            "shillinq_scheduler"
+          ]
         }
       }
     }

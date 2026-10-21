@@ -5,6 +5,25 @@
   "components": {
     "schemas": {
       "AvailabilityRule": {
+        "authorization": {
+          "create": [
+            "shillinq_scheduler",
+            "shillinq_booking_administrator"
+          ],
+          "read": [
+            "shillinq_scheduler",
+            "shillinq_booking_administrator",
+            "shillinq_operator",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_scheduler",
+            "shillinq_booking_administrator"
+          ],
+          "delete": [
+            "shillinq_booking_administrator"
+          ]
+        },
         "slug": "AvailabilityRule",
         "icon": "CalendarClockOutline",
         "version": "0.1.0",
@@ -114,6 +133,25 @@
         }
       },
       "ResourceBreak": {
+        "authorization": {
+          "create": [
+            "shillinq_scheduler",
+            "shillinq_booking_administrator"
+          ],
+          "read": [
+            "shillinq_scheduler",
+            "shillinq_booking_administrator",
+            "shillinq_operator",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_scheduler",
+            "shillinq_booking_administrator"
+          ],
+          "delete": [
+            "shillinq_booking_administrator"
+          ]
+        },
         "slug": "ResourceBreak",
         "icon": "CoffeeOutline",
         "version": "0.1.0",
@@ -250,6 +288,25 @@
         }
       },
       "BookingConstraint": {
+        "authorization": {
+          "create": [
+            "shillinq_scheduler",
+            "shillinq_booking_administrator"
+          ],
+          "read": [
+            "shillinq_scheduler",
+            "shillinq_booking_administrator",
+            "shillinq_operator",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_scheduler",
+            "shillinq_booking_administrator"
+          ],
+          "delete": [
+            "shillinq_booking_administrator"
+          ]
+        },
         "slug": "BookingConstraint",
         "icon": "ClockAlertOutline",
         "version": "0.1.0",

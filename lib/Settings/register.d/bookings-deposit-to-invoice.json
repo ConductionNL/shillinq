@@ -288,26 +288,17 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "scheduler": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "customer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_scheduler"
+          ],
+          "read": [
+            "shillinq_auditor",
+            "shillinq_scheduler"
+          ],
+          "update": [
+            "shillinq_scheduler"
+          ]
         },
         "x-openregister-aggregations": {
           "countByState": {

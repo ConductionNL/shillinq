@@ -194,6 +194,8 @@ class ConfirmationApiController extends Controller {
 				object: $appointment,
 				register: $this->settings->getRegisterSlug(),
 				schema: 'Appointment',
+				// The confirmation token, validated above, is the authentication for this anonymous caller.
+				_rbac: false,
 			);
 
 			$this->tokens->markRedeemed($result['token']);
@@ -421,10 +423,11 @@ class ConfirmationApiController extends Controller {
 				->setRegister($this->settings->getRegisterSlug())
 				->setSchema('Appointment')
 				->findAll(
-					[
+					config: [
 						'filters' => ['appointmentId' => $appointmentId],
 						'limit' => 1,
-					]
+					],
+					_rbac: false,
 				);
 		} catch (Throwable $e) {
 			$this->logger->error(
