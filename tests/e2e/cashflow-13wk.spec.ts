@@ -85,11 +85,8 @@ test.describe('cashflow 13wk — manifest pages render', () => {
 		// It looked for `[data-widget="cashflow-13week-chart"]`, `canvas`, or
 		// `[data-widget-id=…]`. All three are wrong:
 		//
-		//  - `data-widget` appears in exactly one place in the whole app,
-		//    `src/components/cashflow/CashflowDashboard.vue`, which is an
-		//    ORPHAN: it is imported by nothing, registered in no registry entry,
-		//    and bound as no manifest page's `component`. The test was written
-		//    against a component that never mounts.
+		//  - `data-widget` appeared only in an orphan component that never
+		//    mounted (since deleted).
 		//  - @conduction/nextcloud-vue emits NO `data-widget` /
 		//    `data-widget-id` attribute anywhere (grep: zero hits). Manifest
 		//    dashboards render through CnDashboardPage → CnDashboardGrid, whose
@@ -131,11 +128,7 @@ test.describe('cashflow 13wk — manifest pages render', () => {
 	 *   - `lib/Service/CashflowPdfRenderer.php` exists and `render()` has ZERO
 	 *     callers anywhere in `lib/`;
 	 *   - `appinfo/routes.php` registers no cashflow export route at all;
-	 *   - the only "Export PDF" button in the codebase lives in
-	 *     `src/components/cashflow/CashflowDashboard.vue`, which is an ORPHAN
-	 *     component (no import, no registry entry, no manifest binding), and
-	 *     even if it mounted its click only `$emit`s `export-pdf` — nothing
-	 *     listens.
+	 *   - there is no "Export PDF" button in the app;
 	 *   - `/cashflow/dashboard` declares no `headerActions` in
 	 *     `src/manifest.json`, so no export affordance is rendered.
 	 *
