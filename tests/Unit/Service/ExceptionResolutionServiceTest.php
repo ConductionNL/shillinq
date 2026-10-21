@@ -51,6 +51,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\ExceptionResolutionService;
 use OCA\Shillinq\Service\ForbiddenActionException;
+use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Service\PurchaseOrder\CreditNoteRequestAdapterInterface;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
@@ -410,7 +411,7 @@ final class ExceptionResolutionServiceTest extends TestCase {
 					'totalInclVat' => 1925000,
 					'statusCode' => 'exception',
 					'administrationId' => 'adm-1',
-					'@self' => ['owner' => 'clerk-carl'],
+					'owner' => 'clerk-carl',
 				],
 			],
 			'ToleranceProfile' => [],
@@ -839,7 +840,7 @@ final class ExceptionResolutionServiceTest extends TestCase {
 	 */
 	public function testAcceptRefusesTheInvoiceCreator(): void {
 		$seed = $this->baselineSeed();
-		$seed['SupplierInvoice'][0]['@self']['owner'] = 'creditadmin';
+		$seed['SupplierInvoice'][0]['owner'] = 'creditadmin';
 		$saved = [];
 		$service = $this->buildService(data: $seed, saved: $saved, accessibleAdministrations: ['adm-1'], userId: 'creditadmin');
 
@@ -857,7 +858,7 @@ final class ExceptionResolutionServiceTest extends TestCase {
 	 */
 	public function testAcceptFailsClosedWithoutAKnownCreator(): void {
 		$seed = $this->baselineSeed();
-		unset($seed['SupplierInvoice'][0]['@self']);
+		unset($seed['SupplierInvoice'][0]['owner']);
 		$saved = [];
 		$service = $this->buildService(data: $seed, saved: $saved, accessibleAdministrations: ['adm-1'], userId: 'creditadmin');
 
@@ -902,4 +903,38 @@ final class ExceptionResolutionServiceTest extends TestCase {
 		self::assertSame('controller-claire', $accepted['resolvedBy']);
 
 	}//end testAcceptFollowsTheToleranceProfileRouting()
+	/**
+	 * OpenRegister's findAll matches nothing on an `id` filter; the match and
+	 * the invoice are read by id, so accepting still finds them.
+	 *
+	 * @return void
+	 */
+	public function testAcceptReadsTheMatchAndInvoiceById(): void {
+		$saved = [];
+		$objects = new InMemoryObjectServiceStub($this->baselineSeed(), $saved, false, true);
+
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('creditadmin');
+		$session = $this->createMock(IUserSession::class);
+		$session->method('getUser')->willReturn($user);
+		$administrations = $this->createMock(AdministrationContextService::class);
+		$administrations->method('canAccess')->willReturn(true);
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
+
+		$service = new ExceptionResolutionService(
+			appConfig: $appConfig,
+			administrationContext: $administrations,
+			userSession: $session,
+			notificationManager: $this->createMock(INotificationManager::class),
+			logger: $this->createMock(LoggerInterface::class),
+			objectService: $objects,
+		);
+
+		$result = $service->acceptWithMotivation(administrationId: 'adm-1', matchId: 'twm-1', resolutionNotes: 'Within contract');
+
+		self::assertSame('creditadmin', $result['resolvedBy']);
+		self::assertSame('approved', array_values(array_filter($saved, static fn (array $row): bool => $row['schema'] === 'SupplierInvoice'))[0]['object']['statusCode']);
+
+	}//end testAcceptReadsTheMatchAndInvoiceById()
 }//end class

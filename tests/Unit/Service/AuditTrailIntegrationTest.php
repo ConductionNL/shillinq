@@ -117,7 +117,7 @@ final class AuditTrailIntegrationTest extends TestCase {
 					'totalInclVat' => 188760,
 					'currency' => 'EUR',
 					'ublFileId' => 'file-200',
-					'@self' => ['owner' => 'peppol-intake'],
+					'owner' => 'peppol-intake',
 				],
 			],
 			'ThreeWayMatch' => [
