@@ -6,7 +6,8 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\StandardsPolicyService;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Contract\ObjectEntityInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Unit tests for the pure ranking logic of StandardsPolicyService (REQ-ASP-003).
@@ -29,7 +30,7 @@ class StandardsPolicyServiceTest extends TestCase {
 	 */
 	protected function setUp(): void {
 		parent::setUp();
-		$this->service = new StandardsPolicyService($this->createMock(ContainerInterface::class));
+		$this->service = new StandardsPolicyService($this->createMock(ObjectServiceInterface::class));
 
 	}//end setUp()
 
@@ -115,84 +116,36 @@ class StandardsPolicyServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testSaveUpdatesOnlyTheNamedAdministrationsPolicy(): void {
-		$store = new class {
-
-			/**
-			 * Saved calls.
-			 *
-			 * @var array<int,array<string,mixed>>
-			 */
-			public array $saved = [];
-
-			/**
-			 * Filters of the last findAll.
-			 *
-			 * @var array<string,mixed>
-			 */
-			public array $filters = [];
-
-			/**
-			 * Fluent register setter.
-			 *
-			 * @param string $register Register.
-			 *
-			 * @return static
-			 */
-			public function setRegister(string $register): static {
-				return $this;
+		$rows = [
+			['@self' => ['id' => 'pol-a'], 'administrationId' => 'adm-a', 'frameworks' => []],
+			['@self' => ['id' => 'pol-b'], 'administrationId' => 'adm-b', 'frameworks' => []],
+		];
+		$saved = [];
+		$objects = $this->createMock(ObjectServiceInterface::class);
+		$objects->method('setRegister')->willReturnSelf();
+		$objects->method('setSchema')->willReturnSelf();
+		$objects->method('findAll')->willReturnCallback(
+			static fn (array $config): array => array_values(
+				array_filter($rows, static fn (array $row): bool => $row['administrationId'] === ($config['filters']['administrationId'] ?? null))
+			)
+		);
+		$objects->method('saveObject')->willReturnCallback(
+			function (array $object, ?array $extend, $register, $schema, ?string $uuid) use (&$saved): ObjectEntityInterface {
+				$saved[] = ['object' => $object, 'uuid' => $uuid];
+				$entity = $this->createMock(ObjectEntityInterface::class);
+				$entity->method('jsonSerialize')->willReturn(['@self' => ['id' => $uuid]] + $object);
+				return $entity;
 			}
-
-			/**
-			 * Fluent schema setter.
-			 *
-			 * @param string $schema Schema.
-			 *
-			 * @return static
-			 */
-			public function setSchema(string $schema): static {
-				return $this;
-			}
-
-			/**
-			 * Two administrations' policies; filtered on administrationId.
-			 *
-			 * @param array<string,mixed> $params Query.
-			 *
-			 * @return array<int,array<string,mixed>>
-			 */
-			public function findAll(array $params): array {
-				$this->filters = ($params['filters'] ?? []);
-				$rows = [
-					['@self' => ['id' => 'pol-a'], 'administrationId' => 'adm-a', 'frameworks' => []],
-					['@self' => ['id' => 'pol-b'], 'administrationId' => 'adm-b', 'frameworks' => []],
-				];
-
-				return array_values(array_filter($rows, fn (array $row): bool => $row['administrationId'] === ($this->filters['administrationId'] ?? null)));
-			}
-
-			/**
-			 * Record the save.
-			 *
-			 * @param mixed ...$args Named arguments.
-			 *
-			 * @return array<string,mixed>
-			 */
-			public function saveObject(mixed ...$args): array {
-				$this->saved[] = $args;
-				return ['@self' => ['id' => $args['uuid'] ?? 'new']] + $args['object'];
-			}
-		};
-		$container = $this->createMock(ContainerInterface::class);
-		$container->method('get')->willReturn($store);
-		$service = new StandardsPolicyService($container);
+		);
+		$service = new StandardsPolicyService($objects);
 
 		$result = $service->savePolicy('adm-b', [['key' => 'ifrs', 'enabled' => true, 'precedence' => 1]]);
 
 		self::assertSame('pol-b', $result['id']);
-		self::assertCount(1, $store->saved);
-		self::assertSame('pol-b', $store->saved[0]['uuid']);
-		self::assertSame('adm-b', $store->saved[0]['object']['administrationId']);
-		self::assertSame([['key' => 'ifrs', 'enabled' => true, 'precedence' => 1]], $store->saved[0]['object']['frameworks']);
+		self::assertCount(1, $saved);
+		self::assertSame('pol-b', $saved[0]['uuid']);
+		self::assertSame('adm-b', $saved[0]['object']['administrationId']);
+		self::assertSame([['key' => 'ifrs', 'enabled' => true, 'precedence' => 1]], $saved[0]['object']['frameworks']);
 
 	}//end testSaveUpdatesOnlyTheNamedAdministrationsPolicy()
 
