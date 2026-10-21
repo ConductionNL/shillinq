@@ -244,6 +244,12 @@ class CalendarControllerTest extends TestCase {
 						'updatedAt' => '2026-05-20T10:00:00Z',
 					],
 					[
+						'calendarId' => 'cal-orphan',
+						'resource' => 'res-009',
+						'timeZone' => 'Europe/Amsterdam',
+						'status' => 'active',
+					],
+					[
 						'calendarId' => 'cal-002',
 						'resource' => 'res-003',
 						'administrationId' => 'adm-1',
@@ -465,6 +471,7 @@ class CalendarControllerTest extends TestCase {
 			$this->createMock(LoggerInterface::class),
 			$this->buildL10n(),
 			$this->buildGroupManager($isAdmin),
+			$this->transitions,
 		);
 	}//end buildControllerFor()
 
@@ -566,6 +573,42 @@ class CalendarControllerTest extends TestCase {
 		$this->assertSame('bk-002', $data['conflicts'][0]['bookingId']);
 		$this->assertCount(0, $this->fakeObjectService->savedObjects, 'No booking is saved on conflict');
 	}//end testCreateBookingReturns409OnConflict()
+
+	/**
+	 * A calendar without an administration takes no booking, not even from
+	 * an admin: there is no default administration to fall back on.
+	 *
+	 * @return void
+	 */
+	public function testCreateBookingRefusesACalendarWithoutAnAdministration(): void {
+		$context = $this->createMock(AdministrationContextService::class);
+		$context->method('currentUserId')->willReturn('admin');
+		$context->method('canAccess')->willReturn(false);
+		$this->params = [
+			'title' => 'Klant: Admin',
+			'startTime' => '2026-05-21T14:00:00Z',
+			'endTime' => '2026-05-21T14:30:00Z',
+			'attendee' => 'Admin',
+		];
+		$this->conflicts->method('checkConflicts')->willReturn([]);
+
+		$controller = new CalendarController(
+			$this->request,
+			$this->container,
+			$this->settings,
+			$this->conflicts,
+			$context,
+			$this->guard,
+			$this->createMock(LoggerInterface::class),
+			$this->buildL10n(),
+			$this->buildGroupManager(true),
+			$this->transitions,
+		);
+
+		$response = $controller->createBooking('cal-orphan');
+		$this->assertSame(Http::STATUS_UNPROCESSABLE_ENTITY, $response->getStatus());
+		$this->assertCount(0, $this->fakeObjectService->savedObjects);
+	}//end testCreateBookingRefusesACalendarWithoutAnAdministration()
 
 	/**
 	 * The browser cannot choose the status: a posted `status: confirmed`
