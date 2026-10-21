@@ -115,6 +115,13 @@ final class InvoiceApiControllerTest extends TestCase {
 	private BillableLinesService&MockObject $billableLines;
 
 	/**
+	 * The caller's active administration, or null for none.
+	 *
+	 * @var string|null
+	 */
+	private ?string $activeAdministrationId = 'adm-1';
+
+	/**
 	 * The controller under test.
 	 *
 	 * @var InvoiceApiController
@@ -146,7 +153,9 @@ final class InvoiceApiControllerTest extends TestCase {
 				return $this->user;
 			}
 		);
-		$this->administrationContext->method('buildContext')->willReturn(['activeAdministrationId' => 'adm-1']);
+		$this->administrationContext->method('buildContext')->willReturnCallback(
+			fn (): array => ['activeAdministrationId' => $this->activeAdministrationId]
+		);
 
 		$this->objectService->method('setRegister')->willReturnSelf();
 		$this->objectService->method('setSchema')->willReturnSelf();
@@ -644,4 +653,32 @@ final class InvoiceApiControllerTest extends TestCase {
 	}//end testBillableAnonymousReturns401()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
+	/**
+	 * A caller without an administration reads, posts, renders and drafts
+	 * nothing: there is no `default` administration to fall back on.
+	 *
+	 * @return void
+	 */
+	public function testACallerWithoutAnAdministrationIsRefusedEverywhere(): void {
+		$this->activeAdministrationId = null;
+		$orphan = $this->entity(['id' => 'inv-default', 'administrationId' => 'default']);
+		$this->objectService->method('find')->willReturn($orphan);
+		$this->objectService->expects(self::never())->method('findAll');
+		$this->service->expects(self::never())->method('draftInvoice');
+		$this->service->expects(self::never())->method('postInvoice');
+		$this->pdfGenerator->expects(self::never())->method('generatePdf');
+		$this->billableLines->expects(self::never())->method('forCustomer');
+
+		$responses = [
+			'index' => $this->controller->index(),
+			'show' => $this->controller->show('inv-default'),
+			'post' => $this->controller->post('inv-default'),
+			'pdf' => $this->controller->pdf('inv-default'),
+			'generate' => $this->controller->generate(),
+			'billable' => $this->controller->billable(),
+		];
+		foreach ($responses as $endpoint => $response) {
+			self::assertSame(403, $response->getStatus(), $endpoint . ' refuses a caller without an administration.');
+		}
+	}//end testACallerWithoutAnAdministrationIsRefusedEverywhere()
 }//end class

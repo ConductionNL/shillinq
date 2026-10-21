@@ -363,10 +363,12 @@ class SlotService {
 				->setRegister($registerSlug)
 				->setSchema('Appointment')
 				->findAll(
-					[
+					config: [
 						'filters' => ['resourceId' => $resourceId],
 						'limit' => 500,
-					]
+					],
+					// Availability must see every appointment on the resource, not only those the caller may read.
+					_rbac: false,
 				);
 		} catch (\Throwable $e) {
 			$this->logger->error(
@@ -429,10 +431,11 @@ class SlotService {
 				->setRegister($registerSlug)
 				->setSchema($schema)
 				->findAll(
-					[
+					config: [
 						'filters' => [$field => $value],
 						'limit' => 1,
-					]
+					],
+					_rbac: false,
 				);
 			foreach ($records as $candidate) {
 				return $this->toArray(object: $candidate);

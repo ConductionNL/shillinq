@@ -5,6 +5,25 @@
   "components": {
     "schemas": {
       "Service": {
+        "authorization": {
+          "create": [
+            "shillinq_scheduler",
+            "shillinq_booking_administrator"
+          ],
+          "read": [
+            "shillinq_scheduler",
+            "shillinq_booking_administrator",
+            "shillinq_operator",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_scheduler",
+            "shillinq_booking_administrator"
+          ],
+          "delete": [
+            "shillinq_booking_administrator"
+          ]
+        },
         "slug": "Service",
         "icon": "BriefcaseOutline",
         "version": "0.1.0",
@@ -80,6 +99,25 @@
         }
       },
       "Resource": {
+        "authorization": {
+          "create": [
+            "shillinq_scheduler",
+            "shillinq_booking_administrator"
+          ],
+          "read": [
+            "shillinq_scheduler",
+            "shillinq_booking_administrator",
+            "shillinq_operator",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_scheduler",
+            "shillinq_booking_administrator"
+          ],
+          "delete": [
+            "shillinq_booking_administrator"
+          ]
+        },
         "slug": "Resource",
         "icon": "CalendarOutline",
         "version": "0.1.0",
@@ -296,27 +334,17 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "scheduler": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "customer": {
-              "permissions": [
-                "create",
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_scheduler"
+          ],
+          "read": [
+            "shillinq_auditor",
+            "shillinq_scheduler"
+          ],
+          "update": [
+            "shillinq_scheduler"
+          ]
         },
         "x-openregister-aggregations": {
           "countByStatus": {

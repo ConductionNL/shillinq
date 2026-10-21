@@ -103,6 +103,10 @@ class InvoiceApiController extends Controller {
 
 		try {
 			$admin = $this->resolveAdministrationId();
+			if ($admin === '') {
+				return $this->withoutAdministration();
+			}
+
 			$body = $this->decodeBody();
 
 			$req = InvoiceGenerationRequest::fromArray($admin, $body);
@@ -173,9 +177,14 @@ class InvoiceApiController extends Controller {
 			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
 		}
 
+		$admin = $this->resolveAdministrationId();
+		if ($admin === '') {
+			return $this->withoutAdministration();
+		}
+
 		return new JSONResponse(
 			$this->billableLines->forCustomer(
-				administrationId: $this->resolveAdministrationId(),
+				administrationId: $admin,
 				customerId: trim((string)$this->request->getParam('customerId', '')),
 				projectId: trim((string)$this->request->getParam('projectId', '')),
 				fromDate: trim((string)$this->request->getParam('fromDate', '')),
@@ -206,6 +215,10 @@ class InvoiceApiController extends Controller {
 
 		try {
 			$admin = $this->resolveAdministrationId();
+			if ($admin === '') {
+				return $this->withoutAdministration();
+			}
+
 			$filters = ['administrationId' => $admin];
 
 			$billingModel = (string)$this->request->getParam('billingModel', '');
@@ -256,6 +269,10 @@ class InvoiceApiController extends Controller {
 
 		try {
 			$admin = $this->resolveAdministrationId();
+			if ($admin === '') {
+				return $this->withoutAdministration();
+			}
+
 
 			$found = $this->objectService
 				->setRegister('shillinq')
@@ -319,6 +336,10 @@ class InvoiceApiController extends Controller {
 
 		try {
 			$admin = $this->resolveAdministrationId();
+			if ($admin === '') {
+				return $this->withoutAdministration();
+			}
+
 			$found = $this->objectService->setRegister('shillinq')->setSchema('BillableInvoice')->find($invoiceId);
 
 			if ($found === null) {
@@ -381,6 +402,10 @@ class InvoiceApiController extends Controller {
 
 		try {
 			$admin = $this->resolveAdministrationId();
+			if ($admin === '') {
+				return $this->withoutAdministration();
+			}
+
 			$found = $this->objectService->setRegister('shillinq')->setSchema('BillableInvoice')->find($invoiceId);
 
 			if ($found === null) {
@@ -442,21 +467,28 @@ class InvoiceApiController extends Controller {
 	}//end decodeBody()
 
 	/**
-	 * Resolve the administration id server-side.
+	 * The caller's active administration, resolved on the server.
 	 *
-	 * @return string
+	 * @return string The administration id, or '' when the caller has none.
 	 */
 	private function resolveAdministrationId(): string {
 		try {
-			$context = $this->administrationContext->buildContext();
-			$candidate = (string)($context['activeAdministrationId'] ?? '');
-			if ($candidate !== '') {
-				return $candidate;
-			}
+			return (string)($this->administrationContext->buildContext()['activeAdministrationId'] ?? '');
 		} catch (\Throwable $e) {
-			// Fall through to default.
+			$this->logger->error('InvoiceApiController: administration context failed: ' . $e->getMessage());
+			return '';
 		}
-
-		return 'default';
 	}//end resolveAdministrationId()
+
+	/**
+	 * The answer for a caller who belongs to no administration.
+	 *
+	 * @return JSONResponse
+	 */
+	private function withoutAdministration(): JSONResponse {
+		return new JSONResponse(
+			['message' => 'You are not a member of any administration.', 'error' => 'invoice-no-administration'],
+			Http::STATUS_FORBIDDEN
+		);
+	}//end withoutAdministration()
 }//end class
