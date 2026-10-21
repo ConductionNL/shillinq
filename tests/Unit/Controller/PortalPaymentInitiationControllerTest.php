@@ -90,7 +90,7 @@ final class PortalPaymentInitiationControllerTest extends TestCase {
 
 		$this->controller = new PortalPaymentInitiationController(
 			request: $this->request,
-			verifier: new PortalAssertionVerifier(config: null, secretOverride: self::SECRET),
+			verifier: new PortalAssertionVerifier(secretOverride: self::SECRET),
 			sessionService: $this->sessionService,
 			logger: $this->createMock(LoggerInterface::class),
 		);

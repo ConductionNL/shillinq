@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\AppInfo;
 
+use OCA\OpenRegister\AppHost\Bootstrap;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Contract\RegisterSlugResolverInterface;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
@@ -701,8 +702,10 @@ class Application extends App implements IBootstrap {
 
 		// REQ-004 bewijsstuk-required completion gate, both halves.
 		(new OrderFulfilmentGateRegistration())->register(context: $context);
+		(new PurchasingControlsRegistration())->register(context: $context);
 		// #516/#1103: the ledger posting guards; then the reporting listeners.
 		(new LedgerPostingRegistration())->register(context: $context);
+		(new PaymentControlsRegistration())->register(context: $context);
 		(new ReportingRegistration())->register(context: $context);
 		(new FieldRequirementRegistration())->register(context: $context);
 
@@ -721,6 +724,7 @@ class Application extends App implements IBootstrap {
 		// REQ-SIGN-001/005/006 — the decidesk DECISION and docudesk DOCUMENT
 		// signing request+outcome listeners, registered as one unit.
 		(new SigningDelegationRegistration())->register(context: $context);
+		(new ReportScheduleControlsRegistration())->register(context: $context);
 
 		// Change receipt-extraction-consume (REQ-RXC-001) — consume filinq's
 		// cross-app FinancialExtractionCompletedEvent (the canonical
@@ -1128,6 +1132,7 @@ class Application extends App implements IBootstrap {
 		// registered as one unit. See BudgetScenarioRegistration's own
 		// docblock for why this lives in its own class.
 		(new BudgetScenarioRegistration())->register(context: $context);
+		(new BbvValidationRegistration())->register(context: $context);
 
 	}//end register()
 
@@ -1248,7 +1253,43 @@ class Application extends App implements IBootstrap {
 			}
 		);
 
+		$this->bindStoreController(context: $context);
+
 	}//end registerAppHostGenerics()
+
+	/**
+	 * Alias `Controller\StoreController` to OpenRegister's generic store
+	 * controller, which serves the `store#search` and `store#install` routes
+	 * that `Routes::standard()` declares.
+	 *
+	 * The class_exists() guard stays in this method: psalm relies on it to
+	 * accept the Bootstrap call and does not carry that narrowing across a call.
+	 *
+	 * @param IRegistrationContext $context The registration context.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md
+	 */
+	private function bindStoreController(IRegistrationContext $context): void {
+		// Gate-64: apphost-prelude exclude OpenRegisterAutoloader::register() below is the prelude.
+		OpenRegisterAutoloader::register();
+
+		if (class_exists(Bootstrap::class) === true) {
+			try {
+				Bootstrap::aliasStoreController(
+					context: $context,
+					appId: self::APP_ID,
+					controllerNs: 'OCA\\Shillinq\\Controller'
+				);
+			} catch (\Throwable) {
+				// An OpenRegister older than the helper, or present but
+				// unloadable: the store routes stay unbound and every other
+				// registration still runs.
+			}
+		}
+
+	}//end bindStoreController()
 
 	/**
 	 * Boot the application.

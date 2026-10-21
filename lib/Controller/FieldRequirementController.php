@@ -54,6 +54,25 @@ class FieldRequirementController extends Controller {
 	}//end __construct()
 
 	/**
+	 * GET /api/field-requirements: the active requirements of the caller's administrations, switched on or off.
+	 *
+	 * @return JSONResponse `{rows}` or 401.
+	 *
+	 * @spec openspec/changes/required-field-switch/specs/app-administration/spec.md
+	 */
+	#[NoAdminRequired]
+	public function index(): JSONResponse {
+		if ($this->context->currentUserId() === null) {
+			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
+		}
+
+		$ids = array_values(array_map('strval', $this->context->accessibleAdministrationIds()));
+
+		return new JSONResponse(['rows' => $this->requirements->listed(administrationIds: $ids)]);
+
+	}//end index()
+
+	/**
 	 * GET /api/field-requirements/{id}/fields: the record type's fields for one requirement.
 	 *
 	 * @param string $id The requirement.

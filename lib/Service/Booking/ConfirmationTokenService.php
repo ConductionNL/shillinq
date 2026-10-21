@@ -371,13 +371,15 @@ class ConfirmationTokenService {
 				->setRegister($this->settings->getRegisterSlug())
 				->setSchema('ConfirmationToken')
 				->findAll(
-					[
+					config: [
 						'filters' => [
 							'appointmentId' => $appointmentId,
 							'status' => 'active',
 						],
 						'limit' => 5,
-					]
+					],
+					// Tokens are server-issued and redeemed by anonymous customers holding the link.
+					_rbac: false,
 				);
 		} catch (Throwable $e) {
 			$this->logger->error(
@@ -414,6 +416,7 @@ class ConfirmationTokenService {
 				object: $token,
 				register: $this->settings->getRegisterSlug(),
 				schema: 'ConfirmationToken',
+				_rbac: false,
 			);
 			return $this->toArray(object: $saved);
 		} catch (Throwable $e) {

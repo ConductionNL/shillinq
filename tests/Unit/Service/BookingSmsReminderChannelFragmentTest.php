@@ -178,9 +178,12 @@ final class BookingSmsReminderChannelFragmentTest extends TestCase {
 		self::assertContains('sms', $notif['channels']);
 		self::assertSame('booking.reminder-due', $notif['trigger']);
 
-		$permMap = $schema['x-openregister-rbac']['permissionMap'];
-		foreach (['booking:sms-channel:list', 'booking:sms-channel:create', 'booking:sms-channel:edit', 'booking:sms-channel:activate', 'booking:sms-channel:delete'] as $slug) {
-			self::assertArrayHasKey($slug, $permMap, "RBAC must map $slug");
+		foreach (['create', 'read', 'update', 'delete'] as $action) {
+			self::assertContains(
+				needle: 'shillinq_sms_channel_administrator',
+				haystack: $schema['authorization'][$action],
+				message: "The channel administrator must hold $action"
+			);
 		}
 	}//end testDeclarativeCalculationsNotificationsAndRbac()
 

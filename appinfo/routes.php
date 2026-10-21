@@ -106,6 +106,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'relation#payeeBothSides', 'url' => '/api/relations/payee/{payeeId}/both-sides', 'verb' => 'GET'],
             ['name' => 'relation#bothSides', 'url' => '/api/relations/{customerId}/both-sides', 'verb' => 'GET'],
             // platform-required-fields REQ-PRF-001: a requirement's record type fields.
+            ['name' => 'fieldRequirement#index', 'url' => '/api/field-requirements', 'verb' => 'GET'],
             ['name' => 'fieldRequirement#fields', 'url' => '/api/field-requirements/{id}/fields', 'verb' => 'GET'],
             // reporting-custom-analysis REQ-RCA-002: the financial pivot.
             ['name' => 'ledgerPivot#pivot', 'url' => '/api/analysis/pivot', 'verb' => 'GET'],
@@ -209,6 +210,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // issue #111). Static {invoiceId}/{action} routes precede the bare {invoiceId}
         // routes so Symfony matches them first.
             ['name' => 'invoiceApi#generate', 'url' => '/api/v1/invoices/generate', 'verb' => 'POST'],
+            ['name' => 'invoiceApi#billable', 'url' => '/api/v1/invoices/billable-lines', 'verb' => 'GET'],
             ['name' => 'invoiceApi#index', 'url' => '/api/v1/invoices', 'verb' => 'GET'],
             ['name' => 'invoiceApi#post', 'url' => '/api/v1/invoices/{invoiceId}/post', 'verb' => 'POST'],
             ['name' => 'invoiceApi#pdf', 'url' => '/api/v1/invoices/{invoiceId}/pdf', 'verb' => 'GET'],
@@ -309,6 +311,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // Sales-down-payments (REQ-SDP-001, REQ-SDP-003, REQ-SDP-005): raise a
             // down payment on an order, show the order's position, deduct on the final invoice.
             ['name' => 'downPayment#create', 'url' => '/api/ar-invoices/down-payments', 'verb' => 'POST'],
+            ['name' => 'quickDraftInvoice#create', 'url' => '/api/ar-invoices/quick-drafts', 'verb' => 'POST'],
             ['name' => 'downPayment#show', 'url' => '/api/ar-invoices/{id}/down-payments', 'verb' => 'GET'],
             ['name' => 'downPayment#deduct', 'url' => '/api/ar-invoices/{id}/down-payment-deductions', 'verb' => 'POST'],
 
@@ -785,6 +788,11 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // controller on the payment.administer action.
             ['name' => 'objectRequestRefund#approve', 'url' => '/api/payment-requests/{id}/refund/approve', 'verb' => 'POST'],
             ['name' => 'objectRequestRefund#markPaid', 'url' => '/api/payment-requests/{id}/refund/paid', 'verb' => 'POST'],
+            // Finance's half of a payout another app raised
+            // (inbound-payable-from-another-app, REQ-IPY-002, REQ-IPY-003).
+            ['name' => 'inboundPayable#approve', 'url' => '/api/inbound-payables/{id}/approve', 'verb' => 'POST'],
+            ['name' => 'inboundPayable#markPaid', 'url' => '/api/inbound-payables/{id}/paid', 'verb' => 'POST'],
+            ['name' => 'inboundPayable#reject', 'url' => '/api/inbound-payables/{id}/reject', 'verb' => 'POST'],
 
             // Raise the published leges for an object's type in one action
             // (leges-at-intake, REQ-SOPR-008). The amount comes from the fee

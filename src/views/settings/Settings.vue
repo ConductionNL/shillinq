@@ -1,5 +1,6 @@
 <template>
 	<CnSettingsSection
+		wide
 		:name="t('shillinq', 'Configuration')"
 		:description="t('shillinq', 'Configure the app settings')">
 		<form @submit.prevent="save">

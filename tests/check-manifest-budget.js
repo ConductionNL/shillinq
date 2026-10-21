@@ -194,7 +194,44 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // query lens on Payment requests, not a second index page), the Approve and
 // Mark paid row actions and three state filter options. 1,207,415 in all.
 // Raised to 1,213,500: 6,085 B of headroom, 0.50%.
-const DEFAULT_BUDGET_BYTES = 1_213_500
+//
+// Re-measured 2026-10-14 (board navigation, screens round 10): development
+// held 1,211,152 bytes. This change adds 2,531 B: the nav-board-sections.json
+// fragment (the Verkoop, Inkoop, Bank and Boekhouding headings with their 15
+// entries, and the All modules heading) and the root `nav` block (New booking,
+// Help and guidance, footer order). 1,213,683 in all.
+// Raised to 1,219,700: 6,017 B of headroom, 0.50%.
+//
+// Re-measured 2026-10-14 (sales invoice board, screens round 10): the branch
+// it stacks on held 1,218,823 bytes after the sales, purchase and claims list
+// headers. This change adds 979 B to add-shillinq-einvoicing-ubl-peppol.json:
+// the invoice page's tab strip, side column cards, pill and breadcrumb, less
+// the four totals tiles. 1,219,802 in all.
+// Raised to 1,226,000: 6,198 B of headroom, 0.51%.
+//
+// Re-measured 2026-10-15 (liquidity board, screens round 10: board
+// ShLiquiditeit on the cashflow dashboard, four key figures, the forecast
+// chart, the Wet Fido norms, recurring costs and treasury counts): development
+// held 1,220,469 bytes. This change adds 8,088 B. 1,228,557 in all.
+// Raised to 1,234,700: 6,143 B of headroom, 0.50%.
+//
+// Re-measured 2026-10-15 (receivables board, screens round 10: board
+// ShDebiteurenbeheer on the ar-aging page, five age tiles, the open invoices
+// with their reminder step and the payment requests): development held
+// 1,228,532 bytes. This change adds 8,037 B. 1,236,569 in all.
+// Raised to 1,242,800: 6,231 B of headroom, 0.50%.
+//
+// Re-measured 2026-10-15 (bank board, screens round 10: board ShBank, the new
+// bank-and-payments-board.json fragment with the Bank and payments page, its
+// key figures and four views): development held 1,236,569 bytes. This change
+// adds 9,601 B. 1,246,170 in all.
+// Raised to 1,252,500: 6,330 B of headroom, 0.51%.
+//
+// Re-measured 2026-10-16 (provider payouts, board ShDebiteurenbeheer: the
+// fourth tab of the receivables tab strip and its payouts table):
+// development held 1,251,745 bytes. This change adds 1,393 B. 1,253,138 in all.
+// Raised to 1,259,400: 6,262 B of headroom, 0.50%.
+const DEFAULT_BUDGET_BYTES = 1_259_400
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),

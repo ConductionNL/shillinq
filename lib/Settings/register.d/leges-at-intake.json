@@ -9,6 +9,27 @@
   "components": {
     "schemas": {
       "FeeSchedule": {
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
+        },
         "slug": "FeeSchedule",
         "icon": "CashRegister",
         "version": "0.3.0",

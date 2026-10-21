@@ -208,6 +208,66 @@ class FieldRequirements {
 	}//end find()
 
 	/**
+	 * The active requirements of the given administrations, switched on or off, each with a title naming field and record type.
+	 *
+	 * @param list<string> $administrationIds The administrations.
+	 *
+	 * @return list<array<string, mixed>> The requirements, each with `title`.
+	 *
+	 * @spec openspec/changes/required-field-switch/specs/app-administration/spec.md
+	 */
+	public function listed(array $administrationIds): array {
+		$listed = [];
+		foreach (array_unique($administrationIds) as $administrationId) {
+			if ($administrationId === '') {
+				continue;
+			}
+
+			$rows = $this->readAllRows(
+				objectService: $this->objectService,
+				registerSlug: $this->settings->getRegisterSlug(),
+				schema: self::SCHEMA,
+				filters: ['administrationId' => $administrationId, 'lifecycleState' => 'active']
+			);
+			foreach ($rows as $row) {
+				$requirement = $this->rowPayload(row: $row);
+				if (is_object($row) === true && method_exists($row, 'getUuid') === true && (string)$row->getUuid() !== '') {
+					$requirement['id'] = (string)$row->getUuid();
+				}
+
+				$requirement['enabled'] = (($requirement['enabled'] ?? true) !== false);
+				$requirement['title'] = $this->requirementTitle(requirement: $requirement);
+				$listed[] = $requirement;
+			}
+		}
+
+		return $listed;
+
+	}//end listed()
+
+	/**
+	 * A requirement's title: the field on its record type, for example "Cost Center on Supplier invoice".
+	 *
+	 * @param array<string, mixed> $requirement The requirement.
+	 *
+	 * @return string The title.
+	 */
+	private function requirementTitle(array $requirement): string {
+		$schema = trim((string)($requirement['schema'] ?? ''));
+		$field = trim((string)($requirement['field'] ?? ''));
+		$definition = $this->schemas->definition(schema: $schema);
+		if ($definition === null) {
+			return $this->l10n->t('%1$s on %2$s', [$field, $schema]);
+		}
+
+		return $this->l10n->t(
+			'%1$s on %2$s',
+			[$this->l10n->t($this->title(definition: $definition, field: $field)), $this->l10n->t($definition['title'])]
+		);
+
+	}//end requirementTitle()
+
+	/**
 	 * The active requirements of an administration on a schema.
 	 *
 	 * @param string $administrationId The administration.
@@ -233,7 +293,9 @@ class FieldRequirements {
 		return array_values(
 			array_filter(
 				$this->cache[$administrationId],
-				static fn (array $row): bool => strcasecmp((string)($row['schema'] ?? ''), $schema) === 0 && (string)($row['field'] ?? '') !== ''
+				static fn (array $row): bool => strcasecmp((string)($row['schema'] ?? ''), $schema) === 0
+					&& (string)($row['field'] ?? '') !== ''
+					&& ($row['enabled'] ?? true) !== false
 			)
 		);
 

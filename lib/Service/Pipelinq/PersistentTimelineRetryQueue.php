@@ -197,7 +197,9 @@ final class PersistentTimelineRetryQueue implements TimelineRetryQueue {
 				->saveObject(
 					object: $payload,
 					register: $registerSlug,
-					schema: 'TimelinePublishRetryEntry'
+					schema: 'TimelinePublishRetryEntry',
+					// The retry queue is written by the server on behalf of whoever triggered the publish.
+					_rbac: false,
 				);
 
 			return $this->extractId(result: $saved);

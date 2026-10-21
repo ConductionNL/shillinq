@@ -1,6 +1,8 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
 	"version": "1.4.0",
+	"look": "board",
+	"nav": {"primaryAction": {"id": "new-booking", "label": "New Booking", "icon": "Plus", "solid": true, "action": {"id": "new-booking", "label": "New Booking", "type": "open-form", "register": "shillinq", "schema": "JournalEntry"}}, "help": {"label": "Help and guidance", "href": "https://shillinq.conduction.nl"}, "footer": ["help", "settings"]},
 	"dependencies": [
 		"openregister"
 	],
@@ -4603,20 +4605,21 @@
 			"id": "ChartOfAccounts",
 			"route": "/chart-of-accounts",
 			"type": "index",
-			"title": "Chart of Accounts",
+			"title": "General Ledger",
 			"config": {
 				"register": "shillinq",
 				"schema": "Account",
 				"columns": [
 					{
-						"key": "accountNumber",
-						"label": "Account Number",
+						"key": "rgsCode",
+						"label": "RGS code",
 						"sortable": true
 					},
 					{
-						"key": "name",
-						"label": "Name",
-						"sortable": true
+						"key": "accountNumber",
+						"label": "Account",
+						"sortable": true,
+						"secondary": "{name}"
 					},
 					{
 						"key": "accountType",
@@ -4631,7 +4634,65 @@
 				],
 				"defaultSort": "accountNumber",
 				"detailRoute": "ChartOfAccountsDetail",
-				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/chart-of-accounts"
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/chart-of-accounts",
+				"_boardNote": "Board ShGrootboek is the chart of accounts: title, count line, Download / Actions / New account, chips for balance sheet, profit and loss and control accounts, the RGS code first and the account with its type under it. The board balance column waits on data: an account carries no balance.",
+				"showTitle": true,
+				"countSubtitle": "{total} accounts",
+				"showCount": false,
+				"quickFilters": [
+					{
+						"label": "All accounts",
+						"filter": {},
+						"default": true,
+						"showCount": true
+					},
+					{
+						"label": "Balance sheet",
+						"filter": {
+							"accountType": [
+								"assets",
+								"liabilities",
+								"equity"
+							]
+						},
+						"showCount": true
+					},
+					{
+						"label": "Profit and loss",
+						"filter": {
+							"accountType": [
+								"revenue",
+								"expenses"
+							]
+						},
+						"showCount": true
+					},
+					{
+						"label": "Control accounts",
+						"filter": {
+							"controlAccountFor": "IS NOT NULL"
+						},
+						"showCount": true
+					}
+				],
+				"headerButtons": [
+					{
+						"action": "export"
+					},
+					{
+						"action": "actions-menu",
+						"items": [
+							"import",
+							"refresh",
+							"documentation"
+						]
+					},
+					{
+						"action": "add",
+						"variant": "primary",
+						"label": "New account"
+					}
+				]
 			}
 		},
 		{
@@ -5247,7 +5308,7 @@
 			"id": "Dashboard",
 			"route": "/",
 			"type": "dashboard",
-			"title": "Financial overview",
+			"title": "Dashboard",
 			"slots": {
 				"widget-cashflow-chart": "CashflowChartWidget"
 			},
@@ -5269,7 +5330,8 @@
 						"type": "open-modal",
 						"target": "InvoiceQuickDraftModal",
 						"icon": "FileDocumentPlus",
-						"props": { "open": true }
+						"props": { "open": true },
+						"variant": "primary"
 					}
 				],
 				"dateRange": {
@@ -5531,7 +5593,7 @@
 						"widgetId": "turnover",
 						"gridX": 0,
 						"gridY": 0,
-						"gridWidth": 4,
+						"gridWidth": 3,
 						"gridHeight": 2,
 						"showTitle": false,
 						"dateChip": true
@@ -5539,9 +5601,9 @@
 					{
 						"id": "layout-margin",
 						"widgetId": "margin",
-						"gridX": 4,
+						"gridX": 3,
 						"gridY": 0,
-						"gridWidth": 4,
+						"gridWidth": 3,
 						"gridHeight": 2,
 						"showTitle": false,
 						"dateChip": true
@@ -5549,9 +5611,18 @@
 					{
 						"id": "layout-debtors",
 						"widgetId": "debtors",
-						"gridX": 8,
+						"gridX": 6,
 						"gridY": 0,
-						"gridWidth": 4,
+						"gridWidth": 3,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "layout-cash",
+						"widgetId": "cash",
+						"gridX": 9,
+						"gridY": 0,
+						"gridWidth": 3,
 						"gridHeight": 2,
 						"showTitle": false
 					},
@@ -5560,28 +5631,19 @@
 						"widgetId": "creditors",
 						"gridX": 0,
 						"gridY": 2,
-						"gridWidth": 4,
+						"gridWidth": 6,
 						"gridHeight": 2,
 						"showTitle": false
 					},
 					{
 						"id": "layout-billable",
 						"widgetId": "billable",
-						"gridX": 4,
+						"gridX": 6,
 						"gridY": 2,
-						"gridWidth": 4,
+						"gridWidth": 6,
 						"gridHeight": 2,
 						"showTitle": false,
 						"dateChip": true
-					},
-					{
-						"id": "layout-cash",
-						"widgetId": "cash",
-						"gridX": 8,
-						"gridY": 2,
-						"gridWidth": 4,
-						"gridHeight": 2,
-						"showTitle": false
 					},
 					{
 						"id": "layout-turnover-chart",
@@ -5589,41 +5651,41 @@
 						"gridX": 0,
 						"gridY": 4,
 						"gridWidth": 6,
-						"gridHeight": 4,
-						"dateChip": true
-					},
-					{
-						"id": "layout-margin-chart",
-						"widgetId": "margin-chart",
-						"gridX": 6,
-						"gridY": 4,
-						"gridWidth": 6,
-						"gridHeight": 4,
+						"gridHeight": 5,
 						"dateChip": true
 					},
 					{
 						"id": "layout-cashflow-chart",
 						"widgetId": "cashflow-chart",
-						"gridX": 0,
-						"gridY": 8,
+						"gridX": 6,
+						"gridY": 4,
 						"gridWidth": 6,
-						"gridHeight": 4,
+						"gridHeight": 5,
+						"dateChip": true
+					},
+					{
+						"id": "layout-margin-chart",
+						"widgetId": "margin-chart",
+						"gridX": 0,
+						"gridY": 9,
+						"gridWidth": 6,
+						"gridHeight": 5,
 						"dateChip": true
 					},
 					{
 						"id": "layout-billable-hours-chart",
 						"widgetId": "billable-hours-chart",
 						"gridX": 6,
-						"gridY": 8,
+						"gridY": 9,
 						"gridWidth": 6,
-						"gridHeight": 4,
+						"gridHeight": 5,
 						"dateChip": true
 					},
 					{
 						"id": "layout-open-debtors",
 						"widgetId": "open-debtors",
 						"gridX": 0,
-						"gridY": 12,
+						"gridY": 14,
 						"gridWidth": 6,
 						"gridHeight": 5
 					},
@@ -5631,7 +5693,7 @@
 						"id": "layout-open-creditors",
 						"widgetId": "open-creditors",
 						"gridX": 6,
-						"gridY": 12,
+						"gridY": 14,
 						"gridWidth": 6,
 						"gridHeight": 5
 					}
@@ -7653,24 +7715,30 @@
 				"schema": "CustomerMaster",
 				"columns": [
 					{
-						"key": "customerNumber",
-						"label": "Customer #",
-						"sortable": true
-					},
-					{
-						"key": "name",
+						"key": "legalName",
 						"label": "Name",
+						"sortable": true,
+						"secondary": "{tradeName}"
+					},
+					{
+						"key": "kvkNumber",
+						"label": "KvK Number",
 						"sortable": true
 					},
 					{
-						"key": "paymentTermDays",
-						"label": "Payment Terms (days)",
+						"key": "legalForm",
+						"label": "Legal form",
 						"sortable": true
 					},
 					{
-						"key": "creditLimit",
-						"label": "Credit Limit (EUR)",
-						"sortable": true
+						"key": "address.city",
+						"label": "City",
+						"sortable": false
+					},
+					{
+						"key": "email",
+						"label": "Email",
+						"sortable": false
 					},
 					{
 						"key": "lifecycleState",
@@ -7678,9 +7746,35 @@
 						"sortable": true
 					}
 				],
-				"defaultSort": "customerNumber",
+				"defaultSort": "legalName",
 				"detailRoute": "CustomerDetail",
-				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/customers"
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/customers",
+				"look": "board",
+				"showTitle": true,
+				"countText": "{shown} of {total} customers",
+				"rowIcon": "OfficeBuildingOutline",
+				"headerButtons": [
+					{
+						"action": "export"
+					},
+					{
+						"action": "actions-menu"
+					}
+				],
+				"quickFilters": [
+					{
+						"label": "All",
+						"filter": {}
+					},
+					{
+						"label": "Also a supplier",
+						"filter": {"payeeId": "IS NOT NULL"}
+					},
+					{
+						"label": "Blocked",
+						"filter": {"lifecycleState": "blocked"}
+					}
+				]
 			}
 		},
 		{
@@ -7693,109 +7787,40 @@
 				"schema": "CustomerMaster",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/customers",
 				"indexRoute": "Customers",
-				"_note": "Debtor master archetype — a customer that gets invoiced. Body leads with the schema-driven Data widget (legalName/tradeName, kvkNumber, vatId with its VIES check, iban, creditLimit, dunningPolicyRef — real CustomerMaster fields; the legacy page listed fabricated keys like customerNumber/name/tradingName/btwNumber/paymentTermDays/peppolEndpoint/phone that do not exist on this schema, fixed here) beside a Related panel. The AR position is the customer's whole reason to be here, so its invoices (ARInvoice filtered customerId=@objectId, rowRoute to ARInvoiceDetail) are the primary body list, with outstanding/open-invoice totals as summaryAggregates KPI chips. No comms leaves — CustomerMaster carries no email/talk linkedType beyond the plain email/telephone fields already in the Data widget. Audit trail evidences master-data changes (credit limit, IBAN) and stays in the sidebar per policy.",
+				"_note": "Debtor master on the shared organisation page (nextcloud-vue screens-relation-pages, board ShKlant): the board look, a breadcrumb to Customers, one tab strip (Overview stack of details, agreements and open invoices; Invoices; Payment plans; Also a supplier with the both-sides figures; History last) and a side column with the SEPA mandate, the contact person, the address, the links and the History card. Every widget the page had stays, now placed through the tabs or the side column.",
 				"widgets": [
 					{
 						"id": "customer-identity",
 						"type": "data",
-						"title": "Company identity",
-						"icon": "OfficeBuilding",
-						"content": {
-							"columns": 2,
-							"include": [
-								"customerId",
-								"legalName",
-								"tradeName",
-								"kvkNumber",
-								"vatId",
-								"vatIdValidationStatus",
-								"vatIdValidatedAt",
-								"email",
-								"telephone"
-							]
-						}
+						"title": "Customer details",
+						"content": {"columns": 3, "include": ["legalName", "tradeName", "kvkNumber", "legalForm", "address", "vatId", "vatIdValidationStatus", "contactPerson", "email", "telephone", "customerId"]}
 					},
 					{
 						"id": "customer-stats-open-invoices",
 						"type": "stats-block",
 						"title": "Open invoices",
 						"icon": "ChartBar",
-						"content": {
-							"entries": [
-								{
-									"title": "Open invoices",
-									"register": "shillinq",
-									"schema": "ARInvoice",
-									"metric": "count",
-									"filter": {
-										"customerId": "@objectId",
-										"lifecycleState": "issued"
-									},
-									"route": "AccountsReceivable"
-								}
-							]
-						}
+						"content": {"entries": [{"title": "Open invoices", "register": "shillinq", "schema": "ARInvoice", "metric": "count", "filter": {"customerId": "@objectId", "lifecycleState": "issued"}, "route": "AccountsReceivable"}]}
 					},
 					{
 						"id": "customer-stats-overdue-invoices",
 						"type": "stats-block",
 						"title": "Overdue invoices",
 						"icon": "ChartBar",
-						"content": {
-							"entries": [
-								{
-									"title": "Overdue invoices",
-									"register": "shillinq",
-									"schema": "ARInvoice",
-									"metric": "count",
-									"filter": {
-										"customerId": "@objectId",
-										"lifecycleState": "overdue"
-									},
-									"route": "AccountsReceivable"
-								}
-							]
-						}
+						"content": {"entries": [{"title": "Overdue invoices", "register": "shillinq", "schema": "ARInvoice", "metric": "count", "filter": {"customerId": "@objectId", "lifecycleState": "overdue"}, "route": "AccountsReceivable"}]}
 					},
 					{
 						"id": "customer-stats-outstanding-gross",
 						"type": "stats-block",
 						"title": "Outstanding (gross)",
 						"icon": "ChartBar",
-						"content": {
-							"entries": [
-								{
-									"title": "Outstanding (gross)",
-									"register": "shillinq",
-									"schema": "ARInvoice",
-									"metric": "sum",
-									"field": "grossAmount",
-									"filter": {
-										"customerId": "@objectId",
-										"lifecycleState": "overdue"
-									},
-									"format": "currency"
-								}
-							]
-						}
+						"content": {"entries": [{"title": "Outstanding (gross)", "register": "shillinq", "schema": "ARInvoice", "metric": "sum", "field": "grossAmount", "filter": {"customerId": "@objectId", "lifecycleState": "overdue"}, "format": "currency"}]}
 					},
 					{
 						"id": "customer-finance",
 						"type": "data",
-						"title": "Finance & compliance",
-						"icon": "CurrencyEur",
-						"content": {
-							"columns": 2,
-							"include": [
-								"iban",
-								"creditLimit",
-								"dunningPolicyRef",
-								"defaultGlAccount",
-								"lifecycleState",
-								"administrationId",
-								"ublDebtorRef"
-							]
-						}
+						"title": "Agreements",
+						"content": {"columns": 2, "include": ["iban", "creditLimit", "dunningPolicyRef", "defaultGlAccount", "lifecycleState", "administrationId", "ublDebtorRef"]}
 					},
 					{
 						"id": "customer-related",
@@ -7808,332 +7833,71 @@
 						"type": "object-list",
 						"title": "Invoices",
 						"icon": "FileDocument",
-						"content": {
-							"register": "shillinq",
-							"schema": "ARInvoice",
-							"filter": {
-								"customerId": "@objectId"
-							},
-							"sort": {
-								"field": "dueDate",
-								"dir": "desc"
-							},
-							"limit": 20,
-							"columns": [
-								{
-									"key": "invoiceNumber",
-									"label": "Invoice #"
-								},
-								{
-									"key": "invoiceDate",
-									"label": "Date"
-								},
-								{
-									"key": "dueDate",
-									"label": "Due"
-								},
-								{
-									"key": "grossAmount",
-									"label": "Total (EUR)"
-								},
-								{
-									"key": "lifecycleState",
-									"label": "Status"
-								}
-							],
-							"rowRoute": "ARInvoiceDetail",
-							"viewAllRoute": "AccountsReceivable",
-							"viewAllQuery": {
-								"customerId": "@objectId"
-							},
-							"emptyText": "No invoices yet for this customer."
-						}
+						"content": {"register": "shillinq", "schema": "ARInvoice", "filter": {"customerId": "@objectId"}, "sort": {"field": "dueDate", "dir": "desc"}, "limit": 20, "columns": [{"key": "invoiceNumber", "label": "Invoice #"}, {"key": "invoiceDate", "label": "Date"}, {"key": "dueDate", "label": "Due"}, {"key": "grossAmount", "label": "Total (EUR)"}, {"key": "lifecycleState", "label": "Status"}], "rowRoute": "ARInvoiceDetail", "viewAllRoute": "AccountsReceivable", "viewAllQuery": {"customerId": "@objectId"}, "emptyText": "No invoices yet for this customer."}
 					},
 					{
 						"id": "customer-payment-plans",
 						"type": "object-list",
 						"title": "Payment plans",
 						"icon": "CalendarClock",
-						"content": {
-							"register": "shillinq",
-							"schema": "PaymentPlan",
-							"filter": {
-								"customerId": "@objectId"
-							},
-							"limit": 20,
-							"columns": [
-								{
-									"key": "planNumber",
-									"label": "Plan"
-								},
-								{
-									"key": "totalAmount",
-									"label": "Total"
-								},
-								{
-									"key": "paidAmount",
-									"label": "Paid"
-								},
-								{
-									"key": "nextDueDate",
-									"label": "Next due"
-								},
-								{
-									"key": "lifecycleState",
-									"label": "State"
-								}
-							],
-							"rowRoute": "PaymentPlanDetail",
-							"emptyText": "No payment plans for this customer."
-						}
+						"content": {"register": "shillinq", "schema": "PaymentPlan", "filter": {"customerId": "@objectId"}, "limit": 20, "columns": [{"key": "planNumber", "label": "Plan"}, {"key": "totalAmount", "label": "Total"}, {"key": "paidAmount", "label": "Paid"}, {"key": "nextDueDate", "label": "Next due"}, {"key": "lifecycleState", "label": "State"}], "rowRoute": "PaymentPlanDetail", "emptyText": "No payment plans for this customer."}
 					},
 					{
 						"id": "customer-both-sides-open-receivable",
 						"title": "Open receivable",
 						"type": "stat",
-						"content": {
-							"label": "Open receivable",
-							"icon": "ScaleBalance",
-							"format": {
-								"style": "currency",
-								"currency": "EUR",
-								"decimals": 2
-							},
-							"endpointSource": {
-								"url": "/apps/shillinq/api/relations/@objectId/both-sides"
-							},
-							"valueField": "totals.openReceivable"
-						}
+						"content": {"label": "Open receivable", "icon": "ScaleBalance", "format": {"style": "currency", "currency": "EUR", "decimals": 2}, "endpointSource": {"url": "/apps/shillinq/api/relations/@objectId/both-sides"}, "valueField": "totals.openReceivable"}
 					},
 					{
 						"id": "customer-both-sides-open-payable",
 						"title": "Open payable",
 						"type": "stat",
-						"content": {
-							"label": "Open payable",
-							"icon": "ScaleBalance",
-							"format": {
-								"style": "currency",
-								"currency": "EUR",
-								"decimals": 2
-							},
-							"endpointSource": {
-								"url": "/apps/shillinq/api/relations/@objectId/both-sides"
-							},
-							"valueField": "totals.openPayable"
-						}
+						"content": {"label": "Open payable", "icon": "ScaleBalance", "format": {"style": "currency", "currency": "EUR", "decimals": 2}, "endpointSource": {"url": "/apps/shillinq/api/relations/@objectId/both-sides"}, "valueField": "totals.openPayable"}
 					},
 					{
 						"id": "customer-both-sides-net",
 						"title": "Net position",
 						"type": "stat",
-						"content": {
-							"label": "Net position",
-							"icon": "ScaleBalance",
-							"format": {
-								"style": "currency",
-								"currency": "EUR",
-								"decimals": 2
-							},
-							"endpointSource": {
-								"url": "/apps/shillinq/api/relations/@objectId/both-sides"
-							},
-							"valueField": "totals.net"
-						}
+						"content": {"label": "Net position", "icon": "ScaleBalance", "format": {"style": "currency", "currency": "EUR", "decimals": 2}, "endpointSource": {"url": "/apps/shillinq/api/relations/@objectId/both-sides"}, "valueField": "totals.net"}
 					},
 					{
 						"id": "customer-both-sides-sent",
 						"title": "Invoices sent",
 						"type": "object-table",
-						"content": {
-							"endpointSource": {
-								"url": "/apps/shillinq/api/relations/@objectId/both-sides",
-								"responsePath": "sent.rows"
-							},
-							"columns": [
-								{
-									"key": "number",
-									"label": "Invoice"
-								},
-								{
-									"key": "date",
-									"label": "Date"
-								},
-								{
-									"key": "state",
-									"label": "Status"
-								},
-								{
-									"key": "amount",
-									"label": "Amount",
-									"formatter": "currency",
-									"formatterOptions": {
-										"currency": "EUR",
-										"decimals": 2
-									}
-								},
-								{
-									"key": "open",
-									"label": "Still open",
-									"formatter": "currency",
-									"formatterOptions": {
-										"currency": "EUR",
-										"decimals": 2
-									}
-								}
-							],
-							"emptyText": "No sales invoices this year, or none linked."
-						}
+						"content": {"endpointSource": {"url": "/apps/shillinq/api/relations/@objectId/both-sides", "responsePath": "sent.rows"}, "columns": [{"key": "number", "label": "Invoice"}, {"key": "date", "label": "Date"}, {"key": "state", "label": "Status"}, {"key": "amount", "label": "Amount", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2}}, {"key": "open", "label": "Still open", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2}}], "emptyText": "No sales invoices this year, or none linked."}
 					},
 					{
 						"id": "customer-both-sides-received",
 						"title": "Invoices received",
 						"type": "object-table",
-						"content": {
-							"endpointSource": {
-								"url": "/apps/shillinq/api/relations/@objectId/both-sides",
-								"responsePath": "received.rows"
-							},
-							"columns": [
-								{
-									"key": "number",
-									"label": "Invoice"
-								},
-								{
-									"key": "date",
-									"label": "Date"
-								},
-								{
-									"key": "state",
-									"label": "Status"
-								},
-								{
-									"key": "amount",
-									"label": "Amount",
-									"formatter": "currency",
-									"formatterOptions": {
-										"currency": "EUR",
-										"decimals": 2
-									}
-								},
-								{
-									"key": "open",
-									"label": "Still open",
-									"formatter": "currency",
-									"formatterOptions": {
-										"currency": "EUR",
-										"decimals": 2
-									}
-								}
-							],
-							"emptyText": "No purchase invoices this year, the customer is not linked to a supplier, or your role may not read purchases."
-						}
+						"content": {"endpointSource": {"url": "/apps/shillinq/api/relations/@objectId/both-sides", "responsePath": "received.rows"}, "columns": [{"key": "number", "label": "Invoice"}, {"key": "date", "label": "Date"}, {"key": "state", "label": "Status"}, {"key": "amount", "label": "Amount", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2}}, {"key": "open", "label": "Still open", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2}}], "emptyText": "No purchase invoices this year, the customer is not linked to a supplier, or your role may not read purchases."}
+					},
+					{
+						"id": "customer-open-invoices",
+						"type": "record-list",
+						"title": "Open invoices",
+						"content": {"register": "shillinq", "schema": "ARInvoice", "filter": {"customerId": "@objectId", "lifecycleState": "issued"}, "sort": {"field": "dueDate", "dir": "asc"}, "limit": 5, "presentation": "rows", "title": "{invoiceNumber}", "meta": "Invoice date {invoiceDate|date}", "pill": {"field": "lifecycleState", "labels": {"issued": "Outstanding", "overdue": "Overdue", "paid": "Paid"}, "colorMap": {"issued": "warning", "overdue": "error", "paid": "success"}}, "trailing": ["Due {dueDate|date}"], "rowRoute": "ARInvoiceDetail", "headerLink": {"label": "View all {total} open invoices", "route": "AccountsReceivable", "query": {"customerId": "@objectId"}}, "emptyText": "No open invoices for this customer."}
+					},
+					{
+						"id": "customer-history",
+						"type": "audit-trail",
+						"title": "History"
+					},
+					{
+						"id": "customer-panels",
+						"type": "tabs",
+						"title": "Customer",
+						"content": {"tabs": [{"widgetIds": ["customer-identity", "customer-finance", "customer-open-invoices"], "label": "Overview"}, {"widgetIds": ["customer-stats-open-invoices", "customer-stats-overdue-invoices", "customer-stats-outstanding-gross", "customer-invoices"], "label": "Invoices", "countFrom": "widget"}, {"widgetId": "customer-payment-plans", "label": "Payment plans", "countFrom": "widget"}, {"widgetIds": ["customer-both-sides-open-receivable", "customer-both-sides-open-payable", "customer-both-sides-net", "customer-both-sides-sent", "customer-both-sides-received"], "label": "Also a supplier"}, {"widgetId": "customer-history", "label": "History"}]}
 					}
 				],
 				"layout": [
 					{
 						"id": "1",
-						"widgetId": "customer-identity",
+						"widgetId": "customer-panels",
 						"gridX": 0,
 						"gridY": 0,
-						"gridWidth": 8,
-						"gridHeight": 4
-					},
-					{
-						"id": "2-1",
-						"widgetId": "customer-stats-open-invoices",
-						"gridX": 8,
-						"gridY": 0,
-						"gridWidth": 4,
-						"gridHeight": 2
-					},
-					{
-						"id": "2-2",
-						"widgetId": "customer-stats-overdue-invoices",
-						"gridX": 8,
-						"gridY": 2,
-						"gridWidth": 4,
-						"gridHeight": 2
-					},
-					{
-						"id": "2-3",
-						"widgetId": "customer-stats-outstanding-gross",
-						"gridX": 8,
-						"gridY": 4,
-						"gridWidth": 4,
-						"gridHeight": 2
-					},
-					{
-						"id": "3",
-						"widgetId": "customer-finance",
-						"gridX": 0,
-						"gridY": 6,
-						"gridWidth": 8,
-						"gridHeight": 4
-					},
-					{
-						"id": "4",
-						"widgetId": "customer-related",
-						"gridX": 8,
-						"gridY": 6,
-						"gridWidth": 4,
-						"gridHeight": 4
-					},
-					{
-						"id": "5",
-						"widgetId": "customer-invoices",
-						"gridX": 0,
-						"gridY": 10,
 						"gridWidth": 12,
-						"gridHeight": 5
-					},
-					{
-						"id": "6",
-						"widgetId": "customer-payment-plans",
-						"gridX": 0,
-						"gridY": 15,
-						"gridWidth": 12,
-						"gridHeight": 4
-					},
-					{
-						"id": "7-1",
-						"widgetId": "customer-both-sides-open-receivable",
-						"gridX": 0,
-						"gridY": 19,
-						"gridWidth": 4,
-						"gridHeight": 2
-					},
-					{
-						"id": "7-2",
-						"widgetId": "customer-both-sides-open-payable",
-						"gridX": 4,
-						"gridY": 19,
-						"gridWidth": 4,
-						"gridHeight": 2
-					},
-					{
-						"id": "7-3",
-						"widgetId": "customer-both-sides-net",
-						"gridX": 8,
-						"gridY": 19,
-						"gridWidth": 4,
-						"gridHeight": 2
-					},
-					{
-						"id": "8",
-						"widgetId": "customer-both-sides-sent",
-						"gridX": 0,
-						"gridY": 21,
-						"gridWidth": 6,
-						"gridHeight": 5
-					},
-					{
-						"id": "9",
-						"widgetId": "customer-both-sides-received",
-						"gridX": 6,
-						"gridY": 21,
-						"gridWidth": 6,
-						"gridHeight": 5
+						"gridHeight": 18
 					}
 				],
 				"headerActions": [
@@ -8143,10 +7907,7 @@
 						"type": "open-modal",
 						"target": "AgreePaymentPlanModal",
 						"icon": "CalendarClock",
-						"props": {
-							"open": true,
-							"from": "customer"
-						}
+						"props": {"open": true, "from": "customer"}
 					},
 					{
 						"id": "link-supplier",
@@ -8154,65 +7915,103 @@
 						"type": "open-modal",
 						"target": "RelationLinkDialog",
 						"icon": "LinkVariant",
-						"props": {
-							"open": true
-						}
+						"props": {"open": true}
 					},
-					{"id": "check-vat-number", "label": "Check VAT number", "type": "handler", "handler": "checkCustomerVatNumber", "icon": "CheckDecagramOutline", "description": "Check the VAT number against the EU VIES register and keep the outcome on this record."}
+					{
+						"id": "check-vat-number",
+						"label": "Check VAT number",
+						"type": "handler",
+						"handler": "checkCustomerVatNumber",
+						"icon": "CheckDecagramOutline",
+						"description": "Check the VAT number against the EU VIES register and keep the outcome on this record."
+					}
 				],
 				"lifecycleActions": true,
 				"sidebar": {
 					"enabled": true,
 					"showMetadata": true,
 					"tabs": [
-						{
-							"id": "audit",
-							"label": "History",
-							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
-						}
+						{"id": "audit", "label": "History", "icon": "History", "widgets": [{"type": "audit"}]}
 					]
-				}
+				},
+				"look": "board",
+				"breadcrumb": {
+					"label": "Customers",
+					"route": "Customers"
+				},
+				"statusPill": {
+					"field": "payeeLink.matchedOn",
+					"labels": {
+						"kvk": "Also a supplier",
+						"vat": "Also a supplier",
+						"manual": "Also a supplier"
+					},
+					"variant": "purple"
+				},
+				"identifierField": "customerId",
+				"tabsLabel": "Customer parts",
+				"sideColumn": [
+					{
+						"id": "side-sepa",
+						"type": "facts",
+						"title": "SEPA mandate",
+						"content": {"source": {"register": "shillinq", "schema": "SepaMandate", "id": "@object.defaultMandateId"}, "fields": [{"as": "pill", "path": "status", "variantMap": {"active": "success", "cancelled": "error", "suspended": "warning", "pending": "info", "expired": "default"}}, {"label": "Mandate", "path": "mandateReference"}, {"label": "IBAN", "path": "debtorIban", "copy": true}, {"label": "Signed", "path": "signedAt", "format": "date"}], "emptyText": "No SEPA mandate"}
+					},
+					"customer-related",
+					"customer-history"
+				],
+				"follow": false
 			}
 		},
 		{
 			"id": "AccountsReceivable",
 			"route": "/bookkeeping/accounts-receivable",
 			"type": "index",
-			"title": "Accounts Receivable",
+			"title": "Sales invoices",
 			"config": {
 				"register": "shillinq",
 				"schema": "ARInvoice",
 				"columns": [
 					{
 						"key": "invoiceNumber",
-						"label": "Invoice #",
+						"label": "Invoice number",
 						"sortable": true
 					},
 					{
 						"key": "customerId",
 						"label": "Customer",
-						"sortable": true
+						"sortable": true,
+						"labelField": "legalName"
 					},
 					{
-						"key": "invoiceDate",
-						"label": "Invoice Date",
-						"sortable": true
-					},
-					{
-						"key": "dueDate",
-						"label": "Due Date",
+						"key": "currency",
+						"label": "Currency",
 						"sortable": true
 					},
 					{
 						"key": "grossAmount",
-						"label": "Total (EUR)",
+						"label": "Amount",
+						"sortable": true,
+						"format": {
+							"style": "currency",
+							"currencyField": "currency"
+						}
+					},
+					{
+						"key": "dueDate",
+						"label": "Due date",
 						"sortable": true
 					},
 					{
 						"key": "lifecycleState",
 						"label": "Status",
 						"sortable": true
+					},
+					{
+						"key": "invoiceDate",
+						"label": "Invoice date",
+						"sortable": true,
+						"hidden": true
 					}
 				],
 				"defaultSort": "dueDate",
@@ -8225,6 +8024,77 @@
 						"icon": "CashPlus",
 						"handler": "openDownPaymentInvoice",
 						"description": "Invoice part of an order up front. It is booked as an advance received and taken off the final invoice."
+					},
+					{
+						"id": "generate-invoices",
+						"label": "Generate invoices",
+						"icon": "FileDocumentMultipleOutline",
+						"handler": "openInvoiceGenerateWizard",
+						"description": "From hours, costs, meter readings and retainers"
+					},
+					{
+						"id": "new-invoice",
+						"label": "New invoice",
+						"type": "open-form",
+						"register": "shillinq",
+						"schema": "arInvoice",
+						"icon": "Plus"
+					}
+				],
+				"_boardNote": "Board ShVerkoopfacturen: title, count line, Download / Actions / New invoice, status chips with counts, Currency and Amount in the invoice currency. The invoice date stays as a column the reader can switch on. New invoice names its schema as the slug arInvoice: the create form kebab-cases ARInvoice to ar-invoice, which OpenRegister does not know, and a slug matches case-insensitively.",
+				"showTitle": true,
+				"showAdd": false,
+				"countSubtitle": {
+					"singular": "{total} invoice · numbered without gaps",
+					"plural": "{total} invoices · numbered without gaps"
+				},
+				"showCount": false,
+				"quickFilters": [
+					{
+						"label": "All",
+						"filter": {},
+						"default": true,
+						"showCount": true
+					},
+					{
+						"label": "Draft",
+						"filter": {
+							"lifecycleState": "draft"
+						},
+						"showCount": true
+					},
+					{
+						"label": "Sent",
+						"filter": {
+							"lifecycleState": "issued"
+						},
+						"showCount": true
+					},
+					{
+						"label": "Overdue",
+						"filter": {
+							"lifecycleState": "overdue"
+						},
+						"showCount": true
+					}
+				],
+				"searchPlaceholder": "Search by number, customer or amount",
+				"headerButtons": [
+					{
+						"action": "export"
+					},
+					{
+						"action": "actions-menu",
+						"items": [
+							"new-down-payment-invoice",
+							"generate-invoices"
+						]
+					},
+					{
+						"action": "new-invoice",
+						"variant": "primary",
+						"label": "New invoice",
+						"icon": "Plus"
 					}
 				]
 			}
@@ -8535,37 +8405,568 @@
 		{
 			"id": "ARAging",
 			"route": "/bookkeeping/ar-aging",
-			"type": "index",
-			"title": "AR Aging",
+			"type": "dashboard",
+			"title": "Receivables management",
 			"config": {
-				"register": "shillinq",
-				"schema": "ARInvoice",
-				"aggregation": "arAging",
-				"columns": [
+				"description": "Open sales invoices by age, the reminder step they are in and the payment requests that are out",
+				"documentationUrl": "https://shillinq.conduction.nl/guides/create-invoices",
+				"_boardNote": "Board ShDebiteurenbeheer. This page was an index over ARInvoice with the columns agingBucket, count and totalAmount, which an invoice does not carry (and an `aggregation` key the index never read), so every row showed the customer id and three dashes. The age buckets are now five tiles over the open invoices (issued, overdue, disputed) by due date. The board's tab strip is a tabs widget: Open balance (each open invoice with its reminder step from ARInvoice.dunning), Reminder runs (the DunningRun log, counted), Payment requests (counted) and Provider payouts (ProviderPayout, counted); the payment requests card stays below it. Not drawn: the latest-payout card beside the payment requests card, and the Next step this week / Paused chips (no paused flag on an invoice).",
+				"headerActions": [
 					{
-						"key": "customerId",
-						"label": "Customer",
-						"sortable": true
+						"id": "dunning-runs",
+						"label": "Reminder runs",
+						"type": "open-page",
+						"route": "DunningRuns",
+						"icon": "EmailFastOutline"
 					},
 					{
-						"key": "agingBucket",
-						"label": "Aging Bucket",
-						"sortable": true
-					},
-					{
-						"key": "count",
-						"label": "Invoices",
-						"sortable": true
-					},
-					{
-						"key": "totalAmount",
-						"label": "Total Outstanding (EUR)",
-						"sortable": true
+						"id": "dunning-next-run",
+						"label": "Start round",
+						"handler": "openDunningNextRun",
+						"icon": "SendOutline",
+						"variant": "primary"
 					}
 				],
-				"defaultSort": "agingBucket",
-				"description": "AR aging report grouping open invoices by customer and aging bucket. Excludes paid, voided, and written-off invoices.",
-				"documentationUrl": "https://shillinq.conduction.nl/guides/create-invoices"
+				"kpiRow": [
+					"aging-current",
+					"aging-1-30",
+					"aging-31-60",
+					"aging-61-90",
+					"aging-90-plus"
+				],
+				"widgets": [
+					{
+						"id": "aging-current",
+						"title": "Not overdue",
+						"type": "stat",
+						"content": {
+							"label": "Not overdue",
+							"format": {
+								"style": "currency",
+								"currency": "EUR",
+								"decimals": 0
+							},
+							"source": {
+								"register": "shillinq",
+								"schema": "ARInvoice",
+								"metric": "sum",
+								"field": "grossAmount",
+								"filter": {
+									"lifecycleState": [
+										"issued",
+										"overdue",
+										"disputed"
+									],
+									"dueDate": {
+										"gte": "@today"
+									}
+								}
+							},
+							"caption": "{ratio}% of open",
+							"captionSource": {
+								"kind": "ratio",
+								"denominator": {
+									"metric": "sum",
+									"field": "grossAmount",
+									"filter": {
+										"lifecycleState": [
+											"issued",
+											"overdue",
+											"disputed"
+										]
+									}
+								}
+							}
+						}
+					},
+					{
+						"id": "aging-1-30",
+						"title": "1 to 30 days",
+						"type": "stat",
+						"content": {
+							"label": "1 to 30 days",
+							"format": {
+								"style": "currency",
+								"currency": "EUR",
+								"decimals": 0
+							},
+							"source": {
+								"register": "shillinq",
+								"schema": "ARInvoice",
+								"metric": "sum",
+								"field": "grossAmount",
+								"filter": {
+									"lifecycleState": [
+										"issued",
+										"overdue",
+										"disputed"
+									],
+									"dueDate": {
+										"gte": "@today-30d",
+										"lt": "@today"
+									}
+								}
+							},
+							"caption": "{ratio}% of open",
+							"captionSource": {
+								"kind": "ratio",
+								"denominator": {
+									"metric": "sum",
+									"field": "grossAmount",
+									"filter": {
+										"lifecycleState": [
+											"issued",
+											"overdue",
+											"disputed"
+										]
+									}
+								}
+							}
+						}
+					},
+					{
+						"id": "aging-31-60",
+						"title": "31 to 60 days",
+						"type": "stat",
+						"content": {
+							"label": "31 to 60 days",
+							"format": {
+								"style": "currency",
+								"currency": "EUR",
+								"decimals": 0
+							},
+							"source": {
+								"register": "shillinq",
+								"schema": "ARInvoice",
+								"metric": "sum",
+								"field": "grossAmount",
+								"filter": {
+									"lifecycleState": [
+										"issued",
+										"overdue",
+										"disputed"
+									],
+									"dueDate": {
+										"gte": "@today-60d",
+										"lt": "@today-30d"
+									}
+								}
+							},
+							"caption": "{ratio}% of open",
+							"captionSource": {
+								"kind": "ratio",
+								"denominator": {
+									"metric": "sum",
+									"field": "grossAmount",
+									"filter": {
+										"lifecycleState": [
+											"issued",
+											"overdue",
+											"disputed"
+										]
+									}
+								}
+							}
+						}
+					},
+					{
+						"id": "aging-61-90",
+						"title": "61 to 90 days",
+						"type": "stat",
+						"content": {
+							"label": "61 to 90 days",
+							"format": {
+								"style": "currency",
+								"currency": "EUR",
+								"decimals": 0
+							},
+							"source": {
+								"register": "shillinq",
+								"schema": "ARInvoice",
+								"metric": "sum",
+								"field": "grossAmount",
+								"filter": {
+									"lifecycleState": [
+										"issued",
+										"overdue",
+										"disputed"
+									],
+									"dueDate": {
+										"gte": "@today-90d",
+										"lt": "@today-60d"
+									}
+								}
+							},
+							"caption": "{ratio}% of open",
+							"captionSource": {
+								"kind": "ratio",
+								"denominator": {
+									"metric": "sum",
+									"field": "grossAmount",
+									"filter": {
+										"lifecycleState": [
+											"issued",
+											"overdue",
+											"disputed"
+										]
+									}
+								}
+							}
+						}
+					},
+					{
+						"id": "aging-90-plus",
+						"title": "More than 90 days",
+						"type": "stat",
+						"content": {
+							"label": "More than 90 days",
+							"format": {
+								"style": "currency",
+								"currency": "EUR",
+								"decimals": 0
+							},
+							"source": {
+								"register": "shillinq",
+								"schema": "ARInvoice",
+								"metric": "sum",
+								"field": "grossAmount",
+								"filter": {
+									"lifecycleState": [
+										"issued",
+										"overdue",
+										"disputed"
+									],
+									"dueDate": {
+										"lt": "@today-90d"
+									}
+								}
+							},
+							"caption": "{ratio}% of open",
+							"captionSource": {
+								"kind": "ratio",
+								"denominator": {
+									"metric": "sum",
+									"field": "grossAmount",
+									"filter": {
+										"lifecycleState": [
+											"issued",
+											"overdue",
+											"disputed"
+										]
+									}
+								}
+							}
+						}
+					},
+					{
+						"id": "receivables-tabs",
+						"title": "Receivables",
+						"type": "tabs",
+						"content": {
+							"tabs": [
+								{
+									"widgetId": "open-invoices",
+									"label": "Open balance"
+								},
+								{
+									"widgetId": "reminder-runs",
+									"label": "Reminder runs",
+									"countFrom": "widget"
+								},
+								{
+									"widgetId": "payment-request-table",
+									"label": "Payment requests",
+									"countFrom": "widget"
+								},
+								{
+									"widgetId": "provider-payouts",
+									"label": "Provider payouts",
+									"countFrom": "widget"
+								}
+							],
+							"showActions": false
+						},
+						"showTitle": false
+					},
+					{
+						"id": "open-invoices",
+						"title": "Open invoices",
+						"type": "object-table",
+						"content": {
+							"source": {
+								"register": "shillinq",
+								"schema": "ARInvoice",
+								"filter": {
+									"lifecycleState": [
+										"issued",
+										"overdue",
+										"disputed"
+									]
+								},
+								"order": {
+									"dueDate": "asc"
+								},
+								"limit": 20
+							},
+							"rowRoute": "ARInvoiceDetail",
+							"emptyText": "No open invoices. Everything is paid.",
+							"columns": [
+								{
+									"key": "customerId",
+									"label": "Customer",
+									"labelField": "legalName",
+									"resolve": {
+										"register": "shillinq",
+										"schema": "CustomerMaster",
+										"labelField": "legalName"
+									}
+								},
+								{
+									"key": "invoiceNumber",
+									"label": "Invoice"
+								},
+								{
+									"key": "grossAmount",
+									"label": "Outstanding",
+									"format": {
+										"style": "currency",
+										"currencyField": "currency"
+									}
+								},
+								{
+									"key": "dueDate",
+									"label": "Due date",
+									"formatter": "daysUntil"
+								},
+								{
+									"key": "dunning.currentStage",
+									"label": "Step"
+								},
+								{
+									"key": "dunning.nextDunningDate",
+									"label": "Next step"
+								},
+								{
+									"key": "lifecycleState",
+									"label": "Status",
+									"widget": "badge"
+								}
+							]
+						},
+						"headerLink": {
+							"label": "All sales invoices",
+							"route": "AccountsReceivable"
+						}
+					},
+					{
+						"id": "reminder-runs",
+						"title": "Reminder runs",
+						"type": "object-table",
+						"content": {
+							"source": {
+								"register": "shillinq",
+								"schema": "DunningRun",
+								"order": {
+									"executedOn": "desc"
+								},
+								"limit": 20
+							},
+							"rowRoute": "DunningRunDetail",
+							"emptyText": "No reminders sent yet",
+							"columns": [
+								{
+									"key": "recipientName",
+									"label": "Customer"
+								},
+								{
+									"key": "invoiceId",
+									"label": "Invoice"
+								},
+								{
+									"key": "invoiceAmount",
+									"label": "Outstanding",
+									"formatter": "currency",
+									"formatterOptions": {
+										"currency": "EUR",
+										"decimals": 2
+									}
+								},
+								{
+									"key": "stageNr",
+									"label": "Step"
+								},
+								{
+									"key": "channel",
+									"label": "Channel"
+								},
+								{
+									"key": "deliveryStatus",
+									"label": "Delivery",
+									"widget": "badge"
+								},
+								{
+									"key": "executedOn",
+									"label": "Sent",
+									"formatter": "date"
+								}
+							]
+						},
+						"headerLink": {
+							"label": "All reminder runs",
+							"route": "DunningRuns"
+						}
+					},
+					{
+						"id": "payment-request-table",
+						"title": "Payment requests",
+						"type": "object-table",
+						"content": {
+							"source": {
+								"register": "shillinq",
+								"schema": "PaymentRequest",
+								"limit": 20
+							},
+							"rowRoute": "PaymentRequestDetail",
+							"emptyText": "No payment requests yet",
+							"columns": [
+								{
+									"key": "description",
+									"label": "Description"
+								},
+								{
+									"key": "invoiceReference",
+									"label": "Invoice"
+								},
+								{
+									"key": "amount",
+									"label": "Amount",
+									"format": {
+										"style": "currency",
+										"currencyField": "currency"
+									}
+								},
+								{
+									"key": "state",
+									"label": "Status",
+									"widget": "badge"
+								},
+								{
+									"key": "capturedAt",
+									"label": "Paid on",
+									"formatter": "date"
+								}
+							]
+						},
+						"headerLink": {
+							"label": "All payment requests",
+							"route": "PaymentRequests"
+						}
+					},
+					{
+						"id": "provider-payouts",
+						"title": "Provider payouts",
+						"type": "object-table",
+						"content": {
+							"source": {
+								"register": "shillinq",
+								"schema": "ProviderPayout",
+								"order": {
+									"settledAt": "desc"
+								},
+								"limit": 20
+							},
+							"emptyText": "No payouts from a payment provider yet",
+							"columns": [
+								{
+									"key": "provider",
+									"label": "Provider"
+								},
+								{
+									"key": "settledAt",
+									"label": "Paid out on",
+									"formatter": "date"
+								},
+								{
+									"key": "amountNet",
+									"label": "Paid out",
+									"format": {
+										"style": "currency",
+										"currencyField": "currency"
+									}
+								},
+								{
+									"key": "amountFees",
+									"label": "Fees",
+									"format": {
+										"style": "currency",
+										"currencyField": "currency"
+									}
+								},
+								{
+									"key": "matchedLineCount",
+									"label": "Matched"
+								},
+								{
+									"key": "unmatchedLineCount",
+									"label": "Open"
+								},
+								{
+									"key": "state",
+									"label": "State",
+									"widget": "badge"
+								}
+							]
+						}
+					},
+					{
+						"id": "payment-requests",
+						"title": "Payment requests",
+						"type": "record-list",
+						"content": {
+							"register": "shillinq",
+							"schema": "PaymentRequest",
+							"limit": 4,
+							"title": "{description}",
+							"meta": [
+								"{amount|currency}",
+								"{invoiceReference}"
+							],
+							"pill": {
+								"field": "state",
+								"colorMap": {
+									"captured": "success",
+									"settled": "success",
+									"failed": "error",
+									"expired": "warning"
+								}
+							},
+							"rowRoute": "PaymentRequestDetail",
+							"emptyText": "No payment requests yet",
+							"headerLink": {
+								"label": "All payment requests",
+								"route": "PaymentRequests"
+							}
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "layout-receivables-tabs",
+						"widgetId": "receivables-tabs",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 6
+					},
+					{
+						"id": "layout-payment-requests",
+						"widgetId": "payment-requests",
+						"gridX": 0,
+						"gridY": 6,
+						"gridWidth": 6,
+						"gridHeight": 4
+					}
+				]
 			}
 		},
 		{
@@ -10406,7 +10807,7 @@
 			"id": "ExpenseClaims",
 			"route": "/inkoop/expense-claims",
 			"type": "index",
-			"title": "Expense Claims",
+			"title": "Claims",
 			"config": {
 				"register": "shillinq",
 				"schema": "ExpenseClaimEntry",
@@ -10489,7 +10890,51 @@
 					}
 				],
 				"detailRoute": "ExpenseClaimDetail",
-				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/overview"
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/overview",
+				"_boardNote": "Board ShDeclaraties: title, count line, Download / Actions / New claim, chips with counts on the approval and payment state.",
+				"showTitle": true,
+				"countSubtitle": "{total} claims",
+				"showCount": false,
+				"quickFilters": [
+					{
+						"label": "All",
+						"filter": {},
+						"default": true,
+						"showCount": true
+					},
+					{
+						"label": "Awaiting approval",
+						"filter": {
+							"approvalState": "pending"
+						},
+						"showCount": true
+					},
+					{
+						"label": "Reimbursed",
+						"filter": {
+							"state": "reimbursed"
+						},
+						"showCount": true
+					}
+				],
+				"headerButtons": [
+					{
+						"action": "export"
+					},
+					{
+						"action": "actions-menu",
+						"items": [
+							"import",
+							"refresh",
+							"documentation"
+						]
+					},
+					{
+						"action": "add",
+						"variant": "primary",
+						"label": "New claim"
+					}
+				]
 			}
 		},
 		{
@@ -12464,7 +12909,7 @@
 			"id": "CashflowDashboard",
 			"route": "/cashflow/dashboard",
 			"type": "dashboard",
-			"title": "Cashflow Dashboard",
+			"title": "Liquidity",
 			"config": {
 				"_note_export_pdf": "REQ-CF-016 / #865. CnDashboardPage passes headerActions[] to CnActionButtons, which renders each entry as a plain visible NcButton — not the collapsed overflow CnActionsBar uses on an index page. download:true makes nc-vue 2.3.0 request responseType blob and save the file. No custom component, so no customComponents.js entry can be forgotten.",
 				"headerActions": [
@@ -12479,39 +12924,368 @@
 						"icon": "DatabaseExportOutline",
 						"successMessage": "Cashflow forecast exported.",
 						"errorMessage": "No cashflow forecast is available to export yet."
+					},
+					{
+						"id": "add-scenario",
+						"label": "Add scenario",
+						"type": "open-form",
+						"register": "shillinq",
+						"schema": "CashflowScenario",
+						"icon": "Plus",
+						"variant": "primary"
 					}
 				],
 				"widgets": [
 					{
+						"id": "cash-today",
+						"title": "Cash position today",
+						"type": "stat",
+						"content": {
+							"label": "Cash position today",
+							"caption": "all accounts",
+							"format": {
+								"style": "currency",
+								"currency": "EUR",
+								"decimals": 0
+							},
+							"endpointSource": {
+								"url": "/apps/shillinq/api/v1/cash-position"
+							},
+							"valueField": "total",
+							"clickRoute": "BankAccounts"
+						}
+					},
+					{
+						"id": "lowest-point",
+						"title": "Lowest point",
+						"type": "stat",
+						"content": {
+							"label": "Lowest point",
+							"caption": "in the coming 13 weeks",
+							"format": {
+								"style": "currency",
+								"currency": "EUR",
+								"decimals": 0
+							},
+							"source": {
+								"register": "shillinq",
+								"schema": "CashflowWeek",
+								"metric": "min",
+								"field": "closingBalance",
+								"filter": {
+									"weekEnd": {
+										"gte": "@today"
+									},
+									"weekStart": {
+										"lte": "@today+91d"
+									}
+								}
+							}
+						}
+					},
+					{
+						"id": "expected-inflows",
+						"title": "Expected receipts",
+						"type": "stat",
+						"content": {
+							"label": "Expected receipts",
+							"caption": "coming 13 weeks",
+							"format": {
+								"style": "currency",
+								"currency": "EUR",
+								"decimals": 0
+							},
+							"source": {
+								"register": "shillinq",
+								"schema": "CashflowWeek",
+								"metric": "sum",
+								"field": "inflows_total",
+								"filter": {
+									"weekEnd": {
+										"gte": "@today"
+									},
+									"weekStart": {
+										"lte": "@today+91d"
+									}
+								}
+							}
+						}
+					},
+					{
+						"id": "expected-outflows",
+						"title": "Expected payments",
+						"type": "stat",
+						"content": {
+							"label": "Expected payments",
+							"caption": "coming 13 weeks",
+							"format": {
+								"style": "currency",
+								"currency": "EUR",
+								"decimals": 0
+							},
+							"source": {
+								"register": "shillinq",
+								"schema": "CashflowWeek",
+								"metric": "sum",
+								"field": "outflows_total",
+								"filter": {
+									"weekEnd": {
+										"gte": "@today"
+									},
+									"weekStart": {
+										"lte": "@today+91d"
+									}
+								}
+							}
+						}
+					},
+					{
 						"id": "cashflow-13week-chart",
-						"title": "13-Week Cashflow Forecast",
+						"title": "Forecast 13 weeks",
+						"eyebrow": "Balance per week",
 						"type": "chart",
-						"chartType": "bar",
-						"aggregation": "bufferPolicyEvaluation",
-						"schema": "CashflowWeek",
-						"register": "shillinq",
-						"description": "Stacked weekly inflows / outflows with the net saldo as overlay line and the buffer-policy band highlighted."
+						"content": {
+							"chartKind": "bar",
+							"height": 360,
+							"legend": false,
+							"valueFormat": "currency",
+							"options": {
+								"plotOptions": {
+									"bar": {
+										"horizontal": true
+									}
+								}
+							},
+							"dataSource": {
+								"register": "shillinq",
+								"schema": "CashflowWeek",
+								"filter": {
+									"weekEnd": {
+										"gte": "@today"
+									},
+									"weekStart": {
+										"lte": "@today+91d"
+									}
+								},
+								"aggregate": {
+									"groupBy": "weekStart",
+									"metric": "sum",
+									"sumField": "closingBalance"
+								}
+							},
+							"emptyText": "No forecast for the coming weeks yet"
+						}
+					},
+					{
+						"id": "fido-cash-limit",
+						"title": "Cash limit (Wet Fido)",
+						"type": "object-table",
+						"content": {
+							"source": {
+								"register": "shillinq",
+								"schema": "KasgeldLimiet",
+								"order": {
+									"auditYear": "desc"
+								},
+								"limit": 4
+							},
+							"emptyText": "No cash limit calculated yet",
+							"columns": [
+								{
+									"key": "auditYear",
+									"label": "Year"
+								},
+								{
+									"key": "calculatedCeiling",
+									"label": "Norm",
+									"formatter": "currency",
+									"formatterOptions": {
+										"currency": "EUR",
+										"decimals": 0
+									}
+								},
+								{
+									"key": "headroom",
+									"label": "Headroom",
+									"formatter": "currency",
+									"formatterOptions": {
+										"currency": "EUR",
+										"decimals": 0
+									}
+								},
+								{
+									"key": "currentExposure",
+									"label": "Usage",
+									"formatter": "currency",
+									"formatterOptions": {
+										"currency": "EUR",
+										"decimals": 0
+									}
+								},
+								{
+									"key": "status",
+									"label": "Status",
+									"widget": "badge"
+								}
+							]
+						},
+						"headerLink": {
+							"label": "Quarterly reports",
+							"route": "QuartaalrapportagesFido"
+						}
+					},
+					{
+						"id": "fido-interest-norm",
+						"title": "Interest rate risk norm (Wet Fido)",
+						"type": "object-table",
+						"content": {
+							"source": {
+								"register": "shillinq",
+								"schema": "RenteRisicoNorm",
+								"order": {
+									"auditYear": "desc"
+								},
+								"limit": 4
+							},
+							"emptyText": "No interest rate risk norm calculated yet",
+							"columns": [
+								{
+									"key": "auditYear",
+									"label": "Year"
+								},
+								{
+									"key": "calculatedCeiling",
+									"label": "Norm",
+									"formatter": "currency",
+									"formatterOptions": {
+										"currency": "EUR",
+										"decimals": 0
+									}
+								},
+								{
+									"key": "headroomPerYear",
+									"label": "Headroom",
+									"formatter": "currency",
+									"formatterOptions": {
+										"currency": "EUR",
+										"decimals": 0
+									}
+								},
+								{
+									"key": "status",
+									"label": "Status",
+									"widget": "badge"
+								}
+							]
+						}
+					},
+					{
+						"id": "recurring-costs",
+						"title": "Recurring costs",
+						"type": "object-table",
+						"content": {
+							"source": {
+								"register": "shillinq",
+								"schema": "CashflowRecurring",
+								"filter": {
+									"direction": "OUT"
+								},
+								"order": {
+									"standardAmount": "desc"
+								},
+								"limit": 8
+							},
+							"rowRoute": "CashflowRecurringDetail",
+							"emptyText": "No recurring costs yet",
+							"columns": [
+								{
+									"key": "label",
+									"label": "Subscription"
+								},
+								{
+									"key": "category",
+									"label": "Category"
+								},
+								{
+									"key": "frequency",
+									"label": "Frequency"
+								},
+								{
+									"key": "standardAmount",
+									"label": "Amount",
+									"formatter": "currency",
+									"formatterOptions": {
+										"currency": "EUR",
+										"decimals": 0
+									}
+								}
+							]
+						},
+						"headerLink": {
+							"label": "All recurring costs",
+							"route": "CashflowRecurring"
+						}
+					},
+					{
+						"id": "treasury",
+						"title": "Treasury",
+						"type": "stats-block",
+						"content": {
+							"layout": "rows",
+							"entries": [
+								{
+									"title": "Loans",
+									"register": "shillinq",
+									"schema": "Lening",
+									"route": {
+										"name": "Leningen"
+									}
+								},
+								{
+									"title": "Derivatives",
+									"register": "shillinq",
+									"schema": "Derivaat",
+									"route": {
+										"name": "Derivaten"
+									}
+								},
+								{
+									"title": "Cash pools",
+									"register": "shillinq",
+									"schema": "CashPool",
+									"route": {
+										"name": "CashPools"
+									}
+								},
+								{
+									"title": "Intercompany loans",
+									"register": "shillinq",
+									"schema": "IntercompanyLoan",
+									"route": {
+										"name": "IntercompanyLoans"
+									}
+								}
+							]
+						}
 					},
 					{
 						"id": "buffer-status",
 						"title": "Buffer Status",
 						"type": "stats-block",
-						"schema": "CashflowBufferPolicy",
-						"register": "shillinq",
+						"content": {
+							"dataSource": {
+								"register": "shillinq",
+								"schema": "CashflowWeek",
+								"filter": {
+									"bufferStatus": { "ne": "ABOVE_BUFFER" },
+									"weekEnd": { "gte": "@today" },
+									"weekStart": { "lte": "@today+91d" }
+								}
+							}
+						},
 						"props": {
 							"countLabel": "weeks under buffer",
 							"variant": "warning"
-						}
-					},
-					{
-						"id": "crisis-banner",
-						"title": "Crisis Mode",
-						"type": "alert",
-						"schema": "CashflowForecastHorizon",
-						"register": "shillinq",
-						"props": {
-							"severity": "error",
-							"visibilityCondition": "anyWeek.eindSaldo < 0 within next 4 weeks"
 						}
 					}
 				],
@@ -12521,27 +13295,59 @@
 						"widgetId": "cashflow-13week-chart",
 						"gridX": 0,
 						"gridY": 0,
-						"gridWidth": 12,
+						"gridWidth": 8,
 						"gridHeight": 8
+					},
+					{
+						"id": "layout-treasury",
+						"widgetId": "treasury",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 4
 					},
 					{
 						"id": "layout-buffer",
 						"widgetId": "buffer-status",
-						"gridX": 0,
-						"gridY": 8,
+						"gridX": 8,
+						"gridY": 4,
 						"gridWidth": 4,
-						"gridHeight": 3
+						"gridHeight": 2
 					},
 					{
-						"id": "layout-crisis",
-						"widgetId": "crisis-banner",
-						"gridX": 4,
+						"id": "layout-fido-cash",
+						"widgetId": "fido-cash-limit",
+						"gridX": 0,
 						"gridY": 8,
 						"gridWidth": 8,
 						"gridHeight": 3
+					},
+					{
+						"id": "layout-fido-interest",
+						"widgetId": "fido-interest-norm",
+						"gridX": 0,
+						"gridY": 11,
+						"gridWidth": 8,
+						"gridHeight": 3
+					},
+					{
+						"id": "layout-recurring",
+						"widgetId": "recurring-costs",
+						"gridX": 0,
+						"gridY": 14,
+						"gridWidth": 8,
+						"gridHeight": 5
 					}
 				],
-				"documentationUrl": "https://shillinq.conduction.nl/user-guide/cashflow/overview"
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/cashflow/overview",
+				"_boardNote": "Board ShLiquiditeit: four key figures, the balance per week of the 13-week forecast, the Wet Fido norms, the recurring costs counted as expected outflows and the treasury facts. The forecast tiles and the chart read the CashflowWeek objects of the weeks ahead; the buffer status stays. The crisis banner had a widget type the library does not have (`alert`) and only ever drew \"Widget not available\".",
+				"description": "13-week forecast from open items, recurring costs and the budget",
+				"kpiRow": [
+					"cash-today",
+					"lowest-point",
+					"expected-inflows",
+					"expected-outflows"
+				]
 			}
 		},
 		{
@@ -14121,7 +14927,7 @@
 			"id": "SupplierInvoices",
 			"route": "/inkoop/supplier-invoices",
 			"type": "index",
-			"title": "Supplier Invoices",
+			"title": "Purchase invoices",
 			"config": {
 				"register": "shillinq",
 				"schema": "SupplierInvoice",
@@ -14129,19 +14935,23 @@
 				"rowRoute": "SupplierInvoiceDetail",
 				"columns": [
 					{
-						"key": "invoiceNumber",
-						"label": "Invoice #",
-						"sortable": true
+						"key": "supplierId",
+						"label": "Supplier and invoice",
+						"sortable": true,
+						"labelField": "name",
+						"secondary": "{invoiceNumber}"
 					},
 					{
-						"key": "supplierId",
-						"label": "Supplier",
-						"sortable": true
+						"key": "invoiceNumber",
+						"label": "Invoice #",
+						"sortable": true,
+						"hidden": true
 					},
 					{
 						"key": "invoiceDate",
 						"label": "Invoice Date",
-						"sortable": true
+						"sortable": true,
+						"hidden": true
 					},
 					{
 						"key": "dueDate",
@@ -14173,7 +14983,84 @@
 				"detailRoute": "SupplierInvoiceDetail",
 				"_note_rowRoute_overlay": "See the Receipts index — `rowRoute` is the key CnPageRenderer reads; SupplierInvoiceDetail is `type:\"custom\"`, so without it these rows are dead on click.",
 				"description": "Read-only stub at slice-01. Member 05 owns UBL/Peppol/OCR ingestion.",
-				"documentationUrl": "https://shillinq.conduction.nl/guides/import-bills"
+				"documentationUrl": "https://shillinq.conduction.nl/guides/import-bills",
+				"_boardNote": "Board ShInkoopfacturen: title, count line, Download / Actions, chips with counts on the match status, the supplier by name with the invoice number under it. The primary button imports a purchase invoice (BillImportModal); New purchase invoice stays in the Actions menu, its schema written as the slug supplierInvoice for the same reason as New invoice on Sales invoices.",
+				"showTitle": true,
+				"showAdd": false,
+				"countSubtitle": {
+					"singular": "{total} purchase invoice",
+					"plural": "{total} purchase invoices"
+				},
+				"showCount": false,
+				"quickFilters": [
+					{
+						"label": "All",
+						"filter": {},
+						"default": true,
+						"showCount": true
+					},
+					{
+						"label": "Exceptions",
+						"filter": {
+							"statusCode": "exception"
+						},
+						"showCount": true
+					},
+					{
+						"label": "Approved",
+						"filter": {
+							"statusCode": "approved"
+						},
+						"showCount": true
+					},
+					{
+						"label": "IBAN differs",
+						"filter": {
+							"ibanMismatch": true
+						},
+						"showCount": true
+					}
+				],
+				"headerButtons": [
+					{
+						"action": "export"
+					},
+					{
+						"action": "actions-menu",
+						"items": [
+							"new-purchase-invoice",
+							"import",
+							"refresh",
+							"documentation"
+						]
+					},
+					{
+						"action": "import-bill",
+						"variant": "primary",
+						"label": "Import bill",
+						"icon": "Plus"
+					}
+				],
+				"headerActions": [
+					{
+						"id": "import-bill",
+						"label": "Import bill",
+						"type": "open-modal",
+						"target": "BillImportModal",
+						"icon": "InboxArrowDown",
+						"props": {
+							"open": true
+						}
+					},
+					{
+						"id": "new-purchase-invoice",
+						"label": "New purchase invoice",
+						"type": "open-form",
+						"register": "shillinq",
+						"schema": "supplierInvoice",
+						"icon": "Plus"
+					}
+				]
 			}
 		},
 		{

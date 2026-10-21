@@ -159,8 +159,8 @@ final class SalesOrderSeedDataIntegrationTest extends TestCase {
 	}//end overlapMonths()
 
 	/**
-	 * SalesOrder + SalesOrderLine declare the lifecycle, audit-trail and
-	 * administrationId-scoped RBAC the spec requires.
+	 * SalesOrder + SalesOrderLine declare the lifecycle, audit trail and the
+	 * enforced authorization block.
 	 *
 	 * @return void
 	 */
@@ -173,7 +173,7 @@ final class SalesOrderSeedDataIntegrationTest extends TestCase {
 		self::assertSame('active', $order['x-openregister-lifecycle']['initialState']);
 		self::assertArrayHasKey('ended', $order['x-openregister-lifecycle']['states']);
 		self::assertTrue($order['x-openregister-audit-trail']['enabled']);
-		self::assertSame('administrationId', $order['x-openregister-rbac']['adminScope']['field']);
+		self::assertContains('shillinq_bookkeeper', $order['authorization']['create']);
 
 		$line = $schemas['SalesOrderLine'];
 		self::assertTrue($line['x-openregister-audit-trail']['enabled']);

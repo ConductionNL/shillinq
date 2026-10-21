@@ -9,6 +9,11 @@
   "components": {
     "schemas": {
       "Administration": {
+        "authorization": {
+          "read": [
+            "authenticated"
+          ]
+        },
         "slug": "Administration",
         "icon": "OfficeBuilding",
         "version": "0.2.0",
@@ -345,6 +350,11 @@
         }
       },
       "AdministrationMembership": {
+        "authorization": {
+          "read": [
+            "authenticated"
+          ]
+        },
         "slug": "AdministrationMembership",
         "icon": "AccountKey",
         "version": "0.1.0",
@@ -632,6 +642,25 @@
               "requires": "OCA\\Shillinq\\Guard\\IntercompanyEliminationGuard::requireReconciledPair"
             }
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "ConsolidationMapping": {
@@ -725,9 +754,34 @@
             "example": "2026-01-01",
             "title": "Valid From"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "AdministrationMigration": {
+        "authorization": {
+          "read": [
+            "shillinq_admin",
+            "shillinq_auditor"
+          ]
+        },
         "slug": "AdministrationMigration",
         "icon": "TransitConnectionVariant",
         "version": "0.1.0",
@@ -921,6 +975,12 @@
         }
       },
       "AdministrationBackupRun": {
+        "authorization": {
+          "read": [
+            "shillinq_admin",
+            "shillinq_auditor"
+          ]
+        },
         "slug": "AdministrationBackupRun",
         "icon": "DatabaseClock",
         "version": "0.1.0",

@@ -492,6 +492,32 @@
                   "nullable": true,
                   "title": "Bank reference",
                   "description": "The reference of the bank payment that paid the refund."
+                },
+                "approvedBy": {
+                  "type": "string",
+                  "nullable": true,
+                  "title": "Approved by",
+                  "description": "The user who approved the refund. Set by the server."
+                },
+                "approvedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true,
+                  "title": "Approved at",
+                  "description": "When the refund was approved. Set by the server."
+                },
+                "paidBy": {
+                  "type": "string",
+                  "nullable": true,
+                  "title": "Paid by",
+                  "description": "The user who marked the refund paid; never the approver. Set by the server."
+                },
+                "paidAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true,
+                  "title": "Paid on",
+                  "description": "When the refund was marked paid. Set by the server."
                 }
               }
             }
@@ -695,29 +721,23 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_auditor",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       }
     },

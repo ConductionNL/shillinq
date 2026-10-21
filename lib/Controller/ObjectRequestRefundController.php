@@ -30,6 +30,7 @@ namespace OCA\Shillinq\Controller;
 use InvalidArgumentException;
 use OCA\Shillinq\Service\ObjectRequestRefundService;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
+use OCA\Shillinq\Service\RefundStepForbiddenException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -111,11 +112,13 @@ class ObjectRequestRefundController extends Controller {
 	 *
 	 * @param callable(): array<string, mixed> $step The step.
 	 *
-	 * @return JSONResponse The request, a 400 with the reason, or a 500.
+	 * @return JSONResponse The request, a 403 or 400 with the reason, or a 500.
 	 */
 	private function answer(callable $step): JSONResponse {
 		try {
 			$request = $step();
+		} catch (RefundStepForbiddenException $e) {
+			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_FORBIDDEN);
 		} catch (InvalidArgumentException $e) {
 			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
 		} catch (Throwable $e) {
