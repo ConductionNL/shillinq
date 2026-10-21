@@ -53,7 +53,7 @@ export default {
 						{
 							id: 'Treasury',
 							label: this.t('shillinq', 'Treasury'),
-							route: 'Treasury',
+							route: 'TreasuryDashboard',
 						},
 						{
 							id: 'BankAccounts',
