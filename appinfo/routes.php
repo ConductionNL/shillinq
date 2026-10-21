@@ -717,6 +717,8 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // (ADR-005 IDOR-safe). Declared before the SPA catch-all so
             // Symfony route ordering matches it first per ADR-016.
             ['name' => 'supplierInvoiceImport#import', 'url' => '/api/v1/supplier-invoices/import', 'verb' => 'POST'],
+            // Discard your own imported invoice while it is still a review draft.
+            ['name' => 'supplierInvoiceImport#discard', 'url' => '/api/v1/supplier-invoices/{id}/draft', 'verb' => 'DELETE'],
 
             // Receipt-extraction-consume (REQ-RXC-004 / REQ-RXC-005) — thin proxy
             // so the frontend never needs docudesk credentials directly. request()

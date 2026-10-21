@@ -452,4 +452,148 @@ final class SupplierInvoiceImportControllerTest extends TestCase {
 		return new SupplierInvoiceChecks($objectService, $settings);
 
 	}//end checksOver()
+	/**
+	 * F2-S7: an import from the review dialog lands as a draft awaiting confirmation.
+	 *
+	 * @return void
+	 */
+	public function testCsvImportForReviewIsADraft(): void {
+		$this->withReviewBody("supplier,invoiceNumber,invoiceDate,amount,vatAmount\nSUP-1,INV-100,2026-01-01,121.00,21.00\n", 'csv');
+
+		$data = $this->controller->import()->getData();
+
+		self::assertSame('pending-review', $data['records'][0]['extractionStatus']);
+		self::assertSame('received', $data['records'][0]['statusCode']);
+
+	}//end testCsvImportForReviewIsADraft()
+
+	/**
+	 * F2-S7: a UBL import from the review dialog asks the service for a draft.
+	 *
+	 * @return void
+	 */
+	public function testUblImportForReviewAsksForADraft(): void {
+		$this->withReviewBody('<Invoice/>', 'ubl');
+		$this->service->method('parseUblInvoice')->willReturn(['invoiceNumber' => 'INV-1', 'supplierId' => 'SUP-1']);
+		$this->service->expects(self::once())
+			->method('ingestUBLInvoice')
+			->with('adm-1', '<Invoice/>', ['reviewDraft' => true])
+			->willReturn(['id' => 'si-1']);
+
+		self::assertSame(Http::STATUS_OK, $this->controller->import()->getStatus());
+
+	}//end testUblImportForReviewAsksForADraft()
+
+	/**
+	 * F2-S7: the importer discards their own unconfirmed import.
+	 *
+	 * @return void
+	 */
+	public function testDiscardDeletesYourOwnDraft(): void {
+		$deleted = [];
+		$controller = $this->discardController(
+			['id' => 'si-1', 'administrationId' => 'adm-1', 'extractionStatus' => 'pending-review', 'owner' => 'alice'],
+			$deleted
+		);
+
+		self::assertSame(Http::STATUS_NO_CONTENT, $controller->discard('si-1')->getStatus());
+		self::assertSame(['si-1'], $deleted);
+
+	}//end testDiscardDeletesYourOwnDraft()
+
+	/**
+	 * F2-S7: someone else's draft, or a confirmed invoice, is not discarded.
+	 *
+	 * @return void
+	 */
+	public function testDiscardRefusesAnotherOwnerOrAConfirmedInvoice(): void {
+		$deleted = [];
+		$others = $this->discardController(
+			['id' => 'si-1', 'administrationId' => 'adm-1', 'extractionStatus' => 'pending-review', 'owner' => 'bob'],
+			$deleted
+		);
+		self::assertSame(Http::STATUS_CONFLICT, $others->discard('si-1')->getStatus());
+
+		$confirmed = $this->discardController(
+			['id' => 'si-2', 'administrationId' => 'adm-1', 'extractionStatus' => 'confirmed', 'owner' => 'alice'],
+			$deleted
+		);
+		self::assertSame(Http::STATUS_CONFLICT, $confirmed->discard('si-2')->getStatus());
+		self::assertSame([], $deleted);
+
+	}//end testDiscardRefusesAnotherOwnerOrAConfirmedInvoice()
+
+	/**
+	 * F2-S7: an invoice of another administration reads as not found.
+	 *
+	 * @return void
+	 */
+	public function testDiscardMasksAnotherAdministration(): void {
+		$deleted = [];
+		$context = $this->createMock(AdministrationContextService::class);
+		$context->method('canAccess')->willReturn(false);
+		$controller = $this->discardController(
+			['id' => 'si-1', 'administrationId' => 'adm-2', 'extractionStatus' => 'pending-review', 'owner' => 'alice'],
+			$deleted,
+			$context
+		);
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $controller->discard('si-1')->getStatus());
+		self::assertSame([], $deleted);
+
+	}//end testDiscardMasksAnotherAdministration()
+
+	/**
+	 * Request params for an upload from the review dialog.
+	 *
+	 * @param string $contents The file contents.
+	 * @param string $format   ubl or csv.
+	 *
+	 * @return void
+	 */
+	private function withReviewBody(string $contents, string $format): void {
+		$this->request->method('getUploadedFile')->willReturn([]);
+		$this->request->method('getParam')->willReturnCallback(
+			static fn (string $key, mixed $default = null): mixed => match ($key) {
+				'format' => $format,
+				'review' => 'true',
+				default => $default,
+			}
+		);
+		$this->request->method('getParams')->willReturn(['contents' => $contents, 'format' => $format, 'review' => 'true']);
+
+	}//end withReviewBody()
+
+	/**
+	 * A controller over one stored invoice that records deletes.
+	 *
+	 * @param array<string,mixed>                         $invoice The stored invoice.
+	 * @param list<string>                                $deleted Deleted ids (by reference).
+	 * @param AdministrationContextService&MockObject|null $context The administration context.
+	 *
+	 * @return SupplierInvoiceImportController
+	 */
+	private function discardController(array $invoice, array &$deleted, ?AdministrationContextService $context=null): SupplierInvoiceImportController {
+		$objectService = $this->createMock(ObjectServiceInterface::class);
+		$objectService->method('setRegister')->willReturnSelf();
+		$objectService->method('setSchema')->willReturnSelf();
+		$objectService->method('find')->willReturn(new ObjectEntityStub(payload: $invoice));
+		$objectService->method('deleteObject')->willReturnCallback(
+			static function (string $uuid) use (&$deleted): bool {
+				$deleted[] = $uuid;
+				return true;
+			}
+		);
+
+		return new SupplierInvoiceImportController(
+			request: $this->request,
+			supplierInvoiceService: $this->service,
+			administrationContext: ($context ?? $this->administrationContext),
+			session: $this->session,
+			logger: $this->logger,
+			objectService: $objectService,
+			checks: $this->checksOver($objectService),
+		);
+
+	}//end discardController()
 }//end class

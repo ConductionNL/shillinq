@@ -44,6 +44,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\Shillinq\Service\Extraction\ExtractionPrefillService;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -179,7 +180,8 @@ class SupplierInvoiceService {
 	 * @param string $ublXml UBL Invoice XML document.
 	 * @param array<string,mixed> $context Optional context: ublSourceUri,
 	 *                                     peppolReceivedAt (ISO-8601),
-	 *                                     peppolMessageId.
+	 *                                     peppolMessageId, reviewDraft (true stores the
+	 *                                     invoice as a draft awaiting confirmation).
 	 *
 	 * @return array<string,mixed> The persisted SupplierInvoice (id stamped by OR).
 	 *
@@ -236,6 +238,9 @@ class SupplierInvoiceService {
 		);
 
 		$record = array_merge($record, array_filter($this->checks->warnings(invoice: $record)));
+		if (($context['reviewDraft'] ?? false) === true) {
+			$record['extractionStatus'] = ExtractionPrefillService::STATUS_PENDING_REVIEW;
+		}
 
 		return $this->checkSeller(invoice: $this->saveObject(schema: 'SupplierInvoice', object: $record));
 	}//end ingestUBLInvoice()

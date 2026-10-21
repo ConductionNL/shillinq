@@ -6789,7 +6789,12 @@ OC.L10N.register(
         "Add at least one line with a description and a price.": "Voeg minstens een regel toe met een omschrijving en een prijs.",
         "Every line needs a number for quantity, price and VAT rate.": "Elke regel heeft een getal nodig voor aantal, prijs en btw-tarief.",
         "A VAT rate lies between 0 and 100 percent.": "Een btw-tarief ligt tussen 0 en 100 procent.",
-        "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw."
+        "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw.",
+        "The invoice stays a draft until you save it. Discard removes it.": "De factuur blijft een concept tot je hem opslaat. Verwijderen haalt hem weg.",
+        "Discard": "Verwijderen",
+        "Keep as draft": "Als concept bewaren",
+        "Import discarded.": "Import verwijderd.",
+        "This invoice is already confirmed.": "Deze factuur is al bevestigd."
     },
     "nplurals=2; plural=(n != 1);"
 )
