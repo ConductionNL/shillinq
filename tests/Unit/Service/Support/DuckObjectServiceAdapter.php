@@ -268,7 +268,7 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 			$this->unsupported(method: 'find');
 		}
 
-		foreach ($this->findAll() as $row) {
+		foreach ($this->findAll(_rbac: $_rbac, _multitenancy: $_multitenancy) as $row) {
 			if (is_array($row) === false) {
 				continue;
 			}
