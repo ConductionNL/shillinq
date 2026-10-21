@@ -4588,7 +4588,15 @@ OC.L10N.register(
         "Bank statement line": "Bank statement line",
         "The bank statement line the payout arrived as.": "The bank statement line the payout arrived as.",
         "The journal entry that booked the payout.": "The journal entry that booked the payout.",
-        "No payouts from a payment provider yet": "No payouts from a payment provider yet"
+        "No payouts from a payment provider yet": "No payouts from a payment provider yet",
+        "Unknown report type": "Unknown report type",
+        "This report is not available in that format": "This report is not available in that format",
+        "Choose weekly, monthly or quarterly": "Choose weekly, monthly or quarterly",
+        "The run day is out of range": "The run day is out of range",
+        "Choose the previous period or the year to date": "Choose the previous period or the year to date",
+        "Choose active or paused": "Choose active or paused",
+        "These recipients cannot receive this report: %s": "These recipients cannot receive this report: %s",
+        "Choose a folder": "Choose a folder"
     },
     "nplurals=2; plural=(n != 1);"
 )

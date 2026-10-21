@@ -23,11 +23,14 @@ use OCA\Shillinq\Reporting\ReportGenerationService;
 use OCA\Shillinq\Reporting\Schedule\ReportScheduleCalendar;
 use OCA\Shillinq\Reporting\Schedule\ScheduledReportDelivery;
 use OCA\Shillinq\Reporting\Schedule\ScheduledReportRunner;
+use OCA\Shillinq\Reporting\Schedule\ScheduleRecipientPolicy;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\IAppConfig;
+use OCP\IGroupManager;
+use OCP\IUserManager;
 use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -113,10 +116,31 @@ class ScheduledReportRunnerTest extends TestCase {
 			$this->delivery,
 			new ReportScheduleCalendar(),
 			$administrations,
-			$this->createMock(LoggerInterface::class)
+			$this->createMock(LoggerInterface::class),
+			self::recipientPolicy($this->createMock(IUserManager::class), $this->createMock(IGroupManager::class), $administrations)
 		);
 
 	}//end runner()
+
+	/**
+	 * A policy where every user exists and controller-anna is in the controllers group.
+	 *
+	 * @param IUserManager&MockObject        $users           The user manager mock.
+	 * @param IGroupManager&MockObject       $groups          The group manager mock.
+	 * @param AdministrationContextService   $administrations Membership answers.
+	 *
+	 * @return ScheduleRecipientPolicy The policy.
+	 */
+	private static function recipientPolicy(IUserManager&MockObject $users, IGroupManager&MockObject $groups, AdministrationContextService $administrations): ScheduleRecipientPolicy {
+		$users->method('userExists')->willReturn(true);
+		$groups->method('groupExists')->willReturn(true);
+		$groups->method('isInGroup')->willReturnCallback(
+			static fn (string $userId, string $groupId): bool => $userId === 'controller-anna' && $groupId === 'controllers'
+		);
+
+		return new ScheduleRecipientPolicy($users, $groups, $administrations);
+
+	}//end recipientPolicy()
 
 	/**
 	 * The schedule as it is stored now.
@@ -212,4 +236,24 @@ class ScheduledReportRunnerTest extends TestCase {
 		self::assertSame(['ran' => 0, 'failed' => 1], $runner->runDue(new DateTimeImmutable('2026-10-05T01:00:00Z')));
 
 	}//end testAnOwnerWithoutAccessProducesNothing()
+	/**
+	 * A recipient added to someone else's schedule outside the owner's reach receives nothing.
+	 *
+	 * @return void
+	 */
+	public function testARecipientOutsideTheAdministrationIsDropped(): void {
+		$schedule               = self::schedule();
+		$schedule['recipients'] = ['group:controllers', 'user:mallory', 'group:everyone'];
+		$runner                 = $this->runner($schedule);
+		$this->reports->method('generate')->willReturn(['id' => 'gen-1', 'fileId' => 42, 'status' => 'ready']);
+		$this->delivery->expects(self::once())->method('file')
+			->with('controller-anna', 42, '/Rapportages/Maand', ['group:controllers'])
+			->willReturn(['fileId' => 77, 'path' => '/Rapportages/Maand/report.pdf']);
+		$this->delivery->expects(self::once())->method('notifyReady')
+			->with(['group:controllers'], self::anything(), '2026-09', 77)
+			->willReturn(3);
+
+		self::assertSame(['ran' => 1, 'failed' => 0], $runner->runDue(new DateTimeImmutable('2026-10-05T01:00:00Z')));
+
+	}//end testARecipientOutsideTheAdministrationIsDropped()
 }//end class

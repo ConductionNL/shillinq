@@ -6782,7 +6782,15 @@ OC.L10N.register(
         "Bank statement line": "Regel bankafschrift",
         "The bank statement line the payout arrived as.": "De regel op het bankafschrift waarmee de uitbetaling binnenkwam.",
         "The journal entry that booked the payout.": "De journaalpost die de uitbetaling boekte.",
-        "No payouts from a payment provider yet": "Nog geen uitbetalingen van een betaalprovider"
+        "No payouts from a payment provider yet": "Nog geen uitbetalingen van een betaalprovider",
+        "Unknown report type": "Onbekend rapporttype",
+        "This report is not available in that format": "Dit rapport is niet beschikbaar in dat formaat",
+        "Choose weekly, monthly or quarterly": "Kies wekelijks, maandelijks of per kwartaal",
+        "The run day is out of range": "De dag van uitvoering valt buiten het bereik",
+        "Choose the previous period or the year to date": "Kies de vorige periode of het jaar tot nu toe",
+        "Choose active or paused": "Kies actief of gepauzeerd",
+        "These recipients cannot receive this report: %s": "Deze ontvangers kunnen dit rapport niet ontvangen: %s",
+        "Choose a folder": "Kies een map"
     },
     "nplurals=2; plural=(n != 1);"
 )

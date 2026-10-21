@@ -61,6 +61,7 @@ class ScheduledReportRunner {
 	 * @param ReportScheduleCalendar       $calendar       Next run and period.
 	 * @param AdministrationContextService $administrations Who may reach an administration.
 	 * @param LoggerInterface              $logger         Logger.
+	 * @param ScheduleRecipientPolicy      $recipientPolicy Drops recipients the owner may not deliver to.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
@@ -70,6 +71,7 @@ class ScheduledReportRunner {
 		private readonly ReportScheduleCalendar $calendar,
 		private readonly AdministrationContextService $administrations,
 		private readonly LoggerInterface $logger,
+		private readonly ScheduleRecipientPolicy $recipientPolicy,
 	) {
 
 	}//end __construct()
@@ -187,7 +189,7 @@ class ScheduledReportRunner {
 				return 'The report was produced but its file could not be stored.';
 			}
 
-			$recipients = array_map('strval', (array)($schedule['recipients'] ?? []));
+			$recipients = $this->deliverableRecipients(schedule: $schedule, ownerId: $ownerId, administrationId: $administrationId);
 			$filed      = $this->delivery->file(
 				ownerId: $ownerId,
 				fileId: (int)$produced['fileId'],
@@ -203,6 +205,29 @@ class ScheduledReportRunner {
 		return '';
 
 	}//end produceAndDeliver()
+
+	/**
+	 * The schedule's recipients the owner may deliver to; the others are dropped and logged.
+	 *
+	 * The schedule is stored as an ordinary object, so its recipients are
+	 * checked again at run time and not only when the schedule is written.
+	 *
+	 * @param array<string, mixed> $schedule         The schedule.
+	 * @param string               $ownerId          Its owner.
+	 * @param string               $administrationId Its administration.
+	 *
+	 * @return list<string> The recipients.
+	 */
+	private function deliverableRecipients(array $schedule, string $ownerId, string $administrationId): array {
+		$recipients = array_values(array_map('strval', (array)($schedule['recipients'] ?? [])));
+		$refused    = $this->recipientPolicy->refused(ownerId: $ownerId, administrationId: $administrationId, recipients: $recipients);
+		if ($refused !== []) {
+			$this->logger->warning('ScheduledReportRunner: recipients refused', ['schedule' => ($schedule['id'] ?? null), 'recipients' => $refused]);
+		}
+
+		return array_values(array_diff($recipients, $refused));
+
+	}//end deliverableRecipients()
 
 	/**
 	 * Write the run's outcome onto the schedule.
