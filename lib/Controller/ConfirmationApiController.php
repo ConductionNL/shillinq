@@ -47,6 +47,7 @@ use DateTimeZone;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Booking\ConfirmationTokenService;
+use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -60,6 +61,7 @@ use OCP\IRequest;
 use OCP\Security\Bruteforce\IThrottler;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -119,6 +121,8 @@ class ConfirmationApiController extends Controller {
 	 * @param ITimeFactory $time Server clock.
 	 * @param IThrottler $throttler Brute-force throttler for
 	 *                              failed token attempts.
+	 * @param ObjectTransitionRunner $transitions Runs the declared
+	 *                                            confirm transition.
 	 * @param LoggerInterface $logger Logger for fail-closed
 	 *                                diagnostics.
 	 */
@@ -130,6 +134,7 @@ class ConfirmationApiController extends Controller {
 		private readonly ConfirmationTokenService $tokens,
 		private readonly ITimeFactory $time,
 		private readonly IThrottler $throttler,
+		private readonly ObjectTransitionRunner $transitions,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
@@ -146,8 +151,13 @@ class ConfirmationApiController extends Controller {
 	 *
 	 * @param string $appointmentId Appointment id (path parameter).
 	 *
-	 * @return JSONResponse 200 with the updated appointment on success;
-	 *                      401 / 403 / 404 on token failures.
+	 * The move runs as the declared `confirmViaToken` transition, as the
+	 * system: the anonymous caller holds no right on the object, the redeemed
+	 * token is the check. The answer is the portal view only.
+	 *
+	 * @return JSONResponse 200 with the portal view of the appointment;
+	 *                      401 / 403 / 404 on token failures; 409 when the
+	 *                      appointment cannot be confirmed from its state.
 	 *
 	 * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-10
 	 */
@@ -185,17 +195,13 @@ class ConfirmationApiController extends Controller {
 				);
 			}
 
-			$appointment['status'] = 'confirmed';
-			$appointment['confirmedAt'] = $this->nowIso();
-			$appointment['confirmationTokenId'] = (string)($result['token']['tokenId'] ?? '');
-
-			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$saved = $objectService->saveObject(
-				object: $appointment,
-				register: $this->settings->getRegisterSlug(),
-				schema: 'Appointment',
-				// The confirmation token, validated above, is the authentication for this anonymous caller.
-				_rbac: false,
+			$saved = $this->transitions->runAsSystem(
+				objectId: $this->objectUuid(appointment: $appointment),
+				action: 'confirmViaToken',
+				data: [
+					'confirmedAt' => $this->nowIso(),
+					'confirmationTokenId' => (string)($result['token']['tokenId'] ?? ''),
+				],
 			);
 
 			$this->tokens->markRedeemed($result['token']);
@@ -209,8 +215,17 @@ class ConfirmationApiController extends Controller {
 			);
 
 			return new JSONResponse(
-				['appointment' => $this->toArray(object: $saved)],
+				['appointment' => $this->presentAppointment(appointment: $this->toArray(object: $saved))],
 				Http::STATUS_OK,
+			);
+		} catch (RuntimeException $e) {
+			$this->logger->warning(
+				'ConfirmationApiController: confirm transition refused',
+				['appointmentId' => $appointmentId, 'exception' => $e->getMessage()]
+			);
+			return new JSONResponse(
+				['error' => 'This appointment can no longer be confirmed'],
+				Http::STATUS_CONFLICT,
 			);
 		} catch (Throwable $e) {
 			$this->logger->error(
@@ -527,6 +542,25 @@ class ConfirmationApiController extends Controller {
 		];
 
 	}//end presentAppointment()
+
+	/**
+	 * The OpenRegister uuid of an appointment record.
+	 *
+	 * @param array<string, mixed> $appointment Appointment record.
+	 *
+	 * @return string
+	 *
+	 * @throws RuntimeException When the record carries no uuid.
+	 */
+	private function objectUuid(array $appointment): string {
+		$uuid = (string)($appointment['@self']['id'] ?? ($appointment['id'] ?? ''));
+		if ($uuid === '') {
+			throw new RuntimeException('Appointment record carries no uuid');
+		}
+
+		return $uuid;
+
+	}//end objectUuid()
 
 	/**
 	 * Current server time as ISO 8601 UTC.

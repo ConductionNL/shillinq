@@ -60,6 +60,7 @@ class ObjectRequestRefundService {
 	 * @param IAppConfig                    $appConfig       The register slug and the refunds payable account.
 	 * @param ObjectTransitionRunner        $transitions     Posts the journal entries.
 	 * @param PaymentRevenueAccountResolver $revenueAccounts The revenue account of a request type.
+	 * @param AdministrationContextService  $context         The signed-in user and their administrations.
 	 *
 	 * @return void
 	 */
@@ -68,6 +69,7 @@ class ObjectRequestRefundService {
 		private readonly IAppConfig $appConfig,
 		private readonly ObjectTransitionRunner $transitions,
 		private readonly PaymentRevenueAccountResolver $revenueAccounts,
+		private readonly AdministrationContextService $context,
 	) {
 	}//end __construct()
 
@@ -78,6 +80,7 @@ class ObjectRequestRefundService {
 	 *
 	 * @return array<string, mixed> The request, its refund now `approved`.
 	 *
+	 * @throws RefundStepForbiddenException When the user is outside the request's administration.
 	 * @throws InvalidArgumentException When there is no requested refund, or an account is missing.
 	 * @throws RuntimeException When OpenRegister answers a save without an id.
 	 *
@@ -85,6 +88,7 @@ class ObjectRequestRefundService {
 	 */
 	public function approve(string $paymentRequestId): array {
 		$request = $this->find(id: $paymentRequestId);
+		$actor = $this->actorIn(request: $request);
 		$index = $this->refundIn(request: $request, state: 'requested');
 		$refundAccount = $this->refundAccount();
 		$revenue = trim((string)($request['revenueAccount'] ?? ''));
@@ -111,6 +115,8 @@ class ObjectRequestRefundService {
 		);
 
 		$request['refunds'][$index]['state'] = 'approved';
+		$request['refunds'][$index]['approvedBy'] = $actor;
+		$request['refunds'][$index]['approvedAt'] = gmdate('Y-m-d\TH:i:s\Z');
 		$this->save(schema: 'PaymentRequest', object: $request);
 
 		return $request;
@@ -125,6 +131,7 @@ class ObjectRequestRefundService {
 	 *
 	 * @return array<string, mixed> The request, now `refunded`.
 	 *
+	 * @throws RefundStepForbiddenException When the user is outside the request's administration, or approved the refund.
 	 * @throws InvalidArgumentException When there is no approved refund, or a value is missing.
 	 * @throws RuntimeException When OpenRegister answers a save without an id.
 	 *
@@ -138,7 +145,12 @@ class ObjectRequestRefundService {
 		}
 
 		$request = $this->find(id: $paymentRequestId);
+		$actor = $this->actorIn(request: $request);
 		$index = $this->refundIn(request: $request, state: 'approved');
+		if ((string)($request['refunds'][$index]['approvedBy'] ?? '') === $actor) {
+			throw new RefundStepForbiddenException('You approved this refund, so someone else must mark it paid.');
+		}
+
 		$this->book(
 			request: $request,
 			prefix: 'RP',
@@ -150,11 +162,31 @@ class ObjectRequestRefundService {
 
 		$request['refunds'][$index]['state'] = 'paid';
 		$request['refunds'][$index]['bankReference'] = $bankReference;
+		$request['refunds'][$index]['paidBy'] = $actor;
+		$request['refunds'][$index]['paidAt'] = gmdate('Y-m-d\TH:i:s\Z');
 		$request['state'] = 'refunded';
 		$this->save(schema: 'PaymentRequest', object: $request);
 
 		return $request;
 	}//end markPaid()
+
+	/**
+	 * The signed-in user, who must be a member of the request's administration.
+	 *
+	 * @param array<string, mixed> $request The request.
+	 *
+	 * @return string The user id.
+	 *
+	 * @throws RefundStepForbiddenException When nobody is signed in or the user is outside the administration.
+	 */
+	private function actorIn(array $request): string {
+		$actor = (string)($this->context->currentUserId() ?? '');
+		if ($actor === '' || $this->context->canAccess((string)($request['administrationId'] ?? '')) === false) {
+			throw new RefundStepForbiddenException('This payment request belongs to an administration you are not a member of.');
+		}
+
+		return $actor;
+	}//end actorIn()
 
 	/**
 	 * The position of the newest refund, which must be in the given state.

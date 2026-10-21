@@ -9,6 +9,11 @@
   "components": {
     "schemas": {
       "Administration": {
+        "authorization": {
+          "read": [
+            "authenticated"
+          ]
+        },
         "slug": "Administration",
         "icon": "OfficeBuilding",
         "version": "0.2.0",
@@ -345,6 +350,11 @@
         }
       },
       "AdministrationMembership": {
+        "authorization": {
+          "read": [
+            "authenticated"
+          ]
+        },
         "slug": "AdministrationMembership",
         "icon": "AccountKey",
         "version": "0.1.0",
@@ -728,6 +738,12 @@
         }
       },
       "AdministrationMigration": {
+        "authorization": {
+          "read": [
+            "shillinq_admin",
+            "shillinq_auditor"
+          ]
+        },
         "slug": "AdministrationMigration",
         "icon": "TransitConnectionVariant",
         "version": "0.1.0",
@@ -921,6 +937,12 @@
         }
       },
       "AdministrationBackupRun": {
+        "authorization": {
+          "read": [
+            "shillinq_admin",
+            "shillinq_auditor"
+          ]
+        },
         "slug": "AdministrationBackupRun",
         "icon": "DatabaseClock",
         "version": "0.1.0",

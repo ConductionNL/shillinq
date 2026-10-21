@@ -79,57 +79,12 @@ describe('Generate invoices', () => {
 		).toBe(true)
 	})
 
-	it('offers the project hours of the period, oldest first', async () => {
-		const { timeEntriesFor } =
-			await import('../../src/utils/invoiceGenerateWizard.js')
-		const entries = [
-			{ id: 'b', projectId: 'p1', date: '2026-09-20' },
-			{ id: 'a', projectId: 'p1', date: '2026-09-02' },
-			{ id: 'x', projectId: 'p2', date: '2026-09-05' },
-			{ id: 'y', projectId: 'p1', date: '2026-10-01' },
-		]
-		expect(
-			timeEntriesFor(entries, 'p1', '2026-09-01', '2026-09-30').map(
-				(e) => e.id,
-			),
-		).toEqual(['a', 'b'])
-		expect(
-			timeEntriesFor(entries, '', '2026-09-01', '2026-09-30').map((e) => e.id),
-		).toEqual(['a', 'x', 'b'])
-	})
-
-	it('offers only the claims passed on to the customer', async () => {
-		const { passThroughClaimsFor } =
-			await import('../../src/utils/invoiceGenerateWizard.js')
-		const claims = [
-			{
-				id: 'c1',
-				passThroughCustomerIds: ['cust-1'],
-				submittedDate: '2026-09-14',
-			},
-			{
-				id: 'c2',
-				passThroughCustomerIds: ['cust-2'],
-				submittedDate: '2026-09-14',
-			},
-			{ id: 'c3', submittedDate: '2026-09-14' },
-			{
-				id: 'c4',
-				passThroughCustomerIds: ['cust-1'],
-				submittedDate: '2026-08-01',
-			},
-		]
-		expect(
-			passThroughClaimsFor(claims, 'cust-1', '2026-09-01', '2026-09-30').map(
-				(c) => c.id,
-			),
-		).toEqual(['c1'])
-	})
-
 	it('loads meter readings for the usage model only', async () => {
 		const { loadCandidates } =
 			await import('../../src/utils/invoiceGenerateWizard.js')
-		axiosMock.get.mockResolvedValue({ data: { results: [] } })
+		axiosMock.get.mockResolvedValue({
+			data: { timeEntries: [{ id: 't-1' }], expenses: [] },
+		})
 		const usage = await loadCandidates({
 			customerId: 'c',
 			fromDate: '2026-09-01',
@@ -145,10 +100,33 @@ describe('Generate invoices', () => {
 			projectId: 'p1',
 		})
 		expect(hours.readings).toEqual([])
+		expect(hours.timeEntries).toEqual([{ id: 't-1' }])
+	})
+
+	it('reads the lines from the server for the chosen customer, never the whole register', async () => {
+		const { loadCandidates } =
+			await import('../../src/utils/invoiceGenerateWizard.js')
+		axiosMock.get.mockResolvedValue({ data: { timeEntries: [], expenses: [] } })
+		await loadCandidates({
+			customerId: 'cust-1',
+			fromDate: '2026-09-01',
+			toDate: '2026-09-30',
+			billingModel: 't_and_m',
+			projectId: 'p1',
+		})
+		expect(axiosMock.get).toHaveBeenCalledTimes(1)
 		expect(axiosMock.get).toHaveBeenCalledWith(
-			'/index.php/apps/openregister/api/objects/shillinq/UrenRegistratie',
-			{ params: { _limit: 500, projectId: 'p1' } },
+			'/index.php/apps/shillinq/api/v1/invoices/billable-lines',
+			{
+				params: {
+					customerId: 'cust-1',
+					projectId: 'p1',
+					fromDate: '2026-09-01',
+					toDate: '2026-09-30',
+				},
+			},
 		)
+		expect(routes).toContain("'url' => '/api/v1/invoices/billable-lines', 'verb' => 'GET'")
 	})
 
 	it('sends the fields InvoiceGenerationRequest reads', async () => {

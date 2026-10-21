@@ -40,7 +40,11 @@
               "from": "pending_confirmation",
               "to": "confirmed",
               "label": "Confirm via token",
-              "description": "Customer redeemed a valid ConfirmationToken; status moves to confirmed and confirmedAt is set."
+              "description": "Customer redeemed a valid ConfirmationToken; status moves to confirmed and confirmedAt is set. Run by ConfirmationApiController:confirm as the system after the token check.",
+              "inputs": [
+                {"field": "confirmedAt", "required": true},
+                {"field": "confirmationTokenId", "required": true}
+              ]
             },
             "autoCancelExpired": {
               "from": "pending_confirmation",

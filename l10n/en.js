@@ -3524,6 +3524,7 @@ OC.L10N.register(
         "What the instalment asks for.": "What the instalment asks for.",
         "What has been paid on the instalment.": "What has been paid on the instalment.",
         "Paid on": "Paid on",
+        "Paid by": "Paid by",
         "When the instalment was paid in full.": "When the instalment was paid in full.",
         "Allocations": "Allocations",
         "Which invoice each paid euro went to.": "Which invoice each paid euro went to.",

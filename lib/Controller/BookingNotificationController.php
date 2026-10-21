@@ -27,6 +27,7 @@ use DateTimeZone;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -111,11 +112,13 @@ class BookingNotificationController extends Controller {
 	 * Update notification trigger configuration for a specific booking.
 	 *
 	 * Accepts a JSON body with trigger overrides (active, recipients, templateId).
-	 * Organizers may update their own bookings' triggers.
+	 * Organizers may update their own bookings' triggers. A trigger that names
+	 * an id must already belong to this booking; otherwise nothing is saved.
 	 *
 	 * @param string $id Booking UUID.
 	 *
-	 * @return JSONResponse
+	 * @return JSONResponse 200 with the saved triggers; 400 without a triggers
+	 *                      array; 403 when a trigger belongs to another booking.
 	 *
 	 * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
 	 */
@@ -132,6 +135,21 @@ class BookingNotificationController extends Controller {
 
 		try {
 			$registerSlug = $this->settingsService->getRegisterSlug();
+
+			$owned = $this->triggerIdsOf(registerSlug: $registerSlug, bookingId: $id);
+			foreach ($data['triggers'] as $triggerData) {
+				if (is_array($triggerData) === false) {
+					return new JSONResponse(['message' => 'Each trigger must be an object.'], 400);
+				}
+
+				$claimed = array_filter(
+					[$triggerData['id'] ?? '', $triggerData['uuid'] ?? '', $triggerData['@self']['id'] ?? ''],
+					static fn (mixed $value): bool => is_scalar($value) === true && (string)$value !== ''
+				);
+				if (array_diff(array_map('strval', $claimed), $owned) !== []) {
+					return new JSONResponse(['message' => 'A trigger of another booking cannot be changed here.'], 403);
+				}
+			}
 
 			$saved = [];
 			foreach ($data['triggers'] as $triggerData) {
@@ -150,6 +168,31 @@ class BookingNotificationController extends Controller {
 		}//end try
 
 	}//end updateBookingTriggers()
+
+	/**
+	 * The ids of the triggers that belong to one booking.
+	 *
+	 * @param string $registerSlug The register slug.
+	 * @param string $bookingId    The booking id.
+	 *
+	 * @return list<string>
+	 */
+	private function triggerIdsOf(string $registerSlug, string $bookingId): array {
+		$triggers = $this->objectService
+			->setRegister($registerSlug)
+			->setSchema('BookingNotificationTrigger')
+			->findAll(['filters' => ['bookingId' => $bookingId], 'limit' => 1000]);
+
+		$ids = [];
+		foreach ($triggers as $trigger) {
+			$triggerId = ObjectIdentifier::resolve(saved: $trigger);
+			if ($triggerId !== '') {
+				$ids[] = $triggerId;
+			}
+		}
+
+		return $ids;
+	}//end triggerIdsOf()
 
 	/**
 	 * Get notification monitor data for the admin dashboard.
