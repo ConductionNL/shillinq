@@ -26,6 +26,7 @@ use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Controller\InvoiceApiController;
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\BillableLinesService;
 use OCA\Shillinq\Service\InvoiceGenerationService;
 use OCA\Shillinq\Service\InvoicePdfGenerator;
 use OCP\AppFramework\Http;
@@ -107,6 +108,13 @@ final class InvoiceApiControllerTest extends TestCase {
 	private ?IUser $user = null;
 
 	/**
+	 * Mock billable lines service.
+	 *
+	 * @var BillableLinesService&MockObject
+	 */
+	private BillableLinesService&MockObject $billableLines;
+
+	/**
 	 * The controller under test.
 	 *
 	 * @var InvoiceApiController
@@ -127,6 +135,7 @@ final class InvoiceApiControllerTest extends TestCase {
 		$this->administrationContext = $this->createMock(AdministrationContextService::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
 		$this->objectService = $this->createMock(ObjectServiceInterface::class);
+		$this->billableLines = $this->createMock(BillableLinesService::class);
 
 		$user = $this->createMock(IUser::class);
 		$user->method('getUID')->willReturn('alice');
@@ -150,6 +159,7 @@ final class InvoiceApiControllerTest extends TestCase {
 			administrationContext: $this->administrationContext,
 			logger: $this->logger,
 			objectService: $this->objectService,
+			billableLines: $this->billableLines,
 		);
 
 	}//end setUp()
@@ -559,6 +569,79 @@ final class InvoiceApiControllerTest extends TestCase {
 		self::assertStringNotContainsStringIgnoringCase('billingModel must be one of', (string)json_encode($data));
 
 	}//end testGenerateInvalidRequestReturnsSlugWithoutLeakingMessage()
+
+	/**
+	 * Hours or claims that are not the customer's are refused before anything
+	 * is drafted, so they cannot land on this customer's invoice.
+	 *
+	 * @return void
+	 */
+	public function testGenerateRefusesLinesOfAnotherCustomer(): void {
+		$this->request->method('getParams')->willReturn(
+			[
+				'billingModel' => 't_and_m',
+				'customerId' => 'cust-1',
+				'fromDate' => '2026-09-01',
+				'toDate' => '2026-09-30',
+				'rateCardId' => 'rc-1',
+				'timeEntryIds' => ['t-own', 't-of-cust-2'],
+				'expenseIds' => ['c-own'],
+			]
+		);
+		$this->billableLines->expects($this->once())
+			->method('foreignLineIds')
+			->with('adm-1', 'cust-1', ['t-own', 't-of-cust-2'], ['c-own'])
+			->willReturn(['t-of-cust-2']);
+		$this->service->expects($this->never())->method('draftInvoice');
+
+		$response = $this->controller->generate();
+
+		self::assertSame(Http::STATUS_UNPROCESSABLE_ENTITY, $response->getStatus());
+		self::assertSame('invoice-generate-foreign-lines', $response->getData()['error']);
+
+	}//end testGenerateRefusesLinesOfAnotherCustomer()
+
+	/**
+	 * The lines step reads the customer's billable lines from the server,
+	 * scoped to the caller's administration, never one from the request.
+	 *
+	 * @return void
+	 */
+	public function testBillableAnswersTheCustomersLinesInTheCallersAdministration(): void {
+		$this->request->method('getParam')->willReturnMap(
+			[
+				['customerId', '', 'cust-1'],
+				['projectId', '', ''],
+				['fromDate', '', '2026-09-01'],
+				['toDate', '', '2026-09-30'],
+				['administrationId', '', 'adm-attacker'],
+			]
+		);
+		$lines = ['timeEntries' => [['id' => 't-1']], 'expenses' => []];
+		$this->billableLines->expects($this->once())
+			->method('forCustomer')
+			->with('adm-1', 'cust-1', '', '2026-09-01', '2026-09-30')
+			->willReturn($lines);
+
+		$response = $this->controller->billable();
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame($lines, $response->getData());
+
+	}//end testBillableAnswersTheCustomersLinesInTheCallersAdministration()
+
+	/**
+	 * An anonymous caller reads no billable lines.
+	 *
+	 * @return void
+	 */
+	public function testBillableAnonymousReturns401(): void {
+		$this->user = null;
+		$this->billableLines->expects($this->never())->method('forCustomer');
+
+		self::assertSame(Http::STATUS_UNAUTHORIZED, $this->controller->billable()->getStatus());
+
+	}//end testBillableAnonymousReturns401()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

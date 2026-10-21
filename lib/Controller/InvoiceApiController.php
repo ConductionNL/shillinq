@@ -39,6 +39,7 @@ namespace OCA\Shillinq\Controller;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\BillableLinesService;
 use OCA\Shillinq\Service\InvoiceGenerationService;
 use OCA\Shillinq\Service\InvoicePdfGenerator;
 use OCP\AppFramework\Controller;
@@ -65,6 +66,7 @@ class InvoiceApiController extends Controller {
 	 * @param AdministrationContextService $administrationContext Server-resolved tenant scope.
 	 * @param LoggerInterface $logger Logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param BillableLinesService $billableLines The lines one customer can be invoiced for.
 	 */
 	public function __construct(
 		IRequest $request,
@@ -74,6 +76,7 @@ class InvoiceApiController extends Controller {
 		private readonly AdministrationContextService $administrationContext,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly BillableLinesService $billableLines,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 
@@ -103,6 +106,22 @@ class InvoiceApiController extends Controller {
 			$body = $this->decodeBody();
 
 			$req = InvoiceGenerationRequest::fromArray($admin, $body);
+			$foreign = $this->billableLines->foreignLineIds(
+				administrationId: $admin,
+				customerId: $req->customerId,
+				timeEntryIds: array_values(array_map('strval', $req->timeEntryIds)),
+				expenseIds: array_values(array_map('strval', $req->expenseIds))
+			);
+			if ($foreign !== []) {
+				return new JSONResponse(
+					[
+						'message' => 'Some chosen lines are not billable to this customer in this administration.',
+						'error' => 'invoice-generate-foreign-lines',
+					],
+					Http::STATUS_UNPROCESSABLE_ENTITY
+				);
+			}
+
 			$invoice = $this->service->draftInvoice($req);
 
 			return new JSONResponse($invoice, Http::STATUS_OK);
@@ -136,6 +155,34 @@ class InvoiceApiController extends Controller {
 		}//end try
 
 	}//end generate()
+
+	/**
+	 * The lines one customer can be invoiced for
+	 * (GET /api/v1/invoices/billable-lines).
+	 *
+	 * Query: customerId, projectId (optional), fromDate, toDate. The
+	 * administration is the caller's active one, resolved on the server.
+	 *
+	 * @return JSONResponse 200 with `{timeEntries, expenses}`; 401 when anonymous.
+	 *
+	 * @spec openspec/changes/invoice-from-time-and-expense/tasks.md#task-15
+	 */
+	#[NoAdminRequired]
+	public function billable(): JSONResponse {
+		if ($this->session->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
+
+		return new JSONResponse(
+			$this->billableLines->forCustomer(
+				administrationId: $this->resolveAdministrationId(),
+				customerId: trim((string)$this->request->getParam('customerId', '')),
+				projectId: trim((string)$this->request->getParam('projectId', '')),
+				fromDate: trim((string)$this->request->getParam('fromDate', '')),
+				toDate: trim((string)$this->request->getParam('toDate', ''))
+			)
+		);
+	}//end billable()
 
 	/**
 	 * List invoices for the current administration (GET /api/v1/invoices).

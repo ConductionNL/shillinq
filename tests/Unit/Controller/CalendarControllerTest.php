@@ -35,6 +35,7 @@ use OCA\Shillinq\Controller\CalendarController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Booking\TransactionalGuard;
 use OCA\Shillinq\Service\ConflictDetectionService;
+use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Http;
 use OCP\IGroupManager;
@@ -102,6 +103,13 @@ class CalendarControllerTest extends TestCase {
 	private ContainerInterface&MockObject $container;
 
 	/**
+	 * Transition runner.
+	 *
+	 * @var ObjectTransitionRunner&MockObject
+	 */
+	private ObjectTransitionRunner&MockObject $transitions;
+
+	/**
 	 * Per-request query-param overrides.
 	 *
 	 * @var array<string,mixed>
@@ -121,6 +129,7 @@ class CalendarControllerTest extends TestCase {
 		$this->context = $this->createMock(AdministrationContextService::class);
 		$this->guard = $this->createMock(TransactionalGuard::class);
 		$this->conflicts = $this->createMock(ConflictDetectionService::class);
+		$this->transitions = $this->createMock(ObjectTransitionRunner::class);
 
 		$this->settings->method('isOpenRegisterAvailable')->willReturn(true);
 		$this->settings->method('getRegisterSlug')->willReturn('shillinq');
@@ -182,6 +191,7 @@ class CalendarControllerTest extends TestCase {
 			$this->createMock(LoggerInterface::class),
 			$this->buildL10n(),
 			$this->buildGroupManager(false),
+			$this->transitions,
 		);
 	}//end buildController()
 
@@ -232,6 +242,12 @@ class CalendarControllerTest extends TestCase {
 						'status' => 'active',
 						'createdAt' => '2026-05-20T10:00:00Z',
 						'updatedAt' => '2026-05-20T10:00:00Z',
+					],
+					[
+						'calendarId' => 'cal-orphan',
+						'resource' => 'res-009',
+						'timeZone' => 'Europe/Amsterdam',
+						'status' => 'active',
 					],
 					[
 						'calendarId' => 'cal-002',
@@ -318,7 +334,7 @@ class CalendarControllerTest extends TestCase {
 			public function saveObject(array $object, string $register, string $schema): array {
 				$this->savedObjects[] = ['object' => $object, 'register' => $register, 'schema' => $schema];
 				// Echo back the object so the controller can shape the response.
-				return $object;
+				return array_merge($object, ['@self' => ['id' => 'uuid-saved']]);
 			}
 		};
 	}//end buildFakeObjectService()
@@ -374,6 +390,90 @@ class CalendarControllerTest extends TestCase {
 		$response = $controller->show('cal-missing');
 		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
 	}//end testShowReturns404WhenMissing()
+
+	/**
+	 * A user outside the calendar's administration cannot read it: the
+	 * answer is the same 404 as for a calendar that does not exist.
+	 *
+	 * @return void
+	 */
+	public function testShowRefusesCallerOutsideTheAdministration(): void {
+		$response = $this->buildControllerFor(uid: 'mallory', memberOf: 'adm-2', isAdmin: false)->show('cal-001');
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		$this->assertArrayNotHasKey('id', $response->getData());
+	}//end testShowRefusesCallerOutsideTheAdministration()
+
+	/**
+	 * A user outside the calendar's administration cannot list its bookings
+	 * (and so its attendees).
+	 *
+	 * @return void
+	 */
+	public function testListBookingsRefusesCallerOutsideTheAdministration(): void {
+		$this->params['start'] = '2026-05-21';
+		$this->params['end'] = '2026-05-22';
+		$response = $this->buildControllerFor(uid: 'mallory', memberOf: 'adm-2', isAdmin: false)->listBookings('cal-001');
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		$this->assertArrayNotHasKey('bookings', $response->getData());
+	}//end testListBookingsRefusesCallerOutsideTheAdministration()
+
+	/**
+	 * Asking the index for another administration's calendars is refused.
+	 *
+	 * @return void
+	 */
+	public function testIndexRefusesAnAdministrationTheCallerIsNotIn(): void {
+		$this->params['organization'] = 'adm-1';
+		$response = $this->buildControllerFor(uid: 'mallory', memberOf: 'adm-2', isAdmin: false)->index();
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$this->assertArrayNotHasKey('calendars', $response->getData());
+	}//end testIndexRefusesAnAdministrationTheCallerIsNotIn()
+
+	/**
+	 * A Nextcloud admin reads any calendar, as for booking.
+	 *
+	 * @return void
+	 */
+	public function testShowByAdminBypassesMembershipCheck(): void {
+		$response = $this->buildControllerFor(uid: 'admin', memberOf: '', isAdmin: true)->show('cal-001');
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame('cal-001', $response->getData()['id']);
+	}//end testShowByAdminBypassesMembershipCheck()
+
+	/**
+	 * Build a controller for another caller with one membership.
+	 *
+	 * @param string $uid      The caller's user id.
+	 * @param string $memberOf The one administration the caller is a member of ('' for none).
+	 * @param bool   $isAdmin  Whether the caller is a Nextcloud admin.
+	 *
+	 * @return CalendarController
+	 */
+	private function buildControllerFor(string $uid, string $memberOf, bool $isAdmin): CalendarController {
+		$context = $this->createMock(AdministrationContextService::class);
+		$context->method('currentUserId')->willReturn($uid);
+		$context->method('buildContext')->willReturn([
+			'userId' => $uid,
+			'administrations' => $memberOf === '' ? [] : [['administrationId' => $memberOf]],
+			'activeAdministrationId' => $memberOf === '' ? null : $memberOf,
+		]);
+		$context->method('canAccess')->willReturnCallback(
+			static fn (string $administrationId): bool => $memberOf !== '' && $administrationId === $memberOf
+		);
+
+		return new CalendarController(
+			$this->request,
+			$this->container,
+			$this->settings,
+			$this->conflicts,
+			$context,
+			$this->guard,
+			$this->createMock(LoggerInterface::class),
+			$this->buildL10n(),
+			$this->buildGroupManager($isAdmin),
+			$this->transitions,
+		);
+	}//end buildControllerFor()
 
 	/**
 	 * GET /bookings returns only bookings inside the date range and sorts ascending.
@@ -475,6 +575,132 @@ class CalendarControllerTest extends TestCase {
 	}//end testCreateBookingReturns409OnConflict()
 
 	/**
+	 * A calendar without an administration takes no booking, not even from
+	 * an admin: there is no default administration to fall back on.
+	 *
+	 * @return void
+	 */
+	public function testCreateBookingRefusesACalendarWithoutAnAdministration(): void {
+		$context = $this->createMock(AdministrationContextService::class);
+		$context->method('currentUserId')->willReturn('admin');
+		$context->method('canAccess')->willReturn(false);
+		$this->params = [
+			'title' => 'Klant: Admin',
+			'startTime' => '2026-05-21T14:00:00Z',
+			'endTime' => '2026-05-21T14:30:00Z',
+			'attendee' => 'Admin',
+		];
+		$this->conflicts->method('checkConflicts')->willReturn([]);
+
+		$controller = new CalendarController(
+			$this->request,
+			$this->container,
+			$this->settings,
+			$this->conflicts,
+			$context,
+			$this->guard,
+			$this->createMock(LoggerInterface::class),
+			$this->buildL10n(),
+			$this->buildGroupManager(true),
+			$this->transitions,
+		);
+
+		$response = $controller->createBooking('cal-orphan');
+		$this->assertSame(Http::STATUS_UNPROCESSABLE_ENTITY, $response->getStatus());
+		$this->assertCount(0, $this->fakeObjectService->savedObjects);
+	}//end testCreateBookingRefusesACalendarWithoutAnAdministration()
+
+	/**
+	 * The browser cannot choose the status: a posted `status: confirmed`
+	 * is ignored and the booking starts in the lifecycle's initial state.
+	 *
+	 * @return void
+	 */
+	public function testCreateBookingIgnoresAClientChosenStatus(): void {
+		$this->params = [
+			'title' => 'Klant: Bob Jansen',
+			'startTime' => '2026-05-21T14:00:00Z',
+			'endTime' => '2026-05-21T14:30:00Z',
+			'attendee' => 'Bob Jansen',
+			'status' => 'confirmed',
+		];
+		$this->conflicts->method('checkConflicts')->willReturn([]);
+		$this->transitions->expects($this->never())->method('run');
+
+		$response = $this->buildController()->createBooking('cal-001');
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+		$this->assertSame('pending', $this->fakeObjectService->savedObjects[0]['object']['status']);
+		$this->assertSame('pending', $response->getData()['status']);
+	}//end testCreateBookingIgnoresAClientChosenStatus()
+
+	/**
+	 * Asking to confirm at once saves the booking pending and then runs the
+	 * declared `confirm` transition on the server.
+	 *
+	 * @return void
+	 */
+	public function testCreateBookingConfirmsThroughTheTransition(): void {
+		$this->params = [
+			'title' => 'Klant: Bob Jansen',
+			'startTime' => '2026-05-21T14:00:00Z',
+			'endTime' => '2026-05-21T14:30:00Z',
+			'attendee' => 'Bob Jansen',
+			'confirm' => true,
+		];
+		$this->conflicts->method('checkConflicts')->willReturn([]);
+		$this->transitions->expects($this->once())->method('run')->with('uuid-saved', 'confirm');
+
+		$response = $this->buildController()->createBooking('cal-001');
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+		$this->assertSame('pending', $this->fakeObjectService->savedObjects[0]['object']['status']);
+		$this->assertSame('confirmed', $response->getData()['status']);
+	}//end testCreateBookingConfirmsThroughTheTransition()
+
+	/**
+	 * A refused confirm transition rolls the booking back.
+	 *
+	 * @return void
+	 */
+	public function testCreateBookingRollsBackWhenTheConfirmIsRefused(): void {
+		$this->params = [
+			'title' => 'Klant: Bob Jansen',
+			'startTime' => '2026-05-21T14:00:00Z',
+			'endTime' => '2026-05-21T14:30:00Z',
+			'attendee' => 'Bob Jansen',
+			'confirm' => true,
+		];
+		$this->conflicts->method('checkConflicts')->willReturn([]);
+		$this->transitions->method('run')->willThrowException(new \RuntimeException('refused'));
+		$this->guard->expects($this->never())->method('commit');
+
+		$response = $this->buildController()->createBooking('cal-001');
+		$this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+	}//end testCreateBookingRollsBackWhenTheConfirmIsRefused()
+
+	/**
+	 * The override flag the form sends (`overrideConflict`) is the one the
+	 * server reads: an overlapping booking is created when it is set.
+	 *
+	 * @return void
+	 */
+	public function testCreateBookingWithOverrideConflictCreatesDespiteOverlap(): void {
+		$this->params = [
+			'title' => 'Klant: Sophia Vermeulen',
+			'startTime' => '2026-05-21T11:15:00Z',
+			'endTime' => '2026-05-21T12:00:00Z',
+			'attendee' => 'Sophia Vermeulen',
+			'overrideConflict' => true,
+		];
+		$this->conflicts->method('checkConflicts')->willReturn([
+			['bookingId' => 'bk-002', 'title' => 'Klant: Kees Bakker', 'startTime' => '2026-05-21T11:00:00Z', 'endTime' => '2026-05-21T11:45:00Z'],
+		]);
+
+		$response = $this->buildController()->createBooking('cal-001');
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+		$this->assertCount(1, $this->fakeObjectService->savedObjects);
+	}//end testCreateBookingWithOverrideConflictCreatesDespiteOverlap()
+
+	/**
 	 * POST rejects sub-15-minute durations with 400 per REQ-007.
 	 *
 	 * @return void
@@ -537,6 +763,7 @@ class CalendarControllerTest extends TestCase {
 			$this->createMock(LoggerInterface::class),
 			$this->buildL10n(),
 			$this->buildGroupManager(false),
+			$this->transitions,
 		);
 
 		$this->assertSame(Http::STATUS_UNAUTHORIZED, $controller->index()->getStatus());
@@ -587,6 +814,7 @@ class CalendarControllerTest extends TestCase {
 			$this->createMock(LoggerInterface::class),
 			$this->buildL10n(),
 			$this->buildGroupManager(false),
+			$this->transitions,
 		);
 
 		$response = $controller->createBooking('cal-001');
@@ -636,6 +864,7 @@ class CalendarControllerTest extends TestCase {
 			$this->createMock(LoggerInterface::class),
 			$this->buildL10n(),
 			$this->buildGroupManager(true),
+			$this->transitions,
 		);
 
 		$response = $controller->createBooking('cal-001');

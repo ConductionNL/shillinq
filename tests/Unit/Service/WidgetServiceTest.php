@@ -131,6 +131,7 @@ class WidgetServiceTest extends TestCase {
 			'status' => 'active',
 			'duration' => 45,
 			'resourceId' => 'res-001',
+			'administrationId' => 'salon-demo',
 		];
 
 	}//end bookableService()
@@ -241,6 +242,29 @@ class WidgetServiceTest extends TestCase {
 		self::assertSame(404, $result['code']);
 
 	}//end testCreateAppointmentRejectsInactiveService()
+
+	/**
+	 * A public service of another administration cannot be booked through
+	 * this administration's key, and nothing is saved.
+	 *
+	 * @return void
+	 */
+	public function testCreateAppointmentRejectsAServiceOfAnotherAdministration(): void {
+		$foreign = $this->bookableService();
+		$foreign['administrationId'] = 'other-salon';
+
+		$objectService = $this->buildObjectService(services: [$foreign], appointments: [], saved: null);
+		$this->container->method('get')->willReturn($objectService);
+		$this->offerCanonicalSlot();
+
+		$result = $this->service->createAppointment('salon-demo', $this->payload());
+
+		self::assertSame(404, $result['code']);
+		self::assertNull($objectService->lastSaved());
+		self::assertFalse($this->service->isPubliclyBookable('svc-001', 'salon-demo'));
+		self::assertTrue($this->service->isPubliclyBookable('svc-001', 'other-salon'));
+
+	}//end testCreateAppointmentRejectsAServiceOfAnotherAdministration()
 
 	/**
 	 * createAppointment returns 409 when the slot already has a confirmed booking.

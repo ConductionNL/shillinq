@@ -39,6 +39,7 @@ use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Booking\TransactionalGuard;
 use OCA\Shillinq\Service\ConflictDetectionService;
+use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -81,6 +82,7 @@ class CalendarController extends Controller {
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
 	 * @param IL10N $l10n Localized user-facing error messages (ADR-050).
 	 * @param IGroupManager $groupManager Nextcloud admin bypass for the booking guard.
+	 * @param ObjectTransitionRunner $transitions Runs the declared booking transitions.
 	 */
 	public function __construct(
 		IRequest $request,
@@ -92,6 +94,7 @@ class CalendarController extends Controller {
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
 		private readonly IGroupManager $groupManager,
+		private readonly ObjectTransitionRunner $transitions,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -105,6 +108,7 @@ class CalendarController extends Controller {
 	 *  - status       (optional) filter by status (active|inactive|archived).
 	 *
 	 * @return JSONResponse 200 with `{calendars: [...]}`; 401 when anonymous;
+	 *                      403 for an administration the caller is not in;
 	 *                      503 when OpenRegister is unavailable.
 	 *
 	 * @spec openspec/changes/bookings-resource-calendar/tasks.md#task-3
@@ -123,6 +127,10 @@ class CalendarController extends Controller {
 		$resourceFilter = trim((string)$this->request->getParam('resource', ''));
 		$orgFilter = trim((string)$this->request->getParam('organization', ''));
 		$statusFilter = trim((string)$this->request->getParam('status', ''));
+
+		if ($orgFilter !== '' && $this->callerMayUseAdministration(administrationId: $orgFilter) === false) {
+			return new JSONResponse(['error' => 'Not authorized for this administration'], Http::STATUS_FORBIDDEN);
+		}
 
 		$filters = ['administrationId' => $this->resolveAdministrationId(requested: $orgFilter)];
 		if ($resourceFilter !== '') {
@@ -167,7 +175,8 @@ class CalendarController extends Controller {
 	 *
 	 * @param string $calendarId Logical calendar identifier.
 	 *
-	 * @return JSONResponse 200 with the calendar; 401 when anonymous; 404 when missing.
+	 * @return JSONResponse 200 with the calendar; 401 when anonymous; 404 when
+	 *                      missing or outside the caller's administrations.
 	 *
 	 * @spec openspec/changes/bookings-resource-calendar/tasks.md#task-3
 	 */
@@ -183,7 +192,7 @@ class CalendarController extends Controller {
 			return new JSONResponse(['error' => 'calendarId is required'], Http::STATUS_BAD_REQUEST);
 		}
 
-		$record = $this->loadCalendar(calendarId: $calendarId);
+		$record = $this->loadReadableCalendar(calendarId: $calendarId);
 		if ($record === null) {
 			return new JSONResponse(['error' => 'Calendar not found'], Http::STATUS_NOT_FOUND);
 		}
@@ -202,7 +211,8 @@ class CalendarController extends Controller {
 	 *
 	 * @param string $calendarId Logical calendar identifier.
 	 *
-	 * @return JSONResponse 200 with `{bookings: [...]}`; 404 when calendar missing.
+	 * @return JSONResponse 200 with `{bookings: [...]}`; 404 when the calendar is
+	 *                      missing or outside the caller's administrations.
 	 *
 	 * @spec openspec/changes/bookings-resource-calendar/tasks.md#task-3
 	 */
@@ -218,7 +228,7 @@ class CalendarController extends Controller {
 			return new JSONResponse(['error' => 'calendarId is required'], Http::STATUS_BAD_REQUEST);
 		}
 
-		$calendar = $this->loadCalendar(calendarId: $calendarId);
+		$calendar = $this->loadReadableCalendar(calendarId: $calendarId);
 		if ($calendar === null) {
 			return new JSONResponse(['error' => 'Calendar not found'], Http::STATUS_NOT_FOUND);
 		}
@@ -298,14 +308,18 @@ class CalendarController extends Controller {
 	 *  - startTime  (required) ISO 8601 UTC start.
 	 *  - endTime    (required) ISO 8601 UTC end; must be ≥15 min after start.
 	 *  - attendee   (required) Attendee name or reference.
-	 *  - status     (optional) pending|confirmed; default pending.
+	 *  - confirm    (optional) true to confirm at once through the declared
+	 *               `confirm` transition. The booking always starts pending;
+	 *               a posted `status` is ignored.
+	 *  - overrideConflict (optional) true to create despite an overlap.
 	 *
 	 * @param string $calendarId Logical calendar identifier.
 	 *
 	 * @return JSONResponse 201 with the booking; 400 on validation;
 	 *                      403 when the caller has no booking rights on the
 	 *                      calendar's administration; 404 when calendar
-	 *                      missing; 409 on conflict; 503 when OR unavailable.
+	 *                      missing; 409 on conflict; 422 when the calendar
+	 *                      has no administration; 503 when OR unavailable.
 	 *
 	 * @spec openspec/changes/bookings-resource-calendar/tasks.md#task-3
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
@@ -335,6 +349,14 @@ class CalendarController extends Controller {
 			return $authError;
 		}
 
+		$administrationId = (string)($calendarRow['administrationId'] ?? '');
+		if ($administrationId === '') {
+			return new JSONResponse(
+				['error' => 'calendar-without-administration', 'message' => 'This calendar belongs to no administration, so it cannot take bookings.'],
+				Http::STATUS_UNPROCESSABLE_ENTITY,
+			);
+		}
+
 		$parsed = $this->parseBookingRequest();
 		if ($parsed instanceof JSONResponse) {
 			return $parsed;
@@ -342,7 +364,7 @@ class CalendarController extends Controller {
 
 		$title = $parsed['title'];
 		$attendee = $parsed['attendee'];
-		$status = $parsed['status'];
+		$confirm = $parsed['confirm'];
 		$override = $parsed['override'];
 		$start = $parsed['start'];
 		$end = $parsed['end'];
@@ -380,7 +402,7 @@ class CalendarController extends Controller {
 			$bookingId = $this->generateBookingId();
 			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
 			$payload = [
-				'administrationId' => (string)($calendarRow['administrationId'] ?? 'adm-1'),
+				'administrationId' => $administrationId,
 				'bookingId' => $bookingId,
 				'calendar' => $calendarId,
 				'resource' => $resourceId,
@@ -388,7 +410,7 @@ class CalendarController extends Controller {
 				'startTime' => $start->format('Y-m-d\\TH:i:s\\Z'),
 				'endTime' => $end->format('Y-m-d\\TH:i:s\\Z'),
 				'attendee' => $attendee,
-				'status' => $status,
+				'status' => 'pending',
 			];
 
 			$saved = $objectService->saveObject(
@@ -397,12 +419,17 @@ class CalendarController extends Controller {
 				schema: 'Booking',
 			);
 
-			$this->guard->commit();
-
 			$row = $this->toArray(object: $saved);
 			// Merge in fields from our payload as a fallback if the OR layer
 			// does not echo them (e.g. unit-test fake).
 			$row = array_merge($payload, $row);
+
+			if ($confirm === true) {
+				$this->transitions->run(objectId: (string)($row['@self']['id'] ?? ($row['id'] ?? '')), action: 'confirm');
+				$row['status'] = 'confirmed';
+			}
+
+			$this->guard->commit();
 
 			return new JSONResponse(
 				$this->formatBooking(row: $row),
@@ -446,10 +473,7 @@ class CalendarController extends Controller {
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 */
 	private function authorizeBookingCreation(array $calendarRow): ?JSONResponse {
-		$callerUid = (string)($this->context->currentUserId() ?? '');
-		$callerIsAdmin = ($callerUid !== '' && $this->groupManager->isAdmin($callerUid) === true);
-		$calendarAdministrationId = (string)($calendarRow['administrationId'] ?? '');
-		if ($callerIsAdmin === false && $this->context->canAccess($calendarAdministrationId) === false) {
+		if ($this->callerMayUseAdministration(administrationId: (string)($calendarRow['administrationId'] ?? '')) === false) {
 			return new JSONResponse(
 				['error' => 'calendar-booking-forbidden', 'message' => 'Not authorized to book this calendar'],
 				Http::STATUS_FORBIDDEN,
@@ -460,15 +484,54 @@ class CalendarController extends Controller {
 	}//end authorizeBookingCreation()
 
 	/**
+	 * Whether the caller may read or book in an administration: a member of
+	 * it, or a Nextcloud admin.
+	 *
+	 * @param string $administrationId The administration id.
+	 *
+	 * @return bool
+	 */
+	private function callerMayUseAdministration(string $administrationId): bool {
+		$callerUid = (string)($this->context->currentUserId() ?? '');
+		if ($callerUid !== '' && $this->groupManager->isAdmin($callerUid) === true) {
+			return true;
+		}
+
+		return $this->context->canAccess($administrationId);
+	}//end callerMayUseAdministration()
+
+	/**
+	 * Load a calendar the caller may read. A calendar outside the caller's
+	 * administrations reads as missing, so its existence does not leak.
+	 *
+	 * @param string $calendarId Logical calendar id.
+	 *
+	 * @return mixed The calendar record, or null.
+	 */
+	private function loadReadableCalendar(string $calendarId): mixed {
+		$record = $this->loadCalendar(calendarId: $calendarId);
+		if ($record === null) {
+			return null;
+		}
+
+		$row = $this->toArray(object: $record);
+		if ($this->callerMayUseAdministration(administrationId: (string)($row['administrationId'] ?? '')) === false) {
+			return null;
+		}
+
+		return $record;
+	}//end loadReadableCalendar()
+
+	/**
 	 * Parse and validate the `createBooking()` request body: required
-	 * fields present, `status` in the allowed set, `startTime`/`endTime`
+	 * fields present, `startTime`/`endTime`
 	 * parseable ISO 8601 timestamps, and the resulting duration at least
 	 * `ConflictDetectionService::MIN_DURATION_MINUTES`. Extracted out of
 	 * `createBooking()` (rather than inlined there) to keep that method's
 	 * NPath complexity under this app's threshold (issue #506) — the
 	 * validation moves, none of the checks change.
 	 *
-	 * @return array{title:string,attendee:string,status:string,override:bool,start:DateTimeImmutable,end:DateTimeImmutable}|JSONResponse
+	 * @return array{title:string,attendee:string,confirm:bool,override:bool,start:DateTimeImmutable,end:DateTimeImmutable}|JSONResponse
 	 *         The validated fields, or a 400 JSONResponse on validation failure.
 	 */
 	private function parseBookingRequest(): array|JSONResponse {
@@ -476,7 +539,7 @@ class CalendarController extends Controller {
 		$startTime = trim((string)$this->request->getParam('startTime', ''));
 		$endTime = trim((string)$this->request->getParam('endTime', ''));
 		$attendee = trim((string)$this->request->getParam('attendee', ''));
-		$status = trim((string)$this->request->getParam('status', 'pending'));
+		$confirm = filter_var($this->request->getParam('confirm', false), FILTER_VALIDATE_BOOLEAN);
 		$override = filter_var($this->request->getParam('overrideConflict', false), FILTER_VALIDATE_BOOLEAN);
 
 		if ($title === '' || $startTime === '' || $endTime === '' || $attendee === '') {
@@ -484,10 +547,6 @@ class CalendarController extends Controller {
 				['error' => 'title, startTime, endTime and attendee are required'],
 				Http::STATUS_BAD_REQUEST,
 			);
-		}
-
-		if (in_array($status, ['pending', 'confirmed', 'cancelled'], true) === false) {
-			return new JSONResponse(['error' => 'status must be pending, confirmed or cancelled'], Http::STATUS_BAD_REQUEST);
 		}
 
 		try {
@@ -508,7 +567,7 @@ class CalendarController extends Controller {
 		return [
 			'title' => $title,
 			'attendee' => $attendee,
-			'status' => $status,
+			'confirm' => $confirm,
 			'override' => $override,
 			'start' => $start,
 			'end' => $end,
@@ -530,10 +589,9 @@ class CalendarController extends Controller {
 	}//end requireAuth()
 
 	/**
-	 * Resolve the administration id to scope reads to. When the caller
-	 * provides an explicit organization filter, the context service vets
-	 * that the user has a membership there; otherwise the user's current
-	 * session administration is used.
+	 * Resolve the administration id to scope reads to: the caller's explicit
+	 * organization filter (index() has vetted the membership), otherwise the
+	 * caller's active administration.
 	 *
 	 * @param string $requested Caller-supplied organization/administration id (may be empty).
 	 *
