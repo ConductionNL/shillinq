@@ -57,6 +57,13 @@ final class PaymentActionAuthorizer {
 	public const ACTION_ADMINISTER = 'payment.administer';
 
 	/**
+	 * Setting or releasing the payment block of an invoice or a supplier.
+	 *
+	 * @var string
+	 */
+	public const ACTION_BLOCK = 'payment.block';
+
+	/**
 	 * The app-config key mapping an action to the groups that carry it.
 	 *
 	 * @var string

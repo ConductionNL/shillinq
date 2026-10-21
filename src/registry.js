@@ -246,7 +246,6 @@ import BillImportModal from './modals/BillImportModal.vue'
 // each modal is registered here as a kind:"modal" so the manifest action's
 // `target` resolves it. Modal-isolated under src/modals/ (hydra gate-13).
 import InvoiceQuickDraftModal from './modals/InvoiceQuickDraftModal.vue'
-import PaymentBlockModal from './modals/PaymentBlockModal.vue'
 import PaymentPlanActionModal from './modals/PaymentPlanActionModal.vue'
 import PaymentRunReconcileModal from './modals/PaymentRunReconcileModal.vue'
 import RecurringInvoiceProfileModal from './modals/RecurringInvoiceProfileModal.vue'
@@ -406,7 +405,6 @@ export default {
 	PaymentRunReconcileModal: { kind: 'modal', component: PaymentRunReconcileModal },
 	// banking-payment-run REQ-BPR-003/004: Block payment / Release payment on
 	// APTransactionDetail and PayeeDetail.
-	PaymentBlockModal: { kind: 'modal', component: PaymentBlockModal },
 	// receivables-payment-plans REQ-RPPL-001/003: CustomerDetail, ARInvoiceDetail
 	// and PaymentPlanDetail header actions.
 	AgreePaymentPlanModal: { kind: 'modal', component: AgreePaymentPlanModal },

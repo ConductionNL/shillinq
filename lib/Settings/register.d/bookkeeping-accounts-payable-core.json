@@ -11,7 +11,7 @@
       "Payee": {
         "slug": "Payee",
         "icon": "TruckOutline",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "title": "Payee",
         "description": "Canonical \"anyone we pay\" master for accounts payable +: covers suppliers, vendors, AND freelancers (Dutch ZZP'ers / sole traders / contractors), plus government payees. Holds party contact details, payment terms, a structured bankAccount object (IBAN + BIC/SWIFT + account holder), payeeType, folded financial fields (creditLimit, apBalance), dunning policy reference, and default expense account. Folds in the retired VendorFinancialProfile duplicate. Symmetric to CustomerMaster on the AR side. Per + ADR-024 (registers, not parallel PHP tables) + ADR-022 (consumes OR contact abstraction when available via contactRef).",
         "x-openregister-audit-trail": {
@@ -159,6 +159,38 @@
             "nullable": true,
             "description": "Why payment is blocked; asked when the block is set and shown wherever the block refuses a payment.",
             "title": "Payment block reason"
+          },
+          "paymentBlockedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "User who set the payment block. Written by the block endpoint.",
+            "title": "Payment blocked by"
+          },
+          "paymentBlockedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the payment block was set. Written by the block endpoint.",
+            "title": "Payment blocked at"
+          },
+          "paymentReleaseReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the last payment block was released. Written by the block endpoint.",
+            "title": "Payment release reason"
+          },
+          "paymentReleasedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "User who released the last payment block; never the user who set it. Written by the block endpoint.",
+            "title": "Payment released by"
+          },
+          "paymentReleasedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the last payment block was released. Written by the block endpoint.",
+            "title": "Payment released at"
           },
           "dunningPolicyRef": {
             "type": "string",
@@ -310,7 +342,7 @@
       "APTransaction": {
         "slug": "APTransaction",
         "icon": "ReceiptTextOutline",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "AP Transaction",
         "description": "Accounts payable sub-ledger invoice recording vendor billing and payment obligation. Posting (issued transition) materialises one balanced GLTransaction per T1 (credit AP payable, debit expense per lines). Lifecycle: draft → received → issued → paid with partially-paid / overdue / disputed / written-off / voided branches. The issued → overdue transition fires via OR ScheduledWorkflow (ADR-031 path 2: no PHP cron job). Aged-payables aggregations (detail / summary / timeline) declared inline. Sub-ledger linkage: every GLLine emitted from issue or write-off carries subLedgerType=ap + subLedgerRef=<APTransaction UUID> (scenario).",
         "x-openregister-audit-trail": {
@@ -475,6 +507,38 @@
             "nullable": true,
             "description": "Why payment is blocked; asked when the block is set and shown wherever the block refuses a payment.",
             "title": "Payment block reason"
+          },
+          "paymentBlockedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "User who set the payment block. Written by the block endpoint.",
+            "title": "Payment blocked by"
+          },
+          "paymentBlockedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the payment block was set. Written by the block endpoint.",
+            "title": "Payment blocked at"
+          },
+          "paymentReleaseReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the last payment block was released. Written by the block endpoint.",
+            "title": "Payment release reason"
+          },
+          "paymentReleasedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "User who released the last payment block; never the user who set it. Written by the block endpoint.",
+            "title": "Payment released by"
+          },
+          "paymentReleasedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the last payment block was released. Written by the block endpoint.",
+            "title": "Payment released at"
           },
           "writeOffReason": {
             "type": "string",

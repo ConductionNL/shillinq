@@ -6793,7 +6793,18 @@
         "Bank statement line": "Regel bankafschrift",
         "The bank statement line the payout arrived as.": "De regel op het bankafschrift waarmee de uitbetaling binnenkwam.",
         "The journal entry that booked the payout.": "De journaalpost die de uitbetaling boekte.",
-        "No payouts from a payment provider yet": "Nog geen uitbetalingen van een betaalprovider"
+        "No payouts from a payment provider yet": "Nog geen uitbetalingen van een betaalprovider",
+        "Shown wherever the block stops a payment.": "Zichtbaar overal waar de blokkade een betaling tegenhoudt.",
+        "Someone other than the person who set the block releases it.": "Iemand anders dan wie de blokkade zette, geeft hem vrij.",
+        "Payment is blocked.": "De betaling is geblokkeerd.",
+        "Payment is released.": "De betaling is vrijgegeven.",
+        "Sign in to change a payment block.": "Log in om een betalingsblokkade te wijzigen.",
+        "You are not allowed to block or release payments.": "Je mag geen betalingen blokkeren of vrijgeven.",
+        "Give a reason.": "Geef een reden.",
+        "Payment is already blocked.": "De betaling is al geblokkeerd.",
+        "Payment is not blocked.": "De betaling is niet geblokkeerd.",
+        "You set this block, so someone else has to release it.": "Je hebt deze blokkade zelf gezet, dus iemand anders moet hem vrijgeven.",
+        "This record cannot be found.": "Dit record is niet gevonden."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

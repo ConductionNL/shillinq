@@ -4588,7 +4588,18 @@ OC.L10N.register(
         "Bank statement line": "Bank statement line",
         "The bank statement line the payout arrived as.": "The bank statement line the payout arrived as.",
         "The journal entry that booked the payout.": "The journal entry that booked the payout.",
-        "No payouts from a payment provider yet": "No payouts from a payment provider yet"
+        "No payouts from a payment provider yet": "No payouts from a payment provider yet",
+        "Shown wherever the block stops a payment.": "Shown wherever the block stops a payment.",
+        "Someone other than the person who set the block releases it.": "Someone other than the person who set the block releases it.",
+        "Payment is blocked.": "Payment is blocked.",
+        "Payment is released.": "Payment is released.",
+        "Sign in to change a payment block.": "Sign in to change a payment block.",
+        "You are not allowed to block or release payments.": "You are not allowed to block or release payments.",
+        "Give a reason.": "Give a reason.",
+        "Payment is already blocked.": "Payment is already blocked.",
+        "Payment is not blocked.": "Payment is not blocked.",
+        "You set this block, so someone else has to release it.": "You set this block, so someone else has to release it.",
+        "This record cannot be found.": "This record cannot be found."
     },
     "nplurals=2; plural=(n != 1);"
 )
