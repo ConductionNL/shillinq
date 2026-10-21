@@ -1396,24 +1396,12 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "treasury-officer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "read": [
+            "shillinq_treasury_officer",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ]
         }
       },
       "RepaymentInstallment": {
@@ -1481,27 +1469,6 @@
             "default": "pending",
             "description": "Instalment status.",
             "title": "Status"
-          }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "subsidie-coordinator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
           }
         }
       }

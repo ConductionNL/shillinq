@@ -34,6 +34,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\BackgroundJob;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
 use OCA\Shillinq\Lifecycle\MandateGuard;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
@@ -47,6 +48,7 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
  */
 class MandateDormancyExpiryJob extends TimedJob {
+	use RunsJobAsSystem;
 
 	/**
 	 * Run interval: once per day (REQ-SDD-008 "the daily expiry job").
@@ -74,6 +76,21 @@ class MandateDormancyExpiryJob extends TimedJob {
 	}//end __construct()
 
 	/**
+	 * Run the job inside OpenRegister's system context.
+	 *
+	 * @param mixed $argument The job argument.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/specs/schema-authorization/spec.md
+	 */
+	protected function run($argument): void {
+		$this->asSystem(work: function () use ($argument): void {
+			$this->runAsJob(argument: $argument);
+		});
+	}//end run()
+
+	/**
 	 * Iterate active mandates and expire those dormant beyond 36 months.
 	 *
 	 * Fail-soft: any error is logged and swallowed so a single bad record
@@ -87,7 +104,7 @@ class MandateDormancyExpiryJob extends TimedJob {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
 	 */
-	protected function run($argument): void {
+	private function runAsJob($argument): void {
 		try {
 			$register = $this->resolveRegister();
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
@@ -127,7 +144,7 @@ class MandateDormancyExpiryJob extends TimedJob {
 				['exception' => $e->getMessage()]
 			);
 		}//end try
-	}//end run()
+	}//end runAsJob()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.

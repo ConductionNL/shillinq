@@ -223,28 +223,6 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "treasurer": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-calculations": {
           "consentRemainingDays": {
             "materialise": true,
@@ -284,6 +262,22 @@
               "attaches": "camt.053.001.08"
             }
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_treasurer"
+          ],
+          "read": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_treasurer"
+          ],
+          "delete": [
+            "shillinq_treasurer"
+          ]
         }
       },
       "BankStatement": {
@@ -365,24 +359,12 @@
             "description": "Notify the configured bank-connection operator when a new statement is available. Declarative fan-out per ADR-031; no BankNotificationService."
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "treasurer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "read": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ]
         }
       },
       "GLTransaction": {
@@ -9482,31 +9464,21 @@
             "targetField": "ratePerKm"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "employee": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ],
-              "description": "Employees may create and edit their own mileage entries."
-            },
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ],
-              "description": "Full access for corrections and audit."
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_employee",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_bookkeeper"
+          ]
         }
       },
       "PerDiem": {
@@ -9694,31 +9666,21 @@
             "nullable": true
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "employee": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ],
-              "description": "Employees may create and edit their own per-diem entries."
-            },
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ],
-              "description": "Full access for corrections and audit."
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_employee",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_bookkeeper"
+          ]
         }
       },
       "ExpenseClaimEntry": {
@@ -10110,38 +10072,23 @@
             "targetField": "totalAmount"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "employee": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ],
-              "description": "Employees may create and edit their own claims in draft state."
-            },
-            "manager": {
-              "permissions": [
-                "read",
-                "update"
-              ],
-              "description": "Managers may approve or reject submitted claims."
-            },
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ],
-              "description": "Full access for corrections and GL posting."
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_employee",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_manager",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_manager",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_bookkeeper"
+          ]
         }
       },
       "MileageRate": {
@@ -10200,29 +10147,20 @@
             "title": "Notes"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ],
-              "description": "Bookkeepers maintain mileage rate master data per fiscal year."
-            },
-            "employee": {
-              "permissions": [
-                "read"
-              ],
-              "description": "Read-only: employees may view the applicable rate."
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_bookkeeper"
+          ]
         }
       },
       "PerDiemRate": {
@@ -10278,29 +10216,20 @@
             "title": "Source"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ],
-              "description": "Bookkeepers maintain per-diem rate master data per calendar year."
-            },
-            "employee": {
-              "permissions": [
-                "read"
-              ],
-              "description": "Read-only: employees may view applicable rates."
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_bookkeeper"
+          ]
         }
       },
       "ZzpDeductionAmounts": {
@@ -11071,31 +11000,22 @@
             "action": "activate-crisis-mode"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "ondernemer": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "boekhouder": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_ondernemer",
+            "shillinq_cashflow_manager"
+          ],
+          "read": [
+            "shillinq_ondernemer",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_cashflow_manager"
+          ],
+          "update": [
+            "shillinq_ondernemer",
+            "shillinq_bookkeeper",
+            "shillinq_cashflow_manager"
+          ]
         }
       },
       "CashflowWeek": {
@@ -11457,28 +11377,19 @@
             ]
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "ondernemer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "boekhouder": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_cashflow_manager"
+          ],
+          "read": [
+            "shillinq_ondernemer",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_cashflow_manager"
+          ],
+          "update": [
+            "shillinq_cashflow_manager"
+          ]
         }
       },
       "CashflowARProjection": {
@@ -11594,30 +11505,21 @@
             "title": "Administration ID"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "ondernemer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "boekhouder": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_cashflow_manager"
+          ],
+          "read": [
+            "shillinq_ondernemer",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_cashflow_manager"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_cashflow_manager"
+          ]
         }
       },
       "CashflowAPSchedule": {
@@ -11719,30 +11621,21 @@
             "title": "Administration ID"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "ondernemer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "boekhouder": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_cashflow_manager"
+          ],
+          "read": [
+            "shillinq_ondernemer",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_cashflow_manager"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_cashflow_manager"
+          ]
         }
       },
       "CashflowRecurring": {
@@ -11922,33 +11815,26 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "ondernemer": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "boekhouder": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_ondernemer",
+            "shillinq_bookkeeper",
+            "shillinq_cashflow_manager"
+          ],
+          "read": [
+            "shillinq_ondernemer",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_cashflow_manager"
+          ],
+          "update": [
+            "shillinq_ondernemer",
+            "shillinq_bookkeeper",
+            "shillinq_cashflow_manager"
+          ],
+          "delete": [
+            "shillinq_ondernemer"
+          ]
         }
       },
       "CashflowBufferPolicy": {
@@ -12045,31 +11931,22 @@
             "title": "Administration ID"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "ondernemer": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "boekhouder": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_ondernemer",
+            "shillinq_cashflow_manager"
+          ],
+          "read": [
+            "shillinq_ondernemer",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_cashflow_manager"
+          ],
+          "update": [
+            "shillinq_ondernemer",
+            "shillinq_bookkeeper",
+            "shillinq_cashflow_manager"
+          ]
         }
       },
       "CashflowScenario": {
@@ -12269,33 +12146,26 @@
             "title": "Administration ID"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "ondernemer": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "boekhouder": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_ondernemer",
+            "shillinq_bookkeeper",
+            "shillinq_cashflow_manager"
+          ],
+          "read": [
+            "shillinq_ondernemer",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_cashflow_manager"
+          ],
+          "update": [
+            "shillinq_ondernemer",
+            "shillinq_bookkeeper",
+            "shillinq_cashflow_manager"
+          ],
+          "delete": [
+            "shillinq_ondernemer"
+          ]
         }
       },
       "CashflowCalibrationReport": {
@@ -12433,28 +12303,13 @@
             "title": "Administration ID"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "ondernemer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "boekhouder": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "read": [
+            "shillinq_ondernemer",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_cashflow_manager"
+          ]
         }
       },
       "FxRate": {
@@ -12596,29 +12451,17 @@
             "metric": "max"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "admin": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper"
+          ]
         }
       },
       "AuditDocument": {
@@ -13946,6 +13789,25 @@
             "example": "adm-1",
             "title": "Administration ID"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "ComplianceReport": {
@@ -15681,23 +15543,18 @@
             "description": "Notify subsidie-coordinator when a repayment instalment becomes overdue +."
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "subsidie-coordinator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ],
-              "description": "Full CRUD access to manage repayment instalments."
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ],
-              "description": "Read-only access for compliance audit."
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_subsidie_coordinator"
+          ],
+          "read": [
+            "shillinq_subsidie_coordinator",
+            "shillinq_auditor",
+            "shillinq_bookkeeper"
+          ],
+          "update": [
+            "shillinq_subsidie_coordinator"
+          ]
         }
       },
       "BbvAccountMapping": {
@@ -16126,25 +15983,20 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "treasurer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_treasurer"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_treasurer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_treasurer"
+          ]
         }
       },
       "MatchingRule": {
@@ -16534,25 +16386,20 @@
             "deduplication": "first-match-wins"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "treasurer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_treasurer"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_treasurer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_treasurer"
+          ]
         }
       },
       "ProvincialeFondsPosting": {

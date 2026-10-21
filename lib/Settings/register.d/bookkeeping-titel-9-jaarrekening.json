@@ -824,26 +824,18 @@
             "title": "Regels"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bestuur": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "accountant": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "viewer": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bestuur"
+          ],
+          "read": [
+            "shillinq_bestuur",
+            "shillinq_accountant",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_bestuur"
+          ]
         }
       },
       "Note": {
