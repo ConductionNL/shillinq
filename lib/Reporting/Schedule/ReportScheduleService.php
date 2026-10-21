@@ -6,7 +6,7 @@
  * Creates and changes report schedules on behalf of their owner. The server
  * sets the owner, the status of a new schedule and the next run; only the
  * owner changes a schedule, and its recipients are limited to what the owner
- * may share (ScheduleRecipientPolicy).
+ * may share (ReportRecipientPolicy).
  *
  * @category Reporting
  * @package  OCA\Shillinq\Reporting\Schedule
@@ -64,7 +64,7 @@ class ReportScheduleService {
 	 * @param ObjectServiceInterface       $objectService   OpenRegister object service.
 	 * @param SettingsService              $settings        Resolves the register slug.
 	 * @param AdministrationContextService $administrations Answers administration access.
-	 * @param ScheduleRecipientPolicy      $recipients      Limits the recipients.
+	 * @param ReportRecipientPolicy        $recipients      Limits the recipients.
 	 * @param ReportScheduleCalendar       $calendar        Computes the next run.
 	 * @param IL10N                        $l10n            Translates refusals.
 	 */
@@ -72,7 +72,7 @@ class ReportScheduleService {
 		private readonly ObjectServiceInterface $objectService,
 		private readonly SettingsService $settings,
 		private readonly AdministrationContextService $administrations,
-		private readonly ScheduleRecipientPolicy $recipients,
+		private readonly ReportRecipientPolicy $recipients,
 		private readonly ReportScheduleCalendar $calendar,
 		private readonly IL10N $l10n,
 	) {

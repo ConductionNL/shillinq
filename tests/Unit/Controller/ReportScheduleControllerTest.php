@@ -25,15 +25,16 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 use OCA\Shillinq\Controller\ReportScheduleController;
 use OCA\Shillinq\Reporting\Schedule\ReportScheduleCalendar;
 use OCA\Shillinq\Reporting\Schedule\ReportScheduleService;
-use OCA\Shillinq\Reporting\Schedule\ScheduleRecipientPolicy;
+use OCA\Shillinq\Reporting\Schedule\ReportRecipientPolicy;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\AppFramework\Http;
+use OCP\IGroup;
 use OCP\IGroupManager;
 use OCP\IL10N;
 use OCP\IRequest;
-use OCP\IUserManager;
+use OCP\IUser;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -72,10 +73,17 @@ class ReportScheduleControllerTest extends TestCase {
 		$context->method('canUserAccess')->willReturnCallback(
 			static fn (string $user, string $administrationId): bool => $administrationId === 'adm-1' && isset($members[$user]) === true
 		);
-		$users = $this->createMock(IUserManager::class);
-		$users->method('userExists')->willReturnCallback(static fn (string $user): bool => in_array($user, ['anna', 'bram', 'mallory'], true));
 		$groups = $this->createMock(IGroupManager::class);
-		$groups->method('groupExists')->willReturn(true);
+		$groups->method('get')->willReturnCallback(
+			function (string $gid): IGroup {
+				$group = $this->createMock(IGroup::class);
+				$group->method('getGID')->willReturn($gid);
+				$member = $this->createMock(IUser::class);
+				$member->method('getUID')->willReturn('bram');
+				$group->method('getUsers')->willReturn([$member]);
+				return $group;
+			}
+		);
 		$groups->method('isInGroup')->willReturnCallback(
 			static fn (string $user, string $group): bool => $user === 'anna' && $group === 'controllers'
 		);
@@ -110,7 +118,7 @@ class ReportScheduleControllerTest extends TestCase {
 			$this->store,
 			$settings,
 			$context,
-			new ScheduleRecipientPolicy($users, $groups, $context),
+			new ReportRecipientPolicy($context, $groups),
 			new ReportScheduleCalendar(),
 			$l10n
 		);

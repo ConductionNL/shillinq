@@ -192,45 +192,31 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Who created, changed, paused and resumed each schedule, and when."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_admin",
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_admin",
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_admin",
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_admin",
+            "shillinq_controller"
+          ]
         }
       }
     }
