@@ -37,6 +37,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use InvalidArgumentException;
 use Psr\Container\ContainerInterface;
 use Throwable;
 
@@ -129,6 +130,139 @@ class StandardsPolicyService {
 
 		return (string)$enabled[0]['key'];
 	}//end resolveFromPolicy()
+
+	/**
+	 * The administration's own policy: its object id and frameworks.
+	 *
+	 * @param string $administrationId The administration.
+	 *
+	 * @return array{id:?string,frameworks:array<int,array<string,mixed>>}
+	 *
+	 * @spec openspec/specs/accounting-standards-policy/spec.md#requirement-req-asp-002-administrator-can-declare-and-order-frameworks
+	 */
+	public function policyFor(string $administrationId): array {
+		$policy = $this->findPolicy(administrationId: $administrationId);
+		if ($policy === null) {
+			return ['id' => null, 'frameworks' => []];
+		}
+
+		$frameworks = ($policy['frameworks'] ?? []);
+
+		return [
+			'id' => $this->policyId(policy: $policy),
+			'frameworks' => is_array($frameworks) === true ? array_values($frameworks) : [],
+		];
+	}//end policyFor()
+
+	/**
+	 * Save the administration's frameworks, creating its policy on first save.
+	 *
+	 * The caller has checked that the user manages the administration.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param array<int,mixed> $frameworks The frameworks: `{key, enabled, precedence}` each.
+	 *
+	 * @return array{id:?string,frameworks:array<int,array<string,mixed>>}
+	 *
+	 * @throws InvalidArgumentException When an entry is malformed or a key repeats.
+	 *
+	 * @spec openspec/specs/accounting-standards-policy/spec.md#requirement-req-asp-002-administrator-can-declare-and-order-frameworks
+	 */
+	public function savePolicy(string $administrationId, array $frameworks): array {
+		$clean = $this->normaliseFrameworks(frameworks: $frameworks);
+		$existing = $this->findPolicy(administrationId: $administrationId);
+		$payload = array_merge(
+			($existing ?? ['name' => 'Accounting standards policy']),
+			['administrationId' => $administrationId, 'frameworks' => $clean]
+		);
+		unset($payload['@self'], $payload['id']);
+
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$saved = $this->normalise(
+			$objectService->saveObject(
+				object: $payload,
+				register: self::REGISTER_SLUG,
+				schema: self::SCHEMA,
+				uuid: ($existing !== null ? $this->policyId(policy: $existing) : null),
+				_rbac: false,
+				_multitenancy: false,
+			)
+		);
+
+		return ['id' => $this->policyId(policy: $saved), 'frameworks' => $clean];
+	}//end savePolicy()
+
+	/**
+	 * Validate and normalise a frameworks list.
+	 *
+	 * @param array<int,mixed> $frameworks The submitted entries.
+	 *
+	 * @return array<int,array{key:string,enabled:bool,precedence:int}>
+	 *
+	 * @throws InvalidArgumentException When an entry is malformed or a key repeats.
+	 */
+	private function normaliseFrameworks(array $frameworks): array {
+		$clean = [];
+		foreach ($frameworks as $entry) {
+			if (is_array($entry) === false
+				|| is_string($entry['key'] ?? null) === false
+				|| $entry['key'] === ''
+				|| is_bool($entry['enabled'] ?? null) === false
+				|| is_int($entry['precedence'] ?? null) === false
+				|| $entry['precedence'] < 0
+			) {
+				throw new InvalidArgumentException('Each framework needs a key, an enabled flag and a precedence of 0 or more.');
+			}
+
+			if (isset($clean[$entry['key']]) === true) {
+				throw new InvalidArgumentException('A framework appears more than once.');
+			}
+
+			$clean[$entry['key']] = ['key' => $entry['key'], 'enabled' => $entry['enabled'], 'precedence' => $entry['precedence']];
+		}
+
+		return array_values($clean);
+	}//end normaliseFrameworks()
+
+	/**
+	 * The stored policy object of one administration, or null.
+	 *
+	 * @param string $administrationId The administration.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function findPolicy(string $administrationId): ?array {
+		if ($administrationId === '') {
+			return null;
+		}
+
+		$rows = $this->container->get('OCA\OpenRegister\Service\ObjectService')
+			->setRegister(self::REGISTER_SLUG)
+			->setSchema(self::SCHEMA)
+			->findAll(['filters' => ['administrationId' => $administrationId], 'limit' => 1]);
+
+		foreach ($rows as $row) {
+			$policy = $this->normalise($row);
+			if ($policy !== []) {
+				return $policy;
+			}
+		}
+
+		return null;
+	}//end findPolicy()
+
+	/**
+	 * The object id of a stored policy.
+	 *
+	 * @param array<string,mixed> $policy The normalised policy object.
+	 *
+	 * @return string|null
+	 */
+	private function policyId(array $policy): ?string {
+		$id = ($policy['@self']['id'] ?? ($policy['id'] ?? null));
+
+		return is_scalar($id) === true && (string)$id !== '' ? (string)$id : null;
+	}//end policyId()
 
 	/**
 	 * Load the StandardsPolicy frameworks[] list through the real ObjectService.

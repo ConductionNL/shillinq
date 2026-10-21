@@ -3,7 +3,8 @@
 
   Lets an administrator declare which accounting/reporting frameworks the
   administration follows and in which order of precedence (REQ-ASP-002), saved
-  as a single StandardsPolicy object via the OpenRegister objects API. The
+  as the active administration's StandardsPolicy through
+  /api/administrations/{id}/standards-policy; only its owners can save. The
   array order IS the precedence order (top = highest priority); precedence is
   written as the 1-based index on save. The resolver preview mirrors
   StandardsPolicyService.resolveFromPolicy — the first enabled framework wins.
@@ -34,6 +35,16 @@
 		<NcLoadingIcon v-if="loading" :size="32" class="standards-policy__loading" />
 
 		<template v-else>
+			<p
+				v-if="!canEdit"
+				class="standards-policy__intro"
+				data-testid="standards-policy-readonly">
+				{{
+					administrationId
+						? t('shillinq', 'Only an owner of this administration can change its standards policy.')
+						: t('shillinq', 'Choose an administration to see its standards policy.')
+				}}
+			</p>
 			<ul class="standards-policy__list" data-testid="standards-policy-list">
 				<li
 					v-for="(row, index) in rows"
@@ -44,6 +55,7 @@
 					<span class="standards-policy__rank">{{ index + 1 }}</span>
 					<NcCheckboxRadioSwitch
 						:modelValue="row.enabled"
+						:disabled="!canEdit"
 						type="switch"
 						@update:modelValue="setEnabled(index, $event)">
 						<span class="standards-policy__label">{{ row.label }}</span>
@@ -67,7 +79,7 @@
 					<NcButton
 						variant="tertiary"
 						:aria-label="t('shillinq', 'Move up')"
-						:disabled="index === 0"
+						:disabled="!canEdit || index === 0"
 						@click="moveUp(index)">
 						<template #icon>
 							<ArrowUp :size="20" />
@@ -76,7 +88,7 @@
 					<NcButton
 						variant="tertiary"
 						:aria-label="t('shillinq', 'Move down')"
-						:disabled="index === rows.length - 1"
+						:disabled="!canEdit || index === rows.length - 1"
 						@click="moveDown(index)">
 						<template #icon>
 							<ArrowDown :size="20" />
@@ -95,7 +107,7 @@
 			</div>
 
 			<div class="standards-policy__actions">
-				<NcButton variant="primary" :disabled="saving" @click="save">
+				<NcButton variant="primary" :disabled="saving || !canEdit" @click="save">
 					<template #icon>
 						<NcLoadingIcon v-if="saving" :size="20" />
 						<ContentSave v-else :size="20" />
@@ -118,8 +130,8 @@ import ArrowUp from 'vue-material-design-icons/ArrowUp.vue'
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 
-const REGISTER_SLUG = 'shillinq'
-const SCHEMA_SLUG = 'StandardsPolicy'
+import { fetchAdministrationContext } from '../../api/administrationApi.js'
+
 const DOCS_BASE = 'https://shillinq.conduction.nl/standards/'
 
 /**
@@ -233,7 +245,8 @@ export default {
 		return {
 			loading: true,
 			saving: false,
-			recordId: null,
+			administrationId: null,
+			canEdit: false,
 			rows: FRAMEWORKS.map((f) => ({ ...f, enabled: false })),
 		}
 	},
@@ -253,37 +266,29 @@ export default {
 	methods: {
 		t,
 
-		/** Load the existing StandardsPolicy object (if any) and order rows by precedence. */
+		/** Load the active administration's policy and order rows by precedence. */
 		async load() {
 			this.loading = true
 			try {
-				const response = await axios.get(
-					generateUrl(
-						`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}`,
-					),
-					{ params: { _limit: 1 } },
-				)
-				const rows = response.data?.results ?? response.data?.objects ?? []
-				const policy =
-					Array.isArray(rows) && rows.length > 0 ? rows[0] : null
-				if (policy) {
-					this.recordId = policy['@self']?.id ?? policy.id ?? null
+				const context = await fetchAdministrationContext()
+				this.administrationId = context?.activeAdministrationId || null
+				if (this.administrationId) {
+					const response = await axios.get(this.policyUrl())
+					this.canEdit = response.data?.canEdit === true
 					this.applyPolicy(
-						Array.isArray(policy.frameworks) ? policy.frameworks : [],
+						Array.isArray(response.data?.frameworks) ? response.data.frameworks : [],
 					)
 				}
 			} catch (e) {
-				// No saved policy yet (or the schema is not seeded) — start from
-				// the default catalogue. This is the expected first-use state, so
-				// it is not surfaced as an error.
-				// eslint-disable-next-line no-console
-				console.debug(
-					'[StandardsPolicyEditor] no existing policy; using defaults',
-					e,
-				)
+				console.debug('[StandardsPolicyEditor] no policy loaded; using defaults', e)
 			} finally {
 				this.loading = false
 			}
+		},
+
+		/** @return {string} The policy endpoint of the active administration. */
+		policyUrl() {
+			return generateUrl('/apps/shillinq/api/administrations/{id}/standards-policy', { id: this.administrationId })
 		},
 
 		/**
@@ -330,7 +335,6 @@ export default {
 		async save() {
 			this.saving = true
 			const payload = {
-				name: 'Accounting standards policy',
 				frameworks: this.rows.map((row, index) => ({
 					key: row.key,
 					enabled: row.enabled,
@@ -338,25 +342,7 @@ export default {
 				})),
 			}
 			try {
-				if (this.recordId) {
-					await axios.put(
-						generateUrl(
-							`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}/${this.recordId}`,
-						),
-						payload,
-					)
-				} else {
-					const response = await axios.post(
-						generateUrl(
-							`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}`,
-						),
-						payload,
-					)
-					this.recordId =
-						response.data?.['@self']?.id
-						?? response.data?.id
-						?? this.recordId
-				}
+				await axios.put(this.policyUrl(), payload)
 				showSuccess(this.t('shillinq', 'Standards policy saved.'))
 			} catch (e) {
 				showError(this.t('shillinq', 'Failed to save the standards policy.'))
