@@ -29,6 +29,7 @@ namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
 use OCA\Shillinq\Service\SoftCloseExecutor;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
@@ -46,6 +47,7 @@ use Throwable;
  * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-22
  */
 class SoftCloseJob extends TimedJob {
+	use RunsJobAsSystem;
 	/**
 	 * Daily interval in seconds.
 	 *
@@ -76,6 +78,21 @@ class SoftCloseJob extends TimedJob {
 	}//end __construct()
 
 	/**
+	 * Run the job inside OpenRegister's system context.
+	 *
+	 * @param mixed $argument The job argument.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/specs/schema-authorization/spec.md
+	 */
+	protected function run($argument): void {
+		$this->asSystem(work: function () use ($argument): void {
+			$this->runAsJob(argument: $argument);
+		});
+	}//end run()
+
+	/**
 	 * Execute the nightly soft-close for every active administratie (REQ-CLS-002).
 	 *
 	 * @param mixed $argument Unused.
@@ -85,7 +102,7 @@ class SoftCloseJob extends TimedJob {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
 	 *     TimedJob::run()'s signature; this job takes no argument.
 	 */
-	protected function run($argument): void {
+	private function runAsJob($argument): void {
 		try {
 			$administrations = $this->findActiveAdministrations();
 			$periodId = (new DateTimeImmutable())->format('Y-m');
@@ -123,7 +140,7 @@ class SoftCloseJob extends TimedJob {
 			$this->logger->error('SoftCloseJob: top-level failure', ['exception' => $e->getMessage()]);
 		}//end try
 
-	}//end run()
+	}//end runAsJob()
 
 	/**
 	 * Find every active Administration via OpenRegister.

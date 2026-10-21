@@ -205,6 +205,24 @@
             "example": "adm-holding-1",
             "title": "Administration ID"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "DualTransaction": {

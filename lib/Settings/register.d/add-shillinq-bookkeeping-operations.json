@@ -750,27 +750,6 @@
               "credit"
             ]
           }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "bbv-controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
         }
       },
       "BbvTaakveld": {
@@ -810,25 +789,6 @@
             "description": "BBV catalogue version this entry belongs to.",
             "example": "2024",
             "title": "BBV Version"
-          }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "bbv-controller": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
           }
         }
       },

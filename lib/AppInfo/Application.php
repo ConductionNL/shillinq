@@ -1131,6 +1131,7 @@ class Application extends App implements IBootstrap {
 		// registered as one unit. See BudgetScenarioRegistration's own
 		// docblock for why this lives in its own class.
 		(new BudgetScenarioRegistration())->register(context: $context);
+		(new BbvValidationRegistration())->register(context: $context);
 
 	}//end register()
 

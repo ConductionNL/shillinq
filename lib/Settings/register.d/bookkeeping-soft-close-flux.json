@@ -270,35 +270,21 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "controller": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "soft-close-operator": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "PeriodStatus stage transitions (open → soft-closed → hard-closed → audited → locked) MUST be audit-trail-immutable / ADR-022 /: each transition controls which postings are permitted into the period; the stage change history + actor + timestamp is the canonical audit evidence."
+        },
+        "authorization": {
+          "read": [
+            "shillinq_controller",
+            "shillinq_soft_close_operator",
+            "shillinq_auditor",
+            "shillinq_bookkeeper"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_soft_close_operator"
+          ]
         }
       },
       "AutoAccrualRule": {
@@ -405,25 +391,21 @@
             "title": "Rule Version"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "controller": {
-              "permissions": [
-                "read",
-                "create",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "AutoAccrualRule changes (target GL account, calculation method, parameters, reversal pattern, lifecycle state) MUST be audit-trail-immutable / ADR-022 /: each AutoAccrualPosting snapshots the ruleVersion at posting time so audit can reconstruct exactly which rule produced any historical accrual."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "update": [
+            "shillinq_controller"
+          ]
         }
       },
       "AutoAccrualPosting": {
@@ -534,6 +516,24 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "AutoAccrualPosting is append-only audit evidence / ADR-022 /: original posted entry MUST be preserved when a reversal is recorded; the reversal links back to the original via reversalId."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "CloseChecklistTemplate": {
@@ -618,6 +618,24 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "CloseChecklistTemplate changes (task list, owners, due-before, dependsOn, evidenceRequired) MUST be audit-trail-immutable / ADR-022 /: close procedures are an SOX-relevant control; auditors trace which template version produced each CloseChecklistInstance."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "CloseChecklistInstance": {
@@ -753,6 +771,24 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "CloseChecklistInstance per-task state (status, owner, completedAt, evidence, slaBreach) MUST be audit-trail-immutable / ADR-022 /: task completion is internal-control evidence; the audit trail captures who completed what and when, including SLA breaches."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "FluxRun": {
@@ -854,6 +890,24 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "FluxRun (scope, comparison basis, materiality thresholds, runTimestamp, status) MUST be audit-trail-immutable / ADR-022 /: variance analysis feeds the board pack; auditors trace which run produced which narrative and against which baseline."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "FluxItem": {
@@ -969,6 +1023,24 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "FluxItem variance figures, materiality classification, auto-explanation, and owner explanation MUST be audit-trail-immutable / ADR-022 /: owner explanations are SOX-relevant attestations; the audit trail captures who explained what."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "FluxAttribution": {
@@ -1026,6 +1098,24 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "FluxAttribution driver decomposition MUST be audit-trail-immutable / ADR-022 /: explained variances are the quantitative backing for the flux narrative; auditors review individual driver contributions."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "MaterialityPolicy": {
@@ -1130,6 +1220,24 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "MaterialityPolicy thresholds MUST be audit-trail-immutable / ADR-022 /: thresholds determine which variances are escalated; auditors verify that no threshold change was used to suppress disclosable variances."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "ContinuousCloseAlert": {
@@ -1218,6 +1326,24 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "ContinuousCloseAlert records (severity, message, routedTo, acknowledged) MUST be audit-trail-immutable / ADR-022 /: soft-close failures and SLA breaches are operational-risk events; auditors review who was notified and when the alert was acknowledged."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "CloseMetrics": {
@@ -1310,6 +1436,24 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "CloseMetrics KPI snapshots (time-to-close, post-close adjustment count, audit-correction ratio, flux-SLA compliance, unexplained item count, 12-month trend) MUST be audit-trail-immutable / ADR-022 /: these KPIs trend over 12 periods and are presented to the audit committee; tampering with historical KPI values defeats the entire metric."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "GLTransaction": {

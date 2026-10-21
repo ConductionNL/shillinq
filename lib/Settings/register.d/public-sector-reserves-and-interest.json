@@ -190,34 +190,6 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bbv-controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Who planned and realised each mutation, and when."
@@ -236,6 +208,24 @@
               "status": "realised"
             }
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_admin",
+            "shillinq_bbv_controller"
+          ],
+          "read": [
+            "shillinq_admin",
+            "shillinq_bbv_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_admin",
+            "shillinq_bbv_controller"
+          ],
+          "delete": [
+            "shillinq_admin"
+          ]
         }
       },
       "InterestAllocationRun": {
@@ -456,37 +446,27 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bbv-controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Who calculated and posted the run, and when."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_admin",
+            "shillinq_bbv_controller"
+          ],
+          "read": [
+            "shillinq_admin",
+            "shillinq_bbv_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_admin",
+            "shillinq_bbv_controller"
+          ],
+          "delete": [
+            "shillinq_admin"
+          ]
         }
       }
     }
