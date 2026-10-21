@@ -111,7 +111,6 @@ describe('receiptCapture — correction commit payload (REQ-RXC-004)', () => {
 		})
 		expect(payload).toEqual({
 			receiptNumber: 'REC-1',
-			photoUri: 'docudesk://attachments/x/receipt.jpg',
 			amount: 45,
 			currency: 'EUR',
 			amountInBaseCurrency: 45,
@@ -126,6 +125,7 @@ describe('receiptCapture — correction commit payload (REQ-RXC-004)', () => {
 			glAccount: '4400',
 		})
 		expect(payload.fieldConfidence).toBeUndefined()
+		expect(payload.photoUri).toBeUndefined()
 	})
 })
 

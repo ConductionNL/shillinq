@@ -765,4 +765,64 @@ final class ExtractionRequestControllerTest extends TestCase {
 		self::assertSame([], $this->savedObjects);
 
 	}//end testConfirmRefusesADuplicate()
+	/**
+	 * F2-S8: the employee who submitted a receipt may correct it, field by field.
+	 *
+	 * @return void
+	 */
+	public function testTheReceiptOwnerConfirmsOnlyCorrectableFields(): void {
+		$this->stubRows['Receipt'] = [
+			['id' => 'rec-1', 'administrationId' => 'adm-1', 'amount' => 45, 'claimId' => 'claim-1', 'owner' => 'alice'],
+		];
+		$this->request->method('getParams')->willReturn(['amount' => 54, 'administrationId' => 'adm-2', 'photoUri' => 'x']);
+
+		$response = $this->buildController()->confirm(id: 'rec-1', schema: 'Receipt');
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		$saved = $this->savedObjects[0]['object'];
+		self::assertSame(54, $saved['amount']);
+		self::assertSame('adm-1', $saved['administrationId']);
+		self::assertArrayNotHasKey('photoUri', $saved);
+		self::assertArrayNotHasKey('extractionStatus', $saved, 'A receipt that never came from an extraction keeps no extraction status.');
+
+	}//end testTheReceiptOwnerConfirmsOnlyCorrectableFields()
+
+	/**
+	 * F2-S8: another employee of the administration cannot change someone's receipt.
+	 *
+	 * @return void
+	 */
+	public function testAnotherEmployeeCannotChangeAReceipt(): void {
+		$this->stubRows['Receipt'] = [
+			['id' => 'rec-1', 'administrationId' => 'adm-1', 'amount' => 45, 'owner' => 'bob'],
+		];
+		$this->administrationContext->method('buildContext')->willReturn(
+			['administrations' => [['administrationId' => 'adm-1', 'role' => 'inkijker']]]
+		);
+		$this->request->method('getParams')->willReturn(['amount' => 4500]);
+
+		$response = $this->buildController()->confirm(id: 'rec-1', schema: 'Receipt');
+
+		self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		self::assertSame([], $this->savedObjects);
+
+	}//end testAnotherEmployeeCannotChangeAReceipt()
+
+	/**
+	 * F2-S8: a bookkeeper of the receipt's administration may correct it.
+	 *
+	 * @return void
+	 */
+	public function testABookkeeperMayCorrectAReceipt(): void {
+		$this->stubRows['Receipt'] = [
+			['id' => 'rec-1', 'administrationId' => 'adm-1', 'amount' => 45, 'owner' => 'bob'],
+		];
+		$this->administrationContext->method('buildContext')->willReturn(
+			['administrations' => [['administrationId' => 'adm-1', 'role' => 'boekhouder']]]
+		);
+		$this->request->method('getParams')->willReturn(['category' => 'travel']);
+
+		self::assertSame(Http::STATUS_OK, $this->buildController()->confirm(id: 'rec-1', schema: 'Receipt')->getStatus());
+
+	}//end testABookkeeperMayCorrectAReceipt()
 }//end class

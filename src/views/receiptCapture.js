@@ -80,7 +80,6 @@ export function buildReceiptConfirmPayload(form) {
 	const f = form || {}
 	return {
 		receiptNumber: f.receiptNumber,
-		photoUri: f.photoUri,
 		amount: Number(f.amount) || 0,
 		currency: f.currency,
 		amountInBaseCurrency: Number(f.amountInBaseCurrency) || 0,

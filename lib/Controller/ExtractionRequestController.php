@@ -97,6 +97,13 @@ class ExtractionRequestController extends Controller {
 	private const REGISTER_SLUG = 'shillinq';
 
 	/**
+	 * Administration roles that approve receipts and may correct anyone's.
+	 *
+	 * @var array<string>
+	 */
+	private const RECEIPT_APPROVER_ROLES = ['eigenaar', 'controller', 'boekhouder'];
+
+	/**
 	 * Schemas this endpoint may operate on (REQ-RXC-001 docType targets).
 	 *
 	 * @var array<string>
@@ -263,6 +270,12 @@ class ExtractionRequestController extends Controller {
 			return new JSONResponse(['error' => 'Draft not found'], Http::STATUS_NOT_FOUND);
 		}
 
+		if ($schema === ExtractionPrefillService::SCHEMA_RECEIPT
+			&& $this->mayEditReceipt(id: $id, administrationId: (string)($existing['administrationId'] ?? '')) === false
+		) {
+			return new JSONResponse(['error' => 'Only the employee who submitted this receipt, or a bookkeeper, can change it.'], Http::STATUS_FORBIDDEN);
+		}
+
 		$incomingFields = $this->prefillService->correctableFields(schema: $schema, incomingFields: $this->decodeBody());
 		$refusal        = $this->invoiceRefusal(schema: $schema, existing: $existing, incomingFields: $incomingFields);
 		if ($refusal !== null) {
@@ -296,6 +309,67 @@ class ExtractionRequestController extends Controller {
 
 		return new JSONResponse(['record' => $record], Http::STATUS_OK);
 	}//end confirm()
+
+	/**
+	 * A receipt is changed by the employee who submitted it, or by someone
+	 * who approves receipts in its administration.
+	 *
+	 * @param string $id               The receipt id.
+	 * @param string $administrationId The receipt's administration.
+	 *
+	 * @return bool
+	 */
+	private function mayEditReceipt(string $id, string $administrationId): bool {
+		$userId = (string)($this->session->getUser()?->getUID() ?? '');
+		if ($userId === '') {
+			return false;
+		}
+
+		if ($this->ownerOf(schema: ExtractionPrefillService::SCHEMA_RECEIPT, id: $id) === $userId) {
+			return true;
+		}
+
+		foreach (($this->administrationContext->buildContext()['administrations'] ?? []) as $membership) {
+			if ((string)($membership['administrationId'] ?? '') === $administrationId
+				&& in_array((string)($membership['role'] ?? ''), self::RECEIPT_APPROVER_ROLES, true) === true
+			) {
+				return true;
+			}
+		}
+
+		return false;
+
+	}//end mayEditReceipt()
+
+	/**
+	 * The user who created a record.
+	 *
+	 * @param string $schema The schema.
+	 * @param string $id     The record id.
+	 *
+	 * @return string The owner's user id; empty when it cannot be read.
+	 */
+	private function ownerOf(string $schema, string $id): string {
+		try {
+			$found = $this->container->get('OCA\OpenRegister\Service\ObjectService')
+				->setRegister(self::REGISTER_SLUG)
+				->setSchema($schema)
+				->find($id);
+		} catch (Throwable $e) {
+			return '';
+		}
+
+		if (is_object($found) === true && method_exists($found, 'getOwner') === true) {
+			return (string)($found->getOwner() ?? '');
+		}
+
+		if (is_array($found) === true) {
+			return (string)($found['@self']['owner'] ?? ($found['owner'] ?? ''));
+		}
+
+		return '';
+
+	}//end ownerOf()
 
 	/**
 	 * A supplier invoice is confirmed once, from its review draft, and the
