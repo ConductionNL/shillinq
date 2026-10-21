@@ -358,28 +358,20 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "ar-controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_ar_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_ar_controller",
+            "shillinq_auditor",
+            "shillinq_bookkeeper"
+          ],
+          "update": [
+            "shillinq_ar_controller",
+            "shillinq_bookkeeper"
+          ]
         },
         "x-openregister-audit-trail": {
           "enabled": true,
@@ -710,28 +702,20 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "ar-controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_ar_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_ar_controller",
+            "shillinq_auditor",
+            "shillinq_bookkeeper"
+          ],
+          "update": [
+            "shillinq_ar_controller",
+            "shillinq_bookkeeper"
+          ]
         }
       },
       "DunningRecord": {
@@ -811,26 +795,18 @@
             "title": "Status"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "ar-controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_ar_controller"
+          ],
+          "read": [
+            "shillinq_ar_controller",
+            "shillinq_auditor",
+            "shillinq_bookkeeper"
+          ],
+          "update": [
+            "shillinq_ar_controller"
+          ]
         },
         "x-openregister-audit-trail": {
           "enabled": true,

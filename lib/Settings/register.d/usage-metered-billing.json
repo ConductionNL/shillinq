@@ -9,6 +9,27 @@
     "components": {
         "schemas": {
             "UsageRatePlan": {
+                "authorization": {
+                    "create": [
+                        "shillinq_bookkeeper",
+                        "shillinq_ar_controller",
+                        "shillinq_controller"
+                    ],
+                    "read": [
+                        "shillinq_bookkeeper",
+                        "shillinq_ar_controller",
+                        "shillinq_controller",
+                        "shillinq_auditor"
+                    ],
+                    "update": [
+                        "shillinq_bookkeeper",
+                        "shillinq_ar_controller",
+                        "shillinq_controller"
+                    ],
+                    "delete": [
+                        "shillinq_controller"
+                    ]
+                },
                 "x-openregister-audit-trail": {
                     "enabled": true,
                     "description": "Every create, update and delete of a Usage Rate Plan is written to OpenRegister's immutable audit trail with actor and timestamp."
@@ -130,6 +151,27 @@
                 }
             },
             "MeterReading": {
+                "authorization": {
+                    "create": [
+                        "shillinq_bookkeeper",
+                        "shillinq_ar_controller",
+                        "shillinq_controller"
+                    ],
+                    "read": [
+                        "shillinq_bookkeeper",
+                        "shillinq_ar_controller",
+                        "shillinq_controller",
+                        "shillinq_auditor"
+                    ],
+                    "update": [
+                        "shillinq_bookkeeper",
+                        "shillinq_ar_controller",
+                        "shillinq_controller"
+                    ],
+                    "delete": [
+                        "shillinq_controller"
+                    ]
+                },
                 "x-openregister-audit-trail": {
                     "enabled": true,
                     "description": "Every create, update and delete of a Meter Reading is written to OpenRegister's immutable audit trail with actor and timestamp."

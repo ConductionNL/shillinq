@@ -64,6 +64,14 @@ use Psr\Log\LoggerInterface;
  */
 class WidgetApiController extends Controller {
 	/**
+	 * The administration of the widget key guard() accepted; every read and
+	 * write of the request is scoped to it.
+	 *
+	 * @var string
+	 */
+	private string $keyAdministrationId = '';
+
+	/**
 	 * Construct the controller with DI dependencies.
 	 *
 	 * @param IRequest $request The HTTP request.
@@ -122,7 +130,7 @@ class WidgetApiController extends Controller {
 				->setSchema('Service')
 				->findAll(
 					[
-						'filters' => ['status' => 'active'],
+						'filters' => ['status' => 'active', 'administrationId' => $this->keyAdministrationId],
 						'limit' => 200,
 					]
 				);
@@ -144,6 +152,10 @@ class WidgetApiController extends Controller {
 			// absent or non-boolean value DENIES: a query filter that silently
 			// matched nothing would look identical to "no private services".
 			if ((bool)($row['isPublic'] ?? false) !== true) {
+				continue;
+			}
+
+			if ((string)($row['administrationId'] ?? '') !== $this->keyAdministrationId) {
 				continue;
 			}
 
@@ -210,7 +222,7 @@ class WidgetApiController extends Controller {
 		//
 		// 404 rather than 403, matching WidgetService: a 403 would confirm the
 		// service exists, which is the fact being withheld.
-		if ($this->widgetService->isPubliclyBookable(serviceId: $serviceId) === false) {
+		if ($this->widgetService->isPubliclyBookable(serviceId: $serviceId, administrationId: $this->keyAdministrationId) === false) {
 			return new JSONResponse(
 				data: ['error' => 'service_not_found'],
 				statusCode: Http::STATUS_NOT_FOUND
@@ -318,7 +330,7 @@ class WidgetApiController extends Controller {
 		// + rate-limit guard, payload validation with its user-facing REQ-WSW-008
 		// messages, and the mapping from the service's result code to HTTP.
 		$result = $this->widgetService->createAppointment(
-			administrationId: (string)($this->settings->getSettings()['administration_id'] ?? 'adm-1'),
+			administrationId: $this->keyAdministrationId,
 			payload: [
 				'serviceId' => $serviceId,
 				'resourceId' => $resourceId,
@@ -376,7 +388,8 @@ class WidgetApiController extends Controller {
 	 * Authenticate + rate-limit the current request.
 	 *
 	 * Returns null when the request is allowed; a populated JSONResponse
-	 * (401 / 403 / 429) when it is not.
+	 * (401 / 403 / 429) when it is not. A key that names no administration
+	 * is refused, since nothing it books or reads could be scoped.
 	 *
 	 * @return JSONResponse|null
 	 */
@@ -398,6 +411,12 @@ class WidgetApiController extends Controller {
 		}
 
 		$key = ($auth['key'] ?? []);
+		$this->keyAdministrationId = trim((string)($key['administrationId'] ?? ''));
+		if ($this->keyAdministrationId === '') {
+			$this->logger->warning('Shillinq widget auth: key has no administration', ['businessId' => $businessId]);
+			return $this->unauthorised();
+		}
+
 		$rateLimit = ((int)($key['rateLimit'] ?? WidgetAuthService::DEFAULT_RATE_LIMIT));
 		if ($rateLimit <= 0) {
 			$rateLimit = WidgetAuthService::DEFAULT_RATE_LIMIT;

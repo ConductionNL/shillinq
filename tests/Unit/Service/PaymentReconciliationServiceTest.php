@@ -56,6 +56,13 @@ final class PaymentReconciliationServiceTest extends TestCase {
 			private string $schema = '';
 
 			/**
+			 * The `_rbac` flag of every OpenRegister call, in call order.
+			 *
+			 * @var array<int,bool>
+			 */
+			public array $rbacFlags = [];
+
+			/**
 			 * @param array<string, array<int, array<string, mixed>>> $bySchema Records per schema.
 			 * @param array<int, array<string, mixed>> $saved Sink.
 			 */
@@ -76,10 +83,12 @@ final class PaymentReconciliationServiceTest extends TestCase {
 
 			/**
 			 * @param array<string, mixed> $params Query params.
+			 * @param bool                 $_rbac  Whether OpenRegister RBAC applies.
 			 *
 			 * @return array<int, array<string, mixed>>
 			 */
-			public function findAll(array $params = []): array {
+			public function findAll(array $params = [], bool $_rbac = true): array {
+				$this->rbacFlags[] = $_rbac;
 				$offset = (int)($params['offset'] ?? 0);
 				if ($offset > 0) {
 					return [];
@@ -92,10 +101,12 @@ final class PaymentReconciliationServiceTest extends TestCase {
 			 * @param array<string, mixed> $object Object to persist.
 			 * @param string $register Register slug.
 			 * @param string $schema Schema slug.
+			 * @param bool   $_rbac  Whether OpenRegister RBAC applies.
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, string $register = '', string $schema = ''): array {
+			public function saveObject(array $object, string $register = '', string $schema = '', bool $_rbac = true): array {
+				$this->rbacFlags[] = $_rbac;
 				// The subject reaches this double through the ADR-084 contract,
 				// which carries the target schema as a named argument and applies
 				// it via setSchema() rather than passing it on positionally here.
@@ -168,6 +179,8 @@ final class PaymentReconciliationServiceTest extends TestCase {
 		self::assertSame('captured', $request['state']);
 		self::assertSame('po_1', $request['settlementReference']);
 		self::assertArrayHasKey('capturedAt', $request);
+		// Gateway webhooks hold no Nextcloud session, so no call may ask OpenRegister for a group grant.
+		self::assertNotContains(needle: true, haystack: $stub->rbacFlags);
 	}//end testCaptureSettlesLinkedInvoice()
 
 	/**
