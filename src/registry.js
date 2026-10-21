@@ -368,11 +368,8 @@ import BudgetScenarioComparison from './views/BudgetScenarioComparison.vue'
 import DeadlineCalendarSettings from './views/DeadlineCalendarSettings.vue'
 import FlowDetailSidebar from './views/flows/FlowDetailSidebar.vue'
 import ImportWizard from './views/import/ImportWizard.vue'
-import CountPage from './views/inventory/CountPage.vue'
 import MobileScannerHome from './views/inventory/MobileScannerHome.vue'
-import PickPage from './views/inventory/PickPage.vue'
-import ReceivePage from './views/inventory/ReceivePage.vue'
-import TransferPage from './views/inventory/TransferPage.vue'
+import ScanOperation from './views/inventory/ScanOperation.vue'
 import AdminInvoiceDetail from './views/invoice/AdminInvoiceDetail.vue'
 import AdminInvoiceList from './views/invoice/AdminInvoiceList.vue'
 // receipt-extraction-consume (REQ-RXC-003) — custom detail page for a single
@@ -418,10 +415,7 @@ export default {
 
 	StandardsPolicyEditor: { kind: 'page', component: StandardsPolicyEditor },
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
-	MobileScannerReceive: { kind: 'page', component: ReceivePage },
-	MobileScannerTransfer: { kind: 'page', component: TransferPage },
-	MobileScannerPick: { kind: 'page', component: PickPage },
-	MobileScannerCount: { kind: 'page', component: CountPage },
+	ScanOperation: { kind: 'page', component: ScanOperation },
 
 	InvoiceGenerator: { kind: 'page', component: InvoiceGenerator },
 	AdminInvoiceList: { kind: 'page', component: AdminInvoiceList },
