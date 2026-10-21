@@ -188,28 +188,20 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "period-closer": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_period_closer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_period_closer",
+            "shillinq_auditor"
+          ]
         }
       },
       "CustomerMaster": {
@@ -1389,29 +1381,6 @@
               }
             },
             "title": "Predicates"
-          }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "treasurer": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
           }
         }
       },
