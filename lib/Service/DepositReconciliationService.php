@@ -172,10 +172,12 @@ class DepositReconciliationService {
 			->setRegister($registerSlug)
 			->setSchema('DepositPayment')
 			->findAll(
-				[
+				config: [
 					'filters' => ['paymentIntentId' => $paymentIntentId],
 					'limit' => 1,
-				]
+				],
+				// Gateway webhooks are authenticated by signature, not by a Nextcloud session.
+				_rbac: false,
 			);
 
 		if (empty($matches) === true) {
@@ -215,6 +217,7 @@ class DepositReconciliationService {
 			object: $deposit,
 			register: $registerSlug,
 			schema: 'DepositPayment',
+			_rbac: false,
 		);
 
 		return self::RESULT_APPLIED;
@@ -252,11 +255,12 @@ class DepositReconciliationService {
 				->setRegister($registerSlug)
 				->setSchema('DepositPayment')
 				->findAll(
-					[
+					config: [
 						'filters' => ['state' => 'pending'],
 						'limit' => $pageSize,
 						'offset' => (($page - 1) * $pageSize),
-					]
+					],
+					_rbac: false,
 				);
 			$batchSize = count($batch);
 

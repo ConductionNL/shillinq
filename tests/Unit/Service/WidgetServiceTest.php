@@ -337,6 +337,29 @@ class WidgetServiceTest extends TestCase {
 	}//end testCreateAppointmentSucceedsWithoutLeakingPii()
 
 	/**
+	 * The anonymous widget is authenticated by its key, not by a Nextcloud
+	 * session, so its OpenRegister reads and writes must not ask OpenRegister
+	 * for a group grant the caller cannot hold.
+	 *
+	 * @return void
+	 */
+	public function testWidgetCallsBypassObjectRbac(): void {
+		$objectService = $this->buildObjectService(
+			services: [$this->bookableService()],
+			appointments: [],
+			saved: ['appointmentId' => 'apt-new', 'status' => 'pending_confirmation'],
+		);
+		$this->container->method('get')->willReturn($objectService);
+		$this->offerCanonicalSlot();
+
+		$this->service->listPublicServices('salon-demo');
+		$this->service->createAppointment('salon-demo', $this->payload());
+
+		self::assertNotSame(expected: [], actual: $objectService->rbacFlags());
+		self::assertNotContains(needle: true, haystack: $objectService->rbacFlags());
+	}//end testWidgetCallsBypassObjectRbac()
+
+	/**
 	 * The customer's contact details MUST be persisted on the Appointment.
 	 *
 	 * REGRESSION PIN. `register.d/30-bookings-self-service-widget.json` declares
@@ -553,6 +576,11 @@ class WidgetServiceTest extends TestCase {
 			 */
 			private ?array $lastSaved = null;
 
+			/**
+			 * @var array<int,bool>
+			 */
+			private array $rbacFlags = [];
+
 			private string $schema = '';
 
 			/**
@@ -576,10 +604,12 @@ class WidgetServiceTest extends TestCase {
 			}//end setSchema()
 
 			/**
-			 * @param array<string,mixed> $params
+			 * @param array<string,mixed> $config Query, ignored.
+			 * @param bool                $_rbac  Whether OpenRegister RBAC applies.
 			 * @return array<mixed>
 			 */
-			public function findAll(array $params = []): array {
+			public function findAll(array $config = [], bool $_rbac = true): array {
+				$this->rbacFlags[] = $_rbac;
 				if ($this->schema === 'Service') {
 					return $this->services;
 				}
@@ -593,9 +623,13 @@ class WidgetServiceTest extends TestCase {
 
 			/**
 			 * @param array<string,mixed> $object
+			 * @param string              $register Register slug, ignored.
+			 * @param string              $schema   Schema slug, ignored.
+			 * @param bool                $_rbac Whether OpenRegister RBAC applies.
 			 * @return array<string,mixed>|null
 			 */
-			public function saveObject(array $object, string $register = '', string $schema = ''): ?array {
+			public function saveObject(array $object, string $register = '', string $schema = '', bool $_rbac = true): ?array {
+				$this->rbacFlags[] = $_rbac;
 				$this->lastSaved = $object;
 				return $this->saved;
 			}//end saveObject()
@@ -608,6 +642,15 @@ class WidgetServiceTest extends TestCase {
 			public function lastSaved(): ?array {
 				return $this->lastSaved;
 			}//end lastSaved()
+
+			/**
+			 * The `_rbac` flag of every OpenRegister call, in call order.
+			 *
+			 * @return array<int,bool>
+			 */
+			public function rbacFlags(): array {
+				return $this->rbacFlags;
+			}//end rbacFlags()
 		};
 
 	}//end buildObjectService()

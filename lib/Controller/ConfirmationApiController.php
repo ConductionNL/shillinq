@@ -438,10 +438,11 @@ class ConfirmationApiController extends Controller {
 				->setRegister($this->settings->getRegisterSlug())
 				->setSchema('Appointment')
 				->findAll(
-					[
+					config: [
 						'filters' => ['appointmentId' => $appointmentId],
 						'limit' => 1,
-					]
+					],
+					_rbac: false,
 				);
 		} catch (Throwable $e) {
 			$this->logger->error(
