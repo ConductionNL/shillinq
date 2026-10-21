@@ -128,7 +128,10 @@ class AdministrationResultsControllerTest extends TestCase {
 			[['CommitmentLine', 'committedVsRealisedPerBudgetLine', ['administrationId' => 'adm-1']]],
 			$this->runs
 		);
-		$this->assertSame('5.1', $response->getData()['groups'][0]['keys']['programme']);
+		$this->assertSame(
+			['groups' => [['keys' => ['programme' => '5.1'], 'values' => ['sum_remaining_committed' => 100]]]],
+			$response->getData()
+		);
 
 	}//end testCommitmentsAreNarrowedToTheActiveAdministration()
 
