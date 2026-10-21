@@ -35,6 +35,7 @@ use OCA\Shillinq\Controller\CalendarController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Booking\TransactionalGuard;
 use OCA\Shillinq\Service\ConflictDetectionService;
+use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Http;
 use OCP\IGroupManager;
@@ -102,6 +103,13 @@ class CalendarControllerTest extends TestCase {
 	private ContainerInterface&MockObject $container;
 
 	/**
+	 * Transition runner.
+	 *
+	 * @var ObjectTransitionRunner&MockObject
+	 */
+	private ObjectTransitionRunner&MockObject $transitions;
+
+	/**
 	 * Per-request query-param overrides.
 	 *
 	 * @var array<string,mixed>
@@ -121,6 +129,7 @@ class CalendarControllerTest extends TestCase {
 		$this->context = $this->createMock(AdministrationContextService::class);
 		$this->guard = $this->createMock(TransactionalGuard::class);
 		$this->conflicts = $this->createMock(ConflictDetectionService::class);
+		$this->transitions = $this->createMock(ObjectTransitionRunner::class);
 
 		$this->settings->method('isOpenRegisterAvailable')->willReturn(true);
 		$this->settings->method('getRegisterSlug')->willReturn('shillinq');
@@ -182,6 +191,7 @@ class CalendarControllerTest extends TestCase {
 			$this->createMock(LoggerInterface::class),
 			$this->buildL10n(),
 			$this->buildGroupManager(false),
+			$this->transitions,
 		);
 	}//end buildController()
 
@@ -318,7 +328,7 @@ class CalendarControllerTest extends TestCase {
 			public function saveObject(array $object, string $register, string $schema): array {
 				$this->savedObjects[] = ['object' => $object, 'register' => $register, 'schema' => $schema];
 				// Echo back the object so the controller can shape the response.
-				return $object;
+				return array_merge($object, ['@self' => ['id' => 'uuid-saved']]);
 			}
 		};
 	}//end buildFakeObjectService()
@@ -475,6 +485,96 @@ class CalendarControllerTest extends TestCase {
 	}//end testCreateBookingReturns409OnConflict()
 
 	/**
+	 * The browser cannot choose the status: a posted `status: confirmed`
+	 * is ignored and the booking starts in the lifecycle's initial state.
+	 *
+	 * @return void
+	 */
+	public function testCreateBookingIgnoresAClientChosenStatus(): void {
+		$this->params = [
+			'title' => 'Klant: Bob Jansen',
+			'startTime' => '2026-05-21T14:00:00Z',
+			'endTime' => '2026-05-21T14:30:00Z',
+			'attendee' => 'Bob Jansen',
+			'status' => 'confirmed',
+		];
+		$this->conflicts->method('checkConflicts')->willReturn([]);
+		$this->transitions->expects($this->never())->method('run');
+
+		$response = $this->buildController()->createBooking('cal-001');
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+		$this->assertSame('pending', $this->fakeObjectService->savedObjects[0]['object']['status']);
+		$this->assertSame('pending', $response->getData()['status']);
+	}//end testCreateBookingIgnoresAClientChosenStatus()
+
+	/**
+	 * Asking to confirm at once saves the booking pending and then runs the
+	 * declared `confirm` transition on the server.
+	 *
+	 * @return void
+	 */
+	public function testCreateBookingConfirmsThroughTheTransition(): void {
+		$this->params = [
+			'title' => 'Klant: Bob Jansen',
+			'startTime' => '2026-05-21T14:00:00Z',
+			'endTime' => '2026-05-21T14:30:00Z',
+			'attendee' => 'Bob Jansen',
+			'confirm' => true,
+		];
+		$this->conflicts->method('checkConflicts')->willReturn([]);
+		$this->transitions->expects($this->once())->method('run')->with('uuid-saved', 'confirm');
+
+		$response = $this->buildController()->createBooking('cal-001');
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+		$this->assertSame('pending', $this->fakeObjectService->savedObjects[0]['object']['status']);
+		$this->assertSame('confirmed', $response->getData()['status']);
+	}//end testCreateBookingConfirmsThroughTheTransition()
+
+	/**
+	 * A refused confirm transition rolls the booking back.
+	 *
+	 * @return void
+	 */
+	public function testCreateBookingRollsBackWhenTheConfirmIsRefused(): void {
+		$this->params = [
+			'title' => 'Klant: Bob Jansen',
+			'startTime' => '2026-05-21T14:00:00Z',
+			'endTime' => '2026-05-21T14:30:00Z',
+			'attendee' => 'Bob Jansen',
+			'confirm' => true,
+		];
+		$this->conflicts->method('checkConflicts')->willReturn([]);
+		$this->transitions->method('run')->willThrowException(new \RuntimeException('refused'));
+		$this->guard->expects($this->never())->method('commit');
+
+		$response = $this->buildController()->createBooking('cal-001');
+		$this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+	}//end testCreateBookingRollsBackWhenTheConfirmIsRefused()
+
+	/**
+	 * The override flag the form sends (`overrideConflict`) is the one the
+	 * server reads: an overlapping booking is created when it is set.
+	 *
+	 * @return void
+	 */
+	public function testCreateBookingWithOverrideConflictCreatesDespiteOverlap(): void {
+		$this->params = [
+			'title' => 'Klant: Sophia Vermeulen',
+			'startTime' => '2026-05-21T11:15:00Z',
+			'endTime' => '2026-05-21T12:00:00Z',
+			'attendee' => 'Sophia Vermeulen',
+			'overrideConflict' => true,
+		];
+		$this->conflicts->method('checkConflicts')->willReturn([
+			['bookingId' => 'bk-002', 'title' => 'Klant: Kees Bakker', 'startTime' => '2026-05-21T11:00:00Z', 'endTime' => '2026-05-21T11:45:00Z'],
+		]);
+
+		$response = $this->buildController()->createBooking('cal-001');
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+		$this->assertCount(1, $this->fakeObjectService->savedObjects);
+	}//end testCreateBookingWithOverrideConflictCreatesDespiteOverlap()
+
+	/**
 	 * POST rejects sub-15-minute durations with 400 per REQ-007.
 	 *
 	 * @return void
@@ -537,6 +637,7 @@ class CalendarControllerTest extends TestCase {
 			$this->createMock(LoggerInterface::class),
 			$this->buildL10n(),
 			$this->buildGroupManager(false),
+			$this->transitions,
 		);
 
 		$this->assertSame(Http::STATUS_UNAUTHORIZED, $controller->index()->getStatus());
@@ -587,6 +688,7 @@ class CalendarControllerTest extends TestCase {
 			$this->createMock(LoggerInterface::class),
 			$this->buildL10n(),
 			$this->buildGroupManager(false),
+			$this->transitions,
 		);
 
 		$response = $controller->createBooking('cal-001');
@@ -636,6 +738,7 @@ class CalendarControllerTest extends TestCase {
 			$this->createMock(LoggerInterface::class),
 			$this->buildL10n(),
 			$this->buildGroupManager(true),
+			$this->transitions,
 		);
 
 		$response = $controller->createBooking('cal-001');
