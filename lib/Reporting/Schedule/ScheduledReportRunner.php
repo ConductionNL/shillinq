@@ -61,6 +61,7 @@ class ScheduledReportRunner {
 	 * @param ReportScheduleCalendar       $calendar       Next run and period.
 	 * @param AdministrationContextService $administrations Who may reach an administration.
 	 * @param LoggerInterface              $logger         Logger.
+	 * @param ReportRecipientPolicy|null   $recipientPolicy Who may receive the owner's reports.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
@@ -70,6 +71,7 @@ class ScheduledReportRunner {
 		private readonly ReportScheduleCalendar $calendar,
 		private readonly AdministrationContextService $administrations,
 		private readonly LoggerInterface $logger,
+		private readonly ?ReportRecipientPolicy $recipientPolicy = null,
 	) {
 
 	}//end __construct()
@@ -187,7 +189,11 @@ class ScheduledReportRunner {
 				return 'The report was produced but its file could not be stored.';
 			}
 
-			$recipients = array_map('strval', (array)($schedule['recipients'] ?? []));
+			$recipients = $this->allowedRecipients(
+				ownerId: $ownerId,
+				administrationId: $administrationId,
+				recipients: array_map('strval', (array)($schedule['recipients'] ?? []))
+			);
 			$filed      = $this->delivery->file(
 				ownerId: $ownerId,
 				fileId: (int)$produced['fileId'],
@@ -203,6 +209,31 @@ class ScheduledReportRunner {
 		return '';
 
 	}//end produceAndDeliver()
+
+	/**
+	 * The recipients the owner may share this administration's reports with.
+	 *
+	 * A recipient written before ReportScheduleWriteListener existed, or who lost
+	 * access since, is left out and logged rather than sent the owner's report.
+	 *
+	 * @param string             $ownerId          The schedule's owner.
+	 * @param string             $administrationId The administration reported on.
+	 * @param array<int, string> $recipients       The schedule's recipients.
+	 *
+	 * @return array<int, string>
+	 */
+	private function allowedRecipients(string $ownerId, string $administrationId, array $recipients): array {
+		$policy  = ($this->recipientPolicy ?? new ReportRecipientPolicy(administrations: $this->administrations));
+		$refused = $policy->refused(ownerId: $ownerId, administrationId: $administrationId, recipients: $recipients);
+		if ($refused !== []) {
+			$this->logger->warning(
+				'ScheduledReportRunner: left out recipients without access to the administration',
+				['administrationId' => $administrationId, 'recipients' => $refused]
+			);
+		}
+
+		return array_values(array_diff($recipients, $refused));
+	}//end allowedRecipients()
 
 	/**
 	 * Write the run's outcome onto the schedule.
