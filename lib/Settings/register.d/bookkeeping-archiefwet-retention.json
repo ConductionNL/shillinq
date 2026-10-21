@@ -83,22 +83,6 @@
             "nullable": true
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "retention-manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-aggregations": {
           "countByDocumentType": {
             "groupBy": [
@@ -111,6 +95,18 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "OpenRegister's immutable audit trail records every create, update, lifecycle transition and delete of this retention record, with actor and timestamp (REQ-RET-007)."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_retention_manager"
+          ],
+          "read": [
+            "shillinq_retention_manager",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_retention_manager"
+          ]
         }
       },
       "RetentionSchedule": {
@@ -167,22 +163,6 @@
             "example": "2028-12-16"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "retention-manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-calculations": {
           "retentionEndDate": {
             "materialise": true,
@@ -230,6 +210,18 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "OpenRegister's immutable audit trail records every create, update, lifecycle transition and delete of this retention record, with actor and timestamp (REQ-RET-007)."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_retention_manager"
+          ],
+          "read": [
+            "shillinq_retention_manager",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_retention_manager"
+          ]
         }
       },
       "DocumentRetention": {
@@ -410,34 +402,6 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "retention-manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "legal-hold-authority": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "document-disposal": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-aggregations": {
           "activeLegalHoldCount": {
             "filter": {
@@ -464,6 +428,22 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "OpenRegister's immutable audit trail records every create, update, lifecycle transition and delete of this retention record, with actor and timestamp (REQ-RET-007)."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_retention_manager"
+          ],
+          "read": [
+            "shillinq_retention_manager",
+            "shillinq_legal_hold_authority",
+            "shillinq_document_disposal",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_retention_manager",
+            "shillinq_legal_hold_authority",
+            "shillinq_document_disposal"
+          ]
         }
       }
     }

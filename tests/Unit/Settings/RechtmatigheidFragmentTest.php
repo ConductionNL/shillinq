@@ -226,7 +226,7 @@ class RechtmatigheidFragmentTest extends TestCase {
 	}//end testLifecycleGuardReferencesResolve()
 
 	/**
-	 * Each new schema declares an RBAC block (default-deny posture, ADR-005).
+	 * Each new schema declares an enforced authorization block (default-deny posture, ADR-005).
 	 *
 	 * @return void
 	 */
@@ -235,11 +235,11 @@ class RechtmatigheidFragmentTest extends TestCase {
 		$names = ['Rechtmatigheidstoets', 'Rechtmatigheidsbevinding', 'Rechtmatigheidsparagraaf', 'Tolerantiegrens'];
 		foreach ($names as $name) {
 			self::assertArrayHasKey(
-				key: 'x-openregister-rbac',
+				key: 'authorization',
 				array: $schemas[$name],
-				message: $name . ' must declare an x-openregister-rbac block.'
+				message: $name . ' must declare an authorization block.'
 			);
-			self::assertArrayHasKey(key: 'roles', array: $schemas[$name]['x-openregister-rbac']);
+			self::assertArrayHasKey(key: 'read', array: $schemas[$name]['authorization']);
 		}
 
 	}//end testNewSchemasDeclareRbac()

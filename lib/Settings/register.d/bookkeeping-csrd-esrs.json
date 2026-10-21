@@ -221,6 +221,24 @@
               "description": "Return to draft for further scoring or consultation."
             }
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_compliance_officer"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_compliance_officer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_compliance_officer"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "IroRecord": {
@@ -398,6 +416,24 @@
             "description": "Financial-materiality composite. Average of severity and likelihood as financial proxies until the per-dimension financial inputs are split out.",
             "expr": "(@self.severityOrMagnitude + @self.likelihood) / 2"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_compliance_officer"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_compliance_officer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_compliance_officer"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "EsrsDataPoint": {
@@ -626,6 +662,24 @@
               "requires": "OCA\\Shillinq\\Lifecycle\\CsrdEsrsGuard::canRestateDataPoint"
             }
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_compliance_officer"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_compliance_officer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_compliance_officer"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "GhgInventory": {
@@ -890,6 +944,24 @@
               "description": "Publish with the filed report."
             }
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_compliance_officer"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_compliance_officer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_compliance_officer"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "EmissionSource": {
@@ -1031,6 +1103,24 @@
             "description": "co2eResult = activityData x emissionFactor (tCO2e). Declarative per ADR-031 / design D4: no GHGCalculator.php.",
             "expr": "@self.activityData * @self.emissionFactor"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_compliance_officer"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_compliance_officer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_compliance_officer"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "ValueChainActor": {
@@ -1141,6 +1231,24 @@
             "nullable": true,
             "title": "Data Quality Score"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_compliance_officer"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_compliance_officer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_compliance_officer"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "EsrsPolicy": {
@@ -1239,6 +1347,24 @@
             },
             "title": "Linked Iro Records"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_compliance_officer"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_compliance_officer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_compliance_officer"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "EsrsAction": {
@@ -1345,6 +1471,24 @@
             },
             "title": "Linked Iro Records"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_compliance_officer"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_compliance_officer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_compliance_officer"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "EsrsTarget": {
@@ -1457,6 +1601,24 @@
             },
             "title": "Linked Actions"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_compliance_officer"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_compliance_officer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_compliance_officer"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "AssuranceEngagement": {
@@ -1765,6 +1927,24 @@
               "description": "Deposit the validated iXBRL report."
             }
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_compliance_officer"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_compliance_officer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_compliance_officer"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "FixedAsset": {
