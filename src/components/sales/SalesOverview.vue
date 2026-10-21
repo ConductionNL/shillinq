@@ -53,7 +53,7 @@ export default {
 						{
 							id: 'Bookings',
 							label: this.t('shillinq', 'Bookings'),
-							route: 'Bookings',
+							route: 'BookingList',
 						},
 						{
 							id: 'Deposits',
@@ -69,7 +69,7 @@ export default {
 						{
 							id: 'BillableInvoices',
 							label: this.t('shillinq', 'Billable Invoices'),
-							route: 'BillableInvoices',
+							route: 'BillableInvoiceList',
 						},
 						{
 							id: 'RecurringInvoicing',
