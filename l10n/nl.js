@@ -6789,7 +6789,18 @@ OC.L10N.register(
         "Add at least one line with a description and a price.": "Voeg minstens een regel toe met een omschrijving en een prijs.",
         "Every line needs a number for quantity, price and VAT rate.": "Elke regel heeft een getal nodig voor aantal, prijs en btw-tarief.",
         "A VAT rate lies between 0 and 100 percent.": "Een btw-tarief ligt tussen 0 en 100 procent.",
-        "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw."
+        "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw.",
+        "Shown wherever the block stops a payment.": "Zichtbaar overal waar de blokkade een betaling tegenhoudt.",
+        "Someone other than the person who set the block releases it.": "Iemand anders dan wie de blokkade zette, geeft hem vrij.",
+        "Payment is blocked.": "De betaling is geblokkeerd.",
+        "Payment is released.": "De betaling is vrijgegeven.",
+        "Sign in to change a payment block.": "Log in om een betalingsblokkade te wijzigen.",
+        "You are not allowed to block or release payments.": "Je mag geen betalingen blokkeren of vrijgeven.",
+        "Give a reason.": "Geef een reden.",
+        "Payment is already blocked.": "De betaling is al geblokkeerd.",
+        "Payment is not blocked.": "De betaling is niet geblokkeerd.",
+        "You set this block, so someone else has to release it.": "Je hebt deze blokkade zelf gezet, dus iemand anders moet hem vrijgeven.",
+        "This record cannot be found.": "Dit record is niet gevonden."
     },
     "nplurals=2; plural=(n != 1);"
 )

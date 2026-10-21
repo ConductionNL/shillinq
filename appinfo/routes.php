@@ -857,6 +857,8 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'paymentRun#propose', 'url' => '/api/v1/payment-runs/propose', 'verb' => 'POST'],
             ['name' => 'paymentRun#export', 'url' => '/api/v1/payment-runs/{id}/export', 'verb' => 'POST'],
             ['name' => 'paymentRun#reconcile', 'url' => '/api/v1/payment-runs/{id}/reconcile', 'verb' => 'POST'],
+            // Block or release payment of an APTransaction or a Payee.
+            ['name' => 'paymentBlock#update', 'url' => '/api/v1/payment-blocks/{schema}/{id}', 'verb' => 'POST'],
 
             // banking-manual-match (REQ-BMM-001, REQ-BMM-002): pair a bank line
             // with open invoices, or book it to a ledger account, by hand.

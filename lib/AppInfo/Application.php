@@ -73,6 +73,7 @@ use OCA\Shillinq\Listener\BankfeedSyncedListener;
 use OCA\Shillinq\Listener\IntercompanyLinkListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
 use OCA\Shillinq\Listener\FeeScheduleValidationListener;
+use OCA\Shillinq\Listener\PaymentBlockLockListener;
 use OCA\Shillinq\Listener\OrderFulfilmentTransitionListener;
 use OCA\Shillinq\Listener\OssPaymentReconciliationListener;
 use OCA\Shillinq\Listener\PaymentRequestLeafRegistrationListener;
@@ -720,6 +721,12 @@ class Application extends App implements IBootstrap {
 				listener: FeeScheduleValidationListener::class
 			);
 		}
+
+		// Payment block fields change only through the block endpoint.
+		$context->registerEventListener(
+			event: 'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent',
+			listener: PaymentBlockLockListener::class
+		);
 
 		// REQ-SIGN-001/005/006 — the decidesk DECISION and docudesk DOCUMENT
 		// signing request+outcome listeners, registered as one unit.

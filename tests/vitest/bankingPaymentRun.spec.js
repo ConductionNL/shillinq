@@ -115,20 +115,31 @@ describe('Propose payment run', () => {
 })
 
 describe('Block payment and Release payment', () => {
-	beforeEach(() => {
-		axiosMock.patch.mockReset()
-	})
-
-	it.each(['APTransactionDetail', 'PayeeDetail'])(
-		'%s has both actions on a registered modal, and shows the block',
-		(id) => {
+	it.each([
+		['APTransactionDetail', 'APTransaction'],
+		['PayeeDetail', 'Payee'],
+	])(
+		'%s blocks and releases through the server endpoint, with a reason both ways',
+		(id, schema) => {
 			const config = page(id).config
 			const block = config.headerActions.find((a) => a.id === 'block-payment')
 			const release = config.headerActions.find(
 				(a) => a.id === 'release-payment',
 			)
-			expect(block.target).toBe('PaymentBlockModal')
-			expect(release.props.mode).toBe('release')
+			for (const action of [block, release]) {
+				expect(action.target).toBe('CnActionDialog')
+				expect(action.props.objectId).toBe('@objectId')
+				expect(action.props.config.reason.label).toBe('Reason')
+				expect(action.props.config.reason.required).not.toBe(false)
+				expect(action.props.config.confirm.request).toMatchObject({
+					method: 'POST',
+					url: `/apps/shillinq/api/v1/payment-blocks/${schema}/@objectId`,
+				})
+			}
+			expect(block.props.config.confirm.request.body).toEqual({ blocked: true })
+			expect(release.props.config.confirm.request.body).toEqual({
+				blocked: false,
+			})
 			expect(block.visibleWhen).toEqual({
 				field: 'paymentBlocked',
 				op: 'neq',
@@ -139,33 +150,10 @@ describe('Block payment and Release payment', () => {
 				op: 'eq',
 				value: true,
 			})
-			expect(registryJs).toContain(
-				"PaymentBlockModal: { kind: 'modal', component: PaymentBlockModal }",
-			)
+			expect(registryJs).not.toContain('PaymentBlockModal')
 			expect(config.fields.map((f) => f.key)).toEqual(
 				expect.arrayContaining(['paymentBlocked', 'paymentBlockReason']),
 			)
 		},
 	)
-
-	it('refuses a block without a reason and patches both fields through OpenRegister', async () => {
-		const { blockPayload, releasePayload, setPaymentBlock } =
-			await import('../../src/utils/paymentRunApi.js')
-		expect(() => blockPayload('  ')).toThrow(
-			'Give a reason for the payment block.',
-		)
-		expect(blockPayload(' Wacht op creditnota ')).toEqual({
-			paymentBlocked: true,
-			paymentBlockReason: 'Wacht op creditnota',
-		})
-		axiosMock.patch.mockResolvedValue({ data: {} })
-		await setPaymentBlock('APTransaction', 'ap-1', releasePayload())
-		expect(axiosMock.patch).toHaveBeenCalledWith(
-			'/index.php/apps/openregister/api/objects/shillinq/APTransaction/ap-1',
-			{ paymentBlocked: false, paymentBlockReason: null },
-		)
-		await expect(
-			setPaymentBlock('ARInvoice', 'x', releasePayload()),
-		).rejects.toThrow()
-	})
 })

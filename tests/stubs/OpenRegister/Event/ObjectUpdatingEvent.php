@@ -33,6 +33,13 @@ class ObjectUpdatingEvent extends Event {
 	private array $errors = [];
 
 	/**
+	 * Fields a hook adds to the object before it is persisted.
+	 *
+	 * @var array<string,mixed>
+	 */
+	private array $modifiedData = [];
+
+	/**
 	 * Construct the event.
 	 *
 	 * @param ObjectEntity|null $newObject The object as it will be persisted.
@@ -84,4 +91,25 @@ class ObjectUpdatingEvent extends Event {
 	public function getErrors(): array {
 		return $this->errors;
 	}//end getErrors()
+
+	/**
+	 * Record fields a hook adds to the object before it is persisted.
+	 *
+	 * @param array<string,mixed> $data The fields to merge.
+	 *
+	 * @return void
+	 */
+	public function setModifiedData(array $data): void {
+		$this->modifiedData = $data;
+
+	}//end setModifiedData()
+
+	/**
+	 * Return the fields a hook adds to the object.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function getModifiedData(): array {
+		return $this->modifiedData;
+	}//end getModifiedData()
 }//end class
