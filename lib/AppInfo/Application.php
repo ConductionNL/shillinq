@@ -703,8 +703,10 @@ class Application extends App implements IBootstrap {
 
 		// REQ-004 bewijsstuk-required completion gate, both halves.
 		(new OrderFulfilmentGateRegistration())->register(context: $context);
+		(new PurchasingControlsRegistration())->register(context: $context);
 		// #516/#1103: the ledger posting guards; then the reporting listeners.
 		(new LedgerPostingRegistration())->register(context: $context);
+		(new PaymentControlsRegistration())->register(context: $context);
 		(new ReportingRegistration())->register(context: $context);
 		(new FieldRequirementRegistration())->register(context: $context);
 
@@ -729,6 +731,7 @@ class Application extends App implements IBootstrap {
 		// REQ-SIGN-001/005/006 — the decidesk DECISION and docudesk DOCUMENT
 		// signing request+outcome listeners, registered as one unit.
 		(new SigningDelegationRegistration())->register(context: $context);
+		(new ReportScheduleControlsRegistration())->register(context: $context);
 
 		// Change receipt-extraction-consume (REQ-RXC-001) — consume filinq's
 		// cross-app FinancialExtractionCompletedEvent (the canonical
@@ -1136,6 +1139,7 @@ class Application extends App implements IBootstrap {
 		// registered as one unit. See BudgetScenarioRegistration's own
 		// docblock for why this lives in its own class.
 		(new BudgetScenarioRegistration())->register(context: $context);
+		(new BbvValidationRegistration())->register(context: $context);
 
 	}//end register()
 

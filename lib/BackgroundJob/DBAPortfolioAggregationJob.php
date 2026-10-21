@@ -28,6 +28,7 @@ namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
 use OCA\Shillinq\Enums\DBAConstants;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
@@ -46,6 +47,7 @@ use Throwable;
  *     verification of each branch.
  */
 class DBAPortfolioAggregationJob extends TimedJob {
+	use RunsJobAsSystem;
 	/**
 	 * Interval between job runs: 30 days in seconds.
 	 */
@@ -221,6 +223,21 @@ class DBAPortfolioAggregationJob extends TimedJob {
 	}//end computeOverallRisico()
 
 	/**
+	 * Run the job inside OpenRegister's system context.
+	 *
+	 * @param mixed $argument The job argument.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/specs/schema-authorization/spec.md
+	 */
+	protected function run(mixed $argument): void {
+		$this->asSystem(work: function () use ($argument): void {
+			$this->runAsJob(argument: $argument);
+		});
+	}//end run()
+
+	/**
 	 * Execute the aggregation pass.
 	 *
 	 * @param mixed $argument Not used; required by TimedJob.
@@ -231,7 +248,7 @@ class DBAPortfolioAggregationJob extends TimedJob {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
 	 */
-	protected function run(mixed $argument): void {
+	private function runAsJob(mixed $argument): void {
 		$this->logger->info('Shillinq: DBAPortfolioAggregationJob started');
 
 		try {
@@ -305,7 +322,7 @@ class DBAPortfolioAggregationJob extends TimedJob {
 		$this->logger->info(
 			sprintf('Shillinq DBAPortfolioAggregationJob: wrote %d portfolio records', $written)
 		);
-	}//end run()
+	}//end runAsJob()
 
 	/**
 	 * Count exclusive relations (klanten that account for 100% of omzet) (REQ-DBA-005).
