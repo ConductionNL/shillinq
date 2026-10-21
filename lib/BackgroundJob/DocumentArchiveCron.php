@@ -38,6 +38,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\BackgroundJob;
 
+use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\WbsoDocumentService;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -55,6 +56,7 @@ use Throwable;
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-29
  */
 class DocumentArchiveCron extends TimedJob {
+	use RunsJobAsSystem;
 
 	/**
 	 * Daily interval in seconds (24h).
@@ -94,6 +96,21 @@ class DocumentArchiveCron extends TimedJob {
 	}//end __construct()
 
 	/**
+	 * Run the job inside OpenRegister's system context.
+	 *
+	 * @param mixed $argument The job argument.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/specs/schema-authorization/spec.md
+	 */
+	protected function run($argument): void {
+		$this->asSystem(work: function () use ($argument): void {
+			$this->runAsJob(argument: $argument);
+		});
+	}//end run()
+
+	/**
 	 * Sweep filed documents and archive ones past the retention boundary.
 	 *
 	 * @param mixed $argument Unused job argument.
@@ -105,7 +122,7 @@ class DocumentArchiveCron extends TimedJob {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
 	 *     TimedJob::run()'s signature; this job takes no argument.
 	 */
-	protected function run($argument): void {
+	private function runAsJob($argument): void {
 		if ($this->settings->isOpenRegisterAvailable() === false) {
 			$this->logger->info('DocumentArchiveCron: OpenRegister not available, skipping.');
 			return;
@@ -174,5 +191,5 @@ class DocumentArchiveCron extends TimedJob {
 			);
 		}//end try
 
-	}//end run()
+	}//end runAsJob()
 }//end class
