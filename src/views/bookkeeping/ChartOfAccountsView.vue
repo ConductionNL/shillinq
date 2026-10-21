@@ -54,7 +54,7 @@
 
 <script>
 import axios from '@nextcloud/axios'
-import { generateOcsUrl } from '@nextcloud/router'
+import { generateUrl } from '@nextcloud/router'
 import { NcAppContent, NcButton, NcEmptyContent } from '@nextcloud/vue'
 import AccountNode from '../../components/wbso/AccountNode.vue'
 
@@ -91,7 +91,7 @@ export default {
 			this.loading = true
 			this.errorMessage = ''
 			try {
-				const url = generateOcsUrl('apps/shillinq/api/v1/accounts/hierarchy')
+				const url = generateUrl('/apps/shillinq/api/v1/accounts/hierarchy')
 				const { data } = await axios.get(url)
 				this.roots = data?.ocs?.data?.tree ?? data?.tree ?? []
 				this.canCreate =
