@@ -266,7 +266,11 @@ export default {
 	methods: {
 		t,
 
-		/** Load the active administration's policy and order rows by precedence. */
+		/**
+		 * Load the active administration's policy and order rows by precedence.
+		 *
+		 * @spec openspec/specs/accounting-standards-policy/spec.md#requirement-req-asp-002-administrator-can-declare-and-order-frameworks
+		 */
 		async load() {
 			this.loading = true
 			try {
@@ -286,7 +290,11 @@ export default {
 			}
 		},
 
-		/** @return {string} The policy endpoint of the active administration. */
+		/**
+		 * @return {string} The policy endpoint of the active administration.
+		 *
+		 * @spec openspec/specs/accounting-standards-policy/spec.md#requirement-req-asp-002-administrator-can-declare-and-order-frameworks
+		 */
 		policyUrl() {
 			return generateUrl('/apps/shillinq/api/administrations/{id}/standards-policy', { id: this.administrationId })
 		},
@@ -331,7 +339,11 @@ export default {
 			this.rows = rows
 		},
 
-		/** Persist the policy: array order becomes 1-based precedence. */
+		/**
+		 * Persist the policy: array order becomes 1-based precedence.
+		 *
+		 * @spec openspec/specs/accounting-standards-policy/spec.md#requirement-req-asp-002-administrator-can-declare-and-order-frameworks
+		 */
 		async save() {
 			this.saving = true
 			const payload = {
