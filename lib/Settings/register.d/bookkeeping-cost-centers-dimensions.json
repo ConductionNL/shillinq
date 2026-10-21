@@ -362,22 +362,6 @@
             "type": "integer",
             "formula": "(@self.totalBudget ?? 0) - (@self.spentToDate ?? 0)"
           }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
         }
       },
       "GLLine": {
