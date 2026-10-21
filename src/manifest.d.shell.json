@@ -168,13 +168,6 @@
 					"route": "/inkoop/tenderned/:id",
 					"type": "detail",
 					"title": "TenderNed file"
-				},
-				{
-					"_fragment": "20-tenderned-integratie",
-					"id": "CommitmentDetail",
-					"route": "/inkoop/commitments/:id",
-					"type": "detail",
-					"title": "Commitment"
 				}
 			]
 		},
@@ -2256,7 +2249,7 @@
 				},
 				{
 					"_fragment": "bookkeeping-ifrs15-revenue",
-					"id": "ContractDetail",
+					"id": "RevenueContractDetail",
 					"route": "/ifrs-15/contracts/:id",
 					"type": "detail",
 					"title": "Contract"
