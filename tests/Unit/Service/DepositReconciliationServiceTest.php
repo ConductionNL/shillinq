@@ -44,6 +44,13 @@ final class DepositReconciliationServiceTest extends TestCase {
 	private function buildObjectServiceStub(array $deposits, array &$saved): object {
 		return new class($deposits, $saved) {
 			/**
+			 * The `_rbac` flag of every OpenRegister call, in call order.
+			 *
+			 * @var array<int,bool>
+			 */
+			public array $rbacFlags = [];
+
+			/**
 			 * @param array<int, array<string, mixed>> $deposits Records.
 			 * @param array<int, array<string, mixed>> $saved Sink.
 			 */
@@ -63,10 +70,12 @@ final class DepositReconciliationServiceTest extends TestCase {
 
 			/**
 			 * @param array<string, mixed> $params Query params.
+			 * @param bool                 $_rbac  Whether OpenRegister RBAC applies.
 			 *
 			 * @return array<int, array<string, mixed>>
 			 */
-			public function findAll(array $params = []): array {
+			public function findAll(array $params = [], bool $_rbac = true): array {
+				$this->rbacFlags[] = $_rbac;
 				$offset = (int)($params['offset'] ?? 0);
 				if ($offset > 0) {
 					return [];
@@ -79,10 +88,12 @@ final class DepositReconciliationServiceTest extends TestCase {
 			 * @param array<string, mixed> $object Object to persist.
 			 * @param string $register Register slug.
 			 * @param string $schema Schema slug.
+			 * @param bool   $_rbac  Whether OpenRegister RBAC applies.
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, string $register = '', string $schema = ''): array {
+			public function saveObject(array $object, string $register = '', string $schema = '', bool $_rbac = true): array {
+				$this->rbacFlags[] = $_rbac;
 				$this->saved[] = $object;
 				return $object;
 			}
@@ -178,6 +189,8 @@ final class DepositReconciliationServiceTest extends TestCase {
 		self::assertSame('authorized', $saved[0]['state']);
 		self::assertSame('mollie', $saved[0]['paymentGateway']);
 		self::assertArrayHasKey('authorizedAt', $saved[0]);
+		// The webhook is authenticated by its signature, not a Nextcloud session.
+		self::assertSame(expected: [false, false], actual: $stub->rbacFlags);
 	}//end testAuthorizeTransitionsPendingToAuthorized()
 
 	/**
