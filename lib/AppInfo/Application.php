@@ -722,6 +722,7 @@ class Application extends App implements IBootstrap {
 		// REQ-SIGN-001/005/006 — the decidesk DECISION and docudesk DOCUMENT
 		// signing request+outcome listeners, registered as one unit.
 		(new SigningDelegationRegistration())->register(context: $context);
+		(new ReportScheduleControlsRegistration())->register(context: $context);
 
 		// Change receipt-extraction-consume (REQ-RXC-001) — consume filinq's
 		// cross-app FinancialExtractionCompletedEvent (the canonical

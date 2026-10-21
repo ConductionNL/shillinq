@@ -687,27 +687,6 @@
               "description": "Bank confirms the underlying cash transfer."
             }
           }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "group-treasurer": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "cfo": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
         }
       },
       "FXContract": {

@@ -320,32 +320,6 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bestuur": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "accountant": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "viewer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-notifications": {
           "adoptionApproved": {
             "trigger": {
@@ -405,6 +379,20 @@
             },
             "metadataOnly": true
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bestuur"
+          ],
+          "read": [
+            "shillinq_bestuur",
+            "shillinq_accountant",
+            "shillinq_viewer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bestuur"
+          ]
         }
       },
       "BalanceSheet": {
@@ -521,27 +509,6 @@
               }
             },
             "title": "Rubrieken"
-          }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "bestuur": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "accountant": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "viewer": {
-              "permissions": [
-                "read"
-              ]
-            }
           }
         }
       },
@@ -682,26 +649,18 @@
             "title": "Rubrieken"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bestuur": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "accountant": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "viewer": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bestuur"
+          ],
+          "read": [
+            "shillinq_bestuur",
+            "shillinq_accountant",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_bestuur"
+          ]
         }
       },
       "CashFlowStatement": {
@@ -915,26 +874,18 @@
             "title": "Verplicht"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bestuur": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "accountant": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "viewer": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bestuur"
+          ],
+          "read": [
+            "shillinq_bestuur",
+            "shillinq_accountant",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_bestuur"
+          ]
         }
       },
       "DirectorReport": {
@@ -1028,26 +979,18 @@
             "title": "Ondertekenaars"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bestuur": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "accountant": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "viewer": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bestuur"
+          ],
+          "read": [
+            "shillinq_bestuur",
+            "shillinq_accountant",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_bestuur"
+          ]
         }
       },
       "ReviewWorkflow": {
@@ -1203,27 +1146,19 @@
             "title": "Overdrachten Log"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bestuur": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "accountant": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "viewer": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bestuur"
+          ],
+          "read": [
+            "shillinq_bestuur",
+            "shillinq_accountant",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_bestuur",
+            "shillinq_accountant"
+          ]
         }
       }
     }
