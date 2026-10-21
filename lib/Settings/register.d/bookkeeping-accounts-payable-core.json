@@ -1053,7 +1053,7 @@
       "PaymentRun": {
         "slug": "PaymentRun",
         "icon": "BankTransfer",
-        "version": "0.3.0",
+        "version": "0.4.0",
         "title": "Payment Run",
         "description": "A batch of approved Payee payments (consolidate-accounts-payable). Groups open AP invoices into a single outgoing payment instruction with a declarative lifecycle draft → approved → exported → reconciled. Approval (RBAC controller) is a hard gate before export: there is NO direct draft → exported transition. The actual SEPA pain.001 / CSV bank-file GENERATION is the separate payment-run-sepa-export change (writes exportedFileRef); this schema models only the batch + its lifecycle. Each paymentLines[] entry references one Payee + one APTransaction. BankAccount.iban / bankAccount.bic on the referenced Payee are the SEPA creditor source of truth.",
         "x-openregister-audit-trail": {
@@ -1205,6 +1205,28 @@
             "description": "Timestamp the batch was reconciled against the bank statement.",
             "nullable": true,
             "title": "Reconciled At"
+          },
+          "approvedLinesDigest": {
+            "type": "string",
+            "description": "Digest of the administration, dates, accounts, currency, total and payment lines as approved. Written by the server on approval; the export refuses a run whose lines no longer match it.",
+            "nullable": true,
+            "readOnly": true,
+            "title": "Approved lines digest"
+          },
+          "approvedBy": {
+            "type": "string",
+            "description": "User who approved the batch. Written by the server on approval.",
+            "nullable": true,
+            "readOnly": true,
+            "title": "Approved by"
+          },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp the batch was approved. Written by the server on approval.",
+            "nullable": true,
+            "readOnly": true,
+            "title": "Approved at"
           },
           "lifecycleState": {
             "type": "string",
@@ -1795,6 +1817,8 @@
         "lifecycleState": "approved",
         "currency": "EUR",
         "totalAmount": 1497.5,
+        "approvedLinesDigest": "ec19b53237d7986ce7e4090392a316c710bfdf5f75890f15a686f063be209229",
+        "approvedAt": "2026-06-30T10:00:00Z",
         "paymentLines": [
           {
             "payeeId": "payee-eneco",
