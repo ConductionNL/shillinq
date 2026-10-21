@@ -73,6 +73,7 @@ use OCA\Shillinq\Listener\BankfeedSyncedListener;
 use OCA\Shillinq\Listener\IntercompanyLinkListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
 use OCA\Shillinq\Listener\FeeScheduleValidationListener;
+use OCA\Shillinq\Listener\PaymentRunLockListener;
 use OCA\Shillinq\Listener\OrderFulfilmentTransitionListener;
 use OCA\Shillinq\Listener\OssPaymentReconciliationListener;
 use OCA\Shillinq\Listener\PaymentRequestLeafRegistrationListener;
@@ -718,6 +719,14 @@ class Application extends App implements IBootstrap {
 			$context->registerEventListener(
 				event: $preSaveEvent,
 				listener: FeeScheduleValidationListener::class
+			);
+		}
+
+		// An approved payment run is immutable; approval stamps the digest the export checks.
+		foreach (['OCA\\OpenRegister\\Event\\ObjectCreatingEvent', 'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent'] as $preSaveEvent) {
+			$context->registerEventListener(
+				event: $preSaveEvent,
+				listener: PaymentRunLockListener::class
 			);
 		}
 

@@ -26,6 +26,7 @@ use OCA\OpenRegister\Exception\HookStoppedException;
 use OCA\Shillinq\PaymentRun\Generator\PaymentRunCsvGenerator;
 use OCA\Shillinq\PaymentRun\Generator\SepaPain001Generator;
 use OCA\Shillinq\PaymentRun\PaymentBlockChecker;
+use OCA\Shillinq\PaymentRun\PaymentRunApprovalLock;
 use OCA\Shillinq\PaymentRun\PaymentRunExportService;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
@@ -80,7 +81,8 @@ class PaymentRunExportServiceTest extends TestCase {
 	 * @return array<string, mixed>
 	 */
 	private function approvedRun(): array {
-		return [
+		return $this->sealed(
+			[
 			'id' => 'pr-2026-001',
 			'runNumber' => 'PR-2026-001',
 			'administrationId' => 'adm-consultancy',
@@ -94,8 +96,22 @@ class PaymentRunExportServiceTest extends TestCase {
 				['payeeName' => 'Eneco Energie B.V.', 'creditorIban' => 'NL00BANK0123456789', 'amount' => 892.50, 'remittanceInfo' => 'ENECO-2026-04-0001', 'apTransactionRef' => 'a'],
 				['payeeName' => 'Jan de Vries (ZZP)', 'creditorIban' => 'NL00TEST0222222222', 'amount' => 605.00, 'remittanceInfo' => 'JDV-2026-06-0003', 'apTransactionRef' => 'b'],
 			],
-		];
+			]
+		);
 	}//end approvedRun()
+
+	/**
+	 * Stamp the approval digest the lock listener writes when a run is approved.
+	 *
+	 * @param array<string, mixed> $run The run as approved.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function sealed(array $run): array {
+		$run['approvedLinesDigest'] = (new PaymentRunApprovalLock())->digest(run: $run);
+		$run['approvedBy'] = 'approver';
+		return $run;
+	}//end sealed()
 
 	/**
 	 * A fake fluent ObjectService capturing the saved run.
@@ -226,6 +242,7 @@ class PaymentRunExportServiceTest extends TestCase {
 			$session,
 			$this->createMock(LoggerInterface::class),
 			new PaymentBlockChecker(new InMemoryObjectServiceStub($records), $settings),
+			new PaymentRunApprovalLock(),
 		);
 	}//end service()
 
@@ -289,6 +306,7 @@ class PaymentRunExportServiceTest extends TestCase {
 
 		$run = $this->approvedRun();
 		$run['paymentLines'][1]['creditorIban'] = '';
+		$run = $this->sealed($run);
 
 		$result = $service->export($run);
 
@@ -296,6 +314,75 @@ class PaymentRunExportServiceTest extends TestCase {
 		$this->assertSame([2], $result['lines']);
 		$this->assertSame([], $captured);
 	}//end testLineMissingCreditorIbanRejected()
+
+	/**
+	 * F2-S1: a line changed after approval refuses the export before any file is written.
+	 *
+	 * @return void
+	 */
+	public function testALineChangedAfterApprovalIsRefused(): void {
+		$captured = [];
+		$service = $this->service($captured);
+
+		$run = $this->approvedRun();
+		$run['paymentLines'][1]['creditorIban'] = 'NL00EVIL0666666666';
+
+		$result = $service->export($run);
+
+		$this->assertSame('changed-after-approval', $result['error'] ?? null);
+		$this->assertSame(0, $this->newFileCalls);
+		$this->assertSame([], $captured);
+	}//end testALineChangedAfterApprovalIsRefused()
+
+	/**
+	 * F2-S1: an amount raised after approval refuses the export.
+	 *
+	 * @return void
+	 */
+	public function testAnAmountChangedAfterApprovalIsRefused(): void {
+		$captured = [];
+		$service = $this->service($captured);
+
+		$run = $this->approvedRun();
+		$run['paymentLines'][0]['amount'] = 8925.00;
+		$run['totalAmount'] = 9530.00;
+
+		$this->assertSame('changed-after-approval', $service->export($run)['error'] ?? null);
+		$this->assertSame(0, $this->newFileCalls);
+	}//end testAnAmountChangedAfterApprovalIsRefused()
+
+	/**
+	 * F2-S1: a run without an approval digest cannot be exported (fail closed).
+	 *
+	 * @return void
+	 */
+	public function testARunWithoutAnApprovalDigestIsRefused(): void {
+		$captured = [];
+		$service = $this->service($captured);
+
+		$run = $this->approvedRun();
+		unset($run['approvedLinesDigest']);
+
+		$this->assertSame('changed-after-approval', $service->export($run)['error'] ?? null);
+		$this->assertSame(0, $this->newFileCalls);
+	}//end testARunWithoutAnApprovalDigestIsRefused()
+
+	/**
+	 * F2-S1: the export pays exactly the approved lines.
+	 *
+	 * @return void
+	 */
+	public function testTheExportPaysExactlyTheApprovedLines(): void {
+		$captured = [];
+		$service = $this->service($captured);
+		$approved = $this->approvedRun();
+
+		$result = $service->export($approved);
+
+		$this->assertArrayNotHasKey('error', $result);
+		$this->assertSame($approved['paymentLines'], $captured['paymentLines']);
+		$this->assertSame($approved['approvedLinesDigest'], (new PaymentRunApprovalLock())->digest(run: $captured));
+	}//end testTheExportPaysExactlyTheApprovedLines()
 
 	/**
 	 * REQ-BPR-005: a blocked line refuses the export before any file is written.

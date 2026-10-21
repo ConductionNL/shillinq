@@ -97,6 +97,7 @@ class PaymentRunExportService {
 	 * @param IUserSession $userSession Current user (storage home).
 	 * @param LoggerInterface $logger Fail-soft warning logger.
 	 * @param PaymentBlockChecker $blockChecker Names blocked and disputed lines (REQ-BPR-005).
+	 * @param PaymentRunApprovalLock $approvalLock Digest of the lines as approved.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
@@ -106,6 +107,7 @@ class PaymentRunExportService {
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly PaymentBlockChecker $blockChecker,
+		private readonly PaymentRunApprovalLock $approvalLock,
 	) {
 
 	}//end __construct()
@@ -126,6 +128,12 @@ class PaymentRunExportService {
 		if ($state !== 'approved') {
 			$this->logger->warning('PaymentRunExportService: run not approved', ['state' => $state]);
 			return ['error' => 'not-approved', 'state' => $state];
+		}
+
+		$approvedDigest = (string)($paymentRun['approvedLinesDigest'] ?? '');
+		if ($approvedDigest === '' || hash_equals($approvedDigest, $this->approvalLock->digest(run: $paymentRun)) === false) {
+			$this->logger->warning('PaymentRunExportService: run differs from what was approved', ['runNumber' => ($paymentRun['runNumber'] ?? '')]);
+			return ['error' => 'changed-after-approval'];
 		}
 
 		$missing = $this->linesMissingCreditorIban(paymentRun: $paymentRun);
