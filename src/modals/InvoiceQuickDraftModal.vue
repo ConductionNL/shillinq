@@ -197,7 +197,7 @@ import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcDialog, NcSelect } from '@nextcloud/vue'
 import GlAccountPicker from '../components/BudgetBBVMapping/GlAccountPicker.vue'
 import {
-	buildInvoicePayload,
+	buildQuickDraftRequest,
 	computeTotals,
 	defaultDraftLine,
 	dueDateFromTerms,
@@ -206,7 +206,6 @@ import {
 } from './invoiceQuickDraft.js'
 
 const REGISTER_SLUG = 'shillinq'
-const AR_SCHEMA = 'ARInvoice'
 const CUSTOMER_SCHEMA = 'CustomerMaster'
 
 export default {
@@ -225,7 +224,6 @@ export default {
 			loadingCustomers: false,
 			customers: [],
 			selectedCustomer: null,
-			administrationId: '',
 			saving: false,
 			error: '',
 			vatOptions: [
@@ -360,27 +358,6 @@ export default {
 			} finally {
 				this.loadingCustomers = false
 			}
-			this.fetchAdministrationId()
-		},
-
-		/**
-		 * Load the configured administration id. The ARInvoice schema
-		 * requires administrationId, so the quick draft sources it from the
-		 * app settings rather than asking the operator for it.
-		 *
-		 * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
-		 * @return {Promise<void>}
-		 */
-		async fetchAdministrationId() {
-			try {
-				const { data } = await axios.get(
-					generateUrl('/apps/shillinq/api/settings'),
-				)
-				this.administrationId =
-					data?.administration_id ?? data?.administrationId ?? ''
-			} catch (e) {
-				this.administrationId = ''
-			}
 		},
 
 		/**
@@ -460,25 +437,20 @@ export default {
 			this.saving = true
 			this.error = ''
 			try {
-				const payload = buildInvoicePayload({
-					customerId: this.selectedCustomer.value,
-					invoiceDate: this.form.invoiceDate,
-					dueDate: this.form.dueDate,
-					reference: this.form.reference,
-					glAccount: this.form.glAccount,
-					administrationId: this.administrationId,
-					lines: this.form.lines,
-				})
 				const response = await axios.post(
-					generateUrl(
-						`/apps/openregister/api/objects/${REGISTER_SLUG}/${AR_SCHEMA}`,
-					),
-					payload,
+					generateUrl('/apps/shillinq/api/ar-invoices/quick-drafts'),
+					buildQuickDraftRequest({
+						customerId: this.selectedCustomer.value,
+						invoiceDate: this.form.invoiceDate,
+						dueDate: this.form.dueDate,
+						reference: this.form.reference,
+						glAccount: this.form.glAccount,
+						lines: this.form.lines,
+					}),
 				)
-				const created = response.data?.object ?? response.data ?? {}
-				const invoiceId = created.id ?? created.uuid ?? ''
-				const invoiceNumber =
-					created.invoiceNumber || payload.invoiceNumber || ''
+				const created = response.data ?? {}
+				const invoiceId = created.id ?? ''
+				const invoiceNumber = created.invoiceNumber ?? ''
 
 				// Persist per-customer preferences for next time (REQ-IQD-004).
 				const firstLine = this.form.lines[0] || {}
@@ -500,8 +472,7 @@ export default {
 				this.$emit('close')
 			} catch (e) {
 				this.error =
-					e?.response?.data?.error
-					|| e?.response?.data?.message
+					e?.response?.data?.message
 					|| e?.message
 					|| t('shillinq', 'Failed to create draft invoice.')
 				showError(this.error)
