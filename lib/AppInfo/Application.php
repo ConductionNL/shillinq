@@ -702,6 +702,7 @@ class Application extends App implements IBootstrap {
 
 		// REQ-004 bewijsstuk-required completion gate, both halves.
 		(new OrderFulfilmentGateRegistration())->register(context: $context);
+		(new PurchasingControlsRegistration())->register(context: $context);
 		// #516/#1103: the ledger posting guards; then the reporting listeners.
 		(new LedgerPostingRegistration())->register(context: $context);
 		(new ReportingRegistration())->register(context: $context);

@@ -50,6 +50,7 @@ namespace OCA\Shillinq\Tests\Integration;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\ExceptionResolutionService;
+use OCA\Shillinq\Service\RoleMembership;
 use OCA\Shillinq\Service\PurchaseOrder\CreditNoteRequestAdapterInterface;
 use OCP\IAppConfig;
 use OCP\IUser;
@@ -349,6 +350,7 @@ final class ExceptionResolutionIntegrationTest extends TestCase {
 			logger: $logger,
 			creditNoteAdapter: $adapter,
 			objectService: $this->createMock(ObjectServiceInterface::class),
+			roleMembership: $this->createConfiguredMock(RoleMembership::class, ['callerHoldsAny' => true]),
 		);
 
 	}//end buildService()

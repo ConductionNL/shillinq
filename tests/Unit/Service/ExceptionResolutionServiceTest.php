@@ -50,6 +50,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\ExceptionResolutionService;
+use OCA\Shillinq\Service\RoleMembership;
 use OCA\Shillinq\Service\PurchaseOrder\CreditNoteRequestAdapterInterface;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
@@ -228,6 +229,7 @@ final class ExceptionResolutionServiceTest extends TestCase {
 			logger: $logger,
 			creditNoteAdapter: $adapter,
 			objectService: new DuckObjectServiceAdapter($stub),
+			roleMembership: $this->createConfiguredMock(RoleMembership::class, ['callerHoldsAny' => true]),
 		);
 
 	}//end buildService()

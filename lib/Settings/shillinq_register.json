@@ -2,8 +2,8 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Shillinq Register",
-    "description": "Shillinq register v0.7.2: schemas carry an enforced `authorization` block in place of the x-openregister-rbac key OpenRegister never read. PREVIOUSLY: v0.7.1: every schema imports on a fresh instance (payrollEmployee.bsn validates with the bsn format, ApprovalStep.status keeps its note as $comment) and the seed objects a fresh install skipped carry their required fields and name the objects they reference by uuid. PREVIOUSLY: v0.7.0: retires the scaffold `example` schema and renames the `Project` slug to `engagement`. Planninq owns `project` as a container for tasks and kanban columns; this one is a consultancy engagement with RJ 270 percentage-of-completion revenue recognition, which is a different entity wearing the same word. Slugs are global on a shared OpenRegister. The schema KEY stays `Project`, so the register.d fragments that extend it by key are unaffected. PREVIOUSLY: Register containing all schemas for the Shillinq application. V0.6.4: re-authored 31 Dutch schema-level titles (entity display names) to English so manifest-driven UI labels are English-authored; Dutch display is now carried via l10n/nl.json per ADR i18n rule. Previous v0.6.3. Re-authored 254 Dutch schema-property titles (and none renamed keys) to English so manifest-driven UI labels are English-authored; Dutch display is now carried via l10n/nl.json per ADR i18n rule. Previous v0.6.2. Register containing all schemas for the Shillinq application.",
-    "version": "0.7.2"
+    "description": "Shillinq register v0.7.3: the purchasing, inventory, bank, payment, ledger, budget, payroll, reporting, tax and compliance schemas carry an enforced `authorization` block as well. PREVIOUSLY: v0.7.2: schemas carry an enforced `authorization` block in place of the x-openregister-rbac key OpenRegister never read. PREVIOUSLY: v0.7.1: every schema imports on a fresh instance (payrollEmployee.bsn validates with the bsn format, ApprovalStep.status keeps its note as $comment) and the seed objects a fresh install skipped carry their required fields and name the objects they reference by uuid. PREVIOUSLY: v0.7.0: retires the scaffold `example` schema and renames the `Project` slug to `engagement`. Planninq owns `project` as a container for tasks and kanban columns; this one is a consultancy engagement with RJ 270 percentage-of-completion revenue recognition, which is a different entity wearing the same word. Slugs are global on a shared OpenRegister. The schema KEY stays `Project`, so the register.d fragments that extend it by key are unaffected. PREVIOUSLY: Register containing all schemas for the Shillinq application. V0.6.4: re-authored 31 Dutch schema-level titles (entity display names) to English so manifest-driven UI labels are English-authored; Dutch display is now carried via l10n/nl.json per ADR i18n rule. Previous v0.6.3. Re-authored 254 Dutch schema-property titles (and none renamed keys) to English so manifest-driven UI labels are English-authored; Dutch display is now carried via l10n/nl.json per ADR i18n rule. Previous v0.6.2. Register containing all schemas for the Shillinq application.",
+    "version": "0.7.3"
   },
   "x-openregister": {
     "type": "application",
@@ -9348,32 +9348,21 @@
             "nullable": true
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "employee": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ],
-              "description": "Employees may upload and edit their own receipts."
-            },
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ],
-              "description": "Bookkeepers have full access for corrections and audit."
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ],
-              "description": "Read-only access for audit."
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_employee",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_bookkeeper"
+          ]
         }
       },
       "MileageEntry": {
@@ -10894,31 +10883,22 @@
             "type": "boolean"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "warehouse-manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ],
-              "description": "Warehouse managers maintain reorder rules per location."
-            },
-            "procurement": {
-              "permissions": [
-                "read",
-                "update"
-              ],
-              "description": "Procurement team monitors and adjusts reorder rules."
-            },
-            "inventory-viewer": {
-              "permissions": [
-                "read"
-              ],
-              "description": "Read-only access to reorder rules for auditing."
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_warehouse_manager"
+          ],
+          "read": [
+            "shillinq_warehouse_manager",
+            "shillinq_procurement",
+            "shillinq_inventory_viewer"
+          ],
+          "update": [
+            "shillinq_warehouse_manager",
+            "shillinq_procurement"
+          ],
+          "delete": [
+            "shillinq_warehouse_manager"
+          ]
         }
       },
       "CashflowForecastHorizon": {
@@ -21361,27 +21341,19 @@
           ]
         }
       },
-      "x-openregister-rbac": {
-        "roles": {
-          "bookkeeper": {
-            "permissions": [
-              "create",
-              "read",
-              "update"
-            ]
-          },
-          "approver": {
-            "permissions": [
-              "read",
-              "update"
-            ]
-          },
-          "auditor": {
-            "permissions": [
-              "read"
-            ]
-          }
-        }
+      "authorization": {
+        "create": [
+          "shillinq_bookkeeper"
+        ],
+        "read": [
+          "shillinq_bookkeeper",
+          "shillinq_approver",
+          "shillinq_auditor"
+        ],
+        "update": [
+          "shillinq_bookkeeper",
+          "shillinq_approver"
+        ]
       }
     },
     "VATAuditRecord": {
@@ -22223,36 +22195,22 @@
           "example": "In Stock"
         }
       },
-      "x-openregister-rbac": {
-        "roles": {
-          "warehouse_manager": {
-            "permissions": [
-              "create",
-              "read",
-              "update",
-              "delete"
-            ],
-            "description": "Full location management including hierarchy setup and deactivation."
-          },
-          "inventory": {
-            "permissions": [
-              "read",
-              "update"
-            ],
-            "description": "Can view and update stock at locations; cannot create/delete hierarchy."
-          },
-          "auditor": {
-            "permissions": [
-              "read"
-            ],
-            "description": "Read-only access to locations for audit trail review."
-          }
-        },
-        "adminScope": {
-          "field": "administrationId",
-          "enforce": true,
-          "description": "Operators can only view/edit locations in their own administration."
-        }
+      "authorization": {
+        "create": [
+          "shillinq_warehouse_manager"
+        ],
+        "read": [
+          "shillinq_warehouse_manager",
+          "shillinq_inventory",
+          "shillinq_auditor"
+        ],
+        "update": [
+          "shillinq_warehouse_manager",
+          "shillinq_inventory"
+        ],
+        "delete": [
+          "shillinq_warehouse_manager"
+        ]
       }
     },
     "InventoryStockTransfer": {
@@ -22414,32 +22372,22 @@
           }
         }
       },
-      "x-openregister-rbac": {
-        "roles": {
-          "warehouse_manager": {
-            "permissions": [
-              "create",
-              "read",
-              "update",
-              "delete"
-            ]
-          },
-          "inventory": {
-            "permissions": [
-              "read",
-              "update"
-            ]
-          },
-          "auditor": {
-            "permissions": [
-              "read"
-            ]
-          }
-        },
-        "adminScope": {
-          "field": "administrationId",
-          "enforce": true
-        }
+      "authorization": {
+        "create": [
+          "shillinq_warehouse_manager"
+        ],
+        "read": [
+          "shillinq_warehouse_manager",
+          "shillinq_inventory",
+          "shillinq_auditor"
+        ],
+        "update": [
+          "shillinq_warehouse_manager",
+          "shillinq_inventory"
+        ],
+        "delete": [
+          "shillinq_warehouse_manager"
+        ]
       }
     },
     "WBSOTag": {

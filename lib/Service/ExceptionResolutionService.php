@@ -62,6 +62,7 @@ namespace OCA\Shillinq\Service;
 
 use DateTime;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Lifecycle\SupplierInvoiceExceptionApprovalGuard;
 use OCA\Shillinq\Service\PurchaseOrder\CreditNoteRequestAdapterInterface;
 use OCA\Shillinq\Service\PurchaseOrder\LogCreditNoteRequestAdapter;
 use OCP\IAppConfig;
@@ -95,6 +96,20 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
  */
 class ExceptionResolutionService {
+
+	/**
+	 * Roles that may accept an out-of-tolerance three-way match and release its invoice.
+	 *
+	 * @var array<int, string>
+	 */
+	public const EXCEPTION_APPROVER_ROLES = ['approver', 'controller'];
+
+	/**
+	 * Refusal for a caller without an exception approver role.
+	 *
+	 * @var string
+	 */
+	public const MESSAGE_NOT_APPROVER = 'Only an approver or controller can accept a three-way-match exception and release the invoice for payment.';
 
 	/**
 	 * Resolution action recorded for accept-with-motivation. The enum value
@@ -232,6 +247,8 @@ class ExceptionResolutionService {
 	 *                                                                  so the orchestration code
 	 *                                                                  is testable without
 	 *                                                                  openconnector wired.
+	 * @param RoleMembership|null $roleMembership Resolves the exception approver roles; without it nobody may accept.
+	 * @param ServerWriteAuthority $writeAuthority Grants the invoice release for the acceptance save.
 	 *
 	 * @return void
 	 */
@@ -243,6 +260,8 @@ class ExceptionResolutionService {
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 		?CreditNoteRequestAdapterInterface $creditNoteAdapter = null,
+		private readonly ?RoleMembership $roleMembership = null,
+		private readonly ServerWriteAuthority $writeAuthority = new ServerWriteAuthority(),
 	) {
 		$this->creditNoteAdapter = ($creditNoteAdapter ?? new LogCreditNoteRequestAdapter(logger: $logger));
 
@@ -293,6 +312,12 @@ class ExceptionResolutionService {
 		$notes = trim($resolutionNotes);
 		if ($notes === '') {
 			throw new RuntimeException('resolutionNotes is required');
+		}
+
+		if ($this->roleMembership === null
+			|| $this->roleMembership->callerHoldsAny(roles: self::EXCEPTION_APPROVER_ROLES) === false
+		) {
+			throw new RuntimeException(self::MESSAGE_NOT_APPROVER);
 		}
 
 		$match = $this->loadMatch(administrationId: $administrationId, matchId: $matchId);
@@ -856,7 +881,11 @@ class ExceptionResolutionService {
 			}
 
 			$invoice['statusCode'] = $nextStatus;
-			$this->saveObject(schema: self::SCHEMA_SUPPLIER_INVOICE, object: $invoice);
+			$this->writeAuthority->during(
+				purpose: SupplierInvoiceExceptionApprovalGuard::PURPOSE,
+				objectId: $this->idOf(record: $invoice),
+				work: fn (): array => $this->saveObject(schema: self::SCHEMA_SUPPLIER_INVOICE, object: $invoice)
+			);
 		} catch (\Throwable $exception) {
 			$this->logger->warning(
 				'ExceptionResolutionService: failed to advance invoice status',
