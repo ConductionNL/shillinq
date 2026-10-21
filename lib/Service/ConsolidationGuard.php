@@ -217,7 +217,8 @@ class ConsolidationGuard {
 	 *
 	 * Returns true unconditionally (publication approval is a role-based check
 	 * handled by the RBAC layer — `controller` role only). This method is the
-	 * OR lifecycle hook point; actual role enforcement is via x-openregister-rbac.
+	 * OR lifecycle hook point; the role is enforced by the `publish`
+	 * transition's `authorization` (`{"role": "controller"}`).
 	 *
 	 * Retained as an explicit seam so the implementing cycle can add operator
 	 * sign-off or digital-signature preconditions without schema changes.
@@ -231,7 +232,7 @@ class ConsolidationGuard {
 	 * @spec openspec/changes/bookkeeping-financial-statements/tasks.md#task-13
 	 */
 	public function requirePublicationApproval(array $statement): bool {
-		// Role-based enforcement (controller only) is declared in x-openregister-rbac.
+		// Role-based enforcement (controller only) is the publish transition's authorization.
 		// This seam is retained for future operator sign-off or digital-signature
 		// preconditions per REQ-FS-007 without requiring schema changes.
 		return true;

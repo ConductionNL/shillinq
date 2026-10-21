@@ -125,23 +125,26 @@ final class GrConsolidationFragmentTest extends TestCase {
 	}//end testIntercompanyTransactionLifecycleWiresGuard()
 
 	/**
-	 * Both schemas declare an RBAC block scoping write to controller/bookkeeper
-	 * and read-only to auditor (ADR-005 / consolidation-officer surface).
+	 * Both schemas carry an enforced authorization block scoping write to
+	 * controller/bookkeeper and read-only to auditor (ADR-005 /
+	 * consolidation-officer surface).
 	 *
 	 * @return void
 	 */
 	public function testSchemasDeclareRbac(): void {
 		$schemas = $this->fragment()['components']['schemas'];
 		foreach (['IntercompanyTransaction', 'EliminationRule'] as $name) {
-			$roles = $schemas[$name]['x-openregister-rbac']['roles'];
-			self::assertArrayHasKey(key: 'controller', array: $roles, message: "$name must grant controller");
-			self::assertArrayHasKey(key: 'bookkeeper', array: $roles, message: "$name must grant bookkeeper");
-			self::assertArrayHasKey(key: 'auditor', array: $roles, message: "$name must grant auditor");
-			self::assertSame(
-				expected: ['read'],
-				actual: $roles['auditor']['permissions'],
-				message: "$name auditor must be read-only"
-			);
+			$authorization = $schemas[$name]['authorization'];
+			self::assertContains(needle: 'shillinq_controller', haystack: $authorization['update'], message: "$name must grant controller");
+			self::assertContains(needle: 'shillinq_bookkeeper', haystack: $authorization['update'], message: "$name must grant bookkeeper");
+			self::assertContains(needle: 'shillinq_auditor', haystack: $authorization['read'], message: "$name must grant auditor");
+			foreach (['create', 'update', 'delete'] as $action) {
+				self::assertNotContains(
+					needle: 'shillinq_auditor',
+					haystack: ($authorization[$action] ?? []),
+					message: "$name auditor must be read-only"
+				);
+			}
 		}
 	}//end testSchemasDeclareRbac()
 

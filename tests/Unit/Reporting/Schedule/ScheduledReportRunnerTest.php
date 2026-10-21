@@ -20,6 +20,7 @@ namespace OCA\Shillinq\Tests\Unit\Reporting\Schedule;
 
 use DateTimeImmutable;
 use OCA\Shillinq\Reporting\ReportGenerationService;
+use OCA\Shillinq\Reporting\Schedule\ReportRecipientPolicy;
 use OCA\Shillinq\Reporting\Schedule\ReportScheduleCalendar;
 use OCA\Shillinq\Reporting\Schedule\ScheduledReportDelivery;
 use OCA\Shillinq\Reporting\Schedule\ScheduledReportRunner;
@@ -28,11 +29,15 @@ use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\IAppConfig;
+use OCP\IGroup;
+use OCP\IGroupManager;
+use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+
 
 class ScheduledReportRunnerTest extends TestCase {
 
@@ -113,10 +118,50 @@ class ScheduledReportRunnerTest extends TestCase {
 			$this->delivery,
 			new ReportScheduleCalendar(),
 			$administrations,
-			$this->createMock(LoggerInterface::class)
+			$this->createMock(LoggerInterface::class),
+			new ReportRecipientPolicy($administrations, $this->controllersGroup())
 		);
 
 	}//end runner()
+
+	/**
+	 * A group manager holding `controllers`, whose one member is the owner.
+	 *
+	 * @return IGroupManager
+	 */
+	private function controllersGroup(): IGroupManager {
+		$anna = $this->createMock(IUser::class);
+		$anna->method('getUID')->willReturn('controller-anna');
+		$group = $this->createMock(IGroup::class);
+		$group->method('getGID')->willReturn('controllers');
+		$group->method('getUsers')->willReturn([$anna]);
+		$groups = $this->createMock(IGroupManager::class);
+		$groups->method('get')->willReturnCallback(fn (string $gid): ?IGroup => $gid === 'controllers' ? $group : null);
+		$groups->method('isInGroup')->willReturnCallback(fn (string $uid, string $gid): bool => $uid === 'controller-anna' && $gid === 'controllers');
+		return $groups;
+
+	}//end controllersGroup()
+
+	/**
+	 * A recipient without access to the administration is left out of the delivery.
+	 *
+	 * @return void
+	 */
+	public function testARecipientWithoutAccessIsLeftOut(): void {
+		$schedule = self::schedule();
+		$schedule['recipients'] = ['group:controllers', 'user:outsider'];
+		$runner = $this->runner($schedule);
+		$this->reports->method('generate')->willReturn(['id' => 'gen-1', 'fileId' => 42, 'status' => 'ready']);
+		$this->delivery->expects(self::once())->method('file')
+			->with('controller-anna', 42, '/Rapportages/Maand', ['group:controllers'])
+			->willReturn(['fileId' => 77, 'path' => '/Rapportages/Maand/x.pdf']);
+		$this->delivery->expects(self::once())->method('notifyReady')
+			->with(['group:controllers'], self::anything(), '2026-09', 77)
+			->willReturn(1);
+
+		self::assertSame(['ran' => 1, 'failed' => 0], $runner->runDue(new DateTimeImmutable('2026-10-05T01:00:00Z')));
+
+	}//end testARecipientWithoutAccessIsLeftOut()
 
 	/**
 	 * The schedule as it is stored now.

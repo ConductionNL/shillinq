@@ -642,6 +642,25 @@
               "requires": "OCA\\Shillinq\\Guard\\IntercompanyEliminationGuard::requireReconciledPair"
             }
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "ConsolidationMapping": {
@@ -735,6 +754,25 @@
             "example": "2026-01-01",
             "title": "Valid From"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "AdministrationMigration": {

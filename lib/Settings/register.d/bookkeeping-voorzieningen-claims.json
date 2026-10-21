@@ -335,6 +335,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Provision is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "ProvisionMovement": {
@@ -522,6 +541,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Provision Movement is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "ContingentLiability": {
@@ -651,6 +689,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Contingent Liability is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "PensioenvoorzieningDetail": {
@@ -740,6 +797,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Pensioenvoorziening Detail is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "JubileumvoorzieningDetail": {
@@ -810,6 +886,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Jubileumvoorziening Detail is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "HerstructureringsvoorzieningDetail": {
@@ -907,6 +1002,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Herstructureringsvoorziening Detail is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "GarantievoorzieningDetail": {
@@ -982,6 +1096,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Garantievoorziening Detail is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "MilieuvoorzieningDetail": {
@@ -1069,6 +1202,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Milieuvoorziening Detail is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "ClaimsVoorzieningDetail": {
@@ -1165,6 +1317,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Claims Voorziening Detail is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "ProvisionDisclosureTabel": {
@@ -1336,6 +1507,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Provision Disclosure Table is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       }
     },
