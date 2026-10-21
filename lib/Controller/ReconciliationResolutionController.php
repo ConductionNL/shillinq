@@ -272,6 +272,60 @@ class ReconciliationResolutionController extends Controller {
 	}//end bulkResolve()
 
 	/**
+	 * Classify selected matches in one call, across reconciliations.
+	 *
+	 * Takes `matchIds`, `resolutionStatus` and `resolutionReason`; the
+	 * reconciliation of each match is read on the server.
+	 *
+	 * @return JSONResponse `{applied, failed: {matchId: message}}`.
+	 *
+	 * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-004)
+	 */
+	#[NoAdminRequired]
+	public function bulkResolveMatches(): JSONResponse {
+		$matchIdsParam = $this->request->getParam('matchIds');
+		if (is_array($matchIdsParam) === false || empty($matchIdsParam) === true) {
+			return new JSONResponse(
+				['error' => 'matchIds must be a non-empty array'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
+
+		$resolutionStatus = trim((string)$this->request->getParam('resolutionStatus', ''));
+		$resolutionReason = trim((string)$this->request->getParam('resolutionReason', ''));
+
+		$validation = $this->validatePayload(
+			resolutionStatus: $resolutionStatus,
+			resolutionReason: $resolutionReason,
+		);
+		if ($validation !== null) {
+			return $validation;
+		}
+
+		$this->requireAuthenticatedSession();
+
+		$matchIds = array_values(array_unique(array_filter(array_map(static fn ($id): string => trim((string)$id), $matchIdsParam))));
+		$result   = $this->service->resolveMatches(
+			matchIds: $matchIds,
+			resolutionStatus: $resolutionStatus,
+			resolutionReason: $resolutionReason,
+			actor: $this->resolveActor(),
+		);
+
+		$failed = [];
+		foreach ($result['failed'] as $matchId => $exception) {
+			$this->logger->error(
+				'ReconciliationResolutionController: bulk resolve failed for one match',
+				['matchId' => $matchId, 'exception' => $exception->getMessage()]
+			);
+			$failed[$matchId] = $this->safeFailureMessage(exception: $exception);
+		}
+
+		return new JSONResponse(['applied' => $result['applied'], 'failed' => $failed], Http::STATUS_OK);
+
+	}//end bulkResolveMatches()
+
+	/**
 	 * Map a per-id bulk failure onto a message that is safe to return to the
 	 * client.
 	 *

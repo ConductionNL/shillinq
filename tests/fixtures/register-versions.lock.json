@@ -44,6 +44,10 @@
         {
             "appVersion": "0.5.6-unstable.20261016190000",
             "versionsSha256": "3f175d840807693570662bed868d2c84f1695f29bce5901e4a63b272a2889f28"
+        },
+        {
+            "appVersion": "0.5.6-unstable.20261021233000",
+            "versionsSha256": "084ab09945dc0931526c4858fb8238b590be7936eb23ed2a82939d793374262e"
         }
     ],
     "versions": {
@@ -441,7 +445,7 @@
         "schema:Rechtmatigheidsparagraaf": "0.1.0",
         "schema:Rechtmatigheidstoets": "0.1.0",
         "schema:ReconciliationBridge": "0.1.0",
-        "schema:ReconciliationMatch": "0.2.0",
+        "schema:ReconciliationMatch": "0.3.0",
         "schema:ReconciliationReport": "0.1.0",
         "schema:RecurringInvoiceProfile": "0.1.0",
         "schema:ReimbursementPolicy": "0.1.0",
