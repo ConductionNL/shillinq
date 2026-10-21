@@ -107,7 +107,8 @@ class CalendarController extends Controller {
 	 *  - organization (optional) filter by administrationId (legacy alias `organization`).
 	 *  - status       (optional) filter by status (active|inactive|archived).
 	 *
-	 * @return JSONResponse 200 with `{calendars: [...]}`; 401 when anonymous;
+	 * @return JSONResponse 200 with `{calendars: [...]}`, empty when the caller
+	 *                      has no administration; 401 when anonymous;
 	 *                      403 for an administration the caller is not in;
 	 *                      503 when OpenRegister is unavailable.
 	 *
@@ -132,7 +133,12 @@ class CalendarController extends Controller {
 			return new JSONResponse(['error' => 'Not authorized for this administration'], Http::STATUS_FORBIDDEN);
 		}
 
-		$filters = ['administrationId' => $this->resolveAdministrationId(requested: $orgFilter)];
+		$administrationId = $this->resolveAdministrationId(requested: $orgFilter);
+		if ($administrationId === null) {
+			return new JSONResponse(['calendars' => []]);
+		}
+
+		$filters = ['administrationId' => $administrationId];
 		if ($resourceFilter !== '') {
 			$filters['resource'] = $resourceFilter;
 		}
