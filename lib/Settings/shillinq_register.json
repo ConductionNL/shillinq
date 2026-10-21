@@ -5717,30 +5717,22 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "read",
-                "update"
-              ],
-              "description": "Read and update project financial fields."
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "project-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ],
-              "description": "Full project management access; visibility predicate: administrationType ∈ {mkb, zzp}."
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_project_administrator"
+          ],
+          "read": [
+            "shillinq_auditor",
+            "shillinq_bookkeeper",
+            "shillinq_project_administrator"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_project_administrator"
+          ],
+          "delete": [
+            "shillinq_project_administrator"
+          ]
         },
         "x-openregister-calculations": {
           "recognisedRevenue": {
@@ -5995,30 +5987,23 @@
             "description": "Financial records: 7 years per Selectielijst 5.1.2."
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "project-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ],
-              "description": "Full budget-allocation management."
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_project_administrator"
+          ],
+          "read": [
+            "shillinq_auditor",
+            "shillinq_bookkeeper",
+            "shillinq_project_administrator"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_project_administrator"
+          ],
+          "delete": [
+            "shillinq_project_administrator"
+          ]
         },
         "x-openregister-audit-trail": {
           "enabled": true,
@@ -6451,22 +6436,20 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "project-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_project_administrator"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_project_administrator"
+          ],
+          "update": [
+            "shillinq_project_administrator"
+          ],
+          "delete": [
+            "shillinq_project_administrator"
+          ]
         }
       },
       "RateCard": {
@@ -6548,22 +6531,20 @@
             "years": 7
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "project-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_project_administrator"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_project_administrator"
+          ],
+          "update": [
+            "shillinq_project_administrator"
+          ],
+          "delete": [
+            "shillinq_project_administrator"
+          ]
         }
       },
       "RateCardTemplate": {
@@ -6686,22 +6667,20 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "project-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_project_administrator"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_project_administrator"
+          ],
+          "update": [
+            "shillinq_project_administrator"
+          ],
+          "delete": [
+            "shillinq_project_administrator"
+          ]
         }
       },
       "RateCardVersion": {
@@ -6839,22 +6818,20 @@
             "from": "RateSchedule"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "project-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_project_administrator"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_project_administrator"
+          ],
+          "update": [
+            "shillinq_project_administrator"
+          ],
+          "delete": [
+            "shillinq_project_administrator"
+          ]
         }
       },
       "RateSchedule": {
@@ -7211,22 +7188,20 @@
             "type": "string"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "project-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_project_administrator"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_project_administrator"
+          ],
+          "update": [
+            "shillinq_project_administrator"
+          ],
+          "delete": [
+            "shillinq_project_administrator"
+          ]
         }
       },
       "RateRecord": {
@@ -7424,25 +7399,15 @@
             ]
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "project-administrator": {
-              "permissions": [
-                "create",
-                "read"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_project_administrator"
+          ],
+          "read": [
+            "shillinq_auditor",
+            "shillinq_bookkeeper",
+            "shillinq_project_administrator"
+          ]
         }
       },
       "UrenRegistratie": {
@@ -7580,26 +7545,18 @@
             "title": "Utilization Percent"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "project-administrator": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_auditor",
+            "shillinq_bookkeeper",
+            "shillinq_project_administrator"
+          ],
+          "update": [
+            "shillinq_bookkeeper"
+          ]
         },
         "x-openregister-aggregations": {
           "wbsoAutoTag": {
@@ -20479,33 +20436,23 @@
           "enabled": true,
           "description": "OR audit service captures every state transition automatically (actor, timestamp, action, before/after state). No app-local event table per ADR-022 D2."
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "ondernemer": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "boekhouder": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_ondernemer"
+          ],
+          "read": [
+            "shillinq_auditor",
+            "shillinq_bookkeeper",
+            "shillinq_ondernemer"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_ondernemer"
+          ],
+          "delete": [
+            "shillinq_ondernemer"
+          ]
         }
       },
       "SalesOrderLine": {
@@ -20788,33 +20735,23 @@
           "enabled": true,
           "description": "OR audit service captures every state transition automatically (actor, timestamp, action, before/after state). No app-local event table per ADR-022 D2."
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "ondernemer": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "boekhouder": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_ondernemer"
+          ],
+          "read": [
+            "shillinq_auditor",
+            "shillinq_bookkeeper",
+            "shillinq_ondernemer"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_ondernemer"
+          ],
+          "delete": [
+            "shillinq_ondernemer"
+          ]
         }
       },
     "APInvoice": {
@@ -21531,35 +21468,17 @@
           "title": "Created By"
         }
       },
-      "x-openregister-rbac": {
-        "roles": {
-          "administrator": {
-            "permissions": [
-              "create",
-              "read"
-            ]
-          },
-          "bookkeeper": {
-            "permissions": [
-              "read"
-            ]
-          },
-          "controller": {
-            "permissions": [
-              "create",
-              "read"
-            ]
-          },
-          "auditor": {
-            "permissions": [
-              "read"
-            ]
-          }
-        },
-        "adminScope": {
-          "field": "administrationId",
-          "enforce": true
-        }
+      "authorization": {
+        "create": [
+          "shillinq_admin",
+          "shillinq_controller"
+        ],
+        "read": [
+          "shillinq_admin",
+          "shillinq_auditor",
+          "shillinq_bookkeeper",
+          "shillinq_controller"
+        ]
       }
     },
     "VATGLAccounts": {

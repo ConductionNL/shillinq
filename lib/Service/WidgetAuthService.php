@@ -404,10 +404,12 @@ class WidgetAuthService {
 				->setRegister($registerSlug)
 				->setSchema('WidgetAccessKey')
 				->findAll(
-					[
+					config: [
 						'filters' => ['businessId' => $businessId],
 						'limit' => 25,
-					]
+					],
+					// Callers are the key-authenticated public widget or an admin-setting endpoint; WidgetAccessKey itself is admin-only.
+					_rbac: false,
 				);
 
 			foreach ($records as $candidate) {
@@ -446,10 +448,11 @@ class WidgetAuthService {
 				->setRegister($registerSlug)
 				->setSchema('WidgetAccessKey')
 				->findAll(
-					[
+					config: [
 						'filters' => ['businessId' => $businessId],
 						'limit' => 1,
-					]
+					],
+					_rbac: false,
 				);
 			foreach ($records as $candidate) {
 				return $this->toArray(object: $candidate);
@@ -555,6 +558,7 @@ class WidgetAuthService {
 				object: $data,
 				register: $registerSlug,
 				schema: $schema,
+				_rbac: false,
 			);
 
 			return $this->toArray(object: $saved);

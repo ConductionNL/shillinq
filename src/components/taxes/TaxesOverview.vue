@@ -93,7 +93,7 @@ export default {
 						{
 							id: 'Vpb',
 							label: this.t('shillinq', 'Corporate tax (Vpb)'),
-							route: 'Vpb',
+							route: 'VpbDeadlines',
 						},
 						{
 							id: 'TaxProvisions',

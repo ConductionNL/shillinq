@@ -242,36 +242,22 @@
             "description": "Declarative SMS dispatch consumed from OR's notification engine (ADR-022). When a booking.reminder-due event fires, active channels render their template with booking variables and dispatch via the referenced openconnector connector: unless the recipient has opted out (skipWhen, respected when respectOptOut is true). Retries on transient provider error per retryCount/retryIntervalSeconds; failures are logged with a masked phone number. The pure-logic gating/rendering/normalization is implemented in Shillinq's SmsReminderDispatcher helper (provider-adapter interface), keeping the orchestration unit-tested while live dispatch stays in OR's engine."
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "sms-channel-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "booking-administrator": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "permissionMap": {
-            "booking:sms-channel:list": "read",
-            "booking:sms-channel:create": "create",
-            "booking:sms-channel:edit": "update",
-            "booking:sms-channel:activate": "update",
-            "booking:sms-channel:delete": "delete"
-          },
-          "description": "Channel management is restricted to the sms-channel-administrator role (full CRUD) and booking-administrator (read/update); auditors read-only. Permission slugs map onto OR CRUD permissions. Providers credentials are never readable through this schema (they live in openconnector)."
+        "authorization": {
+          "create": [
+            "shillinq_sms_channel_administrator"
+          ],
+          "read": [
+            "shillinq_auditor",
+            "shillinq_booking_administrator",
+            "shillinq_sms_channel_administrator"
+          ],
+          "update": [
+            "shillinq_booking_administrator",
+            "shillinq_sms_channel_administrator"
+          ],
+          "delete": [
+            "shillinq_sms_channel_administrator"
+          ]
         }
       }
     }
