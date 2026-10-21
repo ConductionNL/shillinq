@@ -242,35 +242,23 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "concerncontroller": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "interne-audit": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "externe-accountant": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "toezichthouder": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Controleprotocol is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_concerncontroller"
+          ],
+          "read": [
+            "shillinq_concerncontroller",
+            "shillinq_interne_audit",
+            "shillinq_externe_accountant",
+            "shillinq_toezichthouder"
+          ],
+          "update": [
+            "shillinq_concerncontroller"
+          ]
         }
       },
       "ToleranceMatrix": {
@@ -349,35 +337,23 @@
             "title": "Methodology Note"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "concerncontroller": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "externe-accountant": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "interne-audit": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "toezichthouder": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Tolerantiematrix is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_concerncontroller"
+          ],
+          "read": [
+            "shillinq_concerncontroller",
+            "shillinq_externe_accountant",
+            "shillinq_interne_audit",
+            "shillinq_toezichthouder"
+          ],
+          "update": [
+            "shillinq_concerncontroller"
+          ]
         }
       },
       "Materialiteit": {
@@ -471,35 +447,23 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "concerncontroller": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "externe-accountant": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "interne-audit": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "toezichthouder": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Materialiteit is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_concerncontroller"
+          ],
+          "read": [
+            "shillinq_concerncontroller",
+            "shillinq_externe_accountant",
+            "shillinq_interne_audit",
+            "shillinq_toezichthouder"
+          ],
+          "update": [
+            "shillinq_concerncontroller"
+          ]
         }
       },
       "AuditSample": {
@@ -564,36 +528,24 @@
             "title": "Extracted By"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "externe-accountant": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "interne-audit": {
-              "permissions": [
-                "create",
-                "read"
-              ]
-            },
-            "concerncontroller": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "toezichthouder": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Steekproef is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_externe_accountant",
+            "shillinq_interne_audit"
+          ],
+          "read": [
+            "shillinq_externe_accountant",
+            "shillinq_interne_audit",
+            "shillinq_concerncontroller",
+            "shillinq_toezichthouder"
+          ],
+          "update": [
+            "shillinq_externe_accountant"
+          ]
         }
       },
       "AuditFinding": {
@@ -789,36 +741,24 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "externe-accountant": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "concerncontroller": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "interne-audit": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "toezichthouder": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Bevinding is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_externe_accountant"
+          ],
+          "read": [
+            "shillinq_externe_accountant",
+            "shillinq_concerncontroller",
+            "shillinq_interne_audit",
+            "shillinq_toezichthouder"
+          ],
+          "update": [
+            "shillinq_externe_accountant",
+            "shillinq_concerncontroller"
+          ]
         }
       },
       "VerklaringDraft": {
@@ -963,35 +903,23 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "externe-accountant": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "concerncontroller": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "interne-audit": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "toezichthouder": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Controleverklaring is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_externe_accountant"
+          ],
+          "read": [
+            "shillinq_externe_accountant",
+            "shillinq_concerncontroller",
+            "shillinq_interne_audit",
+            "shillinq_toezichthouder"
+          ],
+          "update": [
+            "shillinq_externe_accountant"
+          ]
         }
       },
       "SiSaAssurance": {
@@ -1051,35 +979,23 @@
             "title": "Findings"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "externe-accountant": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "concerncontroller": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "interne-audit": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "toezichthouder": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a SiSa-assurance is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_externe_accountant"
+          ],
+          "read": [
+            "shillinq_externe_accountant",
+            "shillinq_concerncontroller",
+            "shillinq_interne_audit",
+            "shillinq_toezichthouder"
+          ],
+          "update": [
+            "shillinq_externe_accountant"
+          ]
         }
       }
     },
