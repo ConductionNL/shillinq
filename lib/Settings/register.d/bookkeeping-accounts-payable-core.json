@@ -239,12 +239,6 @@
             "default": "active",
             "example": "active",
             "title": "Lifecycle State"
-          },
-          "paymentBlockReleaseReason": {
-            "type": "string",
-            "nullable": true,
-            "title": "Payment block release reason",
-            "description": "Why the payment block was released. Required when the block is released; the reason the block was set for is kept in paymentBlockReason."
           }
         },
         "x-openregister-lifecycle": {
@@ -500,12 +494,6 @@
             "description": "FK to the administration owning this AP invoice.",
             "example": "adm-1",
             "title": "Administration ID"
-          },
-          "paymentBlockReleaseReason": {
-            "type": "string",
-            "nullable": true,
-            "title": "Payment block release reason",
-            "description": "Why the payment block was released. Required when the block is released; the reason the block was set for is kept in paymentBlockReason."
           }
         },
         "x-openregister-lifecycle": {

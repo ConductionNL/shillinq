@@ -157,19 +157,15 @@ describe('Block payment and Release payment', () => {
 		expect(blockPayload(' Wacht op creditnota ')).toEqual({
 			paymentBlocked: true,
 			paymentBlockReason: 'Wacht op creditnota',
-			paymentBlockReleaseReason: null,
 		})
-		expect(() => releasePayload(' ')).toThrow(
-			'Give a reason for releasing the payment block.',
-		)
 		axiosMock.patch.mockResolvedValue({ data: {} })
-		await setPaymentBlock('APTransaction', 'ap-1', releasePayload(' Creditnota ontvangen '))
+		await setPaymentBlock('APTransaction', 'ap-1', releasePayload())
 		expect(axiosMock.patch).toHaveBeenCalledWith(
 			'/index.php/apps/openregister/api/objects/shillinq/APTransaction/ap-1',
-			{ paymentBlocked: false, paymentBlockReleaseReason: 'Creditnota ontvangen' },
+			{ paymentBlocked: false, paymentBlockReason: null },
 		)
 		await expect(
-			setPaymentBlock('ARInvoice', 'x', releasePayload('x')),
+			setPaymentBlock('ARInvoice', 'x', releasePayload()),
 		).rejects.toThrow()
 	})
 })

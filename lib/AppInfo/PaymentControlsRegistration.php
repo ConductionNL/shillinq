@@ -3,8 +3,7 @@
 /**
  * Payment Controls Registration
  *
- * Wires the pre-save listeners that lock an approved payment run and guard the
- * release of a payment block.
+ * Wires the pre-save listener that locks an approved payment run.
  *
  * @category AppInfo
  * @package  OCA\Shillinq\AppInfo
@@ -26,7 +25,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\AppInfo;
 
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
-use OCA\Shillinq\Listener\PaymentBlockReleaseListener;
 use OCA\Shillinq\Listener\PaymentRunLineLockListener;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
@@ -38,7 +36,7 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
 final class PaymentControlsRegistration {
 
 	/**
-	 * Register the listeners.
+	 * Register the listener.
 	 *
 	 * @param IRegistrationContext $context The app's registration context.
 	 *
@@ -48,6 +46,5 @@ final class PaymentControlsRegistration {
 	 */
 	public function register(IRegistrationContext $context): void {
 		$context->registerEventListener(event: ObjectUpdatingEvent::class, listener: PaymentRunLineLockListener::class);
-		$context->registerEventListener(event: ObjectUpdatingEvent::class, listener: PaymentBlockReleaseListener::class);
 	}//end register()
 }//end class

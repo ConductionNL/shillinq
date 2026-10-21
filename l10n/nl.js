@@ -6789,11 +6789,7 @@ OC.L10N.register(
         "Add at least one line with a description and a price.": "Voeg minstens een regel toe met een omschrijving en een prijs.",
         "Every line needs a number for quantity, price and VAT rate.": "Elke regel heeft een getal nodig voor aantal, prijs en btw-tarief.",
         "A VAT rate lies between 0 and 100 percent.": "Een btw-tarief ligt tussen 0 en 100 procent.",
-        "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw.",
-        "Payment block release reason": "Reden vrijgave betalingsblokkade",
-        "Why the payment block was released. Required when the block is released; the reason the block was set for is kept in paymentBlockReason.": "Waarom de betalingsblokkade is vrijgegeven. Verplicht bij vrijgeven; de reden van de blokkade blijft bewaard in paymentBlockReason.",
-        "Give a reason for releasing the payment block.": "Geef een reden voor het vrijgeven van de betalingsblokkade.",
-        "Reason for release": "Reden van vrijgave"
+        "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw."
     },
     "nplurals=2; plural=(n != 1);"
 )

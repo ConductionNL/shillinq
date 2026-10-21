@@ -5,9 +5,8 @@
  PaymentBlockModal: block or release payment of one supplier invoice or one
  supplier (banking-payment-run REQ-BPR-003, REQ-BPR-004).
 
- Blocking asks a reason; releasing asks a reason too, and only a controller or
- treasurer may release (PaymentBlockReleaseListener). The dialog patches
- paymentBlocked and paymentBlockReason or paymentBlockReleaseReason on the object through
+ Blocking asks a reason; releasing asks a confirmation. Either way the dialog
+ patches paymentBlocked and paymentBlockReason on the object through
  OpenRegister, so the object's audit trail names who did it and when. The
  lifecycle state is left alone: an overdue invoice stays overdue.
 
@@ -39,22 +38,20 @@
 					)
 				}}
 			</p>
-			<p v-else>
-				{{
-					t(
-						'shillinq',
-						'No payment run pays this while the block is on. Bookkeeping goes on as usual.',
-					)
-				}}
-			</p>
-			<NcTextField
-				v-model="reason"
-				:label="
-					mode === 'release'
-						? t('shillinq', 'Reason for release')
-						: t('shillinq', 'Reason')
-				"
-				data-testid="payment-block-reason" />
+			<template v-else>
+				<p>
+					{{
+						t(
+							'shillinq',
+							'No payment run pays this while the block is on. Bookkeeping goes on as usual.',
+						)
+					}}
+				</p>
+				<NcTextField
+					v-model="reason"
+					:label="t('shillinq', 'Reason')"
+					data-testid="payment-block-reason" />
+			</template>
 			<p
 				v-if="error"
 				class="pbm__error"
@@ -159,7 +156,7 @@ export default {
 			try {
 				payload =
 					this.mode === 'release'
-						? releasePayload(this.reason)
+						? releasePayload()
 						: blockPayload(this.reason)
 			} catch (error) {
 				this.error = error.message

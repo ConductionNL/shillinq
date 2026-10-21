@@ -11,7 +11,7 @@
 
 ## 2. State guards
 - [x] 2.1 An approved payment run's lines and amounts are immutable (`PaymentRunLineLockListener`)
-- [x] 2.2 Releasing a payment block needs the controller or treasurer role and a release reason, and keeps the block reason (`PaymentBlockReleaseListener`)
+- [ ] 2.2 Releasing a payment block needs a role and a reason, and keeps the block reason: done by the payment-block endpoint (#2070), not here
 - [x] 2.3 The payment-run `reconcile` transition only follows a CAMT.053 match (`PaymentRunReconcileGuard`)
 - [x] 2.4 Purchase order `approve` only follows a complete approval chain signed through the approval service (`PurchaseOrderApprovalGuard`, `PurchaseOrderApprovalChainListener`)
 - [x] 2.5 Supplier invoice `approveException` only follows an accepted three-way-match exception, and `pay` only a paid AP transaction (`SupplierInvoiceExceptionApprovalGuard`, `SupplierInvoicePayGuard`)

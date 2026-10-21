@@ -4606,11 +4606,7 @@
         "Add at least one line with a description and a price.": "Add at least one line with a description and a price.",
         "Every line needs a number for quantity, price and VAT rate.": "Every line needs a number for quantity, price and VAT rate.",
         "A VAT rate lies between 0 and 100 percent.": "A VAT rate lies between 0 and 100 percent.",
-        "No free draft number was found. Try again.": "No free draft number was found. Try again.",
-        "Payment block release reason": "Payment block release reason",
-        "Why the payment block was released. Required when the block is released; the reason the block was set for is kept in paymentBlockReason.": "Why the payment block was released. Required when the block is released; the reason the block was set for is kept in paymentBlockReason.",
-        "Give a reason for releasing the payment block.": "Give a reason for releasing the payment block.",
-        "Reason for release": "Reason for release"
+        "No free draft number was found. Try again.": "No free draft number was found. Try again."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
