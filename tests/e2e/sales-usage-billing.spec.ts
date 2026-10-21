@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: EUPL-1.2
  *
  * A bookkeeper imports a month of storage readings for Hosting Noord, rates
- * one, and bills September usage from the invoice generator
+ * one, and bills September usage from the Generate invoices dialog
  * (sales-usage-billing REQ-USB-001, REQ-USB-002).
  *
  * The server half (refusal by row number, the rated amount, the invoiced
@@ -67,19 +67,28 @@ test.describe('sales-usage-billing', () => {
 	test('billing September usage takes the rated readings once', async ({
 		page,
 	}) => {
-		await page.goto('/index.php/apps/shillinq/invoice/generate')
-		await page.getByLabel('Billing model').selectOption('usage')
-		await page.getByLabel('Customer').fill('cust-hosting-noord')
-		await page.getByLabel('From').fill('2026-09-01')
-		await page.getByLabel('To').fill('2026-09-30')
+		const chooseUsage = async () => {
+			await page.goto('/index.php/apps/shillinq/bookkeeping/accounts-receivable')
+			await page.getByRole('button', { name: 'Generate invoices' }).click()
+			const wizard = page.getByTestId('invoice-generate-wizard')
+			await wizard.getByTestId('igw-customer').locator('input').fill('Hosting Noord')
+			await page.keyboard.press('Enter')
+			await wizard.getByLabel('From').fill('2026-09-01')
+			await wizard.getByLabel('To').fill('2026-09-30')
+			await wizard.getByTestId('igw-model').locator('input').fill('Usage')
+			await page.keyboard.press('Enter')
+			await wizard.getByRole('button', { name: 'Next' }).click()
+			return wizard
+		}
 
-		const readings = page.getByTestId('usage-readings')
+		const wizard = await chooseUsage()
+		const readings = wizard.locator('section', { hasText: 'Meter readings' })
 		await expect(readings.getByRole('checkbox')).not.toHaveCount(0)
-		await page.getByRole('button', { name: 'Save as Draft' }).click()
-		await expect(page.getByText('Net amount')).toBeVisible()
+		await wizard.getByRole('button', { name: 'Next' }).click()
+		await expect(wizard.getByText('Net amount')).toBeVisible()
+		await wizard.getByRole('button', { name: 'Close' }).click()
 
-		await page.getByLabel('Billing model').selectOption('t_and_m')
-		await page.getByLabel('Billing model').selectOption('usage')
-		await expect(readings).toContainText('no rated readings in this period')
+		const again = await chooseUsage()
+		await expect(again).toContainText('no rated readings in this period')
 	})
 })

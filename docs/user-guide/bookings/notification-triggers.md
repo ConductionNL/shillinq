@@ -12,8 +12,8 @@ reminder. With triggers, the Bookings app does it for you — and records
 every send in an immutable audit trail so you can prove what was sent,
 to whom, when, and through which channel.
 
-This guide walks through the four trigger types, how to configure them
-per booking, how to read the admin monitor and how to troubleshoot the
+This guide walks through the four trigger types, how to administer them,
+how to read the admin monitor and how to troubleshoot the
 common cases where a notification didn't go out.
 
 ## What is a notification trigger?
@@ -45,25 +45,6 @@ A trigger is **enabled** by default. The admin can pause it (status
 engine schedules dispatch at `bookingStart − hours` (with a ±15-minute
 tolerance window — missed slots, e.g. after a restart, dispatch
 immediately).
-
-## Configuring triggers per booking
-
-Every booking detail page shows a **Notifications** button. Click it
-to open the configuration modal:
-
-- The modal lists every trigger that applies to this booking — the
-  global triggers plus any overrides scoped to this single booking.
-- Toggle the checkbox next to the trigger name to enable or disable it
-  for this booking only.
-- Pick the channels (Email, SMS, Chat, Teams, Slack) — the engine
-  tries them in order: if Email fails, it falls back to SMS, etc.
-- Click **Save** to persist; the modal closes and the audit trail
-  records the change.
-
-> The modal lives in its own `.vue` file under `src/modals/` and is
-> isolated from the parent component per ADR-004. If you build a
-> custom view, import `BookingNotificationConfigModal` directly — do
-> not inline the modal markup into the parent.
 
 ## Global trigger administration
 

@@ -21,9 +21,12 @@
 	<section class="admin-invoice-list">
 		<header>
 			<h2>{{ t('shillinq', 'Invoices') }}</h2>
-			<router-link to="/invoice/generate" class="admin-invoice-list__cta">
+			<NcButton
+				variant="primary"
+				data-testid="admin-invoice-list-generate"
+				@click="generate">
 				{{ t('shillinq', 'Generate invoice') }}
-			</router-link>
+			</NcButton>
 		</header>
 
 		<div class="admin-invoice-list__filters">
@@ -94,13 +97,16 @@
 <script>
 import { CnDataTable } from '@conduction/nextcloud-vue'
 import { translate as t } from '@nextcloud/l10n'
+import { NcButton } from '@nextcloud/vue'
 import invoiceApi from '../../api/invoiceApi.js'
+import { openInvoiceGenerateWizard } from '../../utils/invoiceGenerateWizard.js'
 
 export default {
 	name: 'AdminInvoiceList',
 
 	components: {
 		CnDataTable,
+		NcButton,
 	},
 
 	data() {
@@ -181,6 +187,11 @@ export default {
 				minimumFractionDigits: 2,
 				maximumFractionDigits: 2,
 			})
+		},
+
+		async generate() {
+			await openInvoiceGenerateWizard()
+			await this.reload()
 		},
 
 		async reload() {

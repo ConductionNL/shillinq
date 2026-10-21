@@ -232,14 +232,6 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'confirmationApi#confirm', 'url' => '/api/v1/appointments/{appointmentId}/confirm', 'verb' => 'PATCH'],
             ['name' => 'confirmationApi#resend', 'url' => '/api/v1/appointments/{appointmentId}/resend-confirmation', 'verb' => 'POST'],
 
-        // Booking notification triggers + admin monitor (bookings-notification-triggers,
-        // issue #115). Static admin segments precede the booking-scoped routes so the
-        // /api/admin/* prefix matches first under Symfony.
-            ['name' => 'notification#adminMonitor', 'url' => '/api/admin/notification-monitor', 'verb' => 'GET'],
-            ['name' => 'notification#adminDisableAll', 'url' => '/api/admin/notification-monitor/disable-all', 'verb' => 'POST'],
-            ['name' => 'notification#listForBooking', 'url' => '/api/bookings/{id}/notification-triggers', 'verb' => 'GET'],
-            ['name' => 'notification#updateForBooking', 'url' => '/api/bookings/{id}/notification-triggers', 'verb' => 'PATCH'],
-
         // Booking detail (bookings-pipelinq-customer-bridge-05). Hydrates the
         // Appointment record with the linked pipelinq Contact profile +
         // klantbeeld history when `pipelinqContactId` is set, degrading to

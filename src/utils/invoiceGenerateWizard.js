@@ -100,15 +100,32 @@ export function buildGenerateRequest(source, chosen) {
 			request[key] = source[key]
 		}
 	}
+	if (!['fixed_fee', 'mixed'].includes(source.billingModel)) {
+		return request
+	}
 	const fee = Number(String(source.fixedFee ?? '').replace(',', '.'))
-	if (
-		['fixed_fee', 'mixed'].includes(source.billingModel)
-		&& Number.isFinite(fee)
-		&& fee > 0
-	) {
+	if (Number.isFinite(fee) && fee > 0) {
 		request.fixedFeeCents = Math.round(fee * 100)
 	}
+	const notes = String(source.notes ?? '').trim()
+	if (notes !== '') {
+		request.notes = notes
+	}
 	return request
+}
+
+/**
+ * Where the draft's PDF preview opens, or '' before there is a draft.
+ *
+ * @param {object|null} draft The draft the server made.
+ * @return {string} The URL.
+ * @spec openspec/changes/invoice-from-time-and-expense/tasks.md#task-15
+ */
+export function draftPdfUrl(draft) {
+	const id = draft?.id || draft?.invoiceId || ''
+	return id
+		? generateUrl(`/apps/shillinq/api/v1/invoices/${encodeURIComponent(id)}/pdf`)
+		: ''
 }
 
 /**

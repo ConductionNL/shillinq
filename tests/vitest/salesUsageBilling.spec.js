@@ -2,9 +2,9 @@
  * SPDX-License-Identifier: EUPL-1.2
  * Copyright (C) 2026 Conduction B.V.
  *
- * sales-usage-billing: reading the import file, the Rate bulk action, the
- * reading list of the invoice generator, and the request the generator
- * sends when usage is chosen.
+ * sales-usage-billing: reading the import file, the Rate bulk action and
+ * the reading list of the Generate invoices dialog. The request the dialog
+ * sends is covered in invoiceGenerateWizard.spec.js.
  *
  * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
  */
@@ -29,9 +29,6 @@ const ROOT = path.resolve(__dirname, '../..')
 const { billableReadings, parseReadingsCsv, rateReadings } =
 	await import('../../src/utils/usageBilling.js')
 const { rateMeterReadings } = await import('../../src/utils/usageBillingActions.js')
-const InvoiceGenerator = (
-	await import('../../src/components/invoice/InvoiceGenerator.vue')
-).default
 
 describe('the import file', () => {
 	it('reads one row per line under the header, with ; or , and quotes', () => {
@@ -151,58 +148,5 @@ describe('the invoice generator, usage model', () => {
 				(r) => r.id,
 			),
 		).toEqual(['r-a', 'r-b'])
-	})
-
-	it('offers usage and sends the selected reading ids', async () => {
-		const template = fs.readFileSync(
-			path.join(ROOT, 'src/components/invoice/InvoiceGenerator.vue'),
-			'utf8',
-		)
-		expect(template).toContain('<option value="usage">')
-
-		axiosMock.get.mockResolvedValueOnce({ data: { results: readings } })
-		const vm = {
-			...InvoiceGenerator.data(),
-			loadReadings: InvoiceGenerator.methods.loadReadings,
-		}
-		vm.form = {
-			...vm.form,
-			billingModel: 'usage',
-			customerId: 'c-1',
-			fromDate: '2026-09-01',
-			toDate: '2026-09-30',
-		}
-		Object.defineProperty(vm, 'needsUsage', {
-			get: () => InvoiceGenerator.computed.needsUsage.call(vm),
-		})
-
-		await vm.loadReadings()
-
-		expect(axiosMock.get).toHaveBeenCalledWith(
-			'/index.php/apps/openregister/api/objects/shillinq/MeterReading',
-			{ params: { customerId: 'c-1', status: 'rated', _limit: 500 } },
-		)
-		expect(vm.meterReadingIds).toEqual(['r-a', 'r-b'])
-
-		vm.meterReadingIds = ['r-b']
-		const payload = InvoiceGenerator.computed.payload.call({
-			...vm,
-			needsUsage: true,
-			parseIds: InvoiceGenerator.methods.parseIds,
-		})
-		expect(payload.billingModel).toBe('usage')
-		expect(payload.meterReadingIds).toEqual(['r-b'])
-	})
-
-	it('sends no reading ids for another model', () => {
-		const vm = {
-			...InvoiceGenerator.data(),
-			parseIds: InvoiceGenerator.methods.parseIds,
-			needsUsage: false,
-		}
-		vm.meterReadingIds = ['r-a']
-		expect(InvoiceGenerator.computed.payload.call(vm).meterReadingIds).toEqual(
-			[],
-		)
 	})
 })

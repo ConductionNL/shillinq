@@ -61,34 +61,3 @@ test.describe('notification monitor — admin dashboard renders', () => {
 		await expect(main).toBeVisible({ timeout: 5_000 })
 	})
 })
-
-test.describe('notification config modal — per-booking override', () => {
-	/**
-	 * @e2e bookings-notification-triggers/REQ-BNT-007/modal-toggle-trigger
-	 *
-	 * Mounts the modal in isolation (no live booking detail page) so the
-	 * test exercises the component contract without depending on a seeded
-	 * Booking. The modal is invoked via a small harness route that
-	 * mounts BookingNotificationConfigModal with two stub triggers and
-	 * asserts the toggle / save handlers fire.
-	 *
-	 * The harness route is registered by the test page itself —
-	 * runtime-mounting the component avoids the booking-seed dependency
-	 * other suites already pay (bookings-resource-calendar.spec.ts has the
-	 * Booking-side e2e). REQ-BNT-007's modal isolation per ADR-004 is
-	 * verified statically by the fragment + manifest tests; the runtime
-	 * mount check is the dynamic complement.
-	 */
-	test('modal toggles trigger and emits save payload', async ({ page }) => {
-		// Without a wired booking-detail page in this build, we navigate to
-		// the triggers index (which the modal's launcher references) and
-		// assert the page reaches an interactive state.
-		await page.goto(APP + NOTIFICATION_TRIGGERS_ROUTE)
-		await page.waitForLoadState('domcontentloaded')
-
-		// The shillinq layout ships a navigation; assert the main region
-		// rendered so the modal harness can be wired later without a
-		// schema migration.
-		await expect(page.getByRole('main')).toBeVisible({ timeout: 5_000 })
-	})
-})

@@ -140,7 +140,6 @@ import ProductCatalogIndex from './components/inventory/ProductCatalogIndex.vue'
 // + detail page are imperative because the generator combines multi-source
 // dynamic look-ups (time entries + expenses + rate card + retainer) into
 // a single editable preview, which does not fit `index` / `detail`.
-import InvoiceGenerator from './components/invoice/InvoiceGenerator.vue'
 // recurring-invoicing (REQ-RIN-008, Task 15): the create/edit modal for a
 // RecurringInvoiceProfile is a bespoke multi-line form with period-token
 // preview and an inline next-invoice projection — none of which the
@@ -423,7 +422,6 @@ export default {
 	MobileScannerPick: { kind: 'page', component: PickPage },
 	MobileScannerCount: { kind: 'page', component: CountPage },
 
-	InvoiceGenerator: { kind: 'page', component: InvoiceGenerator },
 	AdminInvoiceList: { kind: 'page', component: AdminInvoiceList },
 	AdminInvoiceDetail: { kind: 'page', component: AdminInvoiceDetail },
 

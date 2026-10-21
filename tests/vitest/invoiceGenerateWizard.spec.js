@@ -64,19 +64,54 @@ describe('Generate invoices', () => {
 		)
 	})
 
-	it('keeps the Generate invoice page', () => {
+	it('is the one place to generate: the Generate invoice page is gone', () => {
+		const fragment = fs.readFileSync(
+			path.join(ROOT, 'src/manifest.d/invoice-from-time-and-expense.json'),
+			'utf8',
+		)
+		expect(manifest.pages.some((p) => p.id === 'BillableInvoiceGenerate')).toBe(false)
+		expect(fragment).not.toContain('BillableInvoiceGenerate')
 		expect(
-			manifest.pages.some((p) => p.id === 'BillableInvoiceGenerate')
-				|| fs
-					.readFileSync(
-						path.join(
-							ROOT,
-							'src/manifest.d/invoice-from-time-and-expense.json',
-						),
-						'utf8',
-					)
-					.includes('"BillableInvoiceGenerate"'),
-		).toBe(true)
+			fs.existsSync(path.join(ROOT, 'src/components/invoice/InvoiceGenerator.vue')),
+		).toBe(false)
+	})
+
+	it('sends the chosen meter readings for usage and none for another model', async () => {
+		const { buildGenerateRequest } =
+			await import('../../src/utils/invoiceGenerateWizard.js')
+		const source = { customerId: 'c-1', fromDate: '2026-09-01', toDate: '2026-09-30' }
+		const chosen = { timeEntryIds: [], expenseIds: [], meterReadingIds: ['r-b'] }
+		expect(
+			buildGenerateRequest({ ...source, billingModel: 'usage' }, chosen).meterReadingIds,
+		).toEqual(['r-b'])
+		expect(
+			buildGenerateRequest({ ...source, billingModel: 't_and_m' }, chosen).meterReadingIds,
+		).toEqual([])
+	})
+
+	it('sends the fixed fee line description for a fixed fee only', async () => {
+		const { buildGenerateRequest } =
+			await import('../../src/utils/invoiceGenerateWizard.js')
+		const chosen = { timeEntryIds: [], expenseIds: [] }
+		const fixed = buildGenerateRequest(
+			{ customerId: 'c-1', billingModel: 'fixed_fee', fixedFee: '500', notes: ' Website build ' },
+			chosen,
+		)
+		expect(fixed.notes).toBe('Website build')
+		expect(fixed.fixedFeeCents).toBe(50000)
+		expect(
+			buildGenerateRequest({ customerId: 'c-1', billingModel: 't_and_m', notes: 'x' }, chosen),
+		).not.toHaveProperty('notes')
+		expect(request).toContain("'notes'")
+	})
+
+	it('links the draft to its PDF preview', async () => {
+		const { draftPdfUrl } = await import('../../src/utils/invoiceGenerateWizard.js')
+		expect(draftPdfUrl({ id: 'inv 1' })).toBe(
+			'/index.php/apps/shillinq/api/v1/invoices/inv%201/pdf',
+		)
+		expect(draftPdfUrl(null)).toBe('')
+		expect(routes).toContain("'url' => '/api/v1/invoices/{invoiceId}/pdf', 'verb' => 'GET'")
 	})
 
 	it('loads meter readings for the usage model only', async () => {

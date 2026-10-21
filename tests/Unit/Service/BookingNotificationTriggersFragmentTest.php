@@ -281,11 +281,11 @@ final class BookingNotificationTriggersFragmentTest extends TestCase {
 
 	/**
 	 * Manifest fragment registers a NotificationTriggers + NotificationMonitor
-	 * page pair and a per-booking modal action launcher.
+	 * page pair, and no unread per-booking action block.
 	 *
 	 * @return void
 	 */
-	public function testManifestRegistersAdminPagesAndModalLauncher(): void {
+	public function testManifestRegistersAdminPages(): void {
 		self::assertFileExists($this->manifestPath);
 		$manifest = json_decode((string)file_get_contents($this->manifestPath), true);
 		self::assertIsArray($manifest);
@@ -299,11 +299,7 @@ final class BookingNotificationTriggersFragmentTest extends TestCase {
 		self::assertContains('NotificationTriggerDetail', $pageIds);
 		self::assertContains('NotificationMonitor', $pageIds);
 		self::assertContains('NotificationDeliveryDetail', $pageIds);
-
-		// bookingDetailActions registers the modal launcher.
-		$actions = (array)($manifest['bookingDetailActions'] ?? []);
-		self::assertNotEmpty($actions);
-		self::assertSame('BookingNotificationConfigModal', (string)$actions[0]['modal']);
-	}//end testManifestRegistersAdminPagesAndModalLauncher()
+		self::assertArrayNotHasKey('bookingDetailActions', $manifest, 'Nothing reads bookingDetailActions.');
+	}//end testManifestRegistersAdminPages()
 
 }//end class

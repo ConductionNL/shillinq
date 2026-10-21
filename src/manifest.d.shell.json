@@ -4656,13 +4656,6 @@
 							"icon": "ReceiptTextOutline",
 							"route": "BillableInvoiceList",
 							"order": 10
-						},
-						{
-							"id": "BillableInvoiceGenerate",
-							"label": "Generate invoice",
-							"icon": "ReceiptTextOutline",
-							"route": "BillableInvoiceGenerate",
-							"order": 20
 						}
 					]
 				}
@@ -4674,13 +4667,6 @@
 					"route": "/invoice",
 					"type": "custom",
 					"title": "Invoices"
-				},
-				{
-					"_fragment": "invoice-from-time-and-expense",
-					"id": "BillableInvoiceGenerate",
-					"route": "/invoice/generate",
-					"type": "custom",
-					"title": "Generate Invoice"
 				},
 				{
 					"_fragment": "invoice-from-time-and-expense",

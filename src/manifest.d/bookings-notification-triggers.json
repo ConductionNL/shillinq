@@ -187,14 +187,5 @@
 				}
 			}
 		}
-	],
-	"bookingDetailActions": [
-		{
-			"id": "configure-notifications",
-			"label": "Notifications",
-			"icon": "BellOutline",
-			"modal": "BookingNotificationConfigModal",
-			"description": "Open the per-booking notification configuration. It loads the triggers whose triggerType matches a booking lifecycle event, plus any trigger scoped to this booking, and lets the organiser switch each one on or off and pick its channels."
-		}
 	]
 }

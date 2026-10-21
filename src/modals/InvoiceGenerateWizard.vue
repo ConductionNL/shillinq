@@ -87,6 +87,11 @@
 					:label="t('shillinq', 'Fixed fee (€)')"
 					data-testid="igw-fixed-fee" />
 				<NcTextField
+					v-if="needsFixedFee"
+					v-model="source.notes"
+					:label="t('shillinq', 'Fixed fee line description (optional)')"
+					data-testid="igw-notes" />
+				<NcTextField
 					v-if="source.billingModel === 'milestone'"
 					v-model="source.milestoneId"
 					:label="t('shillinq', 'Milestone ID')"
@@ -191,6 +196,13 @@
 				<dt>{{ t('shillinq', 'Due date') }}</dt>
 				<dd>{{ draft.dueDate }}</dd>
 			</dl>
+			<p v-if="pdfUrl">
+				<a
+					:href="pdfUrl"
+					target="_blank"
+					rel="noopener"
+					data-testid="igw-preview-pdf">{{ t('shillinq', 'Preview PDF') }}</a>
+			</p>
 			<p class="igw__muted">
 				{{
 					t(
@@ -215,6 +227,7 @@ import {
 	buildGenerateRequest,
 	chosenCount,
 	draftInvoice,
+	draftPdfUrl,
 	errorText,
 	idOf,
 	loadCandidates,
@@ -263,6 +276,7 @@ export default {
 				toDate: '',
 				fixedFee: '',
 				milestoneId: '',
+				notes: '',
 			},
 
 			candidates: { timeEntries: [], expenses: [], readings: [] },
@@ -348,6 +362,10 @@ export default {
 
 		needsFixedFee() {
 			return ['fixed_fee', 'mixed'].includes(this.source.billingModel)
+		},
+
+		pdfUrl() {
+			return draftPdfUrl(this.draft)
 		},
 
 		periodLabel() {
