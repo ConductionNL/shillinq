@@ -38,7 +38,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use Throwable;
 
 /**
@@ -63,10 +63,10 @@ class StandardsPolicyService {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily (ADR-022).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 
 	}//end __construct()
@@ -177,9 +177,8 @@ class StandardsPolicyService {
 		);
 		unset($payload['@self'], $payload['id']);
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		$saved = $this->normalise(
-			$objectService->saveObject(
+			$this->objectService->saveObject(
 				object: $payload,
 				register: self::REGISTER_SLUG,
 				schema: self::SCHEMA,
@@ -236,7 +235,7 @@ class StandardsPolicyService {
 			return null;
 		}
 
-		$rows = $this->container->get('OCA\OpenRegister\Service\ObjectService')
+		$rows = $this->objectService
 			->setRegister(self::REGISTER_SLUG)
 			->setSchema(self::SCHEMA)
 			->findAll(['filters' => ['administrationId' => $administrationId], 'limit' => 1]);
@@ -277,14 +276,12 @@ class StandardsPolicyService {
 	 */
 	private function loadFrameworks(?string $administrationId): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-
 			$filters = [];
 			if ($administrationId !== null) {
 				$filters['administrationId'] = $administrationId;
 			}
 
-			$rows = $objectService
+			$rows = $this->objectService
 				->setRegister(self::REGISTER_SLUG)
 				->setSchema(self::SCHEMA)
 				->findAll(
