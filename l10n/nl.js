@@ -4006,6 +4006,7 @@ OC.L10N.register(
         "Performance accountability": "Prestatieverantwoording",
         "Terugbetalingstermijnen": "Terugbetalingstermijnen",
         "Paid on": "Betaald op",
+        "Paid by": "Betaald door",
         "Flow": "Flow",
         "Appointments": "Afspraken",
         "Resources": "Resources",

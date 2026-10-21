@@ -24,10 +24,12 @@ use InvalidArgumentException;
 use OCA\Shillinq\Controller\ObjectRequestRefundController;
 use OCA\Shillinq\Event\PaymentRefundRequestedEvent;
 use OCA\Shillinq\Listener\PaymentRefundRequestedListener;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\DebtorCreditService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\ObjectRequestCommandService;
 use OCA\Shillinq\Service\ObjectRequestRefundService;
+use OCA\Shillinq\Service\RefundStepForbiddenException;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
 use OCA\Shillinq\Service\PaymentRevenueAccountResolver;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
@@ -74,6 +76,20 @@ final class ObjectRequestRefundServiceTest extends TestCase {
 	 * @var IAppConfig
 	 */
 	private IAppConfig $appConfig;
+
+	/**
+	 * The signed-in user the service sees.
+	 *
+	 * @var string
+	 */
+	private string $actor = 'approver';
+
+	/**
+	 * The administrations the signed-in user is a member of.
+	 *
+	 * @var list<string>
+	 */
+	private array $memberOf = ['adm-larp-1'];
 
 	/**
 	 * Store Mila's settled request and let larpinq ask for its refund through
@@ -136,11 +152,16 @@ final class ObjectRequestRefundServiceTest extends TestCase {
 		self::assertTrue($event->isHandled(), (string)$event->getError());
 		$this->store->saved = [];
 
+		$context = $this->createMock(AdministrationContextService::class);
+		$context->method('currentUserId')->willReturnCallback(fn (): string => $this->actor);
+		$context->method('canAccess')->willReturnCallback(fn (string $id): bool => in_array($id, $this->memberOf, true));
+
 		return new ObjectRequestRefundService(
 			objectService: $this->store,
 			appConfig: $this->appConfig,
 			transitions: $transitions,
 			revenueAccounts: $revenue,
+			context: $context,
 		);
 	}//end refundRequested()
 
@@ -195,6 +216,8 @@ final class ObjectRequestRefundServiceTest extends TestCase {
 		$saved = $this->savedIn(schema: 'PaymentRequest');
 		self::assertCount(1, $saved);
 		self::assertSame('approved', $saved[0]['refunds'][0]['state']);
+		self::assertSame('approver', $saved[0]['refunds'][0]['approvedBy']);
+		self::assertNotSame('', (string)$saved[0]['refunds'][0]['approvedAt']);
 		foreach (['JournalEntry' => $journal[0], 'PaymentRequest' => $saved[0]] as $schema => $object) {
 			self::assertSame([], RegisterSchema::errors(slug: $schema, object: $object), $schema . ' payload refused by the merged register');
 		}
@@ -214,6 +237,7 @@ final class ObjectRequestRefundServiceTest extends TestCase {
 		$refunds->approve(paymentRequestId: self::REQUEST_ID);
 		$this->store->saved = [];
 		$this->runs = [];
+		$this->actor = 'payer';
 
 		$request = $refunds->markPaid(paymentRequestId: self::REQUEST_ID, bankReference: 'RF-2026-0007', bankAccount: '1100');
 
@@ -228,6 +252,9 @@ final class ObjectRequestRefundServiceTest extends TestCase {
 		self::assertSame('refunded', $saved[0]['state']);
 		self::assertSame('paid', $saved[0]['refunds'][0]['state']);
 		self::assertSame('RF-2026-0007', $saved[0]['refunds'][0]['bankReference']);
+		self::assertSame('approver', $saved[0]['refunds'][0]['approvedBy']);
+		self::assertSame('payer', $saved[0]['refunds'][0]['paidBy']);
+		self::assertNotSame('', (string)$saved[0]['refunds'][0]['paidAt']);
 		foreach (['JournalEntry' => $journal[0], 'PaymentRequest' => $saved[0]] as $schema => $object) {
 			self::assertSame([], RegisterSchema::errors(slug: $schema, object: $object), $schema . ' payload refused by the merged register');
 		}
@@ -293,6 +320,79 @@ final class ObjectRequestRefundServiceTest extends TestCase {
 	}//end testApprovingTwiceIsRefused()
 
 	/**
+	 * A finance user outside the request's administration can neither
+	 * approve nor pay its refund; nothing is booked.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
+	 */
+	public function testAUserOutsideTheAdministrationIsRefused(): void {
+		$refunds = $this->refundRequested();
+		$this->memberOf = ['adm-other'];
+
+		try {
+			$refunds->approve(paymentRequestId: self::REQUEST_ID);
+			self::fail('A refund was approved from outside its administration.');
+		} catch (RefundStepForbiddenException $e) {
+			self::assertStringContainsString('administration', $e->getMessage());
+		}
+
+		self::assertSame([], $this->store->saved);
+		self::assertSame([], $this->runs);
+
+		$this->memberOf = ['adm-larp-1'];
+		$refunds->approve(paymentRequestId: self::REQUEST_ID);
+		$this->store->saved = [];
+		$this->runs = [];
+		$this->memberOf = ['adm-other'];
+		$this->actor = 'payer';
+
+		$this->expectException(RefundStepForbiddenException::class);
+		$refunds->markPaid(paymentRequestId: self::REQUEST_ID, bankReference: 'RF-2026-0007', bankAccount: '1100');
+	}//end testAUserOutsideTheAdministrationIsRefused()
+
+	/**
+	 * Four eyes: the user who approved a refund cannot also mark it paid,
+	 * and nothing is booked when they try.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
+	 */
+	public function testTheApproverCannotAlsoPay(): void {
+		$refunds = $this->refundRequested();
+		$refunds->approve(paymentRequestId: self::REQUEST_ID);
+		$this->store->saved = [];
+		$this->runs = [];
+
+		try {
+			$refunds->markPaid(paymentRequestId: self::REQUEST_ID, bankReference: 'RF-2026-0007', bankAccount: '1100');
+			self::fail('The approver also marked the refund paid.');
+		} catch (RefundStepForbiddenException $e) {
+			self::assertStringContainsString('approved', $e->getMessage());
+		}
+
+		self::assertSame([], $this->store->saved);
+		self::assertSame([], $this->runs);
+	}//end testTheApproverCannotAlsoPay()
+
+	/**
+	 * The controller answers a refused step as 403.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/receivables-object-request-refund-and-credit/specs/object-payment-requests/spec.md (REQ-ORC-002)
+	 */
+	public function testTheControllerAnswersFourEyesAs403(): void {
+		$refunds = $this->refundRequested();
+		$finance = $this->controller(refunds: $refunds, group: 'finance');
+		self::assertSame(Http::STATUS_OK, $finance->approve(id: self::REQUEST_ID)->getStatus());
+		$paid = $finance->markPaid(id: self::REQUEST_ID, bankReference: 'RF-2026-0007', bankAccount: '1100');
+		self::assertSame(Http::STATUS_FORBIDDEN, $paid->getStatus());
+	}//end testTheControllerAnswersFourEyesAs403()
+
+	/**
 	 * The page's two actions reach the service through the controller, and
 	 * only for a user who carries payment.administer: a clerk without it is
 	 * refused before anything is booked (REQ-ORC-002).
@@ -310,6 +410,7 @@ final class ObjectRequestRefundServiceTest extends TestCase {
 
 		$finance = $this->controller(refunds: $refunds, group: 'finance');
 		self::assertSame(Http::STATUS_OK, $finance->approve(id: self::REQUEST_ID)->getStatus());
+		$this->actor = 'payer';
 		$paid = $finance->markPaid(id: self::REQUEST_ID, bankReference: 'RF-2026-0007', bankAccount: '1100');
 		self::assertSame(Http::STATUS_OK, $paid->getStatus());
 		self::assertSame('refunded', $paid->getData()['state']);
