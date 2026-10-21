@@ -202,33 +202,23 @@
             "years": 7
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_admin",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_admin",
+            "shillinq_auditor",
+            "shillinq_bookkeeper"
+          ],
+          "update": [
+            "shillinq_admin",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_admin"
+          ]
         }
       },
       "KlantLadderOverride": {
@@ -351,39 +341,25 @@
             "years": 7
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_admin",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_admin",
+            "shillinq_auditor",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "update": [
+            "shillinq_admin",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_admin"
+          ]
         }
       },
       "DunningRun": {
@@ -698,33 +674,23 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_admin",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_admin",
+            "shillinq_auditor",
+            "shillinq_bookkeeper"
+          ],
+          "update": [
+            "shillinq_admin",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_admin"
+          ]
         }
       },
       "IncassoKostenBerekening": {
@@ -1017,33 +983,23 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_admin",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_admin",
+            "shillinq_auditor",
+            "shillinq_bookkeeper"
+          ],
+          "update": [
+            "shillinq_admin",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_admin"
+          ]
         }
       },
       "DunningPauseDispute": {
@@ -1159,33 +1115,23 @@
             "years": 7
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_admin",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_admin",
+            "shillinq_auditor",
+            "shillinq_bookkeeper"
+          ],
+          "update": [
+            "shillinq_admin",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_admin"
+          ]
         }
       },
       "CreditScore": {
@@ -1295,32 +1241,22 @@
             "years": 7
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_admin",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_admin",
+            "shillinq_auditor",
+            "shillinq_bookkeeper"
+          ],
+          "update": [
+            "shillinq_admin"
+          ],
+          "delete": [
+            "shillinq_admin"
+          ]
         }
       },
       "OninbaarAfschrijving": {
@@ -1424,38 +1360,24 @@
             "years": 7
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          },
-          "adminScope": {
-            "field": "administrationId",
-            "enforce": true
-          }
+        "authorization": {
+          "create": [
+            "shillinq_admin",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_admin",
+            "shillinq_auditor",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "update": [
+            "shillinq_admin",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_admin"
+          ]
         }
       }
     }
