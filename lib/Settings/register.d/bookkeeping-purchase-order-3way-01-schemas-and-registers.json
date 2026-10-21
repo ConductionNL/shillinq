@@ -256,7 +256,8 @@
             "approve": {
               "from": "draft",
               "to": "approved",
-              "label": "Goedkeuren"
+              "label": "Goedkeuren",
+              "requires": "OCA\\Shillinq\\Lifecycle\\PurchaseOrderApprovalGuard"
             },
             "send": {
               "from": "approved",
@@ -304,6 +305,29 @@
               "label": "Annuleren"
             }
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "PurchaseOrderLine": {
@@ -453,6 +477,29 @@
             "expression": "round(lineTotal * vatRate / 10000)",
             "target": "vatAmount"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "GoodsReceiptNote": {
@@ -664,6 +711,29 @@
               "label": "Afkeuren"
             }
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "GoodsReceiptLine": {
@@ -748,6 +818,29 @@
             "example": "adm-1",
             "title": "Administration ID"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "SupplierInvoice": {
@@ -994,12 +1087,14 @@
             "approveException": {
               "from": "exception",
               "to": "approved",
-              "label": "Handmatig goedkeuren"
+              "label": "Handmatig goedkeuren",
+              "requires": "OCA\\Shillinq\\Lifecycle\\SupplierInvoiceExceptionApprovalGuard"
             },
             "pay": {
               "from": "approved",
               "to": "paid",
-              "label": "Betalen"
+              "label": "Betalen",
+              "requires": "OCA\\Shillinq\\Lifecycle\\SupplierInvoicePayGuard"
             },
             "rejectReceived": {
               "from": "received",
@@ -1026,6 +1121,29 @@
               "label": "Afwijzen"
             }
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "ThreeWayMatch": {
@@ -1260,6 +1378,29 @@
               "label": "Fraude melden"
             }
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "ToleranceProfile": {
@@ -1365,6 +1506,29 @@
             "example": "adm-1",
             "title": "Administration ID"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "VendorPerformance": {
@@ -1470,6 +1634,29 @@
             "example": "adm-1",
             "title": "Administration ID"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_procurement_officer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_approver"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       }
     }
