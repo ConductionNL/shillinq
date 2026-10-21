@@ -6796,7 +6796,14 @@
         "Bank statement line": "Regel bankafschrift",
         "The bank statement line the payout arrived as.": "De regel op het bankafschrift waarmee de uitbetaling binnenkwam.",
         "The journal entry that booked the payout.": "De journaalpost die de uitbetaling boekte.",
-        "No payouts from a payment provider yet": "Nog geen uitbetalingen van een betaalprovider"
+        "No payouts from a payment provider yet": "Nog geen uitbetalingen van een betaalprovider",
+        "Choose an administration before drafting an invoice.": "Kies een administratie voordat je een factuur opstelt.",
+        "This customer is not part of your administration.": "Deze klant hoort niet bij je administratie.",
+        "Enter a valid invoice date.": "Vul een geldige factuurdatum in.",
+        "Add at least one line with a description and a price.": "Voeg minstens een regel toe met een omschrijving en een prijs.",
+        "Every line needs a number for quantity, price and VAT rate.": "Elke regel heeft een getal nodig voor aantal, prijs en btw-tarief.",
+        "A VAT rate lies between 0 and 100 percent.": "Een btw-tarief ligt tussen 0 en 100 procent.",
+        "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

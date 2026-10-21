@@ -4,22 +4,18 @@
  *
  * Unit tests for the InvoiceQuickDraftModal computation + persistence
  * layer (src/modals/invoiceQuickDraft.js): line totals, due-date from
- * payment terms, the draft ARInvoice payload shape and the
+ * payment terms, the quick-draft request and the
  * localStorage preference round-trip with TTL expiry.
  */
 
-import { readdirSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
-	buildInvoicePayload,
+	buildQuickDraftRequest,
 	computeTotals,
 	defaultDraftLine,
 	dueDateFromTerms,
 	loadQuickDraftPrefs,
 	paymentTermDays,
-	periodIdFromDate,
-	provisionalInvoiceNumber,
 	saveQuickDraftPrefs,
 } from '../../src/modals/invoiceQuickDraft.js'
 
@@ -76,205 +72,42 @@ describe('invoiceQuickDraft — payment terms + due date', () => {
 	})
 })
 
-describe('invoiceQuickDraft — payload', () => {
-	it('builds a draft ARInvoice whose lines are the declared invoiceLines', () => {
-		const payload = buildInvoicePayload({
+describe('invoiceQuickDraft — request', () => {
+	it('sends the customer, dates, reference and filled lines only', () => {
+		const body = buildQuickDraftRequest({
 			customerId: 'cust-1',
 			invoiceDate: '2026-02-01',
 			dueDate: '2026-03-03',
 			reference: 'PO-42',
 			glAccount: '8000',
 			lines: [
-				{
-					description: ' Consulting ',
-					quantity: 2,
-					unitPrice: 100,
-					vatRate: 21,
-				},
-				{ description: '', quantity: 0, unitPrice: 0, vatRate: 21 }, // dropped
+				{ description: ' Consulting ', quantity: '2', unitPrice: '100', vatRate: 21 },
+				{ description: 'Hosting', quantity: 1, unitPrice: 10, vatRate: 9, glAccount: '8100' },
+				{ description: '', quantity: 1, unitPrice: 0, vatRate: 21 },
 			],
 		})
-		expect(payload.lifecycleState).toBe('draft')
-		expect(payload.customerId).toBe('cust-1')
-		expect(payload.customerReference).toBe('PO-42')
-		expect(payload.currency).toBe('EUR')
-		expect(payload.netAmount).toBe(200)
-		expect(payload.vatAmount).toBe(42)
-		expect(payload.grossAmount).toBe(242)
-		// ARInvoice declares its lines as `invoiceLines` (EN 16931 BG-25);
-		// OpenRegister drops an undeclared `lines`, so the draft lost them.
-		expect(payload).not.toHaveProperty('lines')
-		expect(payload.invoiceLines).toHaveLength(1)
-		expect(payload.invoiceLines[0]).toEqual({
-			lineId: '1',
-			itemName: 'Consulting',
-			quantity: 2,
-			unitCode: 'C62',
-			netPrice: 100,
-			netAmount: 200,
-			vatRate: 21,
-			vatCategory: 'S',
+		expect(body).toEqual({
+			customerId: 'cust-1',
+			invoiceDate: '2026-02-01',
+			dueDate: '2026-03-03',
+			reference: 'PO-42',
 			glAccount: '8000',
-		})
-	})
-
-	it('marks a zero-rate line Z and rounds the line amount to cents', () => {
-		const payload = buildInvoicePayload({
-			customerId: 'cust-1',
-			invoiceDate: '2026-02-01',
-			dueDate: '2026-03-03',
 			lines: [
-				{
-					description: 'Training',
-					quantity: 3,
-					unitPrice: 33.337,
-					vatRate: 0,
-				},
+				{ description: 'Consulting', quantity: 2, unitPrice: 100, vatRate: 21 },
+				{ description: 'Hosting', quantity: 1, unitPrice: 10, vatRate: 9, glAccount: '8100' },
 			],
 		})
-		expect(payload.invoiceLines[0].vatCategory).toBe('Z')
-		expect(payload.invoiceLines[0].netAmount).toBe(100.01)
 	})
 
-	it('always supplies the schema-required invoiceNumber, administrationId and periodId', () => {
-		const payload = buildInvoicePayload({
+	it('leaves totals, number, state and administration to the server', () => {
+		const body = buildQuickDraftRequest({
 			customerId: 'cust-1',
 			invoiceDate: '2026-02-01',
-			dueDate: '2026-03-03',
-			administrationId: 'ADM-001',
 			lines: [{ description: 'X', quantity: 1, unitPrice: 10, vatRate: 21 }],
 		})
-		expect(payload.administrationId).toBe('ADM-001')
-		expect(payload.periodId).toBe('2026-02')
-		expect(payload.invoiceNumber).toMatch(/^DRAFT-20260201-\d{6}$/)
-	})
-
-	it('honours explicit invoiceNumber and periodId when provided', () => {
-		const payload = buildInvoicePayload({
-			customerId: 'cust-1',
-			invoiceDate: '2026-02-01',
-			dueDate: '2026-03-03',
-			administrationId: 'ADM-001',
-			invoiceNumber: 'F2026-007',
-			periodId: '2026-Q1',
-			lines: [{ description: 'X', quantity: 1, unitPrice: 10, vatRate: 21 }],
-		})
-		expect(payload.invoiceNumber).toBe('F2026-007')
-		expect(payload.periodId).toBe('2026-Q1')
-	})
-})
-
-/**
- * The effective ARInvoice schema: the monolith plus every register.d fragment,
- * merged in file-name order the way SettingsService merges them.
- *
- * @return {object} The merged ARInvoice schema.
- */
-function effectiveArInvoice() {
-	const root = join(__dirname, '../../lib/Settings')
-	const merge = (base, overlay) => {
-		for (const [key, value] of Object.entries(overlay)) {
-			if (
-				value
-				&& typeof value === 'object'
-				&& base[key]
-				&& typeof base[key] === 'object'
-			) {
-				base[key] =
-					Array.isArray(value) && Array.isArray(base[key])
-						? [...base[key], ...value]
-						: merge(base[key], value)
-			} else {
-				base[key] = value
-			}
+		for (const key of ['netAmount', 'vatAmount', 'grossAmount', 'invoiceNumber', 'lifecycleState', 'administrationId', 'periodId']) {
+			expect(body).not.toHaveProperty(key)
 		}
-		return base
-	}
-	let merged = JSON.parse(
-		readFileSync(join(root, 'shillinq_register.json'), 'utf8'),
-	)
-	for (const file of readdirSync(join(root, 'register.d'))
-		.filter((f) => f.endsWith('.json'))
-		.sort()) {
-		merged = merge(
-			merged,
-			JSON.parse(readFileSync(join(root, 'register.d', file), 'utf8')),
-		)
-	}
-	return merged.components.schemas.ARInvoice
-}
-
-describe('invoiceQuickDraft — only declared fields (REQ-IQD-007)', () => {
-	it('writes every key and line key as a declared ARInvoice property', () => {
-		const schema = effectiveArInvoice()
-		const payload = buildInvoicePayload({
-			customerId: 'cust-1',
-			invoiceDate: '2026-02-01',
-			dueDate: '2026-03-03',
-			reference: 'PO-42',
-			glAccount: '8000',
-			administrationId: 'adm-1',
-			lines: [
-				{
-					description: 'Consulting',
-					quantity: 1,
-					unitPrice: 100,
-					vatRate: 21,
-				},
-			],
-		})
-		const declared = Object.keys(schema.properties)
-		expect(Object.keys(payload).filter((k) => !declared.includes(k))).toEqual([])
-		const lineDeclared = Object.keys(
-			schema.properties.invoiceLines.items.properties,
-		)
-		expect(
-			Object.keys(payload.invoiceLines[0]).filter(
-				(k) => !lineDeclared.includes(k),
-			),
-		).toEqual([])
-		expect(payload.customerReference).toBe('PO-42')
-		expect(payload.invoiceLines[0].glAccount).toBe('8000')
-	})
-
-	it('keeps a line its own GL account over the default', () => {
-		const payload = buildInvoicePayload({
-			customerId: 'cust-1',
-			invoiceDate: '2026-02-01',
-			glAccount: '8000',
-			lines: [
-				{
-					description: 'Hosting',
-					quantity: 1,
-					unitPrice: 10,
-					vatRate: 21,
-					glAccount: '8100',
-				},
-			],
-		})
-		expect(payload.invoiceLines[0].glAccount).toBe('8100')
-	})
-})
-
-describe('invoiceQuickDraft — period + provisional number helpers', () => {
-	it('derives the YYYY-MM period bucket from the invoice date', () => {
-		expect(periodIdFromDate('2026-07-09')).toBe('2026-07')
-		expect(periodIdFromDate('2026-12-31')).toBe('2026-12')
-		expect(periodIdFromDate('')).toBe('')
-		expect(periodIdFromDate('not-a-date')).toBe('')
-	})
-
-	it('builds a unique, provisional draft invoice number', () => {
-		const num = provisionalInvoiceNumber(
-			'2026-07-09',
-			new Date(2026, 6, 9, 8, 30, 5),
-		)
-		expect(num).toBe('DRAFT-20260709-083005')
-	})
-
-	it('falls back to a DRAFT prefix when the date is missing', () => {
-		const num = provisionalInvoiceNumber('', new Date(2026, 6, 9, 8, 30, 5))
-		expect(num).toBe('DRAFT-DRAFT-083005')
 	})
 })
 

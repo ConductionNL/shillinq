@@ -62,6 +62,7 @@ namespace OCA\Shillinq\Service;
 
 use DateTime;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Lifecycle\SupplierInvoiceExceptionApprovalGuard;
 use OCA\Shillinq\Service\PurchaseOrder\CreditNoteRequestAdapterInterface;
 use OCA\Shillinq\Service\PurchaseOrder\LogCreditNoteRequestAdapter;
 use OCP\IAppConfig;
@@ -232,6 +233,7 @@ class ExceptionResolutionService {
 	 *                                                                  so the orchestration code
 	 *                                                                  is testable without
 	 *                                                                  openconnector wired.
+	 * @param ServerWriteAuthority $writeAuthority Grants the invoice release for the acceptance save.
 	 *
 	 * @return void
 	 */
@@ -243,6 +245,7 @@ class ExceptionResolutionService {
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 		?CreditNoteRequestAdapterInterface $creditNoteAdapter = null,
+		private readonly ServerWriteAuthority $writeAuthority = new ServerWriteAuthority(),
 	) {
 		$this->creditNoteAdapter = ($creditNoteAdapter ?? new LogCreditNoteRequestAdapter(logger: $logger));
 
@@ -856,7 +859,11 @@ class ExceptionResolutionService {
 			}
 
 			$invoice['statusCode'] = $nextStatus;
-			$this->saveObject(schema: self::SCHEMA_SUPPLIER_INVOICE, object: $invoice);
+			$this->writeAuthority->during(
+				purpose: SupplierInvoiceExceptionApprovalGuard::PURPOSE,
+				objectId: $this->idOf(record: $invoice),
+				work: fn (): array => $this->saveObject(schema: self::SCHEMA_SUPPLIER_INVOICE, object: $invoice)
+			);
 		} catch (\Throwable $exception) {
 			$this->logger->warning(
 				'ExceptionResolutionService: failed to advance invoice status',
