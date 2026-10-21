@@ -39,6 +39,7 @@ import axios from '@nextcloud/axios'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { NcSelect } from '@nextcloud/vue'
+import { fetchActiveAdministrationId } from '../../api/administrationApi.js'
 
 const REGISTER_SLUG = 'shillinq'
 const SCHEMA_SLUG = 'Account'
@@ -188,10 +189,17 @@ export default {
 			this.loading = true
 			this.fetchError = ''
 			try {
-				const params = { _limit: 500 }
-				if (this.administrationId) {
-					params.administrationId = this.administrationId
+				const administrationId =
+					this.administrationId || (await fetchActiveAdministrationId())
+				if (!administrationId) {
+					this.accounts = []
+					this.fetchError = this.t(
+						'shillinq',
+						'No active administration, so the chart of accounts cannot be shown.',
+					)
+					return
 				}
+				const params = { _limit: 500, administrationId }
 				const response = await axios.get(
 					generateUrl(
 						`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}`,

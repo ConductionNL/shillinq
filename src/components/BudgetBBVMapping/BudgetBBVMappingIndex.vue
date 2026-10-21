@@ -572,7 +572,18 @@ export default {
 			this.loading = true
 			this.error = ''
 			try {
-				const params = { _limit: 200 }
+				if (!this.scope.administrationId) {
+					this.objects = []
+					this.error = this.t(
+						'shillinq',
+						'No active administration, so the budget mappings cannot be shown.',
+					)
+					return
+				}
+				const params = {
+					_limit: 200,
+					administrationId: this.scope.administrationId,
+				}
 				const result = await this.store.fetchCollection(TYPE_SLUG, params)
 				const rows = Array.isArray(result?.results)
 					? result.results
@@ -646,11 +657,15 @@ export default {
 		 * @return {Promise<void>}
 		 */
 		async onPageChange(page) {
+			if (!this.scope.administrationId) {
+				return
+			}
 			this.loading = true
 			try {
 				const result = await this.store.fetchCollection(TYPE_SLUG, {
 					_page: page,
 					_limit: this.pagination?.limit || 200,
+					administrationId: this.scope.administrationId,
 				})
 				const rows = Array.isArray(result?.results)
 					? result.results

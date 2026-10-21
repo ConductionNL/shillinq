@@ -4588,7 +4588,9 @@ OC.L10N.register(
         "Bank statement line": "Bank statement line",
         "The bank statement line the payout arrived as.": "The bank statement line the payout arrived as.",
         "The journal entry that booked the payout.": "The journal entry that booked the payout.",
-        "No payouts from a payment provider yet": "No payouts from a payment provider yet"
+        "No payouts from a payment provider yet": "No payouts from a payment provider yet",
+        "No active administration, so the chart of accounts cannot be shown.": "No active administration, so the chart of accounts cannot be shown.",
+        "No active administration, so the budget mappings cannot be shown.": "No active administration, so the budget mappings cannot be shown."
     },
     "nplurals=2; plural=(n != 1);"
 )
