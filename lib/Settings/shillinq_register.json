@@ -2,8 +2,8 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Shillinq Register",
-    "description": "Shillinq register v0.7.1: every schema imports on a fresh instance (payrollEmployee.bsn validates with the bsn format, ApprovalStep.status keeps its note as $comment) and the seed objects a fresh install skipped carry their required fields and name the objects they reference by uuid. PREVIOUSLY: v0.7.0: retires the scaffold `example` schema and renames the `Project` slug to `engagement`. Planninq owns `project` as a container for tasks and kanban columns; this one is a consultancy engagement with RJ 270 percentage-of-completion revenue recognition, which is a different entity wearing the same word. Slugs are global on a shared OpenRegister. The schema KEY stays `Project`, so the register.d fragments that extend it by key are unaffected. PREVIOUSLY: Register containing all schemas for the Shillinq application. V0.6.4: re-authored 31 Dutch schema-level titles (entity display names) to English so manifest-driven UI labels are English-authored; Dutch display is now carried via l10n/nl.json per ADR i18n rule. Previous v0.6.3. Re-authored 254 Dutch schema-property titles (and none renamed keys) to English so manifest-driven UI labels are English-authored; Dutch display is now carried via l10n/nl.json per ADR i18n rule. Previous v0.6.2. Register containing all schemas for the Shillinq application.",
-    "version": "0.7.1"
+    "description": "Shillinq register v0.7.2: schemas carry an enforced `authorization` block in place of the x-openregister-rbac key OpenRegister never read. PREVIOUSLY: v0.7.1: every schema imports on a fresh instance (payrollEmployee.bsn validates with the bsn format, ApprovalStep.status keeps its note as $comment) and the seed objects a fresh install skipped carry their required fields and name the objects they reference by uuid. PREVIOUSLY: v0.7.0: retires the scaffold `example` schema and renames the `Project` slug to `engagement`. Planninq owns `project` as a container for tasks and kanban columns; this one is a consultancy engagement with RJ 270 percentage-of-completion revenue recognition, which is a different entity wearing the same word. Slugs are global on a shared OpenRegister. The schema KEY stays `Project`, so the register.d fragments that extend it by key are unaffected. PREVIOUSLY: Register containing all schemas for the Shillinq application. V0.6.4: re-authored 31 Dutch schema-level titles (entity display names) to English so manifest-driven UI labels are English-authored; Dutch display is now carried via l10n/nl.json per ADR i18n rule. Previous v0.6.3. Re-authored 254 Dutch schema-property titles (and none renamed keys) to English so manifest-driven UI labels are English-authored; Dutch display is now carried via l10n/nl.json per ADR i18n rule. Previous v0.6.2. Register containing all schemas for the Shillinq application.",
+    "version": "0.7.2"
   },
   "x-openregister": {
     "type": "application",
@@ -22547,27 +22547,21 @@
           }
         }
       },
-      "x-openregister-rbac": {
-        "roles": {
-          "administrator": {
-            "permissions": [
-              "create",
-              "read",
-              "update",
-              "delete"
-            ]
-          },
-          "bookkeeper": {
-            "permissions": [
-              "read"
-            ]
-          },
-          "auditor": {
-            "permissions": [
-              "read"
-            ]
-          }
-        }
+      "authorization": {
+        "create": [
+          "shillinq_admin"
+        ],
+        "read": [
+          "shillinq_admin",
+          "shillinq_auditor",
+          "shillinq_bookkeeper"
+        ],
+        "update": [
+          "shillinq_admin"
+        ],
+        "delete": [
+          "shillinq_admin"
+        ]
       }
     },
     "WBSOActivityCode": {
@@ -22688,27 +22682,21 @@
           }
         }
       },
-      "x-openregister-rbac": {
-        "roles": {
-          "administrator": {
-            "permissions": [
-              "create",
-              "read",
-              "update",
-              "delete"
-            ]
-          },
-          "bookkeeper": {
-            "permissions": [
-              "read"
-            ]
-          },
-          "auditor": {
-            "permissions": [
-              "read"
-            ]
-          }
-        }
+      "authorization": {
+        "create": [
+          "shillinq_admin"
+        ],
+        "read": [
+          "shillinq_admin",
+          "shillinq_auditor",
+          "shillinq_bookkeeper"
+        ],
+        "update": [
+          "shillinq_admin"
+        ],
+        "delete": [
+          "shillinq_admin"
+        ]
       }
     },
     "WBSOExportLog": {
@@ -23000,29 +22988,23 @@
           }
         }
       },
-      "x-openregister-rbac": {
-        "roles": {
-          "administrator": {
-            "permissions": [
-              "create",
-              "read",
-              "update",
-              "delete"
-            ]
-          },
-          "bookkeeper": {
-            "permissions": [
-              "create",
-              "read",
-              "update"
-            ]
-          },
-          "auditor": {
-            "permissions": [
-              "read"
-            ]
-          }
-        }
+      "authorization": {
+        "create": [
+          "shillinq_admin",
+          "shillinq_bookkeeper"
+        ],
+        "read": [
+          "shillinq_admin",
+          "shillinq_auditor",
+          "shillinq_bookkeeper"
+        ],
+        "update": [
+          "shillinq_admin",
+          "shillinq_bookkeeper"
+        ],
+        "delete": [
+          "shillinq_admin"
+        ]
       }
     },
     "SisaRegelingIndicator": {
@@ -23297,26 +23279,18 @@
           "title": "Administration ID"
         }
       },
-      "x-openregister-rbac": {
-        "roles": {
-          "bookkeeper": {
-            "permissions": [
-              "create",
-              "read",
-              "update"
-            ]
-          },
-          "payroll-officer": {
-            "permissions": [
-              "read"
-            ]
-          },
-          "auditor": {
-            "permissions": [
-              "read"
-            ]
-          }
-        }
+      "authorization": {
+        "create": [
+          "shillinq_bookkeeper"
+        ],
+        "read": [
+          "shillinq_auditor",
+          "shillinq_bookkeeper",
+          "shillinq_payroll_officer"
+        ],
+        "update": [
+          "shillinq_bookkeeper"
+        ]
       }
     },
     "SoUrenStaat": {
@@ -23499,28 +23473,20 @@
           "sourceSlug": "rvo-wbso-mededeling-submission"
         }
       },
-      "x-openregister-rbac": {
-        "roles": {
-          "bookkeeper": {
-            "permissions": [
-              "create",
-              "read",
-              "update"
-            ]
-          },
-          "payroll-officer": {
-            "permissions": [
-              "create",
-              "read",
-              "update"
-            ]
-          },
-          "auditor": {
-            "permissions": [
-              "read"
-            ]
-          }
-        }
+      "authorization": {
+        "create": [
+          "shillinq_bookkeeper",
+          "shillinq_payroll_officer"
+        ],
+        "read": [
+          "shillinq_auditor",
+          "shillinq_bookkeeper",
+          "shillinq_payroll_officer"
+        ],
+        "update": [
+          "shillinq_bookkeeper",
+          "shillinq_payroll_officer"
+        ]
       }
     }
     }

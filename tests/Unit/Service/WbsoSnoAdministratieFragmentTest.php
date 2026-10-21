@@ -100,7 +100,7 @@ final class WbsoSnoAdministratieFragmentTest extends TestCase {
 			self::assertSame($slug, $schemas[$slug]['slug']);
 			self::assertArrayHasKey('administrationId', $schemas[$slug]['properties'], "$slug must carry administrationId");
 			self::assertContains('administrationId', $schemas[$slug]['required']);
-			self::assertArrayHasKey('x-openregister-rbac', $schemas[$slug], "$slug must declare RBAC");
+			self::assertArrayHasKey('authorization', $schemas[$slug], "$slug must declare an enforced authorization block");
 			self::assertArrayHasKey('x-openregister-lifecycle', $schemas[$slug], "$slug must declare a lifecycle");
 		}
 
