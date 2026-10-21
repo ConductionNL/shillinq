@@ -38,6 +38,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
+use OCP\IConfig;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -63,6 +64,13 @@ class AdministrationContextService {
 		'crediteurenadmin' => true,
 		'salarisadministrateur' => true,
 	];
+
+	/**
+	 * User preference key of the administration the user switched to.
+	 *
+	 * @var string
+	 */
+	private const ACTIVE_ADMINISTRATION_KEY = 'active_administration';
 
 	/**
 	 * Per-request memoisation of {@see membershipsForUser()}, keyed by uid.
@@ -102,6 +110,7 @@ class AdministrationContextService {
 	 * @param IUserSession $userSession The current user session.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param LoggerInterface $logger Logger for diagnostics.
+	 * @param IConfig|null $config User preferences, where the chosen administration is kept.
 	 *
 	 * @return void
 	 */
@@ -110,6 +119,7 @@ class AdministrationContextService {
 		private readonly IUserSession $userSession,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ?IConfig $config=null,
 	) {
 	}//end __construct()
 
@@ -182,6 +192,12 @@ class AdministrationContextService {
 		$activeId = null;
 		if ($administrations !== []) {
 			$activeId = $administrations[0]['administrationId'];
+			$chosen = $this->chosenAdministrationId(userId: $userId);
+			foreach ($administrations as $administration) {
+				if ($administration['administrationId'] === $chosen) {
+					$activeId = $chosen;
+				}
+			}
 		}
 
 		return [
@@ -300,6 +316,71 @@ class AdministrationContextService {
 
 		return in_array(needle: $administrationId, haystack: $this->accessibleAdministrationIds(), strict: true);
 	}//end canAccess()
+
+	/**
+	 * The administration the authenticated user works in now.
+	 *
+	 * The one they last switched to while they are still a member of it,
+	 * otherwise their first valid membership; null without one.
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
+	 */
+	public function activeAdministrationId(): ?string {
+		$userId = $this->currentUserId();
+		if ($userId === null) {
+			return null;
+		}
+
+		$accessible = $this->administrationIdsForUser(userId: $userId);
+		$chosen = $this->chosenAdministrationId(userId: $userId);
+		if ($chosen !== null && in_array($chosen, $accessible, true) === true) {
+			return $chosen;
+		}
+
+		return ($accessible[0] ?? null);
+	}//end activeAdministrationId()
+
+	/**
+	 * Keep the administration the authenticated user switched to.
+	 *
+	 * The caller has checked the membership ({@see resolveSwitchTarget()}).
+	 *
+	 * @param string $administrationId The administration.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
+	 */
+	public function rememberActiveAdministration(string $administrationId): void {
+		$userId = $this->currentUserId();
+		if ($userId === null || $this->config === null) {
+			return;
+		}
+
+		$this->config->setUserValue($userId, Application::APP_ID, self::ACTIVE_ADMINISTRATION_KEY, $administrationId);
+	}//end rememberActiveAdministration()
+
+	/**
+	 * The administration a user last switched to, unchecked.
+	 *
+	 * @param string $userId The user.
+	 *
+	 * @return string|null
+	 */
+	private function chosenAdministrationId(string $userId): ?string {
+		if ($this->config === null) {
+			return null;
+		}
+
+		$chosen = $this->config->getUserValue($userId, Application::APP_ID, self::ACTIVE_ADMINISTRATION_KEY, '');
+		if ($chosen === '') {
+			return null;
+		}
+
+		return $chosen;
+	}//end chosenAdministrationId()
 
 	/**
 	 * Whether the authenticated user may post journal entries in the administration (REQ-MA-003).

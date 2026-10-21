@@ -150,6 +150,8 @@ class AdministrationController extends Controller {
 			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
 		}
 
+		$this->context->rememberActiveAdministration(administrationId: $target);
+
 		return new JSONResponse(['activeAdministrationId' => $target], Http::STATUS_OK);
 	}//end switch()
 

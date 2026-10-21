@@ -132,6 +132,7 @@ final class AdministrationControllerTest extends TestCase {
 		$this->context->method('currentUserId')->willReturn('controller');
 		$this->request->method('getParam')->willReturn('adm-werk-001');
 		$this->context->method('resolveSwitchTarget')->with('adm-werk-001')->willReturn('adm-werk-001');
+		$this->context->expects(self::once())->method('rememberActiveAdministration')->with('adm-werk-001');
 
 		$response = $this->controller->switch();
 		self::assertSame(Http::STATUS_OK, $response->getStatus());
@@ -148,6 +149,7 @@ final class AdministrationControllerTest extends TestCase {
 		$this->context->method('currentUserId')->willReturn('controller');
 		$this->request->method('getParam')->willReturn('adm-secret-999');
 		$this->context->method('resolveSwitchTarget')->willReturn(null);
+		$this->context->expects(self::never())->method('rememberActiveAdministration');
 
 		$response = $this->controller->switch();
 		// Masked as 404, NOT 403 — existence of other tenants is not disclosed.
