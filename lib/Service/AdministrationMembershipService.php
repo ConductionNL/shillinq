@@ -28,9 +28,9 @@ namespace OCA\Shillinq\Service;
 
 use DomainException;
 use InvalidArgumentException;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 
 /**
  * Adds a member to an administration.
@@ -58,13 +58,13 @@ class AdministrationMembershipService {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface $container DI container; OpenRegister's ObjectService is fetched lazily.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
+		private readonly ObjectServiceInterface $objectService,
 		private readonly IAppConfig $appConfig,
 	) {
 	}//end __construct()
@@ -116,8 +116,7 @@ class AdministrationMembershipService {
 			}
 		}
 
-		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-		$existing = $objectService
+		$existing = $this->objectService
 			->setRegister($this->register())
 			->setSchema('AdministrationMembership')
 			->findAll(['filters' => ['userId' => $userId, 'administrationId' => $administrationId], 'limit' => 1]);
@@ -125,7 +124,7 @@ class AdministrationMembershipService {
 			throw new DomainException('The user is already a member of this administration.');
 		}
 
-		$saved = $objectService->saveObject(
+		$saved = $this->objectService->saveObject(
 			object: $membership,
 			register: $this->register(),
 			schema: 'AdministrationMembership',

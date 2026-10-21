@@ -24,10 +24,11 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use DomainException;
 use InvalidArgumentException;
+use OCA\OpenRegister\Contract\ObjectEntityInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationMembershipService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
 
 /**
  * Membership rows are written with a valid role, once per user and administration.
@@ -85,92 +86,45 @@ final class AdministrationMembershipServiceTest extends TestCase {
 	}//end testExistingMemberIsNotAddedAgain()
 
 	/**
-	 * Build the service.
+	 * Build the service over a recording store.
 	 *
-	 * @param object $store The ObjectService double.
+	 * @param object $store The recording store: `existing` rows and a `saved` list.
 	 *
 	 * @return AdministrationMembershipService
 	 */
 	private function service(object $store): AdministrationMembershipService {
-		$container = $this->createMock(ContainerInterface::class);
-		$container->method('get')->willReturn($store);
+		$objects = $this->createMock(ObjectServiceInterface::class);
+		$objects->method('setRegister')->willReturnSelf();
+		$objects->method('setSchema')->willReturnSelf();
+		$objects->method('findAll')->willReturnCallback(static fn (): array => $store->existing);
+		$objects->method('saveObject')->willReturnCallback(
+			function (array $object, ?array $extend, $register, $schema) use ($store): ObjectEntityInterface {
+				$store->saved[] = ['object' => $object, 'schema' => $schema];
+				$entity = $this->createMock(ObjectEntityInterface::class);
+				$entity->method('jsonSerialize')->willReturn($object);
+				return $entity;
+			}
+		);
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturn('shillinq');
 
-		return new AdministrationMembershipService(container: $container, appConfig: $config);
+		return new AdministrationMembershipService(objectService: $objects, appConfig: $config);
 
 	}//end service()
 
 	/**
-	 * An ObjectService double that records saves.
+	 * A recording store.
 	 *
 	 * @param array<int,array<string,mixed>> $existing Rows findAll answers with.
 	 *
 	 * @return object
 	 */
 	private function store(array $existing): object {
-		return new class($existing) {
+		$store = new \stdClass();
+		$store->existing = $existing;
+		$store->saved = [];
 
-			/**
-			 * Saved calls.
-			 *
-			 * @var array<int,array<string,mixed>>
-			 */
-			public array $saved = [];
-
-			/**
-			 * Constructor.
-			 *
-			 * @param array<int,array<string,mixed>> $existing Rows.
-			 */
-			public function __construct(private array $existing) {
-			}
-
-			/**
-			 * Fluent register setter.
-			 *
-			 * @param string $register Register.
-			 *
-			 * @return static
-			 */
-			public function setRegister(string $register): static {
-				return $this;
-			}
-
-			/**
-			 * Fluent schema setter.
-			 *
-			 * @param string $schema Schema.
-			 *
-			 * @return static
-			 */
-			public function setSchema(string $schema): static {
-				return $this;
-			}
-
-			/**
-			 * The existing rows.
-			 *
-			 * @param array<string,mixed> $params Query.
-			 *
-			 * @return array<int,array<string,mixed>>
-			 */
-			public function findAll(array $params): array {
-				return $this->existing;
-			}
-
-			/**
-			 * Record the save.
-			 *
-			 * @param mixed ...$args Named arguments.
-			 *
-			 * @return array<string,mixed>
-			 */
-			public function saveObject(mixed ...$args): array {
-				$this->saved[] = $args;
-				return $args['object'];
-			}
-		};
+		return $store;
 
 	}//end store()
 }//end class
