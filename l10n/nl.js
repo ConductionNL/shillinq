@@ -6782,7 +6782,11 @@ OC.L10N.register(
         "Bank statement line": "Regel bankafschrift",
         "The bank statement line the payout arrived as.": "De regel op het bankafschrift waarmee de uitbetaling binnenkwam.",
         "The journal entry that booked the payout.": "De journaalpost die de uitbetaling boekte.",
-        "No payouts from a payment provider yet": "Nog geen uitbetalingen van een betaalprovider"
+        "No payouts from a payment provider yet": "Nog geen uitbetalingen van een betaalprovider",
+        "Payment block release reason": "Reden vrijgave betalingsblokkade",
+        "Why the payment block was released. Required when the block is released; the reason the block was set for is kept in paymentBlockReason.": "Waarom de betalingsblokkade is vrijgegeven. Verplicht bij vrijgeven; de reden van de blokkade blijft bewaard in paymentBlockReason.",
+        "Give a reason for releasing the payment block.": "Geef een reden voor het vrijgeven van de betalingsblokkade.",
+        "Reason for release": "Reden van vrijgave"
     },
     "nplurals=2; plural=(n != 1);"
 )

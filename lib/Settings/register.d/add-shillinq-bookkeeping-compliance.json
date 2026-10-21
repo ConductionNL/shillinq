@@ -1183,29 +1183,6 @@
               "description": "Operator action: materialises a balanced GLTransaction debiting (or crediting) the designated suspense Account against the bank-account GL. Declarative per the T1 materialisation pattern; no PHP suspense-routing service."
             }
           }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "treasurer": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
         }
       },
       "MatchingRule": {
@@ -1644,29 +1621,6 @@
               "status": "pending",
               "autoConfirmWhen": "MatchingRule.autoConfirm == true",
               "description": "When autoConfirm is true the emitted ReconciliationMatch is created with status=confirmed directly, triggering the reconciliation-match-confirmed event consumed by AR/AP invoice lifecycles."
-            }
-          }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "treasurer": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
             }
           }
         }

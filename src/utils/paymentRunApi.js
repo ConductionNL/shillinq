@@ -76,17 +76,29 @@ export function blockPayload(reason) {
 	if (trimmed === '') {
 		throw new Error(t('shillinq', 'Give a reason for the payment block.'))
 	}
-	return { paymentBlocked: true, paymentBlockReason: trimmed }
+	return {
+		paymentBlocked: true,
+		paymentBlockReason: trimmed,
+		paymentBlockReleaseReason: null,
+	}
 }
 
 /**
- * The patch that releases a payment block.
+ * The patch that releases a payment block, refusing an empty reason. The
+ * reason the block was set for stays on the record.
  *
+ * @param {string} reason Why the block is released.
  * @return {object} The fields to patch.
- * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-2.2
+ * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.2
  */
-export function releasePayload() {
-	return { paymentBlocked: false, paymentBlockReason: null }
+export function releasePayload(reason) {
+	const trimmed = String(reason || '').trim()
+	if (trimmed === '') {
+		throw new Error(
+			t('shillinq', 'Give a reason for releasing the payment block.'),
+		)
+	}
+	return { paymentBlocked: false, paymentBlockReleaseReason: trimmed }
 }
 
 /**

@@ -4588,7 +4588,11 @@ OC.L10N.register(
         "Bank statement line": "Bank statement line",
         "The bank statement line the payout arrived as.": "The bank statement line the payout arrived as.",
         "The journal entry that booked the payout.": "The journal entry that booked the payout.",
-        "No payouts from a payment provider yet": "No payouts from a payment provider yet"
+        "No payouts from a payment provider yet": "No payouts from a payment provider yet",
+        "Payment block release reason": "Payment block release reason",
+        "Why the payment block was released. Required when the block is released; the reason the block was set for is kept in paymentBlockReason.": "Why the payment block was released. Required when the block is released; the reason the block was set for is kept in paymentBlockReason.",
+        "Give a reason for releasing the payment block.": "Give a reason for releasing the payment block.",
+        "Reason for release": "Reason for release"
     },
     "nplurals=2; plural=(n != 1);"
 )
