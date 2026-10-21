@@ -142,14 +142,16 @@ final class PersistentTimelineRetryQueueTest extends TestCase {
 			 * @param array<string, mixed> $object Payload.
 			 * @param string|null $register Register slug (named).
 			 * @param string|null $schema Schema name (named).
+			 * @param bool $_rbac Whether OpenRegister RBAC applies.
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, ?string $register = null, ?string $schema = null): array {
+			public function saveObject(array $object, ?string $register = null, ?string $schema = null, bool $_rbac = true): array {
 				$this->saved[] = [
 					'register' => ($register ?? $this->register),
 					'schema' => ($schema ?? $this->schema),
 					'object' => $object,
+					'rbac' => $_rbac,
 				];
 
 				return array_merge(['id' => $this->idToReturn], $object);
@@ -187,10 +189,11 @@ final class PersistentTimelineRetryQueueTest extends TestCase {
 			 * @param array<string, mixed> $object Payload.
 			 * @param string|null $register Register (named).
 			 * @param string|null $schema Schema (named).
+			 * @param bool $_rbac Ignored.
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, ?string $register = null, ?string $schema = null): array {
+			public function saveObject(array $object, ?string $register = null, ?string $schema = null, bool $_rbac = true): array {
 				throw new \RuntimeException('OR write failed');
 			}//end saveObject()
 		};
@@ -309,6 +312,7 @@ final class PersistentTimelineRetryQueueTest extends TestCase {
 
 		self::assertCount(1, $saved);
 		self::assertSame('TimelinePublishRetryEntry', $saved[0]['schema']);
+		self::assertFalse(condition: $saved[0]['rbac'], message: 'The retry queue is server-written; the caller holds no create grant on it.');
 
 		$payload = $saved[0]['object'];
 		self::assertSame('booking.created', $payload['type']);

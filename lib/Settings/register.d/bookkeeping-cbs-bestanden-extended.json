@@ -162,7 +162,12 @@
               "from": "draft",
               "to": "validated",
               "label": "Valideren",
-              "description": "Run structural + balancing validation, attach IV3 file."
+              "description": "Run structural + balancing validation, attach IV3 file.",
+              "authorization": [
+                {
+                  "role": "auditor"
+                }
+              ]
             },
             "submit": {
               "from": "validated",
@@ -252,30 +257,26 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "finance-manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "accountant": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read",
-                "validate"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true
+        },
+        "authorization": {
+          "roles": {
+            "auditor": [
+              "shillinq_auditor"
+            ]
+          },
+          "create": [
+            "shillinq_finance_manager"
+          ],
+          "read": [
+            "shillinq_finance_manager",
+            "shillinq_accountant",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_finance_manager"
+          ]
         }
       },
       "CBSLine": {
@@ -363,29 +364,21 @@
             "title": "Description"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "finance-manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "accountant": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true
+        },
+        "authorization": {
+          "create": [
+            "shillinq_finance_manager"
+          ],
+          "read": [
+            "shillinq_finance_manager",
+            "shillinq_accountant",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_finance_manager"
+          ]
         }
       }
     }

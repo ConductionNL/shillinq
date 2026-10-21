@@ -519,30 +519,20 @@
             "title": "Administration ID"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ],
-              "description": "Bookkeepers configure policies per administration."
-            },
-            "employee": {
-              "permissions": [
-                "read"
-              ],
-              "description": "Employees read-only to see applicable thresholds at claim submission."
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ],
-              "description": "Read-only access for audit."
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_bookkeeper"
+          ]
         }
       },
       "PassThroughMarkupRule": {
@@ -648,30 +638,20 @@
             "title": "Administration ID"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ],
-              "description": "Bookkeepers configure markup rules per administration."
-            },
-            "employee": {
-              "permissions": [
-                "read"
-              ],
-              "description": "Employees read-only to see applicable rates at expense classification."
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ],
-              "description": "Read-only access for audit."
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_bookkeeper"
+          ]
         }
       }
     }

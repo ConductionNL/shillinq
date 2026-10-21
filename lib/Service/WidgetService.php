@@ -142,13 +142,15 @@ class WidgetService {
 				->setRegister($this->getRegisterSlug())
 				->setSchema('Service')
 				->findAll(
-					[
+					config: [
 						'filters' => [
 							'administrationId' => $administrationId,
 							'isPublic' => true,
 						],
 						'limit' => 200,
-					]
+					],
+					// The public widget has no Nextcloud session; its API key is the authentication.
+					_rbac: false,
 				);
 		} catch (\Throwable $e) {
 			$this->logger->error(
@@ -391,6 +393,7 @@ class WidgetService {
 				object: $appointment,
 				register: $this->getRegisterSlug(),
 				schema: 'Appointment',
+				_rbac: false,
 			);
 		} catch (\Throwable $e) {
 			$this->logger->error(
@@ -490,10 +493,11 @@ class WidgetService {
 				->setRegister($this->getRegisterSlug())
 				->setSchema('Service')
 				->findAll(
-					[
+					config: [
 						'filters' => ['serviceId' => $serviceId],
 						'limit' => 1,
-					]
+					],
+					_rbac: false,
 				);
 		} catch (\Throwable $e) {
 			$this->logger->error(

@@ -143,28 +143,6 @@
             "save": "OCA\\Shillinq\\Guard\\UrencriteriumYearGuard::validateOnSave"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "ondernemer": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "boekhouder": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "controleur": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-aggregations": {
           "countByDrempelStatus": {
             "field": "thresholdStatus",
@@ -176,6 +154,20 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Urencriterium jaar is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_ondernemer"
+          ],
+          "read": [
+            "shillinq_ondernemer",
+            "shillinq_bookkeeper",
+            "shillinq_controleur"
+          ],
+          "update": [
+            "shillinq_ondernemer",
+            "shillinq_bookkeeper"
+          ]
         }
       },
       "UrenDagregistratie": {
@@ -295,30 +287,22 @@
             "title": "Backfill Bewijs"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "ondernemer": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "boekhouder": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "controleur": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Uren dagregistratie is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_ondernemer"
+          ],
+          "read": [
+            "shillinq_ondernemer",
+            "shillinq_bookkeeper",
+            "shillinq_controleur"
+          ],
+          "update": [
+            "shillinq_ondernemer"
+          ]
         }
       },
       "UrenCategorie": {
@@ -412,31 +396,25 @@
             "title": "Voorbeelden"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "ondernemer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "controleur": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Uren categorie is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_admin"
+          ],
+          "read": [
+            "shillinq_admin",
+            "shillinq_ondernemer",
+            "shillinq_controleur"
+          ],
+          "update": [
+            "shillinq_admin"
+          ],
+          "delete": [
+            "shillinq_admin"
+          ]
         }
       },
       "UrenPrognose": {
@@ -524,28 +502,16 @@
             "title": "Kans Behaald Norm"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "ondernemer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "boekhouder": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "controleur": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Uren prognose is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "read": [
+            "shillinq_ondernemer",
+            "shillinq_bookkeeper",
+            "shillinq_controleur"
+          ]
         }
       },
       "UrenAlert": {
@@ -659,21 +625,6 @@
             "title": "Handelingsperspectief"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "ondernemer": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "boekhouder": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-aggregations": {
           "countByUrgentie": {
             "field": "urgency",
@@ -685,6 +636,15 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Uren alert is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "read": [
+            "shillinq_ondernemer",
+            "shillinq_bookkeeper"
+          ],
+          "update": [
+            "shillinq_ondernemer"
+          ]
         }
       },
       "UrenEvidence": {
@@ -785,29 +745,19 @@
             "title": "Bewaar Termijn"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "ondernemer": {
-              "permissions": [
-                "create",
-                "read"
-              ]
-            },
-            "boekhouder": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "controleur": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Uren bewijsdossier is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_ondernemer"
+          ],
+          "read": [
+            "shillinq_ondernemer",
+            "shillinq_bookkeeper",
+            "shillinq_controleur"
+          ]
         }
       }
     }

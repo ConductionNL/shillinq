@@ -121,36 +121,24 @@
             "title": "Status"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "fiscalist": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bestuur": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "viewer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Belastingplichtige is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_fiscalist",
+            "shillinq_bestuur",
+            "shillinq_viewer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_fiscalist",
+            "shillinq_bestuur"
+          ]
         }
       },
       "VpbTariefcatalogus": {
@@ -236,30 +224,22 @@
             "title": "Effective Date"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "fiscalist": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "beheerder": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "viewer": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Vpb-tariefcatalogus is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_beheerder"
+          ],
+          "read": [
+            "shillinq_fiscalist",
+            "shillinq_beheerder",
+            "shillinq_viewer"
+          ],
+          "update": [
+            "shillinq_beheerder"
+          ]
         }
       },
       "VpbAangifte": {
@@ -506,35 +486,23 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "fiscalist": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bestuur": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "viewer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Vpb-aangifte is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_fiscalist",
+            "shillinq_bestuur",
+            "shillinq_viewer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_fiscalist"
+          ]
         }
       },
       "FiscaleCorrectie": {
@@ -614,31 +582,25 @@
             "expr": "(@self.fiscaalBedrag ?? 0) - (@self.commercieelBedrag ?? 0)"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "fiscalist": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "viewer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Fiscale correctie is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_fiscalist",
+            "shillinq_viewer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_fiscalist"
+          ],
+          "delete": [
+            "shillinq_fiscalist"
+          ]
         }
       },
       "Innovatiebox": {
@@ -757,31 +719,25 @@
           },
           "transitions": {}
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "fiscalist": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "viewer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Innovatiebox-claim is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_fiscalist",
+            "shillinq_viewer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_fiscalist"
+          ],
+          "delete": [
+            "shillinq_fiscalist"
+          ]
         }
       },
       "Deelneming": {
@@ -898,31 +854,25 @@
             "expr": "(@self.aandeelhouderschapPercentage ?? 0) >= 5"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "fiscalist": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "viewer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Deelneming is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_fiscalist",
+            "shillinq_viewer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_fiscalist"
+          ],
+          "delete": [
+            "shillinq_fiscalist"
+          ]
         }
       },
       "FiscaleEenheid": {
@@ -1012,31 +962,25 @@
             "title": "Voorvoegingsverliezen Per Dochter"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "fiscalist": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "viewer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Fiscale eenheid is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_fiscalist",
+            "shillinq_viewer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_fiscalist"
+          ],
+          "delete": [
+            "shillinq_fiscalist"
+          ]
         }
       },
       "Voorvoegingsverlies": {
@@ -1139,31 +1083,25 @@
             "guard": "OCA\\Shillinq\\Lifecycle\\VpbBerekeningGuard::bepaalVerjaardatum"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "fiscalist": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "viewer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Voorvoegingsverlies is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_fiscalist",
+            "shillinq_viewer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_fiscalist"
+          ],
+          "delete": [
+            "shillinq_fiscalist"
+          ]
         }
       },
       "InvesteringsAftrek": {
@@ -1275,31 +1213,25 @@
             "expr": "(@self.type == 'EIA' and contains(@self.gecombineerdMet, 'MIA')) or (@self.type == 'MIA' and contains(@self.gecombineerdMet, 'EIA'))"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "fiscalist": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "viewer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Investeringsaftrek is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_fiscalist",
+            "shillinq_viewer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_fiscalist"
+          ],
+          "delete": [
+            "shillinq_fiscalist"
+          ]
         }
       },
       "VoorlopigeAanslag": {
@@ -1397,30 +1329,22 @@
             "title": "Herzieningsuitslag"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "fiscalist": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "viewer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Voorlopige aanslag is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_fiscalist",
+            "shillinq_viewer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_fiscalist"
+          ]
         }
       },
       "DefinitieveAanslag": {
@@ -1566,30 +1490,22 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "fiscalist": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "viewer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Definitieve aanslag is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_fiscalist",
+            "shillinq_viewer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_fiscalist"
+          ]
         }
       },
       "BezwaarBeroep": {
@@ -1846,35 +1762,23 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "fiscalist": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bestuur": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "viewer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Bezwaar / Beroep is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_fiscalist",
+            "shillinq_bestuur",
+            "shillinq_viewer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_fiscalist"
+          ]
         }
       }
     },
