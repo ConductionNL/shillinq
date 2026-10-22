@@ -206,4 +206,18 @@ final class ReportGenerationServiceTest extends TestCase {
 		$this->assertSame('generation-failed', $result['error']);
 		$this->assertCount(0, $objectService->saved, 'A generic generation failure must not write a GeneratedReport record.');
 	}//end testOtherExceptionKeepsGenericBehaviourAndWritesNoRecord()
+
+	/**
+	 * Without an administration nothing is generated and nothing is read.
+	 */
+	public function testEmptyAdministrationIsRefusedBeforeAnyRead(): void {
+		$objectService = new FakeRgsObjectService();
+		$generator = new ThrowingGenerator(new \RuntimeException('the generator must not run'));
+		$service = $this->service($generator, $objectService);
+
+		$result = $service->generate('balance-sheet', '2026', '  ', 'pdf');
+
+		$this->assertSame('missing-administration', $result['error']);
+		$this->assertCount(0, $objectService->saved);
+	}//end testEmptyAdministrationIsRefusedBeforeAnyRead()
 }//end class

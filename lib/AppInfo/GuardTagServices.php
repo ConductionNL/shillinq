@@ -45,6 +45,7 @@ final class GuardTagServices {
 	public function register(IRegistrationContext $context): void {
 		(new CommitmentGuardServices())->register(context: $context);
 		(new ImportBatchServices())->register(context: $context);
+		(new AdministrationConfigGuardServices())->register(context: $context);
 
 	}//end register()
 }//end class
