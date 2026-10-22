@@ -26,7 +26,7 @@ function instance(state = {}) {
 		requiredFieldCount: null,
 		...state,
 	}
-	for (const name of ['pageSections', 'tabs', 'breadcrumbs']) {
+	for (const name of ['pageSections', 'tabs', 'breadcrumbs', 'pipelinqFields', 'pipelinqSettingsUrl']) {
 		Object.defineProperty(vm, name, {
 			get: () => AdminRoot.computed[name].call(vm),
 		})
@@ -50,6 +50,15 @@ describe('admin settings tabs', () => {
 			label: 'Required fields',
 			count: 2,
 		})
+	})
+
+	it('declares the Pipelinq connection as fields: address, a secret token and a test', () => {
+		const fields = instance().pipelinqFields
+		expect(fields.map((f) => [f.key, f.type])).toEqual([['endpoint', 'text'], ['token', 'secret'], ['test', 'action']])
+		expect(fields[1].setKey).toBe('hasToken')
+		expect(fields[2].url).toContain('/apps/shillinq/api/pipelinq/settings/test')
+		expect(fields[2].okPath).toBe('success')
+		expect(instance().pipelinqSettingsUrl).toContain('/apps/shillinq/api/pipelinq/settings')
 	})
 
 	it('draws a switch per required field on the Required fields tab', () => {
