@@ -6800,7 +6800,13 @@
         "Add at least one line with a description and a price.": "Voeg minstens een regel toe met een omschrijving en een prijs.",
         "Every line needs a number for quantity, price and VAT rate.": "Elke regel heeft een getal nodig voor aantal, prijs en btw-tarief.",
         "A VAT rate lies between 0 and 100 percent.": "Een btw-tarief ligt tussen 0 en 100 procent.",
-        "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw."
+        "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw.",
+        "Goods receipt": "Goederenontvangst",
+        "Quality check recorded.": "Kwaliteitscontrole vastgelegd.",
+        "Could not record the quality check.": "De kwaliteitscontrole kon niet worden vastgelegd.",
+        "Goods accepted and stock booked.": "Goederen geaccepteerd en voorraad geboekt.",
+        "Could not accept the goods.": "De goederen konden niet worden geaccepteerd.",
+        "No matches yet. Invoices will add them.": "Nog geen matches. Facturen voegen ze toe."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

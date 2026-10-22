@@ -4595,7 +4595,13 @@ OC.L10N.register(
         "Add at least one line with a description and a price.": "Add at least one line with a description and a price.",
         "Every line needs a number for quantity, price and VAT rate.": "Every line needs a number for quantity, price and VAT rate.",
         "A VAT rate lies between 0 and 100 percent.": "A VAT rate lies between 0 and 100 percent.",
-        "No free draft number was found. Try again.": "No free draft number was found. Try again."
+        "No free draft number was found. Try again.": "No free draft number was found. Try again.",
+        "Goods receipt": "Goods receipt",
+        "Quality check recorded.": "Quality check recorded.",
+        "Could not record the quality check.": "Could not record the quality check.",
+        "Goods accepted and stock booked.": "Goods accepted and stock booked.",
+        "Could not accept the goods.": "Could not accept the goods.",
+        "No matches yet. Invoices will add them.": "No matches yet. Invoices will add them."
     },
     "nplurals=2; plural=(n != 1);"
 )

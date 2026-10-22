@@ -16,7 +16,13 @@
 					"icon": "PackageVariantClosed",
 					"order": 92,
 					"children": [
-						{"id": "GoodsReceiptNoteForm", "label": "Receive goods", "icon": "PlusCircle", "route": "GoodsReceiptNoteForm", "order": 10}
+						{
+							"id": "GoodsReceiptNoteForm",
+							"label": "Receive goods",
+							"icon": "PlusCircle",
+							"route": "GoodsReceiptNoteForm",
+							"order": 10
+						}
 					]
 				}
 			]
@@ -34,10 +40,172 @@
 		{
 			"id": "GoodsReceiptNoteDetail",
 			"route": "/inkoop/goods-receipt-notes/:id",
-			"type": "custom",
+			"type": "detail",
 			"title": "Goods Receipt Note",
-			"component": "GoodsReceiptNoteDetail",
-			"_note": "Beyond the GRN header and lines this page renders the delivery-photo gallery and links to every ThreeWayMatch whose `grnIds` ARRAY contains this GRN — a many-to-many join that config.relatedCollections, which filters a related schema by one foreign-key field, cannot express. Its two transitions also POST to bespoke endpoints (/api/goods-receipt-notes/{id}/quality-check and /accept) with per-status visibility, and the accept call is what posts the StockMove credit and advances the originating purchase orders (REQ-PO3W-003) — not a field write on this object."
+			"config": {
+				"register": "shillinq",
+				"schema": "GoodsReceiptNote",
+				"auditTrail": true,
+				"lifecycleActions": false,
+				"headerActions": [
+					{
+						"id": "quality-check",
+						"label": "Quality check passed",
+						"type": "api-call",
+						"url": "/apps/shillinq/api/goods-receipt-notes/@objectId/quality-check",
+						"method": "POST",
+						"icon": "CheckDecagramOutline",
+						"successMessage": "Quality check recorded.",
+						"errorMessage": "Could not record the quality check.",
+						"visibleWhen": {
+							"field": "statusCode",
+							"op": "eq",
+							"value": "received"
+						}
+					},
+					{
+						"id": "accept",
+						"label": "Accept",
+						"type": "api-call",
+						"url": "/apps/shillinq/api/goods-receipt-notes/@objectId/accept",
+						"method": "POST",
+						"icon": "PackageVariantClosedCheck",
+						"variant": "primary",
+						"successMessage": "Goods accepted and stock booked.",
+						"errorMessage": "Could not accept the goods.",
+						"visibleWhen": {
+							"field": "statusCode",
+							"op": "in",
+							"value": [
+								"received",
+								"quality_checked"
+							]
+						}
+					}
+				],
+				"widgets": [
+					{
+						"id": "grn-data",
+						"type": "data",
+						"title": "Goods receipt",
+						"icon": "PackageVariantClosed",
+						"content": {
+							"columns": 2
+						}
+					},
+					{
+						"id": "grn-lines",
+						"type": "object-list",
+						"title": "Line items",
+						"icon": "FormatListBulleted",
+						"content": {
+							"register": "shillinq",
+							"schema": "GoodsReceiptLine",
+							"filter": {
+								"grnId": "@objectId"
+							},
+							"columns": [
+								{
+									"key": "poLineId",
+									"label": "PO line"
+								},
+								{
+									"key": "quantityReceived",
+									"label": "Received"
+								},
+								{
+									"key": "quantityAccepted",
+									"label": "Accepted"
+								},
+								{
+									"key": "quantityRejected",
+									"label": "Rejected"
+								},
+								{
+									"key": "rejectionReason",
+									"label": "Reason"
+								},
+								{
+									"key": "batchReference",
+									"label": "Batch"
+								}
+							],
+							"limit": 50,
+							"emptyText": "No lines yet.",
+							"allowCreate": false
+						}
+					},
+					{
+						"id": "grn-matches",
+						"type": "object-list",
+						"title": "Three-way matches",
+						"icon": "ScaleBalance",
+						"content": {
+							"register": "shillinq",
+							"schema": "ThreeWayMatch",
+							"filter": {
+								"grnIds": "@objectId"
+							},
+							"columns": [
+								{
+									"key": "matchReference",
+									"label": "Match"
+								},
+								{
+									"key": "matchStatus",
+									"label": "Status"
+								}
+							],
+							"limit": 20,
+							"rowRoute": "ThreeWayMatchDetail",
+							"emptyText": "No matches yet. Invoices will add them.",
+							"allowCreate": false
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "grn-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 6
+					},
+					{
+						"id": "2",
+						"widgetId": "grn-lines",
+						"gridX": 0,
+						"gridY": 6,
+						"gridWidth": 12,
+						"gridHeight": 5
+					},
+					{
+						"id": "3",
+						"widgetId": "grn-matches",
+						"gridX": 0,
+						"gridY": 11,
+						"gridWidth": 12,
+						"gridHeight": 4
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
 		}
 	]
 }
