@@ -261,14 +261,6 @@ import RelationLinkDialog from './modals/RelationLinkDialog.vue'
 // precedent above). kind:"page" custom component per ADR-024 / ADR-036; the
 // manifest fragment src/manifest.d/accountant-portal.json declares the route.
 import AccountantPortalDashboard from './views/AccountantPortalDashboard.vue'
-// bookkeeping-multi-administratie (Task 13): the in-session administration
-// switcher is a custom page hosting the AdministratieSwitcher dropdown. It is
-// genuinely custom (NOT a declarative index/detail over a register) because it
-// reads `/api/administrations/context`, posts to `/api/administrations/switch`
-// and triggers a session-level reload — none of which is expressible in a
-// built-in page type. See AdministratieSwitcher docblock for the kind-page
-// justification per ADR-024 / ADR-036.
-import AdministrationSwitcherPage from './views/AdministrationSwitcherPage.vue'
 // bookings-pipelinq-customer-bridge slice 06 (profile-card-ui): the
 // AfspraakDetail page fans out to /api/v1/bookings/{id} which returns
 // the Appointment AND the linked pipelinq Contact + klantbeeld history
@@ -464,10 +456,6 @@ export default {
 		kind: 'widget',
 		component: BbvLinkerFilterBar,
 		_note: "Slot component for CnIndexPage's `below-header` slot, not a page: the Linker index stays a built-in type:\"index\" so its self-fetch, paging and empty state remain the library's. CnIndexPage has no `filters` prop, so the page's declared config.filters[] had no renderer; this one writes the selection into $route.query, which the self-fetch merges into fixedFilters.",
-	},
-	AdministrationSwitcherPage: {
-		kind: 'page',
-		component: AdministrationSwitcherPage,
 	},
 
 	// bookings-resource-calendar custom pages (REQ-006/REQ-007).

@@ -28,6 +28,14 @@
 		 `objectSidebarState` when a detail page enables `config.sidebar`; this
 		 slot renders the tabs. Mirrors the decidesk / procest shell pattern.
 		-->
+		<!-- The administration is chosen in one place: the header. -->
+		<template #tenant-badge>
+			<CnTenantBadge
+				:switchSource="administrationSwitchSource"
+				switchUrl="/apps/shillinq/api/administrations/switch"
+				switchParam="administrationId"
+				:reloadAfterSwitch="true" />
+		</template>
 		<template #sidebar="{ pageSidebarComponent }">
 			<CnObjectSidebar
 				v-if="objectSidebarState.active"
@@ -54,7 +62,7 @@
 </template>
 
 <script>
-import { CnAppRoot, CnObjectSidebar } from '@conduction/nextcloud-vue'
+import { CnAppRoot, CnObjectSidebar, CnTenantBadge } from '@conduction/nextcloud-vue'
 import { translate as ncT } from '@nextcloud/l10n'
 import { reactive } from 'vue'
 import notificationRuleWording from './notificationLabels.js'
@@ -65,6 +73,7 @@ export default {
 
 	components: {
 		CnAppRoot,
+		CnTenantBadge,
 		CnObjectSidebar,
 	},
 
@@ -151,6 +160,22 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * Where the header switcher reads the user's administrations.
+		 *
+		 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-13
+		 * @return {object} The CnTenantBadge switchSource.
+		 */
+		administrationSwitchSource() {
+			return {
+				url: '/apps/shillinq/api/administrations/context',
+				itemsPath: 'administrations',
+				activePath: 'activeAdministrationId',
+				idField: 'administrationId',
+				labelTemplate: ['{administrationCode} · {name}', '{name}', '{administrationCode}'],
+			}
+		},
+
 		/**
 		 * The wording of every notification rule in the person's language, for
 		 * the Personal settings dialog.

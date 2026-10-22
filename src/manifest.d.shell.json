@@ -2482,13 +2482,6 @@
 					"order": 29,
 					"children": [
 						{
-							"id": "AdministrationSwitcher",
-							"label": "Switch administration",
-							"icon": "ShieldAccountOutline",
-							"route": "AdministrationSwitcher",
-							"order": 1
-						},
-						{
 							"id": "Administraties",
 							"label": "Administrations",
 							"icon": "OfficeBuildingOutline",
@@ -2527,13 +2520,6 @@
 				}
 			],
 			"pages": [
-				{
-					"_fragment": "bookkeeping-multi-administratie",
-					"id": "AdministrationSwitcher",
-					"route": "/administratie/wisselen",
-					"type": "custom",
-					"title": "Switch administration"
-				},
 				{
 					"_fragment": "bookkeeping-multi-administratie",
 					"id": "Administraties",
