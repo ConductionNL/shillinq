@@ -2535,6 +2535,7 @@ OC.L10N.register(
         "Standard-Specific Calculation": "Standaardspecifieke berekening",
         "Standards policy": "Standaardenbeleid",
         "Standards policy saved.": "Standaardenbeleid opgeslagen.",
+        "Suggestions can only be confirmed while the batch is being mapped.": "Voorstellen kunnen alleen worden bevestigd terwijl de batch wordt gekoppeld.",
         "Start": "Start",
         "Start (UTC)": "Start (UTC)",
         "Start Date": "Startdatum",

@@ -157,6 +157,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'administration#exportScope', 'url' => '/api/administrations/{id}/export-scope', 'verb' => 'GET'],
             ['name' => 'administrationExport#exportXaf', 'url' => '/api/administrations/{id}/export', 'verb' => 'GET'],
             ['name' => 'administration#writableStatus', 'url' => '/api/administrations/{id}/writable', 'verb' => 'GET'],
+            ['name' => 'importBatch#confirmSuggestions', 'url' => '/api/import-batches/{id}/confirm-suggestions', 'verb' => 'POST'],
 
         // Payroll engine (NL loonadministratie): read-only compute endpoints.
             ['name' => 'payroll#loonstrook', 'url' => '/api/payroll/loonstrook', 'verb' => 'GET'],

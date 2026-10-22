@@ -2534,6 +2534,7 @@ OC.L10N.register(
         "Standard-Specific Calculation": "Standard-Specific Calculation",
         "Standards policy": "Standards policy",
         "Standards policy saved.": "Standards policy saved.",
+        "Suggestions can only be confirmed while the batch is being mapped.": "Suggestions can only be confirmed while the batch is being mapped.",
         "Start": "Start",
         "Start (UTC)": "Start (UTC)",
         "Start Date": "Start Date",
