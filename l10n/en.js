@@ -4595,7 +4595,15 @@ OC.L10N.register(
         "Add at least one line with a description and a price.": "Add at least one line with a description and a price.",
         "Every line needs a number for quantity, price and VAT rate.": "Every line needs a number for quantity, price and VAT rate.",
         "A VAT rate lies between 0 and 100 percent.": "A VAT rate lies between 0 and 100 percent.",
-        "No free draft number was found. Try again.": "No free draft number was found. Try again."
+        "No free draft number was found. Try again.": "No free draft number was found. Try again.",
+        "Base budget": "Base budget",
+        "Scenario: {name}": "Scenario: {name}",
+        "Scenario not found.": "Scenario not found.",
+        "Scenario not found": "Scenario not found",
+        "scenarioId must be a valid identifier": "scenarioId must be a valid identifier",
+        "Revenue Task Field": "Revenue Task Field",
+        "The BBV task field (taakveld) of the revenue account, copied from the account when the schedule is saved. Read-only: change it on the account.": "The BBV task field (taakveld) of the revenue account, copied from the account when the schedule is saved. Read-only: change it on the account.",
+        "The BBV task field (taakveld) this account books to, for example 8.3. Read by the IV3 report and shown on the fee schedule page.": "The BBV task field (taakveld) this account books to, for example 8.3. Read by the IV3 report and shown on the fee schedule page."
     },
     "nplurals=2; plural=(n != 1);"
 )

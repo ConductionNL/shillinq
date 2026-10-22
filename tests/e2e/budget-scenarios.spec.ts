@@ -38,6 +38,7 @@
  * @e2e budget-scenarios::scenario-comparison-renders-base-and-scenario
  * @e2e budget-scenarios::promote-to-default-demotes-previous-default
  * @e2e budget-scenarios::modifier-crud-reachable
+ * @e2e budget-scenarios::grid-scenario-selector
  *
  * `BudgetScenario` and `BudgetScenarioModifier` ship with NO seed data
  * (design.md ships only the one `LedgerGroup` anchor row, RULING 1), so the
@@ -870,6 +871,47 @@ test.describe('budget-scenarios — scenario comparison page (REQ-BSC-005, REQ-B
 			table.getByText('Scenario', { exact: true }).first(),
 		).toBeVisible({ timeout: 10_000 })
 		await expect(table.getByText('Delta', { exact: true }).first()).toBeVisible({
+			timeout: 10_000,
+		})
+	})
+})
+
+test.describe('budget-scenarios — scenario selector on the budget grid (REQ-BSC-011)', () => {
+	/**
+	 * Q-shillinq-1: choosing a scenario re-reads the grid with that
+	 * scenarioId and shows the "Scenario: X" label; "Base budget" drops it.
+	 *
+	 * @e2e budget-scenarios::grid-scenario-selector
+	 */
+	test('choosing a scenario swaps the budget column and shows its label', async ({
+		page,
+	}) => {
+		await gotoRoute(page, '/begroting/grid')
+
+		const scenarioSelect = page.getByTestId('budget-grid-scenario')
+		await expect(scenarioSelect).toBeVisible({ timeout: 15_000 })
+
+		const optionCount = await scenarioSelect.locator('option').count()
+		test.skip(
+			optionCount <= 1,
+			'no BudgetScenario available to select (only Base budget present)',
+		)
+
+		const gridRequest = page.waitForRequest(
+			(request) =>
+				request.url().includes('/api/budget-grid')
+				&& request.url().includes('scenarioId='),
+		)
+		await scenarioSelect.selectOption({ index: 1 })
+		await gridRequest
+
+		await expect(page.getByTestId('budget-grid-scenario-label')).toContainText(
+			'Scenario:',
+			{ timeout: 10_000 },
+		)
+
+		await scenarioSelect.selectOption({ index: 0 })
+		await expect(page.getByTestId('budget-grid-scenario-label')).toHaveCount(0, {
 			timeout: 10_000,
 		})
 	})

@@ -184,10 +184,17 @@ check current repo state before starting either.
       — no match; `budget-grid-view` has not landed on this branch) — this
       task group is DEFERRED, per the task's own stated fallback. Task
       groups 1–7 land without it.
-- [ ] Add a scenario-selector control to `BudgetGrid.vue` — DEFERRED,
-      blocked on `budget-grid-view` landing `BudgetGrid.vue` first.
-- [ ] Playwright coverage for the grid-embedded selector — DEFERRED, same
-      blocker.
+- [x] Add a scenario-selector control to `BudgetGrid.vue` (Q-shillinq-1,
+      answered 9 Oct: the selector swaps the budget column to the scenario,
+      read-only, "Scenario: X" label; REQ-BSC-011). Built:
+      `lib/Service/BudgetGridScenarioOverlay.php`, optional `scenarioId` on
+      `BudgetGridController::index()` (404 for a scenario outside the
+      administration), selector + label in `src/views/BudgetGrid.vue`,
+      `gridRequestParams()` in `src/views/budgetGridHelpers.js`. Tests:
+      `tests/Unit/Controller/BudgetGridControllerTest.php` (4 new, real
+      overlay + evaluator), `tests/vitest/budgetGridScenario.spec.js`.
+- [ ] Playwright coverage for the grid-embedded selector (written in
+      `tests/e2e/budget-scenarios.spec.ts`, not run: needs the live instance)
 
 ## 9. Spec sync
 - [x] Confirm this change adds no MODIFIED delta against any existing

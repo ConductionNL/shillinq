@@ -30,6 +30,7 @@ use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\Shillinq\Listener\FeeScheduleValidationListener;
 use OCA\Shillinq\Service\FeeScheduleService;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Service\RevenueTaskFieldLookup;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -133,8 +134,8 @@ final class FeeScheduleValidationListenerTest extends TestCase {
 	 *
 	 * @return FeeScheduleValidationListener The listener.
 	 */
-	private function listener(bool $matches, array $stored): FeeScheduleValidationListener {
-		$double = new class(['FeeSchedule' => $stored]) {
+	private function listener(bool $matches, array $stored, array $accounts = []): FeeScheduleValidationListener {
+		$double = new class(['FeeSchedule' => $stored, 'Account' => $accounts]) {
 			/**
 			 * The schema the fluent chain last selected.
 			 *
@@ -181,6 +182,11 @@ final class FeeScheduleValidationListenerTest extends TestCase {
 			),
 			schemaResolver: $resolver,
 			logger: new NullLogger(),
+			taskFields: new RevenueTaskFieldLookup(
+				objectService: new DuckObjectServiceAdapter(inner: $double),
+				appConfig: $appConfig,
+				logger: new NullLogger(),
+			),
 		);
 	}//end listener()
 
@@ -247,4 +253,43 @@ final class FeeScheduleValidationListenerTest extends TestCase {
 
 		return new ObjectUpdatingEvent($entity);
 	}//end updatingEvent()
+
+	/**
+	 * Q-shillinq-2: a saved schedule carries its revenue account's task
+	 * field, so the fee schedule page can show it as a column.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/leges-at-intake/specs/object-payment-requests/spec.md#req-sopr-011
+	 */
+	public function testASavedScheduleCarriesItsRevenueAccountsTaskField(): void {
+		$event = $this->creatingEvent($this->schedule(['id' => 'fs-2', 'validFrom' => '2027-01-01', 'validTo' => '2027-12-31', 'revenueAccount' => '8300']));
+		$accounts = [
+			['accountNumber' => '8000', 'taskField' => '0.61'],
+			['accountNumber' => '8300', 'taskField' => '8.3'],
+		];
+
+		$this->listener(matches: true, stored: [$this->schedule()], accounts: $accounts)->handle($event);
+
+		self::assertFalse($event->isPropagationStopped());
+		self::assertSame('8.3', $event->getObject()->getObject()['revenueTaskField'] ?? null);
+	}//end testASavedScheduleCarriesItsRevenueAccountsTaskField()
+
+	/**
+	 * An account without a task field, or no revenue account at all, leaves
+	 * the column empty (null), never a guessed task field.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/leges-at-intake/specs/object-payment-requests/spec.md#req-sopr-011
+	 */
+	public function testAnAccountWithoutATaskFieldLeavesTheColumnEmpty(): void {
+		$event = $this->updatingEvent($this->schedule(['revenueAccount' => '8300', 'revenueTaskField' => '9.9']));
+
+		$this->listener(matches: true, stored: [$this->schedule()], accounts: [['accountNumber' => '8300']])->handle($event);
+
+		$data = $event->getNewObject()->getObject();
+		self::assertArrayHasKey('revenueTaskField', $data);
+		self::assertNull($data['revenueTaskField']);
+	}//end testAnAccountWithoutATaskFieldLeavesTheColumnEmpty()
 }//end class

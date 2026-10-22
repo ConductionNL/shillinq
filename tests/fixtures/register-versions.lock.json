@@ -44,6 +44,10 @@
         {
             "appVersion": "0.5.6-unstable.20261016190000",
             "versionsSha256": "3f175d840807693570662bed868d2c84f1695f29bce5901e4a63b272a2889f28"
+        },
+        {
+            "appVersion": "0.5.6-unstable.20261021230000",
+            "versionsSha256": "8fcd391a9074bbb395e32f0fa1878b0cea20af0fd37e6907d1d1104278802a85"
         }
     ],
     "versions": {
@@ -55,7 +59,7 @@
         "schema:ARInvoice": "0.16.0",
         "schema:Aansluiting": "0.1.0",
         "schema:AansluitingResult": "0.1.0",
-        "schema:Account": "0.2.0",
+        "schema:Account": "0.4.0",
         "schema:AccountingFramework": "0.1.0",
         "schema:ActivityCostAllocation": "0.1.0",
         "schema:ActuarialValuation": "0.1.0",
@@ -240,7 +244,7 @@
         "schema:ExpiryAlert": "0.1.0",
         "schema:FXContract": "0.1.0",
         "schema:FXPosition": "0.1.0",
-        "schema:FeeSchedule": "0.2.0",
+        "schema:FeeSchedule": "0.3.0",
         "schema:FieldRequirement": "0.2.0",
         "schema:FinancialStatement": "0.1.0",
         "schema:FiscalPeriod": "0.3.0",

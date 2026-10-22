@@ -140,3 +140,30 @@ export function trendChartProps(row, administrationId, range) {
 		range: { from: range.startPeriod, to: range.endPeriod },
 	}
 }
+
+/**
+ * The GET /api/budget-grid query for the grid's current controls. The
+ * optional `scenarioId` is sent only when a scenario is chosen, so "Basis"
+ * reads the default budget exactly as before (REQ-BSC-011).
+ *
+ * @param {object} state The grid's controls.
+ * @param {string} state.administrationId The active administration.
+ * @param {string} state.startPeriod First month, YYYY-MM.
+ * @param {string} state.endPeriod Last month, YYYY-MM.
+ * @param {string} state.granularity month, quarter or year.
+ * @param {string} [state.scenarioId] The chosen BudgetScenario id, empty for Basis.
+ * @return {object} The request params.
+ * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-011
+ */
+export function gridRequestParams(state) {
+	const params = {
+		administrationId: state.administrationId,
+		startPeriod: state.startPeriod,
+		endPeriod: state.endPeriod,
+		granularity: state.granularity,
+	}
+	if (state.scenarioId) {
+		params.scenarioId = state.scenarioId
+	}
+	return params
+}

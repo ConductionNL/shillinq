@@ -6789,7 +6789,15 @@ OC.L10N.register(
         "Add at least one line with a description and a price.": "Voeg minstens een regel toe met een omschrijving en een prijs.",
         "Every line needs a number for quantity, price and VAT rate.": "Elke regel heeft een getal nodig voor aantal, prijs en btw-tarief.",
         "A VAT rate lies between 0 and 100 percent.": "Een btw-tarief ligt tussen 0 en 100 procent.",
-        "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw."
+        "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw.",
+        "Base budget": "Basisbegroting",
+        "Scenario: {name}": "Scenario: {name}",
+        "Scenario not found.": "Scenario niet gevonden.",
+        "Scenario not found": "Scenario niet gevonden",
+        "scenarioId must be a valid identifier": "scenarioId moet een geldige identificatie zijn",
+        "Revenue Task Field": "Taakveld van de opbrengstrekening",
+        "The BBV task field (taakveld) of the revenue account, copied from the account when the schedule is saved. Read-only: change it on the account.": "Het BBV-taakveld van de opbrengstrekening, overgenomen van de rekening bij het opslaan van het tarief. Alleen-lezen: pas het aan op de rekening.",
+        "The BBV task field (taakveld) this account books to, for example 8.3. Read by the IV3 report and shown on the fee schedule page.": "Het BBV-taakveld waarop deze rekening boekt, bijvoorbeeld 8.3. Gelezen door het IV3-rapport en getoond op de pagina met legestarieven."
     },
     "nplurals=2; plural=(n != 1);"
 )
