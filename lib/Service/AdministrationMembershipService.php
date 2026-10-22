@@ -132,15 +132,12 @@ class AdministrationMembershipService {
 			_multitenancy: false,
 		);
 
-		if (is_object($saved) === true && method_exists($saved, 'jsonSerialize') === true) {
-			$saved = $saved->jsonSerialize();
-		}
-
-		if (is_array($saved) === false) {
+		$serialised = $saved->jsonSerialize();
+		if (is_array($serialised) === false) {
 			return $membership;
 		}
 
-		return $saved;
+		return $serialised;
 	}//end addMember()
 
 	/**
