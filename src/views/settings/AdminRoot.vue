@@ -17,6 +17,16 @@
 
 		<PipelinqIntegration v-if="storesReady" />
 
+		<template #tab-exchange-rates>
+			<CnSettingsFieldsSection
+				appId="shillinq"
+				:name="t('shillinq', 'Exchange rates')"
+				:description="t('shillinq', 'Whether the daily exchange-rate import runs. Rates themselves are kept on the exchange rates page.')"
+				:url="fxImportStatusUrl"
+				:fields="fxImportStatusFields"
+				data-testid="admin-section-exchange-rates" />
+		</template>
+
 		<template
 			v-for="section in pageSections"
 			:key="section.id"
@@ -40,6 +50,7 @@
 <script>
 import {
 	CnAdminSettingsShell,
+	CnSettingsFieldsSection,
 	CnSettingsSection,
 	CnToggleTableWidget,
 } from '@conduction/nextcloud-vue'
@@ -55,6 +66,7 @@ export default {
 	name: 'AdminRoot',
 	components: {
 		CnAdminSettingsShell,
+		CnSettingsFieldsSection,
 		CnSettingsSection,
 		CnToggleTableWidget,
 		NcButton,
@@ -86,6 +98,43 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The daily exchange-rate import's state, read by the Exchange rates tab.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/add-shillinq-multi-currency/tasks.md#task-14
+		 */
+		fxImportStatusUrl() {
+			return generateUrl('/apps/shillinq/api/admin/fx-rate-import-status')
+		},
+
+		/**
+		 * The Exchange rates tab: two read-only notes over the import state.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/changes/add-shillinq-multi-currency/tasks.md#task-14
+		 */
+		fxImportStatusFields() {
+			return [
+				{
+					key: 'status',
+					type: 'status',
+					textMap: {
+						ok: 'The daily import runs.',
+						'never-ran': 'The daily import has not run yet.',
+						dormant: 'No rate source is connected, so only rates entered by hand are used.',
+					},
+
+					toneMap: { ok: 'success', 'never-ran': 'warning', dormant: 'warning' },
+				},
+				{
+					key: 'lastRunAt',
+					type: 'status',
+					textMap: { '': '', '*': 'Last successful run: {value}' },
+				},
+			]
+		},
+
 		/**
 		 * Board ShInstellingen's sections whose settings live on their own
 		 * app page: each is a tab that names what it holds and opens that page.
@@ -152,6 +201,7 @@ export default {
 						? { count: this.requiredFieldCount }
 						: {}),
 				})),
+				{ id: 'exchange-rates', label: this.t('shillinq', 'Exchange rates') },
 			]
 		},
 

@@ -328,15 +328,6 @@ import WbsoChartOfAccountsView from './views/bookkeeping/ChartOfAccountsView.vue
 // the page is registered as a kind:"page" custom component per ADR-024.
 import SegmentPnLDashboard from './views/bookkeeping/dimensions/SegmentPnLDashboard.vue'
 import WbsoDocumentsView from './views/bookkeeping/DocumentsView.vue'
-// add-shillinq-multi-currency Task 14: the FxRatesAdmin page wraps the
-// declarative FxRate index grid with a cron-status overlay (last-run
-// timestamp + TreasuryRateAdapter dormancy flag) read from
-// /api/admin/fx-rate-import-status. The header strip + dormancy hint do
-// not fit any built-in `index` / `detail` / `dashboard` page type, so the
-// page is registered as a kind:"page" custom component per ADR-024.
-// Admin-only — the controller is gated by
-// #[AuthorizedAdminSetting(Application::class)].
-import FxRatesAdmin from './views/bookkeeping/multi-currency/FxRatesAdmin.vue'
 import WbsoTransactionsView from './views/bookkeeping/TransactionsView.vue'
 // budget-grid-view (REQ-BGV-001..009): the year-basis begroting grid —
 // verzamelpost rows (LedgerGroup tree, expandable to child groups or
@@ -486,7 +477,6 @@ export default {
 	PeriodCloseDetail: { kind: 'page', component: PeriodCloseDetail },
 
 	// add-shillinq-multi-currency Task 14: FxRates admin overlay (cron status).
-	FxRatesAdmin: { kind: 'page', component: FxRatesAdmin },
 
 	// bookkeeping-cost-centers-dimensions Task 14: segment P&L drill-down.
 	SegmentPnLDashboard: { kind: 'page', component: SegmentPnLDashboard },

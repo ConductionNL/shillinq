@@ -16,7 +16,6 @@
 		"BankAccounts": "BankingCashflow",
 		"CurrencyBalances": "BankingCashflow",
 		"FXRates": "BankingCashflow",
-		"FxRatesAdmin": "BankingCashflow",
 		"Cashflow": "BankingCashflow",
 		"Reconciliations": "BankingCashflow",
 		"VarianceReport": "BankingCashflow",
