@@ -154,6 +154,11 @@ class ReportGenerationService {
 	public function generate(string $reportType, string $period, string $administrationId, string $format, ?string $asUserId=null): array {
 		$userId = ($asUserId ?? ($this->userSession->getUser()?->getUID() ?? ''));
 
+		// The generators read every administration's ledger when none is named.
+		if (trim($administrationId) === '') {
+			return ['error' => 'missing-administration', 'reportType' => $reportType];
+		}
+
 		$catalogue = ReportCatalogue::byId($reportType);
 		if ($catalogue === null) {
 			$this->logger->warning('ReportGenerationService: unknown report type', ['reportType' => $reportType]);
