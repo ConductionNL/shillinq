@@ -38,6 +38,7 @@ namespace OCA\Shillinq\Controller;
 
 use InvalidArgumentException;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\WbsoAccountService;
 use OCA\Shillinq\Service\WbsoRbacResolver;
 use OCP\AppFramework\Controller;
@@ -55,6 +56,7 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-26
  */
 class WbsoAccountApiController extends Controller {
+	use WbsoAdministrationScopeTrait;
 
 	/**
 	 * Identifier-safe slug pattern (REQ-WBSO-005 / ADR-005).
@@ -72,6 +74,7 @@ class WbsoAccountApiController extends Controller {
 	 * @param IUserSession $userSession Session.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
 	 * @param IL10N $l10n Localized strings for client-facing error messages (ADR-050).
+	 * @param AdministrationContextService $administrationContext Membership check on the requested administration.
 	 */
 	public function __construct(
 		IRequest $request,
@@ -80,6 +83,7 @@ class WbsoAccountApiController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
+		private readonly AdministrationContextService $administrationContext,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -88,6 +92,8 @@ class WbsoAccountApiController extends Controller {
 	 * GET /api/v1/accounts (bookkeeper / auditor / administrator).
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-26
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
@@ -98,7 +104,7 @@ class WbsoAccountApiController extends Controller {
 
 		$administrationId = $this->resolveAdministration();
 		if ($administrationId === null) {
-			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+			return $this->administrationNotFound();
 		}
 
 		try {
@@ -121,6 +127,8 @@ class WbsoAccountApiController extends Controller {
 	 * GET /api/v1/accounts/hierarchy (bookkeeper / auditor / administrator).
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-26
 	 */
 	#[NoAdminRequired]
 	public function hierarchy(): JSONResponse {
@@ -131,7 +139,7 @@ class WbsoAccountApiController extends Controller {
 
 		$administrationId = $this->resolveAdministration();
 		if ($administrationId === null) {
-			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+			return $this->administrationNotFound();
 		}
 
 		try {
@@ -156,6 +164,8 @@ class WbsoAccountApiController extends Controller {
 	 * @param string $accountNumber Account number to fetch.
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-26
 	 */
 	#[NoAdminRequired]
 	public function show(string $accountNumber): JSONResponse {
@@ -166,7 +176,7 @@ class WbsoAccountApiController extends Controller {
 
 		$administrationId = $this->resolveAdministration();
 		if ($administrationId === null) {
-			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+			return $this->administrationNotFound();
 		}
 
 		if (preg_match(self::ID_PATTERN, $accountNumber) !== 1) {
@@ -209,7 +219,7 @@ class WbsoAccountApiController extends Controller {
 
 		$administrationId = $this->resolveAdministration();
 		if ($administrationId === null) {
-			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+			return $this->administrationNotFound();
 		}
 
 		$payload = $this->collectPayload(
@@ -268,7 +278,7 @@ class WbsoAccountApiController extends Controller {
 
 		$administrationId = $this->resolveAdministration();
 		if ($administrationId === null) {
-			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+			return $this->administrationNotFound();
 		}
 
 		if (preg_match(self::ID_PATTERN, $accountNumber) !== 1) {
@@ -328,26 +338,6 @@ class WbsoAccountApiController extends Controller {
 
 		return null;
 	}//end requireAuthenticatedReader()
-
-	/**
-	 * Resolve the administration scope from the request, falling back to the
-	 * canonical demo administration when the parameter is omitted (single-
-	 * administration installs).
-	 *
-	 * @return string|null Resolved id, or null when malformed.
-	 */
-	private function resolveAdministration(): ?string {
-		$value = trim((string)$this->request->getParam('administration_id', 'adm-consultancy-nl'));
-		if ($value === '') {
-			return null;
-		}
-
-		if (preg_match(self::ID_PATTERN, $value) !== 1) {
-			return null;
-		}
-
-		return $value;
-	}//end resolveAdministration()
 
 	/**
 	 * Collect a request payload from query params or JSON body.
