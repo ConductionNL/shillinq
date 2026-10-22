@@ -3,7 +3,8 @@
 /**
  * Import Batch Services
  *
- * The container registrations of the ImportBatch lifecycle guard tags.
+ * The container registrations of the ImportBatch lifecycle guard tags, and
+ * the membership check on every import batch and mapping write.
  *
  * @category AppInfo
  * @package  OCA\Shillinq\AppInfo
@@ -27,6 +28,7 @@ namespace OCA\Shillinq\AppInfo;
 use OCA\Shillinq\Lifecycle\ImportBatchGuard;
 use OCA\Shillinq\Lifecycle\ImportReverseGuard;
 use OCA\Shillinq\Lifecycle\RegisterRequiresGuardAdapter;
+use OCA\Shillinq\Listener\AdministrationMembershipWriteListener;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use Psr\Log\LoggerInterface;
 
@@ -42,7 +44,7 @@ use Psr\Log\LoggerInterface;
 final class ImportBatchServices {
 
 	/**
-	 * Register the parse and reverse guard tags.
+	 * Register the parse and reverse guard tags and the membership write check.
 	 *
 	 * @param IRegistrationContext $context The registration context.
 	 *
@@ -66,6 +68,13 @@ final class ImportBatchServices {
 			'OCA\Shillinq\Lifecycle\ImportBatchGuard::canReverse',
 			static fn ($c): ImportReverseGuard => $c->get(ImportReverseGuard::class)
 		);
+
+		foreach (['OCA\\OpenRegister\\Event\\ObjectCreatingEvent', 'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent'] as $preSaveEvent) {
+			$context->registerEventListener(
+				event: $preSaveEvent,
+				listener: AdministrationMembershipWriteListener::class
+			);
+		}
 
 	}//end register()
 }//end class

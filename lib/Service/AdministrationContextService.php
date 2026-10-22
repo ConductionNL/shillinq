@@ -324,6 +324,33 @@ class AdministrationContextService {
 	}//end canPostJournalEntry()
 
 	/**
+	 * Whether the authenticated user holds a currently valid owner (`eigenaar`) membership.
+	 *
+	 * @param string $administrationId The administration id.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-12
+	 */
+	public function isOwnerOf(string $administrationId): bool {
+		$userId = $this->currentUserId();
+		if ($userId === null || $administrationId === '') {
+			return false;
+		}
+
+		foreach ($this->membershipsForUser(userId: $userId) as $membership) {
+			if ((string)($membership['administrationId'] ?? '') === $administrationId
+				&& (string)($membership['role'] ?? '') === 'eigenaar'
+				&& $this->membershipIsCurrentlyValid(membership: $membership) === true
+			) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end isOwnerOf()
+
+	/**
 	 * Validate a requested active administration and return the id to switch to (REQ-MA-003).
 	 *
 	 * Returns the requested id when the user has a valid membership for it; returns

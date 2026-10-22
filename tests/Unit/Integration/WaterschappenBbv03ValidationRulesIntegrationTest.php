@@ -185,18 +185,11 @@ final class WaterschappenBbv03ValidationRulesIntegrationTest extends TestCase {
 		self::assertContains('active', $programme['properties']['status']['enum']);
 		self::assertContains('archived', $programme['properties']['status']['enum']);
 
-		// Cross-record uniqueness rule.
-		self::assertArrayHasKey('x-openregister-validation', $programme);
-		self::assertArrayHasKey(
-			'programmeCodeUniquePerYear',
-			$programme['x-openregister-validation']
-		);
-		$rule = $programme['x-openregister-validation']['programmeCodeUniquePerYear'];
-		self::assertSame('unique', $rule['rule']);
-		self::assertSame(
-			['administrationId', 'fiscalYear', 'programmeCode'],
-			$rule['fields']
-		);
+		// The cross-record uniqueness rule is enforced by
+		// BbvAllocationValidationListener on save; the schema carries no
+		// validations key OpenRegister would read as a per-document rule.
+		self::assertArrayNotHasKey('x-openregister-validation', $programme);
+		self::assertArrayNotHasKey('x-openregister-validations', $programme);
 
 	}//end testProgrammeValidationBlockMaterialises()
 
@@ -234,28 +227,10 @@ final class WaterschappenBbv03ValidationRulesIntegrationTest extends TestCase {
 			$mapping['x-openregister-calculations']
 		);
 
-		// FK existence + sum invariant.
-		self::assertArrayHasKey('x-openregister-validation', $mapping);
-		$validation = $mapping['x-openregister-validation'];
-
-		self::assertArrayHasKey('glAccountForeignKey', $validation);
-		$fk = $validation['glAccountForeignKey'];
-		self::assertSame('foreignKeyExists', $fk['rule']);
-		self::assertSame('glAccountNumber', $fk['localField']);
-		self::assertSame('Account', $fk['foreignSchema']);
-		self::assertSame('accountNumber', $fk['foreignField']);
-		self::assertSame(['administrationId'], $fk['scopeFields']);
-
-		self::assertArrayHasKey('allocationSumPerAccount', $validation);
-		$sumRule = $validation['allocationSumPerAccount'];
-		self::assertSame('sumWithinBounds', $sumRule['rule']);
-		self::assertSame('allocationPercentage', $sumRule['sumField']);
-		self::assertSame(
-			['administrationId', 'glAccountNumber', 'fiscalYear'],
-			$sumRule['groupBy']
-		);
-		self::assertSame(100, $sumRule['maximum']);
-		self::assertSame(self::ALLOCATION_TOLERANCE, $sumRule['tolerance']);
+		// FK existence and the sum invariant compare a record with its
+		// siblings, which BbvAllocationValidationListener enforces on save.
+		self::assertArrayNotHasKey('x-openregister-validation', $mapping);
+		self::assertArrayNotHasKey('x-openregister-validations', $mapping);
 
 	}//end testMappingValidationBlockMaterialises()
 

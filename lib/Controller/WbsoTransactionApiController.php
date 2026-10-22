@@ -33,6 +33,7 @@ namespace OCA\Shillinq\Controller;
 
 use InvalidArgumentException;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\WbsoRbacResolver;
 use OCA\Shillinq\Service\WbsoTransactionService;
 use OCP\AppFramework\Controller;
@@ -51,6 +52,7 @@ use RuntimeException;
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-27
  */
 class WbsoTransactionApiController extends Controller {
+	use WbsoAdministrationScopeTrait;
 
 	/**
 	 * Identifier-safe slug pattern.
@@ -68,6 +70,7 @@ class WbsoTransactionApiController extends Controller {
 	 * @param IUserSession $userSession Session.
 	 * @param LoggerInterface $logger Logger.
 	 * @param IL10N $l10n Localized strings for client-facing error messages (ADR-050).
+	 * @param AdministrationContextService $administrationContext Membership check on the requested administration.
 	 */
 	public function __construct(
 		IRequest $request,
@@ -76,6 +79,7 @@ class WbsoTransactionApiController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
+		private readonly AdministrationContextService $administrationContext,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -84,6 +88,8 @@ class WbsoTransactionApiController extends Controller {
 	 * GET /api/v1/transactions (bookkeeper / auditor / admin).
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-26
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
@@ -94,7 +100,7 @@ class WbsoTransactionApiController extends Controller {
 
 		$administrationId = $this->resolveAdministration();
 		if ($administrationId === null) {
-			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+			return $this->administrationNotFound();
 		}
 
 		$filters = [
@@ -126,6 +132,8 @@ class WbsoTransactionApiController extends Controller {
 	 * @param string $id Transaction id or transactionNumber.
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-26
 	 */
 	#[NoAdminRequired]
 	public function show(string $id): JSONResponse {
@@ -136,7 +144,7 @@ class WbsoTransactionApiController extends Controller {
 
 		$administrationId = $this->resolveAdministration();
 		if ($administrationId === null) {
-			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+			return $this->administrationNotFound();
 		}
 
 		if (preg_match(self::ID_PATTERN, $id) !== 1) {
@@ -177,7 +185,11 @@ class WbsoTransactionApiController extends Controller {
 
 		$administrationId = $this->resolveAdministration();
 		if ($administrationId === null) {
-			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+			return $this->administrationNotFound();
+		}
+
+		if ($this->administrationContext->canPostJournalEntry(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'Posting rights in this administration required'], Http::STATUS_FORBIDDEN);
 		}
 
 		$payload = [
@@ -230,7 +242,11 @@ class WbsoTransactionApiController extends Controller {
 
 		$administrationId = $this->resolveAdministration();
 		if ($administrationId === null) {
-			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+			return $this->administrationNotFound();
+		}
+
+		if ($this->administrationContext->canPostJournalEntry(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'Posting rights in this administration required'], Http::STATUS_FORBIDDEN);
 		}
 
 		if (preg_match(self::ID_PATTERN, $id) !== 1) {
@@ -283,7 +299,11 @@ class WbsoTransactionApiController extends Controller {
 
 		$administrationId = $this->resolveAdministration();
 		if ($administrationId === null) {
-			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+			return $this->administrationNotFound();
+		}
+
+		if ($this->administrationContext->canPostJournalEntry(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'Posting rights in this administration required'], Http::STATUS_FORBIDDEN);
 		}
 
 		if (preg_match(self::ID_PATTERN, $id) !== 1) {
@@ -341,24 +361,6 @@ class WbsoTransactionApiController extends Controller {
 
 		return null;
 	}//end requireAuthenticated()
-
-	/**
-	 * Resolve administration scope, default to the demo administration.
-	 *
-	 * @return string|null
-	 */
-	private function resolveAdministration(): ?string {
-		$value = trim((string)$this->request->getParam('administration_id', 'adm-consultancy-nl'));
-		if ($value === '') {
-			return null;
-		}
-
-		if (preg_match(self::ID_PATTERN, $value) !== 1) {
-			return null;
-		}
-
-		return $value;
-	}//end resolveAdministration()
 
 	/**
 	 * Logger + 500 response without stack-traces.
