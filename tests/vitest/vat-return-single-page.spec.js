@@ -32,8 +32,9 @@ describe('one VAT return page (#1717)', () => {
 	})
 
 	it('has no Taxes card that opens BtwAangiften, and keeps the VATReturns card', () => {
-		const source = read('src/components/taxes/TaxesOverview.vue')
-		expect(source).not.toMatch(/route:\s*'BtwAangiften'/)
-		expect(source).toMatch(/route:\s*'VATReturns'/)
+		const taxes = JSON.parse(read('src/manifest.d/nav-six-clusters-landing-pages.json')).pages.find((p) => p.id === 'TaxesOverview')
+		const routes = taxes.widgets.flatMap((w) => w.props.entries).map((e) => e.route)
+		expect(routes).not.toContain('BtwAangiften')
+		expect(routes).toContain('VATReturns')
 	})
 })

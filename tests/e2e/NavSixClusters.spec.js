@@ -147,7 +147,7 @@ test.describe('nav-six-clusters — Dashboard + 6 domain clusters (REQ-NAVC-001.
 			await page.waitForLoadState('domcontentloaded')
 			await dismissWizard(page)
 
-			const root = page.locator(`[data-testid="${cluster.testId}"]`)
+			const root = page.locator('[data-testid="cn-dashboard-page"]')
 			const deployed = await becomesVisible(root)
 			test.skip(
 				!deployed,
@@ -155,13 +155,9 @@ test.describe('nav-six-clusters — Dashboard + 6 domain clusters (REQ-NAVC-001.
 			)
 
 			await expect(root).toBeVisible()
-			await expect(
-				page.locator(`[data-testid="${cluster.testId}-title"]`),
-			).toContainText(cluster.label)
+			await expect(root.getByRole('heading', { level: 2 }).first()).toContainText(cluster.label)
 
-			const cardSections = page.locator(
-				`[data-testid^="${cluster.testId.replace('-overview', '')}-section-"]`,
-			)
+			const cardSections = page.locator('.cn-nav-card-grid')
 			await expect(
 				cardSections.first(),
 				'at least one card section renders',

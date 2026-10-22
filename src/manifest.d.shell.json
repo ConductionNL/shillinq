@@ -4900,35 +4900,35 @@
 					"_fragment": "nav-six-clusters-landing-pages",
 					"id": "BookkeepingOverview",
 					"route": "/bookkeeping/overview",
-					"type": "custom",
+					"type": "dashboard",
 					"title": "Bookkeeping"
 				},
 				{
 					"_fragment": "nav-six-clusters-landing-pages",
 					"id": "SalesOverview",
 					"route": "/sales/overview",
-					"type": "custom",
+					"type": "dashboard",
 					"title": "Sales"
 				},
 				{
 					"_fragment": "nav-six-clusters-landing-pages",
 					"id": "PurchasingOverview",
 					"route": "/purchasing/overview",
-					"type": "custom",
+					"type": "dashboard",
 					"title": "Purchasing"
 				},
 				{
 					"_fragment": "nav-six-clusters-landing-pages",
 					"id": "BankingCashflowOverview",
 					"route": "/banking-cashflow/overview",
-					"type": "custom",
+					"type": "dashboard",
 					"title": "Banking & Cashflow"
 				},
 				{
 					"_fragment": "nav-six-clusters-landing-pages",
 					"id": "TaxesOverview",
 					"route": "/taxes/overview",
-					"type": "custom",
+					"type": "dashboard",
 					"title": "Taxes"
 				}
 			]

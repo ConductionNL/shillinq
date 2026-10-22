@@ -31,19 +31,32 @@ const pages = manifestFiles.flatMap((f) =>
 )
 const pageIds = new Set(pages.map((p) => p.id))
 
-const landingComponents = [
-	'src/components/bookkeeping/BookkeepingOverview.vue',
-	'src/components/sales/SalesOverview.vue',
-	'src/components/purchasing/PurchasingOverview.vue',
-	'src/components/banking-cashflow/BankingCashflowOverview.vue',
-	'src/components/taxes/TaxesOverview.vue',
-]
+const landingPageIds = ['BookkeepingOverview', 'SalesOverview', 'PurchasingOverview', 'BankingCashflowOverview', 'TaxesOverview']
+function landingEntries (id) {
+  return pages
+	.find((p) => p.id === id)
+	.widgets.filter((w) => w.widgetKey === 'nav-card-grid')
+	.flatMap((w) => w.props.entries)
+}
 
 describe('landing card routes', () => {
-	it.each(landingComponents)('%s links only to page ids', (file) => {
-		const routes = [...read(file).matchAll(/route: '([^']+)'/g)].map((m) => m[1])
+	it.each(landingPageIds)('%s is a dashboard of card grids that link only to page ids', (id) => {
+		expect(pages.find((p) => p.id === id).type).toBe('dashboard')
+		const routes = landingEntries(id).map((e) => e.route)
 		expect(routes.length).toBeGreaterThan(0)
 		expect(routes.filter((r) => !pageIds.has(r))).toEqual([])
+	})
+
+	it('keeps the preset filters as card queries', () => {
+		expect(landingEntries('BookkeepingOverview').find((e) => e.id === 'CostCenters').query).toEqual({ dimensionType: 'cost-center' })
+		expect(landingEntries('PurchasingOverview').find((e) => e.id === 'MijnContracten').query).toEqual({ source: 'tenderned' })
+	})
+
+	it('has no duplicate card on one landing page', () => {
+		for (const id of landingPageIds) {
+			const targets = landingEntries(id).map((e) => e.route + JSON.stringify(e.query || {}))
+			expect(new Set(targets).size, id).toBe(targets.length)
+		}
 	})
 
 	it('the Reports page cards link only to page ids', () => {
