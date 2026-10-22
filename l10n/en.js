@@ -4595,7 +4595,17 @@ OC.L10N.register(
         "Add at least one line with a description and a price.": "Add at least one line with a description and a price.",
         "Every line needs a number for quantity, price and VAT rate.": "Every line needs a number for quantity, price and VAT rate.",
         "A VAT rate lies between 0 and 100 percent.": "A VAT rate lies between 0 and 100 percent.",
-        "No free draft number was found. Try again.": "No free draft number was found. Try again."
+        "No free draft number was found. Try again.": "No free draft number was found. Try again.",
+        "These products come from the product master.": "These products come from the product master.",
+        "The product master is unavailable, so these are the products your stock and barcode records reference.": "The product master is unavailable, so these are the products your stock and barcode records reference.",
+        "Names, categories and prices are owned elsewhere and stay blank.": "Names, categories and prices are owned elsewhere and stay blank.",
+        "These are the attribute names the product master's own products declare.": "These are the attribute names the product master's own products declare.",
+        "The product master is unavailable, so these are the attributes the integration contract publishes.": "The product master is unavailable, so these are the attributes the integration contract publishes.",
+        "Owned by says which application authors each value.": "Owned by says which application authors each value.",
+        "Products this administration holds inventory or barcodes for. The product master owns the definitions; shillinq owns unit cost, quantities and valuation.": "Products this administration holds inventory or barcodes for. The product master owns the definitions; shillinq owns unit cost, quantities and valuation.",
+        "No products yet.": "No products yet.",
+        "Unit cost": "Unit cost",
+        "On hand": "On hand"
     },
     "nplurals=2; plural=(n != 1);"
 )

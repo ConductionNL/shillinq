@@ -51,6 +51,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -69,12 +70,14 @@ class ProductCatalogController extends Controller {
 	 * @param ProductCatalogService $catalogService Resolves the catalog.
 	 * @param IUserSession $userSession Session for the auth body-guard.
 	 * @param LoggerInterface $logger Logger.
+	 * @param IL10N $l10n Translations for the source note and the refusal.
 	 */
 	public function __construct(
 		IRequest $request,
 		private readonly ProductCatalogService $catalogService,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
+		private readonly IL10N $l10n,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 
@@ -108,7 +111,13 @@ class ProductCatalogController extends Controller {
 		try {
 			$catalog = $this->catalogService->listProducts();
 			if ($catalog === null) {
-				return new JSONResponse(['error' => 'no_accessible_administration'], Http::STATUS_FORBIDDEN);
+				return $this->noAdministration();
+			}
+
+			$catalog['sourceNote'] = $this->l10n->t('The product master is unavailable, so these are the products your stock and barcode records reference.')
+				. ' ' . $this->l10n->t('Names, categories and prices are owned elsewhere and stay blank.');
+			if (($catalog['authoritative'] ?? false) === true) {
+				$catalog['sourceNote'] = $this->l10n->t('These products come from the product master.');
 			}
 
 			return new JSONResponse($catalog);
@@ -140,7 +149,13 @@ class ProductCatalogController extends Controller {
 		try {
 			$attributes = $this->catalogService->listAttributes();
 			if ($attributes === null) {
-				return new JSONResponse(['error' => 'no_accessible_administration'], Http::STATUS_FORBIDDEN);
+				return $this->noAdministration();
+			}
+
+			$attributes['sourceNote'] = $this->l10n->t('The product master is unavailable, so these are the attributes the integration contract publishes.')
+				. ' ' . $this->l10n->t('Owned by says which application authors each value.');
+			if (($attributes['authoritative'] ?? false) === true) {
+				$attributes['sourceNote'] = $this->l10n->t('These are the attribute names the product master\'s own products declare.');
 			}
 
 			return new JSONResponse($attributes);
@@ -153,4 +168,20 @@ class ProductCatalogController extends Controller {
 		}
 
 	}//end productAttributes()
+
+	/**
+	 * The refusal for a caller without an administration.
+	 *
+	 * @return JSONResponse 403 with the reason.
+	 */
+	private function noAdministration(): JSONResponse {
+		return new JSONResponse(
+			[
+				'error' => 'no_accessible_administration',
+				'message' => $this->l10n->t('You have no administration yet, so there is no inventory to show. Ask an administrator for access.'),
+			],
+			Http::STATUS_FORBIDDEN
+		);
+
+	}//end noAdministration()
 }//end class
