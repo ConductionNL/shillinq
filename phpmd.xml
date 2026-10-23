@@ -52,6 +52,10 @@
         "should be mocked" concern can apply to. If a future edit gives it state
         or an injected dependency, that claim becomes false and this entry must
         be removed rather than kept — check it before trusting this line.
+
+        (g) LinkedObjectReferences is a pure function of its argument on the
+        same testable claim as (f): NO constructor, NO properties, NO
+        collaborators. Remove this entry if that stops being true.
     -->
     <rule ref="rulesets/cleancode.xml/StaticAccess">
         <properties>
@@ -69,6 +73,7 @@
                 OCA\Shillinq\Enums\DBAConstants,
                 OCA\Shillinq\Util\TokenValidator,
                 OCA\Shillinq\Util\ObjectIdentifier,
+                OCA\Shillinq\Util\LinkedObjectReferences,
                 OCA\Shillinq\Request\InvoiceGenerationRequest,
                 OCA\Shillinq\Service\Pipelinq\PipelinqContact,
                 OCA\Shillinq\Service\Pipelinq\KlantbeeldResult,

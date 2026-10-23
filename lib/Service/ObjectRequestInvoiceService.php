@@ -168,6 +168,7 @@ class ObjectRequestInvoiceService {
 			'grossAmount' => $gross,
 			'lifecycleState' => 'issued',
 			'invoiceType' => 'standard',
+			'linkedObjects' => array_values((array)($request['linkedObjects'] ?? [])),
 			// `invoiceLines` is the line property ARInvoice declares (EN 16931 BG-25).
 			'invoiceLines' => [
 				[

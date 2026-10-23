@@ -1,22 +1,30 @@
 # Design: financial-documents-on-any-object
 
-## D-1 One reference shape, copied from PaymentRequest
+## D-1 One list shape, copied from Contract
 
-`subject` is the exact object shape `PaymentRequest.subject` already has (`ar-invoice-payment-links.json`). One shape
-means one finder query (`subject.register`, `subject.schema`, `subject.id`) for every document kind, and the portal
-scope logic that already reads it keeps working.
+Ruben, 23 Oct: a document can link to several objects. Every kind gets `linkedObjects`, with the item shape
+`Contract.linkedObjects` has (`register`, `schema`, `id`, optional `type` and `label`) plus an optional `app`, so a
+payment request's `subject` converts without losing a field. One shape means one finder for every kind: a document
+belongs on an object when any item matches its register, schema and id.
 
-A document has one subject. The alternative is a `linkedObjects` array, as `Contract` has. A contract covers many cases
-by nature. A quotation or an invoice is about one thing; when it is about several, the invoice lines name them.
+The list freezes when the document is issued: a quote or invoice when it leaves `draft`, a payment request or payout
+when it is raised. `LinkedObjectsLockListener` enforces it on `ObjectUpdatingEvent`, the way
+`PaymentRunLineLockListener` locks an approved run. OpenRegister's `immutable` keyword is not used: it freezes on the
+first value, so a draft invoice could not gain a second case.
+
+`PaymentRequest.subject` stays. `ObjectPaymentRequestValidator` keys its one-open-request invariant on it and the
+portal scope reads it. The list is written beside it, and the repair step backfills old rows.
 
 ## D-2 Kinds are a view over existing schemas, not a new schema
+
+Every row below is a document whose `linkedObjects` contain the host object.
 
 | kind | schema | filter |
 |---|---|---|
 | quote | Quote | |
 | invoice | ARInvoice | `invoiceType` standard or debit-note |
 | credit-note | ARInvoice | `invoiceType` credit-note |
-| payment-request | PaymentRequest | `subjectKind` object, or an invoice request whose invoice is on this subject |
+| payment-request | PaymentRequest | |
 | payout | InboundPayable | |
 
 No `FinancialDocument` base schema. Money keeps one home per kind (ADR-107), and a base schema would be a second

@@ -15,15 +15,17 @@ reference), and the `shillinq-payment-requests` leaf shows the requests on any h
 places that leaf on the case as "Fees and payments".
 
 The other documents do not know their object. `Quote`, `ARInvoice` (which also carries credit and debit notes through
-`invoiceType`) and `InboundPayable` have no `subject`. So a case cannot list its quotation, its invoice or the penalty
+`invoiceType`) and `InboundPayable` name no object at all. So a case cannot list its quotation, its invoice or the penalty
 the municipality owes the applicant. Each app that needs one invents its own link, as dossiq did with its payout row.
 
 ## What changes
 
-- `Quote`, `ARInvoice` and `InboundPayable` gain the same optional `subject` that `PaymentRequest` has: app, type,
-  register, schema, id. It is written at creation and frozen once the document is issued.
-- `PayableRaisedEvent` carries an optional `subject`, so an app that raises a payout says which object it is for.
-- One data leaf, `shillinq-financial-documents`, lists every financial document standing on an object: quotes,
+- `Quote`, `ARInvoice`, `PaymentRequest` and `InboundPayable` gain `linkedObjects`: a list of the objects the document
+  is about, in the item shape `Contract.linkedObjects` already has. The list is frozen once the document is issued.
+- A repair step turns each payment request's single `subject` into a one-item list. `subject` stays, for the
+  validator and the portal that read it today.
+- `PayableRaisedEvent` carries `linkedObjects`, so an app that raises a payout says which objects it is for.
+- One data leaf, `shillinq-financial-documents`, lists every financial document whose list contains the object: quotes,
   invoices, credit notes, payment requests and payouts, in one row shape.
 - One render leaf, `shillinq-financial-documents-panel`, shows them on any detail page and offers the acts. A placement
   narrows it with `kinds` and `actions` props, so a case page can show only invoices and payment requests.

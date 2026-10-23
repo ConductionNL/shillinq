@@ -2,38 +2,57 @@
 
 ## ADDED Requirements
 
-### Requirement: A financial document names the object it is about (REQ-FDO-001)
+### Requirement: A financial document names the objects it is about (REQ-FDO-001)
 
-`Quote`, `ARInvoice` and `InboundPayable` SHALL declare an optional `subject` with the shape `PaymentRequest.subject`
-has: `app`, `type`, `register`, `schema`, `id`. A document SHALL keep its subject once it is issued, accepted or
-approved; a write that changes it after that SHALL be refused. `PayableRaisedEvent` SHALL accept a `subject` and the
-listener SHALL store it on the payable.
+`Quote`, `ARInvoice`, `PaymentRequest` and `InboundPayable` SHALL declare `linkedObjects`: a list of semantic
+references (ADR-048) with the item shape `Contract.linkedObjects` has (`register`, `schema`, `id` required; `type`,
+`label` optional) plus an optional `app`. Every item SHALL name a register, a schema and an id; a list with an item
+that does not SHALL be refused. A quote or an invoice SHALL keep its list once it leaves `draft`. A payment request and
+a payout SHALL keep their list from the moment they are raised. A change to a kept list SHALL be refused, with one
+exception: an empty list MAY be filled with the payment request's own `subject`, which is what the migration writes.
+`PayableRaisedEvent` SHALL accept `linkedObjects` and the payable SHALL store them. A payment request raised on an
+object SHALL carry that object in `linkedObjects` beside `subject`. A repair step SHALL give every existing payment
+request with a `subject` and no `linkedObjects` a one-item list holding that subject.
 
-#### Scenario: An invoice raised on a case names the case
+#### Scenario: An invoice names two cases
 
-- GIVEN a case `c-1` in register `dossiq`, schema `case`
-- WHEN an invoice is issued with `subject` `{app: dossiq, type: case, register: dossiq, schema: case, id: c-1}`
-- THEN the stored ARInvoice carries that subject
-- @e2e exclude schema property; covered by the register test with the merged register
+- GIVEN cases `c-1` and `c-2` in register `dossiq`, schema `case`
+- WHEN an invoice is written with both in `linkedObjects`
+- THEN the stored ARInvoice carries both references
+- @e2e exclude schema property; covered by `LinkedObjectsFragmentTest`
 
-#### Scenario: An issued invoice keeps its subject
+#### Scenario: An issued invoice keeps its list
 
-- GIVEN an issued invoice on case `c-1`
-- WHEN a caller writes `subject.id` `c-2`
-- THEN the write is refused and the invoice still names `c-1`
-- @e2e exclude write guard; covered by PHPUnit
+- GIVEN an issued invoice linked to case `c-1`
+- WHEN a caller adds case `c-2`
+- THEN the write is refused and the invoice still names only `c-1`
+- @e2e exclude write guard; covered by `LinkedObjectsLockListenerTest`
+
+#### Scenario: A draft quote can still change its list
+
+- GIVEN a draft quote linked to case `c-1`
+- WHEN a caller adds case `c-2`
+- THEN the quote names both
+- @e2e exclude write guard; covered by `LinkedObjectsLockListenerTest`
 
 #### Scenario: A payout raised by another app names its object
 
-- GIVEN dossiq raises a payout with `PayableRaisedEvent` and a case as subject
+- GIVEN dossiq raises a payout with `PayableRaisedEvent` and its case in `linkedObjects`
 - WHEN shillinq stores the InboundPayable
-- THEN the payable carries the case as subject
-- @e2e exclude event contract; covered by PHPUnit on `PayableRaisedListener`
+- THEN the payable carries the case in `linkedObjects`
+- @e2e exclude event contract; covered by `InboundPayableServiceTest`
+
+#### Scenario: Existing payment requests get their subject as a list
+
+- GIVEN a payment request with `subject` case `c-1` and no `linkedObjects`
+- WHEN the repair step runs
+- THEN its `linkedObjects` holds case `c-1` and its `subject` is unchanged
+- @e2e exclude repair step; covered by `BackfillLinkedObjectsTest`
 
 ### Requirement: One leaf lists every financial document on an object (REQ-FDO-002)
 
 The data leaf `shillinq-financial-documents` SHALL list the quotes, invoices, credit notes, payment requests and
-payouts whose subject is the host object, newest first, each as one row with `kind`, `number`, `status`, `amount`,
+payouts whose `linkedObjects` contain the host object, newest first, each as one row with `kind`, `number`, `status`, `amount`,
 `currency`, `issuedOn`, `dueOn`, `openAmount` and `paymentState`. It SHALL check the caller's administration before it
 reads. A caller who may not read the administration SHALL get the count and the payment state, and no amounts or
 numbers.

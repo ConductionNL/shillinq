@@ -4,8 +4,8 @@
 
 ## 1. Schema and events
 
-- [ ] 1.1 Fragment `financial-document-subject.json`: `subject` on Quote, ARInvoice, InboundPayable; frozen after issue (REQ-FDO-001). Verify: register test validates each with the merged register; red first.
-- [ ] 1.2 `PayableRaisedEvent` and `PayableRaisedListener` carry `subject` onto the InboundPayable (REQ-FDO-001). Verify: PHPUnit red first.
+- [x] 1.1 Fragment `financial-documents-linked-objects.json`: `linkedObjects` on Quote, ARInvoice, PaymentRequest, InboundPayable; `LinkedObjectsLockListener` freezes it once issued (REQ-FDO-001). Verify: LinkedObjectsFragmentTest, LinkedObjectsLockListenerTest, red first.
+- [x] 1.2 `PayableRaisedEvent` carries `linkedObjects` onto the InboundPayable; the leaf and the object-request invoice write them; repair `BackfillLinkedObjects` (REQ-FDO-001). Verify: InboundPayableServiceTest, BackfillLinkedObjectsTest, red first.
 
 ## 2. Leaf
 

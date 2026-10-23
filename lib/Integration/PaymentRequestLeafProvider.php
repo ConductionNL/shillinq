@@ -429,6 +429,7 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 		$request = [
 			'subjectKind' => 'object',
 			'subject' => $subject,
+			'linkedObjects' => [$subject],
 			'requestType' => (string)($payload['requestType'] ?? ''),
 			'amount' => $payload['amount'] ?? null,
 			'currency' => (string)($payload['currency'] ?? 'EUR'),
