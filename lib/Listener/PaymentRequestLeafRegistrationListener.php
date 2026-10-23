@@ -34,6 +34,7 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Event\RegisterLeafProvidersEvent;
 use OCA\OpenRegister\Service\Integration\LeafDescriptor;
 use OCA\Shillinq\Integration\ContractLeafProvider;
+use OCA\Shillinq\Integration\FinancialDocumentLeafProvider;
 use OCA\Shillinq\Integration\PaymentRequestLeafProvider;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -81,12 +82,14 @@ final class PaymentRequestLeafRegistrationListener implements IEventListener {
 	 *
 	 * @param PaymentRequestLeafProvider $provider The data-provider half.
 	 * @param ContractLeafProvider $contracts The contract a case is handled under.
+	 * @param FinancialDocumentLeafProvider $documents Every financial document linked to an object.
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private readonly PaymentRequestLeafProvider $provider,
 		private readonly ContractLeafProvider $contracts,
+		private readonly FinancialDocumentLeafProvider $documents,
 	) {
 	}//end __construct()
 
@@ -144,6 +147,20 @@ final class PaymentRequestLeafRegistrationListener implements IEventListener {
 				group: 'Finance',
 			),
 			$this->contracts,
+		);
+
+		// Spec financial-documents-on-any-object REQ-FDO-002: every quote,
+		// invoice, credit note, payment request and payout linked to the object.
+		$event->registerLeaf(
+			new LeafDescriptor(
+				id: FinancialDocumentLeafProvider::LEAF_ID,
+				label: 'Financial documents',
+				icon: 'FileDocumentMultipleOutline',
+				kinds: [LeafDescriptor::KIND_DATA_PROVIDER],
+				requiredApp: 'shillinq',
+				group: 'Finance',
+			),
+			$this->documents,
 		);
 
 		$event->registerLeaf(

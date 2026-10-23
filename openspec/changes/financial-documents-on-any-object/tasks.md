@@ -9,7 +9,7 @@
 
 ## 2. Leaf
 
-- [ ] 2.1 `FinancialDocumentLeafProvider` + finder: the five kinds in one row shape, administration check before the read (REQ-FDO-002). Verify: PHPUnit, a caller outside the administration gets no amounts.
+- [x] 2.1 `FinancialDocumentLeafProvider` + finder: the five kinds in one row shape, administration check before the read (REQ-FDO-002). Verify: PHPUnit, a caller outside the administration gets no amounts.
 - [ ] 2.2 Acts through the leaf `create` and `createAsApp` with the new actions (REQ-FDO-003, REQ-FDO-005). Verify: PHPUnit refusals per action; route-auth and IDOR gates.
 
 ## 3. Panel and payment
