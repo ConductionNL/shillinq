@@ -32,14 +32,16 @@ place to read amounts from.
 
 ## D-3 Row shape
 
-`{ id, kind, number, title, status, amount, currency, issuedOn, dueOn, openAmount, paymentState, href, actions[] }`.
-`paymentState` is one of `none`, `outstanding`, `paid`, `waived`, `stale`, with the meaning `CasePaymentState` already
-gives them in dossiq. `href` opens the document in shillinq.
+`{ id, kind, number, status, amount, currency, issuedOn, dueOn, openAmount, paymentState, path, restricted }`.
+`paymentState` is one of `none`, `outstanding`, `paid`, `waived`, the words dossiq's case already uses. `path` is the
+document's page in shillinq, for the panel to pass through `generateUrl`; only invoices and credit notes have one
+today. A quote has no amount of its own, so its `amount` is null. Rows sort newest first by `issuedOn`.
 
 ## D-4 Authorization before the read
 
-The leaf lists only documents in administrations the caller may read (`AdministrationContextService`). A user who may
-open the case but not the administration sees the count and the state, not amounts or numbers. Acts check their own
+The finder reads twice per schema: past the caller's rights to count, and as the caller to know what they may open. A
+document the caller may not read is listed with `restricted: true` and only its kind, status and payment state. A case
+never reads "nothing owed" while an invoice its handler cannot open is outstanding. Acts check their own
 action first: `quote.create`, `invoice.issue`, `invoice.credit`, `payment.request` (exists), `payable.raise`. The
 action list lives in `paymentActionGroups` and `paymentActionApps`, which already hold `payment.request`.
 
