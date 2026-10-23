@@ -1,0 +1,245 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "financial-documents-on-any-object",
+    "adr": "ADR-037 modular register fragment; ADR-048 semantic reference; ADR-107 money has one home",
+    "description": "Quote, ARInvoice, PaymentRequest and InboundPayable name the objects they are about in linkedObjects, the item shape Contract.linkedObjects has plus an optional app. LinkedObjectsLockListener keeps the list once the document is issued (REQ-FDO-001)."
+  },
+  "components": {
+    "schemas": {
+      "Quote": {
+        "version": "0.2.0",
+        "x-spec": "openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md",
+        "properties": {
+          "linkedObjects": {
+            "type": "array",
+            "title": "Linked objects",
+            "description": "The objects this quotation is about, for example the case it prices. Can change while the quote is a draft and is kept once it is sent.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "app": {
+                  "type": "string",
+                  "description": "The app that owns the linked object, for example dossiq. It describes the reference and never makes two references differ.",
+                  "example": "dossiq",
+                  "title": "App"
+                },
+                "type": {
+                  "type": "string",
+                  "description": "The semantic type of the linked object.",
+                  "example": "case",
+                  "title": "Type"
+                },
+                "register": {
+                  "type": "string",
+                  "description": "The register slug holding it.",
+                  "example": "dossiq",
+                  "title": "Register"
+                },
+                "schema": {
+                  "type": "string",
+                  "description": "Its schema slug.",
+                  "example": "Zaak",
+                  "title": "Schema"
+                },
+                "id": {
+                  "type": "string",
+                  "description": "Its identifier.",
+                  "example": "zaak-7",
+                  "title": "Id"
+                },
+                "label": {
+                  "type": "string",
+                  "description": "What to show for it, so the contract screen does not have to read every linked object to draw a list.",
+                  "example": "Onderhoud gemaal, 2026-0042",
+                  "title": "Label"
+                }
+              },
+              "required": [
+                "register",
+                "schema",
+                "id"
+              ]
+            },
+            "default": []
+          }
+        }
+      },
+      "ARInvoice": {
+        "version": "0.17.0",
+        "x-spec": "openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md",
+        "properties": {
+          "linkedObjects": {
+            "type": "array",
+            "title": "Linked objects",
+            "description": "The objects this invoice is about, for example the cases it charges for. Can change while the invoice is a draft and is kept once it is issued. A credit note names the objects of the invoice it corrects.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "app": {
+                  "type": "string",
+                  "description": "The app that owns the linked object, for example dossiq. It describes the reference and never makes two references differ.",
+                  "example": "dossiq",
+                  "title": "App"
+                },
+                "type": {
+                  "type": "string",
+                  "description": "The semantic type of the linked object.",
+                  "example": "case",
+                  "title": "Type"
+                },
+                "register": {
+                  "type": "string",
+                  "description": "The register slug holding it.",
+                  "example": "dossiq",
+                  "title": "Register"
+                },
+                "schema": {
+                  "type": "string",
+                  "description": "Its schema slug.",
+                  "example": "Zaak",
+                  "title": "Schema"
+                },
+                "id": {
+                  "type": "string",
+                  "description": "Its identifier.",
+                  "example": "zaak-7",
+                  "title": "Id"
+                },
+                "label": {
+                  "type": "string",
+                  "description": "What to show for it, so the contract screen does not have to read every linked object to draw a list.",
+                  "example": "Onderhoud gemaal, 2026-0042",
+                  "title": "Label"
+                }
+              },
+              "required": [
+                "register",
+                "schema",
+                "id"
+              ]
+            },
+            "default": []
+          }
+        }
+      },
+      "PaymentRequest": {
+        "version": "0.10.0",
+        "x-spec": "openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md",
+        "properties": {
+          "linkedObjects": {
+            "type": "array",
+            "title": "Linked objects",
+            "description": "The objects the money is asked for. Kept from the moment the request is raised. A request on one object also names it in subject.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "app": {
+                  "type": "string",
+                  "description": "The app that owns the linked object, for example dossiq. It describes the reference and never makes two references differ.",
+                  "example": "dossiq",
+                  "title": "App"
+                },
+                "type": {
+                  "type": "string",
+                  "description": "The semantic type of the linked object.",
+                  "example": "case",
+                  "title": "Type"
+                },
+                "register": {
+                  "type": "string",
+                  "description": "The register slug holding it.",
+                  "example": "dossiq",
+                  "title": "Register"
+                },
+                "schema": {
+                  "type": "string",
+                  "description": "Its schema slug.",
+                  "example": "Zaak",
+                  "title": "Schema"
+                },
+                "id": {
+                  "type": "string",
+                  "description": "Its identifier.",
+                  "example": "zaak-7",
+                  "title": "Id"
+                },
+                "label": {
+                  "type": "string",
+                  "description": "What to show for it, so the contract screen does not have to read every linked object to draw a list.",
+                  "example": "Onderhoud gemaal, 2026-0042",
+                  "title": "Label"
+                }
+              },
+              "required": [
+                "register",
+                "schema",
+                "id"
+              ]
+            },
+            "default": []
+          }
+        }
+      },
+      "InboundPayable": {
+        "version": "0.3.0",
+        "x-spec": "openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md",
+        "properties": {
+          "linkedObjects": {
+            "type": "array",
+            "title": "Linked objects",
+            "description": "The objects this payout is for, as the app that raised it named them, for example the case whose late decision costs a penalty. Kept from the moment it is raised.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "app": {
+                  "type": "string",
+                  "description": "The app that owns the linked object, for example dossiq. It describes the reference and never makes two references differ.",
+                  "example": "dossiq",
+                  "title": "App"
+                },
+                "type": {
+                  "type": "string",
+                  "description": "The semantic type of the linked object.",
+                  "example": "case",
+                  "title": "Type"
+                },
+                "register": {
+                  "type": "string",
+                  "description": "The register slug holding it.",
+                  "example": "dossiq",
+                  "title": "Register"
+                },
+                "schema": {
+                  "type": "string",
+                  "description": "Its schema slug.",
+                  "example": "Zaak",
+                  "title": "Schema"
+                },
+                "id": {
+                  "type": "string",
+                  "description": "Its identifier.",
+                  "example": "zaak-7",
+                  "title": "Id"
+                },
+                "label": {
+                  "type": "string",
+                  "description": "What to show for it, so the contract screen does not have to read every linked object to draw a list.",
+                  "example": "Onderhoud gemaal, 2026-0042",
+                  "title": "Label"
+                }
+              },
+              "required": [
+                "register",
+                "schema",
+                "id"
+              ]
+            },
+            "default": []
+          }
+        }
+      }
+    }
+  }
+}

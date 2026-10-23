@@ -32,6 +32,7 @@ use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Event\PayableCancelRequestedEvent;
 use OCA\Shillinq\Event\PayableRaisedEvent;
+use OCA\Shillinq\Util\LinkedObjectReferences;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\App\IAppManager;
@@ -320,6 +321,10 @@ class InboundPayableService {
 
 		if ($payable['dueOn'] !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$payable['dueOn']) !== 1) {
 			return 'The pay-by date must read YYYY-MM-DD.';
+		}
+
+		if (LinkedObjectReferences::isWellFormed(list: $payable['linkedObjects']) === false) {
+			return LinkedObjectReferences::MALFORMED;
 		}
 
 		return null;

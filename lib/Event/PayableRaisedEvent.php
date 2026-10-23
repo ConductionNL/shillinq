@@ -70,6 +70,7 @@ final class PayableRaisedEvent extends Event {
 	 * @param string $administrationId The administration that books it.
 	 * @param string $dueOn            The latest date the payout should reach the payee (Y-m-d), or empty.
 	 * @param string $currency         The currency.
+	 * @param array<int, array<string, string>> $linkedObjects The objects the payout is for, as semantic references.
 	 *
 	 * @return void
 	 */
@@ -86,6 +87,7 @@ final class PayableRaisedEvent extends Event {
 		private readonly string $administrationId = '',
 		private readonly string $dueOn = '',
 		private readonly string $currency = 'EUR',
+		private readonly array $linkedObjects = [],
 	) {
 		parent::__construct();
 	}//end __construct()
@@ -113,6 +115,7 @@ final class PayableRaisedEvent extends Event {
 			'administrationId' => trim($this->administrationId),
 			'dueOn' => trim($this->dueOn),
 			'callbackUrl' => trim($this->callbackUrl),
+			'linkedObjects' => array_values($this->linkedObjects),
 		];
 	}//end toArray()
 

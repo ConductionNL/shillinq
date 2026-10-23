@@ -176,6 +176,7 @@ final class ObjectRequestInvoiceServiceTest extends TestCase {
 		self::assertSame($customers[0]['id'], $invoices[0]['customerId']);
 		self::assertSame('Winter Camp 2026', $invoices[0]['invoiceLines'][0]['itemName']);
 
+		self::assertSame($created['linkedObjects'], $invoices[0]['linkedObjects'], 'the invoice is about what the request is about (REQ-FDO-001)');
 		self::assertSame($invoices[0]['id'], $created['invoiceReference']);
 		self::assertSame('adm-larp-1', $created['administrationId']);
 

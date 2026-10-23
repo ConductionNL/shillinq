@@ -228,6 +228,22 @@ final class InboundPayableServiceTest extends TestCase {
 	}//end testAnAppRaisesAPayable()
 
 	/**
+	 * A payout names the objects it is for, and the payable keeps them (REQ-FDO-001).
+	 * @return void
+	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-001)
+	 */
+	public function testAPayoutNamesTheObjectsItIsFor(): void {
+		$case = ['app' => 'dossiq', 'type' => 'case', 'register' => 'dossiq', 'schema' => 'case', 'id' => 'c-1'];
+
+		$event = self::dispatch(service: $this->service(), event: self::raised(override: ['linkedObjects' => [$case]]));
+
+		self::assertTrue($event->isHandled(), (string)$event->getError());
+		$saved = $this->savedIn(schema: 'InboundPayable');
+		self::assertSame([$case], $saved[0]['linkedObjects']);
+		self::assertSame([], RegisterSchema::errors(slug: 'InboundPayable', object: $saved[0]));
+	}//end testAPayoutNamesTheObjectsItIsFor()
+
+	/**
 	 * A command with a bad amount, IBAN, payee, reference or callback, or from
 	 * an app that is not installed, is refused and writes nothing (REQ-IPY-001).
 	 * @return void
@@ -241,6 +257,7 @@ final class InboundPayableServiceTest extends TestCase {
 			'reference' => ['reference' => 'X1'],
 			'callback' => ['callbackUrl' => 'ftp://dossiq.example/cb'],
 			'app' => ['sourceApp' => 'ghostapp'],
+			'linked object' => ['linkedObjects' => [['register' => 'dossiq', 'schema' => 'case']]],
 		];
 		foreach ($cases as $label => $override) {
 			$service = $this->service();

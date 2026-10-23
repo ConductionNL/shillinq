@@ -125,8 +125,8 @@ final class SchoolContributionsFragmentTest extends TestCase {
 	}//end testTheFragmentOwnsNoRequiredList()
 
 	/**
-	 * The merged ARInvoice version is this fragment's, because it is the last
-	 * fragment in sort order that sets one. The import only updates a schema
+	 * The merged ARInvoice version is at least this fragment's, because no
+	 * fragment sorting earlier may set the last one. The import only updates a schema
 	 * whose version rises, so a lower merged version would leave the
 	 * contribution group off every existing instance.
 	 *
@@ -148,10 +148,12 @@ final class SchoolContributionsFragmentTest extends TestCase {
 			}
 		}
 
-		self::assertSame('school-contributions.json', $lastWriter);
+		// This fragment, or one sorting after it that moves the version further
+		// (zz-financial-documents-linked-objects), has the last word.
+		self::assertGreaterThanOrEqual(0, strcmp($lastWriter, 'school-contributions.json'), $lastWriter);
 		// 0.16.0: billing-inherited-defects declares four more ARInvoice fields in
-		// its own fragment, which sorts earlier, so the version moves here.
-		self::assertSame('0.16.0', $lastVersion);
+		// its own fragment, which sorts earlier, so the version moved here.
+		self::assertTrue(version_compare($lastVersion, '0.16.0', '>='), $lastVersion);
 	}//end testTheMergedInvoiceVersionIsThisFragments()
 
 	/**

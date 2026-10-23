@@ -318,6 +318,7 @@ final class PaymentRequestLeafProviderTest extends TestCase {
 			['type' => 'case', 'register' => 'dossiq', 'schema' => 'Zaak', 'id' => 'zaak-7'],
 			$created['subject']
 		);
+		self::assertSame([$created['subject']], $created['linkedObjects'], 'the host object is the request\'s one linked object (REQ-FDO-001)');
 		self::assertSame('handler', $created['requestedBy']);
 		self::assertCount(1, $this->saved);
 	}//end testMappedCallerAppendsAPendingRequestOnTheHostObject()
