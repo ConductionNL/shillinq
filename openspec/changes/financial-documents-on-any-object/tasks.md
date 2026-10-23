@@ -4,7 +4,7 @@
 
 ## 1. Schema and events
 
-- [x] 1.1 Fragment `financial-documents-linked-objects.json`: `linkedObjects` on Quote, ARInvoice, PaymentRequest, InboundPayable; `LinkedObjectsLockListener` freezes it once issued (REQ-FDO-001). Verify: LinkedObjectsFragmentTest, LinkedObjectsLockListenerTest, red first.
+- [x] 1.1 Fragment `zz-financial-documents-linked-objects.json`: `linkedObjects` on Quote, ARInvoice, PaymentRequest, InboundPayable; `LinkedObjectsLockListener` freezes it once issued (REQ-FDO-001). Verify: LinkedObjectsFragmentTest, LinkedObjectsLockListenerTest, red first.
 - [x] 1.2 `PayableRaisedEvent` carries `linkedObjects` onto the InboundPayable; the leaf and the object-request invoice write them; repair `BackfillLinkedObjects` (REQ-FDO-001). Verify: InboundPayableServiceTest, BackfillLinkedObjectsTest, red first.
 
 ## 2. Leaf
