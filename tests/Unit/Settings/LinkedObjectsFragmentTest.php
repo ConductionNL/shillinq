@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Unit tests for the financial-documents-linked-objects register fragment.
+ * Unit tests for the zz-financial-documents-linked-objects register fragment.
  *
  * @category Test
  * @package  OCA\Shillinq\Tests\Unit\Settings
@@ -40,7 +40,7 @@ final class LinkedObjectsFragmentTest extends TestCase {
 	 *
 	 * @var string
 	 */
-	private const FRAGMENT = 'financial-documents-linked-objects.json';
+	private const FRAGMENT = 'zz-financial-documents-linked-objects.json';
 
 	/**
 	 * The four document schemas that carry the list.
@@ -109,6 +109,23 @@ final class LinkedObjectsFragmentTest extends TestCase {
 			self::assertArrayHasKey('app', $list['items']['properties'], $name . '.linkedObjects lacks app');
 		}
 	}//end testEveryDocumentDeclaresTheContractListShape()
+
+	/**
+	 * The fragment sorts after every other fragment that sets a version for these schemas,
+	 * because the last fragment in name order wins the version.
+	 *
+	 * @return void
+	 */
+	public function testTheFragmentHasTheLastWordOnTheVersions(): void {
+		foreach (glob(self::FRAGMENT_DIR . '/*.json') as $file) {
+			$schemas = (json_decode((string)file_get_contents($file), true)['components']['schemas'] ?? []);
+			foreach (self::DOCUMENTS as $name) {
+				if (isset($schemas[$name]['version']) === true && basename($file) !== self::FRAGMENT) {
+					self::assertLessThan(0, strcmp(basename($file), self::FRAGMENT), basename($file) . ' sets ' . $name . ' after this fragment');
+				}
+			}
+		}
+	}//end testTheFragmentHasTheLastWordOnTheVersions()
 
 	/**
 	 * Each schema's version moves past every other fragment, so the import picks the list up.

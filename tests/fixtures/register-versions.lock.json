@@ -44,6 +44,10 @@
         {
             "appVersion": "0.5.6-unstable.20261016190000",
             "versionsSha256": "3f175d840807693570662bed868d2c84f1695f29bce5901e4a63b272a2889f28"
+        },
+        {
+            "appVersion": "0.5.6-unstable.20261023120000",
+            "versionsSha256": "feebdb8346d9a8eacf91f1a69c2683eeae6ca423eaf0a4108d52ff351d39e6d4"
         }
     ],
     "versions": {
@@ -52,7 +56,7 @@
         "schema:ACMReport": "0.1.0",
         "schema:APInvoice": "0.1.0",
         "schema:APTransaction": "0.3.0",
-        "schema:ARInvoice": "0.16.0",
+        "schema:ARInvoice": "0.17.0",
         "schema:Aansluiting": "0.1.0",
         "schema:AansluitingResult": "0.1.0",
         "schema:Account": "0.2.0",
@@ -291,7 +295,7 @@
         "schema:IcpSupply": "0.1.0",
         "schema:ImportBatch": "0.3.0",
         "schema:ImportMapping": "0.1.0",
-        "schema:InboundPayable": "0.2.0",
+        "schema:InboundPayable": "0.3.0",
         "schema:IncassoKostenBerekening": "0.2.0",
         "schema:IncomeStatement": "0.1.0",
         "schema:Indicator": "0.1.0",
@@ -390,7 +394,7 @@
         "schema:Payment": "0.1.0",
         "schema:PaymentPlan": "0.1.0",
         "schema:PaymentPlanInstalment": "0.1.0",
-        "schema:PaymentRequest": "0.9.0",
+        "schema:PaymentRequest": "0.10.0",
         "schema:PaymentRun": "0.3.0",
         "schema:Payroll": "0.1.0",
         "schema:PensioenvoorzieningDetail": "0.1.0",
@@ -426,7 +430,7 @@
         "schema:QualifyingAsset": "0.1.0",
         "schema:QuartaalrapportageFido": "0.2.0",
         "schema:QuarterlyTaxStatement": "0.1.0",
-        "schema:Quote": "0.1.0",
+        "schema:Quote": "0.2.0",
         "schema:QuoteLine": "0.1.0",
         "schema:RJ270Stage": "0.1.0",
         "schema:RTransaction": "0.1.0",
