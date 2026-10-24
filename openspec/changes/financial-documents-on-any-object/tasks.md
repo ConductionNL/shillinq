@@ -18,6 +18,10 @@
 - [x] 3.2 Issue an invoice on the object, and request payment of an invoice with the host's linked objects (REQ-FDO-003, REQ-FDO-004). Verify: FinancialDocumentActionsTest, FinancialDocumentActionControllerTest, vitest.
 - [ ] 3.3 Panel acts for new quote, credit invoice and raise payout (follow-up change).
 
+## 3b. Payouts for the raising app
+
+- [x] 3.4 Historical payout on `PayableRaisedEvent`; `PayablesRequestedEvent` answers the raising app (REQ-FDO-007, REQ-FDO-008). Verify: InboundPayableServiceTest, red first.
+
 ## 4. End to end
 
 - [ ] 4.1 Strings (en, nl) and Playwright `tests/e2e/financial-documents-on-any-object.spec.ts`. Verify: passes locally.

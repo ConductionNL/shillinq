@@ -183,7 +183,7 @@
         }
       },
       "InboundPayable": {
-        "version": "0.3.0",
+        "version": "0.4.0",
         "x-spec": "openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md",
         "properties": {
           "linkedObjects": {
@@ -237,6 +237,12 @@
               ]
             },
             "default": []
+          },
+          "historical": {
+            "type": "boolean",
+            "default": false,
+            "title": "Historical",
+            "description": "True when the payout was paid or ended before finance kept it, and was recorded afterwards. A historical payout has no journal entry of its own, because the money moved outside shillinq."
           }
         }
       }

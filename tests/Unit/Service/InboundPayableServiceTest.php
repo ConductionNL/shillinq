@@ -25,9 +25,12 @@ use OCA\Shillinq\AppInfo\ObjectRequestSettlementRegistration;
 use OCA\Shillinq\Controller\InboundPayableController;
 use OCA\Shillinq\Event\PayableCancelRequestedEvent;
 use OCA\Shillinq\Event\PayableRaisedEvent;
+use OCA\Shillinq\Event\PayablesRequestedEvent;
 use OCA\Shillinq\Listener\PayableCancelRequestedListener;
 use OCA\Shillinq\Listener\PayableRaisedListener;
+use OCA\Shillinq\Listener\PayablesRequestedListener;
 use OCA\Shillinq\Service\InboundPayableCallbackSender;
+use OCA\Shillinq\Service\InboundPayableReader;
 use OCA\Shillinq\Service\InboundPayableService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
@@ -242,6 +245,102 @@ final class InboundPayableServiceTest extends TestCase {
 		self::assertSame([$case], $saved[0]['linkedObjects']);
 		self::assertSame([], RegisterSchema::errors(slug: 'InboundPayable', object: $saved[0]));
 	}//end testAPayoutNamesTheObjectsItIsFor()
+
+	/**
+	 * The reader over the same store the service writes.
+	 * @param list<string> $installed Installed apps.
+	 * @return InboundPayableReader The reader.
+	 */
+	private function reader(array $installed = ['dossiq']): InboundPayableReader {
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
+		$apps = $this->createMock(IAppManager::class);
+		$apps->method('isInstalled')->willReturnCallback(static fn (string $id): bool => in_array($id, $installed, true));
+
+		return new InboundPayableReader(objectService: $this->store, appConfig: $appConfig, appManager: $apps);
+	}//end reader()
+
+	/**
+	 * A payout the app paid before finance kept it is recorded in the state it
+	 * reached, with no booking and no callback, because the money moved outside
+	 * shillinq (REQ-FDO-007).
+	 * @return void
+	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-007)
+	 */
+	public function testAHistoricalPayoutIsRecordedWithoutBookingOrCallback(): void {
+		$case = ['app' => 'dossiq', 'type' => 'case', 'register' => 'dossiq', 'schema' => 'case', 'id' => 'case-7'];
+		$event = self::dispatch(
+			service: $this->service(),
+			event: self::raised(override: ['historicalState' => 'paid', 'paidOn' => '2026-03-03', 'bankReference' => 'ERP-9', 'linkedObjects' => [$case]])
+		);
+
+		self::assertTrue($event->isHandled(), (string)$event->getError());
+		$saved = $this->savedIn(schema: 'InboundPayable');
+		self::assertCount(1, $saved);
+		self::assertSame('paid', $saved[0]['state']);
+		self::assertTrue($saved[0]['historical']);
+		self::assertSame('2026-03-03', $saved[0]['paidOn']);
+		self::assertSame('ERP-9', $saved[0]['bankReference']);
+		self::assertArrayNotHasKey('historicalState', $saved[0]);
+		self::assertSame('paid', $event->getResult()['state']);
+		self::assertSame([], $this->runs, 'a historical payout books nothing');
+		self::assertSame([], $this->posts, 'a historical payout calls nobody back');
+		self::assertSame([], RegisterSchema::errors(slug: 'InboundPayable', object: $saved[0]));
+	}//end testAHistoricalPayoutIsRecordedWithoutBookingOrCallback()
+
+	/**
+	 * A historical state must be one a payout can end in, and a paid one needs its date (REQ-FDO-007).
+	 * @return void
+	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-007)
+	 */
+	public function testAHistoricalStateMustBeOneAPayoutCanReach(): void {
+		foreach ([['historicalState' => 'booked'], ['historicalState' => 'paid'], ['historicalState' => 'paid', 'paidOn' => '3-3-2026']] as $override) {
+			$event = self::dispatch(service: $this->service(), event: self::raised(override: $override));
+			self::assertFalse($event->isHandled(), (string)json_encode($override));
+			self::assertSame([], $this->store->saved ?? [], 'nothing written');
+		}
+	}//end testAHistoricalStateMustBeOneAPayoutCanReach()
+
+	/**
+	 * The app that raised payouts reads them back: its own only, narrowed by
+	 * calculation and by the year they were paid in (REQ-FDO-008).
+	 * @return void
+	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-008)
+	 */
+	public function testTheRaisingAppReadsItsOwnPayouts(): void {
+		$service = $this->service(installed: ['dossiq', 'larpinq']);
+		self::dispatch(service: $service, event: self::raised(override: ['reference' => 'DWS-2026-0001', 'correlationId' => 'calc-1', 'historicalState' => 'paid', 'paidOn' => '2026-03-03']));
+		self::dispatch(service: $service, event: self::raised(override: ['reference' => 'DWS-2025-0009', 'correlationId' => 'calc-2', 'historicalState' => 'paid', 'paidOn' => '2025-12-30']));
+		self::dispatch(service: $service, event: self::raised(override: ['reference' => 'DWS-2026-0002', 'correlationId' => 'calc-3']));
+		self::dispatch(service: $service, event: self::raised(override: ['sourceApp' => 'larpinq', 'reference' => 'LRP-2026-0001', 'correlationId' => 'calc-1', 'historicalState' => 'paid', 'paidOn' => '2026-01-01']));
+
+		$listener = new PayablesRequestedListener(payables: $this->reader(installed: ['dossiq', 'larpinq']));
+		$year = new PayablesRequestedEvent(sourceApp: 'dossiq', paidInYear: 2026);
+		$listener->handle(event: $year);
+		$byCalculation = new PayablesRequestedEvent(sourceApp: 'dossiq', correlationIds: ['calc-1', 'calc-3']);
+		$listener->handle(event: $byCalculation);
+
+		self::assertSame(['DWS-2026-0001'], array_column($year->getPayables(), 'reference'));
+		self::assertSame(['DWS-2026-0001', 'DWS-2026-0002'], array_column($byCalculation->getPayables(), 'reference'));
+		$row = $year->getPayables()[0];
+		self::assertSame(['payableId', 'reference', 'correlationId', 'category', 'amount', 'payee', 'currency', 'state', 'paidOn', 'bankReference', 'historical', 'linkedObjects'], array_keys($row));
+		self::assertSame(['name' => 'J. Jansen', 'iban' => self::IBAN], $row['payee'], 'the audit names who was paid');
+		self::assertSame(1442.0, $row['amount']);
+	}//end testTheRaisingAppReadsItsOwnPayouts()
+
+	/**
+	 * An app that is not installed reads nothing (REQ-FDO-008).
+	 * @return void
+	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-008)
+	 */
+	public function testAnAppThatIsNotInstalledIsRefused(): void {
+		$event = new PayablesRequestedEvent(sourceApp: 'ghostapp');
+		$this->service();
+		(new PayablesRequestedListener(payables: $this->reader()))->handle(event: $event);
+
+		self::assertFalse($event->isHandled());
+		self::assertNotSame('', (string)$event->getError());
+	}//end testAnAppThatIsNotInstalledIsRefused()
 
 	/**
 	 * A command with a bad amount, IBAN, payee, reference or callback, or from
