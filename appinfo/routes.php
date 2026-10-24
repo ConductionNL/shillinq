@@ -783,6 +783,12 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // the same right as settling its money.
             ['name' => 'paymentRequestAction#send', 'url' => '/api/payment-requests/{id}/send', 'verb' => 'POST'],
             ['name' => 'paymentRequestAction#settle', 'url' => '/api/payment-requests/{id}/settle', 'verb' => 'POST'],
+            // Financial documents on any object (financial-documents-on-any-object,
+            // REQ-FDO-003/004): issue an invoice on a host object, ask for payment
+            // of an invoice. #[NoAdminRequired], gated INSIDE on invoice.issue or
+            // payment.request and on the caller's administration.
+            ['name' => 'financialDocumentAction#issueInvoice', 'url' => '/api/financial-documents/invoices', 'verb' => 'POST'],
+            ['name' => 'financialDocumentAction#requestPayment', 'url' => '/api/financial-documents/invoices/{id}/payment-request', 'verb' => 'POST'],
 
             // Finance's half of a refund another app asked for
             // (receivables-object-request-refund-and-credit, REQ-ORC-002):

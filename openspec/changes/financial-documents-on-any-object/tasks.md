@@ -15,7 +15,7 @@
 ## 3. Panel and payment
 
 - [ ] 3.1 `ShillinqFinancialDocumentsPanel.vue` + registration with `kinds` and `actions` props and the linked-card summary (REQ-FDO-003). Verify: vitest.
-- [ ] 3.2 "Request payment" on an invoice raises an invoice payment request with the host subject (REQ-FDO-004). Verify: PHPUnit + vitest.
+- [ ] 3.2 (backend done: `FinancialDocumentActions` + `FinancialDocumentActionController`, issue invoice and request payment; panel button open) "Request payment" on an invoice raises an invoice payment request with the host subject (REQ-FDO-004). Verify: PHPUnit + vitest.
 
 ## 4. End to end
 
