@@ -70,11 +70,13 @@ final class FeeScheduleService {
 	 * The parts that identify which type a schedule applies to. The intake
 	 * channel is deliberately absent: a channel-specific row and the default row
 	 * for the same type are two rows of the SAME tuple, and an overlap check that
-	 * counted the channel would let a second default slip past.
+	 * counted the channel would let a second default slip past. The variant is
+	 * present: a fee for one route of a type and the fee for the type as a whole
+	 * are different rules, and a row without one reads as the empty variant.
 	 *
 	 * @var array<int, string>
 	 */
-	public const TUPLE_PARTS = ['targetApp', 'register', 'schema', 'typeProperty', 'typeValue'];
+	public const TUPLE_PARTS = ['targetApp', 'register', 'schema', 'typeProperty', 'typeValue', 'variantValue'];
 
 	/**
 	 * Constructor.
@@ -117,7 +119,8 @@ final class FeeScheduleService {
 
 
 		$valid = [];
-		foreach ($this->schedulesFor(tuple: $tuple) as $schedule) {
+		// A refund is paid back after the fact, never charged at intake.
+		foreach ((new FeeCalculation())->ofKind(schedules: $this->schedulesFor(tuple: $tuple), refund: false) as $schedule) {
 			if ($this->isValidOn(schedule: $schedule, day: $day) === true) {
 				$valid[] = $schedule;
 			}
@@ -262,22 +265,23 @@ final class FeeScheduleService {
 				continue;
 			}
 
-			$resolved = $this->resolve(
-				tuple: [
-					'targetApp' => (string)($row['targetApp'] ?? $register),
-					'register' => $register,
-					'schema' => $schema,
-					'typeProperty' => $typeProperty,
-					'typeValue' => $typeValue,
-				],
-				intakeChannel: $intakeChannel,
-				onDate: $onDate,
-			);
+			$tuple = [
+				'targetApp' => (string)($row['targetApp'] ?? $register),
+				'register' => $register,
+				'schema' => $schema,
+				'typeProperty' => $typeProperty,
+				'typeValue' => $typeValue,
+			];
 
-			if ($resolved !== null) {
-				return $resolved;
+			// The fee for the object's own variant first, then the type's.
+			$variant = (string)($object[(string)($row['variantProperty'] ?? 'variant')] ?? '');
+			foreach (array_unique([$variant, '']) as $variantValue) {
+				$resolved = $this->resolve(tuple: ($tuple + ['variantValue' => $variantValue]), intakeChannel: $intakeChannel, onDate: $onDate);
+				if ($resolved !== null) {
+					return (new FeeCalculation())->applyTo(schedule: $resolved, object: $object);
+				}
 			}
-		}
+		}//end foreach
 
 		return null;
 	}//end resolveForObject()
@@ -297,6 +301,7 @@ final class FeeScheduleService {
 	 */
 	public function assertNoOverlap(array $schedule, ?array $existing = null): void {
 		$this->assertLegalBasis(schedule: $schedule);
+		(new FeeCalculation())->assertValid(schedule: $schedule);
 		$this->assertAmountsHaveADefault(schedule: $schedule);
 
 		$from = (string)($schedule['validFrom'] ?? '');
@@ -308,7 +313,12 @@ final class FeeScheduleService {
 		$channel = (string)($schedule['intakeChannel'] ?? '');
 		$selfId = (string)($schedule['id'] ?? '');
 
-		$candidates = ($existing ?? $this->schedulesFor(tuple: $schedule));
+		// A refund rule and a charge for the same type are two rules, not an overlap.
+		$calculation = new FeeCalculation();
+		$candidates  = $calculation->ofKind(
+			schedules: ($existing ?? $this->schedulesFor(tuple: $schedule)),
+			refund: $calculation->isRefund(schedule: $schedule)
+		);
 
 		foreach ($candidates as $candidate) {
 			$candidateId = (string)($candidate['id'] ?? '');
