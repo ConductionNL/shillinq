@@ -21,6 +21,7 @@ export const reportViewCategories = {
 export const reportViews = [
 	{
 		id: 'APAging',
+		route: 'APAgingT2',
 		label: 'AP Aging',
 		icon: 'CalendarClockOutline',
 		category: 'operational',
@@ -153,6 +154,8 @@ export const reportViews = [
 	},
 	{
 		id: 'InventoryPostingHistory',
+		route: 'GeneralLedger',
+		query: { subLedgerType: 'inventory' },
 		label: 'Posting Historie',
 		icon: 'BookOpenVariantOutline',
 		category: 'compliance',
@@ -516,6 +519,7 @@ export const reportViews = [
 	},
 	{
 		id: 'DBAOpdrachten',
+		route: 'DBAIntakeWizard',
 		label: 'DBA assignments',
 		icon: 'BriefcaseAccountOutline',
 		category: 'compliance',
@@ -528,18 +532,21 @@ export const reportViews = [
 	},
 	{
 		id: 'DBAModelovereenkomsten',
+		route: 'DBAModelovereenkomstRegister',
 		label: 'Model agreement register',
 		icon: 'FileDocumentCheckOutline',
 		category: 'compliance',
 	},
 	{
 		id: 'DBAPortfolioRisicos',
+		route: 'DBAPortfolioDashboard',
 		label: 'DBA Portfolio Dashboard',
 		icon: 'ChartArc',
 		category: 'compliance',
 	},
 	{
 		id: 'DBAEvidenceDossiers',
+		route: 'DBAEvidenceBrowser',
 		label: 'DBA Evidence Browser',
 		icon: 'FolderZipOutline',
 		category: 'compliance',

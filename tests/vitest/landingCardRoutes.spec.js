@@ -77,3 +77,13 @@ describe('WBSO bookkeeping views', () => {
 		expect(source).toMatch(/generateUrl\('\/apps\/shillinq\/api\/v1\//)
 	})
 })
+
+describe('report view cards', () => {
+	it('open a registered page', async () => {
+		const { reportViews } = await import('../../src/components/reporting/reportViews.js')
+		const missing = reportViews
+			.map((view) => view.route || view.id)
+			.filter((name) => !pageIds.has(name))
+		expect(missing).toEqual([])
+	})
+})
