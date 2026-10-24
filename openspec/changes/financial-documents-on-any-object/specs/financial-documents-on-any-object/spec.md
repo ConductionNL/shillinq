@@ -81,9 +81,7 @@ invoice (`payment.request`), and send a payment link or record money that arrive
 SHALL refuse an act in an administration the caller does not work in. The panel SHALL report its summary to the linked
 card as the payment request panel does.
 
-> Narrowed while building: new quote, credit invoice and raise payout are not panel acts in this change. A quote has
-> no editor page in shillinq yet, a credit note has its own flow, and a payout is raised by the app that owes it
-> through `PayableRaisedEvent`. They follow in a later change.
+> New quote, credit invoice and raise payout followed as REQ-FDO-009.
 
 #### Scenario: A case page shows only invoices and payment requests
 
@@ -165,3 +163,30 @@ answer with another app's payouts, and SHALL refuse an app that is not installed
 - WHEN dossiq asks for its payouts paid in 2026
 - THEN shillinq answers with dossiq's 2026 payout only
 - @e2e exclude event contract; covered by `InboundPayableServiceTest`
+
+### Requirement: The panel starts a quote, credits an invoice and raises a payout (REQ-FDO-009)
+
+The panel SHALL offer three more acts, each behind its own action and the caller's administration:
+
+- new quote (`quote.create`): a draft quote linked to the object, with one line for the amount and description, for a
+  customer named by id or by name and email;
+- credit invoice (`invoice.credit`): for an issued or paid invoice, a credit note that is the negative of it, issued,
+  on the same linked objects and referring to the invoice by number; a draft or a credit note SHALL be refused;
+- raise payout (`payable.raise`): a payout to a payee and IBAN, with shillinq as the raising app, linked to the object;
+  a payout finance refuses SHALL be a refusal with finance's words.
+
+Each act SHALL be refused before anything is written.
+
+#### Scenario: A handler credits an invoice raised in error
+
+- GIVEN an issued invoice of 121 euros on case `c-1`
+- WHEN the handler chooses "Credit invoice"
+- THEN an issued credit note of minus 121 euros, referring to the invoice, is linked to case `c-1`
+- @e2e exclude unit only; covered by `FinancialDocumentAuthoringTest`
+
+#### Scenario: A quote is started on a case
+
+- GIVEN a handler holding `quote.create`
+- WHEN they start a quote of 4,500 euros for a customer on case `c-1`
+- THEN a draft quote with one line of 4,500 euros is linked to case `c-1`
+- @e2e exclude unit only; covered by `FinancialDocumentAuthoringTest`

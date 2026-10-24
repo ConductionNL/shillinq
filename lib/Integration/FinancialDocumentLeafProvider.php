@@ -34,6 +34,7 @@ namespace OCA\Shillinq\Integration;
 
 use OCA\OpenRegister\Service\Integration\IntegrationProvider;
 use OCA\Shillinq\Service\FinancialDocumentActions;
+use OCA\Shillinq\Service\FinancialDocumentAuthoring;
 use OCA\Shillinq\Service\FinancialDocumentFinder;
 use OCA\Shillinq\Service\FinancialDocumentRows;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
@@ -214,6 +215,9 @@ final class FinancialDocumentLeafProvider implements IntegrationProvider {
 				'issueInvoice' => $this->authorizer->may(FinancialDocumentActions::ACTION_ISSUE_INVOICE),
 				'requestPayment' => $this->authorizer->may(PaymentActionAuthorizer::ACTION_REQUEST),
 				'administerPayments' => $this->authorizer->may(PaymentActionAuthorizer::ACTION_ADMINISTER),
+				'createQuote' => $this->authorizer->may(FinancialDocumentAuthoring::ACTION_CREATE_QUOTE),
+				'creditInvoice' => $this->authorizer->may(FinancialDocumentAuthoring::ACTION_CREDIT_INVOICE),
+				'raisePayout' => $this->authorizer->may(FinancialDocumentAuthoring::ACTION_RAISE_PAYOUT),
 			],
 		];
 	}//end list()

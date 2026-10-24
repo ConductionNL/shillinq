@@ -25,6 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\FinancialDocumentActionRefusedException;
 use OCA\Shillinq\Service\FinancialDocumentActions;
+use OCA\Shillinq\Service\FinancialDocumentGuard;
 use OCA\Shillinq\Service\ObjectRequestInvoiceService;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
@@ -150,12 +151,14 @@ final class FinancialDocumentActionsTest extends TestCase {
 		$administrations->method('canAccess')->willReturn($memberOfAdministration);
 		$administrations->method('defaultAdministrationIdForUser')->willReturn('adm-1');
 
+		$objects = new DuckObjectServiceAdapter(inner: $store);
+		$authorizer = new PaymentActionAuthorizer(appConfig: $appConfig, userSession: $session, groupManager: $groups);
+
 		return new FinancialDocumentActions(
-			objectService: new DuckObjectServiceAdapter(inner: $store),
+			objectService: $objects,
 			appConfig: $appConfig,
-			authorizer: new PaymentActionAuthorizer(appConfig: $appConfig, userSession: $session, groupManager: $groups),
-			administrations: $administrations,
 			invoices: ($invoices ?? $this->createMock(ObjectRequestInvoiceService::class)),
+			guard: new FinancialDocumentGuard(objectService: $objects, appConfig: $appConfig, authorizer: $authorizer, administrations: $administrations),
 		);
 	}//end actions()
 

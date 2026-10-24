@@ -40,7 +40,13 @@ final class FinancialDocumentRows {
 	 */
 	private const FIELDS = [
 		'Quote' => ['number' => 'quoteNumber', 'status' => 'status', 'amount' => null, 'issuedOn' => 'acceptedAt', 'dueOn' => 'validUntil'],
-		'ARInvoice' => ['number' => 'invoiceNumber', 'status' => 'lifecycleState', 'amount' => 'grossAmount', 'issuedOn' => 'invoiceDate', 'dueOn' => 'dueDate'],
+		'ARInvoice' => [
+			'number' => 'invoiceNumber',
+			'status' => 'lifecycleState',
+			'amount' => 'grossAmount',
+			'issuedOn' => 'invoiceDate',
+			'dueOn' => 'dueDate',
+		],
 		'PaymentRequest' => ['number' => 'paymentReference', 'status' => 'state', 'amount' => 'amount', 'issuedOn' => 'requestedAt', 'dueOn' => 'dueAt'],
 		'InboundPayable' => ['number' => 'reference', 'status' => 'state', 'amount' => 'amount', 'issuedOn' => 'requestedAt', 'dueOn' => 'dueOn'],
 	];

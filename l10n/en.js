@@ -1,6 +1,15 @@
 OC.L10N.register(
     "shillinq",
     {
+        "New quote": "New quote",
+        "Raise payout": "Raise payout",
+        "Credit invoice": "Credit invoice",
+        "Who is paid": "Who is paid",
+        "Start the quote": "Start the quote",
+        "Raise the payout": "Raise the payout",
+        "The quote is started.": "The quote is started.",
+        "The payout is raised.": "The payout is raised.",
+        "The credit note is issued.": "The credit note is issued.",
         "financial documents": "financial documents",
         "No quotes, invoices or payments are linked to this record.": "No quotes, invoices or payments are linked to this record.",
         "Issue invoice": "Issue invoice",

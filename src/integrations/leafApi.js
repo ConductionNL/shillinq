@@ -193,3 +193,52 @@ export async function requestInvoicePayment(invoiceId) {
 	const response = await axios.post(url, {})
 	return response.data || {}
 }
+
+/**
+ * Start a draft quote on the host object, with one line. The server refuses a
+ * caller without `quote.create`, or outside the administration.
+ *
+ * @param {object} context The host object identity.
+ * @param {string} context.register The host object's register.
+ * @param {string} context.schema The host object's schema.
+ * @param {string} context.objectId The host object's id.
+ * @param {object} quote The quote: amount, description, debtor and optionally objectType.
+ *
+ * @return {Promise<object>} `{ quote: { id } }`.
+ */
+export async function createQuote({ register, schema, objectId }, quote) {
+	const url = generateUrl('/apps/shillinq/api/financial-documents/quotes')
+	const response = await axios.post(url, { register, schema, objectId, ...quote })
+	return response.data || {}
+}
+
+/**
+ * Issue a credit note for the whole of an invoice.
+ *
+ * @param {string} invoiceId The invoice id.
+ *
+ * @return {Promise<object>} `{ creditNote: { id } }`.
+ */
+export async function creditInvoice(invoiceId) {
+	const url = generateUrl('/apps/shillinq/api/financial-documents/invoices/{invoiceId}/credit', { invoiceId })
+	const response = await axios.post(url, {})
+	return response.data || {}
+}
+
+/**
+ * Raise a payout on the host object. The server refuses a caller without
+ * `payable.raise`, or outside the administration; finance refuses a bad IBAN.
+ *
+ * @param {object} context The host object identity.
+ * @param {string} context.register The host object's register.
+ * @param {string} context.schema The host object's schema.
+ * @param {string} context.objectId The host object's id.
+ * @param {object} payout The payout: amount, payeeName, iban and optionally description, dueOn, objectType.
+ *
+ * @return {Promise<object>} `{ payout: { payableId, state } }`.
+ */
+export async function raisePayout({ register, schema, objectId }, payout) {
+	const url = generateUrl('/apps/shillinq/api/financial-documents/payouts')
+	const response = await axios.post(url, { register, schema, objectId, ...payout })
+	return response.data || {}
+}

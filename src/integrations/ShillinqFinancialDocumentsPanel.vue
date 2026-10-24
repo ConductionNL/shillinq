@@ -24,46 +24,54 @@
 		</div>
 
 		<template v-else>
-			<div v-if="offers('issue-invoice') && !carded" class="shillinq-leaf__actions">
+			<div v-if="topActs.length > 0 && !carded" class="shillinq-leaf__actions">
 				<NcButton
+					v-for="topAct in topActs"
+					:key="topAct.id"
 					variant="secondary"
-					data-testid="shillinq-issue-invoice"
-					@click="openIssue">
-					{{ issueLabel }}
+					:data-testid="`shillinq-${topAct.id}`"
+					@click="openForm(topAct.id)">
+					{{ topAct.label }}
 				</NcButton>
 			</div>
 
 			<form
-				v-if="issueOpen"
+				v-if="formFor !== ''"
 				class="shillinq-leaf__form"
-				data-testid="shillinq-issue-invoice-form"
-				@submit.prevent="issue">
-				<label for="shillinq-issue-amount">{{ amountLabel }}</label>
+				:data-testid="`shillinq-${formFor}-form`"
+				@submit.prevent="submitForm">
+				<label for="shillinq-form-amount">{{ amountLabel }}</label>
 				<input
-					id="shillinq-issue-amount"
-					v-model="issueForm.amount"
+					id="shillinq-form-amount"
+					v-model="form.amount"
 					type="number"
 					min="0.01"
 					step="0.01"
 					required>
-				<label for="shillinq-issue-description">{{ descriptionLabel }}</label>
-				<input id="shillinq-issue-description" v-model="issueForm.description" type="text">
-				<label for="shillinq-issue-name">{{ debtorNameLabel }}</label>
-				<input id="shillinq-issue-name" v-model="issueForm.name" type="text" required>
-				<label for="shillinq-issue-email">{{ debtorEmailLabel }}</label>
-				<input id="shillinq-issue-email" v-model="issueForm.email" type="email" required>
+				<label for="shillinq-form-description">{{ descriptionLabel }}</label>
+				<input id="shillinq-form-description" v-model="form.description" type="text">
+				<label for="shillinq-form-name">{{ formFor === 'raise-payout' ? payeeNameLabel : debtorNameLabel }}</label>
+				<input id="shillinq-form-name" v-model="form.name" type="text" required>
+				<template v-if="formFor === 'raise-payout'">
+					<label for="shillinq-form-iban">{{ ibanLabel }}</label>
+					<input id="shillinq-form-iban" v-model="form.iban" type="text" required>
+				</template>
+				<template v-else>
+					<label for="shillinq-form-email">{{ debtorEmailLabel }}</label>
+					<input id="shillinq-form-email" v-model="form.email" type="email" required>
+				</template>
 				<div class="shillinq-leaf__actions">
-					<NcButton :disabled="busyId === 'issue'" variant="primary" type="submit">
-						{{ confirmIssueLabel }}
+					<NcButton :disabled="busyId === 'form'" variant="primary" type="submit">
+						{{ confirmLabelFor(formFor) }}
 					</NcButton>
-					<NcButton variant="tertiary" @click="issueOpen = false">
+					<NcButton variant="tertiary" @click="formFor = ''">
 						{{ cancelLabel }}
 					</NcButton>
 				</div>
 			</form>
 
-			<p v-if="notices.issue" class="shillinq-leaf__notice" role="status">
-				{{ notices.issue }}
+			<p v-if="notices.form" class="shillinq-leaf__notice" role="status">
+				{{ notices.form }}
 			</p>
 
 			<p
@@ -105,6 +113,14 @@
 							:data-testid="`shillinq-request-payment-${row.id}`"
 							@click="requestPayment(row)">
 							{{ requestPaymentLabel }}
+						</NcButton>
+						<NcButton
+							v-if="rowActs(row).includes('credit-invoice')"
+							:disabled="busyId === row.id"
+							variant="tertiary"
+							:data-testid="`shillinq-credit-invoice-${row.id}`"
+							@click="credit(row)">
+							{{ creditLabel }}
 						</NcButton>
 						<NcButton
 							v-if="rowActs(row).includes('send-link')"
@@ -168,11 +184,14 @@ import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcLoadingIcon } from '@nextcloud/vue'
 import {
+	createQuote,
+	creditInvoice,
 	FINANCIAL_DOCUMENTS_DATA_LEAF,
 	formatAmount,
 	hostIdentity,
 	isResolvable,
 	issueInvoice,
+	raisePayout,
 	readLeaf,
 	requestInvoicePayment,
 	sendPaymentLink,
@@ -196,7 +215,7 @@ export const ALL_KINDS = ['quote', 'invoice', 'credit-note', 'payment-request', 
  *
  * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
  */
-export const ALL_ACTIONS = ['issue-invoice', 'request-payment', 'send-link', 'record-payment']
+export const ALL_ACTIONS = ['issue-invoice', 'new-quote', 'raise-payout', 'request-payment', 'credit-invoice', 'send-link', 'record-payment']
 
 /**
  * Which acts a row offers, given the caller's grants and the placement's actions.
@@ -210,14 +229,17 @@ export const ALL_ACTIONS = ['issue-invoice', 'request-payment', 'send-link', 're
  * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
  */
 export function actsForRow(row, acts, allowed) {
-	if (!row || row.restricted === true || row.paymentState !== 'outstanding') {
+	if (!row || row.restricted === true) {
 		return []
 	}
 	const offered = []
-	if (row.kind === 'invoice' && acts.requestPayment === true) {
+	if (row.kind === 'invoice' && row.paymentState === 'outstanding' && acts.requestPayment === true) {
 		offered.push('request-payment')
 	}
-	if (row.kind === 'payment-request' && acts.administerPayments === true) {
+	if (row.kind === 'invoice' && ['outstanding', 'paid'].includes(row.paymentState) && acts.creditInvoice === true) {
+		offered.push('credit-invoice')
+	}
+	if (row.kind === 'payment-request' && row.paymentState === 'outstanding' && acts.administerPayments === true) {
 		offered.push('send-link', 'record-payment')
 	}
 	return offered.filter((act) => allowed.includes(act))
@@ -258,13 +280,13 @@ export default {
 	data() {
 		return {
 			rows: [],
-			acts: { issueInvoice: false, requestPayment: false, administerPayments: false },
+			acts: { issueInvoice: false, requestPayment: false, administerPayments: false, createQuote: false, creditInvoice: false, raisePayout: false },
 			loading: false,
 			error: '',
 			busyId: '',
 			notices: {},
-			issueOpen: false,
-			issueForm: { amount: '', description: '', name: '', email: '' },
+			formFor: '',
+			form: { amount: '', description: '', name: '', email: '', iban: '' },
 			settleFor: '',
 			settleForm: { method: 'pin', settlementReference: '', reason: '' },
 		}
@@ -284,10 +306,7 @@ export default {
 		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		leafReport() {
-			const actions = []
-			if (this.offers('issue-invoice')) {
-				actions.push({ label: this.issueLabel, run: () => this.openIssue() })
-			}
+			const actions = this.topActs.map((act) => ({ label: act.label, run: () => this.openForm(act.id) }))
 			return {
 				count: this.visibleRows.length,
 				emptyLabel: this.emptyLabel,
@@ -299,6 +318,45 @@ export default {
 
 				actions,
 			}
+		},
+
+		/**
+		 * The acts not tied to a row that the caller holds and the placement allows.
+		 *
+		 * @return {Array<{id: string, label: string}>} The acts.
+		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+		 */
+		topActs() {
+			return [
+				{ id: 'issue-invoice', label: this.issueLabel },
+				{ id: 'new-quote', label: this.newQuoteLabel },
+				{ id: 'raise-payout', label: this.raisePayoutLabel },
+			].filter((act) => this.offers(act.id))
+		},
+
+		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		newQuoteLabel() {
+			return t('shillinq', 'New quote')
+		},
+
+		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		raisePayoutLabel() {
+			return t('shillinq', 'Raise payout')
+		},
+
+		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		creditLabel() {
+			return t('shillinq', 'Credit invoice')
+		},
+
+		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		payeeNameLabel() {
+			return t('shillinq', 'Who is paid')
+		},
+
+		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
+		ibanLabel() {
+			return t('shillinq', 'IBAN')
 		},
 
 		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
@@ -439,7 +497,8 @@ export default {
 		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		offers(act) {
-			return act === 'issue-invoice' && this.acts.issueInvoice === true && this.actions.includes(act)
+			const grants = { 'issue-invoice': 'issueInvoice', 'new-quote': 'createQuote', 'raise-payout': 'raisePayout' }
+			return grants[act] !== undefined && this.acts[grants[act]] === true && this.actions.includes(act)
 		},
 
 		/**
@@ -520,39 +579,72 @@ export default {
 		},
 
 		/**
+		 * Open the form for one act not tied to a row.
+		 *
+		 * @param {string} act The act: issue-invoice, new-quote or raise-payout.
 		 * @return {void}
 		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
-		openIssue() {
-			this.issueForm = { amount: '', description: '', name: '', email: '' }
-			this.issueOpen = true
+		openForm(act) {
+			this.form = { amount: '', description: '', name: '', email: '', iban: '' }
+			this.formFor = act
 		},
 
 		/**
-		 * Issue an invoice on the host object.
+		 * The confirm label of a form.
 		 *
-		 * @return {Promise<void>}
-		 *
+		 * @param {string} act The act.
+		 * @return {string} The label.
 		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
-		async issue() {
-			this.busyId = 'issue'
-			this.notices = { ...this.notices, issue: '' }
+		confirmLabelFor(act) {
+			const labels = {
+				'issue-invoice': this.confirmIssueLabel,
+				'new-quote': t('shillinq', 'Start the quote'),
+				'raise-payout': t('shillinq', 'Raise the payout'),
+			}
+			return labels[act] || ''
+		},
+
+		/**
+		 * Submit the open form: issue an invoice, start a quote or raise a payout on the host object.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+		 */
+		async submitForm() {
+			const host = hostIdentity(this.$props)
+			const debtor = { name: this.form.name, email: this.form.email }
+			const base = { amount: Number(this.form.amount), description: this.form.description, objectType: this.objectType }
+			const calls = {
+				'issue-invoice': [() => issueInvoice(host, { ...base, debtor }), t('shillinq', 'The invoice is issued.')],
+				'new-quote': [() => createQuote(host, { ...base, debtor }), t('shillinq', 'The quote is started.')],
+				'raise-payout': [() => raisePayout(host, { ...base, payeeName: this.form.name, iban: this.form.iban }), t('shillinq', 'The payout is raised.')],
+			}
+			const [call, done] = calls[this.formFor]
+			this.busyId = 'form'
+			this.notices = { ...this.notices, form: '' }
 			try {
-				await issueInvoice(hostIdentity(this.$props), {
-					amount: Number(this.issueForm.amount),
-					description: this.issueForm.description,
-					debtor: { name: this.issueForm.name, email: this.issueForm.email },
-					objectType: this.objectType,
-				})
-				this.issueOpen = false
-				this.notices = { ...this.notices, issue: t('shillinq', 'The invoice is issued.') }
+				await call()
+				this.formFor = ''
+				this.notices = { ...this.notices, form: done }
 				await this.load()
 			} catch (e) {
-				this.notices = { ...this.notices, issue: this.refusal(e) }
+				this.notices = { ...this.notices, form: this.refusal(e) }
 			} finally {
 				this.busyId = ''
 			}
+		},
+
+		/**
+		 * Issue a credit note for an invoice.
+		 *
+		 * @param {object} row The invoice row.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
+		 */
+		async credit(row) {
+			await this.act(row, () => creditInvoice(row.id), t('shillinq', 'The credit note is issued.'))
 		},
 
 		/**

@@ -16,7 +16,7 @@
 
 - [x] 3.1 `ShillinqFinancialDocumentsPanel.vue` + registration with `kinds` and `actions` props, the acts the caller holds from the leaf envelope, and the linked-card summary (REQ-FDO-003). Verify: vitest financialDocumentsPanel.spec.js.
 - [x] 3.2 Issue an invoice on the object, and request payment of an invoice with the host's linked objects (REQ-FDO-003, REQ-FDO-004). Verify: FinancialDocumentActionsTest, FinancialDocumentActionControllerTest, vitest.
-- [ ] 3.3 Panel acts for new quote, credit invoice and raise payout (follow-up change).
+- [x] 3.3 Panel acts for new quote, credit invoice and raise payout (REQ-FDO-009). Verify: FinancialDocumentAuthoringTest, FinancialDocumentActionControllerTest, vitest.
 
 ## 3b. Payouts for the raising app
 
