@@ -150,7 +150,7 @@ as YYYY-MM-DD. Any other historical state SHALL be refused and nothing written.
 
 `PayablesRequestedEvent` SHALL answer an installed app with the payouts it raised, narrowed by correlation ids, by
 category and by the year they were paid in, one row per payout with `payableId`, `reference`, `correlationId`,
-`category`, `amount`, `currency`, `state`, `paidOn`, `bankReference`, `historical` and `linkedObjects`. It SHALL NOT
+`category`, `amount`, `payee`, `currency`, `state`, `paidOn`, `bankReference`, `historical` and `linkedObjects`. It SHALL NOT
 answer with another app's payouts, and SHALL refuse an app that is not installed.
 
 #### Scenario: The annual penalty audit reads 2026

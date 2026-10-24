@@ -323,7 +323,8 @@ final class InboundPayableServiceTest extends TestCase {
 		self::assertSame(['DWS-2026-0001'], array_column($year->getPayables(), 'reference'));
 		self::assertSame(['DWS-2026-0001', 'DWS-2026-0002'], array_column($byCalculation->getPayables(), 'reference'));
 		$row = $year->getPayables()[0];
-		self::assertSame(['payableId', 'reference', 'correlationId', 'category', 'amount', 'currency', 'state', 'paidOn', 'bankReference', 'historical', 'linkedObjects'], array_keys($row));
+		self::assertSame(['payableId', 'reference', 'correlationId', 'category', 'amount', 'payee', 'currency', 'state', 'paidOn', 'bankReference', 'historical', 'linkedObjects'], array_keys($row));
+		self::assertSame(['name' => 'J. Jansen', 'iban' => self::IBAN], $row['payee'], 'the audit names who was paid');
 		self::assertSame(1442.0, $row['amount']);
 	}//end testTheRaisingAppReadsItsOwnPayouts()
 

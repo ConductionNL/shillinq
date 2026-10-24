@@ -96,6 +96,10 @@ class InboundPayableReader {
 				'correlationId' => (string)($payable['correlationId'] ?? ''),
 				'category' => (string)($payable['category'] ?? ''),
 				'amount' => (float)($payable['amount'] ?? 0),
+				'payee' => [
+					'name' => (string)($payable['payee']['name'] ?? ''),
+					'iban' => (string)($payable['payee']['iban'] ?? ''),
+				],
 				'currency' => (string)($payable['currency'] ?? 'EUR'),
 				'state' => (string)($payable['state'] ?? ''),
 				'paidOn' => (string)($payable['paidOn'] ?? ''),
