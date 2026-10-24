@@ -1,5 +1,14 @@
 {
     "translations": {
+        "New quote": "Nieuwe offerte",
+        "Raise payout": "Uitbetaling aanmaken",
+        "Credit invoice": "Factuur crediteren",
+        "Who is paid": "Aan wie",
+        "Start the quote": "Offerte aanmaken",
+        "Raise the payout": "Uitbetaling aanmaken",
+        "The quote is started.": "De offerte staat klaar.",
+        "The payout is raised.": "De uitbetaling staat klaar.",
+        "The credit note is issued.": "De creditnota is gemaakt.",
         "financial documents": "financiële documenten",
         "No quotes, invoices or payments are linked to this record.": "Aan dit dossier hangen geen offertes, facturen of betalingen.",
         "Issue invoice": "Factuur maken",

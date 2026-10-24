@@ -64,18 +64,16 @@ class FinancialDocumentActions {
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service (ADR-083).
 	 * @param IAppConfig $appConfig App config, for the register slug.
-	 * @param PaymentActionAuthorizer $authorizer Whether the caller carries an action.
-	 * @param AdministrationContextService $administrations Which administrations the caller works in.
 	 * @param ObjectRequestInvoiceService $invoices Issues an invoice for a debtor and an amount.
+	 * @param FinancialDocumentGuard $guard The refusals every act shares.
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly IAppConfig $appConfig,
-		private readonly PaymentActionAuthorizer $authorizer,
-		private readonly AdministrationContextService $administrations,
 		private readonly ObjectRequestInvoiceService $invoices,
+		private readonly FinancialDocumentGuard $guard,
 	) {
 	}//end __construct()
 
@@ -97,13 +95,10 @@ class FinancialDocumentActions {
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 	 */
 	public function issueInvoice(string $register, string $schema, string $objectId, array $payload): array {
-		$this->assertMay(action: self::ACTION_ISSUE_INVOICE);
-		$administrationId = trim((string)($payload['administrationId'] ?? ''));
-		if ($administrationId === '') {
-			$administrationId = (string)$this->administrations->defaultAdministrationIdForUser(userId: $this->authorizer->callerId());
-		}
+		$this->guard->assertMay(action: self::ACTION_ISSUE_INVOICE);
+		$administrationId = $this->guard->administrationOr(given: (string)($payload['administrationId'] ?? ''));
 
-		$this->assertAdministration(administrationId: $administrationId);
+		$this->guard->assertAdministration(administrationId: $administrationId);
 
 		$amount = round((float)($payload['amount'] ?? 0), 2);
 		if ($amount <= 0.0) {
@@ -151,10 +146,10 @@ class FinancialDocumentActions {
 	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-004)
 	 */
 	public function requestPayment(string $invoiceId): array {
-		$this->assertMay(action: PaymentActionAuthorizer::ACTION_REQUEST);
+		$this->guard->assertMay(action: PaymentActionAuthorizer::ACTION_REQUEST);
 
-		$invoice = $this->readableInvoice(invoiceId: $invoiceId);
-		$this->assertAdministration(administrationId: (string)($invoice['administrationId'] ?? ''));
+		$invoice = $this->guard->readableInvoice(invoiceId: $invoiceId);
+		$this->guard->assertAdministration(administrationId: (string)($invoice['administrationId'] ?? ''));
 		$this->assertPayable(invoice: $invoice);
 
 		$request = [
@@ -166,7 +161,7 @@ class FinancialDocumentActions {
 			'state' => 'pending',
 			'administrationId' => (string)($invoice['administrationId'] ?? ''),
 			'linkedObjects' => array_values((array)($invoice['linkedObjects'] ?? [])),
-			'requestedBy' => $this->authorizer->callerId(),
+			'requestedBy' => $this->guard->callerId(),
 		];
 
 		$saved = $this->objectService->saveObject(
@@ -178,59 +173,6 @@ class FinancialDocumentActions {
 
 		return ['id' => ObjectIdentifier::resolve(saved: $saved)] + $request;
 	}//end requestPayment()
-
-	/**
-	 * Refuse a caller who does not carry the action.
-	 *
-	 * @param string $action The action.
-	 *
-	 * @return void
-	 *
-	 * @throws FinancialDocumentActionRefusedException When the caller lacks it.
-	 */
-	private function assertMay(string $action): void {
-		if ($this->authorizer->may($action) === false) {
-			throw new FinancialDocumentActionRefusedException(message: sprintf('This needs the %s action.', $action), status: 403);
-		}
-	}//end assertMay()
-
-	/**
-	 * Refuse an administration the caller does not work in.
-	 *
-	 * @param string $administrationId The administration.
-	 *
-	 * @return void
-	 *
-	 * @throws FinancialDocumentActionRefusedException When the caller may not work in it.
-	 */
-	private function assertAdministration(string $administrationId): void {
-		if ($administrationId === '' || $this->administrations->canAccess(administrationId: $administrationId) === false) {
-			throw new FinancialDocumentActionRefusedException(message: 'You do not work in the administration this money belongs to.', status: 403);
-		}
-	}//end assertAdministration()
-
-	/**
-	 * The invoice, read as the caller.
-	 *
-	 * @param string $invoiceId The invoice id.
-	 *
-	 * @return array<string, mixed> The invoice.
-	 *
-	 * @throws FinancialDocumentActionRefusedException When the caller cannot read it.
-	 */
-	private function readableInvoice(string $invoiceId): array {
-		$rows = $this->objectService
-			->setRegister($this->registerSlug())
-			->setSchema('ARInvoice')
-			->findAll(['filters' => ['id' => $invoiceId], 'limit' => 1]);
-
-		$invoice = ObjectIdentifier::recordWithId(candidate: ($rows[0] ?? null));
-		if ($invoice === null) {
-			throw new FinancialDocumentActionRefusedException(message: 'No invoice with that id is readable.', status: 404);
-		}
-
-		return $invoice;
-	}//end readableInvoice()
 
 	/**
 	 * Refuse an invoice that is not outstanding, or already has an open payment request.

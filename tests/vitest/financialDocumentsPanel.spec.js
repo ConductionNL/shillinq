@@ -16,8 +16,11 @@ import ShillinqFinancialDocumentsPanel, {
 	ALL_ACTIONS,
 } from '../../src/integrations/ShillinqFinancialDocumentsPanel.vue'
 import {
+	createQuote,
+	creditInvoice,
 	FINANCIAL_DOCUMENTS_DATA_LEAF,
 	issueInvoice,
+	raisePayout,
 	requestInvoicePayment,
 } from '../../src/integrations/leafApi.js'
 import {
@@ -25,7 +28,7 @@ import {
 	registerFinancialDocumentsLeaf,
 } from '../../src/integrations/registerFinancialDocumentsLeaf.js'
 
-const ALL_ACTS = { issueInvoice: true, requestPayment: true, administerPayments: true }
+const ALL_ACTS = { issueInvoice: true, requestPayment: true, administerPayments: true, createQuote: true, creditInvoice: true, raisePayout: true }
 
 const invoice = { id: 'i-1', kind: 'invoice', number: 'F-1', amount: 120, currency: 'EUR', paymentState: 'outstanding', restricted: false, path: '/apps/shillinq/bookkeeping/accounts-receivable/i-1' }
 const request = { id: 'p-1', kind: 'payment-request', number: '', amount: 85, currency: 'EUR', paymentState: 'outstanding', restricted: false, path: '' }
@@ -48,16 +51,17 @@ describe('financial documents panel', () => {
 	})
 
 	it('offers request payment on an outstanding invoice and the payment acts on a request', () => {
-		expect(actsForRow(invoice, ALL_ACTS, ALL_ACTIONS)).toEqual(['request-payment'])
+		expect(actsForRow(invoice, ALL_ACTS, ALL_ACTIONS)).toEqual(['request-payment', 'credit-invoice'])
 		expect(actsForRow(request, ALL_ACTS, ALL_ACTIONS)).toEqual(['send-link', 'record-payment'])
 		expect(actsForRow(quote, ALL_ACTS, ALL_ACTIONS)).toEqual([])
 	})
 
 	it('offers nothing the caller does not hold, the placement leaves out, or a restricted row', () => {
-		expect(actsForRow(invoice, { ...ALL_ACTS, requestPayment: false }, ALL_ACTIONS)).toEqual([])
+		expect(actsForRow(invoice, { ...ALL_ACTS, requestPayment: false, creditInvoice: false }, ALL_ACTIONS)).toEqual([])
 		expect(actsForRow(request, ALL_ACTS, ['request-payment'])).toEqual([])
 		expect(actsForRow({ ...invoice, restricted: true }, ALL_ACTS, ALL_ACTIONS)).toEqual([])
-		expect(actsForRow({ ...invoice, paymentState: 'paid' }, ALL_ACTS, ALL_ACTIONS)).toEqual([])
+		expect(actsForRow({ ...invoice, paymentState: 'paid' }, ALL_ACTS, ALL_ACTIONS)).toEqual(['credit-invoice'])
+		expect(actsForRow({ ...invoice, kind: 'credit-note', paymentState: 'none' }, ALL_ACTS, ALL_ACTIONS)).toEqual([])
 	})
 
 	it('shows only the kinds the placement names', () => {
@@ -72,6 +76,30 @@ describe('financial documents panel', () => {
 		expect(offers.call({ acts: ALL_ACTS, actions: ALL_ACTIONS }, 'issue-invoice')).toBe(true)
 		expect(offers.call({ acts: { ...ALL_ACTS, issueInvoice: false }, actions: ALL_ACTIONS }, 'issue-invoice')).toBe(false)
 		expect(offers.call({ acts: ALL_ACTS, actions: ['request-payment'] }, 'issue-invoice')).toBe(false)
+	})
+
+	it('offers new quote and raise payout like issue invoice: held and allowed', () => {
+		const offers = ShillinqFinancialDocumentsPanel.methods.offers
+
+		expect(offers.call({ acts: ALL_ACTS, actions: ALL_ACTIONS }, 'new-quote')).toBe(true)
+		expect(offers.call({ acts: ALL_ACTS, actions: ALL_ACTIONS }, 'raise-payout')).toBe(true)
+		expect(offers.call({ acts: { ...ALL_ACTS, raisePayout: false }, actions: ALL_ACTIONS }, 'raise-payout')).toBe(false)
+		expect(offers.call({ acts: ALL_ACTS, actions: ['issue-invoice'] }, 'new-quote')).toBe(false)
+	})
+
+	it('starts a quote, credits an invoice and raises a payout on the host object', async () => {
+		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: {} })
+		const host = { register: 'dossiq', schema: 'case', objectId: 'c-1' }
+
+		await createQuote(host, { amount: 4500, description: 'Plein', debtor: { name: 'J', email: 'j@example.nl' } })
+		await creditInvoice('i-1')
+		await raisePayout(host, { amount: 357, payeeName: 'J. Burger', iban: 'NL91ABNA0417164300' })
+
+		expect(post.mock.calls[0][0]).toContain('/apps/shillinq/api/financial-documents/quotes')
+		expect(post.mock.calls[0][1]).toMatchObject({ register: 'dossiq', schema: 'case', objectId: 'c-1', amount: 4500 })
+		expect(post.mock.calls[1][0]).toContain('/apps/shillinq/api/financial-documents/invoices/i-1/credit')
+		expect(post.mock.calls[2][0]).toContain('/apps/shillinq/api/financial-documents/payouts')
+		expect(post.mock.calls[2][1]).toMatchObject({ objectId: 'c-1', payeeName: 'J. Burger', iban: 'NL91ABNA0417164300' })
 	})
 
 	it('titles a row by kind, number and amount, and words the payment state', () => {

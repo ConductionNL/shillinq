@@ -228,10 +228,10 @@ final class FinancialDocumentLeafProviderTest extends TestCase {
 
 	public function testTheListSaysWhichActsTheCallerHolds(): void {
 		$none = $this->provider(new FinancialDocumentStore([]))->list('dossiq', 'case', self::CASE_ID)['acts'];
-		$some = $this->provider(new FinancialDocumentStore([]), ['invoice.issue', 'payment.administer'])->list('dossiq', 'case', self::CASE_ID)['acts'];
+		$some = $this->provider(new FinancialDocumentStore([]), ['invoice.issue', 'payment.administer', 'invoice.credit'])->list('dossiq', 'case', self::CASE_ID)['acts'];
 
-		self::assertSame(['issueInvoice' => false, 'requestPayment' => false, 'administerPayments' => false], $none);
-		self::assertSame(['issueInvoice' => true, 'requestPayment' => false, 'administerPayments' => true], $some);
+		self::assertSame(['issueInvoice' => false, 'requestPayment' => false, 'administerPayments' => false, 'createQuote' => false, 'creditInvoice' => false, 'raisePayout' => false], $none);
+		self::assertSame(['issueInvoice' => true, 'requestPayment' => false, 'administerPayments' => true, 'createQuote' => false, 'creditInvoice' => true, 'raisePayout' => false], $some);
 	}//end testTheListSaysWhichActsTheCallerHolds()
 
 	public function testGetAnswersAReadableRowAndRefusesTheRest(): void {
