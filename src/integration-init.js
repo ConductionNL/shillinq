@@ -15,6 +15,7 @@
 // router, no store, no app shell.
 
 import { registerContractLeaf } from './integrations/registerContractLeaf.js'
+import { registerFinancialDocumentsLeaf } from './integrations/registerFinancialDocumentsLeaf.js'
 import { registerPaymentRequestsLeaf } from './integrations/registerPaymentRequestsLeaf.js'
 
 // Sets __webpack_public_path__ / __webpack_nonce__ for this entry. The panels
@@ -27,3 +28,4 @@ import './setPublicPath.js'
 
 registerPaymentRequestsLeaf()
 registerContractLeaf()
+registerFinancialDocumentsLeaf()
