@@ -52,6 +52,10 @@
         {
             "appVersion": "0.5.6-unstable.20261024120000",
             "versionsSha256": "40af870d9d74d646aebb91b84232b3eccf7c6d5cfa97d56949236e34e54b21be"
+        },
+        {
+            "appVersion": "0.5.6-unstable.20261024210000",
+            "versionsSha256": "5ddb41d86aff9456ac8a0e2a8624816643e5db7741cd1ac12f9fe032acbffe95"
         }
     ],
     "versions": {
@@ -248,7 +252,7 @@
         "schema:ExpiryAlert": "0.1.0",
         "schema:FXContract": "0.1.0",
         "schema:FXPosition": "0.1.0",
-        "schema:FeeSchedule": "0.2.0",
+        "schema:FeeSchedule": "0.3.0",
         "schema:FieldRequirement": "0.2.0",
         "schema:FinancialStatement": "0.1.0",
         "schema:FiscalPeriod": "0.3.0",
