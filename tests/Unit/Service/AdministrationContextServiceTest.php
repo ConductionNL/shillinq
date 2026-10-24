@@ -25,6 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
+use OCP\IConfig;
 use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -104,7 +105,7 @@ final class AdministrationContextServiceTest extends TestCase {
 	 *
 	 * @return AdministrationContextService
 	 */
-	private function buildService(array $memberships, array $administrations): AdministrationContextService {
+	private function buildService(array $memberships, array $administrations, ?IConfig $config=null): AdministrationContextService {
 		$stub = new class($memberships, $administrations) {
 
 			/**
@@ -233,6 +234,7 @@ final class AdministrationContextServiceTest extends TestCase {
 			userSession: $this->userSession,
 			appConfig: $this->appConfig,
 			logger: $this->createMock(LoggerInterface::class),
+			config: $config,
 		);
 
 	}//end buildService()
@@ -373,6 +375,57 @@ final class AdministrationContextServiceTest extends TestCase {
 		self::assertFalse($service->canAccess('adm-werk-001'));
 
 	}//end testExpiredMembershipExcluded()
+
+	/**
+	 * The administration a user switched to stays active, while they are a member of it.
+	 *
+	 * @return void
+	 */
+	public function testSwitchedAdministrationStaysActive(): void {
+		$this->authenticateAs('anna');
+		$memberships = [
+			['userId' => 'anna', 'administrationId' => 'adm-werk-001', 'role' => 'boekhouder'],
+			['userId' => 'anna', 'administrationId' => 'adm-beheer-001', 'role' => 'boekhouder'],
+		];
+		$stored = [];
+		$config = $this->createMock(IConfig::class);
+		$config->method('setUserValue')->willReturnCallback(
+			static function (string $uid, string $app, string $key, string $value) use (&$stored): void {
+				$stored[$uid] = $value;
+			}
+		);
+		$config->method('getUserValue')->willReturnCallback(
+			static function (string $uid) use (&$stored): string {
+				return ($stored[$uid] ?? '');
+			}
+		);
+		$service = $this->buildService($memberships, $this->sampleAdministrations(), $config);
+
+		self::assertSame('adm-werk-001', $service->activeAdministrationId());
+
+		$service->rememberActiveAdministration('adm-beheer-001');
+
+		self::assertSame('adm-beheer-001', $service->activeAdministrationId());
+		self::assertSame('adm-beheer-001', $service->buildContext()['activeAdministrationId']);
+
+	}//end testSwitchedAdministrationStaysActive()
+
+	/**
+	 * A stored choice the user is no longer a member of falls back to their first membership.
+	 *
+	 * @return void
+	 */
+	public function testStoredChoiceWithoutMembershipFallsBack(): void {
+		$this->authenticateAs('anna');
+		$memberships = [['userId' => 'anna', 'administrationId' => 'adm-werk-001', 'role' => 'boekhouder']];
+		$config = $this->createMock(IConfig::class);
+		$config->method('getUserValue')->willReturn('adm-beheer-001');
+		$service = $this->buildService($memberships, $this->sampleAdministrations(), $config);
+
+		self::assertSame('adm-werk-001', $service->activeAdministrationId());
+		self::assertSame('adm-werk-001', $service->buildContext()['activeAdministrationId']);
+
+	}//end testStoredChoiceWithoutMembershipFallsBack()
 
 	/**
 	 * Only a currently valid `eigenaar` membership of that administration makes an owner.
