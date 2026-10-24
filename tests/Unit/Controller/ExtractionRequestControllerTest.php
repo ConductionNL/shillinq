@@ -28,6 +28,7 @@ use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Extraction\ChartOfAccountsCandidateService;
 use OCA\Shillinq\Service\Extraction\DocudeskExtractionClient;
 use OCA\Shillinq\Service\Extraction\ExtractionPrefillService;
+use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
 use OCA\Shillinq\Service\Extraction\GlAccountSuggestionClient;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -112,6 +113,13 @@ final class ExtractionRequestControllerTest extends TestCase {
 	public array $stubRows = [];
 
 	/**
+	 * The duplicate-invoice rule.
+	 *
+	 * @var SupplierInvoiceChecks&MockObject
+	 */
+	private SupplierInvoiceChecks&MockObject $invoiceChecks;
+
+	/**
 	 * Captured saveObject calls.
 	 *
 	 * @var array<int,array<string,mixed>>
@@ -132,6 +140,7 @@ final class ExtractionRequestControllerTest extends TestCase {
 		$this->administrationContext = $this->createMock(AdministrationContextService::class);
 		$this->session = $this->createMock(IUserSession::class);
 		$this->container = $this->createMock(ContainerInterface::class);
+		$this->invoiceChecks = $this->createMock(SupplierInvoiceChecks::class);
 
 		$user = $this->createMock(IUser::class);
 		$user->method('getUID')->willReturn('alice');
@@ -157,6 +166,7 @@ final class ExtractionRequestControllerTest extends TestCase {
 			suggestionClient: $this->suggestionClient,
 			candidateService: $this->candidateService,
 			prefillService: new ExtractionPrefillService(),
+			invoiceChecks: $this->invoiceChecks,
 			administrationContext: $this->administrationContext,
 			session: $this->session,
 			container: $this->container,
@@ -309,6 +319,7 @@ final class ExtractionRequestControllerTest extends TestCase {
 			suggestionClient: $this->suggestionClient,
 			candidateService: $this->candidateService,
 			prefillService: new ExtractionPrefillService(),
+			invoiceChecks: $this->invoiceChecks,
 			administrationContext: $this->administrationContext,
 			session: $session,
 			container: $this->container,
@@ -676,4 +687,142 @@ final class ExtractionRequestControllerTest extends TestCase {
 		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
 
 	}//end testSuggestGlAccountMasksDraftInOtherAdministration()
+	/**
+	 * F2-S7: confirm writes only the correctable fields; status, administration and payment fields are dropped.
+	 *
+	 * @return void
+	 */
+	public function testConfirmWritesOnlyCorrectableFields(): void {
+		$this->stubRows['SupplierInvoice'] = [
+			[
+				'id' => 'draft-1',
+				'administrationId' => 'adm-1',
+				'supplierId' => 'sup-1',
+				'invoiceNumber' => 'F-1',
+				'totalInclVat' => 12100,
+				'statusCode' => 'received',
+				'extractionStatus' => 'pending-review',
+			],
+		];
+		$this->request->method('getParams')->willReturn(
+			[
+				'totalInclVat' => 12500,
+				'statusCode' => 'paid',
+				'administrationId' => 'adm-2',
+				'paymentBlocked' => false,
+				'extractionStatus' => 'pending-review',
+			]
+		);
+
+		$response = $this->buildController()->confirm(id: 'draft-1', schema: 'SupplierInvoice');
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		$saved = $this->savedObjects[0]['object'];
+		self::assertSame(12500, $saved['totalInclVat']);
+		self::assertSame('received', $saved['statusCode']);
+		self::assertSame('adm-1', $saved['administrationId']);
+		self::assertArrayNotHasKey('paymentBlocked', $saved);
+		self::assertSame('confirmed', $saved['extractionStatus']);
+		self::assertSame(['totalInclVat'], $saved['humanCorrected']);
+
+	}//end testConfirmWritesOnlyCorrectableFields()
+
+	/**
+	 * F2-S7: a confirmed invoice cannot be confirmed (edited) again through this endpoint.
+	 *
+	 * @return void
+	 */
+	public function testConfirmRefusesAnAlreadyConfirmedInvoice(): void {
+		$this->stubRows['SupplierInvoice'] = [
+			['id' => 'inv-1', 'administrationId' => 'adm-1', 'totalInclVat' => 100, 'extractionStatus' => 'confirmed'],
+		];
+		$this->request->method('getParams')->willReturn(['totalInclVat' => 999999]);
+
+		$response = $this->buildController()->confirm(id: 'inv-1', schema: 'SupplierInvoice');
+
+		self::assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		self::assertSame([], $this->savedObjects);
+
+	}//end testConfirmRefusesAnAlreadyConfirmedInvoice()
+
+	/**
+	 * F2-S7: a correction that duplicates another invoice of the supplier is refused.
+	 *
+	 * @return void
+	 */
+	public function testConfirmRefusesADuplicate(): void {
+		$this->stubRows['SupplierInvoice'] = [
+			['id' => 'draft-1', 'administrationId' => 'adm-1', 'supplierId' => 'sup-1', 'invoiceNumber' => 'F-1', 'extractionStatus' => 'pending-review'],
+		];
+		$this->request->method('getParams')->willReturn(['invoiceNumber' => 'F-0']);
+		$this->invoiceChecks->expects(self::once())->method('duplicateOf')
+			->with('adm-1', 'sup-1', 'F-0', ['draft-1'])
+			->willReturn('inv-0');
+
+		$response = $this->buildController()->confirm(id: 'draft-1', schema: 'SupplierInvoice');
+
+		self::assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		self::assertSame([], $this->savedObjects);
+
+	}//end testConfirmRefusesADuplicate()
+	/**
+	 * F2-S8: the employee who submitted a receipt may correct it, field by field.
+	 *
+	 * @return void
+	 */
+	public function testTheReceiptOwnerConfirmsOnlyCorrectableFields(): void {
+		$this->stubRows['Receipt'] = [
+			['id' => 'rec-1', 'administrationId' => 'adm-1', 'amount' => 45, 'claimId' => 'claim-1', 'owner' => 'alice'],
+		];
+		$this->request->method('getParams')->willReturn(['amount' => 54, 'administrationId' => 'adm-2', 'photoUri' => 'x']);
+
+		$response = $this->buildController()->confirm(id: 'rec-1', schema: 'Receipt');
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		$saved = $this->savedObjects[0]['object'];
+		self::assertSame(54, $saved['amount']);
+		self::assertSame('adm-1', $saved['administrationId']);
+		self::assertArrayNotHasKey('photoUri', $saved);
+		self::assertArrayNotHasKey('extractionStatus', $saved, 'A receipt that never came from an extraction keeps no extraction status.');
+
+	}//end testTheReceiptOwnerConfirmsOnlyCorrectableFields()
+
+	/**
+	 * F2-S8: another employee of the administration cannot change someone's receipt.
+	 *
+	 * @return void
+	 */
+	public function testAnotherEmployeeCannotChangeAReceipt(): void {
+		$this->stubRows['Receipt'] = [
+			['id' => 'rec-1', 'administrationId' => 'adm-1', 'amount' => 45, 'owner' => 'bob'],
+		];
+		$this->administrationContext->method('buildContext')->willReturn(
+			['administrations' => [['administrationId' => 'adm-1', 'role' => 'inkijker']]]
+		);
+		$this->request->method('getParams')->willReturn(['amount' => 4500]);
+
+		$response = $this->buildController()->confirm(id: 'rec-1', schema: 'Receipt');
+
+		self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		self::assertSame([], $this->savedObjects);
+
+	}//end testAnotherEmployeeCannotChangeAReceipt()
+
+	/**
+	 * F2-S8: a bookkeeper of the receipt's administration may correct it.
+	 *
+	 * @return void
+	 */
+	public function testABookkeeperMayCorrectAReceipt(): void {
+		$this->stubRows['Receipt'] = [
+			['id' => 'rec-1', 'administrationId' => 'adm-1', 'amount' => 45, 'owner' => 'bob'],
+		];
+		$this->administrationContext->method('buildContext')->willReturn(
+			['administrations' => [['administrationId' => 'adm-1', 'role' => 'boekhouder']]]
+		);
+		$this->request->method('getParams')->willReturn(['category' => 'travel']);
+
+		self::assertSame(Http::STATUS_OK, $this->buildController()->confirm(id: 'rec-1', schema: 'Receipt')->getStatus());
+
+	}//end testABookkeeperMayCorrectAReceipt()
 }//end class

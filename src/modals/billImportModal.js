@@ -66,7 +66,8 @@ export function isDeferredPdf(format) {
 
 /**
  * Build the multipart FormData posted to the import endpoint. The format
- * is always sent explicitly so the server does not have to re-sniff.
+ * is always sent explicitly so the server does not have to re-sniff, and
+ * `review` asks the server to keep the invoice a draft until it is confirmed.
  *
  * @spec openspec/specs/shillinq-bill-import-modal/spec.md
  * @param {File|Blob} file The selected file.
@@ -80,10 +81,11 @@ export function buildImportFormData(file, format, FormDataCtor) {
 		const fd = new Ctor()
 		fd.append('file', file)
 		fd.append('format', format)
+		fd.append('review', 'true')
 		return fd
 	}
 	// Fallback for environments without FormData (kept testable).
-	return { file, format }
+	return { file, format, review: true }
 }
 
 /**
@@ -104,6 +106,26 @@ export function reviewFormFromRecord(record) {
 		amount: centsToEuro(r.totalInclVat),
 		vatAmount: centsToEuro(r.totalVat),
 		glAccount: String(r.glAccount ?? ''),
+	}
+}
+
+/**
+ * The corrected fields sent to the confirm endpoint. Status, administration
+ * and provenance are the server's; amounts go as integer cents.
+ *
+ * @spec openspec/specs/shillinq-bill-import-modal/spec.md
+ * @param {object} form The review form values.
+ * @return {object} The confirm request body.
+ */
+export function confirmPayloadFromForm(form) {
+	const f = form || {}
+	return {
+		supplierId: f.supplier,
+		invoiceNumber: f.invoiceNumber,
+		invoiceDate: f.invoiceDate,
+		glAccount: f.glAccount,
+		totalInclVat: Math.round((Number(f.amount) || 0) * 100),
+		totalVat: Math.round((Number(f.vatAmount) || 0) * 100),
 	}
 }
 

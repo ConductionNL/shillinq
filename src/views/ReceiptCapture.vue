@@ -518,9 +518,9 @@ export default {
 		},
 
 		/**
-		 * REQ-RXC-004: commit an extraction-draft correction through the
-		 * confirm proxy (records humanCorrected server-side); otherwise a
-		 * plain OR object update.
+		 * Save the corrected fields through the confirm endpoint, which writes
+		 * only correctable fields, records them as human-corrected and lets
+		 * only the submitter or a bookkeeper change the receipt (REQ-RXC-004).
 		 *
 		 * @spec openspec/specs/receipt-extraction-consume/spec.md
 		 */
@@ -529,26 +529,13 @@ export default {
 			this.busy = true
 			this.saveError = ''
 			try {
-				const payload = buildReceiptConfirmPayload(this.form)
-				if (this.isDraftReview) {
-					const response = await axios.put(
-						generateUrl(
-							`/apps/shillinq/api/v1/extraction/drafts/${this.id}?schema=${RECEIPT_SCHEMA}`,
-						),
-						payload,
-					)
-					this.record =
-						response.data?.record ?? response.data ?? this.record
-				} else {
-					const response = await axios.put(
-						generateUrl(
-							`/apps/openregister/api/objects/${REGISTER_SLUG}/${RECEIPT_SCHEMA}/${this.id}`,
-						),
-						{ ...this.record, ...payload },
-					)
-					this.record =
-						response.data?.object ?? response.data ?? this.record
-				}
+				const response = await axios.put(
+					generateUrl(
+						`/apps/shillinq/api/v1/extraction/drafts/${encodeURIComponent(this.id)}?schema=${RECEIPT_SCHEMA}`,
+					),
+					buildReceiptConfirmPayload(this.form),
+				)
+				this.record = response.data?.record ?? response.data ?? this.record
 				this.form = reviewFormFromReceipt(this.record)
 				showSuccess(t('shillinq', 'Receipt saved.'))
 			} catch (e) {

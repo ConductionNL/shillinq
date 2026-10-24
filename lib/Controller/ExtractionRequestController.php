@@ -62,6 +62,7 @@ use OCA\Shillinq\Service\Extraction\ChartOfAccountsCandidateService;
 use OCA\Shillinq\Service\Extraction\DocudeskExtractionClient;
 use OCA\Shillinq\Service\Extraction\ExtractionPrefillService;
 use OCA\Shillinq\Service\Extraction\GlAccountSuggestionClient;
+use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -96,6 +97,13 @@ class ExtractionRequestController extends Controller {
 	private const REGISTER_SLUG = 'shillinq';
 
 	/**
+	 * Administration roles that approve receipts and may correct anyone's.
+	 *
+	 * @var array<string>
+	 */
+	private const RECEIPT_APPROVER_ROLES = ['eigenaar', 'controller', 'boekhouder'];
+
+	/**
 	 * Schemas this endpoint may operate on (REQ-RXC-001 docType targets).
 	 *
 	 * @var array<string>
@@ -113,6 +121,7 @@ class ExtractionRequestController extends Controller {
 	 * @param GlAccountSuggestionClient $suggestionClient Outbound docudesk suggestion/correction client.
 	 * @param ChartOfAccountsCandidateService $candidateService Shillinq's own chart-of-accounts candidates.
 	 * @param ExtractionPrefillService $prefillService Correction-recording service.
+	 * @param SupplierInvoiceChecks $invoiceChecks The duplicate-invoice rule.
 	 * @param AdministrationContextService $administrationContext Server-resolved tenant scope (ADR-005).
 	 * @param IUserSession $session User session.
 	 * @param ContainerInterface $container DI container (OR ObjectService).
@@ -126,6 +135,7 @@ class ExtractionRequestController extends Controller {
 		private readonly GlAccountSuggestionClient $suggestionClient,
 		private readonly ChartOfAccountsCandidateService $candidateService,
 		private readonly ExtractionPrefillService $prefillService,
+		private readonly SupplierInvoiceChecks $invoiceChecks,
 		private readonly AdministrationContextService $administrationContext,
 		private readonly IUserSession $session,
 		private readonly ContainerInterface $container,
@@ -260,18 +270,17 @@ class ExtractionRequestController extends Controller {
 			return new JSONResponse(['error' => 'Draft not found'], Http::STATUS_NOT_FOUND);
 		}
 
-		$incomingFields = $this->decodeBody();
-		// AdministrationId, id and the confidence/provenance bookkeeping
-		// fields are never operator-editable via this endpoint.
-		unset(
-			$incomingFields['administrationId'],
-			$incomingFields['id'],
-			$incomingFields['fieldConfidence'],
-			$incomingFields['overallConfidence'],
-			$incomingFields['extractedFieldsOriginal'],
-			$incomingFields['humanCorrected'],
-			$incomingFields['extractionStatus']
-		);
+		if ($schema === ExtractionPrefillService::SCHEMA_RECEIPT
+			&& $this->mayEditReceipt(id: $id, administrationId: (string)($existing['administrationId'] ?? '')) === false
+		) {
+			return new JSONResponse(['error' => 'Only the employee who submitted this receipt, or a bookkeeper, can change it.'], Http::STATUS_FORBIDDEN);
+		}
+
+		$incomingFields = $this->prefillService->correctableFields(schema: $schema, incomingFields: $this->decodeBody());
+		$refusal        = $this->invoiceRefusal(schema: $schema, existing: $existing, incomingFields: $incomingFields);
+		if ($refusal !== null) {
+			return $refusal;
+		}
 
 		$updated = $this->prefillService->recordCorrection(existingDraft: $existing, incomingFields: $incomingFields);
 
@@ -300,6 +309,101 @@ class ExtractionRequestController extends Controller {
 
 		return new JSONResponse(['record' => $record], Http::STATUS_OK);
 	}//end confirm()
+
+	/**
+	 * A receipt is changed by the employee who submitted it, or by someone
+	 * who approves receipts in its administration.
+	 *
+	 * @param string $id               The receipt id.
+	 * @param string $administrationId The receipt's administration.
+	 *
+	 * @return bool
+	 */
+	private function mayEditReceipt(string $id, string $administrationId): bool {
+		$userId = (string)($this->session->getUser()?->getUID() ?? '');
+		if ($userId === '') {
+			return false;
+		}
+
+		if ($this->ownerOf(schema: ExtractionPrefillService::SCHEMA_RECEIPT, id: $id) === $userId) {
+			return true;
+		}
+
+		foreach (($this->administrationContext->buildContext()['administrations'] ?? []) as $membership) {
+			if ((string)($membership['administrationId'] ?? '') === $administrationId
+				&& in_array((string)($membership['role'] ?? ''), self::RECEIPT_APPROVER_ROLES, true) === true
+			) {
+				return true;
+			}
+		}
+
+		return false;
+
+	}//end mayEditReceipt()
+
+	/**
+	 * The user who created a record.
+	 *
+	 * @param string $schema The schema.
+	 * @param string $id     The record id.
+	 *
+	 * @return string The owner's user id; empty when it cannot be read.
+	 */
+	private function ownerOf(string $schema, string $id): string {
+		try {
+			$found = $this->container->get('OCA\OpenRegister\Service\ObjectService')
+				->setRegister(self::REGISTER_SLUG)
+				->setSchema($schema)
+				->find($id);
+		} catch (Throwable $e) {
+			return '';
+		}
+
+		if (is_object($found) === true && method_exists($found, 'getOwner') === true) {
+			return (string)($found->getOwner() ?? '');
+		}
+
+		if (is_array($found) === true) {
+			return (string)($found['@self']['owner'] ?? ($found['owner'] ?? ''));
+		}
+
+		return '';
+
+	}//end ownerOf()
+
+	/**
+	 * A supplier invoice is confirmed once, from its review draft, and the
+	 * correction may not turn it into a duplicate of another invoice.
+	 *
+	 * @param string              $schema         The draft's schema.
+	 * @param array<string,mixed> $existing       The stored draft.
+	 * @param array<string,mixed> $incomingFields The correctable fields sent.
+	 *
+	 * @return JSONResponse|null The refusal, or null when the confirm may go ahead.
+	 */
+	private function invoiceRefusal(string $schema, array $existing, array $incomingFields): ?JSONResponse {
+		if ($schema !== ExtractionPrefillService::SCHEMA_SUPPLIER_INVOICE) {
+			return null;
+		}
+
+		if (($existing['extractionStatus'] ?? '') !== ExtractionPrefillService::STATUS_PENDING_REVIEW) {
+			return new JSONResponse(['error' => 'This invoice is already confirmed.'], Http::STATUS_CONFLICT);
+		}
+
+		$merged    = array_merge($existing, $incomingFields);
+		$duplicate = $this->invoiceChecks->duplicateOf(
+			administrationId: (string)($merged['administrationId'] ?? ''),
+			supplierId: (string)($merged['supplierId'] ?? ''),
+			invoiceNumber: (string)($merged['invoiceNumber'] ?? ''),
+			ignoreIds: [(string)($existing['id'] ?? '')]
+		);
+		if ($duplicate !== null) {
+			return new JSONResponse(['error' => 'This invoice number already exists for this supplier'], Http::STATUS_CONFLICT);
+		}
+
+		return null;
+
+	}//end invoiceRefusal()
 
 	/**
 	 * Post the committed GL-account booking back to docudesk as a
