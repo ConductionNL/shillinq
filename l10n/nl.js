@@ -6796,7 +6796,15 @@ OC.L10N.register(
         "Add at least one line with a description and a price.": "Voeg minstens een regel toe met een omschrijving en een prijs.",
         "Every line needs a number for quantity, price and VAT rate.": "Elke regel heeft een getal nodig voor aantal, prijs en btw-tarief.",
         "A VAT rate lies between 0 and 100 percent.": "Een btw-tarief ligt tussen 0 en 100 procent.",
-        "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw."
+        "No free draft number was found. Try again.": "Er is geen vrij conceptnummer gevonden. Probeer het opnieuw.",
+        "Unknown report type": "Onbekend rapporttype",
+        "This report is not available in that format": "Dit rapport is niet beschikbaar in dat formaat",
+        "Choose weekly, monthly or quarterly": "Kies wekelijks, maandelijks of per kwartaal",
+        "The run day is out of range": "De dag van uitvoering valt buiten het bereik",
+        "Choose the previous period or the year to date": "Kies de vorige periode of het jaar tot nu toe",
+        "Choose active or paused": "Kies actief of gepauzeerd",
+        "These recipients cannot receive this report: %s": "Deze ontvangers kunnen dit rapport niet ontvangen: %s",
+        "Choose a folder": "Kies een map"
     },
     "nplurals=2; plural=(n != 1);"
 )
