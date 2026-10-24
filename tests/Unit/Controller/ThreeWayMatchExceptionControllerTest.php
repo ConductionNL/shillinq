@@ -25,6 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 use OCA\Shillinq\Controller\ThreeWayMatchExceptionController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\ExceptionResolutionService;
+use OCA\Shillinq\Service\ForbiddenActionException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
@@ -316,6 +317,24 @@ final class ThreeWayMatchExceptionControllerTest extends TestCase {
 		);
 
 	}//end testAcceptUnexpectedFailureReturns500WithoutStackTrace()
+
+	/**
+	 * F2-S6: a caller outside the approver role, or the invoice's creator, gets 403.
+	 *
+	 * @return void
+	 */
+	public function testAcceptByAnUnauthorisedApproverReturns403(): void {
+		$this->withParams(['administrationId' => 'adm-1', 'matchId' => 'match-3', 'resolutionNotes' => 'ok']);
+		$this->administrationContext->method('canAccess')->willReturn(true);
+		$this->exceptions->method('acceptWithMotivation')
+			->willThrowException(new ForbiddenActionException('The person who entered the invoice cannot accept its exception.'));
+
+		$response = $this->controller->accept();
+
+		self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		self::assertSame(['error' => 'The person who entered the invoice cannot accept its exception.'], $response->getData());
+
+	}//end testAcceptByAnUnauthorisedApproverReturns403()
 
 	/**
 	 * Filing a dispute returns 200 with both the updated match and the credit-note
