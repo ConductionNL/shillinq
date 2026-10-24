@@ -346,12 +346,12 @@ class AansluitingService {
 
 		$currentByKey = [];
 		foreach ($current as $bucket) {
-			$currentByKey[$this->rubriekKey(bucket: $bucket)] = (float)$bucket['totalVATAmount'];
+			$currentByKey[$this->vatReturnService->declarationKey(bucket: $bucket)] = (float)$bucket['totalVATAmount'];
 		}
 
 		$filedByKey = [];
 		foreach ($filed as $bucket) {
-			$filedByKey[$this->rubriekKey(bucket: $bucket)] = (float)$bucket['totalVATAmount'];
+			$filedByKey[$this->vatReturnService->declarationKey(bucket: $bucket)] = (float)$bucket['totalVATAmount'];
 		}
 
 		$lineDeltas = $this->calculator->diffBuckets(bucketsA: $currentByKey, bucketsB: $filedByKey, relationship: 'equal');
@@ -616,18 +616,6 @@ class AansluitingService {
 
 		return null;
 	}//end findRelatedVatCorrection()
-
-	/**
-	 * Build the type:taxRate rubriek bucket key, matching
-	 * VatSuppletieDetectionService's bucketKey() convention.
-	 *
-	 * @param array<string,mixed> $bucket A VATReturnService declaration bucket.
-	 *
-	 * @return string
-	 */
-	private function rubriekKey(array $bucket): string {
-		return ((string)$bucket['type']) . ':' . number_format((float)$bucket['taxRate'], 2, '.', '');
-	}//end rubriekKey()
 
 	/**
 	 * Fetch an Aansluiting definition by id.

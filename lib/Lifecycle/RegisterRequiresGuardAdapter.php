@@ -107,6 +107,10 @@ final class RegisterRequiresGuardAdapter implements LifecycleGuardInterface {
 	public function check(array $object, string $action, string $userId): GuardResult {
 		try {
 			$allowed = ($this->guard->{$this->method}($object) === true);
+		} catch (PostingRefusedException $e) {
+			// A refusal the bookkeeper must read: which account or which
+			// restriction (ledger-booking-rules).
+			return GuardResult::deny($e->getMessage());
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'RegisterRequiresGuardAdapter: guard method threw — denying transition (fail-closed)',

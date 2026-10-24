@@ -9406,7 +9406,7 @@
         "lifecycleState": "active",
         "tradeName": "Voorbeeld Tradename 1",
         "kvkNumber": "Voorbeeld Kvknumber 1",
-        "vatID": "Voorbeeld Vatid 1",
+        "vatId": "Voorbeeld Vatid 1",
         "telephone": "Voorbeeld Telephone 1",
         "iban": "Voorbeeld Iban 1",
         "creditLimit": 1.0,
@@ -9417,7 +9417,6 @@
           "00000000-0000-4000-8000-000000000000"
         ],
         "peppolParticipantId": "Voorbeeld Peppolparticipantid 1",
-        "vatId": "Voorbeeld Vatid 1",
         "vatIdValidatedAt": "2026-03-01T09:00:00+00:00",
         "vatIdValidUntil": "2026-03-01T09:00:00+00:00",
         "vatIdValidationStatus": "unchecked",
@@ -9436,7 +9435,7 @@
         "lifecycleState": "blocked",
         "tradeName": "Voorbeeld Tradename 2",
         "kvkNumber": "Voorbeeld Kvknumber 2",
-        "vatID": "Voorbeeld Vatid 2",
+        "vatId": "Voorbeeld Vatid 2",
         "telephone": "Voorbeeld Telephone 2",
         "iban": "Voorbeeld Iban 2",
         "creditLimit": 2.0,
@@ -9447,7 +9446,6 @@
           "00000000-0000-4000-8000-000000000001"
         ],
         "peppolParticipantId": "Voorbeeld Peppolparticipantid 2",
-        "vatId": "Voorbeeld Vatid 2",
         "vatIdValidatedAt": "2026-03-02T09:00:00+00:00",
         "vatIdValidUntil": "2026-03-02T09:00:00+00:00",
         "vatIdValidationStatus": "valid",
@@ -9466,7 +9464,7 @@
         "lifecycleState": "archived",
         "tradeName": "Voorbeeld Tradename 3",
         "kvkNumber": "Voorbeeld Kvknumber 3",
-        "vatID": "Voorbeeld Vatid 3",
+        "vatId": "Voorbeeld Vatid 3",
         "telephone": "Voorbeeld Telephone 3",
         "iban": "Voorbeeld Iban 3",
         "creditLimit": 3.0,
@@ -9477,7 +9475,6 @@
           "00000000-0000-4000-8000-000000000002"
         ],
         "peppolParticipantId": "Voorbeeld Peppolparticipantid 3",
-        "vatId": "Voorbeeld Vatid 3",
         "vatIdValidatedAt": "2026-03-03T09:00:00+00:00",
         "vatIdValidUntil": "2026-03-03T09:00:00+00:00",
         "vatIdValidationStatus": "invalid",
@@ -33614,6 +33611,144 @@
         "civilServantsCount": 2,
         "lastUpdatedAt": "2026-03-03",
         "denominatorStaleWarning": true
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "DebtorCredit",
+          "slug": "debtorcredit-debtorcredit-1-1"
+        },
+        "debtorKey": "joris@example.nl",
+        "amount": 85.0,
+        "remaining": 85.0,
+        "currency": "EUR",
+        "sourcePaymentRequestId": "Voorbeeld Sourcepaymentrequestid 1",
+        "administrationId": "Voorbeeld Administrationid 1",
+        "state": "open"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "DebtorCredit",
+          "slug": "debtorcredit-debtorcredit-2-2"
+        },
+        "debtorKey": "cm-demo-customer-1",
+        "amount": 45.0,
+        "remaining": 20.0,
+        "currency": "EUR",
+        "sourcePaymentRequestId": "Voorbeeld Sourcepaymentrequestid 2",
+        "administrationId": "Voorbeeld Administrationid 2",
+        "state": "open"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "DebtorCredit",
+          "slug": "debtorcredit-debtorcredit-3-3"
+        },
+        "debtorKey": "anna@example.nl",
+        "amount": 30.0,
+        "remaining": 0.0,
+        "currency": "EUR",
+        "sourcePaymentRequestId": "Voorbeeld Sourcepaymentrequestid 3",
+        "administrationId": "Voorbeeld Administrationid 3",
+        "state": "used"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "InboundPayable",
+          "slug": "inboundpayable-inboundpayable-1-1"
+        },
+        "sourceApp": "Voorbeeld Sourceapp 1",
+        "amount": 1.0,
+        "currency": "EUR",
+        "payee": {
+          "name": "Voorbeeld Name 1",
+          "iban": "Voorbeeld Iban 1"
+        },
+        "reference": "Voorbeeld Reference 1",
+        "state": "requested",
+        "requestedAt": "2026-03-01T09:00:00+00:00",
+        "category": "Voorbeeld Category 1",
+        "description": "Voorbeeld Description 1",
+        "correlationId": "Voorbeeld Correlationid 1",
+        "administrationId": "Voorbeeld Administrationid 1",
+        "dueOn": "2026-03-01",
+        "callbackUrl": "Voorbeeld Callbackurl 1",
+        "approvedAt": "2026-03-01T09:00:00+00:00",
+        "paidOn": "2026-03-01",
+        "bankReference": "Voorbeeld Bankreference 1",
+        "rejectedReason": "Voorbeeld Rejectedreason 1",
+        "journalEntryIds": [
+          "Voorbeeld Journalentryids 1"
+        ],
+        "callbackDeliveredAt": "2026-03-01T09:00:00+00:00",
+        "callbackError": "Voorbeeld Callbackerror 1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "InboundPayable",
+          "slug": "inboundpayable-inboundpayable-2-2"
+        },
+        "sourceApp": "Voorbeeld Sourceapp 2",
+        "amount": 2.0,
+        "currency": "EUR",
+        "payee": {
+          "name": "Voorbeeld Name 2",
+          "iban": "Voorbeeld Iban 2"
+        },
+        "reference": "Voorbeeld Reference 2",
+        "state": "approved",
+        "requestedAt": "2026-03-02T09:00:00+00:00",
+        "category": "Voorbeeld Category 2",
+        "description": "Voorbeeld Description 2",
+        "correlationId": "Voorbeeld Correlationid 2",
+        "administrationId": "Voorbeeld Administrationid 2",
+        "dueOn": "2026-03-02",
+        "callbackUrl": "Voorbeeld Callbackurl 2",
+        "approvedAt": "2026-03-02T09:00:00+00:00",
+        "paidOn": "2026-03-02",
+        "bankReference": "Voorbeeld Bankreference 2",
+        "rejectedReason": "Voorbeeld Rejectedreason 2",
+        "journalEntryIds": [
+          "Voorbeeld Journalentryids 2"
+        ],
+        "callbackDeliveredAt": "2026-03-02T09:00:00+00:00",
+        "callbackError": "Voorbeeld Callbackerror 2"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "InboundPayable",
+          "slug": "inboundpayable-inboundpayable-3-3"
+        },
+        "sourceApp": "Voorbeeld Sourceapp 3",
+        "amount": 3.0,
+        "currency": "EUR",
+        "payee": {
+          "name": "Voorbeeld Name 3",
+          "iban": "Voorbeeld Iban 3"
+        },
+        "reference": "Voorbeeld Reference 3",
+        "state": "paid",
+        "requestedAt": "2026-03-03T09:00:00+00:00",
+        "category": "Voorbeeld Category 3",
+        "description": "Voorbeeld Description 3",
+        "correlationId": "Voorbeeld Correlationid 3",
+        "administrationId": "Voorbeeld Administrationid 3",
+        "dueOn": "2026-03-03",
+        "callbackUrl": "Voorbeeld Callbackurl 3",
+        "approvedAt": "2026-03-03T09:00:00+00:00",
+        "paidOn": "2026-03-03",
+        "bankReference": "Voorbeeld Bankreference 3",
+        "rejectedReason": "Voorbeeld Rejectedreason 3",
+        "journalEntryIds": [
+          "Voorbeeld Journalentryids 3"
+        ],
+        "callbackDeliveredAt": "2026-03-03T09:00:00+00:00",
+        "callbackError": "Voorbeeld Callbackerror 3"
       }
     ]
   }

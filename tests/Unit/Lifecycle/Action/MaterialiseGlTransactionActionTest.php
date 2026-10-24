@@ -1,0 +1,653 @@
+<?php
+
+/**
+ * Unit tests for MaterialiseGlTransactionAction.
+ *
+ * @category Test
+ * @package  OCA\Shillinq\Tests\Unit\Lifecycle\Action
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @link https://conduction.nl
+ *
+ * @spec openspec/specs/bookkeeping-journal-entries/spec.md
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+declare(strict_types=1);
+
+namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
+
+use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
+use OCA\Shillinq\Standards\RuleEngine;
+use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
+use OCP\IAppConfig;
+use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
+use RuntimeException;
+
+/**
+ * A posted source becomes exactly one balanced, posted GLTransaction.
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters
+ */
+final class MaterialiseGlTransactionActionTest extends TestCase {
+
+	/**
+	 * The store behind the ObjectService mock.
+	 *
+	 * @var InMemoryObjectStore
+	 */
+	private InMemoryObjectStore $store;
+
+	/**
+	 * Build the action over a fresh store, with every app-config value unset.
+	 *
+	 * @return MaterialiseGlTransactionAction
+	 */
+	private function action(): MaterialiseGlTransactionAction {
+		$this->store = new InMemoryObjectStore();
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => $default
+		);
+
+		return new MaterialiseGlTransactionAction(
+			$this->store->mock($this),
+			$appConfig,
+			$this->createMock(LoggerInterface::class)
+		);
+	}//end action()
+
+	/**
+	 * The memorial entry of the design's seed data: 4000 against 1100.
+	 *
+	 * @param float $credit The credit amount.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function journalEntry(float $credit = 1200.0): array {
+		return [
+			'id' => 'je-1',
+			'journalNumber' => 'MEM-2026-0001',
+			'entryDate' => '2026-03-14',
+			'description' => 'Huur maart',
+			'administrationId' => 'adm-1',
+			'state' => 'posted',
+			'lines' => [
+				['accountNumber' => '4000', 'side' => 'debit', 'amount' => 1200.0, 'description' => 'Huisvesting'],
+				['accountNumber' => '1100', 'side' => 'credit', 'amount' => $credit, 'description' => 'Bank'],
+			],
+		];
+	}//end journalEntry()
+
+	/**
+	 * A balanced journal entry posts one GLTransaction with its lines 1:1.
+	 *
+	 * @return void
+	 */
+	public function testABalancedJournalEntryPostsOneTransaction(): void {
+		$parameters = ['sourceSchema' => 'JournalEntry', 'keepBalanced' => true];
+		$result = $this->action()->execute($this->journalEntry(), [], $parameters, MaterialiseGlTransactionAction::class);
+
+		$transactions = $this->store->savedOf('GLTransaction');
+		self::assertCount(1, $transactions);
+		self::assertSame('posted', $transactions[0]['state']);
+		self::assertSame('JournalEntry:je-1', $transactions[0]['sourceReference']);
+		self::assertSame('je-1', $transactions[0]['journalEntryId']);
+		self::assertSame('2026-03', $transactions[0]['periodId']);
+		self::assertSame('adm-1', $transactions[0]['administrationId']);
+
+		$lines = $this->store->savedOf('GLLine');
+		self::assertCount(2, $lines);
+		self::assertSame(['4000', 'debit', 1200.0], [$lines[0]['accountNumber'], $lines[0]['side'], $lines[0]['amount']]);
+		self::assertSame(['1100', 'credit', 1200.0], [$lines[1]['accountNumber'], $lines[1]['side'], $lines[1]['amount']]);
+		self::assertSame($transactions[0]['id'], $lines[0]['transactionId']);
+
+		self::assertSame($transactions[0]['id'], $result['glTransactionId'], 'The back reference is returned so it saves with the transition.');
+	}//end testABalancedJournalEntryPostsOneTransaction()
+
+	/**
+	 * A transaction this handler writes as posted carries the posting stamps,
+	 * so it meets the same mandatory ledger rules a posted entry from the
+	 * ledger page does (REQ-LPP-004).
+	 *
+	 * @return void
+	 */
+	public function testAMaterialisedTransactionMeetsTheMandatoryLedgerRules(): void {
+		$parameters = ['sourceSchema' => 'JournalEntry', 'keepBalanced' => true];
+		$this->action()->execute($this->journalEntry(), [], $parameters, MaterialiseGlTransactionAction::class);
+
+		$transaction = $this->store->savedOf('GLTransaction')[0];
+		self::assertTrue($transaction['postingLocked']);
+		self::assertSame('2036-12-31', $transaction['retentionUntil']);
+		self::assertSame('post', $transaction['auditTrail'][0]['action']);
+		$header = $transaction;
+		unset($header['id']);
+		self::assertSame([], RegisterSchema::errors(slug: 'GLTransaction', object: $header), 'the stamped header validates against the merged register');
+
+		$transaction['lines'] = $this->store->savedOf('GLLine');
+		$mandatory = [];
+		foreach (RuleEngine::evaluate('GLTransaction', $transaction, ['jurisdiction' => 'NL']) as $violation) {
+			if ($violation->severity === 'mandatory') {
+				$mandatory[] = $violation->ruleId;
+			}
+		}
+
+		self::assertSame([], $mandatory);
+	}//end testAMaterialisedTransactionMeetsTheMandatoryLedgerRules()
+
+	/**
+	 * A journal entry line's cost centre and project reach its GL line, so a
+	 * posting restriction and the segment reports see them (ledger-booking-rules).
+	 *
+	 * @return void
+	 */
+	public function testAJournalLinesCostCentreAndProjectReachTheGlLine(): void {
+		$entry = $this->journalEntry();
+		$entry['lines'][0]['costCenterCode'] = 'KP-300';
+		$entry['lines'][0]['projectCode'] = 'P-2026-014';
+		$this->action()->execute($entry, [], ['sourceSchema' => 'JournalEntry'], MaterialiseGlTransactionAction::class);
+
+		$lines = $this->store->savedOf('GLLine');
+		self::assertSame(['KP-300', 'P-2026-014'], [$lines[0]['costCenterCode'] ?? null, $lines[0]['projectCode'] ?? null]);
+		self::assertArrayNotHasKey('costCenterCode', $lines[1]);
+		$row = $lines[0];
+		unset($row['id']);
+		// The store mints non-uuid ids; OpenRegister hands out uuids.
+		$row['transactionId'] = '0f8fad5b-d9cb-469f-a165-70867728950e';
+		self::assertSame([], RegisterSchema::errors(slug: 'GLLine', object: $row));
+	}//end testAJournalLinesCostCentreAndProjectReachTheGlLine()
+
+	/**
+	 * An unbalanced entry is refused and nothing is written.
+	 *
+	 * @return void
+	 */
+	public function testAnUnbalancedJournalEntryIsRefusedAndWritesNothing(): void {
+		$action = $this->action();
+
+		try {
+			$parameters = ['sourceSchema' => 'JournalEntry', 'keepBalanced' => true];
+			$action->execute($this->journalEntry(1000.0), [], $parameters, MaterialiseGlTransactionAction::class);
+			self::fail('An unbalanced entry must not post.');
+		} catch (RuntimeException $e) {
+			self::assertStringContainsString('not balanced', $e->getMessage());
+			self::assertStringContainsString('1200.00', $e->getMessage());
+			self::assertStringContainsString('1000.00', $e->getMessage());
+		}
+
+		self::assertSame([], $this->store->saved);
+	}//end testAnUnbalancedJournalEntryIsRefusedAndWritesNothing()
+
+	/**
+	 * A repeated run, or a source already carrying its back reference, books nothing twice.
+	 *
+	 * @return void
+	 */
+	public function testARepeatedRunDoesNotPostTwice(): void {
+		$action = $this->action();
+		$entry = $this->journalEntry();
+
+		$first = $action->execute($entry, [], ['sourceSchema' => 'JournalEntry'], MaterialiseGlTransactionAction::class);
+		// Same source, back reference not yet saved: found by sourceReference.
+		$second = $action->execute($entry, [], ['sourceSchema' => 'JournalEntry'], MaterialiseGlTransactionAction::class);
+		// Back reference saved: returned untouched.
+		$third = $action->execute($first, [], ['sourceSchema' => 'JournalEntry'], MaterialiseGlTransactionAction::class);
+
+		self::assertCount(1, $this->store->savedOf('GLTransaction'));
+		self::assertSame($first['glTransactionId'], $second['glTransactionId']);
+		self::assertSame($first, $third);
+	}//end testARepeatedRunDoesNotPostTwice()
+
+	/**
+	 * An issued invoice of EUR 1,210 books 1,210 on receivables, 1,000 on
+	 * revenue and 210 on VAT (REQ-LPP-007).
+	 *
+	 * @return void
+	 */
+	public function testAnIssuedSalesInvoiceBooksReceivablesRevenueAndVat(): void {
+		$invoice = [
+			'id' => 'ar-1',
+			'invoiceNumber' => '2026-0042',
+			'invoiceDate' => '2026-06-30',
+			'periodId' => '2026-06',
+			'administrationId' => 'adm-1',
+			'currency' => 'EUR',
+			'grossAmount' => 1210.0,
+			'netAmount' => 1000.0,
+			'vatAmount' => 210.0,
+			'invoiceLines' => [
+				['itemName' => 'Advies', 'netAmount' => 600.0],
+				['itemName' => 'Training', 'netAmount' => 400.0],
+			],
+			'lifecycleState' => 'issued',
+		];
+
+		$result = $this->action()->execute($invoice, [], ['sourceSchema' => 'ARInvoice'], MaterialiseGlTransactionAction::class);
+
+		$byAccount = [];
+		foreach ($this->store->savedOf('GLLine') as $line) {
+			$byAccount[$line['accountNumber']][] = [$line['side'], $line['amount']];
+		}
+
+		self::assertSame([['debit', 1210.0]], $byAccount['1100'], 'receivables');
+		self::assertSame([['credit', 600.0], ['credit', 400.0]], $byAccount['8000'], 'revenue per line');
+		self::assertSame([['credit', 210.0]], $byAccount['2110'], 'output VAT');
+
+		$transaction = $this->store->savedOf('GLTransaction')[0];
+		self::assertSame('ar-invoice', $transaction['journalType']);
+		self::assertSame('2026-06', $transaction['periodId']);
+		self::assertSame($transaction['id'], $result['glTransactionId']);
+	}//end testAnIssuedSalesInvoiceBooksReceivablesRevenueAndVat()
+
+	/**
+	 * Post an invoice and group its GL lines by account.
+	 *
+	 * @param array<string,mixed> $invoice The ARInvoice.
+	 *
+	 * @return array<string,list<array{0: string, 1: float}>>
+	 */
+	private function postedByAccount(array $invoice): array {
+		$this->action()->execute($invoice, [], ['sourceSchema' => 'ARInvoice'], MaterialiseGlTransactionAction::class);
+
+		$byAccount = [];
+		foreach ($this->store->savedOf('GLLine') as $line) {
+			$byAccount[$line['accountNumber']][] = [$line['side'], $line['amount']];
+		}
+
+		return $byAccount;
+	}//end postedByAccount()
+
+	/**
+	 * The spec scenario of REQ-SDP-002: the down payment of EUR 5,445 credits
+	 * 4,500 to 2310 and 945 to VAT, and nothing to revenue.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
+	 */
+	public function testADownPaymentIsBookedAsAnAdvanceNotAsRevenue(): void {
+		$byAccount = $this->postedByAccount(
+			[
+				'id' => 'ar-dp', 'invoiceNumber' => '2026-0412', 'invoiceDate' => '2026-06-01', 'administrationId' => 'adm-kvl',
+				'grossAmount' => 5445.0, 'netAmount' => 4500.0, 'vatAmount' => 945.0, 'invoiceTypeCode' => '386',
+				'invoiceLines' => [['itemName' => 'Down payment on order Keuken Eiland 2026-117', 'netAmount' => 4500.0, 'vatRate' => 0.21]],
+				'downPayment' => ['kind' => 'down-payment', 'orderReference' => 'order-117'],
+			]
+		);
+
+		self::assertSame([['debit', 5445.0]], $byAccount['1100'], 'receivables');
+		self::assertSame([['credit', 4500.0]], $byAccount['2310'], 'advances received');
+		self::assertSame([['credit', 945.0]], $byAccount['2110'], 'output VAT');
+		self::assertArrayNotHasKey('8000', $byAccount, 'nothing on revenue');
+	}//end testADownPaymentIsBookedAsAnAdvanceNotAsRevenue()
+
+	/**
+	 * REQ-SDP-003: the final invoice books the full revenue, and the deduction
+	 * line debits the advances account.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
+	 */
+	public function testAFinalInvoiceBooksFullRevenueAndReleasesTheAdvance(): void {
+		$byAccount = $this->postedByAccount(
+			[
+				'id' => 'ar-kitchen', 'invoiceNumber' => '2026-0587', 'invoiceDate' => '2026-11-02', 'administrationId' => 'adm-kvl',
+				'grossAmount' => 12705.0, 'netAmount' => 10500.0, 'vatAmount' => 2205.0,
+				'invoiceLines' => [
+					['itemName' => 'Keuken Eiland', 'netAmount' => 15000.0, 'vatRate' => 0.21],
+					['itemName' => 'Down payment 2026-0412 deducted', 'netAmount' => -4500.0, 'vatRate' => 0.21, 'downPaymentInvoiceId' => 'ar-dp'],
+				],
+				'downPayment' => ['kind' => 'final', 'orderReference' => 'order-117'],
+			]
+		);
+
+		self::assertSame([['debit', 12705.0]], $byAccount['1100'], 'receivables: the amount due');
+		self::assertSame([['credit', 15000.0]], $byAccount['8000'], 'the full revenue');
+		self::assertSame([['debit', 4500.0]], $byAccount['2310'], 'the advance released');
+		self::assertSame([['credit', 2205.0]], $byAccount['2110'], 'VAT: the order VAT less what the down payment charged');
+	}//end testAFinalInvoiceBooksFullRevenueAndReleasesTheAdvance()
+
+	/**
+	 * An invoice whose lines do not add up to its total is refused.
+	 *
+	 * @return void
+	 */
+	public function testASalesInvoiceThatDoesNotAddUpIsRefused(): void {
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('not balanced');
+
+		$this->action()->execute(
+			[
+				'id' => 'ar-2', 'invoiceNumber' => '2026-0043', 'invoiceDate' => '2026-06-30', 'administrationId' => 'adm-1',
+				'grossAmount' => 1250.0, 'netAmount' => 1000.0, 'vatAmount' => 210.0,
+			],
+			[],
+			['sourceSchema' => 'ARInvoice'],
+			MaterialiseGlTransactionAction::class
+		);
+	}//end testASalesInvoiceThatDoesNotAddUpIsRefused()
+
+	/**
+	 * A purchase invoice debits expense per line and input VAT, credits payables.
+	 *
+	 * @return void
+	 */
+	public function testAPurchaseInvoiceBooksExpenseVatAndPayables(): void {
+		$this->action()->execute(
+			[
+				'id' => 'ap-1', 'invoiceNumber' => 'INK-7', 'invoiceDate' => '2026-05-02', 'administrationId' => 'adm-1',
+				'totalAmount' => 1815.0, 'taxAmount' => 315.0,
+				'lines' => [
+					['accountNumber' => '4500', 'amount' => 1000.0, 'description' => 'Laptops'],
+					['accountNumber' => '4510', 'amount' => 500.0, 'description' => 'Software'],
+				],
+				'state' => 'posted',
+			],
+			[],
+			['sourceSchema' => 'APInvoice'],
+			MaterialiseGlTransactionAction::class
+		);
+
+		$lines = array_map(static fn (array $l): array => [$l['accountNumber'], $l['side'], $l['amount']], $this->store->savedOf('GLLine'));
+		self::assertSame(
+			[['4500', 'debit', 1000.0], ['4510', 'debit', 500.0], ['1230', 'debit', 315.0], ['2000', 'credit', 1815.0]],
+			$lines
+		);
+		self::assertSame('ap', $this->store->savedOf('GLLine')[3]['subLedgerType']);
+	}//end testAPurchaseInvoiceBooksExpenseVatAndPayables()
+
+	/**
+	 * REQ-PSII-002: an issued AP transaction posts like a purchase invoice,
+	 * and the schema declares that posting on its issue transition.
+	 *
+	 * @return void
+	 */
+	public function testAnIssuedApTransactionBooksExpenseVatAndCreditor(): void {
+		$this->action()->execute(
+			[
+				'id' => 'ap-0455', 'invoiceNumber' => '2026-0455', 'invoiceDate' => '2026-09-01', 'administrationId' => 'adm-1',
+				'vendorId' => 'payee-1', 'totalAmount' => 1210.0, 'taxAmount' => 210.0,
+				'lines' => [['accountNumber' => '4300', 'amount' => 1000.0, 'description' => 'Folders']],
+				'state' => 'issued',
+			],
+			[],
+			['sourceSchema' => 'APTransaction'],
+			MaterialiseGlTransactionAction::class
+		);
+
+		$lines = array_map(static fn (array $l): array => [$l['accountNumber'], $l['side'], $l['amount']], $this->store->savedOf('GLLine'));
+		self::assertSame([['4300', 'debit', 1000.0], ['1230', 'debit', 210.0], ['2000', 'credit', 1210.0]], $lines);
+
+		$issue = RegisterSchema::schema('APTransaction')['x-openregister-lifecycle']['transitions']['issue'];
+		self::assertSame(MaterialiseGlTransactionAction::class, $issue['actions'][0]['action']);
+		self::assertSame('APTransaction', $issue['actions'][0]['actionParameters']['sourceSchema']);
+	}//end testAnIssuedApTransactionBooksExpenseVatAndCreditor()
+
+	/**
+	 * A source schema without a mapper is refused by name, never guessed at.
+	 *
+	 * @return void
+	 */
+	public function testASchemaWithoutAMapperIsRefusedByName(): void {
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('"InventoryValuation"');
+
+		$source = ['id' => 'iv-1', 'administrationId' => 'adm-1'];
+		$this->action()->execute($source, [], ['sourceSchema' => 'InventoryValuation'], MaterialiseGlTransactionAction::class);
+	}//end testASchemaWithoutAMapperIsRefusedByName()
+
+	/**
+	 * An expense claim is refused by name until expenses-category-mapping
+	 * adds its mapper, and nothing is written (REQ-LPP-006).
+	 *
+	 * @return void
+	 */
+	public function testAnExpenseClaimIsRefusedUntilItsAccountsResolve(): void {
+		$action = $this->action();
+		$source = ['id' => 'ece-1', 'administrationId' => 'adm-1', 'lines' => [['amount' => 100.08]]];
+		try {
+			$action->execute($source, [], ['sourceSchema' => 'ExpenseClaimEntry'], MaterialiseGlTransactionAction::class);
+			self::fail('An expense claim must not post without its account mapping.');
+		} catch (RuntimeException $e) {
+			self::assertStringContainsString('"ExpenseClaimEntry"', $e->getMessage());
+		}
+
+		self::assertSame([], $this->store->savedOf('GLTransaction'));
+	}//end testAnExpenseClaimIsRefusedUntilItsAccountsResolve()
+
+	/**
+	 * A line that fails to save withdraws the transaction it belonged to.
+	 *
+	 * @return void
+	 */
+	public function testAFailedLineWithdrawsTheTransaction(): void {
+		$action = $this->action();
+		$this->store->failOnSchema = 'GLLine';
+
+		try {
+			$action->execute($this->journalEntry(), [], ['sourceSchema' => 'JournalEntry'], MaterialiseGlTransactionAction::class);
+			self::fail('A failed line must abort the post.');
+		} catch (RuntimeException $e) {
+			self::assertStringContainsString('could not be written', $e->getMessage());
+		}
+
+		$transactionId = $this->store->savedOf('GLTransaction')[0]['id'];
+		self::assertContains(['GLTransaction', $transactionId], $this->store->deleted);
+	}//end testAFailedLineWithdrawsTheTransaction()
+
+	/**
+	 * The statutory tariffs as the seeder writes them, from the real seed file.
+	 *
+	 * @return void
+	 */
+	private function seedTariffs(): void {
+		$seed = json_decode((string)file_get_contents(__DIR__ . '/../../../../lib/Settings/seeds/btw-tariffs-2026.json'), true);
+		$this->store->rows['VatTariff'] = $seed['tariffs'];
+	}//end seedTariffs()
+
+	/**
+	 * The posted GL lines as [account, side, amount, tariff, box, kind].
+	 *
+	 * @return list<array{0: string, 1: string, 2: float, 3: string|null, 4: string|null, 5: string|null}>
+	 */
+	private function stampedLines(): array {
+		return array_map(
+			static fn (array $l): array => [
+				$l['accountNumber'],
+				$l['side'],
+				$l['amount'],
+				($l['vatTariffCode'] ?? null),
+				($l['vatReturnBox'] ?? null),
+				($l['vatAmountKind'] ?? null),
+			],
+			$this->store->savedOf('GLLine')
+		);
+	}//end stampedLines()
+
+	/**
+	 * REQ-VBTW-004: a sale at two rates books one VAT line per tariff, and
+	 * every revenue and VAT line carries its tariff, its return box and
+	 * whether it is the base or the VAT. The lines validate against the
+	 * merged register.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
+	 */
+	public function testASaleAtTwoRatesBooksVatPerTariffWithItsBox(): void {
+		$action = $this->action();
+		$this->seedTariffs();
+		$action->execute(
+			[
+				'id' => 'ar-9', 'invoiceNumber' => '2026-0090', 'invoiceDate' => '2026-08-12', 'periodId' => '2026-08',
+				'administrationId' => 'adm-1', 'currency' => 'EUR', 'grossAmount' => 1755.0, 'netAmount' => 1500.0, 'vatAmount' => 255.0,
+				'invoiceLines' => [
+					['itemName' => 'Taarten', 'netAmount' => 500.0, 'vatCategory' => 'S', 'vatRate' => 9],
+					['itemName' => 'Cursus', 'netAmount' => 1000.0, 'vatCategory' => 'S', 'vatRate' => 21],
+				],
+				'lifecycleState' => 'issued',
+			],
+			[],
+			['sourceSchema' => 'ARInvoice'],
+			MaterialiseGlTransactionAction::class
+		);
+
+		self::assertSame(
+			[
+				['1100', 'debit', 1755.0, null, null, null],
+				['8000', 'credit', 500.0, 'low', '1b', 'base'],
+				['8000', 'credit', 1000.0, 'high', '1a', 'base'],
+				['2110', 'credit', 45.0, 'low', '1b', 'vat'],
+				['2110', 'credit', 210.0, 'high', '1a', 'vat'],
+			],
+			$this->stampedLines()
+		);
+		foreach ($this->store->savedOf('GLLine') as $row) {
+			unset($row['id']);
+			// The store mints non-uuid ids; OpenRegister hands out uuids.
+			$row['transactionId'] = '0f8fad5b-d9cb-469f-a165-70867728950e';
+			self::assertSame([], RegisterSchema::errors(slug: 'GLLine', object: $row));
+		}
+	}//end testASaleAtTwoRatesBooksVatPerTariffWithItsBox()
+
+	/**
+	 * The invoice's own VAT breakdown is what was charged, so it wins over a
+	 * recalculation; a cent the per-tariff amounts do not account for goes to
+	 * the largest tariff, so the VAT booked equals the VAT invoiced.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
+	 */
+	public function testTheInvoicesVatBreakdownWinsAndAStrayCentGoesToTheLargestTariff(): void {
+		$action = $this->action();
+		$this->seedTariffs();
+		$action->execute(
+			[
+				'id' => 'ar-10', 'invoiceNumber' => '2026-0091', 'invoiceDate' => '2026-08-12', 'periodId' => '2026-08',
+				'administrationId' => 'adm-1', 'currency' => 'EUR', 'grossAmount' => 76.67, 'netAmount' => 66.66, 'vatAmount' => 10.01,
+				'invoiceLines' => [
+					['itemName' => 'A', 'netAmount' => 33.33, 'vatCategory' => 'S', 'vatRate' => 21],
+					['itemName' => 'B', 'netAmount' => 33.33, 'vatCategory' => 'S', 'vatRate' => 9],
+				],
+				'vatBreakdown' => [['category' => 'S', 'rate' => 21, 'taxableAmount' => 33.33, 'taxAmount' => 7.0]],
+				'lifecycleState' => 'issued',
+			],
+			[],
+			['sourceSchema' => 'ARInvoice'],
+			MaterialiseGlTransactionAction::class
+		);
+
+		$vat = array_values(array_filter($this->stampedLines(), static fn (array $l): bool => $l[5] === 'vat'));
+		self::assertSame([['2110', 'credit', 7.01, 'high', '1a', 'vat'], ['2110', 'credit', 3.0, 'low', '1b', 'vat']], $vat);
+	}//end testTheInvoicesVatBreakdownWinsAndAStrayCentGoesToTheLargestTariff()
+
+	/**
+	 * The design's Korenbloem purchases: EUR 4,000 at the high tariff and
+	 * EUR 2,000 at the low tariff book EUR 840 and EUR 180 input VAT, each on
+	 * its own line in box 5b. A purchase's base is in no box.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
+	 */
+	public function testASplitPurchaseBooksInputVatPerTariffInBox5b(): void {
+		$action = $this->action();
+		$this->seedTariffs();
+		$action->execute(
+			[
+				'id' => 'ap-9', 'invoiceNumber' => 'INK-90', 'invoiceDate' => '2026-08-02', 'administrationId' => 'adm-1',
+				'totalAmount' => 7020.0, 'taxAmount' => 1020.0,
+				'lines' => [
+					['accountNumber' => '7000', 'amount' => 4000.0, 'description' => 'Oven', 'taxCode' => 'BTW21'],
+					['accountNumber' => '7010', 'amount' => 2000.0, 'description' => 'Meel', 'taxCode' => 'low'],
+				],
+				'state' => 'posted',
+			],
+			[],
+			['sourceSchema' => 'APInvoice'],
+			MaterialiseGlTransactionAction::class
+		);
+
+		self::assertSame(
+			[
+				['7000', 'debit', 4000.0, 'high', null, 'base'],
+				['7010', 'debit', 2000.0, 'low', null, 'base'],
+				['1230', 'debit', 840.0, 'high', '5b', 'vat'],
+				['1230', 'debit', 180.0, 'low', '5b', 'vat'],
+				['2000', 'credit', 7020.0, null, null, null],
+			],
+			$this->stampedLines()
+		);
+	}//end testASplitPurchaseBooksInputVatPerTariffInBox5b()
+
+	/**
+	 * A reverse-charged purchase puts its base in the box of its tariff
+	 * (2a domestic, 4b from the EU, 4a from outside the EU).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
+	 */
+	public function testAReverseChargedPurchasePutsItsBaseInTheBoxOfItsTariff(): void {
+		$action = $this->action();
+		$this->seedTariffs();
+		$action->execute(
+			[
+				'id' => 'ap-10', 'invoiceNumber' => 'INK-91', 'invoiceDate' => '2026-08-03', 'administrationId' => 'adm-1',
+				'totalAmount' => 3000.0, 'taxAmount' => 0,
+				'lines' => [
+					['accountNumber' => '7100', 'amount' => 2000.0, 'description' => 'Onderaanneming', 'taxCode' => 'reverse-charge'],
+					['accountNumber' => '7110', 'amount' => 1000.0, 'description' => 'Machine uit Duitsland', 'taxCode' => 'intra-eu-acquisition'],
+				],
+				'state' => 'posted',
+			],
+			[],
+			['sourceSchema' => 'APInvoice'],
+			MaterialiseGlTransactionAction::class
+		);
+
+		self::assertSame(
+			[
+				['7100', 'debit', 2000.0, 'reverse-charge', '2a', 'base'],
+				['7110', 'debit', 1000.0, 'intra-eu-acquisition', '4b', 'base'],
+				['2000', 'credit', 3000.0, null, null, null],
+			],
+			$this->stampedLines()
+		);
+	}//end testAReverseChargedPurchasePutsItsBaseInTheBoxOfItsTariff()
+
+	/**
+	 * Without tariff records the lines still carry their tariff code and
+	 * kind, so a later check can name them, but no box is guessed.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-1.2
+	 */
+	public function testWithoutTariffRecordsNoBoxIsGuessed(): void {
+		$this->action()->execute(
+			[
+				'id' => 'ar-11', 'invoiceNumber' => '2026-0092', 'invoiceDate' => '2026-08-12', 'periodId' => '2026-08',
+				'administrationId' => 'adm-1', 'currency' => 'EUR', 'grossAmount' => 121.0, 'netAmount' => 100.0, 'vatAmount' => 21.0,
+				'invoiceLines' => [['itemName' => 'A', 'netAmount' => 100.0, 'vatCategory' => 'S', 'vatRate' => 21]],
+				'lifecycleState' => 'issued',
+			],
+			[],
+			['sourceSchema' => 'ARInvoice'],
+			MaterialiseGlTransactionAction::class
+		);
+
+		self::assertSame(
+			[['1100', 'debit', 121.0, null, null, null], ['8000', 'credit', 100.0, 'high', null, 'base'], ['2110', 'credit', 21.0, 'high', null, 'vat']],
+			$this->stampedLines()
+		);
+	}//end testWithoutTariffRecordsNoBoxIsGuessed()
+}//end class

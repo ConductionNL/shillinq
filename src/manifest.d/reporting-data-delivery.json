@@ -1,0 +1,209 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "reporting-data-delivery",
+		"description": "Report schedules under Reporting & Compliance: an index with active and paused filters, and a detail page with Pause and Resume and the last run. Schedules are made from the report dialog (Schedule this report) or here."
+	},
+	"menu": [
+		{
+			"id": "ReportingCompliance",
+			"children": [
+				{
+					"id": "ReportSchedules",
+					"label": "Report schedules",
+					"icon": "CalendarClock",
+					"route": "ReportSchedules",
+					"order": 90
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "ReportSchedules",
+			"route": "/reports/schedules",
+			"type": "index",
+			"title": "Report schedules",
+			"config": {
+				"register": "shillinq",
+				"schema": "ReportSchedule",
+				"columns": [
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "frequency",
+						"label": "Frequency",
+						"sortable": true
+					},
+					{
+						"key": "runDay",
+						"label": "Run day",
+						"sortable": true
+					},
+					{
+						"key": "format",
+						"label": "Format",
+						"sortable": true
+					},
+					{
+						"key": "nextRunAt",
+						"label": "Next run",
+						"sortable": true
+					},
+					{
+						"key": "lastError",
+						"label": "Last error",
+						"sortable": false
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "nextRunAt",
+				"detailRoute": "ReportScheduleDetail",
+				"quickFilters": [
+					{
+						"label": "All",
+						"filter": {},
+						"default": true
+					},
+					{
+						"label": "Active",
+						"filter": {
+							"status": "active"
+						}
+					},
+					{
+						"label": "Paused",
+						"filter": {
+							"status": "paused"
+						}
+					}
+				]
+			}
+		},
+		{
+			"id": "ReportScheduleDetail",
+			"route": "/reports/schedules/:id",
+			"type": "detail",
+			"title": "Report schedule",
+			"config": {
+				"register": "shillinq",
+				"schema": "ReportSchedule",
+				"indexRoute": "ReportSchedules",
+				"auditTrail": true,
+				"lifecycleActions": true,
+				"actions": [
+					{
+						"id": "pause-report-schedule",
+						"label": "Pause",
+						"icon": "PauseCircleOutline",
+						"visibleWhen": {
+							"field": "status",
+							"op": "eq",
+							"value": "active"
+						},
+						"type": "lifecycle-transition",
+						"transition": "pause",
+						"description": "Stop producing the report until it is resumed."
+					},
+					{
+						"id": "resume-report-schedule",
+						"label": "Resume",
+						"icon": "PlayCircleOutline",
+						"visibleWhen": {
+							"field": "status",
+							"op": "eq",
+							"value": "paused"
+						},
+						"type": "lifecycle-transition",
+						"transition": "resume",
+						"description": "Produce the report again from the next run day."
+					}
+				],
+				"widgets": [
+					{
+						"id": "schedule",
+						"type": "data",
+						"title": "Schedule",
+						"icon": "CalendarClock",
+						"content": {
+							"columns": 2,
+							"include": [
+								"name",
+								"reportType",
+								"format",
+								"frequency",
+								"runDay",
+								"periodRule",
+								"recipients",
+								"folderPath",
+								"status"
+							]
+						}
+					},
+					{
+						"id": "runs",
+						"type": "data",
+						"title": "Runs",
+						"icon": "History",
+						"content": {
+							"columns": 2,
+							"include": [
+								"nextRunAt",
+								"lastRunAt",
+								"lastPeriod",
+								"lastFilePath",
+								"lastError"
+							]
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "schedule",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 6
+					},
+					{
+						"id": "2",
+						"widgetId": "runs",
+						"gridX": 0,
+						"gridY": 6,
+						"gridWidth": 12,
+						"gridHeight": 4
+					}
+				],
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		}
+	]
+}

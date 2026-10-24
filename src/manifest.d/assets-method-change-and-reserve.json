@@ -1,0 +1,42 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "assets-method-change-and-reserve",
+		"adr": "ADR-037 modular manifest fragment",
+		"description": "Reinvestment reserves (REQ-AMCR-004, REQ-AMCR-005): the gains on sold assets kept for a replacement, with what was applied, what remains and when the remainder is released to profit."
+	},
+	"menu": [
+		{
+			"id": "ReinvestmentReserves",
+			"label": "Reinvestment reserves",
+			"icon": "PiggyBankOutline",
+			"route": "ReinvestmentReserves",
+			"order": 31
+		}
+	],
+	"pages": [
+		{
+			"id": "ReinvestmentReserves",
+			"route": "/fixed-assets/reinvestment-reserves",
+			"type": "index",
+			"title": "Reinvestment reserves",
+			"config": {
+				"register": "shillinq",
+				"schema": "ReinvestmentReserve",
+				"description": "The gain on a sold asset, kept for a replacement. Apply a reserve from the replacement asset's page; a remainder still open at the expiry date goes to profit.",
+				"columns": [
+					{"key": "disposedAssetNumber", "label": "Sold asset", "sortable": true},
+					{"key": "formedOn", "label": "Formed on", "sortable": true},
+					{"key": "amount", "label": "Amount", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2}},
+					{"key": "appliedAmount", "label": "Applied", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2}},
+					{"key": "remainder", "label": "Remainder", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2}},
+					{"key": "expiresOn", "label": "Expires on", "sortable": true},
+					{"key": "lifecycleState", "label": "State", "sortable": true}
+				],
+				"defaultSort": "expiresOn",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/reinvestment-reserve"
+			}
+		}
+	]
+}

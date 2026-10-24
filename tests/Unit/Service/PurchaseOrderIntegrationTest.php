@@ -32,9 +32,12 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\PurchaseOrderApprovalService;
 use OCA\Shillinq\Service\PurchaseOrderService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
+use OCP\IUser;
+use OCP\IUserSession;
 use OCP\Notification\IManager as INotificationManager;
 use OCP\Notification\INotification;
 use PHPUnit\Framework\TestCase;
@@ -91,7 +94,7 @@ final class PurchaseOrderIntegrationTest extends TestCase {
 		);
 
 		self::assertSame(18500.00, $po['totalAmount']);
-		self::assertSame('pending_approval', $po['lifecycleState']);
+		self::assertSame('draft', $po['statusCode']);
 		self::assertCount(2, $po['approvalChain']);
 		self::assertCount(2, $notifications);
 
@@ -114,9 +117,9 @@ final class PurchaseOrderIntegrationTest extends TestCase {
 			'PurchaseOrder',
 			$poId,
 			static function (array &$row) {
-				$row['approvalChain'][0]['status'] = 'approved';
-				$row['approvalChain'][0]['signedAt'] = '2026-06-01T12:00:00+00:00';
-				$row['approvalChain'][0]['signedBy'] = 'teamleider-1';
+				$row['approvalChain'][0]['decision'] = 'approved';
+				$row['approvalChain'][0]['decidedAt'] = '2026-06-01T12:00:00+00:00';
+				$row['approvalChain'][0]['userId'] = 'teamleider-1';
 			}
 		);
 
@@ -133,17 +136,108 @@ final class PurchaseOrderIntegrationTest extends TestCase {
 			'PurchaseOrder',
 			$poId,
 			static function (array &$row) {
-				$row['approvalChain'][1]['status'] = 'approved';
-				$row['approvalChain'][1]['signedAt'] = '2026-06-02T09:00:00+00:00';
-				$row['approvalChain'][1]['signedBy'] = 'facility-1';
+				$row['approvalChain'][1]['decision'] = 'approved';
+				$row['approvalChain'][1]['decidedAt'] = '2026-06-02T09:00:00+00:00';
+				$row['approvalChain'][1]['userId'] = 'facility-1';
 			}
 		);
 
 		$updated = $service->blockSendUntilApproved(administrationId: 'adm-1', purchaseOrderId: $poId);
-		self::assertSame('sent', $updated['lifecycleState']);
+		self::assertSame('sent', $updated['statusCode']);
 		self::assertNotEmpty($updated['sentAt']);
 
 	}//end testCreateThenSendEndToEnd()
+
+	/**
+	 * The approval service signs the chain the purchase order service created,
+	 * and the send check reads what the approval service wrote (#1716).
+	 *
+	 * The chain used to be created with `status` / `signedAt` and signed on
+	 * `decision` / `decidedAt`, so the first decision threw "Approval chain is
+	 * fully signed" and the send check waited for fields nothing wrote. The
+	 * end-to-end test above sets the chain fields by hand, which is how it
+	 * stayed green. This one drives both real services over the same store.
+	 *
+	 * @return void
+	 */
+	public function testTheApprovalDecisionsSignTheChainTheServiceCreatedAndUnblockTheSend(): void {
+		$data = [
+			'AdministrationMembership' => [
+				['administrationId' => 'adm-1', 'role' => 'teamleider', 'userId' => 'teamleider-1'],
+				['administrationId' => 'adm-1', 'role' => 'facility_manager', 'userId' => 'facility-1'],
+			],
+			'PurchaseOrder' => [],
+			'ApprovalTask' => [],
+		];
+
+		$saved = [];
+		$notifications = [];
+		$stub = $this->buildObjectServiceStub($data, $saved);
+		$service = $this->buildService($stub, $saved, 'inkoper-1', ['adm-1'], $notifications);
+
+		$po = $service->createPurchaseOrder(
+			administrationId: 'adm-1',
+			payload: [
+				'supplierId' => 'sup-coffee',
+				'costCenter' => 'FAC-2026',
+				'currency' => 'EUR',
+				'lines' => [
+					['productCode' => 'COFFEE-PRO-1', 'quantity' => 1, 'unitPrice' => 18500.00, 'vatRate' => 0.21, 'glAccount' => '4400'],
+				],
+			]
+		);
+		$poId = (string)$po['id'];
+		self::assertCount(2, $po['approvalChain']);
+
+		$approvals = $this->buildApprovalService($stub, 'teamleider-1');
+		$afterFirst = $approvals->recordApprovalDecision(administrationId: 'adm-1', purchaseOrderId: $poId, decision: 'approved');
+		self::assertSame('draft', $afterFirst['statusCode']);
+		self::assertSame('approved', $afterFirst['approvalChain'][0]['decision']);
+		self::assertSame('teamleider-1', $afterFirst['approvalChain'][0]['userId']);
+
+		try {
+			$service->blockSendUntilApproved(administrationId: 'adm-1', purchaseOrderId: $poId);
+			self::fail('One of two approvers signed: the send must still be refused.');
+		} catch (\RuntimeException $e) {
+			self::assertSame('Purchase order cannot be sent: approval chain incomplete', $e->getMessage());
+		}
+
+		$afterSecond = $this->buildApprovalService($stub, 'facility-1')
+			->recordApprovalDecision(administrationId: 'adm-1', purchaseOrderId: $poId, decision: 'approved');
+		self::assertSame('approved', $afterSecond['statusCode']);
+
+		$sent = $service->blockSendUntilApproved(administrationId: 'adm-1', purchaseOrderId: $poId);
+		self::assertSame('sent', $sent['statusCode']);
+	}//end testTheApprovalDecisionsSignTheChainTheServiceCreatedAndUnblockTheSend()
+
+	/**
+	 * The real approval service over the shared store, acting as $userId.
+	 *
+	 * @param object $stub The in-memory store.
+	 * @param string $userId The signed-in approver.
+	 *
+	 * @return PurchaseOrderApprovalService
+	 */
+	private function buildApprovalService(object $stub, string $userId): PurchaseOrderApprovalService {
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
+
+		$administrationContext = $this->createMock(AdministrationContextService::class);
+		$administrationContext->method('canAccess')->willReturn(true);
+
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn($userId);
+		$session = $this->createMock(IUserSession::class);
+		$session->method('getUser')->willReturn($user);
+
+		return new PurchaseOrderApprovalService(
+			appConfig: $appConfig,
+			administrationContext: $administrationContext,
+			userSession: $session,
+			logger: $this->createMock(LoggerInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
+		);
+	}//end buildApprovalService()
 
 	/**
 	 * The standalone PurchaseOrderForm/PurchaseOrderDetail pages were retired into

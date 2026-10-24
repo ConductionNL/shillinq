@@ -43,6 +43,7 @@ namespace OCA\Shillinq\Tests\Integration;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\MultiPoConsolidationService;
+use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
 use OCA\Shillinq\Service\SupplierInvoiceService;
 use OCP\IAppConfig;
 use OCP\IUser;
@@ -332,6 +333,7 @@ final class MultiPoConsolidationIntegrationTest extends TestCase {
 			administrationContext: $administrationContext,
 			logger: $logger,
 			objectService: $this->createMock(ObjectServiceInterface::class),
+			checks: $this->createStub(SupplierInvoiceChecks::class),
 		);
 
 		$service = new MultiPoConsolidationService(

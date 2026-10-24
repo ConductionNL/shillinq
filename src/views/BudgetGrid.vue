@@ -21,6 +21,11 @@
  gap that precedent left open). A grootboek (Account) leaf row is a real
  navigation link to ChartOfAccountsDetail, not a toggle (REQ-BGV-007).
 
+ Below the grid, BudgetLinesEditor types the budget itself: the months of
+ one annual budget per ledger group (planning-budget-editing, REQ-PBE-001,
+ REQ-PBE-002), and MultiYearBudget sets the years side by side with Start
+ next year (REQ-PBE-003).
+
  @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md
 -->
 <template>
@@ -124,58 +129,86 @@
 							</tr>
 						</thead>
 						<tbody>
-							<tr
-								v-for="row in visibleRows"
-								:key="row.id"
-								class="budget-grid__row"
-								data-testid="budget-grid-row"
-								:data-row-kind="row.kind">
-								<th
-									scope="row"
-									class="budget-grid__row-header"
-									:style="{
-										paddingInlineStart:
-											row.depth * 20 + 8 + 'px',
-									}">
-									<button
-										v-if="
-											row.kind === 'ledgerGroup'
-											&& row.hasChildren
-										"
-										type="button"
-										class="budget-grid__toggle"
-										data-testid="budget-grid-expand-toggle"
-										:aria-expanded="expandedIds.has(row.id)"
-										@click="toggleRow(row.id)"
-										@keyup.enter="toggleRow(row.id)"
-										@keyup.space="toggleRow(row.id)">
-										<ChevronDown
-											v-if="expandedIds.has(row.id)"
-											:size="16" />
-										<ChevronRight v-else :size="16" />
-										{{ row.label }}
-									</button>
-									<router-link
-										v-else-if="row.kind === 'account'"
-										:to="row.route"
-										class="budget-grid__account-link"
-										data-testid="budget-grid-account-link">
-										{{ row.label }} ({{ row.accountNumber }})
-									</router-link>
-									<span v-else>{{ row.label }}</span>
-								</th>
-								<td
-									v-for="column in columns"
-									:key="column.key"
-									class="budget-grid__cell"
-									:class="{
-										'budget-grid__total-col': column.isTotal,
-									}">
-									<BudgetGridCell
-										:cell="row.cells[column.key]"
-										:isAccount="row.kind === 'account'" />
-								</td>
-							</tr>
+							<template v-for="row in visibleRows" :key="row.id">
+								<tr
+									class="budget-grid__row"
+									data-testid="budget-grid-row"
+									:data-row-kind="row.kind">
+									<th
+										scope="row"
+										class="budget-grid__row-header"
+										:style="{
+											paddingInlineStart:
+												row.depth * 20 + 8 + 'px',
+										}">
+										<button
+											v-if="
+												row.kind === 'ledgerGroup'
+												&& row.hasChildren
+											"
+											type="button"
+											class="budget-grid__toggle"
+											data-testid="budget-grid-expand-toggle"
+											:aria-expanded="expandedIds.has(row.id)"
+											@click="toggleRow(row.id)"
+											@keyup.enter="toggleRow(row.id)"
+											@keyup.space="toggleRow(row.id)">
+											<ChevronDown
+												v-if="expandedIds.has(row.id)"
+												:size="16" />
+											<ChevronRight v-else :size="16" />
+											{{ row.label }}
+										</button>
+										<router-link
+											v-else-if="row.kind === 'account'"
+											:to="row.route"
+											class="budget-grid__account-link"
+											data-testid="budget-grid-account-link">
+											{{ row.label }} ({{ row.accountNumber }})
+										</router-link>
+										<span v-else>{{ row.label }}</span>
+										<button
+											type="button"
+											class="budget-grid__trend-toggle"
+											data-testid="budget-grid-view-trend-toggle"
+											:aria-expanded="
+												openChartRowId === row.id
+											"
+											:aria-label="
+												t(
+													'shillinq',
+													'View trend of {name}',
+													{ name: row.label },
+												)
+											"
+											@click="toggleChart(row.id)"
+											@keyup.enter="toggleChart(row.id)"
+											@keyup.space="toggleChart(row.id)">
+											<ChartLine :size="16" />
+										</button>
+									</th>
+									<td
+										v-for="column in columns"
+										:key="column.key"
+										class="budget-grid__cell"
+										:class="{
+											'budget-grid__total-col': column.isTotal,
+										}">
+										<BudgetGridCell
+											:cell="row.cells[column.key]"
+											:isAccount="row.kind === 'account'" />
+									</td>
+								</tr>
+								<tr
+									v-if="openChartRowId === row.id"
+									class="budget-grid__chart-row"
+									data-testid="budget-grid-trend-row">
+									<td :colspan="columns.length + 1">
+										<BudgetTrendChart
+											v-bind="trendChartProps(row)" />
+									</td>
+								</tr>
+							</template>
 						</tbody>
 						<tfoot v-if="computedRows.length">
 							<tr
@@ -204,6 +237,10 @@
 					{{ errorMessage }}
 				</p>
 			</section>
+
+			<BudgetLinesEditor :administrationId="administrationId" />
+
+			<MultiYearBudget :administrationId="administrationId" />
 		</div>
 	</NcAppContent>
 </template>
@@ -212,11 +249,20 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcAppContent, NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
+import ChartLine from 'vue-material-design-icons/ChartLine.vue'
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue'
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue'
+import BudgetTrendChart from '../components/budget-charts/BudgetTrendChart.vue'
 import BudgetGridCell from '../components/BudgetGridCell.vue'
+import BudgetLinesEditor from '../components/BudgetLinesEditor.vue'
+import MultiYearBudget from '../components/MultiYearBudget.vue'
 import { fetchAdministrationContext } from '../api/administrationApi.js'
-import { defaultRange, flattenVisibleRows } from './budgetGridHelpers.js'
+import {
+	defaultRange,
+	flattenVisibleRows,
+	nextOpenChartRow,
+	trendChartProps,
+} from './budgetGridHelpers.js'
 
 export default {
 	name: 'BudgetGrid',
@@ -227,7 +273,11 @@ export default {
 		NcLoadingIcon,
 		ChevronDown,
 		ChevronRight,
+		ChartLine,
+		BudgetTrendChart,
 		BudgetGridCell,
+		BudgetLinesEditor,
+		MultiYearBudget,
 	},
 
 	data() {
@@ -243,6 +293,7 @@ export default {
 			rows: [],
 			computedRows: [],
 			expandedIds: new Set(),
+			openChartRowId: null,
 		}
 	},
 
@@ -324,6 +375,7 @@ export default {
 					? data.computedRows
 					: []
 				this.expandedIds = new Set()
+				this.openChartRowId = null
 			} catch (error) {
 				const status = error?.response?.status
 				if (status === 404) {
@@ -363,6 +415,32 @@ export default {
 				next.add(id)
 			}
 			this.expandedIds = next
+		},
+
+		/**
+		 * Open the trend chart beneath a row, or close it when it is open
+		 * already. One chart is open at a time (budget-charts REQ-BCH-001).
+		 *
+		 * @param {string} id The row id.
+		 * @return {void}
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-001
+		 */
+		toggleChart(id) {
+			this.openChartRowId = nextOpenChartRow(this.openChartRowId, id)
+		},
+
+		/**
+		 * The chart props for a row, over this grid's own period range.
+		 *
+		 * @param {object} row The grid row.
+		 * @return {object|null} The BudgetTrendChart props.
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-001
+		 */
+		trendChartProps(row) {
+			return trendChartProps(row, this.administrationId, {
+				startPeriod: this.startPeriod,
+				endPeriod: this.endPeriod,
+			})
 		},
 	},
 }
@@ -430,6 +508,25 @@ export default {
 
 .budget-grid__toggle:focus-visible {
 	outline: 2px solid var(--color-primary-element, #0082c9);
+}
+
+.budget-grid__trend-toggle {
+	display: inline-flex;
+	align-items: center;
+	margin-inline-start: 8px;
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: var(--color-text-maxcontrast);
+	padding: 4px;
+}
+
+.budget-grid__trend-toggle:focus-visible {
+	outline: 2px solid var(--color-primary-element);
+}
+
+.budget-grid__chart-row td {
+	white-space: normal;
 }
 
 .budget-grid__account-link {

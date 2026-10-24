@@ -164,10 +164,6 @@ errors during the year. The jaaropgave validates that
 | Spec | Hand-off service | Output |
 | --- | --- | --- |
 | bookkeeping-loonaangifte-sbr | `PayrollSbrConversionService::toSbrInstancePayload` | LA-XX-2026 instance payload + deterministic `sbrInstanceRef` |
-| bookkeeping-ap-ar | `PayrollApArHandoffService::toApTransactionPayloads` | Two APTransaction payloads (Belastingdienst + UWV) with breakdown |
-| bookkeeping-upa-pensioen | `PayrollUpaHandoffService::toUpaSubmissionPayloads` | Per-pensioenuitvoerder UPA payloads grouped by `pensioenRegeling` |
-| bookkeeping-wkr | `PayrollWkrHandoffService::toWkrLoonsomPayload` | Period loonsom (sum of `fiscaalLoon`) for WKR ceiling-tracking |
-| bookkeeping-liv-lkv (future) | `PayrollLivLkvHandoffService::toLivLkvEligibilityPayload` | Per-(werknemer, jaar) inkomenniveau + fiscaalLoonJaar + lkvCategorie |
 | bookkeeping-chart-of-accounts | `PayrollChartOfAccountsMapping::all` | Canonical RGS 3.5 account map |
 
 Every hand-off is a **pure** computation — no cross-app HTTP, no transport.
@@ -198,10 +194,6 @@ shape.
 | `PayrollFragmentTest` | ADR-037 register.d fragment unioning |
 | `PayrollSbrConversionServiceTest` | Deterministic ref; payload echo |
 | `PayrollJaaropgaveServiceTest` | YTD aggregate; cumulatieven consistency refusal |
-| `PayrollApArHandoffServiceTest` | Belastingdienst + UWV split |
-| `PayrollUpaHandoffServiceTest` | Per-uitvoerder grouping; scope guard |
-| `PayrollWkrHandoffServiceTest` | Loonsom sum; scope guard |
-| `PayrollLivLkvHandoffServiceTest` | Eligibility shape; cross-admin guard |
 | `PayrollChartOfAccountsMappingTest` | Canonical RGS 3.5 contract |
 
 Run from the worktree (PHP 8.3, Nextcloud-aware bootstrap):

@@ -3,14 +3,15 @@
 /**
  * BTW-aangifte (VAT return) data-report generator
  *
- * Renders a Dutch periodic VAT return (BTW-aangifte) natively as XML using
- * XMLWriter, laid out by rubriek. It prefers a stored VatReturnFiling record for
- * the period (outputVat / deductibleVat / intraCommunitySupplies) and otherwise
- * derives the rubriek totals from the period's ARInvoice rows: rubriek 1a is the
- * high-rate (21%) turnover + tax, 1b the low/reduced-rate (9%) turnover + tax, 5a
- * the total output tax (1a+1b), 5b the deductible input tax, and the net amount
- * payable is 5a − 5b. Rendering is byte-native — no office or XML-DOM library is
- * used; an empty period still produces a well-formed return with zero totals.
+ * Renders the prepared VAT return of the period (a BtwAangifte with its
+ * VATDeclaration records, one per return box) as an XML file laid out by
+ * rubriek. The figures are the declarations as VATReturnService prepared them
+ * from the booked ledger lines, so the file, the return page and the
+ * correction check show the same numbers (REQ-VBTW-004). Nothing is derived
+ * here: a period without a prepared return is refused with a message that
+ * says so, rather than rendered as a return of zeros someone could file.
+ *
+ * Rendering is byte-native (XMLWriter), no office or XML-DOM library is used.
  *
  * @category Reporting
  * @package  OCA\Shillinq\Reporting\Generator
@@ -21,27 +22,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec exclude The reporting capability has no canonical spec. This tag pointed at
- *       openspec/changes/reporting-compliance-consolidation (a change directory that
- *       exists neither under changes nor under changes/archive), and no canonical
- *       reporting capability exists under openspec/specs either. Tracked in #525.
- *       Deliberately NOT resolved by writing that spec — authoring the requirement
- *       a tag is checked against turns the gate green over an unspecified capability.
- *       NOTE: this generator is one of the three that CONTRADICT their domain
- *       capability (REQ-VBTW-004 — the ADR-031 aggregation anti-pattern), so
- *       retagging it at bookkeeping-vat-btw-filing would make the gate pass
- *       against a requirement the code breaks. That contradiction is #525.
- *
- * KNOWINGLY DANGLING — do not repoint this tag (gate-46, shillinq#499).
- * The change directory it names was never committed, and the `reporting`
- * capability has NO canonical spec. One was drafted during gate remediation
- * and withdrawn: a spec written to fit the code, by the process whose job is
- * to check the code against a spec, is not a specification anyone agreed to.
- * Authoring it is the capability owner's decision, not a gate fix. Note in
- * particular that bookkeeping-vat-btw-filing REQ-VBTW-004 forbids a PHP
- * service deriving the rubrieken by walking the GL, calling it the ADR-031
- * aggregation anti-pattern — pointing there would report conformance to a
- * rule this code breaks.
+ * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md#requirement-req-vbtw-004-the-btw-journal-shall-be-derived-from-period-filtered-gl-aggregations
+ * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-2.2
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment, Squiz.PHP.DisallowInlineIf
  */
@@ -54,14 +36,39 @@ use OCA\Shillinq\Reporting\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 use XMLWriter;
 
 /**
- * BTW-aangifte XML generator built natively from VatReturnFiling + ARInvoice.
+ * BTW-aangifte XML generator built from the period's prepared return.
+ *
+ * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md#requirement-req-vbtw-004-the-btw-journal-shall-be-derived-from-period-filtered-gl-aggregations
  */
 final class VatReturnReportGenerator implements ReportGeneratorInterface {
 
 	use ReportDataTrait;
+
+	/**
+	 * The rubrieken of the return form with a base and a VAT amount, in form order.
+	 */
+	private const BOX_LABELS = [
+		'1a' => 'Leveringen/diensten belast met hoog tarief',
+		'1b' => 'Leveringen/diensten belast met laag tarief',
+		'1c' => 'Leveringen/diensten belast met overige tarieven, behalve 0%',
+		'1d' => 'Privégebruik',
+		'1e' => 'Leveringen/diensten belast met 0% of niet bij u belast',
+		'2a' => 'Leveringen/diensten waarbij de omzetbelasting naar u is verlegd',
+		'3a' => 'Leveringen naar landen buiten de EU',
+		'3b' => 'Leveringen naar landen binnen de EU',
+		'3c' => 'Installatie/afstandsverkopen binnen de EU',
+		'4a' => 'Leveringen/diensten uit landen buiten de EU',
+		'4b' => 'Leveringen/diensten uit landen binnen de EU',
+	];
+
+	/**
+	 * The box input VAT is declared in.
+	 */
+	private const INPUT_VAT_BOX = '5b';
 
 	/**
 	 * Construct the VAT-return report generator.
@@ -80,6 +87,8 @@ final class VatReturnReportGenerator implements ReportGeneratorInterface {
 	 * {@inheritDoc}
 	 *
 	 * @return string
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-2.2
 	 */
 	public static function reportType(): string {
 		return 'vat-return';
@@ -89,38 +98,49 @@ final class VatReturnReportGenerator implements ReportGeneratorInterface {
 	 * {@inheritDoc}
 	 *
 	 * @return array<int, string>
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-2.2
 	 */
 	public static function supportedFormats(): array {
 		return ['xml'];
 	}//end supportedFormats()
 
 	/**
-	 * Render the VAT return for the context administration + period.
+	 * Render the prepared VAT return of the context administration and period.
 	 *
-	 * @param array<string, mixed> $context `{ period?, administrationId? }`.
+	 * @param array<string, mixed> $context `{ period, administrationId? }`, period as 2026, 2026-Q3 or 2026-07.
 	 * @param string $format Must be 'xml'.
 	 *
 	 * @return GeneratedFile
+	 *
+	 * @throws RuntimeException When the format is not XML or the period has no prepared return.
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-2.2
 	 */
 	public function generate(array $context, string $format): GeneratedFile {
-		$period = $this->contextString($context, 'period');
-
-		$section = $this->deriveFromInvoices($context);
-
-		// A stored VatReturnFiling overrides the derived output/input VAT where
-		// present (the filing carries the authoritative submitted totals).
-		$filing = $this->latestFiling($context);
-		if ($filing !== null) {
-			$output = $this->toFloat($filing['outputVat'] ?? 0);
-			if ($output > 0) {
-				$section['5a'] = $output;
-			}
-
-			$section['5b'] = $this->toFloat($filing['deductibleVat'] ?? $section['5b']);
-			$section['3b'] = $this->toFloat($filing['intraCommunitySupplies'] ?? $section['3b']);
+		if ($format !== 'xml') {
+			throw new RuntimeException(sprintf('The VAT return file is XML only, not %s.', $format));
 		}
 
-		$payable = ($section['5a'] - $section['5b']);
+		$period = $this->contextString($context, 'period');
+		$vatReturn = $this->preparedReturn($context);
+		if ($vatReturn === null) {
+			throw new RuntimeException(
+				sprintf('No VAT return has been prepared for %s. Prepare it on the VAT returns page first.', $period)
+			);
+		}
+
+		$returnId = (string)($vatReturn['id'] ?? ($vatReturn['@self']['id'] ?? ''));
+		$boxes = $this->boxTotals($returnId);
+
+		$owedCt = 0;
+		foreach ($boxes as $box => $amounts) {
+			if ($box !== self::INPUT_VAT_BOX) {
+				$owedCt += $amounts['vat'];
+			}
+		}
+
+		$deductibleCt = ($boxes[self::INPUT_VAT_BOX]['vat'] ?? 0);
 
 		$writer = new XMLWriter();
 		$writer->openMemory();
@@ -131,26 +151,25 @@ final class VatReturnReportGenerator implements ReportGeneratorInterface {
 		$writer->startElement('BTWAangifte');
 		$writer->writeAttribute('period', $period);
 		$writer->writeAttribute('administration', $this->contextString($context, 'administrationId'));
+		$writer->writeAttribute('aangifte', (string)($vatReturn['returnNumber'] ?? ''));
+		$writer->writeAttribute('status', (string)($vatReturn['statusCode'] ?? ''));
 		$writer->writeAttribute('valuta', 'EUR');
 		$writer->writeAttribute('opgesteld', gmdate('Y-m-d\TH:i:s\Z'));
 
-		// Rubriek 1a — leveringen/diensten belast met hoog tarief (21%).
-		$this->writeRubriek($writer, '1a', 'Leveringen/diensten belast met hoog tarief', $section['1a_base'], $section['1a_vat']);
-		// Rubriek 1b — leveringen/diensten belast met laag tarief (9%).
-		$this->writeRubriek($writer, '1b', 'Leveringen/diensten belast met laag tarief', $section['1b_base'], $section['1b_vat']);
-		// Rubriek 3b — intracommunautaire leveringen.
-		$this->writeRubriek($writer, '3b', 'Leveringen naar landen binnen de EU', $section['3b'], 0.0);
-		// Rubriek 5a — verschuldigde omzetbelasting (totaal).
-		$this->writeRubriek($writer, '5a', 'Verschuldigde omzetbelasting', null, $section['5a']);
-		// Rubriek 5b — voorbelasting.
-		$this->writeRubriek($writer, '5b', 'Voorbelasting', null, $section['5b']);
+		foreach (self::BOX_LABELS as $box => $label) {
+			$this->writeRubriek($writer, $box, $label, ($boxes[$box]['base'] ?? 0), ($boxes[$box]['vat'] ?? 0));
+		}
 
-		// Rubriek 5g — eindtotaal te betalen / terug te vragen.
-		$writer->startElement('Rubriek');
-		$writer->writeAttribute('code', '5g');
-		$writer->writeElement('Omschrijving', 'Totaal te betalen / terug te vragen');
-		$writer->writeElement('Omzetbelasting', $this->money($payable));
-		$writer->endElement();
+		// A box of an operator-added tariff that is not on the form keeps its own code.
+		foreach ($boxes as $box => $amounts) {
+			if (isset(self::BOX_LABELS[$box]) === false && $box !== self::INPUT_VAT_BOX) {
+				$this->writeRubriek($writer, $box, 'Rubriek ' . $box, $amounts['base'], $amounts['vat']);
+			}
+		}
+
+		$this->writeRubriek($writer, '5a', 'Verschuldigde omzetbelasting', null, $owedCt);
+		$this->writeRubriek($writer, self::INPUT_VAT_BOX, 'Voorbelasting', null, $deductibleCt);
+		$this->writeRubriek($writer, '5g', 'Totaal te betalen / terug te vragen', null, ($owedCt - $deductibleCt));
 
 		$writer->endElement();
 		// End BTWAangifte.
@@ -166,126 +185,120 @@ final class VatReturnReportGenerator implements ReportGeneratorInterface {
 	}//end generate()
 
 	/**
-	 * Derive the rubriek base/VAT totals from the period's ARInvoice rows.
-	 *
-	 * High rate is recognised as a vatBreakdown group with rate >= 20; reduced rate
-	 * as 0 < rate < 20. Falls back to the invoice's netAmount/vatAmount split by the
-	 * dominant rate when no vatBreakdown is present.
-	 *
-	 * @param array<string,mixed> $context Report context.
-	 *
-	 * @return array<string,float>
-	 */
-	private function deriveFromInvoices(array $context): array {
-		$totals = [
-			'1a_base' => 0.0,
-			'1a_vat' => 0.0,
-			'1b_base' => 0.0,
-			'1b_vat' => 0.0,
-			'3b' => 0.0,
-			'5a' => 0.0,
-			'5b' => 0.0,
-		];
-
-		foreach ($this->loadAll('ARInvoice', $this->lineFilters($context)) as $invoice) {
-			$breakdown = $invoice['vatBreakdown'] ?? null;
-			if (is_array($breakdown) === true && $breakdown !== []) {
-				foreach ($breakdown as $group) {
-					if (is_array($group) === false) {
-						continue;
-					}
-
-					$rate = $this->toFloat($group['rate'] ?? 0);
-					$base = $this->toFloat($group['taxableAmount'] ?? 0);
-					$taxPart = $this->toFloat($group['taxAmount'] ?? 0);
-					$this->accumulate($totals, $rate, $base, $taxPart);
-				}
-
-				continue;
-			}
-
-			// No breakdown: split by a single nominal rate inferred from net/vat.
-			$net = $this->toFloat($invoice['netAmount'] ?? 0);
-			$vat = $this->toFloat($invoice['vatAmount'] ?? 0);
-			$rate = ($net > 0.0) ? round((($vat / $net) * 100), 0) : 0.0;
-			$this->accumulate($totals, $rate, $net, $vat);
-		}//end foreach
-
-		$totals['5a'] = ($totals['1a_vat'] + $totals['1b_vat']);
-
-		return $totals;
-	}//end deriveFromInvoices()
-
-	/**
-	 * Add one taxable group's amounts into the rubriek totals by rate band.
-	 *
-	 * @param array<string,float> $totals Running rubriek totals (by reference).
-	 * @param float $rate The VAT rate percentage.
-	 * @param float $base The taxable base amount.
-	 * @param float $taxPart The tax amount.
-	 *
-	 * @return void
-	 */
-	private function accumulate(array &$totals, float $rate, float $base, float $taxPart): void {
-		if ($rate >= 20.0) {
-			$totals['1a_base'] += $base;
-			$totals['1a_vat'] += $taxPart;
-			return;
-		}
-
-		if ($rate > 0.0) {
-			$totals['1b_base'] += $base;
-			$totals['1b_vat'] += $taxPart;
-		}
-
-	}//end accumulate()
-
-	/**
-	 * Pick the most relevant stored VatReturnFiling for the context, if any.
+	 * The prepared return of the context period: the filed one when the period
+	 * was filed, else the draft.
 	 *
 	 * @param array<string,mixed> $context Report context.
 	 *
 	 * @return array<string,mixed>|null
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-2.2
 	 */
-	private function latestFiling(array $context): ?array {
-		$filings = $this->loadAll('VatReturnFiling', $this->administrationFilter($context));
-		if ($filings === []) {
+	private function preparedReturn(array $context): ?array {
+		$wanted = $this->periodOf($this->contextString($context, 'period'));
+		if ($wanted === null) {
 			return null;
 		}
 
-		$period = $this->contextString($context, 'period');
-		if ($period !== '') {
-			foreach ($filings as $filing) {
-				$end = (string)($filing['periodEndDate'] ?? '');
-				if ($end !== '' && str_starts_with($end, substr($period, 0, 4)) === true) {
-					return $filing;
-				}
+		$draft = null;
+		foreach ($this->loadAll('BtwAangifte', $this->administrationFilter($context)) as $vatReturn) {
+			if ((string)($vatReturn['period'] ?? '') !== $wanted['period']
+				|| (int)($vatReturn['periodYear'] ?? 0) !== $wanted['year']
+				|| ($wanted['period'] !== 'year' && (int)($vatReturn['periodNumber'] ?? 0) !== $wanted['number'])
+			) {
+				continue;
 			}
+
+			if ((string)($vatReturn['statusCode'] ?? 'draft') !== 'draft') {
+				return $vatReturn;
+			}
+
+			$draft = ($draft ?? $vatReturn);
 		}
 
-		return $filings[0];
-	}//end latestFiling()
+		return $draft;
+	}//end preparedReturn()
+
+	/**
+	 * Read a report period (2026, 2026-Q3 or 2026-07) as the return's period
+	 * kind, year and number.
+	 *
+	 * @param string $period The report period.
+	 *
+	 * @return array{period:string,year:int,number:int}|null Null when it is none of the three.
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-2.2
+	 */
+	private function periodOf(string $period): ?array {
+		if (preg_match('/^(\d{4})-Q([1-4])$/', $period, $match) === 1) {
+			return ['period' => 'quarter', 'year' => (int)$match[1], 'number' => (int)$match[2]];
+		}
+
+		if (preg_match('/^(\d{4})-(\d{2})$/', $period, $match) === 1) {
+			return ['period' => 'month', 'year' => (int)$match[1], 'number' => (int)$match[2]];
+		}
+
+		if (preg_match('/^\d{4}$/', $period) === 1) {
+			return ['period' => 'year', 'year' => (int)$period, 'number' => 0];
+		}
+
+		return null;
+	}//end periodOf()
+
+	/**
+	 * The return's declarations as base and VAT in cents per box. A
+	 * declaration without a box (prepared before boxes existed) cannot be
+	 * placed on the form: it is left out and logged.
+	 *
+	 * @param string $returnId The BtwAangifte id.
+	 *
+	 * @return array<string,array{base:int,vat:int}>
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-2.2
+	 */
+	private function boxTotals(string $returnId): array {
+		$boxes = [];
+		foreach ($this->loadAll('VATDeclaration', ['filters' => ['returnId' => $returnId]]) as $declaration) {
+			$box = (string)($declaration['returnBox'] ?? '');
+			if ($box === '') {
+				$this->logger->warning(
+					'Shillinq VAT return file: a declaration without a return box is left out',
+					['returnId' => $returnId, 'declaration' => (string)($declaration['declarationNumber'] ?? '')]
+				);
+				continue;
+			}
+
+			$boxes[$box] ??= ['base' => 0, 'vat' => 0];
+			$boxes[$box]['base'] += (int)round($this->toFloat($declaration['totalTaxableAmount'] ?? 0) * 100);
+			$boxes[$box]['vat'] += (int)round($this->toFloat($declaration['totalVATAmount'] ?? 0) * 100);
+		}
+
+		ksort($boxes);
+		return $boxes;
+	}//end boxTotals()
 
 	/**
 	 * Write a single rubriek element.
 	 *
 	 * @param XMLWriter $writer The XML writer.
 	 * @param string $code Rubriek code (e.g. '1a').
-	 * @param string $label Human description.
-	 * @param float|null $base Taxable base (omitted when null).
-	 * @param float $vatAmount The VAT amount.
+	 * @param string $label Description on the form.
+	 * @param int|null $baseCt Taxable base in cents (omitted when null).
+	 * @param int $vatCt The VAT amount in cents.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-2.2
 	 */
-	private function writeRubriek(XMLWriter $writer, string $code, string $label, ?float $base, float $vatAmount): void {
+	private function writeRubriek(XMLWriter $writer, string $code, string $label, ?int $baseCt, int $vatCt): void {
 		$writer->startElement('Rubriek');
 		$writer->writeAttribute('code', $code);
 		$writer->writeElement('Omschrijving', $label);
-		if ($base !== null) {
-			$writer->writeElement('Bedrag', $this->money($base));
+		if ($baseCt !== null) {
+			$writer->writeElement('Bedrag', $this->money($baseCt / 100));
 		}
 
-		$writer->writeElement('Omzetbelasting', $this->money($vatAmount));
+		$writer->writeElement('Omzetbelasting', $this->money($vatCt / 100));
 		$writer->endElement();
 
 	}//end writeRubriek()

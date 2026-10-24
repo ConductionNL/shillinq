@@ -348,11 +348,31 @@ final class CBSExportServiceTest extends TestCase {
 
 		self::assertFalse($result['valid']);
 		self::assertContains(
-			'taxIdentificationNumber must match the pattern ^NL[0-9]{10}B[0-9]{2}$',
+			'taxIdentificationNumber must match the pattern ^NL[0-9]{9}B[0-9]{2}$',
 			$result['errors'],
 		);
 
 	}//end testValidateSubmissionRejectsMalformedTaxId()
+
+	/**
+	 * REQ-CBS-006: a Dutch BTW-id is NL, nine digits, B and two digits.
+	 *
+	 * @return void
+	 */
+	public function testValidateSubmissionAcceptsARealBtwId(): void {
+		$result = $this->svc()->validateSubmission(submission: [
+			'id' => 'sub-1',
+			'kvkNumber' => '34365416',
+			'taxIdentificationNumber' => 'NL814022818B01',
+			'reportingPeriodStartDate' => '2026-01-01',
+			'reportingPeriodEndDate' => '2026-03-31',
+		]);
+
+		foreach ($result['errors'] as $error) {
+			self::assertStringNotContainsString('taxIdentificationNumber', $error);
+		}
+
+	}//end testValidateSubmissionAcceptsARealBtwId()
 
 	/**
 	 * REQ-CBS-006: missing reporting period is rejected.

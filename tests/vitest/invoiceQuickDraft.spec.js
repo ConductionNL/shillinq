@@ -4,20 +4,18 @@
  *
  * Unit tests for the InvoiceQuickDraftModal computation + persistence
  * layer (src/modals/invoiceQuickDraft.js): line totals, due-date from
- * payment terms, the draft ARInvoice payload shape and the
+ * payment terms, the quick-draft request and the
  * localStorage preference round-trip with TTL expiry.
  */
 
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
-	buildInvoicePayload,
+	buildQuickDraftRequest,
 	computeTotals,
 	defaultDraftLine,
 	dueDateFromTerms,
 	loadQuickDraftPrefs,
 	paymentTermDays,
-	periodIdFromDate,
-	provisionalInvoiceNumber,
 	saveQuickDraftPrefs,
 } from '../../src/modals/invoiceQuickDraft.js'
 
@@ -74,89 +72,42 @@ describe('invoiceQuickDraft — payment terms + due date', () => {
 	})
 })
 
-describe('invoiceQuickDraft — payload', () => {
-	it('always builds a draft ARInvoice with normalised lines', () => {
-		const payload = buildInvoicePayload({
+describe('invoiceQuickDraft — request', () => {
+	it('sends the customer, dates, reference and filled lines only', () => {
+		const body = buildQuickDraftRequest({
 			customerId: 'cust-1',
 			invoiceDate: '2026-02-01',
 			dueDate: '2026-03-03',
 			reference: 'PO-42',
 			glAccount: '8000',
 			lines: [
-				{
-					description: ' Consulting ',
-					quantity: 2,
-					unitPrice: 100,
-					vatRate: 21,
-				},
-				{ description: '', quantity: 0, unitPrice: 0, vatRate: 21 }, // dropped
+				{ description: ' Consulting ', quantity: '2', unitPrice: '100', vatRate: 21 },
+				{ description: 'Hosting', quantity: 1, unitPrice: 10, vatRate: 9, glAccount: '8100' },
+				{ description: '', quantity: 1, unitPrice: 0, vatRate: 21 },
 			],
 		})
-		expect(payload.lifecycleState).toBe('draft')
-		expect(payload.customerId).toBe('cust-1')
-		expect(payload.customerReference).toBe('PO-42')
-		expect(payload.currency).toBe('EUR')
-		expect(payload.netAmount).toBe(200)
-		expect(payload.vatAmount).toBe(42)
-		expect(payload.grossAmount).toBe(242)
-		expect(payload.lines).toHaveLength(1)
-		expect(payload.lines[0]).toEqual({
-			lineNumber: 1,
-			description: 'Consulting',
-			quantity: 2,
-			unitPrice: 100,
-			vatRate: 21,
+		expect(body).toEqual({
+			customerId: 'cust-1',
+			invoiceDate: '2026-02-01',
+			dueDate: '2026-03-03',
+			reference: 'PO-42',
 			glAccount: '8000',
+			lines: [
+				{ description: 'Consulting', quantity: 2, unitPrice: 100, vatRate: 21 },
+				{ description: 'Hosting', quantity: 1, unitPrice: 10, vatRate: 9, glAccount: '8100' },
+			],
 		})
 	})
 
-	it('always supplies the schema-required invoiceNumber, administrationId and periodId', () => {
-		const payload = buildInvoicePayload({
+	it('leaves totals, number, state and administration to the server', () => {
+		const body = buildQuickDraftRequest({
 			customerId: 'cust-1',
 			invoiceDate: '2026-02-01',
-			dueDate: '2026-03-03',
-			administrationId: 'ADM-001',
 			lines: [{ description: 'X', quantity: 1, unitPrice: 10, vatRate: 21 }],
 		})
-		expect(payload.administrationId).toBe('ADM-001')
-		expect(payload.periodId).toBe('2026-02')
-		expect(payload.invoiceNumber).toMatch(/^DRAFT-20260201-\d{6}$/)
-	})
-
-	it('honours explicit invoiceNumber and periodId when provided', () => {
-		const payload = buildInvoicePayload({
-			customerId: 'cust-1',
-			invoiceDate: '2026-02-01',
-			dueDate: '2026-03-03',
-			administrationId: 'ADM-001',
-			invoiceNumber: 'F2026-007',
-			periodId: '2026-Q1',
-			lines: [{ description: 'X', quantity: 1, unitPrice: 10, vatRate: 21 }],
-		})
-		expect(payload.invoiceNumber).toBe('F2026-007')
-		expect(payload.periodId).toBe('2026-Q1')
-	})
-})
-
-describe('invoiceQuickDraft — period + provisional number helpers', () => {
-	it('derives the YYYY-MM period bucket from the invoice date', () => {
-		expect(periodIdFromDate('2026-07-09')).toBe('2026-07')
-		expect(periodIdFromDate('2026-12-31')).toBe('2026-12')
-		expect(periodIdFromDate('')).toBe('')
-		expect(periodIdFromDate('not-a-date')).toBe('')
-	})
-
-	it('builds a unique, provisional draft invoice number', () => {
-		const num = provisionalInvoiceNumber(
-			'2026-07-09',
-			new Date(2026, 6, 9, 8, 30, 5),
-		)
-		expect(num).toBe('DRAFT-20260709-083005')
-	})
-
-	it('falls back to a DRAFT prefix when the date is missing', () => {
-		const num = provisionalInvoiceNumber('', new Date(2026, 6, 9, 8, 30, 5))
-		expect(num).toBe('DRAFT-DRAFT-083005')
+		for (const key of ['netAmount', 'vatAmount', 'grossAmount', 'invoiceNumber', 'lifecycleState', 'administrationId', 'periodId']) {
+			expect(body).not.toHaveProperty(key)
+		}
 	})
 })
 

@@ -38,13 +38,20 @@ use Psr\Log\LoggerInterface;
  */
 final class PeriodCloseGuardTrialBalanceTest extends TestCase {
 	/**
-	 * @param array<int,array<string,mixed>> $periods FiscalPeriod rows.
-	 * @param array<int,array<string,mixed>> $lines GLLine rows.
+	 * @param array<int,array<string,mixed>> $periods      FiscalPeriod rows.
+	 * @param array<int,array<string,mixed>> $lines        GLLine rows.
+	 * @param array<int,array<string,mixed>> $transactions GLTransaction rows.
+	 * @param bool                           $asEntities   Return rows as jsonSerialize() objects, like OpenRegister.
 	 *
 	 * @return PeriodCloseGuard
 	 */
-	private function buildGuard(array $periods, array $lines): PeriodCloseGuard {
-		$stub = new class($periods, $lines) {
+	private function buildGuard(
+		array $periods,
+		array $lines,
+		array $transactions=[],
+		bool $asEntities=false
+	): PeriodCloseGuard {
+		$stub = new class($periods, $lines, $transactions, $asEntities) {
 			/**
 			 * @var array<int,array<string,mixed>>
 			 */
@@ -56,17 +63,31 @@ final class PeriodCloseGuardTrialBalanceTest extends TestCase {
 			private array $lines;
 
 			/**
+			 * @var array<int,array<string,mixed>>
+			 */
+			private array $transactions;
+
+			/**
+			 * @var bool
+			 */
+			private bool $asEntities;
+
+			/**
 			 * @var string
 			 */
 			private string $schema = '';
 
 			/**
-			 * @param array<int,array<string,mixed>> $periods FiscalPeriod rows.
-			 * @param array<int,array<string,mixed>> $lines GLLine rows.
+			 * @param array<int,array<string,mixed>> $periods      FiscalPeriod rows.
+			 * @param array<int,array<string,mixed>> $lines        GLLine rows.
+			 * @param array<int,array<string,mixed>> $transactions GLTransaction rows.
+			 * @param bool                           $asEntities   Wrap rows in jsonSerialize() objects.
 			 */
-			public function __construct(array $periods, array $lines) {
+			public function __construct(array $periods, array $lines, array $transactions, bool $asEntities) {
 				$this->periods = $periods;
 				$this->lines = $lines;
+				$this->transactions = $transactions;
+				$this->asEntities = $asEntities;
 			}//end __construct()
 
 			public function setRegister(string $register): static {
@@ -81,12 +102,16 @@ final class PeriodCloseGuardTrialBalanceTest extends TestCase {
 			/**
 			 * @param array<string,mixed> $params Query parameters.
 			 *
-			 * @return array<int,array<string,mixed>>
+			 * @return array<int,mixed>
 			 */
 			public function findAll(array $params = []): array {
-				$source = ($this->schema === 'GLLine' ? $this->lines : $this->periods);
+				$source = match ($this->schema) {
+					'GLLine' => $this->lines,
+					'GLTransaction' => $this->transactions,
+					default => $this->periods,
+				};
 				$filters = ($params['filters'] ?? []);
-				return array_values(
+				$rows = array_values(
 					array_filter(
 						$source,
 						static function (array $row) use ($filters): bool {
@@ -99,6 +124,27 @@ final class PeriodCloseGuardTrialBalanceTest extends TestCase {
 							return true;
 						}
 					)
+				);
+				if ($this->asEntities === false) {
+					return $rows;
+				}
+
+				return array_map(
+					static fn (array $row): \JsonSerializable => new class($row) implements \JsonSerializable {
+						/**
+						 * @param array<string,mixed> $row Row data.
+						 */
+						public function __construct(private array $row) {
+						}//end __construct()
+
+						/**
+						 * @return array<string,mixed>
+						 */
+						public function jsonSerialize(): array {
+							return $this->row;
+						}//end jsonSerialize()
+					},
+					$rows
 				);
 			}//end findAll()
 		};
@@ -127,9 +173,10 @@ final class PeriodCloseGuardTrialBalanceTest extends TestCase {
 		$guard = $this->buildGuard(
 			[['periodId' => '2026-01', 'administrationId' => 'adm-1']],
 			[
-				['periodId' => '2026-01', 'side' => 'debit', 'amount' => 18500.40],
-				['periodId' => '2026-01', 'side' => 'credit', 'amount' => 18500.40],
-			]
+				['periodId' => '2026-01', 'transactionId' => 'txn-1', 'side' => 'debit', 'amount' => 18500.40],
+				['periodId' => '2026-01', 'transactionId' => 'txn-1', 'side' => 'credit', 'amount' => 18500.40],
+			],
+			[['id' => 'txn-1', 'periodId' => '2026-01', 'administrationId' => 'adm-1']]
 		);
 
 		$allowed = $guard->trialBalanceVerifies(['periodId' => '2026-01', 'administrationId' => 'adm-1']);
@@ -146,9 +193,10 @@ final class PeriodCloseGuardTrialBalanceTest extends TestCase {
 		$guard = $this->buildGuard(
 			[['periodId' => '2026-01', 'administrationId' => 'adm-1']],
 			[
-				['periodId' => '2026-01', 'side' => 'debit', 'amount' => 20000.00],
-				['periodId' => '2026-01', 'side' => 'credit', 'amount' => 18500.40],
-			]
+				['periodId' => '2026-01', 'transactionId' => 'txn-1', 'side' => 'debit', 'amount' => 20000.00],
+				['periodId' => '2026-01', 'transactionId' => 'txn-1', 'side' => 'credit', 'amount' => 18500.40],
+			],
+			[['id' => 'txn-1', 'periodId' => '2026-01', 'administrationId' => 'adm-1']]
 		);
 
 		$allowed = $guard->trialBalanceVerifies(['periodId' => '2026-01', 'administrationId' => 'adm-1']);
@@ -168,4 +216,76 @@ final class PeriodCloseGuardTrialBalanceTest extends TestCase {
 		self::assertTrue($allowed);
 
 	}//end testBeginCloseAllowedWithNoPostedLinesYet()
+
+	/**
+	 * OpenRegister returns ObjectEntity rows, not arrays: they must be read
+	 * through jsonSerialize(), and an unbalanced period is still denied.
+	 *
+	 * @return void
+	 */
+	public function testEntityRowsAreReadThroughJsonSerialize(): void {
+		$txn = [['id' => 'txn-1', 'periodId' => '2026-01', 'administrationId' => 'adm-1']];
+		$balanced = $this->buildGuard(
+			[],
+			[
+				['periodId' => '2026-01', 'transactionId' => 'txn-1', 'side' => 'debit', 'amount' => 250.00],
+				['periodId' => '2026-01', 'transactionId' => 'txn-1', 'side' => 'credit', 'amount' => 250.00],
+			],
+			$txn,
+			true
+		);
+		$unbalanced = $this->buildGuard(
+			[],
+			[['periodId' => '2026-01', 'transactionId' => 'txn-1', 'side' => 'debit', 'amount' => 250.00]],
+			$txn,
+			true
+		);
+
+		self::assertTrue($balanced->trialBalanceVerifies(['periodId' => '2026-01', 'administrationId' => 'adm-1']));
+		self::assertFalse($unbalanced->trialBalanceVerifies(['periodId' => '2026-01', 'administrationId' => 'adm-1']));
+
+	}//end testEntityRowsAreReadThroughJsonSerialize()
+
+	/**
+	 * Lines posted by another administration in the same period do not count
+	 * against this administration's trial balance.
+	 *
+	 * @return void
+	 */
+	public function testLinesOfAnotherAdministrationAreIgnored(): void {
+		$guard = $this->buildGuard(
+			[],
+			[
+				['periodId' => '2026-04', 'transactionId' => 'txn-own', 'side' => 'debit', 'amount' => 100.00],
+				['periodId' => '2026-04', 'transactionId' => 'txn-own', 'side' => 'credit', 'amount' => 100.00],
+				['periodId' => '2026-04', 'transactionId' => 'txn-other', 'side' => 'debit', 'amount' => 12000.00],
+			],
+			[
+				['id' => 'txn-own', 'periodId' => '2026-04', 'administrationId' => 'adm-1'],
+				['id' => 'txn-other', 'periodId' => '2026-04', 'administrationId' => 'adm-2'],
+			],
+			true
+		);
+
+		self::assertTrue($guard->trialBalanceVerifies(['periodId' => '2026-04', 'administrationId' => 'adm-1']));
+		self::assertFalse($guard->trialBalanceVerifies(['periodId' => '2026-04', 'administrationId' => 'adm-2']));
+
+	}//end testLinesOfAnotherAdministrationAreIgnored()
+
+	/**
+	 * Without an administration scope every line in the period counts.
+	 *
+	 * @return void
+	 */
+	public function testUnscopedPeriodCountsEveryLine(): void {
+		$guard = $this->buildGuard(
+			[],
+			[['periodId' => '2026-04', 'transactionId' => 'txn-other', 'side' => 'debit', 'amount' => 12000.00]],
+			[],
+			true
+		);
+
+		self::assertFalse($guard->trialBalanceVerifies(['periodId' => '2026-04']));
+
+	}//end testUnscopedPeriodCountsEveryLine()
 }//end class

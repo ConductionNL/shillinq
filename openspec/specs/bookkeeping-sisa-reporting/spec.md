@@ -19,7 +19,6 @@ This specification defines the requirements for bookkeeping sisa reporting in th
 
 @e2e exclude unbuilt UI: SISA compliance audit page not yet implemented
 
-
 ### REQ-SISA-001: Single Information Single Audit SHALL be declared as `SisaReport` + `AuditDocument` + `ComplianceAuditTrail` registers, not a parallel audit database
 
 Single Information Single Audit compliance MUST be expressed as three new
@@ -328,8 +327,6 @@ manifest pattern. `node tests/validate-manifest.js` must exit 0.
 - **WHEN** the page is opened
 - **THEN** the aggregated metrics (settlement %, findings count, opinion) MUST display.
 
-## MODIFIED Requirements
-
 ### REQ-SISA-M001: Audit trail is captured automatically on state transitions
 
 Every schema that participates in SiSa (`APTransaction`, `ARInvoice`,
@@ -339,6 +336,12 @@ the event (no app-local logging needed).
 
 Rationale: Per ADR-022, prefer OR's abstractions; avoid parallel audit
 tracking.
+
+#### Scenario: A state transition on a SiSa schema is audited by OpenRegister
+- **GIVEN** an `APTransaction`, `ARInvoice`, `JournalEntry` or `AuditDocument` whose schema declares an `x-openregister-lifecycle` block
+- **WHEN** the object moves from one lifecycle state to another
+- **THEN** OpenRegister's audit service SHALL record the transition
+- **AND** shillinq SHALL NOT write an app-local audit entry for it
 
 ## Dependencies
 

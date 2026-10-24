@@ -45,13 +45,12 @@
           },
           "bsn": {
             "type": "string",
-            "description": "Burgerservicenummer. Special-category PII (ADR-005): validated by 11-proef on write, masked as ***<last4> on display, never written to the audit trail. Null for B2B contractors. The 11-proef checksum is not expressible declaratively: ADR-031 exception guard OCA\\Shillinq\\Validation\\BsnValidator:isValid is invoked on write.",
+            "description": "Burgerservicenummer. Special-category PII (ADR-005): validated by the 11-proef on write (OpenRegister's bsn format), masked as ***<last4> on display, never written to the audit trail. Null for B2B contractors.",
             "nullable": true,
-            "pii": true,
             "x-pii": "bsn",
             "x-mask": "trailing4",
             "pattern": "^[0-9]{9}$",
-            "guard": "OCA\\Shillinq\\Validation\\BsnValidator::isValid",
+            "format": "bsn",
             "example": "123456782",
             "title": "BSN"
           },
@@ -188,30 +187,22 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "payroll-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Employee is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_payroll_administrator"
+          ],
+          "read": [
+            "shillinq_payroll_administrator",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_payroll_administrator"
+          ]
         }
       },
       "Payroll": {
@@ -393,22 +384,9 @@
               "from": "calculated",
               "to": "issued",
               "label": "Issue payroll",
-              "description": "Materialise the salary-expense GLTransaction, generate the loonstrookje and publish payroll-issued.",
+              "description": "Generate the loonstrookje and publish payroll-issued. The payroll journal is booked from humaniq's JournalEntry, not from this transition (ledger-posting-path REQ-LPP-006).",
               "requires": "OCA\\Shillinq\\Lifecycle\\PayrollGuard::canIssue",
               "actions": [
-                {
-                  "trigger": "x-openregister-lifecycle-action",
-                  "action": "materialise-gl-transaction",
-                  "description": "Materialise one balanced salary-expense GLTransaction (debit salary-expense account by contractType, credit payroll-liability) and set glTransactionId.",
-                  "actionParameters": {
-                    "register": "shillinq",
-                    "schema": "GLTransaction",
-                    "linesSchema": "GLLine",
-                    "keepBalanced": true,
-                    "backReferenceField": "payrollId",
-                    "idempotencyKey": "payrollNumber"
-                  }
-                },
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "generate-determination-letter",
@@ -494,30 +472,22 @@
             "cbc:LegalMonetaryTotal/cbc:PayableAmount": "netAmount"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "payroll-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Payroll is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_payroll_administrator"
+          ],
+          "read": [
+            "shillinq_payroll_administrator",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_payroll_administrator"
+          ]
         }
       },
       "Deduction": {
@@ -600,30 +570,22 @@
             "title": "Administration ID"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "payroll-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Deduction is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_payroll_administrator"
+          ],
+          "read": [
+            "shillinq_payroll_administrator",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_payroll_administrator"
+          ]
         }
       },
       "DeterminationLetter": {
@@ -742,30 +704,22 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "payroll-administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Determination Letter is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_payroll_administrator"
+          ],
+          "read": [
+            "shillinq_payroll_administrator",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_payroll_administrator"
+          ]
         }
       }
     }

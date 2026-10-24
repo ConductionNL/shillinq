@@ -64,6 +64,7 @@ use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\Vat\VatLineStamper;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -231,11 +232,11 @@ class VatSuppletieDetectionService {
 		$netCorrectionCt = 0;
 		foreach ($deltas as $delta) {
 			$deltaCt = (int)round(((float)$delta['deltaVATAmount']) * 100);
-			if ($delta['type'] === 'collected') {
+			if ($this->isOwed(delta: $delta) === true) {
 				$netCorrectionCt += $deltaCt;
 			} else {
-				// Paid + reverse-charge deltas move deductible VAT the
-				// opposite way of net payable (REQ-VBTW-014).
+				// Deductible VAT deltas move net payable the opposite
+				// way (REQ-VBTW-014).
 				$netCorrectionCt -= $deltaCt;
 			}
 		}
@@ -278,7 +279,8 @@ class VatSuppletieDetectionService {
 
 	/**
 	 * Whether the filed and current rubriek snapshots are identical (no
-	 * drift). Compares by (type, taxRate) bucket with a half-cent epsilon
+	 * drift). Compares by declaration key (the box, or type and rate for a
+	 * return filed before boxes) with a half-cent epsilon
 	 * to avoid float noise false-positives.
 	 *
 	 * @param array<int,array<string,mixed>> $filed Filed snapshot buckets.
@@ -291,25 +293,27 @@ class VatSuppletieDetectionService {
 	}//end snapshotsMatch()
 
 	/**
-	 * Diff two rubriek snapshots bucket-by-bucket (key = type:taxRate),
-	 * returning only buckets with a non-zero VAT-amount delta.
+	 * Diff two rubriek snapshots bucket-by-bucket (key =
+	 * VATReturnService::declarationKey(): the box, or type:taxRate for a
+	 * return filed before boxes), returning only buckets with a non-zero
+	 * VAT-amount delta.
 	 *
 	 * @param array<int,array<string,mixed>> $filed Filed snapshot buckets.
 	 * @param array<int,array<string,mixed>> $current Current snapshot buckets.
 	 *
-	 * @return array<int,array{type:string,taxRate:float,deltaVATAmount:float,deltaTaxableAmount:float}>
+	 * @return array<int,array{type:string,taxRate:float,returnBox:string,deltaVATAmount:float,deltaTaxableAmount:float}>
 	 */
 	private function computeDeltas(array $filed, array $current): array {
 		$byKey = [];
 		foreach ($filed as $bucket) {
-			$key = $this->bucketKey(bucket: $bucket);
+			$key = $this->vatReturnService->declarationKey(bucket: $bucket);
 			$this->ensureBucketDefaults(byKey: $byKey, key: $key, bucket: $bucket);
 			$byKey[$key]['filedVAT'] = (float)($bucket['totalVATAmount'] ?? 0.0);
 			$byKey[$key]['filedTaxable'] = (float)($bucket['totalTaxableAmount'] ?? 0.0);
 		}
 
 		foreach ($current as $bucket) {
-			$key = $this->bucketKey(bucket: $bucket);
+			$key = $this->vatReturnService->declarationKey(bucket: $bucket);
 			$this->ensureBucketDefaults(byKey: $byKey, key: $key, bucket: $bucket);
 			$byKey[$key]['currentVAT'] = (float)($bucket['totalVATAmount'] ?? 0.0);
 			$byKey[$key]['currentTaxable'] = (float)($bucket['totalTaxableAmount'] ?? 0.0);
@@ -328,6 +332,7 @@ class VatSuppletieDetectionService {
 			$deltas[] = [
 				'type' => $bucket['type'],
 				'taxRate' => $bucket['taxRate'],
+				'returnBox' => $bucket['returnBox'],
 				'deltaVATAmount' => $deltaVAT,
 				'deltaTaxableAmount' => $deltaTaxable,
 			];
@@ -346,7 +351,7 @@ class VatSuppletieDetectionService {
 	 * ruled out here — lets computeDeltas() read every key unconditionally.
 	 *
 	 * @param array<string,array<string,mixed>> $byKey Accumulator (by reference).
-	 * @param string $key The type:taxRate bucket key.
+	 * @param string $key The declaration key.
 	 * @param array<string,mixed> $bucket The snapshot bucket supplying type/taxRate.
 	 *
 	 * @return void
@@ -358,7 +363,8 @@ class VatSuppletieDetectionService {
 
 		$byKey[$key] = [
 			'type' => (string)$bucket['type'],
-			'taxRate' => (float)$bucket['taxRate'],
+			'taxRate' => (float)($bucket['taxRate'] ?? 0.0),
+			'returnBox' => (string)($bucket['returnBox'] ?? ''),
 			'filedVAT' => 0.0,
 			'filedTaxable' => 0.0,
 			'currentVAT' => 0.0,
@@ -368,15 +374,43 @@ class VatSuppletieDetectionService {
 	}//end ensureBucketDefaults()
 
 	/**
-	 * Build the type:taxRate bucket key.
+	 * Whether a delta moves VAT owed (true) or VAT deductible (false). A box
+	 * delta is owed unless it is input VAT (5b), which includes the VAT owed
+	 * on a reverse-charged purchase in 2a, 4a or 4b; a delta of a return filed
+	 * before boxes is owed only when it is collected, as before.
 	 *
-	 * @param array<string,mixed> $bucket A snapshot bucket.
+	 * @param array<string,mixed> $delta A delta from computeDeltas().
 	 *
-	 * @return string
+	 * @return bool
 	 */
-	private function bucketKey(array $bucket): string {
-		return ((string)$bucket['type']) . ':' . number_format((float)$bucket['taxRate'], 2, '.', '');
-	}//end bucketKey()
+	private function isOwed(array $delta): bool {
+		$box = (string)($delta['returnBox'] ?? '');
+		if ($box !== '') {
+			return ($box !== VatLineStamper::INPUT_VAT_BOX);
+		}
+
+		return ($delta['type'] === 'collected');
+	}//end isOwed()
+
+	/**
+	 * Whether a VATLine of the filed return is where a delta's VAT was booked:
+	 * for a box, the line of that box on its VAT account; before boxes, the
+	 * line of the same type and rate.
+	 *
+	 * @param array<string,mixed> $line A VATLine of the filed return.
+	 * @param array<string,mixed> $delta A delta from computeDeltas().
+	 *
+	 * @return bool
+	 */
+	private function lineCarries(array $line, array $delta): bool {
+		$box = (string)($delta['returnBox'] ?? '');
+		if ($box !== '') {
+			return ((string)($line['returnBox'] ?? '') === $box && ((float)($line['vatAmount'] ?? 0.0)) !== 0.0);
+		}
+
+		return ((string)($line['type'] ?? '') === $delta['type']
+			&& abs(((float)($line['taxRate'] ?? -1)) - $delta['taxRate']) < 0.001);
+	}//end lineCarries()
 
 	/**
 	 * Resolve the GL account each delta bucket originally posted to (looked
@@ -401,9 +435,7 @@ class VatSuppletieDetectionService {
 		foreach ($deltas as $delta) {
 			$account = null;
 			foreach ($lines as $line) {
-				if ((string)($line['type'] ?? '') === $delta['type']
-					&& abs(((float)($line['taxRate'] ?? -1)) - $delta['taxRate']) < 0.001
-				) {
+				if ($this->lineCarries(line: $line, delta: $delta) === true) {
 					$account = (string)($line['glAccountNumber'] ?? '');
 					break;
 				}
@@ -471,11 +503,11 @@ class VatSuppletieDetectionService {
 			}
 
 			$increases = (((float)$delta['deltaVATAmount']) > 0);
-			// Collected (output tax) increase = credit the liability;
-			// paid/reverse-charge (deductible) increase = debit the asset.
-			$isCollected = ($delta['type'] === 'collected');
+			// Owed (output tax) increase = credit the liability;
+			// deductible increase = debit the asset.
+			$isOwed = $this->isOwed(delta: $delta);
 			$side = 'debit';
-			if ($isCollected === $increases) {
+			if ($isOwed === $increases) {
 				$side = 'credit';
 			}
 
@@ -500,7 +532,7 @@ class VatSuppletieDetectionService {
 					'side' => $side,
 					'amount' => ($amountCt / 100),
 					'currency' => 'EUR',
-					'description' => sprintf('Suppletie %s %.2f%% delta', $delta['type'], $delta['taxRate']),
+					'description' => $this->deltaLabel(delta: $delta),
 				]
 			);
 
@@ -536,6 +568,23 @@ class VatSuppletieDetectionService {
 
 		return $transactionId;
 	}//end createCorrectionPosting()
+
+	/**
+	 * The description of a correction posting line: its box, or its type and
+	 * rate for a return filed before boxes.
+	 *
+	 * @param array<string,mixed> $delta A delta from computeDeltas().
+	 *
+	 * @return string
+	 */
+	private function deltaLabel(array $delta): string {
+		$box = (string)($delta['returnBox'] ?? '');
+		if ($box !== '') {
+			return sprintf('Suppletie rubriek %s delta', $box);
+		}
+
+		return sprintf('Suppletie %s %.2f%% delta', $delta['type'], $delta['taxRate']);
+	}//end deltaLabel()
 
 	/**
 	 * Split a VATReturn's `period`/`periodNumber` onto the VatCorrection's

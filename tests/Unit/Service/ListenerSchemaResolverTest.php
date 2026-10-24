@@ -332,4 +332,64 @@ class ListenerSchemaResolverTest extends TestCase {
 		);
 
 	}//end testRegisterSlugIsAcceptedDirectly()
+	/**
+	 * POSITIVE CONTROL for a foreign register: integriq saves its CloudEvents
+	 * in register `integriq`, schema `event`, stamped as ids. The match holds
+	 * with the slug contract OFF, the default, so a listener built on it fires.
+	 *
+	 * @return void
+	 */
+	public function testMatchesAForeignRegisterAndSchemaFromIds(): void {
+		$resolver = $this->resolver(
+			schemas: ['4101' => 'event', '4102' => 'source'],
+			registers: ['7' => 'integriq', '264' => 'shillinq'],
+			enabled: false,
+		);
+
+		$this->assertTrue(
+			$resolver->matchesRegisterAndSchema(entity: $this->entity(registerId: '7', schemaId: '4101'), registerSlug: 'integriq', schemaSlug: 'event')
+		);
+
+	}//end testMatchesAForeignRegisterAndSchemaFromIds()
+
+	/**
+	 * Both halves must match: the right schema in another register, the right
+	 * register with another schema, and an unresolvable id are all refused.
+	 *
+	 * @return void
+	 */
+	public function testForeignMatchNeedsBothTheRegisterAndTheSchema(): void {
+		$resolver = $this->resolver(
+			schemas: ['4101' => 'event', '4102' => 'source'],
+			registers: ['7' => 'integriq', '264' => 'shillinq'],
+		);
+
+		$this->assertFalse(
+			$resolver->matchesRegisterAndSchema(entity: $this->entity(registerId: '264', schemaId: '4101'), registerSlug: 'integriq', schemaSlug: 'event')
+		);
+		$this->assertFalse(
+			$resolver->matchesRegisterAndSchema(entity: $this->entity(registerId: '7', schemaId: '4102'), registerSlug: 'integriq', schemaSlug: 'event')
+		);
+		$this->assertFalse(
+			$resolver->matchesRegisterAndSchema(entity: $this->entity(registerId: '99', schemaId: '4101'), registerSlug: 'integriq', schemaSlug: 'event')
+		);
+		$this->assertFalse(
+			$resolver->matchesRegisterAndSchema(entity: null, registerSlug: 'integriq', schemaSlug: 'event')
+		);
+
+	}//end testForeignMatchNeedsBothTheRegisterAndTheSchema()
+
+	/**
+	 * An entity that already carries the slugs matches without a mapper.
+	 *
+	 * @return void
+	 */
+	public function testForeignMatchAcceptsSlugShapedValues(): void {
+		$resolver = $this->resolver(schemas: [], registers: []);
+
+		$this->assertTrue(
+			$resolver->matchesRegisterAndSchema(entity: $this->entity(registerId: 'integriq', schemaId: 'event'), registerSlug: 'integriq', schemaSlug: 'event')
+		);
+
+	}//end testForeignMatchAcceptsSlugShapedValues()
 }//end class

@@ -26,7 +26,7 @@
 			type="line"
 			:series="series"
 			:categories="categories"
-			:height="240"
+			height="100%"
 			:options="options" />
 	</div>
 </template>

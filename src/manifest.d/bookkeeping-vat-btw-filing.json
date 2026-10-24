@@ -48,7 +48,10 @@
 					{"key": "statusCode", "label": "Status", "type": "select", "options": ["draft", "submitted", "verified", "filed"]}
 				],
 				"defaultSort": "periodYear",
-				"detailRoute": "VATReturnDetail"
+				"detailRoute": "VATReturnDetail",
+				"headerActions": [
+					{"id": "prepare-vat-return", "label": "Prepare return", "icon": "PercentOutline", "handler": "openPrepareVatReturn", "description": "Add up the booked ledger lines of a period per box and save them as a draft return."}
+				]
 			}
 		},
 		{

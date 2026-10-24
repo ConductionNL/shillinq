@@ -1,0 +1,1490 @@
+[
+	{
+		"row": "1.11",
+		"matrix": "dossiq",
+		"decision": "existing",
+		"reason": "leges-at-intake raises a payment request at intake from a fee schedule and adds a payment step to the portaliq journey; it cites this row.",
+		"change": "leges-at-intake",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "12.12",
+		"matrix": "dossiq",
+		"decision": "existing",
+		"reason": "case-payment-requests puts a payment request on any object with a data-provider leaf for the case app; it cites this row.",
+		"change": "case-payment-requests",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "prod-overdue-chasing",
+		"matrix": "pipelinq",
+		"decision": "build",
+		"reason": "Same capability as shillinq rec-reminders, which four competitors rate yes; covered by the same change; changelog https://www.hubspot.com/spotlight; 1 competitor yes (hubspot-crm).",
+		"change": "receivables-automatic-dunning",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "bnk-fx-rates",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is applying the daily rate at booking; 4 competitor yes (exact-online, moneybird, twinfield, odoo).",
+		"change": "banking-fx-at-booking",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "bnk-integrated-account",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; changelog https://www.moneybird.nl/changelog/ideal-voor-de-moneybird-betaalrekening/; 2 competitor yes (moneybird, snelstart).",
+		"change": "banking-connected-accounts",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "bnk-manual-match",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is pairing a bank line with an invoice or ledger entry by hand; 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "banking-manual-match",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "bnk-multi-account",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is connected accounts feeding a combined cash position; the connection itself is integriq (shillinq matrix bnk-psd2, building); 4 competitor yes (exact-online, moneybird, snelstart, odoo).",
+		"change": "banking-connected-accounts",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "bnk-pay-from-app",
+		"matrix": "shillinq",
+		"decision": "existing",
+		"reason": "REQ-FPCR-004 submits an approved payment run to a provider through integriq instead of exporting a file, with the per line result back; that is paying supplier bills from the app.",
+		"change": "fees-payments-and-the-contract-register",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "bnk-payment-block",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109); 1 competitor yes (odoo).",
+		"change": "banking-payment-run",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "bnk-scheduled-payment",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is a date per payment rather than per batch; changelog https://www.moneybird.nl/changelog/slim-plannen-van-betalingen/; 4 competitor yes (exact-online, moneybird, snelstart, twinfield).",
+		"change": "banking-payment-run",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "bnk-sepa-batch",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is proposing the run from the invoices due instead of typing lines; 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "banking-payment-run",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "bnk-treasury",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Partial, built, no demand; no competitor rates it yes.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "bok-availability",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Partial, built, no demand; one competitor yes (odoo).",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "bok-calendar",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Partial, built, no demand; one competitor yes (odoo).",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "bok-confirm",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Partial, built, no demand; no competitor rates it yes.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "bok-email",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Partial, built, no demand; one competitor yes (odoo).",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "bok-online",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Partial, built, no demand; one competitor yes (odoo).",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "bok-recurring",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Rated no with the backend built; no competitor rates it yes and no demand, outside the core areas.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "bok-sms",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Partial, built, no demand; one competitor yes (odoo).",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "exp-category-mapping",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; 3 competitor yes (moneybird, snelstart, odoo).",
+		"change": "expenses-category-mapping",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "exp-company-cards",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Rated no; changelog demand with one competitor yes (odoo) meets none of the build tests, outside the core areas.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "exp-policy",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Rated no with records built; no competitor rates it yes and no demand, outside the core areas.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "exp-reinvoice",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is applying the markup rules and picking the expense; 2 competitor yes (exact-online, odoo).",
+		"change": "sales-time-and-expense-billing",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "inv-block-unsellable",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Partial, built, no demand; no competitor rates it yes.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "inv-cogs",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is the cost read on issue, which depends on the receipt layers of inv-valuation; 3 competitor yes (exact-online, snelstart, odoo).",
+		"change": "inventory-receipt-cost-layers",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "inv-valuation",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is goods received through a GRN creating cost layers; 2 competitor yes (snelstart, odoo).",
+		"change": "inventory-receipt-cost-layers",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "led-account-guidance",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is guidance shown while booking, not only a description field; changelog https://www.odoo.com/odoo-19-release-notes; 1 competitor yes (odoo).",
+		"change": "ledger-booking-rules",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "led-close-checklist",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is adding and resolving checklist items, archived period-close changes shipped without it; 2 competitor yes (exact-online, moneybird).",
+		"change": "ledger-period-end",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "led-control-account-lock",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109).",
+		"change": "ledger-booking-rules",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "led-deferrals",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is booking and releasing deferrals, accruals are only recorded; 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "ledger-period-end",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "led-dimension-block",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; archived cost-centre changes shipped without combination rules, code re-read on 2026-09-27 found none; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109).",
+		"change": "ledger-booking-rules",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "led-dimensions",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is a signed roll-up per dimension, the aggregations sum amounts without side or account type; 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "reporting-segment-results",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "led-double-entry",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is a user-driven post that aborts on the unregistered lifecycle action evaluate-allocation-rules; 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "ledger-posting-path",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "led-dual-gaap",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Partial, built, no demand; no competitor rates it yes.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "led-intercompany",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Partial, built, no demand; no competitor rates it yes.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "led-master-data-sync",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no, core area (ledger); roadmap https://www.exact.com/nl/vooruitblik.",
+		"change": "ledger-multi-administration",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "led-multi-admin",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is a switch that sticks and lists scoped to the active administration; 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "ledger-multi-administration",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "led-multi-legislation",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no, core area (ledger); roadmap https://www.exact.com/nl/vooruitblik; 1 competitor yes (odoo).",
+		"change": "ledger-foreign-legislation",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "led-open-item-clearing",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no, core area (ledger); roadmap https://helpcenter.moneybird.nl/nl/articles/549560-afletteren-in-beta; 1 competitor yes (twinfield).",
+		"change": "ledger-open-item-clearing",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "led-open-years",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; several years can be open but the post path they receive entries on aborts, same missing half as led-double-entry; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109); 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "ledger-posting-path",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "led-reinvestment-reserve",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no, core area (ledger); changelog https://www.moneybird.nl/changelog/herinvesteringsreserve/; 1 competitor yes (moneybird).",
+		"change": "assets-method-change-and-reserve",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "led-retention",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Partial, built, no demand; no competitor rates it yes.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "led-soft-close",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Partial, built, no demand; no competitor rates it yes.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "led-tamper-proof",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is sealing each posted entry, only export packages are sealed; changelog https://www.odoo.com/odoo-19-release-notes; 1 competitor yes (odoo).",
+		"change": "ledger-sealed-entries",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pln-asset-method-change",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109); 1 competitor yes (odoo).",
+		"change": "assets-method-change-and-reserve",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pln-budget-amendments",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; the Begrotingswijziging schema has no page; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109).",
+		"change": "planning-budget-editing",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pln-budget-grid",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is typing into the grid, budget-grid-view is read-only by design; 3 competitor yes (exact-online, twinfield, odoo).",
+		"change": "planning-budget-editing",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pln-commitment-carryover",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109).",
+		"change": "planning-commitment-year-end",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pln-commitments",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Partial, built, no demand; no competitor rates it yes (the guard tags it needs are registered by planning-commitment-year-end as a prerequisite).",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pln-leases",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Partial, built, no demand; no competitor rates it yes.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pln-multi-year-budget",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is a multi-year view over the Meerjarenraming schemas; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109); 3 competitor yes (exact-online, twinfield, odoo).",
+		"change": "planning-budget-editing",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pln-pensions",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Partial, built, no demand; no competitor rates it yes.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "plt-client-templates",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is an office saving its own chart of accounts as a template; changelog https://www.moneybird.nl/changelog/sjabloon-administraties-in-mijn-kantoor/; 4 competitor yes (exact-online, moneybird, snelstart, twinfield).",
+		"change": "ledger-multi-administration",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "plt-help-assistant",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no in the matrix, corrected to partial: src/App.vue:15 mounts the hermiq companion through CnAppRoot, so an assistant is there when hermiq answers; the missing half is shillinq knowledge for how-to answers; 4 competitor yes (exact-online, moneybird, twinfield, odoo).",
+		"change": "platform-help-agent",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "plt-marketplace",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; adopt-connection-registry is a status page for shillinq own connections, not a catalogue; 4 competitor yes (exact-online, moneybird, snelstart, odoo).",
+		"change": "platform-integration-catalogue",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "plt-mobile",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is creating invoices and capturing receipts from an installable mobile app; 4 competitor yes (exact-online, moneybird, snelstart, odoo).",
+		"change": "platform-mobile-pwa",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "plt-nl-query",
+		"matrix": "shillinq",
+		"decision": "existing",
+		"reason": "Rated no in the matrix, corrected to partial: src/App.vue:15 already mounts the hermiq companion (CnAppRoot aiCompanion), and REQ-MCP-004 and REQ-MCP-005 give it a read tool for every shillinq action with routing descriptions, so a finance question in plain language is covered by that open change.",
+		"change": "mcp-action-tool-surface",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "plt-offline",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is offline work beyond warehouse scanning, which the mobile app needs for receipts and draft invoices; changelog https://www.odoo.com/odoo-20-release-notes.",
+		"change": "platform-mobile-pwa",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "plt-readonly-access",
+		"matrix": "shillinq",
+		"decision": "existing",
+		"reason": "REQ-MCP-003 gives every agent a default-deny grant with a read scope through hermiq, and REQ-MCP-005 serves the read tools on both MCP surfaces; a scoped read-only token for a non-agent integration is a Nextcloud app password capability, which has no scope in nextcloud/server.",
+		"change": "mcp-action-tool-surface",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "plt-required-fields",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109); 1 competitor yes (odoo).",
+		"change": "platform-required-fields",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "ppl-hours-budget",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is a warning when logged hours pass the estimate; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109); 2 competitor yes (exact-online, odoo).",
+		"change": "people-hours-budget",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "ppl-ib47",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Partial, built, no demand; no competitor rates it yes.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "ppl-payroll",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "Payroll runs in humaniq: humaniq matrix pay-run is yes and built with owner humaniq, and hydra ADR-107 decisions 4 and 6 give payroll and the wage base to humaniq; a second payroll engine in shillinq is not built.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "ppl-payroll-journal",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; humaniq already hands the payroll journal into shillinq JournalEntry (humaniq matrix pay-gl-journal), the missing half is posting it to the ledger, which is the post path of led-double-entry; 4 competitor yes (exact-online, moneybird, snelstart, odoo).",
+		"change": "ledger-posting-path",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "ppl-payroll-tax-return",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Rated no; roadmap demand but no competitor rates it yes, outside the core areas.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pub-asset-interest",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109).",
+		"change": "public-sector-reserves-and-interest",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pub-iv3",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Partial, built, no demand; no competitor rates it yes.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pub-programme-budget",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Partial, built, no demand; no competitor rates it yes.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pub-reserves",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; the Reserve schema has no page; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109).",
+		"change": "public-sector-reserves-and-interest",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pur-approval-delegate",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109).",
+		"change": "purchasing-approval-delegation",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pur-duplicate-check",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is the check on a typed invoice; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109); 2 competitor yes (moneybird, odoo).",
+		"change": "purchasing-supplier-invoice-intake",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pur-framework",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Partial, built, no demand; one competitor yes (odoo).",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pur-iban-check",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109).",
+		"change": "purchasing-supplier-invoice-intake",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pur-invoice-approval",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Partial, built, no demand; one competitor yes (exact-online).",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pur-last-invoice-close",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109).",
+		"change": "planning-commitment-year-end",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pur-po",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is the PO actually reaching the supplier, both adapters are log-only; 3 competitor yes (exact-online, snelstart, odoo).",
+		"change": "purchasing-order-dispatch-and-receipt",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pur-po-approval",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Partial, built, no demand; one competitor yes (odoo).",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pur-receipt",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is a screen for service receipts; 3 competitor yes (exact-online, snelstart, odoo).",
+		"change": "purchasing-order-dispatch-and-receipt",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "pur-ubl-import",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is booking a non-PO invoice without a three-way match; 4 competitor yes (exact-online, moneybird, snelstart, odoo).",
+		"change": "purchasing-supplier-invoice-intake",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "rec-ai-debtor",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Rated no; one competitor yes (exact-online) and no demand, outside the core areas.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "rec-early-payment-discount",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Rated no; changelog demand with one competitor yes (odoo) meets none of the build tests, outside the core areas.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "rec-ladder-per-customer",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the override only matters once dunning runs, same missing half as rec-reminders; 2 competitor yes (exact-online, moneybird).",
+		"change": "receivables-automatic-dunning",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "rec-payment-plan",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is a payment plan for an ordinary customer debt, instalments exist only for grant reclaims; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109).",
+		"change": "receivables-payment-plans",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "rec-payment-request",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half (a provider that creates the link and reports paid) is the same code path as sal-pay-link, which four competitors rate yes; 1 competitor yes (moneybird).",
+		"change": "receivables-payment-links",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "rec-psp-payouts",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; 2 competitor yes (exact-online, moneybird).",
+		"change": "receivables-provider-payouts",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "rec-reminders",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is dunning that runs on its own and a channel that sends; 4 competitor yes (exact-online, moneybird, snelstart, odoo).",
+		"change": "receivables-automatic-dunning",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "rep-ai-report",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Rated no; roadmap demand but no competitor rates it yes, outside the core areas.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "rep-annotations",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Rated no; changelog demand with one competitor yes (odoo) meets none of the build tests, outside the core areas.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "rep-annual-accounts",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Partial, built, no demand; no competitor rates it yes.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "rep-balance-sheet",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is an as-of date filter and the unclosed result in equity; 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "reporting-financial-statements",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "rep-bi",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; 4 competitor yes (exact-online, snelstart, twinfield, odoo).",
+		"change": "reporting-custom-analysis",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "rep-bi-feed",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is a push feed or OData endpoint for a BI tool; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109); 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "reporting-data-delivery",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "rep-consolidation",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Partial, built, no demand; one competitor yes (odoo).",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "rep-drilldown",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "reporting-financial-statements",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "rep-pnl",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is comparative columns on the statement; 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "reporting-financial-statements",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "rep-relation-both-sides",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109); 2 competitor yes (moneybird, odoo).",
+		"change": "reporting-relation-both-sides",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "rep-scheduled",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; tender demand (https://www.tenderned.nl/aankondigingen/overzicht/416109).",
+		"change": "reporting-data-delivery",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "rep-segment-pnl",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is a signed profit and loss per segment restricted to posted P&L lines; 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "reporting-segment-results",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-approval",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no, core area (sales); 1 competitor yes (exact-online).",
+		"change": "sales-invoice-issue-controls",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-batch",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no, core area (sales); the school contribution bulk raise (extracurricular-fee-to-shillinq) is called by another app and does not send; 3 competitor yes (exact-online, snelstart, odoo).",
+		"change": "sales-invoice-sending",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-branded-invoice",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is a logo, colours and a layout choice on the invoice; 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "sales-invoice-document",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-churn-reason",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no, core area (sales); changelog https://www.moneybird.nl/changelog/ontdek-waarom-klanten-hun-abonnement-stopzetten/; 2 competitor yes (moneybird, odoo).",
+		"change": "sales-cancellation",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-customer-language",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no, core area (sales); 3 competitor yes (moneybird, twinfield, odoo).",
+		"change": "sales-invoice-document",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-customer-terms",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no, core area (sales); 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "sales-invoice-sending",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-down-payment",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no, core area (sales); changelog https://www.odoo.com/odoo-19-release-notes; 2 competitor yes (moneybird, odoo).",
+		"change": "sales-down-payments",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-einvoice-rejection",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated partial in the matrix, corrected to no by the code read of 2026-09-27 (the listener never fires and its notification has no notifier); core area (sales), and it rests on the same hand-off as sal-peppol-send; changelog https://support.exactonline.com/community/s/article/All-All-HNO-Content-rn-whatsnewlandingpage?language=en_GB; 2 competitor yes (exact-online, odoo).",
+		"change": "sales-einvoice-exchange",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-email-pdf",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no, core area (sales); 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "sales-invoice-sending",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-foreign-currency",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is the PDF and the time-and-expense generator honouring the invoice currency; 4 competitor yes (exact-online, moneybird, twinfield, odoo).",
+		"change": "sales-invoice-document",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-numbering",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is a locked unbroken sequence on the AR invoice; 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "sales-invoice-issue-controls",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-pay-link",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is a provider that creates the iDEAL or card link and the link printed on the invoice; 4 competitor yes (exact-online, moneybird, snelstart, odoo).",
+		"change": "receivables-payment-links",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-peppol-send",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is the hand-off to integriq on the channel integriq listens on; 4 competitor yes (exact-online, moneybird, snelstart, odoo).",
+		"change": "sales-einvoice-exchange",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-qr",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no, core area (sales); 2 competitor yes (moneybird, odoo).",
+		"change": "sales-invoice-document",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-quick-draft",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Partial, built, no demand; no competitor rates it yes.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-self-billing",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated partial in the matrix, corrected to no by the code read of 2026-09-27 (the self-billing flags are not declared on ARInvoice); core area (sales); changelog https://support.exactonline.com/community/s/article/All-All-HNO-Content-rn-whatsnewlandingpage?language=en_GB; 1 competitor yes (exact-online).",
+		"change": "sales-einvoice-exchange",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-tap-to-pay",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no, core area (sales); changelog https://www.moneybird.nl/changelog/laat-je-klant-contactloos-betalen/; 2 competitor yes (moneybird, odoo).",
+		"change": "receivables-provider-payouts",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-time-to-invoice",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is picking unbilled hours and expenses instead of typing ids; 3 competitor yes (exact-online, moneybird, odoo).",
+		"change": "sales-time-and-expense-billing",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-webshop-sync",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no, core area (sales); 3 competitor yes (moneybird, snelstart, odoo).",
+		"change": "sales-webshop-orders",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "sal-withdrawal-button",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no, core area (sales); changelog https://www.moneybird.nl/changelog/herroepingsknop-voor-online-verkopen/; 1 competitor yes (moneybird).",
+		"change": "sales-cancellation",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "tax-broken-year-vat",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is VAT corrections grouped by the broken fiscal year; changelog https://taasupportportal.wolterskluwer.com/nl/nl-nl/release-notes/twinfield-boekh-3041276; 3 competitor yes (snelstart, twinfield, odoo).",
+		"change": "tax-vat-return-from-books",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "tax-fiscal-unity",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; roadmap https://www.snelstart.nl/boekhouders-en-accountants/functies/fiscaal; 2 competitor yes (twinfield, odoo).",
+		"change": "tax-vat-return-from-books",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "tax-margin-scheme",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Rated no; one competitor yes (snelstart) and no demand, outside the core areas.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "tax-partial-deductibility",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; changelog https://www.odoo.com/odoo-19-release-notes; 2 competitor yes (moneybird, odoo).",
+		"change": "tax-vat-rates-and-deductibility",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "tax-payment-reference",
+		"matrix": "shillinq",
+		"decision": "defer",
+		"reason": "Rated no; changelog demand with one competitor yes (moneybird) meets none of the build tests, outside the core areas.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "tax-return-checks",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no; changelog https://www.odoo.com/odoo-19-release-notes; 2 competitor yes (exact-online, odoo).",
+		"change": "tax-vat-return-from-books",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "tax-sbr",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no and marked specified with no change directory; archived SBR work shipped a log-only adapter, so the change is written here; 2 competitor yes (exact-online, snelstart).",
+		"change": "tax-digipoort-filing",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "tax-vat-calc",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is rates kept as configuration instead of a code constant; 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "tax-vat-rates-and-deductibility",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "tax-vat-file",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Rated no and marked specified with no change directory; archived VAT filing work shipped a log-only Digipoort adapter, so the change is written here; 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "tax-digipoort-filing",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "tax-vat-number-check",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is checking suppliers and a lookup a user can reach; changelog https://www.snelstart.nl/productnieuws/snelstart-polaris-release-notes-30-oktober-snelstart; 3 competitor yes (moneybird, snelstart, odoo).",
+		"change": "tax-vat-number-check",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "tax-vat-prepare",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is input VAT derived from purchases; 5 competitor yes (exact-online, moneybird, snelstart, twinfield, odoo).",
+		"change": "tax-vat-return-from-books",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "cmp-cas-pay",
+		"matrix": "portaliq",
+		"decision": "build",
+		"reason": "Partial, built; the missing half is the provider behind the checkout, which is LogMolliePaymentAdapter, the same code path as shillinq sal-pay-link; 1 competitor yes (nl-portal).",
+		"change": "receivables-payment-links",
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "plt-dark-mode",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "Owned by nextcloud/server: dark mode comes from Nextcloud theming, which shillinq inherits; platform-provided, so shillinq builds no theme of its own.",
+		"change": null,
+		"decidedOn": "2026-09-27"
+	},
+	{
+		"row": "registration-payments-through-shillinq",
+		"matrix": "larpinq",
+		"decision": "build",
+		"reason": "Four halves requested by larpinq's merged change registration-payments-through-shillinq (larpinq PR #749): an event-fee requestType, matching a bank line to an object payment request by its reference, a receipt mail to the debtor on capture, and an invoice made when the debtor asks for one. Shillinq has none of them for a request on an object; larpinq's design D1 and D4 depend on them. Build: a merged change of another product depends on these halves.",
+		"change": "receivables-object-request-settlement",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "registration-cancel-transfer-refund",
+		"matrix": "larpinq",
+		"decision": "build",
+		"reason": "Two halves requested by larpinq's merged change registration-cancel-transfer-refund (larpinq PR #749): receiving a refund or credit request for an object payment request, and applying a debtor's open credit to a later request. Nothing in shillinq receives either; case-payment-requests leaves refunds out and CreditNote reverses only invoices. Build: a merged change of another product depends on these halves.",
+		"change": "receivables-object-request-refund-and-credit",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "payroll-expenses-and-allowances",
+		"matrix": "humaniq",
+		"decision": "existing",
+		"reason": "Expense account half requested by humaniq's payroll-expenses-and-allowances (design D6: a journal debit line on the new setting getGlPostAccountReimbursements). The seeded charts already carry accounts that take it: the RGS MKB seed has 4060 Overige personeelskosten, 4500 Reiskosten and 4530 Kilometervergoeding, the BBV seed 7000 Personeelslasten (lib/Settings/seeds, shipped by 2026-06-14-add-shillinq-bookkeeping-foundation). Humaniq names the number in its own setting, as it does for the other four journal lines.",
+		"change": "2026-06-14-add-shillinq-bookkeeping-foundation",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "payroll-cost-allocation",
+		"matrix": "humaniq",
+		"decision": "build",
+		"reason": "Journal-line cost codes half requested by humaniq's payroll-cost-allocation (design D4 writes costCenterCode and projectCode on the payroll journal's debit lines). JournalEntry.lines carries only account, side, amount and description, and ledger-posting-path maps only those onto GLLine, so the codes would be lost. Build: another product's merged change depends on it.",
+		"change": "ledger-journal-line-dimensions",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "rec-ai-debtor",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "Single competitor, no demand: only exact-online rates it yes and no demand row names it.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "tax-margin-scheme",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "Single competitor, no demand: only snelstart rates it yes and no demand row names it.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "tax-investment-deduction",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "The archived 2026-06-14-bookkeeping-investeringsaftrek shipped the schemas, 2026 tables and both calculators without a caller or a page, so the row is built as the wiring the archived change promised.",
+		"change": "tax-investment-deduction-claims",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "rep-cashflow-statement",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Three competitors rate it yes (exact-online, moneybird, odoo).",
+		"change": "reporting-cash-flow-statement",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "exp-company-cards",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "Single competitor, no demand: only odoo rates it yes, and a changelog origin is not a feature request or roadmap demand.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "rep-annotations",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "Single competitor, no demand: only odoo rates it yes, and a changelog origin is not a feature request or roadmap demand.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "rec-early-payment-discount",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "Single competitor, no demand: only odoo rates it yes, and a changelog origin is not a feature request or roadmap demand.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "tax-payment-reference",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "Single competitor, no demand: only moneybird rates it yes, and a changelog origin is not a feature request or roadmap demand.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "ppl-payroll-tax-return",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes (roadmap demand only), and payroll belongs to humaniq under ADR-107, as the decided-no row ppl-payroll records.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "plt-custom-entities",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Two competitors rate it yes (exact-online, odoo).",
+		"change": "platform-custom-record-types",
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "rep-ai-report",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes; roadmap demand alone meets none of the build tests.",
+		"change": null,
+		"decidedOn": "2026-09-28"
+	},
+	{
+		"row": "sal-quote-to-invoice",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Core area (sales), building with no change for its missing half; 4 competitors rate it yes (exact-online, moneybird, snelstart, odoo).",
+		"change": "sales-quote-and-order-to-invoice",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "sal-orders",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Core area (sales), building with no change for its missing half; 3 competitors rate it yes (exact-online, snelstart, odoo).",
+		"change": "sales-quote-and-order-to-invoice",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "sal-usage-billing",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Core area (sales), building with no change for its missing half.",
+		"change": "sales-usage-billing",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "rec-direct-debit",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "5 competitors rate it yes (exact-online, moneybird, snelstart, twinfield, odoo); building with no change for its missing half.",
+		"change": "receivables-sepa-direct-debit",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "tax-icp",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "4 competitors rate it yes (exact-online, moneybird, snelstart, twinfield); building with no change for its missing half.",
+		"change": "tax-icp-and-reverse-charge",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "tax-reverse-charge",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "5 competitors rate it yes (exact-online, moneybird, snelstart, twinfield, odoo); building with no change for its missing half.",
+		"change": "tax-icp-and-reverse-charge",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "tax-vat-position",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "4 competitors rate it yes (exact-online, moneybird, snelstart, odoo); building with no change for its missing half.",
+		"change": "tax-vat-position-and-suppletie",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "tax-suppletie",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "4 competitors rate it yes (exact-online, moneybird, snelstart, twinfield); building with no change for its missing half.",
+		"change": "tax-vat-position-and-suppletie",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "plt-import",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "3 competitors rate it yes (exact-online, snelstart, twinfield); building with no change for its missing half.",
+		"change": "platform-administration-import",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "rec-pay-forecast",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "One competitor rates it yes (exact-online), no tender, feature request or roadmap names it, and receivables is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "tax-kor",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "tax-oss",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "One competitor rates it yes (odoo), no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "tax-vpb",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "tax-ib-zzp",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "tax-hours-criterion",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "One competitor rates it yes (moneybird), no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "tax-deferred",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "tax-wbso",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "tax-innovation-box",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and tax is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-bbv",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-sisa",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-rechtmatigheid",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-bcf",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-fido",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-gr",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-market-separation",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-ensia",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-subsidies",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-eu-funds",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-audit-protocol",
+		"matrix": "shillinq",
+		"decision": "decided-no",
+		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
+		"change": null,
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-bbv",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Ruben 29 Sep: municipalities are the market. Reverses the decided-no of 2026-09-29 (build-all rule, no competitor rates it yes).",
+		"change": "public-sector-task-field-allocation",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-gr",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Ruben 29 Sep: municipalities are the market. Reverses the decided-no of 2026-09-29 (build-all rule, no competitor rates it yes).",
+		"change": "public-sector-task-field-allocation",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-market-separation",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Ruben 29 Sep: municipalities are the market. Reverses the decided-no of 2026-09-29 (build-all rule, no competitor rates it yes).",
+		"change": "public-sector-task-field-allocation",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-subsidies",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Ruben 29 Sep: municipalities are the market. Reverses the decided-no of 2026-09-29 (build-all rule, no competitor rates it yes).",
+		"change": "public-sector-grant-accountability",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-sisa",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Ruben 29 Sep: municipalities are the market. Reverses the decided-no of 2026-09-29 (build-all rule, no competitor rates it yes).",
+		"change": "public-sector-grant-accountability",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-eu-funds",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Ruben 29 Sep: municipalities are the market. Reverses the decided-no of 2026-09-29 (build-all rule, no competitor rates it yes).",
+		"change": "public-sector-grant-accountability",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-rechtmatigheid",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Ruben 29 Sep: municipalities are the market. Reverses the decided-no of 2026-09-29 (build-all rule, no competitor rates it yes).",
+		"change": "public-sector-council-and-auditor-statements",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-audit-protocol",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Ruben 29 Sep: municipalities are the market. Reverses the decided-no of 2026-09-29 (build-all rule, no competitor rates it yes).",
+		"change": "public-sector-council-and-auditor-statements",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-ensia",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Ruben 29 Sep: municipalities are the market. Reverses the decided-no of 2026-09-29 (build-all rule, no competitor rates it yes).",
+		"change": "public-sector-council-and-auditor-statements",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-bcf",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Ruben 29 Sep: municipalities are the market. Reverses the decided-no of 2026-09-29 (build-all rule, no competitor rates it yes).",
+		"change": "public-sector-quarterly-returns",
+		"decidedOn": "2026-09-29"
+	},
+	{
+		"row": "pub-fido",
+		"matrix": "shillinq",
+		"decision": "build",
+		"reason": "Ruben 29 Sep: municipalities are the market. Reverses the decided-no of 2026-09-29 (build-all rule, no competitor rates it yes).",
+		"change": "public-sector-quarterly-returns",
+		"decidedOn": "2026-09-29"
+	}
+]

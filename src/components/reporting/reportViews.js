@@ -50,12 +50,6 @@ export const reportViews = [
 		category: 'public-sector',
 	},
 	{
-		id: 'BtwAangiften',
-		label: 'BTW-aangiften',
-		icon: 'FileDocumentOutline',
-		category: 'tax',
-	},
-	{
 		id: 'BtwCorrecties',
 		label: 'BTW-correcties',
 		icon: 'FileDocumentEditOutline',

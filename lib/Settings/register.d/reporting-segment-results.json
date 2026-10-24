@@ -1,0 +1,58 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "reporting-segment-results",
+    "adr": "ADR-037 modular register fragment: never edit shillinq_register.json",
+    "description": "Adds three fields to GLLine so a segment report can show a result instead of a gross total of postings. signedAmount is declared as a materialised calculation (credit positive, debit negative), so a sum over it is the result. accountClass and countsInResult are stamped by GLLineResultStampListener when the line's transaction is posted or reversed, because a line cannot see its account's type or its transaction's state through a calculation. Historic lines are stamped once by the StampGlLineResults repair step.",
+    "spec": "openspec/specs/bookkeeping-cost-centers-dimensions/spec.md"
+  },
+  "info": {
+    "version": "0.1.0-reporting-segment-results"
+  },
+  "components": {
+    "schemas": {
+      "GLLine": {
+        "properties": {
+          "signedAmount": {
+            "type": "number",
+            "description": "The amount with its sign: positive on the credit side, negative on the debit side. Calculated when the line is saved, so the sum of a segment's lines is its result.",
+            "nullable": true,
+            "example": -250.0,
+            "title": "Signed amount"
+          },
+          "accountClass": {
+            "type": "string",
+            "enum": ["pnl", "balance"],
+            "description": "Whether the line's account is a profit and loss account (revenue or expenses) or a balance sheet account, as the chart of accounts said when the transaction was posted.",
+            "nullable": true,
+            "example": "pnl",
+            "title": "Account class"
+          },
+          "countsInResult": {
+            "type": "boolean",
+            "description": "True while the line's transaction is posted and not reversed. A draft line, and the lines of a reversed transaction and of its reversal, do not count.",
+            "nullable": true,
+            "example": true,
+            "title": "Counts in result"
+          }
+        },
+        "x-openregister-calculations": {
+          "signedAmount": {
+            "expression": {
+              "if": [
+                { "eq": [{ "prop": "side" }, { "lit": "credit" }] },
+                { "prop": "amount" },
+                { "-": [{ "lit": 0 }, { "prop": "amount" }] }
+              ]
+            },
+            "type": "number",
+            "materialise": true,
+            "description": "Credit positive, debit negative (reporting-segment-results REQ-RSR-001)."
+          }
+        }
+      }
+    }
+  },
+  "objects": []
+}
