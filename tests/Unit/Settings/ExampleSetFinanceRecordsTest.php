@@ -86,6 +86,11 @@ class ExampleSetFinanceRecordsTest extends TestCase {
 	 */
 	public function testEveryRecordIsInTheDefaultAdministration(): void {
 		foreach (self::objects() as $key => $object) {
+			// A fee rule is the council's, for every administration.
+			if ($object['schema'] === 'FeeSchedule') {
+				continue;
+			}
+
 			if ($key === 'fixed-asset-vrachtwagen') {
 				$this->assertSame(expected: '{{lookup:administration}}', actual: $object['data']['administrationId']);
 				$this->assertSame(expected: ['administrationCode' => 'ADM-001'], actual: $object['lookups']['administration']['where']);

@@ -1,6 +1,6 @@
 {
 	"set": "zuiddrecht",
-	"$comment": "shillinq's part of the Zuiddrecht example set: the finance records the ShActief, ShBtwAangifte, ShBegroting, ShBetaalrun and ShInkooporder boards open, in the shipped default administration ADM-001 that the demo employee Pieter is a member of (the fixed asset names it by uuid, the other records by code, as their schemas declare). A fixed asset (the parking enforcement truck), the VAT return for Q3 2026 ready to file, the draft budget 2027, a payment run waiting for its second approval, and a partly received purchase order with the green maintenance supplier, who is also a payee of the run. Install with `occ openregister:example-set:install zuiddrecht`.",
+	"$comment": "shillinq's part of the Zuiddrecht example set: the finance records the ShActief, ShBtwAangifte, ShBegroting, ShBetaalrun and ShInkooporder boards open, in the shipped default administration ADM-001 that the demo employee Pieter is a member of (the fixed asset names it by uuid, the other records by code, as their schemas declare). A fixed asset (the parking enforcement truck), the VAT return for Q3 2026 ready to file, the draft budget 2027, a payment run waiting for its second approval, and a partly received purchase order with the green maintenance supplier, who is also a payee of the run. Install with `occ openregister:example-set:install zuiddrecht`. Three fee rules for dossiq's omgevingsvergunning (bouwen per euro bouwkosten, kappen per boom on the Kappen variant, a refund on withdrawal within four weeks) fill the Legesregels of dossiq's VTH settings.",
 	"appConfig": [
 		{
 			"key": "paymentActionApps",
@@ -157,6 +157,80 @@
 				"totalInclVat": 5880600,
 				"statusCode": "partial_received",
 				"administrationId": "ADM-001"
+			}
+		},
+		{
+			"key": "leges-bouwen",
+			"register": "shillinq",
+			"schema": "FeeSchedule",
+			"data": {
+				"targetApp": "dossiq",
+				"register": "dossiq",
+				"schema": "case",
+				"typeProperty": "caseTypeIdentifier",
+				"typeValue": "omgevingsvergunning",
+				"currency": "EUR",
+				"payAtIntake": "later",
+				"validFrom": "2026-01-01",
+				"name": "Bouwen, per euro bouwkosten",
+				"calculation": "percentage",
+				"percentage": 2.35,
+				"minimumAmount": 125,
+				"baseProperty": "bouwkosten",
+				"legalBasis": {
+					"regulation": "Legesverordening 2026",
+					"article": "2.3.1",
+					"effectiveDate": "2026-01-01"
+				}
+			}
+		},
+		{
+			"key": "leges-kappen",
+			"register": "shillinq",
+			"schema": "FeeSchedule",
+			"data": {
+				"targetApp": "dossiq",
+				"register": "dossiq",
+				"schema": "case",
+				"typeProperty": "caseTypeIdentifier",
+				"typeValue": "omgevingsvergunning",
+				"currency": "EUR",
+				"payAtIntake": "later",
+				"validFrom": "2026-01-01",
+				"name": "Kappen",
+				"variantValue": "Kappen",
+				"calculation": "per_unit",
+				"unitPrice": 82.4,
+				"unitLabel": "boom",
+				"baseProperty": "aantalBomen",
+				"legalBasis": {
+					"regulation": "Legesverordening 2026",
+					"article": "2.3.8",
+					"effectiveDate": "2026-01-01"
+				}
+			}
+		},
+		{
+			"key": "leges-intrekken",
+			"register": "shillinq",
+			"schema": "FeeSchedule",
+			"data": {
+				"targetApp": "dossiq",
+				"register": "dossiq",
+				"schema": "case",
+				"typeProperty": "caseTypeIdentifier",
+				"typeValue": "omgevingsvergunning",
+				"currency": "EUR",
+				"payAtIntake": "later",
+				"validFrom": "2026-01-01",
+				"name": "Intrekken binnen 4 weken",
+				"calculation": "refund_percentage",
+				"percentage": 75,
+				"legalBasis": {
+					"regulation": "Legesverordening 2026",
+					"article": "1.4",
+					"effectiveDate": "2026-01-01"
+				}
 			}
 		}
 	]
