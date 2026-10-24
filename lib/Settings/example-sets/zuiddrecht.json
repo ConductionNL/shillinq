@@ -1,6 +1,13 @@
 {
 	"set": "zuiddrecht",
 	"$comment": "shillinq's part of the Zuiddrecht example set: the finance records the ShActief, ShBtwAangifte, ShBegroting, ShBetaalrun and ShInkooporder boards open, in the shipped default administration ADM-001 that the demo employee Pieter is a member of (the fixed asset names it by uuid, the other records by code, as their schemas declare). A fixed asset (the parking enforcement truck), the VAT return for Q3 2026 ready to file, the draft budget 2027, a payment run waiting for its second approval, and a partly received purchase order with the green maintenance supplier, who is also a payee of the run. Install with `occ openregister:example-set:install zuiddrecht`.",
+	"appConfig": [
+		{
+			"key": "paymentActionApps",
+			"value": "{\"payment.request\": [\"dossiq\"]}",
+			"$comment": "dossiq raises payment requests in the demo: the leges at intake and the invoice for a forfeited penalty (financial-documents-on-any-object, REQ-FDO-005)."
+		}
+	],
 	"objects": [
 		{
 			"key": "payee-de-linde",

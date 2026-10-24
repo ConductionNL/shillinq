@@ -47,6 +47,23 @@ class ExampleSetFinanceRecordsTest extends TestCase {
 	}//end objects()
 
 	/**
+	 * dossiq may raise payment requests in the demo (a forfeited penalty's
+	 * invoice, the leges): the set grants it payment.request through shillinq's
+	 * own app config, which is the only config a fragment may set.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-005)
+	 */
+	public function testTheSetLetsDossiqRaisePaymentRequests(): void {
+		$fragment = json_decode((string)file_get_contents(self::FRAGMENT), true);
+		$entries = array_column(($fragment['appConfig'] ?? []), 'value', 'key');
+
+		$this->assertArrayHasKey(key: 'paymentActionApps', array: $entries);
+		$this->assertSame(expected: ['payment.request' => ['dossiq']], actual: json_decode($entries['paymentActionApps'], true));
+	}//end testTheSetLetsDossiqRaisePaymentRequests()
+
+	/**
 	 * One record per board, each of the schema the board's page reads.
 	 *
 	 * @return void
