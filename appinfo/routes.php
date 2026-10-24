@@ -885,6 +885,10 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'commitmentYearEnd#carryOver', 'url' => '/api/v1/commitments/carry-over', 'verb' => 'POST'],
             ['name' => 'commitmentYearEnd#previewLastInvoice', 'url' => '/api/v1/supplier-invoices/{id}/last-invoice', 'verb' => 'GET'],
             ['name' => 'commitmentYearEnd#markLastInvoice', 'url' => '/api/v1/supplier-invoices/{id}/last-invoice', 'verb' => 'POST'],
+            // Commitments per budget line and segment results, scoped to one administration on the server.
+            ['name' => 'administrationResults#commitments', 'url' => '/api/budget-line-commitments', 'verb' => 'GET'],
+            ['name' => 'administrationResults#commitmentLines', 'url' => '/api/budget-line-commitments/lines', 'verb' => 'GET'],
+            ['name' => 'administrationResults#segments', 'url' => '/api/segment-results', 'verb' => 'GET'],
             // public-sector-reserves-and-interest REQ-PSRI-002: the multi-year reserve overview.
             ['name' => 'reserveOverview#overview', 'url' => '/api/v1/public-sector/reserves/overview', 'verb' => 'GET'],
 
