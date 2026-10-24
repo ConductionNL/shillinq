@@ -127,6 +127,33 @@ final class FeeCalculation {
 	}//end applyTo()
 
 	/**
+	 * Whether a schedule is a refund rule rather than a charge.
+	 *
+	 * @param array<string, mixed> $schedule The schedule.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/fee-rule-calculation/specs/object-payment-requests/spec.md#requirement-a-fee-rule-has-a-name-and-a-calculation
+	 */
+	public function isRefund(array $schedule): bool {
+		return (string) ($schedule['calculation'] ?? '') === 'refund_percentage';
+	}//end isRefund()
+
+	/**
+	 * The schedules that are refund rules, or the ones that are charges.
+	 *
+	 * @param array<int, array<string, mixed>> $schedules The schedules.
+	 * @param bool                             $refund    True for the refund rules, false for the charges.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 *
+	 * @spec openspec/changes/fee-rule-calculation/specs/object-payment-requests/spec.md#requirement-a-fee-rule-has-a-name-and-a-calculation
+	 */
+	public function ofKind(array $schedules, bool $refund): array {
+		return array_values(array_filter($schedules, fn (array $schedule): bool => $this->isRefund(schedule: $schedule) === $refund));
+	}//end ofKind()
+
+	/**
 	 * The schedule's calculation kind, fixed when it names none.
 	 *
 	 * @param array<string, mixed> $schedule The schedule.

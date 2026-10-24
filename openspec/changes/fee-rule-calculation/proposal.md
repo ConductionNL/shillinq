@@ -19,3 +19,5 @@ FeeSchedule 0.3.0 gains:
 - `calculation`: one of `fixed` (the default and the old behaviour), `percentage` with `percentage`, `minimumAmount` and `baseProperty`, `per_unit` with `unitPrice`, `unitLabel` and `baseProperty`, or `refund_percentage` with `percentage`.
 
 `FeeCalculation` refuses a schedule that lacks the numbers its kind needs, and works out the amount for an object. If the object does not carry its base value yet, the amount is left off with `amountSource` `needs-base`, rather than charged as zero. A refund carries no intake amount.
+
+A refund rule sits next to the charge for the same type. It is not an overlap with that charge, and it is never charged at intake.

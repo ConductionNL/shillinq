@@ -402,4 +402,19 @@ final class FeeScheduleServiceTest extends TestCase {
 		$this->expectExceptionMessage('A percentage fee needs percentage and baseProperty.');
 		$service->assertNoOverlap($this->schedule(['calculation' => 'percentage']), []);
 	}//end testACalculationWithoutItsNumbersIsRefused()
+
+	/**
+	 * A refund rule beside the type's charge is not an overlap, and is never charged at intake.
+	 *
+	 * @return void
+	 */
+	public function testARefundRuleSitsBesideTheCharge(): void {
+		$refund  = $this->schedule(['id' => 'fs-refund', 'calculation' => 'refund_percentage', 'percentage' => 75]);
+		$service = $this->service(['FeeSchedule' => [$this->schedule(), $refund]]);
+
+		$service->assertNoOverlap($refund, [$this->schedule()]);
+		$resolved = $service->resolveForObject('dossiq', 'Zaak', ['caseType' => 'bouwvergunning'], '', '2026-06-01');
+
+		self::assertSame('fs-1', $resolved['id']);
+	}//end testARefundRuleSitsBesideTheCharge()
 }//end class

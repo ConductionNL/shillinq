@@ -119,7 +119,8 @@ final class FeeScheduleService {
 
 
 		$valid = [];
-		foreach ($this->schedulesFor(tuple: $tuple) as $schedule) {
+		// A refund is paid back after the fact, never charged at intake.
+		foreach ((new FeeCalculation())->ofKind(schedules: $this->schedulesFor(tuple: $tuple), refund: false) as $schedule) {
 			if ($this->isValidOn(schedule: $schedule, day: $day) === true) {
 				$valid[] = $schedule;
 			}
@@ -312,7 +313,12 @@ final class FeeScheduleService {
 		$channel = (string)($schedule['intakeChannel'] ?? '');
 		$selfId = (string)($schedule['id'] ?? '');
 
-		$candidates = ($existing ?? $this->schedulesFor(tuple: $schedule));
+		// A refund rule and a charge for the same type are two rules, not an overlap.
+		$calculation = new FeeCalculation();
+		$candidates  = $calculation->ofKind(
+			schedules: ($existing ?? $this->schedulesFor(tuple: $schedule)),
+			refund: $calculation->isRefund(schedule: $schedule)
+		);
 
 		foreach ($candidates as $candidate) {
 			$candidateId = (string)($candidate['id'] ?? '');
