@@ -59,6 +59,7 @@ use Psr\Log\LoggerInterface;
 use RuntimeException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
+use OCA\Shillinq\Service\Extraction\ExtractionPrefillService;
 
 /**
  * HTTP API for the dashboard "Import bill" modal (shillinq-bill-import-modal).
@@ -148,11 +149,12 @@ class SupplierInvoiceImportController extends Controller {
 				);
 			}
 
+			$review = filter_var($this->request->getParam('review', false), FILTER_VALIDATE_BOOLEAN);
 			switch ($format) {
 				case 'ubl':
-					return $this->importUbl(administrationId: $admin, ublXml: $contents);
+					return $this->importUbl(administrationId: $admin, ublXml: $contents, review: $review);
 				case 'csv':
-					return $this->importCsv(administrationId: $admin, csv: $contents);
+					return $this->importCsv(administrationId: $admin, csv: $contents, review: $review);
 				case 'pdf':
 					// Honest deferral — no OCR engine is bundled (REQ-BIM-002).
 					return new JSONResponse(
@@ -176,6 +178,56 @@ class SupplierInvoiceImportController extends Controller {
 	}//end import()
 
 	/**
+	 * Discard an imported invoice that is still a review draft.
+	 *
+	 * Only the person who imported it may, and only before it is confirmed.
+	 *
+	 * @param string $id The SupplierInvoice id.
+	 *
+	 * @return JSONResponse 204, or the refusal.
+	 *
+	 * @spec openspec/specs/shillinq-bill-import-modal/spec.md
+	 */
+	#[NoAdminRequired]
+	public function discard(string $id): JSONResponse {
+		$user = $this->session->getUser();
+		if ($user === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
+
+		try {
+			$entity = $this->objectService->setRegister(self::REGISTER_SLUG)->setSchema(self::SUPPLIER_INVOICE_SCHEMA)->find($id);
+		} catch (\Throwable $e) {
+			$entity = null;
+		}
+
+		$invoice = $entity?->getObject() ?? [];
+		if ($invoice === []
+			|| $this->administrationContext->canAccess(administrationId: (string)($invoice['administrationId'] ?? '')) === false
+		) {
+			return new JSONResponse(['error' => 'Invoice not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		$owner = (string)($entity->getOwner() ?? '');
+		if (($invoice['extractionStatus'] ?? '') !== ExtractionPrefillService::STATUS_PENDING_REVIEW
+			|| $owner === ''
+			|| $owner !== $user->getUID()
+		) {
+			return new JSONResponse(['error' => 'Only your own unconfirmed import can be discarded.'], Http::STATUS_CONFLICT);
+		}
+
+		try {
+			$this->objectService->setRegister(self::REGISTER_SLUG)->setSchema(self::SUPPLIER_INVOICE_SCHEMA)->deleteObject($id);
+		} catch (\Throwable $e) {
+			$this->logger->error('SupplierInvoiceImportController.discard failed: ' . $e->getMessage());
+			return new JSONResponse(['error' => 'The import could not be discarded.'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+
+		return new JSONResponse([], Http::STATUS_NO_CONTENT);
+
+	}//end discard()
+
+	/**
 	 * Import a single UBL/e-invoice XML document.
 	 *
 	 * Parses the header identifiers first to pre-check for a duplicate
@@ -184,12 +236,13 @@ class SupplierInvoiceImportController extends Controller {
 	 *
 	 * @param string $administrationId Server-resolved tenant scope.
 	 * @param string $ublXml UBL Invoice XML.
+	 * @param bool $review True to keep the invoice a draft until it is confirmed.
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/shillinq-bill-import-modal/spec.md
 	 */
-	private function importUbl(string $administrationId, string $ublXml): JSONResponse {
+	private function importUbl(string $administrationId, string $ublXml, bool $review): JSONResponse {
 		try {
 			$parsed = $this->supplierInvoiceService->resolveSupplier(
 				administrationId: $administrationId,
@@ -205,7 +258,8 @@ class SupplierInvoiceImportController extends Controller {
 
 			$record = $this->supplierInvoiceService->ingestUBLInvoice(
 				administrationId: $administrationId,
-				ublXml: $ublXml
+				ublXml: $ublXml,
+				context: ['reviewDraft' => $review]
 			);
 
 			return new JSONResponse(
@@ -229,12 +283,13 @@ class SupplierInvoiceImportController extends Controller {
 	 *
 	 * @param string $administrationId Server-resolved tenant scope.
 	 * @param string $csv Raw CSV text.
+	 * @param bool $review True to keep the invoice a draft until it is confirmed.
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/shillinq-bill-import-modal/spec.md
 	 */
-	private function importCsv(string $administrationId, string $csv): JSONResponse {
+	private function importCsv(string $administrationId, string $csv, bool $review): JSONResponse {
 		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
 			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_FORBIDDEN);
 		}
@@ -276,6 +331,9 @@ class SupplierInvoiceImportController extends Controller {
 				'statusCode' => SupplierInvoiceService::STATUS_RECEIVED,
 				'createdAt' => date('c'),
 			];
+			if ($review === true) {
+				$record['extractionStatus'] = ExtractionPrefillService::STATUS_PENDING_REVIEW;
+			}
 
 			$saved = $this->saveSupplierInvoice($record);
 			$records[] = $saved;

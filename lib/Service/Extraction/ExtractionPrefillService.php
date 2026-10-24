@@ -83,6 +83,42 @@ class ExtractionPrefillService {
 	public const STATUS_CONFIRMED = 'confirmed';
 
 	/**
+	 * The fields an operator may correct when confirming a draft, per schema.
+	 * Status, administration, provenance and payment fields are never among them.
+	 *
+	 * @var array<string, list<string>>
+	 */
+	public const CORRECTABLE_FIELDS = [
+		self::SCHEMA_SUPPLIER_INVOICE => [
+			'supplierId',
+			'invoiceNumber',
+			'invoiceDate',
+			'dueDate',
+			'glAccount',
+			'glAccountLabel',
+			'totalInclVat',
+			'totalVat',
+			'totalExclVat',
+			'description',
+		],
+		self::SCHEMA_RECEIPT => [
+			'receiptNumber',
+			'amount',
+			'currency',
+			'amountInBaseCurrency',
+			'exchangeRate',
+			'receiptDate',
+			'category',
+			'extractedText',
+			'vendorName',
+			'description',
+			'costCentreCode',
+			'claimId',
+			'glAccount',
+		],
+	];
+
+	/**
 	 * Resolve the shillinq schema slug for a docudesk `docType`.
 	 *
 	 * @param string $docType `receipt` or `supplier-invoice`.
@@ -260,6 +296,22 @@ class ExtractionPrefillService {
 
 		return implode(' — ', $parts);
 	}//end composeReceiptSummary()
+
+	/**
+	 * Keep only the fields an operator may correct on this schema.
+	 *
+	 * @param string              $schema         SupplierInvoice or Receipt.
+	 * @param array<string,mixed> $incomingFields The submitted fields.
+	 *
+	 * @return array<string,mixed> The correctable subset.
+	 *
+	 * @spec openspec/specs/receipt-extraction-consume/spec.md
+	 */
+	public function correctableFields(string $schema, array $incomingFields): array {
+		$allowed = (self::CORRECTABLE_FIELDS[$schema] ?? []);
+		return array_intersect_key($incomingFields, array_flip($allowed));
+
+	}//end correctableFields()
 
 	/**
 	 * Record an operator correction on an existing draft (REQ-RXC-004).

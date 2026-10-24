@@ -316,6 +316,28 @@ XML;
 	}//end testIngestUBLInvoicePersistsAtReceivedWithProvenance()
 
 	/**
+	 * F2-S7: a UBL uploaded for review is stored once, as a draft awaiting confirmation;
+	 * a Peppol delivery is not.
+	 *
+	 * @return void
+	 */
+	public function testIngestUBLInvoiceForReviewIsADraft(): void {
+		$saved = [];
+		$service = $this->buildService(data: ['SupplierInvoice' => []], saved: $saved, accessibleAdministrations: ['adm-1']);
+
+		$draft = $service->ingestUBLInvoice(administrationId: 'adm-1', ublXml: $this->ublXml(), context: ['reviewDraft' => true]);
+
+		self::assertSame('pending-review', $draft['extractionStatus']);
+		self::assertCount(1, $saved);
+
+		$saved = [];
+		$delivered = $this->buildService(data: ['SupplierInvoice' => []], saved: $saved, accessibleAdministrations: ['adm-1'])
+			->ingestUBLInvoice(administrationId: 'adm-1', ublXml: $this->ublXml());
+		self::assertArrayNotHasKey('extractionStatus', $delivered);
+
+	}//end testIngestUBLInvoiceForReviewIsADraft()
+
+	/**
 	 * ingestUBLInvoice de-duplicates against an existing record so a
 	 * Peppol delivery retry does not create a second SupplierInvoice.
 	 *
