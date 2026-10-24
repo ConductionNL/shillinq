@@ -85,6 +85,7 @@ function register() {
 		],
 		transitions: [],
 		patched: [],
+		confirmCalls: [],
 	}
 	const next = {
 		parse: (batch) => ({ ...batch, status: 'staged' }),
@@ -117,6 +118,12 @@ function register() {
 		}),
 	}
 	axiosMock.post.mockImplementation(async (url, body) => {
+		if (url.endsWith('/confirm-suggestions')) {
+			const open = state.mappings.filter((row) => row.targetAccount && !row.confirmed)
+			state.confirmCalls.push(url)
+			state.mappings = state.mappings.map((row) => (row.targetAccount ? { ...row, confirmed: true } : row))
+			return { data: { confirmed: open.length } }
+		}
 		if (url.endsWith('/ImportBatch')) {
 			state.batch = { ...body, id: 'batch-1' }
 			return { data: state.batch }
@@ -181,7 +188,8 @@ describe('the import wizard', () => {
 		expect(vm.open).toHaveLength(1)
 
 		await vm.confirmAll()
-		expect(state.patched).toEqual(['map-2'])
+		expect(state.confirmCalls).toEqual(['/index.php/apps/shillinq/api/import-batches/batch-1/confirm-suggestions'])
+		expect(state.patched).toEqual([])
 		expect(vm.open).toHaveLength(0)
 
 		await vm.transition('validate')

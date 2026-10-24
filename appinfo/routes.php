@@ -160,6 +160,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'standardsPolicy#show', 'url' => '/api/administrations/{administrationId}/standards-policy', 'verb' => 'GET'],
             ['name' => 'standardsPolicy#update', 'url' => '/api/administrations/{administrationId}/standards-policy', 'verb' => 'PUT'],
             ['name' => 'administrationMember#create', 'url' => '/api/administrations/{administrationId}/members', 'verb' => 'POST'],
+            ['name' => 'importBatch#confirmSuggestions', 'url' => '/api/import-batches/{id}/confirm-suggestions', 'verb' => 'POST'],
 
         // Payroll engine (NL loonadministratie): read-only compute endpoints.
             ['name' => 'payroll#loonstrook', 'url' => '/api/payroll/loonstrook', 'verb' => 'GET'],

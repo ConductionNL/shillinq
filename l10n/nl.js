@@ -2542,6 +2542,7 @@ OC.L10N.register(
         "Choose a role, and write dates as YYYY-MM-DD.": "Kies een rol en schrijf datums als JJJJ-MM-DD.",
         "This user is already a member of this administration.": "Deze gebruiker is al lid van deze administratie.",
         "Each framework needs a key, an on or off state and a position.": "Elk raamwerk heeft een sleutel, een aan- of uitstand en een positie nodig.",
+        "Suggestions can only be confirmed while the batch is being mapped.": "Voorstellen kunnen alleen worden bevestigd terwijl de batch wordt gekoppeld.",
         "Start": "Start",
         "Start (UTC)": "Start (UTC)",
         "Start Date": "Startdatum",

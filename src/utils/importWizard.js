@@ -223,27 +223,18 @@ export async function loadMappings(id) {
 }
 
 /**
- * Confirm every mapping row that has a target account.
+ * Confirm every mapping row of the batch that has a target account, in one
+ * server call.
  *
- * @param {Array<object>} mappings The rows.
+ * @param {string} batchId The batch id.
  * @return {Promise<number>} How many rows were confirmed.
  * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
  */
-export async function confirmSuggestions(mappings) {
-	let confirmed = 0
-	for (const row of mappings || []) {
-		if (!row?.targetAccount || row?.confirmed === true) {
-			continue
-		}
-		await axios.patch(
-			generateUrl(
-				`/apps/openregister/api/objects/${REGISTER_SLUG}/ImportMapping/${encodeURIComponent(row.id)}`,
-			),
-			{ confirmed: true },
-		)
-		confirmed++
-	}
-	return confirmed
+export async function confirmSuggestions(batchId) {
+	const response = await axios.post(
+		generateUrl(`/apps/shillinq/api/import-batches/${encodeURIComponent(batchId)}/confirm-suggestions`),
+	)
+	return Number(response.data?.confirmed ?? 0)
 }
 
 /**

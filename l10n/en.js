@@ -2541,6 +2541,7 @@ OC.L10N.register(
         "Choose a role, and write dates as YYYY-MM-DD.": "Choose a role, and write dates as YYYY-MM-DD.",
         "This user is already a member of this administration.": "This user is already a member of this administration.",
         "Each framework needs a key, an on or off state and a position.": "Each framework needs a key, an on or off state and a position.",
+        "Suggestions can only be confirmed while the batch is being mapped.": "Suggestions can only be confirmed while the batch is being mapped.",
         "Start": "Start",
         "Start (UTC)": "Start (UTC)",
         "Start Date": "Start Date",
