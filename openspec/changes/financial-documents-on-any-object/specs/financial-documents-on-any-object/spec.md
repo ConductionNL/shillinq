@@ -128,3 +128,34 @@ action and the app is enabled, and SHALL record the app as `app:<appId>`. No app
 - WHEN it opens after this change
 - THEN it shows the same requests and acts as before
 - @e2e exclude unchanged component; covered by the existing panel tests
+
+### Requirement: A payout settled before finance kept it can be recorded (REQ-FDO-007)
+
+`PayableRaisedEvent` SHALL accept `historicalState` (approved, paid, rejected or cancelled), `paidOn` and
+`bankReference`. A payout raised with a historical state SHALL be stored in that state with `historical: true`, with no
+journal entry and no callback, because the money moved outside shillinq. A historical paid payout SHALL need `paidOn`
+as YYYY-MM-DD. Any other historical state SHALL be refused and nothing written.
+
+> Assumption, made unattended: a payout dossiq paid through an ERP before shillinq kept payouts is recorded without a
+> journal entry, because the ERP already booked it. If finance wants these booked, the import changes, not the reader.
+
+#### Scenario: A penalty paid in March is recorded as paid
+
+- GIVEN dossiq migrates a payout of 1,442 euros paid on 3 March 2026 with bank reference ERP-9
+- WHEN it raises the payout with `historicalState: paid`
+- THEN shillinq stores it as paid and historical, books nothing and calls nobody back
+- @e2e exclude event contract; covered by `InboundPayableServiceTest`
+
+### Requirement: The raising app reads its payouts back (REQ-FDO-008)
+
+`PayablesRequestedEvent` SHALL answer an installed app with the payouts it raised, narrowed by correlation ids, by
+category and by the year they were paid in, one row per payout with `payableId`, `reference`, `correlationId`,
+`category`, `amount`, `currency`, `state`, `paidOn`, `bankReference`, `historical` and `linkedObjects`. It SHALL NOT
+answer with another app's payouts, and SHALL refuse an app that is not installed.
+
+#### Scenario: The annual penalty audit reads 2026
+
+- GIVEN dossiq raised one payout paid in 2026, one paid in 2025, and larpinq one paid in 2026
+- WHEN dossiq asks for its payouts paid in 2026
+- THEN shillinq answers with dossiq's 2026 payout only
+- @e2e exclude event contract; covered by `InboundPayableServiceTest`

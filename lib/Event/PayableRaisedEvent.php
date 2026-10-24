@@ -71,6 +71,9 @@ final class PayableRaisedEvent extends Event {
 	 * @param string $dueOn            The latest date the payout should reach the payee (Y-m-d), or empty.
 	 * @param string $currency         The currency.
 	 * @param array<int, array<string, string>> $linkedObjects The objects the payout is for, as semantic references.
+	 * @param string $historicalState For a payout settled before finance kept it: the state it reached; empty for a new payout.
+	 * @param string $paidOn The day a historical payout was paid, YYYY-MM-DD.
+	 * @param string $bankReference The bank reference of a historical payout.
 	 *
 	 * @return void
 	 */
@@ -88,6 +91,9 @@ final class PayableRaisedEvent extends Event {
 		private readonly string $dueOn = '',
 		private readonly string $currency = 'EUR',
 		private readonly array $linkedObjects = [],
+		private readonly string $historicalState = '',
+		private readonly string $paidOn = '',
+		private readonly string $bankReference = '',
 	) {
 		parent::__construct();
 	}//end __construct()
@@ -116,6 +122,9 @@ final class PayableRaisedEvent extends Event {
 			'dueOn' => trim($this->dueOn),
 			'callbackUrl' => trim($this->callbackUrl),
 			'linkedObjects' => array_values($this->linkedObjects),
+			'historicalState' => trim($this->historicalState),
+			'paidOn' => trim($this->paidOn),
+			'bankReference' => trim($this->bankReference),
 		];
 	}//end toArray()
 

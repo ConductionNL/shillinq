@@ -17,6 +17,10 @@
 - [ ] 3.1 `ShillinqFinancialDocumentsPanel.vue` + registration with `kinds` and `actions` props and the linked-card summary (REQ-FDO-003). Verify: vitest.
 - [ ] 3.2 "Request payment" on an invoice raises an invoice payment request with the host subject (REQ-FDO-004). Verify: PHPUnit + vitest.
 
+## 3b. Payouts for the raising app
+
+- [x] 3.4 Historical payout on `PayableRaisedEvent`; `PayablesRequestedEvent` answers the raising app (REQ-FDO-007, REQ-FDO-008). Verify: InboundPayableServiceTest, red first.
+
 ## 4. End to end
 
 - [ ] 4.1 Strings (en, nl) and Playwright `tests/e2e/financial-documents-on-any-object.spec.ts`. Verify: passes locally.

@@ -67,6 +67,13 @@ class InboundPayableService {
 	private const SCHEMA = 'InboundPayable';
 
 	/**
+	 * The states a historical payout may be recorded in.
+	 *
+	 * @var array<int, string>
+	 */
+	private const HISTORICAL_STATES = ['approved', 'paid', 'rejected', 'cancelled'];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface       $objectService OpenRegister's object service (ADR-083).
@@ -111,8 +118,7 @@ class InboundPayableService {
 			return;
 		}
 
-		$payable['state'] = 'requested';
-		$payable['requestedAt'] = gmdate('Y-m-d\TH:i:s\Z');
+		$payable = $this->withInitialState(payable: $payable);
 		try {
 			$id = $this->save(schema: self::SCHEMA, object: $payable);
 		} catch (Throwable $e) {
@@ -121,8 +127,40 @@ class InboundPayableService {
 			return;
 		}
 
-		$event->accept(payableId: $id, state: 'requested');
+		$event->accept(payableId: $id, state: (string)$payable['state']);
 	}//end raise()
+
+	/**
+	 * A new payout starts requested. A historical one, paid or ended before
+	 * finance kept it, is stored in the state it reached with no booking and
+	 * no callback, because the money moved outside shillinq (REQ-FDO-007).
+	 *
+	 * @param array<string, mixed> $payable The command's fields.
+	 *
+	 * @return array<string, mixed> The payable to store.
+	 *
+	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-007)
+	 */
+	private function withInitialState(array $payable): array {
+		$historical = (string)$payable['historicalState'];
+		unset($payable['historicalState']);
+		foreach (['paidOn', 'bankReference'] as $key) {
+			if ((string)$payable[$key] === '') {
+				unset($payable[$key]);
+			}
+		}
+
+		$payable['requestedAt'] = gmdate('Y-m-d\TH:i:s\Z');
+		if ($historical === '') {
+			$payable['state'] = 'requested';
+			return $payable;
+		}
+
+		$payable['state'] = $historical;
+		$payable['historical'] = true;
+
+		return $payable;
+	}//end withInitialState()
 
 	/**
 	 * Approve a requested payable: book the expense against the payables account.
@@ -327,8 +365,33 @@ class InboundPayableService {
 			return LinkedObjectReferences::MALFORMED;
 		}
 
-		return null;
+		return $this->historicalRefusal(payable: $payable);
 	}//end refusal()
+
+	/**
+	 * Why a historical payout is refused, or null: its state must be one a
+	 * payout can reach, and a paid one needs the day it was paid.
+	 *
+	 * @param array<string, mixed> $payable The command's fields.
+	 *
+	 * @return string|null The refusal.
+	 */
+	private function historicalRefusal(array $payable): ?string {
+		$state = (string)$payable['historicalState'];
+		if ($state === '') {
+			return null;
+		}
+
+		if (in_array($state, self::HISTORICAL_STATES, true) === false) {
+			return sprintf('A historical payout ends approved, paid, rejected or cancelled, not "%s".', $state);
+		}
+
+		if ($state === 'paid' && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$payable['paidOn']) !== 1) {
+			return 'A historical paid payout needs the day it was paid, as YYYY-MM-DD.';
+		}
+
+		return null;
+	}//end historicalRefusal()
 
 	/**
 	 * Answer a reference the app used before: the same payout is a retry, another is a clash.
