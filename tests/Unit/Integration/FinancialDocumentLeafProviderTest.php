@@ -29,8 +29,12 @@ use OCA\Shillinq\Integration\PaymentRequestLeafProvider;
 use OCA\Shillinq\Listener\PaymentRequestLeafRegistrationListener;
 use OCA\Shillinq\Service\FinancialDocumentFinder;
 use OCA\Shillinq\Service\FinancialDocumentRows;
+use OCA\Shillinq\Service\PaymentActionAuthorizer;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
+use OCP\IGroupManager;
+use OCP\IUser;
+use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use RuntimeException;
@@ -132,13 +136,28 @@ final class FinancialDocumentLeafProviderTest extends TestCase {
 	 *
 	 * @return FinancialDocumentLeafProvider
 	 */
-	private function provider(FinancialDocumentStore $store): FinancialDocumentLeafProvider {
+	private function provider(FinancialDocumentStore $store, array $actions = []): FinancialDocumentLeafProvider {
 		$appConfig = $this->createMock(IAppConfig::class);
-		$appConfig->method('getValueString')->willReturn('shillinq');
+		$appConfig->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = '') use ($actions): string {
+				if ($key === PaymentActionAuthorizer::CONFIG_ACTION_GROUPS) {
+					return (string)json_encode(array_fill_keys($actions, ['finance']));
+				}
+
+				return 'shillinq';
+			}
+		);
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('handler');
+		$session = $this->createMock(IUserSession::class);
+		$session->method('getUser')->willReturn($user);
+		$groups = $this->createMock(IGroupManager::class);
+		$groups->method('isInGroup')->willReturn(true);
 
 		return new FinancialDocumentLeafProvider(
 			finder: new FinancialDocumentFinder(objectService: new DuckObjectServiceAdapter(inner: $store), appConfig: $appConfig),
 			rows: new FinancialDocumentRows(),
+			authorizer: new PaymentActionAuthorizer(appConfig: $appConfig, userSession: $session, groupManager: $groups),
 		);
 	}//end provider()
 
@@ -207,6 +226,14 @@ final class FinancialDocumentLeafProviderTest extends TestCase {
 		);
 	}//end testADocumentTheCallerMayNotReadIsCountedWithoutItsAmountOrNumber()
 
+	public function testTheListSaysWhichActsTheCallerHolds(): void {
+		$none = $this->provider(new FinancialDocumentStore([]))->list('dossiq', 'case', self::CASE_ID)['acts'];
+		$some = $this->provider(new FinancialDocumentStore([]), ['invoice.issue', 'payment.administer'])->list('dossiq', 'case', self::CASE_ID)['acts'];
+
+		self::assertSame(['issueInvoice' => false, 'requestPayment' => false, 'administerPayments' => false], $none);
+		self::assertSame(['issueInvoice' => true, 'requestPayment' => false, 'administerPayments' => true], $some);
+	}//end testTheListSaysWhichActsTheCallerHolds()
+
 	public function testGetAnswersAReadableRowAndRefusesTheRest(): void {
 		$provider = $this->provider(new FinancialDocumentStore(self::rows(), hidden: ['i-1']));
 
@@ -249,6 +276,7 @@ final class FinancialDocumentLeafProviderTest extends TestCase {
 
 		$registered = array_map(static fn (array $leaf): string => $leaf['descriptor']->getId(), $event->getLeaves());
 		self::assertContains(FinancialDocumentLeafProvider::LEAF_ID, $registered);
+		self::assertContains('shillinq-financial-documents-panel', $registered, 'the panel half (REQ-FDO-003)');
 		self::assertContains(PaymentRequestLeafProvider::LEAF_ID, $registered, 'the payment request leaf stays (REQ-FDO-006)');
 	}//end testTheLeafIsRegisteredBesideThePaymentRequests()
 }//end class

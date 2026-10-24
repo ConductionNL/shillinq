@@ -33,8 +33,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Integration;
 
 use OCA\OpenRegister\Service\Integration\IntegrationProvider;
+use OCA\Shillinq\Service\FinancialDocumentActions;
 use OCA\Shillinq\Service\FinancialDocumentFinder;
 use OCA\Shillinq\Service\FinancialDocumentRows;
+use OCA\Shillinq\Service\PaymentActionAuthorizer;
 use RuntimeException;
 
 /**
@@ -55,12 +57,14 @@ final class FinancialDocumentLeafProvider implements IntegrationProvider {
 	 *
 	 * @param FinancialDocumentFinder $finder Reads the documents linked to an object.
 	 * @param FinancialDocumentRows $rows Turns a document into a row.
+	 * @param PaymentActionAuthorizer $authorizer Which acts the caller holds, so the panel offers only those.
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private readonly FinancialDocumentFinder $finder,
 		private readonly FinancialDocumentRows $rows,
+		private readonly PaymentActionAuthorizer $authorizer,
 	) {
 	}//end __construct()
 
@@ -182,9 +186,9 @@ final class FinancialDocumentLeafProvider implements IntegrationProvider {
 	 * @param string $objectId The host object's id.
 	 * @param array<string, mixed> $filters Optional list filters; unknown keys are ignored.
 	 *
-	 * @return array<string, mixed> The `{items, total, nextCursor}` envelope.
+	 * @return array<string, mixed> The `{items, total, nextCursor, acts}` envelope.
 	 *
-	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002)
+	 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-002, REQ-FDO-003)
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $filters is IntegrationProvider's;
 	 * the panel narrows by kind itself.
@@ -202,7 +206,16 @@ final class FinancialDocumentLeafProvider implements IntegrationProvider {
 
 		usort($items, static fn (array $left, array $right): int => strcmp((string)$right['issuedOn'], (string)$left['issuedOn']));
 
-		return ['items' => $items, 'total' => count($items), 'nextCursor' => null];
+		return [
+			'items' => $items,
+			'total' => count($items),
+			'nextCursor' => null,
+			'acts' => [
+				'issueInvoice' => $this->authorizer->may(FinancialDocumentActions::ACTION_ISSUE_INVOICE),
+				'requestPayment' => $this->authorizer->may(PaymentActionAuthorizer::ACTION_REQUEST),
+				'administerPayments' => $this->authorizer->may(PaymentActionAuthorizer::ACTION_ADMINISTER),
+			],
+		];
 	}//end list()
 
 	/**

@@ -36,6 +36,14 @@ export const PAYMENT_REQUESTS_DATA_LEAF = 'shillinq-payment-requests'
 export const CONTRACTS_DATA_LEAF = 'shillinq-contracts'
 
 /**
+ * The data-provider leaf that lists every financial document linked to an
+ * object. Declared server-side in `FinancialDocumentLeafProvider::LEAF_ID`.
+ *
+ * @type {string}
+ */
+export const FINANCIAL_DOCUMENTS_DATA_LEAF = 'shillinq-financial-documents'
+
+/**
  * Read one leaf's rows for a host object.
  *
  * @param {object} context      The host object identity.
@@ -149,4 +157,39 @@ export function formatAmount(amount, currency) {
 	} catch {
 		return `${currency || 'EUR'} ${value.toFixed(2)}`
 	}
+}
+
+/**
+ * Issue one invoice linked to the host object. The server refuses a caller
+ * without `invoice.issue`, or outside the administration, before it writes.
+ *
+ * @param {object} context The host object identity.
+ * @param {string} context.register The host object's register.
+ * @param {string} context.schema The host object's schema.
+ * @param {string} context.objectId The host object's id.
+ * @param {object} invoice The invoice.
+ * @param {number} invoice.amount The gross amount.
+ * @param {string} invoice.description What it is for.
+ * @param {object} invoice.debtor A customerMasterId, or a name and an email.
+ * @param {string} [invoice.objectType] The host object's semantic type.
+ *
+ * @return {Promise<object>} `{ invoice: { id } }`.
+ */
+export async function issueInvoice({ register, schema, objectId }, invoice) {
+	const url = generateUrl('/apps/shillinq/api/financial-documents/invoices')
+	const response = await axios.post(url, { register, schema, objectId, ...invoice })
+	return response.data || {}
+}
+
+/**
+ * Ask for payment of an outstanding invoice through shillinq.
+ *
+ * @param {string} invoiceId The invoice id.
+ *
+ * @return {Promise<object>} `{ request }`.
+ */
+export async function requestInvoicePayment(invoiceId) {
+	const url = generateUrl('/apps/shillinq/api/financial-documents/invoices/{invoiceId}/payment-request', { invoiceId })
+	const response = await axios.post(url, {})
+	return response.data || {}
 }

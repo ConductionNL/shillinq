@@ -1,6 +1,6 @@
 # Tasks: financial-documents-on-any-object
 
-<!-- HYDRA CAP: max 20 unindented `- [ ]` lines. This file uses 7. -->
+<!-- HYDRA CAP: max 20 unindented `- [ ]` lines. This file uses 8. -->
 
 ## 1. Schema and events
 
@@ -14,8 +14,9 @@
 
 ## 3. Panel and payment
 
-- [ ] 3.1 `ShillinqFinancialDocumentsPanel.vue` + registration with `kinds` and `actions` props and the linked-card summary (REQ-FDO-003). Verify: vitest.
-- [ ] 3.2 "Request payment" on an invoice raises an invoice payment request with the host subject (REQ-FDO-004). Verify: PHPUnit + vitest.
+- [x] 3.1 `ShillinqFinancialDocumentsPanel.vue` + registration with `kinds` and `actions` props, the acts the caller holds from the leaf envelope, and the linked-card summary (REQ-FDO-003). Verify: vitest financialDocumentsPanel.spec.js.
+- [x] 3.2 Issue an invoice on the object, and request payment of an invoice with the host's linked objects (REQ-FDO-003, REQ-FDO-004). Verify: FinancialDocumentActionsTest, FinancialDocumentActionControllerTest, vitest.
+- [ ] 3.3 Panel acts for new quote, credit invoice and raise payout (follow-up change).
 
 ## 4. End to end
 

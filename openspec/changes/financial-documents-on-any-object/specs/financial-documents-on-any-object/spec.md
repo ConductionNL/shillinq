@@ -74,10 +74,16 @@ numbers.
 ### Requirement: The panel shows and creates documents, narrowed per placement (REQ-FDO-003)
 
 The render leaf `shillinq-financial-documents-panel` SHALL show the rows on any detail page that places it. A placement
-SHALL narrow it with the props `kinds` and `actions`. The panel SHALL offer only the acts the caller holds: new
-quote (`quote.create`), issue invoice (`invoice.issue`), credit invoice (`invoice.credit`), request payment
-(`payment.request`) and raise payout (`payable.raise`). The server SHALL refuse an act the caller does not hold, with a
-403 and nothing written. The panel SHALL report its summary to the linked card as the payment request panel does.
+SHALL narrow it with the props `kinds` and `actions`. The leaf SHALL tell the panel which acts the caller holds, and the
+panel SHALL offer only those: issue an invoice on the object (`invoice.issue`), request payment of an outstanding
+invoice (`payment.request`), and send a payment link or record money that arrived another way on a payment request
+(`payment.administer`). The server SHALL refuse an act the caller does not hold, with a 403 and nothing written, and
+SHALL refuse an act in an administration the caller does not work in. The panel SHALL report its summary to the linked
+card as the payment request panel does.
+
+> Narrowed while building: new quote, credit invoice and raise payout are not panel acts in this change. A quote has
+> no editor page in shillinq yet, a credit note has its own flow, and a payout is raised by the app that owes it
+> through `PayableRaisedEvent`. They follow in a later change.
 
 #### Scenario: A case page shows only invoices and payment requests
 

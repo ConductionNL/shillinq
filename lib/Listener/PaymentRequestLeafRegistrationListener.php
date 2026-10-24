@@ -62,6 +62,13 @@ final class PaymentRequestLeafRegistrationListener implements IEventListener {
 	public const CONTRACT_PANEL_ID = 'shillinq-contracts-panel';
 
 	/**
+	 * The render-surface half of the financial documents leaf.
+	 *
+	 * @var string
+	 */
+	public const DOCUMENTS_PANEL_ID = 'shillinq-financial-documents-panel';
+
+	/**
 	 * Where both panels render, written out on this half and repeated verbatim
 	 * on the JS half, because two explicit sets are what the parity check can
 	 * compare.
@@ -161,6 +168,20 @@ final class PaymentRequestLeafRegistrationListener implements IEventListener {
 				group: 'Finance',
 			),
 			$this->documents,
+		);
+
+		$event->registerLeaf(
+			new LeafDescriptor(
+				id: self::DOCUMENTS_PANEL_ID,
+				label: 'Financial documents',
+				icon: 'FileDocumentMultipleOutline',
+				kinds: [LeafDescriptor::KIND_RENDER_SURFACE],
+				requiredApp: 'shillinq',
+				group: 'Finance',
+				surfaces: self::PANEL_SURFACES,
+				renderMode: LeafDescriptor::RENDER_MODE_MOUNT,
+			),
+			null,
 		);
 
 		$event->registerLeaf(
