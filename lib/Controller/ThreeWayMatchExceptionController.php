@@ -46,6 +46,7 @@ namespace OCA\Shillinq\Controller;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\ExceptionResolutionService;
+use OCA\Shillinq\Service\ForbiddenActionException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -144,6 +145,8 @@ class ThreeWayMatchExceptionController extends Controller {
 				matchId: $matchId,
 				resolutionNotes: $resolutionNotes
 			);
+		} catch (ForbiddenActionException $exception) {
+			return new JSONResponse(['error' => $exception->getMessage()], Http::STATUS_FORBIDDEN);
 		} catch (RuntimeException $exception) {
 			return $this->mapRuntimeException(exception: $exception);
 		} catch (\Throwable $exception) {
