@@ -173,7 +173,6 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 			return;
 		}
 
-		$this->failures = 0;
 		try {
 			$registerSlug = $this->settingsService->getRegisterSlug();
 
@@ -213,6 +212,8 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 				'Shillinq: RematerialiseConvertedCalculations failed',
 				['exception' => $e->getMessage()]
 			);
+		} finally {
+			$this->failures = 0;
 		}//end try
 
 	}//end run()
