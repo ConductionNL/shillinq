@@ -42,3 +42,36 @@ A cost source SHALL be declared as configuration: the app, register and schema o
 - WHEN the controller opens the Iv3 report
 - THEN the case cost section says "Zaakkosten per taakveld komen uit Dossiq. Dossiq is niet geïnstalleerd." and shows no amount
 - @e2e exclude degraded state, asserted by PHPUnit and the live task
+
+### Requirement: The same case cost source is grouped per case type per period (REQ-IV3-012)
+
+Shillinq SHALL offer a report "Zaakkosten per zaaktype" that groups the cost of the hours booked on objects of each configured cost source by the object's type, for a period the controller picks (a month, a quarter or a year). It SHALL read the same source rows as the case cost section of REQ-IV3-010, so the cost and hours over all types for a period SHALL equal the cost and hours over all taakvelden for that period. Each row SHALL name the type by its title and show the number of objects, the hours and the cost. A type SHALL be grouped whether or not it carries a taakveld. An object whose cost is incomplete SHALL be counted in hours and listed under its type as incomplete, never added to the cost. When the source's app, or humaniq for the hours, is not installed, the report SHALL say which app is missing and SHALL show no figure. The report SHALL export to CSV with the same rows. Its costs SHALL NOT be added to the lasten derived from GL lines.
+
+#### Scenario: Cases are grouped by their case type
+
+- GIVEN in Q3 two dossiq cases of type "Omgevingsvergunning" with hours costing EUR 1,000.00 and EUR 250.00, and one case of type "Bezwaar" with hours costing EUR 400.00
+- WHEN the controller opens "Zaakkosten per zaaktype" for Q3
+- THEN the report shows a row "Omgevingsvergunning" with 2 cases and EUR 1,250.00 and a row "Bezwaar" with 1 case and EUR 400.00
+- AND the total of EUR 1,650.00 equals the total of the case cost section of the Iv3 report for Q3
+- @e2e exclude report arithmetic, asserted by PHPUnit; the page is covered by the live task
+
+#### Scenario: A case with an incomplete cost is listed, not summed
+
+- GIVEN in Q3 a case of type "Bezwaar" with hours by a person who has no cost rate, next to a case of the same type costing EUR 400.00
+- WHEN the report for Q3 is generated
+- THEN the row "Bezwaar" shows EUR 400.00, counts the hours of both cases and lists the first case as incomplete
+- @e2e exclude aggregation policy, asserted by PHPUnit
+
+#### Scenario: A missing app is named, not shown as zero
+
+- GIVEN Shillinq without dossiq, or without humaniq
+- WHEN the controller opens "Zaakkosten per zaaktype"
+- THEN the report says "Zaakkosten per zaaktype komen uit Dossiq. Dossiq is niet geïnstalleerd." or "Uren komen uit Humaniq. Humaniq is niet geïnstalleerd." and shows no amount, not EUR 0.00
+- @e2e exclude degraded state, asserted by PHPUnit and the live task
+
+#### Scenario: The grouping exports to CSV
+
+- GIVEN the report for Q3 with the rows "Omgevingsvergunning" and "Bezwaar" and one incomplete case
+- WHEN the controller exports it to CSV
+- THEN the CSV holds one line per case type with period, type, number of cases, hours, cost and number of incomplete cases, and the same totals as the page
+- @e2e exclude export format, asserted by PHPUnit
