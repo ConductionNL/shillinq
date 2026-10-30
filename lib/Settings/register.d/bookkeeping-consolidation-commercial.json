@@ -11,11 +11,11 @@
       "ConsolidationGroup": {
         "slug": "ConsolidationGroup",
         "icon": "Sitemap",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "title": "Consolidation Group",
         "description": "Definition of a consolidation circle (moeder + dochters) per RJ 217 / IFRS 10. Holds the reporting framework, reporting currency, uniform fiscal-year end and default consolidation method. Wettelijke basis: BW 2:406. One per groepsstructuur; a ConsolidationPeriod runs a measurement for a specific period against this group.",
         "x-schema-org": "schema:Organization",
-        "x-spec": "openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md",
+        "x-spec": "openspec/specs/bookkeeping-consolidation-commercial/spec.md",
         "type": "object",
         "required": [
           "groupName",
@@ -136,11 +136,11 @@
       "GroupEntity": {
         "slug": "GroupEntity",
         "icon": "OfficeBuildingOutline",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "title": "Group Entity",
         "description": "A deelneming within a consolidation group. Maps an Administration to the group with its eigendomspercentage, stem-percentage, consolidation method, eerste-consolidatie-datum and functionele valuta. Drives the per-entity column in the pre-elimination werkpapier (design D10) and the minority-interest split (design D6).",
         "x-schema-org": "schema:Organization",
-        "x-spec": "openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md",
+        "x-spec": "openspec/specs/bookkeeping-consolidation-commercial/spec.md",
         "type": "object",
         "required": [
           "consolidationGroupId",
@@ -303,11 +303,11 @@
       "IntercompanyRelation": {
         "slug": "IntercompanyRelation",
         "icon": "SwapHorizontal",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "title": "Intercompany Relation",
         "description": "Mapping of an internal trade relationship between two group entities for elimination matching. The \"wegwijzer\" that tells the eliminatie-engine which debtor account in entity A corresponds to which creditor account in entity B, with the matching tolerance.",
         "x-schema-org": "schema:Action",
-        "x-spec": "openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md",
+        "x-spec": "openspec/specs/bookkeeping-consolidation-commercial/spec.md",
         "type": "object",
         "required": [
           "consolidationGroupId",
@@ -388,11 +388,11 @@
       "ConsolidationPeriod": {
         "slug": "ConsolidationPeriod",
         "icon": "CalendarSync",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "title": "Consolidation Period",
         "description": "A consolidation run for a specific period. Container for the elimination werkpapier; carries the workflow state (open → eliminationPhase → review → closed → archived), the executor, computed elimination totals and the exception queue of out-of-tolerance mismatches (design D3). Snapshot is immutable once closed.",
         "x-schema-org": "schema:Action",
-        "x-spec": "openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md",
+        "x-spec": "openspec/specs/bookkeeping-consolidation-commercial/spec.md",
         "type": "object",
         "required": [
           "consolidationGroupId",
@@ -628,11 +628,11 @@
       "EliminationEntry": {
         "slug": "EliminationEntry",
         "icon": "BookMinusOutline",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "title": "Elimination Entry",
         "description": "An individual elimination booking within a consolidation period. Carries debit/credit lines per GL account, the source entities/transactions for drill-down, the auto-generated flag and the full accountant-review audit trail (who/when/why, design D7). Immutable once the period closes; a reversal is a new entry, never an overwrite.",
         "x-schema-org": "schema:Action",
-        "x-spec": "openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md",
+        "x-spec": "openspec/specs/bookkeeping-consolidation-commercial/spec.md",
         "type": "object",
         "required": [
           "consolidationPeriodId",
@@ -816,11 +816,11 @@
       "TranslationAdjustment": {
         "slug": "TranslationAdjustment",
         "icon": "CurrencyUsd",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "title": "Translation Adjustment",
         "description": "Currency revaluation (CTA) for a foreign-currency entity per the current-rate method (RJ 122 / IAS 21). Records the functional- and reporting-currency amounts and the isolated CTA component posted to OCI/eigen vermogen: never to the P&L (design D4).",
         "x-schema-org": "schema:MonetaryAmount",
-        "x-spec": "openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md",
+        "x-spec": "openspec/specs/bookkeeping-consolidation-commercial/spec.md",
         "type": "object",
         "required": [
           "consolidationPeriodId",
@@ -906,11 +906,11 @@
       "MinorityInterest": {
         "slug": "MinorityInterest",
         "icon": "AccountMultipleOutline",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "title": "Minority Interest",
         "description": "Non-controlling interest tracking per entity with ownership <100%. Records the third-party percentage and rolls the opening balance + period result share − dividend forward to the closing balance, presented separately under geconsolideerd eigen vermogen as \"Aandeel derden\" (RJ 217 §8 / IFRS 10 §B95-B96, design D6).",
         "x-schema-org": "schema:MonetaryAmount",
-        "x-spec": "openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md",
+        "x-spec": "openspec/specs/bookkeeping-consolidation-commercial/spec.md",
         "type": "object",
         "required": [
           "consolidationGroupId",
@@ -991,11 +991,11 @@
       "Goodwill": {
         "slug": "Goodwill",
         "icon": "DiamondStone",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "title": "Goodwill",
         "description": "Acquisition goodwill/badwill with amortisation schedule. On first consolidation of an acquired subsidiary, purchasePrice − fairValueNetAssetsAcquired = goodwill (positive) or badwill (negative). Amortisation method is gated by the group's reportingFramework: RJ linear (10/20yr) vs IFRS impairment-test (design D5).",
         "x-schema-org": "schema:MonetaryAmount",
-        "x-spec": "openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md",
+        "x-spec": "openspec/specs/bookkeeping-consolidation-commercial/spec.md",
         "type": "object",
         "required": [
           "consolidationGroupId",
@@ -1123,11 +1123,11 @@
       "ConsolidatedBalance": {
         "slug": "ConsolidatedBalance",
         "icon": "ScaleBalance",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "title": "Consolidated Balance",
         "description": "Output object with aggregated + eliminated balance totals per RGS-rapportageregel, with comparative prior-year columns. The balance-sheet equation totalAssets = totalLiabilities + totalEquity must hold (design D10, validated by ConsolidationGuard).",
         "x-schema-org": "schema:Report",
-        "x-spec": "openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md",
+        "x-spec": "openspec/specs/bookkeeping-consolidation-commercial/spec.md",
         "type": "object",
         "required": [
           "consolidationGroupId",
@@ -1291,11 +1291,11 @@
       "ConsolidatedIncomeStatement": {
         "slug": "ConsolidatedIncomeStatement",
         "icon": "ChartLine",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "title": "Consolidated Income Statement",
         "description": "Output object with consolidated V&W per RGS-rapportageregel, split between parent shareholders and minority interest, with comparative prior-year columns. The split netProfitTotal = attributedToParent + attributedToMinority must hold (validated by ConsolidationGuard).",
         "x-schema-org": "schema:Report",
-        "x-spec": "openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md",
+        "x-spec": "openspec/specs/bookkeeping-consolidation-commercial/spec.md",
         "type": "object",
         "required": [
           "consolidationGroupId",
