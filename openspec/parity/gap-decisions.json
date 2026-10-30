@@ -160,14 +160,6 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
-		"row": "exp-company-cards",
-		"matrix": "shillinq",
-		"decision": "defer",
-		"reason": "Rated no; changelog demand with one competitor yes (odoo) meets none of the build tests, outside the core areas.",
-		"change": null,
-		"decidedOn": "2026-09-27"
-	},
-	{
 		"row": "exp-policy",
 		"matrix": "shillinq",
 		"decision": "defer",
@@ -512,14 +504,6 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
-		"row": "ppl-payroll-tax-return",
-		"matrix": "shillinq",
-		"decision": "defer",
-		"reason": "Rated no; roadmap demand but no competitor rates it yes, outside the core areas.",
-		"change": null,
-		"decidedOn": "2026-09-27"
-	},
-	{
 		"row": "pub-asset-interest",
 		"matrix": "shillinq",
 		"decision": "build",
@@ -632,22 +616,6 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
-		"row": "rec-ai-debtor",
-		"matrix": "shillinq",
-		"decision": "defer",
-		"reason": "Rated no; one competitor yes (exact-online) and no demand, outside the core areas.",
-		"change": null,
-		"decidedOn": "2026-09-27"
-	},
-	{
-		"row": "rec-early-payment-discount",
-		"matrix": "shillinq",
-		"decision": "defer",
-		"reason": "Rated no; changelog demand with one competitor yes (odoo) meets none of the build tests, outside the core areas.",
-		"change": null,
-		"decidedOn": "2026-09-27"
-	},
-	{
 		"row": "rec-ladder-per-customer",
 		"matrix": "shillinq",
 		"decision": "build",
@@ -685,22 +653,6 @@
 		"decision": "build",
 		"reason": "Partial, built; the missing half is dunning that runs on its own and a channel that sends; 4 competitor yes (exact-online, moneybird, snelstart, odoo).",
 		"change": "receivables-automatic-dunning",
-		"decidedOn": "2026-09-27"
-	},
-	{
-		"row": "rep-ai-report",
-		"matrix": "shillinq",
-		"decision": "defer",
-		"reason": "Rated no; roadmap demand but no competitor rates it yes, outside the core areas.",
-		"change": null,
-		"decidedOn": "2026-09-27"
-	},
-	{
-		"row": "rep-annotations",
-		"matrix": "shillinq",
-		"decision": "defer",
-		"reason": "Rated no; changelog demand with one competitor yes (odoo) meets none of the build tests, outside the core areas.",
-		"change": null,
 		"decidedOn": "2026-09-27"
 	},
 	{
@@ -960,27 +912,11 @@
 		"decidedOn": "2026-09-27"
 	},
 	{
-		"row": "tax-margin-scheme",
-		"matrix": "shillinq",
-		"decision": "defer",
-		"reason": "Rated no; one competitor yes (snelstart) and no demand, outside the core areas.",
-		"change": null,
-		"decidedOn": "2026-09-27"
-	},
-	{
 		"row": "tax-partial-deductibility",
 		"matrix": "shillinq",
 		"decision": "build",
 		"reason": "Rated no; changelog https://www.odoo.com/odoo-19-release-notes; 2 competitor yes (moneybird, odoo).",
 		"change": "tax-vat-rates-and-deductibility",
-		"decidedOn": "2026-09-27"
-	},
-	{
-		"row": "tax-payment-reference",
-		"matrix": "shillinq",
-		"decision": "defer",
-		"reason": "Rated no; changelog demand with one competitor yes (moneybird) meets none of the build tests, outside the core areas.",
-		"change": null,
 		"decidedOn": "2026-09-27"
 	},
 	{
