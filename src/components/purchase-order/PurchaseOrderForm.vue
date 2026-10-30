@@ -16,7 +16,7 @@
  the detail view (the actual transmission control lives on the detail view
  because the action requires a persisted PO with a complete approval chain).
 
- @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+ @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
  @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
 -->
 <template>

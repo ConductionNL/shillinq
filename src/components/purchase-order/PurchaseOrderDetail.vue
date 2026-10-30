@@ -17,7 +17,7 @@
  (ADR-005). The view reflects peppolSentAt / peppolMessageId on success and
  peppolFallbackReason whenever the supplier was not Peppol-registered.
 
- @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+ @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
  @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
 -->
 <template>
@@ -310,7 +310,7 @@ export default {
 	},
 
 	methods: {
-		/** @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md */
+		/** @spec openspec/specs/bookkeeping-purchase-order-core/spec.md */
 		async loadPurchaseOrder() {
 			this.loading = true
 			try {
@@ -332,7 +332,7 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md */
+		/** @spec openspec/specs/bookkeeping-purchase-order-core/spec.md */
 		async loadRelated() {
 			// The related-records lookups go through the OR REST surface; if the
 			// schemas are not yet registered (e.g. before slice 04/06 ship) we

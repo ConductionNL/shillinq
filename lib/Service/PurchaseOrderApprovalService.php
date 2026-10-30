@@ -327,7 +327,7 @@ class PurchaseOrderApprovalService {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
 	 */
 	public static function isApprovedEntry(mixed $entry): bool {
 		if (is_array($entry) === false) {

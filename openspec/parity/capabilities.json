@@ -2486,7 +2486,8 @@
 				"evidence": "lib/Service/SupplierInvoiceService.php:124 ALLOWED_TRANSITIONS received->matching->matched/exception->approved->paid, driven by ThreeWayMatchingEngine.php:1086; src/components/supplier-invoice/SupplierInvoiceDetail.vue:16 says transitions are not exposed in the UI; APTransaction approvalNeeded exists only as an x-openregister-notifications declaration (bookkeeping-accounts-payable-core.json)",
 				"reachedOn": "ThreeWayMatchIndex /inkoop/three-way-matches (menu Purchasing > Three-way matches) exception panel accept/reject; SupplierInvoiceDetail is read-only",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookkeeping-purchase-order-3way-06-matching-engine"
+				"spec": "openspec/specs/bookkeeping-three-way-matching-engine",
+				"requirement": "Automated line-level 3-way matching within tolerance (REQ-TWM-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2521,7 +2522,8 @@
 				"evidence": "lib/Service/ThreeWayMatchingEngine.php evaluateMatch + setStatus at :1086; src/components/three-way-match/ThreeWayMatchIndex.vue:312 POSTs /api/three-way-matches/evaluate; ThreeWayMatchExceptionPanel.vue calls /api/three-way-match/exceptions/*; lib/Listener/GRIRClearingListener.php (Application.php:309) posts the GR/IR settlement on SupplierInvoice matched; SupplierInvoice cannot reach approved/paid without matched or an accepted exception (SupplierInvoiceService.php:124)",
 				"reachedOn": "ThreeWayMatchIndex /inkoop/three-way-matches (menu Purchasing > Three-way matches); ThreeWayMatchDetail /inkoop/3way-matches/:id",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookkeeping-purchase-order-3way-06-matching-engine"
+				"spec": "openspec/specs/bookkeeping-three-way-matching-engine",
+				"requirement": "Automated line-level 3-way matching within tolerance (REQ-TWM-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2660,7 +2662,8 @@
 				"evidence": "lib/Service/VendorPerformanceAggregation.php:14-25 computes onTimeDelivery, quantityAccuracy, priceAccuracy, invoiceAccuracy and a weighted overallScore + trend from GRN/ThreeWayMatch/SupplierInvoice; VendorPerformanceAggregationJob registered in appinfo/info.xml",
 				"reachedOn": "VendorPerformanceIndex /inkoop/vendor-performance (menu Purchasing > Vendor performance); VendorPerformanceDetail /inkoop/vendor-performance/:id",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookkeeping-purchase-order-3way-10-vendor-performance"
+				"spec": "openspec/specs/bookkeeping-vendor-performance",
+				"requirement": "Monthly vendor scoring with auto-review eligibility (REQ-VPS-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2765,7 +2768,8 @@
 				"evidence": "PurchaseOrderService::determineApprovalChain (PurchaseOrderController.php:184, called from PurchaseOrderForm.vue:337) materialises an amount-threshold chain and PurchaseOrderDetail.vue:223 blocks sending until every approver signs; the decision endpoint /api/purchase-orders/{id}/approval-decision (routes.php:365, PurchaseOrderApprovalService::recordApprovalDecision) is not called anywhere in src/ (absent from _lane/frontend-api-paths.txt) Corrections round 8 (2026-09-28), shillinq#1716: even a call to the decision endpoint cannot complete approval, because lib/Service/PurchaseOrderService.php:839-852 writes chain entries with status pending, lib/Service/PurchaseOrderApprovalService.php:217 skips every entry whose decision is not pending and :237 then throws Approval chain is fully signed, and the send checks at lib/Service/PurchaseOrderService.php:436-443 and :627-634 wait for status approved and a signedAt that nothing writes, at a165206.",
 				"reachedOn": "PurchaseOrders /inkoop/purchase-orders (menu Purchasing > Purchase Orders) shows the chain; nothing reaches the approve action: no button calls approval-decision",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookkeeping-purchase-order-3way-02-purchase-order-core"
+				"spec": "openspec/specs/bookkeeping-purchase-order-core",
+				"requirement": "Create purchase order with amount-threshold approval chain (REQ-POC-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4253,7 +4257,8 @@
 				"evidence": "ConsolidationGroup/ConsolidationPeriod/ConsolidatedReport lists exist, but lib/Service/ConsolidationMappingService.php (applyMapping, shouldEliminate) has no caller outside itself, and the only elimination writer (IntercompanyMatchingService.php:398) is unreachable (SoftCloseExecutor.php:469 calls non-existent matchForPeriod). No code aggregates subsidiaries into group statements.",
 				"reachedOn": "ConsolidationGroups, ConsolidationPeriods, ConsolidatedReports (via menu Bookkeeping > Consolidation Groups / Consolidated Reports)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookkeeping-consolidation-commercial"
+				"spec": "openspec/specs/bookkeeping-consolidation-commercial",
+				"requirement": "Define a consolidation group with parent + subsidiaries, ownership and method (REQ-CONS-001); REQ-CONS-002 to REQ-CONS-005 aggregate, eliminate and translate"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4465,7 +4470,8 @@
 				"evidence": "Contracts and ContractObligations lists; lib/Listener/ContractObligationTaskListener.php (registered Application.php:1255) calls lib/Service/ObligationTaskBridge.php to write a VTODO plus a deadline VEVENT for the renewal/opzegtermijn date (line 162) on obligation create/update; ContractCostRollupJob (registered) rolls up spend for ContractSpendDashboard.",
 				"reachedOn": "Contracts /contracts and ContractObligations /contracts/obligations (via menu Purchasing > Procurement Contracts / Obligations)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-15-contract-lifecycle-management"
+				"spec": "openspec/specs/contract-lifecycle-management",
+				"requirement": "Contracts are stored as a Contract schema with a Nextcloud contact as counterparty (REQ-CLM-001); obligations in REQ-CLM-003, renewal alerts in REQ-CLM-004"
 			},
 			"screen": {
 				"canvas": "design-system",

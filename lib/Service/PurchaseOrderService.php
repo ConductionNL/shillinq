@@ -33,7 +33,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
  * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
@@ -74,7 +74,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *   required approver in the chain has approved with a timestamp; on success it
  *   persists the lifecycle change and returns the updated record.
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.LongVariable)
@@ -253,7 +253,7 @@ class PurchaseOrderService {
 	 * @throws \RuntimeException When the requester lacks access, the cost-center
 	 *                           budget is exceeded, or a required field is missing.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
 	 */
 	public function createPurchaseOrder(string $administrationId, array $payload): array {
 		if ($administrationId === '') {
@@ -372,7 +372,7 @@ class PurchaseOrderService {
 	 *
 	 * @return array<int,array{role:string,order:int}> Ordered approver descriptors.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
 	 */
 	public function determineApprovalChain(float $amount): array {
 		$cents = $this->toCents(amount: $amount);
@@ -415,7 +415,7 @@ class PurchaseOrderService {
 	 *  is a pure check on one chain entry, shared with the approval service so the
 	 *  send check and the signing read one shape (#1716).
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
 	 */
 	public function blockSendUntilApproved(string $administrationId, string $purchaseOrderId): array {
 		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
@@ -684,7 +684,7 @@ class PurchaseOrderService {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
 	 */
 	private function assignApprovalTasks(
 		string $administrationId,

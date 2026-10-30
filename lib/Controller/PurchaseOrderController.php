@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
  * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
@@ -48,7 +48,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Purchase-order REST endpoints (create / preview / send-transition).
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
  */
 class PurchaseOrderController extends Controller {
 	/**
@@ -93,7 +93,7 @@ class PurchaseOrderController extends Controller {
 	 * @return JSONResponse 201 with the persisted PurchaseOrder; 400 on validation;
 	 *                      401 anonymous; 404 on cross-tenant; 500 without stack trace.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
@@ -166,7 +166,7 @@ class PurchaseOrderController extends Controller {
 	 *
 	 * @return JSONResponse 200 with {chain: [...]} ; 401 anonymous.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
 	 *
 	 * @no-admin-idor-exempt Stateless policy calculator — reads no storage and takes no
 	 *     object reference. The only input is a numeric amount; it goes to
@@ -210,7 +210,7 @@ class PurchaseOrderController extends Controller {
 	 *                      anonymous; 404 on cross-tenant / missing PO; 409 when
 	 *                      approval-chain incomplete; 500 without stack trace.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
 	 */
 	#[NoAdminRequired]
 	public function send(string $id): JSONResponse {
