@@ -50,7 +50,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -93,7 +93,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
  */
 class ExceptionResolutionService {
 
@@ -281,7 +281,7 @@ class ExceptionResolutionService {
 	 *                           non-exception match status, or blank
 	 *                           motivation.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
 	 */
 	public function acceptWithMotivation(
 		string $administrationId,
@@ -348,7 +348,7 @@ class ExceptionResolutionService {
 	 *                           missing invoice, non-exception match
 	 *                           status, or blank reason.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
 	 */
 	public function fileDispute(
 		string $administrationId,
@@ -446,7 +446,7 @@ class ExceptionResolutionService {
 	 *                           non-exception match status, or blank
 	 *                           reason.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
 	 */
 	public function rejectAndBlockPayment(
 		string $administrationId,
@@ -512,7 +512,7 @@ class ExceptionResolutionService {
 	 *
 	 * @throws \RuntimeException On cross-tenant access.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
 	 */
 	public function notifyOnException(string $administrationId, string $matchId): void {
 		$this->assertAccess(administrationId: $administrationId);

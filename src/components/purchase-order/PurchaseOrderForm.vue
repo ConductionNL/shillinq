@@ -17,7 +17,7 @@
  because the action requires a persisted PO with a complete approval chain).
 
  @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
- @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
+ @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
 -->
 <template>
 	<div class="po-form">

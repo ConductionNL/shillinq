@@ -34,7 +34,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -89,7 +89,7 @@ use OCA\Shillinq\Service\Tax\VatNumberCheck;
  * Pre-existing debt (issue #506): inherent branch complexity in this
  * domain logic; deferred pending a dedicated refactor.
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
  */
 class SupplierInvoiceService {
 	/**
@@ -187,7 +187,7 @@ class SupplierInvoiceService {
 	 *                           UBL is malformed, or the document does not
 	 *                           carry an InvoiceNumber.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
 	 */
 	public function ingestUBLInvoice(string $administrationId, string $ublXml, array $context = []): array {
 		if ($administrationId === '') {
@@ -347,7 +347,7 @@ class SupplierInvoiceService {
 	 *                           the OCR payload lacks a usable invoice
 	 *                           identifier.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
 	 */
 	public function ingestPDFInvoice(
 		string $administrationId,
@@ -446,7 +446,7 @@ class SupplierInvoiceService {
 	 * @throws \RuntimeException On unknown invoice, unknown invoice line, or
 	 *                           cross-tenant access.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-07-multi-po-consolidation/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-007
 	 */
 	public function linkInvoiceLineToPo(
 		string $administrationId,
@@ -588,7 +588,7 @@ class SupplierInvoiceService {
 	 * @throws \RuntimeException On unknown invoice, illegal transition, or
 	 *                           cross-tenant access.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
 	 */
 	public function setStatus(string $administrationId, string $invoiceId, string $toStatus): array {
 		if ($administrationId === '') {
