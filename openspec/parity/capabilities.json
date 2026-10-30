@@ -1233,7 +1233,8 @@
 				"evidence": "Administrations and memberships are kept (Administraties, AdministratieLidmaatschappen) and src/components/AdministratieSwitcher.vue posts /api/administrations/switch, but lib/Controller/AdministrationController.php:128 switch() only validates and echoes the id (persists nothing), and lib/Service/AdministrationContextService.php:181 always returns the FIRST membership as activeAdministrationId, so after the switcher's page reload the old administration is active again; generic index pages (e.g. GeneralLedger) carry no administrationId filter.",
 				"reachedOn": "AdministrationSwitcher /administratie/wisselen (via menu Bookkeeping > Switch administration); Administraties (settings gear > Administrations)",
 				"owner": "ConductionNL/shillinq",
-				"change": "ledger-multi-administration"
+				"change": "ledger-multi-administration",
+				"requirement": "The chosen administration sticks (REQ-LMA-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2217,7 +2218,8 @@
 				"reachedOn": "DunningLadders /bookkeeping/dunning/ladders (settings gear), DunningRuns /bookkeeping/dunning/runs (via menu Bookkeeping > Dunning Runs)",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-27",
-				"change": "receivables-automatic-dunning"
+				"change": "receivables-automatic-dunning",
+				"requirement": "A reminder mail carries the stage's wording and the invoice (REQ-RAD-003)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4961,7 +4963,9 @@
 				"evidence": "AvailabilityRule, ResourceBreak, BookingConstraint schemas and AvailabilityRules page (bookings-availability-rules.json, settingsSection in src/menu-layout.json), but no PHP file reads those schemas (grep 'AvailabilityRule'|'ResourceBreak'|'BookingConstraint' in lib: none); lib/Service/SlotService.php:136-160 uses only the resource's single openingTime/closingTime and existing appointments",
 				"reachedOn": "AvailabilityRules /verkoop/beschikbaarheidsregels (settings gear); Resources /bookings/resources (via menu Sales > Bookings > Resources)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookings-availability-rules"
+				"change": "2026-06-14-bookings-availability-rules",
+				"spec": "openspec/specs/bookings-availability-rules",
+				"requirement": "REQ-BAR-001 AvailabilityRule Register Definition"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5301,7 +5305,9 @@
 				"evidence": "IB47Record list on IB47Jaarbatch (src/manifest.d/add-shillinq-detachering-payroll-administratie.json); no PHP aggregates payments to third parties into IB47 records or builds the statement (grep Ib47 in lib/*.php finds only the adapter interface and lib/Service/External/Ib47/LogIb47Adapter.php), and the IB47 connection is log-only per lib/Settings/connections.json. The report catalogue has no IB47 entry.",
 				"reachedOn": "IB47Jaarbatch /bookkeeping/detachering-payroll/ib47 (via menu Bookkeeping > IB47 annual batch)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookkeeping-detachering-payroll-administratie"
+				"change": "2026-06-14-bookkeeping-detachering-payroll-administratie",
+				"spec": "openspec/specs/bookkeeping-detachering-payroll-administratie",
+				"requirement": "IB47Record register (REQ-DPA-002)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5407,7 +5413,8 @@
 				"evidence": "Shillinq has no login of its own; every page sits behind Nextcloud authentication, whose two-factor providers apply (appinfo/info.xml navigation shillinq.dashboard.page)",
 				"reachedOn": "Nextcloud login, before any shillinq page",
 				"owner": "nextcloud/server",
-				"spec": "none"
+				"change": "platform-properties",
+				"requirement": "Sign-in, including two-factor authentication, is the Nextcloud login (REQ-PLAT-001)"
 			},
 			"screen": {
 				"board": null,
@@ -5441,7 +5448,8 @@
 				"evidence": "every page reads and writes through OpenRegister's REST API (/index.php/apps/openregister/api/objects/shillinq/..., e.g. src/manifest.json BtwAangifteDetail sidebar source); appinfo/routes.php adds 843 lines of app routes",
 				"reachedOn": "any client with Nextcloud credentials; no API documentation page is shipped in this repo",
 				"owner": "ConductionNL/openregister",
-				"spec": "none"
+				"change": "platform-properties",
+				"requirement": "Other software reaches shillinq's records through a REST API (REQ-PLAT-003)"
 			},
 			"screen": {
 				"board": null,
@@ -5548,7 +5556,8 @@
 				"reachedOn": "The floating companion on every shillinq page when hermiq is installed",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-27",
-				"change": "mcp-action-tool-surface"
+				"change": "mcp-action-tool-surface",
+				"requirement": "A user SHALL be able to command shillinq from chat, with agent-facing descriptions carrying the routing knowledge (REQ-MCP-005)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5652,7 +5661,8 @@
 				"evidence": "l10n/ ships 25 languages (50 .js/.json files), including nl, en, de and fr",
 				"reachedOn": "every page, following the Nextcloud user language",
 				"owner": "ConductionNL/shillinq",
-				"spec": "none"
+				"change": "platform-properties",
+				"requirement": "The interface follows the user's Nextcloud language (REQ-PLAT-004)"
 			},
 			"screen": {
 				"board": null,
@@ -5758,7 +5768,8 @@
 				"evidence": "appinfo/info.xml: a Nextcloud app under EUPL-1.2 with OpenRegister as its data layer, installed on the customer's own Nextcloud",
 				"reachedOn": "Nextcloud app store or a manual install",
 				"owner": "ConductionNL/shillinq",
-				"spec": "none"
+				"change": "platform-properties",
+				"requirement": "shillinq runs on the customer's own Nextcloud (REQ-PLAT-005)"
 			},
 			"screen": {
 				"board": null,
@@ -6034,7 +6045,8 @@
 				"evidence": "Built half: TreasuryDashboard /treasury/dashboard plus index pages for loans, derivatives, statutes and quarterly reports (src/manifest.d/bookkeeping-wet-fido-treasury.json); lib/Service/Treasury holds the calculations. The missing half is change public-sector-quarterly-returns (decided build 2026-09-29, Ruben 29 Sep: municipalities are the market).",
 				"reachedOn": "TreasuryDashboard /treasury/dashboard (menu Banking & Cashflow)",
 				"owner": "ConductionNL/shillinq",
-				"change": "public-sector-quarterly-returns"
+				"change": "public-sector-quarterly-returns",
+				"requirement": "The cash limit is computed (REQ-FDO-010); The interest risk norm is shown on the dashboard (REQ-FDO-011)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6242,7 +6254,8 @@
 				"evidence": "Built half: SubsidiesOverzicht, SubsidieAanvragen and SubsidieTerugvorderingen are index pages; lib/Service/SubsidieVerantwoordingService.php has no caller in lib/. The missing half is change public-sector-grant-accountability (decided build 2026-09-29, Ruben 29 Sep: municipalities are the market).",
 				"reachedOn": "SubsidiesOverzicht /subsidies/overzicht (menu Reporting & Compliance)",
 				"owner": "ConductionNL/shillinq",
-				"change": "public-sector-grant-accountability"
+				"change": "public-sector-grant-accountability",
+				"requirement": "Indicators are computed per specific grant (REQ-SISA-012)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -7138,7 +7151,8 @@
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing",
-				"change": "fees-payments-and-the-contract-register"
+				"change": "fees-payments-and-the-contract-register",
+				"requirement": "A payment run is submitted to a provider (REQ-FPCR-004)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -8228,7 +8242,8 @@
 				"readOn": "2026-09-26",
 				"evidence": "Shillinq has no login of its own; Nextcloud authentication applies, and Nextcloud supports SAML and OpenID Connect through its user_saml and user_oidc apps.",
 				"reachedOn": "Nextcloud login, before any shillinq page",
-				"spec": "none"
+				"change": "platform-properties",
+				"requirement": "Single sign-on works through the Nextcloud login (REQ-PLAT-002)"
 			},
 			"screen": {
 				"board": null,
