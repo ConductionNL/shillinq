@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/fee-rule-calculation/specs/object-payment-requests/spec.md#requirement-a-fee-rule-has-a-name-and-a-calculation
+ * @spec openspec/specs/object-payment-requests/spec.md#requirement-a-fee-rule-has-a-name-and-a-calculation
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -34,7 +34,7 @@ use InvalidArgumentException;
 /**
  * Validates a schedule's calculation and applies it to an object.
  *
- * @spec openspec/changes/fee-rule-calculation/specs/object-payment-requests/spec.md#requirement-a-fee-rule-has-a-name-and-a-calculation
+ * @spec openspec/specs/object-payment-requests/spec.md#requirement-a-fee-rule-has-a-name-and-a-calculation
  */
 final class FeeCalculation {
 
@@ -59,7 +59,7 @@ final class FeeCalculation {
 	 *
 	 * @throws InvalidArgumentException When the calculation cannot be worked out.
 	 *
-	 * @spec openspec/changes/fee-rule-calculation/specs/object-payment-requests/spec.md#requirement-a-fee-rule-has-a-name-and-a-calculation
+	 * @spec openspec/specs/object-payment-requests/spec.md#requirement-a-fee-rule-has-a-name-and-a-calculation
 	 */
 	public function assertValid(array $schedule): void {
 		$kind = $this->kindOf(schedule: $schedule);
@@ -95,7 +95,7 @@ final class FeeCalculation {
 	 *
 	 * @return array<string, mixed>
 	 *
-	 * @spec openspec/changes/fee-rule-calculation/specs/object-payment-requests/spec.md#requirement-a-fee-rule-has-a-name-and-a-calculation
+	 * @spec openspec/specs/object-payment-requests/spec.md#requirement-a-fee-rule-has-a-name-and-a-calculation
 	 */
 	public function applyTo(array $schedule, array $object): array {
 		$kind = $this->kindOf(schedule: $schedule);
@@ -133,7 +133,7 @@ final class FeeCalculation {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/fee-rule-calculation/specs/object-payment-requests/spec.md#requirement-a-fee-rule-has-a-name-and-a-calculation
+	 * @spec openspec/specs/object-payment-requests/spec.md#requirement-a-fee-rule-has-a-name-and-a-calculation
 	 */
 	public function isRefund(array $schedule): bool {
 		return (string) ($schedule['calculation'] ?? '') === 'refund_percentage';
@@ -147,7 +147,7 @@ final class FeeCalculation {
 	 *
 	 * @return array<int, array<string, mixed>>
 	 *
-	 * @spec openspec/changes/fee-rule-calculation/specs/object-payment-requests/spec.md#requirement-a-fee-rule-has-a-name-and-a-calculation
+	 * @spec openspec/specs/object-payment-requests/spec.md#requirement-a-fee-rule-has-a-name-and-a-calculation
 	 */
 	public function ofKind(array $schedules, bool $refund): array {
 		return array_values(array_filter($schedules, fn (array $schedule): bool => $this->isRefund(schedule: $schedule) === $refund));

@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/restore-archiefwet-retention-schemas/specs/bookkeeping-archiefwet-retention/spec.md#requirement-the-retention-schemas-the-code-uses-are-in-the-register-req-ret-014
+ * @spec openspec/specs/bookkeeping-archiefwet-retention/spec.md#requirement-the-retention-schemas-the-code-uses-are-in-the-register-req-ret-014
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

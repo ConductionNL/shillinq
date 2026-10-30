@@ -58,7 +58,7 @@ class FieldRequirementController extends Controller {
 	 *
 	 * @return JSONResponse `{rows}` or 401.
 	 *
-	 * @spec openspec/changes/required-field-switch/specs/app-administration/spec.md
+	 * @spec openspec/specs/app-administration/spec.md
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {

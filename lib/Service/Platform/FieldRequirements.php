@@ -214,7 +214,7 @@ class FieldRequirements {
 	 *
 	 * @return list<array<string, mixed>> The requirements, each with `title`.
 	 *
-	 * @spec openspec/changes/required-field-switch/specs/app-administration/spec.md
+	 * @spec openspec/specs/app-administration/spec.md
 	 */
 	public function listed(array $administrationIds): array {
 		$listed = [];
