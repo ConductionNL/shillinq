@@ -37,7 +37,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md#tests
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

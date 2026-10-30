@@ -17,7 +17,7 @@
  slice 05; the matching engine in slice 06 owns the move out of
  `received`.
 
- @spec openspec/changes/bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion/tasks.md
+ @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
 -->
 <template>
 	<div class="si-detail">
@@ -352,7 +352,7 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion/tasks.md */
+		/** @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice */
 		async loadInvoice() {
 			this.loading = true
 			try {
@@ -374,7 +374,7 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion/tasks.md */
+		/** @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice */
 		async loadMatches() {
 			// ThreeWayMatch records are populated by slice 06; gracefully fall
 			// through to the empty state when the lookup isn't available yet.

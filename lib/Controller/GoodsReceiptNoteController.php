@@ -25,7 +25,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -50,7 +50,7 @@ use Psr\Log\LoggerInterface;
  * Goods-receipt-note REST endpoints (create / add line / quality-check /
  * accept / upload photos).
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
  */
 class GoodsReceiptNoteController extends Controller {
 	/**
@@ -102,7 +102,7 @@ class GoodsReceiptNoteController extends Controller {
 	 * `canAccess(`). `GoodsReceiptNoteService::createGRN()` also re-checks
 	 * access. No guard change needed.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
@@ -174,7 +174,7 @@ class GoodsReceiptNoteController extends Controller {
 	 * administration's GRN even by supplying an id they guessed. No guard
 	 * change needed.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
@@ -245,7 +245,7 @@ class GoodsReceiptNoteController extends Controller {
 	 * GRN lookup by `id` AND `administrationId` together. No guard change
 	 * needed.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
@@ -305,7 +305,7 @@ class GoodsReceiptNoteController extends Controller {
 	 * acceptGRN()` additionally scopes the GRN lookup by `id` AND
 	 * `administrationId` together. No guard change needed.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
@@ -366,7 +366,7 @@ class GoodsReceiptNoteController extends Controller {
 	 * coverage for both directions was previously missing and is added by
 	 * this change).
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */

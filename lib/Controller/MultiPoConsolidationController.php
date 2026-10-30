@@ -33,7 +33,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-07-multi-po-consolidation/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-007
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -59,7 +59,7 @@ use RuntimeException;
 /**
  * Multi-PO consolidation REST endpoints.
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-07-multi-po-consolidation/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-007
  */
 class MultiPoConsolidationController extends Controller {
 	/**
@@ -114,7 +114,7 @@ class MultiPoConsolidationController extends Controller {
 	 *                      401 anonymous; 404 cross-tenant or missing
 	 *                      invoice; 500 without stack trace.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-07-multi-po-consolidation/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-007
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
@@ -174,7 +174,7 @@ class MultiPoConsolidationController extends Controller {
 	 *                      validation; 401 anonymous; 404 on cross-tenant
 	 *                      or missing invoice / line.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-07-multi-po-consolidation/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-007
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
@@ -271,7 +271,7 @@ class MultiPoConsolidationController extends Controller {
 	 *                      set; 401 anonymous; 404 cross-tenant or
 	 *                      missing invoice / line.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-07-multi-po-consolidation/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-007
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
