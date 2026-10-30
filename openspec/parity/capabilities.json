@@ -5929,6 +5929,35 @@
 			"note": "Covers taakveld totals only, not the economic categories, and cannot be submitted."
 		},
 		{
+			"id": "pub-iv3-case-costs",
+			"area": "public-sector",
+			"name": "Report case costs per Iv3 taakveld and per case type, from the hours booked on cases.",
+			"shillinq": "no",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "no",
+			"built": {
+				"state": "specified",
+				"evidence": "Not built. lib/Reporting/Generator/Iv3ReportGenerator.php sums GL lines per taakveld only; no cost source reads hours per case and the case type's taakveld, and lib/Reporting/ReportCatalogue.php has no per case type report.",
+				"reachedOn": "ReportingComplianceOverview /reporting-compliance, report card IV3-rapportage (planned: a case cost section, and a report card Zaakkosten per zaaktype)",
+				"owner": "ConductionNL/shillinq",
+				"readOn": "2026-10-30",
+				"change": "iv3-report-takes-case-costs-by-case-type",
+				"requirement": "The Iv3 report shows case costs per taakveld from the case type classification (REQ-IV3-010); The same case cost source is grouped per case type per period (REQ-IV3-012)"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShOverheid"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "emu-sisa-bcf-reporting",
+			"source": "own-code",
+			"note": "Decisions 261 and 262 (30 Oct 2026, ADR-107): Shillinq is the only Iv3 reporter; dossiq classifies a case type (iv3TaskField) and links out, and sums no money. The competitor columns follow pub-iv3: none of them serves Dutch public-sector finance in the documents read for it."
+		},
+		{
 			"id": "pub-sisa",
 			"area": "public-sector",
 			"name": "Produce the SiSa appendix for specific grants.",
