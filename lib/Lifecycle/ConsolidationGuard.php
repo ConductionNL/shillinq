@@ -54,7 +54,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md
+ * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
  */
 
 declare(strict_types=1);
@@ -84,7 +84,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  *
- * @spec openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md
+ * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
  */
 class ConsolidationGuard {
 	/**
@@ -118,7 +118,7 @@ class ConsolidationGuard {
 	 *
 	 * @return bool True when the group may be activated.
 	 *
-	 * @spec openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md
+	 * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
 	 */
 	public function canActivateGroup(string $groupId, ?array $object = null): bool {
 		try {
@@ -149,7 +149,7 @@ class ConsolidationGuard {
 	 *
 	 * @return bool True when the entity may be activated.
 	 *
-	 * @spec openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md
+	 * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
 	 */
 	public function canActivateEntity(string $entityId, ?array $object = null): bool {
 		try {
@@ -185,7 +185,7 @@ class ConsolidationGuard {
 	 *
 	 * @return bool True when the elimination phase may start.
 	 *
-	 * @spec openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md
+	 * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
 	 */
 	public function canStartElimination(string $periodId, ?array $object = null): bool {
 		try {
@@ -217,7 +217,7 @@ class ConsolidationGuard {
 	 *
 	 * @return bool True when the period may go to review.
 	 *
-	 * @spec openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md
+	 * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
 	 */
 	public function canSubmitForReview(string $periodId, ?array $object = null): bool {
 		try {
@@ -271,7 +271,7 @@ class ConsolidationGuard {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
 	 *
-	 * @spec openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md
+	 * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
 	 */
 	public function canClosePeriod(string $periodId, ?array $object = null): bool {
 		try {
@@ -319,7 +319,7 @@ class ConsolidationGuard {
 	 *
 	 * @return bool True when the entry may be approved.
 	 *
-	 * @spec openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md
+	 * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
 	 */
 	public function canApproveElimination(string $entryId, ?array $object = null): bool {
 		try {
@@ -353,7 +353,7 @@ class ConsolidationGuard {
 	 *
 	 * @return bool True when the entry may be rejected.
 	 *
-	 * @spec openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md
+	 * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
 	 */
 	public function canRejectElimination(string $entryId, ?array $object = null): bool {
 		try {
@@ -384,7 +384,7 @@ class ConsolidationGuard {
 	 *
 	 * @return bool True when the balance may be finalised.
 	 *
-	 * @spec openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md
+	 * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
 	 */
 	public function canFinalizeBalance(string $balanceId, ?array $object = null): bool {
 		try {
@@ -418,7 +418,7 @@ class ConsolidationGuard {
 	 *
 	 * @return bool True when the income statement may be finalised.
 	 *
-	 * @spec openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md
+	 * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
 	 */
 	public function canFinalizeIncomeStatement(string $statementId, ?array $object = null): bool {
 		try {
