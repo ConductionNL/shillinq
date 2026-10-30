@@ -57,6 +57,7 @@ namespace OCA\Shillinq\Lifecycle;
 use OCA\OpenRegister\Lifecycle\GuardResult;
 use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\PaymentRun\PaymentBlockChecker;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -96,6 +97,9 @@ final class PaymentRunDuplicateGuard implements LifecycleGuardInterface {
 	 *
 	 * @var string
 	 */
+	public const MESSAGE_PAYMENT_BLOCKED = 'This payment run cannot be exported: payment is blocked for invoice %s. '
+		. 'Remove the line or release the block before exporting.';
+
 	public const MESSAGE_INDETERMINATE = 'This payment run cannot be exported: the duplicate-payment check could not be completed, '
 		. 'so the disbursement is blocked (fail-closed).';
 
@@ -125,12 +129,14 @@ final class PaymentRunDuplicateGuard implements LifecycleGuardInterface {
 	 *
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution (ADR-022).
 	 * @param IAppConfig $appConfig App config for the register slug.
-	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 * @param LoggerInterface     $logger       Logger for fail-closed diagnostics.
+	 * @param PaymentBlockChecker $blockChecker Names blocked and disputed lines (banking-payment-run REQ-BPR-005).
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly PaymentBlockChecker $blockChecker,
 	) {
 	}//end __construct()
 
@@ -187,6 +193,15 @@ final class PaymentRunDuplicateGuard implements LifecycleGuardInterface {
 					['paymentRun' => $objectId, 'action' => $action]
 				);
 				return GuardResult::deny(self::MESSAGE_ALREADY_BATCHED);
+			}
+
+			$blocked = $this->blockChecker->blockedLines(paymentRun: $object);
+			if ($blocked !== []) {
+				$this->logger->warning(
+					'PaymentRunDuplicateGuard: a line pays a blocked or disputed invoice — denying export.',
+					['paymentRun' => $objectId, 'action' => $action, 'invoices' => array_column($blocked, 'invoiceNumber')]
+				);
+				return GuardResult::deny(sprintf(self::MESSAGE_PAYMENT_BLOCKED, implode(', ', array_column($blocked, 'invoiceNumber'))));
 			}
 		} catch (\Throwable $e) {
 			$this->logger->error(

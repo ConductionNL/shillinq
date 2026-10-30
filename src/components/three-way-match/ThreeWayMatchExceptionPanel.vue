@@ -26,7 +26,7 @@
  updated ThreeWayMatch (the dispute response also carries the dispatch
  envelope) and the panel switches into the "resolved" state.
 
- @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+ @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
 -->
 <template>
 	<div class="twm-exception" data-testid="twm-exception-panel">
@@ -325,7 +325,7 @@ export default {
 	},
 
 	methods: {
-		/** @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md */
+		/** @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005 */
 		async loadMatch() {
 			this.loading = true
 			try {
@@ -370,7 +370,7 @@ export default {
 			await Promise.all(tasks)
 		},
 
-		/** @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md */
+		/** @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005 */
 		async loadInvoice() {
 			try {
 				const response = await axios.get(
@@ -384,7 +384,7 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md */
+		/** @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005 */
 		async loadPo(poId) {
 			try {
 				const response = await axios.get(
@@ -398,7 +398,7 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md */
+		/** @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005 */
 		async loadGrn(grnId) {
 			try {
 				const response = await axios.get(

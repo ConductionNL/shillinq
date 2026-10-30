@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-projection-engine/specs/budget-projection-engine/spec.md#req-bpe-010
+ * @spec openspec/specs/budget-projection-engine/spec.md#req-bpe-010
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

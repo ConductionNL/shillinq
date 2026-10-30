@@ -188,28 +188,20 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "period-closer": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_period_closer",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_period_closer",
+            "shillinq_auditor"
+          ]
         }
       },
       "CustomerMaster": {
@@ -252,12 +244,6 @@
             "nullable": true,
             "description": "Dutch KvK registration number.",
             "title": "KvK Number"
-          },
-          "vatID": {
-            "type": "string",
-            "nullable": true,
-            "description": "Dutch VAT number (BTW-nummer).",
-            "title": "VAT ID"
           },
           "email": {
             "type": "string",
@@ -364,28 +350,20 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "ar-controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_ar_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_ar_controller",
+            "shillinq_auditor",
+            "shillinq_bookkeeper"
+          ],
+          "update": [
+            "shillinq_ar_controller",
+            "shillinq_bookkeeper"
+          ]
         },
         "x-openregister-audit-trail": {
           "enabled": true,
@@ -563,7 +541,35 @@
               "from": "draft",
               "to": "issued",
               "label": "Issue invoice",
-              "description": "Credit-limit check; materialises a balanced GLTransaction and writes glTransactionId."
+              "description": "Credit-limit check; materialises a balanced GLTransaction and writes glTransactionId.",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\DownPaymentGuard",
+                  "description": "Before anything is booked: refuse a final invoice whose down payment was already deducted on another invoice, or whose deductions exceed its total (sales-down-payments REQ-SDP-004). A no-op for an invoice without deductions.",
+                  "actionParameters": {
+                    "step": "check"
+                  }
+                },
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\MaterialiseGlTransactionAction",
+                  "description": "Book the issued invoice: debit the receivables control account for grossAmount, credit revenue per invoice line and output VAT for vatAmount, in one balanced GLTransaction, and write glTransactionId (REQ-LPP-007). A down payment credits the advances account instead of revenue, and a deduction line debits it (REQ-SDP-002, REQ-SDP-003).",
+                  "actionParameters": {
+                    "sourceSchema": "ARInvoice",
+                    "register": "shillinq",
+                    "keepBalanced": true
+                  }
+                },
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\DownPaymentGuard",
+                  "description": "After the booking: record on each deducted down payment the final invoice that deducted it (REQ-SDP-004).",
+                  "actionParameters": {
+                    "step": "stamp"
+                  }
+                }
+              ]
             },
             "mark-paid": {
               "from": "issued",
@@ -688,28 +694,20 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "ar-controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_ar_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_ar_controller",
+            "shillinq_auditor",
+            "shillinq_bookkeeper"
+          ],
+          "update": [
+            "shillinq_ar_controller",
+            "shillinq_bookkeeper"
+          ]
         }
       },
       "DunningRecord": {
@@ -789,26 +787,18 @@
             "title": "Status"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "ar-controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_ar_controller"
+          ],
+          "read": [
+            "shillinq_ar_controller",
+            "shillinq_auditor",
+            "shillinq_bookkeeper"
+          ],
+          "update": [
+            "shillinq_ar_controller"
+          ]
         },
         "x-openregister-audit-trail": {
           "enabled": true,
@@ -869,7 +859,8 @@
               "camt053",
               "mt940",
               "csv",
-              "manual"
+              "manual",
+              "feed"
             ],
             "description": "Import format.",
             "title": "Import Format"
@@ -915,6 +906,28 @@
             "nullable": true,
             "description": "Docudesk FK URI for the original bank-statement file (consume bookkeeping-document-attachment-integration).",
             "title": "Source Document URI"
+          },
+          "statementSource": {
+            "type": "string",
+            "enum": [
+              "file",
+              "feed"
+            ],
+            "default": "file",
+            "description": "How the statement arrived: a file a person imported, or the bank feed.",
+            "title": "Source"
+          },
+          "sourceBatchUri": {
+            "type": "string",
+            "nullable": true,
+            "description": "The bank feed batch this statement was written from. A second delivery of the same batch writes nothing.",
+            "title": "Feed batch"
+          },
+          "glAccountId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The ledger account the imported statement books against.",
+            "title": "Ledger account"
           }
         },
         "x-openregister-uniqueness": {
@@ -986,7 +999,8 @@
               "x-openregister-rbac-required-role": "period-closer"
             }
           }
-        }
+        },
+        "version": "0.2.0"
       },
       "BankStatementLine": {
         "slug": "BankStatementLine",
@@ -1135,29 +1149,6 @@
               "to": "routed-to-suspense",
               "label": "Route to suspense",
               "description": "Operator action: materialises a balanced GLTransaction debiting (or crediting) the designated suspense Account against the bank-account GL. Declarative per the T1 materialisation pattern; no PHP suspense-routing service."
-            }
-          }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "treasurer": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
             }
           }
         }
@@ -1344,37 +1335,14 @@
             },
             "title": "Predicates"
           }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "treasurer": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
         }
       },
       "ReconciliationMatch": {
         "slug": "ReconciliationMatch",
         "icon": "LinkVariant",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "Reconciliation Match",
-        "description": "A candidate or confirmed match between a bank statement line and an AR/AP invoice, journal, or suspense routing. Emitted by the matching aggregation (confidence=auto) or operator-created (confidence=manual); the operator confirms or rejects. Confirmed matches emit a `reconciliation-match-confirmed` event consumed by AR/AP invoice lifecycles.",
+        "description": "A candidate or confirmed match between a bank statement line and an AR/AP invoice, journal, or suspense routing. Emitted by the matching aggregation (confidence=auto) or operator-created (confidence=manual); the operator confirms or rejects. Confirmed matches emit a `reconciliation-match-confirmed` event consumed by AR/AP invoice lifecycles. V0.2.0 (receivables-object-request-settlement) adds matchType payment-request: a line that quotes an object payment request's paymentReference.",
         "x-schema-org": "schema:Action",
         "type": "object",
         "x-openregister-audit": true,
@@ -1427,7 +1395,8 @@
               "ap-invoice",
               "journal",
               "gl-transaction",
-              "suspense"
+              "suspense",
+              "payment-request"
             ],
             "description": "What the line matched against (alias: candidateType in legacy tasks docs).",
             "title": "Match Type"
@@ -1597,29 +1566,6 @@
               "status": "pending",
               "autoConfirmWhen": "MatchingRule.autoConfirm == true",
               "description": "When autoConfirm is true the emitted ReconciliationMatch is created with status=confirmed directly, triggering the reconciliation-match-confirmed event consumed by AR/AP invoice lifecycles."
-            }
-          }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "treasurer": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
             }
           }
         }

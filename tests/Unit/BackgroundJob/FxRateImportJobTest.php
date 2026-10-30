@@ -267,7 +267,8 @@ final class FxRateImportJobTest extends TestCase {
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 		$this->adapter->method('isDormant')->willReturn(true);
 		$this->adapter->expects(self::never())->method('fetchFxSpot');
-		$this->container->expects(self::never())->method('get');
+		// The only container lookup is the system-context wrapper's ObjectService.
+		$this->container->expects(self::atMost(1))->method('get')->with('OCA\\OpenRegister\\Service\\ObjectService');
 
 		$job = $this->makeJob();
 		$m = new ReflectionMethod(FxRateImportJob::class, 'run');

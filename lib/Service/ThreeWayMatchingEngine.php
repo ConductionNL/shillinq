@@ -57,7 +57,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+ * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -95,7 +95,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Matching is by nature
  * a multi-axis decision (price + qty + date + presence).
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+ * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
  *
  * @SuppressWarnings(PHPMD.CyclomaticComplexity)
  * @SuppressWarnings(PHPMD.ElseExpression)
@@ -270,7 +270,7 @@ class ThreeWayMatchingEngine {
 	 *
 	 * @throws \RuntimeException When the invoice is unknown or cross-tenant.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+	 * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
 	 */
 	public function evaluateMatch(string $administrationId, string $invoiceId): array {
 		if ($administrationId === '') {
@@ -571,7 +571,7 @@ class ThreeWayMatchingEngine {
 	 *
 	 * @return array<int,array{invoiceLine: array<string,mixed>, poLine: array<string,mixed>|null, grnLine: array<string,mixed>|null}>
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+	 * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
 	 */
 	public function matchLineItems(array $invoiceLines, array $poLines, array $grnLines): array {
 		$tuples = [];
@@ -617,7 +617,7 @@ class ThreeWayMatchingEngine {
 	 *
 	 * @return array<int,array<string,mixed>>
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+	 * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
 	 */
 	public function calculateDivergence(array $invoiceLine, ?array $poLine, ?array $grnLine): array {
 		$deltas = [];
@@ -734,7 +734,7 @@ class ThreeWayMatchingEngine {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+	 * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
 	 */
 	public function evaluateTolerance(array $divergence, ?array $profile): bool {
 		$field = (string)($divergence['field'] ?? '');
@@ -785,7 +785,7 @@ class ThreeWayMatchingEngine {
 	 *
 	 * @return array<string,mixed> The persisted ThreeWayMatch record.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+	 * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
 	 */
 	public function routeToException(
 		string $administrationId,

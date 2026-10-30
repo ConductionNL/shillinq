@@ -32,6 +32,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Listener;
 
+use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
+use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
+use OCA\Shillinq\Service\Asset\ReinvestmentReserves;
+use OCA\Shillinq\Service\Asset\AssetRecords;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Listener\FixedAssetDisposalListener;
@@ -294,6 +299,68 @@ class FixedAssetDisposalListenerTest extends TestCase {
 		self::assertArrayNotHasKey('8001', $lines, 'No loss line on a profitable disposal.');
 
 	}//end testSellingAboveBookValuePostsAGain()
+
+	/**
+	 * REQ-AMCR-004 "Selling the old van": the gain goes to the reinvestment
+	 * reserve account, not to profit, and a reserve of 6,000 expiring
+	 * 2029-12-31 is recorded and valid against the real schema.
+	 *
+	 * @return void
+	 */
+	public function testSellingTheOldVanIntoAReinvestmentReserve(): void {
+		$van = [
+			'id' => 'old-van',
+			'assetNumber' => 'FA-2019-004',
+			'administrationId' => 'adm-1',
+			'purchaseCost' => 20000,
+			'purchaseDate' => '2019-04-01',
+			'capitalizationAccountNumber' => '0320',
+			'accumulatedDepreciationAccountNumber' => '0329',
+			'currency' => 'EUR',
+			'status' => 'retired',
+			'retirementDate' => '2026-03-31',
+			'salvageProceeds' => 14000.0,
+			'disposalAccountingTreatment' => 'sale',
+			'disposalGainToReserve' => true,
+		];
+		$this->objects->seed('FixedAsset', [$van]);
+		$this->objects->seed('DepreciationSchedule', [['id' => 'sch-van', 'assetRef' => 'old-van', 'administrationId' => 'adm-1', 'periodEndDate' => '2026-03-31', 'accumulatedDepreciation' => 12000, 'status' => 'posted']]);
+
+		$settings = $this->createMock(SettingsService::class);
+		$settings->method('getRegisterSlug')->willReturn('shillinq');
+		$objects = new DuckObjectServiceAdapter($this->objects);
+		$records = new AssetRecords($objects, new ObjectTransitionRunner(container: $this->createMock(ContainerInterface::class)), $settings);
+		$config = $this->createMock(IAppConfig::class);
+		$config->method('getValueString')->willReturnCallback(static fn (string $app, string $key, string $default = ''): string => [FixedAssetDisposalService::CFG_GAIN_ACCOUNT => '8000', FixedAssetDisposalService::CFG_CLEARING_ACCOUNT => '1100'][$key] ?? $default);
+		$context = $this->createMock(AdministrationContextService::class);
+		$context->method('canAccess')->willReturn(true);
+		$service = new FixedAssetDisposalService(
+			appConfig: $config,
+			emitter: new DisposalJournalEmitter(new DepreciationCalculator()),
+			administrationContext: $context,
+			logger: $this->createMock(LoggerInterface::class),
+			objectService: $objects,
+			reserves: new ReinvestmentReserves($records, $config),
+		);
+		$this->listener = new FixedAssetDisposalListener(disposalService: $service, logger: $this->createMock(LoggerInterface::class));
+
+		$this->retire($van);
+
+		$this->assertJournalBalances();
+		$lines = $this->postedLines();
+		self::assertSame(['side' => 'credit', 'amount' => 6000.0], $lines[ReinvestmentReserves::DEFAULT_RESERVE_ACCOUNT]);
+		self::assertArrayNotHasKey('8000', $lines, 'No disposal gain is booked to profit.');
+
+		$reserves = $this->objects->dump('ReinvestmentReserve');
+		self::assertCount(1, $reserves);
+		$reserve = array_values($reserves)[0];
+		self::assertEquals(6000, $reserve['amount']);
+		self::assertSame('2029-12-31', $reserve['expiresOn']);
+		self::assertSame('open', $reserve['lifecycleState']);
+		unset($reserve['id']);
+		self::assertSame([], RegisterSchema::errors('ReinvestmentReserve', $reserve));
+
+	}//end testSellingTheOldVanIntoAReinvestmentReserve()
 
 	/**
 	 * A transition to any other state posts nothing (REQ-GLTAX-001).

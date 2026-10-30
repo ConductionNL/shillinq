@@ -1,0 +1,144 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "sales-usage-billing",
+		"adr": "ADR-037 modular manifest fragment",
+		"description": "Usage billing (REQ-USB-001): rate plans and meter readings get their pages under Sales, with Import readings and Rate on the readings list."
+	},
+	"menu": [
+		{
+			"id": "MeterReadings",
+			"label": "Meter readings",
+			"icon": "Counter",
+			"route": "MeterReadings",
+			"order": 40
+		},
+		{
+			"id": "UsageRatePlans",
+			"label": "Rate plans",
+			"icon": "TagOutline",
+			"route": "UsageRatePlans",
+			"order": 41
+		}
+	],
+	"pages": [
+		{
+			"id": "MeterReadings",
+			"route": "/sales/meter-readings",
+			"type": "index",
+			"title": "Meter readings",
+			"config": {
+				"register": "shillinq",
+				"schema": "MeterReading",
+				"description": "What each customer used per period. Import readings from a file, rate them against their rate plan, then bill them from the invoice generator.",
+				"columns": [
+					{"key": "customerId", "label": "Customer", "sortable": true},
+					{"key": "resourceType", "label": "Resource", "sortable": true},
+					{"key": "quantity", "label": "Quantity", "sortable": true},
+					{"key": "unit", "label": "Unit"},
+					{"key": "periodStart", "label": "From", "sortable": true},
+					{"key": "periodEnd", "label": "To", "sortable": true},
+					{"key": "ratedAmount", "label": "Amount", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2}},
+					{"key": "status", "label": "Status", "sortable": true},
+					{"key": "invoiceId", "label": "Invoice"}
+				],
+				"filters": [
+					{"key": "status", "label": "Status", "type": "enum", "options": ["unrated", "rated", "invoiced"]},
+					{"key": "customerId", "label": "Customer", "type": "string"},
+					{"key": "periodEnd", "label": "Period", "type": "dateRange"}
+				],
+				"defaultSort": "-periodEnd",
+				"detailRoute": "MeterReadingDetail",
+				"headerActions": [
+					{
+						"id": "import-meter-readings",
+						"label": "Import readings",
+						"icon": "Upload",
+						"handler": "openMeterReadingImport",
+						"description": "Add a file of readings. Each refused row is named with its row number and the reason."
+					}
+				],
+				"bulkActions": [
+					{
+						"id": "rate-meter-readings",
+						"label": "Rate readings",
+						"icon": "Calculator",
+						"handler": "rateMeterReadings",
+						"description": "Price the selected unrated readings against their rate plan."
+					}
+				],
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/usage-billing"
+			}
+		},
+		{
+			"id": "MeterReadingDetail",
+			"route": "/sales/meter-readings/:id",
+			"type": "detail",
+			"title": "Meter reading",
+			"config": {
+				"register": "shillinq",
+				"schema": "MeterReading",
+				"fields": [
+					{"key": "customerId", "label": "Customer", "type": "string"},
+					{"key": "meterId", "label": "Meter", "type": "string"},
+					{"key": "resourceType", "label": "Resource", "type": "string"},
+					{"key": "quantity", "label": "Quantity", "type": "number"},
+					{"key": "unit", "label": "Unit", "type": "string"},
+					{"key": "ratePlanId", "label": "Rate plan", "type": "string"},
+					{"key": "periodStart", "label": "From", "type": "string"},
+					{"key": "periodEnd", "label": "To", "type": "string"},
+					{"key": "ratedAmount", "label": "Amount", "type": "number"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "invoiceId", "label": "Invoice", "type": "string"}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "MeterReadings"
+			}
+		},
+		{
+			"id": "UsageRatePlans",
+			"route": "/sales/rate-plans",
+			"type": "index",
+			"title": "Rate plans",
+			"config": {
+				"register": "shillinq",
+				"schema": "UsageRatePlan",
+				"description": "The price per unit of a metered resource, flat or in tiers. A reading is rated against the plan of its resource.",
+				"columns": [
+					{"key": "name", "label": "Name", "sortable": true},
+					{"key": "resourceType", "label": "Resource", "sortable": true},
+					{"key": "unit", "label": "Unit"},
+					{"key": "ratingMethod", "label": "Rating", "sortable": true},
+					{"key": "unitPriceCents", "label": "Price per unit (cents)"},
+					{"key": "vatRate", "label": "VAT %"},
+					{"key": "effectiveFrom", "label": "From", "sortable": true}
+				],
+				"defaultSort": "name",
+				"detailRoute": "UsageRatePlanDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/usage-billing"
+			}
+		},
+		{
+			"id": "UsageRatePlanDetail",
+			"route": "/sales/rate-plans/:id",
+			"type": "detail",
+			"title": "Rate plan",
+			"config": {
+				"register": "shillinq",
+				"schema": "UsageRatePlan",
+				"fields": [
+					{"key": "name", "label": "Name", "type": "string"},
+					{"key": "resourceType", "label": "Resource", "type": "string"},
+					{"key": "unit", "label": "Unit", "type": "string"},
+					{"key": "ratingMethod", "label": "Rating", "type": "string"},
+					{"key": "unitPriceCents", "label": "Price per unit (cents)", "type": "number"},
+					{"key": "vatRate", "label": "VAT %", "type": "number"},
+					{"key": "glRevenueAccount", "label": "Revenue account", "type": "string"},
+					{"key": "effectiveFrom", "label": "From", "type": "string"}
+				],
+				"indexRoute": "UsageRatePlans"
+			}
+		}
+	]
+}

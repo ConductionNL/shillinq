@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md
+ * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

@@ -33,7 +33,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -58,7 +58,7 @@ use RuntimeException;
 /**
  * Three-way-match exception-resolution REST endpoints.
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
  */
 class ThreeWayMatchExceptionController extends Controller {
 
@@ -111,7 +111,7 @@ class ThreeWayMatchExceptionController extends Controller {
 	 *                      validation; 401 anonymous; 404 cross-tenant or
 	 *                      missing match; 500 without stack trace.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
 	 */
 	#[NoAdminRequired]
 	public function accept(): JSONResponse {
@@ -171,7 +171,7 @@ class ThreeWayMatchExceptionController extends Controller {
 	 *                      401 anonymous; 404 cross-tenant or missing
 	 *                      match / invoice; 500 without stack trace.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
 	 */
 	#[NoAdminRequired]
 	public function dispute(): JSONResponse {
@@ -231,7 +231,7 @@ class ThreeWayMatchExceptionController extends Controller {
 	 *                      validation; 401 anonymous; 404 cross-tenant or
 	 *                      missing match; 500 without stack trace.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
 	 */
 	#[NoAdminRequired]
 	public function reject(): JSONResponse {

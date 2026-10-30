@@ -41,7 +41,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -82,7 +82,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)   GRN lifecycle exposes the
  * five surfaces named above; each one corresponds 1:1 with a slice-04 task.
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
  *
  * @SuppressWarnings(PHPMD.ElseExpression)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
@@ -194,7 +194,7 @@ class GoodsReceiptNoteService {
 	 * @throws \RuntimeException When the caller lacks access, no valid PO is
 	 *                           supplied, or a required field is missing.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
 	 */
 	public function createGRN(string $administrationId, array $payload): array {
 		$this->assertAccess(administrationId: $administrationId);
@@ -253,7 +253,7 @@ class GoodsReceiptNoteService {
 	 * @throws \RuntimeException When the GRN or PO line is missing, or
 	 *                           validation fails.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
 	 */
 	public function addGRNLine(string $administrationId, string $grnId, array $payload): array {
 		$this->assertAccess(administrationId: $administrationId);
@@ -360,7 +360,7 @@ class GoodsReceiptNoteService {
 	 * @throws \RuntimeException When the GRN is missing or the source state is
 	 *                           not "received".
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
 	 */
 	public function qualityCheckPass(string $administrationId, string $grnId): array {
 		$this->assertAccess(administrationId: $administrationId);
@@ -417,7 +417,7 @@ class GoodsReceiptNoteService {
 	 * @throws \RuntimeException When the GRN is missing or the source state is
 	 *                           terminal.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
 	 */
 	public function acceptGRN(string $administrationId, string $grnId): array {
 		$this->assertAccess(administrationId: $administrationId);
@@ -495,7 +495,7 @@ class GoodsReceiptNoteService {
 	 *
 	 * @throws \RuntimeException When the GRN is missing.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
 	 */
 	public function uploadPhotos(string $administrationId, string $grnId, array $photoFileIds): array {
 		$this->assertAccess(administrationId: $administrationId);
@@ -682,18 +682,18 @@ class GoodsReceiptNoteService {
 			return;
 		}
 
-		$newLifecycle = $po['lifecycleState'] ?? '';
+		$newLifecycle = $po['statusCode'] ?? '';
 		if ($allFullyReceived === true) {
 			$newLifecycle = 'fully_received';
 		} elseif ($anyReceived === true) {
 			$newLifecycle = 'partial_received';
 		}
 
-		if ($newLifecycle === ($po['lifecycleState'] ?? '')) {
+		if ($newLifecycle === ($po['statusCode'] ?? '')) {
 			return;
 		}
 
-		$po['lifecycleState'] = $newLifecycle;
+		$po['statusCode'] = $newLifecycle;
 		$this->saveObject(schema: self::SCHEMA_PO, object: $po);
 
 	}//end updatePurchaseOrderReceiptLifecycle()

@@ -22,7 +22,7 @@
  in-memory filter is well-sized; downstream slice 11's audit-trail
  export takes the back-end pagination route).
 
- @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+ @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
 -->
 <template>
 	<div class="twm-index">
@@ -262,7 +262,7 @@ export default {
 	},
 
 	methods: {
-		/** @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md */
+		/** @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md */
 		async loadMatches() {
 			this.loading = true
 			this.error = ''

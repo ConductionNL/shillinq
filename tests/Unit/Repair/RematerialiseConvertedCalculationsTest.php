@@ -31,6 +31,8 @@ namespace OCA\Shillinq\Tests\Unit\Repair;
 use OCA\Shillinq\Repair\RematerialiseConvertedCalculations;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
+use OCP\App\IAppManager;
+use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -109,6 +111,20 @@ class RematerialiseConvertedCalculationsTest extends TestCase {
 	 * @var object
 	 */
 	private object $fakeObjectService;
+
+	/**
+	 * App config values written through the IAppConfig mock, keyed by config key.
+	 *
+	 * @var array<string,string>
+	 */
+	private array $appConfigValues = [];
+
+	/**
+	 * The installed shillinq version the IAppManager mock reports.
+	 *
+	 * @var string
+	 */
+	private string $installedVersion = '0.5.6';
 
 	/**
 	 * Setup test fixtures.
@@ -266,6 +282,80 @@ class RematerialiseConvertedCalculationsTest extends TestCase {
 		self::assertSame('p-1', $this->fakeObjectService->saves[0]['object']['id']);
 
 	}//end testFindAllFailureOnOneSchemaDoesNotBlockOthers()
+
+	/**
+	 * A clean run records the installed version as the done-marker.
+	 *
+	 * @return void
+	 */
+	public function testCleanRunRecordsTheInstalledVersion(): void {
+		$step = $this->makeStep(rowsBySchema: ['FixedAsset' => [['id' => 'fa-1']]]);
+
+		$step->run($this->output);
+
+		self::assertSame('0.5.6', $this->appConfigValues[RematerialiseConvertedCalculations::DONE_VERSION_KEY] ?? null);
+
+	}//end testCleanRunRecordsTheInstalledVersion()
+
+	/**
+	 * A second repair on the same installed version re-saves nothing.
+	 *
+	 * @return void
+	 */
+	public function testSecondRunOnTheSameVersionResavesNothing(): void {
+		$this->appConfigValues[RematerialiseConvertedCalculations::DONE_VERSION_KEY] = '0.5.6';
+		$step = $this->makeStep(rowsBySchema: ['FixedAsset' => [['id' => 'fa-1']]]);
+
+		$step->run($this->output);
+
+		self::assertSame([], $this->fakeObjectService->saves);
+		self::assertSame([], $this->fakeObjectService->schemasQueried);
+
+	}//end testSecondRunOnTheSameVersionResavesNothing()
+
+	/**
+	 * Control: after an upgrade (a different installed version) the step re-saves again.
+	 *
+	 * @return void
+	 */
+	public function testANewVersionResavesAgain(): void {
+		$this->appConfigValues[RematerialiseConvertedCalculations::DONE_VERSION_KEY] = '0.5.5';
+		$step = $this->makeStep(rowsBySchema: ['FixedAsset' => [['id' => 'fa-1']]]);
+
+		$step->run($this->output);
+
+		self::assertCount(1, $this->fakeObjectService->saves);
+		self::assertSame('0.5.6', $this->appConfigValues[RematerialiseConvertedCalculations::DONE_VERSION_KEY]);
+
+	}//end testANewVersionResavesAgain()
+
+	/**
+	 * A run with a failed save leaves the marker unset, so the next repair retries.
+	 *
+	 * @return void
+	 */
+	public function testAFailedSaveLeavesTheMarkerUnset(): void {
+		$step = $this->makeStep(rowsBySchema: ['ZzpDeduction' => [['id' => 'zd-fail']]], failIds: ['zd-fail']);
+
+		$step->run($this->output);
+
+		self::assertArrayNotHasKey(RematerialiseConvertedCalculations::DONE_VERSION_KEY, $this->appConfigValues);
+
+	}//end testAFailedSaveLeavesTheMarkerUnset()
+
+	/**
+	 * A schema that could not be listed leaves the marker unset, so the next repair retries.
+	 *
+	 * @return void
+	 */
+	public function testAFailedListingLeavesTheMarkerUnset(): void {
+		$step = $this->makeStep(rowsBySchema: [], failFindAllSchemas: ['FixedAsset']);
+
+		$step->run($this->output);
+
+		self::assertArrayNotHasKey(RematerialiseConvertedCalculations::DONE_VERSION_KEY, $this->appConfigValues);
+
+	}//end testAFailedListingLeavesTheMarkerUnset()
 
 	/**
 	 * Build a RematerialiseConvertedCalculations step wired to a fake
@@ -434,11 +524,26 @@ class RematerialiseConvertedCalculationsTest extends TestCase {
 			->with('OCA\OpenRegister\Service\ObjectService')
 			->willReturn($this->fakeObjectService);
 
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturnCallback(
+			fn (string $app, string $key, string $default = ''): string => ($this->appConfigValues[$key] ?? $default)
+		);
+		$appConfig->method('setValueString')->willReturnCallback(
+			function (string $app, string $key, string $value): bool {
+				$this->appConfigValues[$key] = $value;
+				return true;
+			}
+		);
+		$appManager = $this->createMock(IAppManager::class);
+		$appManager->method('getAppVersion')->willReturn($this->installedVersion);
+
 		return new RematerialiseConvertedCalculations(
 			settingsService: $this->settingsService,
 			logger: $this->logger,
 			container: $this->container,
 			objectService: new DuckObjectServiceAdapter($this->fakeObjectService),
+			appConfig: $appConfig,
+			appManager: $appManager,
 		);
 
 	}//end makeStep()

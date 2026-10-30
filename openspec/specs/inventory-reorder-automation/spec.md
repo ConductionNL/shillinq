@@ -18,7 +18,6 @@ This specification defines the requirements for inventory reorder automation in 
 
 @e2e exclude unbuilt UI: reorder rule pages not yet implemented
 
-
 ### REQ-IRA-001: Inventory reorder automation SHALL be declared as `InventoryReorderRule` register with per-location, per-supplier granularity
 
 Inventory reorder automation MUST be expressed as a new register in
@@ -325,11 +324,3 @@ alerts, and act on low-stock conditions.
 - **WHEN** operator opens Low Stock Alerts
 - **THEN** the index lists all 5 with timestamps, item names, and
   "Order Now" / "Snooze" action buttons.
-
-## MODIFIED Requirements
-
-None. This is a spec-only addition; no existing registers are changed.
-
-## REMOVED Requirements
-
-None. This is a spec-only addition; no capabilities are removed.

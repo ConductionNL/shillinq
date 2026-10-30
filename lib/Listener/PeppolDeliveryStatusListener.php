@@ -4,7 +4,7 @@
  * Peppol Delivery Status Listener
  *
  * Consumes the cross-app `nl.conduction.peppol.delivery.status` cloud event
- * (REQ-EINV-005) emitted by openconnector's Peppol access point and advances
+ * (REQ-EINV-005) emitted by integriq's Peppol access point and advances
  * the `ARInvoice.deliveryStatus` sub-lifecycle declared in
  * add-shillinq-einvoicing-ubl-peppol.json (REQ-AR-011). The event's `status`
  * field (`queued|sent|delivered|rejected|failed`) maps 1:1 onto
@@ -15,13 +15,17 @@
  * (ADR-031 — imperative notification dispatch is a justified external-event
  * consumption surface).
  *
- * Registered against the literal event-name string (not an `Event` subclass)
- * via `IRegistrationContext::registerEventListener()`, which accepts
- * `string|class-string<T>` for exactly this cross-app cloud-event pattern
- * (mirrors {@see \OCA\Shillinq\Service\BudgetImpactEmitter}'s emit side).
+ * integriq does not dispatch a Nextcloud event named after the CloudEvent.
+ * `EventService::emitCloudEvent()` saves the CloudEvent as an OpenRegister
+ * object in integriq's `integriq` register, `event` schema, with `type` and
+ * `data` on it (integriq `PeppolTransmissionService::emitDeliveryStatus()`).
+ * So this listener is registered on OpenRegister's `ObjectCreatedEvent` and
+ * reads the envelope off that object. It used to be registered on the event
+ * NAME, which nothing dispatches, and had never run (issue #1111,
+ * sales-einvoice-exchange design D3).
  *
  * Fail-soft: any exception is logged but never bubbles up — a missed/garbled
- * delivery-status event can be re-driven by openconnector's own retry policy;
+ * delivery-status event can be re-driven by integriq's own retry policy;
  * this listener never blocks the NC event bus.
  *
  * @category Listener
@@ -45,9 +49,11 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use DateTime;
+use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\ListenerSchemaResolver;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\Event;
-use OCP\EventDispatcher\GenericEvent;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
 use OCP\Notification\IManager as INotificationManager;
@@ -64,11 +70,12 @@ use Throwable;
  */
 class PeppolDeliveryStatusListener implements IEventListener {
 	/**
-	 * Cross-app cloud-event name this listener consumes.
+	 * CloudEvent `type` this listener consumes (integriq
+	 * `PeppolTransmissionService::EVENT_TYPE_DELIVERY_STATUS`).
 	 *
 	 * @var string
 	 */
-	public const EVENT_NAME = 'nl.conduction.peppol.delivery.status';
+	public const CLOUDEVENT_TYPE = 'nl.conduction.peppol.delivery.status';
 
 	/**
 	 * Notification object type for the finance-operator "rejected" alert.
@@ -78,11 +85,28 @@ class PeppolDeliveryStatusListener implements IEventListener {
 	private const NOTIFICATION_OBJECT_TYPE = 'ar_invoice';
 
 	/**
-	 * Notification subject identifier for a rejected e-invoice.
+	 * Notification subject identifier for a rejected e-invoice, rendered by
+	 * {@see \OCA\Shillinq\Notification\EInvoiceNotifier}.
 	 *
 	 * @var string
 	 */
-	private const NOTIFICATION_SUBJECT_REJECTED = 'einvoice_delivery_rejected';
+	public const NOTIFICATION_SUBJECT_REJECTED = 'einvoice_delivery_rejected';
+
+	/**
+	 * The AdministrationMembership roles told about a rejected e-invoice (#1754).
+	 *
+	 * The membership schema has no `ar-controller` role, so looking that up
+	 * found nobody. These are the roles of that enum that own the receivables:
+	 * `debiteurenadmin` runs them, `boekhouder` keeps the books they post to,
+	 * `controller` and `eigenaar` answer for the administration. The last two
+	 * also mean a small administration, which often has only an owner, still
+	 * hears about the rejection. Read-only (`inkijker`, `accountant_extern`)
+	 * and other-ledger roles (`crediteurenadmin`, `salarisadministrateur`)
+	 * are not told.
+	 *
+	 * @var array<int,string>
+	 */
+	public const RECEIVABLES_ROLES = ['debiteurenadmin', 'boekhouder', 'controller', 'eigenaar'];
 
 	/**
 	 * Declared delivery sub-lifecycle transitions (REQ-AR-011), keyed
@@ -112,34 +136,59 @@ class PeppolDeliveryStatusListener implements IEventListener {
 	 * @param IAppConfig $appConfig App config for the register slug.
 	 * @param INotificationManager $notificationManager NC notification dispatcher (rejected alert).
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
+	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's register and schema ids to slugs.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly INotificationManager $notificationManager,
 		private readonly LoggerInterface $logger,
+		private readonly ListenerSchemaResolver $schemaResolver,
 	) {
 
 	}//end __construct()
 
 	/**
-	 * Handle a `nl.conduction.peppol.delivery.status` event.
+	 * Handle the creation of integriq's `nl.conduction.peppol.delivery.status` CloudEvent object.
 	 *
-	 * @param Event $event The dispatched GenericEvent carrying
-	 *                     {objectUri, transmissionId, status, timestamp, detail}.
+	 * @param Event $event The dispatched event; only an `ObjectCreatedEvent` for a
+	 *                     delivery-status object in integriq's `event` schema is taken.
+	 *                     Its `data` is {objectUri, transmissionId, status, timestamp, detail}.
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
+	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-2.1
+	 *
+	 * @listener-placement inline cheap-bounded — every object that is not an
+	 *   integriq delivery-status CloudEvent returns on an in-memory type check
+	 *   before any read. For the rare one that is, the work is one invoice read
+	 *   (by id, or by its invoice number), one read of that
+	 *   administration's ar-controller memberships, and one invoice save, and
+	 *   the write it runs inside is integriq's own event record, not a user's.
 	 */
 	public function handle(Event $event): void {
-		if ($event instanceof GenericEvent === false) {
+		if ($event instanceof ObjectCreatedEvent === false) {
 			return;
 		}
 
 		try {
-			$payload = $event->getArguments();
-			$this->apply(payload: $payload);
+			$entity = $event->getObject();
+			$cloudEvent = $entity?->getObject();
+			if (is_array($cloudEvent) === false || ($cloudEvent['type'] ?? null) !== self::CLOUDEVENT_TYPE) {
+				return;
+			}
+
+			if ($this->schemaResolver->matchesRegisterAndSchema(
+				entity: $entity,
+				registerSlug: IntegriqCloudEventListener::REGISTER_SLUG,
+				schemaSlug: IntegriqCloudEventListener::SCHEMA_SLUG
+			) === false
+			) {
+				return;
+			}
+
+			$this->apply(payload: (array)($cloudEvent['data'] ?? []));
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'PeppolDeliveryStatusListener: failed to apply delivery-status event — fail-soft',
@@ -222,31 +271,48 @@ class PeppolDeliveryStatusListener implements IEventListener {
 	 * objectUri id segment may be either, depending on whether the record had
 	 * an OR-assigned id at emission time).
 	 *
+	 * The id arm uses find(): a `filters['id']` query matches no row in real
+	 * OpenRegister, because `id` is an entity column and not a JSON property
+	 * (see {@see ObjectIdentifier::findOne()}). The record keeps its uuid as
+	 * `id`, so the save below updates this invoice instead of creating one.
+	 *
 	 * @param string $id Candidate id or invoiceNumber.
 	 *
 	 * @return array<string,mixed>|null
+	 *
+	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-2.1
 	 */
 	private function findByIdOrInvoiceNumber(string $id): ?array {
-		$byId = $this->findAll(schema: 'ARInvoice', filters: ['id' => $id]);
-		foreach ($byId as $row) {
-			if (is_array($row) === true) {
-				return $row;
+		try {
+			$scoped = $this->container->get('OCA\OpenRegister\Service\ObjectService')
+				->setRegister($this->register())
+				->setSchema('ARInvoice');
+		} catch (Throwable $e) {
+			$this->logger->info(
+				'PeppolDeliveryStatusListener: OR query unavailable — skipping',
+				['schema' => 'ARInvoice', 'exception' => $e->getMessage()]
+			);
+			return null;
+		}
+
+		try {
+			$invoice = ObjectIdentifier::recordWithId(candidate: $scoped->find($id));
+			if ($invoice !== null) {
+				return $invoice;
 			}
+		} catch (Throwable $notAUuid) {
+			// A miss makes find() throw; fall through to the invoice number.
 		}
 
 		$byNumber = $this->findAll(schema: 'ARInvoice', filters: ['invoiceNumber' => $id]);
-		foreach ($byNumber as $row) {
-			if (is_array($row) === true) {
-				return $row;
-			}
-		}
 
-		return null;
+		return ($byNumber[0] ?? null);
 	}//end findByIdOrInvoiceNumber()
 
 	/**
-	 * Notify every `ar-controller` in the invoice's administration that the
-	 * e-invoice was rejected (REQ-EINV-005 — surfaced, never silent).
+	 * Notify the members of the invoice's administration who own its
+	 * receivables that the e-invoice was rejected (REQ-EINV-005, surfaced,
+	 * never silent). See {@see self::RECEIVABLES_ROLES} for who that is.
 	 *
 	 * @param array<string,mixed> $invoice Updated ARInvoice record.
 	 * @param string $detail Rejection detail from the event.
@@ -262,17 +328,20 @@ class PeppolDeliveryStatusListener implements IEventListener {
 
 		$memberships = $this->findAll(
 			schema: 'AdministrationMembership',
-			filters: [
-				'administrationId' => $administrationId,
-				'role' => 'ar-controller',
-			]
+			filters: ['administrationId' => $administrationId]
 		);
 
+		$notified = [];
 		foreach ($memberships as $membership) {
 			$userId = trim((string)($membership['userId'] ?? ''));
-			if ($userId === '') {
+			if ($userId === ''
+				|| isset($notified[$userId]) === true
+				|| in_array((string)($membership['role'] ?? ''), self::RECEIVABLES_ROLES, true) === false
+			) {
 				continue;
 			}
+
+			$notified[$userId] = true;
 
 			try {
 				$notification = $this->notificationManager->createNotification();
@@ -286,6 +355,7 @@ class PeppolDeliveryStatusListener implements IEventListener {
 						[
 							'invoiceNumber' => $invoiceNumber,
 							'detail' => $detail,
+							'invoiceId' => (string)($invoice['id'] ?? ''),
 						]
 					);
 				$this->notificationManager->notify($notification);
@@ -346,10 +416,14 @@ class PeppolDeliveryStatusListener implements IEventListener {
 			return [];
 		}
 
+		// OpenRegister's findAll() answers ObjectEntity instances, not arrays
+		// (RenderObject::renderEntities()). Keeping only arrays dropped every
+		// row a live instance returned (#1754).
 		$result = [];
 		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
+			$record = ObjectIdentifier::recordWithId(candidate: $row);
+			if ($record !== null) {
+				$result[] = $record;
 			}
 		}
 

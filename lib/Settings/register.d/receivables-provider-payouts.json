@@ -1,0 +1,527 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "receivables-payouts-tab",
+    "adr": "ADR-037 modular register fragment; ADR-022 apps consume OpenRegister, no own CRUD",
+    "description": "ProviderPayout as designed in openspec/changes/receivables-provider-payouts/design.md (D1, Seed Data): one settlement of a payment provider (Mollie, Stripe) with its amounts and transaction lines. This fragment carries the record and its seeds for board ShDebiteurenbeheer's Uitbetalingen provider tab; the lifecycle, the unmatched notification, PaymentDevice and the posting settings follow with the rest of that change.",
+    "spec": "openspec/specs/bookkeeping-bank-reconciliation/spec.md"
+  },
+  "components": {
+    "schemas": {
+      "ProviderPayout": {
+        "slug": "ProviderPayout",
+        "icon": "BankTransferIn",
+        "version": "0.1.1",
+        "title": "Provider payout",
+        "description": "A settlement of a payment provider to the bank account: the amounts paid out and kept, and the payments in it, each matched to what it paid or still open.",
+        "x-schema-org": "schema:MoneyTransfer",
+        "x-spec": "openspec/specs/bookkeeping-bank-reconciliation/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "provider",
+          "settlementReference",
+          "settledAt",
+          "amountNet",
+          "state"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "title": "Administration ID",
+            "description": "The administration whose bank account received the payout.",
+            "example": "adm-gov-1"
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "mollie",
+              "stripe"
+            ],
+            "x-enum-labels": {
+              "mollie": "Mollie",
+              "stripe": "Stripe"
+            },
+            "title": "Provider",
+            "description": "The payment provider that paid out.",
+            "example": "mollie"
+          },
+          "settlementReference": {
+            "type": "string",
+            "title": "Settlement reference",
+            "description": "The provider's reference of the settlement. A captured payment request names it in settlementReference.",
+            "example": "st_example0001"
+          },
+          "settledAt": {
+            "type": "string",
+            "format": "date",
+            "title": "Paid out on",
+            "description": "The day the payout reached the bank account.",
+            "example": "2026-10-07"
+          },
+          "currency": {
+            "type": "string",
+            "default": "EUR",
+            "title": "Currency",
+            "description": "ISO 4217 currency of the amounts.",
+            "example": "EUR"
+          },
+          "amountGross": {
+            "type": "number",
+            "minimum": 0,
+            "nullable": true,
+            "title": "Gross amount",
+            "description": "The sum of the payments in the payout, before refunds, chargebacks and fees.",
+            "example": 4951
+          },
+          "amountFees": {
+            "type": "number",
+            "minimum": 0,
+            "nullable": true,
+            "title": "Fees",
+            "description": "What the provider kept as fees on this payout.",
+            "example": 38.65
+          },
+          "amountRefunds": {
+            "type": "number",
+            "minimum": 0,
+            "nullable": true,
+            "title": "Refunds",
+            "description": "What was paid back to customers out of this payout.",
+            "example": 0
+          },
+          "amountChargebacks": {
+            "type": "number",
+            "minimum": 0,
+            "nullable": true,
+            "title": "Chargebacks",
+            "description": "What customers' banks reclaimed out of this payout.",
+            "example": 0
+          },
+          "amountNet": {
+            "type": "number",
+            "title": "Paid out",
+            "description": "The amount that reached the bank account.",
+            "example": 4912.35
+          },
+          "lines": {
+            "type": "array",
+            "title": "Lines",
+            "description": "The payments, refunds and chargebacks in the payout, each matched to what it paid or still unmatched.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "providerPaymentId": {
+                  "type": "string",
+                  "title": "Provider payment ID",
+                  "example": "tr_8Kq2"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "payment",
+                    "refund",
+                    "chargeback"
+                  ],
+                  "x-enum-labels": {
+                    "payment": "Payment",
+                    "refund": "Refund",
+                    "chargeback": "Chargeback"
+                  },
+                  "title": "Kind",
+                  "example": "payment"
+                },
+                "amount": {
+                  "type": "number",
+                  "title": "Amount",
+                  "example": 60
+                },
+                "fee": {
+                  "type": "number",
+                  "nullable": true,
+                  "title": "Fees",
+                  "example": 0.29
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "matched",
+                    "unmatched"
+                  ],
+                  "x-enum-labels": {
+                    "matched": "Matched",
+                    "unmatched": "Unmatched"
+                  },
+                  "title": "State",
+                  "example": "unmatched"
+                },
+                "matchedObjectId": {
+                  "type": "string",
+                  "nullable": true,
+                  "title": "Matched to",
+                  "description": "The payment request, deposit or invoice the line paid.",
+                  "example": "pr-2026-0412"
+                }
+              }
+            },
+            "default": []
+          },
+          "matchedLineCount": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true,
+            "title": "Matched",
+            "description": "How many lines are matched to what they paid. Kept with the lines.",
+            "example": 14
+          },
+          "unmatchedLineCount": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true,
+            "title": "Open",
+            "description": "How many lines match nothing yet and wait for someone to match them. Kept with the lines.",
+            "example": 1
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "received",
+              "matched",
+              "booked",
+              "reconciled"
+            ],
+            "x-enum-labels": {
+              "received": "Received",
+              "matched": "Matched",
+              "booked": "Booked",
+              "reconciled": "Reconciled"
+            },
+            "default": "received",
+            "title": "State",
+            "description": "Received from the provider, its lines matched, its amounts booked, and its bank line reconciled.",
+            "example": "booked"
+          },
+          "bankStatementLineId": {
+            "type": "string",
+            "nullable": true,
+            "title": "Bank statement line",
+            "description": "The bank statement line the payout arrived as.",
+            "example": "bsl-2026-10-07-0042"
+          },
+          "glTransactionId": {
+            "type": "string",
+            "nullable": true,
+            "title": "Journal entry",
+            "description": "The journal entry that booked the payout.",
+            "example": "gl-2026-10-07-0108"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Who recorded a payout, matched its lines or changed its amounts, and when."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_admin",
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_admin",
+            "shillinq_controller",
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_admin",
+            "shillinq_controller",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_admin",
+            "shillinq_controller"
+          ]
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "ProviderPayout",
+        "slug": "payout-mollie-2026-10-07"
+      },
+      "administrationId": "adm-gov-1",
+      "provider": "mollie",
+      "settlementReference": "st_2026_1007",
+      "settledAt": "2026-10-07",
+      "currency": "EUR",
+      "amountGross": 4951,
+      "amountFees": 38.65,
+      "amountRefunds": 0,
+      "amountChargebacks": 0,
+      "amountNet": 4912.35,
+      "lines": [
+        {
+          "providerPaymentId": "tr_100701",
+          "type": "payment",
+          "amount": 349.35,
+          "fee": 2.74,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_100702",
+          "type": "payment",
+          "amount": 349.35,
+          "fee": 2.74,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_100703",
+          "type": "payment",
+          "amount": 349.35,
+          "fee": 2.74,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_100704",
+          "type": "payment",
+          "amount": 349.35,
+          "fee": 2.74,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_100705",
+          "type": "payment",
+          "amount": 349.35,
+          "fee": 2.74,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_100706",
+          "type": "payment",
+          "amount": 349.35,
+          "fee": 2.74,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_100707",
+          "type": "payment",
+          "amount": 349.35,
+          "fee": 2.74,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_100708",
+          "type": "payment",
+          "amount": 349.35,
+          "fee": 2.74,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_100709",
+          "type": "payment",
+          "amount": 349.35,
+          "fee": 2.74,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_100710",
+          "type": "payment",
+          "amount": 349.35,
+          "fee": 2.74,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_100711",
+          "type": "payment",
+          "amount": 349.35,
+          "fee": 2.74,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_100712",
+          "type": "payment",
+          "amount": 349.35,
+          "fee": 2.74,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_100713",
+          "type": "payment",
+          "amount": 349.35,
+          "fee": 2.74,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_100714",
+          "type": "payment",
+          "amount": 349.45,
+          "fee": 2.74,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_8Kq2",
+          "type": "payment",
+          "amount": 60,
+          "fee": 0.29,
+          "status": "unmatched"
+        }
+      ],
+      "matchedLineCount": 14,
+      "unmatchedLineCount": 1,
+      "state": "booked"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "ProviderPayout",
+        "slug": "payout-mollie-2026-09-30"
+      },
+      "administrationId": "adm-gov-1",
+      "provider": "mollie",
+      "settlementReference": "st_2026_0930",
+      "settledAt": "2026-09-30",
+      "currency": "EUR",
+      "amountGross": 3120.5,
+      "amountFees": 24.4,
+      "amountRefunds": 0,
+      "amountChargebacks": 0,
+      "amountNet": 3096.1,
+      "lines": [
+        {
+          "providerPaymentId": "tr_093001",
+          "type": "payment",
+          "amount": 283.68,
+          "fee": 2.21,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_093002",
+          "type": "payment",
+          "amount": 283.68,
+          "fee": 2.21,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_093003",
+          "type": "payment",
+          "amount": 283.68,
+          "fee": 2.21,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_093004",
+          "type": "payment",
+          "amount": 283.68,
+          "fee": 2.21,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_093005",
+          "type": "payment",
+          "amount": 283.68,
+          "fee": 2.21,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_093006",
+          "type": "payment",
+          "amount": 283.68,
+          "fee": 2.21,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_093007",
+          "type": "payment",
+          "amount": 283.68,
+          "fee": 2.21,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_093008",
+          "type": "payment",
+          "amount": 283.68,
+          "fee": 2.21,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_093009",
+          "type": "payment",
+          "amount": 283.68,
+          "fee": 2.21,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_093010",
+          "type": "payment",
+          "amount": 283.68,
+          "fee": 2.21,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_093011",
+          "type": "payment",
+          "amount": 283.7,
+          "fee": 2.3,
+          "status": "matched"
+        }
+      ],
+      "matchedLineCount": 11,
+      "unmatchedLineCount": 0,
+      "state": "reconciled"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "ProviderPayout",
+        "slug": "payout-stripe-2026-09-28"
+      },
+      "administrationId": "adm-gov-1",
+      "provider": "stripe",
+      "settlementReference": "po_1Q8sT2",
+      "settledAt": "2026-09-28",
+      "currency": "EUR",
+      "amountGross": 860,
+      "amountFees": 12.9,
+      "amountRefunds": 0,
+      "amountChargebacks": 0,
+      "amountNet": 847.1,
+      "lines": [
+        {
+          "providerPaymentId": "tr_8sT201",
+          "type": "payment",
+          "amount": 215.0,
+          "fee": 3.22,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_8sT202",
+          "type": "payment",
+          "amount": 215.0,
+          "fee": 3.22,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_8sT203",
+          "type": "payment",
+          "amount": 215.0,
+          "fee": 3.22,
+          "status": "matched"
+        },
+        {
+          "providerPaymentId": "tr_8sT204",
+          "type": "payment",
+          "amount": 215.0,
+          "fee": 3.24,
+          "status": "matched"
+        }
+      ],
+      "matchedLineCount": 4,
+      "unmatchedLineCount": 0,
+      "state": "reconciled"
+    }
+  ]
+}

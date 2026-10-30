@@ -50,7 +50,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -62,6 +62,7 @@ namespace OCA\Shillinq\Service;
 
 use DateTime;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Lifecycle\SupplierInvoiceExceptionApprovalGuard;
 use OCA\Shillinq\Service\PurchaseOrder\CreditNoteRequestAdapterInterface;
 use OCA\Shillinq\Service\PurchaseOrder\LogCreditNoteRequestAdapter;
 use OCP\IAppConfig;
@@ -92,7 +93,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
  */
 class ExceptionResolutionService {
 
@@ -232,6 +233,7 @@ class ExceptionResolutionService {
 	 *                                                                  so the orchestration code
 	 *                                                                  is testable without
 	 *                                                                  openconnector wired.
+	 * @param ServerWriteAuthority $writeAuthority Grants the invoice release for the acceptance save.
 	 *
 	 * @return void
 	 */
@@ -243,6 +245,7 @@ class ExceptionResolutionService {
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 		?CreditNoteRequestAdapterInterface $creditNoteAdapter = null,
+		private readonly ServerWriteAuthority $writeAuthority = new ServerWriteAuthority(),
 	) {
 		$this->creditNoteAdapter = ($creditNoteAdapter ?? new LogCreditNoteRequestAdapter(logger: $logger));
 
@@ -278,7 +281,7 @@ class ExceptionResolutionService {
 	 *                           non-exception match status, or blank
 	 *                           motivation.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
 	 */
 	public function acceptWithMotivation(
 		string $administrationId,
@@ -345,7 +348,7 @@ class ExceptionResolutionService {
 	 *                           missing invoice, non-exception match
 	 *                           status, or blank reason.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
 	 */
 	public function fileDispute(
 		string $administrationId,
@@ -443,7 +446,7 @@ class ExceptionResolutionService {
 	 *                           non-exception match status, or blank
 	 *                           reason.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
 	 */
 	public function rejectAndBlockPayment(
 		string $administrationId,
@@ -509,7 +512,7 @@ class ExceptionResolutionService {
 	 *
 	 * @throws \RuntimeException On cross-tenant access.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
 	 */
 	public function notifyOnException(string $administrationId, string $matchId): void {
 		$this->assertAccess(administrationId: $administrationId);
@@ -856,7 +859,11 @@ class ExceptionResolutionService {
 			}
 
 			$invoice['statusCode'] = $nextStatus;
-			$this->saveObject(schema: self::SCHEMA_SUPPLIER_INVOICE, object: $invoice);
+			$this->writeAuthority->during(
+				purpose: SupplierInvoiceExceptionApprovalGuard::PURPOSE,
+				objectId: $this->idOf(record: $invoice),
+				work: fn (): array => $this->saveObject(schema: self::SCHEMA_SUPPLIER_INVOICE, object: $invoice)
+			);
 		} catch (\Throwable $exception) {
 			$this->logger->warning(
 				'ExceptionResolutionService: failed to advance invoice status',

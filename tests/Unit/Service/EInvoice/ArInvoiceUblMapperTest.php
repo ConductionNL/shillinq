@@ -165,4 +165,115 @@ final class ArInvoiceUblMapperTest extends TestCase {
 		self::assertStringContainsString('A &amp; B &lt;Consultancy&gt;', $xml);
 
 	}//end testSpecialCharactersAreEscaped()
+
+	/**
+	 * REQ-EINV-010: the customer's reference is the buyer reference (BT-10),
+	 * in UBL order right after the document currency.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/arinvoice-field-backfill-and-bt10/specs/bookkeeping-einvoicing-ubl-peppol/spec.md (REQ-EINV-010)
+	 */
+	public function testCustomerReferenceIsTheBuyerReference(): void {
+		$invoice = $this->issuedInvoice();
+		$invoice['customerReference'] = 'PO-4711 & co';
+
+		$xml = (new ArInvoiceUblMapper())->toNlciusXml(arInvoice: $invoice);
+
+		self::assertInstanceOf(SimpleXMLElement::class, new SimpleXMLElement($xml));
+		self::assertStringContainsString(
+			'<cbc:DocumentCurrencyCode>EUR</cbc:DocumentCurrencyCode><cbc:BuyerReference>PO-4711 &amp; co</cbc:BuyerReference><cac:AccountingSupplierParty>',
+			$xml
+		);
+	}//end testCustomerReferenceIsTheBuyerReference()
+
+	/**
+	 * REQ-EINV-010: no reference, no empty BuyerReference element.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/arinvoice-field-backfill-and-bt10/specs/bookkeeping-einvoicing-ubl-peppol/spec.md (REQ-EINV-010)
+	 */
+	public function testNoCustomerReferenceWritesNoBuyerReference(): void {
+		$invoice = $this->issuedInvoice();
+		$invoice['customerReference'] = '  ';
+
+		$xml = (new ArInvoiceUblMapper())->toNlciusXml(arInvoice: $invoice);
+
+		self::assertStringNotContainsString('BuyerReference', $xml);
+	}//end testNoCustomerReferenceWritesNoBuyerReference()
+	/**
+	 * REQ-SDP-006: a down-payment invoice carries invoice type code 386.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
+	 */
+	public function testADownPaymentInvoiceIsTypeCode386(): void {
+		$invoice = array_merge(
+			$this->issuedInvoice(),
+			['invoiceTypeCode' => '386', 'downPayment' => ['kind' => 'down-payment', 'orderReference' => 'order-117']]
+		);
+
+		$doc = new SimpleXMLElement((new ArInvoiceUblMapper())->toNlciusXml(arInvoice: $invoice));
+		$doc->registerXPathNamespace('cbc', 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2');
+
+		self::assertSame('386', (string)$doc->xpath('/*/cbc:InvoiceTypeCode')[0]);
+
+	}//end testADownPaymentInvoiceIsTypeCode386()
+
+	/**
+	 * REQ-SDP-006, the spec scenario: the final invoice to Gemeente Voorbeeld
+	 * carries the negative deduction line and a billing reference to the
+	 * down-payment invoice, and its lines add up to its total (BR-CO-10).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
+	 */
+	public function testAFinalInvoiceCarriesTheDeductionAndTheBillingReference(): void {
+		$invoice = array_merge(
+			$this->issuedInvoice(),
+			[
+				'netAmount' => 700.0,
+				'vatAmount' => 147.0,
+				'grossAmount' => 847.0,
+				'precedingInvoiceReferences' => [['reference' => '2026-0030', 'issueDate' => '2026-05-01']],
+				'downPayment' => ['kind' => 'final', 'orderReference' => 'order-9'],
+			]
+		);
+		$invoice['invoiceLines'][] = [
+			'lineId' => '3', 'quantity' => -1, 'unitCode' => 'C62', 'netAmount' => -300.0, 'netPrice' => 300.0,
+			'itemName' => 'Down payment 2026-0030 deducted', 'vatCategory' => 'S', 'vatRate' => 0.21, 'downPaymentInvoiceId' => 'ar-30',
+		];
+
+		$xml = (new ArInvoiceUblMapper())->toNlciusXml(arInvoice: $invoice);
+		$doc = new SimpleXMLElement($xml);
+		$doc->registerXPathNamespace('cbc', 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2');
+		$doc->registerXPathNamespace('cac', 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2');
+
+		self::assertSame('2026-0030', (string)$doc->xpath('/*/cac:BillingReference/cac:InvoiceDocumentReference/cbc:ID')[0]);
+		self::assertSame('2026-05-01', (string)$doc->xpath('/*/cac:BillingReference/cac:InvoiceDocumentReference/cbc:IssueDate')[0]);
+		self::assertLessThan(
+			strpos($xml, '<cac:AccountingSupplierParty>'),
+			strpos($xml, '<cac:BillingReference>'),
+			'UBL puts BillingReference before the seller'
+		);
+
+		$deduction = $doc->xpath('/*/cac:InvoiceLine[cbc:ID="3"]')[0];
+		$deduction->registerXPathNamespace('cbc', 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2');
+		$deduction->registerXPathNamespace('cac', 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2');
+		self::assertSame('-1', (string)$deduction->xpath('cbc:InvoicedQuantity')[0]);
+		self::assertSame('-300.00', (string)$deduction->xpath('cbc:LineExtensionAmount')[0]);
+		self::assertSame('300.00', (string)$deduction->xpath('cac:Price/cbc:PriceAmount')[0], 'BR-27: the price is never negative');
+
+		$lineSum = 0.0;
+		foreach ($doc->xpath('/*/cac:InvoiceLine/cbc:LineExtensionAmount') as $amount) {
+			$lineSum += (float)$amount;
+		}
+
+		self::assertSame(700.0, round($lineSum, 2));
+		self::assertSame('700.00', (string)$doc->xpath('/*/cac:LegalMonetaryTotal/cbc:LineExtensionAmount')[0], 'BR-CO-10');
+
+	}//end testAFinalInvoiceCarriesTheDeductionAndTheBillingReference()
 }//end class

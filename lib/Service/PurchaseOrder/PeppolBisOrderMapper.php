@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,7 +32,7 @@ namespace OCA\Shillinq\Service\PurchaseOrder;
 /**
  * Stateless PO → UBL 2.1 Order document mapper (Peppol BIS Ordering 3.0).
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
  */
 final class PeppolBisOrderMapper {
 

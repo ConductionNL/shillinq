@@ -148,6 +148,18 @@
             "example": "Net 30, korting 2%/10 dagen",
             "title": "Credit Terms"
           },
+          "paymentBlocked": {
+            "type": "boolean",
+            "default": false,
+            "description": "Payment block on this supplier (banking-payment-run REQ-BPR-004). A blocked supplier is left out of a proposed payment run and refuses the export of a run that pays it. It does not change the lifecycle state and does not stop invoices being received, issued or posted.",
+            "title": "Payment blocked"
+          },
+          "paymentBlockReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why payment is blocked; asked when the block is set and shown wherever the block refuses a payment.",
+            "title": "Payment block reason"
+          },
           "dunningPolicyRef": {
             "type": "string",
             "description": "FK to OR dunning-workflow policy record if the extension is stable per ADR-022; else null. Drives reminder cadence from the overdue state.",
@@ -270,29 +282,23 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "APTransaction": {
@@ -452,6 +458,18 @@
             "example": "gl-txn-2026-ap-0001",
             "title": "GL Transaction ID"
           },
+          "paymentBlocked": {
+            "type": "boolean",
+            "default": false,
+            "description": "Payment block on this invoice (banking-payment-run REQ-BPR-003). A blocked invoice is left out of a proposed payment run and refuses the export of a run that pays it. It does not change the lifecycle state.",
+            "title": "Payment blocked"
+          },
+          "paymentBlockReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why payment is blocked; asked when the block is set and shown wherever the block refuses a payment.",
+            "title": "Payment block reason"
+          },
           "writeOffReason": {
             "type": "string",
             "description": "Operator-authored audit-trailed reason for write-off. Required on the writeOff lifecycle transition.",
@@ -538,7 +556,19 @@
               "to": "issued",
               "label": "Issue / post invoice",
               "description": "Operator approves and posts the AP invoice. Guards: (1) balanced materialisation per T1; (2) FiscalPeriod open; (3) Payee.lifecycleState=active. Actions: (a) materialise one balanced GLTransaction (debit expense per line, credit AP payable account); (b) set glTransactionId back-reference; (c) set periodId from invoiceDate.",
-              "requires": "OCA\\Shillinq\\Lifecycle\\BalanceGuard::isBalanced"
+              "requires": "OCA\\Shillinq\\Lifecycle\\BalanceGuard::isInvoiceBalanced",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\MaterialiseGlTransactionAction",
+                  "description": "Book the issued supplier invoice: debit each line's expense account and input VAT, credit the creditors control account, in one balanced GLTransaction, and write glTransactionId (purchasing-supplier-invoice-intake REQ-PSII-002).",
+                  "actionParameters": {
+                    "sourceSchema": "APTransaction",
+                    "register": "shillinq",
+                    "keepBalanced": true
+                  }
+                }
+              ]
             },
             "matchFull": {
               "from": [
@@ -591,7 +621,11 @@
               "label": "Write off",
               "description": "Operator in role controller writes off the residual balance. Action: materialise a compensating balanced GLTransaction (debit AP payable account, credit bad-debt recovery / write-off account). Audit-trailed reason required. Sets writeOffGlTransactionId back-reference.",
               "requires": "OCA\\Shillinq\\Lifecycle\\APGuard::requireWriteOffReason",
-              "x-rbac-role": "controller"
+              "authorization": [
+                {
+                  "role": "controller"
+                }
+              ]
             },
             "void": {
               "from": "issued",
@@ -892,29 +926,28 @@
             ]
           }
         },
-        "x-openregister-rbac": {
+        "authorization": {
           "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+            "controller": [
+              "shillinq_controller"
+            ]
+          },
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "DunningNotice": {
@@ -989,29 +1022,23 @@
             "title": "Administration ID"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "PaymentRun": {
@@ -1134,6 +1161,13 @@
                   "nullable": true,
                   "title": "Remittance Info"
                 },
+                "requestedExecutionDate": {
+                  "type": "string",
+                  "format": "date",
+                  "nullable": true,
+                  "description": "The day this payment should leave the bank (banking-payment-run REQ-BPR-006). Lines without one take the run's executionDate; the pain.001 file writes one payment information block per date.",
+                  "title": "Requested execution date"
+                },
                 "apTransactionRef": {
                   "type": "string",
                   "description": "FK to the APTransaction UUID / slug this line settles.",
@@ -1204,8 +1238,12 @@
               "to": "approved",
               "label": "Approve payment run",
               "description": "Controller approves the batch. Four-eyes segregation of duties (payment-run-four-eyes): the approver MUST differ from whoever prepared the batch. Enforced server-side by FourEyesPaymentRunGuard, which derives the preparer from OpenRegister's immutable audit trail (ADR-022) and fails closed when the preparer is indeterminate. There is NO direct draft → exported transition. Approval is the control point before money leaves the administration.",
-              "x-rbac-role": "controller",
-              "requires": "OCA\\Shillinq\\Lifecycle\\FourEyesPaymentRunGuard"
+              "requires": "OCA\\Shillinq\\Lifecycle\\FourEyesPaymentRunGuard",
+              "authorization": [
+                {
+                  "role": "controller"
+                }
+              ]
             },
             "export": {
               "from": "approved",
@@ -1218,33 +1256,33 @@
               "from": "exported",
               "to": "reconciled",
               "label": "Reconcile payment run",
-              "description": "Match the exported batch against the bank statement and set reconciledAt. Terminal."
+              "description": "Match the exported batch against the bank statement and set reconciledAt. Terminal.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\PaymentRunReconcileGuard"
             }
           }
         },
-        "x-openregister-rbac": {
+        "authorization": {
           "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "controller": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+            "controller": [
+              "shillinq_controller"
+            ]
+          },
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       }
     },
@@ -1402,6 +1440,96 @@
         "phone": "+31702000000",
         "administrationId": "adm-shillinq-demo",
         "lifecycleState": "active"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Payee",
+          "slug": "payee-drukkerij-vandermeer"
+        },
+        "vendorNumber": "V-2026-022",
+        "name": "Drukkerij Van der Meer B.V.",
+        "payeeType": "supplier",
+        "kvkNumber": "12345678",
+        "vatNumber": "NL812345678B01",
+        "paymentTermDays": 30,
+        "defaultExpenseAccountNumber": "4300",
+        "bankAccount": {
+          "iban": "NL00TEST0555555555",
+          "accountHolderName": "Drukkerij Van der Meer B.V."
+        },
+        "administrationId": "adm-shillinq-demo",
+        "lifecycleState": "active"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Payee",
+          "slug": "payee-schoonmaak-devries"
+        },
+        "vendorNumber": "V-2026-021",
+        "name": "Schoonmaakbedrijf De Vries",
+        "payeeType": "supplier",
+        "paymentTermDays": 30,
+        "defaultExpenseAccountNumber": "4400",
+        "bankAccount": {
+          "iban": "NL00TEST0444444444",
+          "accountHolderName": "Schoonmaakbedrijf De Vries"
+        },
+        "paymentBlocked": true,
+        "paymentBlockReason": "IBAN change under verification",
+        "administrationId": "adm-shillinq-demo",
+        "lifecycleState": "active"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "APTransaction",
+          "slug": "ap-txn-devries-dv-7781"
+        },
+        "invoiceNumber": "DV-7781",
+        "vendorId": "payee-schoonmaak-devries",
+        "invoiceDate": "2026-06-01",
+        "dueDate": "2026-07-01",
+        "currency": "EUR",
+        "totalAmount": 2420.0,
+        "taxAmount": 420.0,
+        "lines": [
+          {
+            "description": "Kantoorschoonmaak juni 2026",
+            "accountNumber": "4400",
+            "amount": 2000.0,
+            "taxCode": "BTW21"
+          }
+        ],
+        "state": "issued",
+        "administrationId": "adm-shillinq-demo"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "APTransaction",
+          "slug": "ap-txn-officecenter-2026-06-0019"
+        },
+        "invoiceNumber": "OC-2026-06-0019",
+        "vendorId": "payee-officecenter",
+        "invoiceDate": "2026-06-10",
+        "dueDate": "2026-06-24",
+        "currency": "EUR",
+        "totalAmount": 605.0,
+        "taxAmount": 105.0,
+        "lines": [
+          {
+            "description": "Bureaustoelen, deellevering",
+            "accountNumber": "4400",
+            "amount": 500.0,
+            "taxCode": "BTW21"
+          }
+        ],
+        "state": "issued",
+        "paymentBlocked": true,
+        "paymentBlockReason": "Wacht op creditnota",
+        "administrationId": "adm-shillinq-demo"
       },
       {
         "@self": {

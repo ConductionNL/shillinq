@@ -32,7 +32,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
@@ -53,7 +53,7 @@ use Psr\Log\NullLogger;
 /**
  * Log-only Peppol adapter (default DI binding for both PO and AR).
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  */
 final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInterface {
@@ -193,7 +193,7 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
 	 *
 	 * @return string The transmission identifier.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
 	 *
 	 * @inheritDoc
 	 */

@@ -1,0 +1,277 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "receivables-payment-plans",
+		"description": "Payment plans: the index with a Due this month filter, the plan page with its instalments and the Activate, Record a payment and Cancel actions (PaymentPlanActionModal, through PaymentPlanController). Agree a payment plan sits on CustomerDetail and ARInvoiceDetail in src/manifest.json."
+	},
+	"menu": [
+		{
+			"id": "PaymentPlans",
+			"label": "Payment plans",
+			"icon": "CalendarClock",
+			"route": "PaymentPlans",
+			"order": 24
+		}
+	],
+	"pages": [
+		{
+			"id": "PaymentPlans",
+			"route": "/bookkeeping/payment-plans",
+			"type": "index",
+			"title": "Payment plans",
+			"config": {
+				"register": "shillinq",
+				"schema": "PaymentPlan",
+				"columns": [
+					{
+						"key": "planNumber",
+						"label": "Plan",
+						"sortable": true
+					},
+					{
+						"key": "customerName",
+						"label": "Customer",
+						"sortable": true
+					},
+					{
+						"key": "totalAmount",
+						"label": "Total",
+						"sortable": true
+					},
+					{
+						"key": "paidAmount",
+						"label": "Paid",
+						"sortable": true
+					},
+					{
+						"key": "arrears",
+						"label": "Arrears",
+						"sortable": true
+					},
+					{
+						"key": "nextDueDate",
+						"label": "Next due",
+						"sortable": true
+					},
+					{
+						"key": "nextDueAmount",
+						"label": "Next instalment",
+						"sortable": false
+					},
+					{
+						"key": "thisMonthAmount",
+						"label": "Due this month",
+						"sortable": false
+					},
+					{
+						"key": "thisMonthPaid",
+						"label": "Paid this month",
+						"sortable": false
+					},
+					{
+						"key": "lifecycleState",
+						"label": "State",
+						"sortable": true
+					}
+				],
+				"defaultSort": "nextDueDate",
+				"detailRoute": "PaymentPlanDetail",
+				"quickFilters": [
+					{
+						"label": "All",
+						"filter": {},
+						"default": true
+					},
+					{
+						"label": "Due this month",
+						"filter": {
+							"lifecycleState": "active",
+							"instalmentThisMonth": true
+						}
+					},
+					{
+						"label": "Active",
+						"filter": {
+							"lifecycleState": "active"
+						}
+					},
+					{
+						"label": "Broken",
+						"filter": {
+							"lifecycleState": "broken"
+						}
+					}
+				]
+			}
+		},
+		{
+			"id": "PaymentPlanDetail",
+			"route": "/bookkeeping/payment-plans/:id",
+			"type": "detail",
+			"title": "Payment plan",
+			"config": {
+				"register": "shillinq",
+				"schema": "PaymentPlan",
+				"indexRoute": "PaymentPlans",
+				"headerActions": [
+					{
+						"id": "activate-plan",
+						"label": "Activate plan",
+						"type": "open-modal",
+						"target": "PaymentPlanActionModal",
+						"icon": "PlayCircleOutline",
+						"props": {
+							"open": true,
+							"mode": "activate"
+						},
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"op": "eq",
+							"value": "draft"
+						}
+					},
+					{
+						"id": "record-payment",
+						"label": "Record a payment",
+						"type": "open-modal",
+						"target": "PaymentPlanActionModal",
+						"icon": "CashPlus",
+						"props": {
+							"open": true,
+							"mode": "settle"
+						},
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"op": "eq",
+							"value": "active"
+						}
+					},
+					{
+						"id": "cancel-draft-plan",
+						"label": "Cancel plan",
+						"type": "open-modal",
+						"target": "PaymentPlanActionModal",
+						"icon": "CloseCircleOutline",
+						"props": {
+							"open": true,
+							"mode": "cancel"
+						},
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"op": "eq",
+							"value": "draft"
+						}
+					},
+					{
+						"id": "cancel-plan",
+						"label": "Cancel plan",
+						"type": "open-modal",
+						"target": "PaymentPlanActionModal",
+						"icon": "CloseCircleOutline",
+						"props": {
+							"open": true,
+							"mode": "cancel"
+						},
+						"visibleWhen": {
+							"field": "lifecycleState",
+							"op": "eq",
+							"value": "active"
+						}
+					}
+				],
+				"widgets": [
+					{
+						"id": "plan-terms",
+						"type": "data",
+						"title": "Plan",
+						"icon": "CalendarClock",
+						"content": {
+							"columns": 2,
+							"include": [
+								"planNumber",
+								"customerName",
+								"invoiceNumbers",
+								"totalAmount",
+								"paidAmount",
+								"arrears",
+								"nextDueDate",
+								"nextDueAmount",
+								"frequency",
+								"graceDays",
+								"paymentReference",
+								"agreedOn",
+								"agreedWith",
+								"lifecycleState",
+								"endReason"
+							]
+						}
+					},
+					{
+						"id": "plan-instalments",
+						"type": "object-list",
+						"title": "Instalments",
+						"icon": "CalendarCheckOutline",
+						"content": {
+							"register": "shillinq",
+							"schema": "PaymentPlanInstalment",
+							"filter": {
+								"planId": "@objectId"
+							},
+							"sort": {
+								"field": "instalmentNumber",
+								"dir": "asc"
+							},
+							"limit": 120,
+							"columns": [
+								{
+									"key": "instalmentNumber",
+									"label": "Instalment"
+								},
+								{
+									"key": "dueDate",
+									"label": "Due"
+								},
+								{
+									"key": "amount",
+									"label": "Amount"
+								},
+								{
+									"key": "paidAmount",
+									"label": "Paid"
+								},
+								{
+									"key": "paidDate",
+									"label": "Paid on"
+								},
+								{
+									"key": "state",
+									"label": "State"
+								}
+							],
+							"emptyText": "No instalments yet."
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "plan-terms",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 5
+					},
+					{
+						"id": "2",
+						"widgetId": "plan-instalments",
+						"gridX": 0,
+						"gridY": 5,
+						"gridWidth": 12,
+						"gridHeight": 6
+					}
+				]
+			}
+		}
+	]
+}

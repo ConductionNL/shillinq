@@ -90,27 +90,6 @@
             "taxonomyVersion"
           ]
         ],
-        "x-openregister-rbac": {
-          "roles": {
-            "finance-manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "accountant": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true
         }
@@ -557,28 +536,6 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "finance-manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "accountant": {
-              "permissions": [
-                "read",
-                "create"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true
         }
@@ -656,29 +613,6 @@
             "taxonomyVersion"
           ]
         ],
-        "x-openregister-rbac": {
-          "roles": {
-            "finance-manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "accountant": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true
         }
@@ -777,10 +711,40 @@
     {
       "@self": {
         "register": "shillinq",
+        "schema": "Account",
+        "slug": "acct-1000-current-assets",
+        "id": "1c45852d-3295-5903-99e5-facbf40ca339"
+      },
+      "accountNumber": "1000",
+      "name": "Vlottende activa",
+      "accountType": "assets",
+      "currency": "EUR",
+      "administrationId": "adm-consultancy-nl",
+      "lifecycleState": "active",
+      "description": "Source account of the SBR/XBRL mapping sample."
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Account",
+        "slug": "acct-4000-operating-revenue",
+        "id": "6f4036d7-b601-5fdd-af57-6efc414ef78b"
+      },
+      "accountNumber": "4000",
+      "name": "Bedrijfsopbrengsten",
+      "accountType": "revenue",
+      "currency": "EUR",
+      "administrationId": "adm-consultancy-nl",
+      "lifecycleState": "active",
+      "description": "Source account of the SBR/XBRL mapping sample."
+    },
+    {
+      "@self": {
+        "register": "shillinq",
         "schema": "XBRLMapping",
         "slug": "xbrl-map-2026-acct-1000-current-assets"
       },
-      "sourceAccountId": "acct-1000-current-assets",
+      "sourceAccountId": "1c45852d-3295-5903-99e5-facbf40ca339",
       "targetXBRLConcept": "http://xbrl.gl/concept/CurrentAssets",
       "taxonomyVersion": "2026-01",
       "mappingDate": "2026-01-01",
@@ -793,7 +757,7 @@
         "schema": "XBRLMapping",
         "slug": "xbrl-map-2026-acct-4000-operating-revenue"
       },
-      "sourceAccountId": "acct-4000-operating-revenue",
+      "sourceAccountId": "6f4036d7-b601-5fdd-af57-6efc414ef78b",
       "targetXBRLConcept": "http://xbrl.gl/concept/OperatingRevenue",
       "taxonomyVersion": "2026-01",
       "mappingDate": "2026-01-01",

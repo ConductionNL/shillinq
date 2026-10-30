@@ -104,6 +104,13 @@ final class PortalPaymentObjectServiceStub {
 	public int $findAllCalls = 0;
 
 	/**
+	 * Make find() throw an infrastructure error (not a miss).
+	 *
+	 * @var bool
+	 */
+	public bool $throwOnFind = false;
+
+	/**
 	 * Make saveObject() throw.
 	 *
 	 * @var bool
@@ -139,6 +146,15 @@ final class PortalPaymentObjectServiceStub {
 		}
 
 		$filters = ($config['filters'] ?? []);
+
+		// OpenRegister's `filters` address JSON properties, and `id` is the
+		// entity's own column: a filter on it matches nothing, for every value.
+		// The stub mirrors that, or a lookup by `id` certifies itself here and
+		// finds nothing live.
+		if (array_key_exists('id', $filters) === true) {
+			return [];
+		}
+
 		$rows = ($this->data[$this->register][$this->schema] ?? []);
 
 		return array_values(
@@ -156,6 +172,33 @@ final class PortalPaymentObjectServiceStub {
 			)
 		);
 	}//end findAll()
+
+	/**
+	 * OpenRegister's single-object lookup: by uuid, throwing on a miss.
+	 *
+	 * @param int|string $id The uuid.
+	 * @param array|null $_extend Unused.
+	 * @param bool $files Unused.
+	 * @param mixed $register The register.
+	 * @param mixed $schema The schema.
+	 * @param bool $_rbac Unused.
+	 * @param bool $_multitenancy Unused.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public function find(int|string $id, ?array $_extend = [], bool $files = false, mixed $register = null, mixed $schema = null, bool $_rbac = true, bool $_multitenancy = true): array {
+		if ($this->throwOnFind === true) {
+			throw new RuntimeException('OpenRegister read failed');
+		}
+
+		foreach (($this->data[(string)($register ?? $this->register)][(string)($schema ?? $this->schema)] ?? []) as $row) {
+			if (($row['id'] ?? null) === (string)$id) {
+				return $row;
+			}
+		}
+
+		throw new \OCP\AppFramework\Db\DoesNotExistException('not found');
+	}//end find()
 
 	/**
 	 * @param array|object $object The object data.
@@ -520,9 +563,9 @@ final class PortalPaymentSessionServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testInvoiceLookupFailureIsDownstreamError(): void {
-		// Call 1 = the portalAccount claim resolution (must succeed so the
-		// failure is pinned specifically to the LATER ARInvoice read).
-		$this->objectService->throwOnFindAllFromCall = 2;
+		// The claim resolution (findAll) succeeds; the ARInvoice read by uuid
+		// (find) fails with an infrastructure error, not a miss.
+		$this->objectService->throwOnFind = true;
 
 		$this->provider->expects($this->never())->method('createSession');
 
@@ -530,6 +573,23 @@ final class PortalPaymentSessionServiceTest extends TestCase {
 
 		self::assertSame('downstream_error', $result->status);
 	}//end testInvoiceLookupFailureIsDownstreamError()
+
+	/**
+	 * An invoice addressed by its slug (not its uuid) still resolves through
+	 * the slug property, owned and payable (REQ-SPPI-009).
+	 *
+	 * @return void
+	 */
+	public function testAnInvoiceAddressedBySlugResolves(): void {
+		$this->objectService->data['shillinq']['ARInvoice'][0]['slug'] = 'inv-2026-0001';
+		$this->provider->expects($this->once())->method('createSession')->willReturn(
+			new PaymentSessionResult(dormant: false, checkoutUrl: 'https://mollie.example/checkout/tr_s', paymentIntentId: 'tr_s')
+		);
+
+		$result = $this->makeService()->initiate(claims: $this->claims(), target: 'inv-2026-0001');
+
+		self::assertSame('ok', $result->status);
+	}//end testAnInvoiceAddressedBySlugResolves()
 
 	/**
 	 * A PSP call failure is a downstream error, never leaked to the caller.
@@ -543,4 +603,252 @@ final class PortalPaymentSessionServiceTest extends TestCase {
 
 		self::assertSame('downstream_error', $result->status);
 	}//end testProviderFailureIsDownstreamError()
+
+	/**
+	 * An invoice whose amount cannot be read opens NO checkout. The cast used to
+	 * make it 0.00 and the citizen was sent to a payment page for nothing, which
+	 * they then believe they have paid (REQ-SPPI-004).
+	 *
+	 * @return void
+	 */
+	public function testAnInvoiceWithAnUnreadableAmountNeverReachesThePsp(): void {
+		unset($this->objectService->data['shillinq']['ARInvoice'][0]['totalAmount']);
+
+		$this->provider->expects($this->never())->method('createSession');
+
+		$result = $this->makeService()->initiate(claims: $this->claims(), target: self::INVOICE_ID);
+
+		self::assertSame('downstream_error', $result->status);
+	}//end testAnInvoiceWithAnUnreadableAmountNeverReachesThePsp()
+
+	/**
+	 * Nor does one that is payable for zero. A checkout for 0.00 is a page that
+	 * cannot be paid, and the invoice needs a person, not a provider.
+	 *
+	 * @return void
+	 */
+	public function testAnInvoiceOfZeroNeverReachesThePsp(): void {
+		$this->objectService->data['shillinq']['ARInvoice'][0]['totalAmount'] = 0.0;
+
+		$this->provider->expects($this->never())->method('createSession');
+
+		$result = $this->makeService()->initiate(claims: $this->claims(), target: self::INVOICE_ID);
+
+		self::assertSame('downstream_error', $result->status);
+	}//end testAnInvoiceOfZeroNeverReachesThePsp()
+
+	/**
+	 * No PaymentRequest is written either. A pending request for 0.00 would be
+	 * reused by the next attempt, so the refusal has to leave nothing behind.
+	 *
+	 * @return void
+	 */
+	public function testAnUnreadableAmountWritesNoPaymentRequest(): void {
+		unset($this->objectService->data['shillinq']['ARInvoice'][0]['totalAmount']);
+
+		$this->makeService()->initiate(claims: $this->claims(), target: self::INVOICE_ID);
+
+		// The stub records every write, so this reads the writes that HAPPENED
+		// rather than the seed data, which the stub never mutates.
+		self::assertEmpty(
+			array_filter(
+				$this->objectService->saved,
+				static fn (array $write): bool => $write['schema'] === 'PaymentRequest'
+			)
+		);
+	}//end testAnUnreadableAmountWritesNoPaymentRequest()
+
+	/**
+	 * Seed a parent's portal account and an issued school contribution invoice
+	 * that carries only the fields ARInvoice declares.
+	 *
+	 * @return void
+	 */
+	private function seedParentContribution(): void {
+		$this->objectService->data['portaliq']['portalAccount'] = [
+			[
+				'subjectRef' => self::SUBJECT_REF,
+				'audience' => 'parent',
+				'claims' => ['shillinq' => ['customerMasterId' => self::CUSTOMER_MASTER_ID]],
+			],
+		];
+		$this->objectService->data['shillinq']['ARInvoice'] = [
+			[
+				'id' => self::INVOICE_ID,
+				'customerId' => self::CUSTOMER_MASTER_ID,
+				'lifecycleState' => 'issued',
+				'grossAmount' => 35.0,
+				'currency' => 'EUR',
+				'invoiceNumber' => 'CTB-2026-1A2B3C4D-0001',
+				'administrationId' => 'adm-school-1',
+				'contribution' => [
+					'kind' => 'school-trip',
+					'voluntary' => true,
+					'chargeable' => ['app' => 'learniq', 'type' => 'fee-item', 'register' => 'learniq', 'schema' => 'FeeItem', 'id' => 'fee-9'],
+					'beneficiary' => ['type' => 'learner', 'id' => 'child-a'],
+					'raiseBatchId' => 'ctb-20261001-1a2b3c4d',
+				],
+			],
+		];
+	}//end seedParentContribution()
+
+	/**
+	 * A parent pays an issued contribution invoice (read through
+	 * `lifecycleState`) through the request the raise already wrote, for
+	 * exactly its amount (REQ-SCON-010).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-010)
+	 */
+	public function testAParentPaysAnIssuedContributionInvoice(): void {
+		$this->seedParentContribution();
+		$this->objectService->data['shillinq']['PaymentRequest'] = [
+			[
+				'id' => 'pr-raised-1',
+				'invoiceReference' => self::INVOICE_ID,
+				'subjectKind' => 'object',
+				'requestType' => 'contribution',
+				'amount' => 35.0,
+				'currency' => 'EUR',
+				'state' => 'pending',
+			],
+		];
+
+		$captured = null;
+		$this->provider->method('createSession')->willReturnCallback(
+			function (PaymentSessionRequest $request) use (&$captured): PaymentSessionResult {
+				$captured = $request;
+				return new PaymentSessionResult(dormant: false, checkoutUrl: 'https://mollie.example/checkout/tr_p', paymentIntentId: 'tr_p');
+			}
+		);
+
+		$result = $this->makeService()->initiate(claims: $this->claims(['audience' => 'parent']), target: self::INVOICE_ID);
+
+		self::assertSame('ok', $result->status);
+		self::assertSame(35.0, $captured->amount);
+		self::assertSame('pr-raised-1', $captured->metadata['correlationId']);
+		$last = end($this->objectService->saved);
+		self::assertSame('pr-raised-1', $last['uuid']);
+		self::assertSame('tr_p', $last['object']['paymentIntentId']);
+	}//end testAParentPaysAnIssuedContributionInvoice()
+
+	/**
+	 * After a failed attempt the fresh request keeps the contribution
+	 * reference, so the settled signal still names the owning app, and its
+	 * amount comes from `grossAmount` (REQ-SCON-010).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-010)
+	 */
+	public function testAFreshRequestForAContributionKeepsItsReference(): void {
+		$this->seedParentContribution();
+		$this->objectService->data['shillinq']['PaymentRequest'] = [
+			['id' => 'pr-failed-1', 'invoiceReference' => self::INVOICE_ID, 'amount' => 35.0, 'state' => 'failed'],
+		];
+		$this->provider->method('createSession')->willReturn(
+			new PaymentSessionResult(dormant: false, checkoutUrl: 'https://mollie.example/checkout/tr_q', paymentIntentId: 'tr_q')
+		);
+
+		$result = $this->makeService()->initiate(claims: $this->claims(['audience' => 'parent']), target: self::INVOICE_ID);
+
+		self::assertSame('ok', $result->status);
+		$minted = $this->objectService->saved[0]['object'];
+		self::assertSame('object', $minted['subjectKind']);
+		self::assertSame('contribution', $minted['requestType']);
+		self::assertSame('fee-9', $minted['subject']['id']);
+		self::assertSame('learniq', $minted['subject']['app']);
+		self::assertSame('child-a', $minted['beneficiary']['id']);
+		self::assertTrue($minted['voluntary']);
+		self::assertSame(35.0, $minted['amount']);
+		self::assertSame(self::CUSTOMER_MASTER_ID, $minted['debtor']['customerMasterId']);
+	}//end testAFreshRequestForAContributionKeepsItsReference()
+
+	/**
+	 * A supplier still cannot pay: only customers and parents do.
+	 *
+	 * @return void
+	 */
+	public function testASupplierStillCannotPay(): void {
+		$this->seedParentContribution();
+		$this->provider->expects($this->never())->method('createSession');
+
+		$result = $this->makeService()->initiate(claims: $this->claims(['audience' => 'supplier']), target: self::INVOICE_ID);
+
+		self::assertSame('forbidden', $result->status);
+	}//end testASupplierStillCannotPay()
+
+	/**
+	 * A pending leges request without an invoice, owed by this subject's
+	 * customer, and three that are not payable by them.
+	 *
+	 * @return void
+	 */
+	private function seedRequestsWithoutAnInvoice(): void {
+		$own = ['subjectKind' => 'object', 'requestType' => 'leges', 'amount' => 125.0, 'currency' => 'EUR', 'state' => 'pending', 'description' => 'Leges omgevingsvergunning', 'customerId' => self::CUSTOMER_MASTER_ID, 'debtor' => ['customerMasterId' => self::CUSTOMER_MASTER_ID], 'administrationId' => 'adm-1'];
+		$this->objectService->data['shillinq']['PaymentRequest'] = [
+			$own + ['id' => 'pr-own'],
+			array_merge($own, ['id' => 'pr-foreign', 'customerId' => self::OTHER_CUSTOMER_ID, 'debtor' => ['customerMasterId' => self::OTHER_CUSTOMER_ID]]),
+			array_merge($own, ['id' => 'pr-invoice', 'invoiceReference' => self::INVOICE_ID]),
+			array_merge($own, ['id' => 'pr-captured', 'state' => 'captured']),
+			array_merge($own, ['id' => 'pr-zero', 'amount' => 0]),
+		];
+	}//end seedRequestsWithoutAnInvoice()
+
+	/**
+	 * A citizen pays a leges request that has no invoice: the checkout is for
+	 * exactly the request's amount, and the intent id lands on that request
+	 * (REQ-SPPI-008, REQ-SOPR-005).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
+	 */
+	public function testACitizenPaysARequestWithoutAnInvoice(): void {
+		$this->seedRequestsWithoutAnInvoice();
+		$captured = null;
+		$this->provider->expects($this->once())->method('createSession')->willReturnCallback(
+			function (PaymentSessionRequest $request) use (&$captured): PaymentSessionResult {
+				$captured = $request;
+				return new PaymentSessionResult(dormant: false, checkoutUrl: 'https://mollie.example/checkout/tr_9', paymentIntentId: 'tr_9');
+			}
+		);
+
+		$result = $this->makeService()->initiateForRequest(claims: $this->claims(), target: 'pr-own');
+
+		self::assertSame('ok', $result->status);
+		self::assertSame(125.0, $captured->amount);
+		self::assertSame('EUR', $captured->currency);
+		self::assertSame('ideal', $captured->method);
+		self::assertStringContainsString('Leges omgevingsvergunning', $captured->description);
+		self::assertSame('pr-own', $captured->metadata['correlationId']);
+		self::assertCount(1, $this->objectService->saved);
+		self::assertSame('pr-own', $this->objectService->saved[0]['uuid']);
+		self::assertSame('tr_9', $this->objectService->saved[0]['object']['paymentIntentId']);
+		self::assertArrayNotHasKey('id', $this->objectService->saved[0]['object']);
+	}//end testACitizenPaysARequestWithoutAnInvoice()
+
+	/**
+	 * Another customer's request, an invoice-backed one and a captured one
+	 * are forbidden without a provider call; a zero amount is a downstream
+	 * error; a supplier and a URL-shaped id are forbidden (REQ-SPPI-008).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
+	 */
+	public function testOnlyTheSubjectsOwnPendingRequestWithoutAnInvoiceIsPayable(): void {
+		$this->seedRequestsWithoutAnInvoice();
+		$this->provider->expects($this->never())->method('createSession');
+		$service = $this->makeService();
+
+		foreach (['pr-foreign', 'pr-invoice', 'pr-captured', 'pr-missing', 'https://attacker.example/pr-own', ''] as $target) {
+			self::assertSame('forbidden', $service->initiateForRequest(claims: $this->claims(), target: $target)->status, $target);
+		}
+
+		self::assertSame('forbidden', $service->initiateForRequest(claims: $this->claims(['audience' => 'supplier']), target: 'pr-own')->status);
+		self::assertSame('downstream_error', $service->initiateForRequest(claims: $this->claims(), target: 'pr-zero')->status);
+		self::assertSame([], $this->objectService->saved);
+	}//end testOnlyTheSubjectsOwnPendingRequestWithoutAnInvoiceIsPayable()
 }//end class

@@ -211,6 +211,59 @@ class AdministrationContextService {
 			return [];
 		}
 
+		return $this->administrationIdsForUser(userId: $userId);
+	}//end accessibleAdministrationIds()
+
+	/**
+	 * Whether a named user may access an administration, without a session.
+	 *
+	 * A background job runs as nobody; a scheduled report runs on behalf of the
+	 * schedule's owner and must never reach further than that owner could by hand.
+	 *
+	 * @param string $userId           The user.
+	 * @param string $administrationId The administration.
+	 *
+	 * @return bool True when the user holds a currently valid membership.
+	 *
+	 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+	 */
+	public function canUserAccess(string $userId, string $administrationId): bool {
+		if ($userId === '' || $administrationId === '') {
+			return false;
+		}
+
+		return in_array(needle: $administrationId, haystack: $this->administrationIdsForUser(userId: $userId), strict: true);
+	}//end canUserAccess()
+
+	/**
+	 * The administration a named user works in by default: their first valid membership.
+	 *
+	 * A dashboard widget is asked for a user id without a shillinq session, so
+	 * it cannot read the session's active administration.
+	 *
+	 * @param string $userId The user.
+	 *
+	 * @return string|null The administration id, or null when the user has none.
+	 *
+	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
+	 */
+	public function defaultAdministrationIdForUser(string $userId): ?string {
+		if ($userId === '') {
+			return null;
+		}
+
+		return ($this->administrationIdsForUser(userId: $userId)[0] ?? null);
+
+	}//end defaultAdministrationIdForUser()
+
+	/**
+	 * The administration ids a user holds a currently valid membership for.
+	 *
+	 * @param string $userId The user.
+	 *
+	 * @return array<int,string>
+	 */
+	private function administrationIdsForUser(string $userId): array {
 		$ids = [];
 		foreach ($this->membershipsForUser(userId: $userId) as $membership) {
 			$administrationId = (string)($membership['administrationId'] ?? '');
@@ -226,7 +279,7 @@ class AdministrationContextService {
 		}
 
 		return array_values(array_unique($ids));
-	}//end accessibleAdministrationIds()
+	}//end administrationIdsForUser()
 
 	/**
 	 * Whether the authenticated user may access a given administration (REQ-MA-001).
@@ -269,6 +322,33 @@ class AdministrationContextService {
 
 		return false;
 	}//end canPostJournalEntry()
+
+	/**
+	 * Whether the authenticated user holds a currently valid owner (`eigenaar`) membership.
+	 *
+	 * @param string $administrationId The administration id.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-12
+	 */
+	public function isOwnerOf(string $administrationId): bool {
+		$userId = $this->currentUserId();
+		if ($userId === null || $administrationId === '') {
+			return false;
+		}
+
+		foreach ($this->membershipsForUser(userId: $userId) as $membership) {
+			if ((string)($membership['administrationId'] ?? '') === $administrationId
+				&& (string)($membership['role'] ?? '') === 'eigenaar'
+				&& $this->membershipIsCurrentlyValid(membership: $membership) === true
+			) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end isOwnerOf()
 
 	/**
 	 * Validate a requested active administration and return the id to switch to (REQ-MA-003).

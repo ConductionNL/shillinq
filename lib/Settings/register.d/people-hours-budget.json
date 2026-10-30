@@ -1,0 +1,145 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "people-hours-budget",
+    "adr": "ADR-037 modular register fragment; ADR-031 declarative calculation and notifications, ADR-078 imperative re-sum in an object-event listener",
+    "description": "Hours budget per assignment. ProjectAssignment.loggedHours is the sum of the hours booked on it (UrenRegistratie.projectAssignmentId), kept current by lib/Listener/AssignmentHoursListener.php; hoursUsedPercent is declared. The warned flags go true once at 80 and at 100 percent and fall back when the estimate changes, and each flag going true tells the project owner (the project's responsibleUser, copied onto the assignment as projectOwner). The project (engagement) carries the totals and hoursOverBudget for the over-budget filter."
+  },
+  "components": {
+    "schemas": {
+      "ProjectAssignment": {
+        "properties": {
+          "loggedHours": {
+            "type": "number",
+            "minimum": 0,
+            "nullable": true,
+            "description": "Hours booked on this assignment, the sum of its time registrations. Kept current automatically; do not edit.",
+            "example": 96,
+            "title": "Logged hours"
+          },
+          "remainingHours": {
+            "type": "number",
+            "nullable": true,
+            "description": "Estimated hours minus logged hours; negative when the budget is overrun. Empty when there is no estimate.",
+            "example": 24,
+            "title": "Remaining hours"
+          },
+          "hoursUsedPercent": {
+            "type": "number",
+            "nullable": true,
+            "readOnly": true,
+            "description": "Derived: logged hours as a percentage of the estimated hours, one decimal. Empty when there is no estimate.",
+            "example": 80,
+            "title": "Hours used (%)"
+          },
+          "hoursWarnedAt80": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "The project owner was warned that this assignment reached 80 percent of its hours. Cleared when the estimate changes.",
+            "example": true,
+            "title": "Warned at 80 percent"
+          },
+          "hoursWarnedAt100": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "The project owner was warned that this assignment reached 100 percent of its hours. Cleared when the estimate changes.",
+            "example": false,
+            "title": "Warned at 100 percent"
+          },
+          "projectOwner": {
+            "type": "string",
+            "nullable": true,
+            "description": "Nextcloud user id of the project owner (the project's responsible user), who receives the hours warnings.",
+            "example": "j.devries",
+            "title": "Project owner"
+          },
+          "projectTitle": {
+            "type": "string",
+            "nullable": true,
+            "description": "The project's name, copied for the hours warnings.",
+            "example": "Herinrichting Wmo-loket",
+            "title": "Project"
+          }
+        },
+        "x-openregister-calculations": {
+          "hoursUsedPercent": {
+            "materialise": true,
+            "targetField": "hoursUsedPercent",
+            "type": "number",
+            "description": "Logged hours as a percentage of the estimate, one decimal; empty without an estimate. JSON-AST: if(estimatedHours > 0, round(loggedHours / estimatedHours * 100, 1), null).",
+            "expression": {
+              "if": [
+                { "gt": [ { "prop": "estimatedHours" }, { "lit": 0 } ] },
+                { "round": [ { "*": [ { "/": [ { "prop": "loggedHours" }, { "prop": "estimatedHours" } ] }, { "lit": 100 } ] }, { "lit": 1 } ] },
+                { "lit": null }
+              ]
+            }
+          }
+        },
+        "x-openregister-notifications": {
+          "onHoursAt80": {
+            "trigger": {
+              "type": "updated",
+              "condition": { "field": "hoursWarnedAt80", "operator": "equals", "value": true, "from": false }
+            },
+            "description": "Tell the project owner once that an assignment reached 80 percent of its budgeted hours.",
+            "enabled": true,
+            "channels": [ "nc-notification" ],
+            "recipients": [ { "kind": "field", "field": "projectOwner" } ],
+            "subject": {
+              "nl": "{{projectTitle}}: {{personId}} heeft {{loggedHours}} van {{estimatedHours}} uur geschreven (80 procent)",
+              "en": "{{projectTitle}}: {{personId}} has logged {{loggedHours}} of {{estimatedHours}} hours (80 percent)"
+            }
+          },
+          "onHoursAt100": {
+            "trigger": {
+              "type": "updated",
+              "condition": { "field": "hoursWarnedAt100", "operator": "equals", "value": true, "from": false }
+            },
+            "description": "Tell the project owner once that an assignment used all of its budgeted hours.",
+            "enabled": true,
+            "channels": [ "nc-notification" ],
+            "recipients": [ { "kind": "field", "field": "projectOwner" } ],
+            "subject": {
+              "nl": "{{projectTitle}}: {{personId}} heeft {{loggedHours}} van {{estimatedHours}} uur geschreven, het urenbudget is op",
+              "en": "{{projectTitle}}: {{personId}} has logged {{loggedHours}} of {{estimatedHours}} hours, the hours budget is used up"
+            }
+          }
+        }
+      },
+      "engagement": {
+        "properties": {
+          "estimatedHoursTotal": {
+            "type": "number",
+            "nullable": true,
+            "description": "Sum of the estimated hours of the project's assignments. Kept current automatically.",
+            "example": 120,
+            "title": "Estimated hours"
+          },
+          "loggedHoursTotal": {
+            "type": "number",
+            "nullable": true,
+            "description": "Sum of the hours logged on the project's assignments. Kept current automatically.",
+            "example": 96,
+            "title": "Logged hours"
+          },
+          "remainingHoursTotal": {
+            "type": "number",
+            "nullable": true,
+            "description": "Estimated minus logged hours over the project's assignments; negative when overrun.",
+            "example": 24,
+            "title": "Remaining hours"
+          },
+          "hoursOverBudget": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "At least one assignment of the project is over 100 percent of its estimated hours.",
+            "example": false,
+            "title": "Over hours budget"
+          }
+        }
+      }
+    }
+  }
+}

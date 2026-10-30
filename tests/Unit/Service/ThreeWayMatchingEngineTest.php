@@ -38,7 +38,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+ * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -49,6 +49,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
 use OCA\Shillinq\Service\SupplierInvoiceService;
 use OCA\Shillinq\Service\ThreeWayMatchingEngine;
 use OCA\Shillinq\Service\ToleranceProfileService;
@@ -224,6 +225,7 @@ final class ThreeWayMatchingEngineTest extends TestCase {
 			administrationContext: $administrationContext,
 			logger:                $logger,
 			objectService: new DuckObjectServiceAdapter($stub),
+			checks: $this->createStub(SupplierInvoiceChecks::class),
 		);
 
 		return new ThreeWayMatchingEngine(

@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
 use OCA\Shillinq\Lifecycle\JournalEntryGuard;
+use OCA\Shillinq\Lifecycle\PostingRestrictionGuard;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -86,6 +87,7 @@ class JournalEntryGuardTest extends TestCase {
 			appConfig: $this->appConfig,
 			logger: $this->logger,
 			objectService: new DuckObjectServiceAdapter($this->buildObjectServiceStub(records: [])),
+			restrictions: $this->createMock(PostingRestrictionGuard::class),
 		);
 
 	}//end setUp()
@@ -107,6 +109,7 @@ class JournalEntryGuardTest extends TestCase {
 			appConfig: $this->appConfig,
 			logger: $this->logger,
 			objectService: new DuckObjectServiceAdapter($store),
+			restrictions: $this->createMock(PostingRestrictionGuard::class),
 		);
 
 	}//end wireObjectService()

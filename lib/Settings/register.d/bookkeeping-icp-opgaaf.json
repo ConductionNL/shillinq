@@ -92,6 +92,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a VIES Validation is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_fiscalist",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "IcpSupply": {
@@ -217,6 +236,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a ICP Supply is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_fiscalist",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "IcpOpgaaf": {
@@ -444,6 +482,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a ICP-opgaaf (Recapitulative Statement) is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_fiscalist",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "PeriodicitySwitch": {
@@ -548,6 +605,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Periodicity Switch is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_fiscalist",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "ARInvoice": {
