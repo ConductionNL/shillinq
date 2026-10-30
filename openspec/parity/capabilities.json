@@ -1233,7 +1233,8 @@
 				"evidence": "Administrations and memberships are kept (Administraties, AdministratieLidmaatschappen) and src/components/AdministratieSwitcher.vue posts /api/administrations/switch, but lib/Controller/AdministrationController.php:128 switch() only validates and echoes the id (persists nothing), and lib/Service/AdministrationContextService.php:181 always returns the FIRST membership as activeAdministrationId, so after the switcher's page reload the old administration is active again; generic index pages (e.g. GeneralLedger) carry no administrationId filter.",
 				"reachedOn": "AdministrationSwitcher /administratie/wisselen (via menu Bookkeeping > Switch administration); Administraties (settings gear > Administrations)",
 				"owner": "ConductionNL/shillinq",
-				"change": "ledger-multi-administration"
+				"change": "ledger-multi-administration",
+				"requirement": "The chosen administration sticks (REQ-LMA-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2217,7 +2218,8 @@
 				"reachedOn": "DunningLadders /bookkeeping/dunning/ladders (settings gear), DunningRuns /bookkeeping/dunning/runs (via menu Bookkeeping > Dunning Runs)",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-27",
-				"change": "receivables-automatic-dunning"
+				"change": "receivables-automatic-dunning",
+				"requirement": "A reminder mail carries the stage's wording and the invoice (REQ-RAD-003)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2486,7 +2488,8 @@
 				"evidence": "lib/Service/SupplierInvoiceService.php:124 ALLOWED_TRANSITIONS received->matching->matched/exception->approved->paid, driven by ThreeWayMatchingEngine.php:1086; src/components/supplier-invoice/SupplierInvoiceDetail.vue:16 says transitions are not exposed in the UI; APTransaction approvalNeeded exists only as an x-openregister-notifications declaration (bookkeeping-accounts-payable-core.json)",
 				"reachedOn": "ThreeWayMatchIndex /inkoop/three-way-matches (menu Purchasing > Three-way matches) exception panel accept/reject; SupplierInvoiceDetail is read-only",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookkeeping-purchase-order-3way-06-matching-engine"
+				"spec": "openspec/specs/bookkeeping-three-way-matching-engine",
+				"requirement": "Automated line-level 3-way matching within tolerance (REQ-TWM-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2521,7 +2524,8 @@
 				"evidence": "lib/Service/ThreeWayMatchingEngine.php evaluateMatch + setStatus at :1086; src/components/three-way-match/ThreeWayMatchIndex.vue:312 POSTs /api/three-way-matches/evaluate; ThreeWayMatchExceptionPanel.vue calls /api/three-way-match/exceptions/*; lib/Listener/GRIRClearingListener.php (Application.php:309) posts the GR/IR settlement on SupplierInvoice matched; SupplierInvoice cannot reach approved/paid without matched or an accepted exception (SupplierInvoiceService.php:124)",
 				"reachedOn": "ThreeWayMatchIndex /inkoop/three-way-matches (menu Purchasing > Three-way matches); ThreeWayMatchDetail /inkoop/3way-matches/:id",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookkeeping-purchase-order-3way-06-matching-engine"
+				"spec": "openspec/specs/bookkeeping-three-way-matching-engine",
+				"requirement": "Automated line-level 3-way matching within tolerance (REQ-TWM-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2660,7 +2664,8 @@
 				"evidence": "lib/Service/VendorPerformanceAggregation.php:14-25 computes onTimeDelivery, quantityAccuracy, priceAccuracy, invoiceAccuracy and a weighted overallScore + trend from GRN/ThreeWayMatch/SupplierInvoice; VendorPerformanceAggregationJob registered in appinfo/info.xml",
 				"reachedOn": "VendorPerformanceIndex /inkoop/vendor-performance (menu Purchasing > Vendor performance); VendorPerformanceDetail /inkoop/vendor-performance/:id",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookkeeping-purchase-order-3way-10-vendor-performance"
+				"spec": "openspec/specs/bookkeeping-vendor-performance",
+				"requirement": "Monthly vendor scoring with auto-review eligibility (REQ-VPS-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -2765,7 +2770,8 @@
 				"evidence": "PurchaseOrderService::determineApprovalChain (PurchaseOrderController.php:184, called from PurchaseOrderForm.vue:337) materialises an amount-threshold chain and PurchaseOrderDetail.vue:223 blocks sending until every approver signs; the decision endpoint /api/purchase-orders/{id}/approval-decision (routes.php:365, PurchaseOrderApprovalService::recordApprovalDecision) is not called anywhere in src/ (absent from _lane/frontend-api-paths.txt) Corrections round 8 (2026-09-28), shillinq#1716: even a call to the decision endpoint cannot complete approval, because lib/Service/PurchaseOrderService.php:839-852 writes chain entries with status pending, lib/Service/PurchaseOrderApprovalService.php:217 skips every entry whose decision is not pending and :237 then throws Approval chain is fully signed, and the send checks at lib/Service/PurchaseOrderService.php:436-443 and :627-634 wait for status approved and a signedAt that nothing writes, at a165206.",
 				"reachedOn": "PurchaseOrders /inkoop/purchase-orders (menu Purchasing > Purchase Orders) shows the chain; nothing reaches the approve action: no button calls approval-decision",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookkeeping-purchase-order-3way-02-purchase-order-core"
+				"spec": "openspec/specs/bookkeeping-purchase-order-core",
+				"requirement": "Create purchase order with amount-threshold approval chain (REQ-POC-001)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4253,7 +4259,8 @@
 				"evidence": "ConsolidationGroup/ConsolidationPeriod/ConsolidatedReport lists exist, but lib/Service/ConsolidationMappingService.php (applyMapping, shouldEliminate) has no caller outside itself, and the only elimination writer (IntercompanyMatchingService.php:398) is unreachable (SoftCloseExecutor.php:469 calls non-existent matchForPeriod). No code aggregates subsidiaries into group statements.",
 				"reachedOn": "ConsolidationGroups, ConsolidationPeriods, ConsolidatedReports (via menu Bookkeeping > Consolidation Groups / Consolidated Reports)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookkeeping-consolidation-commercial"
+				"spec": "openspec/specs/bookkeeping-consolidation-commercial",
+				"requirement": "Define a consolidation group with parent + subsidiaries, ownership and method (REQ-CONS-001); REQ-CONS-002 to REQ-CONS-005 aggregate, eliminate and translate"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4465,7 +4472,8 @@
 				"evidence": "Contracts and ContractObligations lists; lib/Listener/ContractObligationTaskListener.php (registered Application.php:1255) calls lib/Service/ObligationTaskBridge.php to write a VTODO plus a deadline VEVENT for the renewal/opzegtermijn date (line 162) on obligation create/update; ContractCostRollupJob (registered) rolls up spend for ContractSpendDashboard.",
 				"reachedOn": "Contracts /contracts and ContractObligations /contracts/obligations (via menu Purchasing > Procurement Contracts / Obligations)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-15-contract-lifecycle-management"
+				"spec": "openspec/specs/contract-lifecycle-management",
+				"requirement": "Contracts are stored as a Contract schema with a Nextcloud contact as counterparty (REQ-CLM-001); obligations in REQ-CLM-003, renewal alerts in REQ-CLM-004"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -4955,7 +4963,9 @@
 				"evidence": "AvailabilityRule, ResourceBreak, BookingConstraint schemas and AvailabilityRules page (bookings-availability-rules.json, settingsSection in src/menu-layout.json), but no PHP file reads those schemas (grep 'AvailabilityRule'|'ResourceBreak'|'BookingConstraint' in lib: none); lib/Service/SlotService.php:136-160 uses only the resource's single openingTime/closingTime and existing appointments",
 				"reachedOn": "AvailabilityRules /verkoop/beschikbaarheidsregels (settings gear); Resources /bookings/resources (via menu Sales > Bookings > Resources)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookings-availability-rules"
+				"change": "2026-06-14-bookings-availability-rules",
+				"spec": "openspec/specs/bookings-availability-rules",
+				"requirement": "REQ-BAR-001 AvailabilityRule Register Definition"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5295,7 +5305,9 @@
 				"evidence": "IB47Record list on IB47Jaarbatch (src/manifest.d/add-shillinq-detachering-payroll-administratie.json); no PHP aggregates payments to third parties into IB47 records or builds the statement (grep Ib47 in lib/*.php finds only the adapter interface and lib/Service/External/Ib47/LogIb47Adapter.php), and the IB47 connection is log-only per lib/Settings/connections.json. The report catalogue has no IB47 entry.",
 				"reachedOn": "IB47Jaarbatch /bookkeeping/detachering-payroll/ib47 (via menu Bookkeeping > IB47 annual batch)",
 				"owner": "ConductionNL/shillinq",
-				"change": "2026-06-14-bookkeeping-detachering-payroll-administratie"
+				"change": "2026-06-14-bookkeeping-detachering-payroll-administratie",
+				"spec": "openspec/specs/bookkeeping-detachering-payroll-administratie",
+				"requirement": "IB47Record register (REQ-DPA-002)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5401,7 +5413,8 @@
 				"evidence": "Shillinq has no login of its own; every page sits behind Nextcloud authentication, whose two-factor providers apply (appinfo/info.xml navigation shillinq.dashboard.page)",
 				"reachedOn": "Nextcloud login, before any shillinq page",
 				"owner": "nextcloud/server",
-				"spec": "none"
+				"change": "platform-properties",
+				"requirement": "Sign-in, including two-factor authentication, is the Nextcloud login (REQ-PLAT-001)"
 			},
 			"screen": {
 				"board": null,
@@ -5435,7 +5448,8 @@
 				"evidence": "every page reads and writes through OpenRegister's REST API (/index.php/apps/openregister/api/objects/shillinq/..., e.g. src/manifest.json BtwAangifteDetail sidebar source); appinfo/routes.php adds 843 lines of app routes",
 				"reachedOn": "any client with Nextcloud credentials; no API documentation page is shipped in this repo",
 				"owner": "ConductionNL/openregister",
-				"spec": "none"
+				"change": "platform-properties",
+				"requirement": "Other software reaches shillinq's records through a REST API (REQ-PLAT-003)"
 			},
 			"screen": {
 				"board": null,
@@ -5542,7 +5556,8 @@
 				"reachedOn": "The floating companion on every shillinq page when hermiq is installed",
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-27",
-				"change": "mcp-action-tool-surface"
+				"change": "mcp-action-tool-surface",
+				"requirement": "A user SHALL be able to command shillinq from chat, with agent-facing descriptions carrying the routing knowledge (REQ-MCP-005)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -5646,7 +5661,8 @@
 				"evidence": "l10n/ ships 25 languages (50 .js/.json files), including nl, en, de and fr",
 				"reachedOn": "every page, following the Nextcloud user language",
 				"owner": "ConductionNL/shillinq",
-				"spec": "none"
+				"change": "platform-properties",
+				"requirement": "The interface follows the user's Nextcloud language (REQ-PLAT-004)"
 			},
 			"screen": {
 				"board": null,
@@ -5752,7 +5768,8 @@
 				"evidence": "appinfo/info.xml: a Nextcloud app under EUPL-1.2 with OpenRegister as its data layer, installed on the customer's own Nextcloud",
 				"reachedOn": "Nextcloud app store or a manual install",
 				"owner": "ConductionNL/shillinq",
-				"spec": "none"
+				"change": "platform-properties",
+				"requirement": "shillinq runs on the customer's own Nextcloud (REQ-PLAT-005)"
 			},
 			"screen": {
 				"board": null,
@@ -5912,6 +5929,35 @@
 			"note": "Covers taakveld totals only, not the economic categories, and cannot be submitted."
 		},
 		{
+			"id": "pub-iv3-case-costs",
+			"area": "public-sector",
+			"name": "Report case costs per Iv3 taakveld and per case type, from the hours booked on cases.",
+			"shillinq": "no",
+			"exact-online": "unknown",
+			"moneybird": "unknown",
+			"snelstart": "unknown",
+			"twinfield": "unknown",
+			"odoo": "no",
+			"built": {
+				"state": "specified",
+				"evidence": "Not built. lib/Reporting/Generator/Iv3ReportGenerator.php sums GL lines per taakveld only; no cost source reads hours per case and the case type's taakveld, and lib/Reporting/ReportCatalogue.php has no per case type report.",
+				"reachedOn": "ReportingComplianceOverview /reporting-compliance, report card IV3-rapportage (planned: a case cost section, and a report card Zaakkosten per zaaktype)",
+				"owner": "ConductionNL/shillinq",
+				"readOn": "2026-10-30",
+				"change": "iv3-report-takes-case-costs-by-case-type",
+				"requirement": "The Iv3 report shows case costs per taakveld from the case type classification (REQ-IV3-010); The same case cost source is grouped per case type per period (REQ-IV3-012)"
+			},
+			"screen": {
+				"canvas": "design-system",
+				"board": "ShOverheid"
+			},
+			"provider": "shillinq",
+			"providerHow": "read-from-code",
+			"feature": "emu-sisa-bcf-reporting",
+			"source": "own-code",
+			"note": "Decisions 261 and 262 (30 Oct 2026, ADR-107): Shillinq is the only Iv3 reporter; dossiq classifies a case type (iv3TaskField) and links out, and sums no money. The competitor columns follow pub-iv3: none of them serves Dutch public-sector finance in the documents read for it."
+		},
+		{
 			"id": "pub-sisa",
 			"area": "public-sector",
 			"name": "Produce the SiSa appendix for specific grants.",
@@ -6028,7 +6074,8 @@
 				"evidence": "Built half: TreasuryDashboard /treasury/dashboard plus index pages for loans, derivatives, statutes and quarterly reports (src/manifest.d/bookkeeping-wet-fido-treasury.json); lib/Service/Treasury holds the calculations. The missing half is change public-sector-quarterly-returns (decided build 2026-09-29, Ruben 29 Sep: municipalities are the market).",
 				"reachedOn": "TreasuryDashboard /treasury/dashboard (menu Banking & Cashflow)",
 				"owner": "ConductionNL/shillinq",
-				"change": "public-sector-quarterly-returns"
+				"change": "public-sector-quarterly-returns",
+				"requirement": "The cash limit is computed (REQ-FDO-010); The interest risk norm is shown on the dashboard (REQ-FDO-011)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -6236,7 +6283,8 @@
 				"evidence": "Built half: SubsidiesOverzicht, SubsidieAanvragen and SubsidieTerugvorderingen are index pages; lib/Service/SubsidieVerantwoordingService.php has no caller in lib/. The missing half is change public-sector-grant-accountability (decided build 2026-09-29, Ruben 29 Sep: municipalities are the market).",
 				"reachedOn": "SubsidiesOverzicht /subsidies/overzicht (menu Reporting & Compliance)",
 				"owner": "ConductionNL/shillinq",
-				"change": "public-sector-grant-accountability"
+				"change": "public-sector-grant-accountability",
+				"requirement": "Indicators are computed per specific grant (REQ-SISA-012)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -7132,7 +7180,8 @@
 				"owner": "ConductionNL/shillinq",
 				"readOn": "2026-09-26",
 				"reachedOn": "nothing",
-				"change": "fees-payments-and-the-contract-register"
+				"change": "fees-payments-and-the-contract-register",
+				"requirement": "A payment run is submitted to a provider (REQ-FPCR-004)"
 			},
 			"screen": {
 				"canvas": "design-system",
@@ -8222,7 +8271,8 @@
 				"readOn": "2026-09-26",
 				"evidence": "Shillinq has no login of its own; Nextcloud authentication applies, and Nextcloud supports SAML and OpenID Connect through its user_saml and user_oidc apps.",
 				"reachedOn": "Nextcloud login, before any shillinq page",
-				"spec": "none"
+				"change": "platform-properties",
+				"requirement": "Single sign-on works through the Nextcloud login (REQ-PLAT-002)"
 			},
 			"screen": {
 				"board": null,

@@ -28,7 +28,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/contract-lifecycle-management/specs/contract-lifecycle-management/spec.md
+ * @spec openspec/specs/contract-lifecycle-management/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -49,7 +49,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * returns ['taskUri' => null, 'taskLinkStatus' => 'failed'] and logs the
  * reason; it never throws into the obligation CRUD path (REQ-CLM-003).
  *
- * @spec openspec/changes/contract-lifecycle-management/specs/contract-lifecycle-management/spec.md
+ * @spec openspec/specs/contract-lifecycle-management/spec.md
  *
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral
