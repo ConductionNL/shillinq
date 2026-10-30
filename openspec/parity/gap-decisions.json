@@ -1314,89 +1314,89 @@
 	{
 		"row": "pub-bbv",
 		"matrix": "shillinq",
-		"decision": "decided-no",
-		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
-		"change": null,
+		"decision": "build",
+		"reason": "Ruben 29 Sep (decision 3): municipalities are the market, build them. This entry first said decided-no (no competitor rates it yes, public-sector outside the core area); the build entry below reverses it.",
+		"change": "public-sector-task-field-allocation",
 		"decidedOn": "2026-09-29"
 	},
 	{
 		"row": "pub-sisa",
 		"matrix": "shillinq",
-		"decision": "decided-no",
-		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
-		"change": null,
+		"decision": "build",
+		"reason": "Ruben 29 Sep (decision 3): municipalities are the market, build them. This entry first said decided-no (no competitor rates it yes, public-sector outside the core area); the build entry below reverses it.",
+		"change": "public-sector-grant-accountability",
 		"decidedOn": "2026-09-29"
 	},
 	{
 		"row": "pub-rechtmatigheid",
 		"matrix": "shillinq",
-		"decision": "decided-no",
-		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
-		"change": null,
+		"decision": "build",
+		"reason": "Ruben 29 Sep (decision 3): municipalities are the market, build them. This entry first said decided-no (no competitor rates it yes, public-sector outside the core area); the build entry below reverses it.",
+		"change": "public-sector-council-and-auditor-statements",
 		"decidedOn": "2026-09-29"
 	},
 	{
 		"row": "pub-bcf",
 		"matrix": "shillinq",
-		"decision": "decided-no",
-		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
-		"change": null,
+		"decision": "build",
+		"reason": "Ruben 29 Sep (decision 3): municipalities are the market, build them. This entry first said decided-no (no competitor rates it yes, public-sector outside the core area); the build entry below reverses it.",
+		"change": "public-sector-quarterly-returns",
 		"decidedOn": "2026-09-29"
 	},
 	{
 		"row": "pub-fido",
 		"matrix": "shillinq",
-		"decision": "decided-no",
-		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
-		"change": null,
+		"decision": "build",
+		"reason": "Ruben 29 Sep (decision 3): municipalities are the market, build them. This entry first said decided-no (no competitor rates it yes, public-sector outside the core area); the build entry below reverses it.",
+		"change": "public-sector-quarterly-returns",
 		"decidedOn": "2026-09-29"
 	},
 	{
 		"row": "pub-gr",
 		"matrix": "shillinq",
-		"decision": "decided-no",
-		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
-		"change": null,
+		"decision": "build",
+		"reason": "Ruben 29 Sep (decision 3): municipalities are the market, build them. This entry first said decided-no (no competitor rates it yes, public-sector outside the core area); the build entry below reverses it.",
+		"change": "public-sector-task-field-allocation",
 		"decidedOn": "2026-09-29"
 	},
 	{
 		"row": "pub-market-separation",
 		"matrix": "shillinq",
-		"decision": "decided-no",
-		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
-		"change": null,
+		"decision": "build",
+		"reason": "Ruben 29 Sep (decision 3): municipalities are the market, build them. This entry first said decided-no (no competitor rates it yes, public-sector outside the core area); the build entry below reverses it.",
+		"change": "public-sector-task-field-allocation",
 		"decidedOn": "2026-09-29"
 	},
 	{
 		"row": "pub-ensia",
 		"matrix": "shillinq",
-		"decision": "decided-no",
-		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
-		"change": null,
+		"decision": "build",
+		"reason": "Ruben 29 Sep (decision 3): municipalities are the market, build them. This entry first said decided-no (no competitor rates it yes, public-sector outside the core area); the build entry below reverses it.",
+		"change": "public-sector-council-and-auditor-statements",
 		"decidedOn": "2026-09-29"
 	},
 	{
 		"row": "pub-subsidies",
 		"matrix": "shillinq",
-		"decision": "decided-no",
-		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
-		"change": null,
+		"decision": "build",
+		"reason": "Ruben 29 Sep (decision 3): municipalities are the market, build them. This entry first said decided-no (no competitor rates it yes, public-sector outside the core area); the build entry below reverses it.",
+		"change": "public-sector-grant-accountability",
 		"decidedOn": "2026-09-29"
 	},
 	{
 		"row": "pub-eu-funds",
 		"matrix": "shillinq",
-		"decision": "decided-no",
-		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
-		"change": null,
+		"decision": "build",
+		"reason": "Ruben 29 Sep (decision 3): municipalities are the market, build them. This entry first said decided-no (no competitor rates it yes, public-sector outside the core area); the build entry below reverses it.",
+		"change": "public-sector-grant-accountability",
 		"decidedOn": "2026-09-29"
 	},
 	{
 		"row": "pub-audit-protocol",
 		"matrix": "shillinq",
-		"decision": "decided-no",
-		"reason": "No competitor rates it yes, no tender, feature request or roadmap names it, and public-sector is outside the core area (ledger, sales). The built half stays; the missing half is not built.",
-		"change": null,
+		"decision": "build",
+		"reason": "Ruben 29 Sep (decision 3): municipalities are the market, build them. This entry first said decided-no (no competitor rates it yes, public-sector outside the core area); the build entry below reverses it.",
+		"change": "public-sector-council-and-auditor-statements",
 		"decidedOn": "2026-09-29"
 	},
 	{
