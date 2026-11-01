@@ -367,9 +367,8 @@ export default {
 					return t('shillinq', 'Closed')
 				case STATE_AUDIT_LOCKED:
 					return t('shillinq', 'Audit locked')
-				default:
-					return state
 			}
+			return state
 		},
 
 		canStartClose() {
