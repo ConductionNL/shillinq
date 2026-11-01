@@ -72,228 +72,456 @@ final class RuleEngine {
 	 */
 	private static function checks(): array {
 		$builtin = [
-			'ARInvoice' => [
-				// EN 16931 mandatory invoice fields (BT-1/2/5/109/112) mapped to the ARInvoice header.
-				'en16931-br-02' => static fn (array $o): bool => self::present($o, 'invoiceNumber'),
-				'en16931-br-03' => static fn (array $o): bool => self::present($o, 'invoiceDate'),
-				'en16931-br-05' => static fn (array $o): bool => self::present($o, 'currency'),
-				'en16931-br-13' => static fn (array $o): bool => self::numericPresent($o, 'netAmount'),
-				'en16931-br-14' => static fn (array $o): bool => self::numericPresent($o, 'grossAmount'),
-				// BR-CO-15: total with VAT = total without VAT + total VAT (at cent precision).
-				'en16931-br-co-15' => static fn (array $o): bool => self::centsEqual(
-					(float)($o['grossAmount'] ?? 0),
-					((float)($o['netAmount'] ?? 0) + (float)($o['vatAmount'] ?? 0))
-				),
-				// A gapless sequential invoice number — presence is enforceable per-object.
-				'gl-sequential-invoice-numbering' => static fn (array $o): bool => self::present($o, 'invoiceNumber'),
-				// Buyer / customer must be identified (VAT Directive art. 226(5) / EN 16931 BT-44).
-				'vatdir-art226-5' => static fn (array $o): bool => self::present($o, 'customerId'),
-				'en16931-br-07' => static fn (array $o): bool => self::present($o, 'customerId'),
-				// The VAT amount payable must be stated (VAT Directive art. 226(10)).
-				'vatdir-art226-10' => static fn (array $o): bool => self::numericPresent($o, 'vatAmount'),
-				// Currency must be a valid ISO 4217 code (EN 16931 BR-CL-03).
-				'en16931-br-cl-03' => static fn (array $o): bool => self::isIsoCurrency((string)($o['currency'] ?? '')),
-				// Totals must not exceed 2 decimals (EN 16931 BR-DEC-12/13/14).
-				'en16931-br-dec-12' => static fn (array $o): bool => self::maxDecimals($o['netAmount'] ?? null, 2),
-				'en16931-br-dec-13' => static fn (array $o): bool => self::maxDecimals($o['vatAmount'] ?? null, 2),
-				'en16931-br-dec-14' => static fn (array $o): bool => self::maxDecimals($o['grossAmount'] ?? null, 2),
-
-				// --- EN 16931 invoice-line group (BG-25), enforced against the modeled `invoiceLines[]`. ---
-				'en16931-br-16' => static fn (array $o): bool => self::lines($o) !== [],
-				'en16931-br-21' => static fn (array $o): bool => self::allLinesPresent($o, 'lineId'),
-				'en16931-br-22' => static fn (array $o): bool => self::allLinesNumeric($o, 'quantity'),
-				'en16931-br-23' => static fn (array $o): bool => self::allLinesPresent($o, 'unitCode'),
-				'en16931-br-24' => static fn (array $o): bool => self::allLinesNumeric($o, 'netAmount'),
-				'en16931-br-25' => static fn (array $o): bool => self::allLinesPresent($o, 'itemName'),
-				'en16931-br-26' => static fn (array $o): bool => self::allLinesNumeric($o, 'netPrice'),
-				'en16931-br-co-04' => static fn (array $o): bool => self::allLinesVatCategorized($o),
-				'en16931-br-dec-23' => static fn (array $o): bool => self::allLinesMaxDecimals($o, 'netAmount', 2),
-
-				// --- Document totals derived from the lines (BT-106 / BT-109). ---
-				'en16931-br-12' => static fn (array $o): bool => self::numericPresent($o, 'lineNetTotal'),
-				'en16931-br-dec-09' => static fn (array $o): bool => self::maxDecimals($o['lineNetTotal'] ?? null, 2),
-				'en16931-br-co-10' => static fn (array $o): bool => self::centsEqual(
-					(float)($o['lineNetTotal'] ?? 0),
-					self::sumLineNet($o)
-				),
-				'en16931-br-co-13' => static fn (array $o): bool => self::centsEqual(
-					(float)($o['netAmount'] ?? 0),
-					(float)($o['lineNetTotal'] ?? 0)
-				),
-
-				// --- EN 16931 VAT breakdown group (BG-23), enforced against the modeled `vatBreakdown[]`. ---
-				'en16931-br-co-18' => static fn (array $o): bool => self::vatBreakdown($o) !== [],
-				'en16931-br-45' => static fn (array $o): bool => self::allBreakdownNumeric($o, 'taxableAmount'),
-				'en16931-br-46' => static fn (array $o): bool => self::allBreakdownNumeric($o, 'taxAmount'),
-				'en16931-br-47' => static fn (array $o): bool => self::allBreakdownPresent($o, 'category'),
-				'en16931-br-48' => static fn (array $o): bool => self::allBreakdownRated($o),
-				'en16931-br-dec-19' => static fn (array $o): bool => self::allBreakdownMaxDecimals($o, 'taxableAmount', 2),
-				'en16931-br-dec-20' => static fn (array $o): bool => self::allBreakdownMaxDecimals($o, 'taxAmount', 2),
-				'en16931-br-co-14' => static fn (array $o): bool => self::centsEqual(
-					(float)($o['vatAmount'] ?? 0),
-					self::sumBreakdownTax($o)
-				),
-				'en16931-br-co-17' => static fn (array $o): bool => self::breakdownTaxConsistent($o),
-
-				// VAT Directive art. 226(8)/(9): taxable amount per rate + the rate applied.
-				'vatdir-art226-8' => static fn (array $o): bool => self::allBreakdownNumeric($o, 'taxableAmount'),
-				'vatdir-art226-9' => static fn (array $o): bool => self::allBreakdownRated($o),
-
-				// --- EN 16931 per-VAT-category breakdown consistency (BG-23 keyed by BT-118). ---
-				// *-08: category taxable amount = Σ line net of that category. *-09: tax amount
-				// is taxable × rate for Standard-rated and zero for the exempt/zero-rated families.
-				'en16931-br-s-08' => static fn (array $o): bool => self::categoryTaxableOk($o, 'S'),
-				'en16931-br-s-09' => static fn (array $o): bool => self::categoryTaxOk($o, 'S', false),
-				'en16931-br-z-08' => static fn (array $o): bool => self::categoryTaxableOk($o, 'Z'),
-				'en16931-br-z-09' => static fn (array $o): bool => self::categoryTaxOk($o, 'Z', true),
-				'en16931-br-e-08' => static fn (array $o): bool => self::categoryTaxableOk($o, 'E'),
-				'en16931-br-e-09' => static fn (array $o): bool => self::categoryTaxOk($o, 'E', true),
-				'en16931-br-ae-08' => static fn (array $o): bool => self::categoryTaxableOk($o, 'AE'),
-				'en16931-br-ae-09' => static fn (array $o): bool => self::categoryTaxOk($o, 'AE', true),
-				'en16931-br-o-08' => static fn (array $o): bool => self::categoryTaxableOk($o, 'O'),
-				'en16931-br-o-09' => static fn (array $o): bool => self::categoryTaxOk($o, 'O', true),
-				'en16931-br-g-08' => static fn (array $o): bool => self::categoryTaxableOk($o, 'G'),
-				'en16931-br-g-09' => static fn (array $o): bool => self::categoryTaxOk($o, 'G', true),
-				'en16931-br-ic-08' => static fn (array $o): bool => self::categoryTaxableOk($o, 'K'),
-				'en16931-br-ic-09' => static fn (array $o): bool => self::categoryTaxOk($o, 'K', true),
-
-				// --- EN 16931 invoiced-item VAT rate per line category (BT-152 by BT-151, BR-*-05). ---
-				// Standard rated must be > 0; the zero/exempt/reverse/export/intra families must be 0;
-				// 'Not subject to VAT' must carry no rate at all.
-				'en16931-br-s-05' => static fn (array $o): bool => self::lineRateByCategory($o, 'S', 'positive'),
-				'en16931-br-z-05' => static fn (array $o): bool => self::lineRateByCategory($o, 'Z', 'zero'),
-				'en16931-br-e-05' => static fn (array $o): bool => self::lineRateByCategory($o, 'E', 'zero'),
-				'en16931-br-ae-05' => static fn (array $o): bool => self::lineRateByCategory($o, 'AE', 'zero'),
-				'en16931-br-g-05' => static fn (array $o): bool => self::lineRateByCategory($o, 'G', 'zero'),
-				'en16931-br-ic-05' => static fn (array $o): bool => self::lineRateByCategory($o, 'K', 'zero'),
-				'en16931-br-o-05' => static fn (array $o): bool => self::lineRateByCategory($o, 'O', 'absent'),
-
-				// --- EN 16931 VAT exemption reason per breakdown category (BT-120/121 by BT-118, BR-*-10). ---
-				// Standard/Zero rated must NOT carry an exemption reason; the exempt/reverse/not-subject/
-				// export/intra-community families MUST carry one.
-				'en16931-br-s-10' => static fn (array $o): bool => self::breakdownExemptionByCategory($o, 'S', false),
-				'en16931-br-z-10' => static fn (array $o): bool => self::breakdownExemptionByCategory($o, 'Z', false),
-				'en16931-br-e-10' => static fn (array $o): bool => self::breakdownExemptionByCategory($o, 'E', true),
-				'en16931-br-ae-10' => static fn (array $o): bool => self::breakdownExemptionByCategory($o, 'AE', true),
-				'en16931-br-o-10' => static fn (array $o): bool => self::breakdownExemptionByCategory($o, 'O', true),
-				'en16931-br-g-10' => static fn (array $o): bool => self::breakdownExemptionByCategory($o, 'G', true),
-				'en16931-br-ic-10' => static fn (array $o): bool => self::breakdownExemptionByCategory($o, 'K', true),
-
-				// --- EN 16931 document-level allowances (BG-20) and charges (BG-21). ---
-				// BR-31/32/33: each allowance has amount, VAT category, and a reason or reason code.
-				'en16931-br-31' => static fn (array $o): bool => self::allItemsNumeric($o, 'allowances', 'amount'),
-				'en16931-br-32' => static fn (array $o): bool => self::allItemsPresent($o, 'allowances', 'vatCategory'),
-				'en16931-br-33' => static fn (array $o): bool => self::allItemsHaveReason($o, 'allowances'),
-				// BR-36/37/38: each charge has amount, VAT category, and a reason or reason code.
-				'en16931-br-36' => static fn (array $o): bool => self::allItemsNumeric($o, 'charges', 'amount'),
-				'en16931-br-37' => static fn (array $o): bool => self::allItemsPresent($o, 'charges', 'vatCategory'),
-				'en16931-br-38' => static fn (array $o): bool => self::allItemsHaveReason($o, 'charges'),
-				// BR-41/42/43/44: each invoice-line allowance/charge has an amount and a reason.
-				'en16931-br-41' => static fn (array $o): bool => self::allLineItemsNumeric($o, 'lineAllowances', 'amount'),
-				'en16931-br-42' => static fn (array $o): bool => self::allLineItemsHaveReason($o, 'lineAllowances'),
-				'en16931-br-43' => static fn (array $o): bool => self::allLineItemsNumeric($o, 'lineCharges', 'amount'),
-				'en16931-br-44' => static fn (array $o): bool => self::allLineItemsHaveReason($o, 'lineCharges'),
-				// BR-CO-11/12: document allowance/charge totals reconcile to the sum of the lines.
-				'en16931-br-co-11' => static fn (array $o): bool => self::centsEqual(
-					(float)($o['allowancesTotal'] ?? 0),
-					self::sumItems($o, 'allowances')
-				),
-				'en16931-br-co-12' => static fn (array $o): bool => self::centsEqual(
-					(float)($o['chargesTotal'] ?? 0),
-					self::sumItems($o, 'charges')
-				),
-				// BR-DEC-01/02/05/06/10/11/24/25/27/28: allowance/charge amounts respect 2 decimals.
-				'en16931-br-dec-01' => static fn (array $o): bool => self::allItemsMaxDecimals($o, 'allowances', 'amount', 2),
-				'en16931-br-dec-02' => static fn (array $o): bool => self::allItemsMaxDecimals($o, 'allowances', 'baseAmount', 2),
-				'en16931-br-dec-05' => static fn (array $o): bool => self::allItemsMaxDecimals($o, 'charges', 'amount', 2),
-				'en16931-br-dec-06' => static fn (array $o): bool => self::allItemsMaxDecimals($o, 'charges', 'baseAmount', 2),
-				'en16931-br-dec-10' => static fn (array $o): bool => self::maxDecimals($o['allowancesTotal'] ?? null, 2),
-				'en16931-br-dec-11' => static fn (array $o): bool => self::maxDecimals($o['chargesTotal'] ?? null, 2),
-				'en16931-br-dec-24' => static fn (array $o): bool => self::allLineItemsMaxDecimals($o, 'lineAllowances', 'amount', 2),
-				'en16931-br-dec-25' => static fn (array $o): bool => self::allLineItemsMaxDecimals($o, 'lineAllowances', 'baseAmount', 2),
-				'en16931-br-dec-27' => static fn (array $o): bool => self::allLineItemsMaxDecimals($o, 'lineCharges', 'amount', 2),
-				'en16931-br-dec-28' => static fn (array $o): bool => self::allLineItemsMaxDecimals($o, 'lineCharges', 'baseAmount', 2),
-
-				// --- EN 16931 seller/buyer party identification (BG-4/BG-7) + payment/tax-point. ---
-				'en16931-br-01' => static fn (array $o): bool => self::present($o, 'specificationId'),
-				'en16931-br-06' => static fn (array $o): bool => self::present($o, 'sellerName'),
-				'en16931-br-08' => static fn (array $o): bool => self::present($o, 'sellerAddress'),
-				'en16931-br-09' => static fn (array $o): bool => self::present($o, 'sellerCountryCode'),
-				'en16931-br-10' => static fn (array $o): bool => self::present($o, 'buyerAddress'),
-				'vatdir-art226-3' => static fn (array $o): bool => self::present($o, 'sellerVatId'),
-				// BR-CO-26: a supplier must be identifiable by id, legal-reg or VAT id.
-				'en16931-br-co-26' => static fn (array $o): bool => (self::present($o, 'sellerIdentifier')
-					|| self::present($o, 'sellerTaxRegId') || self::present($o, 'sellerVatId')),
-				// BR-CO-09: every present VAT identifier carries an ISO 3166-1 alpha-2 prefix.
-				'en16931-br-co-09' => static fn (array $o): bool => self::vatIdsHaveCountryPrefix($o),
-				// BR-CO-03: tax point date and tax point date code are mutually exclusive.
-				'en16931-br-co-03' => static fn (array $o): bool => (self::present($o, 'taxPointDate') === false
-					|| self::present($o, 'taxPointDateCode') === false),
-				// BR-CO-25: a positive amount due requires a payment due date or payment terms.
-				'en16931-br-co-25' => static fn (array $o): bool => (((float)($o['grossAmount'] ?? 0)) <= 0
-					|| self::present($o, 'dueDate') || self::present($o, 'paymentTerms')),
-				// BR-{S,Z,E}-02: a line of this category requires a seller VAT/tax identifier.
-				'en16931-br-s-02' => static fn (array $o): bool => self::sellerVatRequiredFor($o, 'S'),
-				'en16931-br-z-02' => static fn (array $o): bool => self::sellerVatRequiredFor($o, 'Z'),
-				'en16931-br-e-02' => static fn (array $o): bool => self::sellerVatRequiredFor($o, 'E'),
-				// BR-G-02: export line requires the seller VAT id or tax representative VAT id.
-				'en16931-br-g-02' => static fn (array $o): bool => (self::anyLineHasCategory($o, 'G') === false
-					|| self::present($o, 'sellerVatId') || self::present($o, 'sellerTaxRepVatId')),
-				// BR-AE-02: reverse-charge line requires seller AND buyer identification.
-				'en16931-br-ae-02' => static fn (array $o): bool => (self::anyLineHasCategory($o, 'AE') === false
-					|| ((self::present($o, 'sellerVatId') || self::present($o, 'sellerTaxRegId') || self::present($o, 'sellerTaxRepVatId'))
-					&& (self::present($o, 'buyerVatId') || self::present($o, 'buyerLegalRegId')))),
-				// BR-IC-02: intra-community line requires seller VAT id (or tax rep) AND buyer VAT id.
-				'en16931-br-ic-02' => static fn (array $o): bool => (self::anyLineHasCategory($o, 'K') === false
-					|| ((self::present($o, 'sellerVatId') || self::present($o, 'sellerTaxRepVatId')) && self::present($o, 'buyerVatId'))),
-				// BR-O-02: a 'Not subject to VAT' line forbids seller/buyer VAT identifiers.
-				'en16931-br-o-02' => static fn (array $o): bool => (self::anyLineHasCategory($o, 'O') === false
-					|| (self::present($o, 'sellerVatId') === false && self::present($o, 'sellerTaxRepVatId') === false
-					&& self::present($o, 'buyerVatId') === false)),
-
-				// --- EN 16931 / VAT Directive mandatory invoice-content fields. ---
-				'en16931-br-04' => static fn (array $o): bool => self::present($o, 'invoiceTypeCode'),
-				'vatdir-art226-1' => static fn (array $o): bool => self::present($o, 'invoiceDate'),
-				'vatdir-art226-2' => static fn (array $o): bool => self::present($o, 'invoiceNumber'),
-				'vatdir-art226-7' => static fn (array $o): bool => self::present($o, 'supplyDate'),
-			],
-			'APTransaction' => [
-				// Purchase (received) invoices: the same EN 16931 / VAT Directive
-				// content rules apply, mapped to the APTransaction header fields.
-				'en16931-br-02' => static fn (array $o): bool => self::present($o, 'invoiceNumber'),
-				'en16931-br-03' => static fn (array $o): bool => self::present($o, 'invoiceDate'),
-				'en16931-br-05' => static fn (array $o): bool => self::present($o, 'currency'),
-				'en16931-br-cl-03' => static fn (array $o): bool => self::isIsoCurrency((string)($o['currency'] ?? '')),
-				'en16931-br-14' => static fn (array $o): bool => self::numericPresent($o, 'totalAmount'),
-				'vatdir-art226-5' => static fn (array $o): bool => self::present($o, 'vendorId'),
-				'vatdir-art226-10' => static fn (array $o): bool => self::numericPresent($o, 'taxAmount'),
-				'gl-source-document-traceability' => static fn (array $o): bool => self::present($o, 'sourceDocumentUri'),
-			],
-			'GLTransaction' => [
-				// Completeness: a real double entry — at least two lines, each with an account and a non-zero, sided amount.
-				'gl-completeness-timeliness' => static fn (array $o): bool => self::glComplete($o),
-				'gl-sequential-journal-numbering' => static fn (array $o): bool => self::present($o, 'transactionNumber'),
-				// Recorded with a posting date (chronological order / timeliness).
-				'gl-chronological-order' => static fn (array $o): bool => self::present($o, 'postingDate'),
-				// Every journal entry must balance: total debits = total credits.
-				'ledger-double-entry-balance' => static fn (array $o): bool => self::glBalanced($o),
-				// Each entry traceable to a source document (Belegfunktion / GoBD).
-				'gl-source-document-traceability' => static fn (array $o): bool => self::present($o, 'sourceReference'),
-			],
+			'ARInvoice'     => array_merge(
+				self::invoiceHeaderChecks(),
+				self::invoiceIdentityChecks(),
+				self::invoiceLineChecks(),
+				self::invoiceTotalChecks(),
+				self::vatBreakdownChecks(),
+				self::vatCategoryChecks(),
+				self::lineRateChecks(),
+				self::exemptionChecks(),
+				self::allowanceChargeChecks(),
+				self::allowanceChargeTotalChecks(),
+				self::allowanceChargeDecimalChecks(),
+				self::partyChecks(),
+				self::categoryPartyChecks(),
+				self::invoiceContentChecks()
+			),
+			'APTransaction' => self::purchaseInvoiceChecks(),
+			'GLTransaction' => self::journalChecks(),
 		];
 
-		// Merge per-domain providers (lib/Standards/Checks/*.php). Each provider
-		// contributes [objectType => [ruleId => predicate]]; later providers add to
-		// (never silently overwrite) the built-in registry, so the corpus can grow
-		// an executable check per domain without editing this file.
+		return self::withProviderChecks($builtin);
+	}//end checks()
+
+	/**
+	 * Merge per-domain providers (lib/Standards/Checks/*.php) into the built-in
+	 * registry. Each provider contributes [objectType => [ruleId => predicate]];
+	 * later providers add to (never silently overwrite) the built-in registry,
+	 * so the corpus can grow an executable check per domain without editing
+	 * this file.
+	 *
+	 * @param array<string, array<string, callable>> $checks The built-in registry.
+	 *
+	 * @return array<string, array<string, callable>>
+	 */
+	private static function withProviderChecks(array $checks): array {
 		foreach (self::providers() as $provider) {
 			foreach ($provider::checks() as $objectType => $ruleChecks) {
-				$builtin[$objectType] = array_merge(($builtin[$objectType] ?? []), $ruleChecks);
+				$checks[$objectType] = array_merge(($checks[$objectType] ?? []), $ruleChecks);
 			}
 		}
 
-		return $builtin;
-	}//end checks()
+		return $checks;
+	}//end withProviderChecks()
+
+
+	/**
+	 * The EN 16931 mandatory header fields of a sales invoice and the BR-CO-15 total.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function invoiceHeaderChecks(): array {
+		return [
+			// EN 16931 mandatory invoice fields (BT-1/2/5/109/112) mapped to the ARInvoice header.
+			'en16931-br-02' => static fn (array $o): bool => self::present($o, 'invoiceNumber'),
+			'en16931-br-03' => static fn (array $o): bool => self::present($o, 'invoiceDate'),
+			'en16931-br-05' => static fn (array $o): bool => self::present($o, 'currency'),
+			'en16931-br-13' => static fn (array $o): bool => self::numericPresent($o, 'netAmount'),
+			'en16931-br-14' => static fn (array $o): bool => self::numericPresent($o, 'grossAmount'),
+			// BR-CO-15: total with VAT = total without VAT + total VAT (at cent precision).
+			'en16931-br-co-15' => static fn (array $o): bool => self::centsEqual(
+				(float)($o['grossAmount'] ?? 0),
+				((float)($o['netAmount'] ?? 0) + (float)($o['vatAmount'] ?? 0))
+			),
+		];
+
+	}//end invoiceHeaderChecks()
+
+	/**
+	 * Numbering, buyer, VAT amount, currency and total decimals of a sales invoice.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function invoiceIdentityChecks(): array {
+		return [
+			// A gapless sequential invoice number — presence is enforceable per-object.
+			'gl-sequential-invoice-numbering' => static fn (array $o): bool => self::present($o, 'invoiceNumber'),
+			// Buyer / customer must be identified (VAT Directive art. 226(5) / EN 16931 BT-44).
+			'vatdir-art226-5' => static fn (array $o): bool => self::present($o, 'customerId'),
+			'en16931-br-07' => static fn (array $o): bool => self::present($o, 'customerId'),
+			// The VAT amount payable must be stated (VAT Directive art. 226(10)).
+			'vatdir-art226-10' => static fn (array $o): bool => self::numericPresent($o, 'vatAmount'),
+			// Currency must be a valid ISO 4217 code (EN 16931 BR-CL-03).
+			'en16931-br-cl-03' => static fn (array $o): bool => self::isIsoCurrency((string)($o['currency'] ?? '')),
+			// Totals must not exceed 2 decimals (EN 16931 BR-DEC-12/13/14).
+			'en16931-br-dec-12' => static fn (array $o): bool => self::maxDecimals($o['netAmount'] ?? null, 2),
+			'en16931-br-dec-13' => static fn (array $o): bool => self::maxDecimals($o['vatAmount'] ?? null, 2),
+			'en16931-br-dec-14' => static fn (array $o): bool => self::maxDecimals($o['grossAmount'] ?? null, 2),
+		];
+
+	}//end invoiceIdentityChecks()
+
+	/**
+	 * The EN 16931 invoice-line group (BG-25), over the modeled `invoiceLines[]`.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function invoiceLineChecks(): array {
+		return [
+			'en16931-br-16' => static fn (array $o): bool => self::lines($o) !== [],
+			'en16931-br-21' => static fn (array $o): bool => self::allLinesPresent($o, 'lineId'),
+			'en16931-br-22' => static fn (array $o): bool => self::allLinesNumeric($o, 'quantity'),
+			'en16931-br-23' => static fn (array $o): bool => self::allLinesPresent($o, 'unitCode'),
+			'en16931-br-24' => static fn (array $o): bool => self::allLinesNumeric($o, 'netAmount'),
+			'en16931-br-25' => static fn (array $o): bool => self::allLinesPresent($o, 'itemName'),
+			'en16931-br-26' => static fn (array $o): bool => self::allLinesNumeric($o, 'netPrice'),
+			'en16931-br-co-04' => static fn (array $o): bool => self::allLinesVatCategorized($o),
+			'en16931-br-dec-23' => static fn (array $o): bool => self::allLinesMaxDecimals($o, 'netAmount', 2),
+		];
+
+	}//end invoiceLineChecks()
+
+	/**
+	 * The document totals derived from the lines (BT-106 / BT-109).
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function invoiceTotalChecks(): array {
+		return [
+			'en16931-br-12' => static fn (array $o): bool => self::numericPresent($o, 'lineNetTotal'),
+			'en16931-br-dec-09' => static fn (array $o): bool => self::maxDecimals($o['lineNetTotal'] ?? null, 2),
+			'en16931-br-co-10' => static fn (array $o): bool => self::centsEqual(
+				(float)($o['lineNetTotal'] ?? 0),
+				self::sumLineNet($o)
+			),
+			'en16931-br-co-13' => static fn (array $o): bool => self::centsEqual(
+				(float)($o['netAmount'] ?? 0),
+				(float)($o['lineNetTotal'] ?? 0)
+			),
+		];
+
+	}//end invoiceTotalChecks()
+
+	/**
+	 * The EN 16931 VAT breakdown group (BG-23), over the modeled `vatBreakdown[]`.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function vatBreakdownChecks(): array {
+		return [
+			'en16931-br-co-18' => static fn (array $o): bool => self::vatBreakdown($o) !== [],
+			'en16931-br-45' => static fn (array $o): bool => self::allBreakdownNumeric($o, 'taxableAmount'),
+			'en16931-br-46' => static fn (array $o): bool => self::allBreakdownNumeric($o, 'taxAmount'),
+			'en16931-br-47' => static fn (array $o): bool => self::allBreakdownPresent($o, 'category'),
+			'en16931-br-48' => static fn (array $o): bool => self::allBreakdownRated($o),
+			'en16931-br-dec-19' => static fn (array $o): bool => self::allBreakdownMaxDecimals($o, 'taxableAmount', 2),
+			'en16931-br-dec-20' => static fn (array $o): bool => self::allBreakdownMaxDecimals($o, 'taxAmount', 2),
+			'en16931-br-co-14' => static fn (array $o): bool => self::centsEqual(
+				(float)($o['vatAmount'] ?? 0),
+				self::sumBreakdownTax($o)
+			),
+			'en16931-br-co-17' => static fn (array $o): bool => self::breakdownTaxConsistent($o),
+
+			// VAT Directive art. 226(8)/(9): taxable amount per rate + the rate applied.
+			'vatdir-art226-8' => static fn (array $o): bool => self::allBreakdownNumeric($o, 'taxableAmount'),
+			'vatdir-art226-9' => static fn (array $o): bool => self::allBreakdownRated($o),
+		];
+
+	}//end vatBreakdownChecks()
+
+	/**
+	 * The EN 16931 per-VAT-category breakdown consistency (BG-23 keyed by BT-118).
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function vatCategoryChecks(): array {
+		return [
+			// *-08: category taxable amount = Σ line net of that category. *-09: tax amount
+			// is taxable × rate for Standard-rated and zero for the exempt/zero-rated families.
+			'en16931-br-s-08' => static fn (array $o): bool => self::categoryTaxableOk($o, 'S'),
+			'en16931-br-s-09' => static fn (array $o): bool => self::categoryTaxOk($o, 'S', false),
+			'en16931-br-z-08' => static fn (array $o): bool => self::categoryTaxableOk($o, 'Z'),
+			'en16931-br-z-09' => static fn (array $o): bool => self::categoryTaxOk($o, 'Z', true),
+			'en16931-br-e-08' => static fn (array $o): bool => self::categoryTaxableOk($o, 'E'),
+			'en16931-br-e-09' => static fn (array $o): bool => self::categoryTaxOk($o, 'E', true),
+			'en16931-br-ae-08' => static fn (array $o): bool => self::categoryTaxableOk($o, 'AE'),
+			'en16931-br-ae-09' => static fn (array $o): bool => self::categoryTaxOk($o, 'AE', true),
+			'en16931-br-o-08' => static fn (array $o): bool => self::categoryTaxableOk($o, 'O'),
+			'en16931-br-o-09' => static fn (array $o): bool => self::categoryTaxOk($o, 'O', true),
+			'en16931-br-g-08' => static fn (array $o): bool => self::categoryTaxableOk($o, 'G'),
+			'en16931-br-g-09' => static fn (array $o): bool => self::categoryTaxOk($o, 'G', true),
+			'en16931-br-ic-08' => static fn (array $o): bool => self::categoryTaxableOk($o, 'K'),
+			'en16931-br-ic-09' => static fn (array $o): bool => self::categoryTaxOk($o, 'K', true),
+		];
+
+	}//end vatCategoryChecks()
+
+	/**
+	 * The EN 16931 invoiced-item VAT rate per line category (BT-152 by BT-151, BR-*-05).
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function lineRateChecks(): array {
+		return [
+			// Standard rated must be > 0; the zero/exempt/reverse/export/intra families must be 0;
+			// 'Not subject to VAT' must carry no rate at all.
+			'en16931-br-s-05' => static fn (array $o): bool => self::lineRateByCategory($o, 'S', 'positive'),
+			'en16931-br-z-05' => static fn (array $o): bool => self::lineRateByCategory($o, 'Z', 'zero'),
+			'en16931-br-e-05' => static fn (array $o): bool => self::lineRateByCategory($o, 'E', 'zero'),
+			'en16931-br-ae-05' => static fn (array $o): bool => self::lineRateByCategory($o, 'AE', 'zero'),
+			'en16931-br-g-05' => static fn (array $o): bool => self::lineRateByCategory($o, 'G', 'zero'),
+			'en16931-br-ic-05' => static fn (array $o): bool => self::lineRateByCategory($o, 'K', 'zero'),
+			'en16931-br-o-05' => static fn (array $o): bool => self::lineRateByCategory($o, 'O', 'absent'),
+		];
+
+	}//end lineRateChecks()
+
+	/**
+	 * The EN 16931 VAT exemption reason per breakdown category (BT-120/121 by BT-118, BR-*-10).
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function exemptionChecks(): array {
+		return [
+			// Standard/Zero rated must NOT carry an exemption reason; the exempt/reverse/not-subject/
+			// export/intra-community families MUST carry one.
+			'en16931-br-s-10' => static fn (array $o): bool => self::breakdownExemptionByCategory($o, 'S', false),
+			'en16931-br-z-10' => static fn (array $o): bool => self::breakdownExemptionByCategory($o, 'Z', false),
+			'en16931-br-e-10' => static fn (array $o): bool => self::breakdownExemptionByCategory($o, 'E', true),
+			'en16931-br-ae-10' => static fn (array $o): bool => self::breakdownExemptionByCategory($o, 'AE', true),
+			'en16931-br-o-10' => static fn (array $o): bool => self::breakdownExemptionByCategory($o, 'O', true),
+			'en16931-br-g-10' => static fn (array $o): bool => self::breakdownExemptionByCategory($o, 'G', true),
+			'en16931-br-ic-10' => static fn (array $o): bool => self::breakdownExemptionByCategory($o, 'K', true),
+		];
+
+	}//end exemptionChecks()
+
+	/**
+	 * The EN 16931 document-level allowances (BG-20) and charges (BG-21), and the line-level ones.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function allowanceChargeChecks(): array {
+		return [
+			// BR-31/32/33: each allowance has amount, VAT category, and a reason or reason code.
+			'en16931-br-31' => static fn (array $o): bool => self::allItemsNumeric($o, 'allowances', 'amount'),
+			'en16931-br-32' => static fn (array $o): bool => self::allItemsPresent($o, 'allowances', 'vatCategory'),
+			'en16931-br-33' => static fn (array $o): bool => self::allItemsHaveReason($o, 'allowances'),
+			// BR-36/37/38: each charge has amount, VAT category, and a reason or reason code.
+			'en16931-br-36' => static fn (array $o): bool => self::allItemsNumeric($o, 'charges', 'amount'),
+			'en16931-br-37' => static fn (array $o): bool => self::allItemsPresent($o, 'charges', 'vatCategory'),
+			'en16931-br-38' => static fn (array $o): bool => self::allItemsHaveReason($o, 'charges'),
+			// BR-41/42/43/44: each invoice-line allowance/charge has an amount and a reason.
+			'en16931-br-41' => static fn (array $o): bool => self::allLineItemsNumeric($o, 'lineAllowances', 'amount'),
+			'en16931-br-42' => static fn (array $o): bool => self::allLineItemsHaveReason($o, 'lineAllowances'),
+			'en16931-br-43' => static fn (array $o): bool => self::allLineItemsNumeric($o, 'lineCharges', 'amount'),
+			'en16931-br-44' => static fn (array $o): bool => self::allLineItemsHaveReason($o, 'lineCharges'),
+		];
+
+	}//end allowanceChargeChecks()
+
+	/**
+	 * The allowance and charge totals, reconciled to the sum of the lines.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function allowanceChargeTotalChecks(): array {
+		return [
+			// BR-CO-11/12: document allowance/charge totals reconcile to the sum of the lines.
+			'en16931-br-co-11' => static fn (array $o): bool => self::centsEqual(
+				(float)($o['allowancesTotal'] ?? 0),
+				self::sumItems($o, 'allowances')
+			),
+			'en16931-br-co-12' => static fn (array $o): bool => self::centsEqual(
+				(float)($o['chargesTotal'] ?? 0),
+				self::sumItems($o, 'charges')
+			),
+		];
+
+	}//end allowanceChargeTotalChecks()
+
+	/**
+	 * The 2-decimal limit on allowance and charge amounts.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function allowanceChargeDecimalChecks(): array {
+		return [
+			// BR-DEC-01/02/05/06/10/11/24/25/27/28: allowance/charge amounts respect 2 decimals.
+			'en16931-br-dec-01' => static fn (array $o): bool => self::allItemsMaxDecimals($o, 'allowances', 'amount', 2),
+			'en16931-br-dec-02' => static fn (array $o): bool => self::allItemsMaxDecimals($o, 'allowances', 'baseAmount', 2),
+			'en16931-br-dec-05' => static fn (array $o): bool => self::allItemsMaxDecimals($o, 'charges', 'amount', 2),
+			'en16931-br-dec-06' => static fn (array $o): bool => self::allItemsMaxDecimals($o, 'charges', 'baseAmount', 2),
+			'en16931-br-dec-10' => static fn (array $o): bool => self::maxDecimals($o['allowancesTotal'] ?? null, 2),
+			'en16931-br-dec-11' => static fn (array $o): bool => self::maxDecimals($o['chargesTotal'] ?? null, 2),
+			'en16931-br-dec-24' => static fn (array $o): bool => self::allLineItemsMaxDecimals($o, 'lineAllowances', 'amount', 2),
+			'en16931-br-dec-25' => static fn (array $o): bool => self::allLineItemsMaxDecimals($o, 'lineAllowances', 'baseAmount', 2),
+			'en16931-br-dec-27' => static fn (array $o): bool => self::allLineItemsMaxDecimals($o, 'lineCharges', 'amount', 2),
+			'en16931-br-dec-28' => static fn (array $o): bool => self::allLineItemsMaxDecimals($o, 'lineCharges', 'baseAmount', 2),
+		];
+
+	}//end allowanceChargeDecimalChecks()
+
+	/**
+	 * The EN 16931 seller/buyer party identification (BG-4/BG-7), tax point and payment terms.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function partyChecks(): array {
+		return [
+			'en16931-br-01' => static fn (array $o): bool => self::present($o, 'specificationId'),
+			'en16931-br-06' => static fn (array $o): bool => self::present($o, 'sellerName'),
+			'en16931-br-08' => static fn (array $o): bool => self::present($o, 'sellerAddress'),
+			'en16931-br-09' => static fn (array $o): bool => self::present($o, 'sellerCountryCode'),
+			'en16931-br-10' => static fn (array $o): bool => self::present($o, 'buyerAddress'),
+			'vatdir-art226-3' => static fn (array $o): bool => self::present($o, 'sellerVatId'),
+			// BR-CO-26: a supplier must be identifiable by id, legal-reg or VAT id.
+			'en16931-br-co-26' => static fn (array $o): bool => (self::present($o, 'sellerIdentifier')
+				|| self::present($o, 'sellerTaxRegId') || self::present($o, 'sellerVatId')),
+			// BR-CO-09: every present VAT identifier carries an ISO 3166-1 alpha-2 prefix.
+			'en16931-br-co-09' => static fn (array $o): bool => self::vatIdsHaveCountryPrefix($o),
+			// BR-CO-03: tax point date and tax point date code are mutually exclusive.
+			'en16931-br-co-03' => static fn (array $o): bool => (self::present($o, 'taxPointDate') === false
+				|| self::present($o, 'taxPointDateCode') === false),
+			// BR-CO-25: a positive amount due requires a payment due date or payment terms.
+			'en16931-br-co-25' => static fn (array $o): bool => (((float)($o['grossAmount'] ?? 0)) <= 0
+				|| self::present($o, 'dueDate') || self::present($o, 'paymentTerms')),
+		];
+
+	}//end partyChecks()
+
+	/**
+	 * The party identifiers a line of a given VAT category requires or forbids.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function categoryPartyChecks(): array {
+		return [
+			// BR-{S,Z,E}-02: a line of this category requires a seller VAT/tax identifier.
+			'en16931-br-s-02' => static fn (array $o): bool => self::sellerVatRequiredFor($o, 'S'),
+			'en16931-br-z-02' => static fn (array $o): bool => self::sellerVatRequiredFor($o, 'Z'),
+			'en16931-br-e-02' => static fn (array $o): bool => self::sellerVatRequiredFor($o, 'E'),
+			// BR-G-02: export line requires the seller VAT id or tax representative VAT id.
+			'en16931-br-g-02' => static fn (array $o): bool => self::exportSellerIdentified($o),
+			// BR-AE-02: reverse-charge line requires seller AND buyer identification.
+			'en16931-br-ae-02' => static fn (array $o): bool => self::reverseChargePartiesIdentified($o),
+			// BR-IC-02: intra-community line requires seller VAT id (or tax rep) AND buyer VAT id.
+			'en16931-br-ic-02' => static fn (array $o): bool => self::intraCommunityPartiesIdentified($o),
+			// BR-O-02: a 'Not subject to VAT' line forbids seller/buyer VAT identifiers.
+			'en16931-br-o-02' => static fn (array $o): bool => self::notSubjectWithoutVatIds($o),
+		];
+
+	}//end categoryPartyChecks()
+
+	/**
+	 * BR-G-02: an export line requires the seller VAT id or the tax representative VAT id.
+	 *
+	 * @param array<string, mixed> $o The invoice.
+	 *
+	 * @return bool
+	 */
+	private static function exportSellerIdentified(array $o): bool {
+		return (self::anyLineHasCategory($o, 'G') === false
+			|| self::present($o, 'sellerVatId') || self::present($o, 'sellerTaxRepVatId'));
+
+	}//end exportSellerIdentified()
+
+	/**
+	 * BR-AE-02: a reverse-charge line requires seller AND buyer identification.
+	 *
+	 * @param array<string, mixed> $o The invoice.
+	 *
+	 * @return bool
+	 */
+	private static function reverseChargePartiesIdentified(array $o): bool {
+		return (self::anyLineHasCategory($o, 'AE') === false
+			|| ((self::present($o, 'sellerVatId') || self::present($o, 'sellerTaxRegId') || self::present($o, 'sellerTaxRepVatId'))
+			&& (self::present($o, 'buyerVatId') || self::present($o, 'buyerLegalRegId'))));
+
+	}//end reverseChargePartiesIdentified()
+
+	/**
+	 * BR-IC-02: an intra-community line requires the seller VAT id (or tax representative) AND the buyer VAT id.
+	 *
+	 * @param array<string, mixed> $o The invoice.
+	 *
+	 * @return bool
+	 */
+	private static function intraCommunityPartiesIdentified(array $o): bool {
+		return (self::anyLineHasCategory($o, 'K') === false
+			|| ((self::present($o, 'sellerVatId') || self::present($o, 'sellerTaxRepVatId')) && self::present($o, 'buyerVatId')));
+
+	}//end intraCommunityPartiesIdentified()
+
+	/**
+	 * BR-O-02: a 'Not subject to VAT' line forbids seller and buyer VAT identifiers.
+	 *
+	 * @param array<string, mixed> $o The invoice.
+	 *
+	 * @return bool
+	 */
+	private static function notSubjectWithoutVatIds(array $o): bool {
+		return (self::anyLineHasCategory($o, 'O') === false
+			|| (self::present($o, 'sellerVatId') === false && self::present($o, 'sellerTaxRepVatId') === false
+			&& self::present($o, 'buyerVatId') === false));
+
+	}//end notSubjectWithoutVatIds()
+
+	/**
+	 * The EN 16931 / VAT Directive mandatory invoice-content fields.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function invoiceContentChecks(): array {
+		return [
+			'en16931-br-04' => static fn (array $o): bool => self::present($o, 'invoiceTypeCode'),
+			'vatdir-art226-1' => static fn (array $o): bool => self::present($o, 'invoiceDate'),
+			'vatdir-art226-2' => static fn (array $o): bool => self::present($o, 'invoiceNumber'),
+			'vatdir-art226-7' => static fn (array $o): bool => self::present($o, 'supplyDate'),
+		];
+
+	}//end invoiceContentChecks()
+
+	/**
+	 * Purchase (received) invoices: the same EN 16931 / VAT Directive content rules, mapped to the APTransaction header fields.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function purchaseInvoiceChecks(): array {
+		return [
+			'en16931-br-02' => static fn (array $o): bool => self::present($o, 'invoiceNumber'),
+			'en16931-br-03' => static fn (array $o): bool => self::present($o, 'invoiceDate'),
+			'en16931-br-05' => static fn (array $o): bool => self::present($o, 'currency'),
+			'en16931-br-cl-03' => static fn (array $o): bool => self::isIsoCurrency((string)($o['currency'] ?? '')),
+			'en16931-br-14' => static fn (array $o): bool => self::numericPresent($o, 'totalAmount'),
+			'vatdir-art226-5' => static fn (array $o): bool => self::present($o, 'vendorId'),
+			'vatdir-art226-10' => static fn (array $o): bool => self::numericPresent($o, 'taxAmount'),
+			'gl-source-document-traceability' => static fn (array $o): bool => self::present($o, 'sourceDocumentUri'),
+		];
+
+	}//end purchaseInvoiceChecks()
+
+	/**
+	 * The double-entry, numbering, dating and traceability rules of a journal entry.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function journalChecks(): array {
+		return [
+			// Completeness: a real double entry — at least two lines, each with an account and a non-zero, sided amount.
+			'gl-completeness-timeliness' => static fn (array $o): bool => self::glComplete($o),
+			'gl-sequential-journal-numbering' => static fn (array $o): bool => self::present($o, 'transactionNumber'),
+			// Recorded with a posting date (chronological order / timeliness).
+			'gl-chronological-order' => static fn (array $o): bool => self::present($o, 'postingDate'),
+			// Every journal entry must balance: total debits = total credits.
+			'ledger-double-entry-balance' => static fn (array $o): bool => self::glBalanced($o),
+			// Each entry traceable to a source document (Belegfunktion / GoBD).
+			'gl-source-document-traceability' => static fn (array $o): bool => self::present($o, 'sourceReference'),
+		];
+
+	}//end journalChecks()
 
 	/**
 	 * The merged test-data field defaults declared by all providers, keyed by
