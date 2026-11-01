@@ -21,7 +21,7 @@
 			"type": "custom",
 			"title": "Budget Grid",
 			"component": "BudgetGrid",
-			"_note": "Rows are a LedgerGroup TREE (root verzamelposten expandable to child groups or resolved grootboek accounts), not a flat list of one schema's objects, and columns are a caller-selected period range/granularity with a computed TOTAAL cumulative column — `type: index` cannot express nesting or generated columns, `type: dashboard` cannot express row-level drill/expand. Fetches its whole payload once from GET /api/budget-grid; expand/collapse is client-side only (design.md §1c). See BudgetLineCommitments/WbsoChartOfAccountsView for the same type:custom precedent.",
+			"_note": "Rows are a LedgerGroup TREE (root verzamelposten expandable to child groups or resolved grootboek accounts), not a flat list of one schema's objects, and columns are a caller-selected period range/granularity with a computed TOTAAL cumulative column — `type: index` cannot express nesting or generated columns, `type: dashboard` cannot express row-level drill/expand. Fetches its whole payload once from GET /api/budget-grid; expand/collapse is client-side only (design.md §1c). See BudgetLineCommitments for the same type:custom precedent.",
 			"config": {
 				"register": "shillinq",
 				"schema": "LedgerGroup",

@@ -65,15 +65,3 @@ describe('page ids', () => {
 		expect(clashes).toEqual([])
 	})
 })
-
-describe('WBSO bookkeeping views', () => {
-	it.each([
-		'src/views/bookkeeping/ChartOfAccountsView.vue',
-		'src/views/bookkeeping/TransactionsView.vue',
-		'src/views/bookkeeping/DocumentsView.vue',
-	])('%s calls its plain app route, not an OCS url', (file) => {
-		const source = read(file)
-		expect(source).not.toContain('generateOcsUrl')
-		expect(source).toMatch(/generateUrl\('\/apps\/shillinq\/api\/v1\//)
-	})
-})

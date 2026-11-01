@@ -312,13 +312,6 @@ import BookingsConfirmationPortal from './views/bookings/ConfirmationPortal.vue'
 // — it cannot be exposed publicly via the in-app router unless the
 // server-side attribute is dropped. ADR-004 compliant.
 import BookingWidgetKeys from './views/BookingWidgetKeys.vue'
-// bookkeeping-wbso-sno-administratie (REQ-WBSO-006/002/003): the three
-// bookkeeping foundation views are imperative — the Chart of Accounts is a
-// hierarchical RGS tree (no built-in tree page type), and the Transactions /
-// Documents tables fan out to dedicated REST surfaces that filter by status,
-// type, and date range. Registered as kind:"page" custom components per
-// ADR-024 / ADR-036.
-import WbsoChartOfAccountsView from './views/bookkeeping/ChartOfAccountsView.vue'
 // bookkeeping-cost-centers-dimensions Task 14 (W6): the SegmentPnLDashboard
 // composes server-side aggregations declared on GLLine
 // (byCostCenter / byCostCenterHierarchy / byProject /
@@ -327,7 +320,6 @@ import WbsoChartOfAccountsView from './views/bookkeeping/ChartOfAccountsView.vue
 // CSV export — none of which fit any built-in declarative page type, so
 // the page is registered as a kind:"page" custom component per ADR-024.
 import SegmentPnLDashboard from './views/bookkeeping/dimensions/SegmentPnLDashboard.vue'
-import WbsoDocumentsView from './views/bookkeeping/DocumentsView.vue'
 // add-shillinq-multi-currency Task 14: the FxRatesAdmin page wraps the
 // declarative FxRate index grid with a cron-status overlay (last-run
 // timestamp + TreasuryRateAdapter dormancy flag) read from
@@ -337,7 +329,6 @@ import WbsoDocumentsView from './views/bookkeeping/DocumentsView.vue'
 // Admin-only — the controller is gated by
 // #[AuthorizedAdminSetting(Application::class)].
 import FxRatesAdmin from './views/bookkeeping/multi-currency/FxRatesAdmin.vue'
-import WbsoTransactionsView from './views/bookkeeping/TransactionsView.vue'
 // budget-grid-view (REQ-BGV-001..009): the year-basis begroting grid —
 // verzamelpost rows (LedgerGroup tree, expandable to child groups or
 // resolved grootboek accounts), a caller-selected period range/granularity,
@@ -475,9 +466,6 @@ export default {
 	BookingsForm: { kind: 'page', component: BookingForm },
 
 	// bookkeeping-wbso-sno-administratie foundation views.
-	WbsoChartOfAccountsView: { kind: 'page', component: WbsoChartOfAccountsView },
-	WbsoTransactionsView: { kind: 'page', component: WbsoTransactionsView },
-	WbsoDocumentsView: { kind: 'page', component: WbsoDocumentsView },
 
 	// bookings-self-service-widget admin (REQ-WSW-009).
 	BookingWidgetKeys: { kind: 'page', component: BookingWidgetKeys },

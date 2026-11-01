@@ -92,9 +92,9 @@
 				with `#cell-unitPrice` the price column printed the raw `1899`
 				instead of `1899.00 EUR`, and with `:emptyLabel` the empty state
 				printed CnDataTable's untranslated default `No items found`.
-				⚠️ Six other files in this repo use the `#cell-*` spelling on
+				⚠️ Four other files in this repo use the `#cell-*` spelling on
 				CnDataTable (three-way-match, vendor-performance, reporting,
-				bookkeeping DocumentsView/TransactionsView, invoice AdminInvoiceList)
+				invoice AdminInvoiceList)
 				— ~30 overrides that are inert today. Reported, not fixed here:
 				each one changes what those pages render and needs its own check.
 			-->

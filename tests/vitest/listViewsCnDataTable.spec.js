@@ -7,8 +7,6 @@
  * shared nc-vue CnDataTable universal-list-widget.
  *
  *   src/views/invoice/AdminInvoiceList.vue
- *   src/views/bookkeeping/DocumentsView.vue
- *   src/views/bookkeeping/TransactionsView.vue
  *   src/components/three-way-match/ThreeWayMatchIndex.vue
  *   src/components/vendor-performance/VendorPerformanceIndex.vue
  *
@@ -25,8 +23,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ThreeWayMatchIndex from '../../src/components/three-way-match/ThreeWayMatchIndex.vue'
 import VendorPerformanceIndex from '../../src/components/vendor-performance/VendorPerformanceIndex.vue'
-import DocumentsView from '../../src/views/bookkeeping/DocumentsView.vue'
-import TransactionsView from '../../src/views/bookkeeping/TransactionsView.vue'
 import AdminInvoiceList from '../../src/views/invoice/AdminInvoiceList.vue'
 
 /** Identity translator: returns the source string (or fills {placeholders}). */
@@ -58,8 +54,6 @@ afterEach(() => {
 describe('migrate-list-views-to-cndatatable: CnDataTable is the list renderer', () => {
 	const views = [
 		['AdminInvoiceList', AdminInvoiceList],
-		['DocumentsView', DocumentsView],
-		['TransactionsView', TransactionsView],
 		['ThreeWayMatchIndex', ThreeWayMatchIndex],
 		['VendorPerformanceIndex', VendorPerformanceIndex],
 	]
@@ -86,31 +80,6 @@ describe('AdminInvoiceList columns', () => {
 			'grossAmount',
 			'status',
 			'actions',
-		])
-	})
-})
-
-describe('DocumentsView columns', () => {
-	it('has the document number/type/date/status/file-reference columns', () => {
-		expect(columnKeys(DocumentsView)).toEqual([
-			'documentNumber',
-			'documentType',
-			'documentDate',
-			'status',
-			'fileReference',
-		])
-	})
-})
-
-describe('TransactionsView columns', () => {
-	it('has the date/number/type/description/amount/status columns', () => {
-		expect(columnKeys(TransactionsView)).toEqual([
-			'transactionDate',
-			'transactionNumber',
-			'transactionType',
-			'description',
-			'amount',
-			'status',
 		])
 	})
 })

@@ -3737,62 +3737,6 @@
 		{
 			"menu": [
 				{
-					"id": "Bookkeeping",
-					"label": "Bookkeeping",
-					"icon": "NotebookOutline",
-					"order": 20,
-					"children": [
-						{
-							"id": "WbsoChartOfAccounts",
-							"label": "Chart of Accounts",
-							"icon": "NotebookOutline",
-							"route": "WbsoChartOfAccounts",
-							"order": 10
-						},
-						{
-							"id": "WbsoTransactions",
-							"label": "Transactions",
-							"icon": "ReceiptTextOutline",
-							"route": "WbsoTransactions",
-							"order": 20
-						},
-						{
-							"id": "WbsoDocuments",
-							"label": "Documents",
-							"icon": "FileDocumentMultipleOutline",
-							"route": "WbsoDocuments",
-							"order": 30
-						}
-					]
-				}
-			],
-			"pages": [
-				{
-					"_fragment": "bookkeeping-wbso-sno-administratie",
-					"id": "WbsoChartOfAccounts",
-					"route": "/bookkeeping/chart-of-accounts",
-					"type": "custom",
-					"title": "Chart of Accounts"
-				},
-				{
-					"_fragment": "bookkeeping-wbso-sno-administratie",
-					"id": "WbsoTransactions",
-					"route": "/bookkeeping/transactions",
-					"type": "custom",
-					"title": "Transactions"
-				},
-				{
-					"_fragment": "bookkeeping-wbso-sno-administratie",
-					"id": "WbsoDocuments",
-					"route": "/bookkeeping/documents",
-					"type": "custom",
-					"title": "Documents"
-				}
-			]
-		},
-		{
-			"menu": [
-				{
 					"id": "Treasury",
 					"label": "Treasury",
 					"icon": "BankOutline",
