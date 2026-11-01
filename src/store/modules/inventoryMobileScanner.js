@@ -316,6 +316,8 @@ export const useInventoryMobileScannerStore = defineStore('inventoryMobileScanne
 		 * @param {object} op Operation payload.
 		 * @return {Promise<{transactionId:string, localQuantity:number|null}>}
 		 *   Outcome metadata.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
 		 */
 		async submitOperation(op) {
 			if (!this.ready || !this.db) {
