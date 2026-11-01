@@ -130,18 +130,49 @@ export default {
 			this.successMessage = null
 
 			if (
-				!this.location
-				|| !this.sku
-				|| !this.quantity
-				|| this.quantity <= 0
+				!this.requiredFieldsPresent()
+				|| !(await this.locationHasStock())
+				|| !this.claimSubmitSlot()
 			) {
-				this.error = this.t(
-					'shillinq',
-					'Location, SKU and a positive quantity are required.',
-				)
 				return
 			}
+			await this.recordPick()
+		},
 
+		/**
+		 * Whether a location, SKU or a positive quantity is missing.
+		 *
+		 * @return {boolean} True when the form is incomplete.
+		 */
+		pickFieldsMissing() {
+			return (
+				!this.location || !this.sku || !this.quantity || this.quantity <= 0
+			)
+		},
+
+		/**
+		 * Set the error when a location, SKU or positive quantity is missing.
+		 *
+		 * @return {boolean} Whether the form is complete.
+		 */
+		requiredFieldsPresent() {
+			if (!this.pickFieldsMissing()) {
+				return true
+			}
+			this.error = this.t(
+				'shillinq',
+				'Location, SKU and a positive quantity are required.',
+			)
+			return false
+		},
+
+		/**
+		 * Check the location has enough stock, setting the warning when it
+		 * has not. A failed read lets the pick through.
+		 *
+		 * @return {Promise<boolean>} Whether the pick may continue.
+		 */
+		async locationHasStock() {
 			try {
 				if (this.store.db) {
 					const onHand = await readStockQuantity(
@@ -149,53 +180,108 @@ export default {
 						this.sku,
 						this.location,
 					)
-					if (onHand < this.quantity) {
-						this.warning = this.t(
-							'shillinq',
-							'Only {onHand} units available; reduce quantity or cancel.',
-							{ onHand },
-						)
-						return
-					}
+					return this.stockCovers(onHand)
 				}
 			} catch (e) {
 				// Best-effort guard.
 			}
+			return true
+		},
 
+		/**
+		 * Compare the stock on hand with the quantity, setting the warning
+		 * when it falls short.
+		 *
+		 * @param {number} onHand The units at the location.
+		 * @return {boolean} Whether the stock covers the quantity.
+		 */
+		stockCovers(onHand) {
+			if (onHand < this.quantity) {
+				this.warning = this.t(
+					'shillinq',
+					'Only {onHand} units available; reduce quantity or cancel.',
+					{ onHand },
+				)
+				return false
+			}
+			return true
+		},
+
+		/**
+		 * Refuse a second submit within five seconds, otherwise note the time.
+		 *
+		 * @return {boolean} Whether this submit may go ahead.
+		 */
+		claimSubmitSlot() {
 			const now = Date.now()
 			if (now - this.lastSubmittedAt < 5000) {
 				this.error = this.t(
 					'shillinq',
 					'Already submitted; waiting for server ACK.',
 				)
-				return
+				return false
 			}
 			this.lastSubmittedAt = now
+			return true
+		},
 
+		/**
+		 * Queue the pick as a pending operation and report the outcome on
+		 * the form.
+		 *
+		 * @return {Promise<void>}
+		 */
+		async recordPick() {
 			this.submitting = true
 			try {
-				await this.store.submitOperation({
-					type: 'pick',
-					sku: this.sku,
-					location: this.location,
-					quantity: this.quantity,
-					orderLineId: this.orderLineId || null,
-				})
-				this.successMessage = this.t(
-					'shillinq',
-					'Picked {qty} × {sku} (pending sync)',
-					{ qty: this.quantity, sku: this.sku },
-				)
+				await this.store.submitOperation(this.pickOperation())
+				this.successMessage = this.pickDoneMessage()
 				this.sku = ''
 				this.quantity = null
 				this.orderLineId = ''
 			} catch (e) {
-				this.error =
-					e && e.message
-						? e.message
-						: this.t('shillinq', 'Could not record pick.')
+				this.error = this.failureText(e)
 			} finally {
 				this.submitting = false
+			}
+		},
+
+		/**
+		 * The message of a failed submit, or a generic one.
+		 *
+		 * @param {Error|object|null} e What the submit threw.
+		 * @return {string} The error to show.
+		 */
+		failureText(e) {
+			return e && e.message
+				? e.message
+				: this.t('shillinq', 'Could not record pick.')
+		},
+
+		/**
+		 * The confirmation shown once the pick is queued.
+		 *
+		 * @return {string} The translated message.
+		 */
+		pickDoneMessage() {
+			return this.t('shillinq', 'Picked {qty} × {sku} (pending sync)', {
+				qty: this.quantity,
+				sku: this.sku,
+			})
+		},
+
+		/**
+		 * The pending pick operation for the current form.
+		 *
+		 * @return {object} The operation the scanner store submits.
+		 */
+		pickOperation() {
+			return {
+				type: 'pick',
+				sku: this.sku,
+				location: this.location,
+				quantity: this.quantity,
+				orderLineId: this.orderLineId || null,
 			}
 		},
 	},
