@@ -57,22 +57,7 @@ final class RuleTestDataSeederTest extends TestCase {
 			]
 		);
 
-		$appConfig = $this->createStub(IAppConfig::class);
-		$appConfig->method('getValueString')->willReturn('shillinq');
-		$groupManager = $this->createStub(IGroupManager::class);
-		$groupManager->method('get')->willReturn(null);
-		$userManager = $this->createStub(IUserManager::class);
-		$userManager->method('get')->willReturn(null);
-
-		$seeder = new RuleTestDataSeeder(
-			appConfig: $appConfig,
-			userManager: $userManager,
-			groupManager: $groupManager,
-			logger: $this->createStub(LoggerInterface::class),
-			objectService: new DuckObjectServiceAdapter($os),
-		);
-
-		$seeder->seed();
+		$this->seeder(os: $os)->seed();
 
 		$lines = $os->dump(schema: 'GLLine');
 		self::assertCount(2, $lines);
@@ -82,4 +67,60 @@ final class RuleTestDataSeederTest extends TestCase {
 		}
 
 	}//end testSeededBalanceLegsCarryTheParentsAdministration()
+
+	/**
+	 * A sales invoice whose seller VAT id and type code are blank strings gets
+	 * the defaults, so the next run finds it complete and saves nothing.
+	 *
+	 * @return void
+	 */
+	public function testABlankSellerVatIdGetsTheDefaultAndIsNotSeededAgain(): void {
+		$os = new InMemoryObjectService();
+		$os->setSchema('ARInvoice')->saveObject(
+			[
+				'id' => 'ar-1',
+				'netAmount' => 100,
+				'vatAmount' => 21,
+				'sellerVatId' => '',
+				'invoiceTypeCode' => ' ',
+				'sellerName' => 'Own Seller B.V.',
+			]
+		);
+
+		$first = $this->seeder(os: $os)->seed();
+		$invoice = $os->dump(schema: 'ARInvoice')[0];
+		self::assertSame(1, $first['invoiceLinesAdded']);
+		self::assertSame('NL123456789B01', $invoice['sellerVatId']);
+		self::assertSame('380', $invoice['invoiceTypeCode']);
+		self::assertSame('Own Seller B.V.', $invoice['sellerName'], 'A value already set is kept.');
+
+		$second = $this->seeder(os: $os)->seed();
+		self::assertSame(0, $second['invoiceLinesAdded'], 'The completed invoice is not saved again.');
+
+	}//end testABlankSellerVatIdGetsTheDefaultAndIsNotSeededAgain()
+
+	/**
+	 * A seeder over the in-memory store, with no admin user.
+	 *
+	 * @param InMemoryObjectService $os The store.
+	 *
+	 * @return RuleTestDataSeeder
+	 */
+	private function seeder(InMemoryObjectService $os): RuleTestDataSeeder {
+		$appConfig = $this->createStub(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
+		$groupManager = $this->createStub(IGroupManager::class);
+		$groupManager->method('get')->willReturn(null);
+		$userManager = $this->createStub(IUserManager::class);
+		$userManager->method('get')->willReturn(null);
+
+		return new RuleTestDataSeeder(
+			appConfig: $appConfig,
+			userManager: $userManager,
+			groupManager: $groupManager,
+			logger: $this->createStub(LoggerInterface::class),
+			objectService: new DuckObjectServiceAdapter($os),
+		);
+
+	}//end seeder()
 }//end class

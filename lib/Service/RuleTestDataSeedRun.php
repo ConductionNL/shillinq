@@ -401,17 +401,19 @@ final class RuleTestDataSeedRun {
 	/**
 	 * Seller/buyer party identification (BG-4/BG-7) so the EN 16931 party and
 	 * per-category seller-VAT rules (BR-01/06/08/09/10, BR-CO-09/26,
-	 * BR-S/Z/E-02, vatdir-226-3) are satisfied. A value already set is kept.
+	 * BR-S/Z/E-02, vatdir-226-3) are satisfied. A value already set is kept;
+	 * a blank one gets the default, as hasFullStructure() reads it as missing.
 	 *
 	 * @param array<string, mixed> $invoice The sales invoice.
 	 *
 	 * @return array<string, mixed> The invoice with its party fields set.
 	 */
 	private static function withPartyDefaults(array $invoice): array {
-		$invoice['invoiceTypeCode'] = ($invoice['invoiceTypeCode'] ?? '380');
-		$invoice['supplyDate']      = ($invoice['supplyDate'] ?? ($invoice['invoiceDate'] ?? '2026-06-21'));
-		foreach (self::PARTY_DEFAULTS as $field => $default) {
-			$invoice[$field] = ($invoice[$field] ?? $default);
+		$defaults = ['invoiceTypeCode' => '380', 'supplyDate' => ($invoice['invoiceDate'] ?? '2026-06-21')] + self::PARTY_DEFAULTS;
+		foreach ($defaults as $field => $default) {
+			if (self::isBlank(row: $invoice, field: $field) === true) {
+				$invoice[$field] = $default;
+			}
 		}
 
 		return $invoice;
