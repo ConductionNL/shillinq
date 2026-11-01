@@ -569,72 +569,104 @@ export default {
 			this.submitting = true
 			this.submitError = ''
 			try {
-				const response = await fetch(
-					this.buildUrl('/api/widget/appointments'),
-					{
-						method: 'POST',
-						headers: this.authHeaders(),
-						body: JSON.stringify({
-							serviceId: this.selectedServiceId,
-							resourceId: this.resourceId,
-							startTime: this.selectedSlot.startTime,
-							endTime: this.selectedSlot.endTime,
-							customerName: this.customerName,
-							email: this.email,
-							phone: this.phone || null,
-							notes: this.notes || null,
-						}),
-					},
-				)
-				if (response.status === 409) {
-					this.submitError = this.t(
-						'This slot was just booked. Please select another time.',
-					)
-					await this.loadSlots()
-					this.step = 'datetime'
-					return
-				}
-				if (response.status === 401 || response.status === 403) {
-					this.submitError = this.t(
-						'Configuration error. Please contact the website owner.',
-					)
-					return
-				}
-				if (response.status === 404) {
-					this.submitError = this.t(
-						'This service is no longer available. Please refresh the page.',
-					)
-					return
-				}
-				if (response.status >= 500) {
-					this.submitError = this.t(
-						'Something went wrong. Our team has been notified. Please try again later.',
-					)
-					return
-				}
-				if (!response.ok) {
-					const payload = await response.json().catch(() => ({}))
-					this.submitError =
-						payload && payload.message
-							? payload.message
-							: this.t(
-									'Network error. Please check your connection and try again.',
-								)
-					return
-				}
-				const payload = await response.json()
-				this.confirmationMessage =
-					payload && payload.confirmationMessage
-						? payload.confirmationMessage
-						: this.t('Booking confirmed')
-				this.step = 'confirmed'
+				await this.handleSubmitResponse(await this.postAppointment())
 			} catch (e) {
-				this.submitError = this.t(
-					'Network error. Please check your connection and try again.',
-				)
+				this.submitError = this.networkError()
 			} finally {
 				this.submitting = false
 			}
+		},
+
+		postAppointment() {
+			return fetch(this.buildUrl('/api/widget/appointments'), {
+				method: 'POST',
+				headers: this.authHeaders(),
+				body: JSON.stringify(this.appointmentBody()),
+			})
+		},
+
+		appointmentBody() {
+			return {
+				serviceId: this.selectedServiceId,
+				resourceId: this.resourceId,
+				startTime: this.selectedSlot.startTime,
+				endTime: this.selectedSlot.endTime,
+				customerName: this.customerName,
+				email: this.email,
+				phone: this.phone || null,
+				notes: this.notes || null,
+			}
+		},
+
+		// The booking answer: a taken slot sends the customer back to the
+		// times, a refused one shows why, an accepted one confirms.
+		async handleSubmitResponse(response) {
+			if (response.status === 409) {
+				await this.slotTaken()
+				return
+			}
+			const failure = await this.submitFailure(response)
+			if (failure !== null) {
+				this.submitError = failure
+				return
+			}
+			await this.confirmBooking(response)
+		},
+
+		async submitFailure(response) {
+			const statusError = this.submitStatusError(response.status)
+			if (statusError !== null || response.ok) {
+				return statusError
+			}
+			return this.rejectionMessage(response)
+		},
+
+		async slotTaken() {
+			this.submitError = this.t(
+				'This slot was just booked. Please select another time.',
+			)
+			await this.loadSlots()
+			this.step = 'datetime'
+		},
+
+		submitStatusError(status) {
+			if (status === 401 || status === 403) {
+				return this.t(
+					'Configuration error. Please contact the website owner.',
+				)
+			}
+			if (status === 404) {
+				return this.t(
+					'This service is no longer available. Please refresh the page.',
+				)
+			}
+			return status >= 500 ? this.serverError() : null
+		},
+
+		serverError() {
+			return this.t(
+				'Something went wrong. Our team has been notified. Please try again later.',
+			)
+		},
+
+		async rejectionMessage(response) {
+			const payload = await response.json().catch(() => ({}))
+			return payload && payload.message ? payload.message : this.networkError()
+		},
+
+		networkError() {
+			return this.t(
+				'Network error. Please check your connection and try again.',
+			)
+		},
+
+		async confirmBooking(response) {
+			const payload = await response.json()
+			this.confirmationMessage =
+				payload && payload.confirmationMessage
+					? payload.confirmationMessage
+					: this.t('Booking confirmed')
+			this.step = 'confirmed'
 		},
 	},
 }
