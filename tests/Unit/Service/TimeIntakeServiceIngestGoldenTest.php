@@ -274,6 +274,7 @@ final class TimeIntakeServiceIngestGoldenTest extends TestCase {
 			'saved row without an id'          => [['body' => $body, 'save' => ['UrenRegistratie' => 'no-id']]],
 			'saved rows with a self id'        => [['body' => $body, 'save' => ['UrenRegistratie' => 'self-id', 'TimeIntakeBatch' => 'self-id']]],
 			'store lookup fails'               => [['body' => $body, 'save' => ['findAll:UrenRegistratie' => 'throw']]],
+			'batch lookup fails'               => [['body' => $body, 'save' => ['findAll:TimeIntakeBatch' => 'throw']]],
 			'drafting fails'                   => [['body' => $body, 'draft' => 'throw']],
 			'draft with a self id, no number'  => [['body' => $body, 'draft' => ['@self' => ['id' => 'inv-7']]]],
 			'draft without an id'              => [['body' => $body, 'draft' => ['invoiceNumber' => 'X-1']]],
@@ -286,6 +287,38 @@ final class TimeIntakeServiceIngestGoldenTest extends TestCase {
 		];
 
 	}//end scenarios()
+
+	/**
+	 * A store read error in either double-billing guard aborts the ingest:
+	 * no hours row, no batch row and no draft invoice.
+	 *
+	 * @return array<string, array<int, string>>
+	 */
+	public static function guardReads(): array {
+		return [
+			'replay lookup'      => ['TimeIntakeBatch'],
+			'cross-batch dedup'  => ['UrenRegistratie'],
+		];
+
+	}//end guardReads()
+
+	/**
+	 * A failing guard read writes nothing and drafts nothing.
+	 *
+	 * @param string $schema The schema whose read fails.
+	 *
+	 * @return void
+	 */
+	#[DataProvider('guardReads')]
+	public function testAGuardReadErrorWritesNothing(string $schema): void {
+		$actual = $this->runScenario(['body' => self::body(), 'save' => ['findAll:' . $schema => 'throw']]);
+
+		$this->assertSame(\RuntimeException::class, $actual['results'][0]['threw'] ?? null);
+		$this->assertSame([], $actual['drafts']);
+		$saves = array_filter($actual['calls'], static fn (array $call): bool => $call[0] === 'saveObject');
+		$this->assertSame([], array_values($saves));
+
+	}//end testAGuardReadErrorWritesNothing()
 
 	/**
 	 * Every hours row carries the session user and tenant, whatever the
