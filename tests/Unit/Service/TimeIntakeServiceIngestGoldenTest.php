@@ -279,9 +279,37 @@ final class TimeIntakeServiceIngestGoldenTest extends TestCase {
 			'draft without an id'              => [['body' => $body, 'draft' => ['invoiceNumber' => 'X-1']]],
 			'malformed body'                   => [['body' => array_merge($body, ['entries' => []])]],
 			'no project on the batch'          => [['body' => array_merge($body, ['projectRef' => null])]],
+			'body cannot set the acting user or tenant' => [[
+				'body' => array_merge($body, ['personId' => 'mallory', 'administrationId' => 'adm-2', 'scope' => ['personId' => 'mallory']]),
+			],
+			],
 		];
 
 	}//end scenarios()
+
+	/**
+	 * Every hours row carries the session user and tenant, whatever the
+	 * request body claims.
+	 *
+	 * @return void
+	 */
+	public function testBodyCannotSetTheActingUserOrTenant(): void {
+		$body   = array_merge(self::body(), ['personId' => 'mallory', 'administrationId' => 'adm-2', 'scope' => ['personId' => 'mallory']]);
+		$actual = $this->runScenario(['body' => $body]);
+
+		$rows = array_values(
+			array_filter(
+				$actual['calls'],
+				static fn (array $call): bool => $call[0] === 'saveObject' && $call[1] === 'UrenRegistratie'
+			)
+		);
+		$this->assertCount(2, $rows);
+		foreach ($rows as $call) {
+			$this->assertSame('alice', $call[2]['personId']);
+			$this->assertSame('adm-1', $call[2]['administrationId']);
+		}
+
+	}//end testBodyCannotSetTheActingUserOrTenant()
 
 	/**
 	 * One scenario matches the record.
