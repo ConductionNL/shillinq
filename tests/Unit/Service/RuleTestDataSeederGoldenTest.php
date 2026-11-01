@@ -59,6 +59,7 @@ final class RuleTestDataSeederGoldenTest extends TestCase {
 			'empty register, admin from the admin group' => ['empty'],
 			'mixed rows, admin by uid, empty register config' => ['mixed'],
 			'every save and probe fails, no admin at all' => ['failing'],
+			'review cases: blank seller VAT id, lines already present, group admin before uid admin' => ['reviewed'],
 		];
 
 	}//end scenarios()
@@ -131,6 +132,22 @@ final class RuleTestDataSeederGoldenTest extends TestCase {
 	private function rows(string $scenario): array {
 		if ($scenario === 'empty') {
 			return [];
+		}
+
+		if ($scenario === 'reviewed') {
+			return [
+				'GLTransaction' => [['id' => 'tx-eeeeeeee-5', 'sourceReference' => '']],
+				'GLLine' => [['transactionId' => 'tx-eeeeeeee-5'], ['transactionId' => 'tx-eeeeeeee-5']],
+				'ARInvoice' => [
+					[
+						'id' => 'ar-blank-vat-id',
+						'invoiceLines' => [['vatRate' => 21]],
+						'allowancesTotal' => 0,
+						'invoiceTypeCode' => '380',
+						'sellerVatId' => ' ',
+					],
+				],
+			];
 		}
 
 		$specTypes   = array_keys(array_filter(RuleEngine::providerSeedSpecs()));
@@ -223,6 +240,11 @@ final class RuleTestDataSeederGoldenTest extends TestCase {
 			$group->method('getUsers')->willReturn([$this->user(uid: 'group-admin'), $this->user(uid: 'second-admin')]);
 		}
 
+		if ($scenario === 'reviewed') {
+			$group = $this->createStub(IGroup::class);
+			$group->method('getUsers')->willReturn([$this->user(uid: 'carol')]);
+		}
+
 		if ($scenario === 'failing') {
 			$group = $this->createStub(IGroup::class);
 			$group->method('getUsers')->willReturn([]);
@@ -242,7 +264,7 @@ final class RuleTestDataSeederGoldenTest extends TestCase {
 	 */
 	private function userManager(string $scenario): IUserManager {
 		$userManager = $this->createStub(IUserManager::class);
-		$admin       = $scenario === 'mixed' ? $this->user(uid: 'uid-admin') : null;
+		$admin       = in_array($scenario, ['mixed', 'reviewed'], true) ? $this->user(uid: 'uid-admin') : null;
 		$userManager->method('get')->willReturnCallback(static fn (string $uid): ?IUser => $uid === 'admin' ? $admin : null);
 		return $userManager;
 
