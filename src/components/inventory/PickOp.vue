@@ -124,6 +124,14 @@ export default {
 			this.scanning = false
 		},
 
+		/**
+		 * Check the form, the stock and the submit guard in turn, then record
+		 * the pick.
+		 *
+		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
+		 */
 		async handleConfirm() {
 			this.error = null
 			this.warning = null
@@ -143,6 +151,8 @@ export default {
 		 * Whether a location, SKU or a positive quantity is missing.
 		 *
 		 * @return {boolean} True when the form is incomplete.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
 		 */
 		pickFieldsMissing() {
 			return (
@@ -154,6 +164,8 @@ export default {
 		 * Set the error when a location, SKU or positive quantity is missing.
 		 *
 		 * @return {boolean} Whether the form is complete.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
 		 */
 		requiredFieldsPresent() {
 			if (!this.pickFieldsMissing()) {
@@ -171,6 +183,8 @@ export default {
 		 * has not. A failed read lets the pick through.
 		 *
 		 * @return {Promise<boolean>} Whether the pick may continue.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
 		 */
 		async locationHasStock() {
 			try {
@@ -194,6 +208,8 @@ export default {
 		 *
 		 * @param {number} onHand The units at the location.
 		 * @return {boolean} Whether the stock covers the quantity.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
 		 */
 		stockCovers(onHand) {
 			if (onHand < this.quantity) {
@@ -211,6 +227,8 @@ export default {
 		 * Refuse a second submit within five seconds, otherwise note the time.
 		 *
 		 * @return {boolean} Whether this submit may go ahead.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
 		 */
 		claimSubmitSlot() {
 			const now = Date.now()
@@ -230,6 +248,8 @@ export default {
 		 * the form.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
 		 */
 		async recordPick() {
 			this.submitting = true
@@ -251,6 +271,8 @@ export default {
 		 *
 		 * @param {Error|object|null} e What the submit threw.
 		 * @return {string} The error to show.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
 		 */
 		failureText(e) {
 			return e && e.message
@@ -262,6 +284,8 @@ export default {
 		 * The confirmation shown once the pick is queued.
 		 *
 		 * @return {string} The translated message.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
 		 */
 		pickDoneMessage() {
 			return this.t('shillinq', 'Picked {qty} × {sku} (pending sync)', {
@@ -274,6 +298,8 @@ export default {
 		 * The pending pick operation for the current form.
 		 *
 		 * @return {object} The operation the scanner store submits.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
 		 */
 		pickOperation() {
 			return {

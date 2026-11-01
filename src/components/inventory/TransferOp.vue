@@ -134,6 +134,14 @@ export default {
 			this.scanning = false
 		},
 
+		/**
+		 * Check the form, the locations, the stock and the submit guard in turn,
+		 * then record the transfer.
+		 *
+		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
+		 */
 		async handleConfirm() {
 			this.error = null
 			this.successMessage = null
@@ -153,6 +161,8 @@ export default {
 		 * Whether a source, destination, SKU or a positive quantity is missing.
 		 *
 		 * @return {boolean} True when the form is incomplete.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
 		 */
 		transferFieldsMissing() {
 			return (
@@ -169,6 +179,8 @@ export default {
 		 * is missing.
 		 *
 		 * @return {boolean} Whether the form is complete.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
 		 */
 		requiredFieldsPresent() {
 			if (!this.transferFieldsMissing()) {
@@ -185,6 +197,8 @@ export default {
 		 * Set the error when the source and destination are the same.
 		 *
 		 * @return {boolean} Whether the locations differ.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
 		 */
 		locationsDiffer() {
 			if (this.fromLocation !== this.toLocation) {
@@ -200,6 +214,8 @@ export default {
 		 * through; the server rejects it if the quantity ends up negative.
 		 *
 		 * @return {Promise<boolean>} Whether the transfer may continue.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
 		 */
 		async sourceHasStock() {
 			try {
@@ -223,6 +239,8 @@ export default {
 		 *
 		 * @param {number} onHand The units at the source location.
 		 * @return {boolean} Whether the stock covers the quantity.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
 		 */
 		stockCovers(onHand) {
 			if (onHand < this.quantity) {
@@ -240,6 +258,8 @@ export default {
 		 * Refuse a second submit within five seconds, otherwise note the time.
 		 *
 		 * @return {boolean} Whether this submit may go ahead.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
 		 */
 		claimSubmitSlot() {
 			const now = Date.now()
@@ -259,6 +279,8 @@ export default {
 		 * the outcome on the form.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
 		 */
 		async recordTransfer() {
 			this.submitting = true
@@ -279,6 +301,8 @@ export default {
 		 *
 		 * @param {Error|object|null} e What the submit threw.
 		 * @return {string} The error to show.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
 		 */
 		failureText(e) {
 			return e && e.message
@@ -290,6 +314,8 @@ export default {
 		 * The confirmation shown once the transfer is queued.
 		 *
 		 * @return {string} The translated message.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
 		 */
 		transferDoneMessage() {
 			return this.t(
@@ -307,6 +333,8 @@ export default {
 		 * The pending transfer operation for the current form.
 		 *
 		 * @return {object} The operation the scanner store submits.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
 		 */
 		transferOperation() {
 			return {
