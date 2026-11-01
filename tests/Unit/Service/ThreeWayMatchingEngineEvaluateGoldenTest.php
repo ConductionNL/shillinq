@@ -409,6 +409,13 @@ final class ThreeWayMatchingEngineEvaluateGoldenTest extends TestCase {
 				),
 			],
 			],
+			'service receipt only received'      => [[
+				'replace' => [
+					'GoodsReceiptNote' => [],
+					'SvcReceipt'       => [['id' => 'svc-r', 'administrationId' => 'adm-1', 'poIds' => ['po-1'], 'statusCode' => 'received']],
+				],
+			],
+			],
 			'service receipt without id'         => [[
 				'replace' => [
 					'GoodsReceiptNote' => [],

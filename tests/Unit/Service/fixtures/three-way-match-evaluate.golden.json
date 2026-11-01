@@ -13378,6 +13378,162 @@
         "alerts": [],
         "log": []
     },
+    "service receipt only received": {
+        "result": {
+            "invoiceId": "inv-1",
+            "matchedPoIds": [
+                "po-1"
+            ],
+            "matchedGrnIds": [
+                "svc-r"
+            ],
+            "matchStatus": "exception_missing_grn",
+            "divergenceDetails": [
+                {
+                    "field": "grn",
+                    "expected": "accepted",
+                    "actual": "missing"
+                }
+            ],
+            "costCenter": "INV-CC",
+            "projectCode": "INV-PRJ",
+            "createdAt": "(now)",
+            "administrationId": "adm-1",
+            "id": "m-1"
+        },
+        "calls": [
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "findAll",
+                "SupplierInvoice",
+                {
+                    "filters": {
+                        "id": "inv-1",
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "findAll",
+                "PurchaseOrder",
+                {
+                    "filters": {
+                        "id": "po-1",
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "findAll",
+                "PurchaseOrder",
+                {
+                    "filters": {
+                        "id": "po-1",
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "findAll",
+                "PurchaseOrderLine",
+                {
+                    "filters": {
+                        "poId": "po-1",
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "findAll",
+                "GoodsReceiptNote",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "findAll",
+                "SvcReceipt",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "setRegister",
+                "shillinq"
+            ],
+            [
+                "saveObject",
+                "ThreeWayMatch",
+                {
+                    "invoiceId": "inv-1",
+                    "matchedPoIds": [
+                        "po-1"
+                    ],
+                    "matchedGrnIds": [
+                        "svc-r"
+                    ],
+                    "matchStatus": "exception_missing_grn",
+                    "divergenceDetails": [
+                        {
+                            "field": "grn",
+                            "expected": "accepted",
+                            "actual": "missing"
+                        }
+                    ],
+                    "costCenter": "INV-CC",
+                    "projectCode": "INV-PRJ",
+                    "createdAt": "(now)",
+                    "administrationId": "adm-1"
+                }
+            ]
+        ],
+        "transitions": [
+            [
+                "adm-1",
+                "inv-1",
+                "matching"
+            ],
+            [
+                "adm-1",
+                "inv-1",
+                "exception"
+            ]
+        ],
+        "alerts": [
+            [
+                "adm-1",
+                "m-1"
+            ]
+        ],
+        "log": []
+    },
     "service receipt without id": {
         "result": {
             "invoiceId": "inv-1",
