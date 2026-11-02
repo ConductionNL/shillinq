@@ -10,13 +10,11 @@
 -->
 <template>
 	<InventoryOperationForm
+		fallbackToManual
+		v-bind="formState"
 		:title="t('shillinq', 'Inventory Count')"
 		:submitLabel="t('shillinq', 'Save count')"
-		v-bind="formState"
-		fallbackToManual
-		@submit="handleConfirm"
-		@scan="handleScan"
-		@cancel="scanning = false">
+		v-on="formEvents">
 		<InventoryLocationField
 			v-model="location"
 			:locations="store.locations"

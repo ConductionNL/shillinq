@@ -10,13 +10,11 @@
 -->
 <template>
 	<InventoryOperationForm
-		:title="t('shillinq', 'Pick for Order')"
-		:submitLabel="t('shillinq', 'Confirm pick')"
 		v-bind="formState"
 		:warning="warning"
-		@submit="handleConfirm"
-		@scan="handleScan"
-		@cancel="scanning = false">
+		:title="t('shillinq', 'Pick for Order')"
+		:submitLabel="t('shillinq', 'Confirm pick')"
+		v-on="formEvents">
 		<InventoryLocationField
 			v-model="location"
 			:locations="store.locations"

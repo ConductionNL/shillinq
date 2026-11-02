@@ -52,6 +52,19 @@ export const operationComputed = {
 			scanning: this.scanning,
 		}
 	},
+
+	/**
+	 * The handlers of the operation form events.
+	 *
+	 * @return {object} The submit, scan and cancel handlers.
+	 */
+	formEvents() {
+		return {
+			submit: this.handleConfirm,
+			scan: this.handleScan,
+			cancel: this.closeScanner,
+		}
+	},
 }
 
 /**
@@ -70,6 +83,13 @@ export const operationMethods = {
 	 */
 	handleScan(value) {
 		this.sku = value
+		this.scanning = false
+	},
+
+	/**
+	 * Close the scanner without a value.
+	 */
+	closeScanner() {
 		this.scanning = false
 	},
 
