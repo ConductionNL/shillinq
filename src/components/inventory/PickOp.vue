@@ -93,6 +93,7 @@
 import BarcodeScanner from './BarcodeScanner.vue'
 import { readStockQuantity } from '../../composables/useInventoryDb.js'
 import { useInventoryMobileScannerStore } from '../../store/modules/inventoryMobileScanner.js'
+import { claimSubmitSlot } from './claimSubmitSlot.js'
 
 export default {
 	name: 'PickOp',
@@ -119,6 +120,8 @@ export default {
 	},
 
 	methods: {
+		claimSubmitSlot,
+
 		handleScan(value) {
 			this.sku = value
 			this.scanning = false
@@ -220,26 +223,6 @@ export default {
 				)
 				return false
 			}
-			return true
-		},
-
-		/**
-		 * Refuse a second submit within five seconds, otherwise note the time.
-		 *
-		 * @return {boolean} Whether this submit may go ahead.
-		 *
-		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
-		 */
-		claimSubmitSlot() {
-			const now = Date.now()
-			if (now - this.lastSubmittedAt < 5000) {
-				this.error = this.t(
-					'shillinq',
-					'Already submitted; waiting for server ACK.',
-				)
-				return false
-			}
-			this.lastSubmittedAt = now
 			return true
 		},
 

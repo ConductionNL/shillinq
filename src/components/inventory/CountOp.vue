@@ -103,6 +103,7 @@
 import BarcodeScanner from './BarcodeScanner.vue'
 import { readStockQuantity } from '../../composables/useInventoryDb.js'
 import { useInventoryMobileScannerStore } from '../../store/modules/inventoryMobileScanner.js'
+import { claimSubmitSlot } from './claimSubmitSlot.js'
 
 export default {
 	name: 'CountOp',
@@ -146,6 +147,8 @@ export default {
 	},
 
 	methods: {
+		claimSubmitSlot,
+
 		handleScan(value) {
 			this.sku = value
 			this.scanning = false
@@ -167,59 +170,124 @@ export default {
 			}
 		},
 
+		/**
+		 * Check the form and the submit guard, then record the count.
+		 *
+		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
+		 */
 		async handleConfirm() {
 			this.error = null
 			this.successMessage = null
 
-			if (
+			if (!this.countFieldsPresent() || !this.claimSubmitSlot()) {
+				return
+			}
+			await this.recordCount()
+		},
+
+		/**
+		 * Whether the location, the SKU or a non-negative count is missing.
+		 *
+		 * @return {boolean} True when the form is incomplete.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
+		 */
+		countFieldsMissing() {
+			return (
 				!this.location
 				|| !this.sku
 				|| this.physicalQuantity === null
 				|| this.physicalQuantity < 0
-			) {
-				this.error = this.t(
-					'shillinq',
-					'Location, SKU and a non-negative physical count are required.',
-				)
-				return
-			}
+			)
+		},
 
-			const now = Date.now()
-			if (now - this.lastSubmittedAt < 5000) {
-				this.error = this.t(
-					'shillinq',
-					'Already submitted; waiting for server ACK.',
-				)
-				return
+		/**
+		 * Set the error when the location, the SKU or a non-negative count is
+		 * missing.
+		 *
+		 * @return {boolean} Whether the form is complete.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
+		 */
+		countFieldsPresent() {
+			if (!this.countFieldsMissing()) {
+				return true
 			}
-			this.lastSubmittedAt = now
+			this.error = this.t(
+				'shillinq',
+				'Location, SKU and a non-negative physical count are required.',
+			)
+			return false
+		},
 
+		/**
+		 * Queue the count as a pending operation and report the outcome on
+		 * the form.
+		 *
+		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
+		 */
+		async recordCount() {
 			this.submitting = true
 			try {
-				await this.store.submitOperation({
-					type: 'count',
-					sku: this.sku,
-					location: this.location,
-					physicalQuantity: this.physicalQuantity,
-					reconcile: this.reconcile,
-				})
+				await this.store.submitOperation(this.countOperation())
 				this.successMessage = this.t(
 					'shillinq',
 					'Count recorded: variance {variance} (pending sync)',
 					{ variance: this.variance },
 				)
-				this.sku = ''
-				this.physicalQuantity = null
-				this.systemQuantity = null
-				this.reconcile = false
+				this.clearCount()
 			} catch (e) {
-				this.error =
-					e && e.message
-						? e.message
-						: this.t('shillinq', 'Could not record count.')
+				this.error = this.countFailureText(e)
 			} finally {
 				this.submitting = false
 			}
+		},
+
+		/**
+		 * The pending count operation for the current form.
+		 *
+		 * @return {object} The operation the scanner store submits.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
+		 */
+		countOperation() {
+			return {
+				type: 'count',
+				sku: this.sku,
+				location: this.location,
+				physicalQuantity: this.physicalQuantity,
+				reconcile: this.reconcile,
+			}
+		},
+
+		/**
+		 * Empty the form for the next count; the location stays.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
+		 */
+		clearCount() {
+			this.sku = ''
+			this.physicalQuantity = null
+			this.systemQuantity = null
+			this.reconcile = false
+		},
+
+		/**
+		 * The message of a failed submit, or a generic one.
+		 *
+		 * @param {Error|object|null} e What the submit threw.
+		 * @return {string} The error to show.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
+		 */
+		countFailureText(e) {
+			return e && e.message
+				? e.message
+				: this.t('shillinq', 'Could not record count.')
 		},
 	},
 }
