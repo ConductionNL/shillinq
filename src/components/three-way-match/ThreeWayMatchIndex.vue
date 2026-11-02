@@ -236,6 +236,10 @@ export default {
 					label: this.t('shillinq', 'Quantity exception'),
 				},
 				{
+					value: 'exception_date',
+					label: this.t('shillinq', 'Delivery date exception'),
+				},
+				{
 					value: 'exception_missing_grn',
 					label: this.t('shillinq', 'Missing GRN'),
 				},
@@ -372,6 +376,7 @@ export default {
 				within_tolerance: this.t('shillinq', 'Within tolerance'),
 				exception_price: this.t('shillinq', 'Price exception'),
 				exception_quantity: this.t('shillinq', 'Quantity exception'),
+				exception_date: this.t('shillinq', 'Delivery date exception'),
 				exception_missing_grn: this.t('shillinq', 'Missing GRN'),
 				exception_missing_po: this.t('shillinq', 'Missing PO'),
 				fraud_alert: this.t('shillinq', 'Fraud alert'),
@@ -459,6 +464,7 @@ export default {
 
 .twm-index__pill--exception_price,
 .twm-index__pill--exception_quantity,
+.twm-index__pill--exception_date,
 .twm-index__pill--exception_missing_grn,
 .twm-index__pill--exception_missing_po {
 	background: var(--color-warning);
