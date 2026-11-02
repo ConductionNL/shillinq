@@ -26,6 +26,7 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\Seed\SeedImporter;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -1764,7 +1765,11 @@ class SettingsService {
 	 * @spec openspec/changes/inventory-stock-tracking/tasks.md#task-12
 	 */
 	private function inventorySeeds(): InventorySeedService {
-		return new InventorySeedService(settings: $this, container: $this->container, logger: $this->logger);
+		return new InventorySeedService(
+			settings: $this,
+			importer: new SeedImporter(settings: $this, container: $this->container, logger: $this->logger),
+			logger: $this->logger,
+		);
 	}//end inventorySeeds()
 
 	/**

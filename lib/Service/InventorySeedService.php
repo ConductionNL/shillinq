@@ -23,31 +23,40 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use Psr\Container\ContainerInterface;
+use OCA\Shillinq\Service\Seed\SeedImport;
+use OCA\Shillinq\Service\Seed\SeedImporter;
+use OCA\Shillinq\Service\Seed\SeedMessages;
 use Psr\Log\LoggerInterface;
 
 /**
  * Seeds the inventory demo records through OpenRegister's ObjectService.
  *
  * SettingsService runs these seeds and supplies the OpenRegister availability
- * check, the register slug and the configured default administration.
+ * check and the configured default administration.
  *
  * @spec openspec/changes/inventory-stock-tracking/tasks.md#task-12
  */
 class InventorySeedService {
 
 	/**
+	 * Result message when OpenRegister is missing.
+	 *
+	 * @var string
+	 */
+	private const NO_OPENREGISTER = 'OpenRegister is not installed or enabled.';
+
+	/**
 	 * Constructor for the InventorySeedService.
 	 *
 	 * @param SettingsService $settings The settings service
-	 * @param ContainerInterface $container The container
+	 * @param SeedImporter $importer The seed file importer
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private SettingsService $settings,
-		private ContainerInterface $container,
+		private SeedImporter $importer,
 		private LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -69,103 +78,33 @@ class InventorySeedService {
 	 */
 	public function seedInventoryBarcodes(): array {
 		if ($this->settings->isOpenRegisterAvailable() === false) {
-			return [
-				'success' => false,
-				'message' => 'OpenRegister is not installed or enabled.',
-			];
+			return $this->importer->failed(message: self::NO_OPENREGISTER);
 		}
 
-		$seedPath = __DIR__ . '/../Settings/seeds/inventory-barcodes-demo.json';
-		if (file_exists($seedPath) === false) {
-			return [
-				'success' => false,
-				'message' => 'Seed file not found: inventory-barcodes-demo.json',
-			];
+		$file = $this->importer->read(fileName: 'inventory-barcodes-demo.json');
+		if (isset($file['error']) === true) {
+			return $file['error'];
 		}
 
-		$content = file_get_contents($seedPath);
-		if ($content === false) {
-			return [
-				'success' => false,
-				'message' => 'Failed to read inventory-barcodes-demo.json',
-			];
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE) {
-			return [
-				'success' => false,
-				'message' => 'Failed to parse inventory-barcodes-demo.json: ' . json_last_error_msg(),
-			];
-		}
-
-		$barcodes = ($data['barcodes'] ?? []);
+		$barcodes = ($file['data']['barcodes'] ?? []);
 		if (empty($barcodes) === true) {
-			return [
-				'success' => true,
-				'message' => 'Seed file contains no barcodes, nothing to import.',
-				'seeded' => 0,
-				'skipped' => 0,
-			];
+			return $this->importer->nothingSeeded(message: 'Seed file contains no barcodes, nothing to import.');
 		}
 
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->settings->getRegisterSlug();
-			$seeded = 0;
-			$skipped = 0;
+		// Deduplication key (barcode, uomCode): idempotent re-runs per REQ-SKU-011.
+		$match = static fn ($barcode): array => [
+			'barcode' => ($barcode['barcode'] ?? ''),
+			'uomCode' => ($barcode['uomCode'] ?? ''),
+		];
 
-			foreach ($barcodes as $barcode) {
-				// Deduplication key (barcode, uomCode) — idempotent re-runs per REQ-SKU-011.
-				// ADR-022: use the real ObjectService fluent API (setRegister/setSchema/findAll).
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema('Barcode')
-					->findAll(
-						[
-							'filters' => [
-								'barcode' => ($barcode['barcode'] ?? ''),
-								'uomCode' => ($barcode['uomCode'] ?? ''),
-							],
-							'limit' => 1,
-						]
-					);
-
-				if (empty($existing) === false) {
-					$skipped++;
-					continue;
-				}
-
-				$objectService->saveObject(
-					object: $barcode,
-					register: $registerSlug,
-					schema: 'Barcode',
-				);
-				$seeded++;
-			}//end foreach
-
-			$this->logger->info(
-				'Shillinq: inventory barcodes seeded',
-				['seeded' => $seeded, 'skipped' => $skipped]
-			);
-
-			return [
-				'success' => true,
-				'message' => 'Inventory barcodes seeded successfully.',
-				'seeded' => $seeded,
-				'skipped' => $skipped,
-			];
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq: inventory barcode seeding failed',
-				['exception' => $e->getMessage()]
-			);
-			return [
-				'success' => false,
-				'message' => $e->getMessage(),
-			];
-		}//end try
-
+		return $this->importer->import(
+			import: new SeedImport(schema: 'Barcode', rows: $barcodes, match: $match),
+			messages: new SeedMessages(
+				seededLog: 'Shillinq: inventory barcodes seeded',
+				seededMessage: 'Inventory barcodes seeded successfully.',
+				failedLog: 'Shillinq: inventory barcode seeding failed',
+			)
+		);
 	}//end seedInventoryBarcodes()
 
 	/**
@@ -186,114 +125,39 @@ class InventorySeedService {
 	 */
 	public function seedInventoryLots(): array {
 		if ($this->settings->isOpenRegisterAvailable() === false) {
-			return [
-				'success' => false,
-				'message' => 'OpenRegister is not installed or enabled.',
-			];
+			return $this->importer->failed(message: self::NO_OPENREGISTER);
 		}
 
-		$seedPath = __DIR__ . '/../Settings/seeds/inventory-lots-demo.json';
-		if (file_exists($seedPath) === false) {
-			return [
-				'success' => false,
-				'message' => 'Seed file not found: inventory-lots-demo.json',
-			];
+		$file = $this->importer->read(fileName: 'inventory-lots-demo.json');
+		if (isset($file['error']) === true) {
+			return $file['error'];
 		}
 
-		$content = file_get_contents($seedPath);
-		if ($content === false) {
-			return [
-				'success' => false,
-				'message' => 'Failed to read inventory-lots-demo.json',
-			];
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE) {
-			return [
-				'success' => false,
-				'message' => 'Failed to parse inventory-lots-demo.json: ' . json_last_error_msg(),
-			];
-		}
-
-		$lots = ($data['lots'] ?? []);
+		$lots = ($file['data']['lots'] ?? []);
 		if (empty($lots) === true) {
-			return [
-				'success' => true,
-				'message' => 'Seed file contains no lots, nothing to import.',
-				'seeded' => 0,
-				'skipped' => 0,
-			];
+			return $this->importer->nothingSeeded(message: 'Seed file contains no lots, nothing to import.');
 		}
 
 		$settings = $this->settings->getSettings();
 		$administrationId = ($settings['administration_id'] ?? '');
 		if ($administrationId === '') {
-			return [
-				'success' => true,
-				'message' => 'No default administration configured, skipping lot seed.',
-				'seeded' => 0,
-				'skipped' => 0,
-			];
+			return $this->importer->nothingSeeded(message: 'No default administration configured, skipping lot seed.');
 		}
 
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->settings->getRegisterSlug();
-			$seeded = 0;
-			$skipped = 0;
+		// Deduplication key (administrationId, lotNumber): idempotent re-runs per REQ-LOT-002.
+		$match = static fn ($lot): array => [
+			'administrationId' => $administrationId,
+			'lotNumber' => ($lot['lotNumber'] ?? ''),
+		];
 
-			foreach ($lots as $lot) {
-				// Deduplication key (administrationId, lotNumber) — idempotent re-runs per REQ-LOT-002.
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema('InventoryLot')
-					->findAll(
-						[
-							'filters' => [
-								'administrationId' => $administrationId,
-								'lotNumber' => ($lot['lotNumber'] ?? ''),
-							],
-							'limit' => 1,
-						]
-					);
-
-				if (empty($existing) === false) {
-					$skipped++;
-					continue;
-				}
-
-				$lot['administrationId'] = $administrationId;
-				$objectService->saveObject(
-					object: $lot,
-					register: $registerSlug,
-					schema: 'InventoryLot',
-				);
-				$seeded++;
-			}//end foreach
-
-			$this->logger->info(
-				'Shillinq: inventory lots seeded',
-				['seeded' => $seeded, 'skipped' => $skipped]
-			);
-
-			return [
-				'success' => true,
-				'message' => 'Inventory lots seeded successfully.',
-				'seeded' => $seeded,
-				'skipped' => $skipped,
-			];
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq: inventory lot seeding failed',
-				['exception' => $e->getMessage()]
-			);
-			return [
-				'success' => false,
-				'message' => $e->getMessage(),
-			];
-		}//end try
-
+		return $this->importer->import(
+			import: new SeedImport(schema: 'InventoryLot', rows: $lots, match: $match, administrationId: $administrationId),
+			messages: new SeedMessages(
+				seededLog: 'Shillinq: inventory lots seeded',
+				seededMessage: 'Inventory lots seeded successfully.',
+				failedLog: 'Shillinq: inventory lot seeding failed',
+			)
+		);
 	}//end seedInventoryLots()
 
 	/**
@@ -314,118 +178,47 @@ class InventorySeedService {
 	 */
 	public function seedInventoryValuationExamples(string $administrationId): array {
 		if ($this->settings->isOpenRegisterAvailable() === false) {
-			return [
-				'success' => false,
-				'message' => 'OpenRegister is not installed or enabled.',
-			];
+			return $this->importer->failed(message: self::NO_OPENREGISTER);
 		}
 
 		if ($administrationId === '') {
-			return [
-				'success' => false,
-				'message' => 'administrationId is required for InventoryValuation seed.',
-			];
+			return $this->importer->failed(message: 'administrationId is required for InventoryValuation seed.');
 		}
 
-		$seedPath = __DIR__ . '/../Settings/seeds/inventory-valuation-examples.json';
-		if (file_exists($seedPath) === false) {
-			return [
-				'success' => false,
-				'message' => 'Seed file not found: inventory-valuation-examples.json',
-			];
+		$file = $this->importer->read(fileName: 'inventory-valuation-examples.json');
+		if (isset($file['error']) === true) {
+			return $file['error'];
 		}
 
-		$content = file_get_contents($seedPath);
-		if ($content === false) {
-			return [
-				'success' => false,
-				'message' => 'Failed to read inventory-valuation-examples.json',
-			];
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE) {
-			return [
-				'success' => false,
-				'message' => 'Failed to parse inventory-valuation-examples.json: ' . json_last_error_msg(),
-			];
-		}
-
-		$valuations = ($data['valuations'] ?? []);
+		$valuations = ($file['data']['valuations'] ?? []);
 		if (empty($valuations) === true) {
-			return [
-				'success' => true,
-				'message' => 'Seed file contains no valuations, nothing to import.',
-				'seeded' => 0,
-				'skipped' => 0,
-			];
+			return $this->importer->nothingSeeded(message: 'Seed file contains no valuations, nothing to import.');
 		}
 
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->settings->getRegisterSlug();
-			$seeded = 0;
-			$skipped = 0;
-
-			foreach ($valuations as $valuation) {
-				$productId = (string)($valuation['productId'] ?? '');
-				$warehouse = (string)($valuation['warehouse'] ?? '');
-				if ($productId === '' || $warehouse === '') {
-					continue;
-				}
-
-				// Dedup key (productId, warehouse, status=active, administrationId) per REQ-INV-005.
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema('InventoryValuation')
-					->findAll(
-						[
-							'filters' => [
-								'productId' => $productId,
-								'warehouse' => $warehouse,
-								'status' => 'active',
-								'administrationId' => $administrationId,
-							],
-							'limit' => 1,
-						]
-					);
-
-				if (empty($existing) === false) {
-					$skipped++;
-					continue;
-				}
-
-				$valuation['administrationId'] = $administrationId;
-				$objectService->saveObject(
-					object: $valuation,
-					register: $registerSlug,
-					schema: 'InventoryValuation',
-				);
-				$seeded++;
-			}//end foreach
-
-			$this->logger->info(
-				'Shillinq: inventory valuation examples seeded',
-				['seeded' => $seeded, 'skipped' => $skipped]
-			);
+		// Dedup key (productId, warehouse, status=active, administrationId) per REQ-INV-005.
+		$match = static function ($valuation) use ($administrationId): ?array {
+			$productId = (string) ($valuation['productId'] ?? '');
+			$warehouse = (string) ($valuation['warehouse'] ?? '');
+			if ($productId === '' || $warehouse === '') {
+				return null;
+			}
 
 			return [
-				'success' => true,
-				'message' => 'Inventory valuation examples seeded successfully.',
-				'seeded' => $seeded,
-				'skipped' => $skipped,
+				'productId' => $productId,
+				'warehouse' => $warehouse,
+				'status' => 'active',
+				'administrationId' => $administrationId,
 			];
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq: inventory valuation example seeding failed',
-				['exception' => $e->getMessage()]
-			);
-			return [
-				'success' => false,
-				'message' => $e->getMessage(),
-			];
-		}//end try
+		};
 
+		return $this->importer->import(
+			import: new SeedImport(schema: 'InventoryValuation', rows: $valuations, match: $match, administrationId: $administrationId),
+			messages: new SeedMessages(
+				seededLog: 'Shillinq: inventory valuation examples seeded',
+				seededMessage: 'Inventory valuation examples seeded successfully.',
+				failedLog: 'Shillinq: inventory valuation example seeding failed',
+			)
+		);
 	}//end seedInventoryValuationExamples()
 
 	/**
@@ -450,21 +243,53 @@ class InventorySeedService {
 	 */
 	public function seedInventoryStockExamples(string $administrationId): array {
 		if ($this->settings->isOpenRegisterAvailable() === false) {
-			return [
-				'success' => false,
-				'message' => 'OpenRegister is not installed or enabled.',
-			];
+			return $this->importer->failed(message: self::NO_OPENREGISTER);
 		}
 
 		if ($administrationId === '') {
-			return [
-				'success' => true,
-				'message' => 'No default administration configured, skipping stock seed.',
-				'seeded' => 0,
-				'skipped' => 0,
-			];
+			return $this->importer->nothingSeeded(message: 'No default administration configured, skipping stock seed.');
 		}
 
+		$allRows = $this->readStockRows();
+		if (empty($allRows) === true) {
+			return $this->importer->nothingSeeded(message: 'No InventoryStock seed rows found.');
+		}
+
+		// Deduplication key (administrationId, productSku, locationCode): REQ-IST-002.
+		$match = static function ($row) use ($administrationId): ?array {
+			$productSku = ($row['productSku'] ?? '');
+			$locationCode = ($row['locationCode'] ?? '');
+			if ($productSku === '' || $locationCode === '') {
+				return null;
+			}
+
+			return [
+				'administrationId' => $administrationId,
+				'productSku' => $productSku,
+				'locationCode' => $locationCode,
+			];
+		};
+
+		return $this->importer->import(
+			import: new SeedImport(schema: 'InventoryStock', rows: $allRows, match: $match, administrationId: $administrationId),
+			messages: new SeedMessages(
+				seededLog: 'Shillinq: InventoryStock seeded',
+				seededMessage: 'InventoryStock seeded successfully.',
+				failedLog: 'Shillinq: InventoryStock seeding failed',
+			)
+		);
+	}//end seedInventoryStockExamples()
+
+	/**
+	 * The stock rows of the three demo warehouse files.
+	 *
+	 * A missing, unreadable or invalid file is logged as a warning and left out.
+	 *
+	 * @return array<int, mixed>
+	 *
+	 * @spec openspec/changes/inventory-stock-tracking/tasks.md#task-12
+	 */
+	private function readStockRows(): array {
 		$seedFiles = [
 			__DIR__ . '/../Settings/seeds/stock-amsterdam.json',
 			__DIR__ . '/../Settings/seeds/stock-rotterdam.json',
@@ -508,80 +333,8 @@ class InventorySeedService {
 			}
 		}//end foreach
 
-		if (empty($allRows) === true) {
-			return [
-				'success' => true,
-				'message' => 'No InventoryStock seed rows found.',
-				'seeded' => 0,
-				'skipped' => 0,
-			];
-		}
-
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->settings->getRegisterSlug();
-			$seeded = 0;
-			$skipped = 0;
-
-			foreach ($allRows as $row) {
-				$productSku = ($row['productSku'] ?? '');
-				$locationCode = ($row['locationCode'] ?? '');
-				if ($productSku === '' || $locationCode === '') {
-					continue;
-				}
-
-				// Deduplication key (administrationId, productSku, locationCode) — REQ-IST-002.
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema('InventoryStock')
-					->findAll(
-						[
-							'filters' => [
-								'administrationId' => $administrationId,
-								'productSku' => $productSku,
-								'locationCode' => $locationCode,
-							],
-							'limit' => 1,
-						]
-					);
-
-				if (empty($existing) === false) {
-					$skipped++;
-					continue;
-				}
-
-				$row['administrationId'] = $administrationId;
-				$objectService->saveObject(
-					object: $row,
-					register: $registerSlug,
-					schema: 'InventoryStock',
-				);
-				$seeded++;
-			}//end foreach
-
-			$this->logger->info(
-				'Shillinq: InventoryStock seeded',
-				['seeded' => $seeded, 'skipped' => $skipped]
-			);
-
-			return [
-				'success' => true,
-				'message' => 'InventoryStock seeded successfully.',
-				'seeded' => $seeded,
-				'skipped' => $skipped,
-			];
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq: InventoryStock seeding failed',
-				['exception' => $e->getMessage()]
-			);
-			return [
-				'success' => false,
-				'message' => $e->getMessage(),
-			];
-		}//end try
-
-	}//end seedInventoryStockExamples()
+		return $allRows;
+	}//end readStockRows()
 
 	/**
 	 * Seed the default `InventoryGLConfig` record for an administration
@@ -603,111 +356,42 @@ class InventorySeedService {
 	 */
 	public function seedInventoryGLConfig(string $administrationId): array {
 		if ($this->settings->isOpenRegisterAvailable() === false) {
-			return [
-				'success' => false,
-				'message' => 'OpenRegister is not installed or enabled.',
-			];
+			return $this->importer->failed(message: self::NO_OPENREGISTER);
 		}
 
 		if ($administrationId === '') {
-			return [
-				'success' => false,
-				'message' => 'administrationId must not be empty.',
-			];
+			return $this->importer->failed(message: 'administrationId must not be empty.');
 		}
 
-		$seedPath = __DIR__ . '/../Settings/seeds/inventory-gl-config-2026.json';
-		if (file_exists($seedPath) === false) {
-			return [
-				'success' => false,
-				'message' => 'Seed file not found: ' . $seedPath,
-			];
+		$fileName = 'inventory-gl-config-2026.json';
+		$file = $this->importer->read(
+			fileName: $fileName,
+			messages: [
+				'missing' => 'Seed file not found: ' . __DIR__ . '/../Settings/seeds/' . $fileName,
+				'unreadable' => 'Failed to read seed file.',
+				'invalid' => 'Failed to parse seed file: ',
+			]
+		);
+		if (isset($file['error']) === true) {
+			return $file['error'];
 		}
 
-		$content = file_get_contents($seedPath);
-		if ($content === false) {
-			return [
-				'success' => false,
-				'message' => 'Failed to read seed file.',
-			];
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE) {
-			return [
-				'success' => false,
-				'message' => 'Failed to parse seed file: ' . json_last_error_msg(),
-			];
-		}
-
-		$configs = ($data['configs'] ?? []);
+		$configs = ($file['data']['configs'] ?? []);
 		if (empty($configs) === true) {
-			return [
-				'success' => true,
-				'message' => 'No InventoryGLConfig entries in seed file.',
-				'seeded' => 0,
-				'skipped' => 0,
-			];
+			return $this->importer->nothingSeeded(message: 'No InventoryGLConfig entries in seed file.');
 		}
 
-		$seeded = 0;
-		$skipped = 0;
+		// One configuration per administration.
+		$match = static fn ($config): array => ['administrationId' => $administrationId];
 
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->settings->getRegisterSlug();
-
-			foreach ($configs as $config) {
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema('InventoryGLConfig')
-					->findAll(
-						[
-							'filters' => ['administrationId' => $administrationId],
-							'limit' => 1,
-						]
-					);
-
-				if (empty($existing) === false) {
-					$skipped++;
-					continue;
-				}
-
-				$config['administrationId'] = $administrationId;
-
-				$objectService->saveObject(
-					object: $config,
-					register: $registerSlug,
-					schema: 'InventoryGLConfig',
-				);
-				$seeded++;
-			}//end foreach
-
-			$this->logger->info(
-				'Shillinq: InventoryGLConfig seeded',
-				[
-					'administrationId' => $administrationId,
-					'seeded' => $seeded,
-					'skipped' => $skipped,
-				]
-			);
-
-			return [
-				'success' => true,
-				'message' => 'InventoryGLConfig seeded successfully.',
-				'seeded' => $seeded,
-				'skipped' => $skipped,
-			];
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq: InventoryGLConfig seeding failed',
-				['exception' => $e->getMessage()]
-			);
-			return [
-				'success' => false,
-				'message' => $e->getMessage(),
-			];
-		}//end try
-
+		return $this->importer->import(
+			import: new SeedImport(schema: 'InventoryGLConfig', rows: $configs, match: $match, administrationId: $administrationId),
+			messages: new SeedMessages(
+				seededLog: 'Shillinq: InventoryGLConfig seeded',
+				seededMessage: 'InventoryGLConfig seeded successfully.',
+				failedLog: 'Shillinq: InventoryGLConfig seeding failed',
+				logContext: ['administrationId' => $administrationId],
+			)
+		);
 	}//end seedInventoryGLConfig()
 }//end class
