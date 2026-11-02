@@ -40,7 +40,7 @@ export default {
 			 *
 			 * @return {string} The SKU, or an empty string.
 			 */
-			get() {
+			get: function () {
 				return this.modelValue
 			},
 
@@ -49,7 +49,7 @@ export default {
 			 *
 			 * @param {string} sku The entered SKU.
 			 */
-			set(sku) {
+			set: function (sku) {
 				this.$emit('update:modelValue', sku)
 			},
 		},

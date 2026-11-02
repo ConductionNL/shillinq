@@ -3,7 +3,7 @@
 
   The positive quantity input the receive, transfer and pick operations
   share. Use it with v-model; the value is cast to a number as it is typed,
-  and the caller passes the input's accessible name.
+  and the caller passes the accessible name of the input.
 
   @spec openspec/specs/inventory-mobile-scanner/spec.md
 -->
@@ -37,7 +37,7 @@ export default {
 			 *
 			 * @return {number|string|null} The quantity as typed.
 			 */
-			get() {
+			get: function () {
 				return this.modelValue
 			},
 
@@ -46,7 +46,7 @@ export default {
 			 *
 			 * @param {number|string} quantity The quantity, a number when it parses.
 			 */
-			set(quantity) {
+			set: function (quantity) {
 				this.$emit('update:modelValue', quantity)
 			},
 		},

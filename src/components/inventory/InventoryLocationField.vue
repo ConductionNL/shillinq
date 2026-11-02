@@ -2,9 +2,9 @@
   Inventory Location Field
 
   The labelled location picker the warehouse operations share: a required
-  select over the scanner store's locations, with an empty first option.
-  Use it with v-model; the caller passes the translated label, the select's
-  accessible name and the empty option's text.
+  select over the locations of the scanner store, with an empty first option.
+  Use it with v-model; the caller passes the translated label, the accessible
+  name of the select and the text of the empty option.
 
   @spec openspec/specs/inventory-mobile-scanner/spec.md
 -->
@@ -42,7 +42,7 @@ export default {
 			 *
 			 * @return {string} The code, or an empty string.
 			 */
-			get() {
+			get: function () {
 				return this.modelValue
 			},
 
@@ -51,7 +51,7 @@ export default {
 			 *
 			 * @param {string} code The chosen code.
 			 */
-			set(code) {
+			set: function (code) {
 				this.$emit('update:modelValue', code)
 			},
 		},
