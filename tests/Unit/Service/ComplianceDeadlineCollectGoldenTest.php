@@ -79,7 +79,11 @@ final class ComplianceDeadlineCollectGoldenTest extends TestCase {
 	 */
 	public static function calendarScenarios(): array {
 		$cases = [];
-		foreach (['noManager', 'getThrows', 'managerNotObject', 'managerWithoutMethod', 'calendarsNotArray', 'emptyList', 'dedicatedLast', 'dedicatedFirst', 'fallbackOnly', 'nothingWritable'] as $mode) {
+		$modes = [
+			'noManager', 'getThrows', 'managerNotObject', 'managerWithoutMethod', 'calendarsNotArray',
+			'emptyList', 'dedicatedLast', 'dedicatedFirst', 'fallbackOnly', 'nothingWritable',
+		];
+		foreach ($modes as $mode) {
 			$cases['calendar ' . $mode] = [$mode];
 		}
 
@@ -156,8 +160,8 @@ final class ComplianceDeadlineCollectGoldenTest extends TestCase {
 		$bridgeRows = [];
 		if ($schema === 'bridge') {
 			$bridgeRows = [
-				['uid' => 'contract:c-1', 'category' => 'contract', 'summary' => 'Opzegtermijn', 'dueDate' => '2026-09-01', 'source' => 'contract', 'objectId' => 'c-1'],
-				['uid' => 'contract:c-2', 'category' => 'contract', 'summary' => 'Verlenging', 'dueDate' => '2026-10-01', 'source' => 'contract', 'objectId' => 'c-2'],
+				['uid' => 'contract:c-1', 'category' => 'contract', 'summary' => 'Opzegtermijn', 'dueDate' => '2026-09-01', 'objectId' => 'c-1'],
+				['uid' => 'contract:c-2', 'category' => 'contract', 'summary' => 'Verlenging', 'dueDate' => '2026-10-01', 'objectId' => 'c-2'],
 			];
 		}
 
@@ -204,7 +208,8 @@ final class ComplianceDeadlineCollectGoldenTest extends TestCase {
 		);
 
 		$logger  = new GoldenDeadlineLogger();
-		$service = $this->service(container: $container, bridge: $this->createStub(ObligationTaskBridge::class), objects: new GoldenDeadlineObjects(rowsBySchema: [], fails: false), logger: $logger);
+		$objects = new GoldenDeadlineObjects(rowsBySchema: [], fails: false);
+		$service = $this->service(container: $container, bridge: $this->createStub(ObligationTaskBridge::class), objects: $objects, logger: $logger);
 		$method  = new ReflectionMethod(ComplianceDeadlineCalendarService::class, 'resolveUserCalendar');
 		$found   = $method->invoke($service, 'alice');
 
@@ -256,7 +261,12 @@ final class ComplianceDeadlineCollectGoldenTest extends TestCase {
 	 *
 	 * @return ComplianceDeadlineCalendarService
 	 */
-	private function service(ContainerInterface $container, ObligationTaskBridge $bridge, GoldenDeadlineObjects $objects, GoldenDeadlineLogger $logger): ComplianceDeadlineCalendarService {
+	private function service(
+		ContainerInterface $container,
+		ObligationTaskBridge $bridge,
+		GoldenDeadlineObjects $objects,
+		GoldenDeadlineLogger $logger,
+	): ComplianceDeadlineCalendarService {
 		$appConfig = $this->createStub(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturn('books');
 
@@ -281,7 +291,8 @@ final class ComplianceDeadlineCollectGoldenTest extends TestCase {
 	private static function rowsBySchema(): array {
 		return [
 			'BtwAangifte' => [
-				['@self' => ['slug' => 'btw-q1', 'id' => 'x'], 'period' => 'quarter', 'periodYear' => 2026, 'periodNumber' => 1, 'endDate' => '2026-03-31', 'statusCode' => 'draft'],
+				['@self' => ['slug' => 'btw-q1'], 'period' => 'quarter', 'periodYear' => 2026, 'periodNumber' => 1,
+					'endDate' => '2026-03-31', 'statusCode' => 'draft'],
 				['@self' => ['id' => 'btw-m2'], 'period' => 'month', 'periodYear' => 2026, 'periodNumber' => 2, 'endDate' => '2026-02-28'],
 				['id' => 'btw-y', 'period' => 'year', 'periodYear' => 2025, 'endDate' => '2025-12-31T10:00:00Z', 'statusCode' => 'draft'],
 				['uuid' => 'btw-default-unit', 'periodYear' => 2026, 'periodNumber' => 3, 'endDate' => '2026-09-30', 'statusCode' => 'draft'],

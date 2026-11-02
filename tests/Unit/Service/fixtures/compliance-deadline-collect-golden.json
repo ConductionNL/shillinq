@@ -274,7 +274,6 @@
                 "category": "contract",
                 "summary": "Opzegtermijn",
                 "dueDate": "2026-09-01",
-                "source": "contract",
                 "objectId": "c-1"
             },
             {
@@ -282,7 +281,6 @@
                 "category": "contract",
                 "summary": "Verlenging",
                 "dueDate": "2026-10-01",
-                "source": "contract",
                 "objectId": "c-2"
             }
         ],
