@@ -116,7 +116,10 @@ final class CalendarBookingsGoldenTest extends TestCase {
 		);
 
 		$settings = $this->createStub(SettingsService::class);
-		$settings->method('isOpenRegisterAvailable')->willReturn($world['or']);
+		$settings->method('isOpenRegisterAvailable')->willReturnOnConsecutiveCalls(...match ($world['or']) {
+			'drops' => [true, false],
+			default => [$world['or'], $world['or']],
+		});
 		$settings->method('getRegisterSlug')->willReturn('books');
 
 		$objects   = new GoldenCalendarObjects(calendar: $world['calendar'], bookings: $world['bookings'], save: $world['save']);
@@ -252,6 +255,8 @@ final class CalendarBookingsGoldenTest extends TestCase {
 		return [
 			'list in range' => ['params' => $range],
 			'list from an offset start' => ['params' => ['start' => '2026-06-01T10:00:00+02:00', 'end' => '2026-06-01T12:00:00+02:00']],
+			'list start only' => ['params' => ['start' => '2026-06-01T00:00:00Z']],
+			'list zero-length range' => ['params' => ['start' => '2026-06-01T00:00:00Z', 'end' => '2026-06-01T00:00:00Z']],
 			'list end only' => ['params' => ['start' => '2026-06-01T00:00:00Z', 'end' => '2026-06-01T09:00:00Z']],
 			'list empty range' => ['params' => ['start' => '2026-06-02T00:00:00Z', 'end' => '2026-06-01T00:00:00Z']],
 			'list bad start' => ['params' => ['start' => 'whenever', 'end' => '2026-06-02T00:00:00Z']],
@@ -290,6 +295,8 @@ final class CalendarBookingsGoldenTest extends TestCase {
 			'create save returns an entity' => ['save' => 'entity'] + $create,
 			'create confirm fails' => ['save' => 'transitionFails', 'params' => self::BOOKING + ['confirm' => 'true']] + $create,
 			'create on a resource-less calendar' => ['calendar' => 'noResource'] + $create,
+			'create when OpenRegister drops after the lookup' => ['or' => 'drops'] + $create,
+			'create and confirm an entity' => ['save' => 'entity', 'params' => self::BOOKING + ['confirm' => 'on']] + $create,
 		];
 
 	}//end worlds()
@@ -383,6 +390,7 @@ final class GoldenCalendarObjects {
 			['bookingId' => 'b-4', 'startTime' => '2026-06-01T10:30:00+02:00', 'endTime' => '2026-06-01T11:30:00+02:00'],
 			['bookingId' => 'b-5', 'startTime' => '', 'endTime' => '2026-06-01T11:30:00Z'],
 			['bookingId' => 'b-6', 'startTime' => 'garbage', 'endTime' => '2026-06-01T11:30:00Z'],
+			['bookingId' => 'b-9', 'startTime' => '2026-06-01T10:00:00Z', 'endTime' => ''],
 			new GoldenCalendarEntity(['bookingId' => 'b-7', 'startTime' => '2026-06-01T23:30:00Z', 'endTime' => '2026-06-02T00:30:00Z']),
 			['bookingId' => 'b-8', 'startTime' => '2026-06-02T00:00:00Z', 'endTime' => '2026-06-02T01:00:00Z'],
 		];

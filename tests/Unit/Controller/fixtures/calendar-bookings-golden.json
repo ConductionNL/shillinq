@@ -112,6 +112,63 @@
         ],
         "log": []
     },
+    "create and confirm an entity": {
+        "status": 201,
+        "data": {
+            "id": "or-9",
+            "bookingId": "or-9",
+            "calendar": "cal-1",
+            "resource": "room-1",
+            "administrationId": "adm-1",
+            "title": "Intake",
+            "startTime": "2026-06-01T09:00:00Z",
+            "endTime": "2026-06-01T09:30:00Z",
+            "attendee": "jan@example.org",
+            "status": "confirmed",
+            "externalId": null,
+            "createdAt": "now",
+            "updatedAt": ""
+        },
+        "trace": [
+            "isAdmin alice",
+            "canAccess alice -> adm-1",
+            "begin",
+            "lock room-1",
+            "conflicts room-1 2026-06-01T09:00:00Z 2026-06-01T09:30:00Z",
+            "transition uuid-9 confirm",
+            "commit"
+        ],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Calendar",
+                "config": {
+                    "filters": {
+                        "calendarId": "cal-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ],
+        "saved": [
+            {
+                "register": "books",
+                "schema": "Booking",
+                "object": {
+                    "administrationId": "adm-1",
+                    "bookingId": "bk-ID",
+                    "calendar": "cal-1",
+                    "resource": "room-1",
+                    "title": "Intake",
+                    "startTime": "2026-06-01T09:00:00Z",
+                    "endTime": "2026-06-01T09:30:00Z",
+                    "attendee": "jan@example.org",
+                    "status": "pending"
+                }
+            }
+        ],
+        "log": []
+    },
     "create anonymous": {
         "status": 401,
         "data": {
@@ -759,6 +816,30 @@
         "saved": [],
         "log": []
     },
+    "create when OpenRegister drops after the lookup": {
+        "status": 503,
+        "data": {
+            "error": "OpenRegister unavailable"
+        },
+        "trace": [
+            "isAdmin alice",
+            "canAccess alice -> adm-1"
+        ],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Calendar",
+                "config": {
+                    "filters": {
+                        "calendarId": "cal-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ],
+        "saved": [],
+        "log": []
+    },
     "create without OpenRegister": {
         "status": 404,
         "data": {
@@ -1284,6 +1365,116 @@
         "saved": [],
         "log": []
     },
+    "list start only": {
+        "status": 200,
+        "data": {
+            "bookings": [
+                {
+                    "id": "b-1",
+                    "bookingId": "b-1",
+                    "calendar": "",
+                    "resource": "",
+                    "administrationId": "",
+                    "title": "",
+                    "startTime": "2026-06-01T08:00:00Z",
+                    "endTime": "2026-06-01T09:00:00Z",
+                    "attendee": "",
+                    "status": "confirmed",
+                    "externalId": null,
+                    "createdAt": "",
+                    "updatedAt": ""
+                },
+                {
+                    "id": "b-4",
+                    "bookingId": "b-4",
+                    "calendar": "",
+                    "resource": "",
+                    "administrationId": "",
+                    "title": "",
+                    "startTime": "2026-06-01T10:30:00+02:00",
+                    "endTime": "2026-06-01T11:30:00+02:00",
+                    "attendee": "",
+                    "status": "pending",
+                    "externalId": null,
+                    "createdAt": "",
+                    "updatedAt": ""
+                },
+                {
+                    "id": "b-3",
+                    "bookingId": "b-3",
+                    "calendar": "",
+                    "resource": "",
+                    "administrationId": "",
+                    "title": "Late",
+                    "startTime": "2026-06-01T15:00:00Z",
+                    "endTime": "2026-06-01T16:00:00Z",
+                    "attendee": "",
+                    "status": "pending",
+                    "externalId": null,
+                    "createdAt": "",
+                    "updatedAt": ""
+                },
+                {
+                    "id": "b-7",
+                    "bookingId": "b-7",
+                    "calendar": "",
+                    "resource": "",
+                    "administrationId": "",
+                    "title": "",
+                    "startTime": "2026-06-01T23:30:00Z",
+                    "endTime": "2026-06-02T00:30:00Z",
+                    "attendee": "",
+                    "status": "pending",
+                    "externalId": null,
+                    "createdAt": "",
+                    "updatedAt": ""
+                },
+                {
+                    "id": "b-8",
+                    "bookingId": "b-8",
+                    "calendar": "",
+                    "resource": "",
+                    "administrationId": "",
+                    "title": "",
+                    "startTime": "2026-06-02T00:00:00Z",
+                    "endTime": "2026-06-02T01:00:00Z",
+                    "attendee": "",
+                    "status": "pending",
+                    "externalId": null,
+                    "createdAt": "",
+                    "updatedAt": ""
+                }
+            ]
+        },
+        "trace": [
+            "isAdmin alice",
+            "canAccess alice -> adm-1"
+        ],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Calendar",
+                "config": {
+                    "filters": {
+                        "calendarId": "cal-1"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "register": "books",
+                "schema": "Booking",
+                "config": {
+                    "filters": {
+                        "calendar": "cal-1"
+                    },
+                    "limit": 5000
+                }
+            }
+        ],
+        "saved": [],
+        "log": []
+    },
     "list without OpenRegister": {
         "status": 404,
         "data": {
@@ -1293,5 +1484,32 @@
         "reads": [],
         "saved": [],
         "log": []
+    },
+    "list zero-length range": {
+        "status": 400,
+        "data": {
+            "message": "l10n:Invalid start/end range.",
+            "error": "calendar-invalid-range"
+        },
+        "trace": [
+            "isAdmin alice",
+            "canAccess alice -> adm-1"
+        ],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Calendar",
+                "config": {
+                    "filters": {
+                        "calendarId": "cal-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ],
+        "saved": [],
+        "log": [
+            "warning: Shillinq: invalid booking range {\"exception\":\"end must be after start\"}"
+        ]
     }
 }
