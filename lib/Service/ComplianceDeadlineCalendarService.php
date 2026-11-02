@@ -369,156 +369,13 @@ class ComplianceDeadlineCalendarService {
 	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
 	 */
 	public function collectDeadlines(): array {
-		$deadlines = [];
-
-		// REQ-CDC-002 — BTW filing deadlines from VATReturn period data.
-		foreach ($this->fetchRows(schema: 'BtwAangifte') as $row) {
-			$status = (string)($row['statusCode'] ?? 'draft');
-			if ($status !== 'draft') {
-				// Submitted / verified / filed → deadline no longer open.
-				continue;
-			}
-
-			$due = $this->filingDueDateFromPeriodEnd(periodEnd: (string)($row['endDate'] ?? ''));
-			if ($due === null) {
-				continue;
-			}
-
-			$objectId = $this->objectId(row: $row);
-			if ($objectId === '') {
-				continue;
-			}
-
-			$deadlines[] = [
-				'uid' => 'btw-filing:' . $objectId,
-				'category' => self::CATEGORY_FILING,
-				'summary' => 'BTW-aangifte ' . $this->vatPeriodLabel(row: $row),
-				'dueDate' => $due,
-				'source' => 'btw-filing',
-				'objectId' => $objectId,
-			];
-		}//end foreach
-
-		// REQ-CDC-002 — ICP-opgaaf deadlines from the period field.
-		foreach ($this->fetchRows(schema: 'IcpOpgaaf') as $row) {
-			$status = (string)($row['status'] ?? 'draft');
-			if (in_array($status, ['draft', 'finalized', 'rejected'], true) === false) {
-				// Submitted / accepted / corrected → closed.
-				continue;
-			}
-
-			$periodEnd = $this->icpPeriodEnd(period: (string)($row['period'] ?? ''));
-			if ($periodEnd === null) {
-				continue;
-			}
-
-			$due = $this->filingDueDateFromPeriodEnd(periodEnd: $periodEnd);
-			if ($due === null) {
-				continue;
-			}
-
-			$objectId = $this->objectId(row: $row);
-			if ($objectId === '') {
-				continue;
-			}
-
-			$deadlines[] = [
-				'uid' => 'icp-filing:' . $objectId,
-				'category' => self::CATEGORY_FILING,
-				'summary' => 'ICP-opgaaf ' . (string)($row['period'] ?? ''),
-				'dueDate' => $due,
-				'source' => 'icp-filing',
-				'objectId' => $objectId,
-			];
-		}//end foreach
-
-		// REQ-CDC-002 — VPB deadlines carry their own deadlineDate.
-		foreach ($this->fetchRows(schema: 'TaxDeadline') as $row) {
-			$status = (string)($row['status'] ?? 'pending');
-			if ($status !== 'pending') {
-				continue;
-			}
-
-			$due = $this->normaliseDate(date: (string)($row['deadlineDate'] ?? ''));
-			if ($due === null) {
-				continue;
-			}
-
-			$objectId = $this->objectId(row: $row);
-			if ($objectId === '') {
-				continue;
-			}
-
-			$label = trim(
-				(string)($row['deadlineType'] ?? '') . ' ' . (string)($row['fiscalYear'] ?? '')
-			);
-
-			$deadlines[] = [
-				'uid' => 'vpb-filing:' . $objectId,
-				'category' => self::CATEGORY_FILING,
-				'summary' => trim('VPB ' . $label),
-				'dueDate' => $due,
-				'source' => 'vpb-filing',
-				'objectId' => $objectId,
-			];
-		}//end foreach
-
-		// REQ-CDC-003 — payment-run execution dates.
-		foreach ($this->fetchRows(schema: 'PaymentRun') as $row) {
-			$state = (string)($row['lifecycleState'] ?? ($row['status'] ?? 'draft'));
-			if (in_array($state, ['draft', 'approved'], true) === false) {
-				// Exported / reconciled → executed, remove (REQ-CDC-003).
-				continue;
-			}
-
-			$due = $this->normaliseDate(date: (string)($row['executionDate'] ?? ''));
-			if ($due === null) {
-				continue;
-			}
-
-			$objectId = $this->objectId(row: $row);
-			if ($objectId === '') {
-				continue;
-			}
-
-			$deadlines[] = [
-				'uid' => 'payment-run:' . $objectId,
-				'category' => self::CATEGORY_PAYMENT_RUN,
-				'summary' => trim('Betaalrun ' . (string)($row['runNumber'] ?? $objectId)),
-				'dueDate' => $due,
-				'source' => 'payment-run',
-				'objectId' => $objectId,
-			];
-		}//end foreach
-
-		// REQ-CDC-004 — AR invoice due dates (per-user opt-in filter is
-		// applied at publication time, not here — the source set is shared).
-		foreach ($this->fetchRows(schema: 'ARInvoice') as $row) {
-			$state = (string)($row['lifecycleState'] ?? 'draft');
-			if (in_array($state, ['issued', 'overdue', 'disputed'], true) === false) {
-				// Draft (not yet issued) or paid / written-off → not open.
-				continue;
-			}
-
-			$due = $this->normaliseDate(date: (string)($row['dueDate'] ?? ''));
-			if ($due === null) {
-				continue;
-			}
-
-			$objectId = $this->objectId(row: $row);
-			if ($objectId === '') {
-				continue;
-			}
-
-			$deadlines[] = [
-				'uid' => 'ar-invoice:' . $objectId,
-				'category' => self::CATEGORY_AR_DUE,
-				'summary' => trim('Factuur ' . (string)($row['invoiceNumber'] ?? $objectId) . ' vervalt'),
-				'dueDate' => $due,
-				'source' => 'ar-invoice',
-				'objectId' => $objectId,
-			];
-		}//end foreach
+		$deadlines = array_merge(
+			$this->sourceDeadlines(schema: 'BtwAangifte', mapper: $this->btwFilingDeadline(...)),
+			$this->sourceDeadlines(schema: 'IcpOpgaaf', mapper: $this->icpFilingDeadline(...)),
+			$this->sourceDeadlines(schema: 'TaxDeadline', mapper: $this->vpbFilingDeadline(...)),
+			$this->sourceDeadlines(schema: 'PaymentRun', mapper: $this->paymentRunDeadline(...)),
+			$this->sourceDeadlines(schema: 'ARInvoice', mapper: $this->arInvoiceDeadline(...)),
+		);
 
 		// REQ-CDC-005 — contract deadlines come from the extended bridge
 		// (single home for the ContractObligation path; NOT re-read here).
@@ -528,6 +385,168 @@ class ComplianceDeadlineCalendarService {
 
 		return $deadlines;
 	}//end collectDeadlines()
+
+	/**
+	 * Map every row of one source schema to its open deadline.
+	 *
+	 * @param string $schema The source schema.
+	 * @param callable(array<string,mixed>):(array<string,string>|null) $mapper Row to deadline, null when not open.
+	 *
+	 * @return array<int,array<string,string>> The open deadlines of the source.
+	 */
+	private function sourceDeadlines(string $schema, callable $mapper): array {
+		$deadlines = [];
+		foreach ($this->fetchRows(schema: $schema) as $row) {
+			$deadline = $mapper($row);
+			if ($deadline !== null) {
+				$deadlines[] = $deadline;
+			}
+		}
+
+		return $deadlines;
+	}//end sourceDeadlines()
+
+	/**
+	 * REQ-CDC-002: a draft BTW return's filing deadline, from its period end.
+	 *
+	 * @param array<string,mixed> $row The BtwAangifte row.
+	 *
+	 * @return array<string,string>|null The deadline, null when submitted, verified or filed.
+	 */
+	private function btwFilingDeadline(array $row): ?array {
+		if ((string)($row['statusCode'] ?? 'draft') !== 'draft') {
+			return null;
+		}
+
+		$summary = 'BTW-aangifte ' . $this->vatPeriodLabel(row: $row);
+		$due     = $this->filingDueDateFromPeriodEnd(periodEnd: (string)($row['endDate'] ?? ''));
+		$entry   = ['source' => 'btw-filing', 'category' => self::CATEGORY_FILING, 'summary' => $summary, 'dueDate' => $due];
+
+		return $this->openDeadline(row: $row, entry: $entry);
+	}//end btwFilingDeadline()
+
+	/**
+	 * REQ-CDC-002: an open ICP-opgaaf's filing deadline, from its period field.
+	 *
+	 * @param array<string,mixed> $row The IcpOpgaaf row.
+	 *
+	 * @return array<string,string>|null The deadline, null when submitted, accepted or corrected.
+	 */
+	private function icpFilingDeadline(array $row): ?array {
+		if (in_array((string)($row['status'] ?? 'draft'), ['draft', 'finalized', 'rejected'], true) === false) {
+			return null;
+		}
+
+		$period    = (string)($row['period'] ?? '');
+		$periodEnd = $this->icpPeriodEnd(period: $period);
+		$due       = null;
+		if ($periodEnd !== null) {
+			$due = $this->filingDueDateFromPeriodEnd(periodEnd: $periodEnd);
+		}
+
+		$entry = ['source' => 'icp-filing', 'category' => self::CATEGORY_FILING, 'summary' => 'ICP-opgaaf ' . $period, 'dueDate' => $due];
+
+		return $this->openDeadline(row: $row, entry: $entry);
+	}//end icpFilingDeadline()
+
+	/**
+	 * REQ-CDC-002: a pending VPB deadline, which carries its own deadlineDate.
+	 *
+	 * @param array<string,mixed> $row The TaxDeadline row.
+	 *
+	 * @return array<string,string>|null The deadline, null when no longer pending.
+	 */
+	private function vpbFilingDeadline(array $row): ?array {
+		if ((string)($row['status'] ?? 'pending') !== 'pending') {
+			return null;
+		}
+
+		$label = trim((string)($row['deadlineType'] ?? '') . ' ' . (string)($row['fiscalYear'] ?? ''));
+
+		$summary = trim('VPB ' . $label);
+		$due     = $this->normaliseDate(date: (string)($row['deadlineDate'] ?? ''));
+		$entry   = ['source' => 'vpb-filing', 'category' => self::CATEGORY_FILING, 'summary' => $summary, 'dueDate' => $due];
+
+		return $this->openDeadline(row: $row, entry: $entry);
+	}//end vpbFilingDeadline()
+
+	/**
+	 * REQ-CDC-003: a payment run's execution date while it is not yet executed.
+	 *
+	 * @param array<string,mixed> $row The PaymentRun row.
+	 *
+	 * @return array<string,string>|null The deadline, null once exported or reconciled.
+	 */
+	private function paymentRunDeadline(array $row): ?array {
+		$state = (string)($row['lifecycleState'] ?? ($row['status'] ?? 'draft'));
+		if (in_array($state, ['draft', 'approved'], true) === false) {
+			return null;
+		}
+
+		$summary = trim('Betaalrun ' . $this->labelOrObjectId(row: $row, field: 'runNumber'));
+		$due     = $this->normaliseDate(date: (string)($row['executionDate'] ?? ''));
+		$entry   = ['source' => 'payment-run', 'category' => self::CATEGORY_PAYMENT_RUN, 'summary' => $summary, 'dueDate' => $due];
+
+		return $this->openDeadline(row: $row, entry: $entry);
+	}//end paymentRunDeadline()
+
+	/**
+	 * REQ-CDC-004: an issued AR invoice's due date. The per-user opt-in is
+	 * applied at publication time, so the source set stays shared.
+	 *
+	 * @param array<string,mixed> $row The ARInvoice row.
+	 *
+	 * @return array<string,string>|null The deadline, null while draft or once paid or written off.
+	 */
+	private function arInvoiceDeadline(array $row): ?array {
+		$state = (string)($row['lifecycleState'] ?? 'draft');
+		if (in_array($state, ['issued', 'overdue', 'disputed'], true) === false) {
+			return null;
+		}
+
+		$summary = trim('Factuur ' . $this->labelOrObjectId(row: $row, field: 'invoiceNumber') . ' vervalt');
+		$due     = $this->normaliseDate(date: (string)($row['dueDate'] ?? ''));
+		$entry   = ['source' => 'ar-invoice', 'category' => self::CATEGORY_AR_DUE, 'summary' => $summary, 'dueDate' => $due];
+
+		return $this->openDeadline(row: $row, entry: $entry);
+	}//end arInvoiceDeadline()
+
+	/**
+	 * Build the deadline entry (uid {source}:{objectId}, REQ-CDC-001) for a
+	 * row that has both a due date and an object id.
+	 *
+	 * @param array<string,mixed> $row The source row.
+	 * @param array{source: string, category: string, summary: string, dueDate: string|null} $entry The derived fields.
+	 *
+	 * @return array<string,string>|null The deadline, null without a due date or an object id.
+	 */
+	private function openDeadline(array $row, array $entry): ?array {
+		$objectId = $this->objectId(row: $row);
+		if ($entry['dueDate'] === null || $objectId === '') {
+			return null;
+		}
+
+		return [
+			'uid' => $entry['source'] . ':' . $objectId,
+			'category' => $entry['category'],
+			'summary' => $entry['summary'],
+			'dueDate' => $entry['dueDate'],
+			'source' => $entry['source'],
+			'objectId' => $objectId,
+		];
+	}//end openDeadline()
+
+	/**
+	 * A row's label field, or its object id when the field is absent.
+	 *
+	 * @param array<string,mixed> $row The source row.
+	 * @param string $field The label field.
+	 *
+	 * @return string The label.
+	 */
+	private function labelOrObjectId(array $row, string $field): string {
+		return (string)($row[$field] ?? $this->objectId(row: $row));
+	}//end labelOrObjectId()
 
 	/**
 	 * Publish the deadline VEVENTs for one user, honouring the user's
@@ -810,42 +829,12 @@ class ComplianceDeadlineCalendarService {
 	 */
 	private function resolveUserCalendar(string $userId): ?object {
 		try {
-			if ($this->container->has('OCP\\Calendar\\IManager') === false) {
+			$manager = $this->getCalendarManager();
+			if ($manager === null) {
 				return null;
 			}
 
-			$manager = $this->container->get('OCP\\Calendar\\IManager');
-			if (is_object($manager) === false
-				|| method_exists($manager, 'getCalendarsForPrincipal') === false
-			) {
-				return null;
-			}
-
-			$calendars = $manager->getCalendarsForPrincipal('principals/users/' . $userId);
-			if (is_array($calendars) === false) {
-				return null;
-			}
-
-			$fallback = null;
-			foreach ($calendars as $calendar) {
-				if (is_object($calendar) === false
-					|| method_exists($calendar, 'createFromString') === false
-				) {
-					continue;
-				}
-
-				if (method_exists($calendar, 'getUri') === true
-					&& (string)$calendar->getUri() === self::CALENDAR_URI
-				) {
-					return $calendar;
-				}
-
-				if ($fallback === null) {
-					$fallback = $calendar;
-				}
-			}
-
-			return $fallback;
+			return $this->pickCalendar(calendars: $manager->getCalendarsForPrincipal('principals/users/' . $userId));
 		} catch (Throwable $e) {
 			$this->logger->debug(
 				'ComplianceDeadlineCalendarService: calendar backend not resolvable',
@@ -855,6 +844,69 @@ class ComplianceDeadlineCalendarService {
 		}//end try
 
 	}//end resolveUserCalendar()
+
+	/**
+	 * The OCP calendar manager, null when the container has none or it
+	 * cannot list a principal's calendars.
+	 *
+	 * @return object|null The calendar manager.
+	 */
+	private function getCalendarManager(): ?object {
+		if ($this->container->has('OCP\\Calendar\\IManager') === false) {
+			return null;
+		}
+
+		$manager = $this->container->get('OCP\\Calendar\\IManager');
+		if (is_object($manager) === true && method_exists($manager, 'getCalendarsForPrincipal') === true) {
+			return $manager;
+		}
+
+		return null;
+	}//end getCalendarManager()
+
+	/**
+	 * Pick the dedicated deadline calendar, else the first writable one.
+	 *
+	 * @param mixed $calendars The principal's calendars.
+	 *
+	 * @return object|null The calendar, null when none is writable.
+	 */
+	private function pickCalendar(mixed $calendars): ?object {
+		if (is_array($calendars) === false) {
+			return null;
+		}
+
+		$writable = array_values(array_filter($calendars, $this->isWritableCalendar(...)));
+		foreach ($writable as $calendar) {
+			if ($this->isDeadlineCalendar(calendar: $calendar) === true) {
+				return $calendar;
+			}
+		}
+
+		return ($writable[0] ?? null);
+	}//end pickCalendar()
+
+	/**
+	 * Whether a calendar accepts createFromString() upserts.
+	 *
+	 * @param mixed $calendar The candidate calendar.
+	 *
+	 * @return bool True when writable.
+	 */
+	private function isWritableCalendar(mixed $calendar): bool {
+		return is_object($calendar) === true && method_exists($calendar, 'createFromString') === true;
+	}//end isWritableCalendar()
+
+	/**
+	 * Whether a calendar is the app's dedicated deadline calendar.
+	 *
+	 * @param object $calendar The writable calendar.
+	 *
+	 * @return bool True for the 'shillinq-deadlines' calendar.
+	 */
+	private function isDeadlineCalendar(object $calendar): bool {
+		return method_exists($calendar, 'getUri') === true && (string)$calendar->getUri() === self::CALENDAR_URI;
+	}//end isDeadlineCalendar()
 
 	/**
 	 * List the app-owned VEVENT UIDs already present on a calendar.
