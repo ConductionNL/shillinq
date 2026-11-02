@@ -162,7 +162,8 @@ final class AuditFileReportGoldenTest extends TestCase {
 		$build   = new ReflectionMethod(ManagementLetterReportGenerator::class, 'build');
 		$build->invoke(new ManagementLetterReportGenerator($container), $section, $context);
 
-		$this->assertGolden(key: 'letter ' . $audit, recorded: ['blocks' => $section->toArray(), 'auditContexts' => $contexts]);
+		$blocks = json_decode((string) preg_replace('/Gegenereerd: [0-9: -]+ UTC/', 'Gegenereerd: NOW', (string) json_encode($section->toArray())), true);
+		$this->assertGolden(key: 'letter ' . $audit, recorded: ['blocks' => $blocks, 'auditContexts' => $contexts]);
 
 	}//end testLetterMatchesGolden()
 
