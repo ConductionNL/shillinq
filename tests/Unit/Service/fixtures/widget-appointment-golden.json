@@ -1,0 +1,799 @@
+{
+    "bad email": {
+        "response": {
+            "code": 400,
+            "error": "invalid_email"
+        },
+        "reads": [],
+        "saved": [],
+        "slots": [],
+        "log": []
+    },
+    "bad end": {
+        "response": {
+            "code": 400,
+            "error": "invalid_start_time"
+        },
+        "reads": [],
+        "saved": [],
+        "slots": [],
+        "log": []
+    },
+    "bad end and long notes": {
+        "response": {
+            "code": 400,
+            "error": "notes_too_long"
+        },
+        "reads": [],
+        "saved": [],
+        "slots": [],
+        "log": []
+    },
+    "bad phone": {
+        "response": {
+            "code": 400,
+            "error": "invalid_phone"
+        },
+        "reads": [],
+        "saved": [],
+        "slots": [],
+        "log": []
+    },
+    "bad start": {
+        "response": {
+            "code": 400,
+            "error": "invalid_start_time"
+        },
+        "reads": [],
+        "saved": [],
+        "slots": [],
+        "log": []
+    },
+    "catalogue read fails": {
+        "response": {
+            "code": 404,
+            "error": "service_not_found"
+        },
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            }
+        ],
+        "saved": [],
+        "slots": [],
+        "log": [
+            "error: WidgetService: public-service resolution failed {\"exception\":\"catalogue down\",\"serviceId\":\"svc-1\"}"
+        ]
+    },
+    "created": {
+        "response": {
+            "code": 201,
+            "appointmentId": "wsw-ID",
+            "status": "pending_confirmation",
+            "startTime": "2026-06-01T09:00:00Z",
+            "endTime": "2026-06-01T09:30:00Z",
+            "confirmationMessage": "Your appointment was created. You will receive a confirmation email shortly."
+        },
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            }
+        ],
+        "saved": [
+            {
+                "object": {
+                    "administrationId": "adm-1",
+                    "appointmentId": "wsw-ID",
+                    "serviceId": "svc-1",
+                    "resourceId": "room-1",
+                    "customerId": "cust-anon-a3ff11319b5ef6b1",
+                    "startTime": "2026-06-01T09:00:00Z",
+                    "endTime": "2026-06-01T09:30:00Z",
+                    "status": "pending_confirmation",
+                    "customerName": "Jan Jansen",
+                    "customerEmail": "Jan@Example.org",
+                    "customerPhone": "+31612345678",
+                    "notes": "Graag bij de ingang",
+                    "source": "widget"
+                },
+                "register": "books",
+                "schema": "Appointment",
+                "rbac": false
+            }
+        ],
+        "slots": [
+            "read svc-1/room-1/2026-06-01",
+            "invalidate svc-1/room-1/2026-06-01"
+        ],
+        "log": []
+    },
+    "created across midnight in UTC+2": {
+        "response": {
+            "code": 201,
+            "appointmentId": "wsw-ID",
+            "status": "pending_confirmation",
+            "startTime": "2026-06-01T21:30:00Z",
+            "endTime": "2026-06-01T22:15:00Z",
+            "confirmationMessage": "Your appointment was created. You will receive a confirmation email shortly."
+        },
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            }
+        ],
+        "saved": [
+            {
+                "object": {
+                    "administrationId": "adm-1",
+                    "appointmentId": "wsw-ID",
+                    "serviceId": "svc-1",
+                    "resourceId": "room-1",
+                    "customerId": "cust-anon-a3ff11319b5ef6b1",
+                    "startTime": "2026-06-01T21:30:00Z",
+                    "endTime": "2026-06-01T22:15:00Z",
+                    "status": "pending_confirmation",
+                    "customerName": "Jan Jansen",
+                    "customerEmail": "Jan@Example.org",
+                    "customerPhone": "+31612345678",
+                    "notes": "Graag bij de ingang",
+                    "source": "widget"
+                },
+                "register": "books",
+                "schema": "Appointment",
+                "rbac": false
+            }
+        ],
+        "slots": [
+            "read svc-1/room-1/2026-06-01",
+            "invalidate svc-1/room-1/2026-06-01"
+        ],
+        "log": []
+    },
+    "created from an offset time": {
+        "response": {
+            "code": 409,
+            "error": "slot_unavailable"
+        },
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            }
+        ],
+        "saved": [],
+        "slots": [
+            "read svc-1/room-1/2026-06-01"
+        ],
+        "log": []
+    },
+    "created without phone and notes": {
+        "response": {
+            "code": 201,
+            "appointmentId": "wsw-ID",
+            "status": "pending_confirmation",
+            "startTime": "2026-06-01T09:00:00Z",
+            "endTime": "2026-06-01T09:30:00Z",
+            "confirmationMessage": "Your appointment was created. You will receive a confirmation email shortly."
+        },
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            }
+        ],
+        "saved": [
+            {
+                "object": {
+                    "administrationId": "adm-1",
+                    "appointmentId": "wsw-ID",
+                    "serviceId": "svc-1",
+                    "resourceId": "room-1",
+                    "customerId": "cust-anon-a3ff11319b5ef6b1",
+                    "startTime": "2026-06-01T09:00:00Z",
+                    "endTime": "2026-06-01T09:30:00Z",
+                    "status": "pending_confirmation",
+                    "customerName": "Jan Jansen",
+                    "customerEmail": "Jan@Example.org",
+                    "customerPhone": null,
+                    "notes": null,
+                    "source": "widget"
+                },
+                "register": "books",
+                "schema": "Appointment",
+                "rbac": false
+            }
+        ],
+        "slots": [
+            "read svc-1/room-1/2026-06-01",
+            "invalidate svc-1/room-1/2026-06-01"
+        ],
+        "log": []
+    },
+    "empty email": {
+        "response": {
+            "code": 400,
+            "error": "invalid_email"
+        },
+        "reads": [],
+        "saved": [],
+        "slots": [],
+        "log": []
+    },
+    "missing end and bad email": {
+        "response": {
+            "code": 400,
+            "error": "missing_fields"
+        },
+        "reads": [],
+        "saved": [],
+        "slots": [],
+        "log": []
+    },
+    "missing resource": {
+        "response": {
+            "code": 400,
+            "error": "missing_fields"
+        },
+        "reads": [],
+        "saved": [],
+        "slots": [],
+        "log": []
+    },
+    "missing service": {
+        "response": {
+            "code": 400,
+            "error": "missing_fields"
+        },
+        "reads": [],
+        "saved": [],
+        "slots": [],
+        "log": []
+    },
+    "missing start": {
+        "response": {
+            "code": 400,
+            "error": "missing_fields"
+        },
+        "reads": [],
+        "saved": [],
+        "slots": [],
+        "log": []
+    },
+    "no administration": {
+        "response": {
+            "code": 404,
+            "error": "service_not_found"
+        },
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            }
+        ],
+        "saved": [],
+        "slots": [],
+        "log": []
+    },
+    "no object service": {
+        "response": {
+            "code": 500,
+            "error": "service_unavailable"
+        },
+        "reads": [],
+        "saved": [],
+        "slots": [],
+        "log": [
+            "warning: WidgetService: ObjectService unavailable {\"exception\":\"no OCA\\\\OpenRegister\\\\Service\\\\ObjectService\"}"
+        ]
+    },
+    "notes of 500": {
+        "response": {
+            "code": 201,
+            "appointmentId": "wsw-ID",
+            "status": "pending_confirmation",
+            "startTime": "2026-06-01T09:00:00Z",
+            "endTime": "2026-06-01T09:30:00Z",
+            "confirmationMessage": "Your appointment was created. You will receive a confirmation email shortly."
+        },
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            }
+        ],
+        "saved": [
+            {
+                "object": {
+                    "administrationId": "adm-1",
+                    "appointmentId": "wsw-ID",
+                    "serviceId": "svc-1",
+                    "resourceId": "room-1",
+                    "customerId": "cust-anon-a3ff11319b5ef6b1",
+                    "startTime": "2026-06-01T09:00:00Z",
+                    "endTime": "2026-06-01T09:30:00Z",
+                    "status": "pending_confirmation",
+                    "customerName": "Jan Jansen",
+                    "customerEmail": "Jan@Example.org",
+                    "customerPhone": "+31612345678",
+                    "notes": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+                    "source": "widget"
+                },
+                "register": "books",
+                "schema": "Appointment",
+                "rbac": false
+            }
+        ],
+        "slots": [
+            "read svc-1/room-1/2026-06-01",
+            "invalidate svc-1/room-1/2026-06-01"
+        ],
+        "log": []
+    },
+    "notes of 501": {
+        "response": {
+            "code": 400,
+            "error": "notes_too_long"
+        },
+        "reads": [],
+        "saved": [],
+        "slots": [],
+        "log": []
+    },
+    "save echoes its own ids": {
+        "response": {
+            "code": 201,
+            "appointmentId": "or-7",
+            "status": "confirmed",
+            "startTime": "2026-06-01T09:00:00Z",
+            "endTime": "2026-06-01T09:30:00Z",
+            "confirmationMessage": "Your appointment was created. You will receive a confirmation email shortly."
+        },
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            }
+        ],
+        "saved": [
+            {
+                "object": {
+                    "administrationId": "adm-1",
+                    "appointmentId": "wsw-ID",
+                    "serviceId": "svc-1",
+                    "resourceId": "room-1",
+                    "customerId": "cust-anon-a3ff11319b5ef6b1",
+                    "startTime": "2026-06-01T09:00:00Z",
+                    "endTime": "2026-06-01T09:30:00Z",
+                    "status": "pending_confirmation",
+                    "customerName": "Jan Jansen",
+                    "customerEmail": "Jan@Example.org",
+                    "customerPhone": "+31612345678",
+                    "notes": "Graag bij de ingang",
+                    "source": "widget"
+                },
+                "register": "books",
+                "schema": "Appointment",
+                "rbac": false
+            }
+        ],
+        "slots": [
+            "read svc-1/room-1/2026-06-01",
+            "invalidate svc-1/room-1/2026-06-01"
+        ],
+        "log": []
+    },
+    "save fails": {
+        "response": {
+            "code": 500,
+            "error": "create_failed"
+        },
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            }
+        ],
+        "saved": [
+            {
+                "object": {
+                    "administrationId": "adm-1",
+                    "appointmentId": "wsw-ID",
+                    "serviceId": "svc-1",
+                    "resourceId": "room-1",
+                    "customerId": "cust-anon-a3ff11319b5ef6b1",
+                    "startTime": "2026-06-01T09:00:00Z",
+                    "endTime": "2026-06-01T09:30:00Z",
+                    "status": "pending_confirmation",
+                    "customerName": "Jan Jansen",
+                    "customerEmail": "Jan@Example.org",
+                    "customerPhone": "+31612345678",
+                    "notes": "Graag bij de ingang",
+                    "source": "widget"
+                },
+                "register": "books",
+                "schema": "Appointment",
+                "rbac": false
+            }
+        ],
+        "slots": [
+            "read svc-1/room-1/2026-06-01"
+        ],
+        "log": [
+            "error: WidgetService: appointment save failed {\"exception\":\"disk full\",\"administrationId\":\"adm-1\"}"
+        ]
+    },
+    "save returns an entity": {
+        "response": {
+            "code": 201,
+            "appointmentId": "ent-9",
+            "status": "pending_confirmation",
+            "startTime": "2026-06-01T09:00:00Z",
+            "endTime": "2026-06-01T09:30:00Z",
+            "confirmationMessage": "Your appointment was created. You will receive a confirmation email shortly."
+        },
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            }
+        ],
+        "saved": [
+            {
+                "object": {
+                    "administrationId": "adm-1",
+                    "appointmentId": "wsw-ID",
+                    "serviceId": "svc-1",
+                    "resourceId": "room-1",
+                    "customerId": "cust-anon-a3ff11319b5ef6b1",
+                    "startTime": "2026-06-01T09:00:00Z",
+                    "endTime": "2026-06-01T09:30:00Z",
+                    "status": "pending_confirmation",
+                    "customerName": "Jan Jansen",
+                    "customerEmail": "Jan@Example.org",
+                    "customerPhone": "+31612345678",
+                    "notes": "Graag bij de ingang",
+                    "source": "widget"
+                },
+                "register": "books",
+                "schema": "Appointment",
+                "rbac": false
+            }
+        ],
+        "slots": [
+            "read svc-1/room-1/2026-06-01",
+            "invalidate svc-1/room-1/2026-06-01"
+        ],
+        "log": []
+    },
+    "save returns nothing usable": {
+        "response": {
+            "code": 201,
+            "appointmentId": "wsw-ID",
+            "status": "pending_confirmation",
+            "startTime": "2026-06-01T09:00:00Z",
+            "endTime": "2026-06-01T09:30:00Z",
+            "confirmationMessage": "Your appointment was created. You will receive a confirmation email shortly."
+        },
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            }
+        ],
+        "saved": [
+            {
+                "object": {
+                    "administrationId": "adm-1",
+                    "appointmentId": "wsw-ID",
+                    "serviceId": "svc-1",
+                    "resourceId": "room-1",
+                    "customerId": "cust-anon-a3ff11319b5ef6b1",
+                    "startTime": "2026-06-01T09:00:00Z",
+                    "endTime": "2026-06-01T09:30:00Z",
+                    "status": "pending_confirmation",
+                    "customerName": "Jan Jansen",
+                    "customerEmail": "Jan@Example.org",
+                    "customerPhone": "+31612345678",
+                    "notes": "Graag bij de ingang",
+                    "source": "widget"
+                },
+                "register": "books",
+                "schema": "Appointment",
+                "rbac": false
+            }
+        ],
+        "slots": [
+            "read svc-1/room-1/2026-06-01",
+            "invalidate svc-1/room-1/2026-06-01"
+        ],
+        "log": []
+    },
+    "service inactive": {
+        "response": {
+            "code": 404,
+            "error": "service_not_found"
+        },
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            }
+        ],
+        "saved": [],
+        "slots": [],
+        "log": []
+    },
+    "service not public": {
+        "response": {
+            "code": 404,
+            "error": "service_not_found"
+        },
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            }
+        ],
+        "saved": [],
+        "slots": [],
+        "log": []
+    },
+    "service of another administration": {
+        "response": {
+            "code": 404,
+            "error": "service_not_found"
+        },
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            }
+        ],
+        "saved": [],
+        "slots": [],
+        "log": []
+    },
+    "service row unreadable": {
+        "response": {
+            "code": 404,
+            "error": "service_not_found"
+        },
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            }
+        ],
+        "saved": [],
+        "slots": [],
+        "log": []
+    },
+    "service unknown": {
+        "response": {
+            "code": 404,
+            "error": "service_not_found"
+        },
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            }
+        ],
+        "saved": [],
+        "slots": [],
+        "log": []
+    },
+    "slot end differs": {
+        "response": {
+            "code": 409,
+            "error": "slot_unavailable"
+        },
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            }
+        ],
+        "saved": [],
+        "slots": [
+            "read svc-1/room-1/2026-06-01"
+        ],
+        "log": []
+    },
+    "slot read fails": {
+        "response": {
+            "code": 409,
+            "error": "slot_unavailable"
+        },
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            }
+        ],
+        "saved": [],
+        "slots": [
+            "read svc-1/room-1/2026-06-01"
+        ],
+        "log": [
+            "error: WidgetService: slot availability check failed {\"exception\":\"cache down\",\"serviceId\":\"svc-1\"}"
+        ]
+    },
+    "slot taken": {
+        "response": {
+            "code": 409,
+            "error": "slot_unavailable"
+        },
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            }
+        ],
+        "saved": [],
+        "slots": [
+            "read svc-1/room-1/2026-06-01"
+        ],
+        "log": []
+    },
+    "slots missing": {
+        "response": {
+            "code": 409,
+            "error": "slot_unavailable"
+        },
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            }
+        ],
+        "saved": [],
+        "slots": [
+            "read svc-1/room-1/2026-06-01"
+        ],
+        "log": []
+    }
+}
