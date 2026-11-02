@@ -32,6 +32,147 @@
 <script>
 import { translate as t } from '@nextcloud/l10n'
 import ClusterOverview from '../cluster-overview/ClusterOverview.vue'
+import { translateSections } from '../cluster-overview/clusterSections.js'
+
+// Each label is a function, so its literal t() call runs when the page renders.
+const SECTIONS = [
+	{
+		id: 'ledger',
+		label: () => t('shillinq', 'Ledger & Journals'),
+		cards: [
+			{
+				id: 'GeneralLedger',
+				label: () => t('shillinq', 'General Ledger'),
+				route: 'GeneralLedger',
+			},
+			{
+				id: 'ChartOfAccounts',
+				label: () => t('shillinq', 'Chart of Accounts'),
+				route: 'ChartOfAccounts',
+			},
+			{
+				id: 'Journals',
+				label: () => t('shillinq', 'Manual Journals'),
+				route: 'Journals',
+			},
+			{
+				id: 'Aansluitingen',
+				label: () => t('shillinq', 'Tie-outs'),
+				route: 'Aansluitingen',
+			},
+			{
+				id: 'AansluitingResultaten',
+				label: () => t('shillinq', 'Tie-out results'),
+				route: 'AansluitingResultaten',
+			},
+		],
+	},
+	{
+		id: 'dimensions',
+		label: () => t('shillinq', 'Dimensions & Projects'),
+		cards: [
+			{
+				id: 'AnalyticalDimensions',
+				label: () => t('shillinq', 'Analytical dimensions'),
+				route: 'AnalyticalDimensions',
+			},
+			{
+				id: 'CostCenters',
+				label: () => t('shillinq', 'Cost centers'),
+				route: 'AnalyticalDimensions',
+				query: { dimensionType: 'cost-center' },
+			},
+			{
+				id: 'Projects',
+				label: () => t('shillinq', 'Projects'),
+				route: 'Projects',
+			},
+			{
+				id: 'Utilisatie',
+				label: () => t('shillinq', 'Utilisation'),
+				route: 'Utilisatie',
+			},
+		],
+	},
+	{
+		id: 'framework',
+		label: () => t('shillinq', 'Dual GAAP, IFRS & Fiscal Years'),
+		cards: [
+			{
+				id: 'AccountingStandardsPolicy',
+				label: () => t('shillinq', 'Standards policy'),
+				route: 'AccountingStandardsPolicy',
+			},
+			{
+				id: 'AccountingFrameworks',
+				label: () => t('shillinq', 'Framework Configuration'),
+				route: 'AccountingFrameworks',
+			},
+			{
+				id: 'LeaseRegister',
+				label: () => t('shillinq', 'Lease Register (IFRS 16)'),
+				route: 'LeaseRegister',
+			},
+			{
+				id: 'RevenueContracts',
+				label: () => t('shillinq', 'Revenue Contracts (IFRS 15)'),
+				route: 'RevenueContracts',
+			},
+			{
+				id: 'YearEndCloseChecklist',
+				label: () => t('shillinq', 'Year-end close checklist'),
+				route: 'YearEndCloseChecklist',
+			},
+		],
+	},
+	{
+		id: 'consolidation',
+		label: () => t('shillinq', 'Consolidation'),
+		cards: [
+			{
+				id: 'ConsolidationGroups',
+				label: () => t('shillinq', 'Consolidation Groups'),
+				route: 'ConsolidationGroups',
+			},
+			{
+				id: 'ConsolidationPeriods',
+				label: () => t('shillinq', 'Consolidation Periods'),
+				route: 'ConsolidationPeriods',
+			},
+			{
+				id: 'ConsolidatedReports',
+				label: () => t('shillinq', 'Consolidated Reports'),
+				route: 'ConsolidatedReports',
+			},
+		],
+	},
+	{
+		id: 'payroll',
+		label: () => t('shillinq', 'Payroll'),
+		cards: [
+			{
+				id: 'Werkgevers',
+				label: () => t('shillinq', 'Employers'),
+				route: 'Werkgevers',
+			},
+			{
+				id: 'Werknemers',
+				label: () => t('shillinq', 'Employees'),
+				route: 'Werknemers',
+			},
+			{
+				id: 'Loonstroken',
+				label: () => t('shillinq', 'Payslips'),
+				route: 'Loonstroken',
+			},
+			{
+				id: 'Loonjournaalposten',
+				label: () => t('shillinq', 'Payroll journal entries'),
+				route: 'Loonjournaalposten',
+			},
+		],
+	},
+]
 
 export default {
 	name: 'BookkeepingOverview',
@@ -45,144 +186,7 @@ export default {
 		 * @spec openspec/changes/nav-six-clusters/specs/nav-clusters/spec.md#req-navc-002
 		 */
 		sections() {
-			return [
-				{
-					id: 'ledger',
-					label: this.t('shillinq', 'Ledger & Journals'),
-					cards: [
-						{
-							id: 'GeneralLedger',
-							label: this.t('shillinq', 'General Ledger'),
-							route: 'GeneralLedger',
-						},
-						{
-							id: 'ChartOfAccounts',
-							label: this.t('shillinq', 'Chart of Accounts'),
-							route: 'ChartOfAccounts',
-						},
-						{
-							id: 'Journals',
-							label: this.t('shillinq', 'Manual Journals'),
-							route: 'Journals',
-						},
-						{
-							id: 'Aansluitingen',
-							label: this.t('shillinq', 'Tie-outs'),
-							route: 'Aansluitingen',
-						},
-						{
-							id: 'AansluitingResultaten',
-							label: this.t('shillinq', 'Tie-out results'),
-							route: 'AansluitingResultaten',
-						},
-					],
-				},
-				{
-					id: 'dimensions',
-					label: this.t('shillinq', 'Dimensions & Projects'),
-					cards: [
-						{
-							id: 'AnalyticalDimensions',
-							label: this.t('shillinq', 'Analytical dimensions'),
-							route: 'AnalyticalDimensions',
-						},
-						{
-							id: 'CostCenters',
-							label: this.t('shillinq', 'Cost centers'),
-							route: 'AnalyticalDimensions',
-							query: { dimensionType: 'cost-center' },
-						},
-						{
-							id: 'Projects',
-							label: this.t('shillinq', 'Projects'),
-							route: 'Projects',
-						},
-						{
-							id: 'Utilisatie',
-							label: this.t('shillinq', 'Utilisation'),
-							route: 'Utilisatie',
-						},
-					],
-				},
-				{
-					id: 'framework',
-					label: this.t('shillinq', 'Dual GAAP, IFRS & Fiscal Years'),
-					cards: [
-						{
-							id: 'AccountingStandardsPolicy',
-							label: this.t('shillinq', 'Standards policy'),
-							route: 'AccountingStandardsPolicy',
-						},
-						{
-							id: 'AccountingFrameworks',
-							label: this.t('shillinq', 'Framework Configuration'),
-							route: 'AccountingFrameworks',
-						},
-						{
-							id: 'LeaseRegister',
-							label: this.t('shillinq', 'Lease Register (IFRS 16)'),
-							route: 'LeaseRegister',
-						},
-						{
-							id: 'RevenueContracts',
-							label: this.t('shillinq', 'Revenue Contracts (IFRS 15)'),
-							route: 'RevenueContracts',
-						},
-						{
-							id: 'YearEndCloseChecklist',
-							label: this.t('shillinq', 'Year-end close checklist'),
-							route: 'YearEndCloseChecklist',
-						},
-					],
-				},
-				{
-					id: 'consolidation',
-					label: this.t('shillinq', 'Consolidation'),
-					cards: [
-						{
-							id: 'ConsolidationGroups',
-							label: this.t('shillinq', 'Consolidation Groups'),
-							route: 'ConsolidationGroups',
-						},
-						{
-							id: 'ConsolidationPeriods',
-							label: this.t('shillinq', 'Consolidation Periods'),
-							route: 'ConsolidationPeriods',
-						},
-						{
-							id: 'ConsolidatedReports',
-							label: this.t('shillinq', 'Consolidated Reports'),
-							route: 'ConsolidatedReports',
-						},
-					],
-				},
-				{
-					id: 'payroll',
-					label: this.t('shillinq', 'Payroll'),
-					cards: [
-						{
-							id: 'Werkgevers',
-							label: this.t('shillinq', 'Employers'),
-							route: 'Werkgevers',
-						},
-						{
-							id: 'Werknemers',
-							label: this.t('shillinq', 'Employees'),
-							route: 'Werknemers',
-						},
-						{
-							id: 'Loonstroken',
-							label: this.t('shillinq', 'Payslips'),
-							route: 'Loonstroken',
-						},
-						{
-							id: 'Loonjournaalposten',
-							label: this.t('shillinq', 'Payroll journal entries'),
-							route: 'Loonjournaalposten',
-						},
-					],
-				},
-			]
+			return translateSections(SECTIONS)
 		},
 	},
 
