@@ -7,7 +7,8 @@
  * and one set of stored bookings, and records the conflicts or the exception,
  * the object-service reads and the log lines. Each ICS scenario feeds
  * IcsService one appointment, customer, confirm URL and context, and records
- * the payload lines (DTSTAMP as NOW), the timezone lookups and the log lines.
+ * the payload lines (DTSTAMP as NOW, the UID host as HOST), the timezone lookups
+ * and the log lines.
  * The record is tests/Unit/Service/fixtures/booking-conflict-ics-golden.json;
  * SHILLINQ_GOLDEN_RECORD=1 rewrites it.
  *
@@ -179,7 +180,7 @@ final class BookingConflictIcsGoldenTest extends TestCase {
 		$logger  = new GoldenBookingLogger();
 		$service = new IcsService(timezoneResolver: new TimezoneResolver(config: $config, logger: $logger), logger: $logger);
 		$ics     = $service->generateIcs(...self::invitations()[$name]);
-		$ics     = (string) preg_replace('/DTSTAMP:\d{8}T\d{6}Z/', 'DTSTAMP:NOW', $ics);
+		$ics     = (string) preg_replace(['/DTSTAMP:\d{8}T\d{6}Z/', '/^(UID:.*)@[^\r\n]*/m'], ['DTSTAMP:NOW', '$1@HOST'], $ics);
 
 		$this->assertGolden(
 			key: 'ics ' . $name,
