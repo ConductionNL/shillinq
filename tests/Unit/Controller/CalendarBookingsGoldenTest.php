@@ -49,6 +49,7 @@ use Stringable;
  * Calendar bookings golden tests.
  *
  * @covers \OCA\Shillinq\Controller\CalendarController
+ * @covers \OCA\Shillinq\Service\Booking\CalendarRows
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
