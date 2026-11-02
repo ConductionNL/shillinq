@@ -262,40 +262,25 @@ class SettingsService {
 			return $accountsResult['error'];
 		}
 
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			['seeded' => $seeded, 'skipped' => $skipped] = $this->importAccounts(
-				objectService: $objectService,
-				accounts: $accountsResult['accounts'],
-				administrationId: $administrationId
-			);
-
-			$this->logger->info(
-				'Shillinq: RGS template seeded',
-				[
-					'variant' => $templateVariant,
-					'seeded' => $seeded,
-					'skipped' => $skipped,
-				]
-			);
-
-			return [
-				'success' => true,
-				'message' => 'RGS template seeded successfully.',
-				'seeded' => $seeded,
-				'skipped' => $skipped,
-			];
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq: RGS template seeding failed',
-				['exception' => $e->getMessage()]
-			);
-			return [
-				'success' => false,
-				'message' => $e->getMessage(),
-			];
-		}//end try
-
+		return $this->seedImporter()->import(
+			import: new SeedImport(
+				schema: 'Account',
+				rows: $accountsResult['accounts'],
+				// Deduplication key (accountNumber, administrationId): accounts seeded under an
+				// earlier administrationId stay in OpenRegister and are not matched (M3).
+				match: static fn ($account): array => [
+					'accountNumber' => $account['accountNumber'],
+					'administrationId' => $administrationId,
+				],
+				administrationId: $administrationId,
+			),
+			messages: new SeedMessages(
+				seededLog: 'Shillinq: RGS template seeded',
+				seededMessage: 'RGS template seeded successfully.',
+				failedLog: 'Shillinq: RGS template seeding failed',
+				logContext: ['variant' => $templateVariant],
+			)
+		);
 	}//end seedRgsTemplate()
 
 	/**
@@ -342,59 +327,6 @@ class SettingsService {
 
 		return ['accounts' => $accounts];
 	}//end loadSeedAccounts()
-
-	/**
-	 * Import a list of account records into OpenRegister, skipping existing ones.
-	 *
-	 * Deduplication key is (accountNumber, administrationId). This means that if
-	 * an admin changes the administrationId app config after an initial seed, the
-	 * previously seeded accounts (under the old id) will be orphaned — they remain
-	 * in OpenRegister but are no longer matched on re-seed. To clean up, an admin
-	 * must manually delete accounts with the stale administrationId via the
-	 * OpenRegister UI before re-seeding under the new id (M3).
-	 *
-	 * @param object $objectService OpenRegister ObjectService.
-	 * @param array<mixed> $accounts Account records to import.
-	 * @param string $administrationId The administrationId to stamp.
-	 *
-	 * @return array{seeded: int, skipped: int}
-	 */
-	private function importAccounts(object $objectService, array $accounts, string $administrationId): array {
-		$seeded = 0;
-		$skipped = 0;
-
-		foreach ($accounts as $account) {
-			$account['administrationId'] = $administrationId;
-
-			$registerSlug = $this->getRegisterSlug();
-			$existing = $objectService
-				->setRegister($registerSlug)
-				->setSchema('Account')
-				->findAll(
-					[
-						'filters' => [
-							'accountNumber' => $account['accountNumber'],
-							'administrationId' => $administrationId,
-						],
-						'limit' => 1,
-					]
-				);
-
-			if (empty($existing) === false) {
-				$skipped++;
-				continue;
-			}
-
-			$objectService->saveObject(
-				object: $account,
-				register: $registerSlug,
-				schema: 'Account',
-			);
-			$seeded++;
-		}//end foreach
-
-		return ['seeded' => $seeded, 'skipped' => $skipped];
-	}//end importAccounts()
 
 	/**
 	 * Seed RJ-270 stages from the rj-270-stages.json seed file, idempotently.

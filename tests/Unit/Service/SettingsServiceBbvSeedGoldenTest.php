@@ -193,9 +193,25 @@ final class SettingsServiceBbvSeedGoldenTest extends TestCase {
 			'budget' => $service->seedBudgetBbvMappings($adminId),
 		};
 
-		return ['result' => $result, 'calls' => $objects->calls, 'log' => $logger->lines, 'configWrites' => $configWrites];
+		return ['result' => $result, 'calls' => $this->digest($objects->calls), 'log' => $logger->lines, 'configWrites' => $configWrites];
 
 	}//end runScenario()
+
+	/**
+	 * The first calls in full, then a count and a hash of all of them.
+	 *
+	 * @param array<int, array<string, mixed>> $calls The recorded calls.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function digest(array $calls): array {
+		return [
+			'count' => count($calls),
+			'sha256' => hash('sha256', (string) json_encode($calls, JSON_PRESERVE_ZERO_FRACTION)),
+			'head' => array_slice($calls, 0, 12),
+		];
+
+	}//end digest()
 }//end class
 
 /**
