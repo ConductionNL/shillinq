@@ -72,6 +72,14 @@ class SlotService {
 	private const DEFAULT_CLOSING_TIME = '18:00';
 
 	/**
+	 * The default opening and closing time per Resource field.
+	 */
+	private const DEFAULT_TIMES = [
+		'openingTime' => self::DEFAULT_OPENING_TIME,
+		'closingTime' => self::DEFAULT_CLOSING_TIME,
+	];
+
+	/**
 	 * Construct the service with DI dependencies.
 	 *
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
@@ -109,72 +117,109 @@ class SlotService {
 	 */
 	public function getAvailableSlots(string $serviceId, string $resourceId, string $date): array {
 		$cacheKey = $this->buildCacheKey(serviceId: $serviceId, resourceId: $resourceId, date: $date);
-		$cache = $this->getCache();
-
-		if ($cache !== null) {
-			$cached = $cache->get($cacheKey);
-			if (is_array($cached) === true && isset($cached['slots']) === true && isset($cached['etag']) === true) {
-				return [
-					'slots' => $cached['slots'],
-					'etag' => (string)$cached['etag'],
-					'cached' => true,
-				];
-			}
+		$cache    = $this->getCache();
+		$cached   = $this->cachedSlots(cache: $cache, key: $cacheKey);
+		if ($cached !== null) {
+			return $cached;
 		}
 
-		$service = $this->findByLogicalKey(schema: 'Service', field: 'serviceId', value: $serviceId);
-		if ($service === null) {
+		$slots = $this->computeSlots(request: ['serviceId' => $serviceId, 'resourceId' => $resourceId, 'date' => $date]);
+		if ($slots === null) {
 			return ['slots' => [], 'etag' => $this->makeEtag(data: []), 'cached' => false];
 		}
 
-		$resource = $this->findByLogicalKey(schema: 'Resource', field: 'resourceId', value: $resourceId);
-		if ($resource === null) {
-			return ['slots' => [], 'etag' => $this->makeEtag(data: []), 'cached' => false];
+		$result = ['slots' => $slots, 'etag' => $this->makeEtag(data: $slots)];
+		$cache?->set($cacheKey, $result, self::SLOT_CACHE_TTL_SECONDS);
+
+		return $result + ['cached' => false];
+	}//end getAvailableSlots()
+
+	/**
+	 * A complete cached slot answer, or null when there is none.
+	 *
+	 * @param ICache|null $cache The slot cache, null when unavailable.
+	 * @param string $key The cache key.
+	 *
+	 * @return array{slots: array<int,array<string,string>>, etag: string, cached: bool}|null
+	 */
+	private function cachedSlots(?ICache $cache, string $key): ?array {
+		$cached = $cache?->get($key);
+		if ($this->isCompleteEntry(cached: $cached) === false) {
+			return null;
+		}
+
+		return ['slots' => $cached['slots'], 'etag' => (string)$cached['etag'], 'cached' => true];
+	}//end cachedSlots()
+
+	/**
+	 * Whether a cache entry holds both slots and an etag.
+	 *
+	 * @param mixed $cached The cache entry.
+	 *
+	 * @return bool
+	 */
+	private function isCompleteEntry(mixed $cached): bool {
+		return is_array($cached) === true && isset($cached['slots']) === true && isset($cached['etag']) === true;
+	}//end isCompleteEntry()
+
+	/**
+	 * Enumerate the open slots, or null when the service, the resource or a
+	 * positive duration is missing (such an empty answer is not cached).
+	 *
+	 * @param array{serviceId: string, resourceId: string, date: string} $request The slot request.
+	 *
+	 * @return array<int,array<string,string>>|null The slots.
+	 */
+	private function computeSlots(array $request): ?array {
+		$service  = $this->findByLogicalKey(schema: 'Service', field: 'serviceId', value: $request['serviceId']);
+		$resource = null;
+		if ($service !== null) {
+			$resource = $this->findByLogicalKey(schema: 'Resource', field: 'resourceId', value: $request['resourceId']);
 		}
 
 		$duration = (int)($service['duration'] ?? 0);
-		if ($duration <= 0) {
-			return ['slots' => [], 'etag' => $this->makeEtag(data: []), 'cached' => false];
+		if ($resource === null || $duration <= 0) {
+			return null;
 		}
 
-		$openingTime = (string)($resource['openingTime'] ?? self::DEFAULT_OPENING_TIME);
-		if ($openingTime === '') {
-			$openingTime = self::DEFAULT_OPENING_TIME;
-		}
+		return $this->slotsOfResource(request: $request + ['duration' => $duration], resource: $resource);
+	}//end computeSlots()
 
-		$closingTime = (string)($resource['closingTime'] ?? self::DEFAULT_CLOSING_TIME);
-		if ($closingTime === '') {
-			$closingTime = self::DEFAULT_CLOSING_TIME;
-		}
-
-		$allowOverlap = (bool)($resource['allowOverlap'] ?? false);
-		$existing = $this->loadAppointmentsForResourceOnDate(resourceId: $resourceId, date: $date);
-
-		$slots = $this->enumerateSlots(
-			date: $date,
-			openingTime: $openingTime,
-			closingTime: $closingTime,
-			durationMinutes: $duration,
-			existingAppointments: $existing,
-			allowOverlap: $allowOverlap,
+	/**
+	 * Enumerate a resource's slots of the requested duration on the requested date.
+	 *
+	 * @param array{serviceId: string, resourceId: string, date: string, duration: int} $request The slot request.
+	 * @param array<string,mixed> $resource The Resource row.
+	 *
+	 * @return array<int,array<string,string>> The slots.
+	 */
+	private function slotsOfResource(array $request, array $resource): array {
+		return $this->enumerateSlots(
+			date: $request['date'],
+			openingTime: $this->resourceTime(resource: $resource, field: 'openingTime'),
+			closingTime: $this->resourceTime(resource: $resource, field: 'closingTime'),
+			durationMinutes: $request['duration'],
+			existingAppointments: $this->loadAppointmentsForResourceOnDate(resourceId: $request['resourceId'], date: $request['date']),
+			allowOverlap: (bool)($resource['allowOverlap'] ?? false),
 		);
+	}//end slotsOfResource()
 
-		$result = [
-			'slots' => $slots,
-			'etag' => $this->makeEtag(data: $slots),
-		];
-
-		if ($cache !== null) {
-			$cache->set($cacheKey, $result, self::SLOT_CACHE_TTL_SECONDS);
+	/**
+	 * A resource's opening or closing time, the default when absent or empty.
+	 *
+	 * @param array<string,mixed> $resource The Resource row.
+	 * @param string $field openingTime or closingTime.
+	 *
+	 * @return string The time as HH:MM.
+	 */
+	private function resourceTime(array $resource, string $field): string {
+		$time = (string)($resource[$field] ?? self::DEFAULT_TIMES[$field]);
+		if ($time === '') {
+			return self::DEFAULT_TIMES[$field];
 		}
 
-		return [
-			'slots' => $slots,
-			'etag' => $result['etag'],
-			'cached' => false,
-		];
-
-	}//end getAvailableSlots()
+		return $time;
+	}//end resourceTime()
 
 	/**
 	 * Invalidate the slot cache for a (service, resource, date) tuple.
