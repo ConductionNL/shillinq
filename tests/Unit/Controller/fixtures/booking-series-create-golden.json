@@ -1,0 +1,805 @@
+{
+    "administration not accessible": {
+        "status": 403,
+        "data": {
+            "error": "Forbidden"
+        },
+        "asked": [
+            "alice -> adm-2"
+        ],
+        "planned": [],
+        "reads": [],
+        "saved": [],
+        "log": []
+    },
+    "anonymous": {
+        "status": 401,
+        "data": {
+            "error": "Not authenticated"
+        },
+        "asked": [],
+        "planned": [],
+        "reads": [],
+        "saved": [],
+        "log": []
+    },
+    "another user forging adm-1": {
+        "status": 403,
+        "data": {
+            "error": "Forbidden"
+        },
+        "asked": [
+            "mallory -> adm-1"
+        ],
+        "planned": [],
+        "reads": [],
+        "saved": [],
+        "log": []
+    },
+    "created": {
+        "status": 200,
+        "data": {
+            "seriesId": "ser-1",
+            "generated": 2,
+            "skipped": 1
+        },
+        "asked": [
+            "alice -> adm-1"
+        ],
+        "planned": [
+            {
+                "seriesId": "ser-1",
+                "administrationId": "adm-1",
+                "serviceId": "svc-1",
+                "resourceId": "room-1",
+                "customerId": "cust-1",
+                "startTime": "2026-06-01T09:00:00Z",
+                "durationMinutes": 30,
+                "recurrenceRule": "FREQ=WEEKLY;COUNT=3",
+                "openingTime": "09:00",
+                "closingTime": "18:00",
+                "allowOverlap": false,
+                "existingAppointments": [
+                    {
+                        "startTime": "2026-06-08T09:00:00Z",
+                        "endTime": "2026-06-08T09:30:00Z"
+                    }
+                ]
+            }
+        ],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Resource",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "register": "books",
+                "schema": "Appointment",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1000
+                }
+            }
+        ],
+        "saved": [
+            {
+                "register": "books",
+                "schema": "AppointmentSeries",
+                "object": {
+                    "administrationId": "adm-1",
+                    "seriesId": "ser-1",
+                    "serviceId": "svc-1",
+                    "resourceId": "room-1",
+                    "customerId": "cust-1",
+                    "startTime": "2026-06-01T09:00:00Z",
+                    "durationMinutes": 30,
+                    "recurrenceRule": "FREQ=WEEKLY;COUNT=3",
+                    "status": "active",
+                    "generatedCount": 2,
+                    "skippedCount": 1
+                }
+            },
+            {
+                "register": "books",
+                "schema": "Appointment",
+                "object": {
+                    "recurrenceIndex": 0,
+                    "startTime": "2026-06-01T09:00:00Z",
+                    "appointmentId": "ser-1-0"
+                }
+            },
+            {
+                "register": "books",
+                "schema": "Appointment",
+                "object": {
+                    "recurrenceIndex": "2",
+                    "startTime": "2026-06-15T09:00:00Z",
+                    "appointmentId": "ser-1-2"
+                }
+            }
+        ],
+        "log": [
+            "info: BookingDepthController: recurring series created {\"seriesId\":\"ser-1\",\"generated\":2,\"skipped\":1}"
+        ]
+    },
+    "created with nothing generated": {
+        "status": 200,
+        "data": {
+            "seriesId": "ser-1",
+            "generated": 0,
+            "skipped": 1
+        },
+        "asked": [
+            "alice -> adm-1"
+        ],
+        "planned": [
+            {
+                "seriesId": "ser-1",
+                "administrationId": "adm-1",
+                "serviceId": "svc-1",
+                "resourceId": "room-1",
+                "customerId": "cust-1",
+                "startTime": "2026-06-01T09:00:00Z",
+                "durationMinutes": 30,
+                "recurrenceRule": "FREQ=WEEKLY;COUNT=3",
+                "openingTime": "09:00",
+                "closingTime": "18:00",
+                "allowOverlap": false,
+                "existingAppointments": [
+                    {
+                        "startTime": "2026-06-08T09:00:00Z",
+                        "endTime": "2026-06-08T09:30:00Z"
+                    }
+                ]
+            }
+        ],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Resource",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "register": "books",
+                "schema": "Appointment",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1000
+                }
+            }
+        ],
+        "saved": [
+            {
+                "register": "books",
+                "schema": "AppointmentSeries",
+                "object": {
+                    "administrationId": "adm-1",
+                    "seriesId": "ser-1",
+                    "serviceId": "svc-1",
+                    "resourceId": "room-1",
+                    "customerId": "cust-1",
+                    "startTime": "2026-06-01T09:00:00Z",
+                    "durationMinutes": 30,
+                    "recurrenceRule": "FREQ=WEEKLY;COUNT=3",
+                    "status": "active",
+                    "generatedCount": 0,
+                    "skippedCount": 1
+                }
+            }
+        ],
+        "log": [
+            "info: BookingDepthController: recurring series created {\"seriesId\":\"ser-1\",\"generated\":0,\"skipped\":1}"
+        ]
+    },
+    "created without a customer": {
+        "status": 200,
+        "data": {
+            "seriesId": "ser-1",
+            "generated": 2,
+            "skipped": 1
+        },
+        "asked": [
+            "alice -> adm-1"
+        ],
+        "planned": [
+            {
+                "seriesId": "ser-1",
+                "administrationId": "adm-1",
+                "serviceId": "svc-1",
+                "resourceId": "room-1",
+                "customerId": "",
+                "startTime": "2026-06-01T09:00:00Z",
+                "durationMinutes": 30,
+                "recurrenceRule": "FREQ=WEEKLY;COUNT=3",
+                "openingTime": "09:00",
+                "closingTime": "18:00",
+                "allowOverlap": false,
+                "existingAppointments": [
+                    {
+                        "startTime": "2026-06-08T09:00:00Z",
+                        "endTime": "2026-06-08T09:30:00Z"
+                    }
+                ]
+            }
+        ],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Resource",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "register": "books",
+                "schema": "Appointment",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1000
+                }
+            }
+        ],
+        "saved": [
+            {
+                "register": "books",
+                "schema": "AppointmentSeries",
+                "object": {
+                    "administrationId": "adm-1",
+                    "seriesId": "ser-1",
+                    "serviceId": "svc-1",
+                    "resourceId": "room-1",
+                    "customerId": "",
+                    "startTime": "2026-06-01T09:00:00Z",
+                    "durationMinutes": 30,
+                    "recurrenceRule": "FREQ=WEEKLY;COUNT=3",
+                    "status": "active",
+                    "generatedCount": 2,
+                    "skippedCount": 1
+                }
+            },
+            {
+                "register": "books",
+                "schema": "Appointment",
+                "object": {
+                    "recurrenceIndex": 0,
+                    "startTime": "2026-06-01T09:00:00Z",
+                    "appointmentId": "ser-1-0"
+                }
+            },
+            {
+                "register": "books",
+                "schema": "Appointment",
+                "object": {
+                    "recurrenceIndex": "2",
+                    "startTime": "2026-06-15T09:00:00Z",
+                    "appointmentId": "ser-1-2"
+                }
+            }
+        ],
+        "log": [
+            "info: BookingDepthController: recurring series created {\"seriesId\":\"ser-1\",\"generated\":2,\"skipped\":1}"
+        ]
+    },
+    "forbidden and no OpenRegister": {
+        "status": 403,
+        "data": {
+            "error": "Forbidden"
+        },
+        "asked": [
+            "mallory -> adm-1"
+        ],
+        "planned": [],
+        "reads": [],
+        "saved": [],
+        "log": []
+    },
+    "missing administration and forbidden": {
+        "status": 400,
+        "data": {
+            "error": "administrationId, seriesId, serviceId, resourceId, startTime, durationMinutes and recurrenceRule are required"
+        },
+        "asked": [],
+        "planned": [],
+        "reads": [],
+        "saved": [],
+        "log": []
+    },
+    "missing recurrenceRule": {
+        "status": 400,
+        "data": {
+            "error": "administrationId, seriesId, serviceId, resourceId, startTime, durationMinutes and recurrenceRule are required"
+        },
+        "asked": [],
+        "planned": [],
+        "reads": [],
+        "saved": [],
+        "log": []
+    },
+    "missing resourceId": {
+        "status": 400,
+        "data": {
+            "error": "administrationId, seriesId, serviceId, resourceId, startTime, durationMinutes and recurrenceRule are required"
+        },
+        "asked": [],
+        "planned": [],
+        "reads": [],
+        "saved": [],
+        "log": []
+    },
+    "missing seriesId": {
+        "status": 400,
+        "data": {
+            "error": "administrationId, seriesId, serviceId, resourceId, startTime, durationMinutes and recurrenceRule are required"
+        },
+        "asked": [],
+        "planned": [],
+        "reads": [],
+        "saved": [],
+        "log": []
+    },
+    "missing serviceId": {
+        "status": 400,
+        "data": {
+            "error": "administrationId, seriesId, serviceId, resourceId, startTime, durationMinutes and recurrenceRule are required"
+        },
+        "asked": [],
+        "planned": [],
+        "reads": [],
+        "saved": [],
+        "log": []
+    },
+    "missing startTime": {
+        "status": 400,
+        "data": {
+            "error": "administrationId, seriesId, serviceId, resourceId, startTime, durationMinutes and recurrenceRule are required"
+        },
+        "asked": [],
+        "planned": [],
+        "reads": [],
+        "saved": [],
+        "log": []
+    },
+    "no OpenRegister": {
+        "status": 503,
+        "data": {
+            "error": "OpenRegister unavailable"
+        },
+        "asked": [
+            "alice -> adm-1"
+        ],
+        "planned": [],
+        "reads": [],
+        "saved": [],
+        "log": []
+    },
+    "planner crashes": {
+        "status": 500,
+        "data": {
+            "error": "Series creation failed"
+        },
+        "asked": [
+            "alice -> adm-1"
+        ],
+        "planned": [
+            {
+                "seriesId": "ser-1",
+                "administrationId": "adm-1",
+                "serviceId": "svc-1",
+                "resourceId": "room-1",
+                "customerId": "cust-1",
+                "startTime": "2026-06-01T09:00:00Z",
+                "durationMinutes": 30,
+                "recurrenceRule": "FREQ=WEEKLY;COUNT=3",
+                "openingTime": "09:00",
+                "closingTime": "18:00",
+                "allowOverlap": false,
+                "existingAppointments": [
+                    {
+                        "startTime": "2026-06-08T09:00:00Z",
+                        "endTime": "2026-06-08T09:30:00Z"
+                    }
+                ]
+            }
+        ],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Resource",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "register": "books",
+                "schema": "Appointment",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1000
+                }
+            }
+        ],
+        "saved": [],
+        "log": [
+            "error: BookingDepthController: series creation failed {\"seriesId\":\"ser-1\",\"exception\":\"planner crashed\"}"
+        ]
+    },
+    "planner rejects the rule": {
+        "status": 400,
+        "data": {
+            "message": "l10n:Unable to create the appointment series",
+            "error": "appointment-series-create-failed"
+        },
+        "asked": [
+            "alice -> adm-1"
+        ],
+        "planned": [
+            {
+                "seriesId": "ser-1",
+                "administrationId": "adm-1",
+                "serviceId": "svc-1",
+                "resourceId": "room-1",
+                "customerId": "cust-1",
+                "startTime": "2026-06-01T09:00:00Z",
+                "durationMinutes": 30,
+                "recurrenceRule": "FREQ=WEEKLY;COUNT=3",
+                "openingTime": "09:00",
+                "closingTime": "18:00",
+                "allowOverlap": false,
+                "existingAppointments": [
+                    {
+                        "startTime": "2026-06-08T09:00:00Z",
+                        "endTime": "2026-06-08T09:30:00Z"
+                    }
+                ]
+            }
+        ],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Resource",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "register": "books",
+                "schema": "Appointment",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1000
+                }
+            }
+        ],
+        "saved": [],
+        "log": [
+            "error: BookingDepthController.createSeries failed {\"exception\":\"InvalidArgumentException: RRULE secret detail\"}"
+        ]
+    },
+    "resource missing": {
+        "status": 404,
+        "data": {
+            "error": "Resource not found"
+        },
+        "asked": [
+            "alice -> adm-1"
+        ],
+        "planned": [],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Resource",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ],
+        "saved": [],
+        "log": []
+    },
+    "resource of another administration": {
+        "status": 403,
+        "data": {
+            "error": "Forbidden"
+        },
+        "asked": [
+            "alice -> adm-1"
+        ],
+        "planned": [],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Resource",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ],
+        "saved": [],
+        "log": []
+    },
+    "resource read fails": {
+        "status": 500,
+        "data": {
+            "error": "Series creation failed"
+        },
+        "asked": [
+            "alice -> adm-1"
+        ],
+        "planned": [],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Resource",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ],
+        "saved": [],
+        "log": [
+            "error: BookingDepthController: series creation failed {\"seriesId\":\"ser-1\",\"exception\":\"resource read failed\"}"
+        ]
+    },
+    "resource with its own hours": {
+        "status": 200,
+        "data": {
+            "seriesId": "ser-1",
+            "generated": 2,
+            "skipped": 1
+        },
+        "asked": [
+            "alice -> adm-1"
+        ],
+        "planned": [
+            {
+                "seriesId": "ser-1",
+                "administrationId": "adm-1",
+                "serviceId": "svc-1",
+                "resourceId": "room-1",
+                "customerId": "cust-1",
+                "startTime": "2026-06-01T09:00:00Z",
+                "durationMinutes": 30,
+                "recurrenceRule": "FREQ=WEEKLY;COUNT=3",
+                "openingTime": "08:00",
+                "closingTime": "12:00",
+                "allowOverlap": true,
+                "existingAppointments": [
+                    {
+                        "startTime": "2026-06-08T09:00:00Z",
+                        "endTime": "2026-06-08T09:30:00Z"
+                    }
+                ]
+            }
+        ],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Resource",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "register": "books",
+                "schema": "Appointment",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1000
+                }
+            }
+        ],
+        "saved": [
+            {
+                "register": "books",
+                "schema": "AppointmentSeries",
+                "object": {
+                    "administrationId": "adm-1",
+                    "seriesId": "ser-1",
+                    "serviceId": "svc-1",
+                    "resourceId": "room-1",
+                    "customerId": "cust-1",
+                    "startTime": "2026-06-01T09:00:00Z",
+                    "durationMinutes": 30,
+                    "recurrenceRule": "FREQ=WEEKLY;COUNT=3",
+                    "status": "active",
+                    "generatedCount": 2,
+                    "skippedCount": 1
+                }
+            },
+            {
+                "register": "books",
+                "schema": "Appointment",
+                "object": {
+                    "recurrenceIndex": 0,
+                    "startTime": "2026-06-01T09:00:00Z",
+                    "appointmentId": "ser-1-0"
+                }
+            },
+            {
+                "register": "books",
+                "schema": "Appointment",
+                "object": {
+                    "recurrenceIndex": "2",
+                    "startTime": "2026-06-15T09:00:00Z",
+                    "appointmentId": "ser-1-2"
+                }
+            }
+        ],
+        "log": [
+            "info: BookingDepthController: recurring series created {\"seriesId\":\"ser-1\",\"generated\":2,\"skipped\":1}"
+        ]
+    },
+    "resource without administration": {
+        "status": 403,
+        "data": {
+            "error": "Forbidden"
+        },
+        "asked": [
+            "alice -> adm-1"
+        ],
+        "planned": [],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Resource",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ],
+        "saved": [],
+        "log": []
+    },
+    "save fails": {
+        "status": 500,
+        "data": {
+            "error": "Series creation failed"
+        },
+        "asked": [
+            "alice -> adm-1"
+        ],
+        "planned": [
+            {
+                "seriesId": "ser-1",
+                "administrationId": "adm-1",
+                "serviceId": "svc-1",
+                "resourceId": "room-1",
+                "customerId": "cust-1",
+                "startTime": "2026-06-01T09:00:00Z",
+                "durationMinutes": 30,
+                "recurrenceRule": "FREQ=WEEKLY;COUNT=3",
+                "openingTime": "09:00",
+                "closingTime": "18:00",
+                "allowOverlap": false,
+                "existingAppointments": [
+                    {
+                        "startTime": "2026-06-08T09:00:00Z",
+                        "endTime": "2026-06-08T09:30:00Z"
+                    }
+                ]
+            }
+        ],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Resource",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "register": "books",
+                "schema": "Appointment",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1000
+                }
+            }
+        ],
+        "saved": [
+            {
+                "register": "books",
+                "schema": "AppointmentSeries",
+                "object": {
+                    "administrationId": "adm-1",
+                    "seriesId": "ser-1",
+                    "serviceId": "svc-1",
+                    "resourceId": "room-1",
+                    "customerId": "cust-1",
+                    "startTime": "2026-06-01T09:00:00Z",
+                    "durationMinutes": 30,
+                    "recurrenceRule": "FREQ=WEEKLY;COUNT=3",
+                    "status": "active",
+                    "generatedCount": 2,
+                    "skippedCount": 1
+                }
+            },
+            {
+                "register": "books",
+                "schema": "Appointment",
+                "object": {
+                    "recurrenceIndex": 0,
+                    "startTime": "2026-06-01T09:00:00Z",
+                    "appointmentId": "ser-1-0"
+                }
+            }
+        ],
+        "log": [
+            "error: BookingDepthController: series creation failed {\"seriesId\":\"ser-1\",\"exception\":\"disk full\"}"
+        ]
+    },
+    "text duration": {
+        "status": 400,
+        "data": {
+            "error": "administrationId, seriesId, serviceId, resourceId, startTime, durationMinutes and recurrenceRule are required"
+        },
+        "asked": [],
+        "planned": [],
+        "reads": [],
+        "saved": [],
+        "log": []
+    },
+    "zero duration": {
+        "status": 400,
+        "data": {
+            "error": "administrationId, seriesId, serviceId, resourceId, startTime, durationMinutes and recurrenceRule are required"
+        },
+        "asked": [],
+        "planned": [],
+        "reads": [],
+        "saved": [],
+        "log": []
+    }
+}
