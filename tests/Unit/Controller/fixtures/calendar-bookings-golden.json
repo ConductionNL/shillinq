@@ -978,8 +978,12 @@
         "saved": [],
         "log": []
     },
-    "list bad start": {
-        "thrown": "DateMalformedStringException",
+    "list bad end": {
+        "status": 400,
+        "data": {
+            "message": "l10n:Invalid start/end range.",
+            "error": "calendar-invalid-range"
+        },
         "trace": [
             "isAdmin alice",
             "canAccess alice -> adm-1"
@@ -997,7 +1001,36 @@
             }
         ],
         "saved": [],
-        "log": []
+        "log": [
+            "warning: Shillinq: invalid booking range {\"exception\":\"start and end must be ISO 8601 timestamps\"}"
+        ]
+    },
+    "list bad start": {
+        "status": 400,
+        "data": {
+            "message": "l10n:Invalid start/end range.",
+            "error": "calendar-invalid-range"
+        },
+        "trace": [
+            "isAdmin alice",
+            "canAccess alice -> adm-1"
+        ],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Calendar",
+                "config": {
+                    "filters": {
+                        "calendarId": "cal-1"
+                    },
+                    "limit": 1
+                }
+            }
+        ],
+        "saved": [],
+        "log": [
+            "warning: Shillinq: invalid booking range {\"exception\":\"start and end must be ISO 8601 timestamps\"}"
+        ]
     },
     "list booking read fails": {
         "status": 503,

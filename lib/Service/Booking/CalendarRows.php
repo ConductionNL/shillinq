@@ -154,22 +154,15 @@ final class CalendarRows {
 	 *
 	 * @return array{0: DateTimeImmutable, 1: DateTimeImmutable} Inclusive lower / exclusive upper bounds.
 	 *
-	 * @throws InvalidArgumentException When the inputs are malformed or inverted.
+	 * @throws InvalidArgumentException When a date is malformed or the range inverted.
 	 *
 	 * @spec openspec/changes/bookings-resource-calendar/tasks.md#task-3
 	 */
 	public function range(string $start, string $end): array {
 		$tz = new DateTimeZone('UTC');
 
-		$startDt = new DateTimeImmutable('today', $tz);
-		if ($start !== '') {
-			$startDt = new DateTimeImmutable($start, $tz);
-		}
-
-		$endDt = $startDt->modify('+' . self::DEFAULT_RANGE_DAYS . ' days');
-		if ($end !== '') {
-			$endDt = new DateTimeImmutable($end, $tz);
-		}
+		$startDt = $this->parseDate(date: $start, fallback: new DateTimeImmutable('today', $tz));
+		$endDt   = $this->parseDate(date: $end, fallback: $startDt->modify('+' . self::DEFAULT_RANGE_DAYS . ' days'));
 
 		if ($endDt <= $startDt) {
 			throw new InvalidArgumentException('end must be after start');
@@ -177,6 +170,28 @@ final class CalendarRows {
 
 		return [$startDt->setTimezone($tz), $endDt->setTimezone($tz)];
 	}//end range()
+
+	/**
+	 * A requested date in UTC, or the fallback when none is given.
+	 *
+	 * @param string $date The requested date, '' when absent.
+	 * @param DateTimeImmutable $fallback The date to use when absent.
+	 *
+	 * @return DateTimeImmutable
+	 *
+	 * @throws InvalidArgumentException When the date cannot be parsed.
+	 */
+	private function parseDate(string $date, DateTimeImmutable $fallback): DateTimeImmutable {
+		if ($date === '') {
+			return $fallback;
+		}
+
+		try {
+			return new DateTimeImmutable($date, new DateTimeZone('UTC'));
+		} catch (\DateMalformedStringException $e) {
+			throw new InvalidArgumentException('start and end must be ISO 8601 timestamps', 0, $e);
+		}
+	}//end parseDate()
 
 	/**
 	 * Generate a stable, sortable booking id for a new booking.

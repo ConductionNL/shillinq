@@ -261,6 +261,7 @@ final class CalendarBookingsGoldenTest extends TestCase {
 			'list end only' => ['params' => ['start' => '2026-06-01T00:00:00Z', 'end' => '2026-06-01T09:00:00Z']],
 			'list empty range' => ['params' => ['start' => '2026-06-02T00:00:00Z', 'end' => '2026-06-01T00:00:00Z']],
 			'list bad start' => ['params' => ['start' => 'whenever', 'end' => '2026-06-02T00:00:00Z']],
+			'list bad end' => ['params' => ['start' => '2026-06-01T00:00:00Z', 'end' => 'later']],
 			'list anonymous' => ['user' => null, 'params' => $range],
 			'list empty calendar id' => ['calendarId' => '  ', 'params' => $range],
 			'list calendar unknown' => ['calendar' => 'none', 'params' => $range],

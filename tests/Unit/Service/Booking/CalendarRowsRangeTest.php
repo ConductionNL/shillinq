@@ -92,4 +92,34 @@ final class CalendarRowsRangeTest extends TestCase {
 		self::assertSame(['2026-06-01T00:00:00+00:00', '2026-06-02T00:00:00+00:00'], [$start->format('c'), $end->format('c')]);
 
 	}//end testValidRangeIsReturnedInUtc()
+
+	/**
+	 * Without an end the range runs 30 days; a date without a zone is read in UTC.
+	 *
+	 * @return void
+	 */
+	public function testOpenEndRunsThirtyDaysAndBareDatesAreUtc(): void {
+		$timezone = date_default_timezone_get();
+		date_default_timezone_set('Europe/Amsterdam');
+		try {
+			[$start, $end] = (new CalendarRows())->range(start: '2026-06-01 00:00', end: '');
+		} finally {
+			date_default_timezone_set($timezone);
+		}
+
+		self::assertSame(['2026-06-01T00:00:00+00:00', '2026-07-01T00:00:00+00:00'], [$start->format('c'), $end->format('c')]);
+
+	}//end testOpenEndRunsThirtyDaysAndBareDatesAreUtc()
+
+	/**
+	 * Without a start the range starts today in UTC.
+	 *
+	 * @return void
+	 */
+	public function testOpenStartIsToday(): void {
+		[$start] = (new CalendarRows())->range(start: '', end: '2999-01-01T00:00:00Z');
+
+		self::assertSame(gmdate('Y-m-d') . 'T00:00:00+00:00', $start->format('c'));
+
+	}//end testOpenStartIsToday()
 }//end class
