@@ -16,9 +16,9 @@
 
 import fs from 'fs'
 import path from 'path'
+import { afterAll, describe, expect, it, vi } from 'vitest'
 import { createSSRApp } from 'vue'
 import { renderToString } from 'vue/server-renderer'
-import { afterAll, describe, expect, it, vi } from 'vitest'
 
 const scanner = vi.hoisted(() => ({ store: null }))
 
@@ -33,14 +33,18 @@ vi.mock('../../src/components/inventory/BarcodeScanner.vue', () => ({
 		name: 'BarcodeScanner',
 		props: { fallbackToManual: { type: Boolean, default: false } },
 		emits: ['scan', 'cancel'],
-		template: '<div class="scanner-stub" :data-fallback="String(fallbackToManual)"></div>',
+		template:
+			'<div class="scanner-stub" :data-fallback="String(fallbackToManual)"></div>',
 	},
 }))
 
-const { default: ReceiveOp } = await import('../../src/components/inventory/ReceiveOp.vue')
-const { default: TransferOp } = await import('../../src/components/inventory/TransferOp.vue')
+const { default: ReceiveOp } =
+	await import('../../src/components/inventory/ReceiveOp.vue')
+const { default: TransferOp } =
+	await import('../../src/components/inventory/TransferOp.vue')
 const { default: PickOp } = await import('../../src/components/inventory/PickOp.vue')
-const { default: CountOp } = await import('../../src/components/inventory/CountOp.vue')
+const { default: CountOp } =
+	await import('../../src/components/inventory/CountOp.vue')
 
 const GOLDEN = path.join(__dirname, 'fixtures/inventoryOpRender.golden.json')
 const RECORD = process.env.SHILLINQ_GOLDEN_RECORD === '1'
@@ -87,7 +91,7 @@ async function render(component, state) {
 	return html
 		.replace(/ data-v-[a-z0-9]+(="")?/g, '')
 		.replace(/<!--\[-->|<!--\]-->|<!---->/g, '')
-		.replace(/[a-z-]+__sku-row/g, 'SKU_ROW')
+		.replace(/[a-z-]+__sku-row|inventory-sku-field__row/g, 'SKU_ROW')
 		.split('><')
 		.join('>\n<')
 }
@@ -102,7 +106,11 @@ const SHARED = {
 }
 
 const OPS = [
-	['ReceiveOp', ReceiveOp, { ...SHARED, 'location chosen': { data: { location: 'B' } } }],
+	[
+		'ReceiveOp',
+		ReceiveOp,
+		{ ...SHARED, 'location chosen': { data: { location: 'B' } } },
+	],
 	[
 		'TransferOp',
 		TransferOp,
@@ -127,7 +135,9 @@ const OPS = [
 		{
 			...SHARED,
 			'location chosen': { data: { location: 'A', physicalQuantity: 4 } },
-			'with system quantity': { data: { systemQuantity: 6, physicalQuantity: 4 } },
+			'with system quantity': {
+				data: { systemQuantity: 6, physicalQuantity: 4 },
+			},
 			reconcile: { data: { reconcile: true } },
 		},
 	],
@@ -152,7 +162,9 @@ describe('the golden record', () => {
 		if (RECORD) {
 			return
 		}
-		const keys = OPS.flatMap(([name, , scenarios]) => Object.keys(scenarios).map((title) => `${name} / ${title}`))
+		const keys = OPS.flatMap(([name, , scenarios]) =>
+			Object.keys(scenarios).map((title) => `${name} / ${title}`),
+		)
 		expect(Object.keys(golden).sort()).toEqual(keys.sort())
 	})
 })
