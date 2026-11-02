@@ -120,7 +120,7 @@
                 "register": "books",
                 "schema": "Appointment",
                 "object": {
-                    "recurrenceIndex": "2",
+                    "recurrenceIndex": "02",
                     "startTime": "2026-06-15T09:00:00Z",
                     "appointmentId": "ser-1-2"
                 }
@@ -290,7 +290,7 @@
                 "register": "books",
                 "schema": "Appointment",
                 "object": {
-                    "recurrenceIndex": "2",
+                    "recurrenceIndex": "02",
                     "startTime": "2026-06-15T09:00:00Z",
                     "appointmentId": "ser-1-2"
                 }
@@ -663,7 +663,7 @@
                 "register": "books",
                 "schema": "Appointment",
                 "object": {
-                    "recurrenceIndex": "2",
+                    "recurrenceIndex": "02",
                     "startTime": "2026-06-15T09:00:00Z",
                     "appointmentId": "ser-1-2"
                 }

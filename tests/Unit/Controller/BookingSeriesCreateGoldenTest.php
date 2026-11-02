@@ -127,7 +127,7 @@ final class BookingSeriesCreateGoldenTest extends TestCase {
 					default => [
 						'generated' => [
 							['recurrenceIndex' => 0, 'startTime' => '2026-06-01T09:00:00Z'],
-							['recurrenceIndex' => '2', 'startTime' => '2026-06-15T09:00:00Z'],
+							['recurrenceIndex' => '02', 'startTime' => '2026-06-15T09:00:00Z'],
 						],
 						'skipped' => [['recurrenceIndex' => 1, 'reason' => 'conflict']],
 					],
