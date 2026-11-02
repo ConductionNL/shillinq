@@ -36,6 +36,26 @@ const URL_LOCATIONS = '/apps/shillinq/api/v1/inventory/locations'
 const DEFAULT_INTERVAL_MS = 30_000
 const BACKOFF_STEPS_MS = [1_000, 2_000, 4_000, 8_000]
 
+// The pendingOp fields the upload sends, in wire order.
+const UPLOAD_FIELDS = [
+	'transactionId',
+	'type',
+	'sku',
+	'location',
+	'toLocation',
+	'quantity',
+	'physicalQuantity',
+	'reconcile',
+	'orderLineId',
+	'timestamp',
+]
+
+// ACK status of a settled op to the tally counter it raises.
+const SETTLED_COUNTERS = new Map([
+	['accepted', 'accepted'],
+	['duplicate', 'duplicates'],
+])
+
 /**
  * Build the absolute URL for the sync endpoint with optional query.
  *
@@ -94,65 +114,78 @@ export async function syncDownload(db, since) {
  */
 export async function syncUpload(db) {
 	const pending = await readUnsyncedOps(db)
+	const tally = { accepted: 0, duplicates: 0, rejected: [] }
 	if (pending.length === 0) {
-		return { accepted: 0, duplicates: 0, rejected: [] }
+		return tally
 	}
 
-	const operations = pending.map((op) => ({
-		transactionId: op.transactionId,
-		type: op.type,
-		sku: op.sku,
-		location: op.location,
-		toLocation: op.toLocation,
-		quantity: op.quantity,
-		physicalQuantity: op.physicalQuantity,
-		reconcile: op.reconcile,
-		orderLineId: op.orderLineId,
-		timestamp: op.timestamp,
-	}))
-
-	const response = await axios.post(generateUrl(URL_SYNC), { operations })
-	const data = response && response.data ? response.data : {}
-	const results = Array.isArray(data.results) ? data.results : []
-
-	const byTx = new Map()
-	results.forEach((r) => byTx.set(r.transactionId, r))
-
-	let accepted = 0
-	let duplicates = 0
-	const rejected = []
-
+	const data = await postOperations(pending)
+	const byTx = acksByTransaction(data)
 	for (const op of pending) {
 		const ack = byTx.get(op.transactionId)
-		if (!ack) {
-			continue
-		}
-		if (ack.status === 'accepted') {
-			await markOpSynced(
-				db,
-				op.id,
-				ack.serverAckedAt
-					|| data.serverTimestamp
-					|| new Date().toISOString(),
-			)
-			await deletePendingOp(db, op.id)
-			accepted += 1
-		} else if (ack.status === 'duplicate') {
-			await markOpSynced(
-				db,
-				op.id,
-				ack.serverAckedAt
-					|| data.serverTimestamp
-					|| new Date().toISOString(),
-			)
-			await deletePendingOp(db, op.id)
-			duplicates += 1
-		} else {
-			rejected.push({ ...op, ack })
+		if (ack) {
+			await settleAck(db, {
+				op,
+				ack,
+				tally,
+				serverTimestamp: data.serverTimestamp,
+			})
 		}
 	}
 
-	return { accepted, duplicates, rejected }
+	return tally
+}
+
+/**
+ * POST the upload batch and return the response body.
+ *
+ * @param {Array<object>} pending The unsynced pendingOps.
+ * @return {Promise<object>} The response data, or an empty object.
+ */
+async function postOperations(pending) {
+	const operations = pending.map((op) =>
+		Object.fromEntries(UPLOAD_FIELDS.map((field) => [field, op[field]])),
+	)
+	const response = await axios.post(generateUrl(URL_SYNC), { operations })
+	return response && response.data ? response.data : {}
+}
+
+/**
+ * Index the upload ACK rows by transactionId (a later row wins).
+ *
+ * @param {object} data The upload response data.
+ * @return {Map<string,object>} ACK row per transactionId.
+ */
+function acksByTransaction(data) {
+	const results = Array.isArray(data.results) ? data.results : []
+	const byTx = new Map()
+	results.forEach((r) => byTx.set(r.transactionId, r))
+	return byTx
+}
+
+/**
+ * Apply one ACK: an accepted or duplicate op is marked synced and removed
+ * from the queue, anything else is kept as rejected.
+ *
+ * @param {IDBDatabase} db Local DB.
+ * @param {{op:object,ack:object,tally:object,serverTimestamp:string|undefined}} step
+ *   The op, its ACK, the running counts and the batch's server time.
+ * @return {Promise<void>}
+ */
+async function settleAck(db, step) {
+	const { op, ack, tally } = step
+	const counter = SETTLED_COUNTERS.get(ack.status)
+	if (!counter) {
+		tally.rejected.push({ ...op, ack })
+		return
+	}
+	await markOpSynced(
+		db,
+		op.id,
+		ack.serverAckedAt || step.serverTimestamp || new Date().toISOString(),
+	)
+	await deletePendingOp(db, op.id)
+	tally[counter] += 1
 }
 
 /**

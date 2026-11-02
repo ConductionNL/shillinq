@@ -81,26 +81,76 @@ const FULL_OP = {
 	extra: 'not posted',
 }
 
-const op = (id, more = {}) => ({ id, transactionId: `tx-${id}`, type: 'receive', sku: 'S', quantity: id, ...more })
-const ok = (data) => ({ data })
+/**
+ * A pending receive op with the given id, plus overrides.
+ *
+ * @param {number} id The op id; the transactionId is tx-<id>.
+ * @param {object} more Fields to override.
+ * @return {object} The op.
+ */
+function op(id, more = {}) {
+	return {
+		id,
+		transactionId: `tx-${id}`,
+		type: 'receive',
+		sku: 'S',
+		quantity: id,
+		...more,
+	}
+}
+
+/**
+ * An axios response with the given body.
+ *
+ * @param {object|null} data The body.
+ * @return {object} The response.
+ */
+function ok(data) {
+	return { data }
+}
 
 const SCENARIOS = {
 	'nothing pending': { pending: [] },
 	'every field of an operation': {
 		pending: [FULL_OP],
-		response: ok({ results: [{ transactionId: 'tx-1', status: 'accepted', serverAckedAt: 'ack-1' }] }),
+		response: ok({
+			results: [
+				{
+					transactionId: 'tx-1',
+					status: 'accepted',
+					serverAckedAt: 'ack-1',
+				},
+			],
+		}),
 	},
 	'accepted with the ack time': {
 		pending: [op(1)],
-		response: ok({ serverTimestamp: 'srv', results: [{ transactionId: 'tx-1', status: 'accepted', serverAckedAt: 'ack-1' }] }),
+		response: ok({
+			serverTimestamp: 'srv',
+			results: [
+				{
+					transactionId: 'tx-1',
+					status: 'accepted',
+					serverAckedAt: 'ack-1',
+				},
+			],
+		}),
 	},
 	'accepted with the server time': {
 		pending: [op(1)],
-		response: ok({ serverTimestamp: 'srv', results: [{ transactionId: 'tx-1', status: 'accepted' }] }),
+		response: ok({
+			serverTimestamp: 'srv',
+			results: [{ transactionId: 'tx-1', status: 'accepted' }],
+		}),
 	},
 	'accepted with an empty ack time': {
 		pending: [op(1)],
-		response: ok({ serverTimestamp: 'srv', results: [{ transactionId: 'tx-1', status: 'accepted', serverAckedAt: '' }] }),
+		response: ok({
+			serverTimestamp: 'srv',
+			results: [
+				{ transactionId: 'tx-1', status: 'accepted', serverAckedAt: '' },
+			],
+		}),
 	},
 	'accepted with no time at all': {
 		pending: [op(1)],
@@ -108,19 +158,35 @@ const SCENARIOS = {
 	},
 	'duplicate with the ack time': {
 		pending: [op(1)],
-		response: ok({ serverTimestamp: 'srv', results: [{ transactionId: 'tx-1', status: 'duplicate', serverAckedAt: 'ack-1' }] }),
+		response: ok({
+			serverTimestamp: 'srv',
+			results: [
+				{
+					transactionId: 'tx-1',
+					status: 'duplicate',
+					serverAckedAt: 'ack-1',
+				},
+			],
+		}),
 	},
 	'duplicate with the server time': {
 		pending: [op(1)],
-		response: ok({ serverTimestamp: 'srv', results: [{ transactionId: 'tx-1', status: 'duplicate' }] }),
+		response: ok({
+			serverTimestamp: 'srv',
+			results: [{ transactionId: 'tx-1', status: 'duplicate' }],
+		}),
 	},
 	'duplicate with no time at all': {
 		pending: [op(1)],
 		response: ok({ results: [{ transactionId: 'tx-1', status: 'duplicate' }] }),
 	},
-	'rejected': {
+	rejected: {
 		pending: [op(1)],
-		response: ok({ results: [{ transactionId: 'tx-1', status: 'rejected', reason: 'permission' }] }),
+		response: ok({
+			results: [
+				{ transactionId: 'tx-1', status: 'rejected', reason: 'permission' },
+			],
+		}),
 	},
 	'unknown status': {
 		pending: [op(1)],
@@ -128,7 +194,9 @@ const SCENARIOS = {
 	},
 	'inherited property name as status': {
 		pending: [op(1)],
-		response: ok({ results: [{ transactionId: 'tx-1', status: 'constructor' }] }),
+		response: ok({
+			results: [{ transactionId: 'tx-1', status: 'constructor' }],
+		}),
 	},
 	'status in another case': {
 		pending: [op(1)],
@@ -140,11 +208,21 @@ const SCENARIOS = {
 	},
 	'no ack for the operation': {
 		pending: [op(1), op(2)],
-		response: ok({ results: [{ transactionId: 'tx-2', status: 'accepted' }, { transactionId: 'tx-9', status: 'accepted' }] }),
+		response: ok({
+			results: [
+				{ transactionId: 'tx-2', status: 'accepted' },
+				{ transactionId: 'tx-9', status: 'accepted' },
+			],
+		}),
 	},
 	'two acks for one transaction': {
 		pending: [op(1)],
-		response: ok({ results: [{ transactionId: 'tx-1', status: 'rejected' }, { transactionId: 'tx-1', status: 'duplicate' }] }),
+		response: ok({
+			results: [
+				{ transactionId: 'tx-1', status: 'rejected' },
+				{ transactionId: 'tx-1', status: 'duplicate' },
+			],
+		}),
 	},
 	'two operations with one transaction id': {
 		pending: [op(1), op(2, { transactionId: 'tx-1' })],
@@ -156,14 +234,25 @@ const SCENARIOS = {
 			serverTimestamp: 'srv',
 			results: [
 				{ transactionId: 'tx-6', status: 'duplicate' },
-				{ transactionId: 'tx-1', status: 'accepted', serverAckedAt: 'ack-1' },
+				{
+					transactionId: 'tx-1',
+					status: 'accepted',
+					serverAckedAt: 'ack-1',
+				},
 				{ transactionId: 'tx-2', status: 'rejected' },
-				{ transactionId: 'tx-3', status: 'duplicate', serverAckedAt: 'ack-3' },
+				{
+					transactionId: 'tx-3',
+					status: 'duplicate',
+					serverAckedAt: 'ack-3',
+				},
 				{ transactionId: 'tx-5', status: 'accepted' },
 			],
 		}),
 	},
-	'results not a list': { pending: [op(1)], response: ok({ results: { 'tx-1': 'accepted' } }) },
+	'results not a list': {
+		pending: [op(1)],
+		response: ok({ results: { 'tx-1': 'accepted' } }),
+	},
 	'no results': { pending: [op(1)], response: ok({ serverTimestamp: 'srv' }) },
 	'empty data': { pending: [op(1)], response: ok(null) },
 	'no response': { pending: [op(1)], response: null },
@@ -175,12 +264,23 @@ const SCENARIOS = {
 	'marking the second operation fails': {
 		pending: [op(1), op(2), op(3)],
 		fail: 'markOpSynced:2',
-		response: ok({ results: [{ transactionId: 'tx-1', status: 'accepted' }, { transactionId: 'tx-2', status: 'duplicate' }, { transactionId: 'tx-3', status: 'accepted' }] }),
+		response: ok({
+			results: [
+				{ transactionId: 'tx-1', status: 'accepted' },
+				{ transactionId: 'tx-2', status: 'duplicate' },
+				{ transactionId: 'tx-3', status: 'accepted' },
+			],
+		}),
 	},
 	'deleting the first operation fails': {
 		pending: [op(1), op(2)],
 		fail: 'deletePendingOp:1',
-		response: ok({ results: [{ transactionId: 'tx-1', status: 'accepted' }, { transactionId: 'tx-2', status: 'accepted' }] }),
+		response: ok({
+			results: [
+				{ transactionId: 'tx-1', status: 'accepted' },
+				{ transactionId: 'tx-2', status: 'accepted' },
+			],
+		}),
 	},
 }
 
@@ -230,7 +330,12 @@ async function run(scenario) {
 	} catch (e) {
 		thrown = e.message
 	}
-	return faithful({ calls: calls.log, returned, keys: returned ? Object.keys(returned) : null, thrown })
+	return faithful({
+		calls: calls.log,
+		returned,
+		keys: returned ? Object.keys(returned) : null,
+		thrown,
+	})
 }
 
 const golden = RECORD ? {} : JSON.parse(fs.readFileSync(GOLDEN, 'utf8'))
