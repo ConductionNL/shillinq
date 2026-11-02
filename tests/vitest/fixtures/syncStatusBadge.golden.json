@@ -1,0 +1,602 @@
+{
+	"idle / pending 0 / never / retry undefined": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Sync now",
+		"isStale": false
+	},
+	"idle / pending 0 / never / retry 1500": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Sync now",
+		"isStale": false
+	},
+	"idle / pending 0 / recent / retry undefined": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Last synced {at}|{\"at\":\"time(2026-06-01T11:59:00Z)\"}",
+		"isStale": false
+	},
+	"idle / pending 0 / recent / retry 1500": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Last synced {at}|{\"at\":\"time(2026-06-01T11:59:00Z)\"}",
+		"isStale": false
+	},
+	"idle / pending 0 / twoMinutes / retry undefined": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Last synced {at}|{\"at\":\"time(2026-06-01T11:58:00Z)\"}",
+		"isStale": false
+	},
+	"idle / pending 0 / twoMinutes / retry 1500": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Last synced {at}|{\"at\":\"time(2026-06-01T11:58:00Z)\"}",
+		"isStale": false
+	},
+	"idle / pending 0 / stale / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Last synced {at}|{\"at\":\"time(2026-06-01T11:57:59Z)\"}",
+		"isStale": true
+	},
+	"idle / pending 0 / stale / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Last synced {at}|{\"at\":\"time(2026-06-01T11:57:59Z)\"}",
+		"isStale": true
+	},
+	"idle / pending 0 / invalid / retry undefined": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Last synced {at}|{\"at\":\"time(not a date)\"}",
+		"isStale": false
+	},
+	"idle / pending 0 / invalid / retry 1500": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Last synced {at}|{\"at\":\"time(not a date)\"}",
+		"isStale": false
+	},
+	"idle / pending 3 / never / retry undefined": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": false
+	},
+	"idle / pending 3 / never / retry 1500": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": false
+	},
+	"idle / pending 3 / recent / retry undefined": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": false
+	},
+	"idle / pending 3 / recent / retry 1500": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": false
+	},
+	"idle / pending 3 / twoMinutes / retry undefined": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": false
+	},
+	"idle / pending 3 / twoMinutes / retry 1500": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": false
+	},
+	"idle / pending 3 / stale / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": true
+	},
+	"idle / pending 3 / stale / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": true
+	},
+	"idle / pending 3 / invalid / retry undefined": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": false
+	},
+	"idle / pending 3 / invalid / retry 1500": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": false
+	},
+	"syncing / pending 0 / never / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Syncing…",
+		"isStale": false
+	},
+	"syncing / pending 0 / never / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Syncing…",
+		"isStale": false
+	},
+	"syncing / pending 0 / recent / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Syncing…",
+		"isStale": false
+	},
+	"syncing / pending 0 / recent / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Syncing…",
+		"isStale": false
+	},
+	"syncing / pending 0 / twoMinutes / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Syncing…",
+		"isStale": false
+	},
+	"syncing / pending 0 / twoMinutes / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Syncing…",
+		"isStale": false
+	},
+	"syncing / pending 0 / stale / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Syncing…",
+		"isStale": true
+	},
+	"syncing / pending 0 / stale / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Syncing…",
+		"isStale": true
+	},
+	"syncing / pending 0 / invalid / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Syncing…",
+		"isStale": false
+	},
+	"syncing / pending 0 / invalid / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Syncing…",
+		"isStale": false
+	},
+	"syncing / pending 3 / never / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Syncing…",
+		"isStale": false
+	},
+	"syncing / pending 3 / never / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Syncing…",
+		"isStale": false
+	},
+	"syncing / pending 3 / recent / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Syncing…",
+		"isStale": false
+	},
+	"syncing / pending 3 / recent / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Syncing…",
+		"isStale": false
+	},
+	"syncing / pending 3 / twoMinutes / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Syncing…",
+		"isStale": false
+	},
+	"syncing / pending 3 / twoMinutes / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Syncing…",
+		"isStale": false
+	},
+	"syncing / pending 3 / stale / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Syncing…",
+		"isStale": true
+	},
+	"syncing / pending 3 / stale / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Syncing…",
+		"isStale": true
+	},
+	"syncing / pending 3 / invalid / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Syncing…",
+		"isStale": false
+	},
+	"syncing / pending 3 / invalid / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Syncing…",
+		"isStale": false
+	},
+	"pending / pending 0 / never / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Sync now",
+		"isStale": false
+	},
+	"pending / pending 0 / never / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Sync now",
+		"isStale": false
+	},
+	"pending / pending 0 / recent / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Last synced {at}|{\"at\":\"time(2026-06-01T11:59:00Z)\"}",
+		"isStale": false
+	},
+	"pending / pending 0 / recent / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Last synced {at}|{\"at\":\"time(2026-06-01T11:59:00Z)\"}",
+		"isStale": false
+	},
+	"pending / pending 0 / twoMinutes / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Last synced {at}|{\"at\":\"time(2026-06-01T11:58:00Z)\"}",
+		"isStale": false
+	},
+	"pending / pending 0 / twoMinutes / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Last synced {at}|{\"at\":\"time(2026-06-01T11:58:00Z)\"}",
+		"isStale": false
+	},
+	"pending / pending 0 / stale / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Last synced {at}|{\"at\":\"time(2026-06-01T11:57:59Z)\"}",
+		"isStale": true
+	},
+	"pending / pending 0 / stale / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Last synced {at}|{\"at\":\"time(2026-06-01T11:57:59Z)\"}",
+		"isStale": true
+	},
+	"pending / pending 0 / invalid / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Last synced {at}|{\"at\":\"time(not a date)\"}",
+		"isStale": false
+	},
+	"pending / pending 0 / invalid / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Last synced {at}|{\"at\":\"time(not a date)\"}",
+		"isStale": false
+	},
+	"pending / pending 3 / never / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": false
+	},
+	"pending / pending 3 / never / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": false
+	},
+	"pending / pending 3 / recent / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": false
+	},
+	"pending / pending 3 / recent / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": false
+	},
+	"pending / pending 3 / twoMinutes / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": false
+	},
+	"pending / pending 3 / twoMinutes / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": false
+	},
+	"pending / pending 3 / stale / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": true
+	},
+	"pending / pending 3 / stale / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": true
+	},
+	"pending / pending 3 / invalid / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": false
+	},
+	"pending / pending 3 / invalid / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": false
+	},
+	"failed / pending 0 / never / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Sync failed; retry {sec}s|{\"sec\":0}",
+		"isStale": false
+	},
+	"failed / pending 0 / never / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Sync failed; retry {sec}s|{\"sec\":2}",
+		"isStale": false
+	},
+	"failed / pending 0 / recent / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Sync failed; retry {sec}s|{\"sec\":0}",
+		"isStale": false
+	},
+	"failed / pending 0 / recent / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Sync failed; retry {sec}s|{\"sec\":2}",
+		"isStale": false
+	},
+	"failed / pending 0 / twoMinutes / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Sync failed; retry {sec}s|{\"sec\":0}",
+		"isStale": false
+	},
+	"failed / pending 0 / twoMinutes / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Sync failed; retry {sec}s|{\"sec\":2}",
+		"isStale": false
+	},
+	"failed / pending 0 / stale / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Sync failed; retry {sec}s|{\"sec\":0}",
+		"isStale": true
+	},
+	"failed / pending 0 / stale / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Sync failed; retry {sec}s|{\"sec\":2}",
+		"isStale": true
+	},
+	"failed / pending 0 / invalid / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Sync failed; retry {sec}s|{\"sec\":0}",
+		"isStale": false
+	},
+	"failed / pending 0 / invalid / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Sync failed; retry {sec}s|{\"sec\":2}",
+		"isStale": false
+	},
+	"failed / pending 3 / never / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Sync failed; retry {sec}s|{\"sec\":0}",
+		"isStale": false
+	},
+	"failed / pending 3 / never / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Sync failed; retry {sec}s|{\"sec\":2}",
+		"isStale": false
+	},
+	"failed / pending 3 / recent / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Sync failed; retry {sec}s|{\"sec\":0}",
+		"isStale": false
+	},
+	"failed / pending 3 / recent / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Sync failed; retry {sec}s|{\"sec\":2}",
+		"isStale": false
+	},
+	"failed / pending 3 / twoMinutes / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Sync failed; retry {sec}s|{\"sec\":0}",
+		"isStale": false
+	},
+	"failed / pending 3 / twoMinutes / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Sync failed; retry {sec}s|{\"sec\":2}",
+		"isStale": false
+	},
+	"failed / pending 3 / stale / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Sync failed; retry {sec}s|{\"sec\":0}",
+		"isStale": true
+	},
+	"failed / pending 3 / stale / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Sync failed; retry {sec}s|{\"sec\":2}",
+		"isStale": true
+	},
+	"failed / pending 3 / invalid / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Sync failed; retry {sec}s|{\"sec\":0}",
+		"isStale": false
+	},
+	"failed / pending 3 / invalid / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Sync failed; retry {sec}s|{\"sec\":2}",
+		"isStale": false
+	},
+	"offline / pending 0 / never / retry undefined": {
+		"badgeClass": "sync-status-badge__button--red",
+		"humanLabel": "shillinq:Offline",
+		"isStale": false
+	},
+	"offline / pending 0 / never / retry 1500": {
+		"badgeClass": "sync-status-badge__button--red",
+		"humanLabel": "shillinq:Offline",
+		"isStale": false
+	},
+	"offline / pending 0 / recent / retry undefined": {
+		"badgeClass": "sync-status-badge__button--red",
+		"humanLabel": "shillinq:Offline",
+		"isStale": false
+	},
+	"offline / pending 0 / recent / retry 1500": {
+		"badgeClass": "sync-status-badge__button--red",
+		"humanLabel": "shillinq:Offline",
+		"isStale": false
+	},
+	"offline / pending 0 / twoMinutes / retry undefined": {
+		"badgeClass": "sync-status-badge__button--red",
+		"humanLabel": "shillinq:Offline",
+		"isStale": false
+	},
+	"offline / pending 0 / twoMinutes / retry 1500": {
+		"badgeClass": "sync-status-badge__button--red",
+		"humanLabel": "shillinq:Offline",
+		"isStale": false
+	},
+	"offline / pending 0 / stale / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Offline",
+		"isStale": true
+	},
+	"offline / pending 0 / stale / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Offline",
+		"isStale": true
+	},
+	"offline / pending 0 / invalid / retry undefined": {
+		"badgeClass": "sync-status-badge__button--red",
+		"humanLabel": "shillinq:Offline",
+		"isStale": false
+	},
+	"offline / pending 0 / invalid / retry 1500": {
+		"badgeClass": "sync-status-badge__button--red",
+		"humanLabel": "shillinq:Offline",
+		"isStale": false
+	},
+	"offline / pending 3 / never / retry undefined": {
+		"badgeClass": "sync-status-badge__button--red",
+		"humanLabel": "shillinq:Offline",
+		"isStale": false
+	},
+	"offline / pending 3 / never / retry 1500": {
+		"badgeClass": "sync-status-badge__button--red",
+		"humanLabel": "shillinq:Offline",
+		"isStale": false
+	},
+	"offline / pending 3 / recent / retry undefined": {
+		"badgeClass": "sync-status-badge__button--red",
+		"humanLabel": "shillinq:Offline",
+		"isStale": false
+	},
+	"offline / pending 3 / recent / retry 1500": {
+		"badgeClass": "sync-status-badge__button--red",
+		"humanLabel": "shillinq:Offline",
+		"isStale": false
+	},
+	"offline / pending 3 / twoMinutes / retry undefined": {
+		"badgeClass": "sync-status-badge__button--red",
+		"humanLabel": "shillinq:Offline",
+		"isStale": false
+	},
+	"offline / pending 3 / twoMinutes / retry 1500": {
+		"badgeClass": "sync-status-badge__button--red",
+		"humanLabel": "shillinq:Offline",
+		"isStale": false
+	},
+	"offline / pending 3 / stale / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Offline",
+		"isStale": true
+	},
+	"offline / pending 3 / stale / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Offline",
+		"isStale": true
+	},
+	"offline / pending 3 / invalid / retry undefined": {
+		"badgeClass": "sync-status-badge__button--red",
+		"humanLabel": "shillinq:Offline",
+		"isStale": false
+	},
+	"offline / pending 3 / invalid / retry 1500": {
+		"badgeClass": "sync-status-badge__button--red",
+		"humanLabel": "shillinq:Offline",
+		"isStale": false
+	},
+	"undefined / pending 0 / never / retry undefined": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Sync now",
+		"isStale": false
+	},
+	"undefined / pending 0 / never / retry 1500": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Sync now",
+		"isStale": false
+	},
+	"undefined / pending 0 / recent / retry undefined": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Last synced {at}|{\"at\":\"time(2026-06-01T11:59:00Z)\"}",
+		"isStale": false
+	},
+	"undefined / pending 0 / recent / retry 1500": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Last synced {at}|{\"at\":\"time(2026-06-01T11:59:00Z)\"}",
+		"isStale": false
+	},
+	"undefined / pending 0 / twoMinutes / retry undefined": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Last synced {at}|{\"at\":\"time(2026-06-01T11:58:00Z)\"}",
+		"isStale": false
+	},
+	"undefined / pending 0 / twoMinutes / retry 1500": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Last synced {at}|{\"at\":\"time(2026-06-01T11:58:00Z)\"}",
+		"isStale": false
+	},
+	"undefined / pending 0 / stale / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Last synced {at}|{\"at\":\"time(2026-06-01T11:57:59Z)\"}",
+		"isStale": true
+	},
+	"undefined / pending 0 / stale / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Last synced {at}|{\"at\":\"time(2026-06-01T11:57:59Z)\"}",
+		"isStale": true
+	},
+	"undefined / pending 0 / invalid / retry undefined": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Last synced {at}|{\"at\":\"time(not a date)\"}",
+		"isStale": false
+	},
+	"undefined / pending 0 / invalid / retry 1500": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Last synced {at}|{\"at\":\"time(not a date)\"}",
+		"isStale": false
+	},
+	"undefined / pending 3 / never / retry undefined": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": false
+	},
+	"undefined / pending 3 / never / retry 1500": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": false
+	},
+	"undefined / pending 3 / recent / retry undefined": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": false
+	},
+	"undefined / pending 3 / recent / retry 1500": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": false
+	},
+	"undefined / pending 3 / twoMinutes / retry undefined": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": false
+	},
+	"undefined / pending 3 / twoMinutes / retry 1500": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": false
+	},
+	"undefined / pending 3 / stale / retry undefined": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": true
+	},
+	"undefined / pending 3 / stale / retry 1500": {
+		"badgeClass": "sync-status-badge__button--yellow",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": true
+	},
+	"undefined / pending 3 / invalid / retry undefined": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": false
+	},
+	"undefined / pending 3 / invalid / retry 1500": {
+		"badgeClass": "sync-status-badge__button--green",
+		"humanLabel": "shillinq:Pending ({n})|{\"n\":3}",
+		"isStale": false
+	}
+}
