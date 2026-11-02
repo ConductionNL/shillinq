@@ -41,6 +41,8 @@ use Psr\Log\NullLogger;
 /**
  * Forged-parameter cases for the recurring series create.
  *
+ * @covers \OCA\Shillinq\Controller\BookingDepthController
+ *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 final class BookingSeriesForgedParametersTest extends TestCase {

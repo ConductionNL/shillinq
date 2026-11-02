@@ -46,6 +46,9 @@ use Psr\Log\NullLogger;
 /**
  * Forged-parameter cases for the calendar booking endpoints.
  *
+ * @covers \OCA\Shillinq\Controller\CalendarController
+ * @uses   \OCA\Shillinq\Service\Booking\CalendarRows
+ *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 final class CalendarForgedParametersTest extends TestCase {
