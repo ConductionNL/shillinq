@@ -191,15 +191,7 @@ class BbvAdministrationSeedService {
 			$existing = $objectService
 				->setRegister($registerSlug)
 				->setSchema('BbvAccountMapping')
-				->findAll(
-					[
-						'filters' => [
-							'administrationId' => $administrationId,
-							'accountNumber' => $accountNumber,
-						],
-						'limit' => 1,
-					]
-				);
+				->findAll(['filters' => ['administrationId' => $administrationId, 'accountNumber' => $accountNumber], 'limit' => 1]);
 			if (empty($existing) === false) {
 				$counts['skipped']++;
 				continue;
