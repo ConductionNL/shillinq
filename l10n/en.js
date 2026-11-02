@@ -2132,6 +2132,7 @@ OC.L10N.register(
         "Quantity Reserved": "Quantity Reserved",
         "Quantity accuracy": "Quantity accuracy",
         "Quantity exception": "Quantity exception",
+        "Delivery date exception": "Delivery date exception",
         "Quantity received": "Quantity received",
         "Quantity to pick": "Quantity to pick",
         "Quantity to transfer": "Quantity to transfer",

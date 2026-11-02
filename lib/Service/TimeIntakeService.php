@@ -96,6 +96,24 @@ class TimeIntakeService {
 	private const ALLOWED_BILLING_MODEL = 't_and_m';
 
 	/**
+	 * The names of the fields parseAndAssertStructure() returns, in its order.
+	 *
+	 * @var array<int,string>
+	 */
+	private const BATCH_FIELDS = [
+		'batchId',
+		'organisationRef',
+		'billingModel',
+		'currency',
+		'periodStart',
+		'periodEnd',
+		'requestRateCardId',
+		'projectRef',
+		'notes',
+		'entries',
+	];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
@@ -130,18 +148,7 @@ class TimeIntakeService {
 	 * @spec openspec/specs/time-expense-invoice-intake/spec.md
 	 */
 	public function ingest(string $administrationId, string $personId, array $body): array {
-		[
-			$batchId,
-			$organisationRef,
-			$billingModel,
-			$currency,
-			$periodStart,
-			$periodEnd,
-			$requestRateCardId,
-			$projectRef,
-			$notes,
-			$entries,
-		] = $this->parseAndAssertStructure(body: $body);
+		$batch = $this->intakeBatch(body: $body, scope: ['administrationId' => $administrationId, 'personId' => $personId]);
 
 		// The expenses[] array is accepted-and-ignored for this slice (D3,
 		// design.md) — a time-only invoice is drafted; expense
@@ -150,185 +157,362 @@ class TimeIntakeService {
 		// persisted anywhere: nothing downstream reads it.
 		unset($body['expenses']);
 
-		$payloadHash = $this->computePayloadHash(
-			organisationRef: $organisationRef,
-			billingModel: $billingModel,
-			currency: $currency,
-			periodStart: $periodStart,
-			periodEnd: $periodEnd,
-			entries: $entries
+		$existingBatch = $this->findBatch(administrationId: $administrationId, batchId: $batch['batchId']);
+		if ($existingBatch !== null) {
+			return $this->replayOrConflict(batch: $batch, existingBatch: $existingBatch);
+		}
+
+		$this->assertBillable(batch: $batch);
+		$this->assertUniqueEntries(batch: $batch);
+		$reusableRows = $this->sameBatchRows(batch: $batch);
+		$batch['rates']      = $this->resolveEntryRates(batch: $batch);
+		$batch['rateCardId'] = $this->batchRateCardId(batch: $batch);
+		$timeEntryIds        = $this->materialiseEntries(batch: $batch, reusableRows: $reusableRows);
+
+		$invoice   = $this->draftBatchInvoice(batch: $batch, timeEntryIds: $timeEntryIds);
+		$invoiceId = (string)($invoice['id'] ?? ($invoice['@self']['id'] ?? ''));
+		$this->recordBatch(batch: $batch, invoiceId: $invoiceId);
+
+		return [
+			'invoiceId' => $invoiceId,
+			'invoiceNumber' => (string)($invoice['invoiceNumber'] ?? ''),
+			'status' => 'draft',
+			'lines' => count($batch['entries']),
+			'duplicated' => false,
+		];
+
+	}//end ingest()
+
+	/**
+	 * The validated batch as named fields, with the caller's scope and the
+	 * payload hash.
+	 *
+	 * @param array<string,mixed> $body  Decoded JSON request body.
+	 * @param array<string,string> $scope administrationId and personId.
+	 *
+	 * @throws InvalidArgumentException On structural/malformed input.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function intakeBatch(array $body, array $scope): array {
+		$batch = array_merge($scope, array_combine(self::BATCH_FIELDS, $this->parseAndAssertStructure(body: $body)));
+		$batch['payloadHash'] = $this->computePayloadHash(
+			organisationRef: $batch['organisationRef'],
+			billingModel: $batch['billingModel'],
+			currency: $batch['currency'],
+			periodStart: $batch['periodStart'],
+			periodEnd: $batch['periodEnd'],
+			entries: $batch['entries']
 		);
 
-		$existingBatch = $this->findBatch(administrationId: $administrationId, batchId: $batchId);
-		if ($existingBatch !== null) {
-			if ((string)($existingBatch['payloadHash'] ?? '') === $payloadHash) {
-				return $this->replayResponse(batch: $existingBatch);
-			}
+		return $batch;
 
-			throw new RuntimeException(sprintf('Conflict: batchId "%s" was already ingested with a different payload.', $batchId));
+	}//end intakeBatch()
+
+	/**
+	 * Answer a batchId that was already ingested: the stored response for the
+	 * same payload, a conflict for a different one.
+	 *
+	 * @param array<string,mixed> $batch         The incoming batch.
+	 * @param array<string,mixed> $existingBatch The stored TimeIntakeBatch.
+	 *
+	 * @throws RuntimeException "Conflict: ..." when the payload differs.
+	 *
+	 * @return array{invoiceId:string,invoiceNumber:string,status:string,lines:int,duplicated:bool}
+	 */
+	private function replayOrConflict(array $batch, array $existingBatch): array {
+		if ((string)($existingBatch['payloadHash'] ?? '') === $batch['payloadHash']) {
+			return $this->replayResponse(batch: $existingBatch);
 		}
 
-		if ($billingModel !== self::ALLOWED_BILLING_MODEL) {
+		throw new RuntimeException(sprintf('Conflict: batchId "%s" was already ingested with a different payload.', $batch['batchId']));
+
+	}//end replayOrConflict()
+
+	/**
+	 * Refuse a batch that is not time and materials, or whose organisation is
+	 * not a customer of the administration.
+	 *
+	 * @param array<string,mixed> $batch The batch.
+	 *
+	 * @throws RuntimeException On either refusal.
+	 *
+	 * @return void
+	 */
+	private function assertBillable(array $batch): void {
+		if ($batch['billingModel'] !== self::ALLOWED_BILLING_MODEL) {
 			throw new RuntimeException(
-				sprintf('billingModel must be "%s" (got "%s").', self::ALLOWED_BILLING_MODEL, $billingModel)
+				sprintf('billingModel must be "%s" (got "%s").', self::ALLOWED_BILLING_MODEL, $batch['billingModel'])
 			);
 		}
 
-		if ($this->resolveCustomer(organisationRef: $organisationRef, administrationId: $administrationId) === null) {
+		if ($this->resolveCustomer(organisationRef: $batch['organisationRef'], administrationId: $batch['administrationId']) === null) {
 			throw new RuntimeException(
-				sprintf('organisationRef "%s" does not resolve to a known customer for this administration.', $organisationRef)
+				sprintf('organisationRef "%s" does not resolve to a known customer for this administration.', $batch['organisationRef'])
 			);
 		}
 
-		// Cross-batch externalId dedup (Risk 1 / D2): look up every entry's
-		// existing UrenRegistratie row (if any) up front, before writing
-		// anything. A row belonging to a DIFFERENT batchId is a genuine
-		// cross-batch double-bill attempt (422). A row belonging to THIS
-		// SAME batchId means a prior attempt at this exact batchId partially
-		// materialised before failing (Risk 3) — it is reused, not
-		// duplicated, in the materialisation pass below.
-		$existingRowsByExternalId = [];
-		foreach ($entries as $entry) {
-			$existingRow = $this->findHoursRegistrationByExternalId(administrationId: $administrationId, externalId: $entry['externalId']);
-			if ($existingRow !== null) {
-				$rowBatchId = (string)($existingRow['sourceBatchId'] ?? '');
-				if ($rowBatchId !== $batchId) {
-					throw new RuntimeException(
-						sprintf('externalId "%s" was already billed under a different batch.', $entry['externalId'])
-					);
-				}
+	}//end assertBillable()
 
-				$existingRowsByExternalId[$entry['externalId']] = $existingRow;
+	/**
+	 * Cross-batch externalId dedup (Risk 1 / D2): look up every entry's
+	 * existing UrenRegistratie row (if any) up front, before writing
+	 * anything. A row belonging to a DIFFERENT batchId is a genuine
+	 * cross-batch double-bill attempt (422). A row belonging to THIS
+	 * SAME batchId means a prior attempt at this exact batchId partially
+	 * materialised before failing (Risk 3) — it is reused, not
+	 * duplicated, in the materialisation pass.
+	 *
+	 * @param array<string,mixed> $batch The batch.
+	 *
+	 * @throws RuntimeException When an entry was billed under another batch.
+	 *
+	 * @return array<string,array<string,mixed>> externalId => the row to reuse.
+	 */
+	private function sameBatchRows(array $batch): array {
+		$rows = [];
+		foreach ($batch['entries'] as $entry) {
+			$existingRow = $this->findHoursRegistrationByExternalId(administrationId: $batch['administrationId'], externalId: $entry['externalId']);
+			if ($existingRow === null) {
+				continue;
 			}
-		}//end foreach
 
-		// Resolve every entry's rate + validate minutes BEFORE any write
-		// (hard-fail the whole batch — no partial materialisation).
-		$resolvedRates = [];
-		foreach ($entries as $entry) {
+			if ((string)($existingRow['sourceBatchId'] ?? '') !== $batch['batchId']) {
+				throw new RuntimeException(
+					sprintf('externalId "%s" was already billed under a different batch.', $entry['externalId'])
+				);
+			}
+
+			$rows[$entry['externalId']] = $existingRow;
+		}
+
+		return $rows;
+
+	}//end sameBatchRows()
+
+	/**
+	 * Refuse a batch that carries the same externalId twice: both entries
+	 * would be written as hours rows and billed.
+	 *
+	 * @param array<string,mixed> $batch The batch.
+	 *
+	 * @throws RuntimeException Naming the repeated externalId.
+	 *
+	 * @return void
+	 */
+	private function assertUniqueEntries(array $batch): void {
+		$seen = [];
+		foreach ($batch['entries'] as $entry) {
+			if (isset($seen[$entry['externalId']]) === true) {
+				throw new RuntimeException(
+					sprintf('externalId "%s" appears more than once in this batch.', $entry['externalId'])
+				);
+			}
+
+			$seen[$entry['externalId']] = true;
+		}
+
+	}//end assertUniqueEntries()
+
+	/**
+	 * Resolve every entry's rate + validate minutes BEFORE any write
+	 * (hard-fail the whole batch — no partial materialisation).
+	 *
+	 * @param array<string,mixed> $batch The batch.
+	 *
+	 * @throws RuntimeException On non-positive minutes or an unresolvable rate.
+	 *
+	 * @return array<string,float> externalId => resolved rate.
+	 */
+	private function resolveEntryRates(array $batch): array {
+		$rates = [];
+		foreach ($batch['entries'] as $entry) {
 			$minutes = $entry['minutes'];
 			if (is_numeric($minutes) === false || (float)$minutes <= 0.0) {
 				throw new RuntimeException(sprintf('entry "%s" has a non-positive minutes value.', $entry['externalId']));
 			}
 
-			$rate = $this->resolveEntryRate(entry: $entry, administrationId: $administrationId);
+			$rate = $this->resolveEntryRate(entry: $entry, administrationId: $batch['administrationId']);
 			if ($rate === null) {
 				throw new RuntimeException(
 					sprintf('entry "%s" has an unresolvable rateRef and no inline hourlyRate.', $entry['externalId'])
 				);
 			}
 
-			$resolvedRates[$entry['externalId']] = $rate;
-		}//end foreach
+			$rates[$entry['externalId']] = $rate;
+		}
 
+		return $rates;
+
+	}//end resolveEntryRates()
+
+	/**
+	 * The batch's rate card id.
+	 *
+	 * @param array<string,mixed> $batch The batch, with its resolved rates.
+	 *
+	 * @throws RuntimeException When no rate card resolves.
+	 *
+	 * @return string
+	 */
+	private function batchRateCardId(array $batch): string {
 		$rateCardId = $this->resolveBatchRateCardId(
-			administrationId: $administrationId,
-			requestRateCardId: $requestRateCardId,
-			entries: $entries,
-			resolvedRates: $resolvedRates,
-			periodStart: $periodStart,
-			periodEnd: $periodEnd
+			administrationId: $batch['administrationId'],
+			requestRateCardId: $batch['requestRateCardId'],
+			entries: $batch['entries'],
+			resolvedRates: $batch['rates'],
+			periodStart: $batch['periodStart'],
+			periodEnd: $batch['periodEnd']
 		);
 		if ($rateCardId === null) {
 			throw new RuntimeException('rateCardId could not be resolved for this batch.');
 		}
 
-		// Materialise (or reuse, per the same-batch-retry case above).
+		return $rateCardId;
+
+	}//end batchRateCardId()
+
+	/**
+	 * Materialise (or reuse, per the same-batch-retry case) one UrenRegistratie
+	 * row per entry.
+	 *
+	 * @param array<string,mixed>               $batch        The batch, with its resolved rates.
+	 * @param array<string,array<string,mixed>> $reusableRows externalId => same-batch row.
+	 *
+	 * @throws RuntimeException When a saved row has no id.
+	 *
+	 * @return array<int,string> The time entry ids, in entry order.
+	 */
+	private function materialiseEntries(array $batch, array $reusableRows): array {
 		$timeEntryIds = [];
-		foreach ($entries as $entry) {
-			$reused = ($existingRowsByExternalId[$entry['externalId']] ?? null);
-			if ($reused !== null) {
-				$reusedId = (string)($reused['id'] ?? ($reused['@self']['id'] ?? ''));
-				if ($reusedId !== '') {
-					$timeEntryIds[] = $reusedId;
-					continue;
-				}
+		foreach ($batch['entries'] as $entry) {
+			$reusedId = $this->reusableRowId(row: ($reusableRows[$entry['externalId']] ?? null));
+			if ($reusedId !== '') {
+				$timeEntryIds[] = $reusedId;
+				continue;
 			}
 
-			$hours = round(((float)$entry['minutes']) / 60, 4);
-			$description = $entry['description'];
-			if ($description === '') {
-				$description = sprintf('Imported from pipelinq (%s)', $entry['externalId']);
-			}
-
-			if ($entry['projectRef'] !== null) {
-				$rowProjectId = $entry['projectRef'];
-			} else {
-				$rowProjectId = $projectRef;
-			}
-
-			$row = [
-				'administrationId' => $administrationId,
-				'personId' => $personId,
-				'date' => $entry['date'],
-				'hours' => $hours,
-				'description' => $description,
-				'projectId' => $rowProjectId,
-				'externalId' => $entry['externalId'],
-				'sourceApp' => 'pipelinq',
-				'sourceBatchId' => $batchId,
-				'recognisedRate' => $resolvedRates[$entry['externalId']],
-			];
-
-			$saved = $this->saveObject(schema: 'UrenRegistratie', data: $row);
-			$id = (string)($saved['id'] ?? ($saved['@self']['id'] ?? ''));
+			$saved = $this->saveObject(schema: 'UrenRegistratie', data: $this->hoursRow(batch: $batch, entry: $entry));
+			$id    = (string)($saved['id'] ?? ($saved['@self']['id'] ?? ''));
 			if ($id === '') {
 				throw new RuntimeException('Failed to materialise a UrenRegistratie row.');
 			}
 
 			$timeEntryIds[] = $id;
-		}//end foreach
+		}
 
+		return $timeEntryIds;
+
+	}//end materialiseEntries()
+
+	/**
+	 * The id of a same-batch row to reuse, or '' when there is none.
+	 *
+	 * @param array<string,mixed>|null $row The row found for the entry.
+	 *
+	 * @return string
+	 */
+	private function reusableRowId(?array $row): string {
+		if ($row === null) {
+			return '';
+		}
+
+		return (string)($row['id'] ?? ($row['@self']['id'] ?? ''));
+
+	}//end reusableRowId()
+
+	/**
+	 * The UrenRegistratie row for one entry.
+	 *
+	 * @param array<string,mixed> $batch The batch, with its resolved rates.
+	 * @param array<string,mixed> $entry The normalised entry.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function hoursRow(array $batch, array $entry): array {
+		$description = $entry['description'];
+		if ($description === '') {
+			$description = sprintf('Imported from pipelinq (%s)', $entry['externalId']);
+		}
+
+		return [
+			'administrationId' => $batch['administrationId'],
+			'personId' => $batch['personId'],
+			'date' => $entry['date'],
+			'hours' => round(((float)$entry['minutes']) / 60, 4),
+			'description' => $description,
+			'projectId' => ($entry['projectRef'] ?? $batch['projectRef']),
+			'externalId' => $entry['externalId'],
+			'sourceApp' => 'pipelinq',
+			'sourceBatchId' => $batch['batchId'],
+			'recognisedRate' => $batch['rates'][$entry['externalId']],
+		];
+
+	}//end hoursRow()
+
+	/**
+	 * Draft the invoice for the materialised entries through the existing,
+	 * unmodified draftInvoice() machinery.
+	 *
+	 * @param array<string,mixed> $batch        The batch, with its rate card id.
+	 * @param array<int,string>   $timeEntryIds The time entry ids.
+	 *
+	 * @throws RuntimeException When drafting fails.
+	 *
+	 * @return array<string,mixed> The drafted invoice.
+	 */
+	private function draftBatchInvoice(array $batch, array $timeEntryIds): array {
 		$genRequest = new InvoiceGenerationRequest(
-			administrationId: $administrationId,
+			administrationId: $batch['administrationId'],
 			billingModel: self::ALLOWED_BILLING_MODEL,
-			customerId: $organisationRef,
-			fromDate: $periodStart,
-			toDate: $periodEnd,
+			customerId: $batch['organisationRef'],
+			fromDate: $batch['periodStart'],
+			toDate: $batch['periodEnd'],
 			timeEntryIds: $timeEntryIds,
 			expenseIds: [],
-			rateCardId: $rateCardId,
-			projectId: $projectRef,
-			notes: $notes,
+			rateCardId: $batch['rateCardId'],
+			projectId: $batch['projectRef'],
+			notes: $batch['notes'],
 		);
 
 		try {
-			$invoice = $this->invoices->draftInvoice(request: $genRequest);
+			return $this->invoices->draftInvoice(request: $genRequest);
 		} catch (\Throwable $e) {
 			$this->logger->error('TimeIntakeService.ingest: draftInvoice failed: ' . $e->getMessage());
 			throw new RuntimeException('Invoice drafting failed: ' . $e->getMessage());
 		}
 
-		$invoiceId = (string)($invoice['id'] ?? ($invoice['@self']['id'] ?? ''));
+	}//end draftBatchInvoice()
 
+	/**
+	 * Store the TimeIntakeBatch ledger row that makes a replay idempotent.
+	 *
+	 * @param array<string,mixed> $batch     The batch.
+	 * @param string              $invoiceId The drafted invoice id.
+	 *
+	 * @return void
+	 */
+	private function recordBatch(array $batch, string $invoiceId): void {
 		$this->saveObject(
 			schema: 'TimeIntakeBatch',
 			data: [
-				'administrationId' => $administrationId,
-				'batchId' => $batchId,
+				'administrationId' => $batch['administrationId'],
+				'batchId' => $batch['batchId'],
 				'sourceApp' => 'pipelinq',
-				'organisationRef' => $organisationRef,
-				'projectId' => $projectRef,
-				'currency' => $currency,
-				'periodStart' => $periodStart,
-				'periodEnd' => $periodEnd,
-				'entryCount' => count($entries),
+				'organisationRef' => $batch['organisationRef'],
+				'projectId' => $batch['projectRef'],
+				'currency' => $batch['currency'],
+				'periodStart' => $batch['periodStart'],
+				'periodEnd' => $batch['periodEnd'],
+				'entryCount' => count($batch['entries']),
 				'status' => 'invoiced',
 				'invoiceId' => $invoiceId,
 				'receivedAt' => date('c'),
-				'payloadHash' => $payloadHash,
+				'payloadHash' => $batch['payloadHash'],
 			]
 		);
 
-		return [
-			'invoiceId' => $invoiceId,
-			'invoiceNumber' => (string)($invoice['invoiceNumber'] ?? ''),
-			'status' => 'draft',
-			'lines' => count($entries),
-			'duplicated' => false,
-		];
-
-	}//end ingest()
+	}//end recordBatch()
 
 	/**
 	 * Structurally validate + normalise the request body (HTTP 400 on failure).

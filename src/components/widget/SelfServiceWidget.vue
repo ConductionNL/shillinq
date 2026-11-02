@@ -562,6 +562,13 @@ export default {
 					: this.t('Notes must be at most 500 characters')
 		},
 
+		/**
+		 * Book the selected slot and show the outcome.
+		 *
+		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/bookings-self-service-widget/spec.md
+		 */
 		async submit() {
 			if (!this.selectedSlot) {
 				return
@@ -569,72 +576,178 @@ export default {
 			this.submitting = true
 			this.submitError = ''
 			try {
-				const response = await fetch(
-					this.buildUrl('/api/widget/appointments'),
-					{
-						method: 'POST',
-						headers: this.authHeaders(),
-						body: JSON.stringify({
-							serviceId: this.selectedServiceId,
-							resourceId: this.resourceId,
-							startTime: this.selectedSlot.startTime,
-							endTime: this.selectedSlot.endTime,
-							customerName: this.customerName,
-							email: this.email,
-							phone: this.phone || null,
-							notes: this.notes || null,
-						}),
-					},
-				)
-				if (response.status === 409) {
-					this.submitError = this.t(
-						'This slot was just booked. Please select another time.',
-					)
-					await this.loadSlots()
-					this.step = 'datetime'
-					return
-				}
-				if (response.status === 401 || response.status === 403) {
-					this.submitError = this.t(
-						'Configuration error. Please contact the website owner.',
-					)
-					return
-				}
-				if (response.status === 404) {
-					this.submitError = this.t(
-						'This service is no longer available. Please refresh the page.',
-					)
-					return
-				}
-				if (response.status >= 500) {
-					this.submitError = this.t(
-						'Something went wrong. Our team has been notified. Please try again later.',
-					)
-					return
-				}
-				if (!response.ok) {
-					const payload = await response.json().catch(() => ({}))
-					this.submitError =
-						payload && payload.message
-							? payload.message
-							: this.t(
-									'Network error. Please check your connection and try again.',
-								)
-					return
-				}
-				const payload = await response.json()
-				this.confirmationMessage =
-					payload && payload.confirmationMessage
-						? payload.confirmationMessage
-						: this.t('Booking confirmed')
-				this.step = 'confirmed'
+				await this.handleSubmitResponse(await this.postAppointment())
 			} catch (e) {
-				this.submitError = this.t(
-					'Network error. Please check your connection and try again.',
-				)
+				this.submitError = this.networkError()
 			} finally {
 				this.submitting = false
 			}
+		},
+
+		/**
+		 * POST the booking to the widget API.
+		 *
+		 * @return {Promise<Response>} The API response.
+		 *
+		 * @spec openspec/specs/bookings-self-service-widget/spec.md
+		 */
+		postAppointment() {
+			return fetch(this.buildUrl('/api/widget/appointments'), {
+				method: 'POST',
+				headers: this.authHeaders(),
+				body: JSON.stringify(this.appointmentBody()),
+			})
+		},
+
+		/**
+		 * The booking request body.
+		 *
+		 * @return {object} The appointment to create.
+		 *
+		 * @spec openspec/specs/bookings-self-service-widget/spec.md
+		 */
+		appointmentBody() {
+			return {
+				serviceId: this.selectedServiceId,
+				resourceId: this.resourceId,
+				startTime: this.selectedSlot.startTime,
+				endTime: this.selectedSlot.endTime,
+				customerName: this.customerName,
+				email: this.email,
+				phone: this.phone || null,
+				notes: this.notes || null,
+			}
+		},
+
+		/**
+		 * Act on the booking answer: a taken slot sends the customer back to the
+		 * times, a refused one shows why, an accepted one confirms.
+		 *
+		 * @param {Response} response The API response.
+		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/bookings-self-service-widget/spec.md
+		 */
+		async handleSubmitResponse(response) {
+			if (response.status === 409) {
+				await this.slotTaken()
+				return
+			}
+			const failure = await this.submitFailure(response)
+			if (failure !== null) {
+				this.submitError = failure
+				return
+			}
+			await this.confirmBooking(response)
+		},
+
+		/**
+		 * The error to show for a refused booking, or null when it was accepted.
+		 *
+		 * @param {Response} response The API response.
+		 * @return {Promise<string|null>} The error text.
+		 *
+		 * @spec openspec/specs/bookings-self-service-widget/spec.md
+		 */
+		async submitFailure(response) {
+			const statusError = this.submitStatusError(response.status)
+			if (statusError !== null || response.ok) {
+				return statusError
+			}
+			return this.rejectionMessage(response)
+		},
+
+		/**
+		 * Tell the customer the slot is gone, reload the times and go back to them.
+		 *
+		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/bookings-self-service-widget/spec.md
+		 */
+		async slotTaken() {
+			this.submitError = this.t(
+				'This slot was just booked. Please select another time.',
+			)
+			await this.loadSlots()
+			this.step = 'datetime'
+		},
+
+		/**
+		 * The error for a status that refuses the booking outright.
+		 *
+		 * @param {number} status The HTTP status.
+		 * @return {string|null} The error text, or null.
+		 *
+		 * @spec openspec/specs/bookings-self-service-widget/spec.md
+		 */
+		submitStatusError(status) {
+			if (status === 401 || status === 403) {
+				return this.t(
+					'Configuration error. Please contact the website owner.',
+				)
+			}
+			if (status === 404) {
+				return this.t(
+					'This service is no longer available. Please refresh the page.',
+				)
+			}
+			return status >= 500 ? this.serverError() : null
+		},
+
+		/**
+		 * The error for a server failure.
+		 *
+		 * @return {string} The error text.
+		 *
+		 * @spec openspec/specs/bookings-self-service-widget/spec.md
+		 */
+		serverError() {
+			return this.t(
+				'Something went wrong. Our team has been notified. Please try again later.',
+			)
+		},
+
+		/**
+		 * The server's reason for a refusal, or the network error.
+		 *
+		 * @param {Response} response The API response.
+		 * @return {Promise<string>} The error text.
+		 *
+		 * @spec openspec/specs/bookings-self-service-widget/spec.md
+		 */
+		async rejectionMessage(response) {
+			const payload = await response.json().catch(() => ({}))
+			return payload && payload.message ? payload.message : this.networkError()
+		},
+
+		/**
+		 * The error for a failed request.
+		 *
+		 * @return {string} The error text.
+		 *
+		 * @spec openspec/specs/bookings-self-service-widget/spec.md
+		 */
+		networkError() {
+			return this.t(
+				'Network error. Please check your connection and try again.',
+			)
+		},
+
+		/**
+		 * Show the server's confirmation and finish.
+		 *
+		 * @param {Response} response The API response.
+		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/bookings-self-service-widget/spec.md
+		 */
+		async confirmBooking(response) {
+			const payload = await response.json()
+			this.confirmationMessage =
+				payload && payload.confirmationMessage
+					? payload.confirmationMessage
+					: this.t('Booking confirmed')
+			this.step = 'confirmed'
 		},
 	},
 }

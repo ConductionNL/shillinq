@@ -1,0 +1,122 @@
+{
+	"time and materials": {
+		"request": "{\"billingModel\":\"t_and_m\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[\"t1\",\"t2\"],\"expenseIds\":[\"e1\"],\"meterReadingIds\":[]}",
+		"inputsUnchanged": true,
+		"shared": []
+	},
+	"usage keeps the readings": {
+		"request": "{\"billingModel\":\"usage\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[\"t1\",\"t2\"],\"expenseIds\":[\"e1\"],\"meterReadingIds\":[\"m1\"]}",
+		"inputsUnchanged": true,
+		"shared": []
+	},
+	"usage without readings": {
+		"request": "{\"billingModel\":\"usage\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[\"t1\"],\"expenseIds\":[],\"meterReadingIds\":[]}",
+		"inputsUnchanged": true,
+		"shared": []
+	},
+	"nothing chosen": {
+		"request": "{\"billingModel\":\"t_and_m\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[],\"expenseIds\":[],\"meterReadingIds\":[]}",
+		"inputsUnchanged": true,
+		"shared": []
+	},
+	"null id lists": {
+		"request": "{\"billingModel\":\"t_and_m\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[],\"expenseIds\":[],\"meterReadingIds\":[]}",
+		"inputsUnchanged": true,
+		"shared": []
+	},
+	"empty source": {
+		"request": "{\"billingModel\":\"(undefined)\",\"customerId\":\"(undefined)\",\"fromDate\":\"(undefined)\",\"toDate\":\"(undefined)\",\"timeEntryIds\":[],\"expenseIds\":[],\"meterReadingIds\":[]}",
+		"inputsUnchanged": true,
+		"shared": []
+	},
+	"every reference": {
+		"request": "{\"billingModel\":\"t_and_m\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[\"t1\",\"t2\"],\"expenseIds\":[\"e1\"],\"meterReadingIds\":[],\"projectId\":\"p-1\",\"rateCardId\":\"rc-1\",\"retainerScheduleId\":\"rs-1\",\"milestoneId\":\"ms-1\"}",
+		"inputsUnchanged": true,
+		"shared": []
+	},
+	"references in another order": {
+		"request": "{\"billingModel\":\"t_and_m\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[\"t1\",\"t2\"],\"expenseIds\":[\"e1\"],\"meterReadingIds\":[],\"projectId\":\"p-1\",\"rateCardId\":\"rc-1\",\"milestoneId\":\"ms-1\"}",
+		"inputsUnchanged": true,
+		"shared": []
+	},
+	"empty and zero references": {
+		"request": "{\"billingModel\":\"t_and_m\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[\"t1\",\"t2\"],\"expenseIds\":[\"e1\"],\"meterReadingIds\":[]}",
+		"inputsUnchanged": true,
+		"shared": []
+	},
+	"a numeric reference": {
+		"request": "{\"billingModel\":\"t_and_m\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[\"t1\",\"t2\"],\"expenseIds\":[\"e1\"],\"meterReadingIds\":[],\"projectId\":7}",
+		"inputsUnchanged": true,
+		"shared": []
+	},
+	"an unknown source field": {
+		"request": "{\"billingModel\":\"t_and_m\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[\"t1\",\"t2\"],\"expenseIds\":[\"e1\"],\"meterReadingIds\":[]}",
+		"inputsUnchanged": true,
+		"shared": []
+	},
+	"fixed fee as text with a comma": {
+		"request": "{\"billingModel\":\"fixed_fee\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[\"t1\",\"t2\"],\"expenseIds\":[\"e1\"],\"meterReadingIds\":[],\"fixedFeeCents\":125055}",
+		"inputsUnchanged": true,
+		"shared": []
+	},
+	"fixed fee as a number": {
+		"request": "{\"billingModel\":\"fixed_fee\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[\"t1\",\"t2\"],\"expenseIds\":[\"e1\"],\"meterReadingIds\":[],\"fixedFeeCents\":10000}",
+		"inputsUnchanged": true,
+		"shared": []
+	},
+	"fixed fee with a dot": {
+		"request": "{\"billingModel\":\"mixed\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[\"t1\",\"t2\"],\"expenseIds\":[\"e1\"],\"meterReadingIds\":[],\"fixedFeeCents\":1050}",
+		"inputsUnchanged": true,
+		"shared": []
+	},
+	"fixed fee with two commas": {
+		"request": "{\"billingModel\":\"fixed_fee\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[\"t1\",\"t2\"],\"expenseIds\":[\"e1\"],\"meterReadingIds\":[]}",
+		"inputsUnchanged": true,
+		"shared": []
+	},
+	"fixed fee zero": {
+		"request": "{\"billingModel\":\"fixed_fee\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[\"t1\",\"t2\"],\"expenseIds\":[\"e1\"],\"meterReadingIds\":[]}",
+		"inputsUnchanged": true,
+		"shared": []
+	},
+	"fixed fee negative": {
+		"request": "{\"billingModel\":\"mixed\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[\"t1\",\"t2\"],\"expenseIds\":[\"e1\"],\"meterReadingIds\":[]}",
+		"inputsUnchanged": true,
+		"shared": []
+	},
+	"fixed fee not a number": {
+		"request": "{\"billingModel\":\"fixed_fee\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[\"t1\",\"t2\"],\"expenseIds\":[\"e1\"],\"meterReadingIds\":[]}",
+		"inputsUnchanged": true,
+		"shared": []
+	},
+	"fixed fee empty": {
+		"request": "{\"billingModel\":\"fixed_fee\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[\"t1\",\"t2\"],\"expenseIds\":[\"e1\"],\"meterReadingIds\":[]}",
+		"inputsUnchanged": true,
+		"shared": []
+	},
+	"fixed fee null": {
+		"request": "{\"billingModel\":\"fixed_fee\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[\"t1\",\"t2\"],\"expenseIds\":[\"e1\"],\"meterReadingIds\":[]}",
+		"inputsUnchanged": true,
+		"shared": []
+	},
+	"fixed fee infinite": {
+		"request": "{\"billingModel\":\"fixed_fee\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[\"t1\",\"t2\"],\"expenseIds\":[\"e1\"],\"meterReadingIds\":[]}",
+		"inputsUnchanged": true,
+		"shared": []
+	},
+	"fixed fee on another model": {
+		"request": "{\"billingModel\":\"retainer\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[\"t1\",\"t2\"],\"expenseIds\":[\"e1\"],\"meterReadingIds\":[]}",
+		"inputsUnchanged": true,
+		"shared": []
+	},
+	"fixed fee with references": {
+		"request": "{\"billingModel\":\"mixed\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[\"t1\",\"t2\"],\"expenseIds\":[\"e1\"],\"meterReadingIds\":[],\"projectId\":\"p-1\",\"milestoneId\":\"ms-2\",\"fixedFeeCents\":1}",
+		"inputsUnchanged": true,
+		"shared": []
+	},
+	"fixed fee rounding half": {
+		"request": "{\"billingModel\":\"fixed_fee\",\"customerId\":\"c-1\",\"fromDate\":\"2026-10-01\",\"toDate\":\"2026-10-31\",\"timeEntryIds\":[\"t1\",\"t2\"],\"expenseIds\":[\"e1\"],\"meterReadingIds\":[],\"fixedFeeCents\":1}",
+		"inputsUnchanged": true,
+		"shared": []
+	}
+}

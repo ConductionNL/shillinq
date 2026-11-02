@@ -79,7 +79,33 @@ export function validateProfile(form) {
  * @return {object} The profile payload.
  */
 export function buildProfilePayload(form) {
-	const lines = (form.lines || [])
+	return {
+		name: (form.name || '').trim(),
+		customerReference: (form.customerReference || '').trim(),
+		lines: payloadLines(form.lines),
+		frequency: form.frequency || 'monthly',
+		interval: Number(form.interval) || 1,
+		startDate: form.startDate,
+		invoiceDay: Number(form.invoiceDay) || 1,
+		issueMode: form.issueMode || 'draft-for-review',
+		deliveryChannel: form.deliveryChannel || 'email',
+		paymentTermsDays: Number(form.paymentTermsDays) || 30,
+		currency: form.currency || 'EUR',
+		status: form.status || 'draft',
+		...indexationFields(form),
+		...endConditionFields(form),
+	}
+}
+
+/**
+ * The payload lines: lines with a description or a positive price,
+ * normalised (quantity defaults to 1).
+ *
+ * @param {Array<object>|undefined} lines The form lines.
+ * @return {Array<object>} The payload lines.
+ */
+function payloadLines(lines) {
+	return (lines || [])
 		.filter(
 			(l) =>
 				(l.description || '').trim().length > 0 || Number(l.unitPrice) > 0,
@@ -91,35 +117,39 @@ export function buildProfilePayload(form) {
 			vatCode: Number(l.vatCode) || 0,
 			revenueAccount: l.revenueAccount || '',
 		}))
+}
 
-	const payload = {
-		name: (form.name || '').trim(),
-		customerReference: (form.customerReference || '').trim(),
-		lines,
-		frequency: form.frequency || 'monthly',
-		interval: Number(form.interval) || 1,
-		startDate: form.startDate,
-		invoiceDay: Number(form.invoiceDay) || 1,
-		issueMode: form.issueMode || 'draft-for-review',
-		deliveryChannel: form.deliveryChannel || 'email',
-		paymentTermsDays: Number(form.paymentTermsDays) || 30,
-		currency: form.currency || 'EUR',
-		status: form.status || 'draft',
+/**
+ * The indexationPercent field, present only when the form sets one.
+ *
+ * @param {object} form The form state.
+ * @return {object} `{ indexationPercent }` or an empty object.
+ */
+function indexationFields(form) {
+	const percent = form.indexationPercent
+	if (percent === undefined || percent === null || percent === '') {
+		return {}
 	}
+	return { indexationPercent: Number(percent) }
+}
 
-	if (
-		form.indexationPercent !== undefined
-		&& form.indexationPercent !== null
-		&& form.indexationPercent !== ''
-	) {
-		payload.indexationPercent = Number(form.indexationPercent)
-	}
+/**
+ * The end condition: an end date wins over an occurrence count, which also
+ * sets remainingOccurrences. Neither set gives an empty object.
+ *
+ * @param {object} form The form state.
+ * @return {object} The endCondition (and remainingOccurrences) fields.
+ */
+function endConditionFields(form) {
 	if (form.endDate) {
-		payload.endCondition = { endDate: form.endDate }
-	} else if (form.occurrenceCount) {
-		payload.endCondition = { occurrenceCount: Number(form.occurrenceCount) }
-		payload.remainingOccurrences = Number(form.occurrenceCount)
+		return { endCondition: { endDate: form.endDate } }
 	}
-
-	return payload
+	if (form.occurrenceCount) {
+		const count = Number(form.occurrenceCount)
+		return {
+			endCondition: { occurrenceCount: count },
+			remainingOccurrences: count,
+		}
+	}
+	return {}
 }
