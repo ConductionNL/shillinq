@@ -1,0 +1,1878 @@
+{
+    "letter clean": {
+        "blocks": [
+            {
+                "type": "cover",
+                "title": "Management letter",
+                "subtitle": "Bevindingenrapport — compliance & interne beheersing",
+                "meta": [
+                    "Periode: 2025-03",
+                    "Administratie: adm-1",
+                    "Gegenereerd: 2026-11-02 17:32 UTC"
+                ]
+            },
+            {
+                "type": "text",
+                "text": "Geachte directie,",
+                "style": "value",
+                "paragraphStyle": "default"
+            },
+            {
+                "type": "text",
+                "text": "In het kader van de doorlopende controle op de financiële administratie hebben wij de boekhouding getoetst aan het machinaal controleerbare normenkader. Onderstaand treft u onze bevindingen aan, geordend naar ernst, met een samenvatting van de mate waarin de administratie aan de normen voldoet.",
+                "style": "value",
+                "paragraphStyle": "default"
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Samenvatting",
+                "depth": 2
+            },
+            {
+                "type": "detailsTable",
+                "rows": {
+                    "Regels in corpus": "0",
+                    "Machinaal controleerbaar": "0",
+                    "Afdwingbare regels": "0",
+                    "Dekkingsgraad": "12,5 %",
+                    "Objecten gecontroleerd": "7",
+                    "Objecten zonder bevindingen": "7",
+                    "Objecten met bevindingen": "0",
+                    "Compliancegraad": "100,0 %"
+                }
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Bevindingen naar ernst",
+                "depth": 2
+            },
+            {
+                "type": "amountTable",
+                "labelHead": "Ernst",
+                "amountHead": "Aantal",
+                "lines": [
+                    {
+                        "label": "Verplicht (mandatory)",
+                        "amount": 0
+                    },
+                    {
+                        "label": "Voorwaardelijk (conditional)",
+                        "amount": 0
+                    },
+                    {
+                        "label": "Aanbevolen (recommended)",
+                        "amount": 0
+                    }
+                ],
+                "total": {
+                    "label": "Totaal bevindingen",
+                    "amount": 0
+                },
+                "currency": ""
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Aanbeveling",
+                "depth": 2
+            },
+            {
+                "type": "text",
+                "text": "Op basis van het machinaal controleerbare normenkader zijn geen bevindingen geconstateerd. De administratie voldoet aan de getoetste normen.",
+                "style": "value",
+                "paragraphStyle": "default"
+            },
+            {
+                "type": "note",
+                "text": "Deze management letter is automatisch gegenereerd uit de regelmotor (RuleAuditService). De dekkingsgraad geeft aan welk deel van het machinaal controleerbare corpus vandaag daadwerkelijk wordt afgedwongen."
+            }
+        ],
+        "auditContexts": [
+            {
+                "administrationId": "adm-1"
+            }
+        ]
+    },
+    "letter full": {
+        "blocks": [
+            {
+                "type": "cover",
+                "title": "Management letter",
+                "subtitle": "Bevindingenrapport — compliance & interne beheersing",
+                "meta": [
+                    "Periode: 2025-03",
+                    "Administratie: adm-1",
+                    "Gegenereerd: 2026-11-02 17:32 UTC"
+                ]
+            },
+            {
+                "type": "text",
+                "text": "Geachte directie,",
+                "style": "value",
+                "paragraphStyle": "default"
+            },
+            {
+                "type": "text",
+                "text": "In het kader van de doorlopende controle op de financiële administratie hebben wij de boekhouding getoetst aan het machinaal controleerbare normenkader. Onderstaand treft u onze bevindingen aan, geordend naar ernst, met een samenvatting van de mate waarin de administratie aan de normen voldoet.",
+                "style": "value",
+                "paragraphStyle": "default"
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Samenvatting",
+                "depth": 2
+            },
+            {
+                "type": "detailsTable",
+                "rows": {
+                    "Normenkader (versie)": "2026.1",
+                    "Regels in corpus": "812",
+                    "Machinaal controleerbaar": "400",
+                    "Afdwingbare regels": "377",
+                    "Dekkingsgraad": "94,3 %",
+                    "Objecten gecontroleerd": "52",
+                    "Objecten zonder bevindingen": "49",
+                    "Objecten met bevindingen": "3",
+                    "Compliancegraad": "94,2 %"
+                }
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Bevindingen naar ernst",
+                "depth": 2
+            },
+            {
+                "type": "amountTable",
+                "labelHead": "Ernst",
+                "amountHead": "Aantal",
+                "lines": [
+                    {
+                        "label": "Verplicht (mandatory)",
+                        "amount": 3
+                    },
+                    {
+                        "label": "Voorwaardelijk (conditional)",
+                        "amount": 1
+                    },
+                    {
+                        "label": "Aanbevolen (recommended)",
+                        "amount": 1
+                    }
+                ],
+                "total": {
+                    "label": "Totaal bevindingen",
+                    "amount": 5
+                },
+                "currency": ""
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Bevindingen per object-type",
+                "depth": 2
+            },
+            {
+                "type": "amountTable",
+                "labelHead": "Object-type",
+                "amountHead": "Bevindingen",
+                "lines": [
+                    {
+                        "label": "ARInvoice (gecontroleerd: 12, met bevindingen: 3)",
+                        "amount": 5
+                    },
+                    {
+                        "label": "GLTransaction (gecontroleerd: 40, met bevindingen: 0)",
+                        "amount": 0
+                    }
+                ],
+                "total": null,
+                "currency": ""
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Belangrijkste bevindingen",
+                "depth": 2
+            },
+            {
+                "type": "text",
+                "text": "De onderstaande regels zijn het vaakst overtreden en verdienen prioriteit bij het herstel.",
+                "style": "value",
+                "paragraphStyle": "default"
+            },
+            {
+                "type": "amountTable",
+                "labelHead": "Regel",
+                "amountHead": "Aantal",
+                "lines": [
+                    {
+                        "label": "BR-CO-10",
+                        "amount": 3
+                    },
+                    {
+                        "label": "BR-16",
+                        "amount": 0
+                    },
+                    {
+                        "label": "",
+                        "amount": 1
+                    }
+                ],
+                "total": null,
+                "currency": ""
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Aanbeveling",
+                "depth": 2
+            },
+            {
+                "type": "text",
+                "text": "Wij adviseren de geconstateerde bevindingen op te lossen, te beginnen bij de verplichte (mandatory) bevindingen, en de interne beheersing zodanig in te richten dat herhaling wordt voorkomen.",
+                "style": "value",
+                "paragraphStyle": "default"
+            },
+            {
+                "type": "note",
+                "text": "Deze management letter is automatisch gegenereerd uit de regelmotor (RuleAuditService). De dekkingsgraad geeft aan welk deel van het machinaal controleerbare corpus vandaag daadwerkelijk wordt afgedwongen."
+            }
+        ],
+        "auditContexts": [
+            {
+                "administrationId": "adm-1"
+            }
+        ]
+    },
+    "letter noAdministration": {
+        "blocks": [
+            {
+                "type": "cover",
+                "title": "Management letter",
+                "subtitle": "Bevindingenrapport — compliance & interne beheersing",
+                "meta": [
+                    "Periode: 2025-03",
+                    "Gegenereerd: 2026-11-02 17:32 UTC"
+                ]
+            },
+            {
+                "type": "text",
+                "text": "Geachte directie,",
+                "style": "value",
+                "paragraphStyle": "default"
+            },
+            {
+                "type": "text",
+                "text": "In het kader van de doorlopende controle op de financiële administratie hebben wij de boekhouding getoetst aan het machinaal controleerbare normenkader. Onderstaand treft u onze bevindingen aan, geordend naar ernst, met een samenvatting van de mate waarin de administratie aan de normen voldoet.",
+                "style": "value",
+                "paragraphStyle": "default"
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Samenvatting",
+                "depth": 2
+            },
+            {
+                "type": "detailsTable",
+                "rows": {
+                    "Normenkader (versie)": "2026.1",
+                    "Regels in corpus": "812",
+                    "Machinaal controleerbaar": "400",
+                    "Afdwingbare regels": "377",
+                    "Dekkingsgraad": "94,3 %",
+                    "Objecten gecontroleerd": "52",
+                    "Objecten zonder bevindingen": "49",
+                    "Objecten met bevindingen": "3",
+                    "Compliancegraad": "94,2 %"
+                }
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Bevindingen naar ernst",
+                "depth": 2
+            },
+            {
+                "type": "amountTable",
+                "labelHead": "Ernst",
+                "amountHead": "Aantal",
+                "lines": [
+                    {
+                        "label": "Verplicht (mandatory)",
+                        "amount": 3
+                    },
+                    {
+                        "label": "Voorwaardelijk (conditional)",
+                        "amount": 1
+                    },
+                    {
+                        "label": "Aanbevolen (recommended)",
+                        "amount": 1
+                    }
+                ],
+                "total": {
+                    "label": "Totaal bevindingen",
+                    "amount": 5
+                },
+                "currency": ""
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Bevindingen per object-type",
+                "depth": 2
+            },
+            {
+                "type": "amountTable",
+                "labelHead": "Object-type",
+                "amountHead": "Bevindingen",
+                "lines": [
+                    {
+                        "label": "ARInvoice (gecontroleerd: 12, met bevindingen: 3)",
+                        "amount": 5
+                    },
+                    {
+                        "label": "GLTransaction (gecontroleerd: 40, met bevindingen: 0)",
+                        "amount": 0
+                    }
+                ],
+                "total": null,
+                "currency": ""
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Belangrijkste bevindingen",
+                "depth": 2
+            },
+            {
+                "type": "text",
+                "text": "De onderstaande regels zijn het vaakst overtreden en verdienen prioriteit bij het herstel.",
+                "style": "value",
+                "paragraphStyle": "default"
+            },
+            {
+                "type": "amountTable",
+                "labelHead": "Regel",
+                "amountHead": "Aantal",
+                "lines": [
+                    {
+                        "label": "BR-CO-10",
+                        "amount": 3
+                    },
+                    {
+                        "label": "BR-16",
+                        "amount": 0
+                    },
+                    {
+                        "label": "",
+                        "amount": 1
+                    }
+                ],
+                "total": null,
+                "currency": ""
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Aanbeveling",
+                "depth": 2
+            },
+            {
+                "type": "text",
+                "text": "Wij adviseren de geconstateerde bevindingen op te lossen, te beginnen bij de verplichte (mandatory) bevindingen, en de interne beheersing zodanig in te richten dat herhaling wordt voorkomen.",
+                "style": "value",
+                "paragraphStyle": "default"
+            },
+            {
+                "type": "note",
+                "text": "Deze management letter is automatisch gegenereerd uit de regelmotor (RuleAuditService). De dekkingsgraad geeft aan welk deel van het machinaal controleerbare corpus vandaag daadwerkelijk wordt afgedwongen."
+            }
+        ],
+        "auditContexts": [
+            []
+        ]
+    },
+    "letter nothingChecked": {
+        "blocks": [
+            {
+                "type": "cover",
+                "title": "Management letter",
+                "subtitle": "Bevindingenrapport — compliance & interne beheersing",
+                "meta": [
+                    "Periode: 2025-03",
+                    "Administratie: adm-1",
+                    "Gegenereerd: 2026-11-02 17:32 UTC"
+                ]
+            },
+            {
+                "type": "text",
+                "text": "Geachte directie,",
+                "style": "value",
+                "paragraphStyle": "default"
+            },
+            {
+                "type": "text",
+                "text": "In het kader van de doorlopende controle op de financiële administratie hebben wij de boekhouding getoetst aan het machinaal controleerbare normenkader. Onderstaand treft u onze bevindingen aan, geordend naar ernst, met een samenvatting van de mate waarin de administratie aan de normen voldoet.",
+                "style": "value",
+                "paragraphStyle": "default"
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Samenvatting",
+                "depth": 2
+            },
+            {
+                "type": "detailsTable",
+                "rows": {
+                    "Regels in corpus": "0",
+                    "Machinaal controleerbaar": "0",
+                    "Afdwingbare regels": "0",
+                    "Dekkingsgraad": "0,0 %",
+                    "Objecten gecontroleerd": "0",
+                    "Objecten zonder bevindingen": "0",
+                    "Objecten met bevindingen": "0",
+                    "Compliancegraad": "0,0 %"
+                }
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Bevindingen naar ernst",
+                "depth": 2
+            },
+            {
+                "type": "amountTable",
+                "labelHead": "Ernst",
+                "amountHead": "Aantal",
+                "lines": [
+                    {
+                        "label": "Verplicht (mandatory)",
+                        "amount": 0
+                    },
+                    {
+                        "label": "Voorwaardelijk (conditional)",
+                        "amount": 0
+                    },
+                    {
+                        "label": "Aanbevolen (recommended)",
+                        "amount": 0
+                    }
+                ],
+                "total": {
+                    "label": "Totaal bevindingen",
+                    "amount": 0
+                },
+                "currency": ""
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Aanbeveling",
+                "depth": 2
+            },
+            {
+                "type": "text",
+                "text": "Wij adviseren de geconstateerde bevindingen op te lossen, te beginnen bij de verplichte (mandatory) bevindingen, en de interne beheersing zodanig in te richten dat herhaling wordt voorkomen.",
+                "style": "value",
+                "paragraphStyle": "default"
+            },
+            {
+                "type": "note",
+                "text": "Deze management letter is automatisch gegenereerd uit de regelmotor (RuleAuditService). De dekkingsgraad geeft aan welk deel van het machinaal controleerbare corpus vandaag daadwerkelijk wordt afgedwongen."
+            }
+        ],
+        "auditContexts": [
+            {
+                "administrationId": "adm-1"
+            }
+        ]
+    },
+    "letter oddShapes": {
+        "blocks": [
+            {
+                "type": "cover",
+                "title": "Management letter",
+                "subtitle": "Bevindingenrapport — compliance & interne beheersing",
+                "meta": [
+                    "Periode: 2025-03",
+                    "Administratie: adm-1",
+                    "Gegenereerd: 2026-11-02 17:32 UTC"
+                ]
+            },
+            {
+                "type": "text",
+                "text": "Geachte directie,",
+                "style": "value",
+                "paragraphStyle": "default"
+            },
+            {
+                "type": "text",
+                "text": "In het kader van de doorlopende controle op de financiële administratie hebben wij de boekhouding getoetst aan het machinaal controleerbare normenkader. Onderstaand treft u onze bevindingen aan, geordend naar ernst, met een samenvatting van de mate waarin de administratie aan de normen voldoet.",
+                "style": "value",
+                "paragraphStyle": "default"
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Samenvatting",
+                "depth": 2
+            },
+            {
+                "type": "detailsTable",
+                "rows": {
+                    "Regels in corpus": "0",
+                    "Machinaal controleerbaar": "0",
+                    "Afdwingbare regels": "0",
+                    "Dekkingsgraad": "0,0 %",
+                    "Objecten gecontroleerd": "3",
+                    "Objecten zonder bevindingen": "1",
+                    "Objecten met bevindingen": "0",
+                    "Compliancegraad": "33,3 %"
+                }
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Bevindingen naar ernst",
+                "depth": 2
+            },
+            {
+                "type": "amountTable",
+                "labelHead": "Ernst",
+                "amountHead": "Aantal",
+                "lines": [
+                    {
+                        "label": "Verplicht (mandatory)",
+                        "amount": 0
+                    },
+                    {
+                        "label": "Voorwaardelijk (conditional)",
+                        "amount": 0
+                    },
+                    {
+                        "label": "Aanbevolen (recommended)",
+                        "amount": 0
+                    }
+                ],
+                "total": {
+                    "label": "Totaal bevindingen",
+                    "amount": 0
+                },
+                "currency": ""
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Bevindingen per object-type",
+                "depth": 2
+            },
+            {
+                "type": "amountTable",
+                "labelHead": "Object-type",
+                "amountHead": "Bevindingen",
+                "lines": [
+                    {
+                        "label": "Account (gecontroleerd: 0, met bevindingen: 0)",
+                        "amount": 2
+                    }
+                ],
+                "total": null,
+                "currency": ""
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Belangrijkste bevindingen",
+                "depth": 2
+            },
+            {
+                "type": "text",
+                "text": "De onderstaande regels zijn het vaakst overtreden en verdienen prioriteit bij het herstel.",
+                "style": "value",
+                "paragraphStyle": "default"
+            },
+            {
+                "type": "amountTable",
+                "labelHead": "Regel",
+                "amountHead": "Aantal",
+                "lines": [
+                    {
+                        "label": "R-1",
+                        "amount": 4
+                    }
+                ],
+                "total": null,
+                "currency": ""
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Aanbeveling",
+                "depth": 2
+            },
+            {
+                "type": "text",
+                "text": "Op basis van het machinaal controleerbare normenkader zijn geen bevindingen geconstateerd. De administratie voldoet aan de getoetste normen.",
+                "style": "value",
+                "paragraphStyle": "default"
+            },
+            {
+                "type": "note",
+                "text": "Deze management letter is automatisch gegenereerd uit de regelmotor (RuleAuditService). De dekkingsgraad geeft aan welk deel van het machinaal controleerbare corpus vandaag daadwerkelijk wordt afgedwongen."
+            }
+        ],
+        "auditContexts": [
+            {
+                "administrationId": "adm-1"
+            }
+        ]
+    },
+    "letter unavailable": {
+        "blocks": [
+            {
+                "type": "cover",
+                "title": "Management letter",
+                "subtitle": "Bevindingenrapport — compliance & interne beheersing",
+                "meta": [
+                    "Periode: 2025-03",
+                    "Administratie: adm-1",
+                    "Gegenereerd: 2026-11-02 17:32 UTC"
+                ]
+            },
+            {
+                "type": "text",
+                "text": "Geachte directie,",
+                "style": "value",
+                "paragraphStyle": "default"
+            },
+            {
+                "type": "text",
+                "text": "In het kader van de doorlopende controle op de financiële administratie hebben wij de boekhouding getoetst aan het machinaal controleerbare normenkader. Onderstaand treft u onze bevindingen aan, geordend naar ernst, met een samenvatting van de mate waarin de administratie aan de normen voldoet.",
+                "style": "value",
+                "paragraphStyle": "default"
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Samenvatting",
+                "depth": 2
+            },
+            {
+                "type": "detailsTable",
+                "rows": {
+                    "Regels in corpus": "0",
+                    "Machinaal controleerbaar": "0",
+                    "Afdwingbare regels": "0",
+                    "Dekkingsgraad": "0,0 %",
+                    "Objecten gecontroleerd": "0",
+                    "Objecten zonder bevindingen": "0",
+                    "Objecten met bevindingen": "0",
+                    "Compliancegraad": "0,0 %"
+                }
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Bevindingen naar ernst",
+                "depth": 2
+            },
+            {
+                "type": "amountTable",
+                "labelHead": "Ernst",
+                "amountHead": "Aantal",
+                "lines": [
+                    {
+                        "label": "Verplicht (mandatory)",
+                        "amount": 0
+                    },
+                    {
+                        "label": "Voorwaardelijk (conditional)",
+                        "amount": 0
+                    },
+                    {
+                        "label": "Aanbevolen (recommended)",
+                        "amount": 0
+                    }
+                ],
+                "total": {
+                    "label": "Totaal bevindingen",
+                    "amount": 0
+                },
+                "currency": ""
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Aanbeveling",
+                "depth": 2
+            },
+            {
+                "type": "text",
+                "text": "Wij adviseren de geconstateerde bevindingen op te lossen, te beginnen bij de verplichte (mandatory) bevindingen, en de interne beheersing zodanig in te richten dat herhaling wordt voorkomen.",
+                "style": "value",
+                "paragraphStyle": "default"
+            },
+            {
+                "type": "note",
+                "text": "Deze management letter is automatisch gegenereerd uit de regelmotor (RuleAuditService). De dekkingsgraad geeft aan welk deel van het machinaal controleerbare corpus vandaag daadwerkelijk wordt afgedwongen."
+            }
+        ],
+        "auditContexts": []
+    },
+    "saft empty": {
+        "fileName": "saft-2025-03.xml",
+        "content": [
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+            "<AuditFile xmlns=\"urn:OECD:StandardAuditFile-Tax:2.00\">",
+            "  <Header>",
+            "    <AuditFileVersion>2.00</AuditFileVersion>",
+            "    <AuditFileCountry>NL</AuditFileCountry>",
+            "    <AuditFileDateCreated>TODAY</AuditFileDateCreated>",
+            "    <SoftwareCompanyName>Conduction B.V.</SoftwareCompanyName>",
+            "    <SoftwareID>Shillinq</SoftwareID>",
+            "    <Company>",
+            "      <RegistrationNumber>adm-1</RegistrationNumber>",
+            "      <Name>adm-1</Name>",
+            "    </Company>",
+            "    <DefaultCurrencyCode>EUR</DefaultCurrencyCode>",
+            "    <SelectionCriteria>",
+            "      <PeriodStart>2025-03</PeriodStart>",
+            "      <PeriodEnd>2025-03</PeriodEnd>",
+            "    </SelectionCriteria>",
+            "  </Header>",
+            "  <MasterFiles>",
+            "    <GeneralLedgerAccounts/>",
+            "  </MasterFiles>",
+            "  <GeneralLedgerEntries>",
+            "    <NumberOfEntries>0</NumberOfEntries>",
+            "    <TotalDebit>0.00</TotalDebit>",
+            "    <TotalCredit>0.00</TotalCredit>",
+            "    <Journal>",
+            "      <JournalID>GL</JournalID>",
+            "      <Description>General ledger</Description>",
+            "    </Journal>",
+            "  </GeneralLedgerEntries>",
+            "</AuditFile>",
+            ""
+        ],
+        "reads": [
+            {
+                "schema": "Account",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            {
+                "schema": "GLTransaction",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "periodId": "2025-03"
+                    }
+                }
+            },
+            {
+                "schema": "GLLine",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "periodId": "2025-03"
+                    }
+                }
+            }
+        ],
+        "log": []
+    },
+    "saft full": {
+        "fileName": "saft-2025-03.xml",
+        "content": [
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+            "<AuditFile xmlns=\"urn:OECD:StandardAuditFile-Tax:2.00\">",
+            "  <Header>",
+            "    <AuditFileVersion>2.00</AuditFileVersion>",
+            "    <AuditFileCountry>NL</AuditFileCountry>",
+            "    <AuditFileDateCreated>TODAY</AuditFileDateCreated>",
+            "    <SoftwareCompanyName>Conduction B.V.</SoftwareCompanyName>",
+            "    <SoftwareID>Shillinq</SoftwareID>",
+            "    <Company>",
+            "      <RegistrationNumber>adm-1</RegistrationNumber>",
+            "      <Name>adm-1</Name>",
+            "    </Company>",
+            "    <DefaultCurrencyCode>EUR</DefaultCurrencyCode>",
+            "    <SelectionCriteria>",
+            "      <PeriodStart>2025-03</PeriodStart>",
+            "      <PeriodEnd>2025-03</PeriodEnd>",
+            "    </SelectionCriteria>",
+            "  </Header>",
+            "  <MasterFiles>",
+            "    <GeneralLedgerAccounts>",
+            "      <Account>",
+            "        <AccountID>1000</AccountID>",
+            "        <AccountDescription>Kas</AccountDescription>",
+            "        <AccountType>asset</AccountType>",
+            "        <StandardAccountID>10</StandardAccountID>",
+            "      </Account>",
+            "      <Account>",
+            "        <AccountID>4000</AccountID>",
+            "        <AccountDescription></AccountDescription>",
+            "        <AccountType>expense</AccountType>",
+            "      </Account>",
+            "      <Account>",
+            "        <AccountID>8000</AccountID>",
+            "        <AccountDescription>Omzet</AccountDescription>",
+            "        <AccountType>revenue</AccountType>",
+            "      </Account>",
+            "      <Account>",
+            "        <AccountID>1100</AccountID>",
+            "        <AccountDescription>Bank</AccountDescription>",
+            "        <AccountType>liability</AccountType>",
+            "      </Account>",
+            "      <Account>",
+            "        <AccountID>0100</AccountID>",
+            "        <AccountDescription>Zonder administratie</AccountDescription>",
+            "        <AccountType>GL</AccountType>",
+            "      </Account>",
+            "    </GeneralLedgerAccounts>",
+            "  </MasterFiles>",
+            "  <GeneralLedgerEntries>",
+            "    <NumberOfEntries>5</NumberOfEntries>",
+            "    <TotalDebit>117.50</TotalDebit>",
+            "    <TotalCredit>112.50</TotalCredit>",
+            "    <Journal>",
+            "      <JournalID>GL</JournalID>",
+            "      <Description>General ledger</Description>",
+            "      <Transaction>",
+            "        <TransactionID>t-1</TransactionID>",
+            "        <Period>2025-03</Period>",
+            "        <TransactionDate>2025-03-03</TransactionDate>",
+            "        <Description>Memoriaal</Description>",
+            "        <TransactionType>M</TransactionType>",
+            "        <Lines>",
+            "          <DebitLine>",
+            "            <RecordID>1</RecordID>",
+            "            <AccountID>1000</AccountID>",
+            "            <Description>Kas in</Description>",
+            "            <Amount>100.00</Amount>",
+            "          </DebitLine>",
+            "          <CreditLine>",
+            "            <RecordID>l-2</RecordID>",
+            "            <AccountID>8000</AccountID>",
+            "            <Description></Description>",
+            "            <Amount>100.00</Amount>",
+            "          </CreditLine>",
+            "        </Lines>",
+            "      </Transaction>",
+            "      <Transaction>",
+            "        <TransactionID>t-2</TransactionID>",
+            "        <Period>2025-03</Period>",
+            "        <TransactionDate>2025-03-04</TransactionDate>",
+            "        <Description></Description>",
+            "        <TransactionType>N</TransactionType>",
+            "        <Lines>",
+            "          <CreditLine>",
+            "            <RecordID>1</RecordID>",
+            "            <AccountID>4000</AccountID>",
+            "            <Description></Description>",
+            "            <Amount>0.00</Amount>",
+            "          </CreditLine>",
+            "        </Lines>",
+            "      </Transaction>",
+            "      <Transaction>",
+            "        <TransactionID>M-3</TransactionID>",
+            "        <Period>2025-03</Period>",
+            "        <TransactionDate></TransactionDate>",
+            "        <Description></Description>",
+            "        <TransactionType>N</TransactionType>",
+            "        <Lines>",
+            "          <DebitLine>",
+            "            <RecordID>1</RecordID>",
+            "            <AccountID>1000</AccountID>",
+            "            <Description></Description>",
+            "            <Amount>12.50</Amount>",
+            "          </DebitLine>",
+            "          <CreditLine>",
+            "            <RecordID>l-x</RecordID>",
+            "            <AccountID>8000</AccountID>",
+            "            <Description>Omzet</Description>",
+            "            <Amount>12.50</Amount>",
+            "          </CreditLine>",
+            "        </Lines>",
+            "      </Transaction>",
+            "      <Transaction>",
+            "        <TransactionID>t-4</TransactionID>",
+            "        <Period>2025-03</Period>",
+            "        <TransactionDate></TransactionDate>",
+            "        <Description></Description>",
+            "        <TransactionType>N</TransactionType>",
+            "        <Lines/>",
+            "      </Transaction>",
+            "      <Transaction>",
+            "        <TransactionID>t-9</TransactionID>",
+            "        <Period>2025-03</Period>",
+            "        <TransactionDate></TransactionDate>",
+            "        <Description></Description>",
+            "        <TransactionType>N</TransactionType>",
+            "        <Lines>",
+            "          <DebitLine>",
+            "            <RecordID>1</RecordID>",
+            "            <AccountID>1100</AccountID>",
+            "            <Description></Description>",
+            "            <Amount>5.00</Amount>",
+            "          </DebitLine>",
+            "        </Lines>",
+            "      </Transaction>",
+            "    </Journal>",
+            "  </GeneralLedgerEntries>",
+            "</AuditFile>",
+            ""
+        ],
+        "reads": [
+            {
+                "schema": "Account",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            {
+                "schema": "GLTransaction",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "periodId": "2025-03"
+                    }
+                }
+            },
+            {
+                "schema": "GLLine",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "periodId": "2025-03"
+                    }
+                }
+            }
+        ],
+        "log": []
+    },
+    "saft loadFails": {
+        "fileName": "saft-2025-03.xml",
+        "content": [
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+            "<AuditFile xmlns=\"urn:OECD:StandardAuditFile-Tax:2.00\">",
+            "  <Header>",
+            "    <AuditFileVersion>2.00</AuditFileVersion>",
+            "    <AuditFileCountry>NL</AuditFileCountry>",
+            "    <AuditFileDateCreated>TODAY</AuditFileDateCreated>",
+            "    <SoftwareCompanyName>Conduction B.V.</SoftwareCompanyName>",
+            "    <SoftwareID>Shillinq</SoftwareID>",
+            "    <Company>",
+            "      <RegistrationNumber>adm-1</RegistrationNumber>",
+            "      <Name>adm-1</Name>",
+            "    </Company>",
+            "    <DefaultCurrencyCode>EUR</DefaultCurrencyCode>",
+            "    <SelectionCriteria>",
+            "      <PeriodStart>2025-03</PeriodStart>",
+            "      <PeriodEnd>2025-03</PeriodEnd>",
+            "    </SelectionCriteria>",
+            "  </Header>",
+            "  <MasterFiles>",
+            "    <GeneralLedgerAccounts/>",
+            "  </MasterFiles>",
+            "  <GeneralLedgerEntries>",
+            "    <NumberOfEntries>0</NumberOfEntries>",
+            "    <TotalDebit>0.00</TotalDebit>",
+            "    <TotalCredit>0.00</TotalCredit>",
+            "    <Journal>",
+            "      <JournalID>GL</JournalID>",
+            "      <Description>General ledger</Description>",
+            "    </Journal>",
+            "  </GeneralLedgerEntries>",
+            "</AuditFile>",
+            ""
+        ],
+        "reads": [
+            {
+                "schema": "Account",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            {
+                "schema": "GLTransaction",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "periodId": "2025-03"
+                    }
+                }
+            },
+            {
+                "schema": "GLLine",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "periodId": "2025-03"
+                    }
+                }
+            }
+        ],
+        "log": [
+            "warning: Shillinq report generator: could not load Account: read failed for Account",
+            "warning: Shillinq report generator: could not load GLTransaction: read failed for GLTransaction",
+            "warning: Shillinq report generator: could not load GLLine: read failed for GLLine"
+        ]
+    },
+    "saft noAdministration": {
+        "fileName": "saft-2025.xml",
+        "content": [
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+            "<AuditFile xmlns=\"urn:OECD:StandardAuditFile-Tax:2.00\">",
+            "  <Header>",
+            "    <AuditFileVersion>2.00</AuditFileVersion>",
+            "    <AuditFileCountry>NL</AuditFileCountry>",
+            "    <AuditFileDateCreated>TODAY</AuditFileDateCreated>",
+            "    <SoftwareCompanyName>Conduction B.V.</SoftwareCompanyName>",
+            "    <SoftwareID>Shillinq</SoftwareID>",
+            "    <Company>",
+            "      <RegistrationNumber>UNKNOWN</RegistrationNumber>",
+            "      <Name>Shillinq administration</Name>",
+            "    </Company>",
+            "    <DefaultCurrencyCode>EUR</DefaultCurrencyCode>",
+            "    <SelectionCriteria>",
+            "      <PeriodStart>2025</PeriodStart>",
+            "      <PeriodEnd>2025</PeriodEnd>",
+            "    </SelectionCriteria>",
+            "  </Header>",
+            "  <MasterFiles>",
+            "    <GeneralLedgerAccounts>",
+            "      <Account>",
+            "        <AccountID>1000</AccountID>",
+            "        <AccountDescription>Kas</AccountDescription>",
+            "        <AccountType>asset</AccountType>",
+            "        <StandardAccountID>10</StandardAccountID>",
+            "      </Account>",
+            "      <Account>",
+            "        <AccountID>4000</AccountID>",
+            "        <AccountDescription></AccountDescription>",
+            "        <AccountType>expense</AccountType>",
+            "      </Account>",
+            "      <Account>",
+            "        <AccountID>8000</AccountID>",
+            "        <AccountDescription>Omzet</AccountDescription>",
+            "        <AccountType>revenue</AccountType>",
+            "      </Account>",
+            "      <Account>",
+            "        <AccountID>1100</AccountID>",
+            "        <AccountDescription>Bank</AccountDescription>",
+            "        <AccountType>liability</AccountType>",
+            "      </Account>",
+            "      <Account>",
+            "        <AccountID>0100</AccountID>",
+            "        <AccountDescription>Zonder administratie</AccountDescription>",
+            "        <AccountType>GL</AccountType>",
+            "      </Account>",
+            "    </GeneralLedgerAccounts>",
+            "  </MasterFiles>",
+            "  <GeneralLedgerEntries>",
+            "    <NumberOfEntries>5</NumberOfEntries>",
+            "    <TotalDebit>117.50</TotalDebit>",
+            "    <TotalCredit>112.50</TotalCredit>",
+            "    <Journal>",
+            "      <JournalID>GL</JournalID>",
+            "      <Description>General ledger</Description>",
+            "      <Transaction>",
+            "        <TransactionID>t-1</TransactionID>",
+            "        <Period>2025</Period>",
+            "        <TransactionDate>2025-03-03</TransactionDate>",
+            "        <Description>Memoriaal</Description>",
+            "        <TransactionType>M</TransactionType>",
+            "        <Lines>",
+            "          <DebitLine>",
+            "            <RecordID>1</RecordID>",
+            "            <AccountID>1000</AccountID>",
+            "            <Description>Kas in</Description>",
+            "            <Amount>100.00</Amount>",
+            "          </DebitLine>",
+            "          <CreditLine>",
+            "            <RecordID>l-2</RecordID>",
+            "            <AccountID>8000</AccountID>",
+            "            <Description></Description>",
+            "            <Amount>100.00</Amount>",
+            "          </CreditLine>",
+            "        </Lines>",
+            "      </Transaction>",
+            "      <Transaction>",
+            "        <TransactionID>t-2</TransactionID>",
+            "        <Period>2025</Period>",
+            "        <TransactionDate>2025-03-04</TransactionDate>",
+            "        <Description></Description>",
+            "        <TransactionType>N</TransactionType>",
+            "        <Lines>",
+            "          <CreditLine>",
+            "            <RecordID>1</RecordID>",
+            "            <AccountID>4000</AccountID>",
+            "            <Description></Description>",
+            "            <Amount>0.00</Amount>",
+            "          </CreditLine>",
+            "        </Lines>",
+            "      </Transaction>",
+            "      <Transaction>",
+            "        <TransactionID>M-3</TransactionID>",
+            "        <Period>2025</Period>",
+            "        <TransactionDate></TransactionDate>",
+            "        <Description></Description>",
+            "        <TransactionType>N</TransactionType>",
+            "        <Lines>",
+            "          <DebitLine>",
+            "            <RecordID>1</RecordID>",
+            "            <AccountID>1000</AccountID>",
+            "            <Description></Description>",
+            "            <Amount>12.50</Amount>",
+            "          </DebitLine>",
+            "          <CreditLine>",
+            "            <RecordID>l-x</RecordID>",
+            "            <AccountID>8000</AccountID>",
+            "            <Description>Omzet</Description>",
+            "            <Amount>12.50</Amount>",
+            "          </CreditLine>",
+            "        </Lines>",
+            "      </Transaction>",
+            "      <Transaction>",
+            "        <TransactionID>t-4</TransactionID>",
+            "        <Period>2025</Period>",
+            "        <TransactionDate></TransactionDate>",
+            "        <Description></Description>",
+            "        <TransactionType>N</TransactionType>",
+            "        <Lines/>",
+            "      </Transaction>",
+            "      <Transaction>",
+            "        <TransactionID>t-9</TransactionID>",
+            "        <Period>2025</Period>",
+            "        <TransactionDate></TransactionDate>",
+            "        <Description></Description>",
+            "        <TransactionType>N</TransactionType>",
+            "        <Lines>",
+            "          <DebitLine>",
+            "            <RecordID>1</RecordID>",
+            "            <AccountID>1100</AccountID>",
+            "            <Description></Description>",
+            "            <Amount>5.00</Amount>",
+            "          </DebitLine>",
+            "        </Lines>",
+            "      </Transaction>",
+            "    </Journal>",
+            "  </GeneralLedgerEntries>",
+            "</AuditFile>",
+            ""
+        ],
+        "reads": [
+            {
+                "schema": "Account",
+                "config": {
+                    "limit": 10000
+                }
+            },
+            {
+                "schema": "GLTransaction",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "periodId": "2025"
+                    }
+                }
+            },
+            {
+                "schema": "GLLine",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "periodId": "2025"
+                    }
+                }
+            }
+        ],
+        "log": []
+    },
+    "xaf empty": {
+        "fileName": "xaf-2025-03.xml",
+        "content": [
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+            "<auditfile xmlns=\"http://www.auditfiles.nl/XAF/3.2\">",
+            "  <header>",
+            "    <fiscalYear>2025</fiscalYear>",
+            "    <startDate>2025-01-01</startDate>",
+            "    <endDate>2025-12-31</endDate>",
+            "    <curCode>EUR</curCode>",
+            "    <dateCreated>TODAY</dateCreated>",
+            "    <softwareDesc>Shillinq</softwareDesc>",
+            "  </header>",
+            "  <company>",
+            "    <companyName>adm-1</companyName>",
+            "    <companyIdent>adm-1</companyIdent>",
+            "    <currencyCode>EUR</currencyCode>",
+            "    <generalLedger/>",
+            "    <customersSuppliers/>",
+            "    <transactions>",
+            "      <linesCount>0</linesCount>",
+            "      <transactionCount>0</transactionCount>",
+            "      <journal>",
+            "        <jrnID>GL</jrnID>",
+            "        <desc>General ledger</desc>",
+            "        <jrnTp>Z</jrnTp>",
+            "      </journal>",
+            "    </transactions>",
+            "  </company>",
+            "</auditfile>",
+            ""
+        ],
+        "reads": [
+            {
+                "schema": "Account",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            {
+                "schema": "CustomerMaster",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            {
+                "schema": "Payee",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            {
+                "schema": "GLTransaction",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "periodId": "2025-03"
+                    }
+                }
+            },
+            {
+                "schema": "GLLine",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "periodId": "2025-03"
+                    }
+                }
+            }
+        ],
+        "log": []
+    },
+    "xaf full": {
+        "fileName": "xaf-2025-03.xml",
+        "content": [
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+            "<auditfile xmlns=\"http://www.auditfiles.nl/XAF/3.2\">",
+            "  <header>",
+            "    <fiscalYear>2025</fiscalYear>",
+            "    <startDate>2025-01-01</startDate>",
+            "    <endDate>2025-12-31</endDate>",
+            "    <curCode>EUR</curCode>",
+            "    <dateCreated>TODAY</dateCreated>",
+            "    <softwareDesc>Shillinq</softwareDesc>",
+            "  </header>",
+            "  <company>",
+            "    <companyName>adm-1</companyName>",
+            "    <companyIdent>adm-1</companyIdent>",
+            "    <currencyCode>EUR</currencyCode>",
+            "    <generalLedger>",
+            "      <ledgerAccount>",
+            "        <accID>1000</accID>",
+            "        <accDesc>Kas</accDesc>",
+            "        <accTp>B</accTp>",
+            "      </ledgerAccount>",
+            "      <ledgerAccount>",
+            "        <accID>4000</accID>",
+            "        <accDesc>Kosten</accDesc>",
+            "        <accTp>P</accTp>",
+            "      </ledgerAccount>",
+            "      <ledgerAccount>",
+            "        <accID>8000</accID>",
+            "        <accDesc>Omzet</accDesc>",
+            "        <accTp>P</accTp>",
+            "      </ledgerAccount>",
+            "    </generalLedger>",
+            "    <customersSuppliers>",
+            "      <customerSupplier>",
+            "        <custSupID>C-1</custSupID>",
+            "        <custSupTp>C</custSupTp>",
+            "        <companyName>Klant BV</companyName>",
+            "        <companyIdent>123</companyIdent>",
+            "        <taxRegistration>",
+            "          <taxRegIdent>NL1</taxRegIdent>",
+            "        </taxRegistration>",
+            "        <contact>",
+            "          <eMail>a@b.nl</eMail>",
+            "          <telephone>010</telephone>",
+            "        </contact>",
+            "      </customerSupplier>",
+            "      <customerSupplier>",
+            "        <custSupID>C-2</custSupID>",
+            "        <custSupTp>C</custSupTp>",
+            "        <companyName>Klant Twee</companyName>",
+            "        <taxRegistration>",
+            "          <taxRegIdent>NL2</taxRegIdent>",
+            "        </taxRegistration>",
+            "        <contact>",
+            "          <telephone>020</telephone>",
+            "        </contact>",
+            "      </customerSupplier>",
+            "      <customerSupplier>",
+            "        <custSupID>C-3</custSupID>",
+            "        <custSupTp>C</custSupTp>",
+            "        <companyName>Derde</companyName>",
+            "        <taxRegistration>",
+            "          <taxRegIdent>NL3</taxRegIdent>",
+            "        </taxRegistration>",
+            "        <contact>",
+            "          <eMail>c@d.nl</eMail>",
+            "        </contact>",
+            "      </customerSupplier>",
+            "      <customerSupplier>",
+            "        <custSupID>S-1</custSupID>",
+            "        <custSupTp>S</custSupTp>",
+            "        <companyName>Leverancier</companyName>",
+            "      </customerSupplier>",
+            "      <customerSupplier>",
+            "        <custSupID>S-2</custSupID>",
+            "        <custSupTp>S</custSupTp>",
+            "        <companyName></companyName>",
+            "      </customerSupplier>",
+            "    </customersSuppliers>",
+            "    <transactions>",
+            "      <linesCount>5</linesCount>",
+            "      <transactionCount>4</transactionCount>",
+            "      <journal>",
+            "        <jrnID>GL</jrnID>",
+            "        <desc>General ledger</desc>",
+            "        <jrnTp>Z</jrnTp>",
+            "        <transaction>",
+            "          <nr>M-1</nr>",
+            "          <desc>Memoriaal</desc>",
+            "          <trDt>2025-03-03</trDt>",
+            "          <trLine>",
+            "            <nr>1</nr>",
+            "            <accID>1000</accID>",
+            "            <desc>Kas in</desc>",
+            "            <amnt>100.00</amnt>",
+            "            <amntTp>D</amntTp>",
+            "          </trLine>",
+            "          <trLine>",
+            "            <nr>l-2</nr>",
+            "            <accID>8000</accID>",
+            "            <desc></desc>",
+            "            <amnt>100.00</amnt>",
+            "            <amntTp>C</amntTp>",
+            "          </trLine>",
+            "        </transaction>",
+            "        <transaction>",
+            "          <nr>t-2</nr>",
+            "          <desc></desc>",
+            "          <trDt></trDt>",
+            "          <trLine>",
+            "            <nr>1</nr>",
+            "            <accID>4000</accID>",
+            "            <desc></desc>",
+            "            <amnt>0.00</amnt>",
+            "            <amntTp>C</amntTp>",
+            "          </trLine>",
+            "        </transaction>",
+            "        <transaction>",
+            "          <nr>M-3</nr>",
+            "          <desc></desc>",
+            "          <trDt></trDt>",
+            "          <trLine>",
+            "            <nr>1</nr>",
+            "            <accID>1000</accID>",
+            "            <desc></desc>",
+            "            <amnt>12.50</amnt>",
+            "            <amntTp>D</amntTp>",
+            "          </trLine>",
+            "          <trLine>",
+            "            <nr>l-x</nr>",
+            "            <accID>8000</accID>",
+            "            <desc>Omzet</desc>",
+            "            <amnt>12.50</amnt>",
+            "            <amntTp>C</amntTp>",
+            "          </trLine>",
+            "        </transaction>",
+            "        <transaction>",
+            "          <nr>t-4</nr>",
+            "          <desc></desc>",
+            "          <trDt></trDt>",
+            "        </transaction>",
+            "      </journal>",
+            "    </transactions>",
+            "  </company>",
+            "</auditfile>",
+            ""
+        ],
+        "reads": [
+            {
+                "schema": "Account",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            {
+                "schema": "CustomerMaster",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            {
+                "schema": "Payee",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            {
+                "schema": "GLTransaction",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "periodId": "2025-03"
+                    }
+                }
+            },
+            {
+                "schema": "GLLine",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "periodId": "2025-03"
+                    }
+                }
+            }
+        ],
+        "log": []
+    },
+    "xaf loadFails": {
+        "fileName": "xaf-2025-03.xml",
+        "content": [
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+            "<auditfile xmlns=\"http://www.auditfiles.nl/XAF/3.2\">",
+            "  <header>",
+            "    <fiscalYear>2025</fiscalYear>",
+            "    <startDate>2025-01-01</startDate>",
+            "    <endDate>2025-12-31</endDate>",
+            "    <curCode>EUR</curCode>",
+            "    <dateCreated>TODAY</dateCreated>",
+            "    <softwareDesc>Shillinq</softwareDesc>",
+            "  </header>",
+            "  <company>",
+            "    <companyName>adm-1</companyName>",
+            "    <companyIdent>adm-1</companyIdent>",
+            "    <currencyCode>EUR</currencyCode>",
+            "    <generalLedger/>",
+            "    <customersSuppliers/>",
+            "    <transactions>",
+            "      <linesCount>0</linesCount>",
+            "      <transactionCount>0</transactionCount>",
+            "      <journal>",
+            "        <jrnID>GL</jrnID>",
+            "        <desc>General ledger</desc>",
+            "        <jrnTp>Z</jrnTp>",
+            "      </journal>",
+            "    </transactions>",
+            "  </company>",
+            "</auditfile>",
+            ""
+        ],
+        "reads": [
+            {
+                "schema": "Account",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            {
+                "schema": "CustomerMaster",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            {
+                "schema": "Payee",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            {
+                "schema": "GLTransaction",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "periodId": "2025-03"
+                    }
+                }
+            },
+            {
+                "schema": "GLLine",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "administrationId": "adm-1",
+                        "periodId": "2025-03"
+                    }
+                }
+            }
+        ],
+        "log": [
+            "warning: Shillinq report generator: could not load Account: read failed for Account",
+            "warning: Shillinq report generator: could not load CustomerMaster: read failed for CustomerMaster",
+            "warning: Shillinq report generator: could not load Payee: read failed for Payee",
+            "warning: Shillinq report generator: could not load GLTransaction: read failed for GLTransaction",
+            "warning: Shillinq report generator: could not load GLLine: read failed for GLLine"
+        ]
+    },
+    "xaf noAdministration": {
+        "fileName": "xaf-2025.xml",
+        "content": [
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+            "<auditfile xmlns=\"http://www.auditfiles.nl/XAF/3.2\">",
+            "  <header>",
+            "    <fiscalYear>2025</fiscalYear>",
+            "    <startDate>2025-01-01</startDate>",
+            "    <endDate>2025-12-31</endDate>",
+            "    <curCode>EUR</curCode>",
+            "    <dateCreated>TODAY</dateCreated>",
+            "    <softwareDesc>Shillinq</softwareDesc>",
+            "  </header>",
+            "  <company>",
+            "    <companyName>Shillinq administration</companyName>",
+            "    <companyIdent>UNKNOWN</companyIdent>",
+            "    <currencyCode>EUR</currencyCode>",
+            "    <generalLedger>",
+            "      <ledgerAccount>",
+            "        <accID>1000</accID>",
+            "        <accDesc>Kas</accDesc>",
+            "        <accTp>B</accTp>",
+            "      </ledgerAccount>",
+            "      <ledgerAccount>",
+            "        <accID>4000</accID>",
+            "        <accDesc>Kosten</accDesc>",
+            "        <accTp>P</accTp>",
+            "      </ledgerAccount>",
+            "      <ledgerAccount>",
+            "        <accID>8000</accID>",
+            "        <accDesc>Omzet</accDesc>",
+            "        <accTp>P</accTp>",
+            "      </ledgerAccount>",
+            "      <ledgerAccount>",
+            "        <accID>1100</accID>",
+            "        <accDesc>Bank</accDesc>",
+            "        <accTp>B</accTp>",
+            "      </ledgerAccount>",
+            "      <ledgerAccount>",
+            "        <accID>0100</accID>",
+            "        <accDesc>Zonder administratie</accDesc>",
+            "        <accTp>B</accTp>",
+            "      </ledgerAccount>",
+            "    </generalLedger>",
+            "    <customersSuppliers>",
+            "      <customerSupplier>",
+            "        <custSupID>C-1</custSupID>",
+            "        <custSupTp>C</custSupTp>",
+            "        <companyName>Klant BV</companyName>",
+            "        <companyIdent>123</companyIdent>",
+            "        <taxRegistration>",
+            "          <taxRegIdent>NL1</taxRegIdent>",
+            "        </taxRegistration>",
+            "        <contact>",
+            "          <eMail>a@b.nl</eMail>",
+            "          <telephone>010</telephone>",
+            "        </contact>",
+            "      </customerSupplier>",
+            "      <customerSupplier>",
+            "        <custSupID>C-2</custSupID>",
+            "        <custSupTp>C</custSupTp>",
+            "        <companyName>Klant Twee</companyName>",
+            "        <taxRegistration>",
+            "          <taxRegIdent>NL2</taxRegIdent>",
+            "        </taxRegistration>",
+            "        <contact>",
+            "          <telephone>020</telephone>",
+            "        </contact>",
+            "      </customerSupplier>",
+            "      <customerSupplier>",
+            "        <custSupID>C-3</custSupID>",
+            "        <custSupTp>C</custSupTp>",
+            "        <companyName>Derde</companyName>",
+            "        <taxRegistration>",
+            "          <taxRegIdent>NL3</taxRegIdent>",
+            "        </taxRegistration>",
+            "        <contact>",
+            "          <eMail>c@d.nl</eMail>",
+            "        </contact>",
+            "      </customerSupplier>",
+            "      <customerSupplier>",
+            "        <custSupID>C-9</custSupID>",
+            "        <custSupTp>C</custSupTp>",
+            "        <companyName>Andere administratie</companyName>",
+            "      </customerSupplier>",
+            "      <customerSupplier>",
+            "        <custSupID>S-1</custSupID>",
+            "        <custSupTp>S</custSupTp>",
+            "        <companyName>Leverancier</companyName>",
+            "      </customerSupplier>",
+            "      <customerSupplier>",
+            "        <custSupID>S-2</custSupID>",
+            "        <custSupTp>S</custSupTp>",
+            "        <companyName></companyName>",
+            "      </customerSupplier>",
+            "    </customersSuppliers>",
+            "    <transactions>",
+            "      <linesCount>6</linesCount>",
+            "      <transactionCount>5</transactionCount>",
+            "      <journal>",
+            "        <jrnID>GL</jrnID>",
+            "        <desc>General ledger</desc>",
+            "        <jrnTp>Z</jrnTp>",
+            "        <transaction>",
+            "          <nr>M-1</nr>",
+            "          <desc>Memoriaal</desc>",
+            "          <trDt>2025-03-03</trDt>",
+            "          <trLine>",
+            "            <nr>1</nr>",
+            "            <accID>1000</accID>",
+            "            <desc>Kas in</desc>",
+            "            <amnt>100.00</amnt>",
+            "            <amntTp>D</amntTp>",
+            "          </trLine>",
+            "          <trLine>",
+            "            <nr>l-2</nr>",
+            "            <accID>8000</accID>",
+            "            <desc></desc>",
+            "            <amnt>100.00</amnt>",
+            "            <amntTp>C</amntTp>",
+            "          </trLine>",
+            "        </transaction>",
+            "        <transaction>",
+            "          <nr>t-2</nr>",
+            "          <desc></desc>",
+            "          <trDt></trDt>",
+            "          <trLine>",
+            "            <nr>1</nr>",
+            "            <accID>4000</accID>",
+            "            <desc></desc>",
+            "            <amnt>0.00</amnt>",
+            "            <amntTp>C</amntTp>",
+            "          </trLine>",
+            "        </transaction>",
+            "        <transaction>",
+            "          <nr>M-3</nr>",
+            "          <desc></desc>",
+            "          <trDt></trDt>",
+            "          <trLine>",
+            "            <nr>1</nr>",
+            "            <accID>1000</accID>",
+            "            <desc></desc>",
+            "            <amnt>12.50</amnt>",
+            "            <amntTp>D</amntTp>",
+            "          </trLine>",
+            "          <trLine>",
+            "            <nr>l-x</nr>",
+            "            <accID>8000</accID>",
+            "            <desc>Omzet</desc>",
+            "            <amnt>12.50</amnt>",
+            "            <amntTp>C</amntTp>",
+            "          </trLine>",
+            "        </transaction>",
+            "        <transaction>",
+            "          <nr>t-4</nr>",
+            "          <desc></desc>",
+            "          <trDt></trDt>",
+            "        </transaction>",
+            "        <transaction>",
+            "          <nr>X-9</nr>",
+            "          <desc></desc>",
+            "          <trDt></trDt>",
+            "          <trLine>",
+            "            <nr>1</nr>",
+            "            <accID>1100</accID>",
+            "            <desc></desc>",
+            "            <amnt>5.00</amnt>",
+            "            <amntTp>D</amntTp>",
+            "          </trLine>",
+            "        </transaction>",
+            "      </journal>",
+            "    </transactions>",
+            "  </company>",
+            "</auditfile>",
+            ""
+        ],
+        "reads": [
+            {
+                "schema": "Account",
+                "config": {
+                    "limit": 10000
+                }
+            },
+            {
+                "schema": "CustomerMaster",
+                "config": {
+                    "limit": 10000
+                }
+            },
+            {
+                "schema": "Payee",
+                "config": {
+                    "limit": 10000
+                }
+            },
+            {
+                "schema": "GLTransaction",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "periodId": "2025"
+                    }
+                }
+            },
+            {
+                "schema": "GLLine",
+                "config": {
+                    "limit": 10000,
+                    "filters": {
+                        "periodId": "2025"
+                    }
+                }
+            }
+        ],
+        "log": []
+    }
+}
