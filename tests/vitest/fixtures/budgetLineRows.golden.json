@@ -1,0 +1,325 @@
+{
+	"groups envelope": [
+		{
+			"key": "5.1|FAC|2026|4000",
+			"programme": "5.1",
+			"cost_centre": "FAC",
+			"financial_year": 2026,
+			"general_ledger_account": "4000",
+			"geautoriseerd": 1000,
+			"mandatory": 300,
+			"gerealiseerd": 200,
+			"vrij": 500
+		}
+	],
+	"legacy buckets": [
+		{
+			"key": "6.2|ICT|2025|4100",
+			"programme": "6.2",
+			"cost_centre": "ICT",
+			"financial_year": 2025,
+			"general_ledger_account": "4100",
+			"geautoriseerd": 100,
+			"mandatory": 40,
+			"gerealiseerd": 10,
+			"vrij": 50
+		}
+	],
+	"bare array": [
+		{
+			"key": "5.1|FAC|2026|4000",
+			"programme": "5.1",
+			"cost_centre": "FAC",
+			"financial_year": 2026,
+			"general_ledger_account": "4000",
+			"geautoriseerd": 1000,
+			"mandatory": 300,
+			"gerealiseerd": 200,
+			"vrij": 500
+		},
+		{
+			"key": "6.2|ICT|2025|4100",
+			"programme": "6.2",
+			"cost_centre": "ICT",
+			"financial_year": 2025,
+			"general_ledger_account": "4100",
+			"geautoriseerd": 100,
+			"mandatory": 40,
+			"gerealiseerd": 10,
+			"vrij": 50
+		}
+	],
+	"groups wins over buckets": [
+		{
+			"key": "5.1|FAC|2026|4000",
+			"programme": "5.1",
+			"cost_centre": "FAC",
+			"financial_year": 2026,
+			"general_ledger_account": "4000",
+			"geautoriseerd": 1000,
+			"mandatory": 300,
+			"gerealiseerd": 200,
+			"vrij": 500
+		}
+	],
+	"groups not an array": [
+		{
+			"key": "6.2|ICT|2025|4100",
+			"programme": "6.2",
+			"cost_centre": "ICT",
+			"financial_year": 2025,
+			"general_ledger_account": "4100",
+			"geautoriseerd": 100,
+			"mandatory": 40,
+			"gerealiseerd": 10,
+			"vrij": 50
+		}
+	],
+	"nothing usable": [],
+	"null": [],
+	"undefined": [],
+	"a string": [],
+	"a number": [],
+	"empty groups": [],
+	"null and scalar groups": [
+		{
+			"key": "|||",
+			"programme": "",
+			"cost_centre": "",
+			"financial_year": null,
+			"general_ledger_account": "",
+			"geautoriseerd": 0,
+			"mandatory": 0,
+			"gerealiseerd": 0,
+			"vrij": 0
+		},
+		{
+			"key": "|||",
+			"programme": "",
+			"cost_centre": "",
+			"financial_year": null,
+			"general_ledger_account": "",
+			"geautoriseerd": 0,
+			"mandatory": 0,
+			"gerealiseerd": 0,
+			"vrij": 0
+		},
+		{
+			"key": "|||",
+			"programme": "",
+			"cost_centre": "",
+			"financial_year": null,
+			"general_ledger_account": "",
+			"geautoriseerd": 0,
+			"mandatory": 0,
+			"gerealiseerd": 0,
+			"vrij": 0
+		},
+		{
+			"key": "|||",
+			"programme": "",
+			"cost_centre": "",
+			"financial_year": null,
+			"general_ledger_account": "",
+			"geautoriseerd": 0,
+			"mandatory": 0,
+			"gerealiseerd": 0,
+			"vrij": 0
+		}
+	],
+	"empty group": [
+		{
+			"key": "|||",
+			"programme": "",
+			"cost_centre": "",
+			"financial_year": null,
+			"general_ledger_account": "",
+			"geautoriseerd": 0,
+			"mandatory": 0,
+			"gerealiseerd": 0,
+			"vrij": 0
+		}
+	],
+	"keys only": [
+		{
+			"key": "P|||",
+			"programme": "P",
+			"cost_centre": "",
+			"financial_year": null,
+			"general_ledger_account": "",
+			"geautoriseerd": 0,
+			"mandatory": 0,
+			"gerealiseerd": 0,
+			"vrij": 0
+		}
+	],
+	"snake keys inside keys": [
+		{
+			"key": "|CC|0|GL",
+			"programme": "",
+			"cost_centre": "CC",
+			"financial_year": 0,
+			"general_ledger_account": "GL",
+			"geautoriseerd": 0,
+			"mandatory": 0,
+			"gerealiseerd": 0,
+			"vrij": 0
+		}
+	],
+	"camel beats snake": [
+		{
+			"key": "|A|1|C",
+			"programme": "",
+			"cost_centre": "A",
+			"financial_year": 1,
+			"general_ledger_account": "C",
+			"geautoriseerd": 0,
+			"mandatory": 0,
+			"gerealiseerd": 0,
+			"vrij": 0
+		}
+	],
+	"null keys fall back": [
+		{
+			"key": "|S||",
+			"programme": "",
+			"cost_centre": "S",
+			"financial_year": null,
+			"general_ledger_account": "",
+			"geautoriseerd": 0,
+			"mandatory": 0,
+			"gerealiseerd": 0,
+			"vrij": 0
+		}
+	],
+	"values with plain names": [
+		{
+			"key": "|||",
+			"programme": "",
+			"cost_centre": "",
+			"financial_year": null,
+			"general_ledger_account": "",
+			"geautoriseerd": 0,
+			"mandatory": 5,
+			"gerealiseerd": 6,
+			"vrij": -11
+		}
+	],
+	"values beat legacy fields": [
+		{
+			"key": "|||",
+			"programme": "",
+			"cost_centre": "",
+			"financial_year": null,
+			"general_ledger_account": "",
+			"geautoriseerd": 0,
+			"mandatory": 1,
+			"gerealiseerd": 2,
+			"vrij": -3
+		}
+	],
+	"null values fall back to legacy": [
+		{
+			"key": "|||",
+			"programme": "",
+			"cost_centre": "",
+			"financial_year": null,
+			"general_ledger_account": "",
+			"geautoriseerd": 0,
+			"mandatory": 3,
+			"gerealiseerd": 4,
+			"vrij": -7
+		}
+	],
+	"joined null falls back": [
+		{
+			"key": "|||",
+			"programme": "",
+			"cost_centre": "",
+			"financial_year": null,
+			"general_ledger_account": "",
+			"geautoriseerd": 50,
+			"mandatory": 0,
+			"gerealiseerd": 0,
+			"vrij": 50
+		}
+	],
+	"joined missing, group legacy amount": [
+		{
+			"key": "|||",
+			"programme": "",
+			"cost_centre": "",
+			"financial_year": null,
+			"general_ledger_account": "",
+			"geautoriseerd": 70,
+			"mandatory": 0,
+			"gerealiseerd": 0,
+			"vrij": 70
+		}
+	],
+	"non-numeric amounts": [
+		{
+			"key": "|||",
+			"programme": "",
+			"cost_centre": "",
+			"financial_year": null,
+			"general_ledger_account": "",
+			"geautoriseerd": "(NaN)",
+			"mandatory": "(NaN)",
+			"gerealiseerd": 0,
+			"vrij": "(NaN)"
+		}
+	],
+	"over-committed": [
+		{
+			"key": "|||",
+			"programme": "",
+			"cost_centre": "",
+			"financial_year": null,
+			"general_ledger_account": "",
+			"geautoriseerd": 1000,
+			"mandatory": 900,
+			"gerealiseerd": 500,
+			"vrij": -400
+		}
+	],
+	"numeric programme and zero year": [
+		{
+			"key": "0|12|0|",
+			"programme": "0",
+			"cost_centre": "12",
+			"financial_year": 0,
+			"general_ledger_account": "",
+			"geautoriseerd": 0,
+			"mandatory": 0,
+			"gerealiseerd": 0,
+			"vrij": 0
+		}
+	],
+	"zero dimensions": [
+		{
+			"key": "0|0||0",
+			"programme": "0",
+			"cost_centre": "0",
+			"financial_year": null,
+			"general_ledger_account": "0",
+			"geautoriseerd": 0,
+			"mandatory": 0,
+			"gerealiseerd": 0,
+			"vrij": 0
+		}
+	],
+	"negative zero amounts": [
+		{
+			"key": "|||",
+			"programme": "",
+			"cost_centre": "",
+			"financial_year": null,
+			"general_ledger_account": "",
+			"geautoriseerd": "(-0)",
+			"mandatory": 0,
+			"gerealiseerd": 0,
+			"vrij": "(-0)"
+		}
+	]
+}

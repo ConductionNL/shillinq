@@ -316,7 +316,7 @@ final class InvoicingTailChecks implements CheckProvider {
 				'en16931-br-ae-10' => static fn (array $o): bool => self::breakdownHasExemptionReason($o, 'AE'),
 
 				// Intra-community supply ('K').
-				'en16931-br-ic-02' => static fn (array $o): bool => self::sellerVatWhenCategory($o, 'K'),
+				'en16931-br-ic-02' => static fn (array $o): bool => self::intraCommunityPartiesIdentified($o),
 				'en16931-br-ic-03' => static fn (array $o): bool => self::sellerVatWhenCollectionCategory($o, 'allowances', 'K'),
 				'en16931-br-ic-04' => static fn (array $o): bool => self::sellerVatWhenCollectionCategory($o, 'charges', 'K'),
 				'en16931-br-ic-05' => static fn (array $o): bool => self::lineRateZeroForCategory($o, 'K'),
@@ -900,6 +900,20 @@ final class InvoicingTailChecks implements CheckProvider {
 
 		return false;
 	}//end breakdownHasCategory()
+
+	/**
+	 * When a line is an intra-community supply ('K'), the seller VAT id (or tax
+	 * representative VAT id) and the buyer VAT id are present (EN 16931
+	 * BR-IC-02). Vacuously true when no line is an intra-community supply.
+	 *
+	 * @param array<string, mixed> $o The ARInvoice.
+	 *
+	 * @return bool
+	 */
+	private static function intraCommunityPartiesIdentified(array $o): bool {
+		return self::sellerVatWhenCategory($o, 'K')
+			&& (self::anyLineCategory($o, 'K') === false || self::present($o, 'buyerVatId'));
+	}//end intraCommunityPartiesIdentified()
 
 	/**
 	 * When a line of category $cat exists, the seller VAT id (or, for an EU rule, a
