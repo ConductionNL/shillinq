@@ -43,6 +43,9 @@ use Stringable;
  *
  * @covers \OCA\Shillinq\Service\SettingsService
  * @covers \OCA\Shillinq\Service\InventorySeedService
+ * @covers \OCA\Shillinq\Service\Seed\SeedImporter
+ * @uses   \OCA\Shillinq\Service\Seed\SeedImport
+ * @uses   \OCA\Shillinq\Service\Seed\SeedMessages
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
