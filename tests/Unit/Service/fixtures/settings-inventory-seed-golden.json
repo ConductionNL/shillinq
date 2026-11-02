@@ -1,0 +1,2754 @@
+{
+    "barcodes containerFails": {
+        "result": {
+            "success": false,
+            "message": "no service OCA\\OpenRegister\\Service\\ObjectService"
+        },
+        "calls": [],
+        "log": [
+            {
+                "level": "error",
+                "message": "Shillinq: inventory barcode seeding failed",
+                "context": {
+                    "exception": "no service OCA\\OpenRegister\\Service\\ObjectService"
+                }
+            }
+        ]
+    },
+    "barcodes existing": {
+        "result": {
+            "success": true,
+            "message": "Inventory barcodes seeded successfully.",
+            "seeded": 2,
+            "skipped": 3
+        },
+        "calls": [
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "Barcode"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "barcode": "5410317126589",
+                        "uomCode": "EA"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "Barcode"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "barcode": "15410317126586",
+                        "uomCode": "CA"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productId": "DV-KAT-SENIOR-2KG",
+                        "productSku": "DV-KAT-SENIOR-2KG",
+                        "barcode": "15410317126586",
+                        "barcodeType": "GTIN",
+                        "format": "GTIN-14",
+                        "uomCode": "CA",
+                        "quantity": 4,
+                        "isDefault": false,
+                        "isActive": true,
+                        "notes": "Carton of 4 bags"
+                    },
+                    "register": "shillinq",
+                    "schema": "Barcode"
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "Barcode"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "barcode": "00123456789123456789",
+                        "uomCode": "PL"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "Barcode"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "barcode": "OLD-VIT-001",
+                        "uomCode": "EA"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productId": "VIT-C-1000MG-100CT",
+                        "productSku": "VIT-C-1000MG-100CT",
+                        "barcode": "OLD-VIT-001",
+                        "barcodeType": "INTERNAL",
+                        "format": "INTERNAL",
+                        "uomCode": "EA",
+                        "quantity": 1,
+                        "isDefault": false,
+                        "isActive": true,
+                        "notes": "Legacy internal code from prior ERP system (still in use in some locations)"
+                    },
+                    "register": "shillinq",
+                    "schema": "Barcode"
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "Barcode"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "barcode": "012345678912",
+                        "uomCode": "EA"
+                    },
+                    "limit": 1
+                }
+            }
+        ],
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: inventory barcodes seeded",
+                "context": {
+                    "seeded": 2,
+                    "skipped": 3
+                }
+            }
+        ]
+    },
+    "barcodes fresh": {
+        "result": {
+            "success": true,
+            "message": "Inventory barcodes seeded successfully.",
+            "seeded": 5,
+            "skipped": 0
+        },
+        "calls": [
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "Barcode"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "barcode": "5410317126589",
+                        "uomCode": "EA"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productId": "DV-KAT-SENIOR-2KG",
+                        "productSku": "DV-KAT-SENIOR-2KG",
+                        "barcode": "5410317126589",
+                        "barcodeType": "EAN",
+                        "format": "EAN-13",
+                        "uomCode": "EA",
+                        "quantity": 1,
+                        "isDefault": true,
+                        "isActive": true,
+                        "notes": "Unit barcode for individual 2kg bag"
+                    },
+                    "register": "books",
+                    "schema": "Barcode"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "Barcode"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "barcode": "15410317126586",
+                        "uomCode": "CA"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productId": "DV-KAT-SENIOR-2KG",
+                        "productSku": "DV-KAT-SENIOR-2KG",
+                        "barcode": "15410317126586",
+                        "barcodeType": "GTIN",
+                        "format": "GTIN-14",
+                        "uomCode": "CA",
+                        "quantity": 4,
+                        "isDefault": false,
+                        "isActive": true,
+                        "notes": "Carton of 4 bags"
+                    },
+                    "register": "books",
+                    "schema": "Barcode"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "Barcode"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "barcode": "00123456789123456789",
+                        "uomCode": "PL"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productId": "DV-KAT-SENIOR-2KG",
+                        "productSku": "DV-KAT-SENIOR-2KG",
+                        "barcode": "00123456789123456789",
+                        "barcodeType": "SSCC",
+                        "format": "SSCC-18",
+                        "uomCode": "PL",
+                        "quantity": 100,
+                        "isDefault": false,
+                        "isActive": true,
+                        "notes": "Pallet barcode (25 cartons = 100 individual bags)"
+                    },
+                    "register": "books",
+                    "schema": "Barcode"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "Barcode"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "barcode": "OLD-VIT-001",
+                        "uomCode": "EA"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productId": "VIT-C-1000MG-100CT",
+                        "productSku": "VIT-C-1000MG-100CT",
+                        "barcode": "OLD-VIT-001",
+                        "barcodeType": "INTERNAL",
+                        "format": "INTERNAL",
+                        "uomCode": "EA",
+                        "quantity": 1,
+                        "isDefault": false,
+                        "isActive": true,
+                        "notes": "Legacy internal code from prior ERP system (still in use in some locations)"
+                    },
+                    "register": "books",
+                    "schema": "Barcode"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "Barcode"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "barcode": "012345678912",
+                        "uomCode": "EA"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productId": "VIT-C-1000MG-100CT",
+                        "productSku": "VIT-C-1000MG-100CT",
+                        "barcode": "012345678912",
+                        "barcodeType": "UPC",
+                        "format": "UPC-A",
+                        "uomCode": "EA",
+                        "quantity": 1,
+                        "isDefault": true,
+                        "isActive": true,
+                        "notes": "North American UPC-A for US retail channels"
+                    },
+                    "register": "books",
+                    "schema": "Barcode"
+                }
+            }
+        ],
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: inventory barcodes seeded",
+                "context": {
+                    "seeded": 5,
+                    "skipped": 0
+                }
+            }
+        ]
+    },
+    "barcodes noAdmin": {
+        "result": {
+            "success": true,
+            "message": "Inventory barcodes seeded successfully.",
+            "seeded": 5,
+            "skipped": 0
+        },
+        "calls": [
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "Barcode"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "barcode": "5410317126589",
+                        "uomCode": "EA"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productId": "DV-KAT-SENIOR-2KG",
+                        "productSku": "DV-KAT-SENIOR-2KG",
+                        "barcode": "5410317126589",
+                        "barcodeType": "EAN",
+                        "format": "EAN-13",
+                        "uomCode": "EA",
+                        "quantity": 1,
+                        "isDefault": true,
+                        "isActive": true,
+                        "notes": "Unit barcode for individual 2kg bag"
+                    },
+                    "register": "books",
+                    "schema": "Barcode"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "Barcode"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "barcode": "15410317126586",
+                        "uomCode": "CA"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productId": "DV-KAT-SENIOR-2KG",
+                        "productSku": "DV-KAT-SENIOR-2KG",
+                        "barcode": "15410317126586",
+                        "barcodeType": "GTIN",
+                        "format": "GTIN-14",
+                        "uomCode": "CA",
+                        "quantity": 4,
+                        "isDefault": false,
+                        "isActive": true,
+                        "notes": "Carton of 4 bags"
+                    },
+                    "register": "books",
+                    "schema": "Barcode"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "Barcode"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "barcode": "00123456789123456789",
+                        "uomCode": "PL"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productId": "DV-KAT-SENIOR-2KG",
+                        "productSku": "DV-KAT-SENIOR-2KG",
+                        "barcode": "00123456789123456789",
+                        "barcodeType": "SSCC",
+                        "format": "SSCC-18",
+                        "uomCode": "PL",
+                        "quantity": 100,
+                        "isDefault": false,
+                        "isActive": true,
+                        "notes": "Pallet barcode (25 cartons = 100 individual bags)"
+                    },
+                    "register": "books",
+                    "schema": "Barcode"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "Barcode"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "barcode": "OLD-VIT-001",
+                        "uomCode": "EA"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productId": "VIT-C-1000MG-100CT",
+                        "productSku": "VIT-C-1000MG-100CT",
+                        "barcode": "OLD-VIT-001",
+                        "barcodeType": "INTERNAL",
+                        "format": "INTERNAL",
+                        "uomCode": "EA",
+                        "quantity": 1,
+                        "isDefault": false,
+                        "isActive": true,
+                        "notes": "Legacy internal code from prior ERP system (still in use in some locations)"
+                    },
+                    "register": "books",
+                    "schema": "Barcode"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "Barcode"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "barcode": "012345678912",
+                        "uomCode": "EA"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productId": "VIT-C-1000MG-100CT",
+                        "productSku": "VIT-C-1000MG-100CT",
+                        "barcode": "012345678912",
+                        "barcodeType": "UPC",
+                        "format": "UPC-A",
+                        "uomCode": "EA",
+                        "quantity": 1,
+                        "isDefault": true,
+                        "isActive": true,
+                        "notes": "North American UPC-A for US retail channels"
+                    },
+                    "register": "books",
+                    "schema": "Barcode"
+                }
+            }
+        ],
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: inventory barcodes seeded",
+                "context": {
+                    "seeded": 5,
+                    "skipped": 0
+                }
+            }
+        ]
+    },
+    "barcodes saveFails": {
+        "result": {
+            "success": false,
+            "message": "save refused"
+        },
+        "calls": [
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "Barcode"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "barcode": "5410317126589",
+                        "uomCode": "EA"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productId": "DV-KAT-SENIOR-2KG",
+                        "productSku": "DV-KAT-SENIOR-2KG",
+                        "barcode": "5410317126589",
+                        "barcodeType": "EAN",
+                        "format": "EAN-13",
+                        "uomCode": "EA",
+                        "quantity": 1,
+                        "isDefault": true,
+                        "isActive": true,
+                        "notes": "Unit barcode for individual 2kg bag"
+                    },
+                    "register": "books",
+                    "schema": "Barcode"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "Barcode"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "barcode": "15410317126586",
+                        "uomCode": "CA"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productId": "DV-KAT-SENIOR-2KG",
+                        "productSku": "DV-KAT-SENIOR-2KG",
+                        "barcode": "15410317126586",
+                        "barcodeType": "GTIN",
+                        "format": "GTIN-14",
+                        "uomCode": "CA",
+                        "quantity": 4,
+                        "isDefault": false,
+                        "isActive": true,
+                        "notes": "Carton of 4 bags"
+                    },
+                    "register": "books",
+                    "schema": "Barcode"
+                }
+            }
+        ],
+        "log": [
+            {
+                "level": "error",
+                "message": "Shillinq: inventory barcode seeding failed",
+                "context": {
+                    "exception": "save refused"
+                }
+            }
+        ]
+    },
+    "barcodes unavailable": {
+        "result": {
+            "success": false,
+            "message": "OpenRegister is not installed or enabled."
+        },
+        "calls": [],
+        "log": []
+    },
+    "glconfig containerFails": {
+        "result": {
+            "success": false,
+            "message": "no service OCA\\OpenRegister\\Service\\ObjectService"
+        },
+        "calls": [],
+        "log": [
+            {
+                "level": "error",
+                "message": "Shillinq: InventoryGLConfig seeding failed",
+                "context": {
+                    "exception": "no service OCA\\OpenRegister\\Service\\ObjectService"
+                }
+            }
+        ]
+    },
+    "glconfig existing": {
+        "result": {
+            "success": true,
+            "message": "InventoryGLConfig seeded successfully.",
+            "seeded": 0,
+            "skipped": 1
+        },
+        "calls": [
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "InventoryGLConfig"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7"
+                    },
+                    "limit": 1
+                }
+            }
+        ],
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: InventoryGLConfig seeded",
+                "context": {
+                    "administrationId": "adm-7",
+                    "seeded": 0,
+                    "skipped": 1
+                }
+            }
+        ]
+    },
+    "glconfig fresh": {
+        "result": {
+            "success": true,
+            "message": "InventoryGLConfig seeded successfully.",
+            "seeded": 1,
+            "skipped": 0
+        },
+        "calls": [
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryGLConfig"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "cogsAccountNumber": "7000",
+                        "inventoryAssetAccountNumber": "1400",
+                        "grIrClearingAccountNumber": "1800",
+                        "inventoryAdjustmentAccountNumber": "7100",
+                        "isActive": true,
+                        "description": "Shillinq demo administratie: NL RGS 3.5 MKB defaults (7000 Kostprijs omzet / 1400 Voorraden / 1800 GR/IR clearing / 7100 Voorraadmutaties).",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryGLConfig"
+                }
+            }
+        ],
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: InventoryGLConfig seeded",
+                "context": {
+                    "administrationId": "adm-7",
+                    "seeded": 1,
+                    "skipped": 0
+                }
+            }
+        ]
+    },
+    "glconfig noAdmin": {
+        "result": {
+            "success": false,
+            "message": "administrationId must not be empty."
+        },
+        "calls": [],
+        "log": []
+    },
+    "glconfig saveFails": {
+        "result": {
+            "success": true,
+            "message": "InventoryGLConfig seeded successfully.",
+            "seeded": 1,
+            "skipped": 0
+        },
+        "calls": [
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryGLConfig"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "cogsAccountNumber": "7000",
+                        "inventoryAssetAccountNumber": "1400",
+                        "grIrClearingAccountNumber": "1800",
+                        "inventoryAdjustmentAccountNumber": "7100",
+                        "isActive": true,
+                        "description": "Shillinq demo administratie: NL RGS 3.5 MKB defaults (7000 Kostprijs omzet / 1400 Voorraden / 1800 GR/IR clearing / 7100 Voorraadmutaties).",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryGLConfig"
+                }
+            }
+        ],
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: InventoryGLConfig seeded",
+                "context": {
+                    "administrationId": "adm-7",
+                    "seeded": 1,
+                    "skipped": 0
+                }
+            }
+        ]
+    },
+    "glconfig unavailable": {
+        "result": {
+            "success": false,
+            "message": "OpenRegister is not installed or enabled."
+        },
+        "calls": [],
+        "log": []
+    },
+    "lots containerFails": {
+        "result": {
+            "success": false,
+            "message": "no service OCA\\OpenRegister\\Service\\ObjectService"
+        },
+        "calls": [],
+        "log": [
+            {
+                "level": "error",
+                "message": "Shillinq: inventory lot seeding failed",
+                "context": {
+                    "exception": "no service OCA\\OpenRegister\\Service\\ObjectService"
+                }
+            }
+        ]
+    },
+    "lots existing": {
+        "result": {
+            "success": true,
+            "message": "Inventory lots seeded successfully.",
+            "seeded": 2,
+            "skipped": 3
+        },
+        "calls": [
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "InventoryLot"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "lotNumber": "LOT-2026-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "InventoryLot"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "lotNumber": "LOT-2026-002"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "lotNumber": "LOT-2026-002",
+                        "batchCode": "PF-HOND-B042",
+                        "productSku": "NV-HOND-ADULT-400G",
+                        "manufactureDate": "2026-02-01",
+                        "expiryDate": "2028-02-01",
+                        "bestBeforeDate": "2027-12-01",
+                        "quantity": 576,
+                        "unitCode": "BLIK",
+                        "unitCost": 2.15,
+                        "warehouseLocation": "REK-B1-VAK4",
+                        "lotStatus": "active",
+                        "receivedDate": "2026-02-10",
+                        "notes": "Natvoer hond adult, rund en groenten",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "shillinq",
+                    "schema": "InventoryLot"
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "InventoryLot"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "lotNumber": "LOT-2025-099"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "InventoryLot"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "lotNumber": "LOT-2026-003"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "lotNumber": "LOT-2026-003",
+                        "batchCode": "AG-KONIJN-D007",
+                        "productSku": "KORN-KONIJN-STD-5KG",
+                        "manufactureDate": "2026-03-01",
+                        "expiryDate": "2027-09-01",
+                        "bestBeforeDate": "2027-06-01",
+                        "quantity": 120,
+                        "unitCode": "ZAK",
+                        "unitCost": 6.9,
+                        "warehouseLocation": "REK-C2-VAK3",
+                        "lotStatus": "active",
+                        "receivedDate": "2026-03-05",
+                        "notes": "Konijnenkorrels standaard, leverancier Versele-Laga",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "shillinq",
+                    "schema": "InventoryLot"
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "InventoryLot"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "lotNumber": "LOT-2026-004"
+                    },
+                    "limit": 1
+                }
+            }
+        ],
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: inventory lots seeded",
+                "context": {
+                    "seeded": 2,
+                    "skipped": 3
+                }
+            }
+        ]
+    },
+    "lots fresh": {
+        "result": {
+            "success": true,
+            "message": "Inventory lots seeded successfully.",
+            "seeded": 5,
+            "skipped": 0
+        },
+        "calls": [
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryLot"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "lotNumber": "LOT-2026-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "lotNumber": "LOT-2026-001",
+                        "batchCode": "PF-KAT-A001",
+                        "productSku": "DV-KAT-SENIOR-2KG",
+                        "manufactureDate": "2026-01-15",
+                        "expiryDate": "2027-01-15",
+                        "bestBeforeDate": "2026-12-15",
+                        "quantity": 240,
+                        "unitCode": "ZAK",
+                        "unitCost": 8.75,
+                        "warehouseLocation": "REK-A3-VAK2",
+                        "lotStatus": "active",
+                        "receivedDate": "2026-01-20",
+                        "notes": "Droogvoer kat senior, leverancier Prins Petfoods",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryLot"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryLot"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "lotNumber": "LOT-2026-002"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "lotNumber": "LOT-2026-002",
+                        "batchCode": "PF-HOND-B042",
+                        "productSku": "NV-HOND-ADULT-400G",
+                        "manufactureDate": "2026-02-01",
+                        "expiryDate": "2028-02-01",
+                        "bestBeforeDate": "2027-12-01",
+                        "quantity": 576,
+                        "unitCode": "BLIK",
+                        "unitCost": 2.15,
+                        "warehouseLocation": "REK-B1-VAK4",
+                        "lotStatus": "active",
+                        "receivedDate": "2026-02-10",
+                        "notes": "Natvoer hond adult, rund en groenten",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryLot"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryLot"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "lotNumber": "LOT-2025-099"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "lotNumber": "LOT-2025-099",
+                        "batchCode": "PF-HOND-C019",
+                        "productSku": "DV-HOND-PUPS-KLEIN-1KG",
+                        "manufactureDate": "2025-10-01",
+                        "expiryDate": "2026-06-15",
+                        "bestBeforeDate": "2026-05-01",
+                        "quantity": 48,
+                        "unitCode": "ZAK",
+                        "unitCost": 12.4,
+                        "warehouseLocation": "REK-A1-VAK1",
+                        "lotStatus": "quarantined",
+                        "receivedDate": "2025-10-20",
+                        "notes": "Puppyvoer klein ras - in quarantaine i.v.m. kwaliteitscontrole batch C019",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryLot"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryLot"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "lotNumber": "LOT-2026-003"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "lotNumber": "LOT-2026-003",
+                        "batchCode": "AG-KONIJN-D007",
+                        "productSku": "KORN-KONIJN-STD-5KG",
+                        "manufactureDate": "2026-03-01",
+                        "expiryDate": "2027-09-01",
+                        "bestBeforeDate": "2027-06-01",
+                        "quantity": 120,
+                        "unitCode": "ZAK",
+                        "unitCost": 6.9,
+                        "warehouseLocation": "REK-C2-VAK3",
+                        "lotStatus": "active",
+                        "receivedDate": "2026-03-05",
+                        "notes": "Konijnenkorrels standaard, leverancier Versele-Laga",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryLot"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryLot"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "lotNumber": "LOT-2026-004"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "lotNumber": "LOT-2026-004",
+                        "batchCode": "AG-VOGEL-E003",
+                        "productSku": "ZAADHM-VOGEL-PREM-2KG",
+                        "manufactureDate": "2026-03-15",
+                        "expiryDate": "2027-03-15",
+                        "bestBeforeDate": "2027-01-15",
+                        "quantity": 300,
+                        "unitCode": "ZAK",
+                        "unitCost": 5.25,
+                        "warehouseLocation": "REK-C1-VAK2",
+                        "lotStatus": "active",
+                        "receivedDate": "2026-03-20",
+                        "notes": "Vogelzaad mix premium, zonnebloempitten en gierst",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryLot"
+                }
+            }
+        ],
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: inventory lots seeded",
+                "context": {
+                    "seeded": 5,
+                    "skipped": 0
+                }
+            }
+        ]
+    },
+    "lots noAdmin": {
+        "result": {
+            "success": true,
+            "message": "No default administration configured, skipping lot seed.",
+            "seeded": 0,
+            "skipped": 0
+        },
+        "calls": [],
+        "log": []
+    },
+    "lots saveFails": {
+        "result": {
+            "success": false,
+            "message": "save refused"
+        },
+        "calls": [
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryLot"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "lotNumber": "LOT-2026-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "lotNumber": "LOT-2026-001",
+                        "batchCode": "PF-KAT-A001",
+                        "productSku": "DV-KAT-SENIOR-2KG",
+                        "manufactureDate": "2026-01-15",
+                        "expiryDate": "2027-01-15",
+                        "bestBeforeDate": "2026-12-15",
+                        "quantity": 240,
+                        "unitCode": "ZAK",
+                        "unitCost": 8.75,
+                        "warehouseLocation": "REK-A3-VAK2",
+                        "lotStatus": "active",
+                        "receivedDate": "2026-01-20",
+                        "notes": "Droogvoer kat senior, leverancier Prins Petfoods",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryLot"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryLot"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "lotNumber": "LOT-2026-002"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "lotNumber": "LOT-2026-002",
+                        "batchCode": "PF-HOND-B042",
+                        "productSku": "NV-HOND-ADULT-400G",
+                        "manufactureDate": "2026-02-01",
+                        "expiryDate": "2028-02-01",
+                        "bestBeforeDate": "2027-12-01",
+                        "quantity": 576,
+                        "unitCode": "BLIK",
+                        "unitCost": 2.15,
+                        "warehouseLocation": "REK-B1-VAK4",
+                        "lotStatus": "active",
+                        "receivedDate": "2026-02-10",
+                        "notes": "Natvoer hond adult, rund en groenten",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryLot"
+                }
+            }
+        ],
+        "log": [
+            {
+                "level": "error",
+                "message": "Shillinq: inventory lot seeding failed",
+                "context": {
+                    "exception": "save refused"
+                }
+            }
+        ]
+    },
+    "lots unavailable": {
+        "result": {
+            "success": false,
+            "message": "OpenRegister is not installed or enabled."
+        },
+        "calls": [],
+        "log": []
+    },
+    "stock containerFails": {
+        "result": {
+            "success": false,
+            "message": "no service OCA\\OpenRegister\\Service\\ObjectService"
+        },
+        "calls": [],
+        "log": [
+            {
+                "level": "error",
+                "message": "Shillinq: InventoryStock seeding failed",
+                "context": {
+                    "exception": "no service OCA\\OpenRegister\\Service\\ObjectService"
+                }
+            }
+        ]
+    },
+    "stock existing": {
+        "result": {
+            "success": true,
+            "message": "InventoryStock seeded successfully.",
+            "seeded": 7,
+            "skipped": 8
+        },
+        "calls": [
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "LAPTOP-DELL-XPS13",
+                        "locationCode": "WH-AMS-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "TONER-HP-CF283A",
+                        "locationCode": "WH-AMS-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productSku": "TONER-HP-CF283A",
+                        "locationCode": "WH-AMS-001",
+                        "locationName": "Amsterdam Warehouse",
+                        "quantityOnHand": 150,
+                        "quantityReserved": 20,
+                        "quantityInTransit": 0,
+                        "unitCost": 45.0,
+                        "lastRestockDate": "2026-05-10T00:00:00Z",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "shillinq",
+                    "schema": "InventoryStock"
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "BOX-CARDBOARD-S",
+                        "locationCode": "WH-AMS-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "NOTEBOOK-A4-100",
+                        "locationCode": "WH-AMS-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productSku": "NOTEBOOK-A4-100",
+                        "locationCode": "WH-AMS-001",
+                        "locationName": "Amsterdam Warehouse",
+                        "quantityOnHand": 90,
+                        "quantityReserved": 12,
+                        "quantityInTransit": 0,
+                        "unitCost": 3.5,
+                        "lastRestockDate": "2026-05-05T00:00:00Z",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "shillinq",
+                    "schema": "InventoryStock"
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "USB-DRIVE-32GB",
+                        "locationCode": "WH-AMS-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "LAPTOP-DELL-XPS13",
+                        "locationCode": "WH-RTM-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productSku": "LAPTOP-DELL-XPS13",
+                        "locationCode": "WH-RTM-001",
+                        "locationName": "Rotterdam Warehouse",
+                        "quantityOnHand": 8,
+                        "quantityReserved": 2,
+                        "quantityInTransit": 0,
+                        "unitCost": 1899.0,
+                        "lastRestockDate": "2026-05-12T00:00:00Z",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "shillinq",
+                    "schema": "InventoryStock"
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "TONER-HP-CF283A",
+                        "locationCode": "WH-RTM-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "BOX-CARDBOARD-S",
+                        "locationCode": "WH-RTM-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productSku": "BOX-CARDBOARD-S",
+                        "locationCode": "WH-RTM-001",
+                        "locationName": "Rotterdam Warehouse",
+                        "quantityOnHand": 2400,
+                        "quantityReserved": 300,
+                        "quantityInTransit": 0,
+                        "unitCost": 0.75,
+                        "lastRestockDate": "2026-05-08T00:00:00Z",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "shillinq",
+                    "schema": "InventoryStock"
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "NOTEBOOK-A4-100",
+                        "locationCode": "WH-RTM-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "USB-DRIVE-32GB",
+                        "locationCode": "WH-RTM-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productSku": "USB-DRIVE-32GB",
+                        "locationCode": "WH-RTM-001",
+                        "locationName": "Rotterdam Warehouse",
+                        "quantityOnHand": 30,
+                        "quantityReserved": 4,
+                        "quantityInTransit": 0,
+                        "unitCost": 12.0,
+                        "lastRestockDate": "2026-05-09T00:00:00Z",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "shillinq",
+                    "schema": "InventoryStock"
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "LAPTOP-DELL-XPS13",
+                        "locationCode": "ST-UTR-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "TONER-HP-CF283A",
+                        "locationCode": "ST-UTR-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productSku": "TONER-HP-CF283A",
+                        "locationCode": "ST-UTR-001",
+                        "locationName": "Utrecht Store",
+                        "quantityOnHand": 40,
+                        "quantityReserved": 0,
+                        "quantityInTransit": 0,
+                        "unitCost": 45.0,
+                        "lastRestockDate": "2026-05-14T00:00:00Z",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "shillinq",
+                    "schema": "InventoryStock"
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "BOX-CARDBOARD-S",
+                        "locationCode": "ST-UTR-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "NOTEBOOK-A4-100",
+                        "locationCode": "ST-UTR-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productSku": "NOTEBOOK-A4-100",
+                        "locationCode": "ST-UTR-001",
+                        "locationName": "Utrecht Store",
+                        "quantityOnHand": 12,
+                        "quantityReserved": 5,
+                        "quantityInTransit": 0,
+                        "unitCost": 3.5,
+                        "lastRestockDate": "2026-05-16T00:00:00Z",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "shillinq",
+                    "schema": "InventoryStock"
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "USB-DRIVE-32GB",
+                        "locationCode": "ST-UTR-001"
+                    },
+                    "limit": 1
+                }
+            }
+        ],
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: InventoryStock seeded",
+                "context": {
+                    "seeded": 7,
+                    "skipped": 8
+                }
+            }
+        ]
+    },
+    "stock fresh": {
+        "result": {
+            "success": true,
+            "message": "InventoryStock seeded successfully.",
+            "seeded": 15,
+            "skipped": 0
+        },
+        "calls": [
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "LAPTOP-DELL-XPS13",
+                        "locationCode": "WH-AMS-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productSku": "LAPTOP-DELL-XPS13",
+                        "locationCode": "WH-AMS-001",
+                        "locationName": "Amsterdam Warehouse",
+                        "quantityOnHand": 15,
+                        "quantityReserved": 3,
+                        "quantityInTransit": 5,
+                        "unitCost": 1899.0,
+                        "lastRestockDate": "2026-05-15T00:00:00Z",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryStock"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "TONER-HP-CF283A",
+                        "locationCode": "WH-AMS-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productSku": "TONER-HP-CF283A",
+                        "locationCode": "WH-AMS-001",
+                        "locationName": "Amsterdam Warehouse",
+                        "quantityOnHand": 150,
+                        "quantityReserved": 20,
+                        "quantityInTransit": 0,
+                        "unitCost": 45.0,
+                        "lastRestockDate": "2026-05-10T00:00:00Z",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryStock"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "BOX-CARDBOARD-S",
+                        "locationCode": "WH-AMS-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productSku": "BOX-CARDBOARD-S",
+                        "locationCode": "WH-AMS-001",
+                        "locationName": "Amsterdam Warehouse",
+                        "quantityOnHand": 1200,
+                        "quantityReserved": 0,
+                        "quantityInTransit": 500,
+                        "unitCost": 0.75,
+                        "lastRestockDate": "2026-04-30T00:00:00Z",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryStock"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "NOTEBOOK-A4-100",
+                        "locationCode": "WH-AMS-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productSku": "NOTEBOOK-A4-100",
+                        "locationCode": "WH-AMS-001",
+                        "locationName": "Amsterdam Warehouse",
+                        "quantityOnHand": 90,
+                        "quantityReserved": 12,
+                        "quantityInTransit": 0,
+                        "unitCost": 3.5,
+                        "lastRestockDate": "2026-05-05T00:00:00Z",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryStock"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "USB-DRIVE-32GB",
+                        "locationCode": "WH-AMS-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productSku": "USB-DRIVE-32GB",
+                        "locationCode": "WH-AMS-001",
+                        "locationName": "Amsterdam Warehouse",
+                        "quantityOnHand": 60,
+                        "quantityReserved": 8,
+                        "quantityInTransit": 25,
+                        "unitCost": 12.0,
+                        "lastRestockDate": "2026-05-12T00:00:00Z",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryStock"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "LAPTOP-DELL-XPS13",
+                        "locationCode": "WH-RTM-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productSku": "LAPTOP-DELL-XPS13",
+                        "locationCode": "WH-RTM-001",
+                        "locationName": "Rotterdam Warehouse",
+                        "quantityOnHand": 8,
+                        "quantityReserved": 2,
+                        "quantityInTransit": 0,
+                        "unitCost": 1899.0,
+                        "lastRestockDate": "2026-05-12T00:00:00Z",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryStock"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "TONER-HP-CF283A",
+                        "locationCode": "WH-RTM-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productSku": "TONER-HP-CF283A",
+                        "locationCode": "WH-RTM-001",
+                        "locationName": "Rotterdam Warehouse",
+                        "quantityOnHand": 75,
+                        "quantityReserved": 10,
+                        "quantityInTransit": 50,
+                        "unitCost": 45.0,
+                        "lastRestockDate": "2026-04-28T00:00:00Z",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryStock"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "BOX-CARDBOARD-S",
+                        "locationCode": "WH-RTM-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productSku": "BOX-CARDBOARD-S",
+                        "locationCode": "WH-RTM-001",
+                        "locationName": "Rotterdam Warehouse",
+                        "quantityOnHand": 2400,
+                        "quantityReserved": 300,
+                        "quantityInTransit": 0,
+                        "unitCost": 0.75,
+                        "lastRestockDate": "2026-05-08T00:00:00Z",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryStock"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "NOTEBOOK-A4-100",
+                        "locationCode": "WH-RTM-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productSku": "NOTEBOOK-A4-100",
+                        "locationCode": "WH-RTM-001",
+                        "locationName": "Rotterdam Warehouse",
+                        "quantityOnHand": 45,
+                        "quantityReserved": 0,
+                        "quantityInTransit": 100,
+                        "unitCost": 3.5,
+                        "lastRestockDate": "2026-04-22T00:00:00Z",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryStock"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "USB-DRIVE-32GB",
+                        "locationCode": "WH-RTM-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productSku": "USB-DRIVE-32GB",
+                        "locationCode": "WH-RTM-001",
+                        "locationName": "Rotterdam Warehouse",
+                        "quantityOnHand": 30,
+                        "quantityReserved": 4,
+                        "quantityInTransit": 0,
+                        "unitCost": 12.0,
+                        "lastRestockDate": "2026-05-09T00:00:00Z",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryStock"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "LAPTOP-DELL-XPS13",
+                        "locationCode": "ST-UTR-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productSku": "LAPTOP-DELL-XPS13",
+                        "locationCode": "ST-UTR-001",
+                        "locationName": "Utrecht Store",
+                        "quantityOnHand": 3,
+                        "quantityReserved": 1,
+                        "quantityInTransit": 0,
+                        "unitCost": 1899.0,
+                        "lastRestockDate": "2026-05-18T00:00:00Z",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryStock"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "TONER-HP-CF283A",
+                        "locationCode": "ST-UTR-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productSku": "TONER-HP-CF283A",
+                        "locationCode": "ST-UTR-001",
+                        "locationName": "Utrecht Store",
+                        "quantityOnHand": 40,
+                        "quantityReserved": 0,
+                        "quantityInTransit": 0,
+                        "unitCost": 45.0,
+                        "lastRestockDate": "2026-05-14T00:00:00Z",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryStock"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "BOX-CARDBOARD-S",
+                        "locationCode": "ST-UTR-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productSku": "BOX-CARDBOARD-S",
+                        "locationCode": "ST-UTR-001",
+                        "locationName": "Utrecht Store",
+                        "quantityOnHand": 200,
+                        "quantityReserved": 50,
+                        "quantityInTransit": 0,
+                        "unitCost": 0.75,
+                        "lastRestockDate": "2026-05-02T00:00:00Z",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryStock"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "NOTEBOOK-A4-100",
+                        "locationCode": "ST-UTR-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productSku": "NOTEBOOK-A4-100",
+                        "locationCode": "ST-UTR-001",
+                        "locationName": "Utrecht Store",
+                        "quantityOnHand": 12,
+                        "quantityReserved": 5,
+                        "quantityInTransit": 0,
+                        "unitCost": 3.5,
+                        "lastRestockDate": "2026-05-16T00:00:00Z",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryStock"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "USB-DRIVE-32GB",
+                        "locationCode": "ST-UTR-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productSku": "USB-DRIVE-32GB",
+                        "locationCode": "ST-UTR-001",
+                        "locationName": "Utrecht Store",
+                        "quantityOnHand": 8,
+                        "quantityReserved": 3,
+                        "quantityInTransit": 0,
+                        "unitCost": 12.0,
+                        "lastRestockDate": "2026-05-17T00:00:00Z",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryStock"
+                }
+            }
+        ],
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: InventoryStock seeded",
+                "context": {
+                    "seeded": 15,
+                    "skipped": 0
+                }
+            }
+        ]
+    },
+    "stock noAdmin": {
+        "result": {
+            "success": true,
+            "message": "No default administration configured, skipping stock seed.",
+            "seeded": 0,
+            "skipped": 0
+        },
+        "calls": [],
+        "log": []
+    },
+    "stock saveFails": {
+        "result": {
+            "success": false,
+            "message": "save refused"
+        },
+        "calls": [
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "LAPTOP-DELL-XPS13",
+                        "locationCode": "WH-AMS-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productSku": "LAPTOP-DELL-XPS13",
+                        "locationCode": "WH-AMS-001",
+                        "locationName": "Amsterdam Warehouse",
+                        "quantityOnHand": 15,
+                        "quantityReserved": 3,
+                        "quantityInTransit": 5,
+                        "unitCost": 1899.0,
+                        "lastRestockDate": "2026-05-15T00:00:00Z",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryStock"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryStock"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-7",
+                        "productSku": "TONER-HP-CF283A",
+                        "locationCode": "WH-AMS-001"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productSku": "TONER-HP-CF283A",
+                        "locationCode": "WH-AMS-001",
+                        "locationName": "Amsterdam Warehouse",
+                        "quantityOnHand": 150,
+                        "quantityReserved": 20,
+                        "quantityInTransit": 0,
+                        "unitCost": 45.0,
+                        "lastRestockDate": "2026-05-10T00:00:00Z",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryStock"
+                }
+            }
+        ],
+        "log": [
+            {
+                "level": "error",
+                "message": "Shillinq: InventoryStock seeding failed",
+                "context": {
+                    "exception": "save refused"
+                }
+            }
+        ]
+    },
+    "stock unavailable": {
+        "result": {
+            "success": false,
+            "message": "OpenRegister is not installed or enabled."
+        },
+        "calls": [],
+        "log": []
+    },
+    "valuation containerFails": {
+        "result": {
+            "success": false,
+            "message": "no service OCA\\OpenRegister\\Service\\ObjectService"
+        },
+        "calls": [],
+        "log": [
+            {
+                "level": "error",
+                "message": "Shillinq: inventory valuation example seeding failed",
+                "context": {
+                    "exception": "no service OCA\\OpenRegister\\Service\\ObjectService"
+                }
+            }
+        ]
+    },
+    "valuation existing": {
+        "result": {
+            "success": true,
+            "message": "Inventory valuation examples seeded successfully.",
+            "seeded": 2,
+            "skipped": 3
+        },
+        "calls": [
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "InventoryValuation"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "productId": "GT-10-2026",
+                        "warehouse": "Magazijn Noord",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "InventoryValuation"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "productId": "KP-A4-500",
+                        "warehouse": "Centraal Depot",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productId": "KP-A4-500",
+                        "productName": "Kantoorpapier A4 500 vel",
+                        "warehouse": "Centraal Depot",
+                        "quantity": 200.0,
+                        "unitCost": 3.75,
+                        "totalValue": 750.0,
+                        "valuationMethod": "average",
+                        "date": "2026-05-01T00:00:00Z",
+                        "status": "active",
+                        "costCenterId": "CC-MAGAZIJN-001",
+                        "pendingCogs": false,
+                        "administrationId": "adm-7"
+                    },
+                    "register": "shillinq",
+                    "schema": "InventoryValuation"
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "InventoryValuation"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "productId": "HP-200-B",
+                        "warehouse": "Magazijn Zuid",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "InventoryValuation"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "productId": "SM-5L-PRO",
+                        "warehouse": "Centraal Depot",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productId": "SM-5L-PRO",
+                        "productName": "Schoonmaakmiddel Pro 5L",
+                        "warehouse": "Centraal Depot",
+                        "quantity": 100.0,
+                        "unitCost": 8.4,
+                        "totalValue": 840.0,
+                        "valuationMethod": "average",
+                        "date": "2026-05-01T00:00:00Z",
+                        "status": "active",
+                        "costCenterId": "CC-MAGAZIJN-001",
+                        "pendingCogs": false,
+                        "administrationId": "adm-7"
+                    },
+                    "register": "shillinq",
+                    "schema": "InventoryValuation"
+                }
+            },
+            {
+                "setRegister": "shillinq"
+            },
+            {
+                "setSchema": "InventoryValuation"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "productId": "VHG-S-M",
+                        "warehouse": "Magazijn Noord",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "limit": 1
+                }
+            }
+        ],
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: inventory valuation examples seeded",
+                "context": {
+                    "seeded": 2,
+                    "skipped": 3
+                }
+            }
+        ]
+    },
+    "valuation fresh": {
+        "result": {
+            "success": true,
+            "message": "Inventory valuation examples seeded successfully.",
+            "seeded": 5,
+            "skipped": 0
+        },
+        "calls": [
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryValuation"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "productId": "GT-10-2026",
+                        "warehouse": "Magazijn Noord",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productId": "GT-10-2026",
+                        "productName": "Gereedschapset 10-delig",
+                        "warehouse": "Magazijn Noord",
+                        "quantity": 50.0,
+                        "unitCost": 12.5,
+                        "totalValue": 625.0,
+                        "valuationMethod": "FIFO",
+                        "date": "2026-05-01T00:00:00Z",
+                        "status": "active",
+                        "costCenterId": "CC-MAGAZIJN-001",
+                        "pendingCogs": false,
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryValuation"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryValuation"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "productId": "KP-A4-500",
+                        "warehouse": "Centraal Depot",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productId": "KP-A4-500",
+                        "productName": "Kantoorpapier A4 500 vel",
+                        "warehouse": "Centraal Depot",
+                        "quantity": 200.0,
+                        "unitCost": 3.75,
+                        "totalValue": 750.0,
+                        "valuationMethod": "average",
+                        "date": "2026-05-01T00:00:00Z",
+                        "status": "active",
+                        "costCenterId": "CC-MAGAZIJN-001",
+                        "pendingCogs": false,
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryValuation"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryValuation"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "productId": "HP-200-B",
+                        "warehouse": "Magazijn Zuid",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productId": "HP-200-B",
+                        "productName": "Hydraulische pomp HP-200",
+                        "warehouse": "Magazijn Zuid",
+                        "quantity": 15.0,
+                        "unitCost": 89.0,
+                        "totalValue": 1335.0,
+                        "valuationMethod": "FIFO",
+                        "date": "2026-05-01T00:00:00Z",
+                        "status": "active",
+                        "costCenterId": "CC-MAGAZIJN-001",
+                        "pendingCogs": false,
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryValuation"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryValuation"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "productId": "SM-5L-PRO",
+                        "warehouse": "Centraal Depot",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productId": "SM-5L-PRO",
+                        "productName": "Schoonmaakmiddel Pro 5L",
+                        "warehouse": "Centraal Depot",
+                        "quantity": 100.0,
+                        "unitCost": 8.4,
+                        "totalValue": 840.0,
+                        "valuationMethod": "average",
+                        "date": "2026-05-01T00:00:00Z",
+                        "status": "active",
+                        "costCenterId": "CC-MAGAZIJN-001",
+                        "pendingCogs": false,
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryValuation"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryValuation"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "productId": "VHG-S-M",
+                        "warehouse": "Magazijn Noord",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productId": "VHG-S-M",
+                        "productName": "Veiligheidshandschoenen S/M",
+                        "warehouse": "Magazijn Noord",
+                        "quantity": 300.0,
+                        "unitCost": 1.2,
+                        "totalValue": 360.0,
+                        "valuationMethod": "FIFO",
+                        "date": "2026-05-01T00:00:00Z",
+                        "status": "active",
+                        "costCenterId": "CC-MAGAZIJN-001",
+                        "pendingCogs": false,
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryValuation"
+                }
+            }
+        ],
+        "log": [
+            {
+                "level": "info",
+                "message": "Shillinq: inventory valuation examples seeded",
+                "context": {
+                    "seeded": 5,
+                    "skipped": 0
+                }
+            }
+        ]
+    },
+    "valuation noAdmin": {
+        "result": {
+            "success": false,
+            "message": "administrationId is required for InventoryValuation seed."
+        },
+        "calls": [],
+        "log": []
+    },
+    "valuation saveFails": {
+        "result": {
+            "success": false,
+            "message": "save refused"
+        },
+        "calls": [
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryValuation"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "productId": "GT-10-2026",
+                        "warehouse": "Magazijn Noord",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productId": "GT-10-2026",
+                        "productName": "Gereedschapset 10-delig",
+                        "warehouse": "Magazijn Noord",
+                        "quantity": 50.0,
+                        "unitCost": 12.5,
+                        "totalValue": 625.0,
+                        "valuationMethod": "FIFO",
+                        "date": "2026-05-01T00:00:00Z",
+                        "status": "active",
+                        "costCenterId": "CC-MAGAZIJN-001",
+                        "pendingCogs": false,
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryValuation"
+                }
+            },
+            {
+                "setRegister": "books"
+            },
+            {
+                "setSchema": "InventoryValuation"
+            },
+            {
+                "findAll": {
+                    "filters": {
+                        "productId": "KP-A4-500",
+                        "warehouse": "Centraal Depot",
+                        "status": "active",
+                        "administrationId": "adm-7"
+                    },
+                    "limit": 1
+                }
+            },
+            {
+                "saveObject": {
+                    "object": {
+                        "productId": "KP-A4-500",
+                        "productName": "Kantoorpapier A4 500 vel",
+                        "warehouse": "Centraal Depot",
+                        "quantity": 200.0,
+                        "unitCost": 3.75,
+                        "totalValue": 750.0,
+                        "valuationMethod": "average",
+                        "date": "2026-05-01T00:00:00Z",
+                        "status": "active",
+                        "costCenterId": "CC-MAGAZIJN-001",
+                        "pendingCogs": false,
+                        "administrationId": "adm-7"
+                    },
+                    "register": "books",
+                    "schema": "InventoryValuation"
+                }
+            }
+        ],
+        "log": [
+            {
+                "level": "error",
+                "message": "Shillinq: inventory valuation example seeding failed",
+                "context": {
+                    "exception": "save refused"
+                }
+            }
+        ]
+    },
+    "valuation unavailable": {
+        "result": {
+            "success": false,
+            "message": "OpenRegister is not installed or enabled."
+        },
+        "calls": [],
+        "log": []
+    }
+}
