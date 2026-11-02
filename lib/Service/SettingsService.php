@@ -26,7 +26,9 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\Seed\SeedImport;
 use OCA\Shillinq\Service\Seed\SeedImporter;
+use OCA\Shillinq\Service\Seed\SeedMessages;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -75,6 +77,19 @@ class SettingsService {
 	 * @var string
 	 */
 	public const PORTAL_REDIRECT_KEY = 'portal_payment_redirect_url';
+
+	/**
+	 * The single-schema seed files: file, items key, deduplication key,
+	 * schema and log label.
+	 *
+	 * @var array<string, array{0: string, 1: string, 2: string, 3: string, 4: string}>
+	 */
+	private const GENERIC_SEEDS = [
+		'rj270' => ['rj-270-stages.json', 'stages', 'stageId', 'RJ270Stage', 'RJ-270 stages'],
+		'defaultAdministration' => ['administraties/default.json', 'administrations', 'administrationCode', 'Administration', 'Default administration'],
+		'btw' => ['btw-tariffs-2026.json', 'tariffs', 'code', 'VatTariff', 'BTW tariffs'],
+		'taakvelden' => ['bbv-task_fields-2024.json', 'taskFields', 'code', 'BbvTaakveld', 'BBV task_fields'],
+	];
 
 	/**
 	 * Constructor for the SettingsService.
@@ -392,13 +407,7 @@ class SettingsService {
 	 * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-14
 	 */
 	public function seedRj270Stages(): array {
-		return $this->seedGenericFile(
-			seedFileName: 'rj-270-stages.json',
-			itemsKey: 'stages',
-			dedupeKey: 'stageId',
-			schema: 'RJ270Stage',
-			logLabel: 'RJ-270 stages'
-		);
+		return $this->seedGenericFile(seed: 'rj270');
 
 	}//end seedRj270Stages()
 
@@ -424,13 +433,7 @@ class SettingsService {
 	 * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
 	 */
 	public function seedDefaultAdministration(): array {
-		$result = $this->seedGenericFile(
-			seedFileName: 'administraties/default.json',
-			itemsKey: 'administrations',
-			dedupeKey: 'administrationCode',
-			schema: 'Administration',
-			logLabel: 'Default administration'
-		);
+		$result = $this->seedGenericFile(seed: 'defaultAdministration');
 
 		if (($result['success'] ?? false) === true) {
 			$result['administrationCode'] = $this->readDefaultAdministrationCode();
@@ -605,13 +608,7 @@ class SettingsService {
 	 * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
 	 */
 	public function seedBtwTariffs(): array {
-		return $this->seedGenericFile(
-			seedFileName: 'btw-tariffs-2026.json',
-			itemsKey: 'tariffs',
-			dedupeKey: 'code',
-			schema: 'VatTariff',
-			logLabel: 'BTW tariffs'
-		);
+		return $this->seedGenericFile(seed: 'btw');
 
 	}//end seedBtwTariffs()
 
@@ -626,13 +623,7 @@ class SettingsService {
 	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
 	 */
 	public function seedBbvTaakvelden(): array {
-		return $this->seedGenericFile(
-			seedFileName: 'bbv-task_fields-2024.json',
-			itemsKey: 'taskFields',
-			dedupeKey: 'code',
-			schema: 'BbvTaakveld',
-			logLabel: 'BBV task_fields'
-		);
+		return $this->seedGenericFile(seed: 'taakvelden');
 
 	}//end seedBbvTaakvelden()
 
@@ -1098,119 +1089,39 @@ class SettingsService {
 	}//end seedRateCardTemplates()
 
 	/**
-	 * Generic seed helper for single-schema seed files that don't require an administrationId.
+	 * Seed a single-schema seed file that needs no administrationId, as the system user.
 	 *
-	 * @param string $seedFileName Name of the seed file under lib/Settings/seeds/.
-	 * @param string $itemsKey Key in the JSON holding the items array.
-	 * @param string $dedupeKey Field used as deduplication key.
-	 * @param string $schema OpenRegister schema slug to import into.
-	 * @param string $logLabel Label for log messages.
+	 * @param string $seed Key in GENERIC_SEEDS.
 	 *
 	 * @return array<string,mixed>
 	 *
 	 * @spec exclude system-context adoption
 	 */
-	private function seedGenericFile(
-		string $seedFileName,
-		string $itemsKey,
-		string $dedupeKey,
-		string $schema,
-		string $logLabel,
-	): array {
+	private function seedGenericFile(string $seed): array {
+		[$seedFileName, $itemsKey, $dedupeKey, $schema, $logLabel] = self::GENERIC_SEEDS[$seed];
 		if ($this->isOpenRegisterAvailable() === false) {
 			return ['success' => false, 'message' => 'OpenRegister is not installed or enabled.'];
 		}
 
-		$seedPath = __DIR__ . '/../Settings/seeds/' . $seedFileName;
-		if (file_exists($seedPath) === false) {
-			return ['success' => false, 'message' => 'Seed file not found: ' . $seedFileName];
+		$importer = $this->seedImporter();
+		$file = $importer->read(fileName: $seedFileName);
+		if (isset($file['error']) === true) {
+			return $file['error'];
 		}
 
-		$content = file_get_contents($seedPath);
-		if ($content === false) {
-			return ['success' => false, 'message' => 'Failed to read ' . $seedFileName];
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE) {
-			return ['success' => false, 'message' => 'Failed to parse ' . $seedFileName . ': ' . json_last_error_msg()];
-		}
-
-		$items = ($data[$itemsKey] ?? []);
+		$items = ($file['data'][$itemsKey] ?? []);
 		if (empty($items) === true) {
 			return ['success' => false, 'message' => 'Seed file ' . $seedFileName . ' contains no ' . $itemsKey . '.'];
 		}
 
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->getRegisterSlug();
-
-			$seedItems = function () use ($objectService, $registerSlug, $items, $dedupeKey, $schema): array {
-				$seeded = 0;
-				$skipped = 0;
-
-				foreach ($items as $item) {
-					$existing = $objectService
-						->setRegister($registerSlug)
-						->setSchema($schema)
-						->findAll(
-							[
-								'filters' => [$dedupeKey => $item[$dedupeKey]],
-								'limit' => 1,
-							]
-						);
-
-					if (empty($existing) === false) {
-						$skipped++;
-						continue;
-					}
-
-					$objectService->saveObject(
-						object: $item,
-						register: $registerSlug,
-						schema: $schema,
-					);
-					$seeded++;
-				}//end foreach
-
-				return [
-					'seeded' => $seeded,
-					'skipped' => $skipped,
-				];
-			};
-
-			// Seeding runs user-less (repair step / boot); without elevation
-			// OpenRegister RBAC denies the reads/writes as 'Anonymous'. The
-			// guard keeps compatibility with released OR versions that do not
-			// ship runAsSystem() yet.
-			if (method_exists($objectService, 'runAsSystem') === true) {
-				$counts = $objectService->runAsSystem($seedItems);
-			} else {
-				$counts = $seedItems();
-			}
-
-			$seeded = $counts['seeded'];
-			$skipped = $counts['skipped'];
-
-			$this->logger->info(
-				'Shillinq: ' . $logLabel . ' seeded',
-				['seeded' => $seeded, 'skipped' => $skipped]
-			);
-
-			return [
-				'success' => true,
-				'message' => $logLabel . ' seeded successfully.',
-				'seeded' => $seeded,
-				'skipped' => $skipped,
-			];
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq: ' . $logLabel . ' seeding failed',
-				['exception' => $e->getMessage()]
-			);
-			return ['success' => false, 'message' => $e->getMessage()];
-		}//end try
-
+		return $importer->importAsSystem(
+			import: new SeedImport(schema: $schema, rows: $items, match: static fn ($item): array => [$dedupeKey => $item[$dedupeKey]]),
+			messages: new SeedMessages(
+				seededLog: 'Shillinq: ' . $logLabel . ' seeded',
+				seededMessage: $logLabel . ' seeded successfully.',
+				failedLog: 'Shillinq: ' . $logLabel . ' seeding failed',
+			)
+		);
 	}//end seedGenericFile()
 
 	/**
@@ -1765,12 +1676,19 @@ class SettingsService {
 	 * @spec openspec/changes/inventory-stock-tracking/tasks.md#task-12
 	 */
 	private function inventorySeeds(): InventorySeedService {
-		return new InventorySeedService(
-			settings: $this,
-			importer: new SeedImporter(settings: $this, container: $this->container, logger: $this->logger),
-			logger: $this->logger,
-		);
+		return new InventorySeedService(settings: $this, importer: $this->seedImporter(), logger: $this->logger);
 	}//end inventorySeeds()
+
+	/**
+	 * The importer for seed files under lib/Settings/seeds/.
+	 *
+	 * @return SeedImporter
+	 *
+	 * @spec openspec/changes/inventory-stock-tracking/tasks.md#task-12
+	 */
+	private function seedImporter(): SeedImporter {
+		return new SeedImporter(settings: $this, container: $this->container, logger: $this->logger);
+	}//end seedImporter()
 
 	/**
 	 * Seed demo Barcode records from inventory-barcodes-demo.json, idempotently.

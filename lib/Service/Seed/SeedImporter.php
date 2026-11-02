@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Seed;
 
+use Closure;
 use OCA\Shillinq\Service\SettingsService;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -154,36 +155,62 @@ class SeedImporter {
 	 * @spec openspec/changes/inventory-stock-tracking/tasks.md#task-12
 	 */
 	public function import(SeedImport $import, SeedMessages $messages): array {
+		return $this->report(
+			messages: $messages,
+			save: fn (object $objectService): array => $this->saveRows(objectService: $objectService, import: $import)
+		);
+	}//end import()
+
+	/**
+	 * Import the rows that do not exist yet, as the system user.
+	 *
+	 * Seeding runs user-less (repair step / boot); without elevation
+	 * OpenRegister RBAC denies the reads and writes as 'Anonymous'. An
+	 * OpenRegister without runAsSystem() runs the import as is.
+	 *
+	 * @param SeedImport $import The rows, schema and match.
+	 * @param SeedMessages $messages What to log and return.
+	 *
+	 * @return array<string, mixed> Result with success flag, message, seeded and skipped counts.
+	 *
+	 * @spec openspec/changes/inventory-stock-tracking/tasks.md#task-12
+	 */
+	public function importAsSystem(SeedImport $import, SeedMessages $messages): array {
+		return $this->report(
+			messages: $messages,
+			save: function (object $objectService) use ($import): array {
+				$save = fn (): array => $this->saveRows(objectService: $objectService, import: $import);
+				if (method_exists($objectService, 'runAsSystem') === true) {
+					return $objectService->runAsSystem($save);
+				}
+
+				return $save();
+			}
+		);
+	}//end importAsSystem()
+
+	/**
+	 * OpenRegister's ObjectService.
+	 *
+	 * @return object
+	 *
+	 * @spec openspec/changes/inventory-stock-tracking/tasks.md#task-12
+	 */
+	public function objectService(): object {
+		return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+	}//end objectService()
+
+	/**
+	 * Run a save step and report its counts.
+	 *
+	 * @param SeedMessages $messages What to log and return.
+	 * @param Closure(object): array{seeded: int, skipped: int} $save The save step, given the ObjectService.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function report(SeedMessages $messages, Closure $save): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->settings->getRegisterSlug();
-			$counts = [
-				'seeded' => 0,
-				'skipped' => 0,
-			];
-
-			foreach ($import->rows as $row) {
-				$filters = ($import->match)($row);
-				if ($filters === null) {
-					continue;
-				}
-
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema($import->schema)
-					->findAll(['filters' => $filters, 'limit' => 1]);
-				if (empty($existing) === false) {
-					$counts['skipped']++;
-					continue;
-				}
-
-				if ($import->administrationId !== null) {
-					$row['administrationId'] = $import->administrationId;
-				}
-
-				$objectService->saveObject(object: $row, register: $registerSlug, schema: $import->schema);
-				$counts['seeded']++;
-			}//end foreach
+			$counts = $save($this->objectService());
 
 			$this->logger->info($messages->seededLog, $messages->logContext + $counts);
 
@@ -192,5 +219,46 @@ class SeedImporter {
 			$this->logger->error($messages->failedLog, ['exception' => $e->getMessage()]);
 			return $this->failed(message: $e->getMessage());
 		}//end try
-	}//end import()
+	}//end report()
+
+	/**
+	 * Save the rows that have a match and no existing copy.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param SeedImport $import The rows, schema and match.
+	 *
+	 * @return array{seeded: int, skipped: int}
+	 */
+	private function saveRows(object $objectService, SeedImport $import): array {
+		$registerSlug = $this->settings->getRegisterSlug();
+		$counts = [
+			'seeded' => 0,
+			'skipped' => 0,
+		];
+
+		foreach ($import->rows as $row) {
+			$filters = ($import->match)($row);
+			if ($filters === null) {
+				continue;
+			}
+
+			$existing = $objectService
+				->setRegister($registerSlug)
+				->setSchema($import->schema)
+				->findAll(['filters' => $filters, 'limit' => 1]);
+			if (empty($existing) === false) {
+				$counts['skipped']++;
+				continue;
+			}
+
+			if ($import->administrationId !== null) {
+				$row['administrationId'] = $import->administrationId;
+			}
+
+			$objectService->saveObject(object: $row, register: $registerSlug, schema: $import->schema);
+			$counts['seeded']++;
+		}//end foreach
+
+		return $counts;
+	}//end saveRows()
 }//end class
