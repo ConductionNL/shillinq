@@ -1,0 +1,326 @@
+{
+    "calendar calendarsNotArray": {
+        "calendar": null,
+        "principal": [
+            "principals/users/alice"
+        ],
+        "log": []
+    },
+    "calendar dedicatedFirst": {
+        "calendar": "dedicated",
+        "principal": [
+            "principals/users/alice"
+        ],
+        "log": []
+    },
+    "calendar dedicatedLast": {
+        "calendar": "dedicated",
+        "principal": [
+            "principals/users/alice"
+        ],
+        "log": []
+    },
+    "calendar emptyList": {
+        "calendar": null,
+        "principal": [
+            "principals/users/alice"
+        ],
+        "log": []
+    },
+    "calendar fallbackOnly": {
+        "calendar": "personal",
+        "principal": [
+            "principals/users/alice"
+        ],
+        "log": []
+    },
+    "calendar getThrows": {
+        "calendar": null,
+        "principal": [],
+        "log": [
+            "debug: ComplianceDeadlineCalendarService: calendar backend not resolvable {\"userId\":\"alice\",\"exception\":\"no OCP\\\\Calendar\\\\IManager\"}"
+        ]
+    },
+    "calendar managerNotObject": {
+        "calendar": null,
+        "principal": [],
+        "log": []
+    },
+    "calendar managerWithoutMethod": {
+        "calendar": null,
+        "principal": [],
+        "log": []
+    },
+    "calendar noManager": {
+        "calendar": null,
+        "principal": [],
+        "log": []
+    },
+    "calendar nothingWritable": {
+        "calendar": null,
+        "principal": [
+            "principals/users/alice"
+        ],
+        "log": []
+    },
+    "collect ARInvoice": {
+        "deadlines": [
+            {
+                "uid": "ar-invoice:inv-1",
+                "category": "ar-due",
+                "summary": "Factuur F-1 vervalt",
+                "dueDate": "2026-05-10",
+                "source": "ar-invoice",
+                "objectId": "inv-1"
+            },
+            {
+                "uid": "ar-invoice:inv-2",
+                "category": "ar-due",
+                "summary": "Factuur inv-2 vervalt",
+                "dueDate": "2026-05-11",
+                "source": "ar-invoice",
+                "objectId": "inv-2"
+            },
+            {
+                "uid": "ar-invoice:inv-3",
+                "category": "ar-due",
+                "summary": "Factuur F-3 vervalt",
+                "dueDate": "2026-05-12",
+                "source": "ar-invoice",
+                "objectId": "inv-3"
+            }
+        ],
+        "schemas": [
+            "BtwAangifte",
+            "IcpOpgaaf",
+            "TaxDeadline",
+            "PaymentRun",
+            "ARInvoice"
+        ],
+        "log": []
+    },
+    "collect BtwAangifte": {
+        "deadlines": [
+            {
+                "uid": "btw-filing:btw-q1",
+                "category": "filing",
+                "summary": "BTW-aangifte 2026-Q1",
+                "dueDate": "2026-04-30",
+                "source": "btw-filing",
+                "objectId": "btw-q1"
+            },
+            {
+                "uid": "btw-filing:btw-m2",
+                "category": "filing",
+                "summary": "BTW-aangifte 2026-02",
+                "dueDate": "2026-03-31",
+                "source": "btw-filing",
+                "objectId": "btw-m2"
+            },
+            {
+                "uid": "btw-filing:btw-y",
+                "category": "filing",
+                "summary": "BTW-aangifte 2025",
+                "dueDate": "2026-01-31",
+                "source": "btw-filing",
+                "objectId": "btw-y"
+            },
+            {
+                "uid": "btw-filing:btw-default-unit",
+                "category": "filing",
+                "summary": "BTW-aangifte 2026-Q3",
+                "dueDate": "2026-10-31",
+                "source": "btw-filing",
+                "objectId": "btw-default-unit"
+            }
+        ],
+        "schemas": [
+            "BtwAangifte",
+            "IcpOpgaaf",
+            "TaxDeadline",
+            "PaymentRun",
+            "ARInvoice"
+        ],
+        "log": []
+    },
+    "collect IcpOpgaaf": {
+        "deadlines": [
+            {
+                "uid": "icp-filing:icp-q2",
+                "category": "filing",
+                "summary": "ICP-opgaaf 2026-Q2",
+                "dueDate": "2026-07-31",
+                "source": "icp-filing",
+                "objectId": "icp-q2"
+            },
+            {
+                "uid": "icp-filing:icp-q4-lower",
+                "category": "filing",
+                "summary": "ICP-opgaaf 2025-q4",
+                "dueDate": "2026-01-31",
+                "source": "icp-filing",
+                "objectId": "icp-q4-lower"
+            },
+            {
+                "uid": "icp-filing:icp-m5",
+                "category": "filing",
+                "summary": "ICP-opgaaf 2026-05",
+                "dueDate": "2026-06-30",
+                "source": "icp-filing",
+                "objectId": "icp-m5"
+            },
+            {
+                "uid": "icp-filing:icp-m12-default",
+                "category": "filing",
+                "summary": "ICP-opgaaf 2026-12",
+                "dueDate": "2027-01-31",
+                "source": "icp-filing",
+                "objectId": "icp-m12-default"
+            }
+        ],
+        "schemas": [
+            "BtwAangifte",
+            "IcpOpgaaf",
+            "TaxDeadline",
+            "PaymentRun",
+            "ARInvoice"
+        ],
+        "log": []
+    },
+    "collect PaymentRun": {
+        "deadlines": [
+            {
+                "uid": "payment-run:run-1",
+                "category": "payment-run",
+                "summary": "Betaalrun BR-7",
+                "dueDate": "2026-04-10",
+                "source": "payment-run",
+                "objectId": "run-1"
+            },
+            {
+                "uid": "payment-run:run-2",
+                "category": "payment-run",
+                "summary": "Betaalrun run-2",
+                "dueDate": "2026-04-11",
+                "source": "payment-run",
+                "objectId": "run-2"
+            },
+            {
+                "uid": "payment-run:run-3",
+                "category": "payment-run",
+                "summary": "Betaalrun BR-9",
+                "dueDate": "2026-04-12",
+                "source": "payment-run",
+                "objectId": "run-3"
+            },
+            {
+                "uid": "payment-run:run-4",
+                "category": "payment-run",
+                "summary": "Betaalrun run-4",
+                "dueDate": "2026-04-13",
+                "source": "payment-run",
+                "objectId": "run-4"
+            }
+        ],
+        "schemas": [
+            "BtwAangifte",
+            "IcpOpgaaf",
+            "TaxDeadline",
+            "PaymentRun",
+            "ARInvoice"
+        ],
+        "log": []
+    },
+    "collect TaxDeadline": {
+        "deadlines": [
+            {
+                "uid": "vpb-filing:vpb-1",
+                "category": "filing",
+                "summary": "VPB Aangifte 2025",
+                "dueDate": "2026-05-01",
+                "source": "vpb-filing",
+                "objectId": "vpb-1"
+            },
+            {
+                "uid": "vpb-filing:vpb-2",
+                "category": "filing",
+                "summary": "VPB",
+                "dueDate": "2026-06-01",
+                "source": "vpb-filing",
+                "objectId": "vpb-2"
+            },
+            {
+                "uid": "vpb-filing:vpb-3",
+                "category": "filing",
+                "summary": "VPB 2024",
+                "dueDate": "2026-07-01",
+                "source": "vpb-filing",
+                "objectId": "vpb-3"
+            }
+        ],
+        "schemas": [
+            "BtwAangifte",
+            "IcpOpgaaf",
+            "TaxDeadline",
+            "PaymentRun",
+            "ARInvoice"
+        ],
+        "log": []
+    },
+    "collect bridge": {
+        "deadlines": [
+            {
+                "uid": "contract:c-1",
+                "category": "contract",
+                "summary": "Opzegtermijn",
+                "dueDate": "2026-09-01",
+                "source": "contract",
+                "objectId": "c-1"
+            },
+            {
+                "uid": "contract:c-2",
+                "category": "contract",
+                "summary": "Verlenging",
+                "dueDate": "2026-10-01",
+                "source": "contract",
+                "objectId": "c-2"
+            }
+        ],
+        "schemas": [
+            "BtwAangifte",
+            "IcpOpgaaf",
+            "TaxDeadline",
+            "PaymentRun",
+            "ARInvoice"
+        ],
+        "log": []
+    },
+    "collect empty": {
+        "deadlines": [],
+        "schemas": [
+            "BtwAangifte",
+            "IcpOpgaaf",
+            "TaxDeadline",
+            "PaymentRun",
+            "ARInvoice"
+        ],
+        "log": []
+    },
+    "collect readFails": {
+        "deadlines": [],
+        "schemas": [
+            "BtwAangifte",
+            "IcpOpgaaf",
+            "TaxDeadline",
+            "PaymentRun",
+            "ARInvoice"
+        ],
+        "log": [
+            "debug: ComplianceDeadlineCalendarService: schema read unavailable — treating as empty {\"schema\":\"BtwAangifte\",\"exception\":\"read failed for BtwAangifte\"}",
+            "debug: ComplianceDeadlineCalendarService: schema read unavailable — treating as empty {\"schema\":\"IcpOpgaaf\",\"exception\":\"read failed for IcpOpgaaf\"}",
+            "debug: ComplianceDeadlineCalendarService: schema read unavailable — treating as empty {\"schema\":\"TaxDeadline\",\"exception\":\"read failed for TaxDeadline\"}",
+            "debug: ComplianceDeadlineCalendarService: schema read unavailable — treating as empty {\"schema\":\"PaymentRun\",\"exception\":\"read failed for PaymentRun\"}",
+            "debug: ComplianceDeadlineCalendarService: schema read unavailable — treating as empty {\"schema\":\"ARInvoice\",\"exception\":\"read failed for ARInvoice\"}"
+        ]
+    }
+}
