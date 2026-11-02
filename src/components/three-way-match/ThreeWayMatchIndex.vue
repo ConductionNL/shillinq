@@ -217,6 +217,7 @@ export default {
 			]
 		},
 
+		/** @spec openspec/changes/three-way-match-delivery-date-exception/specs/bookkeeping-three-way-matching-engine/spec.md */
 		statusOptions() {
 			return [
 				{
@@ -370,6 +371,13 @@ export default {
 			return `${currency} ${(Number(invoice.totalInclVat) / 100).toFixed(2)}`
 		},
 
+		/**
+		 * The label of a match status.
+		 *
+		 * @param {string} statusCode The match status.
+		 * @return {string} The translated label.
+		 * @spec openspec/changes/three-way-match-delivery-date-exception/specs/bookkeeping-three-way-matching-engine/spec.md
+		 */
 		statusLabel(statusCode) {
 			const labels = {
 				auto_approved: this.t('shillinq', 'Auto-approved'),

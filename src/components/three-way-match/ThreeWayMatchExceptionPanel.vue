@@ -468,6 +468,13 @@ export default {
 			}
 		},
 
+		/**
+		 * The label of a match status.
+		 *
+		 * @param {string} matchStatus The match status.
+		 * @return {string} The translated label.
+		 * @spec openspec/changes/three-way-match-delivery-date-exception/specs/bookkeeping-three-way-matching-engine/spec.md
+		 */
 		statusLabel(matchStatus) {
 			const labels = {
 				exception_price: this.t('shillinq', 'Price exception'),
