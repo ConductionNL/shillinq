@@ -112,6 +112,8 @@ final class IcsService {
 	 *                                      (string).
 	 *
 	 * @return string The complete ICS payload, CRLF-terminated.
+	 *
+	 * @spec openspec/specs/bookings-confirm-flow/spec.md#req-bcf-003
 	 */
 	public function generateIcs(array $appointment, array $customer, string $confirmUrl, array $context = []): string {
 		$tzId = $this->timezoneResolver->resolve(

@@ -106,6 +106,8 @@ class ConflictDetectionService {
 	 * @return array<int,array<string,mixed>> Conflicting booking records (empty if none).
 	 *
 	 * @throws InvalidArgumentException When times are malformed or end ≤ start.
+	 *
+	 * @spec openspec/specs/bookings/spec.md#req-004
 	 */
 	public function checkConflicts(string $resourceId, string $proposedStart, string $proposedEnd, ?string $excludeBookingId = null): array {
 		$resourceId = trim($resourceId);
