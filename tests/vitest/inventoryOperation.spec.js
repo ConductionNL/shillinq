@@ -68,6 +68,27 @@ describe('inventoryOperation', () => {
 		})
 	})
 
+	it('hands the form events to the operation', () => {
+		const vm = {
+			handleConfirm: 'confirm',
+			handleScan: 'scan',
+			closeScanner: 'close',
+		}
+		expect(inventoryOperation.computed.formEvents.call(vm)).toEqual({
+			submit: 'confirm',
+			scan: 'scan',
+			cancel: 'close',
+		})
+	})
+
+	it('closes the scanner without a value', () => {
+		const vm = operation(null)
+		vm.sku = 'kept'
+		vm.scanning = true
+		vm.closeScanner()
+		expect([vm.sku, vm.scanning]).toEqual(['kept', false])
+	})
+
 	it('takes a scanned SKU and closes the scanner', () => {
 		const vm = operation(null)
 		vm.scanning = true
@@ -163,5 +184,46 @@ describe('InventoryOperationForm', () => {
 		scanner.props.onCancel()
 		expect(scanner.props.fallbackToManual).toBe(true)
 		expect(emitted).toEqual([['scan', 'SKU-1'], ['cancel']])
+	})
+})
+
+describe.each(['ReceiveOp', 'TransferOp', 'PickOp', 'CountOp'])('%s', (name) => {
+	it('hands its form events and state to the operation form', () => {
+		const source = fs.readFileSync(
+			path.join(__dirname, `../../src/components/inventory/${name}.vue`),
+			'utf8',
+		)
+		const render = compile(parse(source).descriptor.template.content)
+		const formEvents = {
+			submit: () => 'submit',
+			scan: () => 'scan',
+			cancel: () => 'cancel',
+		}
+		const ctx = {
+			formEvents,
+			formState: {
+				error: 'E',
+				successMessage: null,
+				submitting: false,
+				scanning: false,
+			},
+			store: { locations: [] },
+			availableDestinations: [],
+			t: (app, text) => text,
+		}
+		// The template reads more state than the wiring needs; unknown names read as undefined.
+		const form = render(
+			new Proxy(ctx, {
+				has: (target, key) => !String(key).startsWith('_'),
+				get: (target, key) => target[key],
+			}),
+			[],
+		)
+		expect([
+			form.props.onSubmit,
+			form.props.onScan,
+			form.props.onCancel,
+		]).toEqual([formEvents.submit, formEvents.scan, formEvents.cancel])
+		expect(form.props.error).toBe('E')
 	})
 })
