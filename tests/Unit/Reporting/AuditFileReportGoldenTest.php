@@ -258,7 +258,8 @@ final class AuditFileReportGoldenTest extends TestCase {
 				['accountNumber' => '0100', 'name' => 'Zonder administratie'],
 			],
 			'CustomerMaster' => [
-				['customerId' => 'C-1', 'name' => 'Klant BV', 'kvkNumber' => '123', 'vatNumber' => 'NL1', 'email' => 'a@b.nl', 'phone' => '010', 'administrationId' => 'adm-1'],
+				['customerId' => 'C-1', 'name' => 'Klant BV', 'kvkNumber' => '123', 'vatNumber' => 'NL1', 'email' => 'a@b.nl', 'phone' => '010',
+					'administrationId' => 'adm-1'],
 				['customerNumber' => 'C-2', 'legalName' => 'Klant Twee', 'vatID' => 'NL2', 'telephone' => '020', 'administrationId' => 'adm-1'],
 				['customerId' => 'C-3', 'tradingName' => 'Derde', 'vatId' => 'NL3', 'email' => 'c@d.nl', 'administrationId' => 'adm-1'],
 				['name' => 'Zonder id', 'administrationId' => 'adm-1'],
@@ -270,7 +271,8 @@ final class AuditFileReportGoldenTest extends TestCase {
 				['name' => 'Geen nummer', 'administrationId' => 'adm-1'],
 			],
 			'GLTransaction' => [
-				['id' => 't-1', 'transactionNumber' => 'M-1', 'description' => 'Memoriaal', 'postingDate' => '2025-03-03', 'postingKind' => 'M', 'administrationId' => 'adm-1'],
+				['id' => 't-1', 'transactionNumber' => 'M-1', 'description' => 'Memoriaal', 'postingDate' => '2025-03-03', 'postingKind' => 'M',
+					'administrationId' => 'adm-1'],
 				['@self' => ['id' => 't-2'], 'valueDate' => '2025-03-04', 'administrationId' => 'adm-1'],
 				[
 					'transactionNumber' => 'M-3',
