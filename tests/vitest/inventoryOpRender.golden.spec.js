@@ -6,8 +6,9 @@
  * (Receive, Transfer, Pick, Count). Each scenario server-renders one
  * operation with a fake scanner store and a given state, and compares the
  * markup with tests/vitest/fixtures/inventoryOpRender.golden.json. Scoped-style
- * attributes and fragment markers are dropped, and the SKU row class is
- * recorded as SKU_ROW, so the record holds what a user sees and uses.
+ * attributes and fragment markers are dropped, the SKU row class is recorded
+ * as SKU_ROW and the operation class prefix as OP, so the record holds what a
+ * user sees and uses.
  *
  * SHILLINQ_GOLDEN_RECORD=1 rewrites the record.
  *
@@ -92,6 +93,7 @@ async function render(component, state) {
 		.replace(/ data-v-[a-z0-9]+(="")?/g, '')
 		.replace(/<!--\[-->|<!--\]-->|<!---->/g, '')
 		.replace(/[a-z-]+__sku-row|inventory-sku-field__row/g, 'SKU_ROW')
+		.replace(/\b(?:count|transfer|pick|receive)-op(?![a-z-])|inventory-operation(?![a-z-])/g, 'OP')
 		.split('><')
 		.join('>\n<')
 }
