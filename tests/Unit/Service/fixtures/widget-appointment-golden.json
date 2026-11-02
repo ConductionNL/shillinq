@@ -331,6 +331,56 @@
             "warning: WidgetService: ObjectService unavailable {\"exception\":\"no OCA\\\\OpenRegister\\\\Service\\\\ObjectService\"}"
         ]
     },
+    "notes keep their spaces": {
+        "response": {
+            "code": 201,
+            "appointmentId": "wsw-ID",
+            "status": "pending_confirmation",
+            "startTime": "2026-06-01T09:00:00Z",
+            "endTime": "2026-06-01T09:30:00Z",
+            "confirmationMessage": "Your appointment was created. You will receive a confirmation email shortly."
+        },
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            }
+        ],
+        "saved": [
+            {
+                "object": {
+                    "administrationId": "adm-1",
+                    "appointmentId": "wsw-ID",
+                    "serviceId": "svc-1",
+                    "resourceId": "room-1",
+                    "customerId": "cust-anon-a3ff11319b5ef6b1",
+                    "startTime": "2026-06-01T09:00:00Z",
+                    "endTime": "2026-06-01T09:30:00Z",
+                    "status": "pending_confirmation",
+                    "customerName": "Jan Jansen",
+                    "customerEmail": "Jan@Example.org",
+                    "customerPhone": "+31612345678",
+                    "notes": "  Graag  ",
+                    "source": "widget"
+                },
+                "register": "books",
+                "schema": "Appointment",
+                "rbac": false
+            }
+        ],
+        "slots": [
+            "read svc-1/room-1/2026-06-01",
+            "invalidate svc-1/room-1/2026-06-01"
+        ],
+        "log": []
+    },
     "notes of 500": {
         "response": {
             "code": 201,

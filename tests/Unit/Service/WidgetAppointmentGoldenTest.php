@@ -186,6 +186,7 @@ final class WidgetAppointmentGoldenTest extends TestCase {
 			'bad email' => ['payload' => ['customerEmail' => 'nope']],
 			'empty email' => ['payload' => ['customerEmail' => '']],
 			'bad phone' => ['payload' => ['customerPhone' => '06-123']],
+			'notes keep their spaces' => ['payload' => ['notes' => '  Graag  ']],
 			'notes of 500' => ['payload' => ['notes' => str_repeat('é', 500)]],
 			'notes of 501' => ['payload' => ['notes' => str_repeat('é', 501)]],
 			'bad start' => ['payload' => ['startTime' => 'soon']],
