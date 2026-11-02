@@ -9,102 +9,77 @@
   @spec openspec/changes/inventory-mobile-scanner/tasks.md#T3.4
 -->
 <template>
-	<section class="count-op">
-		<h1>{{ t('shillinq', 'Inventory Count') }}</h1>
+	<InventoryOperationForm
+		:title="t('shillinq', 'Inventory Count')"
+		:submitLabel="t('shillinq', 'Save count')"
+		v-bind="formState"
+		fallbackToManual
+		@submit="handleConfirm"
+		@scan="handleScan"
+		@cancel="scanning = false">
+		<InventoryLocationField
+			v-model="location"
+			:locations="store.locations"
+			:label="t('shillinq', 'Location')"
+			:selectLabel="t('shillinq', 'Count location')"
+			:placeholder="t('shillinq', 'Select a location')" />
 
-		<form class="count-op__form" @submit.prevent="handleConfirm">
-			<InventoryLocationField
-				v-model="location"
-				:locations="store.locations"
-				:label="t('shillinq', 'Location')"
-				:selectLabel="t('shillinq', 'Count location')"
-				:placeholder="t('shillinq', 'Select a location')" />
+		<InventorySkuField v-model="sku" @scan="scanning = true" />
 
-			<InventorySkuField v-model="sku" @scan="scanning = true" />
+		<label>
+			<span>{{ t('shillinq', 'Physical count') }}</span>
+			<input
+				v-model.number="physicalQuantity"
+				type="number"
+				min="0"
+				step="0.01"
+				required
+				:aria-label="t('shillinq', 'Physical count')"
+				@input="recomputeVariance" />
+		</label>
 
-			<label>
-				<span>{{ t('shillinq', 'Physical count') }}</span>
-				<input
-					v-model.number="physicalQuantity"
-					type="number"
-					min="0"
-					step="0.01"
-					required
-					:aria-label="t('shillinq', 'Physical count')"
-					@input="recomputeVariance" />
-			</label>
+		<div v-if="systemQuantity !== null" class="count-op__variance" role="status">
+			{{ t('shillinq', 'System qty: {sys}', { sys: systemQuantity }) }}
+			—
+			{{ t('shillinq', 'Variance: {variance}', { variance: variance }) }}
+		</div>
 
-			<div
-				v-if="systemQuantity !== null"
-				class="count-op__variance"
-				role="status">
-				{{ t('shillinq', 'System qty: {sys}', { sys: systemQuantity }) }}
-				—
-				{{ t('shillinq', 'Variance: {variance}', { variance: variance }) }}
-			</div>
-
-			<label>
-				<input v-model="reconcile" type="checkbox" />
-				{{
-					t(
-						'shillinq',
-						'Update InventoryStock to physical count (reconcile)',
-					)
-				}}
-			</label>
-
-			<div v-if="error" class="count-op__error" role="alert">
-				{{ error }}
-			</div>
-			<div v-if="successMessage" class="count-op__success" role="status">
-				{{ successMessage }}
-			</div>
-
-			<div class="count-op__actions">
-				<button type="submit" :disabled="submitting">
-					{{ t('shillinq', 'Save count') }}
-				</button>
-			</div>
-		</form>
-
-		<BarcodeScanner
-			v-if="scanning"
-			fallbackToManual
-			@scan="handleScan"
-			@cancel="scanning = false" />
-	</section>
+		<label>
+			<input v-model="reconcile" type="checkbox" />
+			{{
+				t('shillinq', 'Update InventoryStock to physical count (reconcile)')
+			}}
+		</label>
+	</InventoryOperationForm>
 </template>
 
 <script>
-import BarcodeScanner from './BarcodeScanner.vue'
 import InventoryLocationField from './InventoryLocationField.vue'
+import InventoryOperationForm from './InventoryOperationForm.vue'
 import InventorySkuField from './InventorySkuField.vue'
 import { readStockQuantity } from '../../composables/useInventoryDb.js'
-import { useInventoryMobileScannerStore } from '../../store/modules/inventoryMobileScanner.js'
-import { claimSubmitSlot } from './claimSubmitSlot.js'
+import { inventoryOperation } from './inventoryOperation.js'
 
 export default {
 	name: 'CountOp',
-	components: { BarcodeScanner, InventoryLocationField, InventorySkuField },
+	components: {
+		InventoryLocationField,
+		InventoryOperationForm,
+		InventorySkuField,
+	},
+
 	data() {
 		return {
+			...inventoryOperation.state(),
 			location: '',
-			sku: '',
 			physicalQuantity: null,
 			systemQuantity: null,
 			reconcile: false,
-			scanning: false,
-			submitting: false,
-			error: null,
-			successMessage: null,
-			lastSubmittedAt: 0,
 		}
 	},
 
 	computed: {
-		store() {
-			return useInventoryMobileScannerStore()
-		},
+		...inventoryOperation.computed,
 
 		variance() {
 			if (this.systemQuantity === null || this.physicalQuantity === null) {
@@ -125,12 +100,7 @@ export default {
 	},
 
 	methods: {
-		claimSubmitSlot,
-
-		handleScan(value) {
-			this.sku = value
-			this.scanning = false
-		},
+		...inventoryOperation.methods,
 
 		async recomputeVariance() {
 			if (!this.store.db || !this.sku || !this.location) {
@@ -209,20 +179,17 @@ export default {
 		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
 		 */
 		async recordCount() {
-			this.submitting = true
-			try {
-				await this.store.submitOperation(this.countOperation())
-				this.successMessage = this.t(
-					'shillinq',
-					'Count recorded: variance {variance} (pending sync)',
-					{ variance: this.variance },
-				)
-				this.clearCount()
-			} catch (e) {
-				this.error = this.countFailureText(e)
-			} finally {
-				this.submitting = false
-			}
+			await this.queueOperation(this.countOperation(), {
+				queued: () => {
+					this.successMessage = this.t(
+						'shillinq',
+						'Count recorded: variance {variance} (pending sync)',
+						{ variance: this.variance },
+					)
+					this.clearCount()
+				},
+				failed: (e) => this.countFailureText(e),
+			})
 		},
 
 		/**
@@ -272,33 +239,7 @@ export default {
 </script>
 
 <style scoped>
-.count-op {
-	display: flex;
-	flex-direction: column;
-	gap: var(--default-grid-baseline, 4px);
-	padding: var(--default-grid-baseline, 4px);
-}
-
-.count-op__form label {
-	display: flex;
-	flex-direction: column;
-	margin-bottom: var(--default-grid-baseline, 4px);
-}
-
 .count-op__variance {
 	color: var(--color-text-maxcontrast);
-}
-
-.count-op__error {
-	color: var(--color-error);
-}
-
-.count-op__success {
-	color: var(--color-success);
-}
-
-.count-op__actions {
-	display: flex;
-	justify-content: flex-end;
 }
 </style>

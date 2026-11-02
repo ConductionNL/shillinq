@@ -9,87 +9,63 @@
   @spec openspec/changes/inventory-mobile-scanner/tasks.md#T3.2
 -->
 <template>
-	<section class="transfer-op">
-		<h1>{{ t('shillinq', 'Transfer Inventory') }}</h1>
+	<InventoryOperationForm
+		:title="t('shillinq', 'Transfer Inventory')"
+		:submitLabel="t('shillinq', 'Confirm')"
+		v-bind="formState"
+		@submit="handleConfirm"
+		@scan="handleScan"
+		@cancel="scanning = false">
+		<InventoryLocationField
+			v-model="fromLocation"
+			:locations="store.locations"
+			:label="t('shillinq', 'From location')"
+			:selectLabel="t('shillinq', 'Source location')"
+			:placeholder="t('shillinq', 'Select source')" />
 
-		<form class="transfer-op__form" @submit.prevent="handleConfirm">
-			<InventoryLocationField
-				v-model="fromLocation"
-				:locations="store.locations"
-				:label="t('shillinq', 'From location')"
-				:selectLabel="t('shillinq', 'Source location')"
-				:placeholder="t('shillinq', 'Select source')" />
+		<InventorySkuField v-model="sku" @scan="scanning = true" />
 
-			<InventorySkuField v-model="sku" @scan="scanning = true" />
+		<InventoryLocationField
+			v-model="toLocation"
+			:locations="availableDestinations"
+			:label="t('shillinq', 'To location')"
+			:selectLabel="t('shillinq', 'Destination location')"
+			:placeholder="t('shillinq', 'Select destination')" />
 
-			<InventoryLocationField
-				v-model="toLocation"
-				:locations="availableDestinations"
-				:label="t('shillinq', 'To location')"
-				:selectLabel="t('shillinq', 'Destination location')"
-				:placeholder="t('shillinq', 'Select destination')" />
-
-			<InventoryQuantityField
-				v-model="quantity"
-				:inputLabel="t('shillinq', 'Quantity to transfer')" />
-
-			<div v-if="error" class="transfer-op__error" role="alert">
-				{{ error }}
-			</div>
-			<div v-if="successMessage" class="transfer-op__success" role="status">
-				{{ successMessage }}
-			</div>
-
-			<div class="transfer-op__actions">
-				<button type="submit" :disabled="submitting">
-					{{ t('shillinq', 'Confirm') }}
-				</button>
-			</div>
-		</form>
-
-		<BarcodeScanner
-			v-if="scanning"
-			@scan="handleScan"
-			@cancel="scanning = false" />
-	</section>
+		<InventoryQuantityField
+			v-model="quantity"
+			:inputLabel="t('shillinq', 'Quantity to transfer')" />
+	</InventoryOperationForm>
 </template>
 
 <script>
-import BarcodeScanner from './BarcodeScanner.vue'
 import InventoryLocationField from './InventoryLocationField.vue'
+import InventoryOperationForm from './InventoryOperationForm.vue'
 import InventoryQuantityField from './InventoryQuantityField.vue'
 import InventorySkuField from './InventorySkuField.vue'
 import { readStockQuantity } from '../../composables/useInventoryDb.js'
-import { useInventoryMobileScannerStore } from '../../store/modules/inventoryMobileScanner.js'
-import { claimSubmitSlot } from './claimSubmitSlot.js'
+import { inventoryOperation } from './inventoryOperation.js'
 
 export default {
 	name: 'TransferOp',
 	components: {
-		BarcodeScanner,
 		InventoryLocationField,
+		InventoryOperationForm,
 		InventoryQuantityField,
 		InventorySkuField,
 	},
 
 	data() {
 		return {
+			...inventoryOperation.state(),
 			fromLocation: '',
 			toLocation: '',
-			sku: '',
 			quantity: null,
-			scanning: false,
-			submitting: false,
-			error: null,
-			successMessage: null,
-			lastSubmittedAt: 0,
 		}
 	},
 
 	computed: {
-		store() {
-			return useInventoryMobileScannerStore()
-		},
+		...inventoryOperation.computed,
 
 		availableDestinations() {
 			return this.store.locations.filter(
@@ -99,12 +75,7 @@ export default {
 	},
 
 	methods: {
-		claimSubmitSlot,
-
-		handleScan(value) {
-			this.sku = value
-			this.scanning = false
-		},
+		...inventoryOperation.methods,
 
 		/**
 		 * Check the form, the locations, the stock and the submit guard in turn,
@@ -235,17 +206,14 @@ export default {
 		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
 		 */
 		async recordTransfer() {
-			this.submitting = true
-			try {
-				await this.store.submitOperation(this.transferOperation())
-				this.successMessage = this.transferDoneMessage()
-				this.sku = ''
-				this.quantity = null
-			} catch (e) {
-				this.error = this.failureText(e)
-			} finally {
-				this.submitting = false
-			}
+			await this.queueOperation(this.transferOperation(), {
+				queued: () => {
+					this.successMessage = this.transferDoneMessage()
+					this.sku = ''
+					this.quantity = null
+				},
+				failed: (e) => this.failureText(e),
+			})
 		},
 
 		/**
@@ -300,31 +268,3 @@ export default {
 	},
 }
 </script>
-
-<style scoped>
-.transfer-op {
-	display: flex;
-	flex-direction: column;
-	gap: var(--default-grid-baseline, 4px);
-	padding: var(--default-grid-baseline, 4px);
-}
-
-.transfer-op__form label {
-	display: flex;
-	flex-direction: column;
-	margin-bottom: var(--default-grid-baseline, 4px);
-}
-
-.transfer-op__error {
-	color: var(--color-error);
-}
-
-.transfer-op__success {
-	color: var(--color-success);
-}
-
-.transfer-op__actions {
-	display: flex;
-	justify-content: flex-end;
-}
-</style>

@@ -93,7 +93,10 @@ async function render(component, state) {
 		.replace(/ data-v-[a-z0-9]+(="")?/g, '')
 		.replace(/<!--\[-->|<!--\]-->|<!---->/g, '')
 		.replace(/[a-z-]+__sku-row|inventory-sku-field__row/g, 'SKU_ROW')
-		.replace(/\b(?:count|transfer|pick|receive)-op(?![a-z-])|inventory-operation(?![a-z-])/g, 'OP')
+		.replace(
+			/\b(?:count|transfer|pick|receive)-op(?![a-z-])|inventory-operation(?![a-z-])/g,
+			'OP',
+		)
 		.split('><')
 		.join('>\n<')
 }
