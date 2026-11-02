@@ -13,38 +13,14 @@
 		<h1>{{ t('shillinq', 'Inventory Count') }}</h1>
 
 		<form class="count-op__form" @submit.prevent="handleConfirm">
-			<label>
-				<span>{{ t('shillinq', 'Location') }}</span>
-				<select
-					v-model="location"
-					required
-					:aria-label="t('shillinq', 'Count location')">
-					<option value="">
-						{{ t('shillinq', 'Select a location') }}
-					</option>
-					<option
-						v-for="loc in store.locations"
-						:key="loc.code"
-						:value="loc.code">
-						{{ loc.name }} ({{ loc.code }})
-					</option>
-				</select>
-			</label>
+			<InventoryLocationField
+				v-model="location"
+				:locations="store.locations"
+				:label="t('shillinq', 'Location')"
+				:selectLabel="t('shillinq', 'Count location')"
+				:placeholder="t('shillinq', 'Select a location')" />
 
-			<label>
-				<span>{{ t('shillinq', 'SKU / barcode') }}</span>
-				<div class="count-op__sku-row">
-					<input
-						v-model="sku"
-						type="text"
-						required
-						:placeholder="t('shillinq', 'Tap scan or type SKU')"
-						:aria-label="t('shillinq', 'Stock keeping unit')" />
-					<button type="button" @click="scanning = true">
-						{{ t('shillinq', 'Scan') }}
-					</button>
-				</div>
-			</label>
+			<InventorySkuField v-model="sku" @scan="scanning = true" />
 
 			<label>
 				<span>{{ t('shillinq', 'Physical count') }}</span>
@@ -101,13 +77,15 @@
 
 <script>
 import BarcodeScanner from './BarcodeScanner.vue'
+import InventoryLocationField from './InventoryLocationField.vue'
+import InventorySkuField from './InventorySkuField.vue'
 import { readStockQuantity } from '../../composables/useInventoryDb.js'
 import { useInventoryMobileScannerStore } from '../../store/modules/inventoryMobileScanner.js'
 import { claimSubmitSlot } from './claimSubmitSlot.js'
 
 export default {
 	name: 'CountOp',
-	components: { BarcodeScanner },
+	components: { BarcodeScanner, InventoryLocationField, InventorySkuField },
 	data() {
 		return {
 			location: '',
@@ -305,15 +283,6 @@ export default {
 	display: flex;
 	flex-direction: column;
 	margin-bottom: var(--default-grid-baseline, 4px);
-}
-
-.count-op__sku-row {
-	display: flex;
-	gap: var(--default-grid-baseline, 4px);
-}
-
-.count-op__sku-row input {
-	flex: 1;
 }
 
 .count-op__variance {
