@@ -49,56 +49,131 @@
  * @spec openspec/changes/budget-core-schema/specs/budget-core-schema/spec.md#req-bcs-002
  */
 export function normaliseBudgetLineRows(payload) {
-	const groups = Array.isArray(payload?.groups)
-		? payload.groups
-		: Array.isArray(payload?.buckets)
-			? payload.buckets
-			: Array.isArray(payload)
-				? payload
-				: []
+	return payloadGroups(payload).map((group) => budgetLineRow(group))
+}
 
-	return groups.map((group) => {
-		const keys = group?.keys ?? group ?? {}
-		const values = group?.values ?? group ?? {}
-		const joined = group?.joined ?? group ?? {}
+/**
+ * The groups of an aggregation payload: the `groups` envelope, the legacy
+ * `buckets` list, or a bare array.
+ *
+ * @param {object|Array} payload Raw response from the aggregation endpoint.
+ * @return {Array<object>} The groups, or [] for a malformed payload.
+ */
+function payloadGroups(payload) {
+	if (Array.isArray(payload?.groups)) {
+		return payload.groups
+	}
+	if (Array.isArray(payload?.buckets)) {
+		return payload.buckets
+	}
+	return Array.isArray(payload) ? payload : []
+}
 
-		const programme = keys?.programme ?? ''
-		const costCentre = keys?.costCentre ?? keys?.cost_centre ?? ''
-		const financialYear = keys?.financialYear ?? keys?.financial_year ?? null
-		const glAccount =
-			keys?.generalLedgerAccount ?? keys?.general_ledger_account ?? ''
+/**
+ * One display row for an aggregation group, with `vrij` computed from the
+ * three declared figures.
+ *
+ * @param {object} group One aggregation group (or legacy flat bucket).
+ * @return {object} The budget-line row.
+ */
+function budgetLineRow(group) {
+	const { programme, costCentre, financialYear, glAccount } =
+		groupDimensions(group)
+	const geautoriseerd = authorisedAmount(group)
+	const mandatory = committedAmount(group)
+	const gerealiseerd = invoicedAmount(group)
 
-		const geautoriseerd = Number(
-			joined?.['CommitmentBudget.authorised_amount']
-				?? group?.geautoriseerd
-				?? 0,
-		)
-		const mandatory = Number(
-			values?.sum_remaining_committed
-				?? values?.remaining_committed
-				?? group?.verplicht
-				?? 0,
-		)
-		const gerealiseerd = Number(
-			values?.sum_invoiced_amount
-				?? values?.invoiced_amount
-				?? group?.gerealiseerd
-				?? 0,
-		)
-		const vrij = geautoriseerd - mandatory - gerealiseerd
+	return {
+		key: [programme, costCentre, financialYear, glAccount].join('|'),
+		programme: String(programme ?? ''),
+		cost_centre: String(costCentre ?? ''),
+		financial_year: financialYear ?? null,
+		general_ledger_account: String(glAccount ?? ''),
+		geautoriseerd,
+		mandatory,
+		gerealiseerd,
+		vrij: geautoriseerd - mandatory - gerealiseerd,
+	}
+}
 
-		return {
-			key: [programme, costCentre, financialYear, glAccount].join('|'),
-			programme: String(programme ?? ''),
-			cost_centre: String(costCentre ?? ''),
-			financial_year: financialYear ?? null,
-			general_ledger_account: String(glAccount ?? ''),
-			geautoriseerd,
-			mandatory,
-			gerealiseerd,
-			vrij,
+/**
+ * The coding dimensions of a group, from its `keys` or the legacy flat shape.
+ *
+ * @param {object} group One aggregation group.
+ * @return {object} programme, costCentre, financialYear and glAccount.
+ */
+function groupDimensions(group) {
+	const keys = group?.keys ?? group ?? {}
+	return {
+		programme: keys?.programme ?? '',
+		costCentre: firstPresent(keys, ['costCentre', 'cost_centre']) ?? '',
+		financialYear:
+			firstPresent(keys, ['financialYear', 'financial_year']) ?? null,
+		glAccount:
+			firstPresent(keys, ['generalLedgerAccount', 'general_ledger_account'])
+			?? '',
+	}
+}
+
+/**
+ * The authorised amount joined from CommitmentBudget, or the legacy field.
+ *
+ * @param {object} group One aggregation group.
+ * @return {number} The geautoriseerd amount (minor units).
+ */
+function authorisedAmount(group) {
+	const joined = group?.joined ?? group ?? {}
+	return Number(
+		joined?.['CommitmentBudget.authorised_amount'] ?? group?.geautoriseerd ?? 0,
+	)
+}
+
+/**
+ * The remaining committed amount of a group, or the legacy field.
+ *
+ * @param {object} group One aggregation group.
+ * @return {number} The verplicht amount (minor units).
+ */
+function committedAmount(group) {
+	const values = group?.values ?? group ?? {}
+	return Number(
+		firstPresent(values, ['sum_remaining_committed', 'remaining_committed'])
+			?? group?.verplicht
+			?? 0,
+	)
+}
+
+/**
+ * The invoiced amount of a group, or the legacy field.
+ *
+ * @param {object} group One aggregation group.
+ * @return {number} The gerealiseerd amount (minor units).
+ */
+function invoicedAmount(group) {
+	const values = group?.values ?? group ?? {}
+	return Number(
+		firstPresent(values, ['sum_invoiced_amount', 'invoiced_amount'])
+			?? group?.gerealiseerd
+			?? 0,
+	)
+}
+
+/**
+ * The first of the named fields that is neither null nor undefined, read the
+ * way `a?.x ?? a?.y` reads them.
+ *
+ * @param {unknown} source The object to read (any value; non-objects have no fields).
+ * @param {Array<string>} names The field names, most preferred first.
+ * @return {unknown} The value, or undefined when none is set.
+ */
+function firstPresent(source, names) {
+	for (const name of names) {
+		const value = source?.[name]
+		if (value !== null && value !== undefined) {
+			return value
 		}
-	})
+	}
+	return undefined
 }
 
 /**
