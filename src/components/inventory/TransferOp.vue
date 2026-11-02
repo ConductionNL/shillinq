@@ -13,65 +13,25 @@
 		<h1>{{ t('shillinq', 'Transfer Inventory') }}</h1>
 
 		<form class="transfer-op__form" @submit.prevent="handleConfirm">
-			<label>
-				<span>{{ t('shillinq', 'From location') }}</span>
-				<select
-					v-model="fromLocation"
-					required
-					:aria-label="t('shillinq', 'Source location')">
-					<option value="">{{ t('shillinq', 'Select source') }}</option>
-					<option
-						v-for="loc in store.locations"
-						:key="loc.code"
-						:value="loc.code">
-						{{ loc.name }} ({{ loc.code }})
-					</option>
-				</select>
-			</label>
+			<InventoryLocationField
+				v-model="fromLocation"
+				:locations="store.locations"
+				:label="t('shillinq', 'From location')"
+				:selectLabel="t('shillinq', 'Source location')"
+				:placeholder="t('shillinq', 'Select source')" />
 
-			<label>
-				<span>{{ t('shillinq', 'SKU / barcode') }}</span>
-				<div class="transfer-op__sku-row">
-					<input
-						v-model="sku"
-						type="text"
-						required
-						:placeholder="t('shillinq', 'Tap scan or type SKU')"
-						:aria-label="t('shillinq', 'Stock keeping unit')" />
-					<button type="button" @click="scanning = true">
-						{{ t('shillinq', 'Scan') }}
-					</button>
-				</div>
-			</label>
+			<InventorySkuField v-model="sku" @scan="scanning = true" />
 
-			<label>
-				<span>{{ t('shillinq', 'To location') }}</span>
-				<select
-					v-model="toLocation"
-					required
-					:aria-label="t('shillinq', 'Destination location')">
-					<option value="">
-						{{ t('shillinq', 'Select destination') }}
-					</option>
-					<option
-						v-for="loc in availableDestinations"
-						:key="loc.code"
-						:value="loc.code">
-						{{ loc.name }} ({{ loc.code }})
-					</option>
-				</select>
-			</label>
+			<InventoryLocationField
+				v-model="toLocation"
+				:locations="availableDestinations"
+				:label="t('shillinq', 'To location')"
+				:selectLabel="t('shillinq', 'Destination location')"
+				:placeholder="t('shillinq', 'Select destination')" />
 
-			<label>
-				<span>{{ t('shillinq', 'Quantity') }}</span>
-				<input
-					v-model.number="quantity"
-					type="number"
-					min="0.01"
-					step="0.01"
-					required
-					:aria-label="t('shillinq', 'Quantity to transfer')" />
-			</label>
+			<InventoryQuantityField
+				v-model="quantity"
+				:inputLabel="t('shillinq', 'Quantity to transfer')" />
 
 			<div v-if="error" class="transfer-op__error" role="alert">
 				{{ error }}
@@ -96,13 +56,22 @@
 
 <script>
 import BarcodeScanner from './BarcodeScanner.vue'
+import InventoryLocationField from './InventoryLocationField.vue'
+import InventoryQuantityField from './InventoryQuantityField.vue'
+import InventorySkuField from './InventorySkuField.vue'
 import { readStockQuantity } from '../../composables/useInventoryDb.js'
 import { useInventoryMobileScannerStore } from '../../store/modules/inventoryMobileScanner.js'
 import { claimSubmitSlot } from './claimSubmitSlot.js'
 
 export default {
 	name: 'TransferOp',
-	components: { BarcodeScanner },
+	components: {
+		BarcodeScanner,
+		InventoryLocationField,
+		InventoryQuantityField,
+		InventorySkuField,
+	},
+
 	data() {
 		return {
 			fromLocation: '',
@@ -344,15 +313,6 @@ export default {
 	display: flex;
 	flex-direction: column;
 	margin-bottom: var(--default-grid-baseline, 4px);
-}
-
-.transfer-op__sku-row {
-	display: flex;
-	gap: var(--default-grid-baseline, 4px);
-}
-
-.transfer-op__sku-row input {
-	flex: 1;
 }
 
 .transfer-op__error {

@@ -13,49 +13,18 @@
 		<h1>{{ t('shillinq', 'Receive Goods') }}</h1>
 
 		<form class="receive-op__form" @submit.prevent="handleConfirm">
-			<label>
-				<span>{{ t('shillinq', 'Location') }}</span>
-				<select
-					v-model="location"
-					required
-					:aria-label="t('shillinq', 'Receiving location')">
-					<option value="">
-						{{ t('shillinq', 'Select a location') }}
-					</option>
-					<option
-						v-for="loc in store.locations"
-						:key="loc.code"
-						:value="loc.code">
-						{{ loc.name }} ({{ loc.code }})
-					</option>
-				</select>
-			</label>
+			<InventoryLocationField
+				v-model="location"
+				:locations="store.locations"
+				:label="t('shillinq', 'Location')"
+				:selectLabel="t('shillinq', 'Receiving location')"
+				:placeholder="t('shillinq', 'Select a location')" />
 
-			<label>
-				<span>{{ t('shillinq', 'SKU / barcode') }}</span>
-				<div class="receive-op__sku-row">
-					<input
-						v-model="sku"
-						type="text"
-						required
-						:placeholder="t('shillinq', 'Tap scan or type SKU')"
-						:aria-label="t('shillinq', 'Stock keeping unit')" />
-					<button type="button" @click="scanning = true">
-						{{ t('shillinq', 'Scan') }}
-					</button>
-				</div>
-			</label>
+			<InventorySkuField v-model="sku" @scan="scanning = true" />
 
-			<label>
-				<span>{{ t('shillinq', 'Quantity') }}</span>
-				<input
-					v-model.number="quantity"
-					type="number"
-					min="0.01"
-					step="0.01"
-					required
-					:aria-label="t('shillinq', 'Quantity received')" />
-			</label>
+			<InventoryQuantityField
+				v-model="quantity"
+				:inputLabel="t('shillinq', 'Quantity received')" />
 
 			<div v-if="error" class="receive-op__error" role="alert">
 				{{ error }}
@@ -80,12 +49,21 @@
 
 <script>
 import BarcodeScanner from './BarcodeScanner.vue'
+import InventoryLocationField from './InventoryLocationField.vue'
+import InventoryQuantityField from './InventoryQuantityField.vue'
+import InventorySkuField from './InventorySkuField.vue'
 import { useInventoryMobileScannerStore } from '../../store/modules/inventoryMobileScanner.js'
 import { claimSubmitSlot } from './claimSubmitSlot.js'
 
 export default {
 	name: 'ReceiveOp',
-	components: { BarcodeScanner },
+	components: {
+		BarcodeScanner,
+		InventoryLocationField,
+		InventoryQuantityField,
+		InventorySkuField,
+	},
+
 	data() {
 		return {
 			location: '',
@@ -223,15 +201,6 @@ export default {
 	display: flex;
 	flex-direction: column;
 	margin-bottom: var(--default-grid-baseline, 4px);
-}
-
-.receive-op__sku-row {
-	display: flex;
-	gap: var(--default-grid-baseline, 4px);
-}
-
-.receive-op__sku-row input {
-	flex: 1;
 }
 
 .receive-op__error {
