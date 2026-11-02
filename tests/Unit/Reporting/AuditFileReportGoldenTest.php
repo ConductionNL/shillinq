@@ -80,7 +80,7 @@ final class AuditFileReportGoldenTest extends TestCase {
 	 */
 	public static function letterScenarios(): array {
 		$cases = [];
-		foreach (['full', 'clean', 'nothingChecked', 'oddShapes', 'unavailable', 'noAdministration'] as $audit) {
+		foreach (['full', 'clean', 'oneFinding', 'nothingChecked', 'oddShapes', 'unavailable', 'noAdministration'] as $audit) {
 			$cases['letter ' . $audit] = [$audit];
 		}
 
@@ -222,6 +222,7 @@ final class AuditFileReportGoldenTest extends TestCase {
 
 		return match ($shape) {
 			'clean' => ['objectsChecked' => 7, 'objectsCompliant' => 7, 'objectsWithViolations' => 0, 'coveragePct' => '12.5'],
+			'oneFinding' => ['objectsChecked' => 7, 'objectsCompliant' => 6, 'objectsWithViolations' => 1],
 			'nothingChecked' => [],
 			'oddShapes' => [
 				'objectsChecked' => 3,

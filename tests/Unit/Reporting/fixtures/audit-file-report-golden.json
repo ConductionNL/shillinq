@@ -697,6 +697,111 @@
             }
         ]
     },
+    "letter oneFinding": {
+        "blocks": [
+            {
+                "type": "cover",
+                "title": "Management letter",
+                "subtitle": "Bevindingenrapport — compliance & interne beheersing",
+                "meta": [
+                    "Periode: 2025-03",
+                    "Administratie: adm-1",
+                    "Gegenereerd: NOW"
+                ]
+            },
+            {
+                "type": "text",
+                "text": "Geachte directie,",
+                "style": "value",
+                "paragraphStyle": "default"
+            },
+            {
+                "type": "text",
+                "text": "In het kader van de doorlopende controle op de financiële administratie hebben wij de boekhouding getoetst aan het machinaal controleerbare normenkader. Onderstaand treft u onze bevindingen aan, geordend naar ernst, met een samenvatting van de mate waarin de administratie aan de normen voldoet.",
+                "style": "value",
+                "paragraphStyle": "default"
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Samenvatting",
+                "depth": 2
+            },
+            {
+                "type": "detailsTable",
+                "rows": {
+                    "Regels in corpus": "0",
+                    "Machinaal controleerbaar": "0",
+                    "Afdwingbare regels": "0",
+                    "Dekkingsgraad": "0,0 %",
+                    "Objecten gecontroleerd": "7",
+                    "Objecten zonder bevindingen": "6",
+                    "Objecten met bevindingen": "1",
+                    "Compliancegraad": "85,7 %"
+                }
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Bevindingen naar ernst",
+                "depth": 2
+            },
+            {
+                "type": "amountTable",
+                "labelHead": "Ernst",
+                "amountHead": "Aantal",
+                "lines": [
+                    {
+                        "label": "Verplicht (mandatory)",
+                        "amount": 0
+                    },
+                    {
+                        "label": "Voorwaardelijk (conditional)",
+                        "amount": 0
+                    },
+                    {
+                        "label": "Aanbevolen (recommended)",
+                        "amount": 0
+                    }
+                ],
+                "total": {
+                    "label": "Totaal bevindingen",
+                    "amount": 0
+                },
+                "currency": ""
+            },
+            {
+                "type": "textBreak",
+                "count": 1
+            },
+            {
+                "type": "heading",
+                "text": "Aanbeveling",
+                "depth": 2
+            },
+            {
+                "type": "text",
+                "text": "Wij adviseren de geconstateerde bevindingen op te lossen, te beginnen bij de verplichte (mandatory) bevindingen, en de interne beheersing zodanig in te richten dat herhaling wordt voorkomen.",
+                "style": "value",
+                "paragraphStyle": "default"
+            },
+            {
+                "type": "note",
+                "text": "Deze management letter is automatisch gegenereerd uit de regelmotor (RuleAuditService). De dekkingsgraad geeft aan welk deel van het machinaal controleerbare corpus vandaag daadwerkelijk wordt afgedwongen."
+            }
+        ],
+        "auditContexts": [
+            {
+                "administrationId": "adm-1"
+            }
+        ]
+    },
     "letter unavailable": {
         "blocks": [
             {
