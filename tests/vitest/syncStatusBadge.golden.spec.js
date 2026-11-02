@@ -20,7 +20,8 @@ vi.mock('../../src/store/modules/inventoryMobileScanner.js', () => ({
 	useInventoryMobileScannerStore: () => null,
 }))
 
-const { default: SyncStatusBadge } = await import('../../src/components/inventory/SyncStatusBadge.vue')
+const { default: SyncStatusBadge } =
+	await import('../../src/components/inventory/SyncStatusBadge.vue')
 
 const GOLDEN = path.join(__dirname, 'fixtures/syncStatusBadge.golden.json')
 const RECORD = process.env.SHILLINQ_GOLDEN_RECORD === '1'
@@ -36,7 +37,9 @@ const recorded = {}
  * @return {string} The fake translation.
  */
 function fakeT(app, text, vars) {
-	return vars === undefined ? `${app}:${text}` : `${app}:${text}|${JSON.stringify(vars)}`
+	return vars === undefined
+		? `${app}:${text}`
+		: `${app}:${text}|${JSON.stringify(vars)}`
 }
 
 /**
@@ -53,7 +56,11 @@ function badge(store) {
 	vm.formatTime = (iso) => `time(${iso})`
 	const computed = (name) => SyncStatusBadge.computed[name].call(vm)
 	Object.defineProperty(vm, 'isStale', { get: () => computed('isStale') })
-	return { badgeClass: computed('badgeClass'), humanLabel: computed('humanLabel'), isStale: vm.isStale }
+	return {
+		badgeClass: computed('badgeClass'),
+		humanLabel: computed('humanLabel'),
+		isStale: vm.isStale,
+	}
 }
 
 const STATES = ['idle', 'syncing', 'pending', 'failed', 'offline', undefined]
@@ -72,7 +79,9 @@ for (const syncState of STATES) {
 	for (const pendingCount of PENDING) {
 		for (const [synced, lastSyncedAt] of Object.entries(SYNCED)) {
 			for (const retryInMs of RETRY) {
-				cases[`${syncState} / pending ${pendingCount} / ${synced} / retry ${retryInMs}`] = {
+				cases[
+					`${syncState} / pending ${pendingCount} / ${synced} / retry ${retryInMs}`
+				] = {
 					syncState,
 					pendingCount,
 					lastSyncedAt,
