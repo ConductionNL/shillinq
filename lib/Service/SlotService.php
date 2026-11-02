@@ -114,6 +114,8 @@ class SlotService {
 	 * @param string $date Calendar date in UTC as YYYY-MM-DD.
 	 *
 	 * @return array{slots: array<int,array<string,string>>, etag: string, cached: bool}
+	 *
+	 * @spec openspec/specs/bookings-self-service-widget/spec.md#req-wsw-002
 	 */
 	public function getAvailableSlots(string $serviceId, string $resourceId, string $date): array {
 		$cacheKey = $this->buildCacheKey(serviceId: $serviceId, resourceId: $resourceId, date: $date);
