@@ -166,6 +166,41 @@ function triggerSyncInBackground(scheduler) {
 	}
 }
 
+/**
+ * Take the rejected operations of a sync summary, and surface its LWW
+ * overwrites as a non-blocking conflict toast.
+ *
+ * @param {object} store The scanner store.
+ * @param {object} status Status payload from createSyncScheduler.
+ */
+function applySummary(store, status) {
+	const summary = status.summary
+	if (!summary) {
+		return
+	}
+	if (Array.isArray(summary.rejected)) {
+		store.rejected = summary.rejected
+	}
+	if (summary.applied > 0) {
+		store.conflicts.push({
+			at: status.lastSyncedAt || new Date().toISOString(),
+			applied: summary.applied,
+			kept: summary.kept,
+		})
+	}
+}
+
+/** The badge text of each sync state that is not offline. */
+const STATUS_LABELS = {
+	[STATE_SYNCED]: (state) =>
+		state.lastSyncedAt ? `Synced ${state.lastSyncedAt}` : 'Synced',
+	[STATE_SYNCING]: () => 'Syncing…',
+	[STATE_PENDING]: (state) =>
+		state.pendingCount > 0 ? `Pending (${state.pendingCount})` : 'Pending',
+	[STATE_FAILED]: (state) =>
+		`Sync failed; retry in ${Math.ceil((state.retryInMs || 0) / 1000)}s`,
+}
+
 export const useInventoryMobileScannerStore = defineStore('inventoryMobileScanner', {
 	state: () => ({
 		db: null,
@@ -185,23 +220,11 @@ export const useInventoryMobileScannerStore = defineStore('inventoryMobileScanne
 	getters: {
 		isOnline: () =>
 			typeof navigator === 'undefined' || navigator.onLine !== false,
-		statusLabel: (state) => {
-			if (state.syncState === STATE_SYNCED) {
-				return state.lastSyncedAt ? `Synced ${state.lastSyncedAt}` : 'Synced'
-			}
-			if (state.syncState === STATE_SYNCING) {
-				return 'Syncing…'
-			}
-			if (state.syncState === STATE_PENDING) {
-				return state.pendingCount > 0
-					? `Pending (${state.pendingCount})`
-					: 'Pending'
-			}
-			if (state.syncState === STATE_FAILED) {
-				return `Sync failed; retry in ${Math.ceil((state.retryInMs || 0) / 1000)}s`
-			}
-			return 'Offline'
-		},
+		statusLabel: (state) =>
+			Object.hasOwn(STATUS_LABELS, state.syncState)
+				? STATUS_LABELS[state.syncState](state)
+				: 'Offline',
+
 		statusColor: (state) => {
 			if (state.syncState === STATE_SYNCED) {
 				return 'green'
@@ -275,19 +298,7 @@ export const useInventoryMobileScannerStore = defineStore('inventoryMobileScanne
 			}
 			this.lastError = status.error || null
 			this.retryInMs = status.retryInMs || 0
-			if (status.summary && Array.isArray(status.summary.rejected)) {
-				this.rejected = status.summary.rejected
-			}
-			if (status.summary && (status.summary.applied || status.summary.kept)) {
-				// LWW overwrites are surfaced as non-blocking conflict toasts.
-				if (status.summary.applied > 0) {
-					this.conflicts.push({
-						at: status.lastSyncedAt || new Date().toISOString(),
-						applied: status.summary.applied,
-						kept: status.summary.kept,
-					})
-				}
-			}
+			applySummary(this, status)
 			await this.refreshPendingCount()
 		},
 

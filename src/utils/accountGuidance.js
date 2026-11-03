@@ -41,19 +41,43 @@ export function guidanceRows(lines, accounts) {
 	}
 	return (lines ?? []).map((line, index) => {
 		const number = String(line?.accountNumber ?? '')
-		const account = byNumber.get(number) ?? {}
 		return {
 			key: String(line?.id ?? index),
 			accountNumber: number,
-			accountName: String(account.name ?? ''),
-			guidance: String(account.description ?? '').trim(),
-			controlAccountFor: String(account.controlAccountFor ?? ''),
-			side: String(line?.side ?? ''),
-			amount: Number(line?.amount ?? 0),
-			costCenterCode: String(line?.costCenterCode ?? ''),
-			projectCode: String(line?.projectCode ?? ''),
+			...accountFields(byNumber.get(number)),
+			...lineFields(line),
 		}
 	})
+}
+
+/**
+ * The name, guidance and control role of a line's account.
+ *
+ * @param {object|null|undefined} account The account, when known.
+ * @return {object} accountName, guidance and controlAccountFor.
+ */
+function accountFields(account) {
+	const known = account ?? {}
+	return {
+		accountName: String(known.name ?? ''),
+		guidance: String(known.description ?? '').trim(),
+		controlAccountFor: String(known.controlAccountFor ?? ''),
+	}
+}
+
+/**
+ * The side, amount and dimensions of a line.
+ *
+ * @param {object|null|undefined} line The line.
+ * @return {object} side, amount, costCenterCode and projectCode.
+ */
+function lineFields(line) {
+	return {
+		side: String(line?.side ?? ''),
+		amount: Number(line?.amount ?? 0),
+		costCenterCode: String(line?.costCenterCode ?? ''),
+		projectCode: String(line?.projectCode ?? ''),
+	}
 }
 
 /**
@@ -67,7 +91,7 @@ export function guidanceRows(lines, accounts) {
 export function objectsUrl(schema, filters = {}) {
 	const query = new URLSearchParams()
 	for (const [key, value] of Object.entries(filters)) {
-		if (value !== undefined && value !== null && value !== '') {
+		if (isFilterValue(value)) {
 			query.set(key, String(value))
 		}
 	}
@@ -77,6 +101,16 @@ export function objectsUrl(schema, filters = {}) {
 		+ '?'
 		+ query.toString()
 	)
+}
+
+/**
+ * Whether a filter value narrows the list: anything but undefined, null and ''.
+ *
+ * @param {unknown} value The filter value.
+ * @return {boolean}
+ */
+function isFilterValue(value) {
+	return value !== undefined && value !== null && value !== ''
 }
 
 /**

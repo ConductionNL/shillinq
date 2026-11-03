@@ -77,6 +77,9 @@ export function vatCheckMessage(result) {
 	}
 }
 
+/** How each outcome kind is shown. */
+const TOAST = { success: showSuccess, warning: showWarning, error: showError }
+
 /**
  * Check the record's VAT number and show the outcome.
  *
@@ -86,9 +89,7 @@ export function vatCheckMessage(result) {
  * @spec openspec/changes/tax-vat-number-check/tasks.md#task-2.1
  */
 export async function checkVatNumber(type, scope) {
-	const id =
-		(scope && scope.item && scope.item.id)
-		|| window.location.pathname.split('/').pop()
+	const id = recordId(scope)
 	if (!id) {
 		return null
 	}
@@ -100,19 +101,27 @@ export async function checkVatNumber(type, scope) {
 			}),
 		)
 		const message = vatCheckMessage(data)
-		const show = {
-			success: showSuccess,
-			warning: showWarning,
-			error: showError,
-		}[message.kind]
-		show(message.text)
+		TOAST[message.kind](message.text)
 		emit('cn:page:refresh', {})
 		return data
 	} catch (e) {
-		const answer = e && e.response && e.response.data && e.response.data.error
-		showError(answer || t('shillinq', 'The VAT number could not be checked.'))
+		showError(
+			e?.response?.data?.error
+				|| t('shillinq', 'The VAT number could not be checked.'),
+		)
 		return null
 	}
+}
+
+/**
+ * The id of the record the action runs on: the page item, else the last
+ * segment of the address.
+ *
+ * @param {{item: object}|null} scope The page scope.
+ * @return {string} The id, or an empty string.
+ */
+function recordId(scope) {
+	return scope?.item?.id || window.location.pathname.split('/').pop()
 }
 
 /**
