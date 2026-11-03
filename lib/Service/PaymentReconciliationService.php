@@ -438,7 +438,7 @@ class PaymentReconciliationService {
 					->setRegister($registerSlug)
 					->setSchema('ARInvoice'),
 				id: $invoiceRef,
-				rbac: false
+				scope: ['_rbac' => false]
 			);
 			$invoices = [];
 			if ($byId !== null) {
