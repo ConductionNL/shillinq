@@ -298,11 +298,9 @@ class HrmqCostRateAdapter {
 	private function activeContract(string $employeeId): ?array {
 		try {
 			$rows = $this->container->get(id: 'OCA\\OpenRegister\\Service\\ObjectService')
-				->findAll(
-					register: $this->registerSlug(),
-					schema: 'EmploymentContract',
-					filters: ['employee' => $employeeId, 'status' => 'active']
-				);
+				->setRegister($this->registerSlug())
+				->setSchema('EmploymentContract')
+				->findAll(['filters' => ['employee' => $employeeId, 'status' => 'active']]);
 		} catch (Throwable $e) {
 			$this->logger->debug('HrmqCostRateAdapter: no active contract for ' . $employeeId);
 			return null;
