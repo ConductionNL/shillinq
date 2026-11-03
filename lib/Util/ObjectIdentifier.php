@@ -225,8 +225,14 @@ final class ObjectIdentifier {
 
 		// Its own try/catch, deliberately — find() throws rather than
 		// returning null, so a shared catch would swallow the fallback.
+		$target = self::lookupTarget(scoped: $scoped);
 		try {
-			$record = self::record(candidate: $scoped->find($id, ...$scope));
+			$found = $scoped->find($id, ...$target, ...$scope);
+			$record = null;
+			if (self::isInSchema(found: $found, target: $target) === true) {
+				$record = self::record(candidate: $found);
+			}
+
 			if ($record !== null) {
 				return $record;
 			}
@@ -253,6 +259,67 @@ final class ObjectIdentifier {
 
 		return null;
 	}//end findOne()
+
+	/**
+	 * The register and schema the service is scoped to, as find() arguments.
+	 *
+	 * OpenRegister's find() does not use the register and schema set on the
+	 * service: without them as arguments it searches every schema by id, uuid,
+	 * slug or uri. A service that does not report its scope gets no arguments.
+	 *
+	 * @param object $scoped ObjectService with register + schema already set.
+	 *
+	 * @return array{register?: object, schema?: object}
+	 */
+	private static function lookupTarget(object $scoped): array {
+		if (method_exists($scoped, 'getCurrentRegisterEntity') === false || method_exists($scoped, 'getCurrentSchemaEntity') === false) {
+			return [];
+		}
+
+		$register = $scoped->getCurrentRegisterEntity();
+		$schema   = $scoped->getCurrentSchemaEntity();
+		if ($register === null || $schema === null) {
+			return [];
+		}
+
+		return ['register' => $register, 'schema' => $schema];
+	}//end lookupTarget()
+
+	/**
+	 * Whether find()'s answer is an object of the schema asked for.
+	 *
+	 * OpenRegister's find() retries a uuid miss without the schema, so the
+	 * answer is checked against the schema's id, uuid and slug, read through
+	 * accessor() because OpenRegister's entities serve them through __call. An
+	 * answer that carries no schema cannot be checked and does not count. With no schema
+	 * asked for there is nothing to check.
+	 *
+	 * @param mixed                $found  What find() answered.
+	 * @param array<string, mixed> $target The find() scope from lookupTarget().
+	 *
+	 * @return bool
+	 */
+	private static function isInSchema(mixed $found, array $target): bool {
+		if (isset($target['schema']) === false) {
+			return true;
+		}
+
+		if (is_object($found) === false) {
+			return false;
+		}
+
+		$schema = $target['schema'];
+		$names  = array_diff(
+			[
+				self::accessor(entity: $schema, getter: 'getId'),
+				self::accessor(entity: $schema, getter: 'getUuid'),
+				self::accessor(entity: $schema, getter: 'getSlug'),
+			],
+			['']
+		);
+
+		return in_array(self::accessor(entity: $found, getter: 'getSchema'), $names, true);
+	}//end isInSchema()
 
 	/**
 	 * Normalise a result entry to a record that keeps its uuid as `id`.
