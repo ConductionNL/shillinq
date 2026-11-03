@@ -78,7 +78,7 @@ namespace OCA\Shillinq\Service;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\IUser;
@@ -261,7 +261,7 @@ class ComplianceDeadlineCalendarService {
 		$default = (self::CATEGORY_DEFAULTS[$category] ?? '0');
 		$value = $this->config->getUserValue(
 			userId: $userId,
-			appName: Application::APP_ID,
+			appName: AppIdentity::APP_ID,
 			key: self::PREF_CATEGORY_PREFIX . $category,
 			default: $default
 		);
@@ -293,7 +293,7 @@ class ComplianceDeadlineCalendarService {
 
 		$this->config->setUserValue(
 			userId: $userId,
-			appName: Application::APP_ID,
+			appName: AppIdentity::APP_ID,
 			key: self::PREF_CATEGORY_PREFIX . $category,
 			value: $value
 		);
@@ -314,7 +314,7 @@ class ComplianceDeadlineCalendarService {
 		$default = (string)(self::LEAD_DAYS_DEFAULTS[$category] ?? 7);
 		$value = $this->config->getUserValue(
 			userId: $userId,
-			appName: Application::APP_ID,
+			appName: AppIdentity::APP_ID,
 			key: self::PREF_LEAD_PREFIX . $category,
 			default: $default
 		);
@@ -349,7 +349,7 @@ class ComplianceDeadlineCalendarService {
 
 		$this->config->setUserValue(
 			userId: $userId,
-			appName: Application::APP_ID,
+			appName: AppIdentity::APP_ID,
 			key: self::PREF_LEAD_PREFIX . $category,
 			value: (string)$days
 		);
@@ -788,7 +788,7 @@ class ComplianceDeadlineCalendarService {
 	private function notifyUser(string $userId, array $deadline, int $daysUntil): bool {
 		try {
 			$notification = $this->notificationMgr->createNotification();
-			$notification->setApp(Application::APP_ID)
+			$notification->setApp(AppIdentity::APP_ID)
 				->setUser($userId)
 				->setObject('compliance-deadline', substr($deadline['uid'], 0, 64))
 				->setSubject(
@@ -1335,7 +1335,7 @@ class ComplianceDeadlineCalendarService {
 	 * @return string The register slug.
 	 */
 	private function registerSlug(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}
@@ -1353,7 +1353,7 @@ class ComplianceDeadlineCalendarService {
 	private function readSentMap(string $userId): array {
 		$raw = $this->config->getUserValue(
 			userId: $userId,
-			appName: Application::APP_ID,
+			appName: AppIdentity::APP_ID,
 			key: self::PREF_SENT,
 			default: ''
 		);
@@ -1389,7 +1389,7 @@ class ComplianceDeadlineCalendarService {
 		try {
 			$this->config->setUserValue(
 				userId: $userId,
-				appName: Application::APP_ID,
+				appName: AppIdentity::APP_ID,
 				key: self::PREF_SENT,
 				value: (string)json_encode($sent)
 			);

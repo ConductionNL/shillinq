@@ -31,7 +31,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -77,7 +77,7 @@ class BalanceGuard {
 	public function isBalanced(string $transactionId): bool {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+			$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 			if ($register === '') {
 				$register = 'shillinq';
 			}

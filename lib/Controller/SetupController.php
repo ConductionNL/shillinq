@@ -34,7 +34,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\DemoDataService;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Settings\AdminSettings;
@@ -122,7 +122,7 @@ class SetupController extends Controller {
 		$requiredDone = ($countryDone === true && $regionDone === true && $rgsDone === true && $adminDone === true);
 
 		if ($requiredDone === true) {
-			$this->appConfig->setValueString(Application::APP_ID, 'setup_completed_version', (string)self::SETUP_VERSION);
+			$this->appConfig->setValueString(AppIdentity::APP_ID, 'setup_completed_version', (string)self::SETUP_VERSION);
 		}
 
 		return new DataResponse(
@@ -185,7 +185,7 @@ class SetupController extends Controller {
 			}
 
 			$this->appConfig->setValueString(
-				Application::APP_ID,
+				AppIdentity::APP_ID,
 				(string)$key,
 				is_scalar($value) ? (string)$value : json_encode($value),
 			);
@@ -243,7 +243,7 @@ class SetupController extends Controller {
 				);
 			}
 
-			$this->appConfig->setValueString(Application::APP_ID, 'administration_id', $adminId);
+			$this->appConfig->setValueString(AppIdentity::APP_ID, 'administration_id', $adminId);
 			return new DataResponse(['success' => true, 'message' => 'Default administration created.', 'detail' => $result]);
 		}//end if
 
@@ -265,7 +265,7 @@ class SetupController extends Controller {
 			// and re-running here matters when OpenRegister was enabled AFTER shillinq
 			// so the install-time repair step never seeded it (ADR-042 recovery path).
 			$this->settingsService->seedSelectielijst();
-			$this->appConfig->setValueString(Application::APP_ID, 'setup_seed_done', '1');
+			$this->appConfig->setValueString(AppIdentity::APP_ID, 'setup_seed_done', '1');
 			return new DataResponse(['success' => true, 'message' => 'Chart of accounts and reference data seeded.']);
 		}//end if
 
@@ -307,8 +307,8 @@ class SetupController extends Controller {
 		}
 
 		if ($picked === DemoDataService::NONE_DATASET) {
-			$this->appConfig->setValueString(Application::APP_ID, self::DATASET_KEY, DemoDataService::NONE_DATASET);
-			$this->appConfig->setValueString(Application::APP_ID, self::DEMO_DATA_DECIDED_KEY, 'skipped');
+			$this->appConfig->setValueString(AppIdentity::APP_ID, self::DATASET_KEY, DemoDataService::NONE_DATASET);
+			$this->appConfig->setValueString(AppIdentity::APP_ID, self::DEMO_DATA_DECIDED_KEY, 'skipped');
 
 			return new DataResponse(['success' => true, 'message' => 'No example data was loaded.']);
 		}
@@ -363,8 +363,8 @@ class SetupController extends Controller {
 		// Recorded only after the import actually returned. Marking it first
 		// would let a failed install present as a finished step.
 		// Loading IS choosing the set, so the pick is recorded too.
-		$this->appConfig->setValueString(Application::APP_ID, self::DATASET_KEY, $dataset);
-		$this->appConfig->setValueString(Application::APP_ID, self::DEMO_DATA_DECIDED_KEY, 'installed');
+		$this->appConfig->setValueString(AppIdentity::APP_ID, self::DATASET_KEY, $dataset);
+		$this->appConfig->setValueString(AppIdentity::APP_ID, self::DEMO_DATA_DECIDED_KEY, 'installed');
 
 		// 🔴 THE COUNTS, ALWAYS. "Demo data installed" with no numbers cannot be
 		// told apart from an import that wrote nothing.
@@ -395,8 +395,8 @@ class SetupController extends Controller {
 	private function skipDemoData(): DataResponse {
 		// Skipping IS choosing "None", so both keys are written: an older
 		// runbook may read either one.
-		$this->appConfig->setValueString(Application::APP_ID, self::DATASET_KEY, DemoDataService::NONE_DATASET);
-		$this->appConfig->setValueString(Application::APP_ID, self::DEMO_DATA_DECIDED_KEY, 'skipped');
+		$this->appConfig->setValueString(AppIdentity::APP_ID, self::DATASET_KEY, DemoDataService::NONE_DATASET);
+		$this->appConfig->setValueString(AppIdentity::APP_ID, self::DEMO_DATA_DECIDED_KEY, 'skipped');
 
 		return new DataResponse(['success' => true, 'message' => 'Demo data skipped.']);
 	}//end skipDemoData()
@@ -409,6 +409,6 @@ class SetupController extends Controller {
 	 * @return string The value, or '' when unset.
 	 */
 	private function config(string $key): string {
-		return $this->appConfig->getValueString(Application::APP_ID, $key, '');
+		return $this->appConfig->getValueString(AppIdentity::APP_ID, $key, '');
 	}//end config()
 }//end class

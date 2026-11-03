@@ -53,7 +53,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Payment;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Portal\PortalSubjectResolver;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -572,7 +572,7 @@ class PortalPaymentSessionService {
 	 * @return string
 	 */
 	private function resolveRedirectUrl(): string {
-		$configured = $this->appConfig->getValueString(Application::APP_ID, self::CONFIG_REDIRECT_URL, '');
+		$configured = $this->appConfig->getValueString(AppIdentity::APP_ID, self::CONFIG_REDIRECT_URL, '');
 		if ($configured !== '') {
 			return $configured;
 		}

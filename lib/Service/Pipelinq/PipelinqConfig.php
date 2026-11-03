@@ -30,7 +30,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Pipelinq;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\Http\Client\IClientService;
 use OCP\IAppConfig;
 use OCP\Security\ICredentialsManager;
@@ -121,7 +121,7 @@ class PipelinqConfig {
 	 */
 	public function getPipelinqEndpoint(): string {
 		return $this->appConfig->getValueString(
-			app: Application::APP_ID,
+			app: AppIdentity::APP_ID,
 			key: self::KEY_ENDPOINT,
 			default: ''
 		);
@@ -144,7 +144,7 @@ class PipelinqConfig {
 	 */
 	public function setPipelinqEndpoint(string $url): void {
 		$this->appConfig->setValueString(
-			app: Application::APP_ID,
+			app: AppIdentity::APP_ID,
 			key: self::KEY_ENDPOINT,
 			value: trim($url)
 		);
