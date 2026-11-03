@@ -58,6 +58,7 @@ use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Repair step that stamps `journalType` (and the folded closing /
@@ -364,14 +365,11 @@ class StampJournalTypeOnGlTransactions implements IRepairStep {
 		string $id,
 	): ?array {
 		try {
-			$found = $objectService
-				->setRegister($registerSlug)
-				->setSchema('GLTransaction')
-				->find(
-					id: $id,
-					_rbac: false,
-					_multitenancy: false
-				);
+			$found = ObjectIdentifier::findScoped(
+				scoped: $objectService->setRegister($registerSlug)->setSchema('GLTransaction'),
+				id: $id,
+				named: ['_rbac' => false, '_multitenancy' => false]
+			);
 		} catch (\Throwable) {
 			return null;
 		}

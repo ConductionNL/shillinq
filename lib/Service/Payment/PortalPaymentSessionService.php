@@ -309,12 +309,10 @@ class PortalPaymentSessionService {
 	 */
 	private function prepareRequest(object $objectService, string $target, string $customerMasterId): ?array {
 		try {
-			$found = $objectService->find(
+			$found = ObjectIdentifier::findScoped(
+				scoped: $objectService->setRegister(self::REGISTER)->setSchema(self::SCHEMA_PAYMENT_REQUEST),
 				id: $target,
-				register: self::REGISTER,
-				schema: self::SCHEMA_PAYMENT_REQUEST,
-				_rbac: false,
-				_multitenancy: false,
+				named: ['_rbac' => false, '_multitenancy' => false]
 			);
 		} catch (Throwable $notFound) {
 			return null;
@@ -390,12 +388,10 @@ class PortalPaymentSessionService {
 		$invoice = null;
 		try {
 			$invoice = ObjectIdentifier::recordWithId(
-				candidate: $objectService->find(
+				candidate: ObjectIdentifier::findScoped(
+					scoped: $objectService->setRegister(self::REGISTER)->setSchema(self::SCHEMA_AR_INVOICE),
 					id: $target,
-					register: self::REGISTER,
-					schema: self::SCHEMA_AR_INVOICE,
-					_rbac: false,
-					_multitenancy: false,
+					named: ['_rbac' => false, '_multitenancy' => false]
 				)
 			);
 		} catch (DoesNotExistException $notFound) {

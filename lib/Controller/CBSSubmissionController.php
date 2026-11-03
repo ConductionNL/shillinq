@@ -54,6 +54,7 @@ use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * CBS Submission CRUD + lifecycle controller.
@@ -265,10 +266,10 @@ class CBSSubmissionController extends Controller {
 
 		try {
 			$existing = $this->toArray(
-				row: $this->objectService()
-					->setRegister($this->register())
-					->setSchema('CBSSubmission')
-					->find($id)
+				row: ObjectIdentifier::findScopedOrThrow(
+					scoped: $this->objectService()->setRegister($this->register())->setSchema('CBSSubmission'),
+					id: $id
+				)
 			);
 		} catch (\Throwable $e) {
 			return new JSONResponse(
@@ -377,10 +378,10 @@ class CBSSubmissionController extends Controller {
 
 		try {
 			$existing = $this->toArray(
-				row: $this->objectService()
-					->setRegister($this->register())
-					->setSchema('CBSSubmission')
-					->find($id)
+				row: ObjectIdentifier::findScopedOrThrow(
+					scoped: $this->objectService()->setRegister($this->register())->setSchema('CBSSubmission'),
+					id: $id
+				)
 			);
 		} catch (\Throwable $e) {
 			return new JSONResponse(
@@ -458,10 +459,10 @@ class CBSSubmissionController extends Controller {
 
 		try {
 			$existing = $this->toArray(
-				row: $this->objectService()
-					->setRegister($this->register())
-					->setSchema('CBSSubmission')
-					->find($id)
+				row: ObjectIdentifier::findScopedOrThrow(
+					scoped: $this->objectService()->setRegister($this->register())->setSchema('CBSSubmission'),
+					id: $id
+				)
 			);
 		} catch (\Throwable $e) {
 			return new JSONResponse(
@@ -528,10 +529,10 @@ class CBSSubmissionController extends Controller {
 
 		try {
 			$existing = $this->toArray(
-				row: $this->objectService()
-					->setRegister($this->register())
-					->setSchema('CBSSubmission')
-					->find($id)
+				row: ObjectIdentifier::findScopedOrThrow(
+					scoped: $this->objectService()->setRegister($this->register())->setSchema('CBSSubmission'),
+					id: $id
+				)
 			);
 		} catch (\Throwable $e) {
 			return new JSONResponse(
@@ -604,10 +605,10 @@ class CBSSubmissionController extends Controller {
 	 */
 	private function buildShowPayload(string $id): array {
 		$submission = $this->toArray(
-			row: $this->objectService()
-				->setRegister($this->register())
-				->setSchema('CBSSubmission')
-				->find($id)
+			row: ObjectIdentifier::findScopedOrThrow(
+				scoped: $this->objectService()->setRegister($this->register())->setSchema('CBSSubmission'),
+				id: $id
+			)
 		);
 
 		$lines = array_map(

@@ -67,6 +67,7 @@ use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Stamp T4 fields (reconId, matchAlgorithm, matchedAt, etc.) on a
@@ -305,10 +306,10 @@ final class ReconciliationMatchToReportListener implements IEventListener {
 				return '';
 			}
 
-			$line = $this->objectService
-				->setRegister($this->getRegisterSlug())
-				->setSchema('BankStatementLine')
-				->find($lineId);
+			$line = ObjectIdentifier::findScoped(
+				scoped: $this->objectService->setRegister($this->getRegisterSlug())->setSchema('BankStatementLine'),
+				id: $lineId
+			);
 			$line = $this->toArray(result: $line);
 			if ($line === null) {
 				return '';
@@ -319,10 +320,10 @@ final class ReconciliationMatchToReportListener implements IEventListener {
 				return '';
 			}
 
-			$statement = $this->objectService
-				->setRegister($this->getRegisterSlug())
-				->setSchema('BankStatement')
-				->find($statementId);
+			$statement = ObjectIdentifier::findScoped(
+				scoped: $this->objectService->setRegister($this->getRegisterSlug())->setSchema('BankStatement'),
+				id: $statementId
+			);
 			$statement = $this->toArray(result: $statement);
 			if ($statement === null) {
 				return '';

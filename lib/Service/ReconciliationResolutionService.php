@@ -36,6 +36,7 @@ use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use OutOfBoundsException;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Persists REQ-REC-004 resolutions onto ReconciliationMatch records and
@@ -94,10 +95,10 @@ class ReconciliationResolutionService {
 
 		// Load + validate the parent reconciliation.
 		try {
-			$parent = $this->objectService
-				->setRegister($register)
-				->setSchema('BankReconciliation')
-				->find($reconId);
+			$parent = ObjectIdentifier::findScoped(
+				scoped: $this->objectService->setRegister($register)->setSchema('BankReconciliation'),
+				id: $reconId
+			);
 			$parent = $this->toArray(result: $parent);
 		} catch (\Throwable $e) {
 			throw new OutOfBoundsException(
@@ -120,10 +121,10 @@ class ReconciliationResolutionService {
 
 		// Load + validate the match record.
 		try {
-			$match = $this->objectService
-				->setRegister($register)
-				->setSchema('ReconciliationMatch')
-				->find($matchId);
+			$match = ObjectIdentifier::findScoped(
+				scoped: $this->objectService->setRegister($register)->setSchema('ReconciliationMatch'),
+				id: $matchId
+			);
 			$match = $this->toArray(result: $match);
 		} catch (\Throwable $e) {
 			throw new OutOfBoundsException(

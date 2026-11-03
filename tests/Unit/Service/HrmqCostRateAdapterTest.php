@@ -90,9 +90,23 @@ class HrmqCostRateAdapterTest extends TestCase {
 			}
 
 			/**
+			 * @return self
+			 */
+			public function setRegister(string $register): self {
+				return $this;
+			}
+
+			/**
+			 * @return self
+			 */
+			public function setSchema(string $schema): self {
+				return $this;
+			}
+
+			/**
 			 * @return mixed The stubbed row.
 			 */
-			public function find(string $id, string $register, string $schema): mixed {
+			public function find(string $id): mixed {
 				if (array_key_exists($id, $this->objects) === false) {
 					throw new RuntimeException('not found');
 				}

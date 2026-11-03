@@ -67,6 +67,7 @@ use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Wires Delivery confirm/cancel into the existing StockMove issue/cancel
@@ -550,10 +551,10 @@ class SalesDispatchStockIssueService {
 			}
 
 			if ($this->transitionStockMove(moveId: $moveId, action: 'post') === true) {
-				$refreshed = $objectService
-					->setRegister($this->register())
-					->setSchema('StockMove')
-					->find($moveId);
+				$refreshed = ObjectIdentifier::findScoped(
+					scoped: $objectService->setRegister($this->register())->setSchema('StockMove'),
+					id: $moveId
+				);
 				return $this->asArray(row: $refreshed);
 			}
 

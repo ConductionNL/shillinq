@@ -53,6 +53,7 @@ use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * REST surface for bank matching-rule preview + suggestion (REQ-BR-011/012).
@@ -370,10 +371,10 @@ class BankRuleController extends Controller {
 	private function readOne(string $schema, string $id): ?array {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$row = $objectService
-				->setRegister($this->registerSlug())
-				->setSchema($schema)
-				->find($id);
+			$row = ObjectIdentifier::findScoped(
+				scoped: $objectService->setRegister($this->registerSlug())->setSchema($schema),
+				id: $id
+			);
 
 			return $this->toArray(result: $row);
 		} catch (\Throwable $e) {

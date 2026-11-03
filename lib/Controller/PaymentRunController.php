@@ -54,6 +54,7 @@ use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * HTTP API for exporting + reconciling a PaymentRun.
@@ -301,10 +302,10 @@ class PaymentRunController extends Controller {
 			return null;
 		}
 
-		$run = $this->objectService
-			->setRegister(self::REGISTER_SLUG)
-			->setSchema('PaymentRun')
-			->find($id);
+		$run = ObjectIdentifier::findScoped(
+			scoped: $this->objectService->setRegister(self::REGISTER_SLUG)->setSchema('PaymentRun'),
+			id: $id
+		);
 
 		if ($run === null) {
 			return null;

@@ -24,6 +24,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\IL10N;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Reads the active FieldRequirement records of an administration and checks objects and requirements against them.
@@ -192,12 +193,10 @@ class FieldRequirements {
 	 * @spec openspec/changes/platform-required-fields/specs/app-administration/spec.md
 	 */
 	public function find(string $id): ?array {
-		$found = $this->objectService->find(
+		$found = ObjectIdentifier::findScoped(
+			scoped: $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema(self::SCHEMA),
 			id: $id,
-			register: $this->settings->getRegisterSlug(),
-			schema: self::SCHEMA,
-			_rbac: false,
-			_multitenancy: false
+			named: ['_rbac' => false, '_multitenancy' => false]
 		);
 		if ($found === null) {
 			return null;

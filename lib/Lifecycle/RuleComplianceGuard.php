@@ -41,6 +41,7 @@ use OCA\Shillinq\Standards\RuleEngine;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Lifecycle guard enforcing machine-checkable rules on issue/post.
@@ -228,7 +229,10 @@ class RuleComplianceGuard {
 	 * @return array<string, mixed>|null
 	 */
 	private function loadObject(string $schema, string $id): ?array {
-		$entity = $this->objectService->find(id: $id, register: $this->register(), schema: $schema);
+		$entity = ObjectIdentifier::findScoped(
+			scoped: $this->objectService->setRegister($this->register())->setSchema($schema),
+			id: $id
+		);
 		if ($entity === null) {
 			return null;
 		}

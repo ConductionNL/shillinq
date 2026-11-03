@@ -60,6 +60,7 @@ use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Atomically-demoting default-scenario promoter (REQ-BSC-002).
@@ -260,10 +261,10 @@ class BudgetScenarioDefaultPromoter {
 	 */
 	private function find(string $id): ?array {
 		try {
-			$entity = $this->objectService
-				->setRegister($this->register())
-				->setSchema(self::SCHEMA_SCENARIO)
-				->find(id: $id);
+			$entity = ObjectIdentifier::findScoped(
+				scoped: $this->objectService->setRegister($this->register())->setSchema(self::SCHEMA_SCENARIO),
+				id: $id
+			);
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'BudgetScenarioDefaultPromoter: failed to read target scenario',

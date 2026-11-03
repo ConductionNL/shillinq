@@ -41,6 +41,7 @@ use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Resolves the administratie-aware RBAC context and enforces tenant isolation.
@@ -524,7 +525,10 @@ class AdministrationContextService {
 			// exactly the bug this method is being fixed for, reintroduced one
 			// layer down. A miss here is a normal id-space mismatch, not an error.
 			try {
-				$arr = $this->asArray(row: $scoped->find($administrationId));
+				$arr = $this->asArray(row: ObjectIdentifier::findScoped(
+					scoped: $scoped,
+					id: $administrationId
+				));
 				if ($arr !== []) {
 					return $arr;
 				}

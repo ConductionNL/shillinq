@@ -54,6 +54,7 @@ use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Composes VAT returns from GL transactions using the real OpenRegister API.
@@ -740,10 +741,10 @@ class VATReturnService {
 	 * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
 	 */
 	public function findReturn(string $returnId): ?array {
-		$found = $this->objectService
-			->setRegister($this->register())
-			->setSchema('BtwAangifte')
-			->find($returnId);
+		$found = ObjectIdentifier::findScoped(
+			scoped: $this->objectService->setRegister($this->register())->setSchema('BtwAangifte'),
+			id: $returnId
+		);
 
 		if ($found === null) {
 			return null;

@@ -227,10 +227,11 @@ class ObjectRequestCommandService {
 		}
 
 		try {
-			$found = $this->objectService
-				->setRegister($this->registerSlug())
-				->setSchema('PaymentRequest')
-				->find($id, _rbac: false, _multitenancy: false);
+			$found = ObjectIdentifier::findScoped(
+				scoped: $this->objectService->setRegister($this->registerSlug())->setSchema('PaymentRequest'),
+				id: $id,
+				named: ['_rbac' => false, '_multitenancy' => false]
+			);
 		} catch (Throwable $e) {
 			return null;
 		}

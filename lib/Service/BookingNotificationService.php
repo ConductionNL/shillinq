@@ -31,6 +31,7 @@ use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Evaluates booking notification triggers and dispatches via openconnector.
@@ -722,10 +723,9 @@ class BookingNotificationService {
 			if ($triggerId !== '') {
 				// ADR-022: use the real ObjectService API (find/findAll);
 				// findObject()/findObjects() do not exist on OpenRegister's ObjectService.
-				$template = $this->objectService->find(
-					id: $triggerId,
-					register: $registerSlug,
-					schema: 'BookingNotificationTemplate'
+				$template = ObjectIdentifier::findScoped(
+					scoped: $this->objectService->setRegister($registerSlug)->setSchema('BookingNotificationTemplate'),
+					id: $triggerId
 				);
 				if ($template !== null) {
 					return $template->jsonSerialize();

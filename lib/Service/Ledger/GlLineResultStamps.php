@@ -277,12 +277,10 @@ class GlLineResultStamps {
 			return null;
 		}
 
-		$found = $this->objectService->find(
+		$found = ObjectIdentifier::findScoped(
+			scoped: $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema('GLTransaction'),
 			id: $transactionId,
-			register: $this->settings->getRegisterSlug(),
-			schema: 'GLTransaction',
-			_rbac: false,
-			_multitenancy: false
+			named: ['_rbac' => false, '_multitenancy' => false]
 		);
 		if ($found === null) {
 			return null;

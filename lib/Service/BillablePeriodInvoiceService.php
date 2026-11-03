@@ -45,6 +45,7 @@ use OCA\Shillinq\Event\BillablePeriodClosedEvent;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Drafts the invoice an BillablePeriodClosedEvent asks for, or refuses it.
@@ -427,7 +428,10 @@ class BillablePeriodInvoiceService {
 	 */
 	private function find(string $schema, string $id): array {
 		try {
-			$found = $this->scoped(schema: $schema)->find($id);
+			$found = ObjectIdentifier::findScoped(
+				scoped: $this->scoped(schema: $schema),
+				id: $id
+			);
 		} catch (Throwable $e) {
 			return [];
 		}

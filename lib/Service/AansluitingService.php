@@ -66,6 +66,7 @@ use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Computes, explains, resolves, and reopens AansluitingResult records.
@@ -625,10 +626,10 @@ class AansluitingService {
 	 * @return array<string,mixed>
 	 */
 	private function fetchReconciliation(string $reconciliationId): array {
-		$definition = $this->objectService
-			->setRegister($this->register())
-			->setSchema('Aansluiting')
-			->find($reconciliationId);
+		$definition = ObjectIdentifier::findScoped(
+			scoped: $this->objectService->setRegister($this->register())->setSchema('Aansluiting'),
+			id: $reconciliationId
+		);
 
 		if ($definition === null) {
 			throw new RuntimeException(sprintf('Aansluiting %s not found', $reconciliationId));
@@ -645,10 +646,10 @@ class AansluitingService {
 	 * @return array<string,mixed>
 	 */
 	private function fetchResult(string $resultId): array {
-		$result = $this->objectService
-			->setRegister($this->register())
-			->setSchema('AansluitingResult')
-			->find($resultId);
+		$result = ObjectIdentifier::findScoped(
+			scoped: $this->objectService->setRegister($this->register())->setSchema('AansluitingResult'),
+			id: $resultId
+		);
 
 		if ($result === null) {
 			throw new RuntimeException(sprintf('AansluitingResult %s not found', $resultId));
