@@ -6,7 +6,8 @@
  *
  * golden(name) returns check(key, value): with SHILLINQ_GOLDEN_RECORD=1 it
  * records the value under the key and writes fixtures/<name>.golden.json
- * after the file's tests; otherwise it compares the value with the record.
+ * after the file's tests; otherwise it compares the value with the record,
+ * key order included.
  * Values are made plain first, so Sets, Maps, undefined, NaN, -0, Dates and
  * thrown errors survive JSON. outcome(fn) runs fn and records either its
  * result or the message it threw. seeded(seed) is a small deterministic
@@ -35,9 +36,11 @@ export function plain(value) {
 	}
 	if (typeof value === 'function') return '__function'
 	if (value === null || typeof value !== 'object') return value
-	if (value instanceof Date) return `__date:${Number.isNaN(value.getTime()) ? 'invalid' : value.toISOString()}`
+	if (value instanceof Date)
+		return `__date:${Number.isNaN(value.getTime()) ? 'invalid' : value.toISOString()}`
 	if (value instanceof Set) return { __set: [...value].map(plain) }
-	if (value instanceof Map) return { __map: [...value].map(([k, v]) => [plain(k), plain(v)]) }
+	if (value instanceof Map)
+		return { __map: [...value].map(([k, v]) => [plain(k), plain(v)]) }
 	if (Array.isArray(value)) return value.map(plain)
 	return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, plain(v)]))
 }
@@ -114,6 +117,6 @@ export function golden(name) {
 			recorded[key] = actual
 			return
 		}
-		expect(actual, key).toEqual(stored[key])
+		expect(JSON.stringify(actual), key).toBe(JSON.stringify(stored[key]))
 	}
 }
