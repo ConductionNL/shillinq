@@ -296,7 +296,7 @@ class PeppolDeliveryStatusListener implements IEventListener {
 		}
 
 		try {
-			$invoice = ObjectIdentifier::recordWithId(candidate: $scoped->find($id));
+			$invoice = ObjectIdentifier::recordWithId(candidate: ObjectIdentifier::findScoped(scoped: $scoped, id: $id));
 			if ($invoice !== null) {
 				return $invoice;
 			}

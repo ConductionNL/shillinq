@@ -60,6 +60,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Save precondition guard for the CashflowRecurring schema per REQ-CF-005.
@@ -356,10 +357,12 @@ class CashflowRecurringGuard {
 	 */
 	private function fetchContract(string $contractReference): ?array {
 		try {
-			$result = $this->objectService
-				->setRegister($this->register())
-				->setSchema(self::SCHEMA_CONTRACT)
-				->find($contractReference);
+			$result = ObjectIdentifier::findScoped(
+				scoped: $this->objectService
+					->setRegister($this->register())
+					->setSchema(self::SCHEMA_CONTRACT),
+				id: $contractReference
+			);
 
 			if ($result === null) {
 				return null;
