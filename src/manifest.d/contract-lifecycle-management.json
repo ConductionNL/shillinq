@@ -46,11 +46,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "Contract",
-				"search": {
-					"enabled": true,
-					"fields": ["contractNumber", "title", "tags"],
-					"description": "Repository search through OpenRegister's _search over contract number, title and tags. There is no app-local search endpoint."
-				},
+				"search": true,
 				"columns": [
 					{"key": "contractNumber", "label": "Contract #", "sortable": true},
 					{"key": "title", "label": "Title", "sortable": true},
