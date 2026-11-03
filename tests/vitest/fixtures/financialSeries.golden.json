@@ -117,20 +117,20 @@
 				0
 			],
 			"nonBillable": [
-				0,
-				0,
+				2.5,
 				1,
 				0,
 				0,
-				0
+				0,
+				2.5
 			],
 			"pct": [
-				null,
-				null,
+				0,
 				0,
 				null,
 				null,
-				null
+				null,
+				0
 			]
 		}
 	},
@@ -143,18 +143,18 @@
 			],
 			"cashIn": [
 				0,
-				20.5,
-				220.5
+				0,
+				20.5
 			],
 			"cashOut": [
-				10.25,
+				50,
 				0,
-				100
+				20.5
 			],
 			"cashNet": [
-				-10.25,
-				20.5,
-				120.5
+				-50,
+				0,
+				0
 			]
 		}
 	},
@@ -164,11 +164,11 @@
 			"marginYtd": 0,
 			"marginPctYtd": null,
 			"openArAmount": 100.1,
-			"openArCount": 3,
-			"openApAmount": 40.5,
-			"openApCount": 2,
+			"openArCount": 4,
+			"openApAmount": 113.33,
+			"openApCount": 3,
 			"billableHours": 0,
-			"billablePct": null,
+			"billablePct": 0,
 			"cashPosition": 0
 		}
 	},
@@ -178,11 +178,11 @@
 			"marginYtd": 0,
 			"marginPctYtd": null,
 			"openArAmount": 100.1,
-			"openArCount": 3,
-			"openApAmount": 40.5,
-			"openApCount": 2,
+			"openArCount": 4,
+			"openApAmount": 113.33,
+			"openApCount": 3,
 			"billableHours": 0,
-			"billablePct": null,
+			"billablePct": 0,
 			"cashPosition": 0
 		}
 	},
@@ -194,6 +194,84 @@
 			"billableHours": 0,
 			"billablePct": 0
 		}
+	},
+	"1 openArRows": {
+		"value": [
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-2",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"1 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "v3",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F3",
+				"party": "v9",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			}
+		]
 	},
 	"2 classifyAccounts": {
 		"value": {
@@ -312,7 +390,7 @@
 	"2 billableSeries": {
 		"value": {
 			"billable": [
-				1,
+				0,
 				0,
 				0,
 				0,
@@ -322,17 +400,17 @@
 			"nonBillable": [
 				0,
 				0,
-				3,
+				2,
 				0,
-				0,
+				1,
 				0
 			],
 			"pct": [
-				100,
+				null,
 				null,
 				0,
 				null,
-				null,
+				0,
 				null
 			]
 		}
@@ -341,19 +419,19 @@
 		"value": {
 			"months": [
 				"2026-06",
-				"2026-08"
+				"2026-07"
 			],
 			"cashIn": [
-				20.5,
-				120.5
+				100,
+				20.5
 			],
 			"cashOut": [
-				10.25,
+				60.25,
 				100
 			],
 			"cashNet": [
-				10.25,
-				20.5
+				39.75,
+				-79.5
 			]
 		}
 	},
@@ -363,9 +441,9 @@
 			"marginYtd": 0,
 			"marginPctYtd": null,
 			"openArAmount": 221.3,
-			"openArCount": 4,
-			"openApAmount": 40.5,
-			"openApCount": 2,
+			"openArCount": 5,
+			"openApAmount": 113.33,
+			"openApCount": 3,
 			"billableHours": 0,
 			"billablePct": null,
 			"cashPosition": 100
@@ -377,11 +455,11 @@
 			"marginYtd": 0,
 			"marginPctYtd": null,
 			"openArAmount": 221.3,
-			"openArCount": 4,
-			"openApAmount": 40.5,
-			"openApCount": 2,
-			"billableHours": 1,
-			"billablePct": 100,
+			"openArCount": 5,
+			"openApAmount": 113.33,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": null,
 			"cashPosition": 100
 		}
 	},
@@ -390,9 +468,97 @@
 			"turnover": 0,
 			"margin": 0,
 			"marginPct": null,
-			"billableHours": 1,
-			"billablePct": 25
+			"billableHours": 0,
+			"billablePct": 0
 		}
+	},
+	"2 openArRows": {
+		"value": [
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"2 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "v3",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F3",
+				"party": "v9",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			}
+		]
 	},
 	"3 classifyAccounts": {
 		"value": {
@@ -521,12 +687,12 @@
 	"3 billableSeries": {
 		"value": {
 			"billable": [
-				5.5,
 				0,
 				0,
 				0,
 				0,
-				0
+				0,
+				1
 			],
 			"nonBillable": [
 				0,
@@ -537,12 +703,12 @@
 				0
 			],
 			"pct": [
-				100,
 				null,
 				null,
 				null,
 				null,
-				null
+				null,
+				100
 			]
 		}
 	},
@@ -550,19 +716,19 @@
 		"value": {
 			"months": [
 				"2026-06",
-				"2026-07"
+				"2026-08"
 			],
 			"cashIn": [
-				120.5,
-				100
+				200,
+				0
 			],
 			"cashOut": [
-				60.25,
-				100
+				80.75,
+				50
 			],
 			"cashNet": [
-				60.25,
-				0
+				119.25,
+				-50
 			]
 		}
 	},
@@ -571,12 +737,12 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 121.3,
-			"openArCount": 4,
+			"openArAmount": 130.3,
+			"openArCount": 6,
 			"openApAmount": 153.83,
 			"openApCount": 4,
-			"billableHours": 0,
-			"billablePct": null,
+			"billableHours": 1,
+			"billablePct": 100,
 			"cashPosition": -250.55
 		}
 	},
@@ -585,12 +751,12 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 121.3,
-			"openArCount": 4,
+			"openArAmount": 130.3,
+			"openArCount": 6,
 			"openApAmount": 153.83,
 			"openApCount": 4,
-			"billableHours": 5.5,
-			"billablePct": 100,
+			"billableHours": 0,
+			"billablePct": null,
 			"cashPosition": -250.55
 		}
 	},
@@ -599,9 +765,117 @@
 			"turnover": 0,
 			"margin": 0,
 			"marginPct": null,
-			"billableHours": 5.5,
+			"billableHours": 1,
 			"billablePct": 100
 		}
+	},
+	"3 openArRows": {
+		"value": [
+			{
+				"id": "id-6",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-2",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"3 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F3",
+				"party": "v9",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"4 classifyAccounts": {
 		"value": {
@@ -704,23 +978,23 @@
 				0,
 				0,
 				0,
-				0,
+				2.5,
 				0
 			],
 			"nonBillable": [
 				0,
+				1,
 				0,
-				2.5,
 				0,
 				0,
 				0
 			],
 			"pct": [
 				null,
-				null,
 				0,
 				null,
 				null,
+				100,
 				null
 			]
 		}
@@ -734,17 +1008,17 @@
 			],
 			"cashIn": [
 				20.5,
-				0,
+				120.5,
 				0
 			],
 			"cashOut": [
-				50,
-				0,
+				70.5,
+				10.25,
 				0
 			],
 			"cashNet": [
-				-29.5,
-				0,
+				-50,
+				110.25,
 				0
 			]
 		}
@@ -754,8 +1028,8 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 221.3,
-			"openArCount": 4,
+			"openArAmount": 230.3,
+			"openArCount": 6,
 			"openApAmount": 153.83,
 			"openApCount": 4,
 			"billableHours": 0,
@@ -768,8 +1042,8 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 221.3,
-			"openArCount": 4,
+			"openArAmount": 230.3,
+			"openArCount": 6,
 			"openApAmount": 153.83,
 			"openApCount": 4,
 			"billableHours": 0,
@@ -782,9 +1056,117 @@
 			"turnover": 0,
 			"margin": 0,
 			"marginPct": null,
-			"billableHours": 0,
-			"billablePct": 0
+			"billableHours": 2.5,
+			"billablePct": 71.43
 		}
+	},
+	"4 openArRows": {
+		"value": [
+			{
+				"id": "id-6",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"4 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F3",
+				"party": "v9",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"5 classifyAccounts": {
 		"value": {
@@ -885,23 +1267,23 @@
 		"value": {
 			"billable": [
 				0,
-				0,
+				4,
 				0,
 				0,
 				0,
 				0
 			],
 			"nonBillable": [
+				6,
 				0,
-				2.5,
 				0,
 				0,
 				0,
 				0
 			],
 			"pct": [
-				null,
 				0,
+				100,
 				null,
 				null,
 				null,
@@ -913,23 +1295,19 @@
 		"value": {
 			"months": [
 				"2026-06",
-				"2026-07",
 				"2026-08"
 			],
 			"cashIn": [
 				41,
-				220.5,
-				20.5
+				0
 			],
 			"cashOut": [
-				50,
-				100,
-				60.25
+				80.75,
+				10.25
 			],
 			"cashNet": [
-				-9,
-				120.5,
-				-39.75
+				-39.75,
+				-10.25
 			]
 		}
 	},
@@ -938,10 +1316,10 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 100.3,
-			"openArCount": 4,
+			"openArAmount": 109.3,
+			"openArCount": 6,
 			"openApAmount": 153.83,
-			"openApCount": 3,
+			"openApCount": 4,
 			"billableHours": 0,
 			"billablePct": null,
 			"cashPosition": 0
@@ -952,12 +1330,12 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 100.3,
-			"openArCount": 4,
+			"openArAmount": 109.3,
+			"openArCount": 6,
 			"openApAmount": 153.83,
-			"openApCount": 3,
+			"openApCount": 4,
 			"billableHours": 0,
-			"billablePct": null,
+			"billablePct": 0,
 			"cashPosition": 0
 		}
 	},
@@ -966,9 +1344,117 @@
 			"turnover": 0,
 			"margin": 0,
 			"marginPct": null,
-			"billableHours": 0,
-			"billablePct": 0
+			"billableHours": 4,
+			"billablePct": 40
 		}
+	},
+	"5 openArRows": {
+		"value": [
+			{
+				"id": "id-6",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-2",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"5 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "v3",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F3",
+				"party": "v9",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"6 classifyAccounts": {
 		"value": {
@@ -1097,43 +1583,51 @@
 	"6 billableSeries": {
 		"value": {
 			"billable": [
-				2.5,
 				0,
+				3,
 				0,
 				0,
 				0,
 				0
 			],
 			"nonBillable": [
+				0,
+				1,
 				1,
 				0,
 				0,
-				0,
-				0,
-				2.5
+				0
 			],
 			"pct": [
-				71.43,
+				null,
+				75,
+				0,
 				null,
 				null,
-				null,
-				null,
-				0
+				null
 			]
 		}
 	},
 	"6 forecastByMonth": {
 		"value": {
 			"months": [
-				"2026-06"
+				"2026-06",
+				"2026-07",
+				"2026-08"
 			],
 			"cashIn": [
-				20.5
+				0,
+				20.5,
+				100
 			],
 			"cashOut": [
-				20.5
+				50,
+				50,
+				100
 			],
 			"cashNet": [
+				-50,
+				-29.5,
 				0
 			]
 		}
@@ -1143,12 +1637,12 @@
 			"turnoverYtd": -100,
 			"marginYtd": -100,
 			"marginPctYtd": null,
-			"openArAmount": 0.3,
-			"openArCount": 3,
-			"openApAmount": 153.83,
-			"openApCount": 4,
+			"openArAmount": 9.3,
+			"openArCount": 5,
+			"openApAmount": 120.5,
+			"openApCount": 3,
 			"billableHours": 0,
-			"billablePct": 0,
+			"billablePct": null,
 			"cashPosition": -20
 		}
 	},
@@ -1157,12 +1651,12 @@
 			"turnoverYtd": -100,
 			"marginYtd": -100,
 			"marginPctYtd": null,
-			"openArAmount": 0.3,
-			"openArCount": 3,
-			"openApAmount": 153.83,
-			"openApCount": 4,
-			"billableHours": 2.5,
-			"billablePct": 71.43,
+			"openArAmount": 9.3,
+			"openArCount": 5,
+			"openApAmount": 120.5,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": null,
 			"cashPosition": -20
 		}
 	},
@@ -1171,9 +1665,97 @@
 			"turnover": -100,
 			"margin": -100,
 			"marginPct": null,
-			"billableHours": 2.5,
-			"billablePct": 41.67
+			"billableHours": 3,
+			"billablePct": 60
 		}
+	},
+	"6 openArRows": {
+		"value": [
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-2",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"6 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F3",
+				"party": "v9",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"7 classifyAccounts": {
 		"value": {
@@ -1312,7 +1894,7 @@
 	"7 billableSeries": {
 		"value": {
 			"billable": [
-				1,
+				0,
 				0,
 				0,
 				0,
@@ -1320,36 +1902,44 @@
 				0
 			],
 			"nonBillable": [
+				0,
+				0,
 				3,
 				0,
 				0,
-				0,
-				0,
-				3
+				0
 			],
 			"pct": [
-				25,
 				null,
 				null,
+				0,
 				null,
 				null,
-				0
+				null
 			]
 		}
 	},
 	"7 forecastByMonth": {
 		"value": {
 			"months": [
+				"2026-06",
+				"2026-07",
 				"2026-08"
 			],
 			"cashIn": [
-				20.5
+				100,
+				100,
+				0
 			],
 			"cashOut": [
-				10.25
+				110.25,
+				10.25,
+				50
 			],
 			"cashNet": [
-				10.25
+				-10.25,
+				89.75,
+				-50
 			]
 		}
 	},
@@ -1358,12 +1948,12 @@
 			"turnoverYtd": 0,
 			"marginYtd": 20,
 			"marginPctYtd": null,
-			"openArAmount": 221.3,
-			"openArCount": 5,
+			"openArAmount": 230.3,
+			"openArCount": 7,
 			"openApAmount": 153.83,
 			"openApCount": 4,
 			"billableHours": 0,
-			"billablePct": 0,
+			"billablePct": null,
 			"cashPosition": 0
 		}
 	},
@@ -1372,12 +1962,12 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 221.3,
-			"openArCount": 5,
+			"openArAmount": 230.3,
+			"openArCount": 7,
 			"openApAmount": 153.83,
 			"openApCount": 4,
-			"billableHours": 1,
-			"billablePct": 25,
+			"billableHours": 0,
+			"billablePct": null,
 			"cashPosition": 0
 		}
 	},
@@ -1386,9 +1976,127 @@
 			"turnover": 0,
 			"margin": 20,
 			"marginPct": null,
-			"billableHours": 1,
-			"billablePct": 14.29
+			"billableHours": 0,
+			"billablePct": 0
 		}
+	},
+	"7 openArRows": {
+		"value": [
+			{
+				"id": "ar-7",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "id-6",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"7 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F3",
+				"party": "v9",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"8 classifyAccounts": {
 		"value": {
@@ -1532,17 +2240,17 @@
 				0
 			],
 			"nonBillable": [
-				2.5,
-				1,
 				0,
+				0,
+				2.5,
 				0,
 				0,
 				0
 			],
 			"pct": [
-				0,
-				0,
 				null,
+				null,
+				0,
 				null,
 				null,
 				null
@@ -1553,19 +2261,19 @@
 		"value": {
 			"months": [
 				"2026-06",
-				"2026-08"
+				"2026-07"
 			],
 			"cashIn": [
 				200,
-				20.5
+				0
 			],
 			"cashOut": [
 				10.25,
-				50
+				60.25
 			],
 			"cashNet": [
 				189.75,
-				-29.5
+				-60.25
 			]
 		}
 	},
@@ -1574,10 +2282,10 @@
 			"turnoverYtd": 0,
 			"marginYtd": -120,
 			"marginPctYtd": null,
-			"openArAmount": 221.3,
-			"openArCount": 5,
-			"openApAmount": 113.33,
-			"openApCount": 3,
+			"openArAmount": 230.3,
+			"openArCount": 6,
+			"openApAmount": 120.5,
+			"openApCount": 2,
 			"billableHours": 0,
 			"billablePct": null,
 			"cashPosition": 0
@@ -1588,12 +2296,12 @@
 			"turnoverYtd": 0,
 			"marginYtd": -120,
 			"marginPctYtd": null,
-			"openArAmount": 221.3,
-			"openArCount": 5,
-			"openApAmount": 113.33,
-			"openApCount": 3,
+			"openArAmount": 230.3,
+			"openArCount": 6,
+			"openApAmount": 120.5,
+			"openApCount": 2,
 			"billableHours": 0,
-			"billablePct": 0,
+			"billablePct": null,
 			"cashPosition": 0
 		}
 	},
@@ -1605,6 +2313,94 @@
 			"billableHours": 0,
 			"billablePct": 0
 		}
+	},
+	"8 openArRows": {
+		"value": [
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "id-6",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"8 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"9 classifyAccounts": {
 		"value": {
@@ -1729,7 +2525,7 @@
 	"9 billableSeries": {
 		"value": {
 			"billable": [
-				0,
+				3,
 				0,
 				0,
 				0,
@@ -1737,17 +2533,17 @@
 				0
 			],
 			"nonBillable": [
-				0,
-				0,
 				2.5,
+				0,
+				0,
 				0,
 				0,
 				0
 			],
 			"pct": [
+				54.55,
 				null,
 				null,
-				0,
 				null,
 				null,
 				null
@@ -1758,19 +2554,23 @@
 		"value": {
 			"months": [
 				"2026-06",
-				"2026-07"
+				"2026-07",
+				"2026-08"
 			],
 			"cashIn": [
-				120.5,
+				41,
+				0,
 				0
 			],
 			"cashOut": [
 				60.25,
-				20.5
+				60.25,
+				10.25
 			],
 			"cashNet": [
-				60.25,
-				-20.5
+				-19.25,
+				-60.25,
+				-10.25
 			]
 		}
 	},
@@ -1779,10 +2579,10 @@
 			"turnoverYtd": -20,
 			"marginYtd": -20,
 			"marginPctYtd": null,
-			"openArAmount": 121.3,
-			"openArCount": 4,
-			"openApAmount": 153.83,
-			"openApCount": 4,
+			"openArAmount": 130.3,
+			"openArCount": 6,
+			"openApAmount": 120.5,
+			"openApCount": 3,
 			"billableHours": 0,
 			"billablePct": null,
 			"cashPosition": 0
@@ -1793,12 +2593,12 @@
 			"turnoverYtd": -20,
 			"marginYtd": -20,
 			"marginPctYtd": null,
-			"openArAmount": 121.3,
-			"openArCount": 4,
-			"openApAmount": 153.83,
-			"openApCount": 4,
-			"billableHours": 0,
-			"billablePct": null,
+			"openArAmount": 130.3,
+			"openArCount": 6,
+			"openApAmount": 120.5,
+			"openApCount": 3,
+			"billableHours": 3,
+			"billablePct": 54.55,
 			"cashPosition": 0
 		}
 	},
@@ -1807,9 +2607,107 @@
 			"turnover": -20,
 			"margin": -20,
 			"marginPct": null,
-			"billableHours": 0,
-			"billablePct": 0
+			"billableHours": 3,
+			"billablePct": 54.55
 		}
+	},
+	"9 openArRows": {
+		"value": [
+			{
+				"id": "id-6",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-2",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"9 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F3",
+				"party": "v9",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"10 classifyAccounts": {
 		"value": {
@@ -1975,26 +2873,26 @@
 		"value": {
 			"billable": [
 				0,
-				3,
-				2.5,
+				0,
+				0,
 				0,
 				0,
 				0
 			],
 			"nonBillable": [
 				0,
-				1,
 				0,
 				0,
 				0,
+				3.5,
 				0
 			],
 			"pct": [
 				null,
-				75,
-				100,
 				null,
 				null,
+				null,
+				0,
 				null
 			]
 		}
@@ -2007,19 +2905,19 @@
 				"2026-08"
 			],
 			"cashIn": [
-				20.5,
+				100,
 				0,
-				20.5
+				41
 			],
 			"cashOut": [
 				0,
-				0,
-				0
+				60.25,
+				60.25
 			],
 			"cashNet": [
-				20.5,
-				0,
-				20.5
+				100,
+				-60.25,
+				-19.25
 			]
 		}
 	},
@@ -2029,8 +2927,8 @@
 			"marginYtd": 0,
 			"marginPctYtd": null,
 			"openArAmount": 221.2,
-			"openArCount": 4,
-			"openApAmount": 73.83,
+			"openArCount": 5,
+			"openApAmount": 120.5,
 			"openApCount": 3,
 			"billableHours": 0,
 			"billablePct": null,
@@ -2043,8 +2941,8 @@
 			"marginYtd": 0,
 			"marginPctYtd": null,
 			"openArAmount": 221.2,
-			"openArCount": 4,
-			"openApAmount": 73.83,
+			"openArCount": 5,
+			"openApAmount": 120.5,
 			"openApCount": 3,
 			"billableHours": 0,
 			"billablePct": null,
@@ -2056,9 +2954,97 @@
 			"turnover": 0,
 			"margin": 0,
 			"marginPct": null,
-			"billableHours": 5.5,
-			"billablePct": 84.62
+			"billableHours": 0,
+			"billablePct": 0
 		}
+	},
+	"10 openArRows": {
+		"value": [
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"10 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F3",
+				"party": "v9",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"11 classifyAccounts": {
 		"value": {
@@ -2210,12 +3196,12 @@
 				0,
 				0,
 				0,
-				1
+				0
 			],
 			"nonBillable": [
 				0,
 				0,
-				0,
+				3,
 				0,
 				0,
 				0
@@ -2223,30 +3209,30 @@
 			"pct": [
 				null,
 				null,
+				0,
 				null,
 				null,
-				null,
-				100
+				null
 			]
 		}
 	},
 	"11 forecastByMonth": {
 		"value": {
 			"months": [
-				"2026-07",
+				"2026-06",
 				"2026-08"
 			],
 			"cashIn": [
-				100,
-				100
+				0,
+				0
 			],
 			"cashOut": [
-				100,
-				50
+				10.25,
+				0
 			],
 			"cashNet": [
-				0,
-				50
+				-10.25,
+				0
 			]
 		}
 	},
@@ -2255,12 +3241,12 @@
 			"turnoverYtd": 100,
 			"marginYtd": 120,
 			"marginPctYtd": 120,
-			"openArAmount": 221.1,
-			"openArCount": 4,
-			"openApAmount": 153.83,
+			"openArAmount": 230.1,
+			"openArCount": 6,
+			"openApAmount": 73.83,
 			"openApCount": 3,
-			"billableHours": 1,
-			"billablePct": 100,
+			"billableHours": 0,
+			"billablePct": null,
 			"cashPosition": 20
 		}
 	},
@@ -2269,9 +3255,9 @@
 			"turnoverYtd": 100,
 			"marginYtd": 120,
 			"marginPctYtd": 120,
-			"openArAmount": 221.1,
-			"openArCount": 4,
-			"openApAmount": 153.83,
+			"openArAmount": 230.1,
+			"openArCount": 6,
+			"openApAmount": 73.83,
 			"openApCount": 3,
 			"billableHours": 0,
 			"billablePct": null,
@@ -2283,9 +3269,107 @@
 			"turnover": 100,
 			"margin": 120,
 			"marginPct": 120,
-			"billableHours": 1,
-			"billablePct": 100
+			"billableHours": 0,
+			"billablePct": 0
 		}
+	},
+	"11 openArRows": {
+		"value": [
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-2",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"11 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "v3",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"12 classifyAccounts": {
 		"value": {
@@ -2420,7 +3504,7 @@
 				0,
 				0,
 				0,
-				3
+				0
 			],
 			"nonBillable": [
 				0,
@@ -2428,7 +3512,7 @@
 				0,
 				0,
 				0,
-				0
+				2.5
 			],
 			"pct": [
 				null,
@@ -2436,7 +3520,7 @@
 				null,
 				null,
 				null,
-				100
+				0
 			]
 		}
 	},
@@ -2444,23 +3528,19 @@
 		"value": {
 			"months": [
 				"2026-06",
-				"2026-07",
 				"2026-08"
 			],
 			"cashIn": [
-				0,
-				120.5,
-				20.5
+				100,
+				0
 			],
 			"cashOut": [
-				50,
-				0,
+				110.25,
 				10.25
 			],
 			"cashNet": [
-				-50,
-				120.5,
-				10.25
+				-10.25,
+				-10.25
 			]
 		}
 	},
@@ -2469,12 +3549,12 @@
 			"turnoverYtd": 0,
 			"marginYtd": 100,
 			"marginPctYtd": null,
-			"openArAmount": 221.1,
-			"openArCount": 4,
-			"openApAmount": 120.5,
+			"openArAmount": 230.1,
+			"openArCount": 6,
+			"openApAmount": 113.33,
 			"openApCount": 3,
-			"billableHours": 3,
-			"billablePct": 100,
+			"billableHours": 0,
+			"billablePct": 0,
 			"cashPosition": 150.56
 		}
 	},
@@ -2483,9 +3563,9 @@
 			"turnoverYtd": 0,
 			"marginYtd": 100,
 			"marginPctYtd": null,
-			"openArAmount": 221.1,
-			"openArCount": 4,
-			"openApAmount": 120.5,
+			"openArAmount": 230.1,
+			"openArCount": 6,
+			"openApAmount": 113.33,
 			"openApCount": 3,
 			"billableHours": 0,
 			"billablePct": null,
@@ -2497,9 +3577,107 @@
 			"turnover": 0,
 			"margin": 100,
 			"marginPct": null,
-			"billableHours": 3,
-			"billablePct": 100
+			"billableHours": 0,
+			"billablePct": 0
 		}
+	},
+	"12 openArRows": {
+		"value": [
+			{
+				"id": "id-6",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"12 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "v3",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F3",
+				"party": "v9",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			}
+		]
 	},
 	"13 classifyAccounts": {
 		"value": {
@@ -2680,15 +3858,15 @@
 				0
 			],
 			"nonBillable": [
+				1,
 				0,
-				0,
-				2.5,
+				3,
 				0,
 				0,
 				0
 			],
 			"pct": [
-				null,
+				0,
 				null,
 				0,
 				null,
@@ -2701,19 +3879,23 @@
 		"value": {
 			"months": [
 				"2026-06",
-				"2026-07"
+				"2026-07",
+				"2026-08"
 			],
 			"cashIn": [
-				141,
+				220.5,
+				100,
 				20.5
 			],
 			"cashOut": [
-				30.75,
-				50
+				110.25,
+				50,
+				0
 			],
 			"cashNet": [
 				110.25,
-				-29.5
+				50,
+				20.5
 			]
 		}
 	},
@@ -2722,10 +3904,10 @@
 			"turnoverYtd": -100,
 			"marginYtd": -100,
 			"marginPctYtd": null,
-			"openArAmount": 0.2,
-			"openArCount": 2,
-			"openApAmount": 120.5,
-			"openApCount": 3,
+			"openArAmount": 9.2,
+			"openArCount": 4,
+			"openApAmount": 80,
+			"openApCount": 2,
 			"billableHours": 0,
 			"billablePct": null,
 			"cashPosition": 0
@@ -2736,12 +3918,12 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 0.2,
-			"openArCount": 2,
-			"openApAmount": 120.5,
-			"openApCount": 3,
+			"openArAmount": 9.2,
+			"openArCount": 4,
+			"openApAmount": 80,
+			"openApCount": 2,
 			"billableHours": 0,
-			"billablePct": null,
+			"billablePct": 0,
 			"cashPosition": 0
 		}
 	},
@@ -2753,6 +3935,74 @@
 			"billableHours": 0,
 			"billablePct": 0
 		}
+	},
+	"13 openArRows": {
+		"value": [
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-2",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"13 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "v3",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			}
+		]
 	},
 	"14 classifyAccounts": {
 		"value": {
@@ -2912,8 +4162,8 @@
 	"14 billableSeries": {
 		"value": {
 			"billable": [
-				1,
 				0,
+				3,
 				0,
 				0,
 				0,
@@ -2921,15 +4171,15 @@
 			],
 			"nonBillable": [
 				0,
+				3,
 				0,
 				0,
 				0,
-				0,
-				2.5
+				1
 			],
 			"pct": [
-				100,
 				null,
+				50,
 				null,
 				null,
 				null,
@@ -2945,19 +4195,19 @@
 				"2026-08"
 			],
 			"cashIn": [
+				200,
 				20.5,
-				0,
 				20.5
 			],
 			"cashOut": [
-				70.5,
-				50,
-				60.25
+				10.25,
+				10.25,
+				0
 			],
 			"cashNet": [
-				-50,
-				-50,
-				-39.75
+				189.75,
+				10.25,
+				20.5
 			]
 		}
 	},
@@ -2966,8 +4216,8 @@
 			"turnoverYtd": -75.1,
 			"marginYtd": -75.1,
 			"marginPctYtd": null,
-			"openArAmount": 221.3,
-			"openArCount": 5,
+			"openArAmount": 230.3,
+			"openArCount": 7,
 			"openApAmount": 153.83,
 			"openApCount": 4,
 			"billableHours": 0,
@@ -2980,12 +4230,12 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 221.3,
-			"openArCount": 5,
+			"openArAmount": 230.3,
+			"openArCount": 7,
 			"openApAmount": 153.83,
 			"openApCount": 4,
-			"billableHours": 1,
-			"billablePct": 100,
+			"billableHours": 0,
+			"billablePct": null,
 			"cashPosition": 80
 		}
 	},
@@ -2994,9 +4244,127 @@
 			"turnover": -75.1,
 			"margin": -75.1,
 			"marginPct": null,
-			"billableHours": 1,
-			"billablePct": 28.57
+			"billableHours": 3,
+			"billablePct": 42.86
 		}
+	},
+	"14 openArRows": {
+		"value": [
+			{
+				"id": "ar-7",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "id-6",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"14 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F3",
+				"party": "v9",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"15 classifyAccounts": {
 		"value": {
@@ -3136,10 +4504,10 @@
 			"nonBillable": [
 				0,
 				0,
-				1,
+				2.5,
 				0,
 				0,
-				1
+				2.5
 			],
 			"pct": [
 				null,
@@ -3153,10 +4521,22 @@
 	},
 	"15 forecastByMonth": {
 		"value": {
-			"months": [],
-			"cashIn": [],
-			"cashOut": [],
-			"cashNet": []
+			"months": [
+				"2026-07",
+				"2026-08"
+			],
+			"cashIn": [
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				50
+			],
+			"cashNet": [
+				0,
+				-50
+			]
 		}
 	},
 	"15 computeKpis": {
@@ -3165,8 +4545,8 @@
 			"marginYtd": -200,
 			"marginPctYtd": null,
 			"openArAmount": 221.3,
-			"openArCount": 4,
-			"openApAmount": 73.83,
+			"openArCount": 5,
+			"openApAmount": 153.83,
 			"openApCount": 3,
 			"billableHours": 0,
 			"billablePct": 0,
@@ -3179,8 +4559,8 @@
 			"marginYtd": 0,
 			"marginPctYtd": null,
 			"openArAmount": 221.3,
-			"openArCount": 4,
-			"openApAmount": 73.83,
+			"openArCount": 5,
+			"openApAmount": 153.83,
 			"openApCount": 3,
 			"billableHours": 0,
 			"billablePct": null,
@@ -3195,6 +4575,94 @@
 			"billableHours": 0,
 			"billablePct": 0
 		}
+	},
+	"15 openArRows": {
+		"value": [
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"15 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F3",
+				"party": "v9",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"16 classifyAccounts": {
 		"value": {
@@ -3353,24 +4821,24 @@
 				0,
 				0,
 				0,
-				0,
-				2.5
-			],
-			"nonBillable": [
-				3,
-				0,
-				0,
-				0,
-				0,
+				1,
 				0
 			],
-			"pct": [
+			"nonBillable": [
 				0,
+				0,
+				0,
+				0,
+				3,
+				3
+			],
+			"pct": [
 				null,
 				null,
 				null,
 				null,
-				100
+				25,
+				0
 			]
 		}
 	},
@@ -3378,19 +4846,23 @@
 		"value": {
 			"months": [
 				"2026-06",
+				"2026-07",
 				"2026-08"
 			],
 			"cashIn": [
-				161.5,
-				20.5
+				100,
+				20.5,
+				41
 			],
 			"cashOut": [
-				80.75,
-				0
+				100,
+				50,
+				60.25
 			],
 			"cashNet": [
-				80.75,
-				20.5
+				0,
+				-29.5,
+				-19.25
 			]
 		}
 	},
@@ -3399,12 +4871,12 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 221.3,
-			"openArCount": 5,
+			"openArAmount": 230.3,
+			"openArCount": 7,
 			"openApAmount": 153.83,
-			"openApCount": 3,
-			"billableHours": 2.5,
-			"billablePct": 100,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": 0,
 			"cashPosition": -100
 		}
 	},
@@ -3413,12 +4885,12 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 221.3,
-			"openArCount": 5,
+			"openArAmount": 230.3,
+			"openArCount": 7,
 			"openApAmount": 153.83,
-			"openApCount": 3,
+			"openApCount": 4,
 			"billableHours": 0,
-			"billablePct": 0,
+			"billablePct": null,
 			"cashPosition": -100
 		}
 	},
@@ -3427,9 +4899,127 @@
 			"turnover": 0,
 			"margin": 0,
 			"marginPct": null,
-			"billableHours": 2.5,
-			"billablePct": 45.45
+			"billableHours": 1,
+			"billablePct": 14.29
 		}
+	},
+	"16 openArRows": {
+		"value": [
+			{
+				"id": "ar-7",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "id-6",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"16 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "v3",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F3",
+				"party": "v9",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"17 classifyAccounts": {
 		"value": {
@@ -3537,16 +5127,16 @@
 				0
 			],
 			"nonBillable": [
-				1,
 				0,
+				5,
 				0,
 				0,
 				0,
 				0
 			],
 			"pct": [
-				0,
 				null,
+				0,
 				null,
 				null,
 				null,
@@ -3557,16 +5147,24 @@
 	"17 forecastByMonth": {
 		"value": {
 			"months": [
-				"2026-06"
+				"2026-06",
+				"2026-07",
+				"2026-08"
 			],
 			"cashIn": [
-				20.5
+				0,
+				0,
+				0
 			],
 			"cashOut": [
-				20.5
+				20.5,
+				60.25,
+				50
 			],
 			"cashNet": [
-				0
+				-20.5,
+				-60.25,
+				-50
 			]
 		}
 	},
@@ -3575,8 +5173,8 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 221.2,
-			"openArCount": 4,
+			"openArAmount": 230.2,
+			"openArCount": 6,
 			"openApAmount": 153.83,
 			"openApCount": 4,
 			"billableHours": 0,
@@ -3589,12 +5187,12 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 221.2,
-			"openArCount": 4,
+			"openArAmount": 230.2,
+			"openArCount": 6,
 			"openApAmount": 153.83,
 			"openApCount": 4,
 			"billableHours": 0,
-			"billablePct": 0,
+			"billablePct": null,
 			"cashPosition": 0
 		}
 	},
@@ -3606,6 +5204,114 @@
 			"billableHours": 0,
 			"billablePct": 0
 		}
+	},
+	"17 openArRows": {
+		"value": [
+			{
+				"id": "id-6",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"17 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F3",
+				"party": "v9",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"18 classifyAccounts": {
 		"value": {
@@ -3753,28 +5459,28 @@
 	"18 billableSeries": {
 		"value": {
 			"billable": [
-				0,
-				5.5,
 				2.5,
+				3,
 				0,
 				0,
-				0
+				2.5,
+				1
 			],
 			"nonBillable": [
 				0,
 				0,
-				3,
+				0,
 				0,
 				0,
 				0
 			],
 			"pct": [
+				100,
+				100,
+				null,
 				null,
 				100,
-				45.45,
-				null,
-				null,
-				null
+				100
 			]
 		}
 	},
@@ -3785,16 +5491,16 @@
 				"2026-07"
 			],
 			"cashIn": [
-				120.5,
-				120.5
+				20.5,
+				0
 			],
 			"cashOut": [
-				10.25,
-				50
+				50,
+				10.25
 			],
 			"cashNet": [
-				110.25,
-				70.5
+				-29.5,
+				-10.25
 			]
 		}
 	},
@@ -3803,12 +5509,12 @@
 			"turnoverYtd": -250.55,
 			"marginYtd": -150.55,
 			"marginPctYtd": null,
-			"openArAmount": 221.3,
-			"openArCount": 5,
-			"openApAmount": 120.5,
+			"openArAmount": 230.3,
+			"openArCount": 7,
+			"openApAmount": 33.33,
 			"openApCount": 2,
-			"billableHours": 0,
-			"billablePct": null,
+			"billableHours": 1,
+			"billablePct": 100,
 			"cashPosition": 75.1
 		}
 	},
@@ -3817,12 +5523,12 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 221.3,
-			"openArCount": 5,
-			"openApAmount": 120.5,
+			"openArAmount": 230.3,
+			"openArCount": 7,
+			"openApAmount": 33.33,
 			"openApCount": 2,
-			"billableHours": 0,
-			"billablePct": null,
+			"billableHours": 2.5,
+			"billablePct": 100,
 			"cashPosition": 75.1
 		}
 	},
@@ -3831,9 +5537,107 @@
 			"turnover": -250.55,
 			"margin": -150.55,
 			"marginPct": null,
-			"billableHours": 8,
-			"billablePct": 72.73
+			"billableHours": 9,
+			"billablePct": 100
 		}
+	},
+	"18 openArRows": {
+		"value": [
+			{
+				"id": "ar-7",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "id-6",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"18 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			}
+		]
 	},
 	"19 classifyAccounts": {
 		"value": {
@@ -3958,27 +5762,27 @@
 		"value": {
 			"billable": [
 				0,
-				0,
-				0,
+				3,
+				2.5,
 				0,
 				0,
 				0
 			],
 			"nonBillable": [
-				1,
+				3.5,
+				3,
 				0,
-				1,
 				0,
-				2.5,
-				3
+				0,
+				0
 			],
 			"pct": [
 				0,
+				50,
+				100,
 				null,
-				0,
 				null,
-				0,
-				0
+				null
 			]
 		}
 	},
@@ -3986,19 +5790,23 @@
 		"value": {
 			"months": [
 				"2026-06",
+				"2026-07",
 				"2026-08"
 			],
 			"cashIn": [
-				20.5,
+				100,
+				0,
 				0
 			],
 			"cashOut": [
-				50,
-				0
+				20.5,
+				0,
+				10.25
 			],
 			"cashNet": [
-				-29.5,
-				0
+				79.5,
+				0,
+				-10.25
 			]
 		}
 	},
@@ -4007,12 +5815,12 @@
 			"turnoverYtd": 0,
 			"marginYtd": -250.55,
 			"marginPctYtd": null,
-			"openArAmount": 221.3,
-			"openArCount": 4,
+			"openArAmount": 230.3,
+			"openArCount": 6,
 			"openApAmount": 153.83,
 			"openApCount": 4,
 			"billableHours": 0,
-			"billablePct": 0,
+			"billablePct": null,
 			"cashPosition": 0
 		}
 	},
@@ -4021,8 +5829,8 @@
 			"turnoverYtd": 0,
 			"marginYtd": -250.55,
 			"marginPctYtd": null,
-			"openArAmount": 221.3,
-			"openArCount": 4,
+			"openArAmount": 230.3,
+			"openArCount": 6,
 			"openApAmount": 153.83,
 			"openApCount": 4,
 			"billableHours": 0,
@@ -4035,9 +5843,117 @@
 			"turnover": 0,
 			"margin": -250.55,
 			"marginPct": null,
-			"billableHours": 0,
-			"billablePct": 0
+			"billableHours": 5.5,
+			"billablePct": 45.83
 		}
+	},
+	"19 openArRows": {
+		"value": [
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-2",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"19 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F3",
+				"party": "v9",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"20 classifyAccounts": {
 		"value": {
@@ -4216,10 +6132,10 @@
 			"billable": [
 				0,
 				0,
+				3,
 				0,
-				0,
-				0,
-				2.5
+				3,
+				0
 			],
 			"nonBillable": [
 				0,
@@ -4232,10 +6148,10 @@
 			"pct": [
 				null,
 				null,
+				100,
 				null,
-				null,
-				null,
-				100
+				100,
+				null
 			]
 		}
 	},
@@ -4243,23 +6159,19 @@
 		"value": {
 			"months": [
 				"2026-06",
-				"2026-07",
-				"2026-08"
+				"2026-07"
 			],
 			"cashIn": [
-				0,
-				220.5,
-				100
+				120.5,
+				20.5
 			],
 			"cashOut": [
-				50,
-				100,
-				10.25
+				10.25,
+				0
 			],
 			"cashNet": [
-				-50,
-				120.5,
-				89.75
+				110.25,
+				20.5
 			]
 		}
 	},
@@ -4268,12 +6180,12 @@
 			"turnoverYtd": -250.55,
 			"marginYtd": -155.45,
 			"marginPctYtd": null,
-			"openArAmount": 100.3,
-			"openArCount": 4,
-			"openApAmount": 120.5,
-			"openApCount": 3,
-			"billableHours": 2.5,
-			"billablePct": 100,
+			"openArAmount": 109.3,
+			"openArCount": 6,
+			"openApAmount": 80,
+			"openApCount": 2,
+			"billableHours": 0,
+			"billablePct": null,
 			"cashPosition": 0
 		}
 	},
@@ -4282,10 +6194,10 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 100.3,
-			"openArCount": 4,
-			"openApAmount": 120.5,
-			"openApCount": 3,
+			"openArAmount": 109.3,
+			"openArCount": 6,
+			"openApAmount": 80,
+			"openApCount": 2,
 			"billableHours": 0,
 			"billablePct": null,
 			"cashPosition": 0
@@ -4296,9 +6208,97 @@
 			"turnover": -250.55,
 			"margin": -155.45,
 			"marginPct": null,
-			"billableHours": 2.5,
+			"billableHours": 6,
 			"billablePct": 100
 		}
+	},
+	"20 openArRows": {
+		"value": [
+			{
+				"id": "id-6",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-2",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"20 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "v3",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			}
+		]
 	},
 	"21 classifyAccounts": {
 		"value": {
@@ -4469,8 +6469,8 @@
 	"21 billableSeries": {
 		"value": {
 			"billable": [
-				0,
-				0,
+				1,
+				3,
 				0,
 				0,
 				0,
@@ -4478,19 +6478,19 @@
 			],
 			"nonBillable": [
 				0,
-				2.5,
+				3,
 				0,
 				0,
-				2.5,
-				2.5
-			],
-			"pct": [
-				null,
-				0,
-				null,
-				null,
 				0,
 				0
+			],
+			"pct": [
+				100,
+				50,
+				null,
+				null,
+				null,
+				null
 			]
 		}
 	},
@@ -4498,23 +6498,19 @@
 		"value": {
 			"months": [
 				"2026-06",
-				"2026-07",
 				"2026-08"
 			],
 			"cashIn": [
-				20.5,
 				100,
-				120.5
+				20.5
 			],
 			"cashOut": [
-				20.5,
-				0,
-				0
+				50,
+				10.25
 			],
 			"cashNet": [
-				0,
-				100,
-				120.5
+				50,
+				10.25
 			]
 		}
 	},
@@ -4525,10 +6521,10 @@
 			"marginPctYtd": null,
 			"openArAmount": 221.2,
 			"openArCount": 3,
-			"openApAmount": 0,
-			"openApCount": 1,
+			"openApAmount": 113.33,
+			"openApCount": 3,
 			"billableHours": 0,
-			"billablePct": 0,
+			"billablePct": null,
 			"cashPosition": 150.56
 		}
 	},
@@ -4539,10 +6535,10 @@
 			"marginPctYtd": null,
 			"openArAmount": 221.2,
 			"openArCount": 3,
-			"openApAmount": 0,
-			"openApCount": 1,
-			"billableHours": 0,
-			"billablePct": null,
+			"openApAmount": 113.33,
+			"openApCount": 3,
+			"billableHours": 1,
+			"billablePct": 100,
 			"cashPosition": 150.56
 		}
 	},
@@ -4551,9 +6547,77 @@
 			"turnover": 0,
 			"margin": 0,
 			"marginPct": null,
-			"billableHours": 0,
-			"billablePct": 0
+			"billableHours": 4,
+			"billablePct": 57.14
 		}
+	},
+	"21 openArRows": {
+		"value": [
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"21 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "v3",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F3",
+				"party": "v9",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			}
+		]
 	},
 	"22 classifyAccounts": {
 		"value": {
@@ -4737,7 +6801,7 @@
 	"22 billableSeries": {
 		"value": {
 			"billable": [
-				0,
+				1,
 				0,
 				0,
 				0,
@@ -4749,15 +6813,15 @@
 				0,
 				0,
 				0,
-				2.5,
+				0,
 				0
 			],
 			"pct": [
-				0,
+				25,
 				null,
 				null,
 				null,
-				0,
+				null,
 				null
 			]
 		}
@@ -4766,23 +6830,19 @@
 		"value": {
 			"months": [
 				"2026-06",
-				"2026-07",
 				"2026-08"
 			],
 			"cashIn": [
-				20.5,
-				120.5,
-				20.5
+				141,
+				0
 			],
 			"cashOut": [
-				0,
-				110.25,
+				70.5,
 				50
 			],
 			"cashNet": [
-				20.5,
-				10.25,
-				-29.5
+				70.5,
+				-50
 			]
 		}
 	},
@@ -4792,9 +6852,9 @@
 			"marginYtd": -75.1,
 			"marginPctYtd": null,
 			"openArAmount": 221.2,
-			"openArCount": 4,
-			"openApAmount": 73.83,
-			"openApCount": 2,
+			"openArCount": 5,
+			"openApAmount": 153.83,
+			"openApCount": 3,
 			"billableHours": 0,
 			"billablePct": null,
 			"cashPosition": -24.9
@@ -4806,11 +6866,11 @@
 			"marginYtd": 0,
 			"marginPctYtd": null,
 			"openArAmount": 221.2,
-			"openArCount": 4,
-			"openApAmount": 73.83,
-			"openApCount": 2,
-			"billableHours": 0,
-			"billablePct": 0,
+			"openArCount": 5,
+			"openApAmount": 153.83,
+			"openApCount": 3,
+			"billableHours": 1,
+			"billablePct": 25,
 			"cashPosition": -24.9
 		}
 	},
@@ -4819,9 +6879,97 @@
 			"turnover": 0,
 			"margin": -75.1,
 			"marginPct": null,
-			"billableHours": 0,
-			"billablePct": 0
+			"billableHours": 1,
+			"billablePct": 25
 		}
+	},
+	"22 openArRows": {
+		"value": [
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-2",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"22 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "v3",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"23 classifyAccounts": {
 		"value": {
@@ -4937,44 +7085,52 @@
 	"23 billableSeries": {
 		"value": {
 			"billable": [
-				2.5,
-				3,
 				0,
 				0,
 				0,
-				0
+				0,
+				5.5,
+				2
 			],
 			"nonBillable": [
-				0,
-				0,
-				0,
-				0,
 				3,
+				0,
+				0,
+				0,
+				0,
 				0
 			],
 			"pct": [
-				100,
-				100,
-				null,
-				null,
 				0,
-				null
+				null,
+				null,
+				null,
+				100,
+				100
 			]
 		}
 	},
 	"23 forecastByMonth": {
 		"value": {
 			"months": [
-				"2026-06"
+				"2026-06",
+				"2026-07",
+				"2026-08"
 			],
 			"cashIn": [
-				100
+				120.5,
+				20.5,
+				20.5
 			],
 			"cashOut": [
-				110.25
+				60.25,
+				0,
+				10.25
 			],
 			"cashNet": [
-				-10.25
+				60.25,
+				20.5,
+				10.25
 			]
 		}
 	},
@@ -4983,12 +7139,12 @@
 			"turnoverYtd": 0,
 			"marginYtd": 20,
 			"marginPctYtd": null,
-			"openArAmount": 121.3,
-			"openArCount": 4,
+			"openArAmount": 130.3,
+			"openArCount": 6,
 			"openApAmount": 153.83,
-			"openApCount": 3,
-			"billableHours": 0,
-			"billablePct": null,
+			"openApCount": 4,
+			"billableHours": 2,
+			"billablePct": 100,
 			"cashPosition": 0
 		}
 	},
@@ -4997,12 +7153,12 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 121.3,
-			"openArCount": 4,
+			"openArAmount": 130.3,
+			"openArCount": 6,
 			"openApAmount": 153.83,
-			"openApCount": 3,
-			"billableHours": 2.5,
-			"billablePct": 100,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": 0,
 			"cashPosition": 0
 		}
 	},
@@ -5011,9 +7167,117 @@
 			"turnover": 0,
 			"margin": 20,
 			"marginPct": null,
-			"billableHours": 5.5,
-			"billablePct": 64.71
+			"billableHours": 7.5,
+			"billablePct": 71.43
 		}
+	},
+	"23 openArRows": {
+		"value": [
+			{
+				"id": "id-6",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-2",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"23 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "v3",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F3",
+				"party": "v9",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"24 classifyAccounts": {
 		"value": {
@@ -5207,28 +7471,28 @@
 	"24 billableSeries": {
 		"value": {
 			"billable": [
+				3,
 				0,
 				0,
-				2.5,
 				0,
 				0,
 				0
 			],
 			"nonBillable": [
-				3.5,
-				1,
 				0,
 				0,
 				2.5,
-				0
+				0,
+				0,
+				1
 			],
 			"pct": [
-				0,
-				0,
 				100,
 				null,
 				0,
-				null
+				null,
+				null,
+				0
 			]
 		}
 	},
@@ -5240,19 +7504,19 @@
 				"2026-08"
 			],
 			"cashIn": [
-				20.5,
 				100,
-				0
+				0,
+				20.5
 			],
 			"cashOut": [
-				60.25,
 				50,
+				10.25,
 				10.25
 			],
 			"cashNet": [
-				-39.75,
 				50,
-				-10.25
+				-10.25,
+				10.25
 			]
 		}
 	},
@@ -5261,12 +7525,12 @@
 			"turnoverYtd": 75.1,
 			"marginYtd": -275.45,
 			"marginPctYtd": -366.78,
-			"openArAmount": 221.2,
-			"openArCount": 4,
+			"openArAmount": 230.2,
+			"openArCount": 6,
 			"openApAmount": 153.83,
 			"openApCount": 4,
 			"billableHours": 0,
-			"billablePct": null,
+			"billablePct": 0,
 			"cashPosition": 75.1
 		}
 	},
@@ -5275,12 +7539,12 @@
 			"turnoverYtd": 0,
 			"marginYtd": -100,
 			"marginPctYtd": null,
-			"openArAmount": 221.2,
-			"openArCount": 4,
+			"openArAmount": 230.2,
+			"openArCount": 6,
 			"openApAmount": 153.83,
 			"openApCount": 4,
-			"billableHours": 0,
-			"billablePct": 0,
+			"billableHours": 3,
+			"billablePct": 100,
 			"cashPosition": 75.1
 		}
 	},
@@ -5289,9 +7553,117 @@
 			"turnover": 75.1,
 			"margin": -275.45,
 			"marginPct": -366.78,
-			"billableHours": 2.5,
-			"billablePct": 26.32
+			"billableHours": 3,
+			"billablePct": 46.15
 		}
+	},
+	"24 openArRows": {
+		"value": [
+			{
+				"id": "id-6",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"24 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F3",
+				"party": "v9",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"25 classifyAccounts": {
 		"value": {
@@ -5496,17 +7868,17 @@
 			"nonBillable": [
 				0,
 				0,
-				1,
 				0,
 				0,
+				3,
 				0
 			],
 			"pct": [
 				null,
 				null,
+				null,
+				null,
 				0,
-				null,
-				null,
 				null
 			]
 		}
@@ -5514,20 +7886,16 @@
 	"25 forecastByMonth": {
 		"value": {
 			"months": [
-				"2026-06",
 				"2026-08"
 			],
 			"cashIn": [
-				100,
 				100
 			],
 			"cashOut": [
-				20.5,
-				0
+				60.25
 			],
 			"cashNet": [
-				79.5,
-				100
+				39.75
 			]
 		}
 	},
@@ -5536,9 +7904,9 @@
 			"turnoverYtd": -445.65,
 			"marginYtd": -445.65,
 			"marginPctYtd": null,
-			"openArAmount": 221.3,
-			"openArCount": 5,
-			"openApAmount": 113.33,
+			"openArAmount": 230.3,
+			"openArCount": 6,
+			"openApAmount": 73.83,
 			"openApCount": 3,
 			"billableHours": 0,
 			"billablePct": null,
@@ -5550,9 +7918,9 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 221.3,
-			"openArCount": 5,
-			"openApAmount": 113.33,
+			"openArAmount": 230.3,
+			"openArCount": 6,
+			"openApAmount": 73.83,
 			"openApCount": 3,
 			"billableHours": 0,
 			"billablePct": null,
@@ -5567,6 +7935,104 @@
 			"billableHours": 0,
 			"billablePct": 0
 		}
+	},
+	"25 openArRows": {
+		"value": [
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "id-6",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"25 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "v3",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F3",
+				"party": "v9",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"26 classifyAccounts": {
 		"value": {
@@ -5713,25 +8179,25 @@
 	"26 billableSeries": {
 		"value": {
 			"billable": [
-				0,
-				0,
 				2.5,
+				0,
+				0,
 				0,
 				0,
 				0
 			],
 			"nonBillable": [
-				0,
 				3,
 				0,
+				2.5,
 				0,
 				3,
 				1
 			],
 			"pct": [
+				45.45,
 				null,
 				0,
-				100,
 				null,
 				0,
 				0
@@ -5742,19 +8208,23 @@
 		"value": {
 			"months": [
 				"2026-06",
+				"2026-07",
 				"2026-08"
 			],
 			"cashIn": [
-				20.5,
-				100
-			],
-			"cashOut": [
-				10.25,
+				0,
+				0,
 				0
 			],
+			"cashOut": [
+				0,
+				50,
+				50
+			],
 			"cashNet": [
-				10.25,
-				100
+				0,
+				-50,
+				-50
 			]
 		}
 	},
@@ -5763,9 +8233,9 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 221.3,
-			"openArCount": 5,
-			"openApAmount": 153.83,
+			"openArAmount": 230.3,
+			"openArCount": 7,
+			"openApAmount": 73.83,
 			"openApCount": 3,
 			"billableHours": 0,
 			"billablePct": 0,
@@ -5777,12 +8247,12 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 221.3,
-			"openArCount": 5,
-			"openApAmount": 153.83,
+			"openArAmount": 230.3,
+			"openArCount": 7,
+			"openApAmount": 73.83,
 			"openApCount": 3,
-			"billableHours": 0,
-			"billablePct": null,
+			"billableHours": 2.5,
+			"billablePct": 45.45,
 			"cashPosition": 0
 		}
 	},
@@ -5792,8 +8262,116 @@
 			"margin": 0,
 			"marginPct": null,
 			"billableHours": 2.5,
-			"billablePct": 26.32
+			"billablePct": 20.83
 		}
+	},
+	"26 openArRows": {
+		"value": [
+			{
+				"id": "ar-7",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "id-6",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"26 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "v3",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"27 classifyAccounts": {
 		"value": {
@@ -6011,27 +8589,27 @@
 		"value": {
 			"billable": [
 				0,
-				0,
+				3,
 				0,
 				0,
 				0,
 				0
 			],
 			"nonBillable": [
-				0,
-				0,
-				0,
-				0,
+				3,
 				1,
-				0
+				0,
+				0,
+				0,
+				3
 			],
 			"pct": [
-				null,
-				null,
-				null,
-				null,
 				0,
-				null
+				75,
+				null,
+				null,
+				null,
+				0
 			]
 		}
 	},
@@ -6043,19 +8621,19 @@
 				"2026-08"
 			],
 			"cashIn": [
-				120.5,
-				100,
-				100
+				20.5,
+				0,
+				120.5
 			],
 			"cashOut": [
-				100,
-				20.5,
-				50
+				50,
+				50,
+				10.25
 			],
 			"cashNet": [
-				20.5,
-				79.5,
-				50
+				-29.5,
+				-50,
+				110.25
 			]
 		}
 	},
@@ -6064,12 +8642,12 @@
 			"turnoverYtd": -100,
 			"marginYtd": -100,
 			"marginPctYtd": null,
-			"openArAmount": 221.3,
-			"openArCount": 5,
+			"openArAmount": 230.3,
+			"openArCount": 7,
 			"openApAmount": 153.83,
 			"openApCount": 4,
 			"billableHours": 0,
-			"billablePct": null,
+			"billablePct": 0,
 			"cashPosition": 526.01
 		}
 	},
@@ -6078,12 +8656,12 @@
 			"turnoverYtd": -100,
 			"marginYtd": -100,
 			"marginPctYtd": null,
-			"openArAmount": 221.3,
-			"openArCount": 5,
+			"openArAmount": 230.3,
+			"openArCount": 7,
 			"openApAmount": 153.83,
 			"openApCount": 4,
 			"billableHours": 0,
-			"billablePct": null,
+			"billablePct": 0,
 			"cashPosition": 526.01
 		}
 	},
@@ -6092,9 +8670,127 @@
 			"turnover": -100,
 			"margin": -100,
 			"marginPct": null,
-			"billableHours": 0,
-			"billablePct": 0
+			"billableHours": 3,
+			"billablePct": 30
 		}
+	},
+	"27 openArRows": {
+		"value": [
+			{
+				"id": "ar-7",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "id-6",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"27 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F3",
+				"party": "v9",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"28 classifyAccounts": {
 		"value": {
@@ -6242,23 +8938,23 @@
 				0,
 				0,
 				0,
-				0
+				1
 			],
 			"nonBillable": [
-				5.5,
-				2,
-				3,
+				1,
+				0,
+				0,
 				0,
 				0,
 				0
 			],
 			"pct": [
 				0,
-				0,
-				0,
 				null,
 				null,
-				null
+				null,
+				null,
+				100
 			]
 		}
 	},
@@ -6270,19 +8966,19 @@
 				"2026-08"
 			],
 			"cashIn": [
-				20.5,
-				20.5,
+				41,
+				100,
 				100
 			],
 			"cashOut": [
+				120.5,
 				50,
-				60.25,
-				10.25
+				60.25
 			],
 			"cashNet": [
-				-29.5,
-				-39.75,
-				89.75
+				-79.5,
+				50,
+				39.75
 			]
 		}
 	},
@@ -6292,11 +8988,11 @@
 			"marginYtd": 0,
 			"marginPctYtd": null,
 			"openArAmount": 221,
-			"openArCount": 3,
+			"openArCount": 4,
 			"openApAmount": 73.83,
-			"openApCount": 2,
-			"billableHours": 0,
-			"billablePct": null,
+			"openApCount": 3,
+			"billableHours": 1,
+			"billablePct": 100,
 			"cashPosition": 230.56
 		}
 	},
@@ -6306,9 +9002,9 @@
 			"marginYtd": 0,
 			"marginPctYtd": null,
 			"openArAmount": 221,
-			"openArCount": 3,
+			"openArCount": 4,
 			"openApAmount": 73.83,
-			"openApCount": 2,
+			"openApCount": 3,
 			"billableHours": 0,
 			"billablePct": 0,
 			"cashPosition": 230.56
@@ -6319,9 +9015,87 @@
 			"turnover": 0,
 			"margin": 0,
 			"marginPct": null,
-			"billableHours": 0,
-			"billablePct": 0
+			"billableHours": 1,
+			"billablePct": 50
 		}
+	},
+	"28 openArRows": {
+		"value": [
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-2",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"28 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "v3",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"29 classifyAccounts": {
 		"value": {
@@ -6453,27 +9227,27 @@
 		"value": {
 			"billable": [
 				0,
-				0,
+				2.5,
 				0,
 				0,
 				0,
 				0
 			],
 			"nonBillable": [
-				1,
-				3,
-				1,
-				0,
 				2.5,
-				5.5
+				0,
+				0,
+				0,
+				1,
+				0
 			],
 			"pct": [
 				0,
-				0,
-				0,
+				100,
+				null,
 				null,
 				0,
-				0
+				null
 			]
 		}
 	},
@@ -6485,19 +9259,19 @@
 				"2026-08"
 			],
 			"cashIn": [
-				100,
-				20.5,
-				0
+				141,
+				0,
+				41
 			],
 			"cashOut": [
-				10.25,
-				50,
-				20.5
+				60.25,
+				0,
+				60.25
 			],
 			"cashNet": [
-				89.75,
-				-29.5,
-				-20.5
+				80.75,
+				0,
+				-19.25
 			]
 		}
 	},
@@ -6506,12 +9280,12 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 100.3,
-			"openArCount": 4,
-			"openApAmount": 120.5,
-			"openApCount": 3,
+			"openArAmount": 109.3,
+			"openArCount": 6,
+			"openApAmount": 80,
+			"openApCount": 2,
 			"billableHours": 0,
-			"billablePct": 0,
+			"billablePct": null,
 			"cashPosition": 250.56
 		}
 	},
@@ -6520,10 +9294,10 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 100.3,
-			"openArCount": 4,
-			"openApAmount": 120.5,
-			"openApCount": 3,
+			"openArAmount": 109.3,
+			"openArCount": 6,
+			"openApAmount": 80,
+			"openApCount": 2,
 			"billableHours": 0,
 			"billablePct": 0,
 			"cashPosition": 250.56
@@ -6534,9 +9308,97 @@
 			"turnover": 0,
 			"margin": 0,
 			"marginPct": null,
-			"billableHours": 0,
-			"billablePct": 0
+			"billableHours": 2.5,
+			"billablePct": 41.67
 		}
+	},
+	"29 openArRows": {
+		"value": [
+			{
+				"id": "id-6",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-2",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"29 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "v3",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			}
+		]
 	},
 	"30 classifyAccounts": {
 		"value": {
@@ -6656,7 +9518,7 @@
 		"value": {
 			"billable": [
 				0,
-				0,
+				3,
 				2.5,
 				0,
 				0,
@@ -6667,16 +9529,16 @@
 				0,
 				0,
 				0,
-				0,
-				3
+				3,
+				0
 			],
 			"pct": [
 				null,
-				null,
+				100,
 				100,
 				null,
-				null,
-				0
+				0,
+				null
 			]
 		}
 	},
@@ -6684,19 +9546,23 @@
 		"value": {
 			"months": [
 				"2026-06",
-				"2026-07"
+				"2026-07",
+				"2026-08"
 			],
 			"cashIn": [
+				20.5,
 				0,
 				0
 			],
 			"cashOut": [
 				60.25,
-				50
+				50,
+				0
 			],
 			"cashNet": [
-				-60.25,
-				-50
+				-39.75,
+				-50,
+				0
 			]
 		}
 	},
@@ -6705,12 +9571,12 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 221.3,
-			"openArCount": 5,
+			"openArAmount": 230.3,
+			"openArCount": 7,
 			"openApAmount": 153.83,
 			"openApCount": 4,
 			"billableHours": 0,
-			"billablePct": 0,
+			"billablePct": null,
 			"cashPosition": -40
 		}
 	},
@@ -6719,8 +9585,8 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 221.3,
-			"openArCount": 5,
+			"openArAmount": 230.3,
+			"openArCount": 7,
 			"openApAmount": 153.83,
 			"openApCount": 4,
 			"billableHours": 0,
@@ -6733,9 +9599,127 @@
 			"turnover": 0,
 			"margin": 0,
 			"marginPct": null,
-			"billableHours": 2.5,
-			"billablePct": 45.45
+			"billableHours": 5.5,
+			"billablePct": 64.71
 		}
+	},
+	"30 openArRows": {
+		"value": [
+			{
+				"id": "id-6",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-2",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"30 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F3",
+				"party": "v9",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"31 classifyAccounts": {
 		"value": {
@@ -6876,27 +9860,27 @@
 	"31 billableSeries": {
 		"value": {
 			"billable": [
-				2.5,
 				0,
 				0,
 				0,
-				1,
+				0,
+				0,
 				0
 			],
 			"nonBillable": [
-				2.5,
 				0,
 				0,
+				1,
 				0,
-				2.5,
+				0,
 				0
 			],
 			"pct": [
-				50,
 				null,
 				null,
+				0,
 				null,
-				28.57,
+				null,
 				null
 			]
 		}
@@ -6904,16 +9888,20 @@
 	"31 forecastByMonth": {
 		"value": {
 			"months": [
-				"2026-06"
+				"2026-06",
+				"2026-07"
 			],
 			"cashIn": [
-				120.5
+				20.5,
+				20.5
 			],
 			"cashOut": [
-				50
+				60.25,
+				110.25
 			],
 			"cashNet": [
-				70.5
+				-39.75,
+				-89.75
 			]
 		}
 	},
@@ -6923,8 +9911,8 @@
 			"marginYtd": -250.55,
 			"marginPctYtd": null,
 			"openArAmount": 0,
-			"openArCount": 1,
-			"openApAmount": 73.83,
+			"openArCount": 2,
+			"openApAmount": 153.83,
 			"openApCount": 3,
 			"billableHours": 0,
 			"billablePct": null,
@@ -6937,11 +9925,11 @@
 			"marginYtd": -250.55,
 			"marginPctYtd": null,
 			"openArAmount": 0,
-			"openArCount": 1,
-			"openApAmount": 73.83,
+			"openArCount": 2,
+			"openApAmount": 153.83,
 			"openApCount": 3,
-			"billableHours": 2.5,
-			"billablePct": 50,
+			"billableHours": 0,
+			"billablePct": null,
 			"cashPosition": 0
 		}
 	},
@@ -6950,9 +9938,67 @@
 			"turnover": -250.55,
 			"margin": -250.55,
 			"marginPct": null,
-			"billableHours": 3.5,
-			"billablePct": 41.18
+			"billableHours": 0,
+			"billablePct": 0
 		}
+	},
+	"31 openArRows": {
+		"value": [
+			{
+				"id": "id-2",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			}
+		]
+	},
+	"31 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F3",
+				"party": "v9",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"32 classifyAccounts": {
 		"value": {
@@ -7134,8 +10180,8 @@
 	"32 billableSeries": {
 		"value": {
 			"billable": [
-				3,
 				0,
+				2.5,
 				0,
 				0,
 				0,
@@ -7144,15 +10190,15 @@
 			"nonBillable": [
 				0,
 				0,
-				3,
+				0,
 				0,
 				0,
 				0
 			],
 			"pct": [
+				null,
 				100,
 				null,
-				0,
 				null,
 				null,
 				null
@@ -7162,16 +10208,20 @@
 	"32 forecastByMonth": {
 		"value": {
 			"months": [
-				"2026-06"
+				"2026-06",
+				"2026-08"
 			],
 			"cashIn": [
-				141
+				41,
+				100
 			],
 			"cashOut": [
-				160.25
+				10.25,
+				10.25
 			],
 			"cashNet": [
-				-19.25
+				30.75,
+				89.75
 			]
 		}
 	},
@@ -7181,9 +10231,9 @@
 			"marginYtd": -250.55,
 			"marginPctYtd": null,
 			"openArAmount": 221.3,
-			"openArCount": 5,
-			"openApAmount": 73.83,
-			"openApCount": 3,
+			"openArCount": 6,
+			"openApAmount": 153.83,
+			"openApCount": 4,
 			"billableHours": 0,
 			"billablePct": null,
 			"cashPosition": 250.56
@@ -7195,11 +10245,11 @@
 			"marginYtd": 0,
 			"marginPctYtd": null,
 			"openArAmount": 221.3,
-			"openArCount": 5,
-			"openApAmount": 73.83,
-			"openApCount": 3,
-			"billableHours": 3,
-			"billablePct": 100,
+			"openArCount": 6,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": null,
 			"cashPosition": 250.56
 		}
 	},
@@ -7208,9 +10258,117 @@
 			"turnover": 0,
 			"margin": -250.55,
 			"marginPct": null,
-			"billableHours": 3,
-			"billablePct": 50
+			"billableHours": 2.5,
+			"billablePct": 100
 		}
+	},
+	"32 openArRows": {
+		"value": [
+			{
+				"id": "id-6",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"32 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F3",
+				"party": "v9",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"33 classifyAccounts": {
 		"value": {
@@ -7343,7 +10501,7 @@
 			],
 			"nonBillable": [
 				0,
-				4,
+				0,
 				0,
 				0,
 				0,
@@ -7351,7 +10509,7 @@
 			],
 			"pct": [
 				null,
-				0,
+				null,
 				null,
 				null,
 				null,
@@ -7363,19 +10521,19 @@
 		"value": {
 			"months": [
 				"2026-06",
-				"2026-08"
+				"2026-07"
 			],
 			"cashIn": [
-				141,
+				100,
 				20.5
 			],
 			"cashOut": [
-				60.25,
-				0
+				10.25,
+				50
 			],
 			"cashNet": [
-				80.75,
-				20.5
+				89.75,
+				-29.5
 			]
 		}
 	},
@@ -7384,10 +10542,10 @@
 			"turnoverYtd": 75.1,
 			"marginYtd": 55.1,
 			"marginPctYtd": 73.37,
-			"openArAmount": 221.1,
-			"openArCount": 4,
+			"openArAmount": 230.1,
+			"openArCount": 6,
 			"openApAmount": 153.83,
-			"openApCount": 4,
+			"openApCount": 3,
 			"billableHours": 0,
 			"billablePct": null,
 			"cashPosition": -100
@@ -7398,10 +10556,10 @@
 			"turnoverYtd": 75.1,
 			"marginYtd": 55.1,
 			"marginPctYtd": 73.37,
-			"openArAmount": 221.1,
-			"openArCount": 4,
+			"openArAmount": 230.1,
+			"openArCount": 6,
 			"openApAmount": 153.83,
-			"openApCount": 4,
+			"openApCount": 3,
 			"billableHours": 0,
 			"billablePct": null,
 			"cashPosition": -100
@@ -7413,8 +10571,106 @@
 			"margin": 55.1,
 			"marginPct": 73.37,
 			"billableHours": 0,
-			"billablePct": 0
+			"billablePct": null
 		}
+	},
+	"33 openArRows": {
+		"value": [
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-2",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"33 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F3",
+				"party": "v9",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"34 classifyAccounts": {
 		"value": {
@@ -7551,11 +10807,11 @@
 	"34 billableSeries": {
 		"value": {
 			"billable": [
-				2.5,
 				0,
-				1,
+				3,
 				0,
 				0,
+				3,
 				0
 			],
 			"nonBillable": [
@@ -7563,15 +10819,15 @@
 				0,
 				0,
 				0,
-				0,
+				2.5,
 				0
 			],
 			"pct": [
-				100,
 				null,
 				100,
 				null,
 				null,
+				54.55,
 				null
 			]
 		}
@@ -7579,16 +10835,24 @@
 	"34 forecastByMonth": {
 		"value": {
 			"months": [
+				"2026-06",
+				"2026-07",
 				"2026-08"
 			],
 			"cashIn": [
-				100
+				100,
+				100,
+				0
 			],
 			"cashOut": [
+				110.25,
+				10.25,
 				50
 			],
 			"cashNet": [
-				50
+				-10.25,
+				89.75,
+				-50
 			]
 		}
 	},
@@ -7597,10 +10861,10 @@
 			"turnoverYtd": 20,
 			"marginYtd": 40,
 			"marginPctYtd": 200,
-			"openArAmount": 121,
-			"openArCount": 2,
-			"openApAmount": 113.33,
-			"openApCount": 3,
+			"openArAmount": 130,
+			"openArCount": 3,
+			"openApAmount": 40.5,
+			"openApCount": 2,
 			"billableHours": 0,
 			"billablePct": null,
 			"cashPosition": 0
@@ -7611,12 +10875,12 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 121,
-			"openArCount": 2,
-			"openApAmount": 113.33,
-			"openApCount": 3,
-			"billableHours": 2.5,
-			"billablePct": 100,
+			"openArAmount": 130,
+			"openArCount": 3,
+			"openApAmount": 40.5,
+			"openApCount": 2,
+			"billableHours": 0,
+			"billablePct": null,
 			"cashPosition": 0
 		}
 	},
@@ -7625,9 +10889,67 @@
 			"turnover": 20,
 			"margin": 40,
 			"marginPct": 200,
-			"billableHours": 3.5,
-			"billablePct": 100
+			"billableHours": 6,
+			"billablePct": 70.59
 		}
+	},
+	"34 openArRows": {
+		"value": [
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-2",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"34 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "v3",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"35 classifyAccounts": {
 		"value": {
@@ -7728,26 +11050,26 @@
 		"value": {
 			"billable": [
 				0,
-				3,
 				0,
 				0,
-				1,
+				0,
+				0,
 				0
 			],
 			"nonBillable": [
-				3,
+				2.5,
 				0,
+				2.5,
 				0,
-				0,
-				4,
+				2.5,
 				0
 			],
 			"pct": [
 				0,
-				100,
 				null,
+				0,
 				null,
-				20,
+				0,
 				null
 			]
 		}
@@ -7756,19 +11078,23 @@
 		"value": {
 			"months": [
 				"2026-06",
-				"2026-07"
+				"2026-07",
+				"2026-08"
 			],
 			"cashIn": [
-				120.5,
-				0
+				141,
+				41,
+				100
 			],
 			"cashOut": [
 				60.25,
-				0
+				20.5,
+				50
 			],
 			"cashNet": [
-				60.25,
-				0
+				80.75,
+				20.5,
+				50
 			]
 		}
 	},
@@ -7778,9 +11104,9 @@
 			"marginYtd": 0,
 			"marginPctYtd": null,
 			"openArAmount": 221.1,
-			"openArCount": 4,
-			"openApAmount": 73.83,
-			"openApCount": 3,
+			"openArCount": 5,
+			"openApAmount": 40.5,
+			"openApCount": 2,
 			"billableHours": 0,
 			"billablePct": null,
 			"cashPosition": 0
@@ -7792,9 +11118,9 @@
 			"marginYtd": 0,
 			"marginPctYtd": null,
 			"openArAmount": 221.1,
-			"openArCount": 4,
-			"openApAmount": 73.83,
-			"openApCount": 3,
+			"openArCount": 5,
+			"openApAmount": 40.5,
+			"openApCount": 2,
 			"billableHours": 0,
 			"billablePct": 0,
 			"cashPosition": 0
@@ -7805,9 +11131,87 @@
 			"turnover": 0,
 			"margin": 0,
 			"marginPct": null,
-			"billableHours": 4,
-			"billablePct": 36.36
+			"billableHours": 0,
+			"billablePct": 0
 		}
+	},
+	"35 openArRows": {
+		"value": [
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-2",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"35 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "v3",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"36 classifyAccounts": {
 		"value": {
@@ -7908,28 +11312,28 @@
 	"36 billableSeries": {
 		"value": {
 			"billable": [
+				3,
 				0,
 				0,
 				0,
 				0,
-				0,
-				0
+				2.5
 			],
 			"nonBillable": [
 				0,
-				0,
-				0,
-				0,
 				3,
-				3
-			],
-			"pct": [
-				null,
-				null,
-				null,
-				null,
+				0,
+				0,
 				0,
 				0
+			],
+			"pct": [
+				100,
+				0,
+				null,
+				null,
+				null,
+				100
 			]
 		}
 	},
@@ -7937,19 +11341,23 @@
 		"value": {
 			"months": [
 				"2026-06",
-				"2026-07"
+				"2026-07",
+				"2026-08"
 			],
 			"cashIn": [
-				20.5,
-				100
+				0,
+				0,
+				20.5
 			],
 			"cashOut": [
-				60.25,
-				10.25
+				10.25,
+				50,
+				0
 			],
 			"cashNet": [
-				-39.75,
-				89.75
+				-10.25,
+				-50,
+				20.5
 			]
 		}
 	},
@@ -7958,12 +11366,12 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 100.2,
-			"openArCount": 2,
+			"openArAmount": 109.2,
+			"openArCount": 4,
 			"openApAmount": 153.83,
 			"openApCount": 4,
-			"billableHours": 0,
-			"billablePct": 0,
+			"billableHours": 2.5,
+			"billablePct": 100,
 			"cashPosition": 0
 		}
 	},
@@ -7972,12 +11380,12 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 100.2,
-			"openArCount": 2,
+			"openArAmount": 109.2,
+			"openArCount": 4,
 			"openApAmount": 153.83,
 			"openApCount": 4,
-			"billableHours": 0,
-			"billablePct": null,
+			"billableHours": 3,
+			"billablePct": 100,
 			"cashPosition": 0
 		}
 	},
@@ -7986,9 +11394,97 @@
 			"turnover": 0,
 			"margin": 0,
 			"marginPct": null,
-			"billableHours": 0,
-			"billablePct": 0
+			"billableHours": 5.5,
+			"billablePct": 64.71
 		}
+	},
+	"36 openArRows": {
+		"value": [
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-2",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"36 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F3",
+				"party": "v9",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"37 classifyAccounts": {
 		"value": {
@@ -8126,46 +11622,46 @@
 			"billable": [
 				0,
 				0,
-				1,
 				0,
-				1,
-				0
+				0,
+				2.5,
+				2.5
 			],
 			"nonBillable": [
 				0,
 				0,
 				0,
 				0,
-				1,
-				2.5
+				2.5,
+				0
 			],
 			"pct": [
 				null,
 				null,
-				100,
+				null,
 				null,
 				50,
-				0
+				100
 			]
 		}
 	},
 	"37 forecastByMonth": {
 		"value": {
 			"months": [
-				"2026-06",
+				"2026-07",
 				"2026-08"
 			],
 			"cashIn": [
-				100,
+				20.5,
 				100
 			],
 			"cashOut": [
 				50,
-				50
+				10.25
 			],
 			"cashNet": [
-				50,
-				50
+				-29.5,
+				89.75
 			]
 		}
 	},
@@ -8175,11 +11671,11 @@
 			"marginYtd": 0,
 			"marginPctYtd": null,
 			"openArAmount": 221.3,
-			"openArCount": 4,
-			"openApAmount": 40.5,
+			"openArCount": 5,
+			"openApAmount": 80,
 			"openApCount": 2,
-			"billableHours": 0,
-			"billablePct": 0,
+			"billableHours": 2.5,
+			"billablePct": 100,
 			"cashPosition": -20
 		}
 	},
@@ -8189,8 +11685,8 @@
 			"marginYtd": 0,
 			"marginPctYtd": null,
 			"openArAmount": 221.3,
-			"openArCount": 4,
-			"openApAmount": 40.5,
+			"openArCount": 5,
+			"openApAmount": 80,
 			"openApCount": 2,
 			"billableHours": 0,
 			"billablePct": null,
@@ -8202,9 +11698,87 @@
 			"turnover": 0,
 			"margin": 0,
 			"marginPct": null,
-			"billableHours": 2,
-			"billablePct": 36.36
+			"billableHours": 5,
+			"billablePct": 66.67
 		}
+	},
+	"37 openArRows": {
+		"value": [
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-2",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"37 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "v3",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			}
+		]
 	},
 	"38 classifyAccounts": {
 		"value": {
@@ -8410,28 +11984,28 @@
 	"38 billableSeries": {
 		"value": {
 			"billable": [
-				1,
 				0,
-				5,
 				0,
-				1,
-				0
+				0,
+				0,
+				3,
+				5
 			],
 			"nonBillable": [
+				1,
+				1,
 				0,
 				0,
 				0,
-				0,
-				0,
-				2.5
+				5
 			],
 			"pct": [
-				100,
+				0,
+				0,
+				null,
 				null,
 				100,
-				null,
-				100,
-				0
+				50
 			]
 		}
 	},
@@ -8439,19 +12013,23 @@
 		"value": {
 			"months": [
 				"2026-06",
-				"2026-07"
+				"2026-07",
+				"2026-08"
 			],
 			"cashIn": [
 				20.5,
-				200
+				0,
+				41
 			],
 			"cashOut": [
-				100,
-				60.25
+				110.25,
+				10.25,
+				50
 			],
 			"cashNet": [
-				-79.5,
-				139.75
+				-89.75,
+				-10.25,
+				-9
 			]
 		}
 	},
@@ -8460,12 +12038,12 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 221.3,
-			"openArCount": 5,
-			"openApAmount": 120.5,
+			"openArAmount": 230.3,
+			"openArCount": 7,
+			"openApAmount": 113.33,
 			"openApCount": 3,
-			"billableHours": 0,
-			"billablePct": 0,
+			"billableHours": 5,
+			"billablePct": 50,
 			"cashPosition": 100
 		}
 	},
@@ -8474,12 +12052,12 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 221.3,
-			"openArCount": 5,
-			"openApAmount": 120.5,
+			"openArAmount": 230.3,
+			"openArCount": 7,
+			"openApAmount": 113.33,
 			"openApCount": 3,
-			"billableHours": 1,
-			"billablePct": 100,
+			"billableHours": 0,
+			"billablePct": 0,
 			"cashPosition": 100
 		}
 	},
@@ -8488,9 +12066,117 @@
 			"turnover": 0,
 			"margin": 0,
 			"marginPct": null,
-			"billableHours": 7,
-			"billablePct": 73.68
+			"billableHours": 8,
+			"billablePct": 53.33
 		}
+	},
+	"38 openArRows": {
+		"value": [
+			{
+				"id": "id-6",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-2",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"38 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "v3",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F3",
+				"party": "v9",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			}
+		]
 	},
 	"39 classifyAccounts": {
 		"value": {
@@ -8684,15 +12370,15 @@
 			],
 			"nonBillable": [
 				0,
-				0,
-				6.5,
+				1,
+				1,
 				0,
 				0,
 				0
 			],
 			"pct": [
 				null,
-				100,
+				75,
 				0,
 				null,
 				null,
@@ -8704,23 +12390,19 @@
 		"value": {
 			"months": [
 				"2026-06",
-				"2026-07",
-				"2026-08"
+				"2026-07"
 			],
 			"cashIn": [
-				320.5,
-				0,
-				100
+				100,
+				220.5
 			],
 			"cashOut": [
-				60.25,
-				10.25,
-				10.25
+				50,
+				150
 			],
 			"cashNet": [
-				260.25,
-				-10.25,
-				89.75
+				50,
+				70.5
 			]
 		}
 	},
@@ -8729,10 +12411,10 @@
 			"turnoverYtd": -75.1,
 			"marginYtd": -130.2,
 			"marginPctYtd": null,
-			"openArAmount": 221.1,
-			"openArCount": 4,
-			"openApAmount": 153.83,
-			"openApCount": 4,
+			"openArAmount": 230.1,
+			"openArCount": 6,
+			"openApAmount": 40.5,
+			"openApCount": 2,
 			"billableHours": 0,
 			"billablePct": null,
 			"cashPosition": 0
@@ -8743,10 +12425,10 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 221.1,
-			"openArCount": 4,
-			"openApAmount": 153.83,
-			"openApCount": 4,
+			"openArAmount": 230.1,
+			"openArCount": 6,
+			"openApAmount": 40.5,
+			"openApCount": 2,
 			"billableHours": 0,
 			"billablePct": null,
 			"cashPosition": 0
@@ -8758,8 +12440,96 @@
 			"margin": -130.2,
 			"marginPct": null,
 			"billableHours": 3,
-			"billablePct": 31.58
+			"billablePct": 60
 		}
+	},
+	"39 openArRows": {
+		"value": [
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-01",
+				"amount": 0.1,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-2",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"39 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "v3",
+				"invoiceDate": "",
+				"dueDate": "2026-03-02",
+				"amount": 0.001,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"40 classifyAccounts": {
 		"value": {
@@ -8893,26 +12663,26 @@
 		"value": {
 			"billable": [
 				0,
-				1,
 				0,
 				0,
 				0,
+				2.5,
 				0
 			],
 			"nonBillable": [
+				2.5,
 				0,
 				0,
-				3,
 				0,
-				0,
+				1,
 				0
 			],
 			"pct": [
-				null,
-				100,
 				0,
 				null,
 				null,
+				null,
+				71.43,
 				null
 			]
 		}
@@ -8921,18 +12691,22 @@
 		"value": {
 			"months": [
 				"2026-06",
+				"2026-07",
 				"2026-08"
 			],
 			"cashIn": [
 				120.5,
+				100,
 				0
 			],
 			"cashOut": [
-				150,
+				110.25,
+				50,
 				50
 			],
 			"cashNet": [
-				-29.5,
+				10.25,
+				50,
 				-50
 			]
 		}
@@ -8942,8 +12716,8 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 221.2,
-			"openArCount": 4,
+			"openArAmount": 230.2,
+			"openArCount": 6,
 			"openApAmount": 153.83,
 			"openApCount": 3,
 			"billableHours": 0,
@@ -8956,12 +12730,12 @@
 			"turnoverYtd": 0,
 			"marginYtd": 0,
 			"marginPctYtd": null,
-			"openArAmount": 221.2,
-			"openArCount": 4,
+			"openArAmount": 230.2,
+			"openArCount": 6,
 			"openApAmount": 153.83,
 			"openApCount": 3,
 			"billableHours": 0,
-			"billablePct": null,
+			"billablePct": 0,
 			"cashPosition": -230.55
 		}
 	},
@@ -8970,9 +12744,107 @@
 			"turnover": 0,
 			"margin": 0,
 			"marginPct": null,
-			"billableHours": 1,
-			"billablePct": 25
+			"billableHours": 2.5,
+			"billablePct": 41.67
 		}
+	},
+	"40 openArRows": {
+		"value": [
+			{
+				"id": "ar-5",
+				"invoiceNumber": "",
+				"party": "Acme",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "id-0",
+				"invoiceNumber": "A1",
+				"party": "Acme",
+				"invoiceDate": "",
+				"dueDate": "2026-05-01",
+				"amount": 121,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "ar-3",
+				"invoiceNumber": "",
+				"party": "k9",
+				"invoiceDate": "",
+				"dueDate": "2026-06-02",
+				"amount": 0.2,
+				"state": "issued",
+				"overdue": true
+			},
+			{
+				"id": "id-2",
+				"invoiceNumber": "",
+				"party": "k3",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-06-30",
+				"amount": 0,
+				"state": "issued",
+				"overdue": false
+			},
+			{
+				"id": "ar-1",
+				"invoiceNumber": "",
+				"party": "Beta",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-07-01",
+				"amount": 100,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "id-4",
+				"invoiceNumber": "",
+				"party": "",
+				"invoiceDate": "2026-01-01",
+				"dueDate": "2026-09-01",
+				"amount": 9,
+				"state": "overdue",
+				"overdue": true
+			}
+		]
+	},
+	"40 openApRows": {
+		"value": [
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "v3",
+				"invoiceDate": "",
+				"dueDate": "2026-03-01",
+				"amount": 33.333,
+				"state": "overdue",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "",
+				"party": "Gamma",
+				"invoiceDate": "",
+				"dueDate": "2026-04-01",
+				"amount": 80,
+				"state": "received",
+				"overdue": true
+			},
+			{
+				"id": "__undefined",
+				"invoiceNumber": "F1",
+				"party": "Delta",
+				"invoiceDate": "",
+				"dueDate": "2026-08-01",
+				"amount": 40.5,
+				"state": "partially-paid",
+				"overdue": false
+			}
+		]
 	},
 	"classifyAccounts null": {
 		"value": {

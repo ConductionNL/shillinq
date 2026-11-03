@@ -21,6 +21,8 @@ import {
 	forecastByMonth,
 	monthlyFinancialSeries,
 	monthsInRange,
+	openApRows,
+	openArRows,
 	postedLinesByMonth,
 } from '../../src/components/dashboard/financial/financialSeries.js'
 import { golden, outcome, seeded } from './goldenHarness.js'
@@ -120,6 +122,13 @@ function ledger(seed) {
 		{ lifecycleState: 'issued', dueDate: '2026-06-30', grossAmount: 'x' },
 		{ lifecycleState: 'issued', dueDate: '2026-06-01', grossAmount: 0.1 },
 		{ lifecycleState: 'issued', dueDate: '2026-06-02', grossAmount: 0.2 },
+		{
+			lifecycleState: 'overdue',
+			dueDate: '2026-09-01',
+			grossAmount: null,
+			netAmount: '9',
+		},
+		{ lifecycleState: 'issued', dueDate: null },
 	].filter(() => r.next() > 0.2)
 	const apTransactions = [
 		{ state: 'received', dueDate: '2026-04-01', totalAmount: 80 },
@@ -198,6 +207,36 @@ describe('financialSeries golden', () => {
 			check(
 				`${seed} computeRangeKpis`,
 				outcome(() => computeRangeKpis(l, MONTHS)),
+			)
+			const customers = [
+				{ customerId: 'k1', legalName: 'Acme' },
+				{ '@self': { id: 'k2' }, tradeName: 'Beta' },
+				{ customerId: 'k3' },
+			]
+			const vendors = [
+				{ vendorNumber: 'v1', name: 'Gamma' },
+				{ '@self': { id: 'v2' }, tradingName: 'Delta' },
+				{ vendorNumber: 'v3' },
+			]
+			const ar = l.arInvoices.map((inv, i) => ({
+				...inv,
+				customerId: ['k1', 'k2', 'k3', 'k9', undefined][i % 5],
+				'@self': i % 2 ? { id: `ar-${i}` } : undefined,
+				id: `id-${i}`,
+				invoiceDate: i % 3 ? '2026-01-01' : undefined,
+			}))
+			const ap = l.apTransactions.map((tx, i) => ({
+				...tx,
+				vendorId: ['v1', 'v2', 'v3', 'v9', undefined][i % 5],
+				invoiceNumber: i % 2 ? `F${i}` : undefined,
+			}))
+			check(
+				`${seed} openArRows`,
+				outcome(() => openArRows(ar, customers, new Date(2026, 5, 15, 12))),
+			)
+			check(
+				`${seed} openApRows`,
+				outcome(() => openApRows(ap, vendors, new Date(2026, 5, 15, 12))),
 			)
 		}
 	})

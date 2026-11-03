@@ -453,11 +453,7 @@ export function openArRows(invoices, customers, now = new Date()) {
 	return (invoices || [])
 		.filter((inv) => OPEN_AR_STATES.includes(inv.lifecycleState))
 		.map((inv) => ({
-			id: inv['@self']?.id ?? inv.id,
-			invoiceNumber: inv.invoiceNumber ?? '',
-			party: names.get(String(inv.customerId ?? '')) || inv.customerId || '',
-			invoiceDate: inv.invoiceDate ?? '',
-			dueDate: inv.dueDate ?? '',
+			...documentHead(inv, partyName(names, inv.customerId)),
 			amount: Number(inv.grossAmount ?? inv.netAmount) || 0,
 			state: inv.lifecycleState,
 			overdue: inv.lifecycleState === 'overdue' || isPastDue(inv.dueDate, now),
@@ -485,11 +481,7 @@ export function openApRows(transactions, vendors, now = new Date()) {
 	return (transactions || [])
 		.filter((tx) => OPEN_AP_STATES.includes(tx.state))
 		.map((tx) => ({
-			id: tx['@self']?.id ?? tx.id,
-			invoiceNumber: tx.invoiceNumber ?? '',
-			party: names.get(String(tx.vendorId ?? '')) || tx.vendorId || '',
-			invoiceDate: tx.invoiceDate ?? '',
-			dueDate: tx.dueDate ?? '',
+			...documentHead(tx, partyName(names, tx.vendorId)),
 			amount: Number(tx.totalAmount) || 0,
 			state: tx.state,
 			overdue: tx.state === 'overdue' || isPastDue(tx.dueDate, now),
@@ -604,6 +596,34 @@ export function formatEur(value, maximumFractionDigits = 0) {
 		currency: 'EUR',
 		maximumFractionDigits,
 	}).format(Number(value))
+}
+
+/**
+ * The id, number, party and dates of an open-items table row.
+ *
+ * @param {object} doc ARInvoice or APTransaction object.
+ * @param {string} party The counterparty's display name.
+ * @return {object} id, invoiceNumber, party, invoiceDate and dueDate.
+ */
+function documentHead(doc, party) {
+	return {
+		id: doc['@self']?.id ?? doc.id,
+		invoiceNumber: doc.invoiceNumber ?? '',
+		party,
+		invoiceDate: doc.invoiceDate ?? '',
+		dueDate: doc.dueDate ?? '',
+	}
+}
+
+/**
+ * The display name of a counterparty, else its id, else an empty string.
+ *
+ * @param {Map<string, string>} names Names by id.
+ * @param {string|undefined} id The counterparty id.
+ * @return {string}
+ */
+function partyName(names, id) {
+	return names.get(String(id ?? '')) || id || ''
 }
 
 /**
