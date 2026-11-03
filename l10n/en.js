@@ -3672,6 +3672,7 @@ OC.L10N.register(
         "Invoice %1$s belongs to another customer.": "Invoice %1$s belongs to another customer.",
         "Invoice %1$s is not overdue with an amount due.": "Invoice %1$s is not overdue with an amount due.",
         "Invoice %1$s is already on payment plan %2$s.": "Invoice %1$s is already on payment plan %2$s.",
+        "Invoice %1$s could not be checked against its payment plan. Try again.": "Invoice %1$s could not be checked against its payment plan. Try again.",
         "The payment plan could not be saved.": "The payment plan could not be saved.",
         "The plan total must be above zero.": "The plan total must be above zero.",
         "Choose a first due date and a weekly or monthly frequency.": "Choose a first due date and a weekly or monthly frequency.",

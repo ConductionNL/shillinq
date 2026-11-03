@@ -5898,6 +5898,7 @@ OC.L10N.register(
         "Invoice %1$s belongs to another customer.": "Factuur %1$s hoort bij een andere klant.",
         "Invoice %1$s is not overdue with an amount due.": "Factuur %1$s is niet vervallen met een openstaand bedrag.",
         "Invoice %1$s is already on payment plan %2$s.": "Factuur %1$s valt al onder betalingsregeling %2$s.",
+        "Invoice %1$s could not be checked against its payment plan. Try again.": "Factuur %1$s kon niet worden gecontroleerd tegen de betalingsregeling. Probeer het opnieuw.",
         "The payment plan could not be saved.": "De betalingsregeling kon niet worden opgeslagen.",
         "The plan total must be above zero.": "Het totaal van de regeling moet boven nul liggen.",
         "Choose a first due date and a weekly or monthly frequency.": "Kies een eerste vervaldatum en een wekelijkse of maandelijkse frequentie.",

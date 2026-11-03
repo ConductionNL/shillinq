@@ -48,6 +48,7 @@ use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Per REQ-SM-004 reservation CAS + REQ-SM-005 stock-ledger commit.
@@ -363,10 +364,12 @@ class StockReservationGuard {
 
 			// Re-read the canonical row to detect concurrent writes; abort on version
 			// mismatch (CAS) so the operator retries with fresh state.
-			$current = $this->objectService
-				->setRegister($this->register())
-				->setSchema('InventoryStock')
-				->find($id);
+			$current = ObjectIdentifier::findScoped(
+				scoped: $this->objectService
+					->setRegister($this->register())
+					->setSchema('InventoryStock'),
+				id: $id
+			);
 			if ($current === null) {
 				return false;
 			}
