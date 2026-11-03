@@ -1,0 +1,9151 @@
+{
+	"1 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"1 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-03",
+					[
+						{
+							"transactionId": "tx-5",
+							"accountNumber": "8100",
+							"side": "debit",
+							"amount": "75.10"
+						}
+					]
+				]
+			]
+		}
+	},
+	"1 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"1 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				0,
+				0,
+				1,
+				0,
+				0,
+				0
+			],
+			"pct": [
+				null,
+				null,
+				0,
+				null,
+				null,
+				null
+			]
+		}
+	},
+	"1 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-07",
+				"2026-08"
+			],
+			"cashIn": [
+				0,
+				20.5,
+				220.5
+			],
+			"cashOut": [
+				10.25,
+				0,
+				100
+			],
+			"cashNet": [
+				-10.25,
+				20.5,
+				120.5
+			]
+		}
+	},
+	"1 computeKpis": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 100.1,
+			"openArCount": 3,
+			"openApAmount": 40.5,
+			"openApCount": 2,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 0
+		}
+	},
+	"1 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 100.1,
+			"openArCount": 3,
+			"openApAmount": 40.5,
+			"openApCount": 2,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 0
+		}
+	},
+	"1 computeRangeKpis": {
+		"value": {
+			"turnover": 0,
+			"margin": 0,
+			"marginPct": null,
+			"billableHours": 0,
+			"billablePct": 0
+		}
+	},
+	"2 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"2 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-01",
+					[
+						{
+							"transactionId": "T10",
+							"accountNumber": "1100",
+							"side": "debit",
+							"amount": 100
+						},
+						{
+							"transactionId": "T10",
+							"accountNumber": "1100",
+							"side": "credit",
+							"amount": 0
+						}
+					]
+				]
+			]
+		}
+	},
+	"2 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				100,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				100,
+				0,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"2 billableSeries": {
+		"value": {
+			"billable": [
+				1,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				0,
+				0,
+				3,
+				0,
+				0,
+				0
+			],
+			"pct": [
+				100,
+				null,
+				0,
+				null,
+				null,
+				null
+			]
+		}
+	},
+	"2 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-08"
+			],
+			"cashIn": [
+				20.5,
+				120.5
+			],
+			"cashOut": [
+				10.25,
+				100
+			],
+			"cashNet": [
+				10.25,
+				20.5
+			]
+		}
+	},
+	"2 computeKpis": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 4,
+			"openApAmount": 40.5,
+			"openApCount": 2,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 100
+		}
+	},
+	"2 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 4,
+			"openApAmount": 40.5,
+			"openApCount": 2,
+			"billableHours": 1,
+			"billablePct": 100,
+			"cashPosition": 100
+		}
+	},
+	"2 computeRangeKpis": {
+		"value": {
+			"turnover": 0,
+			"margin": 0,
+			"marginPct": null,
+			"billableHours": 1,
+			"billablePct": 25
+		}
+	},
+	"3 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"3 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-06",
+					[
+						{
+							"transactionId": "T3",
+							"accountNumber": "3000",
+							"side": "credit",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "T3",
+							"accountNumber": "9999",
+							"side": "debit",
+							"amount": "75.10"
+						},
+						{
+							"transactionId": "T3",
+							"accountNumber": "__undefined",
+							"side": "other",
+							"amount": "x"
+						},
+						{
+							"transactionId": "T3",
+							"accountNumber": "3000",
+							"side": "debit",
+							"amount": 0
+						}
+					]
+				]
+			]
+		}
+	},
+	"3 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				250.56
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				-250.55
+			]
+		}
+	},
+	"3 billableSeries": {
+		"value": {
+			"billable": [
+				5.5,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"pct": [
+				100,
+				null,
+				null,
+				null,
+				null,
+				null
+			]
+		}
+	},
+	"3 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-07"
+			],
+			"cashIn": [
+				120.5,
+				100
+			],
+			"cashOut": [
+				60.25,
+				100
+			],
+			"cashNet": [
+				60.25,
+				0
+			]
+		}
+	},
+	"3 computeKpis": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 121.3,
+			"openArCount": 4,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": -250.55
+		}
+	},
+	"3 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 121.3,
+			"openArCount": 4,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 5.5,
+			"billablePct": 100,
+			"cashPosition": -250.55
+		}
+	},
+	"3 computeRangeKpis": {
+		"value": {
+			"turnover": 0,
+			"margin": 0,
+			"marginPct": null,
+			"billableHours": 5.5,
+			"billablePct": 100
+		}
+	},
+	"4 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1100"
+				]
+			}
+		}
+	},
+	"4 postedLinesByMonth": {
+		"value": {
+			"__map": []
+		}
+	},
+	"4 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"4 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				0,
+				0,
+				2.5,
+				0,
+				0,
+				0
+			],
+			"pct": [
+				null,
+				null,
+				0,
+				null,
+				null,
+				null
+			]
+		}
+	},
+	"4 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-07",
+				"2026-08"
+			],
+			"cashIn": [
+				20.5,
+				0,
+				0
+			],
+			"cashOut": [
+				50,
+				0,
+				0
+			],
+			"cashNet": [
+				-29.5,
+				0,
+				0
+			]
+		}
+	},
+	"4 computeKpis": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 4,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 0
+		}
+	},
+	"4 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 4,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 0
+		}
+	},
+	"4 computeRangeKpis": {
+		"value": {
+			"turnover": 0,
+			"margin": 0,
+			"marginPct": null,
+			"billableHours": 0,
+			"billablePct": 0
+		}
+	},
+	"5 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"3000"
+				]
+			}
+		}
+	},
+	"5 postedLinesByMonth": {
+		"value": {
+			"__map": []
+		}
+	},
+	"5 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"5 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				0,
+				2.5,
+				0,
+				0,
+				0,
+				0
+			],
+			"pct": [
+				null,
+				0,
+				null,
+				null,
+				null,
+				null
+			]
+		}
+	},
+	"5 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-07",
+				"2026-08"
+			],
+			"cashIn": [
+				41,
+				220.5,
+				20.5
+			],
+			"cashOut": [
+				50,
+				100,
+				60.25
+			],
+			"cashNet": [
+				-9,
+				120.5,
+				-39.75
+			]
+		}
+	},
+	"5 computeKpis": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 100.3,
+			"openArCount": 4,
+			"openApAmount": 153.83,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 0
+		}
+	},
+	"5 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 100.3,
+			"openArCount": 4,
+			"openApAmount": 153.83,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 0
+		}
+	},
+	"5 computeRangeKpis": {
+		"value": {
+			"turnover": 0,
+			"margin": 0,
+			"marginPct": null,
+			"billableHours": 0,
+			"billablePct": 0
+		}
+	},
+	"6 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100"
+				]
+			}
+		}
+	},
+	"6 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-01",
+					[
+						{
+							"transactionId": "T10",
+							"accountNumber": "8000",
+							"side": "credit",
+							"amount": 0
+						},
+						{
+							"transactionId": "T10",
+							"accountNumber": "1100",
+							"side": "other",
+							"amount": -20
+						},
+						{
+							"transactionId": "T10",
+							"accountNumber": "1000",
+							"side": "debit",
+							"amount": "x"
+						},
+						{
+							"transactionId": "T10",
+							"accountNumber": "8000",
+							"side": "debit",
+							"amount": 100
+						}
+					]
+				]
+			]
+		}
+	},
+	"6 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				-100,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				-100,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				20,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				-20,
+				0,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"6 billableSeries": {
+		"value": {
+			"billable": [
+				2.5,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				1,
+				0,
+				0,
+				0,
+				0,
+				2.5
+			],
+			"pct": [
+				71.43,
+				null,
+				null,
+				null,
+				null,
+				0
+			]
+		}
+	},
+	"6 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06"
+			],
+			"cashIn": [
+				20.5
+			],
+			"cashOut": [
+				20.5
+			],
+			"cashNet": [
+				0
+			]
+		}
+	},
+	"6 computeKpis": {
+		"value": {
+			"turnoverYtd": -100,
+			"marginYtd": -100,
+			"marginPctYtd": null,
+			"openArAmount": 0.3,
+			"openArCount": 3,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": 0,
+			"cashPosition": -20
+		}
+	},
+	"6 computeKpis january": {
+		"value": {
+			"turnoverYtd": -100,
+			"marginYtd": -100,
+			"marginPctYtd": null,
+			"openArAmount": 0.3,
+			"openArCount": 3,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 2.5,
+			"billablePct": 71.43,
+			"cashPosition": -20
+		}
+	},
+	"6 computeRangeKpis": {
+		"value": {
+			"turnover": -100,
+			"margin": -100,
+			"marginPct": null,
+			"billableHours": 2.5,
+			"billablePct": 41.67
+		}
+	},
+	"7 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": []
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"7 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-05",
+					[
+						{
+							"transactionId": "T7",
+							"accountNumber": "9999",
+							"side": "debit",
+							"amount": 0
+						},
+						{
+							"transactionId": "T7",
+							"accountNumber": "4000",
+							"side": "debit",
+							"amount": -20
+						},
+						{
+							"transactionId": "T7",
+							"accountNumber": "__undefined",
+							"side": "other",
+							"amount": "x"
+						}
+					]
+				],
+				[
+					"2025-12",
+					[
+						{
+							"transactionId": "self-6",
+							"accountNumber": "2000",
+							"side": "other",
+							"amount": "x"
+						},
+						{
+							"transactionId": "self-6",
+							"accountNumber": "1500",
+							"side": "debit",
+							"amount": "__undefined"
+						}
+					]
+				]
+			]
+		}
+	},
+	"7 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				0,
+				0,
+				-20,
+				0
+			],
+			"margin": [
+				0,
+				0,
+				0,
+				0,
+				20,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"7 billableSeries": {
+		"value": {
+			"billable": [
+				1,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				3,
+				0,
+				0,
+				0,
+				0,
+				3
+			],
+			"pct": [
+				25,
+				null,
+				null,
+				null,
+				null,
+				0
+			]
+		}
+	},
+	"7 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-08"
+			],
+			"cashIn": [
+				20.5
+			],
+			"cashOut": [
+				10.25
+			],
+			"cashNet": [
+				10.25
+			]
+		}
+	},
+	"7 computeKpis": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 20,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 5,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": 0,
+			"cashPosition": 0
+		}
+	},
+	"7 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 5,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 1,
+			"billablePct": 25,
+			"cashPosition": 0
+		}
+	},
+	"7 computeRangeKpis": {
+		"value": {
+			"turnover": 0,
+			"margin": 20,
+			"marginPct": null,
+			"billableHours": 1,
+			"billablePct": 14.29
+		}
+	},
+	"8 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"8 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-01",
+					[
+						{
+							"transactionId": "self-6",
+							"accountNumber": "4000",
+							"side": "debit",
+							"amount": 100
+						},
+						{
+							"transactionId": "self-6",
+							"accountNumber": "4000",
+							"side": "credit",
+							"amount": -20
+						}
+					]
+				],
+				[
+					"2026-05",
+					[
+						{
+							"transactionId": "self-2",
+							"accountNumber": "8100",
+							"side": "other",
+							"amount": "__undefined"
+						},
+						{
+							"transactionId": "self-2",
+							"accountNumber": "4000",
+							"side": "debit",
+							"amount": "__undefined"
+						}
+					]
+				]
+			]
+		}
+	},
+	"8 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				120,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				-120,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"8 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				2.5,
+				1,
+				0,
+				0,
+				0,
+				0
+			],
+			"pct": [
+				0,
+				0,
+				null,
+				null,
+				null,
+				null
+			]
+		}
+	},
+	"8 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-08"
+			],
+			"cashIn": [
+				200,
+				20.5
+			],
+			"cashOut": [
+				10.25,
+				50
+			],
+			"cashNet": [
+				189.75,
+				-29.5
+			]
+		}
+	},
+	"8 computeKpis": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": -120,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 5,
+			"openApAmount": 113.33,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 0
+		}
+	},
+	"8 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": -120,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 5,
+			"openApAmount": 113.33,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": 0,
+			"cashPosition": 0
+		}
+	},
+	"8 computeRangeKpis": {
+		"value": {
+			"turnover": 0,
+			"margin": -120,
+			"marginPct": null,
+			"billableHours": 0,
+			"billablePct": 0
+		}
+	},
+	"9 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"9 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-01",
+					[
+						{
+							"transactionId": "T3",
+							"accountNumber": "1500",
+							"side": "other",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "T3",
+							"accountNumber": "8100",
+							"side": "credit",
+							"amount": -20
+						},
+						{
+							"transactionId": "T3",
+							"accountNumber": "2000",
+							"side": "credit",
+							"amount": "__undefined"
+						}
+					]
+				]
+			]
+		}
+	},
+	"9 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				-20,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				-20,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"9 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				0,
+				0,
+				2.5,
+				0,
+				0,
+				0
+			],
+			"pct": [
+				null,
+				null,
+				0,
+				null,
+				null,
+				null
+			]
+		}
+	},
+	"9 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-07"
+			],
+			"cashIn": [
+				120.5,
+				0
+			],
+			"cashOut": [
+				60.25,
+				20.5
+			],
+			"cashNet": [
+				60.25,
+				-20.5
+			]
+		}
+	},
+	"9 computeKpis": {
+		"value": {
+			"turnoverYtd": -20,
+			"marginYtd": -20,
+			"marginPctYtd": null,
+			"openArAmount": 121.3,
+			"openArCount": 4,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 0
+		}
+	},
+	"9 computeKpis january": {
+		"value": {
+			"turnoverYtd": -20,
+			"marginYtd": -20,
+			"marginPctYtd": null,
+			"openArAmount": 121.3,
+			"openArCount": 4,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 0
+		}
+	},
+	"9 computeRangeKpis": {
+		"value": {
+			"turnover": -20,
+			"margin": -20,
+			"marginPct": null,
+			"billableHours": 0,
+			"billablePct": 0
+		}
+	},
+	"10 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"10 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-06",
+					[
+						{
+							"transactionId": "T10",
+							"accountNumber": "1000",
+							"side": "credit",
+							"amount": "75.10"
+						},
+						{
+							"transactionId": "tx-9",
+							"accountNumber": "9999",
+							"side": "debit",
+							"amount": "75.10"
+						},
+						{
+							"transactionId": "T10",
+							"accountNumber": "1000",
+							"side": "credit",
+							"amount": 0
+						},
+						{
+							"transactionId": "tx-9",
+							"accountNumber": "9999",
+							"side": "debit",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "T10",
+							"accountNumber": "__undefined",
+							"side": "other",
+							"amount": "__undefined"
+						}
+					]
+				],
+				[
+					"2026-01",
+					[
+						{
+							"transactionId": "T3",
+							"accountNumber": "4000",
+							"side": "credit",
+							"amount": "__undefined"
+						},
+						{
+							"transactionId": "T3",
+							"accountNumber": "9999",
+							"side": "debit",
+							"amount": 0
+						},
+						{
+							"transactionId": "T3",
+							"accountNumber": "__undefined",
+							"side": "other",
+							"amount": -20
+						},
+						{
+							"transactionId": "T3",
+							"accountNumber": "1500",
+							"side": "credit",
+							"amount": "x"
+						}
+					]
+				]
+			]
+		}
+	},
+	"10 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				75.1
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				-75.1
+			]
+		}
+	},
+	"10 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				3,
+				2.5,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				0,
+				1,
+				0,
+				0,
+				0,
+				0
+			],
+			"pct": [
+				null,
+				75,
+				100,
+				null,
+				null,
+				null
+			]
+		}
+	},
+	"10 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-07",
+				"2026-08"
+			],
+			"cashIn": [
+				20.5,
+				0,
+				20.5
+			],
+			"cashOut": [
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				20.5,
+				0,
+				20.5
+			]
+		}
+	},
+	"10 computeKpis": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.2,
+			"openArCount": 4,
+			"openApAmount": 73.83,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": -75.1
+		}
+	},
+	"10 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.2,
+			"openArCount": 4,
+			"openApAmount": 73.83,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": -75.1
+		}
+	},
+	"10 computeRangeKpis": {
+		"value": {
+			"turnover": 0,
+			"margin": 0,
+			"marginPct": null,
+			"billableHours": 5.5,
+			"billablePct": 84.62
+		}
+	},
+	"11 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100"
+				]
+			}
+		}
+	},
+	"11 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2025-12",
+					[
+						{
+							"transactionId": "T7",
+							"accountNumber": "2000",
+							"side": "other",
+							"amount": "__undefined"
+						},
+						{
+							"transactionId": "T7",
+							"accountNumber": "3000",
+							"side": "debit",
+							"amount": 100
+						}
+					]
+				],
+				[
+					"2026-01",
+					[
+						{
+							"transactionId": "self-6",
+							"accountNumber": "1100",
+							"side": "credit",
+							"amount": -20
+						},
+						{
+							"transactionId": "self-6",
+							"accountNumber": "1500",
+							"side": "credit",
+							"amount": 100
+						},
+						{
+							"transactionId": "self-6",
+							"accountNumber": "4000",
+							"side": "debit",
+							"amount": -20
+						},
+						{
+							"transactionId": "self-6",
+							"accountNumber": "8000",
+							"side": "credit",
+							"amount": 100
+						}
+					]
+				]
+			]
+		}
+	},
+	"11 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				100,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				-20,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				120,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				120,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				20,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				20,
+				0,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"11 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				1
+			],
+			"nonBillable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"pct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				100
+			]
+		}
+	},
+	"11 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-07",
+				"2026-08"
+			],
+			"cashIn": [
+				100,
+				100
+			],
+			"cashOut": [
+				100,
+				50
+			],
+			"cashNet": [
+				0,
+				50
+			]
+		}
+	},
+	"11 computeKpis": {
+		"value": {
+			"turnoverYtd": 100,
+			"marginYtd": 120,
+			"marginPctYtd": 120,
+			"openArAmount": 221.1,
+			"openArCount": 4,
+			"openApAmount": 153.83,
+			"openApCount": 3,
+			"billableHours": 1,
+			"billablePct": 100,
+			"cashPosition": 20
+		}
+	},
+	"11 computeKpis january": {
+		"value": {
+			"turnoverYtd": 100,
+			"marginYtd": 120,
+			"marginPctYtd": 120,
+			"openArAmount": 221.1,
+			"openArCount": 4,
+			"openApAmount": 153.83,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 20
+		}
+	},
+	"11 computeRangeKpis": {
+		"value": {
+			"turnover": 100,
+			"margin": 120,
+			"marginPct": 120,
+			"billableHours": 1,
+			"billablePct": 100
+		}
+	},
+	"12 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"12 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-01",
+					[
+						{
+							"transactionId": "T10",
+							"accountNumber": "__undefined",
+							"side": "credit",
+							"amount": "x"
+						},
+						{
+							"transactionId": "tx-5",
+							"accountNumber": "3000",
+							"side": "credit",
+							"amount": 100
+						},
+						{
+							"transactionId": "tx-5",
+							"accountNumber": "3000",
+							"side": "other",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "tx-5",
+							"accountNumber": "4000",
+							"side": "credit",
+							"amount": 100
+						}
+					]
+				]
+			]
+		}
+	},
+	"12 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				-100,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				100,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				250.56,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				100,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				150.56,
+				0,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"12 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				3
+			],
+			"nonBillable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"pct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				100
+			]
+		}
+	},
+	"12 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-07",
+				"2026-08"
+			],
+			"cashIn": [
+				0,
+				120.5,
+				20.5
+			],
+			"cashOut": [
+				50,
+				0,
+				10.25
+			],
+			"cashNet": [
+				-50,
+				120.5,
+				10.25
+			]
+		}
+	},
+	"12 computeKpis": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 100,
+			"marginPctYtd": null,
+			"openArAmount": 221.1,
+			"openArCount": 4,
+			"openApAmount": 120.5,
+			"openApCount": 3,
+			"billableHours": 3,
+			"billablePct": 100,
+			"cashPosition": 150.56
+		}
+	},
+	"12 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 100,
+			"marginPctYtd": null,
+			"openArAmount": 221.1,
+			"openArCount": 4,
+			"openApAmount": 120.5,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 150.56
+		}
+	},
+	"12 computeRangeKpis": {
+		"value": {
+			"turnover": 0,
+			"margin": 100,
+			"marginPct": null,
+			"billableHours": 3,
+			"billablePct": 100
+		}
+	},
+	"13 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": []
+			}
+		}
+	},
+	"13 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-02",
+					[
+						{
+							"transactionId": "T7",
+							"accountNumber": "9999",
+							"side": "credit",
+							"amount": 0
+						},
+						{
+							"transactionId": "T7",
+							"accountNumber": "4000",
+							"side": "other",
+							"amount": 0
+						},
+						{
+							"transactionId": "T7",
+							"accountNumber": "__undefined",
+							"side": "other",
+							"amount": "__undefined"
+						},
+						{
+							"transactionId": "T7",
+							"accountNumber": "1000",
+							"side": "credit",
+							"amount": -20
+						},
+						{
+							"transactionId": "T7",
+							"accountNumber": "8100",
+							"side": "debit",
+							"amount": 0
+						}
+					]
+				],
+				[
+					"2026-03",
+					[
+						{
+							"transactionId": "tx-5",
+							"accountNumber": "8100",
+							"side": "debit",
+							"amount": 100
+						},
+						{
+							"transactionId": "tx-9",
+							"accountNumber": "1100",
+							"side": "other",
+							"amount": "x"
+						},
+						{
+							"transactionId": "tx-9",
+							"accountNumber": "1000",
+							"side": "debit",
+							"amount": "75.10"
+						},
+						{
+							"transactionId": "tx-5",
+							"accountNumber": "8100",
+							"side": "other",
+							"amount": "x"
+						},
+						{
+							"transactionId": "tx-9",
+							"accountNumber": "8000",
+							"side": "debit",
+							"amount": 0
+						},
+						{
+							"transactionId": "tx-9",
+							"accountNumber": "9999",
+							"side": "other",
+							"amount": "__undefined"
+						}
+					]
+				]
+			]
+		}
+	},
+	"13 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				-100,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				0,
+				-100,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"13 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				0,
+				0,
+				2.5,
+				0,
+				0,
+				0
+			],
+			"pct": [
+				null,
+				null,
+				0,
+				null,
+				null,
+				null
+			]
+		}
+	},
+	"13 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-07"
+			],
+			"cashIn": [
+				141,
+				20.5
+			],
+			"cashOut": [
+				30.75,
+				50
+			],
+			"cashNet": [
+				110.25,
+				-29.5
+			]
+		}
+	},
+	"13 computeKpis": {
+		"value": {
+			"turnoverYtd": -100,
+			"marginYtd": -100,
+			"marginPctYtd": null,
+			"openArAmount": 0.2,
+			"openArCount": 2,
+			"openApAmount": 120.5,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 0
+		}
+	},
+	"13 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 0.2,
+			"openArCount": 2,
+			"openApAmount": 120.5,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 0
+		}
+	},
+	"13 computeRangeKpis": {
+		"value": {
+			"turnover": -100,
+			"margin": -100,
+			"marginPct": null,
+			"billableHours": 0,
+			"billablePct": 0
+		}
+	},
+	"14 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"14 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-02",
+					[
+						{
+							"transactionId": "T3",
+							"accountNumber": "1500",
+							"side": "debit",
+							"amount": "__undefined"
+						},
+						{
+							"transactionId": "T3",
+							"accountNumber": "4000",
+							"side": "debit",
+							"amount": 0
+						},
+						{
+							"transactionId": "T3",
+							"accountNumber": "8000",
+							"side": "other",
+							"amount": "75.10"
+						},
+						{
+							"transactionId": "T3",
+							"accountNumber": "3000",
+							"side": "other",
+							"amount": 100
+						},
+						{
+							"transactionId": "T3",
+							"accountNumber": "1100",
+							"side": "other",
+							"amount": -20
+						}
+					]
+				],
+				[
+					"2026-06",
+					[
+						{
+							"transactionId": "T10",
+							"accountNumber": "9999",
+							"side": "debit",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "T10",
+							"accountNumber": "1100",
+							"side": "other",
+							"amount": 0
+						},
+						{
+							"transactionId": "T10",
+							"accountNumber": "2000",
+							"side": "debit",
+							"amount": "x"
+						}
+					]
+				]
+			]
+		}
+	},
+	"14 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				-75.1,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				-75.1,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				100,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				20,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				80,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"14 billableSeries": {
+		"value": {
+			"billable": [
+				1,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				2.5
+			],
+			"pct": [
+				100,
+				null,
+				null,
+				null,
+				null,
+				0
+			]
+		}
+	},
+	"14 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-07",
+				"2026-08"
+			],
+			"cashIn": [
+				20.5,
+				0,
+				20.5
+			],
+			"cashOut": [
+				70.5,
+				50,
+				60.25
+			],
+			"cashNet": [
+				-50,
+				-50,
+				-39.75
+			]
+		}
+	},
+	"14 computeKpis": {
+		"value": {
+			"turnoverYtd": -75.1,
+			"marginYtd": -75.1,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 5,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": 0,
+			"cashPosition": 80
+		}
+	},
+	"14 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 5,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 1,
+			"billablePct": 100,
+			"cashPosition": 80
+		}
+	},
+	"14 computeRangeKpis": {
+		"value": {
+			"turnover": -75.1,
+			"margin": -75.1,
+			"marginPct": null,
+			"billableHours": 1,
+			"billablePct": 28.57
+		}
+	},
+	"15 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"15 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-02",
+					[
+						{
+							"transactionId": "T4",
+							"accountNumber": "3000",
+							"side": "debit",
+							"amount": 100
+						},
+						{
+							"transactionId": "T4",
+							"accountNumber": "8000",
+							"side": "other",
+							"amount": 100
+						},
+						{
+							"transactionId": "T4",
+							"accountNumber": "4000",
+							"side": "other",
+							"amount": 100
+						},
+						{
+							"transactionId": "T4",
+							"accountNumber": "4000",
+							"side": "debit",
+							"amount": "x"
+						}
+					]
+				]
+			]
+		}
+	},
+	"15 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				-100,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				100,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				-200,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				100,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				100,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"15 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				0,
+				0,
+				1,
+				0,
+				0,
+				1
+			],
+			"pct": [
+				null,
+				null,
+				0,
+				null,
+				null,
+				0
+			]
+		}
+	},
+	"15 forecastByMonth": {
+		"value": {
+			"months": [],
+			"cashIn": [],
+			"cashOut": [],
+			"cashNet": []
+		}
+	},
+	"15 computeKpis": {
+		"value": {
+			"turnoverYtd": -100,
+			"marginYtd": -200,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 4,
+			"openApAmount": 73.83,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": 0,
+			"cashPosition": 100
+		}
+	},
+	"15 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 4,
+			"openApAmount": 73.83,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 100
+		}
+	},
+	"15 computeRangeKpis": {
+		"value": {
+			"turnover": -100,
+			"margin": -200,
+			"marginPct": null,
+			"billableHours": 0,
+			"billablePct": 0
+		}
+	},
+	"16 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"16 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2025-12",
+					[
+						{
+							"transactionId": "self-11",
+							"accountNumber": "8100",
+							"side": "other",
+							"amount": "__undefined"
+						},
+						{
+							"transactionId": "self-11",
+							"accountNumber": "__undefined",
+							"side": "other",
+							"amount": -20
+						},
+						{
+							"transactionId": "self-11",
+							"accountNumber": "__undefined",
+							"side": "other",
+							"amount": -20
+						},
+						{
+							"transactionId": "self-11",
+							"accountNumber": "8000",
+							"side": "debit",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "self-11",
+							"accountNumber": "__undefined",
+							"side": "other",
+							"amount": "75.10"
+						},
+						{
+							"transactionId": "self-11",
+							"accountNumber": "__undefined",
+							"side": "other",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "self-11",
+							"accountNumber": "1100",
+							"side": "credit",
+							"amount": 100
+						},
+						{
+							"transactionId": "self-11",
+							"accountNumber": "1000",
+							"side": "debit",
+							"amount": "x"
+						}
+					]
+				]
+			]
+		}
+	},
+	"16 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"16 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				2.5
+			],
+			"nonBillable": [
+				3,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"pct": [
+				0,
+				null,
+				null,
+				null,
+				null,
+				100
+			]
+		}
+	},
+	"16 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-08"
+			],
+			"cashIn": [
+				161.5,
+				20.5
+			],
+			"cashOut": [
+				80.75,
+				0
+			],
+			"cashNet": [
+				80.75,
+				20.5
+			]
+		}
+	},
+	"16 computeKpis": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 5,
+			"openApAmount": 153.83,
+			"openApCount": 3,
+			"billableHours": 2.5,
+			"billablePct": 100,
+			"cashPosition": -100
+		}
+	},
+	"16 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 5,
+			"openApAmount": 153.83,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": 0,
+			"cashPosition": -100
+		}
+	},
+	"16 computeRangeKpis": {
+		"value": {
+			"turnover": 0,
+			"margin": 0,
+			"marginPct": null,
+			"billableHours": 2.5,
+			"billablePct": 45.45
+		}
+	},
+	"17 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"3000"
+				]
+			}
+		}
+	},
+	"17 postedLinesByMonth": {
+		"value": {
+			"__map": []
+		}
+	},
+	"17 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"17 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				1,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"pct": [
+				0,
+				null,
+				null,
+				null,
+				null,
+				null
+			]
+		}
+	},
+	"17 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06"
+			],
+			"cashIn": [
+				20.5
+			],
+			"cashOut": [
+				20.5
+			],
+			"cashNet": [
+				0
+			]
+		}
+	},
+	"17 computeKpis": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.2,
+			"openArCount": 4,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 0
+		}
+	},
+	"17 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.2,
+			"openArCount": 4,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": 0,
+			"cashPosition": 0
+		}
+	},
+	"17 computeRangeKpis": {
+		"value": {
+			"turnover": 0,
+			"margin": 0,
+			"marginPct": null,
+			"billableHours": 0,
+			"billablePct": 0
+		}
+	},
+	"18 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"18 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-03",
+					[
+						{
+							"transactionId": "tx-9",
+							"accountNumber": "1000",
+							"side": "other",
+							"amount": "75.10"
+						},
+						{
+							"transactionId": "tx-9",
+							"accountNumber": "__undefined",
+							"side": "other",
+							"amount": 0
+						},
+						{
+							"transactionId": "tx-9",
+							"accountNumber": "1500",
+							"side": "debit",
+							"amount": 100
+						},
+						{
+							"transactionId": "tx-9",
+							"accountNumber": "4000",
+							"side": "credit",
+							"amount": 100
+						}
+					]
+				],
+				[
+					"2026-05",
+					[
+						{
+							"transactionId": "self-6",
+							"accountNumber": "8100",
+							"side": "debit",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "self-6",
+							"accountNumber": "8000",
+							"side": "debit",
+							"amount": 0
+						}
+					]
+				]
+			]
+		}
+	},
+	"18 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				-250.55,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				-100,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				0,
+				100,
+				0,
+				-250.55,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				75.1,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				0,
+				75.1,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"18 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				5.5,
+				2.5,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				0,
+				0,
+				3,
+				0,
+				0,
+				0
+			],
+			"pct": [
+				null,
+				100,
+				45.45,
+				null,
+				null,
+				null
+			]
+		}
+	},
+	"18 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-07"
+			],
+			"cashIn": [
+				120.5,
+				120.5
+			],
+			"cashOut": [
+				10.25,
+				50
+			],
+			"cashNet": [
+				110.25,
+				70.5
+			]
+		}
+	},
+	"18 computeKpis": {
+		"value": {
+			"turnoverYtd": -250.55,
+			"marginYtd": -150.55,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 5,
+			"openApAmount": 120.5,
+			"openApCount": 2,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 75.1
+		}
+	},
+	"18 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 5,
+			"openApAmount": 120.5,
+			"openApCount": 2,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 75.1
+		}
+	},
+	"18 computeRangeKpis": {
+		"value": {
+			"turnover": -250.55,
+			"margin": -150.55,
+			"marginPct": null,
+			"billableHours": 8,
+			"billablePct": 72.73
+		}
+	},
+	"19 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"19 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-01",
+					[
+						{
+							"transactionId": "T10",
+							"accountNumber": "__undefined",
+							"side": "debit",
+							"amount": "x"
+						},
+						{
+							"transactionId": "T10",
+							"accountNumber": "9999",
+							"side": "other",
+							"amount": 0
+						},
+						{
+							"transactionId": "T10",
+							"accountNumber": "8000",
+							"side": "other",
+							"amount": 250.555
+						}
+					]
+				]
+			]
+		}
+	},
+	"19 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				250.56,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				-250.55,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"19 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				1,
+				0,
+				1,
+				0,
+				2.5,
+				3
+			],
+			"pct": [
+				0,
+				null,
+				0,
+				null,
+				0,
+				0
+			]
+		}
+	},
+	"19 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-08"
+			],
+			"cashIn": [
+				20.5,
+				0
+			],
+			"cashOut": [
+				50,
+				0
+			],
+			"cashNet": [
+				-29.5,
+				0
+			]
+		}
+	},
+	"19 computeKpis": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": -250.55,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 4,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": 0,
+			"cashPosition": 0
+		}
+	},
+	"19 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": -250.55,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 4,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": 0,
+			"cashPosition": 0
+		}
+	},
+	"19 computeRangeKpis": {
+		"value": {
+			"turnover": 0,
+			"margin": -250.55,
+			"marginPct": null,
+			"billableHours": 0,
+			"billablePct": 0
+		}
+	},
+	"20 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"20 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-03",
+					[
+						{
+							"transactionId": "T3",
+							"accountNumber": "4000",
+							"side": "credit",
+							"amount": "75.10"
+						},
+						{
+							"transactionId": "T3",
+							"accountNumber": "9999",
+							"side": "debit",
+							"amount": "x"
+						},
+						{
+							"transactionId": "T3",
+							"accountNumber": "9999",
+							"side": "other",
+							"amount": 0
+						},
+						{
+							"transactionId": "T3",
+							"accountNumber": "__undefined",
+							"side": "other",
+							"amount": 0
+						},
+						{
+							"transactionId": "T3",
+							"accountNumber": "4000",
+							"side": "other",
+							"amount": -20
+						}
+					]
+				],
+				[
+					"2026-05",
+					[
+						{
+							"transactionId": "tx-1",
+							"accountNumber": "1500",
+							"side": "credit",
+							"amount": "x"
+						},
+						{
+							"transactionId": "tx-1",
+							"accountNumber": "__undefined",
+							"side": "credit",
+							"amount": "x"
+						},
+						{
+							"transactionId": "tx-1",
+							"accountNumber": "3000",
+							"side": "credit",
+							"amount": "x"
+						},
+						{
+							"transactionId": "tx-1",
+							"accountNumber": "2000",
+							"side": "credit",
+							"amount": "x"
+						}
+					]
+				],
+				[
+					"2026-06",
+					[
+						{
+							"transactionId": "self-6",
+							"accountNumber": "8100",
+							"side": "debit",
+							"amount": 250.555
+						}
+					]
+				]
+			]
+		}
+	},
+	"20 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				-250.55
+			],
+			"costs": [
+				0,
+				0,
+				-95.1,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				0,
+				95.1,
+				0,
+				0,
+				-250.55
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"20 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				2.5
+			],
+			"nonBillable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"pct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				100
+			]
+		}
+	},
+	"20 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-07",
+				"2026-08"
+			],
+			"cashIn": [
+				0,
+				220.5,
+				100
+			],
+			"cashOut": [
+				50,
+				100,
+				10.25
+			],
+			"cashNet": [
+				-50,
+				120.5,
+				89.75
+			]
+		}
+	},
+	"20 computeKpis": {
+		"value": {
+			"turnoverYtd": -250.55,
+			"marginYtd": -155.45,
+			"marginPctYtd": null,
+			"openArAmount": 100.3,
+			"openArCount": 4,
+			"openApAmount": 120.5,
+			"openApCount": 3,
+			"billableHours": 2.5,
+			"billablePct": 100,
+			"cashPosition": 0
+		}
+	},
+	"20 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 100.3,
+			"openArCount": 4,
+			"openApAmount": 120.5,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 0
+		}
+	},
+	"20 computeRangeKpis": {
+		"value": {
+			"turnover": -250.55,
+			"margin": -155.45,
+			"marginPct": null,
+			"billableHours": 2.5,
+			"billablePct": 100
+		}
+	},
+	"21 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"21 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-05",
+					[
+						{
+							"transactionId": "T3",
+							"accountNumber": "1100",
+							"side": "other",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "T3",
+							"accountNumber": "__undefined",
+							"side": "credit",
+							"amount": 0
+						}
+					]
+				],
+				[
+					"2025-12",
+					[
+						{
+							"transactionId": "self-6",
+							"accountNumber": "8000",
+							"side": "other",
+							"amount": 100
+						},
+						{
+							"transactionId": "self-6",
+							"accountNumber": "8000",
+							"side": "credit",
+							"amount": "__undefined"
+						},
+						{
+							"transactionId": "self-6",
+							"accountNumber": "1100",
+							"side": "credit",
+							"amount": -20
+						},
+						{
+							"transactionId": "self-6",
+							"accountNumber": "1000",
+							"side": "credit",
+							"amount": 100
+						}
+					]
+				],
+				[
+					"2026-06",
+					[
+						{
+							"transactionId": "T4",
+							"accountNumber": "1500",
+							"side": "other",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "T4",
+							"accountNumber": "2000",
+							"side": "debit",
+							"amount": 0
+						},
+						{
+							"transactionId": "T4",
+							"accountNumber": "1000",
+							"side": "debit",
+							"amount": -20
+						}
+					]
+				]
+			]
+		}
+	},
+	"21 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				250.56,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				20
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				250.56,
+				-20
+			]
+		}
+	},
+	"21 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				0,
+				2.5,
+				0,
+				0,
+				2.5,
+				2.5
+			],
+			"pct": [
+				null,
+				0,
+				null,
+				null,
+				0,
+				0
+			]
+		}
+	},
+	"21 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-07",
+				"2026-08"
+			],
+			"cashIn": [
+				20.5,
+				100,
+				120.5
+			],
+			"cashOut": [
+				20.5,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				100,
+				120.5
+			]
+		}
+	},
+	"21 computeKpis": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.2,
+			"openArCount": 3,
+			"openApAmount": 0,
+			"openApCount": 1,
+			"billableHours": 0,
+			"billablePct": 0,
+			"cashPosition": 150.56
+		}
+	},
+	"21 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.2,
+			"openArCount": 3,
+			"openApAmount": 0,
+			"openApCount": 1,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 150.56
+		}
+	},
+	"21 computeRangeKpis": {
+		"value": {
+			"turnover": 0,
+			"margin": 0,
+			"marginPct": null,
+			"billableHours": 0,
+			"billablePct": 0
+		}
+	},
+	"22 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"22 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-06",
+					[
+						{
+							"transactionId": "tx-5",
+							"accountNumber": "8100",
+							"side": "credit",
+							"amount": 0
+						},
+						{
+							"transactionId": "T7",
+							"accountNumber": "1000",
+							"side": "debit",
+							"amount": "75.10"
+						},
+						{
+							"transactionId": "T7",
+							"accountNumber": "4000",
+							"side": "other",
+							"amount": "x"
+						},
+						{
+							"transactionId": "T7",
+							"accountNumber": "8000",
+							"side": "debit",
+							"amount": 0
+						},
+						{
+							"transactionId": "T7",
+							"accountNumber": "2000",
+							"side": "credit",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "T7",
+							"accountNumber": "__undefined",
+							"side": "credit",
+							"amount": -20
+						},
+						{
+							"transactionId": "T7",
+							"accountNumber": "9999",
+							"side": "credit",
+							"amount": "x"
+						}
+					]
+				],
+				[
+					"2026-02",
+					[
+						{
+							"transactionId": "self-6",
+							"accountNumber": "1100",
+							"side": "credit",
+							"amount": 100
+						},
+						{
+							"transactionId": "self-6",
+							"accountNumber": "4000",
+							"side": "debit",
+							"amount": "75.10"
+						},
+						{
+							"transactionId": "self-6",
+							"accountNumber": "4000",
+							"side": "debit",
+							"amount": "x"
+						},
+						{
+							"transactionId": "self-6",
+							"accountNumber": "9999",
+							"side": "other",
+							"amount": -20
+						},
+						{
+							"transactionId": "self-6",
+							"accountNumber": "9999",
+							"side": "credit",
+							"amount": "__undefined"
+						}
+					]
+				]
+			]
+		}
+	},
+	"22 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				75.1,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				-75.1,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				75.1
+			],
+			"cashOut": [
+				0,
+				100,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				-100,
+				0,
+				0,
+				0,
+				75.1
+			]
+		}
+	},
+	"22 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				3,
+				0,
+				0,
+				0,
+				2.5,
+				0
+			],
+			"pct": [
+				0,
+				null,
+				null,
+				null,
+				0,
+				null
+			]
+		}
+	},
+	"22 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-07",
+				"2026-08"
+			],
+			"cashIn": [
+				20.5,
+				120.5,
+				20.5
+			],
+			"cashOut": [
+				0,
+				110.25,
+				50
+			],
+			"cashNet": [
+				20.5,
+				10.25,
+				-29.5
+			]
+		}
+	},
+	"22 computeKpis": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": -75.1,
+			"marginPctYtd": null,
+			"openArAmount": 221.2,
+			"openArCount": 4,
+			"openApAmount": 73.83,
+			"openApCount": 2,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": -24.9
+		}
+	},
+	"22 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.2,
+			"openArCount": 4,
+			"openApAmount": 73.83,
+			"openApCount": 2,
+			"billableHours": 0,
+			"billablePct": 0,
+			"cashPosition": -24.9
+		}
+	},
+	"22 computeRangeKpis": {
+		"value": {
+			"turnover": 0,
+			"margin": -75.1,
+			"marginPct": null,
+			"billableHours": 0,
+			"billablePct": 0
+		}
+	},
+	"23 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": []
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"23 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-03",
+					[
+						{
+							"transactionId": "tx-9",
+							"accountNumber": "4000",
+							"side": "other",
+							"amount": -20
+						},
+						{
+							"transactionId": "tx-9",
+							"accountNumber": "8100",
+							"side": "debit",
+							"amount": -20
+						}
+					]
+				]
+			]
+		}
+	},
+	"23 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				-20,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				0,
+				20,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"23 billableSeries": {
+		"value": {
+			"billable": [
+				2.5,
+				3,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				0,
+				0,
+				0,
+				0,
+				3,
+				0
+			],
+			"pct": [
+				100,
+				100,
+				null,
+				null,
+				0,
+				null
+			]
+		}
+	},
+	"23 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06"
+			],
+			"cashIn": [
+				100
+			],
+			"cashOut": [
+				110.25
+			],
+			"cashNet": [
+				-10.25
+			]
+		}
+	},
+	"23 computeKpis": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 20,
+			"marginPctYtd": null,
+			"openArAmount": 121.3,
+			"openArCount": 4,
+			"openApAmount": 153.83,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 0
+		}
+	},
+	"23 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 121.3,
+			"openArCount": 4,
+			"openApAmount": 153.83,
+			"openApCount": 3,
+			"billableHours": 2.5,
+			"billablePct": 100,
+			"cashPosition": 0
+		}
+	},
+	"23 computeRangeKpis": {
+		"value": {
+			"turnover": 0,
+			"margin": 20,
+			"marginPct": null,
+			"billableHours": 5.5,
+			"billablePct": 64.71
+		}
+	},
+	"24 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"24 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-01",
+					[
+						{
+							"transactionId": "T4",
+							"accountNumber": "__undefined",
+							"side": "debit",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "T4",
+							"accountNumber": "4000",
+							"side": "debit",
+							"amount": 100
+						},
+						{
+							"transactionId": "T4",
+							"accountNumber": "8000",
+							"side": "debit",
+							"amount": "x"
+						}
+					]
+				],
+				[
+					"2026-03",
+					[
+						{
+							"transactionId": "self-2",
+							"accountNumber": "1500",
+							"side": "credit",
+							"amount": "__undefined"
+						},
+						{
+							"transactionId": "T3",
+							"accountNumber": "4000",
+							"side": "other",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "T3",
+							"accountNumber": "8000",
+							"side": "credit",
+							"amount": "75.10"
+						},
+						{
+							"transactionId": "self-2",
+							"accountNumber": "1100",
+							"side": "other",
+							"amount": "75.10"
+						},
+						{
+							"transactionId": "self-2",
+							"accountNumber": "__undefined",
+							"side": "other",
+							"amount": "__undefined"
+						},
+						{
+							"transactionId": "self-2",
+							"accountNumber": "1000",
+							"side": "other",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "self-2",
+							"accountNumber": "3000",
+							"side": "debit",
+							"amount": 0
+						}
+					]
+				],
+				[
+					"2026-05",
+					[
+						{
+							"transactionId": "self-6",
+							"accountNumber": "9999",
+							"side": "debit",
+							"amount": 0
+						},
+						{
+							"transactionId": "self-6",
+							"accountNumber": "1500",
+							"side": "debit",
+							"amount": -20
+						},
+						{
+							"transactionId": "self-6",
+							"accountNumber": "8000",
+							"side": "debit",
+							"amount": "x"
+						}
+					]
+				]
+			]
+		}
+	},
+	"24 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				75.1,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				100,
+				0,
+				250.56,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				-100,
+				0,
+				-175.45,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				-233.63,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				75.1,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				0,
+				75.1,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"24 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				0,
+				2.5,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				3.5,
+				1,
+				0,
+				0,
+				2.5,
+				0
+			],
+			"pct": [
+				0,
+				0,
+				100,
+				null,
+				0,
+				null
+			]
+		}
+	},
+	"24 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-07",
+				"2026-08"
+			],
+			"cashIn": [
+				20.5,
+				100,
+				0
+			],
+			"cashOut": [
+				60.25,
+				50,
+				10.25
+			],
+			"cashNet": [
+				-39.75,
+				50,
+				-10.25
+			]
+		}
+	},
+	"24 computeKpis": {
+		"value": {
+			"turnoverYtd": 75.1,
+			"marginYtd": -275.45,
+			"marginPctYtd": -366.78,
+			"openArAmount": 221.2,
+			"openArCount": 4,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 75.1
+		}
+	},
+	"24 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": -100,
+			"marginPctYtd": null,
+			"openArAmount": 221.2,
+			"openArCount": 4,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": 0,
+			"cashPosition": 75.1
+		}
+	},
+	"24 computeRangeKpis": {
+		"value": {
+			"turnover": 75.1,
+			"margin": -275.45,
+			"marginPct": -366.78,
+			"billableHours": 2.5,
+			"billablePct": 26.32
+		}
+	},
+	"25 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"25 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-03",
+					[
+						{
+							"transactionId": "T4",
+							"accountNumber": "9999",
+							"side": "debit",
+							"amount": 0
+						},
+						{
+							"transactionId": "T4",
+							"accountNumber": "9999",
+							"side": "credit",
+							"amount": "__undefined"
+						},
+						{
+							"transactionId": "T4",
+							"accountNumber": "8000",
+							"side": "other",
+							"amount": "75.10"
+						},
+						{
+							"transactionId": "T4",
+							"accountNumber": "1000",
+							"side": "other",
+							"amount": "__undefined"
+						}
+					]
+				],
+				[
+					"2026-05",
+					[
+						{
+							"transactionId": "self-2",
+							"accountNumber": "1000",
+							"side": "debit",
+							"amount": 100
+						},
+						{
+							"transactionId": "self-2",
+							"accountNumber": "8000",
+							"side": "credit",
+							"amount": -20
+						},
+						{
+							"transactionId": "self-2",
+							"accountNumber": "8100",
+							"side": "debit",
+							"amount": "__undefined"
+						},
+						{
+							"transactionId": "self-2",
+							"accountNumber": "1500",
+							"side": "credit",
+							"amount": "x"
+						},
+						{
+							"transactionId": "self-2",
+							"accountNumber": "9999",
+							"side": "credit",
+							"amount": "x"
+						}
+					]
+				],
+				[
+					"2026-06",
+					[
+						{
+							"transactionId": "T10",
+							"accountNumber": "1100",
+							"side": "other",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "T10",
+							"accountNumber": "8000",
+							"side": "other",
+							"amount": 100
+						},
+						{
+							"transactionId": "T10",
+							"accountNumber": "8100",
+							"side": "other",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "T10",
+							"accountNumber": "8000",
+							"side": "other",
+							"amount": "__undefined"
+						}
+					]
+				]
+			]
+		}
+	},
+	"25 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				-75.1,
+				0,
+				-20,
+				-350.55
+			],
+			"costs": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				0,
+				-75.1,
+				0,
+				-20,
+				-350.55
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				100,
+				250.56
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				100,
+				250.56
+			]
+		}
+	},
+	"25 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				0,
+				0,
+				1,
+				0,
+				0,
+				0
+			],
+			"pct": [
+				null,
+				null,
+				0,
+				null,
+				null,
+				null
+			]
+		}
+	},
+	"25 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-08"
+			],
+			"cashIn": [
+				100,
+				100
+			],
+			"cashOut": [
+				20.5,
+				0
+			],
+			"cashNet": [
+				79.5,
+				100
+			]
+		}
+	},
+	"25 computeKpis": {
+		"value": {
+			"turnoverYtd": -445.65,
+			"marginYtd": -445.65,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 5,
+			"openApAmount": 113.33,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 350.56
+		}
+	},
+	"25 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 5,
+			"openApAmount": 113.33,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 350.56
+		}
+	},
+	"25 computeRangeKpis": {
+		"value": {
+			"turnover": -445.65,
+			"margin": -445.65,
+			"marginPct": null,
+			"billableHours": 0,
+			"billablePct": 0
+		}
+	},
+	"26 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"26 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2025-12",
+					[
+						{
+							"transactionId": "self-11",
+							"accountNumber": "__undefined",
+							"side": "other",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "self-11",
+							"accountNumber": "1100",
+							"side": "debit",
+							"amount": "x"
+						},
+						{
+							"transactionId": "self-11",
+							"accountNumber": "1500",
+							"side": "credit",
+							"amount": "__undefined"
+						},
+						{
+							"transactionId": "self-11",
+							"accountNumber": "1000",
+							"side": "other",
+							"amount": 100
+						},
+						{
+							"transactionId": "self-11",
+							"accountNumber": "4000",
+							"side": "debit",
+							"amount": -20
+						}
+					]
+				],
+				[
+					"2026-06",
+					[
+						{
+							"transactionId": "T3",
+							"accountNumber": "1000",
+							"side": "debit",
+							"amount": 0
+						}
+					]
+				]
+			]
+		}
+	},
+	"26 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"26 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				0,
+				2.5,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				0,
+				3,
+				0,
+				0,
+				3,
+				1
+			],
+			"pct": [
+				null,
+				0,
+				100,
+				null,
+				0,
+				0
+			]
+		}
+	},
+	"26 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-08"
+			],
+			"cashIn": [
+				20.5,
+				100
+			],
+			"cashOut": [
+				10.25,
+				0
+			],
+			"cashNet": [
+				10.25,
+				100
+			]
+		}
+	},
+	"26 computeKpis": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 5,
+			"openApAmount": 153.83,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": 0,
+			"cashPosition": 0
+		}
+	},
+	"26 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 5,
+			"openApAmount": 153.83,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 0
+		}
+	},
+	"26 computeRangeKpis": {
+		"value": {
+			"turnover": 0,
+			"margin": 0,
+			"marginPct": null,
+			"billableHours": 2.5,
+			"billablePct": 26.32
+		}
+	},
+	"27 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"27 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2025-12",
+					[
+						{
+							"transactionId": "self-6",
+							"accountNumber": "1000",
+							"side": "debit",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "self-6",
+							"accountNumber": "4000",
+							"side": "credit",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "self-6",
+							"accountNumber": "8000",
+							"side": "debit",
+							"amount": 0
+						},
+						{
+							"transactionId": "self-6",
+							"accountNumber": "8000",
+							"side": "other",
+							"amount": "75.10"
+						},
+						{
+							"transactionId": "self-6",
+							"accountNumber": "1500",
+							"side": "other",
+							"amount": 0
+						}
+					]
+				],
+				[
+					"2026-03",
+					[
+						{
+							"transactionId": "tx-5",
+							"accountNumber": "4000",
+							"side": "debit",
+							"amount": "x"
+						},
+						{
+							"transactionId": "tx-5",
+							"accountNumber": "1500",
+							"side": "credit",
+							"amount": -20
+						},
+						{
+							"transactionId": "tx-5",
+							"accountNumber": "8100",
+							"side": "credit",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "T7",
+							"accountNumber": "1000",
+							"side": "other",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "tx-5",
+							"accountNumber": "1100",
+							"side": "debit",
+							"amount": 100
+						},
+						{
+							"transactionId": "T7",
+							"accountNumber": "3000",
+							"side": "credit",
+							"amount": "75.10"
+						},
+						{
+							"transactionId": "tx-5",
+							"accountNumber": "1500",
+							"side": "debit",
+							"amount": "75.10"
+						},
+						{
+							"transactionId": "T7",
+							"accountNumber": "4000",
+							"side": "credit",
+							"amount": "75.10"
+						},
+						{
+							"transactionId": "tx-5",
+							"accountNumber": "2000",
+							"side": "credit",
+							"amount": 100
+						}
+					]
+				],
+				[
+					"2026-01",
+					[
+						{
+							"transactionId": "tx-9",
+							"accountNumber": "8000",
+							"side": "debit",
+							"amount": 100
+						},
+						{
+							"transactionId": "tx-9",
+							"accountNumber": "8100",
+							"side": "credit",
+							"amount": 100
+						},
+						{
+							"transactionId": "tx-9",
+							"accountNumber": "4000",
+							"side": "debit",
+							"amount": "x"
+						}
+					]
+				]
+			]
+		}
+	},
+	"27 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				-100,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				-100,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				350.56,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				75.1,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				0,
+				275.46,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"27 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				0,
+				0,
+				0,
+				0,
+				1,
+				0
+			],
+			"pct": [
+				null,
+				null,
+				null,
+				null,
+				0,
+				null
+			]
+		}
+	},
+	"27 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-07",
+				"2026-08"
+			],
+			"cashIn": [
+				120.5,
+				100,
+				100
+			],
+			"cashOut": [
+				100,
+				20.5,
+				50
+			],
+			"cashNet": [
+				20.5,
+				79.5,
+				50
+			]
+		}
+	},
+	"27 computeKpis": {
+		"value": {
+			"turnoverYtd": -100,
+			"marginYtd": -100,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 5,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 526.01
+		}
+	},
+	"27 computeKpis january": {
+		"value": {
+			"turnoverYtd": -100,
+			"marginYtd": -100,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 5,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 526.01
+		}
+	},
+	"27 computeRangeKpis": {
+		"value": {
+			"turnover": -100,
+			"margin": -100,
+			"marginPct": null,
+			"billableHours": 0,
+			"billablePct": 0
+		}
+	},
+	"28 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"28 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-06",
+					[
+						{
+							"transactionId": "T3",
+							"accountNumber": "1000",
+							"side": "credit",
+							"amount": "__undefined"
+						},
+						{
+							"transactionId": "T3",
+							"accountNumber": "2000",
+							"side": "other",
+							"amount": 0
+						},
+						{
+							"transactionId": "T3",
+							"accountNumber": "1000",
+							"side": "debit",
+							"amount": -20
+						},
+						{
+							"transactionId": "T3",
+							"accountNumber": "__undefined",
+							"side": "credit",
+							"amount": -20
+						},
+						{
+							"transactionId": "T3",
+							"accountNumber": "1100",
+							"side": "debit",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "T3",
+							"accountNumber": "4000",
+							"side": "other",
+							"amount": "__undefined"
+						}
+					]
+				]
+			]
+		}
+	},
+	"28 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				250.56
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				20
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				230.56
+			]
+		}
+	},
+	"28 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				5.5,
+				2,
+				3,
+				0,
+				0,
+				0
+			],
+			"pct": [
+				0,
+				0,
+				0,
+				null,
+				null,
+				null
+			]
+		}
+	},
+	"28 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-07",
+				"2026-08"
+			],
+			"cashIn": [
+				20.5,
+				20.5,
+				100
+			],
+			"cashOut": [
+				50,
+				60.25,
+				10.25
+			],
+			"cashNet": [
+				-29.5,
+				-39.75,
+				89.75
+			]
+		}
+	},
+	"28 computeKpis": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221,
+			"openArCount": 3,
+			"openApAmount": 73.83,
+			"openApCount": 2,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 230.56
+		}
+	},
+	"28 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221,
+			"openArCount": 3,
+			"openApAmount": 73.83,
+			"openApCount": 2,
+			"billableHours": 0,
+			"billablePct": 0,
+			"cashPosition": 230.56
+		}
+	},
+	"28 computeRangeKpis": {
+		"value": {
+			"turnover": 0,
+			"margin": 0,
+			"marginPct": null,
+			"billableHours": 0,
+			"billablePct": 0
+		}
+	},
+	"29 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"29 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-06",
+					[
+						{
+							"transactionId": "self-11",
+							"accountNumber": "1500",
+							"side": "debit",
+							"amount": 0
+						},
+						{
+							"transactionId": "self-11",
+							"accountNumber": "3000",
+							"side": "debit",
+							"amount": "x"
+						},
+						{
+							"transactionId": "self-11",
+							"accountNumber": "3000",
+							"side": "debit",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "self-11",
+							"accountNumber": "1000",
+							"side": "debit",
+							"amount": 0
+						}
+					]
+				]
+			]
+		}
+	},
+	"29 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				250.56
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				250.56
+			]
+		}
+	},
+	"29 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				1,
+				3,
+				1,
+				0,
+				2.5,
+				5.5
+			],
+			"pct": [
+				0,
+				0,
+				0,
+				null,
+				0,
+				0
+			]
+		}
+	},
+	"29 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-07",
+				"2026-08"
+			],
+			"cashIn": [
+				100,
+				20.5,
+				0
+			],
+			"cashOut": [
+				10.25,
+				50,
+				20.5
+			],
+			"cashNet": [
+				89.75,
+				-29.5,
+				-20.5
+			]
+		}
+	},
+	"29 computeKpis": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 100.3,
+			"openArCount": 4,
+			"openApAmount": 120.5,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": 0,
+			"cashPosition": 250.56
+		}
+	},
+	"29 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 100.3,
+			"openArCount": 4,
+			"openApAmount": 120.5,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": 0,
+			"cashPosition": 250.56
+		}
+	},
+	"29 computeRangeKpis": {
+		"value": {
+			"turnover": 0,
+			"margin": 0,
+			"marginPct": null,
+			"billableHours": 0,
+			"billablePct": 0
+		}
+	},
+	"30 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"30 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-06",
+					[
+						{
+							"transactionId": "T4",
+							"accountNumber": "1000",
+							"side": "debit",
+							"amount": -20
+						},
+						{
+							"transactionId": "T4",
+							"accountNumber": "1000",
+							"side": "other",
+							"amount": -20
+						}
+					]
+				]
+			]
+		}
+	},
+	"30 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				40
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				-40
+			]
+		}
+	},
+	"30 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				0,
+				2.5,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				3
+			],
+			"pct": [
+				null,
+				null,
+				100,
+				null,
+				null,
+				0
+			]
+		}
+	},
+	"30 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-07"
+			],
+			"cashIn": [
+				0,
+				0
+			],
+			"cashOut": [
+				60.25,
+				50
+			],
+			"cashNet": [
+				-60.25,
+				-50
+			]
+		}
+	},
+	"30 computeKpis": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 5,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": 0,
+			"cashPosition": -40
+		}
+	},
+	"30 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 5,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": -40
+		}
+	},
+	"30 computeRangeKpis": {
+		"value": {
+			"turnover": 0,
+			"margin": 0,
+			"marginPct": null,
+			"billableHours": 2.5,
+			"billablePct": 45.45
+		}
+	},
+	"31 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1100"
+				]
+			}
+		}
+	},
+	"31 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-01",
+					[
+						{
+							"transactionId": "self-6",
+							"accountNumber": "1000",
+							"side": "credit",
+							"amount": 0
+						},
+						{
+							"transactionId": "self-6",
+							"accountNumber": "1500",
+							"side": "debit",
+							"amount": "x"
+						},
+						{
+							"transactionId": "self-6",
+							"accountNumber": "9999",
+							"side": "debit",
+							"amount": 100
+						},
+						{
+							"transactionId": "self-6",
+							"accountNumber": "1500",
+							"side": "debit",
+							"amount": "75.10"
+						},
+						{
+							"transactionId": "self-6",
+							"accountNumber": "8100",
+							"side": "other",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "self-6",
+							"accountNumber": "2000",
+							"side": "credit",
+							"amount": -20
+						}
+					]
+				]
+			]
+		}
+	},
+	"31 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				-250.55,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				-250.55,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"31 billableSeries": {
+		"value": {
+			"billable": [
+				2.5,
+				0,
+				0,
+				0,
+				1,
+				0
+			],
+			"nonBillable": [
+				2.5,
+				0,
+				0,
+				0,
+				2.5,
+				0
+			],
+			"pct": [
+				50,
+				null,
+				null,
+				null,
+				28.57,
+				null
+			]
+		}
+	},
+	"31 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06"
+			],
+			"cashIn": [
+				120.5
+			],
+			"cashOut": [
+				50
+			],
+			"cashNet": [
+				70.5
+			]
+		}
+	},
+	"31 computeKpis": {
+		"value": {
+			"turnoverYtd": -250.55,
+			"marginYtd": -250.55,
+			"marginPctYtd": null,
+			"openArAmount": 0,
+			"openArCount": 1,
+			"openApAmount": 73.83,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 0
+		}
+	},
+	"31 computeKpis january": {
+		"value": {
+			"turnoverYtd": -250.55,
+			"marginYtd": -250.55,
+			"marginPctYtd": null,
+			"openArAmount": 0,
+			"openArCount": 1,
+			"openApAmount": 73.83,
+			"openApCount": 3,
+			"billableHours": 2.5,
+			"billablePct": 50,
+			"cashPosition": 0
+		}
+	},
+	"31 computeRangeKpis": {
+		"value": {
+			"turnover": -250.55,
+			"margin": -250.55,
+			"marginPct": null,
+			"billableHours": 3.5,
+			"billablePct": 41.18
+		}
+	},
+	"32 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100"
+				]
+			}
+		}
+	},
+	"32 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-02",
+					[
+						{
+							"transactionId": "T10",
+							"accountNumber": "2000",
+							"side": "debit",
+							"amount": 0
+						},
+						{
+							"transactionId": "T10",
+							"accountNumber": "__undefined",
+							"side": "other",
+							"amount": "x"
+						},
+						{
+							"transactionId": "T10",
+							"accountNumber": "2000",
+							"side": "other",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "T10",
+							"accountNumber": "3000",
+							"side": "credit",
+							"amount": "75.10"
+						}
+					]
+				],
+				[
+					"2026-03",
+					[
+						{
+							"transactionId": "self-2",
+							"accountNumber": "8000",
+							"side": "credit",
+							"amount": "x"
+						},
+						{
+							"transactionId": "self-2",
+							"accountNumber": "4000",
+							"side": "debit",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "self-2",
+							"accountNumber": "1500",
+							"side": "other",
+							"amount": "__undefined"
+						},
+						{
+							"transactionId": "self-2",
+							"accountNumber": "1000",
+							"side": "debit",
+							"amount": 250.555
+						}
+					]
+				],
+				[
+					"2025-12",
+					[
+						{
+							"transactionId": "tx-5",
+							"accountNumber": "8100",
+							"side": "debit",
+							"amount": 0
+						},
+						{
+							"transactionId": "tx-5",
+							"accountNumber": "8100",
+							"side": "debit",
+							"amount": -20
+						},
+						{
+							"transactionId": "tx-5",
+							"accountNumber": "4000",
+							"side": "debit",
+							"amount": 100
+						}
+					]
+				]
+			]
+		}
+	},
+	"32 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				250.56,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				0,
+				-250.55,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				250.56,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				0,
+				250.56,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"32 billableSeries": {
+		"value": {
+			"billable": [
+				3,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				0,
+				0,
+				3,
+				0,
+				0,
+				0
+			],
+			"pct": [
+				100,
+				null,
+				0,
+				null,
+				null,
+				null
+			]
+		}
+	},
+	"32 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06"
+			],
+			"cashIn": [
+				141
+			],
+			"cashOut": [
+				160.25
+			],
+			"cashNet": [
+				-19.25
+			]
+		}
+	},
+	"32 computeKpis": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": -250.55,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 5,
+			"openApAmount": 73.83,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 250.56
+		}
+	},
+	"32 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 5,
+			"openApAmount": 73.83,
+			"openApCount": 3,
+			"billableHours": 3,
+			"billablePct": 100,
+			"cashPosition": 250.56
+		}
+	},
+	"32 computeRangeKpis": {
+		"value": {
+			"turnover": 0,
+			"margin": -250.55,
+			"marginPct": null,
+			"billableHours": 3,
+			"billablePct": 50
+		}
+	},
+	"33 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"33 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-01",
+					[
+						{
+							"transactionId": "self-11",
+							"accountNumber": "4000",
+							"side": "credit",
+							"amount": -20
+						},
+						{
+							"transactionId": "self-11",
+							"accountNumber": "8100",
+							"side": "credit",
+							"amount": "75.10"
+						},
+						{
+							"transactionId": "self-11",
+							"accountNumber": "3000",
+							"side": "credit",
+							"amount": 100
+						}
+					]
+				]
+			]
+		}
+	},
+	"33 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				75.1,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				20,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				55.1,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				73.37,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				100,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				-100,
+				0,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"33 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				0,
+				4,
+				0,
+				0,
+				0,
+				0
+			],
+			"pct": [
+				null,
+				0,
+				null,
+				null,
+				null,
+				null
+			]
+		}
+	},
+	"33 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-08"
+			],
+			"cashIn": [
+				141,
+				20.5
+			],
+			"cashOut": [
+				60.25,
+				0
+			],
+			"cashNet": [
+				80.75,
+				20.5
+			]
+		}
+	},
+	"33 computeKpis": {
+		"value": {
+			"turnoverYtd": 75.1,
+			"marginYtd": 55.1,
+			"marginPctYtd": 73.37,
+			"openArAmount": 221.1,
+			"openArCount": 4,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": -100
+		}
+	},
+	"33 computeKpis january": {
+		"value": {
+			"turnoverYtd": 75.1,
+			"marginYtd": 55.1,
+			"marginPctYtd": 73.37,
+			"openArAmount": 221.1,
+			"openArCount": 4,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": -100
+		}
+	},
+	"33 computeRangeKpis": {
+		"value": {
+			"turnover": 75.1,
+			"margin": 55.1,
+			"marginPct": 73.37,
+			"billableHours": 0,
+			"billablePct": 0
+		}
+	},
+	"34 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"34 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-02",
+					[
+						{
+							"transactionId": "tx-1",
+							"accountNumber": "3000",
+							"side": "credit",
+							"amount": 0
+						},
+						{
+							"transactionId": "tx-1",
+							"accountNumber": "1100",
+							"side": "credit",
+							"amount": "__undefined"
+						},
+						{
+							"transactionId": "tx-1",
+							"accountNumber": "4000",
+							"side": "debit",
+							"amount": -20
+						},
+						{
+							"transactionId": "tx-1",
+							"accountNumber": "8000",
+							"side": "credit",
+							"amount": "__undefined"
+						},
+						{
+							"transactionId": "tx-1",
+							"accountNumber": "8100",
+							"side": "debit",
+							"amount": -20
+						}
+					]
+				]
+			]
+		}
+	},
+	"34 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				20,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				-20,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				40,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				200,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"34 billableSeries": {
+		"value": {
+			"billable": [
+				2.5,
+				0,
+				1,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"pct": [
+				100,
+				null,
+				100,
+				null,
+				null,
+				null
+			]
+		}
+	},
+	"34 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-08"
+			],
+			"cashIn": [
+				100
+			],
+			"cashOut": [
+				50
+			],
+			"cashNet": [
+				50
+			]
+		}
+	},
+	"34 computeKpis": {
+		"value": {
+			"turnoverYtd": 20,
+			"marginYtd": 40,
+			"marginPctYtd": 200,
+			"openArAmount": 121,
+			"openArCount": 2,
+			"openApAmount": 113.33,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 0
+		}
+	},
+	"34 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 121,
+			"openArCount": 2,
+			"openApAmount": 113.33,
+			"openApCount": 3,
+			"billableHours": 2.5,
+			"billablePct": 100,
+			"cashPosition": 0
+		}
+	},
+	"34 computeRangeKpis": {
+		"value": {
+			"turnover": 20,
+			"margin": 40,
+			"marginPct": 200,
+			"billableHours": 3.5,
+			"billablePct": 100
+		}
+	},
+	"35 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"35 postedLinesByMonth": {
+		"value": {
+			"__map": []
+		}
+	},
+	"35 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"35 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				3,
+				0,
+				0,
+				1,
+				0
+			],
+			"nonBillable": [
+				3,
+				0,
+				0,
+				0,
+				4,
+				0
+			],
+			"pct": [
+				0,
+				100,
+				null,
+				null,
+				20,
+				null
+			]
+		}
+	},
+	"35 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-07"
+			],
+			"cashIn": [
+				120.5,
+				0
+			],
+			"cashOut": [
+				60.25,
+				0
+			],
+			"cashNet": [
+				60.25,
+				0
+			]
+		}
+	},
+	"35 computeKpis": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.1,
+			"openArCount": 4,
+			"openApAmount": 73.83,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 0
+		}
+	},
+	"35 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.1,
+			"openArCount": 4,
+			"openApAmount": 73.83,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": 0,
+			"cashPosition": 0
+		}
+	},
+	"35 computeRangeKpis": {
+		"value": {
+			"turnover": 0,
+			"margin": 0,
+			"marginPct": null,
+			"billableHours": 4,
+			"billablePct": 36.36
+		}
+	},
+	"36 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"36 postedLinesByMonth": {
+		"value": {
+			"__map": []
+		}
+	},
+	"36 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"36 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				0,
+				0,
+				0,
+				0,
+				3,
+				3
+			],
+			"pct": [
+				null,
+				null,
+				null,
+				null,
+				0,
+				0
+			]
+		}
+	},
+	"36 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-07"
+			],
+			"cashIn": [
+				20.5,
+				100
+			],
+			"cashOut": [
+				60.25,
+				10.25
+			],
+			"cashNet": [
+				-39.75,
+				89.75
+			]
+		}
+	},
+	"36 computeKpis": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 100.2,
+			"openArCount": 2,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": 0,
+			"cashPosition": 0
+		}
+	},
+	"36 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 100.2,
+			"openArCount": 2,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 0
+		}
+	},
+	"36 computeRangeKpis": {
+		"value": {
+			"turnover": 0,
+			"margin": 0,
+			"marginPct": null,
+			"billableHours": 0,
+			"billablePct": 0
+		}
+	},
+	"37 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"37 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-05",
+					[
+						{
+							"transactionId": "T7",
+							"accountNumber": "9999",
+							"side": "credit",
+							"amount": "75.10"
+						},
+						{
+							"transactionId": "T7",
+							"accountNumber": "1000",
+							"side": "debit",
+							"amount": "x"
+						},
+						{
+							"transactionId": "T7",
+							"accountNumber": "__undefined",
+							"side": "other",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "T7",
+							"accountNumber": "1100",
+							"side": "debit",
+							"amount": -20
+						},
+						{
+							"transactionId": "T7",
+							"accountNumber": "1500",
+							"side": "other",
+							"amount": "75.10"
+						}
+					]
+				]
+			]
+		}
+	},
+	"37 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				20,
+				0
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				-20,
+				0
+			]
+		}
+	},
+	"37 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				0,
+				1,
+				0,
+				1,
+				0
+			],
+			"nonBillable": [
+				0,
+				0,
+				0,
+				0,
+				1,
+				2.5
+			],
+			"pct": [
+				null,
+				null,
+				100,
+				null,
+				50,
+				0
+			]
+		}
+	},
+	"37 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-08"
+			],
+			"cashIn": [
+				100,
+				100
+			],
+			"cashOut": [
+				50,
+				50
+			],
+			"cashNet": [
+				50,
+				50
+			]
+		}
+	},
+	"37 computeKpis": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 4,
+			"openApAmount": 40.5,
+			"openApCount": 2,
+			"billableHours": 0,
+			"billablePct": 0,
+			"cashPosition": -20
+		}
+	},
+	"37 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 4,
+			"openApAmount": 40.5,
+			"openApCount": 2,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": -20
+		}
+	},
+	"37 computeRangeKpis": {
+		"value": {
+			"turnover": 0,
+			"margin": 0,
+			"marginPct": null,
+			"billableHours": 2,
+			"billablePct": 36.36
+		}
+	},
+	"38 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"38 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2025-12",
+					[
+						{
+							"transactionId": "T4",
+							"accountNumber": "1500",
+							"side": "other",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "T4",
+							"accountNumber": "4000",
+							"side": "other",
+							"amount": "x"
+						},
+						{
+							"transactionId": "T4",
+							"accountNumber": "8100",
+							"side": "debit",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "T4",
+							"accountNumber": "8100",
+							"side": "other",
+							"amount": "__undefined"
+						},
+						{
+							"transactionId": "T4",
+							"accountNumber": "1100",
+							"side": "credit",
+							"amount": "__undefined"
+						},
+						{
+							"transactionId": "T4",
+							"accountNumber": "9999",
+							"side": "credit",
+							"amount": "x"
+						}
+					]
+				],
+				[
+					"2026-06",
+					[
+						{
+							"transactionId": "tx-9",
+							"accountNumber": "2000",
+							"side": "debit",
+							"amount": 0
+						},
+						{
+							"transactionId": "tx-9",
+							"accountNumber": "1500",
+							"side": "debit",
+							"amount": 0
+						},
+						{
+							"transactionId": "tx-9",
+							"accountNumber": "3000",
+							"side": "other",
+							"amount": 100
+						},
+						{
+							"transactionId": "tx-9",
+							"accountNumber": "1500",
+							"side": "credit",
+							"amount": "75.10"
+						},
+						{
+							"transactionId": "tx-9",
+							"accountNumber": "1100",
+							"side": "credit",
+							"amount": "75.10"
+						},
+						{
+							"transactionId": "tx-9",
+							"accountNumber": "1500",
+							"side": "debit",
+							"amount": "75.10"
+						},
+						{
+							"transactionId": "tx-9",
+							"accountNumber": "4000",
+							"side": "credit",
+							"amount": 100
+						}
+					]
+				],
+				[
+					"2026-05",
+					[
+						{
+							"transactionId": "self-2",
+							"accountNumber": "__undefined",
+							"side": "credit",
+							"amount": "x"
+						},
+						{
+							"transactionId": "self-2",
+							"accountNumber": "3000",
+							"side": "other",
+							"amount": "75.10"
+						}
+					]
+				]
+			]
+		}
+	},
+	"38 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				75.1,
+				100
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				75.1
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				75.1,
+				24.9
+			]
+		}
+	},
+	"38 billableSeries": {
+		"value": {
+			"billable": [
+				1,
+				0,
+				5,
+				0,
+				1,
+				0
+			],
+			"nonBillable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				2.5
+			],
+			"pct": [
+				100,
+				null,
+				100,
+				null,
+				100,
+				0
+			]
+		}
+	},
+	"38 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-07"
+			],
+			"cashIn": [
+				20.5,
+				200
+			],
+			"cashOut": [
+				100,
+				60.25
+			],
+			"cashNet": [
+				-79.5,
+				139.75
+			]
+		}
+	},
+	"38 computeKpis": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 5,
+			"openApAmount": 120.5,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": 0,
+			"cashPosition": 100
+		}
+	},
+	"38 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.3,
+			"openArCount": 5,
+			"openApAmount": 120.5,
+			"openApCount": 3,
+			"billableHours": 1,
+			"billablePct": 100,
+			"cashPosition": 100
+		}
+	},
+	"38 computeRangeKpis": {
+		"value": {
+			"turnover": 0,
+			"margin": 0,
+			"marginPct": null,
+			"billableHours": 7,
+			"billablePct": 73.68
+		}
+	},
+	"39 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": [
+					"4000",
+					"8000"
+				]
+			},
+			"liquid": {
+				"__set": [
+					"1100"
+				]
+			}
+		}
+	},
+	"39 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2026-05",
+					[
+						{
+							"transactionId": "tx-5",
+							"accountNumber": "8100",
+							"side": "other",
+							"amount": "75.10"
+						},
+						{
+							"transactionId": "tx-5",
+							"accountNumber": "8000",
+							"side": "debit",
+							"amount": "__undefined"
+						},
+						{
+							"transactionId": "tx-5",
+							"accountNumber": "__undefined",
+							"side": "other",
+							"amount": "x"
+						}
+					]
+				],
+				[
+					"2026-06",
+					[
+						{
+							"transactionId": "self-6",
+							"accountNumber": "1000",
+							"side": "debit",
+							"amount": "75.10"
+						},
+						{
+							"transactionId": "self-6",
+							"accountNumber": "__undefined",
+							"side": "debit",
+							"amount": 250.555
+						},
+						{
+							"transactionId": "self-6",
+							"accountNumber": "8000",
+							"side": "other",
+							"amount": "75.10"
+						}
+					]
+				],
+				[
+					"2026-02",
+					[
+						{
+							"transactionId": "self-11",
+							"accountNumber": "8000",
+							"side": "other",
+							"amount": 0
+						},
+						{
+							"transactionId": "self-11",
+							"accountNumber": "4000",
+							"side": "other",
+							"amount": -20
+						}
+					]
+				],
+				[
+					"2025-12",
+					[
+						{
+							"transactionId": "T3",
+							"accountNumber": "2000",
+							"side": "other",
+							"amount": 100
+						},
+						{
+							"transactionId": "T3",
+							"accountNumber": "3000",
+							"side": "credit",
+							"amount": -20
+						},
+						{
+							"transactionId": "T3",
+							"accountNumber": "3000",
+							"side": "credit",
+							"amount": "75.10"
+						}
+					]
+				]
+			]
+		}
+	},
+	"39 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				-75.1,
+				0
+			],
+			"costs": [
+				0,
+				-20,
+				0,
+				0,
+				0,
+				75.1
+			],
+			"margin": [
+				0,
+				20,
+				0,
+				0,
+				-75.1,
+				-75.1
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"39 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				3,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				0,
+				0,
+				6.5,
+				0,
+				0,
+				0
+			],
+			"pct": [
+				null,
+				100,
+				0,
+				null,
+				null,
+				null
+			]
+		}
+	},
+	"39 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-07",
+				"2026-08"
+			],
+			"cashIn": [
+				320.5,
+				0,
+				100
+			],
+			"cashOut": [
+				60.25,
+				10.25,
+				10.25
+			],
+			"cashNet": [
+				260.25,
+				-10.25,
+				89.75
+			]
+		}
+	},
+	"39 computeKpis": {
+		"value": {
+			"turnoverYtd": -75.1,
+			"marginYtd": -130.2,
+			"marginPctYtd": null,
+			"openArAmount": 221.1,
+			"openArCount": 4,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 0
+		}
+	},
+	"39 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.1,
+			"openArCount": 4,
+			"openApAmount": 153.83,
+			"openApCount": 4,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 0
+		}
+	},
+	"39 computeRangeKpis": {
+		"value": {
+			"turnover": -75.1,
+			"margin": -130.2,
+			"marginPct": null,
+			"billableHours": 3,
+			"billablePct": 31.58
+		}
+	},
+	"40 classifyAccounts": {
+		"value": {
+			"revenue": {
+				"__set": [
+					"8000",
+					"8100"
+				]
+			},
+			"expenses": {
+				"__set": []
+			},
+			"liquid": {
+				"__set": [
+					"1000",
+					"1100",
+					"3000"
+				]
+			}
+		}
+	},
+	"40 postedLinesByMonth": {
+		"value": {
+			"__map": [
+				[
+					"2025-12",
+					[
+						{
+							"transactionId": "T7",
+							"accountNumber": "8000",
+							"side": "debit",
+							"amount": "x"
+						},
+						{
+							"transactionId": "T7",
+							"accountNumber": "1100",
+							"side": "credit",
+							"amount": -20
+						},
+						{
+							"transactionId": "T7",
+							"accountNumber": "1100",
+							"side": "credit",
+							"amount": 250.555
+						}
+					]
+				],
+				[
+					"2026-02",
+					[
+						{
+							"transactionId": "self-6",
+							"accountNumber": "2000",
+							"side": "other",
+							"amount": 0
+						}
+					]
+				]
+			]
+		}
+	},
+	"40 monthlyFinancialSeries": {
+		"value": {
+			"months": [
+				"2026-01",
+				"2026-02",
+				"2026-03",
+				"2026-04",
+				"2026-05",
+				"2026-06"
+			],
+			"revenue": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"costs": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"margin": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"marginPct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			],
+			"cashIn": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashOut": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"cashNet": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	},
+	"40 billableSeries": {
+		"value": {
+			"billable": [
+				0,
+				1,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				0,
+				0,
+				3,
+				0,
+				0,
+				0
+			],
+			"pct": [
+				null,
+				100,
+				0,
+				null,
+				null,
+				null
+			]
+		}
+	},
+	"40 forecastByMonth": {
+		"value": {
+			"months": [
+				"2026-06",
+				"2026-08"
+			],
+			"cashIn": [
+				120.5,
+				0
+			],
+			"cashOut": [
+				150,
+				50
+			],
+			"cashNet": [
+				-29.5,
+				-50
+			]
+		}
+	},
+	"40 computeKpis": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.2,
+			"openArCount": 4,
+			"openApAmount": 153.83,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": -230.55
+		}
+	},
+	"40 computeKpis january": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 221.2,
+			"openArCount": 4,
+			"openApAmount": 153.83,
+			"openApCount": 3,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": -230.55
+		}
+	},
+	"40 computeRangeKpis": {
+		"value": {
+			"turnover": 0,
+			"margin": 0,
+			"marginPct": null,
+			"billableHours": 1,
+			"billablePct": 25
+		}
+	},
+	"classifyAccounts null": {
+		"value": {
+			"revenue": {
+				"__set": []
+			},
+			"expenses": {
+				"__set": []
+			},
+			"liquid": {
+				"__set": []
+			}
+		}
+	},
+	"postedLinesByMonth null": {
+		"value": {
+			"__map": []
+		}
+	},
+	"billableSeries null": {
+		"value": {
+			"billable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"nonBillable": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"pct": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null
+			]
+		}
+	},
+	"forecastByMonth null": {
+		"value": {
+			"months": [],
+			"cashIn": [],
+			"cashOut": [],
+			"cashNet": []
+		}
+	},
+	"computeKpis empty": {
+		"value": {
+			"turnoverYtd": 0,
+			"marginYtd": 0,
+			"marginPctYtd": null,
+			"openArAmount": 0,
+			"openArCount": 0,
+			"openApAmount": 0,
+			"openApCount": 0,
+			"billableHours": 0,
+			"billablePct": null,
+			"cashPosition": 0
+		}
+	},
+	"computeRangeKpis empty": {
+		"value": {
+			"turnover": 0,
+			"margin": 0,
+			"marginPct": null,
+			"billableHours": 0,
+			"billablePct": null
+		}
+	},
+	"monthsInRange 2026-01-15 2026-04-02": {
+		"value": [
+			"2026-01",
+			"2026-02",
+			"2026-03",
+			"2026-04"
+		]
+	},
+	"monthsInRange 2025-11-30T10:00:00Z 2026-02-01": {
+		"value": [
+			"2025-11",
+			"2025-12",
+			"2026-01",
+			"2026-02"
+		]
+	},
+	"monthsInRange 2026-04-01 2026-01-01": {
+		"value": []
+	},
+	"monthsInRange 2020-01-01 2030-12-31": {
+		"value": [
+			"2020-01",
+			"2020-02",
+			"2020-03",
+			"2020-04",
+			"2020-05",
+			"2020-06",
+			"2020-07",
+			"2020-08",
+			"2020-09",
+			"2020-10",
+			"2020-11",
+			"2020-12",
+			"2021-01",
+			"2021-02",
+			"2021-03",
+			"2021-04",
+			"2021-05",
+			"2021-06",
+			"2021-07",
+			"2021-08",
+			"2021-09",
+			"2021-10",
+			"2021-11",
+			"2021-12",
+			"2022-01",
+			"2022-02",
+			"2022-03",
+			"2022-04",
+			"2022-05",
+			"2022-06",
+			"2022-07",
+			"2022-08",
+			"2022-09",
+			"2022-10",
+			"2022-11",
+			"2022-12",
+			"2023-01",
+			"2023-02",
+			"2023-03",
+			"2023-04",
+			"2023-05",
+			"2023-06",
+			"2023-07",
+			"2023-08",
+			"2023-09",
+			"2023-10",
+			"2023-11",
+			"2023-12",
+			"2024-01",
+			"2024-02",
+			"2024-03",
+			"2024-04",
+			"2024-05",
+			"2024-06",
+			"2024-07",
+			"2024-08",
+			"2024-09",
+			"2024-10",
+			"2024-11",
+			"2024-12"
+		]
+	},
+	"monthsInRange  2026-01-01": {
+		"value": []
+	},
+	"monthsInRange 2026-01-01 null": {
+		"value": []
+	},
+	"monthsInRange bad 2026-01-01": {
+		"value": []
+	},
+	"monthsInRange 2026-02-29 2026-03-01": {
+		"value": [
+			"2026-03"
+		]
+	}
+}
