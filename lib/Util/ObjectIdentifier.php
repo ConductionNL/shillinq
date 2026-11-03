@@ -277,8 +277,9 @@ final class ObjectIdentifier {
 	 * Whether find()'s answer is an object of the schema asked for.
 	 *
 	 * OpenRegister's find() retries a uuid miss without the schema, so the
-	 * answer is checked against the schema's id, uuid and slug. An answer that
-	 * carries no schema cannot be checked and does not count. With no schema
+	 * answer is checked against the schema's id, uuid and slug, read through
+	 * accessor() because OpenRegister's entities serve them through __call. An
+	 * answer that carries no schema cannot be checked and does not count. With no schema
 	 * asked for there is nothing to check.
 	 *
 	 * @param mixed                $found  What find() answered.
@@ -291,19 +292,21 @@ final class ObjectIdentifier {
 			return true;
 		}
 
-		if (is_object($found) === false || method_exists($found, 'getSchema') === false) {
+		if (is_object($found) === false) {
 			return false;
 		}
 
 		$schema = $target['schema'];
-		$names  = [];
-		foreach (['getId', 'getUuid', 'getSlug'] as $getter) {
-			if (method_exists($schema, $getter) === true) {
-				$names[] = (string)$schema->$getter();
-			}
-		}
+		$names  = array_diff(
+			[
+				self::accessor(entity: $schema, getter: 'getId'),
+				self::accessor(entity: $schema, getter: 'getUuid'),
+				self::accessor(entity: $schema, getter: 'getSlug'),
+			],
+			['']
+		);
 
-		return in_array((string)$found->getSchema(), array_diff($names, ['']), true);
+		return in_array(self::accessor(entity: $found, getter: 'getSchema'), $names, true);
 	}//end isInSchema()
 
 	/**

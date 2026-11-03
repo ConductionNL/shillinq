@@ -147,4 +147,58 @@ final class ObjectIdentifierScopedFindTest extends TestCase {
 		};
 		self::assertNull(ObjectIdentifier::findOne($service, self::OWN));
 	}
+
+	public function testASchemaWithoutAnyNameRefusesTheAnswer(): void {
+		$service = new class() {
+			public function getCurrentRegisterEntity(): object {
+				return new \stdClass();
+			}
+			public function getCurrentSchemaEntity(): object {
+				return new class() {
+					public function getId(): string {
+						return '';
+					}
+				};
+			}
+			public function find(string $id, mixed ...$named): ObjectEntity {
+				$entity = new ObjectEntity();
+				$entity->setSchema('');
+				$entity->setObject(['name' => 'nameless']);
+				return $entity;
+			}
+		};
+		self::assertNull(ObjectIdentifier::findOne($service, self::OWN));
+	}
+
+	public function testAnAnswerThatNamesTheSchemaByUuidOrSlugIsAccepted(): void {
+		foreach (['uuid-APTransaction', 'APTransaction'] as $stored) {
+			$service = new class($stored) {
+				public function __construct(private string $stored) {
+				}
+				public function getCurrentRegisterEntity(): object {
+					return new \stdClass();
+				}
+				public function getCurrentSchemaEntity(): object {
+					return new class() {
+						public function getId(): int {
+							return 7;
+						}
+						public function getUuid(): string {
+							return 'uuid-APTransaction';
+						}
+						public function getSlug(): string {
+							return 'APTransaction';
+						}
+					};
+				}
+				public function find(string $id, mixed ...$named): ObjectEntity {
+					$entity = new ObjectEntity();
+					$entity->setSchema($this->stored);
+					$entity->setObject(['name' => 'by ' . $this->stored]);
+					return $entity;
+				}
+			};
+			self::assertSame(['name' => 'by ' . $stored], ObjectIdentifier::findOne($service, self::OWN));
+		}
+	}
 }
