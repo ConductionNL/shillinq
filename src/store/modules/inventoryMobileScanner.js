@@ -166,6 +166,17 @@ function triggerSyncInBackground(scheduler) {
 	}
 }
 
+/** The badge text of each sync state that is not offline. */
+const STATUS_LABELS = {
+	[STATE_SYNCED]: (state) =>
+		state.lastSyncedAt ? `Synced ${state.lastSyncedAt}` : 'Synced',
+	[STATE_SYNCING]: () => 'Syncing…',
+	[STATE_PENDING]: (state) =>
+		state.pendingCount > 0 ? `Pending (${state.pendingCount})` : 'Pending',
+	[STATE_FAILED]: (state) =>
+		`Sync failed; retry in ${Math.ceil((state.retryInMs || 0) / 1000)}s`,
+}
+
 export const useInventoryMobileScannerStore = defineStore('inventoryMobileScanner', {
 	state: () => ({
 		db: null,
@@ -185,23 +196,11 @@ export const useInventoryMobileScannerStore = defineStore('inventoryMobileScanne
 	getters: {
 		isOnline: () =>
 			typeof navigator === 'undefined' || navigator.onLine !== false,
-		statusLabel: (state) => {
-			if (state.syncState === STATE_SYNCED) {
-				return state.lastSyncedAt ? `Synced ${state.lastSyncedAt}` : 'Synced'
-			}
-			if (state.syncState === STATE_SYNCING) {
-				return 'Syncing…'
-			}
-			if (state.syncState === STATE_PENDING) {
-				return state.pendingCount > 0
-					? `Pending (${state.pendingCount})`
-					: 'Pending'
-			}
-			if (state.syncState === STATE_FAILED) {
-				return `Sync failed; retry in ${Math.ceil((state.retryInMs || 0) / 1000)}s`
-			}
-			return 'Offline'
-		},
+		statusLabel: (state) =>
+			Object.hasOwn(STATUS_LABELS, state.syncState)
+				? STATUS_LABELS[state.syncState](state)
+				: 'Offline',
+
 		statusColor: (state) => {
 			if (state.syncState === STATE_SYNCED) {
 				return 'green'

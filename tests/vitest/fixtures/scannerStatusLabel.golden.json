@@ -1,0 +1,2402 @@
+{
+	"0": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"1": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"2": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"3": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"4": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"5": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"6": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"7": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"8": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"9": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"10": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"11": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"12": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"13": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"14": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"15": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"16": {
+		"label": {
+			"value": "Synced 2026-11-03 10:00"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"17": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"18": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"19": {
+		"label": {
+			"value": "Synced 2026-11-03 10:00"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"20": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"21": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"22": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"23": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"24": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"25": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"26": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"27": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"28": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"29": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"30": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"31": {
+		"label": {
+			"value": "Pending"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"32": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"33": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"34": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"35": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"36": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"37": {
+		"label": {
+			"value": "Pending"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"38": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"39": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"40": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"41": {
+		"label": {
+			"value": "Sync failed; retry in NaNs"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"42": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"43": {
+		"label": {
+			"value": "Synced 2026-11-03 10:00"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"44": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"45": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"46": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"47": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"48": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"49": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"50": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"51": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"52": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"53": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"54": {
+		"label": {
+			"value": "Synced 2026-11-03 10:00"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"55": {
+		"label": {
+			"value": "Sync failed; retry in 1s"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"56": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"57": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"58": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"59": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"60": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"61": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"62": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"63": {
+		"label": {
+			"value": "Sync failed; retry in 1s"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"64": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"65": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"66": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"67": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"68": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"69": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"70": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"71": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"72": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"73": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"74": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"75": {
+		"label": {
+			"value": "Synced 2026-11-03 10:00"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"76": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"77": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"78": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"79": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"80": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"81": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"82": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"83": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"84": {
+		"label": {
+			"value": "Pending"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"85": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"86": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"87": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"88": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"89": {
+		"label": {
+			"value": "Pending"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"90": {
+		"label": {
+			"value": "Synced 2026-11-03 10:00"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"91": {
+		"label": {
+			"value": "Sync failed; retry in 0s"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"92": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"93": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"94": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"95": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"96": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"97": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"98": {
+		"label": {
+			"value": "Pending"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"99": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"100": {
+		"label": {
+			"value": "Sync failed; retry in 0s"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"101": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"102": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"103": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"104": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"105": {
+		"label": {
+			"value": "Sync failed; retry in 0s"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"106": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"107": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"108": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"109": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"110": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"111": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"112": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"113": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"114": {
+		"label": {
+			"value": "Sync failed; retry in 0s"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"115": {
+		"label": {
+			"value": "Sync failed; retry in 0s"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"116": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"117": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"118": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"119": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"120": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"121": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"122": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"123": {
+		"label": {
+			"value": "Sync failed; retry in 0s"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"124": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"125": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"126": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"127": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"128": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"129": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"130": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"131": {
+		"label": {
+			"value": "Pending"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"132": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"133": {
+		"label": {
+			"value": "Sync failed; retry in 2s"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"134": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"135": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"136": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"137": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"138": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"139": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"140": {
+		"label": {
+			"value": "Synced 2026-11-03 10:00"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"141": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"142": {
+		"label": {
+			"value": "Pending (3)"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"143": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"144": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"145": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"146": {
+		"label": {
+			"value": "Pending"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"147": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"148": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"149": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"150": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"151": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"152": {
+		"label": {
+			"value": "Pending"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"153": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"154": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"155": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"156": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"157": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"158": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"159": {
+		"label": {
+			"value": "Pending (3)"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"160": {
+		"label": {
+			"value": "Pending (3)"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"161": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"162": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"163": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"164": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"165": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"166": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"167": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"168": {
+		"label": {
+			"value": "Sync failed; retry in 0s"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"169": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"170": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"171": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"172": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"173": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"174": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"175": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"176": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"177": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"178": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"179": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"180": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"181": {
+		"label": {
+			"value": "Sync failed; retry in NaNs"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"182": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"183": {
+		"label": {
+			"value": "Pending"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"184": {
+		"label": {
+			"value": "Sync failed; retry in 0s"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"185": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"186": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"187": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"188": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"189": {
+		"label": {
+			"value": "Pending"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"190": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"191": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"192": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"193": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"194": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"195": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"196": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"197": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"198": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"199": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"200": {
+		"label": {
+			"value": "Sync failed; retry in 0s"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"201": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"202": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"203": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"204": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"205": {
+		"label": {
+			"value": "Sync failed; retry in NaNs"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"206": {
+		"label": {
+			"value": "Sync failed; retry in NaNs"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"207": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"208": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"209": {
+		"label": {
+			"value": "Sync failed; retry in NaNs"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"210": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"211": {
+		"label": {
+			"value": "Sync failed; retry in 0s"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"212": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"213": {
+		"label": {
+			"value": "Pending"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"214": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"215": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"216": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"217": {
+		"label": {
+			"value": "Synced 2026-11-03 10:00"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"218": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"219": {
+		"label": {
+			"value": "Sync failed; retry in 0s"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"220": {
+		"label": {
+			"value": "Sync failed; retry in NaNs"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"221": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"222": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"223": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"224": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"225": {
+		"label": {
+			"value": "Pending (3)"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"226": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"227": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"228": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"229": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"230": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"231": {
+		"label": {
+			"value": "Sync failed; retry in 0s"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"232": {
+		"label": {
+			"value": "Pending (3)"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"233": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"234": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"235": {
+		"label": {
+			"value": "Sync failed; retry in 1s"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"236": {
+		"label": {
+			"value": "Pending (3)"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"237": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"238": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"239": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"240": {
+		"label": {
+			"value": "Pending (3)"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"241": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"242": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"243": {
+		"label": {
+			"value": "Sync failed; retry in 2s"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"244": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"245": {
+		"label": {
+			"value": "Pending (3)"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"246": {
+		"label": {
+			"value": "Sync failed; retry in 0s"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"247": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"248": {
+		"label": {
+			"value": "Synced 2026-11-03 10:00"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"249": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"250": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"251": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"252": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"253": {
+		"label": {
+			"value": "Sync failed; retry in 0s"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"254": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"255": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"256": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"257": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"258": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"259": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"260": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"261": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"262": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"263": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"264": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"265": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"266": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"267": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"268": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"269": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"270": {
+		"label": {
+			"value": "Sync failed; retry in 0s"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"271": {
+		"label": {
+			"value": "Sync failed; retry in 1s"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"272": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"273": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"274": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"275": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"276": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"277": {
+		"label": {
+			"value": "Pending"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"278": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"279": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"280": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"281": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"282": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"283": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"284": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"285": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"286": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"287": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"288": {
+		"label": {
+			"value": "Synced"
+		},
+		"color": {
+			"value": "green"
+		}
+	},
+	"289": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"290": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"291": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"292": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"293": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"294": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"295": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"296": {
+		"label": {
+			"value": "Syncing…"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"297": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	},
+	"298": {
+		"label": {
+			"value": "Offline"
+		},
+		"color": {
+			"value": "red"
+		}
+	},
+	"299": {
+		"label": {
+			"value": "Sync failed; retry in 0s"
+		},
+		"color": {
+			"value": "yellow"
+		}
+	}
+}
