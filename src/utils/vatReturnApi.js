@@ -66,18 +66,8 @@ export function buildPrepareRequest(form) {
  */
 export function prepareErrorText(error) {
 	const status = error?.response?.status
-	const code = String(error?.response?.data?.error || '')
-	if (status === 400 && code.includes('future')) {
-		return t(
-			'shillinq',
-			'That period has not ended yet. Prepare a return for a period that is over.',
-		)
-	}
 	if (status === 400) {
-		return t(
-			'shillinq',
-			'Choose a period kind, a year from 2020 and a period number that fits it.',
-		)
+		return badPeriodText(String(error?.response?.data?.error || ''))
 	}
 	if (status === 403 || status === 404) {
 		return t('shillinq', 'You cannot prepare a return for this administration.')
@@ -85,6 +75,25 @@ export function prepareErrorText(error) {
 	return t(
 		'shillinq',
 		'The return could not be prepared. Try again, or ask your administrator to check the log.',
+	)
+}
+
+/**
+ * The sentence for a period the server refused.
+ *
+ * @param {string} code The server's error code.
+ * @return {string} The sentence.
+ */
+function badPeriodText(code) {
+	if (code.includes('future')) {
+		return t(
+			'shillinq',
+			'That period has not ended yet. Prepare a return for a period that is over.',
+		)
+	}
+	return t(
+		'shillinq',
+		'Choose a period kind, a year from 2020 and a period number that fits it.',
 	)
 }
 
