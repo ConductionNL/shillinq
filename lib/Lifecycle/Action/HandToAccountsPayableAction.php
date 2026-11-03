@@ -6,7 +6,8 @@
  * The declared action of SupplierInvoice.bookWithoutOrder. It writes one
  * APTransaction for the invoice (amounts from cents to euros, each line on
  * its expense account), runs its receive and issue transitions so the AP
- * sub-ledger posts it to the ledger, links the two records, and writes the
+ * sub-ledger posts it to the ledger, links the two records (the transaction
+ * carries the invoice uuid as supplierInvoiceId), and writes the
  * AP transaction payment blocked when the invoice's IBAN differs from the
  * supplier record (purchasing-supplier-invoice-intake design.md D1, D4).
  *
@@ -94,6 +95,7 @@ class HandToAccountsPayableAction implements LifecycleActionInterface {
 		}
 
 		$transaction = $this->apTransaction(invoice: $objectData, payee: $payee);
+		$transaction['supplierInvoiceId'] = (string)($objectData['id'] ?? '');
 		$saved = $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema('APTransaction')->saveObject(object: $transaction);
 		$apId = ObjectIdentifier::resolve(saved: $saved);
 		if ($apId === '') {

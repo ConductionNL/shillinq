@@ -85,7 +85,13 @@ final class SupplierInvoiceApBindingLockListenerTest extends TestCase {
 		self::assertSame([], $this->update(self::HANDED, ['note' => 'y', 'state' => 'paid'] + self::HANDED));
 	}
 
-	public function testBeforeTheHandoverNothingIsFrozen(): void {
+	/**
+	 * Before the hand-over the lock lets the binding be written, the hand-over's
+	 * own write included. A binding written by hand does not make the invoice
+	 * payable: the pay guard accepts only a transaction that names the invoice's
+	 * uuid (SupplierInvoicePayGuardLookupTest).
+	 */
+	public function testBeforeTheHandoverTheLockLeavesTheBindingToThePayGuard(): void {
 		$before = ['apTransactionId' => ''] + self::HANDED;
 		self::assertSame([], $this->update($before, ['apTransactionId' => 'tx-a', 'totalInclVat' => 1] + self::HANDED));
 		$before = self::HANDED;

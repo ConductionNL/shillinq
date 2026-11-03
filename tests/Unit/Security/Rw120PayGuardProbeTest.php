@@ -43,13 +43,15 @@ final class Rw120PayGuardProbeTest extends TestCase {
 	public const OTHER_APP = '77777777-7777-4777-8777-777777777777';
 	public const NO_ADMIN = '88888888-8888-4888-8888-888888888888';
 	public const PARTIAL = '99999999-9999-4999-8999-999999999999';
+	public const INVOICE = 'aaaaaaaa-0000-4000-8000-00000000000a';
+	public const OTHER_INVOICE = 'bbbbbbbb-0000-4000-8000-00000000000b';
 
 	/** @var array<int, array<string, mixed>> */
 	public array $calls = [];
 
 	/** @return array<int, array<string, mixed>> rows: uuid, slug, register, schema, org, data */
 	private static function rows(): array {
-		return [
+		$rows = [
 			['uuid' => self::OWN, 'slug' => null, 'register' => 'shillinq', 'schema' => 'APTransaction', 'org' => 'org-a', 'data' => ['state' => 'paid', 'administrationId' => 'adm-1']],
 			['uuid' => self::FOREIGN_ORG, 'slug' => null, 'register' => 'shillinq', 'schema' => 'APTransaction', 'org' => 'org-b', 'data' => ['state' => 'paid', 'administrationId' => 'adm-1']],
 			['uuid' => self::OTHER_ADMIN, 'slug' => null, 'register' => 'shillinq', 'schema' => 'APTransaction', 'org' => 'org-a', 'data' => ['state' => 'paid', 'administrationId' => 'adm-2']],
@@ -64,6 +66,11 @@ final class Rw120PayGuardProbeTest extends TestCase {
 			// A paid object with no administrationId (RepaymentInstallment-like).
 			['uuid' => self::NO_ADMIN, 'slug' => null, 'register' => 'shillinq', 'schema' => 'RepaymentInstallment', 'org' => 'org-a', 'data' => ['state' => 'paid']],
 		];
+		// Every row names the invoice under test, except the other supplier invoice's transaction.
+		foreach ($rows as $i => $row) {
+			$rows[$i]['data']['supplierInvoiceId'] = $row['uuid'] === self::OTHER_SUPPLIER_TX ? self::OTHER_INVOICE : self::INVOICE;
+		}
+		return $rows;
 	}
 
 	private function guard(): SupplierInvoicePayGuard {
@@ -148,7 +155,7 @@ final class Rw120PayGuardProbeTest extends TestCase {
 	}
 
 	private function allowed(array $invoice): bool {
-		return $this->guard()->check($invoice, 'pay', 'officer')->isAllowed();
+		return $this->guard()->check($invoice + ['id' => self::INVOICE], 'pay', 'officer')->isAllowed();
 	}
 
 	public function testLegitimatePaidTransactionAllows(): void {

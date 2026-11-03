@@ -6,7 +6,9 @@
  * Guards `SupplierInvoice.pay` (approved -> paid). An invoice is paid when the
  * AP transaction it was handed to is paid; that state is reached by the bank
  * match on the AP side. A supplier invoice marked paid while its AP
- * transaction is open, or without one, is refused.
+ * transaction is open, or without one, is refused. The hand-over writes the
+ * invoice uuid on the transaction, so pointing an invoice at another
+ * invoice's paid transaction is refused too.
  *
  * @category Lifecycle
  * @package  OCA\Shillinq\Lifecycle
@@ -89,7 +91,7 @@ final class SupplierInvoicePayGuard implements LifecycleGuardInterface {
 			return GuardResult::deny(self::MESSAGE);
 		}
 
-		if ($transaction !== null && $this->isPaidTransactionOf(transaction: $transaction, invoice: $object) === true) {
+		if ($transaction !== null && $this->isTransactionOf(transaction: $transaction, invoice: $object) === true) {
 			return GuardResult::allow();
 		}
 
@@ -126,6 +128,23 @@ final class SupplierInvoicePayGuard implements LifecycleGuardInterface {
 
 		return $found->getObject();
 	}//end apTransaction()
+
+	/**
+	 * Whether the transaction was written for this invoice by the hand-over
+	 * (it names the invoice's uuid, which a write to the invoice cannot change)
+	 * and is paid with the invoice's details.
+	 *
+	 * @param array<string, mixed> $transaction The AP transaction.
+	 * @param array<string, mixed> $invoice     The supplier invoice.
+	 *
+	 * @return bool
+	 */
+	private function isTransactionOf(array $transaction, array $invoice): bool {
+		$invoiceId = trim((string)($invoice['id'] ?? ''));
+		return $invoiceId !== ''
+			&& (string)($transaction['supplierInvoiceId'] ?? '') === $invoiceId
+			&& $this->isPaidTransactionOf(transaction: $transaction, invoice: $invoice) === true;
+	}//end isTransactionOf()
 
 	/**
 	 * Whether the transaction is paid and is the one this invoice was handed to:
