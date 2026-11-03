@@ -557,7 +557,8 @@ final class RuleTestDataSeedRun {
 	}//end withDefaults()
 
 	/**
-	 * Whether a row lacks a field or holds only whitespace in it.
+	 * Whether a row lacks a field or holds only whitespace in it. A field that
+	 * holds an array, such as a seeded address, is set.
 	 *
 	 * @param array<string, mixed> $row   The row.
 	 * @param string|int           $field The field.
@@ -565,7 +566,12 @@ final class RuleTestDataSeedRun {
 	 * @return bool True when the default applies.
 	 */
 	private static function isBlank(array $row, string|int $field): bool {
-		return array_key_exists($field, $row) === false || trim((string) ($row[$field] ?? '')) === '';
+		if (array_key_exists($field, $row) === false) {
+			return true;
+		}
+
+		$value = ($row[$field] ?? '');
+		return is_array($value) === false && trim((string) $value) === '';
 	}//end isBlank()
 
 	/**
