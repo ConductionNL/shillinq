@@ -30,30 +30,85 @@ export const PIVOT_AXES = [
  * @spec openspec/specs/financial-dashboard-graphs/spec.md
  */
 export function pivotTable(pivot, labels) {
-	const columns = pivot.columns || []
-	const name = (group) =>
-		group.label === null || group.label === undefined
-			? labels.notSet
-			: group.label
-	const table = [[labels.rowHeader, ...columns.map(name), labels.total]]
+	const table = { pivot, labels, columns: pivot.columns || [] }
+	const rows = [headerRow(table)]
 	for (const row of pivot.rows || []) {
-		const cells = (pivot.cells && pivot.cells[row.key]) || {}
-		table.push([
-			name(row),
-			...columns.map((column) =>
-				column.key in cells ? cells[column.key] : null,
-			),
-			pivot.rowTotals ? (pivot.rowTotals[row.key] ?? 0) : 0,
-		])
+		rows.push(bodyRow(table, row))
 	}
-	table.push([
-		labels.total,
-		...columns.map((column) =>
-			pivot.columnTotals ? (pivot.columnTotals[column.key] ?? 0) : 0,
+	rows.push(totalsRow(table))
+	return rows
+}
+
+/**
+ * The shown name of a row or column group.
+ *
+ * @param {object} labels Texts: notSet.
+ * @param {object} group The group.
+ * @return {string|number} Its label, or the not-set text.
+ */
+function groupName(labels, group) {
+	return group.label === null || group.label === undefined
+		? labels.notSet
+		: group.label
+}
+
+/**
+ * The header row: the row header, each column's name and the total.
+ *
+ * @param {object} table `{ labels, columns }`.
+ * @return {Array<string|number>} The row.
+ */
+function headerRow(table) {
+	return [
+		table.labels.rowHeader,
+		...table.columns.map((column) => groupName(table.labels, column)),
+		table.labels.total,
+	]
+}
+
+/**
+ * One row group: its name, its cell per column (null when absent) and its total.
+ *
+ * @param {object} table `{ pivot, labels, columns }`.
+ * @param {object} row The row group.
+ * @return {Array<string|number|null>} The row.
+ */
+function bodyRow(table, row) {
+	const cells = (table.pivot.cells && table.pivot.cells[row.key]) || {}
+	return [
+		groupName(table.labels, row),
+		...table.columns.map((column) =>
+			column.key in cells ? cells[column.key] : null,
 		),
-		pivot.total ?? 0,
-	])
-	return table
+		totalOf(table.pivot.rowTotals, row.key),
+	]
+}
+
+/**
+ * The totals row: each column's total and the grand total.
+ *
+ * @param {object} table `{ pivot, labels, columns }`.
+ * @return {Array<string|number>} The row.
+ */
+function totalsRow(table) {
+	return [
+		table.labels.total,
+		...table.columns.map((column) =>
+			totalOf(table.pivot.columnTotals, column.key),
+		),
+		table.pivot.total ?? 0,
+	]
+}
+
+/**
+ * A total by key, 0 when the totals or the key are missing.
+ *
+ * @param {object|null|undefined} totals Totals by key.
+ * @param {string} key The key.
+ * @return {number}
+ */
+function totalOf(totals, key) {
+	return totals ? (totals[key] ?? 0) : 0
 }
 
 /**

@@ -36,25 +36,49 @@ export const READING_COLUMNS = [
  * @spec openspec/changes/sales-usage-billing/tasks.md#task-2.1
  */
 export function splitCsvLine(line, separator) {
-	const cells = []
-	let cell = ''
-	let quoted = false
+	const scan = { line, separator, cells: [], cell: '', quoted: false }
 	for (let i = 0; i < line.length; i++) {
-		const char = line[i]
-		if (char === '"' && quoted && line[i + 1] === '"') {
-			cell += '"'
-			i++
-		} else if (char === '"') {
-			quoted = !quoted
-		} else if (char === separator && !quoted) {
-			cells.push(cell.trim())
-			cell = ''
-		} else {
-			cell += char
-		}
+		i += csvStep(scan, i)
 	}
-	cells.push(cell.trim())
-	return cells
+	scan.cells.push(scan.cell.trim())
+	return scan.cells
+}
+
+/**
+ * Read the character at `i`; returns how many extra characters it used.
+ *
+ * @param {object} scan The line, separator, cells so far, open cell and quote state.
+ * @param {number} i The position.
+ * @return {number} 1 after an escaped quote, else 0.
+ */
+function csvStep(scan, i) {
+	const char = scan.line[i]
+	if (char === '"') {
+		return csvQuote(scan, i)
+	}
+	if (char === scan.separator && !scan.quoted) {
+		scan.cells.push(scan.cell.trim())
+		scan.cell = ''
+	} else {
+		scan.cell += char
+	}
+	return 0
+}
+
+/**
+ * A quote: an escaped quote inside a quoted cell, or the quote state flips.
+ *
+ * @param {object} scan The scan state.
+ * @param {number} i The position of the quote.
+ * @return {number} 1 when the next quote was used, else 0.
+ */
+function csvQuote(scan, i) {
+	if (scan.quoted && scan.line[i + 1] === '"') {
+		scan.cell += '"'
+		return 1
+	}
+	scan.quoted = !scan.quoted
+	return 0
 }
 
 /**
