@@ -241,10 +241,10 @@ export function signedAmount(line, kind) {
  *
  * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {object} input `{ accounts, transactions, lines, months }`.
- * @param input.accounts
- * @param input.transactions
- * @param input.lines
- * @param input.months
+ * @param {object[]} input.accounts Account objects.
+ * @param {object[]} input.transactions GLTransaction objects.
+ * @param {object[]} input.lines GLLine objects.
+ * @param {string[]} input.months Month keys.
  * @return {{ months: string[], revenue: number[], costs: number[], margin: number[],
  *   marginPct: (number|null)[], cashIn: number[], cashOut: number[], cashNet: number[] }}
  */
@@ -502,12 +502,12 @@ export function openApRows(transactions, vendors, now = new Date()) {
  *
  * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {object} input `{ accounts, transactions, lines, arInvoices, apTransactions, hourEntries }`.
- * @param input.accounts
- * @param input.transactions
- * @param input.lines
- * @param input.arInvoices
- * @param input.apTransactions
- * @param input.hourEntries
+ * @param {object[]} input.accounts Account objects.
+ * @param {object[]} input.transactions GLTransaction objects.
+ * @param {object[]} input.lines GLLine objects.
+ * @param {object[]} input.arInvoices ARInvoice objects.
+ * @param {object[]} input.apTransactions APTransaction objects.
+ * @param {object[]} input.hourEntries UrenRegistratie objects.
  * @param {Date} now Reference date (YTD window + current month).
  * @return {object}
  */
@@ -607,8 +607,11 @@ export function formatEur(value, maximumFractionDigits = 0) {
 }
 
 /**
- * @param {string} dueDate @param {Date} now @return {boolean}
- * @param now
+ * Whether a due date lies before the UTC day of `now`.
+ *
+ * @param {string} dueDate The due date.
+ * @param {Date} now Reference date.
+ * @return {boolean}
  */
 function isPastDue(dueDate, now) {
 	const key = typeof dueDate === 'string' ? dueDate.slice(0, 10) : ''
@@ -646,10 +649,10 @@ function percentOf(part, whole) {
  *
  * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {object} input `{ accounts, transactions, lines, hourEntries }`.
- * @param input.accounts
- * @param input.transactions
- * @param input.lines
- * @param input.hourEntries
+ * @param {object[]} input.accounts Account objects.
+ * @param {object[]} input.transactions GLTransaction objects.
+ * @param {object[]} input.lines GLLine objects.
+ * @param {object[]} input.hourEntries UrenRegistratie objects.
  * @param {string[]} months Month keys (`YYYY-MM`) to aggregate over.
  * @return {{ turnover: number, margin: number, marginPct: (number|null),
  *   billableHours: number, billablePct: (number|null) }}
