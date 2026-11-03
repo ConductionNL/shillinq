@@ -47,21 +47,42 @@
 					type="number"
 					min="0.01"
 					step="0.01"
-					required>
+					required />
 				<label for="shillinq-form-description">{{ descriptionLabel }}</label>
-				<input id="shillinq-form-description" v-model="form.description" type="text">
-				<label for="shillinq-form-name">{{ formFor === 'raise-payout' ? payeeNameLabel : debtorNameLabel }}</label>
-				<input id="shillinq-form-name" v-model="form.name" type="text" required>
+				<input
+					id="shillinq-form-description"
+					v-model="form.description"
+					type="text" />
+				<label for="shillinq-form-name">{{
+					formFor === 'raise-payout' ? payeeNameLabel : debtorNameLabel
+				}}</label>
+				<input
+					id="shillinq-form-name"
+					v-model="form.name"
+					type="text"
+					required />
 				<template v-if="formFor === 'raise-payout'">
 					<label for="shillinq-form-iban">{{ ibanLabel }}</label>
-					<input id="shillinq-form-iban" v-model="form.iban" type="text" required>
+					<input
+						id="shillinq-form-iban"
+						v-model="form.iban"
+						type="text"
+						required />
 				</template>
 				<template v-else>
 					<label for="shillinq-form-email">{{ debtorEmailLabel }}</label>
-					<input id="shillinq-form-email" v-model="form.email" type="email" required>
+					<input
+						id="shillinq-form-email"
+						v-model="form.email"
+						type="email"
+						autocomplete="email"
+						required />
 				</template>
 				<div class="shillinq-leaf__actions">
-					<NcButton :disabled="busyId === 'form'" variant="primary" type="submit">
+					<NcButton
+						:disabled="busyId === 'form'"
+						variant="primary"
+						type="submit">
 						{{ confirmLabelFor(formFor) }}
 					</NcButton>
 					<NcButton variant="tertiary" @click="formFor = ''">
@@ -99,7 +120,9 @@
 						{{ dueLine(row) }}
 					</p>
 
-					<div v-if="row.path || rowActs(row).length > 0" class="shillinq-leaf__actions">
+					<div
+						v-if="row.path || rowActs(row).length > 0"
+						class="shillinq-leaf__actions">
 						<NcButton
 							v-if="row.path"
 							variant="tertiary"
@@ -144,8 +167,12 @@
 						v-if="settleFor === row.id"
 						class="shillinq-leaf__form"
 						@submit.prevent="settle(row)">
-						<label :for="`shillinq-settle-method-${row.id}`">{{ methodLabel }}</label>
-						<select :id="`shillinq-settle-method-${row.id}`" v-model="settleForm.method">
+						<label :for="`shillinq-settle-method-${row.id}`">{{
+							methodLabel
+						}}</label>
+						<select
+							:id="`shillinq-settle-method-${row.id}`"
+							v-model="settleForm.method">
 							<option
 								v-for="option in settlementMethods"
 								:key="option.value"
@@ -153,15 +180,25 @@
 								{{ option.label }}
 							</option>
 						</select>
-						<label :for="`shillinq-settle-reference-${row.id}`">{{ referenceLabel }}</label>
+						<label :for="`shillinq-settle-reference-${row.id}`">{{
+							referenceLabel
+						}}</label>
 						<input
 							:id="`shillinq-settle-reference-${row.id}`"
 							v-model="settleForm.settlementReference"
-							type="text">
-						<label :for="`shillinq-settle-reason-${row.id}`">{{ reasonLabel }}</label>
-						<input :id="`shillinq-settle-reason-${row.id}`" v-model="settleForm.reason" type="text">
+							type="text" />
+						<label :for="`shillinq-settle-reason-${row.id}`">{{
+							reasonLabel
+						}}</label>
+						<input
+							:id="`shillinq-settle-reason-${row.id}`"
+							v-model="settleForm.reason"
+							type="text" />
 						<div class="shillinq-leaf__actions">
-							<NcButton :disabled="busyId === row.id" variant="primary" type="submit">
+							<NcButton
+								:disabled="busyId === row.id"
+								variant="primary"
+								type="submit">
 								{{ confirmSettleLabel }}
 							</NcButton>
 							<NcButton variant="tertiary" @click="settleFor = ''">
@@ -170,7 +207,10 @@
 						</div>
 					</form>
 
-					<p v-if="notices[row.id]" class="shillinq-leaf__notice" role="status">
+					<p
+						v-if="notices[row.id]"
+						class="shillinq-leaf__notice"
+						role="status">
 						{{ notices[row.id] }}
 					</p>
 				</li>
@@ -206,7 +246,13 @@ import { leafReportMixin } from './leafReport.js'
  *
  * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
  */
-export const ALL_KINDS = ['quote', 'invoice', 'credit-note', 'payment-request', 'payout']
+export const ALL_KINDS = [
+	'quote',
+	'invoice',
+	'credit-note',
+	'payment-request',
+	'payout',
+]
 
 /**
  * Every act the panel can offer.
@@ -215,7 +261,15 @@ export const ALL_KINDS = ['quote', 'invoice', 'credit-note', 'payment-request', 
  *
  * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
  */
-export const ALL_ACTIONS = ['issue-invoice', 'new-quote', 'raise-payout', 'request-payment', 'credit-invoice', 'send-link', 'record-payment']
+export const ALL_ACTIONS = [
+	'issue-invoice',
+	'new-quote',
+	'raise-payout',
+	'request-payment',
+	'credit-invoice',
+	'send-link',
+	'record-payment',
+]
 
 /**
  * Which acts a row offers, given the caller's grants and the placement's actions.
@@ -233,13 +287,25 @@ export function actsForRow(row, acts, allowed) {
 		return []
 	}
 	const offered = []
-	if (row.kind === 'invoice' && row.paymentState === 'outstanding' && acts.requestPayment === true) {
+	if (
+		row.kind === 'invoice'
+		&& row.paymentState === 'outstanding'
+		&& acts.requestPayment === true
+	) {
 		offered.push('request-payment')
 	}
-	if (row.kind === 'invoice' && ['outstanding', 'paid'].includes(row.paymentState) && acts.creditInvoice === true) {
+	if (
+		row.kind === 'invoice'
+		&& ['outstanding', 'paid'].includes(row.paymentState)
+		&& acts.creditInvoice === true
+	) {
 		offered.push('credit-invoice')
 	}
-	if (row.kind === 'payment-request' && row.paymentState === 'outstanding' && acts.administerPayments === true) {
+	if (
+		row.kind === 'payment-request'
+		&& row.paymentState === 'outstanding'
+		&& acts.administerPayments === true
+	) {
 		offered.push('send-link', 'record-payment')
 	}
 	return offered.filter((act) => allowed.includes(act))
@@ -280,7 +346,15 @@ export default {
 	data() {
 		return {
 			rows: [],
-			acts: { issueInvoice: false, requestPayment: false, administerPayments: false, createQuote: false, creditInvoice: false, raisePayout: false },
+			acts: {
+				issueInvoice: false,
+				requestPayment: false,
+				administerPayments: false,
+				createQuote: false,
+				creditInvoice: false,
+				raisePayout: false,
+			},
+
 			loading: false,
 			error: '',
 			busyId: '',
@@ -306,13 +380,18 @@ export default {
 		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		leafReport() {
-			const actions = this.topActs.map((act) => ({ label: act.label, run: () => this.openForm(act.id) }))
+			const actions = this.topActs.map((act) => ({
+				label: act.label,
+				run: () => this.openForm(act.id),
+			}))
 			return {
 				count: this.visibleRows.length,
 				emptyLabel: this.emptyLabel,
 				noun: t('shillinq', 'financial documents'),
 				rows: this.visibleRows.map((row) => ({
-					label: [this.titleOf(row), this.stateOf(row)].filter((part) => part !== '').join(' · '),
+					label: [this.titleOf(row), this.stateOf(row)]
+						.filter((part) => part !== '')
+						.join(' · '),
 					icon: 'FileDocumentOutline',
 				})),
 
@@ -361,7 +440,10 @@ export default {
 
 		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
 		emptyLabel() {
-			return t('shillinq', 'No quotes, invoices or payments are linked to this record.')
+			return t(
+				'shillinq',
+				'No quotes, invoices or payments are linked to this record.',
+			)
 		},
 
 		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
@@ -426,7 +508,10 @@ export default {
 
 		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
 		restrictedLabel() {
-			return t('shillinq', 'You cannot open this document; the finance administration holds it.')
+			return t(
+				'shillinq',
+				'You cannot open this document; the finance administration holds it.',
+			)
 		},
 
 		/** @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003) */
@@ -478,11 +563,17 @@ export default {
 			this.loading = true
 			this.error = ''
 			try {
-				const envelope = await readLeaf(identity, FINANCIAL_DOCUMENTS_DATA_LEAF)
+				const envelope = await readLeaf(
+					identity,
+					FINANCIAL_DOCUMENTS_DATA_LEAF,
+				)
 				this.rows = Array.isArray(envelope.items) ? envelope.items : []
 				this.acts = { ...this.acts, ...(envelope.acts || {}) }
 			} catch {
-				this.error = t('shillinq', 'The financial documents could not be read.')
+				this.error = t(
+					'shillinq',
+					'The financial documents could not be read.',
+				)
 			} finally {
 				this.loading = false
 			}
@@ -497,8 +588,16 @@ export default {
 		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		offers(act) {
-			const grants = { 'issue-invoice': 'issueInvoice', 'new-quote': 'createQuote', 'raise-payout': 'raisePayout' }
-			return grants[act] !== undefined && this.acts[grants[act]] === true && this.actions.includes(act)
+			const grants = {
+				'issue-invoice': 'issueInvoice',
+				'new-quote': 'createQuote',
+				'raise-payout': 'raisePayout',
+			}
+			return (
+				grants[act] !== undefined
+				&& this.acts[grants[act]] === true
+				&& this.actions.includes(act)
+			)
 		},
 
 		/**
@@ -529,7 +628,11 @@ export default {
 				'payment-request': t('shillinq', 'Payment request'),
 				payout: t('shillinq', 'Payout'),
 			}
-			return [kinds[row.kind] || row.kind, row.number || '', row.amount === null ? '' : formatAmount(row.amount, row.currency)]
+			return [
+				kinds[row.kind] || row.kind,
+				row.number || '',
+				row.amount === null ? '' : formatAmount(row.amount, row.currency),
+			]
 				.filter((part) => part !== '')
 				.join(' ')
 		},
@@ -586,7 +689,13 @@ export default {
 		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		openForm(act) {
-			this.form = { amount: '', description: '', name: '', email: '', iban: '' }
+			this.form = {
+				amount: '',
+				description: '',
+				name: '',
+				email: '',
+				iban: '',
+			}
 			this.formFor = act
 		},
 
@@ -615,11 +724,31 @@ export default {
 		async submitForm() {
 			const host = hostIdentity(this.$props)
 			const debtor = { name: this.form.name, email: this.form.email }
-			const base = { amount: Number(this.form.amount), description: this.form.description, objectType: this.objectType }
+			const base = {
+				amount: Number(this.form.amount),
+				description: this.form.description,
+				objectType: this.objectType,
+			}
 			const calls = {
-				'issue-invoice': [() => issueInvoice(host, { ...base, debtor }), t('shillinq', 'The invoice is issued.')],
-				'new-quote': [() => createQuote(host, { ...base, debtor }), t('shillinq', 'The quote is started.')],
-				'raise-payout': [() => raisePayout(host, { ...base, payeeName: this.form.name, iban: this.form.iban }), t('shillinq', 'The payout is raised.')],
+				'issue-invoice': [
+					() => issueInvoice(host, { ...base, debtor }),
+					t('shillinq', 'The invoice is issued.'),
+				],
+
+				'new-quote': [
+					() => createQuote(host, { ...base, debtor }),
+					t('shillinq', 'The quote is started.'),
+				],
+
+				'raise-payout': [
+					() =>
+						raisePayout(host, {
+							...base,
+							payeeName: this.form.name,
+							iban: this.form.iban,
+						}),
+					t('shillinq', 'The payout is raised.'),
+				],
 			}
 			const [call, done] = calls[this.formFor]
 			this.busyId = 'form'
@@ -644,7 +773,11 @@ export default {
 		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		async credit(row) {
-			await this.act(row, () => creditInvoice(row.id), t('shillinq', 'The credit note is issued.'))
+			await this.act(
+				row,
+				() => creditInvoice(row.id),
+				t('shillinq', 'The credit note is issued.'),
+			)
 		},
 
 		/**
@@ -656,7 +789,11 @@ export default {
 		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		async requestPayment(row) {
-			await this.act(row, () => requestInvoicePayment(row.id), t('shillinq', 'The payment request is raised.'))
+			await this.act(
+				row,
+				() => requestInvoicePayment(row.id),
+				t('shillinq', 'The payment request is raised.'),
+			)
 		},
 
 		/**
@@ -668,7 +805,11 @@ export default {
 		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		async send(row) {
-			await this.act(row, () => sendPaymentLink(row.id), t('shillinq', 'The payment link went out to the debtor.'))
+			await this.act(
+				row,
+				() => sendPaymentLink(row.id),
+				t('shillinq', 'The payment link went out to the debtor.'),
+			)
 		},
 
 		/**
@@ -694,7 +835,11 @@ export default {
 		 */
 		async settle(row) {
 			const settlement = { ...this.settleForm, amount: 0 }
-			await this.act(row, () => settleByOtherMeans(row.id, settlement), t('shillinq', 'The payment is on the record.'))
+			await this.act(
+				row,
+				() => settleByOtherMeans(row.id, settlement),
+				t('shillinq', 'The payment is on the record.'),
+			)
 			this.settleFor = ''
 		},
 
@@ -731,7 +876,8 @@ export default {
 		 * @spec openspec/changes/financial-documents-on-any-object/specs/financial-documents-on-any-object/spec.md (REQ-FDO-003)
 		 */
 		refusal(e) {
-			const message = e && e.response && e.response.data && e.response.data.error
+			const message =
+				e && e.response && e.response.data && e.response.data.error
 			if (typeof message === 'string' && message !== '') {
 				return message
 			}

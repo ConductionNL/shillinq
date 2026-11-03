@@ -56,6 +56,12 @@
         (g) LinkedObjectReferences is a pure function of its argument on the
         same testable claim as (f): NO constructor, NO properties, NO
         collaborators. Remove this entry if that stops being true.
+
+        (h) OpenRegisterAutoloader and OpenRegister's AppHost Bootstrap are
+        called from the app's register() phase, before any DI container exists
+        to inject them into: OpenRegisterAutoloader registers a class loader
+        (process-wide state by nature), and Bootstrap::aliasStoreController()
+        is OpenRegister's static registration API, category (d).
     -->
     <rule ref="rulesets/cleancode.xml/StaticAccess">
         <properties>
@@ -74,6 +80,8 @@
                 OCA\Shillinq\Util\TokenValidator,
                 OCA\Shillinq\Util\ObjectIdentifier,
                 OCA\Shillinq\Util\LinkedObjectReferences,
+                OCA\Shillinq\AppInfo\OpenRegisterAutoloader,
+                OCA\OpenRegister\AppHost\Bootstrap,
                 OCA\Shillinq\Request\InvoiceGenerationRequest,
                 OCA\Shillinq\Service\Pipelinq\PipelinqContact,
                 OCA\Shillinq\Service\Pipelinq\KlantbeeldResult,

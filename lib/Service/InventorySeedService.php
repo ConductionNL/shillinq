@@ -382,7 +382,7 @@ class InventorySeedService {
 		}
 
 		// One configuration per administration.
-		$match = static fn ($config): array => ['administrationId' => $administrationId];
+		$match = static fn (): array => ['administrationId' => $administrationId];
 
 		return $this->importer->import(
 			import: new SeedImport(schema: 'InventoryGLConfig', rows: $configs, match: $match, administrationId: $administrationId),
