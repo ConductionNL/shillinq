@@ -142,7 +142,7 @@
 										:modelValue="
 											chosen[group.key].includes(row.id)
 										"
-										:ariaLabel="row.title"
+										:aria-label="row.title"
 										@update:modelValue="
 											toggle(group.key, row.id, $event)
 										" />

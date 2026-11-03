@@ -160,7 +160,10 @@ export default {
 		 */
 		notificationLabels() {
 			return Object.fromEntries(
-				Object.entries(notificationRuleWording).map(([key, text]) => [key, ncT('shillinq', text)]),
+				Object.entries(notificationRuleWording).map(([key, text]) => [
+					key,
+					ncT('shillinq', text),
+				]),
 			)
 		},
 
