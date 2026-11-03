@@ -153,18 +153,38 @@ function prefsKey(customerId) {
 export function loadQuickDraftPrefs(customerId) {
 	if (!customerId) return null
 	try {
-		const raw = globalThis.localStorage?.getItem(prefsKey(customerId))
-		if (!raw) return null
-		const parsed = JSON.parse(raw)
-		if (!parsed || typeof parsed !== 'object') return null
-		if (parsed.savedAt && Date.now() - parsed.savedAt > PREFS_TTL_MS) {
+		const prefs = readStoredPrefs(customerId)
+		if (prefs && isExpired(prefs)) {
 			globalThis.localStorage?.removeItem(prefsKey(customerId))
 			return null
 		}
-		return parsed
+		return prefs
 	} catch (e) {
 		return null
 	}
+}
+
+/**
+ * The stored preferences object of a customer, or null when absent or not an object.
+ *
+ * @param {string} customerId Customer id.
+ * @return {object|null}
+ */
+function readStoredPrefs(customerId) {
+	const raw = globalThis.localStorage?.getItem(prefsKey(customerId))
+	if (!raw) return null
+	const parsed = JSON.parse(raw)
+	return parsed && typeof parsed === 'object' ? parsed : null
+}
+
+/**
+ * Whether stored preferences are older than their time to live.
+ *
+ * @param {object} prefs The stored preferences.
+ * @return {boolean}
+ */
+function isExpired(prefs) {
+	return Boolean(prefs.savedAt) && Date.now() - prefs.savedAt > PREFS_TTL_MS
 }
 
 /**
