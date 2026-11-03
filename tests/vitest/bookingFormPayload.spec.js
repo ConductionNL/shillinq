@@ -42,7 +42,10 @@ describe('BookingForm.postBooking', () => {
 	beforeEach(() => {
 		globalThis.OC = { requestToken: 'tok' }
 		globalThis.t = (app, text) => text
-		globalThis.fetch = vi.fn(async () => ({ status: 201, json: async () => ({ id: 'bk-new' }) }))
+		globalThis.fetch = vi.fn(async () => ({
+			status: 201,
+			json: async () => ({ id: 'bk-new' }),
+		}))
 	})
 
 	afterEach(() => {
@@ -55,13 +58,17 @@ describe('BookingForm.postBooking', () => {
 		await BookingForm.methods.postBooking.call(makeForm('confirmed'), false)
 		const [url, init] = globalThis.fetch.mock.calls[0]
 		const body = JSON.parse(init.body)
-		expect(url).toMatch(/\/apps\/shillinq\/api\/v2\/calendars\/cal-001\/bookings$/)
+		expect(url).toMatch(
+			/\/apps\/shillinq\/api\/v2\/calendars\/cal-001\/bookings$/,
+		)
 		expect(body).not.toHaveProperty('status')
 		expect(body.confirm).toBe(true)
 		expect(body.overrideConflict).toBe(false)
 
 		await BookingForm.methods.postBooking.call(makeForm('pending'), false)
-		expect(JSON.parse(globalThis.fetch.mock.calls[1][1].body).confirm).toBe(false)
+		expect(JSON.parse(globalThis.fetch.mock.calls[1][1].body).confirm).toBe(
+			false,
+		)
 	})
 
 	it('sends the conflict override as overrideConflict, not as ?force=1', async () => {
