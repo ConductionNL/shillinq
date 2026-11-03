@@ -65,6 +65,7 @@ class HrmqCostRateServiceStub {
  * structural test below pins that no hrmq type appears in the constructor.
  *
  * @covers \OCA\Shillinq\Service\HrmqCostRateAdapter
+ * @uses \OCA\Shillinq\Util\ObjectIdentifier
  */
 class HrmqCostRateAdapterTest extends TestCase {
 
