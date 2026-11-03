@@ -109,10 +109,22 @@ export default {
 			}).format(numeric / 100)
 		},
 
+		/**
+		 * The translated text shown when the records cannot be loaded.
+		 *
+		 * @return {string} The text.
+		 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+		 */
 		loadFailedText() {
 			return this.t('shillinq', 'Failed to load chart of accounts.')
 		},
 
+		/**
+		 * Load the records this picker offers.
+		 *
+		 * @return {Promise<void>} Resolves when loaded.
+		 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+		 */
 		async fetchAccounts() {
 			const params = { _limit: 500 }
 			if (this.administrationId) {

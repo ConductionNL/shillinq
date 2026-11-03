@@ -102,10 +102,22 @@ export default {
 			return [code, name].filter(Boolean).join(' · ')
 		},
 
+		/**
+		 * The translated text shown when the records cannot be loaded.
+		 *
+		 * @return {string} The text.
+		 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+		 */
 		loadFailedText() {
 			return this.t('shillinq', 'Failed to load BBV programmes.')
 		},
 
+		/**
+		 * Load the records this picker offers.
+		 *
+		 * @return {Promise<void>} Resolves when loaded.
+		 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+		 */
 		async fetchProgrammes() {
 			const params = {
 				fiscalYear: this.fiscalYear,
