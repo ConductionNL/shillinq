@@ -81,8 +81,19 @@ describe('invoiceQuickDraft — request', () => {
 			reference: 'PO-42',
 			glAccount: '8000',
 			lines: [
-				{ description: ' Consulting ', quantity: '2', unitPrice: '100', vatRate: 21 },
-				{ description: 'Hosting', quantity: 1, unitPrice: 10, vatRate: 9, glAccount: '8100' },
+				{
+					description: ' Consulting ',
+					quantity: '2',
+					unitPrice: '100',
+					vatRate: 21,
+				},
+				{
+					description: 'Hosting',
+					quantity: 1,
+					unitPrice: 10,
+					vatRate: 9,
+					glAccount: '8100',
+				},
 				{ description: '', quantity: 1, unitPrice: 0, vatRate: 21 },
 			],
 		})
@@ -93,8 +104,19 @@ describe('invoiceQuickDraft — request', () => {
 			reference: 'PO-42',
 			glAccount: '8000',
 			lines: [
-				{ description: 'Consulting', quantity: 2, unitPrice: 100, vatRate: 21 },
-				{ description: 'Hosting', quantity: 1, unitPrice: 10, vatRate: 9, glAccount: '8100' },
+				{
+					description: 'Consulting',
+					quantity: 2,
+					unitPrice: 100,
+					vatRate: 21,
+				},
+				{
+					description: 'Hosting',
+					quantity: 1,
+					unitPrice: 10,
+					vatRate: 9,
+					glAccount: '8100',
+				},
 			],
 		})
 	})
@@ -105,7 +127,15 @@ describe('invoiceQuickDraft — request', () => {
 			invoiceDate: '2026-02-01',
 			lines: [{ description: 'X', quantity: 1, unitPrice: 10, vatRate: 21 }],
 		})
-		for (const key of ['netAmount', 'vatAmount', 'grossAmount', 'invoiceNumber', 'lifecycleState', 'administrationId', 'periodId']) {
+		for (const key of [
+			'netAmount',
+			'vatAmount',
+			'grossAmount',
+			'invoiceNumber',
+			'lifecycleState',
+			'administrationId',
+			'periodId',
+		]) {
 			expect(body).not.toHaveProperty(key)
 		}
 	})

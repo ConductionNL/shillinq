@@ -64,6 +64,9 @@ export function registerFinancialDocumentsLeaf(globalRef) {
 	} catch (e) {
 		// First registration wins (AD-13); the app bundle and the init script both register.
 		// eslint-disable-next-line no-console
-		console.warn('[shillinq] the financial documents panel was already registered', e)
+		console.warn(
+			'[shillinq] the financial documents panel was already registered',
+			e,
+		)
 	}
 }

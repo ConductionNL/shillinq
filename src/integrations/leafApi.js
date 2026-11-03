@@ -177,7 +177,12 @@ export function formatAmount(amount, currency) {
  */
 export async function issueInvoice({ register, schema, objectId }, invoice) {
 	const url = generateUrl('/apps/shillinq/api/financial-documents/invoices')
-	const response = await axios.post(url, { register, schema, objectId, ...invoice })
+	const response = await axios.post(url, {
+		register,
+		schema,
+		objectId,
+		...invoice,
+	})
 	return response.data || {}
 }
 
@@ -189,7 +194,10 @@ export async function issueInvoice({ register, schema, objectId }, invoice) {
  * @return {Promise<object>} `{ request }`.
  */
 export async function requestInvoicePayment(invoiceId) {
-	const url = generateUrl('/apps/shillinq/api/financial-documents/invoices/{invoiceId}/payment-request', { invoiceId })
+	const url = generateUrl(
+		'/apps/shillinq/api/financial-documents/invoices/{invoiceId}/payment-request',
+		{ invoiceId },
+	)
 	const response = await axios.post(url, {})
 	return response.data || {}
 }
@@ -220,7 +228,10 @@ export async function createQuote({ register, schema, objectId }, quote) {
  * @return {Promise<object>} `{ creditNote: { id } }`.
  */
 export async function creditInvoice(invoiceId) {
-	const url = generateUrl('/apps/shillinq/api/financial-documents/invoices/{invoiceId}/credit', { invoiceId })
+	const url = generateUrl(
+		'/apps/shillinq/api/financial-documents/invoices/{invoiceId}/credit',
+		{ invoiceId },
+	)
 	const response = await axios.post(url, {})
 	return response.data || {}
 }
