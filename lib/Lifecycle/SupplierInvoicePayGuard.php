@@ -30,6 +30,7 @@ namespace OCA\Shillinq\Lifecycle;
 use OCA\OpenRegister\Lifecycle\GuardResult;
 use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
 use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -82,25 +83,35 @@ final class SupplierInvoicePayGuard implements LifecycleGuardInterface {
 		}
 
 		try {
-			$rows = $this->container->get('OCA\OpenRegister\Service\ObjectService')
-				->setRegister($this->settingsService->getRegisterSlug())
-				->setSchema('APTransaction')
-				->findAll(['filters' => ['id' => $apTransactionId], 'limit' => 1], false, false);
+			$transaction = ObjectIdentifier::findOne(
+				scoped: $this->container->get('OCA\OpenRegister\Service\ObjectService')
+					->setRegister($this->settingsService->getRegisterSlug())
+					->setSchema('APTransaction'),
+				id: $apTransactionId,
+				scope: ['_rbac' => false]
+			);
 		} catch (Throwable $e) {
 			$this->logger->error('SupplierInvoicePayGuard: AP transaction lookup failed; refusing', ['exception' => $e->getMessage()]);
 			return GuardResult::deny(self::MESSAGE);
 		}
 
-		foreach ((array)$rows as $row) {
-			if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-				$row = $row->jsonSerialize();
-			}
-
-			if (is_array($row) === true && (string)($row['state'] ?? '') === 'paid') {
-				return GuardResult::allow();
-			}
+		if ($transaction !== null && $this->isPaidTransactionOf(transaction: $transaction, invoice: $object) === true) {
+			return GuardResult::allow();
 		}
 
 		return GuardResult::deny(self::MESSAGE);
 	}//end check()
+
+	/**
+	 * Whether the transaction is paid and booked in the invoice's administration.
+	 *
+	 * @param array<string, mixed> $transaction The AP transaction.
+	 * @param array<string, mixed> $invoice     The supplier invoice.
+	 *
+	 * @return bool
+	 */
+	private function isPaidTransactionOf(array $transaction, array $invoice): bool {
+		return (string)($transaction['state'] ?? '') === 'paid'
+			&& (string)($transaction['administrationId'] ?? '') === (string)($invoice['administrationId'] ?? '');
+	}//end isPaidTransactionOf()
 }//end class

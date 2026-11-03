@@ -94,9 +94,13 @@ final class PurchasingGuardsTest extends TestCase {
 			public function setSchema($s): self {
 				return $this;
 			}
-			public function findAll(array $config = [], bool $rbac = true, bool $multi = true): array {
-				$id = ($config['filters']['id'] ?? '');
-				return array_values(array_filter($this->rows, fn (array $r): bool => $r['id'] === $id));
+			public function find(string $id, bool $_rbac = true, bool $_multitenancy = true): array {
+				foreach ($this->rows as $row) {
+					if ($row['id'] === $id) {
+						return $row;
+					}
+				}
+				throw new \RuntimeException('DoesNotExist');
 			}
 		};
 		$container = $this->createMock(ContainerInterface::class);
