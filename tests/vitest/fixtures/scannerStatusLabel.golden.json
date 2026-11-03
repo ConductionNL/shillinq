@@ -505,7 +505,7 @@
 	},
 	"63": {
 		"label": {
-			"value": "Sync failed; retry in 1s"
+			"value": "Sync failed; retry in 2s"
 		},
 		"color": {
 			"value": "yellow"
@@ -985,7 +985,7 @@
 	},
 	"123": {
 		"label": {
-			"value": "Sync failed; retry in 0s"
+			"value": "Sync failed; retry in 2s"
 		},
 		"color": {
 			"value": "yellow"
@@ -1601,7 +1601,7 @@
 	},
 	"200": {
 		"label": {
-			"value": "Sync failed; retry in 0s"
+			"value": "Sync failed; retry in 1s"
 		},
 		"color": {
 			"value": "yellow"
@@ -2161,7 +2161,7 @@
 	},
 	"270": {
 		"label": {
-			"value": "Sync failed; retry in 0s"
+			"value": "Sync failed; retry in 2s"
 		},
 		"color": {
 			"value": "yellow"
@@ -2393,7 +2393,7 @@
 	},
 	"299": {
 		"label": {
-			"value": "Sync failed; retry in 0s"
+			"value": "Sync failed; retry in 1s"
 		},
 		"color": {
 			"value": "yellow"

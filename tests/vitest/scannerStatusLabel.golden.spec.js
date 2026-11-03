@@ -43,7 +43,7 @@ describe('scanner status label golden', () => {
 				syncState: r.pick(states),
 				lastSyncedAt: r.pick([null, '', '2026-11-03 10:00']),
 				pendingCount: r.pick([0, 3, -1, null]),
-				retryInMs: r.pick([0, 1500, 999, null, undefined, 'x']),
+				retryInMs: r.pick([0, 1500, 1200, 999, null, undefined, 'x']),
 			})
 			check(`${i}`, {
 				label: outcome(() => store.statusLabel),
