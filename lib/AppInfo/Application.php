@@ -21,7 +21,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\AppInfo;
 
-use OCA\OpenRegister\AppHost\Bootstrap;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Contract\RegisterSlugResolverInterface;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
@@ -132,7 +131,6 @@ use OCA\Shillinq\Service\Payment\MolliePaymentProvider;
 use OCA\Shillinq\Service\Payment\PaymentProviderInterface;
 use OCA\Shillinq\Service\Peppol\LogPeppolTransmissionAdapter;
 use OCA\Shillinq\Service\Peppol\PeppolTransmissionPortInterface;
-use OCA\Shillinq\Service\Pipelinq\CustomerBridgeMetricsService;
 use OCA\Shillinq\Service\Pipelinq\LoggingPipelinqAdminNotifier;
 use OCA\Shillinq\Service\Pipelinq\PersistentTimelineRetryQueue;
 use OCA\Shillinq\Service\Pipelinq\PipelinqAdminNotifier;
@@ -248,7 +246,7 @@ class Application extends App implements IBootstrap {
 		// register-slug resolution). Bootstrap::register() is intentionally not
 		// used: it would alias those onto generics that do not match shillinq's
 		// behaviour. See openspec/changes/adopt-apphost.
-		$this->registerAppHostGenerics(context: $context);
+		(new AppHostRegistration())->register(context: $context);
 
 		// Register deep link patterns with OpenRegister's unified search provider.
 		// Only fires when OpenRegister is installed and dispatches the event.
@@ -1135,161 +1133,6 @@ class Application extends App implements IBootstrap {
 		(new BbvValidationRegistration())->register(context: $context);
 
 	}//end register()
-
-	/**
-	 * Wire the OpenRegister AppHost generic controllers + the metrics provider.
-	 *
-	 * Re-points shillinq's mechanical skeleton classes at the engine generics:
-	 *
-	 *   - `Controller\DashboardController` → GenericDashboardController (the SPA
-	 *     shell + history-mode catch-all — identical behaviour).
-	 *   - `Controller\HealthController` → GenericHealthController (now a real
-	 *     `database` + `orAvailable` check driven by the manifest, replacing the
-	 *     hardcoded `{status:ok}` literal).
-	 *   - `Controller\MetricsController` → GenericMetricsController (Prometheus
-	 *     0.0.4, replacing the ADR-006-violating JSON snapshot — the documented
-	 *     intentional contract change).
-	 *
-	 * The customer-bridge metrics service is registered as the app's
-	 * {@see \OCA\OpenRegister\AppHost\IMetricsProvider} under the ADR-035 alias
-	 * `…IMetricsProvider::shillinq`, so the manifest `{"kind":"provider"}`
-	 * descriptor merges its series into the generic Prometheus exposition.
-	 *
-	 * All references to OCA\OpenRegister\AppHost\… are STRINGS resolved inside
-	 * closures, so a disabled OpenRegister never fatals bootstrap.
-	 *
-	 * @param IRegistrationContext $context The registration context.
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/specs/apphost-adoption/spec.md
-	 */
-	private function registerAppHostGenerics(IRegistrationContext $context): void {
-		$appId = self::APP_ID;
-
-		$context->registerService(
-			'OCA\\Shillinq\\Controller\\DashboardController',
-			static function (ContainerInterface $c) use ($appId) {
-				$class = 'OCA\\OpenRegister\\AppHost\\Controller\\GenericDashboardController';
-				return new $class(
-					appName: $appId,
-					request: $c->get('OCP\\IRequest')
-				);
-			}
-		);
-
-		$context->registerService(
-			'OCA\\Shillinq\\Controller\\HealthController',
-			static function (ContainerInterface $c) use ($appId) {
-				$class = 'OCA\\OpenRegister\\AppHost\\Controller\\GenericHealthController';
-				return new $class(
-					appName: $appId,
-					request: $c->get('OCP\\IRequest'),
-					manifestLoader: $c->get('OCA\\OpenRegister\\AppHost\\Observability\\ManifestLoader'),
-					executor: $c->get('OCA\\OpenRegister\\AppHost\\Observability\\HealthCheckExecutor')
-				);
-			}
-		);
-
-		$context->registerService(
-			'OCA\\Shillinq\\Controller\\MetricsController',
-			static function (ContainerInterface $c) use ($appId) {
-				$class = 'OCA\\OpenRegister\\AppHost\\Controller\\GenericMetricsController';
-				return new $class(
-					appName: $appId,
-					request: $c->get('OCP\\IRequest'),
-					manifestLoader: $c->get('OCA\\OpenRegister\\AppHost\\Observability\\ManifestLoader'),
-					engine: $c->get('OCA\\OpenRegister\\AppHost\\Observability\\MetricsEngine')
-				);
-			}
-		);
-
-		// Mechanical admin-settings + section → engine generics (the generic
-		// AdminSettings also upgrades the plain ISettings to the
-		// IDelegatedSettings #299 pattern). info.xml references the LEAF class
-		// names (OCA\Shillinq\Settings\AdminSettings / Sections\SettingsSection)
-		// so Nextcloud's settings Manager resolves them through Shillinq's own
-		// DI container — where these factories inject the leaf metadata (appId,
-		// section id "shillinq", priority, icon). Registering under the generic
-		// OCA\OpenRegister\... names instead would route resolution to
-		// OpenRegister's container, which has no appId bound, fatally blanking
-		// every settings page in the instance.
-		$context->registerService(
-			'OCA\\Shillinq\\Settings\\AdminSettings',
-			static function (ContainerInterface $c) use ($appId) {
-				$class = 'OCA\\OpenRegister\\AppHost\\Settings\\GenericAdminSettings';
-				return new $class(
-					appId: $appId,
-					sectionId: $appId,
-					priority: 10,
-					appManager: $c->get('OCP\\App\\IAppManager'),
-					initialState: $c->get('OCP\\AppFramework\\Services\\IInitialState'),
-					appConfig: $c->get('OCP\\IAppConfig')
-				);
-			}
-		);
-
-		$context->registerService(
-			'OCA\\Shillinq\\Sections\\SettingsSection',
-			static function (ContainerInterface $c) use ($appId) {
-				$class = 'OCA\\OpenRegister\\AppHost\\Settings\\GenericSettingsSection';
-				return new $class(
-					sectionId: $appId,
-					name: 'Shillinq',
-					appId: $appId,
-					iconFile: 'app-dark.svg',
-					priority: 75,
-					urlGenerator: $c->get('OCP\\IURLGenerator')
-				);
-			}
-		);
-
-		// ADR-035 provider discovery: expose the customer-bridge counters to the
-		// observability engine's `{"kind":"provider"}` metric descriptor.
-		$context->registerService(
-			'OCA\\OpenRegister\\AppHost\\IMetricsProvider::' . $appId,
-			static function (ContainerInterface $c): CustomerBridgeMetricsService {
-				return $c->get(CustomerBridgeMetricsService::class);
-			}
-		);
-
-		$this->bindStoreController(context: $context);
-
-	}//end registerAppHostGenerics()
-
-	/**
-	 * Alias `Controller\StoreController` to OpenRegister's generic store
-	 * controller, which serves the `store#search` and `store#install` routes
-	 * that `Routes::standard()` declares.
-	 *
-	 * The class_exists() guard stays in this method: psalm relies on it to
-	 * accept the Bootstrap call and does not carry that narrowing across a call.
-	 *
-	 * @param IRegistrationContext $context The registration context.
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/specs/apphost-adoption/spec.md
-	 */
-	private function bindStoreController(IRegistrationContext $context): void {
-		// Gate-64: apphost-prelude exclude OpenRegisterAutoloader::register() below is the prelude.
-		OpenRegisterAutoloader::register();
-
-		if (class_exists(Bootstrap::class) === true) {
-			try {
-				Bootstrap::aliasStoreController(
-					context: $context,
-					appId: self::APP_ID,
-					controllerNs: 'OCA\\Shillinq\\Controller'
-				);
-			} catch (\Throwable) {
-				// An OpenRegister older than the helper, or present but
-				// unloadable: the store routes stay unbound and every other
-				// registration still runs.
-			}
-		}
-
-	}//end bindStoreController()
 
 	/**
 	 * Boot the application.
