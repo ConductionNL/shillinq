@@ -462,6 +462,14 @@
         ]
     ],
     [
+        "registerEventListener",
+        [
+            "'OCA\\\\OpenRegister\\\\Event\\\\ObjectUpdatingEvent'",
+            "'OCA\\\\Shillinq\\\\Listener\\\\SupplierInvoiceApBindingLockListener'",
+            "0"
+        ]
+    ],
+    [
         "registerService",
         [
             "'OCA\\\\Shillinq\\\\Lifecycle\\\\RuleComplianceGuard::validateTransaction'",
