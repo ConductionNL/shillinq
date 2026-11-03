@@ -94,10 +94,14 @@ final class PurchasingGuardsTest extends TestCase {
 			public function setSchema($s): self {
 				return $this;
 			}
-			public function find(string $id, bool $_rbac = true, bool $_multitenancy = true): array {
+			public function find(string $id, ...$named): ObjectEntity {
 				foreach ($this->rows as $row) {
 					if ($row['id'] === $id) {
-						return $row;
+						$entity = new ObjectEntity();
+						$entity->setRegister('shillinq');
+						$entity->setSchema('APTransaction');
+						$entity->setObject($row + ['administrationId' => 'adm-1']);
+						return $entity;
 					}
 				}
 				throw new \RuntimeException('DoesNotExist');
@@ -107,13 +111,15 @@ final class PurchasingGuardsTest extends TestCase {
 		$container->method('get')->willReturn($objectService);
 		$settings = $this->createMock(SettingsService::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
-		return new SupplierInvoicePayGuard($container, $settings, $this->createMock(LoggerInterface::class));
+		$schemas = $this->createMock(ListenerSchemaResolver::class);
+		$schemas->method('matchesRegisterAndSchema')->willReturn(true);
+		return new SupplierInvoicePayGuard($container, $settings, $this->createMock(LoggerInterface::class), $schemas);
 	}
 
 	public function testInvoiceIsPaidOnlyWhenItsApTransactionIsPaid(): void {
 		$guard = $this->payGuard([['id' => 'ap-paid', 'state' => 'paid'], ['id' => 'ap-open', 'state' => 'issued']]);
-		self::assertTrue($guard->check(['apTransactionId' => 'ap-paid'], 'pay', 'ann')->isAllowed());
-		self::assertFalse($guard->check(['apTransactionId' => 'ap-open'], 'pay', 'ann')->isAllowed());
+		self::assertTrue($guard->check(['apTransactionId' => 'ap-paid', 'administrationId' => 'adm-1'], 'pay', 'ann')->isAllowed());
+		self::assertFalse($guard->check(['apTransactionId' => 'ap-open', 'administrationId' => 'adm-1'], 'pay', 'ann')->isAllowed());
 		self::assertFalse($guard->check(['apTransactionId' => 'ap-missing'], 'pay', 'ann')->isAllowed());
 		self::assertFalse($guard->check([], 'pay', 'ann')->isAllowed());
 	}
