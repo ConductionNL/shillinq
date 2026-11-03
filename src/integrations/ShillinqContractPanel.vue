@@ -16,7 +16,10 @@
  stop work that is in fact funded (REQ-FPCR-005).
 -->
 <template>
-	<div v-if="!summarised" class="shillinq-contract-panel" data-testid="shillinq-contract-panel">
+	<div
+		v-if="!summarised"
+		class="shillinq-contract-panel"
+		data-testid="shillinq-contract-panel">
 		<NcLoadingIcon v-if="loading" :size="24" />
 
 		<div v-else-if="error" class="shillinq-leaf__error" role="alert">
@@ -129,7 +132,10 @@ export default {
 				count: this.contracts.length,
 				emptyLabel: this.emptyLabel,
 				noun: t('shillinq', 'contract'),
-				rows: this.contracts.map((contract) => ({ label: this.titleOf(contract), icon: 'FileDocumentOutline' })),
+				rows: this.contracts.map((contract) => ({
+					label: this.titleOf(contract),
+					icon: 'FileDocumentOutline',
+				})),
 			}
 		},
 
