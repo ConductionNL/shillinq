@@ -1,0 +1,170 @@
+KILLED L172 '!== null'->'=== null': if (quote === null) {
+KILLED L173 ' && '->' || ': if (c === quote || prev !== '\\') {
+KILLED L176 '\\bcontinue\\b'->'break': break
+KILLED L178 ' \\|\\| '->' && ': if (c === "'" && c === '"' || c === '`') {
+KILLED L178 ' \\|\\| '->' && ': if (c === "'" || c === '"' && c === '`') {
+KILLED L180 '\\bcontinue\\b'->'break': break
+KILLED L182 ' && '->' || ': if (c === '/' || src[i + 1] === '/') {
+KILLED L182 '\\+ 1\\b'->'+ 2': if (c === '/' && src[i + 2] === '/') {
+KILLED L184 '=== -1'->'!== -1': i = nl !== -1 ? src.length : nl
+KILLED L185 '\\bcontinue\\b'->'break': break
+KILLED L187 ' && '->' || ': if (c === '/' || src[i + 1] === '*') {
+KILLED L187 '\\+ 1\\b'->'+ 2': if (c === '/' && src[i + 2] === '*') {
+KILLED L189 '=== -1'->'!== -1': i = end !== -1 ? src.length : end + 1
+KILLED L189 '\\+ 1\\b'->'+ 2': i = end === -1 ? src.length : end + 2
+KILLED L190 '\\bcontinue\\b'->'break': break
+KILLED L192 ' && '->' || ': if (c === '#' || open === '(') {
+KILLED L192 "=== '\\('"->"!== '('": if (c === '#' && open !== '(') {
+KILLED L194 '=== -1'->'!== -1': i = nl !== -1 ? src.length : nl
+KILLED L195 '\\bcontinue\\b'->'break': break
+KILLED L198 'depth\\+\\+'->'depth--': depth--
+KILLED L201 '=== 0'->'!== 0': if (depth !== 0) {
+KILLED L202 '\\+ 1\\b'->'+ 2': return src.slice(from + 2, i)
+KILLED L224 '!== null'->'=== null': if (quote === null) {
+KILLED L226 ' && '->' || ': if (c === quote || prev !== '\\') {
+KILLED L229 '\\bcontinue\\b'->'break': break
+KILLED L231 ' \\|\\| '->' && ': if (c === "'" && c === '"' || c === '`') {
+KILLED L231 ' \\|\\| '->' && ': if (c === "'" || c === '"' && c === '`') {
+KILLED L234 '\\bcontinue\\b'->'break': break
+KILLED L236 ' && '->' || ': if (c === '/' || body[i + 1] === '/') {
+KILLED L236 '\\+ 1\\b'->'+ 2': if (c === '/' && body[i + 2] === '/') {
+KILLED L238 '=== -1'->'!== -1': i = nl !== -1 ? body.length : nl
+KILLED L239 '\\bcontinue\\b'->'break': break
+KILLED L241 ' && '->' || ': if (c === '/' || body[i + 1] === '*') {
+KILLED L241 '\\+ 1\\b'->'+ 2': if (c === '/' && body[i + 2] === '*') {
+KILLED L243 '=== -1'->'!== -1': i = end !== -1 ? body.length : end + 1
+SURVIVED L243 '\\+ 1\\b'->'+ 2': i = end === -1 ? body.length : end + 2
+KILLED L244 '\\bcontinue\\b'->'break': break
+KILLED L248 '=== -1'->'!== -1': i = nl !== -1 ? body.length : nl
+KILLED L249 '\\bcontinue\\b'->'break': break
+KILLED L251 ' \\|\\| '->' && ': if (c === '(' && c === '[' || c === '{') {
+KILLED L251 ' \\|\\| '->' && ': if (c === '(' || c === '[' && c === '{') {
+KILLED L251 "=== '\\('"->"!== '('": if (c !== '(' || c === '[' || c === '{') {
+KILLED L252 'depth\\+\\+'->'depth--': depth--
+KILLED L253 ' \\|\\| '->' && ': } else if (c === ')' && c === ']' || c === '}') {
+KILLED L253 ' \\|\\| '->' && ': } else if (c === ')' || c === ']' && c === '}') {
+KILLED L256 '=== 0'->'!== 0': if (c === ',' && depth !== 0) {
+KILLED L256 ' && '->' || ': if (c === ',' || depth === 0) {
+KILLED L257 '\\.trim\\(\\)'->'': parts.push(current)
+KILLED L257 '\\.push\\('->'.slice(': parts.slice(current.trim())
+KILLED L259 '\\bcontinue\\b'->'break': break
+KILLED L263 '\\.trim\\(\\)'->'': if (current !== '') {
+KILLED L264 '\\.trim\\(\\)'->'': parts.push(current)
+KILLED L264 '\\.push\\('->'.slice(': parts.slice(current.trim())
+SURVIVED L374 '\\bcontinue\\b'->'break': break
+KILLED L379 '=== null'->'!== null': if (cls !== null) {
+SURVIVED L380 '\\bcontinue\\b'->'break': break
+KILLED L394 '!== -1'->'=== -1': while ((idx = src.indexOf('new LeafDescriptor(', idx)) === -1) {
+KILLED L400 '=== null'->'!== null': if (m !== null) {
+KILLED L401 '\\bcontinue\\b'->'break': break
+KILLED L404 '!== null'->'=== null': if (value === null) {
+KILLED L415 '\\.push\\('->'.slice(': faces.slice(face)
+KILLED L416 '\\+ 1\\b'->'+ 2': idx = open + 2
+KILLED L423 '=== false'->'=== true': if (isProvider === true) {
+KILLED L424 '\\bcontinue\\b'->'break': break
+KILLED L439 '=== null'->'!== null': if (sig !== null) {
+KILLED L440 '\\bcontinue\\b'->'break': break
+KILLED L444 '=== null'->'!== null': if (ret !== null) {
+KILLED L445 '\\bcontinue\\b'->'break': break
+KILLED L448 '!== null'->'=== null': if (value === null) {
+KILLED L463 '\\.push\\('->'.slice(': faces.slice(face)
+KILLED L585 ' \\|\\| '->' && ': (n) => n.endsWith('.js') && n.endsWith('.ts') || n.endsWith('.vue'),
+KILLED L585 ' \\|\\| '->' && ': (n) => n.endsWith('.js') || n.endsWith('.ts') && n.endsWith('.vue'),
+SURVIVED L592 '\\bcontinue\\b'->'break': break
+KILLED L606 '=== false'->'=== true': src.includes('registerIntegration') === true
+KILLED L607 '=== false'->'=== true': && src.includes('integrations.register') === true
+KILLED L609 '\\bcontinue\\b'->'break': break
+KILLED L618 '!== null'->'=== null': while ((m = re.exec(src)) === null) {
+KILLED L620 '=== true'->'=== false': if (/function\s+$/.test(before) === false) {
+KILLED L621 '\\bcontinue\\b'->'break': break // the library's own `export function registerIntegration(`
+KILLED L624 '\\.trim\\(\\)'->'': let argText = balanced(src, open)
+KILLED L625 '=== false'->'=== true': if (argText.startsWith('{') === true) {
+KILLED L629 '=== null'->'!== null': if (ident !== null || objects[ident[1]] === undefined) {
+KILLED L629 '=== undefined'->'!== undefined': if (ident === null || objects[ident[1]] !== undefined) {
+KILLED L629 ' \\|\\| '->' && ': if (ident === null && objects[ident[1]] === undefined) {
+KILLED L630 '\\bcontinue\\b'->'break': break
+KILLED L637 '!== null'->'=== null': if (spread === null) {
+KILLED L638 '\\.push\\('->'.slice(': reg.spreads.slice(spread[1])
+KILLED L639 '\\bcontinue\\b'->'break': break
+KILLED L645 '=== null'->'!== null': if (kv !== null) {
+KILLED L646 '\\bcontinue\\b'->'break': break
+KILLED L648 ' \\|\\| '->' && ': const key = kv[1] && kv[2] || kv[3]
+KILLED L648 ' \\|\\| '->' && ': const key = kv[1] || kv[2] && kv[3]
+KILLED L649 '\\.push\\('->'.slice(': reg.keys.slice(key)
+KILLED L651 '=== undefined'->'!== undefined': const value = kv[4] !== undefined ? null : resolveJs(kv[4], locals)
+KILLED L652 '!== null'->'=== null': if (value === null) {
+KILLED L657 '!== undefined'->'=== undefined': && kv[4] === undefined
+KILLED L658 '=== true'->'=== false': && kv[4].trim().startsWith('{') === false
+SURVIVED L658 '\\.trim\\(\\)'->'': && kv[4].startsWith('{') === true
+SURVIVED L661 '\\.trim\\(\\)'->'': for (const cfg of splitTopLevel(balanced(kv[4], 0))) {
+KILLED L666 '=== null'->'!== null': if (ckv !== null) {
+KILLED L667 '\\bcontinue\\b'->'break': break
+KILLED L671 ' \\|\\| '->' && ': reg.offlineConfig[ckv[1] && ckv[2] || ckv[3]] = cvalue
+KILLED L671 ' \\|\\| '->' && ': reg.offlineConfig[ckv[1] || ckv[2] && ckv[3]] = cvalue
+KILLED L686 '\\.push\\('->'.slice(': regs.slice(reg)
+KILLED L875 '!== null'->'=== null': if (r.id === null) {
+KILLED L881 '!== null'->'=== null': if (f.id === null) {
+KILLED L889 '=== null'->'!== null': if (r.id !== null) {
+KILLED L890 '\\bcontinue\\b'->'break': break // identity inherited from a spread — covered by R5
+KILLED L893 '=== null'->'!== null': const mode = r.renderMode !== null ? 'component' : r.renderMode
+KILLED L893 "'component'"->"'mount'": const mode = r.renderMode === null ? 'mount' : r.renderMode
+KILLED L896 '=== false'->'=== true': if (r.keys.includes(key) === true) {
+KILLED L897 '\\.push\\('->'.slice(': failures.slice(
+KILLED L910 '=== null'->'!== null': if (f.id !== null) {
+KILLED L911 '\\.push\\('->'.slice(': failures.slice(
+KILLED L915 '\\bcontinue\\b'->'break': break
+KILLED L918 '=== true'->'=== false': if (jsById.has(f.id) === false) {
+KILLED L919 '\\bcontinue\\b'->'break': break
+KILLED L938 '=== false'->'=== true': if (f.renderSurface === true) {
+KILLED L939 '=== true'->'=== false': if (srcLiterals.has(f.id) === false) {
+KILLED L940 '\\bcontinue\\b'->'break': break
+KILLED L942 '\\.push\\('->'.slice(': failures.slice(
+KILLED L949 '\\bcontinue\\b'->'break': break
+KILLED L951 '\\.push\\('->'.slice(': failures.slice(
+KILLED L958 '=== null'->'!== null': if (r.id !== null) {
+KILLED L959 '\\bcontinue\\b'->'break': break
+KILLED L962 '=== false'->'=== true': if (faceById.has(r.id) === true) {
+KILLED L963 '\\.push\\('->'.slice(': failures.slice(
+KILLED L977 '=== null'->'!== null': if (r === undefined || f.renderMode !== null || r.renderMode === null) {
+KILLED L977 '=== null'->'!== null': if (r === undefined || f.renderMode === null || r.renderMode !== null) {
+KILLED L977 '=== undefined'->'!== undefined': if (r !== undefined || f.renderMode === null || r.renderMode === null) {
+KILLED L977 ' \\|\\| '->' && ': if (r === undefined && f.renderMode === null || r.renderMode === null) {
+KILLED L977 ' \\|\\| '->' && ': if (r === undefined || f.renderMode === null && r.renderMode === null) {
+KILLED L978 '\\bcontinue\\b'->'break': break
+KILLED L982 '\\.push\\('->'.slice(': failures.slice(
+KILLED L1002 '=== undefined'->'!== undefined': if (r !== undefined) {
+KILLED L1003 '\\bcontinue\\b'->'break': break
+KILLED L1008 '=== undefined'->'!== undefined': if (left !== undefined || right === undefined) {
+KILLED L1008 '=== undefined'->'!== undefined': if (left === undefined || right !== undefined) {
+KILLED L1008 ' \\|\\| '->' && ': if (left === undefined && right === undefined) {
+KILLED L1009 '\\bcontinue\\b'->'break': break
+KILLED L1012 '=== false'->'=== true': if (sameValue(left, right) === true) {
+KILLED L1013 '\\.push\\('->'.slice(': failures.slice(
+KILLED L1028 '=== null'->'!== null': if (source !== null) {
+KILLED L1029 '\\.push\\('->'.slice(': failures.slice(
+KILLED L1035 '\\.push\\('->'.slice(': failures.slice(
+KILLED L1043 '=== null'->'!== null': if (r.id !== null && r.spreads.length === 0) {
+KILLED L1043 '=== 0'->'!== 0': if (r.id === null && r.spreads.length !== 0) {
+KILLED L1043 ' && '->' || ': if (r.id === null || r.spreads.length === 0) {
+KILLED L1044 '\\.push\\('->'.slice(': failures.slice(
+KILLED L1054 '=== undefined'->'!== undefined': if (r.offlineConfig !== undefined) {
+KILLED L1055 '\\bcontinue\\b'->'break': break
+KILLED L1057 '=== 0'->'!== 0': if (schemaFiles !== 0) {
+KILLED L1058 '\\.push\\('->'.slice(': failures.slice(
+SURVIVED L1063 '\\bcontinue\\b'->'break': break
+KILLED L1068 '=== undefined'->'!== undefined': if (slug !== undefined) {
+KILLED L1069 '\\bcontinue\\b'->'break': break
+KILLED L1072 '=== false'->'=== true': if (Object.hasOwn(schemas, slug) === true) {
+KILLED L1073 '\\.push\\('->'.slice(': failures.slice(
+KILLED L1082 '=== undefined'->'!== undefined': if (prop !== undefined || planned === undefined) {
+KILLED L1082 '=== undefined'->'!== undefined': if (prop === undefined || planned !== undefined) {
+KILLED L1082 ' \\|\\| '->' && ': if (prop === undefined && planned === undefined) {
+KILLED L1083 '\\bcontinue\\b'->'break': break
+KILLED L1086 '=== undefined'->'!== undefined': if (props !== undefined) {
+SURVIVED L1087 '\\bcontinue\\b'->'break': break // already reported by the schema loop above
+KILLED L1090 '=== false'->'=== true': if (props.includes(prop) === true) {
+KILLED L1091 '\\.push\\('->'.slice(': failures.slice(
+KILLED L1108 '=== 0'->'!== 0': if (failures.length !== 0) {
+KILLED L1112 '=== true'->'=== false': if (Object.values(counts).every((n) => n === 0) === false) {
+KILLED L1112 '=== 0'->'!== 0': if (Object.values(counts).every((n) => n !== 0) === true) {
+TOTAL 169 killed 161 survived 8

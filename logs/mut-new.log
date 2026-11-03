@@ -1,0 +1,142 @@
+KILLED L178 '!== null'->'=== null': if (scan.quote === null) {
+KILLED L182 '=== true'->'=== false': if (QUOTES.includes(scan.text[i]) === false) {
+KILLED L198 ' && '->' || ': if (scan.text[i] === scan.quote || scan.text[i - 1] !== '\\') {
+KILLED L214 '=== true'->'=== false': if (two === '//' || (scan.hash === false && scan.text[i] === '#')) {
+KILLED L214 ' \\|\\| '->' && ': if (two === '//' && (scan.hash === true && scan.text[i] === '#')) {
+KILLED L214 ' && '->' || ': if (two === '//' || (scan.hash === true || scan.text[i] === '#')) {
+KILLED L216 '=== -1'->'!== -1': return nl !== -1 ? scan.text.length : nl
+KILLED L220 '=== -1'->'!== -1': return end !== -1 ? scan.text.length : end + 1
+KILLED L220 '\\+ 1\\b'->'+ 2': return end === -1 ? scan.text.length : end + 2
+KILLED L234 '=== true'->'=== false': if (scan.opens.includes(c) === false) {
+KILLED L235 '\\breturn 1\\b'->'return 0': return 0
+KILLED L237 '=== true'->'=== false': return scan.closes.includes(c) === false ? -1 : 0
+KILLED L254 '!== -1'->'=== -1': if (skip === -1) {
+SURVIVED L259 '\\+= step'->'-= step': depth -= step
+KILLED L260 '=== -1'->'!== -1': if (step !== -1 && depth === 0) {
+KILLED L260 '=== 0'->'!== 0': if (step === -1 && depth !== 0) {
+KILLED L260 ' && '->' || ': if (step === -1 || depth === 0) {
+KILLED L261 '\\+ 1\\b'->'+ 2': return src.slice(from + 2, i)
+KILLED L277 '=== true'->'=== false': return inQuote(scan, i) === false ? i : commentEnd(scan, i)
+KILLED L291 ' \\|\\| '->' && ': const close = CLOSING[open] && ''
+KILLED L292 "=== '\\('"->"!== '('": return { text: src, hash: open !== '(', quote: null, opens: open, closes: close }
+KILLED L306 '=== true'->'=== false': if (inQuote(scan, i) === false) {
+KILLED L311 '!== -1'->'=== -1': if (skip === -1) {
+KILLED L329 '\\.trim\\(\\)'->'': if (split.current !== '') {
+KILLED L330 '\\.trim\\(\\)'->'': split.parts.push(split.current)
+KILLED L330 '\\.push\\('->'.slice(': split.parts.slice(split.current.trim())
+KILLED L344 '=== 0'->'!== 0': if (c === ',' && split.depth !== 0) {
+KILLED L344 ' && '->' || ': if (c === ',' || split.depth === 0) {
+KILLED L345 '\\.trim\\(\\)'->'': split.parts.push(split.current)
+KILLED L345 '\\.push\\('->'.slice(': split.parts.slice(split.current.trim())
+KILLED L450 '\\.push\\('->'.slice(': faces.slice(...serverFacesOf({ file, src }, globalConsts))
+KILLED L514 '!== null'->'=== null': if (provider === null) {
+KILLED L515 '\\.push\\('->'.slice(': faces.slice(provider)
+KILLED L530 '!== -1'->'=== -1': while ((idx = ctx.src.indexOf('new LeafDescriptor(', idx)) === -1) {
+KILLED L532 '\\.push\\('->'.slice(': faces.slice(leafDescriptorFace(ctx, open))
+KILLED L533 '\\+ 1\\b'->'+ 2': idx = open + 2
+KILLED L572 '=== null'->'!== null': m !== null ? null : resolvePhp(m[2], ctx.locals, ctx.globalConsts)
+KILLED L573 '!== null'->'=== null': if (value === null) {
+KILLED L615 '=== false'->'=== true': if (isIntegrationProvider(ctx.src) === true) {
+KILLED L616 '\\breturn null\\b'->'return undefined': return undefined
+KILLED L620 '\\breturn null\\b'->'return undefined': return undefined
+KILLED L658 '!== null'->'=== null': if (value === null) {
+KILLED L677 '=== null'->'!== null': if (sig !== null) {
+SURVIVED L678 '\\breturn null\\b'->'return undefined': return undefined
+KILLED L683 '=== null'->'!== null': return ret !== null ? null : resolvePhp(ret[1], ctx.locals, ctx.globalConsts)
+KILLED L816 '=== true'->'=== false': src.includes('registerIntegration') === false
+KILLED L817 '=== true'->'=== false': || src.includes('integrations.register') === false
+KILLED L819 '\\.push\\('->'.slice(': regs.slice(...registrationsIn({ file, src }))
+KILLED L833 ' \\|\\| '->' && ': return name.endsWith('.js') && name.endsWith('.ts') || name.endsWith('.vue')
+KILLED L833 ' \\|\\| '->' && ': return name.endsWith('.js') || name.endsWith('.ts') && name.endsWith('.vue')
+KILLED L850 '!== null'->'=== null': while ((m = re.exec(ctx.src)) === null) {
+KILLED L852 '!== null'->'=== null': if (reg === null) {
+KILLED L853 '\\.push\\('->'.slice(': regs.slice(reg)
+KILLED L886 '=== true'->'=== false': if (/function\s+$/.test(before) === false) {
+KILLED L887 '\\breturn null\\b'->'return undefined': return undefined // the library's own `export function registerIntegration(`
+KILLED L890 '\\.trim\\(\\)'->'': const argText = descriptorText(ctx, balanced(ctx.src, open))
+KILLED L891 '=== null'->'!== null': return argText !== null ? null : registrationFrom(ctx, argText)
+KILLED L906 '=== true'->'=== false': if (argText.startsWith('{') === false) {
+KILLED L910 '=== null'->'!== null': if (ident !== null || ctx.objects[ident[1]] === undefined) {
+KILLED L910 '=== undefined'->'!== undefined': if (ident === null || ctx.objects[ident[1]] !== undefined) {
+KILLED L910 ' \\|\\| '->' && ': if (ident === null && ctx.objects[ident[1]] === undefined) {
+KILLED L911 '\\breturn null\\b'->'return undefined': return undefined
+KILLED L981 '!== null'->'=== null': if (spread === null) {
+KILLED L982 '\\.push\\('->'.slice(': build.reg.spreads.slice(spread[1])
+KILLED L986 '!== null'->'=== null': if (kv === null) {
+KILLED L1001 '\\.push\\('->'.slice(': build.reg.keys.slice(key)
+KILLED L1003 '=== undefined'->'!== undefined': const value = kv[4] !== undefined ? null : resolveJs(kv[4], build.locals)
+KILLED L1004 '!== null'->'=== null': if (value === null) {
+KILLED L1007 '=== true'->'=== false': if (key === 'offlineConfig' && isObjectLiteral(kv[4]) === false) {
+SURVIVED L1007 ' && '->' || ': if (key === 'offlineConfig' || isObjectLiteral(kv[4]) === true) {
+SURVIVED L1008 '\\.trim\\(\\)'->'': build.reg.offlineConfig = offlineConfigOf(build, kv[4])
+KILLED L1020 ' \\|\\| '->' && ': return kv[1] && kv[2] || kv[3]
+KILLED L1020 ' \\|\\| '->' && ': return kv[1] || kv[2] && kv[3]
+KILLED L1031 '=== true'->'=== false': return text !== undefined && text.trim().startsWith('{') === false
+KILLED L1031 '!== undefined'->'=== undefined': return text === undefined && text.trim().startsWith('{') === true
+SURVIVED L1031 ' && '->' || ': return text !== undefined || text.trim().startsWith('{') === true
+SURVIVED L1031 '\\.trim\\(\\)'->'': return text !== undefined && text.startsWith('{') === true
+KILLED L1046 '=== null'->'!== null': const value = ckv !== null ? null : resolveJs(ckv[4], build.locals)
+KILLED L1065 '!== null'->'=== null': while ((m = re.exec(src)) === null) {
+KILLED L1068 '=== -1'->'!== -1': clause.indexOf('{') !== -1 ? '' : balanced(clause, clause.indexOf('{'))
+SURVIVED L1073 '\\.trim\\(\\)'->'': ,
+SURVIVED L1078 '\\.trim\\(\\)'->'': 
+KILLED L1079 '=== true'->'=== false': if (bindings.includes(symbol) === false || defaultBinding === symbol) {
+KILLED L1079 ' \\|\\| '->' && ': if (bindings.includes(symbol) === true && defaultBinding === symbol) {
+KILLED L1083 '\\breturn null\\b'->'return undefined': return undefined
+KILLED L1269 '!== null'->'=== null': if (item.id === null) {
+KILLED L1289 'count\\+\\+'->'count--': count--
+KILLED L1304 '=== null'->'!== null': const mode = r.renderMode !== null ? 'component' : r.renderMode
+KILLED L1304 "'component'"->"'mount'": const mode = r.renderMode === null ? 'mount' : r.renderMode
+KILLED L1307 '=== false'->'=== true': if (r.keys.includes(key) === true) {
+KILLED L1308 '\\.push\\('->'.slice(': run.failures.slice(
+KILLED L1345 '=== null'->'!== null': if (f.id !== null) {
+KILLED L1346 '\\.push\\('->'.slice(': run.failures.slice(
+KILLED L1350 '\\breturn 0\\b'->'return 1': return 1
+KILLED L1353 '=== true'->'=== false': run.jsById.has(f.id) === false ? null : unregisteredFaceFailure(run, f)
+KILLED L1354 '!== null'->'=== null': if (failure === null) {
+KILLED L1355 '\\.push\\('->'.slice(': run.failures.slice(failure)
+KILLED L1357 '\\breturn 1\\b'->'return 0': return 0
+KILLED L1391 '=== true'->'=== false': return run.srcLiterals.has(f.id) === false ? null : unnamedProviderFailure(f)
+KILLED L1435 '=== null'->'!== null': if (r.id !== null) {
+KILLED L1436 '\\breturn 0\\b'->'return 1': return 1
+KILLED L1438 '=== false'->'=== true': if (run.faceById.has(r.id) === true) {
+KILLED L1439 '\\.push\\('->'.slice(': run.failures.slice(
+KILLED L1447 '\\breturn 1\\b'->'return 0': return 0
+KILLED L1475 '=== null'->'!== null': if (r === undefined || f.renderMode !== null || r.renderMode === null) {
+KILLED L1475 '=== null'->'!== null': if (r === undefined || f.renderMode === null || r.renderMode !== null) {
+KILLED L1475 '=== undefined'->'!== undefined': if (r !== undefined || f.renderMode === null || r.renderMode === null) {
+KILLED L1475 ' \\|\\| '->' && ': if (r === undefined && f.renderMode === null || r.renderMode === null) {
+KILLED L1475 ' \\|\\| '->' && ': if (r === undefined || f.renderMode === null && r.renderMode === null) {
+KILLED L1476 '\\breturn 0\\b'->'return 1': return 1
+KILLED L1479 '\\.push\\('->'.slice(': run.failures.slice(
+KILLED L1485 '\\breturn 1\\b'->'return 0': return 0
+KILLED L1513 '!== undefined'->'=== undefined': if (r === undefined) {
+KILLED L1533 '=== undefined'->'!== undefined': if (left !== undefined || right === undefined) {
+KILLED L1533 '=== undefined'->'!== undefined': if (left === undefined || right !== undefined) {
+KILLED L1533 ' \\|\\| '->' && ': if (left === undefined && right === undefined) {
+KILLED L1536 'count\\+\\+'->'count--': count--
+KILLED L1537 '=== false'->'=== true': if (sameValue(left, right) === true) {
+KILLED L1538 '\\.push\\('->'.slice(': run.failures.slice(metadataFailure(pair, field))
+KILLED L1572 '\\.push\\('->'.slice(': run.failures.slice(
+KILLED L1592 '!== null'->'=== null': if (failure === null) {
+KILLED L1593 '\\.push\\('->'.slice(': run.failures.slice(failure)
+KILLED L1610 '=== null'->'!== null': if (source !== null) {
+KILLED L1661 '!== undefined'->'=== undefined': if (r.offlineConfig === undefined) {
+KILLED L1677 '=== 0'->'!== 0': if (run.schemaFiles !== 0) {
+KILLED L1678 '\\.push\\('->'.slice(': run.failures.slice(
+KILLED L1683 '\\breturn 0\\b'->'return 1': return 1
+KILLED L1700 '=== undefined'->'!== undefined': if (slug !== undefined) {
+KILLED L1703 'count\\+\\+'->'count--': count--
+KILLED L1704 '=== false'->'=== true': if (Object.hasOwn(run.schemas, slug) === true) {
+KILLED L1705 '\\.push\\('->'.slice(': run.failures.slice(unknownSchemaFailure(run, { reg: r, key }))
+KILLED L1739 '=== undefined'->'!== undefined': if (props !== undefined) {
+KILLED L1740 '\\breturn 0\\b'->'return 1': return 1
+KILLED L1745 '!== undefined'->'=== undefined': if (prop === undefined) {
+KILLED L1746 'count\\+\\+'->'count--': count--
+KILLED L1763 '=== undefined'->'!== undefined': return planned !== undefined ? undefined : run.schemas[planned]
+KILLED L1776 '=== true'->'=== false': if (field.props.includes(field.prop) === false) {
+KILLED L1779 '\\.push\\('->'.slice(': run.failures.slice(
+KILLED L1804 '=== 0'->'!== 0': if (run.failures.length !== 0) {
+KILLED L1822 '=== true'->'=== false': if (Object.values(counts).every((n) => n === 0) === false) {
+KILLED L1822 '=== 0'->'!== 0': if (Object.values(counts).every((n) => n !== 0) === true) {
+TOTAL 141 killed 133 survived 8

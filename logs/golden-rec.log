@@ -1,0 +1,9 @@
+
+ RUN  v5.0.1 /home/rubenlinde/sig-lanes/sh1-shillinq/repo
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  18:04:37
+   Duration  1.61s (tests 87%, transform 8%, import 4%, worker 1%)
+
