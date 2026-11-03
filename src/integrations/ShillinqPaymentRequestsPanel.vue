@@ -207,7 +207,9 @@ export default {
 				emptyLabel: this.emptyLabel,
 				noun: t('shillinq', 'fees and payments'),
 				rows: this.requests.map((request) => ({
-					label: [this.amountOf(request), this.stateOf(request)].filter((part) => part !== '').join(' · '),
+					label: [this.amountOf(request), this.stateOf(request)]
+						.filter((part) => part !== '')
+						.join(' · '),
 					icon: 'CashMultiple',
 				})),
 			}

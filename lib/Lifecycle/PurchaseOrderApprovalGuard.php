@@ -83,6 +83,8 @@ final class PurchaseOrderApprovalGuard implements LifecycleGuardInterface {
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) PurchaseOrderApprovalService::isApprovedEntry() is the one reading of a signed entry.
 	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleGuardInterface's.
+	 *
 	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.4
 	 */
 	public function check(array $object, string $action, string $userId): GuardResult {

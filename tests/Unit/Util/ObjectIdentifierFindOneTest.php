@@ -47,6 +47,11 @@ final class ObjectIdentifierFindOneTest extends TestCase {
 			public array $calls = [];
 
 			/**
+			 * @var array<int,array<string,mixed>>
+			 */
+			public array $configs = [];
+
+			/**
 			 * @param array<string,mixed>|null $byId     find() answer.
 			 * @param array<int,array>         $byFilter findAll() answer.
 			 */
@@ -78,7 +83,8 @@ final class ObjectIdentifierFindOneTest extends TestCase {
 			 * @return array<int,array>
 			 */
 			public function findAll(array $config = [], bool $_rbac = true): array {
-				$this->calls[] = ['findAll', $_rbac];
+				$this->calls[]   = ['findAll', $_rbac];
+				$this->configs[] = $config;
 				return $this->byFilter;
 			}//end findAll()
 		};
@@ -96,6 +102,7 @@ final class ObjectIdentifierFindOneTest extends TestCase {
 
 		self::assertSame(['code' => 'ADM-001'], $record);
 		self::assertSame([['find', true], ['findAll', true]], $scoped->calls);
+		self::assertSame([['filters' => ['code' => 'ADM-001'], 'limit' => 1]], $scoped->configs);
 	}//end testLookupsApplyRbacByDefault()
 
 	/**
@@ -107,9 +114,10 @@ final class ObjectIdentifierFindOneTest extends TestCase {
 	public function testLookupsSkipRbacWhenAsked(): void {
 		$scoped = $this->scoped(null, [['code' => 'ADM-001']]);
 
-		ObjectIdentifier::findOne($scoped, 'ADM-001', 'code', false);
+		ObjectIdentifier::findOne($scoped, 'ADM-001', 'code', ['_rbac' => false]);
 
 		self::assertSame([['find', false], ['findAll', false]], $scoped->calls);
+		self::assertSame([['filters' => ['code' => 'ADM-001'], 'limit' => 1]], $scoped->configs);
 	}//end testLookupsSkipRbacWhenAsked()
 
 	/**
@@ -120,7 +128,7 @@ final class ObjectIdentifierFindOneTest extends TestCase {
 	public function testUuidHitSkipsFallback(): void {
 		$scoped = $this->scoped(['id' => 'u-1', 'name' => 'x'], []);
 
-		$record = ObjectIdentifier::findOne($scoped, 'u-1', 'code', false);
+		$record = ObjectIdentifier::findOne($scoped, 'u-1', 'code', ['_rbac' => false]);
 
 		self::assertSame('x', $record['name']);
 		self::assertSame([['find', false]], $scoped->calls);

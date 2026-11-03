@@ -197,14 +197,16 @@ final class ObjectIdentifier {
 	 * @param object      $scoped           ObjectService with register + schema already set.
 	 * @param string      $id               The uuid, or the fallback property's value.
 	 * @param string|null $fallbackProperty JSON property to match when $id is not a uuid.
-	 * @param bool        $rbac             False for a caller that authenticates by key, token or
-	 *                                      signature and so holds no OpenRegister group grant.
+	 * @param array       $scope            Named arguments both lookups pass on, e.g.
+	 *                                      `['_rbac' => false]` for a caller that authenticates by
+	 *                                      key, token or signature and so holds no OpenRegister
+	 *                                      group grant.
 	 *
 	 * @return array<string,mixed>|null The record, or null when genuinely absent.
 	 *
 	 * @spec openspec/specs/inventory-cycle-count/spec.md
 	 */
-	public static function findOne(object $scoped, string $id, ?string $fallbackProperty = null, bool $rbac = true): ?array {
+	public static function findOne(object $scoped, string $id, ?string $fallbackProperty = null, array $scope = []): ?array {
 		if ($id === '') {
 			return null;
 		}
@@ -212,14 +214,7 @@ final class ObjectIdentifier {
 		// Its own try/catch, deliberately — find() throws rather than
 		// returning null, so a shared catch would swallow the fallback.
 		try {
-			$found = null;
-			if ($rbac === true) {
-				$found = $scoped->find($id);
-			} else {
-				$found = $scoped->find($id, _rbac: false);
-			}
-
-			$record = self::record(candidate: $found);
+			$record = self::record(candidate: $scoped->find($id, ...$scope));
 			if ($record !== null) {
 				return $record;
 			}
@@ -232,13 +227,7 @@ final class ObjectIdentifier {
 		}
 
 		try {
-			$query = ['filters' => [$fallbackProperty => $id], 'limit' => 1];
-			$matches = null;
-			if ($rbac === true) {
-				$matches = $scoped->findAll($query);
-			} else {
-				$matches = $scoped->findAll(config: $query, _rbac: false);
-			}
+			$matches = $scoped->findAll(['filters' => [$fallbackProperty => $id], 'limit' => 1], ...$scope);
 		} catch (Throwable $e) {
 			return null;
 		}
