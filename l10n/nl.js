@@ -5370,7 +5370,7 @@ OC.L10N.register(
         "Where the books sit against budget, and by how much.": "Waar de boeken staan ten opzichte van de begroting, en met hoeveel verschil.",
         "Everything Reporting & Compliance has already produced.": "Alles wat Rapportage & compliance al heeft opgeleverd.",
         "What retention destroyed, and when.": "Wat de bewaartermijn heeft vernietigd, en wanneer.",
-        "Store": "Store",
+        "Marketplace": "Marktplaats",
         "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Installeer registers, schema's en flows die andere organisaties hebben gepubliceerd.",
         "Payroll employee": "Loonwerknemer",
         "HR employee": "HR-werknemer",
