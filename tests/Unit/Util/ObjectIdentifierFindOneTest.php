@@ -133,4 +133,28 @@ final class ObjectIdentifierFindOneTest extends TestCase {
 		self::assertSame('x', $record['name']);
 		self::assertSame([['find', false]], $scoped->calls);
 	}//end testUuidHitSkipsFallback()
+	/**
+	 * Only `_rbac` reaches OpenRegister: a caller cannot switch off the
+	 * organisation scope or any other lookup option through `$scope`.
+	 *
+	 * @return void
+	 */
+	public function testScopeCannotWidenTheLookup(): void {
+		$scoped = new class() {
+			/** @var array<int, array{0: string, 1: array<string, mixed>}> */
+			public array $calls = [];
+			public function find(string $id, mixed ...$named): array {
+				$this->calls[] = ['find', $named];
+				throw new \RuntimeException('DoesNotExist');
+			}
+			public function findAll(array $config = [], mixed ...$named): array {
+				$this->calls[] = ['findAll', $named];
+				return [['code' => 'ADM-001']];
+			}
+		};
+
+		ObjectIdentifier::findOne($scoped, 'ADM-001', 'code', ['_rbac' => false, '_multitenancy' => false, '_audit' => false, '_render' => true]);
+
+		self::assertSame([['find', ['_rbac' => false]], ['findAll', ['_rbac' => false]]], $scoped->calls);
+	}//end testScopeCannotWidenTheLookup()
 }//end class

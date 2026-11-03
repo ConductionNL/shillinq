@@ -83,6 +83,14 @@ use Throwable;
  * @spec openspec/specs/inventory-cycle-count/spec.md
  */
 final class ObjectIdentifier {
+
+	/**
+	 * The OpenRegister lookup arguments findOne() passes on.
+	 *
+	 * @var array<string, true>
+	 */
+	private const SCOPE_KEYS = ['_rbac' => true];
+
 	/**
 	 * Resolve the UUID from whatever ObjectService handed back.
 	 *
@@ -200,7 +208,9 @@ final class ObjectIdentifier {
 	 * @param array       $scope            Named arguments both lookups pass on, e.g.
 	 *                                      `['_rbac' => false]` for a caller that authenticates by
 	 *                                      key, token or signature and so holds no OpenRegister
-	 *                                      group grant.
+	 *                                      group grant. Only the keys in SCOPE_KEYS pass, so a
+	 *                                      caller cannot widen a lookup past the caller's
+	 *                                      organisation.
 	 *
 	 * @return array<string,mixed>|null The record, or null when genuinely absent.
 	 *
@@ -210,6 +220,8 @@ final class ObjectIdentifier {
 		if ($id === '') {
 			return null;
 		}
+
+		$scope = array_intersect_key($scope, self::SCOPE_KEYS);
 
 		// Its own try/catch, deliberately — find() throws rather than
 		// returning null, so a shared catch would swallow the fallback.
