@@ -28,7 +28,19 @@ import { golden, outcome, seeded } from './goldenHarness.js'
 const check = golden('financialSeries')
 
 const MONTHS = ['2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06']
-const DATES = ['2026-01-05', '2026-02-28 10:00:00', '2026-03-31T23:00:00Z', '2026-05-01', '2026-06-30', '2025-12-31', 'bad', '', null, undefined, 20260101]
+const DATES = [
+	'2026-01-05',
+	'2026-02-28 10:00:00',
+	'2026-03-31T23:00:00Z',
+	'2026-05-01',
+	'2026-06-30',
+	'2025-12-31',
+	'bad',
+	'',
+	null,
+	undefined,
+	20260101,
+]
 
 /**
  * A generated ledger.
@@ -62,18 +74,47 @@ function ledger(seed) {
 			postingDate: r.pick(DATES),
 		})
 	}
-	const refs = ['tx-1', 'self-2', 'T3', 'T4', 'tx-5', 'self-6', 'T7', 'missing', '', 'tx-9', 'T10', 'self-11']
+	const refs = [
+		'tx-1',
+		'self-2',
+		'T3',
+		'T4',
+		'tx-5',
+		'self-6',
+		'T7',
+		'missing',
+		'',
+		'tx-9',
+		'T10',
+		'self-11',
+	]
 	const lines = []
 	for (let i = 0; i < 40; i++) {
 		lines.push({
 			transactionId: r.pick(refs),
-			accountNumber: r.pick(['8000', '8100', '4000', '1000', '1100', '1500', '2000', '3000', '9999', undefined]),
+			accountNumber: r.pick([
+				'8000',
+				'8100',
+				'4000',
+				'1000',
+				'1100',
+				'1500',
+				'2000',
+				'3000',
+				'9999',
+				undefined,
+			]),
 			side: r.pick(['credit', 'debit', 'other']),
 			amount: r.pick([100, 250.555, '75.10', 'x', 0, -20, undefined]),
 		})
 	}
 	const arInvoices = [
-		{ lifecycleState: 'issued', dueDate: '2026-05-01', grossAmount: 121, invoiceNumber: 'A1' },
+		{
+			lifecycleState: 'issued',
+			dueDate: '2026-05-01',
+			grossAmount: 121,
+			invoiceNumber: 'A1',
+		},
 		{ lifecycleState: 'overdue', dueDate: '2026-07-01', netAmount: 100 },
 		{ lifecycleState: 'paid', dueDate: '2026-01-01', grossAmount: 50 },
 		{ lifecycleState: 'issued', dueDate: '2026-06-30', grossAmount: 'x' },
@@ -98,36 +139,94 @@ function ledger(seed) {
 	const weeks = []
 	for (let i = 0; i < 8; i++) {
 		weeks.push({
-			weekStart: r.pick(['2026-05-04', '2026-06-01', '2026-06-29', '2026-07-06', '2026-08-03', 'bad', null]),
+			weekStart: r.pick([
+				'2026-05-04',
+				'2026-06-01',
+				'2026-06-29',
+				'2026-07-06',
+				'2026-08-03',
+				'bad',
+				null,
+			]),
 			inflows_total: r.pick([100, '20.5', 'x', undefined]),
 			outflows_total: r.pick([50, '10.25', null]),
 		})
 	}
-	return { accounts, transactions, lines, arInvoices, apTransactions, hourEntries, weeks }
+	return {
+		accounts,
+		transactions,
+		lines,
+		arInvoices,
+		apTransactions,
+		hourEntries,
+		weeks,
+	}
 }
 
 describe('financialSeries golden', () => {
 	it('matches the record for generated ledgers', () => {
 		for (let seed = 1; seed <= 40; seed++) {
 			const l = ledger(seed)
-			check(`${seed} classifyAccounts`, outcome(() => classifyAccounts(l.accounts)))
-			check(`${seed} postedLinesByMonth`, outcome(() => postedLinesByMonth(l.transactions, l.lines)))
-			check(`${seed} monthlyFinancialSeries`, outcome(() => monthlyFinancialSeries({ ...l, months: MONTHS })))
-			check(`${seed} billableSeries`, outcome(() => billableSeries(l.hourEntries, MONTHS)))
-			check(`${seed} forecastByMonth`, outcome(() => forecastByMonth(l.weeks, '2026-05')))
-			check(`${seed} computeKpis`, outcome(() => computeKpis(l, new Date(2026, 5, 15, 12))))
-			check(`${seed} computeKpis january`, outcome(() => computeKpis(l, new Date(2026, 0, 2, 12))))
-			check(`${seed} computeRangeKpis`, outcome(() => computeRangeKpis(l, MONTHS)))
+			check(
+				`${seed} classifyAccounts`,
+				outcome(() => classifyAccounts(l.accounts)),
+			)
+			check(
+				`${seed} postedLinesByMonth`,
+				outcome(() => postedLinesByMonth(l.transactions, l.lines)),
+			)
+			check(
+				`${seed} monthlyFinancialSeries`,
+				outcome(() => monthlyFinancialSeries({ ...l, months: MONTHS })),
+			)
+			check(
+				`${seed} billableSeries`,
+				outcome(() => billableSeries(l.hourEntries, MONTHS)),
+			)
+			check(
+				`${seed} forecastByMonth`,
+				outcome(() => forecastByMonth(l.weeks, '2026-05')),
+			)
+			check(
+				`${seed} computeKpis`,
+				outcome(() => computeKpis(l, new Date(2026, 5, 15, 12))),
+			)
+			check(
+				`${seed} computeKpis january`,
+				outcome(() => computeKpis(l, new Date(2026, 0, 2, 12))),
+			)
+			check(
+				`${seed} computeRangeKpis`,
+				outcome(() => computeRangeKpis(l, MONTHS)),
+			)
 		}
 	})
 
 	it('matches the record for edge inputs', () => {
-		check('classifyAccounts null', outcome(() => classifyAccounts(null)))
-		check('postedLinesByMonth null', outcome(() => postedLinesByMonth(null, null)))
-		check('billableSeries null', outcome(() => billableSeries(null, MONTHS)))
-		check('forecastByMonth null', outcome(() => forecastByMonth(null, '2026-01')))
-		check('computeKpis empty', outcome(() => computeKpis({}, new Date(2026, 2, 3, 12))))
-		check('computeRangeKpis empty', outcome(() => computeRangeKpis({}, [])))
+		check(
+			'classifyAccounts null',
+			outcome(() => classifyAccounts(null)),
+		)
+		check(
+			'postedLinesByMonth null',
+			outcome(() => postedLinesByMonth(null, null)),
+		)
+		check(
+			'billableSeries null',
+			outcome(() => billableSeries(null, MONTHS)),
+		)
+		check(
+			'forecastByMonth null',
+			outcome(() => forecastByMonth(null, '2026-01')),
+		)
+		check(
+			'computeKpis empty',
+			outcome(() => computeKpis({}, new Date(2026, 2, 3, 12))),
+		)
+		check(
+			'computeRangeKpis empty',
+			outcome(() => computeRangeKpis({}, [])),
+		)
 		const ranges = [
 			['2026-01-15', '2026-04-02'],
 			['2025-11-30T10:00:00Z', '2026-02-01'],
@@ -139,7 +238,10 @@ describe('financialSeries golden', () => {
 			['2026-02-29', '2026-03-01'],
 		]
 		for (const [from, to] of ranges) {
-			check(`monthsInRange ${from} ${to}`, outcome(() => monthsInRange(from, to)))
+			check(
+				`monthsInRange ${from} ${to}`,
+				outcome(() => monthsInRange(from, to)),
+			)
 		}
 	})
 })
