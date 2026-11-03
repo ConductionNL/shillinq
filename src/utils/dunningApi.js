@@ -50,6 +50,14 @@ export async function switchOnDunning(id) {
 	return response?.data
 }
 
+/** The translated name of each dunning channel code. */
+const CHANNEL_LABELS = {
+	EMAIL: () => t('shillinq', 'Email'),
+	eMAILPostRegistration: () => t('shillinq', 'Email and registered post'),
+	REGISTERED_POST: () => t('shillinq', 'Registered post'),
+	COLLECTION_AGENCY_API: () => t('shillinq', 'Collection agency'),
+}
+
 /**
  * The name of a dunning channel.
  *
@@ -58,18 +66,9 @@ export async function switchOnDunning(id) {
  * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
  */
 export function channelLabel(channel) {
-	switch (channel) {
-		case 'EMAIL':
-			return t('shillinq', 'Email')
-		case 'eMAILPostRegistration':
-			return t('shillinq', 'Email and registered post')
-		case 'REGISTERED_POST':
-			return t('shillinq', 'Registered post')
-		case 'COLLECTION_AGENCY_API':
-			return t('shillinq', 'Collection agency')
-		default:
-			return String(channel || '')
-	}
+	return Object.prototype.hasOwnProperty.call(CHANNEL_LABELS, channel)
+		? CHANNEL_LABELS[channel]()
+		: String(channel || '')
 }
 
 /**
@@ -97,15 +96,34 @@ export function reportLine(report) {
 	return t(
 		'shillinq',
 		'Last run {day}: {overdue} marked overdue, {sent} sent, {manual} to send by hand, {failed} failed, {skipped} with nothing due.',
-		{
-			day,
-			overdue: Number(report.markedOverdue || 0),
-			sent: Number(report.sent || 0),
-			manual: Number(report.manual || 0),
-			failed: Number(report.failed || 0),
-			skipped: Number(report.skipped || 0),
-		},
+		{ day, ...runCounts(report) },
 	)
+}
+
+/**
+ * The counts of a run report, 0 where missing.
+ *
+ * @param {object} report The stored run report.
+ * @return {object} overdue, sent, manual, failed and skipped.
+ */
+function runCounts(report) {
+	return {
+		overdue: count(report.markedOverdue),
+		sent: count(report.sent),
+		manual: count(report.manual),
+		failed: count(report.failed),
+		skipped: count(report.skipped),
+	}
+}
+
+/**
+ * A count as a number, 0 when missing.
+ *
+ * @param {unknown} value The stored count.
+ * @return {number}
+ */
+function count(value) {
+	return Number(value || 0)
 }
 
 /**
