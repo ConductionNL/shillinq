@@ -31,6 +31,7 @@
  *
  * @param {object|null} contact Slice-05 contact payload (or null).
  * @return {'organization'|'individual'|null}
+ * @spec openspec/changes/archive/2026-06-14-bookings-pipelinq-customer-bridge-06-profile-card-ui/tasks.md
  */
 export function classifyContact(contact) {
 	if (!isTrustedContact(contact)) {
@@ -70,6 +71,7 @@ const PROFILE_FIELDS = [
  *
  * @param {object|null} contact Slice-05 contact payload.
  * @return {Array<{ key: string, label: string, value: string, href?: string }>}
+ * @spec openspec/changes/archive/2026-06-14-bookings-pipelinq-customer-bridge-06-profile-card-ui/tasks.md
  */
 export function buildProfileFields(contact) {
 	if (!isTrustedContact(contact)) {
@@ -111,6 +113,7 @@ function isTrustedContact(contact) {
  *
  * @param {object} payload Slice-05 response.
  * @return {'unlinked'|'error'|'notfound'|'ok'}
+ * @spec openspec/changes/archive/2026-06-14-bookings-pipelinq-customer-bridge-06-profile-card-ui/tasks.md
  */
 export function selectProfileState(payload) {
 	if (!payload) {
@@ -149,6 +152,7 @@ function hasContactError(payload) {
  *
  * @param {object} payload Slice-05 response.
  * @return {'hidden'|'unavailable'|'empty'|'ok'}
+ * @spec openspec/changes/archive/2026-06-14-bookings-pipelinq-customer-bridge-06-profile-card-ui/tasks.md
  */
 export function selectHistoryState(payload) {
 	const k = payload?.klantbeeld
