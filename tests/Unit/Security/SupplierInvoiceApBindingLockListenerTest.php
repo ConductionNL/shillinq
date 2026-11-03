@@ -99,6 +99,18 @@ final class SupplierInvoiceApBindingLockListenerTest extends TestCase {
 		self::assertSame([], $this->update($before, ['invoiceNumber' => 'A-2'] + self::HANDED));
 	}
 
+	public function testDataThatNamesAnotherInvoiceIsRefusedBeforeTheHandover(): void {
+		$before = ['apTransactionId' => ''] + self::HANDED;
+		$errors = $this->update($before, ['id' => 'inv-b', 'apTransactionId' => 'tx-b'] + self::HANDED);
+		self::assertSame(SupplierInvoiceApBindingLockListener::ID_MESSAGE, $errors['message'] ?? null);
+		self::assertSame('id', $errors['field'] ?? null);
+	}
+
+	public function testDataThatNamesTheInvoiceItselfPasses(): void {
+		self::assertSame([], $this->update(self::HANDED, ['id' => 'inv-a', 'note' => 'y'] + self::HANDED));
+		self::assertSame([], $this->update(self::HANDED, ['id' => '', 'note' => 'y'] + self::HANDED));
+	}
+
 	public function testOtherSchemasAndCreatesAreLeftAlone(): void {
 		self::assertSame([], $this->update(self::HANDED, ['apTransactionId' => 'tx-b'] + self::HANDED, 'PurchaseOrder'));
 		$event = new ObjectCreatingEvent(self::entity(self::HANDED));
