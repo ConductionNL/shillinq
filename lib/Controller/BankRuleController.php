@@ -51,9 +51,9 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\OCS\OCSForbiddenException;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use OCA\Shillinq\Util\ObjectIdentifier;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * REST surface for bank matching-rule preview + suggestion (REQ-BR-011/012).
@@ -82,7 +82,7 @@ class BankRuleController extends Controller {
 	 * @param BankRulePreviewService $previewService Read-only predicate evaluator.
 	 * @param BankRuleSuggestionService $suggestionService History-based learning path.
 	 * @param AdministrationContextService $administration Server-resolved tenant scope.
-	 * @param ContainerInterface $container DI container (lazy OR ObjectService).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service.
 	 * @param IUserSession $userSession Current NC user.
 	 * @param LoggerInterface $logger Logger.
 	 *
@@ -93,7 +93,7 @@ class BankRuleController extends Controller {
 		private readonly BankRulePreviewService $previewService,
 		private readonly BankRuleSuggestionService $suggestionService,
 		private readonly AdministrationContextService $administration,
-		private readonly ContainerInterface $container,
+		private readonly ObjectServiceInterface $objectService,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {
@@ -253,8 +253,6 @@ class BankRuleController extends Controller {
 
 		try {
 			$admin = $this->resolveAdministrationId();
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-
 			$payload = [
 				'ruleName' => $ruleName,
 				'priority' => (int)$this->request->getParam('priority', '100'),
@@ -268,7 +266,7 @@ class BankRuleController extends Controller {
 				$payload['targetGlAccount'] = $targetGl;
 			}
 
-			$created = $objectService
+			$created = $this->objectService
 				->setRegister($this->registerSlug())
 				->setSchema('MatchingRule')
 				->saveObject($payload);
@@ -339,15 +337,10 @@ class BankRuleController extends Controller {
 	 * @return list<array<string,mixed>>
 	 */
 	private function readObjects(string $schema, array $filters): array {
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		$rows = $objectService
+		$rows = $this->objectService
 			->setRegister($this->registerSlug())
 			->setSchema($schema)
 			->findAll(['filters' => $filters, 'limit' => self::READ_CAP]);
-
-		if (is_array($rows) === false) {
-			$rows = [];
-		}
 
 		$out = [];
 		foreach ($rows as $row) {
@@ -370,9 +363,8 @@ class BankRuleController extends Controller {
 	 */
 	private function readOne(string $schema, string $id): ?array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$row = ObjectIdentifier::findScoped(
-				scoped: $objectService->setRegister($this->registerSlug())->setSchema($schema),
+				scoped: $this->objectService->setRegister($this->registerSlug())->setSchema($schema),
 				id: $id
 			);
 
