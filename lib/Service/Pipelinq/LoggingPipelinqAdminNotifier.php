@@ -65,6 +65,7 @@ final class LoggingPipelinqAdminNotifier implements PipelinqAdminNotifier {
 	 * @param TimelineEventDto $event The event whose publish was rejected.
 	 *
 	 * @return void
+	 * @spec openspec/changes/archive/2026-06-14-bookings-pipelinq-customer-bridge-08-lifecycle-events/tasks.md
 	 */
 	public function notifyAuthFailure(TimelineEventDto $event): void {
 		$this->logger->error(

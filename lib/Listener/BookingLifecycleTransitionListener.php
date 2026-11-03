@@ -105,6 +105,7 @@ final class BookingLifecycleTransitionListener implements IEventListener {
 	 * @param Event $event Event from OpenRegister.
 	 *
 	 * @return void
+	 * @spec openspec/changes/archive/2026-06-14-bookings-pipelinq-customer-bridge-08-lifecycle-events/tasks.md
 	 */
 	public function handle(Event $event): void {
 		if (($event instanceof ObjectTransitionedEvent) === false) {

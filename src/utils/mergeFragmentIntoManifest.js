@@ -41,6 +41,7 @@
  * @param {object}        fullFragment     The dynamically-imported fragment JSON (`{pages, menu, ...}`).
  * @param {Array<object>} fullFragment.pages Full page objects (with `config` etc.) from the fragment.
  * @return {{updated: number, appended: number}} How many pages were updated in place vs. newly appended.
+ * @spec openspec/specs/manifest-boot-performance/spec.md
  */
 export function mergeFullFragmentIntoManifest(manifest, fullFragment) {
 	const pages = arrayOrEmpty(manifest && manifest.pages)
@@ -102,6 +103,7 @@ function isPage(page) {
  *
  * @param {Array<object>} pages The merged manifest's `pages[]` (post-boot-merge, still carrying `_fragment` on slim entries).
  * @return {Map<string, string>} pageId → fragment filename stem.
+ * @spec openspec/specs/manifest-boot-performance/spec.md
  */
 export function buildPageFragmentIndex(pages) {
 	const index = new Map()

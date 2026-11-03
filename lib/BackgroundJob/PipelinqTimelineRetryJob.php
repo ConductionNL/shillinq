@@ -137,6 +137,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 	 *                        TimelinePublishRetryEntry to attempt.
 	 *
 	 * @return void
+	 * @spec openspec/changes/archive/2026-06-14-bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
 	 */
 	protected function run($argument): void {
 		if (is_array($argument) === false || isset($argument['entryId']) === false) {

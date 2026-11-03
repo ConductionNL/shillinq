@@ -290,6 +290,7 @@ export const useInventoryMobileScannerStore = defineStore('inventoryMobileScanne
 		 *
 		 * @param {object} status Status payload from createSyncScheduler.
 		 * @return {Promise<void>} Resolves once derived state is refreshed.
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
 		 */
 		async applyStatus(status) {
 			this.syncState = status.state || STATE_PENDING

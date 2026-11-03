@@ -454,6 +454,7 @@ class PipelinqContactAdapter {
 	 * @return array<string, mixed> Decoded JSON response body (empty array when the response has no content).
 	 *
 	 * @throws PipelinqTransportException When the breaker is open, the retry budget is exhausted, or the remote returns a non-retryable error.
+	 * @spec openspec/changes/archive/2026-06-14-bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
 	 */
 	protected function request(string $method, string $path, ?array $payload = null): array {
 		if ($this->circuitBreaker->allowRequest() === false) {
