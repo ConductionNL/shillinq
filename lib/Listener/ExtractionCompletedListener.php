@@ -56,6 +56,7 @@ use OCP\Notification\IManager as INotificationManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Turns a docudesk extraction-completed event into a confidence-scored
@@ -106,6 +107,9 @@ class ExtractionCompletedListener implements IEventListener {
 	 * @param Event $event The dispatched event.
 	 *
 	 * @return void
+	 *
+	 * @listener-placement inline correctness — registered on filinq's extraction-completed event, not on an object
+	 * write: it answers the requester's own extraction call, whose caller reads the draft next.
 	 *
 	 * @spec openspec/specs/receipt-extraction-consume/spec.md
 	 */
@@ -239,7 +243,7 @@ class ExtractionCompletedListener implements IEventListener {
 			$rows = $objectService
 				->setRegister($this->register())
 				->setSchema($schema)
-				->findAll(['filters' => ['sourceDocumentUri' => $documentUri]]);
+				->findAll(['filters' => ['sourceDocumentUri' => $documentUri], 'limit' => 1]);
 		} catch (Throwable $e) {
 			$this->logger->info(
 				'ExtractionCompletedListener: OR query unavailable — treating as new draft',
@@ -253,9 +257,7 @@ class ExtractionCompletedListener implements IEventListener {
 		}
 
 		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				return $row;
-			}
+			return ObjectIdentifier::recordWithId(candidate: $row);
 		}
 
 		return null;
@@ -281,18 +283,16 @@ class ExtractionCompletedListener implements IEventListener {
 			$rows = $objectService
 				->setRegister($this->register())
 				->setSchema('AdministrationMembership')
-				->findAll(['filters' => ['userId' => $userId]]);
+				->findAll(['filters' => ['userId' => $userId], 'limit' => 100]);
 		} catch (Throwable $e) {
 			return 'default';
 		}
 
 		if (is_array($rows) === true) {
 			foreach ($rows as $row) {
-				if (is_array($row) === true) {
-					$administrationId = (string)($row['administrationId'] ?? '');
-					if ($administrationId !== '') {
-						return $administrationId;
-					}
+				$administrationId = (string)(ObjectIdentifier::recordWithId(candidate: $row)['administrationId'] ?? '');
+				if ($administrationId !== '') {
+					return $administrationId;
 				}
 			}
 		}
@@ -356,9 +356,7 @@ class ExtractionCompletedListener implements IEventListener {
 				->setSchema($schema)
 				->saveObject($object);
 
-			if (is_array($result) === true) {
-				return $result;
-			}
+			return (ObjectIdentifier::recordWithId(candidate: $result) ?? $object);
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'ExtractionCompletedListener: failed to persist extraction draft',

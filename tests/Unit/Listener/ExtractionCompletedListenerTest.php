@@ -87,6 +87,7 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 use OCA\DocuDesk\Event\FinancialExtractionCompletedEvent;
 use OCA\Shillinq\Listener\ExtractionCompletedListener;
 use OCA\Shillinq\Service\Extraction\ExtractionPrefillService;
+use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\EventDispatcher\Event;
 use OCP\IAppConfig;
 use OCP\Notification\IManager as INotificationManager;
@@ -216,6 +217,76 @@ final class ExtractionCompletedListenerTest extends TestCase {
 	}//end testReExtractionRefreshesExistingDraftWithoutDuplicating()
 
 	/**
+	 * OpenRegister's findAll() answers entities. A re-extraction still finds its
+	 * draft, and a new draft lands in the requester's own administration.
+	 *
+	 * @return void
+	 */
+	public function testEntityRowsFindTheDraftAndTheAdministration(): void {
+		$saved = [];
+		$store = new InMemoryObjectServiceStub(
+			[
+				'SupplierInvoice' => [['id' => 'draft-1', 'sourceDocumentUri' => 'docudesk://attachments/x/invoice.pdf', 'administrationId' => 'adm-1']],
+				'Receipt' => [],
+				'AdministrationMembership' => [['id' => 'm-1', 'userId' => 'bob', 'administrationId' => 'adm-7']],
+			],
+			$saved,
+			findAllRendersEntities: true
+		);
+		$unused = [];
+		$listener = $this->buildListenerOver(store: $store, notifications: $unused);
+
+		$listener->handle($this->makeEvent(docType: 'supplier-invoice', fields: ['invoiceNumber' => 'F-NEW'], fieldConfidence: [], overallConfidence: 0.9));
+		self::assertSame('draft-1', $saved[0]['object']['id'] ?? null, 'the existing draft is refreshed');
+		self::assertSame('adm-1', $saved[0]['object']['administrationId']);
+
+		$listener->handle($this->makeEvent(docType: 'receipt', fields: ['totalIncl' => 45.0], fieldConfidence: [], overallConfidence: 0.9, requestedBy: 'bob'));
+		self::assertSame('adm-7', $saved[1]['object']['administrationId'], 'a new draft lands in the requester\'s administration');
+
+	}//end testEntityRowsFindTheDraftAndTheAdministration()
+
+	/**
+	 * The two reads that run on each extraction are bounded, and the notification
+	 * of a new draft names the draft's number.
+	 *
+	 * @return void
+	 */
+	public function testReadsAreBoundedAndTheNotificationNamesTheDraft(): void {
+		$saved = [];
+		$store = new class(['Receipt' => [], 'AdministrationMembership' => []], $saved, true) extends InMemoryObjectServiceStub {
+			/**
+			 * The limit of each findAll.
+			 *
+			 * @var array<int,mixed>
+			 */
+			public array $limits = [];
+
+			/**
+			 * Record the limit, then answer as the stub does.
+			 *
+			 * @param array<string,mixed> $config        The query.
+			 * @param bool                $_rbac         Ignored.
+			 * @param bool                $_multitenancy Ignored.
+			 *
+			 * @return array<int,mixed>
+			 */
+			public function findAll(array $config = [], bool $_rbac = true, bool $_multitenancy = true): array {
+				$this->limits[] = ($config['limit'] ?? null);
+				return parent::findAll($config, $_rbac, $_multitenancy);
+			}
+		};
+		$notifications = [];
+
+		$this->buildListenerOver(store: $store, notifications: $notifications)->handle(
+			$this->makeEvent(docType: 'receipt', fields: ['totalIncl' => 45.0], fieldConfidence: [], overallConfidence: 0.9, requestedBy: 'bob')
+		);
+
+		self::assertSame([1, 100], $store->limits);
+		self::assertSame($saved[0]['object']['receiptNumber'], $notifications[0]['reference'] ?? null);
+
+	}//end testReadsAreBoundedAndTheNotificationNamesTheDraft()
+
+	/**
 	 * A non-matching event class is ignored without error.
 	 *
 	 * @return void
@@ -270,9 +341,22 @@ final class ExtractionCompletedListenerTest extends TestCase {
 	 * @return ExtractionCompletedListener
 	 */
 	private function buildListener(array $existing, array &$saved, ?array &$notifications): ExtractionCompletedListener {
-		$notifications = [];
+		$stub = $this->arrayStore(existing: $existing, saved: $saved);
 
-		$stub = new class($existing, $saved) {
+		return $this->buildListenerOver(store: $stub, notifications: $notifications);
+
+	}//end buildListener()
+
+	/**
+	 * A store that answers findAll() with arrays.
+	 *
+	 * @param array<int,array<string,mixed>> $existing Existing drafts.
+	 * @param array<int,mixed>               $saved    Recorded saves.
+	 *
+	 * @return object
+	 */
+	private function arrayStore(array $existing, array &$saved): object {
+		return new class($existing, $saved) {
 
 			/**
 			 * @var array<int,array<string,mixed>>
@@ -352,6 +436,22 @@ final class ExtractionCompletedListenerTest extends TestCase {
 			}//end saveObject()
 		};
 
+	}//end arrayStore()
+
+	/**
+	 * The listener over the given store, recording notifications.
+	 *
+	 * @param object                 $store         The object service double.
+	 * @param array<int,mixed>|null  $notifications Recorded notifications.
+	 *
+	 * @return ExtractionCompletedListener
+	 */
+	private function buildListenerOver(object $store, ?array &$notifications): ExtractionCompletedListener {
+		$stub = $store;
+
+		$notifications = [];
+
+
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturn($stub);
 
@@ -361,7 +461,7 @@ final class ExtractionCompletedListenerTest extends TestCase {
 		$manager = $this->createMock(INotificationManager::class);
 		$manager->method('createNotification')->willReturnCallback(
 			function () : INotification {
-				$state = (object)['user' => '', 'subject' => ''];
+				$state = (object)['user' => '', 'subject' => '', 'reference' => ''];
 
 				$notification = $this->createMock(INotification::class);
 				$notification->method('setApp')->willReturnSelf();
@@ -372,7 +472,12 @@ final class ExtractionCompletedListenerTest extends TestCase {
 						return $notification;
 					}
 				);
-				$notification->method('setObject')->willReturnSelf();
+				$notification->method('setObject')->willReturnCallback(
+					function (string $type, string $reference) use ($notification, $state): INotification {
+						$state->reference = $reference;
+						return $notification;
+					}
+				);
 				$notification->method('setSubject')->willReturnCallback(
 					function (string $subject) use ($notification, $state): INotification {
 						$state->subject = $subject;
@@ -388,7 +493,7 @@ final class ExtractionCompletedListenerTest extends TestCase {
 			function (INotification $notification) use (&$notifications): void {
 				$state = ($this->notificationState[spl_object_id($notification)] ?? null);
 				if ($state !== null) {
-					$notifications[] = ['user' => $state->user, 'subject' => $state->subject];
+					$notifications[] = ['user' => $state->user, 'subject' => $state->subject, 'reference' => $state->reference];
 				}
 			}
 		);
