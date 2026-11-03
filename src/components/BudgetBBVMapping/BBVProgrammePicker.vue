@@ -37,26 +37,27 @@
 </template>
 
 <script>
-import axios from '@nextcloud/axios'
 import { translate as t } from '@nextcloud/l10n'
-import { generateUrl } from '@nextcloud/router'
 import { NcSelect } from '@nextcloud/vue'
-
-const REGISTER_SLUG = 'shillinq'
-const SCHEMA_SLUG = 'BBVProgramme'
+import { recordPickerMixin } from './recordPickerMixin.js'
 
 export default {
 	name: 'BBVProgrammePicker',
 	components: { NcSelect },
-	props: {
-		/**
-		 * v-model: the selected programmeCode (string).
-		 */
-		modelValue: {
-			type: String,
-			default: '',
-		},
+	mixins: [
+		recordPickerMixin({
+			schema: 'BBVProgramme',
+			rowsKey: 'programmes',
+			optionKey: 'programme',
+			valueOf: (programme) =>
+				String(programme.programmeCode ?? programme.id ?? ''),
+			storedValueOf: (programme) =>
+				String(programme.programmeCode || programme.id),
+			nameOf: (programme) => programme?.programmeName || '',
+		}),
+	],
 
+	props: {
 		/**
 		 * Optional administration scope. When set, the picker filters
 		 * BBVProgramme records to this administration.
@@ -73,55 +74,6 @@ export default {
 		fiscalYear: {
 			type: Number,
 			default: () => new Date().getFullYear(),
-		},
-	},
-
-	emits: ['update:modelValue', 'selected'],
-	data() {
-		return {
-			loading: false,
-			query: '',
-			programmes: [],
-			fetchError: '',
-		}
-	},
-
-	computed: {
-		options() {
-			return this.programmes.map((p) => ({
-				value: String(p.programmeCode ?? p.id ?? ''),
-				display: this.formatDisplay(p),
-				programme: p,
-			}))
-		},
-
-		filteredOptions() {
-			const q = (this.query || '').trim().toLowerCase()
-			if (!q) {
-				return this.options
-			}
-			return this.options.filter((o) => {
-				const code = String(o.value || '').toLowerCase()
-				const name = (o.programme?.programmeName || '').toLowerCase()
-				return code.includes(q) || name.includes(q)
-			})
-		},
-
-		selectedOption() {
-			if (!this.modelValue) {
-				return null
-			}
-			const match = this.options.find(
-				(o) => o.value === String(this.modelValue),
-			)
-			if (match) {
-				return match
-			}
-			return {
-				value: String(this.modelValue),
-				display: String(this.modelValue),
-				programme: null,
-			}
 		},
 	},
 
@@ -150,67 +102,20 @@ export default {
 			return [code, name].filter(Boolean).join(' · ')
 		},
 
-		onSearch(query) {
-			this.query = query || ''
-		},
-
-		onSelected(option) {
-			if (!option) {
-				return
-			}
-			this.$emit('selected', option.programme || null)
-		},
-
-		onUpdateModelValue(option) {
-			const value = option?.value ?? ''
-			this.$emit('update:modelValue', value)
-			if (option?.programme) {
-				this.$emit('selected', option.programme)
-			}
+		loadFailedText() {
+			return this.t('shillinq', 'Failed to load BBV programmes.')
 		},
 
 		async fetchProgrammes() {
-			this.loading = true
-			this.fetchError = ''
-			try {
-				const params = {
-					fiscalYear: this.fiscalYear,
-					status: 'active',
-					limit: 500,
-				}
-				if (this.administrationId) {
-					params.administrationId = this.administrationId
-				}
-				const response = await axios.get(
-					generateUrl(
-						`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}`,
-					),
-					{ params },
-				)
-				const rows =
-					response.data?.results
-					?? response.data?.objects
-					?? response.data
-					?? []
-				this.programmes = Array.isArray(rows) ? rows : []
-				if (this.modelValue) {
-					const match = this.programmes.find(
-						(p) =>
-							String(p.programmeCode || p.id)
-							=== String(this.modelValue),
-					)
-					if (match) {
-						this.$emit('selected', match)
-					}
-				}
-			} catch (e) {
-				this.programmes = []
-				this.fetchError =
-					e?.response?.data?.error
-					|| this.t('shillinq', 'Failed to load BBV programmes.')
-			} finally {
-				this.loading = false
+			const params = {
+				fiscalYear: this.fiscalYear,
+				status: 'active',
+				limit: 500,
 			}
+			if (this.administrationId) {
+				params.administrationId = this.administrationId
+			}
+			await this.loadRecords(params)
 		},
 	},
 }
