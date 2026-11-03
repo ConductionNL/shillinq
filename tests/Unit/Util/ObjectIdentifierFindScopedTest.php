@@ -58,4 +58,27 @@ final class ObjectIdentifierFindScopedTest extends TestCase {
 		self::assertSame(['id' => 'x'], ObjectIdentifier::findScoped($service, 'x', ['_rbac' => false]));
 		self::assertSame([['x', ['_rbac' => false]]], $service->calls);
 	}
+
+	public function testStrictLookupAnswersTheRecordOrNull(): void {
+		self::assertSame('own', ObjectIdentifier::findOneStrict(Rw124FindOneProbeTest::service(true), Rw124FindOneProbeTest::OWN)['name'] ?? null);
+		self::assertNull(ObjectIdentifier::findOneStrict(Rw124FindOneProbeTest::service(true), Rw124FindOneProbeTest::OTHER));
+		self::assertNull(ObjectIdentifier::findOneStrict(Rw124FindOneProbeTest::service(true), ''));
+	}
+
+	public function testStrictLookupTreatsOnlyAMissAsAbsent(): void {
+		$missing = new class() {
+			public function find(string $id, mixed ...$named): never {
+				throw new \OCP\AppFramework\Db\DoesNotExistException('missing');
+			}
+		};
+		self::assertNull(ObjectIdentifier::findOneStrict($missing, 'x'));
+
+		$down = new class() {
+			public function find(string $id, mixed ...$named): never {
+				throw new RuntimeException('OpenRegister is down');
+			}
+		};
+		$this->expectException(RuntimeException::class);
+		ObjectIdentifier::findOneStrict($down, 'x');
+	}
 }

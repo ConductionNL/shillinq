@@ -75,6 +75,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Util;
 
+use OCP\AppFramework\Db\DoesNotExistException;
 use Throwable;
 
 /**
@@ -259,6 +260,33 @@ final class ObjectIdentifier {
 
 		return null;
 	}//end findOne()
+
+	/**
+	 * The record with this uuid in the service's register and schema, for a
+	 * caller that must not read a failed lookup as "absent".
+	 *
+	 * A miss (DoesNotExistException) and an object of another schema answer
+	 * null; any other failure of OpenRegister is thrown, so a guard that
+	 * passes on "absent" can refuse instead.
+	 *
+	 * @param object $scoped ObjectService with register + schema already set.
+	 * @param string $id     The uuid.
+	 *
+	 * @return array<string,mixed>|null
+	 *
+	 * @spec openspec/specs/inventory-cycle-count/spec.md
+	 */
+	public static function findOneStrict(object $scoped, string $id): ?array {
+		if ($id === '') {
+			return null;
+		}
+
+		try {
+			return self::record(candidate: self::findScoped(scoped: $scoped, id: $id));
+		} catch (DoesNotExistException $miss) {
+			return null;
+		}
+	}//end findOneStrict()
 
 	/**
 	 * find()'s answer for this id in the service's register and schema, or
