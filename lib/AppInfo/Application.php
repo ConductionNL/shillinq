@@ -246,6 +246,7 @@ class Application extends App implements IBootstrap {
 		// register-slug resolution). Bootstrap::register() is intentionally not
 		// used: it would alias those onto generics that do not match shillinq's
 		// behaviour. See openspec/changes/adopt-apphost.
+		$this->registerGenericControllers(context: $context);
 		(new AppHostRegistration())->register(context: $context);
 
 		// Register deep link patterns with OpenRegister's unified search provider.
@@ -1133,6 +1134,59 @@ class Application extends App implements IBootstrap {
 		(new BbvValidationRegistration())->register(context: $context);
 
 	}//end register()
+
+	/**
+	 * Point the dashboard, health and metrics controllers at the AppHost generics.
+	 *
+	 * These stay in the composition root: their factories look OpenRegister
+	 * classes up by name, which only the composition root may do unguarded
+	 * (ADR-083).
+	 *
+	 * @param IRegistrationContext $context The registration context.
+	 *
+	 * @return void
+	 */
+	private function registerGenericControllers(IRegistrationContext $context): void {
+		$appId = self::APP_ID;
+
+		$context->registerService(
+			'OCA\\Shillinq\\Controller\\DashboardController',
+			static function (ContainerInterface $c) use ($appId) {
+				$class = 'OCA\\OpenRegister\\AppHost\\Controller\\GenericDashboardController';
+				return new $class(
+					appName: $appId,
+					request: $c->get('OCP\\IRequest')
+				);
+			}
+		);
+
+		$context->registerService(
+			'OCA\\Shillinq\\Controller\\HealthController',
+			static function (ContainerInterface $c) use ($appId) {
+				$class = 'OCA\\OpenRegister\\AppHost\\Controller\\GenericHealthController';
+				return new $class(
+					appName: $appId,
+					request: $c->get('OCP\\IRequest'),
+					manifestLoader: $c->get('OCA\\OpenRegister\\AppHost\\Observability\\ManifestLoader'),
+					executor: $c->get('OCA\\OpenRegister\\AppHost\\Observability\\HealthCheckExecutor')
+				);
+			}
+		);
+
+		$context->registerService(
+			'OCA\\Shillinq\\Controller\\MetricsController',
+			static function (ContainerInterface $c) use ($appId) {
+				$class = 'OCA\\OpenRegister\\AppHost\\Controller\\GenericMetricsController';
+				return new $class(
+					appName: $appId,
+					request: $c->get('OCP\\IRequest'),
+					manifestLoader: $c->get('OCA\\OpenRegister\\AppHost\\Observability\\ManifestLoader'),
+					engine: $c->get('OCA\\OpenRegister\\AppHost\\Observability\\MetricsEngine')
+				);
+			}
+		);
+
+	}//end registerGenericControllers()
 
 	/**
 	 * Boot the application.

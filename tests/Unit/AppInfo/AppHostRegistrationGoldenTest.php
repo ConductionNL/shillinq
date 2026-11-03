@@ -1,7 +1,8 @@
 <?php
 
 /**
- * Golden test for the AppHost generic-controller and settings wiring.
+ * Golden test for the AppHost generic-controller and settings wiring, in
+ * Application and AppHostRegistration.
  *
  * @category Test
  * @package  OCA\Shillinq\Tests\Unit\AppInfo
@@ -23,12 +24,14 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\AppInfo;
 
 use OCA\Shillinq\AppInfo\AppHostRegistration;
+use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\AppInfo\OpenRegisterAutoloader;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use ReflectionClass;
+use ReflectionMethod;
 use stdClass;
 
 /**
@@ -39,6 +42,7 @@ use stdClass;
  * in a separate process so no other test sees them.
  *
  * @covers \OCA\Shillinq\AppInfo\AppHostRegistration
+ * @covers \OCA\Shillinq\AppInfo\Application
  * @uses   \OCA\Shillinq\AppInfo\OpenRegisterAutoloader
  * @uses   \OCA\Shillinq\Service\Pipelinq\CustomerBridgeMetricsService
  *
@@ -80,6 +84,8 @@ final class AppHostRegistrationGoldenTest extends TestCase {
 			}
 		);
 
+		$application = (new ReflectionClass(Application::class))->newInstanceWithoutConstructor();
+		(new ReflectionMethod(Application::class, 'registerGenericControllers'))->invoke($application, $context);
 		(new AppHostRegistration())->register(context: $context);
 		OpenRegisterAutoloader::unregister();
 
