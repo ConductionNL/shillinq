@@ -66,7 +66,7 @@ const CHANNEL_LABELS = {
  * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-4.1
  */
 export function channelLabel(channel) {
-	return Object.prototype.hasOwnProperty.call(CHANNEL_LABELS, channel)
+	return Object.hasOwn(CHANNEL_LABELS, channel)
 		? CHANNEL_LABELS[channel]()
 		: String(channel || '')
 }
