@@ -249,6 +249,33 @@ final class ObjectIdentifier {
 	}//end findOne()
 
 	/**
+	 * find()'s answer for this id in the service's register and schema, or
+	 * null when it is an object of another schema. A service that does not
+	 * report its scope gets find()'s answer unchanged.
+	 *
+	 * For callers that need the entity rather than its payload. find()'s own
+	 * miss (DoesNotExistException) is not caught, so callers keep their miss
+	 * handling. `$named` passes on to find() as given, e.g. `_rbac: false`.
+	 *
+	 * @param object               $scoped ObjectService with register + schema already set.
+	 * @param string               $id     The uuid, slug or id.
+	 * @param array<string, mixed> $named  Further find() arguments.
+	 *
+	 * @return mixed
+	 *
+	 * @spec openspec/specs/inventory-cycle-count/spec.md
+	 */
+	public static function findScoped(object $scoped, string $id, array $named = []): mixed {
+		$target = self::lookupTarget(scoped: $scoped);
+		$found  = $scoped->find($id, ...$target, ...$named);
+		if (self::isInSchema(found: $found, target: $target) === false) {
+			return null;
+		}
+
+		return $found;
+	}//end findScoped()
+
+	/**
 	 * The register and schema the service is scoped to, as find() arguments.
 	 *
 	 * OpenRegister's find() does not use the register and schema set on the

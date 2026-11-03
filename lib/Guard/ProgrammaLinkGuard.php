@@ -46,6 +46,7 @@ use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Save precondition guard for BBV provincie programme assignment on GLLine.
@@ -240,10 +241,12 @@ class ProgrammaLinkGuard {
 	private function fetchStoredProgramme(string $id): ?string {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$result = $objectService
-				->setRegister(register: $this->getRegisterSlug())
-				->setSchema(schema: 'GLLine')
-				->find($id);
+			$result = ObjectIdentifier::findScoped(
+				scoped: $objectService
+					->setRegister(register: $this->getRegisterSlug())
+					->setSchema(schema: 'GLLine'),
+				id: $id
+			);
 
 			if (is_object($result) === true && method_exists($result, 'jsonSerialize') === true) {
 				$result = $result->jsonSerialize();
