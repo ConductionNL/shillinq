@@ -10,7 +10,7 @@
  * FxRate index grid.
  *
  * Per ADR-005 / ADR-004 the endpoint is admin-gated via
- * `#[AuthorizedAdminSetting(Application::class)]` — only admins authorised
+ * `#[AuthorizedAdminSetting(AdminSettings::class)]` — only admins authorised
  * for the shillinq settings section can read the cron metadata (the rate
  * grid itself follows the standard OR register read RBAC).
  *
@@ -39,6 +39,7 @@ use DateTimeZone;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\BackgroundJob\FxRateImportJob;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
+use OCA\Shillinq\Settings\AdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
@@ -91,7 +92,7 @@ class FxRateAdminController extends Controller {
 	 *
 	 * @spec openspec/changes/add-shillinq-multi-currency/tasks.md#task-14
 	 */
-	#[AuthorizedAdminSetting(Application::class)]
+	#[AuthorizedAdminSetting(AdminSettings::class)]
 	public function status(): JSONResponse {
 		$jobClass = FxRateImportJob::class;
 		$lastRunEpoch = $this->resolveLastRunEpoch(jobClass: $jobClass);
