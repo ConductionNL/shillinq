@@ -35,7 +35,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Pipelinq;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -70,7 +70,7 @@ final class LoggingPipelinqAdminNotifier implements PipelinqAdminNotifier {
 		$this->logger->error(
 			'Invalid pipelinq API token; check config',
 			[
-				'app' => Application::APP_ID,
+				'app' => AppIdentity::APP_ID,
 				'configKey' => PipelinqContactAdapter::CONFIG_KEY_TOKEN,
 				'type' => $event->type(),
 				'externalId' => $event->externalId(),

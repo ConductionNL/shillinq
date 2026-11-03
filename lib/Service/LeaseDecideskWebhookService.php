@@ -40,7 +40,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\Http\Client\IClientService;
 use OCP\IAppConfig;
 use OCP\Security\ICredentialsManager;
@@ -108,7 +108,7 @@ class LeaseDecideskWebhookService {
 	 */
 	public function getWebhookUrl(): string {
 		return $this->appConfig->getValueString(
-			app: Application::APP_ID,
+			app: AppIdentity::APP_ID,
 			key: self::KEY_WEBHOOK_URL,
 			default: ''
 		);
@@ -124,7 +124,7 @@ class LeaseDecideskWebhookService {
 	 */
 	public function setWebhookUrl(string $url): void {
 		$this->appConfig->setValueString(
-			app: Application::APP_ID,
+			app: AppIdentity::APP_ID,
 			key: self::KEY_WEBHOOK_URL,
 			value: trim($url)
 		);
@@ -194,7 +194,7 @@ class LeaseDecideskWebhookService {
 	 */
 	public function buildPayload(array $event): array {
 		return [
-			'source' => Application::APP_ID,
+			'source' => AppIdentity::APP_ID,
 			'kind' => 'lease-reassessment-approval-request',
 			'eventId' => ($event['id'] ?? ($event['reassessmentNumber'] ?? null)),
 			'reassessmentNumber' => ($event['reassessmentNumber'] ?? null),

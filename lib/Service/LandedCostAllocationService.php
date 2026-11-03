@@ -49,7 +49,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -470,7 +470,7 @@ class LandedCostAllocationService {
 	private function inventoryAccount(): string {
 		$configured = trim(
 			$this->appConfig->getValueString(
-				Application::APP_ID,
+				AppIdentity::APP_ID,
 				self::CFG_INVENTORY_ACCOUNT,
 				self::DEFAULT_INVENTORY_ACCOUNT
 			)
@@ -490,7 +490,7 @@ class LandedCostAllocationService {
 	private function landedCostClearingAccount(): string {
 		$configured = trim(
 			$this->appConfig->getValueString(
-				Application::APP_ID,
+				AppIdentity::APP_ID,
 				self::CFG_LANDED_COST_CLEARING_ACCOUNT,
 				self::DEFAULT_LANDED_COST_CLEARING_ACCOUNT
 			)
@@ -541,7 +541,7 @@ class LandedCostAllocationService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

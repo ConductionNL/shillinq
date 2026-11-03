@@ -33,7 +33,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Dunning;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -179,7 +179,7 @@ class CreditScoreService {
 			];
 		}
 
-		$threshold = (float)$this->appConfig->getValueString(Application::APP_ID, self::CFG_WARNING_THRESHOLD, '3.0');
+		$threshold = (float)$this->appConfig->getValueString(AppIdentity::APP_ID, self::CFG_WARNING_THRESHOLD, '3.0');
 		$value = (float)($score['score'] ?? 0.0);
 		$limit = null;
 		if (isset($score['creditLimitAdvice']) === true) {
@@ -265,7 +265,7 @@ class CreditScoreService {
 	 * @return bool
 	 */
 	private function isFresh(array $score): bool {
-		$days = max(1, (int)$this->appConfig->getValueString(Application::APP_ID, self::CFG_CACHE_DAYS, '30'));
+		$days = max(1, (int)$this->appConfig->getValueString(AppIdentity::APP_ID, self::CFG_CACHE_DAYS, '30'));
 		$date = (string)($score['scoreDate'] ?? '');
 		if ($date === '') {
 			return false;
@@ -287,7 +287,7 @@ class CreditScoreService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

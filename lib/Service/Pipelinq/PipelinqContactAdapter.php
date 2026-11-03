@@ -67,7 +67,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Pipelinq;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\Http\Client\IClient;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
@@ -196,7 +196,7 @@ class PipelinqContactAdapter {
 				$this->logger->warning(
 					'pipelinq circuit breaker transitioned',
 					[
-						'app' => Application::APP_ID,
+						'app' => AppIdentity::APP_ID,
 						'from' => $from,
 						'to' => $to,
 						'reason' => $reason,
@@ -284,7 +284,7 @@ class PipelinqContactAdapter {
 			$this->logger->debug(
 				'pipelinq contact cache hit',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'externalId' => $id,
 				]
 			);
@@ -304,7 +304,7 @@ class PipelinqContactAdapter {
 				$this->logger->debug(
 					'pipelinq contact not found',
 					[
-						'app' => Application::APP_ID,
+						'app' => AppIdentity::APP_ID,
 						'externalId' => $id,
 					]
 				);
@@ -322,7 +322,7 @@ class PipelinqContactAdapter {
 				$this->logger->warning(
 					'pipelinq contact response malformed',
 					[
-						'app' => Application::APP_ID,
+						'app' => AppIdentity::APP_ID,
 						'externalId' => $id,
 						'status' => $e->statusCode(),
 						'reason' => $previous->getMessage(),
@@ -339,7 +339,7 @@ class PipelinqContactAdapter {
 				$this->logger->warning(
 					'pipelinq unavailable; serving cached contact',
 					[
-						'app' => Application::APP_ID,
+						'app' => AppIdentity::APP_ID,
 						'externalId' => $id,
 						'status' => $e->statusCode(),
 					]
@@ -423,7 +423,7 @@ class PipelinqContactAdapter {
 			$this->logger->warning(
 				'pipelinq contact cache write skipped — encode failed',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'reason' => $e->getMessage(),
 				]
 			);
@@ -460,7 +460,7 @@ class PipelinqContactAdapter {
 			$this->logger->warning(
 				'pipelinq request short-circuited (breaker open)',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'method' => $method,
 					'path' => $path,
 				]
@@ -492,7 +492,7 @@ class PipelinqContactAdapter {
 					$this->logger->debug(
 						'pipelinq request succeeded',
 						[
-							'app' => Application::APP_ID,
+							'app' => AppIdentity::APP_ID,
 							'method' => $method,
 							'path' => $path,
 							'attempt' => $attempt,
@@ -524,7 +524,7 @@ class PipelinqContactAdapter {
 			$this->logger->warning(
 				'pipelinq request attempt failed',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'method' => $method,
 					'path' => $path,
 					'attempt' => $attempt,
@@ -545,7 +545,7 @@ class PipelinqContactAdapter {
 					$this->logger->error(
 						'pipelinq authentication rejected — admin must rotate the bearer token',
 						[
-							'app' => Application::APP_ID,
+							'app' => AppIdentity::APP_ID,
 							'method' => $method,
 							'path' => $path,
 							'status' => $lastStatusCode,
@@ -568,7 +568,7 @@ class PipelinqContactAdapter {
 		$this->logger->error(
 			'pipelinq retry budget exhausted — request abandoned',
 			[
-				'app' => Application::APP_ID,
+				'app' => AppIdentity::APP_ID,
 				'method' => $method,
 				'path' => $path,
 				'status' => $lastStatusCode,
@@ -653,7 +653,7 @@ class PipelinqContactAdapter {
 			$this->logger->warning(
 				'pipelinq klantbeeld unavailable',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'externalId' => $externalId,
 					'status' => $e->statusCode(),
 					'breaker' => $this->circuitBreaker->state(),
@@ -668,7 +668,7 @@ class PipelinqContactAdapter {
 			$this->logger->warning(
 				'pipelinq klantbeeld response missing transactions array',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'externalId' => $externalId,
 				]
 			);
@@ -776,7 +776,7 @@ class PipelinqContactAdapter {
 				$this->logger->error(
 					'Invalid pipelinq API token; check config',
 					[
-						'app' => Application::APP_ID,
+						'app' => AppIdentity::APP_ID,
 						'configKey' => self::CONFIG_KEY_TOKEN,
 						'type' => $event->type(),
 						'externalId' => $event->externalId(),
@@ -796,7 +796,7 @@ class PipelinqContactAdapter {
 			$this->logger->warning(
 				'pipelinq timeline publish failed',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'type' => $event->type(),
 					'externalId' => $event->externalId(),
 					'contactId' => $event->contactId(),
@@ -811,7 +811,7 @@ class PipelinqContactAdapter {
 		$this->logger->info(
 			'pipelinq timeline publish succeeded',
 			[
-				'app' => Application::APP_ID,
+				'app' => AppIdentity::APP_ID,
 				'type' => $event->type(),
 				'externalId' => $event->externalId(),
 				'contactId' => $event->contactId(),
@@ -893,7 +893,7 @@ class PipelinqContactAdapter {
 	 * @throws PipelinqTransportException When the endpoint is missing.
 	 */
 	private function resolveEndpoint(): string {
-		$endpoint = trim($this->appConfig->getValueString(Application::APP_ID, self::CONFIG_KEY_ENDPOINT, ''));
+		$endpoint = trim($this->appConfig->getValueString(AppIdentity::APP_ID, self::CONFIG_KEY_ENDPOINT, ''));
 		if ($endpoint === '') {
 			throw new PipelinqTransportException(
 				message: 'pipelinq endpoint is not configured',
@@ -913,7 +913,7 @@ class PipelinqContactAdapter {
 	 *                request.
 	 */
 	private function resolveToken(): string {
-		return trim($this->appConfig->getValueString(Application::APP_ID, self::CONFIG_KEY_TOKEN, ''));
+		return trim($this->appConfig->getValueString(AppIdentity::APP_ID, self::CONFIG_KEY_TOKEN, ''));
 	}//end resolveToken()
 
 	/**

@@ -93,7 +93,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Service\Aggregation\AggregationQuery;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\Migration\GlLineAdministrationBackfillMigrator;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -327,7 +327,7 @@ class SpendAnalyticsService {
 	 */
 	private function assertGlScopeIsEnforceable(): void {
 		$gate = $this->appConfig->getValueString(
-			Application::APP_ID,
+			AppIdentity::APP_ID,
 			GlLineAdministrationBackfillMigrator::GATE_CONFIG_KEY,
 			''
 		);
@@ -477,7 +477,7 @@ class SpendAnalyticsService {
 	 * @return string The register slug.
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($slug === '') {
 			return 'shillinq';
 		}

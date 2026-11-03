@@ -32,7 +32,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use InvalidArgumentException;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\WbsoRbacResolver;
 use OCA\Shillinq\Service\WbsoTransactionService;
@@ -81,7 +81,7 @@ class WbsoTransactionApiController extends Controller {
 		private readonly IL10N $l10n,
 		private readonly AdministrationContextService $administrationContext,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

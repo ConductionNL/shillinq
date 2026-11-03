@@ -43,7 +43,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\CogsPosterService;
 use OCA\Shillinq\Service\FifoValuationService;
 use OCA\Shillinq\Service\MovingAverageValuationService;
@@ -263,7 +263,7 @@ class StockMoveTransitionedListener implements IEventListener {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

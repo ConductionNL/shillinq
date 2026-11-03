@@ -162,7 +162,7 @@ use Psr\Log\LoggerInterface;
 class Application extends App implements IBootstrap {
 	use FilteredObjectListenerTrait;
 
-	public const APP_ID = 'shillinq';
+	public const APP_ID = AppIdentity::APP_ID;
 
 	/**
 	 * Constructor for the Application class.

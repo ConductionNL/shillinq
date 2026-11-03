@@ -50,7 +50,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -353,7 +353,7 @@ class CBSExportService {
 	 */
 	public function getMappingFromSettings(string $administrationId): array {
 		$key = 'cbs_account_mapping_' . $administrationId;
-		$raw = $this->appConfig->getValueString(Application::APP_ID, $key, '');
+		$raw = $this->appConfig->getValueString(AppIdentity::APP_ID, $key, '');
 		if ($raw === '') {
 			return self::DEFAULT_MAPPING;
 		}
@@ -695,7 +695,7 @@ class CBSExportService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

@@ -61,7 +61,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTime;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Lifecycle\SupplierInvoiceExceptionApprovalGuard;
 use OCA\Shillinq\Service\PurchaseOrder\CreditNoteRequestAdapterInterface;
 use OCA\Shillinq\Service\PurchaseOrder\LogCreditNoteRequestAdapter;
@@ -729,7 +729,7 @@ class ExceptionResolutionService {
 			try {
 				$notification = $this->notificationManager->createNotification();
 				$notification
-					->setApp(Application::APP_ID)
+					->setApp(AppIdentity::APP_ID)
 					->setUser($userId)
 					->setDateTime(new DateTime())
 					->setObject(self::NOTIFICATION_OBJECT_TYPE, $matchId)
@@ -1013,7 +1013,7 @@ class ExceptionResolutionService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}
