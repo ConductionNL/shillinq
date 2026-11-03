@@ -74,11 +74,11 @@ function headerRow(table) {
  * @return {Array<string|number|null>} The row.
  */
 function bodyRow(table, row) {
-	const cells = (table.pivot.cells && table.pivot.cells[row.key]) || {}
+	const cells = ownValue(table.pivot.cells, row.key) || {}
 	return [
 		groupName(table.labels, row),
 		...table.columns.map((column) =>
-			column.key in cells ? cells[column.key] : null,
+			Object.hasOwn(cells, column.key) ? cells[column.key] : null,
 		),
 		totalOf(table.pivot.rowTotals, row.key),
 	]
@@ -108,7 +108,19 @@ function totalsRow(table) {
  * @return {number}
  */
 function totalOf(totals, key) {
-	return totals ? (totals[key] ?? 0) : 0
+	return ownValue(totals, key) ?? 0
+}
+
+/**
+ * A value the object holds under the key itself, never one it inherits, so a
+ * key such as `constructor` does not read Object's function.
+ *
+ * @param {object|null|undefined} values Values by key.
+ * @param {string} key The key.
+ * @return {object|number|null|undefined} The value, or undefined.
+ */
+function ownValue(values, key) {
+	return values && Object.hasOwn(values, key) ? values[key] : undefined
 }
 
 /**
