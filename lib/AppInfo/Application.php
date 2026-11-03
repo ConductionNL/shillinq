@@ -184,49 +184,7 @@ class Application extends App implements IBootstrap {
 	 */
 	public function register(IRegistrationContext $context): void {
 
-		// ADR-084: services type-hint OpenRegister's PUBLISHED interface, never its
-		// concrete class, so this app's unit tests can mock a type they are able to
-		// load. Nextcloud autowires concrete classes across apps but not interfaces,
-		// so the binding has to be stated — and the composition root is where this
-		// app says how it is wired.
-		//
-		// An ALIAS, not a factory: it resolves when something actually asks for the
-		// interface, so an instance without OpenRegister fails at the route that
-		// needed the data rather than at registration. Both names are strings and
-		// neither triggers an autoload, which is what keeps ADR-083 rule 3's promise
-		// that the start screen still boots.
-		$context->registerServiceAlias(
-			ObjectServiceInterface::class,
-			'OCA\OpenRegister\Service\ObjectService'
-		);
-
-		// The register-slug resolver, bound the same way and for the same reason.
-		//
-		// Register slugs live in `openregister_registers`, and nine fleet apps ship
-		// a repair step that renames theirs. The step is per instance, so both
-		// slugs are live across the estate at once and a literal is wrong on half
-		// of it. The old-slug case is the quiet one: OpenRegister finds no
-		// register, matches no rows, and returns an empty set that is byte for byte
-		// what a healthy empty register returns. No exception, no 404, no log line.
-		// This app once read Integriq's connector register that way, from the
-		// external-adapters roster that adopt-connection-registry removed.
-		//
-		// Verified against this container, not assumed: OpenRegister registers the
-		// resolver in its OWN container, so nothing of that registration reaches
-		// here. What reaches here is the alias stated here plus autowiring of the
-		// concrete class, whose only dependencies are `RegisterMapper` and
-		// `LoggerInterface`. Both resolve from a leaf app's DIContainer, and the
-		// interface then answers with a live resolution. Resolved live in this
-		// app's own DIContainer on the running instance before this was written.
-		//
-		// The one thing lost is OpenRegister's shared-instance registration: a leaf
-		// container autowires a fresh resolver per injection point, so the
-		// request-scoped memo is per consumer rather than per request. That costs
-		// one indexed read per consumer and changes no answer.
-		$context->registerServiceAlias(
-			RegisterSlugResolverInterface::class,
-			'OCA\OpenRegister\Service\RegisterSlugResolver'
-		);
+		$this->registerOpenRegisterContracts(context: $context);
 		// OpenRegister AppHost adoption (adopt-apphost) — the mechanical
 		// controllers/settings that are byte-for-byte the fleet skeleton are
 		// re-pointed at the engine's generics, and observability is served by
@@ -1134,6 +1092,59 @@ class Application extends App implements IBootstrap {
 		(new BbvValidationRegistration())->register(context: $context);
 
 	}//end register()
+
+	/**
+	 * Bind the OpenRegister interfaces this app's services type-hint to their implementations.
+	 *
+	 * @param IRegistrationContext $context The registration context.
+	 *
+	 * @return void
+	 */
+	private function registerOpenRegisterContracts(IRegistrationContext $context): void {
+		// ADR-084: services type-hint OpenRegister's PUBLISHED interface, never its
+		// concrete class, so this app's unit tests can mock a type they are able to
+		// load. Nextcloud autowires concrete classes across apps but not interfaces,
+		// so the binding has to be stated — and the composition root is where this
+		// app says how it is wired.
+		//
+		// An ALIAS, not a factory: it resolves when something actually asks for the
+		// interface, so an instance without OpenRegister fails at the route that
+		// needed the data rather than at registration. Both names are strings and
+		// neither triggers an autoload, which is what keeps ADR-083 rule 3's promise
+		// that the start screen still boots.
+		$context->registerServiceAlias(
+			ObjectServiceInterface::class,
+			'OCA\OpenRegister\Service\ObjectService'
+		);
+
+		// The register-slug resolver, bound the same way and for the same reason.
+		//
+		// Register slugs live in `openregister_registers`, and nine fleet apps ship
+		// a repair step that renames theirs. The step is per instance, so both
+		// slugs are live across the estate at once and a literal is wrong on half
+		// of it. The old-slug case is the quiet one: OpenRegister finds no
+		// register, matches no rows, and returns an empty set that is byte for byte
+		// what a healthy empty register returns. No exception, no 404, no log line.
+		// This app once read Integriq's connector register that way, from the
+		// external-adapters roster that adopt-connection-registry removed.
+		//
+		// Verified against this container, not assumed: OpenRegister registers the
+		// resolver in its OWN container, so nothing of that registration reaches
+		// here. What reaches here is the alias stated here plus autowiring of the
+		// concrete class, whose only dependencies are `RegisterMapper` and
+		// `LoggerInterface`. Both resolve from a leaf app's DIContainer, and the
+		// interface then answers with a live resolution. Resolved live in this
+		// app's own DIContainer on the running instance before this was written.
+		//
+		// The one thing lost is OpenRegister's shared-instance registration: a leaf
+		// container autowires a fresh resolver per injection point, so the
+		// request-scoped memo is per consumer rather than per request. That costs
+		// one indexed read per consumer and changes no answer.
+		$context->registerServiceAlias(
+			RegisterSlugResolverInterface::class,
+			'OCA\OpenRegister\Service\RegisterSlugResolver'
+		);
+	}//end registerOpenRegisterContracts()
 
 	/**
 	 * Point the dashboard, health and metrics controllers at the AppHost generics.
