@@ -1,6 +1,7 @@
 OC.L10N.register(
     "shillinq",
     {
+        "Marketplace": "Marketplace",
         "New quote": "New quote",
         "Raise payout": "Raise payout",
         "Credit invoice": "Credit invoice",
