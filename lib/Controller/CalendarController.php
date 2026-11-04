@@ -35,8 +35,9 @@ namespace OCA\Shillinq\Controller;
 use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\Booking\CalendarRows;
 use OCA\Shillinq\Service\Booking\TransactionalGuard;
 use OCA\Shillinq\Service\ConflictDetectionService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
@@ -64,13 +65,6 @@ use Psr\Log\LoggerInterface;
 class CalendarController extends Controller {
 
 	/**
-	 * Default date range when the client omits start/end query parameters.
-	 * The detail endpoint returns bookings in the next 30 days from `today`
-	 * per REQ-005 of bookings-resource-calendar.
-	 */
-	private const DEFAULT_RANGE_DAYS = 30;
-
-	/**
 	 * Construct the controller with DI dependencies.
 	 *
 	 * @param IRequest $request The request object.
@@ -96,7 +90,7 @@ class CalendarController extends Controller {
 		private readonly IGroupManager $groupManager,
 		private readonly ObjectTransitionRunner $transitions,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -170,7 +164,7 @@ class CalendarController extends Controller {
 
 		$calendars = [];
 		foreach ($records as $record) {
-			$calendars[] = $this->formatCalendar(record: $record);
+			$calendars[] = (new CalendarRows())->calendar(row: $this->toArray(object: $record));
 		}
 
 		return new JSONResponse(['calendars' => $calendars]);
@@ -203,7 +197,7 @@ class CalendarController extends Controller {
 			return new JSONResponse(['error' => 'Calendar not found'], Http::STATUS_NOT_FOUND);
 		}
 
-		return new JSONResponse($this->formatCalendar(record: $record));
+		return new JSONResponse((new CalendarRows())->calendar(row: $this->toArray(object: $record)));
 	}//end show()
 
 	/**
@@ -229,18 +223,47 @@ class CalendarController extends Controller {
 			return $authResult;
 		}
 
-		$calendarId = trim($calendarId);
+		$refusal = $this->readableCalendarRefusal(calendarId: trim($calendarId));
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$range = $this->requestedRange();
+		if ($range instanceof JSONResponse) {
+			return $range;
+		}
+
+		return $this->bookingsInRangeResponse(calendarId: trim($calendarId), range: $range);
+	}//end listBookings()
+
+	/**
+	 * The 400 or 404 response when the calendar id is empty, or the calendar
+	 * is missing or outside the caller's administrations; null when readable.
+	 *
+	 * @param string $calendarId Trimmed logical calendar identifier.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function readableCalendarRefusal(string $calendarId): ?JSONResponse {
 		if ($calendarId === '') {
 			return new JSONResponse(['error' => 'calendarId is required'], Http::STATUS_BAD_REQUEST);
 		}
 
-		$calendar = $this->loadReadableCalendar(calendarId: $calendarId);
-		if ($calendar === null) {
+		if ($this->loadReadableCalendar(calendarId: $calendarId) === null) {
 			return new JSONResponse(['error' => 'Calendar not found'], Http::STATUS_NOT_FOUND);
 		}
 
+		return null;
+	}//end readableCalendarRefusal()
+
+	/**
+	 * The requested start/end range in UTC, or a 400 response when it is invalid.
+	 *
+	 * @return array{0: DateTimeImmutable, 1: DateTimeImmutable}|JSONResponse
+	 */
+	private function requestedRange(): array|JSONResponse {
 		try {
-			[$rangeStart, $rangeEnd] = $this->resolveRange(
+			return (new CalendarRows())->range(
 				start: (string)$this->request->getParam('start', ''),
 				end: (string)$this->request->getParam('end', ''),
 			);
@@ -251,55 +274,31 @@ class CalendarController extends Controller {
 				Http::STATUS_BAD_REQUEST,
 			);
 		}
+	}//end requestedRange()
 
+	/**
+	 * The calendar's bookings that intersect the range, sorted by startTime;
+	 * 503 when the lookup fails.
+	 *
+	 * @param string $calendarId Logical calendar identifier.
+	 * @param array{0: DateTimeImmutable, 1: DateTimeImmutable} $range The half-open range.
+	 *
+	 * @return JSONResponse
+	 */
+	private function bookingsInRangeResponse(string $calendarId, array $range): JSONResponse {
 		try {
-			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$records = $objectService
+			$records = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService')
 				->setRegister($this->settings->getRegisterSlug())
 				->setSchema('Booking')
-				->findAll(
-					[
-						'filters' => ['calendar' => $calendarId],
-						'limit' => 5000,
-					]
-				);
+				->findAll(['filters' => ['calendar' => $calendarId], 'limit' => 5000]);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq: booking lookup failed',
-				['exception' => $e->getMessage()]
-			);
+			$this->logger->error('Shillinq: booking lookup failed', ['exception' => $e->getMessage()]);
 			return new JSONResponse(['error' => 'Booking lookup failed'], Http::STATUS_SERVICE_UNAVAILABLE);
 		}
 
-		$bookings = [];
-		foreach ($records as $record) {
-			$row = $this->toArray(object: $record);
-			$startRaw = (string)($row['startTime'] ?? '');
-			$endRaw = (string)($row['endTime'] ?? '');
-			if ($startRaw === '' || $endRaw === '') {
-				continue;
-			}
-
-			try {
-				$start = (new DateTimeImmutable($startRaw))->setTimezone(new DateTimeZone('UTC'));
-				$end = (new DateTimeImmutable($endRaw))->setTimezone(new DateTimeZone('UTC'));
-			} catch (\Throwable) {
-				continue;
-			}
-
-			// Half-open range: include bookings whose window intersects the range.
-			if ($start < $rangeEnd && $end > $rangeStart) {
-				$bookings[] = $this->formatBooking(row: $row);
-			}
-		}
-
-		usort(
-			$bookings,
-			static fn (array $a, array $b): int => strcmp((string)$a['startTime'], (string)$b['startTime'])
-		);
-
-		return new JSONResponse(['bookings' => $bookings]);
-	}//end listBookings()
+		$rows = array_map($this->toArray(...), $records);
+		return new JSONResponse(['bookings' => (new CalendarRows())->inRange(rows: $rows, range: $range)]);
+	}//end bookingsInRangeResponse()
 
 	/**
 	 * POST /api/v2/calendars/{calendarId}/bookings — create a booking.
@@ -337,7 +336,28 @@ class CalendarController extends Controller {
 			return $authResult;
 		}
 
-		$calendarId = trim($calendarId);
+		$calendar = $this->bookableCalendar(calendarId: trim($calendarId));
+		if ($calendar instanceof JSONResponse) {
+			return $calendar;
+		}
+
+		$authError = $this->authorizeBookingCreation(calendarRow: $calendar['row']);
+		if ($authError !== null) {
+			return $authError;
+		}
+
+		return $this->createBookingOnCalendar(calendar: $calendar);
+	}//end createBooking()
+
+	/**
+	 * The calendar to book, as its trimmed id and row; 400 when the id is
+	 * empty, 404 when the calendar is missing.
+	 *
+	 * @param string $calendarId Trimmed logical calendar identifier.
+	 *
+	 * @return array{id: string, row: array<string, mixed>}|JSONResponse
+	 */
+	private function bookableCalendar(string $calendarId): array|JSONResponse {
 		if ($calendarId === '') {
 			return new JSONResponse(['error' => 'calendarId is required'], Http::STATUS_BAD_REQUEST);
 		}
@@ -347,20 +367,23 @@ class CalendarController extends Controller {
 			return new JSONResponse(['error' => 'Calendar not found'], Http::STATUS_NOT_FOUND);
 		}
 
-		$calendarRow = $this->toArray(object: $calendar);
-		$resourceId = (string)($calendarRow['resource'] ?? '');
+		return ['id' => $calendarId, 'row' => $this->toArray(object: $calendar)];
+	}//end bookableCalendar()
 
-		$authError = $this->authorizeBookingCreation(calendarRow: $calendarRow);
-		if ($authError !== null) {
-			return $authError;
-		}
-
-		$administrationId = (string)($calendarRow['administrationId'] ?? '');
+	/**
+	 * Validate the booking request against an authorised calendar and create
+	 * it: 422 when the calendar has no administration, 400 on an invalid
+	 * request, 503 without OpenRegister.
+	 *
+	 * @param array{id: string, row: array<string, mixed>} $calendar The calendar.
+	 *
+	 * @return JSONResponse
+	 */
+	private function createBookingOnCalendar(array $calendar): JSONResponse {
+		$administrationId = (string)($calendar['row']['administrationId'] ?? '');
 		if ($administrationId === '') {
-			return new JSONResponse(
-				['error' => 'calendar-without-administration', 'message' => 'This calendar belongs to no administration, so it cannot take bookings.'],
-				Http::STATUS_UNPROCESSABLE_ENTITY,
-			);
+			$message = 'This calendar belongs to no administration, so it cannot take bookings.';
+			return new JSONResponse(['error' => 'calendar-without-administration', 'message' => $message], Http::STATUS_UNPROCESSABLE_ENTITY);
 		}
 
 		$parsed = $this->parseBookingRequest();
@@ -368,95 +391,108 @@ class CalendarController extends Controller {
 			return $parsed;
 		}
 
-		$title = $parsed['title'];
-		$attendee = $parsed['attendee'];
-		$confirm = $parsed['confirm'];
-		$override = $parsed['override'];
-		$start = $parsed['start'];
-		$end = $parsed['end'];
+		$scope = ['administrationId' => $administrationId, 'calendar' => $calendar['id'], 'resource' => (string)($calendar['row']['resource'] ?? '')];
+		return $this->storeBooking(booking: $parsed + $scope);
+	}//end createBookingOnCalendar()
 
+	/**
+	 * Check conflicts and create the booking in one transaction (503 without
+	 * OpenRegister). The
+	 * transaction boundary plus the resource row-lock together close the
+	 * read-then-write race window (REQ-004).
+	 *
+	 * @param array<string, mixed> $booking The parsed request plus its calendar scope.
+	 *
+	 * @return JSONResponse 201, 409 on an unoverridden conflict, 500 on failure.
+	 */
+	private function storeBooking(array $booking): JSONResponse {
 		if ($this->settings->isOpenRegisterAvailable() === false) {
 			return new JSONResponse(['error' => 'OpenRegister unavailable'], Http::STATUS_SERVICE_UNAVAILABLE);
 		}
 
-		// Transactionally check + create. The conflict service runs first,
-		// then — only if no overlap — the OR write fires. The transaction
-		// boundary plus the resource row-lock together close the read-then-
-		// write race-window (REQ-004).
 		$this->guard->beginTransaction();
 		try {
-			$this->conflicts->lockResource(resourceId: $resourceId);
-
-			$existingConflicts = $this->conflicts->checkConflicts(
-				resourceId: $resourceId,
-				proposedStart: $start->format('Y-m-d\\TH:i:s\\Z'),
-				proposedEnd: $end->format('Y-m-d\\TH:i:s\\Z'),
-			);
-
-			if ($existingConflicts !== [] && $override === false) {
-				$this->guard->rollBack();
-				return new JSONResponse(
-					[
-						'error' => 'conflict',
-						'message' => 'The proposed booking overlaps existing bookings on this resource.',
-						'conflicts' => $existingConflicts,
-					],
-					Http::STATUS_CONFLICT,
-				);
-			}
-
-			$bookingId = $this->generateBookingId();
-			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$payload = [
-				'administrationId' => $administrationId,
-				'bookingId' => $bookingId,
-				'calendar' => $calendarId,
-				'resource' => $resourceId,
-				'title' => $title,
-				'startTime' => $start->format('Y-m-d\\TH:i:s\\Z'),
-				'endTime' => $end->format('Y-m-d\\TH:i:s\\Z'),
-				'attendee' => $attendee,
-				'status' => 'pending',
-			];
-
-			$saved = $objectService->saveObject(
-				object: $payload,
-				register: $this->settings->getRegisterSlug(),
-				schema: 'Booking',
-			);
-
-			$row = $this->toArray(object: $saved);
-			// Merge in fields from our payload as a fallback if the OR layer
-			// does not echo them (e.g. unit-test fake).
-			$row = array_merge($payload, $row);
-
-			if ($confirm === true) {
-				$this->transitions->run(objectId: (string)($row['@self']['id'] ?? ($row['id'] ?? '')), action: 'confirm');
-				$row['status'] = 'confirmed';
-			}
-
-			$this->guard->commit();
-
-			return new JSONResponse(
-				$this->formatBooking(row: $row),
-				Http::STATUS_CREATED,
-			);
+			return $this->storeBookingInTransaction(booking: $booking);
 		} catch (\Throwable $e) {
-			if ($this->guard->inTransaction() === true) {
-				$this->guard->rollBack();
-			}
+			return $this->bookingCreateFailed(error: $e);
+		}
 
-			$this->logger->error(
-				'Shillinq: booking create failed',
-				['exception' => $e->getMessage()]
-			);
-			return new JSONResponse(
-				['error' => 'Booking create failed'],
-				Http::STATUS_INTERNAL_SERVER_ERROR,
-			);
-		}//end try
+	}//end storeBooking()
 
-	}//end createBooking()
+	/**
+	 * Roll back an open transaction, log the failure and answer 500.
+	 *
+	 * @param \Throwable $error What went wrong.
+	 *
+	 * @return JSONResponse
+	 */
+	private function bookingCreateFailed(\Throwable $error): JSONResponse {
+		if ($this->guard->inTransaction() === true) {
+			$this->guard->rollBack();
+		}
+
+		$this->logger->error('Shillinq: booking create failed', ['exception' => $error->getMessage()]);
+		return new JSONResponse(['error' => 'Booking create failed'], Http::STATUS_INTERNAL_SERVER_ERROR);
+	}//end bookingCreateFailed()
+
+	/**
+	 * Lock the resource, refuse an unoverridden overlap, save the booking,
+	 * confirm it when asked, and commit.
+	 *
+	 * @param array<string, mixed> $booking The parsed request plus its calendar scope.
+	 *
+	 * @return JSONResponse
+	 */
+	private function storeBookingInTransaction(array $booking): JSONResponse {
+		$existingConflicts = $this->lockedConflicts(booking: $booking);
+		if ($existingConflicts !== [] && $booking['override'] === false) {
+			$this->guard->rollBack();
+			$message = 'The proposed booking overlaps existing bookings on this resource.';
+			return new JSONResponse(['error' => 'conflict', 'message' => $message, 'conflicts' => $existingConflicts], Http::STATUS_CONFLICT);
+		}
+
+		$row = $this->saveBooking(booking: $booking);
+		$this->guard->commit();
+
+		return new JSONResponse((new CalendarRows())->format(row: $row), Http::STATUS_CREATED);
+	}//end storeBookingInTransaction()
+
+	/**
+	 * Lock the resource row, then list the bookings that overlap the request.
+	 *
+	 * @param array<string, mixed> $booking The parsed request plus its calendar scope.
+	 *
+	 * @return array<int, array<string, mixed>> The conflicting bookings.
+	 */
+	private function lockedConflicts(array $booking): array {
+		$this->conflicts->lockResource(resourceId: $booking['resource']);
+		return $this->conflicts->checkConflicts(
+			resourceId: $booking['resource'],
+			proposedStart: $booking['start']->format('Y-m-d\\TH:i:s\\Z'),
+			proposedEnd: $booking['end']->format('Y-m-d\\TH:i:s\\Z'),
+		);
+	}//end lockedConflicts()
+
+	/**
+	 * Save a pending booking and run the confirm transition when asked.
+	 *
+	 * @param array<string, mixed> $booking The parsed request plus its calendar scope.
+	 *
+	 * @return array<string, mixed> The saved row, with the payload as fallback for fields the store does not echo.
+	 */
+	private function saveBooking(array $booking): array {
+		$payload = (new CalendarRows())->payload(booking: $booking);
+		$saved   = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService')
+			->saveObject(object: $payload, register: $this->settings->getRegisterSlug(), schema: 'Booking');
+		$row     = array_merge($payload, $this->toArray(object: $saved));
+
+		if ($booking['confirm'] === true) {
+			$this->transitions->run(objectId: (string)($row['@self']['id'] ?? ($row['id'] ?? '')), action: 'confirm');
+			$row['status'] = 'confirmed';
+		}
+
+		return $row;
+	}//end saveBooking()
 
 	/**
 	 * Per-object booking-creation guard (security-endpoint-guards REQ-001):
@@ -654,96 +690,6 @@ class CalendarController extends Controller {
 
 		return null;
 	}//end loadCalendar()
-
-	/**
-	 * Default a missing range to today + 30 days and normalise to UTC.
-	 *
-	 * @param string $start Caller-supplied start (may be empty).
-	 * @param string $end Caller-supplied end (may be empty).
-	 *
-	 * @return array{0: DateTimeImmutable, 1: DateTimeImmutable} Inclusive lower / exclusive upper bounds.
-	 *
-	 * @throws InvalidArgumentException When the inputs are malformed or inverted.
-	 */
-	private function resolveRange(string $start, string $end): array {
-		$tz = new DateTimeZone('UTC');
-
-		if ($start !== '') {
-			$startDt = new DateTimeImmutable($start, $tz);
-		} else {
-			$startDt = new DateTimeImmutable('today', $tz);
-		}
-
-		if ($end !== '') {
-			$endDt = new DateTimeImmutable($end, $tz);
-		} else {
-			$endDt = $startDt->modify('+' . self::DEFAULT_RANGE_DAYS . ' days');
-		}
-
-		if ($endDt <= $startDt) {
-			throw new InvalidArgumentException('end must be after start');
-		}
-
-		return [$startDt->setTimezone($tz), $endDt->setTimezone($tz)];
-	}//end resolveRange()
-
-	/**
-	 * Generate a stable, sortable booking id for a new booking.
-	 *
-	 * @return string Booking id (bk-YYYYMMDDHHMMSS-rrrr).
-	 */
-	private function generateBookingId(): string {
-		return 'bk-' . gmdate('YmdHis') . '-' . bin2hex(random_bytes(2));
-	}//end generateBookingId()
-
-	/**
-	 * Shape a calendar OR record into the API response payload.
-	 *
-	 * @param mixed $record OR ObjectService record.
-	 *
-	 * @return array<string,mixed>
-	 */
-	private function formatCalendar(mixed $record): array {
-		$row = $this->toArray(object: $record);
-		return [
-			'id' => (string)($row['calendarId'] ?? ''),
-			'calendarId' => (string)($row['calendarId'] ?? ''),
-			'resource' => (string)($row['resource'] ?? ''),
-			'administrationId' => (string)($row['administrationId'] ?? ''),
-			'timeZone' => (string)($row['timeZone'] ?? 'Europe/Amsterdam'),
-			'workingHours' => ($row['workingHours'] ?? null),
-			'status' => (string)($row['status'] ?? 'active'),
-			'createdAt' => (string)($row['createdAt'] ?? ''),
-			'updatedAt' => (string)($row['updatedAt'] ?? ''),
-		];
-
-	}//end formatCalendar()
-
-	/**
-	 * Shape a booking OR record into the API response payload.
-	 *
-	 * @param array<string,mixed> $row Flat booking row.
-	 *
-	 * @return array<string,mixed>
-	 */
-	private function formatBooking(array $row): array {
-		return [
-			'id' => (string)($row['bookingId'] ?? ''),
-			'bookingId' => (string)($row['bookingId'] ?? ''),
-			'calendar' => (string)($row['calendar'] ?? ''),
-			'resource' => (string)($row['resource'] ?? ''),
-			'administrationId' => (string)($row['administrationId'] ?? ''),
-			'title' => (string)($row['title'] ?? ''),
-			'startTime' => (string)($row['startTime'] ?? ''),
-			'endTime' => (string)($row['endTime'] ?? ''),
-			'attendee' => (string)($row['attendee'] ?? ''),
-			'status' => (string)($row['status'] ?? 'pending'),
-			'externalId' => ($row['externalId'] ?? null),
-			'createdAt' => (string)($row['createdAt'] ?? ''),
-			'updatedAt' => (string)($row['updatedAt'] ?? ''),
-		];
-
-	}//end formatBooking()
 
 	/**
 	 * Normalise an OR record (Entity, array, or JSON-serialisable) into a flat array.

@@ -45,7 +45,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -324,7 +324,7 @@ class NrvWriteDownService {
 	private function inventoryAccount(): string {
 		$configured = trim(
 			$this->appConfig->getValueString(
-				Application::APP_ID,
+				AppIdentity::APP_ID,
 				self::CFG_INVENTORY_ACCOUNT,
 				self::DEFAULT_INVENTORY_ACCOUNT
 			)
@@ -344,7 +344,7 @@ class NrvWriteDownService {
 	private function writeDownAccount(): string {
 		$configured = trim(
 			$this->appConfig->getValueString(
-				Application::APP_ID,
+				AppIdentity::APP_ID,
 				self::CFG_WRITEDOWN_ACCOUNT,
 				self::DEFAULT_WRITEDOWN_ACCOUNT
 			)
@@ -395,7 +395,7 @@ class NrvWriteDownService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

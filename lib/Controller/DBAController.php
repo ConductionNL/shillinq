@@ -35,7 +35,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Enums\DBAConstants;
 use OCA\Shillinq\Guard\DBAOpdrachtGuard;
 use OCA\Shillinq\Guard\DBAScoreCalculator;
@@ -112,7 +112,7 @@ class DBAController extends Controller {
 		private readonly AdministrationContextService $administrationContext,
 		private readonly IGroupManager $groupManager,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -365,7 +365,7 @@ class DBAController extends Controller {
 			$key .= '.' . $administrationId;
 		}
 
-		$this->appConfig->setValueString(Application::APP_ID, $key, $mode);
+		$this->appConfig->setValueString(AppIdentity::APP_ID, $key, $mode);
 		return new JSONResponse(['mode' => $mode, 'administrationId' => $administrationId]);
 	}//end setMode()
 
@@ -639,7 +639,7 @@ class DBAController extends Controller {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

@@ -46,7 +46,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Throwable;
 
@@ -220,7 +220,7 @@ class SubsidieVerantwoordingService {
 	 * @return float The auditor threshold in the base currency.
 	 */
 	private function resolveThreshold(): float {
-		$raw = $this->appConfig->getValueString(Application::APP_ID, 'auditor_threshold', '');
+		$raw = $this->appConfig->getValueString(AppIdentity::APP_ID, 'auditor_threshold', '');
 		if ($raw === '' || is_numeric($raw) === false) {
 			return self::DEFAULT_AUDIT_THRESHOLD;
 		}

@@ -28,7 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 
@@ -112,7 +112,7 @@ class StatementManifestService {
 				];
 			}
 
-			$existing = $this->appConfig->getValueString(Application::APP_ID, $configKey, '');
+			$existing = $this->appConfig->getValueString(AppIdentity::APP_ID, $configKey, '');
 			if ($existing !== '' && $force === false) {
 				// Idempotent: operator-edited manifest already present — preserve it.
 				$skipped++;
@@ -120,7 +120,7 @@ class StatementManifestService {
 			}
 
 			$this->appConfig->setValueString(
-				Application::APP_ID,
+				AppIdentity::APP_ID,
 				$configKey,
 				json_encode($manifest)
 			);

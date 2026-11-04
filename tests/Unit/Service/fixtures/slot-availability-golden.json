@@ -1,0 +1,1000 @@
+{
+    "appointment read fails": {
+        "result": {
+            "slots": [
+                {
+                    "startTime": "2026-05-22T10:30:00Z",
+                    "endTime": "2026-05-22T11:00:00Z"
+                },
+                {
+                    "startTime": "2026-05-22T10:45:00Z",
+                    "endTime": "2026-05-22T11:15:00Z"
+                },
+                {
+                    "startTime": "2026-05-22T11:00:00Z",
+                    "endTime": "2026-05-22T11:30:00Z"
+                },
+                {
+                    "startTime": "2026-05-22T11:15:00Z",
+                    "endTime": "2026-05-22T11:45:00Z"
+                },
+                {
+                    "startTime": "2026-05-22T11:30:00Z",
+                    "endTime": "2026-05-22T12:00:00Z"
+                }
+            ],
+            "etag": "\"734e7eee9decdbde1f91643374d197ea\"",
+            "cached": false
+        },
+        "cache": [
+            "get shillinq-widget-slots:svc-1:room-1:2026-05-22",
+            "set shillinq-widget-slots:svc-1:room-1:2026-05-22 300 {\"slots\":[{\"startTime\":\"2026-05-22T10:30:00Z\",\"endTime\":\"2026-05-22T11:00:00Z\"},{\"startTime\":\"2026-05-22T10:45:00Z\",\"endTime\":\"2026-05-22T11:15:00Z\"},{\"startTime\":\"2026-05-22T11:00:00Z\",\"endTime\":\"2026-05-22T11:30:00Z\"},{\"startTime\":\"2026-05-22T11:15:00Z\",\"endTime\":\"2026-05-22T11:45:00Z\"},{\"startTime\":\"2026-05-22T11:30:00Z\",\"endTime\":\"2026-05-22T12:00:00Z\"}],\"etag\":\"\\\"734e7eee9decdbde1f91643374d197ea\\\"\"}"
+        ],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "Resource",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "Appointment",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 500
+                },
+                "rbac": false
+            }
+        ],
+        "log": [
+            "error: Shillinq slot service: appointment lookup failed {\"exception\":\"read failed\"}"
+        ]
+    },
+    "bad hours": {
+        "result": {
+            "slots": [],
+            "etag": "\"4f53cda18c2baa0c0354bb5f9a3ecbe5\"",
+            "cached": false
+        },
+        "cache": [],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "Resource",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "Appointment",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 500
+                },
+                "rbac": false
+            }
+        ],
+        "log": [
+            "error: Shillinq slot service: invalid date/time window {\"date\":\"2026-05-22\",\"openingTime\":\"xx\",\"closingTime\":\"12:00\",\"exception\":\"Failed to parse time string (2026-05-22Txx:00) at position 10 (T): The timezone could not be found in the database\"}"
+        ]
+    },
+    "cache entry not an array": {
+        "result": {
+            "slots": [
+                {
+                    "startTime": "2026-05-22T10:30:00Z",
+                    "endTime": "2026-05-22T11:00:00Z"
+                },
+                {
+                    "startTime": "2026-05-22T11:30:00Z",
+                    "endTime": "2026-05-22T12:00:00Z"
+                }
+            ],
+            "etag": "\"8d49a6edcf046ffe663c7bbee8993e16\"",
+            "cached": false
+        },
+        "cache": [
+            "get shillinq-widget-slots:svc-1:room-1:2026-05-22",
+            "set shillinq-widget-slots:svc-1:room-1:2026-05-22 300 {\"slots\":[{\"startTime\":\"2026-05-22T10:30:00Z\",\"endTime\":\"2026-05-22T11:00:00Z\"},{\"startTime\":\"2026-05-22T11:30:00Z\",\"endTime\":\"2026-05-22T12:00:00Z\"}],\"etag\":\"\\\"8d49a6edcf046ffe663c7bbee8993e16\\\"\"}"
+        ],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "Resource",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "Appointment",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 500
+                },
+                "rbac": false
+            }
+        ],
+        "log": []
+    },
+    "cache entry without etag": {
+        "result": {
+            "slots": [
+                {
+                    "startTime": "2026-05-22T10:30:00Z",
+                    "endTime": "2026-05-22T11:00:00Z"
+                },
+                {
+                    "startTime": "2026-05-22T11:30:00Z",
+                    "endTime": "2026-05-22T12:00:00Z"
+                }
+            ],
+            "etag": "\"8d49a6edcf046ffe663c7bbee8993e16\"",
+            "cached": false
+        },
+        "cache": [
+            "get shillinq-widget-slots:svc-1:room-1:2026-05-22",
+            "set shillinq-widget-slots:svc-1:room-1:2026-05-22 300 {\"slots\":[{\"startTime\":\"2026-05-22T10:30:00Z\",\"endTime\":\"2026-05-22T11:00:00Z\"},{\"startTime\":\"2026-05-22T11:30:00Z\",\"endTime\":\"2026-05-22T12:00:00Z\"}],\"etag\":\"\\\"8d49a6edcf046ffe663c7bbee8993e16\\\"\"}"
+        ],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "Resource",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "Appointment",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 500
+                },
+                "rbac": false
+            }
+        ],
+        "log": []
+    },
+    "cache factory throws": {
+        "result": {
+            "slots": [
+                {
+                    "startTime": "2026-05-22T10:30:00Z",
+                    "endTime": "2026-05-22T11:00:00Z"
+                },
+                {
+                    "startTime": "2026-05-22T11:30:00Z",
+                    "endTime": "2026-05-22T12:00:00Z"
+                }
+            ],
+            "etag": "\"8d49a6edcf046ffe663c7bbee8993e16\"",
+            "cached": false
+        },
+        "cache": [],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "Resource",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "Appointment",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 500
+                },
+                "rbac": false
+            }
+        ],
+        "log": [
+            "warning: Shillinq slot service: cache factory threw {\"exception\":\"redis gone\"}"
+        ]
+    },
+    "computed and cached": {
+        "result": {
+            "slots": [
+                {
+                    "startTime": "2026-05-22T10:30:00Z",
+                    "endTime": "2026-05-22T11:00:00Z"
+                },
+                {
+                    "startTime": "2026-05-22T11:30:00Z",
+                    "endTime": "2026-05-22T12:00:00Z"
+                }
+            ],
+            "etag": "\"8d49a6edcf046ffe663c7bbee8993e16\"",
+            "cached": false
+        },
+        "cache": [
+            "get shillinq-widget-slots:svc-1:room-1:2026-05-22",
+            "set shillinq-widget-slots:svc-1:room-1:2026-05-22 300 {\"slots\":[{\"startTime\":\"2026-05-22T10:30:00Z\",\"endTime\":\"2026-05-22T11:00:00Z\"},{\"startTime\":\"2026-05-22T11:30:00Z\",\"endTime\":\"2026-05-22T12:00:00Z\"}],\"etag\":\"\\\"8d49a6edcf046ffe663c7bbee8993e16\\\"\"}"
+        ],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "Resource",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "Appointment",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 500
+                },
+                "rbac": false
+            }
+        ],
+        "log": []
+    },
+    "computed without a cache": {
+        "result": {
+            "slots": [
+                {
+                    "startTime": "2026-05-22T10:30:00Z",
+                    "endTime": "2026-05-22T11:00:00Z"
+                },
+                {
+                    "startTime": "2026-05-22T11:30:00Z",
+                    "endTime": "2026-05-22T12:00:00Z"
+                }
+            ],
+            "etag": "\"8d49a6edcf046ffe663c7bbee8993e16\"",
+            "cached": false
+        },
+        "cache": [],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "Resource",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "Appointment",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 500
+                },
+                "rbac": false
+            }
+        ],
+        "log": []
+    },
+    "default hours": {
+        "result": {
+            "slots": [
+                {
+                    "startTime": "2026-05-23T09:00:00Z",
+                    "endTime": "2026-05-23T09:30:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T09:15:00Z",
+                    "endTime": "2026-05-23T09:45:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T09:30:00Z",
+                    "endTime": "2026-05-23T10:00:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T09:45:00Z",
+                    "endTime": "2026-05-23T10:15:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T10:00:00Z",
+                    "endTime": "2026-05-23T10:30:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T10:15:00Z",
+                    "endTime": "2026-05-23T10:45:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T10:30:00Z",
+                    "endTime": "2026-05-23T11:00:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T10:45:00Z",
+                    "endTime": "2026-05-23T11:15:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T11:00:00Z",
+                    "endTime": "2026-05-23T11:30:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T11:15:00Z",
+                    "endTime": "2026-05-23T11:45:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T11:30:00Z",
+                    "endTime": "2026-05-23T12:00:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T11:45:00Z",
+                    "endTime": "2026-05-23T12:15:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T12:00:00Z",
+                    "endTime": "2026-05-23T12:30:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T12:15:00Z",
+                    "endTime": "2026-05-23T12:45:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T12:30:00Z",
+                    "endTime": "2026-05-23T13:00:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T12:45:00Z",
+                    "endTime": "2026-05-23T13:15:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T13:00:00Z",
+                    "endTime": "2026-05-23T13:30:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T13:15:00Z",
+                    "endTime": "2026-05-23T13:45:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T13:30:00Z",
+                    "endTime": "2026-05-23T14:00:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T13:45:00Z",
+                    "endTime": "2026-05-23T14:15:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T14:00:00Z",
+                    "endTime": "2026-05-23T14:30:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T14:15:00Z",
+                    "endTime": "2026-05-23T14:45:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T14:30:00Z",
+                    "endTime": "2026-05-23T15:00:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T14:45:00Z",
+                    "endTime": "2026-05-23T15:15:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T15:00:00Z",
+                    "endTime": "2026-05-23T15:30:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T15:15:00Z",
+                    "endTime": "2026-05-23T15:45:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T15:30:00Z",
+                    "endTime": "2026-05-23T16:00:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T15:45:00Z",
+                    "endTime": "2026-05-23T16:15:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T16:00:00Z",
+                    "endTime": "2026-05-23T16:30:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T16:15:00Z",
+                    "endTime": "2026-05-23T16:45:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T16:30:00Z",
+                    "endTime": "2026-05-23T17:00:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T16:45:00Z",
+                    "endTime": "2026-05-23T17:15:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T17:00:00Z",
+                    "endTime": "2026-05-23T17:30:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T17:15:00Z",
+                    "endTime": "2026-05-23T17:45:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T17:30:00Z",
+                    "endTime": "2026-05-23T18:00:00Z"
+                }
+            ],
+            "etag": "\"e8b0b1d0d1105f3d3867b16c329c6f7b\"",
+            "cached": false
+        },
+        "cache": [],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "Resource",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "Appointment",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 500
+                },
+                "rbac": false
+            }
+        ],
+        "log": []
+    },
+    "empty hours": {
+        "result": {
+            "slots": [
+                {
+                    "startTime": "2026-05-23T09:00:00Z",
+                    "endTime": "2026-05-23T09:30:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T09:15:00Z",
+                    "endTime": "2026-05-23T09:45:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T09:30:00Z",
+                    "endTime": "2026-05-23T10:00:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T09:45:00Z",
+                    "endTime": "2026-05-23T10:15:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T10:00:00Z",
+                    "endTime": "2026-05-23T10:30:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T10:15:00Z",
+                    "endTime": "2026-05-23T10:45:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T10:30:00Z",
+                    "endTime": "2026-05-23T11:00:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T10:45:00Z",
+                    "endTime": "2026-05-23T11:15:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T11:00:00Z",
+                    "endTime": "2026-05-23T11:30:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T11:15:00Z",
+                    "endTime": "2026-05-23T11:45:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T11:30:00Z",
+                    "endTime": "2026-05-23T12:00:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T11:45:00Z",
+                    "endTime": "2026-05-23T12:15:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T12:00:00Z",
+                    "endTime": "2026-05-23T12:30:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T12:15:00Z",
+                    "endTime": "2026-05-23T12:45:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T12:30:00Z",
+                    "endTime": "2026-05-23T13:00:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T12:45:00Z",
+                    "endTime": "2026-05-23T13:15:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T13:00:00Z",
+                    "endTime": "2026-05-23T13:30:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T13:15:00Z",
+                    "endTime": "2026-05-23T13:45:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T13:30:00Z",
+                    "endTime": "2026-05-23T14:00:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T13:45:00Z",
+                    "endTime": "2026-05-23T14:15:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T14:00:00Z",
+                    "endTime": "2026-05-23T14:30:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T14:15:00Z",
+                    "endTime": "2026-05-23T14:45:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T14:30:00Z",
+                    "endTime": "2026-05-23T15:00:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T14:45:00Z",
+                    "endTime": "2026-05-23T15:15:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T15:00:00Z",
+                    "endTime": "2026-05-23T15:30:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T15:15:00Z",
+                    "endTime": "2026-05-23T15:45:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T15:30:00Z",
+                    "endTime": "2026-05-23T16:00:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T15:45:00Z",
+                    "endTime": "2026-05-23T16:15:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T16:00:00Z",
+                    "endTime": "2026-05-23T16:30:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T16:15:00Z",
+                    "endTime": "2026-05-23T16:45:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T16:30:00Z",
+                    "endTime": "2026-05-23T17:00:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T16:45:00Z",
+                    "endTime": "2026-05-23T17:15:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T17:00:00Z",
+                    "endTime": "2026-05-23T17:30:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T17:15:00Z",
+                    "endTime": "2026-05-23T17:45:00Z"
+                },
+                {
+                    "startTime": "2026-05-23T17:30:00Z",
+                    "endTime": "2026-05-23T18:00:00Z"
+                }
+            ],
+            "etag": "\"e8b0b1d0d1105f3d3867b16c329c6f7b\"",
+            "cached": false
+        },
+        "cache": [],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "Resource",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "Appointment",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 500
+                },
+                "rbac": false
+            }
+        ],
+        "log": []
+    },
+    "no OpenRegister": {
+        "result": {
+            "slots": [],
+            "etag": "\"4f53cda18c2baa0c0354bb5f9a3ecbe5\"",
+            "cached": false
+        },
+        "cache": [
+            "get shillinq-widget-slots:svc-1:room-1:2026-05-22"
+        ],
+        "reads": [],
+        "log": []
+    },
+    "no duration": {
+        "result": {
+            "slots": [],
+            "etag": "\"4f53cda18c2baa0c0354bb5f9a3ecbe5\"",
+            "cached": false
+        },
+        "cache": [],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "Resource",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            }
+        ],
+        "log": []
+    },
+    "overlap allowed": {
+        "result": {
+            "slots": [
+                {
+                    "startTime": "2026-05-22T11:00:00Z",
+                    "endTime": "2026-05-22T11:30:00Z"
+                },
+                {
+                    "startTime": "2026-05-22T11:15:00Z",
+                    "endTime": "2026-05-22T11:45:00Z"
+                },
+                {
+                    "startTime": "2026-05-22T11:30:00Z",
+                    "endTime": "2026-05-22T12:00:00Z"
+                }
+            ],
+            "etag": "\"cb1acb986796242f49952991f6e82dd9\"",
+            "cached": false
+        },
+        "cache": [],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "Resource",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "Appointment",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 500
+                },
+                "rbac": false
+            }
+        ],
+        "log": []
+    },
+    "resource unknown": {
+        "result": {
+            "slots": [],
+            "etag": "\"4f53cda18c2baa0c0354bb5f9a3ecbe5\"",
+            "cached": false
+        },
+        "cache": [
+            "get shillinq-widget-slots:svc-1:room-1:2026-05-22"
+        ],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "Resource",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            }
+        ],
+        "log": []
+    },
+    "served from the cache": {
+        "result": {
+            "slots": [
+                {
+                    "startTime": "cached"
+                }
+            ],
+            "etag": "42",
+            "cached": true
+        },
+        "cache": [
+            "get shillinq-widget-slots:svc-1:room-1:2026-05-22"
+        ],
+        "reads": [],
+        "log": []
+    },
+    "service read fails": {
+        "result": {
+            "slots": [],
+            "etag": "\"4f53cda18c2baa0c0354bb5f9a3ecbe5\"",
+            "cached": false
+        },
+        "cache": [],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            }
+        ],
+        "log": [
+            "error: Shillinq slot service: lookup failed {\"schema\":\"Service\",\"exception\":\"read failed\"}"
+        ]
+    },
+    "service unknown": {
+        "result": {
+            "slots": [],
+            "etag": "\"4f53cda18c2baa0c0354bb5f9a3ecbe5\"",
+            "cached": false
+        },
+        "cache": [
+            "get shillinq-widget-slots:svc-1:room-1:2026-05-22"
+        ],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            }
+        ],
+        "log": []
+    },
+    "zero duration": {
+        "result": {
+            "slots": [],
+            "etag": "\"4f53cda18c2baa0c0354bb5f9a3ecbe5\"",
+            "cached": false
+        },
+        "cache": [
+            "get shillinq-widget-slots:svc-1:room-1:2026-05-22"
+        ],
+        "reads": [
+            {
+                "register": "books",
+                "schema": "Service",
+                "config": {
+                    "filters": {
+                        "serviceId": "svc-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            },
+            {
+                "register": "books",
+                "schema": "Resource",
+                "config": {
+                    "filters": {
+                        "resourceId": "room-1"
+                    },
+                    "limit": 1
+                },
+                "rbac": false
+            }
+        ],
+        "log": []
+    }
+}

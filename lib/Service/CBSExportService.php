@@ -50,7 +50,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -129,6 +129,7 @@ class CBSExportService {
 	 * @param array $organization Required organization metadata: legalName, kvkNumber, taxIdentificationNumber.
 	 *
 	 * @return array<string,mixed> The persisted CBSSubmission (id + fields).
+	 * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
 	 */
 	public function generateSubmission(
 		string $administrationId,
@@ -236,6 +237,7 @@ class CBSExportService {
 	 * @param array $submission The CBSSubmission record (with id).
 	 *
 	 * @return array{valid:bool,errors:array<int,string>,warnings:array<int,string>}
+	 * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
 	 */
 	public function validateSubmission(array $submission): array {
 		$errors = [];
@@ -298,6 +300,7 @@ class CBSExportService {
 	 * @param array<int,array> $lines The persisted CBSLine records.
 	 *
 	 * @return array<string,mixed> The IV3-extended JSON envelope.
+	 * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
 	 */
 	public function generateIV3Json(array $submission, array $lines): array {
 		$linePayload = [];
@@ -350,10 +353,11 @@ class CBSExportService {
 	 * @param string $administrationId Administration scope.
 	 *
 	 * @return array<int,array{start:string,end:string,classification:string,lineNumber:string}>
+	 * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
 	 */
 	public function getMappingFromSettings(string $administrationId): array {
 		$key = 'cbs_account_mapping_' . $administrationId;
-		$raw = $this->appConfig->getValueString(Application::APP_ID, $key, '');
+		$raw = $this->appConfig->getValueString(AppIdentity::APP_ID, $key, '');
 		if ($raw === '') {
 			return self::DEFAULT_MAPPING;
 		}
@@ -408,6 +412,7 @@ class CBSExportService {
 	 * @param array<int,array> $mapping The account-range → classification mapping.
 	 *
 	 * @return array<int,array{classification:string,lineNumber:string,accountRangeStart:string,accountRangeEnd:string,aggregatedAmount:int,glLineCount:int}>
+	 * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
 	 */
 	public function aggregateLines(array $glLines, array $accounts, array $mapping): array {
 		// Index accounts by accountNumber for fast lookup (currently unused
@@ -695,7 +700,7 @@ class CBSExportService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

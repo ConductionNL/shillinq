@@ -28,7 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
 
@@ -108,7 +108,7 @@ class ObjectTransitionRunner {
 			throw new RuntimeException('OpenRegister TransitionEngine cannot run a transition as the system');
 		}
 
-		return $engine->transitionAsSystem($objectId, $action, Application::APP_ID, $data);
+		return $engine->transitionAsSystem($objectId, $action, AppIdentity::APP_ID, $data);
 
 	}//end runAsSystem()
 }//end class
