@@ -263,27 +263,11 @@ export default {
 }
 </script>
 
+<style scoped src="./leafPanel.css"></style>
+
 <style scoped>
 .shillinq-contract-panel {
 	padding: 8px;
-}
-
-.shillinq-leaf__list {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-}
-
-.shillinq-leaf__row {
-	border-bottom: 1px solid var(--color-border);
-	padding: 8px 0;
-}
-
-.shillinq-leaf__row-head {
-	display: flex;
-	justify-content: space-between;
-	gap: 8px;
-	font-weight: bold;
 }
 
 .shillinq-leaf__state {
@@ -300,13 +284,5 @@ export default {
 .shillinq-leaf__empty {
 	color: var(--color-text-maxcontrast);
 	margin: 4px 0;
-}
-
-.shillinq-leaf__error {
-	color: var(--color-error);
-}
-
-.shillinq-leaf__notice {
-	margin-top: 8px;
 }
 </style>

@@ -40,7 +40,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Pipelinq\KlantbeeldResult;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContact;
@@ -90,7 +90,7 @@ class BookingDetailController extends Controller {
 		private readonly PipelinqContactAdapter $pipelinq,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
@@ -197,7 +197,7 @@ class BookingDetailController extends Controller {
 			$this->logger->warning(
 				'BookingDetailController: pipelinq Contact unavailable',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'bookingId' => $bookingId,
 					'externalId' => $pipelinqContactId,
 					'status' => $e->statusCode(),
@@ -211,7 +211,7 @@ class BookingDetailController extends Controller {
 			$this->logger->error(
 				'BookingDetailController: pipelinq Contact failed',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'bookingId' => $bookingId,
 					'exception' => $e->getMessage(),
 				]
@@ -236,7 +236,7 @@ class BookingDetailController extends Controller {
 			$this->logger->warning(
 				'BookingDetailController: klantbeeld fetch threw unexpectedly',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'bookingId' => $bookingId,
 					'exception' => $e->getMessage(),
 				]
@@ -303,7 +303,7 @@ class BookingDetailController extends Controller {
 			$this->logger->error(
 				'BookingDetailController: appointment lookup failed',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'appointmentId' => $appointmentId,
 					'exception' => $e->getMessage(),
 				]

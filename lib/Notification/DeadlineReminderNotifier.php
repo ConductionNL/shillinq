@@ -32,7 +32,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Notification;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\L10N\IFactory;
 use OCP\Notification\INotification;
 use OCP\Notification\INotifier;
@@ -62,7 +62,7 @@ class DeadlineReminderNotifier implements INotifier {
 	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
 	 */
 	public function getID(): string {
-		return Application::APP_ID;
+		return AppIdentity::APP_ID;
 	}//end getID()
 
 	/**
@@ -73,7 +73,7 @@ class DeadlineReminderNotifier implements INotifier {
 	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
 	 */
 	public function getName(): string {
-		return $this->l10nFactory->get(Application::APP_ID)->t('Shillinq');
+		return $this->l10nFactory->get(AppIdentity::APP_ID)->t('Shillinq');
 	}//end getName()
 
 	/**
@@ -89,13 +89,13 @@ class DeadlineReminderNotifier implements INotifier {
 	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
 	 */
 	public function prepare(INotification $notification, string $languageCode): INotification {
-		if ($notification->getApp() !== Application::APP_ID
+		if ($notification->getApp() !== AppIdentity::APP_ID
 			|| $notification->getSubject() !== 'deadline_reminder'
 		) {
 			throw new UnknownNotificationException();
 		}
 
-		$l = $this->l10nFactory->get(Application::APP_ID, $languageCode);
+		$l = $this->l10nFactory->get(AppIdentity::APP_ID, $languageCode);
 		$parameters = $notification->getSubjectParameters();
 		$summary = (string)($parameters['summary'] ?? '');
 		$dueDate = (string)($parameters['dueDate'] ?? '');

@@ -32,7 +32,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Reporting\Schedule;
 
 use DateTime;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\Constants;
 use OCP\Files\File;
 use OCP\Files\Folder;
@@ -163,7 +163,7 @@ class ScheduledReportDelivery {
 			schedule: $schedule,
 			subject: self::SUBJECT_FAILED,
 			parameters: ['name' => $this->label(schedule: $schedule), 'reason' => $reason],
-			link: $this->urlGenerator->linkToRouteAbsolute(Application::APP_ID . '.dashboard.page')
+			link: $this->urlGenerator->linkToRouteAbsolute(AppIdentity::APP_ID . '.dashboard.page')
 		);
 
 	}//end notifyFailed()
@@ -253,7 +253,7 @@ class ScheduledReportDelivery {
 	 */
 	private function notify(string $userId, array $schedule, string $subject, array $parameters, string $link): void {
 		$notification = $this->notifications->createNotification();
-		$notification->setApp(Application::APP_ID)
+		$notification->setApp(AppIdentity::APP_ID)
 			->setUser($userId)
 			->setDateTime(new DateTime())
 			->setObject('report_schedule', (string)($schedule['id'] ?? ''))

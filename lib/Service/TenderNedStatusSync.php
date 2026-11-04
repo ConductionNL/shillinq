@@ -49,7 +49,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Support\FleetAppId;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -201,7 +201,7 @@ class TenderNedStatusSync {
 	 */
 	private function isContractingDienst(array $tender): bool {
 		$tenantKvk = trim(
-			$this->appConfig->getValueString(Application::APP_ID, 'tenant_kvk', '')
+			$this->appConfig->getValueString(AppIdentity::APP_ID, 'tenant_kvk', '')
 		);
 		if ($tenantKvk === '') {
 			return false;
@@ -306,7 +306,7 @@ class TenderNedStatusSync {
 	 * @return string
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($slug === '') {
 			return 'shillinq';
 		}

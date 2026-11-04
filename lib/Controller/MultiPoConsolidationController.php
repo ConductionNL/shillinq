@@ -43,7 +43,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\MultiPoConsolidationService;
 use OCP\AppFramework\Controller;
@@ -91,7 +91,7 @@ class MultiPoConsolidationController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
@@ -417,7 +417,7 @@ class MultiPoConsolidationController extends Controller {
 	 */
 	private function register(): string {
 		$appConfig = $this->container->get(\OCP\IAppConfig::class);
-		$slug = $appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$slug = $appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($slug === '') {
 			return 'shillinq';
 		}
