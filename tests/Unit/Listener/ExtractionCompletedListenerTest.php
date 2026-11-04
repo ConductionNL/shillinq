@@ -86,10 +86,12 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 
 use OCA\DocuDesk\Event\FinancialExtractionCompletedEvent;
 use OCA\Shillinq\Listener\ExtractionCompletedListener;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Extraction\ExtractionPrefillService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\EventDispatcher\Event;
 use OCP\IAppConfig;
+use OCP\IUserSession;
 use OCP\Notification\IManager as INotificationManager;
 use OCP\Notification\INotification;
 use PHPUnit\Framework\TestCase;
@@ -246,8 +248,59 @@ final class ExtractionCompletedListenerTest extends TestCase {
 	}//end testEntityRowsFindTheDraftAndTheAdministration()
 
 	/**
-	 * The two reads that run on each extraction are bounded, and the notification
-	 * of a new draft names the draft's number.
+	 * A new draft skips the requester's expired and not-yet-valid memberships and
+	 * lands in the administration they currently belong to.
+	 *
+	 * @return void
+	 */
+	public function testANewDraftSkipsMembershipsOutsideTheirValidity(): void {
+		$saved = [];
+		$store = new InMemoryObjectServiceStub(
+			[
+				'Receipt' => [],
+				'AdministrationMembership' => [
+					['id' => 'm-old', 'userId' => 'bob', 'administrationId' => 'adm-former', 'validUntil' => '2020-01-01'],
+					['id' => 'm-next', 'userId' => 'bob', 'administrationId' => 'adm-next', 'validFrom' => '2999-01-01'],
+					['id' => 'm-now', 'userId' => 'bob', 'administrationId' => 'adm-7', 'validFrom' => '2020-01-01'],
+				],
+			],
+			$saved,
+			findAllRendersEntities: true
+		);
+		$unused = [];
+		$listener = $this->buildListenerOver(store: $store, notifications: $unused);
+
+		$listener->handle($this->makeEvent(docType: 'receipt', fields: ['totalIncl' => 45.0], fieldConfidence: [], overallConfidence: 0.9, requestedBy: 'bob'));
+		self::assertSame('adm-7', $saved[0]['object']['administrationId']);
+
+	}//end testANewDraftSkipsMembershipsOutsideTheirValidity()
+
+	/**
+	 * A requester with only an expired membership gets no administration of theirs.
+	 *
+	 * @return void
+	 */
+	public function testANewDraftOfARequesterWithOnlyAnExpiredMembershipGoesToDefault(): void {
+		$saved = [];
+		$store = new InMemoryObjectServiceStub(
+			[
+				'Receipt' => [],
+				'AdministrationMembership' => [['id' => 'm-old', 'userId' => 'bob', 'administrationId' => 'adm-former', 'validUntil' => '2020-01-01']],
+			],
+			$saved,
+			findAllRendersEntities: true
+		);
+		$unused = [];
+		$listener = $this->buildListenerOver(store: $store, notifications: $unused);
+
+		$listener->handle($this->makeEvent(docType: 'receipt', fields: ['totalIncl' => 45.0], fieldConfidence: [], overallConfidence: 0.9, requestedBy: 'bob'));
+		self::assertSame('default', $saved[0]['object']['administrationId']);
+
+	}//end testANewDraftOfARequesterWithOnlyAnExpiredMembershipGoesToDefault()
+
+	/**
+	 * The draft lookup that runs on each extraction is bounded, and the
+	 * notification of a new draft names the draft's number.
 	 *
 	 * @return void
 	 */
@@ -281,7 +334,7 @@ final class ExtractionCompletedListenerTest extends TestCase {
 			$this->makeEvent(docType: 'receipt', fields: ['totalIncl' => 45.0], fieldConfidence: [], overallConfidence: 0.9, requestedBy: 'bob')
 		);
 
-		self::assertSame([1, 100], $store->limits);
+		self::assertSame([1, null], $store->limits, 'the draft lookup is bounded; memberships load through AdministrationContextService');
 		self::assertSame($saved[0]['object']['receiptNumber'], $notifications[0]['reference'] ?? null);
 
 	}//end testReadsAreBoundedAndTheNotificationNamesTheDraft()
@@ -503,7 +556,13 @@ final class ExtractionCompletedListenerTest extends TestCase {
 			appConfig: $appConfig,
 			prefillService: new ExtractionPrefillService(),
 			notificationManager: $manager,
-			logger: new NullLogger()
+			logger: new NullLogger(),
+			administrationContext: new AdministrationContextService(
+				container: $container,
+				userSession: $this->createMock(IUserSession::class),
+				appConfig: $appConfig,
+				logger: new NullLogger()
+			)
 		);
 
 	}//end buildListener()

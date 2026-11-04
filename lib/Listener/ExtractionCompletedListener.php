@@ -47,6 +47,7 @@ namespace OCA\Shillinq\Listener;
 
 use DateTime;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Extraction\ExtractionPrefillService;
 use OCA\Shillinq\Support\FleetAppId;
 use OCP\EventDispatcher\Event;
@@ -90,6 +91,7 @@ class ExtractionCompletedListener implements IEventListener {
 	 * @param ExtractionPrefillService $prefillService Field-mapping service.
 	 * @param INotificationManager $notificationManager NC notification dispatcher.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
+	 * @param AdministrationContextService $administrationContext Resolves the requester's administration.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
@@ -97,6 +99,7 @@ class ExtractionCompletedListener implements IEventListener {
 		private readonly ExtractionPrefillService $prefillService,
 		private readonly INotificationManager $notificationManager,
 		private readonly LoggerInterface $logger,
+		private readonly AdministrationContextService $administrationContext,
 	) {
 
 	}//end __construct()
@@ -264,7 +267,7 @@ class ExtractionCompletedListener implements IEventListener {
 	}//end findBySourceDocumentUri()
 
 	/**
-	 * Resolve an administration for a requesting user via their
+	 * Resolve the requesting user's administration: their first currently valid
 	 * AdministrationMembership, falling back to 'default' (mirrors
 	 * {@see \OCA\Shillinq\Controller\SupplierInvoiceImportController::resolveAdministrationId()}
 	 * for the no-membership case).
@@ -278,26 +281,7 @@ class ExtractionCompletedListener implements IEventListener {
 			return 'default';
 		}
 
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rows = $objectService
-				->setRegister($this->register())
-				->setSchema('AdministrationMembership')
-				->findAll(['filters' => ['userId' => $userId], 'limit' => 100]);
-		} catch (Throwable $e) {
-			return 'default';
-		}
-
-		if (is_array($rows) === true) {
-			foreach ($rows as $row) {
-				$administrationId = (string)(ObjectIdentifier::recordWithId(candidate: $row)['administrationId'] ?? '');
-				if ($administrationId !== '') {
-					return $administrationId;
-				}
-			}
-		}
-
-		return 'default';
+		return ($this->administrationContext->defaultAdministrationIdForUser(userId: $userId) ?? 'default');
 	}//end resolveAdministrationId()
 
 	/**
