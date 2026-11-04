@@ -71,6 +71,7 @@ use OCP\Notification\IManager as INotificationManager;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Slice 08 — resolution-side workflow for out-of-tolerance ThreeWayMatch
@@ -141,14 +142,13 @@ class ExceptionResolutionService {
 	public const NOTIFICATION_SUBJECT_DISPUTE = 'three_way_match_dispute_filed';
 
 	/**
-	 * Default role looked up for the crediteuren-administrateur notification
-	 * queue. Membership rows with this role on the administration receive
-	 * the exception alert. Mirrors the PurchaseOrderService approver-lookup
-	 * pattern (AdministrationMembership.role).
+	 * Default role for the exception alert and for accepting an exception
+	 * when no tolerance profile routes it elsewhere: the accounts payable
+	 * value of the AdministrationMembership role enum.
 	 *
 	 * @var string
 	 */
-	public const ROLE_CREDITEUREN_ADMIN = 'crediteuren_administrateur';
+	public const ROLE_CREDITEUREN_ADMIN = 'crediteurenadmin';
 
 	/**
 	 * Default role looked up for the Inkoper escalation queue when a
@@ -302,6 +302,7 @@ class ExceptionResolutionService {
 		$this->assertExceptionStatus(match: $match);
 
 		$resolvedBy = $this->currentUserId();
+		$this->assertMayAccept(administrationId: $administrationId, match: $match, actor: $resolvedBy);
 		$resolvedAt = $this->nowIso();
 
 		$match['resolutionAction'] = self::ACTION_ACCEPTED;
@@ -631,6 +632,39 @@ class ExceptionResolutionService {
 		}
 
 	}//end dispatchDispute()
+
+	/**
+	 * Only a member of the exception's approver role may accept it, and never
+	 * the person who entered the invoice. Fails closed when the invoice or
+	 * its creator cannot be read.
+	 *
+	 * @param string              $administrationId Tenant scope.
+	 * @param array<string,mixed> $match            ThreeWayMatch record.
+	 * @param string              $actor            The accepting user.
+	 *
+	 * @return void
+	 *
+	 * @throws ForbiddenActionException When the actor may not accept.
+	 */
+	private function assertMayAccept(string $administrationId, array $match, string $actor): void {
+		$role = $this->resolveAlertRole(administrationId: $administrationId, match: $match);
+		if (in_array($actor, $this->findRoleMembers(administrationId: $administrationId, role: $role), true) === false) {
+			throw new ForbiddenActionException('Only the approver role for this exception can accept it.');
+		}
+
+		$creator   = '';
+		$invoiceId = trim((string)($match['invoiceId'] ?? ''));
+		if ($invoiceId !== ''
+			&& $this->findOne(schema: self::SCHEMA_SUPPLIER_INVOICE, filters: ['id' => $invoiceId, 'administrationId' => $administrationId]) !== null
+		) {
+			$creator = $this->ownerOf(schema: self::SCHEMA_SUPPLIER_INVOICE, id: $invoiceId);
+		}
+
+		if ($creator === '' || $creator === $actor) {
+			throw new ForbiddenActionException('The person who entered the invoice cannot accept its exception.');
+		}
+
+	}//end assertMayAccept()
 
 	/**
 	 * Resolve the membership role that should receive the exception
@@ -965,6 +999,10 @@ class ExceptionResolutionService {
 	 * @return array<string,mixed>|null
 	 */
 	private function findOne(string $schema, array $filters): ?array {
+		if (isset($filters['id']) === true) {
+			return $this->findById(schema: $schema, filters: $filters);
+		}
+
 		$rows = $this->findAll(schema: $schema, filters: $filters);
 		foreach ($rows as $row) {
 			if (is_array($row) === true) {
@@ -974,6 +1012,64 @@ class ExceptionResolutionService {
 
 		return null;
 	}//end findOne()
+
+	/**
+	 * Read one record by id and check the other filters on it. OpenRegister's
+	 * `filters` address JSON properties, and the entity id is not one, so an
+	 * id filter on findAll matches nothing.
+	 *
+	 * @param string              $schema  Schema slug.
+	 * @param array<string,mixed> $filters `id` plus the properties the record must have.
+	 *
+	 * @return array<string,mixed>|null The record with its id, or null.
+	 */
+	private function findById(string $schema, array $filters): ?array {
+		try {
+			$found = $this->objectService
+				->setRegister($this->register())
+				->setSchema($schema)
+				->find((string)$filters['id']);
+		} catch (\Throwable $exception) {
+			return null;
+		}
+
+		$record = ObjectIdentifier::recordWithId(candidate: $found);
+		if ($record === null) {
+			return null;
+		}
+
+		unset($filters['id']);
+		foreach ($filters as $key => $value) {
+			if (($record[$key] ?? null) !== $value) {
+				return null;
+			}
+		}
+
+		return $record;
+
+	}//end findById()
+
+	/**
+	 * The user who created a record.
+	 *
+	 * @param string $schema Schema slug.
+	 * @param string $id     Record id.
+	 *
+	 * @return string The owner's user id; empty when it cannot be read.
+	 */
+	private function ownerOf(string $schema, string $id): string {
+		try {
+			$found = $this->objectService
+				->setRegister($this->register())
+				->setSchema($schema)
+				->find($id);
+		} catch (\Throwable $exception) {
+			return '';
+		}
+
+		return trim((string)($found?->getOwner() ?? ''));
+
+	}//end ownerOf()
 
 	/**
 	 * Fetch all records via the real ObjectService API (findAll).
@@ -999,6 +1095,10 @@ class ExceptionResolutionService {
 
 		$result = [];
 		foreach ($rows as $row) {
+			if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+				$row = $row->jsonSerialize();
+			}
+
 			if (is_array($row) === true) {
 				$result[] = $row;
 			}
