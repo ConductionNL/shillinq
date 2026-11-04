@@ -31,7 +31,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Portal\PortalAssertionVerifier;
 use OCA\Shillinq\Service\ContributionDeclineService;
 use OCP\AppFramework\Controller;
@@ -73,7 +73,7 @@ class PortalContributionDeclineController extends Controller {
 		private readonly ContributionDeclineService $declineService,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

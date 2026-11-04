@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Security;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
@@ -16,7 +17,6 @@ use OCA\Shillinq\Listener\BbvAllocationValidationListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\SettingsService;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -58,13 +58,18 @@ final class BbvAllocationValidationListenerTest extends TestCase {
 				}));
 			}
 		};
-		$container = $this->createMock(ContainerInterface::class);
-		$container->method('get')->willReturn($objectService);
+		$service = $this->createMock(ObjectServiceInterface::class);
+		$service->method('setRegister')->willReturnSelf();
+		$service->method('setSchema')->willReturnCallback(function ($slug) use ($service, $objectService) {
+			$objectService->setSchema($slug);
+			return $service;
+		});
+		$service->method('findAll')->willReturnCallback(fn (...$args): array => $objectService->findAll(...$args));
 		$resolver = $this->createMock(ListenerSchemaResolver::class);
 		$resolver->method('matchesSchema')->willReturnCallback(fn ($e, string $slug): bool => $slug === $schema);
 		$settings = $this->createMock(SettingsService::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
-		return new BbvAllocationValidationListener($resolver, $container, $settings, $this->createMock(LoggerInterface::class));
+		return new BbvAllocationValidationListener($resolver, $service, $settings, $this->createMock(LoggerInterface::class));
 	}
 
 	private function creating(array $data): ObjectCreatingEvent {

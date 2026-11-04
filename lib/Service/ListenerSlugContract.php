@@ -48,7 +48,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 
 /**
@@ -81,6 +81,6 @@ class ListenerSlugContract {
 	 * @return bool True when the contract is enabled for this instance.
 	 */
 	public function isEnabled(): bool {
-		return $this->appConfig->getValueBool(Application::APP_ID, self::CONFIG_KEY, false);
+		return $this->appConfig->getValueBool(AppIdentity::APP_ID, self::CONFIG_KEY, false);
 	}//end isEnabled()
 }//end class

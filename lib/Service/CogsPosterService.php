@@ -54,7 +54,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -313,7 +313,7 @@ class CogsPosterService {
 	 * @return string
 	 */
 	private function cogsAccount(): string {
-		return trim($this->appConfig->getValueString(Application::APP_ID, self::CFG_COGS_ACCOUNT, ''));
+		return trim($this->appConfig->getValueString(AppIdentity::APP_ID, self::CFG_COGS_ACCOUNT, ''));
 	}//end cogsAccount()
 
 	/**
@@ -322,7 +322,7 @@ class CogsPosterService {
 	 * @return string
 	 */
 	private function inventoryAccount(): string {
-		return trim($this->appConfig->getValueString(Application::APP_ID, self::CFG_INVENTORY_ACCOUNT, ''));
+		return trim($this->appConfig->getValueString(AppIdentity::APP_ID, self::CFG_INVENTORY_ACCOUNT, ''));
 	}//end inventoryAccount()
 
 	/**
@@ -391,7 +391,7 @@ class CogsPosterService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

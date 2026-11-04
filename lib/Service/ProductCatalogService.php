@@ -73,7 +73,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -537,7 +537,7 @@ class ProductCatalogService {
 
 		$local = self::SOURCE_LOCAL_CACHE;
 		$master = self::MASTER_REGISTER;
-		$app = Application::APP_ID;
+		$app = AppIdentity::APP_ID;
 
 		$rows = [
 			['sku', 'text', 'Stock keeping unit resolved from the product master.', $master, $remote],
@@ -685,7 +685,7 @@ class ProductCatalogService {
 	 * @return string The register slug, defaulting to `shillinq`.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

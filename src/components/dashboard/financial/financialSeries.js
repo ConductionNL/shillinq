@@ -36,10 +36,7 @@ export function monthKey(dateStr) {
 export function lastMonths(count, now = new Date()) {
 	const months = []
 	for (let i = count - 1; i >= 0; i--) {
-		const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-		months.push(
-			`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
-		)
+		months.push(monthKeyOf(new Date(now.getFullYear(), now.getMonth() - i, 1)))
 	}
 	return months
 }
@@ -54,18 +51,45 @@ export function lastMonths(count, now = new Date()) {
  */
 export function monthsInRange(from, to) {
 	if (!from || !to) return []
-	const start = new Date(`${from.slice(0, 10)}T00:00:00`)
-	const end = new Date(`${to.slice(0, 10)}T00:00:00`)
+	return monthSpan(rangeDay(from), rangeDay(to))
+}
+
+/**
+ * Local midnight of the day an ISO-8601 bound starts with.
+ *
+ * @param {string} value ISO-8601 bound.
+ * @return {Date}
+ */
+function rangeDay(value) {
+	return new Date(`${value.slice(0, 10)}T00:00:00`)
+}
+
+/**
+ * Month keys from the month of `start` through the month of `end`, at most 60.
+ *
+ * @param {Date} start Lower bound.
+ * @param {Date} end Upper bound.
+ * @return {string[]}
+ */
+function monthSpan(start, end) {
 	if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return []
 	const months = []
 	let d = new Date(start.getFullYear(), start.getMonth(), 1)
 	while (d <= end && months.length < 60) {
-		months.push(
-			`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
-		)
+		months.push(monthKeyOf(d))
 		d = new Date(d.getFullYear(), d.getMonth() + 1, 1)
 	}
 	return months
+}
+
+/**
+ * Month key (`YYYY-MM`) of a date, by its local fields.
+ *
+ * @param {Date} date The date.
+ * @return {string}
+ */
+function monthKeyOf(date) {
+	return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
 }
 
 /**
@@ -95,23 +119,43 @@ export function monthLabel(key) {
  * @return {{ revenue: Set<string>, expenses: Set<string>, liquid: Set<string> }}
  */
 export function classifyAccounts(accounts) {
-	const revenue = new Set()
-	const expenses = new Set()
-	const liquid = new Set()
+	const classes = { revenue: new Set(), expenses: new Set(), liquid: new Set() }
 	for (const account of accounts || []) {
 		const number = String(account.accountNumber ?? '')
-		if (!number) continue
-		if (account.accountType === 'revenue') revenue.add(number)
-		else if (account.accountType === 'expenses') expenses.add(number)
-		else if (
-			account.accountType === 'assets'
-			&& (/^10/.test(number)
-				|| /\b(bank|kas|cash)\b/i.test(String(account.name ?? '')))
-		) {
-			liquid.add(number)
-		}
+		const kind = accountClass(account, number)
+		if (kind) classes[kind].add(number)
 	}
-	return { revenue, expenses, liquid }
+	return classes
+}
+
+/**
+ * The dashboard class of one account: revenue, expenses, liquid or none.
+ *
+ * @param {object} account Account object.
+ * @param {string} number Its account number as a string.
+ * @return {string|null}
+ */
+function accountClass(account, number) {
+	if (!number) return null
+	if (account.accountType === 'revenue' || account.accountType === 'expenses') {
+		return account.accountType
+	}
+	return isLiquidAccount(account, number) ? 'liquid' : null
+}
+
+/**
+ * Whether an account is a bank or cash account.
+ *
+ * @param {object} account Account object.
+ * @param {string} number Its account number as a string.
+ * @return {boolean}
+ */
+function isLiquidAccount(account, number) {
+	return (
+		account.accountType === 'assets'
+		&& (/^10/.test(number)
+			|| /\b(bank|kas|cash)\b/i.test(String(account.name ?? '')))
+	)
 }
 
 /**
@@ -126,23 +170,53 @@ export function classifyAccounts(accounts) {
  * @return {Map<string, object[]>} month key → lines posted in that month.
  */
 export function postedLinesByMonth(transactions, lines) {
-	const byRef = new Map()
-	for (const tx of transactions || []) {
-		if (tx.state !== 'posted') continue
-		const id = tx['@self']?.id ?? tx.id
-		if (id) byRef.set(String(id), tx)
-		if (tx.transactionNumber) byRef.set(String(tx.transactionNumber), tx)
-	}
+	const byRef = postedByRef(transactions)
 	const buckets = new Map()
 	for (const line of lines || []) {
-		const tx = byRef.get(String(line.transactionId ?? ''))
-		if (!tx) continue
-		const key = monthKey(tx.postingDate)
+		const key = postingMonth(byRef, line)
 		if (!key) continue
 		if (!buckets.has(key)) buckets.set(key, [])
 		buckets.get(key).push(line)
 	}
 	return buckets
+}
+
+/**
+ * Posted transactions by every reference a line may use: the OR object id
+ * and the transaction number.
+ *
+ * @param {object[]} transactions GLTransaction objects.
+ * @return {Map<string, object>}
+ */
+function postedByRef(transactions) {
+	const byRef = new Map()
+	for (const tx of transactions || []) {
+		if (tx.state !== 'posted') continue
+		for (const ref of transactionRefs(tx)) byRef.set(String(ref), tx)
+	}
+	return byRef
+}
+
+/**
+ * The references of a transaction that are set, id first.
+ *
+ * @param {object} tx GLTransaction object.
+ * @return {Array<string|number>}
+ */
+function transactionRefs(tx) {
+	return [tx['@self']?.id ?? tx.id, tx.transactionNumber].filter(Boolean)
+}
+
+/**
+ * Month key of the posting date of a line's posted transaction.
+ *
+ * @param {Map<string, object>} byRef Posted transactions by reference.
+ * @param {object} line GLLine object.
+ * @return {string|null}
+ */
+function postingMonth(byRef, line) {
+	const tx = byRef.get(String(line.transactionId ?? ''))
+	return tx ? monthKey(tx.postingDate) : null
 }
 
 /**
@@ -167,10 +241,10 @@ export function signedAmount(line, kind) {
  *
  * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {object} input `{ accounts, transactions, lines, months }`.
- * @param input.accounts
- * @param input.transactions
- * @param input.lines
- * @param input.months
+ * @param {object[]} input.accounts Account objects.
+ * @param {object[]} input.transactions GLTransaction objects.
+ * @param {object[]} input.lines GLLine objects.
+ * @param {string[]} input.months Month keys.
  * @return {{ months: string[], revenue: number[], costs: number[], margin: number[],
  *   marginPct: (number|null)[], cashIn: number[], cashOut: number[], cashNet: number[] }}
  */
@@ -188,31 +262,72 @@ export function monthlyFinancialSeries({ accounts, transactions, lines, months }
 		cashNet: [],
 	}
 	for (const key of months) {
-		let revenue = 0
-		let costs = 0
-		let cashIn = 0
-		let cashOut = 0
-		for (const line of buckets.get(key) || []) {
-			const number = String(line.accountNumber ?? '')
-			if (classes.revenue.has(number)) revenue += signedAmount(line, 'revenue')
-			else if (classes.expenses.has(number))
-				costs += signedAmount(line, 'expenses')
-			if (classes.liquid.has(number)) {
-				const movement = signedAmount(line, 'liquid')
-				if (movement >= 0) cashIn += movement
-				else cashOut += -movement
-			}
-		}
-		const margin = revenue - costs
-		result.revenue.push(round2(revenue))
-		result.costs.push(round2(costs))
-		result.margin.push(round2(margin))
-		result.marginPct.push(revenue > 0 ? round2((margin / revenue) * 100) : null)
-		result.cashIn.push(round2(cashIn))
-		result.cashOut.push(round2(cashOut))
-		result.cashNet.push(round2(cashIn - cashOut))
+		pushMonth(result, monthTotals(buckets.get(key) || [], classes))
 	}
 	return result
+}
+
+/** The series total each profit-and-loss class adds to. */
+const PROFIT_TOTAL = { revenue: 'revenue', expenses: 'costs' }
+
+/**
+ * Revenue, costs, cash in and cash out of one month's posted lines.
+ *
+ * @param {object[]} monthLines GLLine objects posted in the month.
+ * @param {object} classes Account classes from classifyAccounts().
+ * @return {{ revenue: number, costs: number, cashIn: number, cashOut: number }}
+ */
+function monthTotals(monthLines, classes) {
+	const totals = { revenue: 0, costs: 0, cashIn: 0, cashOut: 0 }
+	for (const line of monthLines) {
+		const number = String(line.accountNumber ?? '')
+		const kind = profitClass(classes, number)
+		if (kind) totals[PROFIT_TOTAL[kind]] += signedAmount(line, kind)
+		if (classes.liquid.has(number)) addCash(totals, signedAmount(line, 'liquid'))
+	}
+	return totals
+}
+
+/**
+ * The profit-and-loss class of an account number, revenue before expenses.
+ *
+ * @param {object} classes Account classes from classifyAccounts().
+ * @param {string} number Account number.
+ * @return {string|null}
+ */
+function profitClass(classes, number) {
+	if (classes.revenue.has(number)) return 'revenue'
+	return classes.expenses.has(number) ? 'expenses' : null
+}
+
+/**
+ * Add a liquid movement to cash in when positive or zero, else to cash out.
+ *
+ * @param {object} totals Month totals.
+ * @param {number} movement Signed liquid movement.
+ * @return {void}
+ */
+function addCash(totals, movement) {
+	if (movement >= 0) totals.cashIn += movement
+	else totals.cashOut += -movement
+}
+
+/**
+ * Append one month's totals to the series.
+ *
+ * @param {object} result The series.
+ * @param {object} totals Month totals.
+ * @return {void}
+ */
+function pushMonth(result, totals) {
+	const margin = totals.revenue - totals.costs
+	result.revenue.push(round2(totals.revenue))
+	result.costs.push(round2(totals.costs))
+	result.margin.push(round2(margin))
+	result.marginPct.push(percentOf(margin, totals.revenue))
+	result.cashIn.push(round2(totals.cashIn))
+	result.cashOut.push(round2(totals.cashOut))
+	result.cashNet.push(round2(totals.cashIn - totals.cashOut))
 }
 
 /**
@@ -225,28 +340,57 @@ export function monthlyFinancialSeries({ accounts, transactions, lines, months }
  * @return {{ billable: number[], nonBillable: number[], pct: (number|null)[] }}
  */
 export function billableSeries(entries, months) {
-	const billableByMonth = new Map()
-	const totalByMonth = new Map()
+	const byMonth = hoursByMonth(entries)
+	const series = { billable: [], nonBillable: [], pct: [] }
+	for (const key of months) {
+		const { total, billable } = byMonth.get(key) || { total: 0, billable: 0 }
+		series.billable.push(round2(billable))
+		series.nonBillable.push(round2(total - billable))
+		series.pct.push(percentOf(billable, total))
+	}
+	return series
+}
+
+/**
+ * Total and billable hours per month key.
+ *
+ * @param {object[]} entries UrenRegistratie objects.
+ * @return {Map<string, { total: number, billable: number }>}
+ */
+function hoursByMonth(entries) {
+	const byMonth = new Map()
 	for (const entry of entries || []) {
 		const key = monthKey(entry.date)
 		if (!key) continue
-		const hours = Number(entry.hours) || 0
-		totalByMonth.set(key, (totalByMonth.get(key) || 0) + hours)
-		if (Number(entry.recognisedRate) > 0) {
-			billableByMonth.set(key, (billableByMonth.get(key) || 0) + hours)
-		}
+		const bucket = monthBucket(byMonth, key)
+		const hours = entryHours(entry)
+		bucket.total += hours
+		if (Number(entry.recognisedRate) > 0) bucket.billable += hours
 	}
-	const billable = []
-	const nonBillable = []
-	const pct = []
-	for (const key of months) {
-		const total = totalByMonth.get(key) || 0
-		const bill = billableByMonth.get(key) || 0
-		billable.push(round2(bill))
-		nonBillable.push(round2(total - bill))
-		pct.push(total > 0 ? round2((bill / total) * 100) : null)
-	}
-	return { billable, nonBillable, pct }
+	return byMonth
+}
+
+/**
+ * The hours of an entry, 0 when not a number.
+ *
+ * @param {object} entry UrenRegistratie object.
+ * @return {number}
+ */
+function entryHours(entry) {
+	return Number(entry.hours) || 0
+}
+
+/**
+ * The bucket of a month key, created empty on first use.
+ *
+ * @param {Map<string, object>} byMonth Buckets by month key.
+ * @param {string} key Month key.
+ * @return {{ total: number, billable: number, cashIn: number, cashOut: number }}
+ */
+function monthBucket(byMonth, key) {
+	if (!byMonth.has(key))
+		byMonth.set(key, { total: 0, billable: 0, cashIn: 0, cashOut: 0 })
+	return byMonth.get(key)
 }
 
 /**
@@ -264,20 +408,28 @@ export function forecastByMonth(weeks, afterMonth) {
 	for (const week of weeks || []) {
 		const key = monthKey(week.weekStart)
 		if (!key || key <= afterMonth) continue
-		const bucket = byMonth.get(key) || { cashIn: 0, cashOut: 0 }
-		bucket.cashIn += Number(week.inflows_total) || 0
-		bucket.cashOut += Number(week.outflows_total) || 0
-		byMonth.set(key, bucket)
+		addWeek(monthBucket(byMonth, key), week)
 	}
 	const months = [...byMonth.keys()].sort()
+	const buckets = months.map((key) => byMonth.get(key))
 	return {
 		months,
-		cashIn: months.map((key) => round2(byMonth.get(key).cashIn)),
-		cashOut: months.map((key) => round2(byMonth.get(key).cashOut)),
-		cashNet: months.map((key) =>
-			round2(byMonth.get(key).cashIn - byMonth.get(key).cashOut),
-		),
+		cashIn: buckets.map((bucket) => round2(bucket.cashIn)),
+		cashOut: buckets.map((bucket) => round2(bucket.cashOut)),
+		cashNet: buckets.map((bucket) => round2(bucket.cashIn - bucket.cashOut)),
 	}
+}
+
+/**
+ * Add a forecast week's inflows and outflows to its month bucket.
+ *
+ * @param {object} bucket Month bucket.
+ * @param {object} week CashflowWeek object.
+ * @return {void}
+ */
+function addWeek(bucket, week) {
+	bucket.cashIn += Number(week.inflows_total) || 0
+	bucket.cashOut += Number(week.outflows_total) || 0
 }
 
 /**
@@ -301,11 +453,7 @@ export function openArRows(invoices, customers, now = new Date()) {
 	return (invoices || [])
 		.filter((inv) => OPEN_AR_STATES.includes(inv.lifecycleState))
 		.map((inv) => ({
-			id: inv['@self']?.id ?? inv.id,
-			invoiceNumber: inv.invoiceNumber ?? '',
-			party: names.get(String(inv.customerId ?? '')) || inv.customerId || '',
-			invoiceDate: inv.invoiceDate ?? '',
-			dueDate: inv.dueDate ?? '',
+			...documentHead(inv, partyName(names, inv.customerId)),
 			amount: Number(inv.grossAmount ?? inv.netAmount) || 0,
 			state: inv.lifecycleState,
 			overdue: inv.lifecycleState === 'overdue' || isPastDue(inv.dueDate, now),
@@ -333,11 +481,7 @@ export function openApRows(transactions, vendors, now = new Date()) {
 	return (transactions || [])
 		.filter((tx) => OPEN_AP_STATES.includes(tx.state))
 		.map((tx) => ({
-			id: tx['@self']?.id ?? tx.id,
-			invoiceNumber: tx.invoiceNumber ?? '',
-			party: names.get(String(tx.vendorId ?? '')) || tx.vendorId || '',
-			invoiceDate: tx.invoiceDate ?? '',
-			dueDate: tx.dueDate ?? '',
+			...documentHead(tx, partyName(names, tx.vendorId)),
 			amount: Number(tx.totalAmount) || 0,
 			state: tx.state,
 			overdue: tx.state === 'overdue' || isPastDue(tx.dueDate, now),
@@ -350,12 +494,12 @@ export function openApRows(transactions, vendors, now = new Date()) {
  *
  * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {object} input `{ accounts, transactions, lines, arInvoices, apTransactions, hourEntries }`.
- * @param input.accounts
- * @param input.transactions
- * @param input.lines
- * @param input.arInvoices
- * @param input.apTransactions
- * @param input.hourEntries
+ * @param {object[]} input.accounts Account objects.
+ * @param {object[]} input.transactions GLTransaction objects.
+ * @param {object[]} input.lines GLLine objects.
+ * @param {object[]} input.arInvoices ARInvoice objects.
+ * @param {object[]} input.apTransactions APTransaction objects.
+ * @param {object[]} input.hourEntries UrenRegistratie objects.
  * @param {Date} now Reference date (YTD window + current month).
  * @return {object}
  */
@@ -363,51 +507,77 @@ export function computeKpis(
 	{ accounts, transactions, lines, arInvoices, apTransactions, hourEntries },
 	now = new Date(),
 ) {
-	const year = now.getFullYear()
-	const ytdMonths = []
-	for (let m = 0; m <= now.getMonth(); m++) {
-		ytdMonths.push(`${year}-${String(m + 1).padStart(2, '0')}`)
-	}
 	const series = monthlyFinancialSeries({
 		accounts,
 		transactions,
 		lines,
-		months: ytdMonths,
+		months: yearToDateMonths(now),
 	})
 	const turnoverYtd = round2(sum(series.revenue))
 	const marginYtd = round2(sum(series.margin))
-
-	// Cash position is all-time, not YTD: net of every posted liquid movement.
-	const classes = classifyAccounts(accounts)
-	const buckets = postedLinesByMonth(transactions, lines)
-	let cashPosition = 0
-	for (const monthLines of buckets.values()) {
-		for (const line of monthLines) {
-			if (classes.liquid.has(String(line.accountNumber ?? ''))) {
-				cashPosition += signedAmount(line, 'liquid')
-			}
-		}
-	}
-
 	const openAr = openArRows(arInvoices, [], now)
 	const openAp = openApRows(apTransactions, [], now)
-
-	const currentMonth = `${year}-${String(now.getMonth() + 1).padStart(2, '0')}`
-	const billable = billableSeries(hourEntries, [currentMonth])
+	const billable = billableSeries(hourEntries, [monthKeyOf(now)])
 
 	return {
 		turnoverYtd,
 		marginYtd,
-		marginPctYtd:
-			turnoverYtd > 0 ? round2((marginYtd / turnoverYtd) * 100) : null,
-		openArAmount: round2(sum(openAr.map((r) => r.amount))),
+		marginPctYtd: percentOf(marginYtd, turnoverYtd),
+		openArAmount: totalAmount(openAr),
 		openArCount: openAr.length,
-		openApAmount: round2(sum(openAp.map((r) => r.amount))),
+		openApAmount: totalAmount(openAp),
 		openApCount: openAp.length,
 		billableHours: billable.billable[0],
 		billablePct: billable.pct[0],
-		cashPosition: round2(cashPosition),
+		cashPosition: round2(cashPosition({ accounts, transactions, lines })),
 	}
+}
+
+/**
+ * Month keys from January through the month of `now`.
+ *
+ * @param {Date} now Reference date.
+ * @return {string[]}
+ */
+function yearToDateMonths(now) {
+	const months = []
+	for (let m = 0; m <= now.getMonth(); m++) {
+		months.push(monthKeyOf(new Date(now.getFullYear(), m, 1)))
+	}
+	return months
+}
+
+/**
+ * Cash position, all-time rather than YTD: the net of every posted liquid
+ * movement.
+ *
+ * @param {object} input `{ accounts, transactions, lines }`.
+ * @param {object[]} input.accounts Account objects.
+ * @param {object[]} input.transactions GLTransaction objects.
+ * @param {object[]} input.lines GLLine objects.
+ * @return {number}
+ */
+function cashPosition({ accounts, transactions, lines }) {
+	const liquid = classifyAccounts(accounts).liquid
+	let position = 0
+	for (const monthLines of postedLinesByMonth(transactions, lines).values()) {
+		for (const line of monthLines) {
+			if (liquid.has(String(line.accountNumber ?? ''))) {
+				position += signedAmount(line, 'liquid')
+			}
+		}
+	}
+	return position
+}
+
+/**
+ * Rounded sum of the amounts of table rows.
+ *
+ * @param {object[]} rows Rows with an `amount`.
+ * @return {number}
+ */
+function totalAmount(rows) {
+	return round2(sum(rows.map((r) => r.amount)))
 }
 
 /**
@@ -429,8 +599,39 @@ export function formatEur(value, maximumFractionDigits = 0) {
 }
 
 /**
- * @param {string} dueDate @param {Date} now @return {boolean}
- * @param now
+ * The id, number, party and dates of an open-items table row.
+ *
+ * @param {object} doc ARInvoice or APTransaction object.
+ * @param {string} party The counterparty's display name.
+ * @return {object} id, invoiceNumber, party, invoiceDate and dueDate.
+ */
+function documentHead(doc, party) {
+	return {
+		id: doc['@self']?.id ?? doc.id,
+		invoiceNumber: doc.invoiceNumber ?? '',
+		party,
+		invoiceDate: doc.invoiceDate ?? '',
+		dueDate: doc.dueDate ?? '',
+	}
+}
+
+/**
+ * The display name of a counterparty, else its id, else an empty string.
+ *
+ * @param {Map<string, string>} names Names by id.
+ * @param {string|undefined} id The counterparty id.
+ * @return {string}
+ */
+function partyName(names, id) {
+	return names.get(String(id ?? '')) || id || ''
+}
+
+/**
+ * Whether a due date lies before the UTC day of `now`.
+ *
+ * @param {string} dueDate The due date.
+ * @param {Date} now Reference date.
+ * @return {boolean}
  */
 function isPastDue(dueDate, now) {
 	const key = typeof dueDate === 'string' ? dueDate.slice(0, 10) : ''
@@ -448,6 +649,17 @@ function round2(value) {
 }
 
 /**
+ * A part as a rounded percentage of a whole, null when the whole is not positive.
+ *
+ * @param {number} part The part.
+ * @param {number} whole The whole.
+ * @return {number|null}
+ */
+function percentOf(part, whole) {
+	return whole > 0 ? round2((part / whole) * 100) : null
+}
+
+/**
  * Range-driven KPI metrics: turnover, margin (€ + %) and billable
  * (hours + %) aggregated over an explicit list of month buckets
  * (the dashboard's selected date range) rather than the fixed
@@ -457,10 +669,10 @@ function round2(value) {
  *
  * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {object} input `{ accounts, transactions, lines, hourEntries }`.
- * @param input.accounts
- * @param input.transactions
- * @param input.lines
- * @param input.hourEntries
+ * @param {object[]} input.accounts Account objects.
+ * @param {object[]} input.transactions GLTransaction objects.
+ * @param {object[]} input.lines GLLine objects.
+ * @param {object[]} input.hourEntries UrenRegistratie objects.
  * @param {string[]} months Month keys (`YYYY-MM`) to aggregate over.
  * @return {{ turnover: number, margin: number, marginPct: (number|null),
  *   billableHours: number, billablePct: (number|null) }}
@@ -480,9 +692,8 @@ export function computeRangeKpis(
 	return {
 		turnover,
 		margin,
-		marginPct: turnover > 0 ? round2((margin / turnover) * 100) : null,
+		marginPct: percentOf(margin, turnover),
 		billableHours: round2(billableHours),
-		billablePct:
-			totalHours > 0 ? round2((billableHours / totalHours) * 100) : null,
+		billablePct: percentOf(billableHours, totalHours),
 	}
 }

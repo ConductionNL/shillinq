@@ -65,7 +65,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -163,6 +163,7 @@ class TimeIntakeService {
 		}
 
 		$this->assertBillable(batch: $batch);
+		$this->assertUniqueEntries(batch: $batch);
 		$reusableRows = $this->sameBatchRows(batch: $batch);
 		$batch['rates']      = $this->resolveEntryRates(batch: $batch);
 		$batch['rateCardId'] = $this->batchRateCardId(batch: $batch);
@@ -288,6 +289,30 @@ class TimeIntakeService {
 		return $rows;
 
 	}//end sameBatchRows()
+
+	/**
+	 * Refuse a batch that carries the same externalId twice: both entries
+	 * would be written as hours rows and billed.
+	 *
+	 * @param array<string,mixed> $batch The batch.
+	 *
+	 * @throws RuntimeException Naming the repeated externalId.
+	 *
+	 * @return void
+	 */
+	private function assertUniqueEntries(array $batch): void {
+		$seen = [];
+		foreach ($batch['entries'] as $entry) {
+			if (isset($seen[$entry['externalId']]) === true) {
+				throw new RuntimeException(
+					sprintf('externalId "%s" appears more than once in this batch.', $entry['externalId'])
+				);
+			}
+
+			$seen[$entry['externalId']] = true;
+		}
+
+	}//end assertUniqueEntries()
 
 	/**
 	 * Resolve every entry's rate + validate minutes BEFORE any write
@@ -931,7 +956,7 @@ class TimeIntakeService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

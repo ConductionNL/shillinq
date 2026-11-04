@@ -1,0 +1,94 @@
+{
+	"every field set": {
+		"payload": "{\"name\":\"Hosting\",\"customerReference\":\"cust-1\",\"lines\":[{\"description\":\"Server\",\"quantity\":2,\"unitPrice\":49.5,\"vatCode\":21,\"revenueAccount\":\"8000\"}],\"frequency\":\"quarterly\",\"interval\":3,\"startDate\":\"2026-01-01\",\"invoiceDay\":15,\"issueMode\":\"auto-send\",\"deliveryChannel\":\"peppol\",\"paymentTermsDays\":14,\"currency\":\"USD\",\"status\":\"active\"}",
+		"formUnchanged": true
+	},
+	"empty form": {
+		"payload": "{\"name\":\"\",\"customerReference\":\"\",\"lines\":[],\"frequency\":\"monthly\",\"interval\":1,\"startDate\":\"(undefined)\",\"invoiceDay\":1,\"issueMode\":\"draft-for-review\",\"deliveryChannel\":\"email\",\"paymentTermsDays\":30,\"currency\":\"EUR\",\"status\":\"draft\"}",
+		"formUnchanged": true
+	},
+	"only a name": {
+		"payload": "{\"name\":\"x\",\"customerReference\":\"\",\"lines\":[],\"frequency\":\"monthly\",\"interval\":1,\"startDate\":\"(undefined)\",\"invoiceDay\":1,\"issueMode\":\"draft-for-review\",\"deliveryChannel\":\"email\",\"paymentTermsDays\":30,\"currency\":\"EUR\",\"status\":\"draft\"}",
+		"formUnchanged": true
+	},
+	"blank strings and zeros": {
+		"payload": "{\"name\":\"\",\"customerReference\":\"\",\"lines\":[],\"frequency\":\"monthly\",\"interval\":1,\"startDate\":\"\",\"invoiceDay\":1,\"issueMode\":\"draft-for-review\",\"deliveryChannel\":\"email\",\"paymentTermsDays\":30,\"currency\":\"EUR\",\"status\":\"draft\"}",
+		"formUnchanged": true
+	},
+	"non-numeric numbers": {
+		"payload": "{\"name\":\"\",\"customerReference\":\"\",\"lines\":[],\"frequency\":\"monthly\",\"interval\":1,\"startDate\":\"(undefined)\",\"invoiceDay\":1,\"issueMode\":\"draft-for-review\",\"deliveryChannel\":\"email\",\"paymentTermsDays\":30,\"currency\":\"EUR\",\"status\":\"draft\"}",
+		"formUnchanged": true
+	},
+	"null name and customer": {
+		"payload": "{\"name\":\"\",\"customerReference\":\"\",\"lines\":[],\"frequency\":\"monthly\",\"interval\":1,\"startDate\":\"(undefined)\",\"invoiceDay\":1,\"issueMode\":\"draft-for-review\",\"deliveryChannel\":\"email\",\"paymentTermsDays\":30,\"currency\":\"EUR\",\"status\":\"draft\"}",
+		"formUnchanged": true
+	},
+	"lines null": {
+		"payload": "{\"name\":\"\",\"customerReference\":\"\",\"lines\":[],\"frequency\":\"monthly\",\"interval\":1,\"startDate\":\"(undefined)\",\"invoiceDay\":1,\"issueMode\":\"draft-for-review\",\"deliveryChannel\":\"email\",\"paymentTermsDays\":30,\"currency\":\"EUR\",\"status\":\"draft\"}",
+		"formUnchanged": true
+	},
+	"lines filtered and normalised": {
+		"payload": "{\"name\":\"\",\"customerReference\":\"\",\"lines\":[{\"description\":\"Only text\",\"quantity\":1,\"unitPrice\":0,\"vatCode\":0,\"revenueAccount\":\"\"},{\"description\":\"\",\"quantity\":1,\"unitPrice\":10,\"vatCode\":0,\"revenueAccount\":\"\"},{\"description\":\"Text\",\"quantity\":1,\"unitPrice\":0,\"vatCode\":0,\"revenueAccount\":\"\"},{\"description\":\"Both\",\"quantity\":2.5,\"unitPrice\":3,\"vatCode\":9,\"revenueAccount\":\"\"},{\"description\":\"Negative qty\",\"quantity\":-1,\"unitPrice\":1,\"vatCode\":0,\"revenueAccount\":\"\"}],\"frequency\":\"monthly\",\"interval\":1,\"startDate\":\"(undefined)\",\"invoiceDay\":1,\"issueMode\":\"draft-for-review\",\"deliveryChannel\":\"email\",\"paymentTermsDays\":30,\"currency\":\"EUR\",\"status\":\"draft\"}",
+		"formUnchanged": true
+	},
+	"indexation zero": {
+		"payload": "{\"name\":\"\",\"customerReference\":\"\",\"lines\":[],\"frequency\":\"monthly\",\"interval\":1,\"startDate\":\"(undefined)\",\"invoiceDay\":1,\"issueMode\":\"draft-for-review\",\"deliveryChannel\":\"email\",\"paymentTermsDays\":30,\"currency\":\"EUR\",\"status\":\"draft\",\"indexationPercent\":0}",
+		"formUnchanged": true
+	},
+	"indexation as text": {
+		"payload": "{\"name\":\"\",\"customerReference\":\"\",\"lines\":[],\"frequency\":\"monthly\",\"interval\":1,\"startDate\":\"(undefined)\",\"invoiceDay\":1,\"issueMode\":\"draft-for-review\",\"deliveryChannel\":\"email\",\"paymentTermsDays\":30,\"currency\":\"EUR\",\"status\":\"draft\",\"indexationPercent\":2.5}",
+		"formUnchanged": true
+	},
+	"indexation not a number": {
+		"payload": "{\"name\":\"\",\"customerReference\":\"\",\"lines\":[],\"frequency\":\"monthly\",\"interval\":1,\"startDate\":\"(undefined)\",\"invoiceDay\":1,\"issueMode\":\"draft-for-review\",\"deliveryChannel\":\"email\",\"paymentTermsDays\":30,\"currency\":\"EUR\",\"status\":\"draft\",\"indexationPercent\":\"(NaN)\"}",
+		"formUnchanged": true
+	},
+	"indexation empty string": {
+		"payload": "{\"name\":\"\",\"customerReference\":\"\",\"lines\":[],\"frequency\":\"monthly\",\"interval\":1,\"startDate\":\"(undefined)\",\"invoiceDay\":1,\"issueMode\":\"draft-for-review\",\"deliveryChannel\":\"email\",\"paymentTermsDays\":30,\"currency\":\"EUR\",\"status\":\"draft\"}",
+		"formUnchanged": true
+	},
+	"indexation null": {
+		"payload": "{\"name\":\"\",\"customerReference\":\"\",\"lines\":[],\"frequency\":\"monthly\",\"interval\":1,\"startDate\":\"(undefined)\",\"invoiceDay\":1,\"issueMode\":\"draft-for-review\",\"deliveryChannel\":\"email\",\"paymentTermsDays\":30,\"currency\":\"EUR\",\"status\":\"draft\"}",
+		"formUnchanged": true
+	},
+	"indexation undefined": {
+		"payload": "{\"name\":\"\",\"customerReference\":\"\",\"lines\":[],\"frequency\":\"monthly\",\"interval\":1,\"startDate\":\"(undefined)\",\"invoiceDay\":1,\"issueMode\":\"draft-for-review\",\"deliveryChannel\":\"email\",\"paymentTermsDays\":30,\"currency\":\"EUR\",\"status\":\"draft\"}",
+		"formUnchanged": true
+	},
+	"indexation false": {
+		"payload": "{\"name\":\"\",\"customerReference\":\"\",\"lines\":[],\"frequency\":\"monthly\",\"interval\":1,\"startDate\":\"(undefined)\",\"invoiceDay\":1,\"issueMode\":\"draft-for-review\",\"deliveryChannel\":\"email\",\"paymentTermsDays\":30,\"currency\":\"EUR\",\"status\":\"draft\",\"indexationPercent\":0}",
+		"formUnchanged": true
+	},
+	"end date": {
+		"payload": "{\"name\":\"\",\"customerReference\":\"\",\"lines\":[],\"frequency\":\"monthly\",\"interval\":1,\"startDate\":\"(undefined)\",\"invoiceDay\":1,\"issueMode\":\"draft-for-review\",\"deliveryChannel\":\"email\",\"paymentTermsDays\":30,\"currency\":\"EUR\",\"status\":\"draft\",\"endCondition\":{\"endDate\":\"2027-01-01\"}}",
+		"formUnchanged": true
+	},
+	"end date and occurrences": {
+		"payload": "{\"name\":\"\",\"customerReference\":\"\",\"lines\":[],\"frequency\":\"monthly\",\"interval\":1,\"startDate\":\"(undefined)\",\"invoiceDay\":1,\"issueMode\":\"draft-for-review\",\"deliveryChannel\":\"email\",\"paymentTermsDays\":30,\"currency\":\"EUR\",\"status\":\"draft\",\"endCondition\":{\"endDate\":\"2027-01-01\"}}",
+		"formUnchanged": true
+	},
+	"occurrences": {
+		"payload": "{\"name\":\"\",\"customerReference\":\"\",\"lines\":[],\"frequency\":\"monthly\",\"interval\":1,\"startDate\":\"(undefined)\",\"invoiceDay\":1,\"issueMode\":\"draft-for-review\",\"deliveryChannel\":\"email\",\"paymentTermsDays\":30,\"currency\":\"EUR\",\"status\":\"draft\",\"endCondition\":{\"occurrenceCount\":6},\"remainingOccurrences\":6}",
+		"formUnchanged": true
+	},
+	"occurrences zero": {
+		"payload": "{\"name\":\"\",\"customerReference\":\"\",\"lines\":[],\"frequency\":\"monthly\",\"interval\":1,\"startDate\":\"(undefined)\",\"invoiceDay\":1,\"issueMode\":\"draft-for-review\",\"deliveryChannel\":\"email\",\"paymentTermsDays\":30,\"currency\":\"EUR\",\"status\":\"draft\"}",
+		"formUnchanged": true
+	},
+	"occurrences not a number": {
+		"payload": "{\"name\":\"\",\"customerReference\":\"\",\"lines\":[],\"frequency\":\"monthly\",\"interval\":1,\"startDate\":\"(undefined)\",\"invoiceDay\":1,\"issueMode\":\"draft-for-review\",\"deliveryChannel\":\"email\",\"paymentTermsDays\":30,\"currency\":\"EUR\",\"status\":\"draft\",\"endCondition\":{\"occurrenceCount\":\"(NaN)\"},\"remainingOccurrences\":\"(NaN)\"}",
+		"formUnchanged": true
+	},
+	"empty end date with occurrences": {
+		"payload": "{\"name\":\"\",\"customerReference\":\"\",\"lines\":[],\"frequency\":\"monthly\",\"interval\":1,\"startDate\":\"(undefined)\",\"invoiceDay\":1,\"issueMode\":\"draft-for-review\",\"deliveryChannel\":\"email\",\"paymentTermsDays\":30,\"currency\":\"EUR\",\"status\":\"draft\",\"endCondition\":{\"occurrenceCount\":3},\"remainingOccurrences\":3}",
+		"formUnchanged": true
+	},
+	"everything with indexation and end": {
+		"payload": "{\"name\":\"Hosting\",\"customerReference\":\"cust-1\",\"lines\":[{\"description\":\"Server\",\"quantity\":2,\"unitPrice\":49.5,\"vatCode\":21,\"revenueAccount\":\"8000\"}],\"frequency\":\"quarterly\",\"interval\":3,\"startDate\":\"2026-01-01\",\"invoiceDay\":15,\"issueMode\":\"auto-send\",\"deliveryChannel\":\"peppol\",\"paymentTermsDays\":14,\"currency\":\"USD\",\"status\":\"active\",\"indexationPercent\":3,\"endCondition\":{\"occurrenceCount\":12},\"remainingOccurrences\":12}",
+		"formUnchanged": true
+	},
+	"an extra form field is ignored": {
+		"payload": "{\"name\":\"x\",\"customerReference\":\"\",\"lines\":[],\"frequency\":\"monthly\",\"interval\":1,\"startDate\":\"(undefined)\",\"invoiceDay\":1,\"issueMode\":\"draft-for-review\",\"deliveryChannel\":\"email\",\"paymentTermsDays\":30,\"currency\":\"EUR\",\"status\":\"draft\"}",
+		"formUnchanged": true
+	}
+}

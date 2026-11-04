@@ -335,6 +335,43 @@ final class TimeIntakeServiceIngestGoldenTest extends TestCase {
 	}//end testIngestMatchesTheGoldenRecord()
 
 	/**
+	 * A batch that repeats an externalId is refused before any write, also
+	 * when the repeat differs only in surrounding whitespace.
+	 *
+	 * @return array<string, array<int, string>>
+	 */
+	public static function repeatedIds(): array {
+		return [
+			'same id'         => ['e-1'],
+			'padded same id'  => [' e-1 '],
+		];
+
+	}//end repeatedIds()
+
+	/**
+	 * A repeated externalId writes nothing and drafts nothing.
+	 *
+	 * @param string $repeat The externalId of the repeated entry.
+	 *
+	 * @return void
+	 */
+	#[DataProvider('repeatedIds')]
+	public function testARepeatedEntryInOneBatchIsRefused(string $repeat): void {
+		$body = self::body();
+		$body['entries'][1]['externalId'] = $repeat;
+		$actual = $this->runScenario(['body' => $body]);
+
+		$this->assertSame(
+			['threw' => \RuntimeException::class, 'message' => 'externalId "e-1" appears more than once in this batch.'],
+			$actual['results'][0]
+		);
+		$this->assertSame([], $actual['drafts']);
+		$saves = array_filter($actual['calls'], static fn (array $call): bool => $call[0] === 'saveObject');
+		$this->assertSame([], array_values($saves));
+
+	}//end testARepeatedEntryInOneBatchIsRefused()
+
+	/**
 	 * Write the record after a recording run.
 	 *
 	 * @return void

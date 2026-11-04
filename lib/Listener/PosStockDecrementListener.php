@@ -70,7 +70,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use DateTime;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\SalesDispatchStockIssueService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -350,7 +350,7 @@ class PosStockDecrementListener implements IEventListener {
 
 			foreach ($adminGroup->getUsers() as $user) {
 				$notification = $this->notificationMgr->createNotification();
-				$notification->setApp(Application::APP_ID)
+				$notification->setApp(AppIdentity::APP_ID)
 					->setUser($user->getUID())
 					->setObject('pos-stock-unmatched-line', $posTxnId . '#' . $lineIndex)
 					->setSubject(
@@ -392,7 +392,7 @@ class PosStockDecrementListener implements IEventListener {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

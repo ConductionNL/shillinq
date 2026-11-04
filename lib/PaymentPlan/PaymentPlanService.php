@@ -534,7 +534,15 @@ class PaymentPlanService {
 			return;
 		}
 
-		$plan = ObjectIdentifier::findOne(scoped: $this->scoped(schema: 'PaymentPlan'), id: $planId);
+		try {
+			$plan = ObjectIdentifier::findOneStrict(scoped: $this->scoped(schema: 'PaymentPlan'), id: $planId);
+		} catch (Throwable $e) {
+			throw new PaymentPlanRefusedException(
+				template: 'Invoice %1$s could not be checked against its payment plan. Try again.',
+				parameters: [$number]
+			);
+		}
+
 		if ($plan !== null && in_array((string)($plan['lifecycleState'] ?? ''), ['draft', 'active'], true) === true) {
 			throw new PaymentPlanRefusedException(
 				template: 'Invoice %1$s is already on payment plan %2$s.',
