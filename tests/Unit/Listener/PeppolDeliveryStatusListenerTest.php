@@ -290,6 +290,23 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 	}//end testAnInvoiceNumberInTheObjectUriFindsTheInvoice()
 
 	/**
+	 * A uuid that answers with an object of another schema is not an invoice:
+	 * OpenRegister retries a uuid missed in ARInvoice without the schema.
+	 *
+	 * @return void
+	 */
+	public function testAnObjectOfAnotherSchemaIsNotTakenForTheInvoice(): void {
+		$store = new InMemoryObjectServiceStub(['ARInvoice' => [], 'Quote' => [['id' => self::INVOICE_ID, 'deliveryStatus' => 'sent']]]);
+
+		$this->listener(objectService: $store)->handle(
+			$this->deliveryStatus(data: ['objectUri' => 'openregister://shillinq/ARInvoice/' . self::INVOICE_ID, 'status' => 'delivered'])
+		);
+
+		self::assertSame([], $store->saved);
+
+	}//end testAnObjectOfAnotherSchemaIsNotTakenForTheInvoice()
+
+	/**
 	 * An illegal transition (e.g. not-sent -> delivered, skipping queued/sent)
 	 * is skipped: fail-soft, no state corruption.
 	 *
