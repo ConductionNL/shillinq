@@ -519,27 +519,21 @@ export default {
 			this.submitting = true
 			this.error = ''
 			try {
-				const payload = schedulePayload(
-					this.report,
-					{
-						...this.schedule,
-						administrationId: this.form.administrationId,
-						format: this.form.format,
-					},
-					new Date(),
-				)
-				const response = await axios.post(
-					generateUrl(
-						'/apps/openregister/api/objects/shillinq/ReportSchedule',
-					),
+				const payload = schedulePayload(this.report, {
+					...this.schedule,
+					administrationId: this.form.administrationId,
+					format: this.form.format,
+				})
+				const { data } = await axios.post(
+					generateUrl('/apps/shillinq/api/report-schedules'),
 					payload,
 				)
 				this.scheduledMessage = this.t(
 					'shillinq',
 					'Scheduled. The first run is on {date}.',
-					{ date: payload.nextRunAt.slice(0, 10) },
+					{ date: String(data?.nextRunAt ?? '').slice(0, 10) },
 				)
-				this.$emit('scheduled', response.data || payload)
+				this.$emit('scheduled', data)
 			} catch (e) {
 				this.error =
 					e?.response?.data?.error
