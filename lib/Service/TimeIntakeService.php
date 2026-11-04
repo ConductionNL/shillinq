@@ -798,7 +798,7 @@ class TimeIntakeService {
 	 * @return array<string,mixed>|null
 	 */
 	private function findHoursRegistrationByExternalId(string $administrationId, string $externalId): ?array {
-		$rows = $this->findAll(schema: 'UrenRegistratie', filters: ['administrationId' => $administrationId, 'externalId' => $externalId]);
+		$rows = $this->findGuardRows(schema: 'UrenRegistratie', filters: ['administrationId' => $administrationId, 'externalId' => $externalId]);
 		foreach ($rows as $row) {
 			if (is_array($row) === true) {
 				return $row;
@@ -817,7 +817,7 @@ class TimeIntakeService {
 	 * @return array<string,mixed>|null
 	 */
 	private function findBatch(string $administrationId, string $batchId): ?array {
-		$rows = $this->findAll(schema: 'TimeIntakeBatch', filters: ['administrationId' => $administrationId, 'batchId' => $batchId]);
+		$rows = $this->findGuardRows(schema: 'TimeIntakeBatch', filters: ['administrationId' => $administrationId, 'batchId' => $batchId]);
 		foreach ($rows as $row) {
 			if (is_array($row) === true) {
 				return $row;
@@ -934,6 +934,30 @@ class TimeIntakeService {
 		}
 
 	}//end findAll()
+
+	/**
+	 * Read the rows a double-billing guard depends on, failing closed.
+	 *
+	 * The replay lookup and the cross-batch dedup must never read a store
+	 * error as "no rows": that would write hours again and draft a second
+	 * invoice. A read error aborts the ingest before anything is written.
+	 *
+	 * @param string $schema Schema slug.
+	 * @param array<string,mixed> $filters Filter map.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 *
+	 * @throws RuntimeException When the store cannot be read.
+	 */
+	private function findGuardRows(string $schema, array $filters): array {
+		try {
+			return $this->objectService->setRegister($this->register())->setSchema($schema)->findAll(['filters' => $filters]);
+		} catch (\Throwable $e) {
+			$this->logger->error(sprintf('TimeIntakeService findAll(%s) failed: %s', $schema, $e->getMessage()));
+			throw new RuntimeException('The duplicate check could not read existing records; nothing was written.', 0, $e);
+		}
+
+	}//end findGuardRows()
 
 	/**
 	 * Save (create) via the real OR ObjectService API.
