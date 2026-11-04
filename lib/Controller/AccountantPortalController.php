@@ -46,7 +46,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Reporting\ReportGenerationService;
 use OCA\Shillinq\Service\AccountantDashboardService;
 use OCA\Shillinq\Service\AdministrationContextService;
@@ -99,7 +99,7 @@ class AccountantPortalController extends Controller {
 		private readonly ReportGenerationService $reports,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

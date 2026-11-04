@@ -28,7 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\WidgetAuthService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -55,7 +55,7 @@ class WidgetSettingsController extends Controller {
 		private readonly WidgetAuthService $authService,
 		private readonly IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -91,7 +91,7 @@ class WidgetSettingsController extends Controller {
 	 *
 	 * @spec openspec/specs/bookings-self-service-widget/spec.md
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function create(): JSONResponse {
 		$businessId = trim((string)$this->request->getParam('businessId', ''));
 		$administrationId = trim((string)$this->request->getParam('administrationId', ''));
@@ -129,7 +129,7 @@ class WidgetSettingsController extends Controller {
 	 *
 	 * @spec openspec/specs/bookings-self-service-widget/spec.md
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function rotate(): JSONResponse {
 		$businessId = trim((string)$this->request->getParam('businessId', ''));
 
@@ -156,7 +156,7 @@ class WidgetSettingsController extends Controller {
 	 *
 	 * @spec openspec/specs/bookings-self-service-widget/spec.md
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function revoke(): JSONResponse {
 		$businessId = trim((string)$this->request->getParam('businessId', ''));
 		if ($businessId === '') {

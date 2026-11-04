@@ -32,7 +32,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
 use OCA\Shillinq\Service\External\Mollie\MolliePaymentAdapterInterface;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
@@ -122,7 +122,7 @@ class ConnectionReportService {
 			$delivered = $this->send(
 				key: $key,
 				build: static fn (): object => new $eventClass(
-					app: Application::APP_ID,
+					app: AppIdentity::APP_ID,
 					key: $key,
 					status: $status,
 					message: $message,

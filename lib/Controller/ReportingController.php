@@ -58,7 +58,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Reporting\ReportCatalogue;
 use OCA\Shillinq\Reporting\ReportGenerationService;
 use OCA\Shillinq\Service\AdministrationContextService;
@@ -108,7 +108,7 @@ class ReportingController extends Controller {
 		private readonly ReportGenerationService $service,
 		private readonly AdministrationContextService $context,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 

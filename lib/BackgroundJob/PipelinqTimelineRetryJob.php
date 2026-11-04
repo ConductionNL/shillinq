@@ -50,7 +50,7 @@ namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
 use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
 use OCA\Shillinq\Service\SettingsService;
@@ -137,12 +137,13 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 	 *                        TimelinePublishRetryEntry to attempt.
 	 *
 	 * @return void
+	 * @spec openspec/changes/archive/2026-06-14-bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
 	 */
 	protected function run($argument): void {
 		if (is_array($argument) === false || isset($argument['entryId']) === false) {
 			$this->logger->warning(
 				'PipelinqTimelineRetryJob: invalid argument, skipping',
-				['app' => Application::APP_ID]
+				['app' => AppIdentity::APP_ID]
 			);
 			return;
 		}
@@ -151,7 +152,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 		if ($entryId === '') {
 			$this->logger->warning(
 				'PipelinqTimelineRetryJob: empty entryId, skipping',
-				['app' => Application::APP_ID]
+				['app' => AppIdentity::APP_ID]
 			);
 			return;
 		}
@@ -159,7 +160,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 		if ($this->settings->isOpenRegisterAvailable() === false) {
 			$this->logger->info(
 				'PipelinqTimelineRetryJob: OpenRegister not available, skipping',
-				['app' => Application::APP_ID]
+				['app' => AppIdentity::APP_ID]
 			);
 			return;
 		}
@@ -180,7 +181,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 				$this->logger->debug(
 					'PipelinqTimelineRetryJob: entry not found, treating as already drained',
 					[
-						'app' => Application::APP_ID,
+						'app' => AppIdentity::APP_ID,
 						'entryId' => $entryId,
 					]
 				);
@@ -195,7 +196,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 				$this->logger->debug(
 					'PipelinqTimelineRetryJob: entry not yet due, re-queued',
 					[
-						'app' => Application::APP_ID,
+						'app' => AppIdentity::APP_ID,
 						'entryId' => $entryId,
 						'nextRetryAt' => (string)($entry['nextRetryAt'] ?? ''),
 					]
@@ -216,7 +217,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 				$this->logger->debug(
 					'PipelinqTimelineRetryJob: retry succeeded, entry drained',
 					[
-						'app' => Application::APP_ID,
+						'app' => AppIdentity::APP_ID,
 						'entryId' => $entryId,
 						'type' => $dto->type(),
 						'externalId' => $dto->externalId(),
@@ -236,7 +237,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 			$this->logger->error(
 				'PipelinqTimelineRetryJob: tick failed unexpectedly',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'entryId' => $entryId,
 					'exception' => $e->getMessage(),
 				]
@@ -281,7 +282,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 			$this->logger->error(
 				'PipelinqTimelineRetryJob: max retries exhausted, dead-lettered',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'entryId' => $entryId,
 					'type' => (string)($entry['type'] ?? ''),
 					'externalId' => (string)($entry['externalId'] ?? ''),
@@ -311,7 +312,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 		$this->logger->info(
 			'PipelinqTimelineRetryJob: retry failed, re-queued with backoff',
 			[
-				'app' => Application::APP_ID,
+				'app' => AppIdentity::APP_ID,
 				'entryId' => $entryId,
 				'retryCount' => $nextCount,
 				'nextRetryAt' => $entry['nextRetryAt'],
@@ -444,7 +445,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 			$this->logger->warning(
 				'PipelinqTimelineRetryJob: failed to delete retry entry',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'entryId' => $entryId,
 					'exception' => $e->getMessage(),
 				]
@@ -498,7 +499,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 			$this->logger->error(
 				'PipelinqTimelineRetryJob: failed to write dead-letter entry',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'entryId' => $entryId,
 					'exception' => $e->getMessage(),
 				]
@@ -531,7 +532,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 			$this->logger->warning(
 				'PipelinqTimelineRetryJob: failed to re-queue retry tick',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'entryId' => $entryId,
 					'exception' => $e->getMessage(),
 				]

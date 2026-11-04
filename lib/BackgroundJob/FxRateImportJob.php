@@ -43,7 +43,7 @@ namespace OCA\Shillinq\BackgroundJob;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateResult;
@@ -412,7 +412,7 @@ class FxRateImportJob extends TimedJob {
 	 * @return array<int, array{transaction: string, base: string}>
 	 */
 	private function configuredPairs(): array {
-		$raw = $this->appConfig->getValueString(Application::APP_ID, 'multi_currency_pairs', '');
+		$raw = $this->appConfig->getValueString(AppIdentity::APP_ID, 'multi_currency_pairs', '');
 		if ($raw === '') {
 			return self::DEFAULT_PAIRS;
 		}
@@ -447,7 +447,7 @@ class FxRateImportJob extends TimedJob {
 	 * @return string Register slug.
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($slug === '') {
 			return 'shillinq';
 		}

@@ -43,7 +43,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\Activity\IManager as IActivityManager;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -300,7 +300,7 @@ class ApprovalActivityEmitter {
 
 			$activity = $this->activityManager->generateEvent();
 			$activity
-				->setApp(Application::APP_ID)
+				->setApp(AppIdentity::APP_ID)
 				->setType(self::ACTIVITY_TYPE)
 				->setAuthor($effectiveActor)
 				->setAffectedUser($effectiveActor)

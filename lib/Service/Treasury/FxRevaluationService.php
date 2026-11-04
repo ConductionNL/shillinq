@@ -48,7 +48,7 @@ namespace OCA\Shillinq\Service\Treasury;
 
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -535,7 +535,7 @@ class FxRevaluationService {
 	 * @return string The account code.
 	 */
 	private function glAccount(string $key, string $default): string {
-		$configured = $this->appConfig->getValueString(Application::APP_ID, $key, $default);
+		$configured = $this->appConfig->getValueString(AppIdentity::APP_ID, $key, $default);
 		if ($configured === '') {
 			return $default;
 		}
@@ -606,7 +606,7 @@ class FxRevaluationService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}
