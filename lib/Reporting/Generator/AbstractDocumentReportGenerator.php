@@ -68,6 +68,7 @@ use OCA\Shillinq\Support\FleetAppId;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
 use Throwable;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Base class carrying the default block vocabulary + the docudesk hand-off.
@@ -597,10 +598,10 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 				return null;
 			}
 
-			$object = $objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->find($id);
+			$object = ObjectIdentifier::findScoped(
+				scoped: $objectService->setRegister($this->register())->setSchema($schema),
+				id: $id
+			);
 
 			if ($object === null) {
 				return null;

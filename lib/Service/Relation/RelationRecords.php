@@ -31,6 +31,7 @@ namespace OCA\Shillinq\Service\Relation;
 use JsonSerializable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Administration-scoped reads and patches of the relation schemas.
@@ -110,10 +111,10 @@ class RelationRecords {
 			return null;
 		}
 
-		$entity = $this->objectService
-			->setRegister($this->settings->getRegisterSlug())
-			->setSchema($schema)
-			->find($id);
+		$entity = ObjectIdentifier::findScoped(
+			scoped: $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema($schema),
+			id: $id
+		);
 		if ($entity === null) {
 			return null;
 		}

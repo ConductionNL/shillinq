@@ -60,6 +60,7 @@ use OCP\BackgroundJob\QueuedJob;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Tick the retry pipeline for one queued timeline event.
@@ -392,10 +393,10 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 	 */
 	private function loadEntry(mixed $objectService, string $registerSlug, string $entryId): ?array {
 		try {
-			$record = $objectService
-				->setRegister($registerSlug)
-				->setSchema('TimelinePublishRetryEntry')
-				->find($entryId);
+			$record = ObjectIdentifier::findScoped(
+				scoped: $objectService->setRegister($registerSlug)->setSchema('TimelinePublishRetryEntry'),
+				id: $entryId
+			);
 		} catch (Throwable $e) {
 			return null;
 		}

@@ -236,7 +236,11 @@ final class ContributionDebtorResolver {
 		$scoped = $this->objectService->setRegister($this->registerSlug())->setSchema(self::CUSTOMER);
 
 		try {
-			$record = ObjectIdentifier::recordWithId(candidate: $scoped->find($id, _rbac: false, _multitenancy: false));
+			$record = ObjectIdentifier::recordWithId(candidate: ObjectIdentifier::findScoped(
+				scoped: $scoped,
+				id: $id,
+				named: ['_rbac' => false, '_multitenancy' => false]
+			));
 			if ($record !== null && (string)($record['id'] ?? '') !== '') {
 				return (string)$record['id'];
 			}

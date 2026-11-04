@@ -452,10 +452,11 @@ class InboundPayableService {
 		$record = null;
 		if ($id !== '') {
 			try {
-				$found = $this->objectService
-					->setRegister($this->registerSlug())
-					->setSchema(self::SCHEMA)
-					->find($id, _rbac: false, _multitenancy: false);
+				$found = ObjectIdentifier::findScoped(
+					scoped: $this->objectService->setRegister($this->registerSlug())->setSchema(self::SCHEMA),
+					id: $id,
+					named: ['_rbac' => false, '_multitenancy' => false]
+				);
 				$record = ObjectIdentifier::recordWithId(candidate: $found);
 			} catch (Throwable $e) {
 				$record = null;

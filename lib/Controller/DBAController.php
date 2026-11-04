@@ -55,6 +55,7 @@ use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * DBA Compliance Marker endpoint façade.
@@ -686,7 +687,10 @@ class DBAController extends Controller {
 	 */
 	private function findEntityOrNull(object $objectService, string $register, string $schema, string $id): ?array {
 		try {
-			$entity = $objectService->setRegister($register)->setSchema($schema)->find($id);
+			$entity = ObjectIdentifier::findScoped(
+				scoped: $objectService->setRegister($register)->setSchema($schema),
+				id: $id
+			);
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'DBA controller: find failed',

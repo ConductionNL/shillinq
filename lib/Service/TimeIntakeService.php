@@ -71,6 +71,7 @@ use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Validates, materialises, and delegates a pipelinq time-billing batch.
@@ -902,7 +903,10 @@ class TimeIntakeService {
 	 */
 	private function find(string $schema, string $id): ?array {
 		try {
-			$rs = $this->objectService->setRegister($this->register())->setSchema($schema)->find($id);
+			$rs = ObjectIdentifier::findScoped(
+				scoped: $this->objectService->setRegister($this->register())->setSchema($schema),
+				id: $id
+			);
 			// ADR-084: find() is declared `: ?ObjectEntityInterface`, so the old
 			// is_array() arm was unreachable by type and this helper returned NULL
 			// for every existing record — every lookup read as "not found".

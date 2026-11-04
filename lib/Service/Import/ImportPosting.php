@@ -174,7 +174,10 @@ class ImportPosting {
 	 * @throws DomainException When the opening entry is gone.
 	 */
 	private function postReversal(array $batch, string $openingId): string {
-		$opening = ObjectIdentifier::recordWithId(candidate: $this->scoped(schema: 'JournalEntry')->find($openingId));
+		$opening = ObjectIdentifier::recordWithId(candidate: ObjectIdentifier::findScoped(
+			scoped: $this->scoped(schema: 'JournalEntry'),
+			id: $openingId
+		));
 		if ($opening === null) {
 			throw new DomainException(sprintf('its opening entry %s cannot be found.', $openingId));
 		}

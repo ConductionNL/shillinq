@@ -144,6 +144,7 @@ final class RecordingIntakeObjectService {
  * SHILLINQ_GOLDEN_RECORD=1 rewrites the record.
  *
  * @covers \OCA\Shillinq\Service\TimeIntakeService
+ * @uses \OCA\Shillinq\Util\ObjectIdentifier
  *
  * @uses \OCA\Shillinq\Request\InvoiceGenerationRequest
  *

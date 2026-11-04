@@ -59,6 +59,7 @@ use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Repair step that folds DunningRun + OninbaarAfschrijving onto ARInvoice.
@@ -131,12 +132,10 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 				// Load the linked ARInvoice. factuurId is the ARInvoice UUID.
 				$invoice = null;
 				try {
-					$invoice = $this->objectService->find(
+					$invoice = ObjectIdentifier::findScoped(
+						scoped: $this->objectService->setRegister($registerSlug)->setSchema('ARInvoice'),
 						id: $invoiceId,
-						register: $registerSlug,
-						schema: 'ARInvoice',
-						_rbac: false,
-						_multitenancy: false,
+						named: ['_rbac' => false, '_multitenancy' => false]
 					);
 				} catch (\Throwable $e) {
 					$invoice = null;

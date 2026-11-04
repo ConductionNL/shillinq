@@ -33,6 +33,7 @@ use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Guards financial-statement lifecycle transitions.
@@ -105,10 +106,9 @@ class ConsolidationGuard {
 			// findObject() does not exist — it raised an Error that the
 			// \Throwable arm below swallowed into `return false`, so this
 			// guard denied EVERY finalise without ever reading a FiscalYear.
-			$fiscalYear = $this->objectService->find(
-				id: $fiscalYearId,
-				register: $this->getRegisterSlug(),
-				schema: 'FiscalYear'
+			$fiscalYear = ObjectIdentifier::findScopedOrThrow(
+				scoped: $this->objectService->setRegister($this->getRegisterSlug())->setSchema('FiscalYear'),
+				id: (string)$fiscalYearId
 			);
 
 			if ($fiscalYear === null) {
@@ -160,10 +160,9 @@ class ConsolidationGuard {
 
 		try {
 			// ADR-022: find(), not findObject() — see requireFiscalPeriodClosed().
-			$consolidationGroup = $this->objectService->find(
-				id: $consolidationGroupId,
-				register: $this->getRegisterSlug(),
-				schema: 'ConsolidationGroup'
+			$consolidationGroup = ObjectIdentifier::findScopedOrThrow(
+				scoped: $this->objectService->setRegister($this->getRegisterSlug())->setSchema('ConsolidationGroup'),
+				id: (string)$consolidationGroupId
 			);
 
 			if ($consolidationGroup === null) {

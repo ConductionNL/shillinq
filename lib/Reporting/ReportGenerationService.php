@@ -74,6 +74,7 @@ use OCP\SystemTag\TagNotFoundException;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Discovers generators, renders a report, stores + tags the file, records it.
@@ -401,10 +402,10 @@ class ReportGenerationService {
 				return null;
 			}
 
-			$object = $objectService
-				->setRegister(self::REGISTER)
-				->setSchema(self::SCHEMA)
-				->find($id);
+			$object = ObjectIdentifier::findScoped(
+				scoped: $objectService->setRegister(self::REGISTER)->setSchema(self::SCHEMA),
+				id: $id
+			);
 
 			if ($object === null) {
 				return null;

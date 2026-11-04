@@ -38,6 +38,7 @@ use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Daily DBA monitoring batch — generates flags for high-risk patterns.
@@ -342,7 +343,7 @@ class DBAFlagGenerationJob extends TimedJob {
 			$modelId = (string)($assignment['modelAgreementId'] ?? '');
 			if ($modelId !== '') {
 				try {
-					$model = $objectService->setRegister($register)->setSchema('DBAModelovereenkomst')->find($modelId);
+					$model = ObjectIdentifier::findScoped(scoped: $objectService->setRegister($register)->setSchema('DBAModelovereenkomst'), id: $modelId);
 					$modelArr = $this->toArray(entity: $model);
 					if ($modelArr !== null
 						&& $this->detectModelovereenkomstVerlopen(

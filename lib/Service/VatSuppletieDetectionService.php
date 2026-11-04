@@ -69,6 +69,7 @@ use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Detects filed-vs-ledger drift on a VATReturn and compiles a VatCorrection.
@@ -615,10 +616,10 @@ class VatSuppletieDetectionService {
 	 * @return array<string,mixed>
 	 */
 	private function fetchCorrection(string $vatCorrectionId): array {
-		$correction = $this->objectService
-			->setRegister($this->register())
-			->setSchema('VatCorrection')
-			->find($vatCorrectionId);
+		$correction = ObjectIdentifier::findScoped(
+			scoped: $this->objectService->setRegister($this->register())->setSchema('VatCorrection'),
+			id: $vatCorrectionId
+		);
 
 		if ($correction === null) {
 			throw new RuntimeException(sprintf('VatCorrection %s not found', $vatCorrectionId));

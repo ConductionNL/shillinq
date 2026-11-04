@@ -51,6 +51,7 @@ use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * HTTP API for BillableInvoice drafting + posting.
@@ -274,10 +275,10 @@ class InvoiceApiController extends Controller {
 			}
 
 
-			$found = $this->objectService
-				->setRegister('shillinq')
-				->setSchema('BillableInvoice')
-				->find($invoiceId);
+			$found = ObjectIdentifier::findScoped(
+				scoped: $this->objectService->setRegister('shillinq')->setSchema('BillableInvoice'),
+				id: $invoiceId
+			);
 
 			if ($found === null) {
 				return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
@@ -340,7 +341,10 @@ class InvoiceApiController extends Controller {
 				return $this->withoutAdministration();
 			}
 
-			$found = $this->objectService->setRegister('shillinq')->setSchema('BillableInvoice')->find($invoiceId);
+			$found = ObjectIdentifier::findScoped(
+				scoped: $this->objectService->setRegister('shillinq')->setSchema('BillableInvoice'),
+				id: $invoiceId
+			);
 
 			if ($found === null) {
 				return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
@@ -406,7 +410,10 @@ class InvoiceApiController extends Controller {
 				return $this->withoutAdministration();
 			}
 
-			$found = $this->objectService->setRegister('shillinq')->setSchema('BillableInvoice')->find($invoiceId);
+			$found = ObjectIdentifier::findScoped(
+				scoped: $this->objectService->setRegister('shillinq')->setSchema('BillableInvoice'),
+				id: $invoiceId
+			);
 
 			if ($found === null) {
 				return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);

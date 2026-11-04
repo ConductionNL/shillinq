@@ -186,12 +186,10 @@ class ContributionDeclineService {
 	 */
 	private function findOwnedVoluntaryInvoice(object $objectService, string $target, string $customerMasterId): ?array {
 		try {
-			$found = $objectService->find(
+			$found = ObjectIdentifier::findScoped(
+				scoped: $objectService->setRegister(self::REGISTER)->setSchema('ARInvoice'),
 				id: $target,
-				register: self::REGISTER,
-				schema: 'ARInvoice',
-				_rbac: false,
-				_multitenancy: false,
+				named: ['_rbac' => false, '_multitenancy' => false]
 			);
 		} catch (Throwable $notFound) {
 			return null;
