@@ -562,7 +562,7 @@ export default {
 		 */
 		async confirmAll() {
 			await this.guarded(async () => {
-				await confirmSuggestions(this.mappings)
+				await confirmSuggestions(this.batch.id)
 				this.mappings = await loadMappings(this.batch.id)
 			})
 		},
