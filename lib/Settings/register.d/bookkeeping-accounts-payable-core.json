@@ -494,6 +494,12 @@
             "description": "FK to the administration owning this AP invoice.",
             "example": "adm-1",
             "title": "Administration ID"
+          },
+          "supplierInvoiceId": {
+            "type": "string",
+            "description": "UUID of the SupplierInvoice this transaction was written for by the hand-over to accounts payable. The supplier invoice's pay guard accepts only a transaction that names the invoice itself.",
+            "nullable": true,
+            "title": "Supplier invoice ID"
           }
         },
         "x-openregister-lifecycle": {

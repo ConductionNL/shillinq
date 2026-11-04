@@ -33,6 +33,7 @@ use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Lifecycle precondition guard for ExpenseClaimEntry submit and post transitions.
@@ -194,10 +195,10 @@ class ExpenseClaimGuard {
 
 		foreach ($checks as $check) {
 			foreach ($check['ids'] as $itemId) {
-				$item = $this->objectService
-					->setRegister(register: $register)
-					->setSchema(schema: $check['schema'])
-					->find(id: $itemId);
+				$item = ObjectIdentifier::findScoped(
+					scoped: $this->objectService->setRegister(register: $register)->setSchema(schema: $check['schema']),
+					id: (string)$itemId
+				);
 
 				// ADR-084: find() returns an ObjectEntityInterface, which extends
 				// JsonSerializable ONLY and does not implement ArrayAccess. The

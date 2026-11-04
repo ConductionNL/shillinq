@@ -46,6 +46,7 @@ namespace OCA\Shillinq\Service\Import;
 use OCA\Shillinq\Lifecycle\ImportBatchGuard;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Staged XAF/CSV import pipeline (REQ-AIM-005 .. REQ-AIM-009).
@@ -950,7 +951,10 @@ class ImportPipelineService {
 				return null;
 			}
 
-			$object = $service->setRegister($this->register())->setSchema('ImportBatch')->find($batchId);
+			$object = ObjectIdentifier::findScopedOrThrow(
+				scoped: $service->setRegister($this->register())->setSchema('ImportBatch'),
+				id: $batchId
+			);
 			return $this->toArray(object: $object);
 		} catch (\Throwable $e) {
 			$this->logger->warning('ImportPipelineService: loadBatch failed', ['batchId' => $batchId, 'exception' => $e->getMessage()]);

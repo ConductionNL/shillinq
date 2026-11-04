@@ -298,10 +298,11 @@ class ObjectRequestRefundService {
 		$record = null;
 		if ($id !== '') {
 			try {
-				$found = $this->objectService
-					->setRegister($this->registerSlug())
-					->setSchema('PaymentRequest')
-					->find($id, _rbac: false, _multitenancy: false);
+				$found = ObjectIdentifier::findScoped(
+					scoped: $this->objectService->setRegister($this->registerSlug())->setSchema('PaymentRequest'),
+					id: $id,
+					named: ['_rbac' => false, '_multitenancy' => false]
+				);
 				$record = ObjectIdentifier::recordWithId(candidate: $found);
 			} catch (Throwable $e) {
 				$record = null;

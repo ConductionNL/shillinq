@@ -316,6 +316,30 @@ final class ObjectIdentifier {
 	}//end findScoped()
 
 	/**
+	 * find()'s answer in the service's register and schema, where an object of
+	 * another schema counts as a miss: DoesNotExistException, as find() throws for
+	 * one. For a guard that denies on a failed lookup but passes on null.
+	 *
+	 * @param object $scoped ObjectService with register + schema already set.
+	 * @param string $id     The uuid, slug or id.
+	 *
+	 * @return mixed
+	 *
+	 * @throws DoesNotExistException When the answer is an object of another schema.
+	 *
+	 * @spec openspec/specs/inventory-cycle-count/spec.md
+	 */
+	public static function findScopedOrThrow(object $scoped, string $id): mixed {
+		$target = self::lookupTarget(scoped: $scoped);
+		$found  = $scoped->find($id, ...$target);
+		if ($found !== null && self::isInSchema(found: $found, target: $target) === false) {
+			throw new DoesNotExistException('No object with this id in the schema asked for.');
+		}
+
+		return $found;
+	}//end findScopedOrThrow()
+
+	/**
 	 * The register and schema the service is scoped to, as find() arguments.
 	 *
 	 * OpenRegister's find() does not use the register and schema set on the

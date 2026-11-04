@@ -51,6 +51,7 @@ use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Project a concluded docudesk signing request onto the originating shillinq
@@ -375,10 +376,10 @@ final class SigningConcludedListener implements IEventListener {
 	 */
 	private function findObject(string $schema, string $id): ?array {
 		try {
-			$result = $this->objectService
-				->setRegister($this->settingsService->getRegisterSlug())
-				->setSchema($schema)
-				->find($id);
+			$result = ObjectIdentifier::findScoped(
+				scoped: $this->objectService->setRegister($this->settingsService->getRegisterSlug())->setSchema($schema),
+				id: $id
+			);
 
 			return $this->toArray(result: $result);
 		} catch (Throwable $e) {

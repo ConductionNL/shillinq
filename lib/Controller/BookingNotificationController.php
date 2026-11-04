@@ -353,10 +353,9 @@ class BookingNotificationController extends Controller {
 			// findObject() does not exist — calling it raised an Error that the
 			// \Throwable arm below turned into a blanket 403, so this guard
 			// denied EVERY non-admin instead of checking anything.
-			$booking = $this->objectService->find(
-				id: $bookingId,
-				register: $registerSlug,
-				schema: 'Booking'
+			$booking = ObjectIdentifier::findScoped(
+				scoped: $this->objectService->setRegister($registerSlug)->setSchema('Booking'),
+				id: $bookingId
 			);
 
 			if ($booking === null) {

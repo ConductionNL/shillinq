@@ -20,8 +20,9 @@ use RuntimeException;
 
 /**
  * The pay guard accepts only the invoice's own paid AP transaction: the
- * object found must be an APTransaction of this register, in the invoice's
- * administration, with the invoice's number, supplier and total.
+ * object found must be an APTransaction of this register, written for this
+ * invoice's uuid by the hand-over, in the invoice's administration, with the
+ * invoice's number, supplier and total.
  *
  * @covers \OCA\Shillinq\Lifecycle\SupplierInvoicePayGuard
  */
@@ -29,7 +30,10 @@ final class SupplierInvoicePayGuardLookupTest extends TestCase {
 
 	private const TX = '11111111-1111-4111-8111-111111111111';
 
+	private const INVOICE_ID = 'aaaaaaaa-0000-4000-8000-00000000000a';
+
 	private const INVOICE = [
+		'id' => self::INVOICE_ID,
 		'apTransactionId' => self::TX,
 		'administrationId' => 'adm-1',
 		'invoiceNumber' => 'INK-7',
@@ -43,6 +47,7 @@ final class SupplierInvoicePayGuardLookupTest extends TestCase {
 		'invoiceNumber' => 'INK-7',
 		'vendorId' => 'payee-1',
 		'totalAmount' => 121.0,
+		'supplierInvoiceId' => self::INVOICE_ID,
 	];
 
 	/**
@@ -119,6 +124,31 @@ final class SupplierInvoicePayGuardLookupTest extends TestCase {
 		self::assertFalse($this->allowed(self::entity(['vendorId' => 'payee-2'] + self::PAID)));
 		self::assertFalse($this->allowed(self::entity(['totalAmount' => 120.99] + self::PAID)));
 		self::assertFalse($this->allowed(self::entity(['administrationId' => 'adm-2'] + self::PAID)));
+	}
+
+	public function testATransactionWrittenForAnotherInvoiceRefusesPay(): void {
+		$otherInvoice = 'bbbbbbbb-0000-4000-8000-00000000000b';
+		self::assertFalse($this->allowed(self::entity(['supplierInvoiceId' => $otherInvoice] + self::PAID)));
+		self::assertFalse($this->allowed(self::entity(['supplierInvoiceId' => ' ' . self::INVOICE_ID] + self::PAID)));
+		self::assertFalse($this->allowed(self::entity(['supplierInvoiceId' => true] + self::PAID)), 'a non-text value names no invoice');
+	}
+
+	public function testATransactionThatNamesNoInvoiceRefusesPay(): void {
+		$unnamed = self::PAID;
+		unset($unnamed['supplierInvoiceId']);
+		self::assertFalse($this->allowed(self::entity($unnamed)));
+		self::assertFalse($this->allowed(self::entity(['supplierInvoiceId' => ''] + self::PAID)));
+	}
+
+	public function testAnInvoiceWithoutItsUuidRefusesPay(): void {
+		$unnamed = self::INVOICE;
+		unset($unnamed['id']);
+		self::assertFalse($this->allowed(self::entity(['supplierInvoiceId' => ''] + self::PAID), $unnamed));
+		self::assertFalse($this->allowed(self::entity(['supplierInvoiceId' => ''] + self::PAID), ['id' => '  '] + self::INVOICE));
+	}
+
+	public function testTheInvoiceUuidIsComparedTrimmed(): void {
+		self::assertTrue($this->allowed(self::entity(self::PAID), ['id' => ' ' . self::INVOICE_ID . ' '] + self::INVOICE));
 	}
 
 	public function testABlankAdministrationRefusesPay(): void {

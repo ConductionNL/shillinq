@@ -55,6 +55,7 @@ use OCP\IRequest;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Admin endpoints over the timeline dead-letter queue.
@@ -305,10 +306,10 @@ class TimelineDeadLetterController extends Controller {
 	 */
 	private function loadDead(mixed $objectService, string $registerSlug, string $id): ?array {
 		try {
-			$record = $objectService
-				->setRegister($registerSlug)
-				->setSchema('TimelineDeadLetter')
-				->find($id);
+			$record = ObjectIdentifier::findScoped(
+				scoped: $objectService->setRegister($registerSlug)->setSchema('TimelineDeadLetter'),
+				id: $id
+			);
 		} catch (Throwable $e) {
 			return null;
 		}

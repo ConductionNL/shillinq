@@ -75,6 +75,7 @@ use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * REQ-002 cross-schema promotion listener for the
@@ -403,10 +404,9 @@ class TenderNedAwardDetectedListener implements IEventListener {
 		}
 
 		try {
-			$object = $objectService->find(
-				id: $uuid,
-				register: $this->getRegisterSlug(),
-				schema: $schema
+			$object = ObjectIdentifier::findScoped(
+				scoped: $objectService->setRegister($this->getRegisterSlug())->setSchema($schema),
+				id: $uuid
 			);
 		} catch (Throwable $e) {
 			$this->logger->warning(
