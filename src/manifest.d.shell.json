@@ -4559,14 +4559,14 @@
 					"_fragment": "inventory-product-catalog",
 					"id": "ProductCatalog",
 					"route": "/inventory/products",
-					"type": "custom",
+					"type": "index",
 					"title": "Products"
 				},
 				{
 					"_fragment": "inventory-product-catalog",
 					"id": "ProductAttributeCatalog",
 					"route": "/inventory/product-attributes",
-					"type": "custom",
+					"type": "index",
 					"title": "Product Attributes"
 				}
 			]
