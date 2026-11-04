@@ -71,7 +71,7 @@
                 OCA\Shillinq\Support\FleetAppId,
                 OCA\Shillinq\Support\DateWindow,
                 OCA\OpenRegister\Lifecycle\GuardResult,
-                OCA\OpenRegister\Service\Aggregation\AggregationQuery,
+                OCA\OpenRegister\Search\Service\Aggregation\AggregationQuery,
                 OCA\OpenRegister\AppHost\Observability\MetricSample,
                 OCA\Shillinq\Standards\RuleEngine,
                 OCA\Shillinq\Standards\RuleCatalogue,
