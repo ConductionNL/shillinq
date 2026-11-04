@@ -13,17 +13,17 @@
  */
 
 /**
- * The segment types the dashboard offers and the GLLine aggregation behind each.
+ * The segment types the dashboard offers; the server maps each to its GLLine aggregation.
  *
- * @type {Record<string, string>}
+ * @type {Array<string>}
  */
-export const SEGMENT_AGGREGATION = {
-	costCenter: 'byCostCenter',
-	costCenterHierarchy: 'byCostCenterHierarchy',
-	costObject: 'byCostObject',
-	project: 'byProject',
-	analyticalDimension: 'byAnalyticalDimension',
-}
+export const SEGMENTS = [
+	'costCenter',
+	'costCenterHierarchy',
+	'costObject',
+	'project',
+	'analyticalDimension',
+]
 
 /**
  * A figure as a number, 0 when absent.
@@ -114,17 +114,17 @@ export function segmentTotals(rows) {
 }
 
 /**
- * The query parameters of one aggregation call: the administration always, the period when chosen.
+ * The query parameters of one segment results call: the segment always, the period when chosen.
  *
- * @param {string} administrationId The active administration.
+ * @param {string} segment One of SEGMENTS.
  * @param {string} periodId The chosen FiscalPeriod periodId (2026-M09, 2026-Q3), or ''.
  * @return {Record<string, string>} The parameters.
  * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
  */
-export function segmentQuery(administrationId, periodId) {
-	const params = { 'filter[administrationId]': administrationId }
+export function segmentQuery(segment, periodId) {
+	const params = { segment }
 	if (periodId) {
-		params['filter[periodId]'] = periodId
+		params.periodId = periodId
 	}
 	return params
 }
@@ -136,7 +136,7 @@ export function segmentQuery(administrationId, periodId) {
  * administration chooses (2026-M09, 2026-Q3), so the choices come from the
  * periods themselves, oldest first.
  *
- * @param {object|Array<object>|null} payload The FiscalPeriod list response.
+ * @param {object|Array<object>|null} payload The periods of the segment results response, or a FiscalPeriod list response.
  * @return {Array<{id: string, label: string}>} The choices.
  * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
  */
