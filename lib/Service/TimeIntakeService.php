@@ -65,7 +65,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -959,7 +959,7 @@ class TimeIntakeService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

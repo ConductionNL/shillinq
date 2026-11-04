@@ -35,7 +35,7 @@ namespace OCA\Shillinq\Controller;
 use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Booking\CalendarRows;
 use OCA\Shillinq\Service\Booking\TransactionalGuard;
@@ -90,7 +90,7 @@ class CalendarController extends Controller {
 		private readonly IGroupManager $groupManager,
 		private readonly ObjectTransitionRunner $transitions,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

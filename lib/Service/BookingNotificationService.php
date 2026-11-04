@@ -26,7 +26,7 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -260,7 +260,7 @@ class BookingNotificationService {
 	 */
 	public function recordAuditTrail(array $notification, string $status, string $reason): void {
 		try {
-			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+			$registerSlug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 			if ($registerSlug === '') {
 				$registerSlug = 'shillinq';
 			}
@@ -421,7 +421,7 @@ class BookingNotificationService {
 	 */
 	public function isOptedOut(string $recipient, string $triggerType): bool {
 		try {
-			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+			$registerSlug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 			if ($registerSlug === '') {
 				$registerSlug = 'shillinq';
 			}
@@ -482,7 +482,7 @@ class BookingNotificationService {
 		}
 
 		try {
-			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+			$registerSlug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 			if ($registerSlug === '') {
 				$registerSlug = 'shillinq';
 			}
@@ -562,7 +562,7 @@ class BookingNotificationService {
 		int $windowMinutes = self::DEFAULT_DEDUP_WINDOW_MINUTES,
 	): bool {
 		try {
-			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+			$registerSlug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 			if ($registerSlug === '') {
 				$registerSlug = 'shillinq';
 			}
@@ -676,7 +676,7 @@ class BookingNotificationService {
 	 */
 	private function loadActiveTriggers(string $eventType, ?string $bookingId): array {
 		try {
-			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+			$registerSlug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 			if ($registerSlug === '') {
 				$registerSlug = 'shillinq';
 			}
@@ -715,7 +715,7 @@ class BookingNotificationService {
 	 */
 	private function loadTemplate(string $triggerId, string $eventType): array {
 		try {
-			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+			$registerSlug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 			if ($registerSlug === '') {
 				$registerSlug = 'shillinq';
 			}

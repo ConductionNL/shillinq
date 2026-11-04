@@ -25,7 +25,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Usage\MeterReadingImportService;
 use OCP\AppFramework\Controller;
@@ -60,7 +60,7 @@ class MeterReadingImportController extends Controller {
 		private readonly AdministrationContextService $context,
 		private readonly MeterReadingImportService $importer,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 

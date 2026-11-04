@@ -33,7 +33,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -76,7 +76,7 @@ class PayrollWebhookController extends Controller {
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -187,7 +187,7 @@ class PayrollWebhookController extends Controller {
 	 * @return bool True only when a configured secret produces a matching HMAC.
 	 */
 	private function verifySignature(string $rawBody): bool {
-		$secret = $this->appConfig->getValueString(Application::APP_ID, self::SECRET_KEY, '');
+		$secret = $this->appConfig->getValueString(AppIdentity::APP_ID, self::SECRET_KEY, '');
 		if ($secret === '') {
 			return false;
 		}
@@ -304,7 +304,7 @@ class PayrollWebhookController extends Controller {
 	 * @return string The register slug.
 	 */
 	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

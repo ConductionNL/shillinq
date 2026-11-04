@@ -26,7 +26,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use DomainException;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Asset\AssetRecords;
 use OCA\Shillinq\Service\Tax\VatNumberCheck;
@@ -58,7 +58,7 @@ class VatNumberCheckController extends Controller {
 		private readonly AssetRecords $records,
 		private readonly VatNumberCheck $check,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 

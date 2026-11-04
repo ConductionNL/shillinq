@@ -24,7 +24,7 @@ namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -72,7 +72,7 @@ class BookingNotificationController extends Controller {
 		private AdministrationContextService $administrationContext,
 		private readonly ObjectServiceInterface $objectService,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -204,7 +204,7 @@ class BookingNotificationController extends Controller {
 	 *
 	 * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	#[NoCSRFRequired]
 	public function getNotificationMonitor(): JSONResponse {
 		try {
@@ -260,7 +260,7 @@ class BookingNotificationController extends Controller {
 	 *
 	 * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function disableAllTriggers(): JSONResponse {
 		try {
 			$registerSlug = $this->settingsService->getRegisterSlug();

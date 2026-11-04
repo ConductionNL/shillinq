@@ -42,7 +42,7 @@ namespace OCA\Shillinq\Listener;
 use DateTimeImmutable;
 use DateTimeZone;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\Pipelinq\CustomerBridgeMetricsService;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
@@ -122,7 +122,7 @@ final class BookingCreatedTimelinePublishListener implements IEventListener {
 				$this->logger->warning(
 					'BookingCreatedTimelinePublishListener: missing appointmentId — skipping publish',
 					[
-						'app' => Application::APP_ID,
+						'app' => AppIdentity::APP_ID,
 					]
 				);
 				return;
@@ -139,7 +139,7 @@ final class BookingCreatedTimelinePublishListener implements IEventListener {
 				$this->logger->debug(
 					'BookingCreatedTimelinePublishListener: published',
 					[
-						'app' => Application::APP_ID,
+						'app' => AppIdentity::APP_ID,
 						'externalId' => $externalId,
 						'contactId' => $pipelinqContactId,
 					]
@@ -159,7 +159,7 @@ final class BookingCreatedTimelinePublishListener implements IEventListener {
 			$this->logger->error(
 				'BookingCreatedTimelinePublishListener: publish errored',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'exception' => $e->getMessage(),
 				]
 			);
@@ -241,7 +241,7 @@ final class BookingCreatedTimelinePublishListener implements IEventListener {
 				$this->logger->debug(
 					'BookingCreatedTimelinePublishListener: createdAt unparseable, falling back to now',
 					[
-						'app' => Application::APP_ID,
+						'app' => AppIdentity::APP_ID,
 						'reason' => $e->getMessage(),
 					]
 				);

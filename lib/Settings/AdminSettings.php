@@ -26,7 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Settings;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
@@ -54,12 +54,12 @@ class AdminSettings implements IDelegatedSettings {
 	 * @return TemplateResponse
 	 */
 	public function getForm(): TemplateResponse {
-		$version = $this->appManager->getAppVersion(appId: Application::APP_ID);
+		$version = $this->appManager->getAppVersion(appId: AppIdentity::APP_ID);
 
 		$this->initialState->provideInitialState('version', $version);
 
 		return new TemplateResponse(
-			Application::APP_ID,
+			AppIdentity::APP_ID,
 			'settings/admin',
 			[]
 		);

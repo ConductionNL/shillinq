@@ -60,7 +60,7 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Lifecycle\AansluitingResolutionGuard;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -711,7 +711,7 @@ class AansluitingService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

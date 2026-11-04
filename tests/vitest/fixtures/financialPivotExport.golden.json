@@ -1,0 +1,1208 @@
+{
+	"0 csv": {
+		"value": "\n"
+	},
+	"0 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table></Table></Worksheet></Workbook>"
+	},
+	"1 csv": {
+		"value": "-2.50,\"line\nbreak\"\n"
+	},
+	"1 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"2 csv": {
+		"value": "\n"
+	},
+	"2 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table></Table></Worksheet></Workbook>"
+	},
+	"3 csv": {
+		"value": "\n"
+	},
+	"3 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table></Table></Worksheet></Workbook>"
+	},
+	"4 csv": {
+		"value": "true,,\"say \"\"hi\"\"\",\n"
+	},
+	"4 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\">true</Data></Cell><Cell/><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell><Data ss:Type=\"String\"></Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"5 csv": {
+		"value": "-2.50\n-2.50\n\"\"\"\"\n"
+	},
+	"5 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell></Row><Row><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">&quot;</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"6 csv": {
+		"value": "\"line\nbreak\",\"a\r\nb\",\"\"\"\"\n"
+	},
+	"6 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"7 csv": {
+		"value": "\"\"\"\",true,-2.50,plain\n\"line\nbreak\",\"\n\",\"a\r\nb\",\"\"\"\"\n"
+	},
+	"7 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"String\">true</Data></Cell><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell><Data ss:Type=\"String\">plain</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"8 csv": {
+		"value": "-2.50,\"a,b\"\n\"\"\"\",0.00\n,\"\n\"\n"
+	},
+	"8 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell><Data ss:Type=\"String\">a,b</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"Number\">0</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\"></Data></Cell><Cell><Data ss:Type=\"String\">\n</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"9 csv": {
+		"value": "<b>&amp;</b>\ntrue\n"
+	},
+	"9 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">true</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"10 csv": {
+		"value": "\n"
+	},
+	"10 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table></Table></Worksheet></Workbook>"
+	},
+	"11 csv": {
+		"value": "\n<b>&amp;</b>\n"
+	},
+	"11 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell/></Row><Row><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"12 csv": {
+		"value": "\n"
+	},
+	"12 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table></Table></Worksheet></Workbook>"
+	},
+	"13 csv": {
+		"value": "plain,,\",\"\ntrue,\",\",true\n"
+	},
+	"13 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"String\">plain</Data></Cell><Cell/><Cell><Data ss:Type=\"String\">,</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">true</Data></Cell><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell><Data ss:Type=\"String\">true</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"14 csv": {
+		"value": "it's\n-2.50\n"
+	},
+	"14 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">it's</Data></Cell></Row><Row><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"15 csv": {
+		"value": "\n"
+	},
+	"15 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table></Table></Worksheet></Workbook>"
+	},
+	"16 csv": {
+		"value": "\n"
+	},
+	"16 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table></Table></Worksheet></Workbook>"
+	},
+	"17 csv": {
+		"value": "\n"
+	},
+	"17 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table></Table></Worksheet></Workbook>"
+	},
+	"18 csv": {
+		"value": "\"a\r\nb\",\"\"\"\",\",\"\n-2.50,,\"\"\"\"\n"
+	},
+	"18 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"String\">,</Data></Cell></Row><Row><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell/><Cell><Data ss:Type=\"String\">&quot;</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"19 csv": {
+		"value": ",it's,it's\n-2.50,true,-2.50\n"
+	},
+	"19 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\"></Data></Cell><Cell><Data ss:Type=\"String\">it's</Data></Cell><Cell><Data ss:Type=\"String\">it's</Data></Cell></Row><Row><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell><Data ss:Type=\"String\">true</Data></Cell><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"20 csv": {
+		"value": "\n"
+	},
+	"20 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table></Table></Worksheet></Workbook>"
+	},
+	"21 csv": {
+		"value": "\n"
+	},
+	"21 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table></Table></Worksheet></Workbook>"
+	},
+	"22 csv": {
+		"value": "\n"
+	},
+	"22 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell/></Row></Table></Worksheet></Workbook>"
+	},
+	"23 csv": {
+		"value": "<b>&amp;</b>,\"\n\",0.00\n"
+	},
+	"23 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell><Data ss:Type=\"Number\">0</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"24 csv": {
+		"value": "\n"
+	},
+	"24 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table></Table></Worksheet></Workbook>"
+	},
+	"25 csv": {
+		"value": "\"say \"\"hi\"\"\",\n,it's\n"
+	},
+	"25 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell/></Row><Row><Cell/><Cell><Data ss:Type=\"String\">it's</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"26 csv": {
+		"value": ",\"\"\"\"\n"
+	},
+	"26 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell/><Cell><Data ss:Type=\"String\">&quot;</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"27 csv": {
+		"value": "<b>&amp;</b>\n\"a,b\"\n1234.57\n"
+	},
+	"27 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">a,b</Data></Cell></Row><Row><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"28 csv": {
+		"value": "-2.50,0.00\n0.00,\",\"\n"
+	},
+	"28 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell><Data ss:Type=\"Number\">0</Data></Cell></Row><Row><Cell><Data ss:Type=\"Number\">0</Data></Cell><Cell><Data ss:Type=\"String\">,</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"29 csv": {
+		"value": "\"\"\"\",0.00,it's\n\",\",,\"a\r\nb\"\n,true,0.00\n"
+	},
+	"29 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"Number\">0</Data></Cell><Cell><Data ss:Type=\"String\">it's</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell><Data ss:Type=\"String\"></Data></Cell><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell></Row><Row><Cell/><Cell><Data ss:Type=\"String\">true</Data></Cell><Cell><Data ss:Type=\"Number\">0</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"30 csv": {
+		"value": "<b>&amp;</b>,it's,,\"\n\"\n"
+	},
+	"30 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell><Cell><Data ss:Type=\"String\">it's</Data></Cell><Cell><Data ss:Type=\"String\"></Data></Cell><Cell><Data ss:Type=\"String\">\n</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"31 csv": {
+		"value": "\n"
+	},
+	"31 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table></Table></Worksheet></Workbook>"
+	},
+	"32 csv": {
+		"value": "-2.50,0.00,\",\"\n1234.57,0.00,-2.50\nit's,,\"\n\"\n"
+	},
+	"32 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell><Data ss:Type=\"Number\">0</Data></Cell><Cell><Data ss:Type=\"String\">,</Data></Cell></Row><Row><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell><Cell><Data ss:Type=\"Number\">0</Data></Cell><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">it's</Data></Cell><Cell/><Cell><Data ss:Type=\"String\">\n</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"33 csv": {
+		"value": ",-2.50,\",\",it's\n"
+	},
+	"33 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell/><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell><Data ss:Type=\"String\">it's</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"34 csv": {
+		"value": "plain,\"a,b\"\n"
+	},
+	"34 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\">plain</Data></Cell><Cell><Data ss:Type=\"String\">a,b</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"35 csv": {
+		"value": "\"a,b\",\",\"\n"
+	},
+	"35 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">a,b</Data></Cell><Cell><Data ss:Type=\"String\">,</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"36 csv": {
+		"value": "-2.50,<b>&amp;</b>\n0.00,\",\"\nplain,\"a\r\nb\"\n"
+	},
+	"36 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell></Row><Row><Cell><Data ss:Type=\"Number\">0</Data></Cell><Cell><Data ss:Type=\"String\">,</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">plain</Data></Cell><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"37 csv": {
+		"value": "\n"
+	},
+	"37 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table></Table></Worksheet></Workbook>"
+	},
+	"38 csv": {
+		"value": "it's,\"a\r\nb\"\n-2.50,\"\n\"\n"
+	},
+	"38 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">it's</Data></Cell><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell></Row><Row><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell><Data ss:Type=\"String\">\n</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"39 csv": {
+		"value": "plain\n"
+	},
+	"39 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"String\">plain</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"40 csv": {
+		"value": "\n"
+	},
+	"40 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table></Table></Worksheet></Workbook>"
+	},
+	"41 csv": {
+		"value": "-2.50,\"\"\"\",\"a\r\nb\",\"say \"\"hi\"\"\"\n\"line\nbreak\",\",\",\"\"\"\",true\n-2.50,-2.50,\"\"\"\",it's\n"
+	},
+	"41 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"String\">true</Data></Cell></Row><Row><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"String\">it's</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"42 csv": {
+		"value": "\"line\nbreak\"\n"
+	},
+	"42 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"43 csv": {
+		"value": "\"line\nbreak\"\n"
+	},
+	"43 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"44 csv": {
+		"value": "\"\"\"\",\"\n\",\n,1234.57,plain\n\"line\nbreak\",,<b>&amp;</b>\n"
+	},
+	"44 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell/></Row><Row><Cell><Data ss:Type=\"String\"></Data></Cell><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell><Cell><Data ss:Type=\"String\">plain</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell><Cell/><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"45 csv": {
+		"value": "\n"
+	},
+	"45 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table></Table></Worksheet></Workbook>"
+	},
+	"46 csv": {
+		"value": "\n"
+	},
+	"46 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table></Table></Worksheet></Workbook>"
+	},
+	"47 csv": {
+		"value": "\n"
+	},
+	"47 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table></Table></Worksheet></Workbook>"
+	},
+	"48 csv": {
+		"value": "\n"
+	},
+	"48 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table></Table></Worksheet></Workbook>"
+	},
+	"49 csv": {
+		"value": "\n"
+	},
+	"49 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table></Table></Worksheet></Workbook>"
+	},
+	"50 csv": {
+		"value": "\n"
+	},
+	"50 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table></Table></Worksheet></Workbook>"
+	},
+	"51 csv": {
+		"value": "\",\",plain,1234.57\n"
+	},
+	"51 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell><Data ss:Type=\"String\">plain</Data></Cell><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"52 csv": {
+		"value": "<b>&amp;</b>\n\"line\nbreak\"\nplain\n"
+	},
+	"52 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">plain</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"53 csv": {
+		"value": "<b>&amp;</b>,plain,\n\"line\nbreak\",,\"say \"\"hi\"\"\"\n"
+	},
+	"53 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell><Cell><Data ss:Type=\"String\">plain</Data></Cell><Cell/></Row><Row><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell><Cell/><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"54 csv": {
+		"value": "\n"
+	},
+	"54 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table></Table></Worksheet></Workbook>"
+	},
+	"55 csv": {
+		"value": "1234.57\n\n"
+	},
+	"55 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\"></Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"56 csv": {
+		"value": "plain\nplain\n"
+	},
+	"56 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\">plain</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">plain</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"57 csv": {
+		"value": "\n"
+	},
+	"57 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\"></Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"58 csv": {
+		"value": "\n"
+	},
+	"58 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table></Table></Worksheet></Workbook>"
+	},
+	"59 csv": {
+		"value": "\"say \"\"hi\"\"\"\n\"a,b\"\n"
+	},
+	"59 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">a,b</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"60 csv": {
+		"value": "<b>&amp;</b>,\n\"a\r\nb\",\"a\r\nb\"\n0.00,plain\n"
+	},
+	"60 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell><Cell><Data ss:Type=\"String\"></Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell></Row><Row><Cell><Data ss:Type=\"Number\">0</Data></Cell><Cell><Data ss:Type=\"String\">plain</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"61 csv": {
+		"value": "\"say \"\"hi\"\"\",true,\"a,b\",-2.50\n"
+	},
+	"61 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell><Data ss:Type=\"String\">true</Data></Cell><Cell><Data ss:Type=\"String\">a,b</Data></Cell><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"62 csv": {
+		"value": "\",\",\"line\nbreak\",-2.50\n\"say \"\"hi\"\"\",1234.57,it's\n"
+	},
+	"62 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell><Cell><Data ss:Type=\"String\">it's</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"63 csv": {
+		"value": "true,-2.50,true\n\"a,b\",\",\",it's\nit's,1234.57,it's\n"
+	},
+	"63 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">true</Data></Cell><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell><Data ss:Type=\"String\">true</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">a,b</Data></Cell><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell><Data ss:Type=\"String\">it's</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">it's</Data></Cell><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell><Cell><Data ss:Type=\"String\">it's</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"64 csv": {
+		"value": "it's,\"\n\",\"say \"\"hi\"\"\"\n,plain,\n-2.50,\"a,b\",<b>&amp;</b>\n"
+	},
+	"64 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"String\">it's</Data></Cell><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell></Row><Row><Cell/><Cell><Data ss:Type=\"String\">plain</Data></Cell><Cell/></Row><Row><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell><Data ss:Type=\"String\">a,b</Data></Cell><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"65 csv": {
+		"value": "\"say \"\"hi\"\"\",1234.57,\"a,b\",\",\"\n\"a,b\",\"\n\",,\"\"\"\"\n-2.50,1234.57,plain,\"a,b\"\n"
+	},
+	"65 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell><Cell><Data ss:Type=\"String\">a,b</Data></Cell><Cell><Data ss:Type=\"String\">,</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">a,b</Data></Cell><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell/><Cell><Data ss:Type=\"String\">&quot;</Data></Cell></Row><Row><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell><Cell><Data ss:Type=\"String\">plain</Data></Cell><Cell><Data ss:Type=\"String\">a,b</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"66 csv": {
+		"value": "\"a\r\nb\",\"say \"\"hi\"\"\",,\n\"\n\",<b>&amp;</b>,\"\n\",it's\n"
+	},
+	"66 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell/><Cell><Data ss:Type=\"String\"></Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell><Data ss:Type=\"String\">it's</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"67 csv": {
+		"value": "\"a\r\nb\",,-2.50,<b>&amp;</b>\nit's,-2.50,\"say \"\"hi\"\"\",\n"
+	},
+	"67 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell><Cell/><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">it's</Data></Cell><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell><Data ss:Type=\"String\"></Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"68 csv": {
+		"value": "\",\",\"line\nbreak\",<b>&amp;</b>,0.00\n"
+	},
+	"68 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell><Cell><Data ss:Type=\"Number\">0</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"69 csv": {
+		"value": "\",\"\n\n"
+	},
+	"69 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">,</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\"></Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"70 csv": {
+		"value": "1234.57,\",\",,1234.57\n\"say \"\"hi\"\"\",,\",\",-2.50\n"
+	},
+	"70 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell/><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell/><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"71 csv": {
+		"value": "\"a,b\",<b>&amp;</b>,,\"\n\"\n"
+	},
+	"71 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">a,b</Data></Cell><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell><Cell/><Cell><Data ss:Type=\"String\">\n</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"72 csv": {
+		"value": "\n\"a\r\nb\"\n0.00\n"
+	},
+	"72 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell/></Row><Row><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell></Row><Row><Cell><Data ss:Type=\"Number\">0</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"73 csv": {
+		"value": "\n"
+	},
+	"73 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table></Table></Worksheet></Workbook>"
+	},
+	"74 csv": {
+		"value": "\n"
+	},
+	"74 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table></Table></Worksheet></Workbook>"
+	},
+	"75 csv": {
+		"value": "\n"
+	},
+	"75 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table></Table></Worksheet></Workbook>"
+	},
+	"76 csv": {
+		"value": ",\"\n\",true\n\"line\nbreak\",0.00,\"a\r\nb\"\nplain,\",\",\"\"\"\"\n"
+	},
+	"76 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell/><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell><Data ss:Type=\"String\">true</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell><Cell><Data ss:Type=\"Number\">0</Data></Cell><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">plain</Data></Cell><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"77 csv": {
+		"value": ",\"say \"\"hi\"\"\",,\"say \"\"hi\"\"\"\n,1234.57,\"a,b\",\"line\nbreak\"\n\"say \"\"hi\"\"\",\"\n\",,\n"
+	},
+	"77 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell/><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell><Data ss:Type=\"String\"></Data></Cell><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\"></Data></Cell><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell><Cell><Data ss:Type=\"String\">a,b</Data></Cell><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell/><Cell/></Row></Table></Worksheet></Workbook>"
+	},
+	"78 csv": {
+		"value": "\",\",\"a,b\",<b>&amp;</b>\n"
+	},
+	"78 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell><Data ss:Type=\"String\">a,b</Data></Cell><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"79 csv": {
+		"value": "\n"
+	},
+	"79 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"String\"></Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"80 csv": {
+		"value": "\"a,b\",<b>&amp;</b>,\n,,it's\n"
+	},
+	"80 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell><Data ss:Type=\"String\">a,b</Data></Cell><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell><Cell/></Row><Row><Cell/><Cell><Data ss:Type=\"String\"></Data></Cell><Cell><Data ss:Type=\"String\">it's</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"81 csv": {
+		"value": "\n"
+	},
+	"81 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table></Table></Worksheet></Workbook>"
+	},
+	"82 csv": {
+		"value": "\n"
+	},
+	"82 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table></Table></Worksheet></Workbook>"
+	},
+	"83 csv": {
+		"value": "\"line\nbreak\"\n"
+	},
+	"83 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"84 csv": {
+		"value": "\"\n\",\n0.00,\"\"\"\"\n"
+	},
+	"84 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell/></Row><Row><Cell><Data ss:Type=\"Number\">0</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"85 csv": {
+		"value": "\n"
+	},
+	"85 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table></Table></Worksheet></Workbook>"
+	},
+	"86 csv": {
+		"value": "\"line\nbreak\",-2.50,,0.00\n\"\n\",\"a\r\nb\",it's,\n\",\",it's,\"\"\"\",\n"
+	},
+	"86 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell><Data ss:Type=\"String\"></Data></Cell><Cell><Data ss:Type=\"Number\">0</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell><Cell><Data ss:Type=\"String\">it's</Data></Cell><Cell/></Row><Row><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell><Data ss:Type=\"String\">it's</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell/></Row></Table></Worksheet></Workbook>"
+	},
+	"87 csv": {
+		"value": "\"\"\"\",it's,\"a,b\"\n"
+	},
+	"87 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"String\">it's</Data></Cell><Cell><Data ss:Type=\"String\">a,b</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"88 csv": {
+		"value": "\n"
+	},
+	"88 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table></Table></Worksheet></Workbook>"
+	},
+	"89 csv": {
+		"value": "\n"
+	},
+	"89 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table></Table></Worksheet></Workbook>"
+	},
+	"90 csv": {
+		"value": "plain,\"a\r\nb\",1234.57,\"\n\"\n"
+	},
+	"90 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell><Data ss:Type=\"String\">plain</Data></Cell><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell><Cell><Data ss:Type=\"String\">\n</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"91 csv": {
+		"value": "\n"
+	},
+	"91 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table></Table></Worksheet></Workbook>"
+	},
+	"92 csv": {
+		"value": "plain,\",\"\n<b>&amp;</b>,0.00\n\"line\nbreak\",\n"
+	},
+	"92 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"String\">plain</Data></Cell><Cell><Data ss:Type=\"String\">,</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell><Cell><Data ss:Type=\"Number\">0</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell><Cell/></Row></Table></Worksheet></Workbook>"
+	},
+	"93 csv": {
+		"value": "0.00,\",\"\n\"say \"\"hi\"\"\",\"\n\"\n<b>&amp;</b>,0.00\n"
+	},
+	"93 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"Number\">0</Data></Cell><Cell><Data ss:Type=\"String\">,</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell><Data ss:Type=\"String\">\n</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell><Cell><Data ss:Type=\"Number\">0</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"94 csv": {
+		"value": "\n"
+	},
+	"94 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table></Table></Worksheet></Workbook>"
+	},
+	"95 csv": {
+		"value": "\n"
+	},
+	"95 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table></Table></Worksheet></Workbook>"
+	},
+	"96 csv": {
+		"value": ",\"say \"\"hi\"\"\",\n"
+	},
+	"96 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell/><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell><Data ss:Type=\"String\"></Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"97 csv": {
+		"value": "\n"
+	},
+	"97 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table></Table></Worksheet></Workbook>"
+	},
+	"98 csv": {
+		"value": "\"a\r\nb\",,<b>&amp;</b>\nit's,\"line\nbreak\",\n"
+	},
+	"98 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell><Cell/><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">it's</Data></Cell><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell><Cell/></Row></Table></Worksheet></Workbook>"
+	},
+	"99 csv": {
+		"value": "\",\",\"line\nbreak\"\n\"line\nbreak\",\"say \"\"hi\"\"\"\n1234.57,\"\"\"\"\n"
+	},
+	"99 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell></Row><Row><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"100 csv": {
+		"value": "\n"
+	},
+	"100 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table></Table></Worksheet></Workbook>"
+	},
+	"101 csv": {
+		"value": "\n"
+	},
+	"101 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table></Table></Worksheet></Workbook>"
+	},
+	"102 csv": {
+		"value": "\"\n\",true\n\"a\r\nb\",it's\n"
+	},
+	"102 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell><Data ss:Type=\"String\">true</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell><Cell><Data ss:Type=\"String\">it's</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"103 csv": {
+		"value": "\n"
+	},
+	"103 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table></Table></Worksheet></Workbook>"
+	},
+	"104 csv": {
+		"value": "\"a\r\nb\"\n\n1234.57\n"
+	},
+	"104 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell></Row><Row><Cell/></Row><Row><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"105 csv": {
+		"value": "-2.50,\n\"\"\"\",1234.57\n"
+	},
+	"105 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell/></Row><Row><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"106 csv": {
+		"value": "\"say \"\"hi\"\"\",\nit's,\"\n\"\n0.00,\n"
+	},
+	"106 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell/></Row><Row><Cell><Data ss:Type=\"String\">it's</Data></Cell><Cell><Data ss:Type=\"String\">\n</Data></Cell></Row><Row><Cell><Data ss:Type=\"Number\">0</Data></Cell><Cell><Data ss:Type=\"String\"></Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"107 csv": {
+		"value": "\n"
+	},
+	"107 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table></Table></Worksheet></Workbook>"
+	},
+	"108 csv": {
+		"value": "\"a\r\nb\"\n-2.50\n"
+	},
+	"108 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell></Row><Row><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"109 csv": {
+		"value": "1234.57,1234.57,\"\"\"\",\"a,b\"\n"
+	},
+	"109 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"String\">a,b</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"110 csv": {
+		"value": "\n"
+	},
+	"110 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table></Table></Worksheet></Workbook>"
+	},
+	"111 csv": {
+		"value": ",\"\n\",\",\"\n\"say \"\"hi\"\"\",\"\n\",<b>&amp;</b>\n\"\n\",plain,\n"
+	},
+	"111 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\"></Data></Cell><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell><Data ss:Type=\"String\">,</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell><Data ss:Type=\"String\">plain</Data></Cell><Cell><Data ss:Type=\"String\"></Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"112 csv": {
+		"value": ",\n"
+	},
+	"112 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell/><Cell/></Row></Table></Worksheet></Workbook>"
+	},
+	"113 csv": {
+		"value": "<b>&amp;</b>,true\n,\",\"\n\"\n\",true\n"
+	},
+	"113 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell><Cell><Data ss:Type=\"String\">true</Data></Cell></Row><Row><Cell/><Cell><Data ss:Type=\"String\">,</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell><Data ss:Type=\"String\">true</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"114 csv": {
+		"value": "\",\"\n\",\"\n\n"
+	},
+	"114 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"String\">,</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">,</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\"></Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"115 csv": {
+		"value": ",\"\n\",\"\n\",plain\ntrue,\"\n\",\",\",\"a\r\nb\"\n\"\n\",\"say \"\"hi\"\"\",,\"\n\"\n"
+	},
+	"115 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell/><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell><Data ss:Type=\"String\">plain</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">true</Data></Cell><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell/><Cell><Data ss:Type=\"String\">\n</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"116 csv": {
+		"value": "it's,1234.57,-2.50,\n,\"a\r\nb\",\",\",plain\n"
+	},
+	"116 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"String\">it's</Data></Cell><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell/></Row><Row><Cell/><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell><Data ss:Type=\"String\">plain</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"117 csv": {
+		"value": "\n"
+	},
+	"117 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table></Table></Worksheet></Workbook>"
+	},
+	"118 csv": {
+		"value": "\"\"\"\",-2.50,-2.50,<b>&amp;</b>\n1234.57,\",\",,0.00\n"
+	},
+	"118 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell></Row><Row><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell/><Cell><Data ss:Type=\"Number\">0</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"119 csv": {
+		"value": "it's\n-2.50\n"
+	},
+	"119 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\">it's</Data></Cell></Row><Row><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"120 csv": {
+		"value": "\"say \"\"hi\"\"\",it's\n\",\",plain\n\",\",plain\n"
+	},
+	"120 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell><Data ss:Type=\"String\">it's</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell><Data ss:Type=\"String\">plain</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell><Data ss:Type=\"String\">plain</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"121 csv": {
+		"value": "\n"
+	},
+	"121 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table></Table></Worksheet></Workbook>"
+	},
+	"122 csv": {
+		"value": "\n"
+	},
+	"122 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table></Table></Worksheet></Workbook>"
+	},
+	"123 csv": {
+		"value": "<b>&amp;</b>,\"line\nbreak\"\n"
+	},
+	"123 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"124 csv": {
+		"value": "\n"
+	},
+	"124 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table></Table></Worksheet></Workbook>"
+	},
+	"125 csv": {
+		"value": "\"line\nbreak\",0.00,\",\",\"a,b\"\n<b>&amp;</b>,,\",\",<b>&amp;</b>\n"
+	},
+	"125 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell><Cell><Data ss:Type=\"Number\">0</Data></Cell><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell><Data ss:Type=\"String\">a,b</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell><Cell/><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"126 csv": {
+		"value": "\"say \"\"hi\"\"\",\"say \"\"hi\"\"\"\n\"say \"\"hi\"\"\",\n\"say \"\"hi\"\"\",\"a\r\nb\"\n"
+	},
+	"126 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell/></Row><Row><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"127 csv": {
+		"value": "plain,\"\n\"\n"
+	},
+	"127 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">plain</Data></Cell><Cell><Data ss:Type=\"String\">\n</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"128 csv": {
+		"value": "\n"
+	},
+	"128 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table></Table></Worksheet></Workbook>"
+	},
+	"129 csv": {
+		"value": "\"\n\",\",\"\n<b>&amp;</b>,\"a\r\nb\"\n\"a\r\nb\",\"a,b\"\n"
+	},
+	"129 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell><Data ss:Type=\"String\">,</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell><Cell><Data ss:Type=\"String\">a,b</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"130 csv": {
+		"value": "\n"
+	},
+	"130 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table></Table></Worksheet></Workbook>"
+	},
+	"131 csv": {
+		"value": "\"\n\",,plain,plain\n"
+	},
+	"131 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell/><Cell><Data ss:Type=\"String\">plain</Data></Cell><Cell><Data ss:Type=\"String\">plain</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"132 csv": {
+		"value": "\"a,b\",\"\"\"\"\n\"\"\"\",it's\n\"say \"\"hi\"\"\",-2.50\n"
+	},
+	"132 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">a,b</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"String\">it's</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"133 csv": {
+		"value": "\",\",\"\n\",\"\n\"\n"
+	},
+	"133 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell><Data ss:Type=\"String\">\n</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"134 csv": {
+		"value": "plain,\"\"\"\",,\"\"\"\"\n"
+	},
+	"134 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"String\">plain</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell/><Cell><Data ss:Type=\"String\">&quot;</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"135 csv": {
+		"value": "0.00,1234.57,\"line\nbreak\",\n\"a,b\",\"\"\"\",\"say \"\"hi\"\"\",<b>&amp;</b>\n\"line\nbreak\",\"a,b\",0.00,\"line\nbreak\"\n"
+	},
+	"135 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"Number\">0</Data></Cell><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell><Cell><Data ss:Type=\"String\"></Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">a,b</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell><Cell><Data ss:Type=\"String\">a,b</Data></Cell><Cell><Data ss:Type=\"Number\">0</Data></Cell><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"136 csv": {
+		"value": "1234.57,\",\",1234.57,plain\n"
+	},
+	"136 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell><Cell><Data ss:Type=\"String\">plain</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"137 csv": {
+		"value": "\"a,b\",\n\"a,b\",\n"
+	},
+	"137 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">a,b</Data></Cell><Cell/></Row><Row><Cell><Data ss:Type=\"String\">a,b</Data></Cell><Cell><Data ss:Type=\"String\"></Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"138 csv": {
+		"value": "\"line\nbreak\"\n-2.50\n"
+	},
+	"138 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell></Row><Row><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"139 csv": {
+		"value": "\"a\r\nb\"\n<b>&amp;</b>\n"
+	},
+	"139 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"140 csv": {
+		"value": "plain\n\n"
+	},
+	"140 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">plain</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\"></Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"141 csv": {
+		"value": ",\"\n\"\n"
+	},
+	"141 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell/><Cell><Data ss:Type=\"String\">\n</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"142 csv": {
+		"value": "\n"
+	},
+	"142 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table></Table></Worksheet></Workbook>"
+	},
+	"143 csv": {
+		"value": "1234.57\nit's\n\",\"\n"
+	},
+	"143 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">it's</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">,</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"144 csv": {
+		"value": "\n<b>&amp;</b>\n"
+	},
+	"144 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell/></Row><Row><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"145 csv": {
+		"value": "plain,\"a\r\nb\",\"\n\"\n1234.57,0.00,\",\"\n"
+	},
+	"145 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"String\">plain</Data></Cell><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell><Cell><Data ss:Type=\"String\">\n</Data></Cell></Row><Row><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell><Cell><Data ss:Type=\"Number\">0</Data></Cell><Cell><Data ss:Type=\"String\">,</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"146 csv": {
+		"value": "\n"
+	},
+	"146 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table></Table></Worksheet></Workbook>"
+	},
+	"147 csv": {
+		"value": "\n"
+	},
+	"147 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table></Table></Worksheet></Workbook>"
+	},
+	"148 csv": {
+		"value": ",,0.00,\"a,b\"\n\"\"\"\",\"\n\",<b>&amp;</b>,\ntrue,\"line\nbreak\",\"a,b\",it's\n"
+	},
+	"148 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell/><Cell/><Cell><Data ss:Type=\"Number\">0</Data></Cell><Cell><Data ss:Type=\"String\">a,b</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell><Cell><Data ss:Type=\"String\"></Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">true</Data></Cell><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell><Cell><Data ss:Type=\"String\">a,b</Data></Cell><Cell><Data ss:Type=\"String\">it's</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"149 csv": {
+		"value": "<b>&amp;</b>\n\n"
+	},
+	"149 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell></Row><Row><Cell/></Row></Table></Worksheet></Workbook>"
+	},
+	"150 csv": {
+		"value": "\",\"\n"
+	},
+	"150 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"String\">,</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"151 csv": {
+		"value": ",\"line\nbreak\",it's\n\"line\nbreak\",0.00,0.00\n\"\n\",\"\"\"\",1234.57\n"
+	},
+	"151 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"String\"></Data></Cell><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell><Cell><Data ss:Type=\"String\">it's</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell><Cell><Data ss:Type=\"Number\">0</Data></Cell><Cell><Data ss:Type=\"Number\">0</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"152 csv": {
+		"value": "1234.57,1234.57\n"
+	},
+	"152 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"153 csv": {
+		"value": "\n"
+	},
+	"153 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table></Table></Worksheet></Workbook>"
+	},
+	"154 csv": {
+		"value": "\"\"\"\",\"a\r\nb\",\",\"\n"
+	},
+	"154 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell><Cell><Data ss:Type=\"String\">,</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"155 csv": {
+		"value": "\"\n\",-2.50\ntrue,it's\n"
+	},
+	"155 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">true</Data></Cell><Cell><Data ss:Type=\"String\">it's</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"156 csv": {
+		"value": "\n"
+	},
+	"156 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table></Table></Worksheet></Workbook>"
+	},
+	"157 csv": {
+		"value": "\"say \"\"hi\"\"\"\n\"\n\"\n\"a,b\"\n"
+	},
+	"157 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">\n</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">a,b</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"158 csv": {
+		"value": "\"\"\"\",\"\"\"\",\"\"\"\",-2.50\n,1234.57,,-2.50\n\"\n\",true,\"say \"\"hi\"\"\",\"say \"\"hi\"\"\"\n"
+	},
+	"158 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\"></Data></Cell><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell><Cell><Data ss:Type=\"String\"></Data></Cell><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell><Data ss:Type=\"String\">true</Data></Cell><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"159 csv": {
+		"value": "\",\",\"say \"\"hi\"\"\",\"\"\"\"\n\"say \"\"hi\"\"\",\"a\r\nb\",\"a\r\nb\"\n"
+	},
+	"159 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"160 csv": {
+		"value": "\n"
+	},
+	"160 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table></Table></Worksheet></Workbook>"
+	},
+	"161 csv": {
+		"value": "\"\"\"\",\"\"\"\",\"a,b\",-2.50\n0.00,\"\"\"\",\"\"\"\",<b>&amp;</b>\n,it's,<b>&amp;</b>,1234.57\n"
+	},
+	"161 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"String\">a,b</Data></Cell><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell></Row><Row><Cell><Data ss:Type=\"Number\">0</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\"></Data></Cell><Cell><Data ss:Type=\"String\">it's</Data></Cell><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"162 csv": {
+		"value": "1234.57,,\"a\r\nb\",0.00\nit's,\"line\nbreak\",true,\n"
+	},
+	"162 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell><Cell/><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell><Cell><Data ss:Type=\"Number\">0</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">it's</Data></Cell><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell><Cell><Data ss:Type=\"String\">true</Data></Cell><Cell><Data ss:Type=\"String\"></Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"163 csv": {
+		"value": "\"a\r\nb\",\"line\nbreak\",plain,\n1234.57,1234.57,-2.50,\"line\nbreak\"\n"
+	},
+	"163 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell><Cell><Data ss:Type=\"String\">plain</Data></Cell><Cell/></Row><Row><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"164 csv": {
+		"value": "\"a\r\nb\"\n\"\"\"\"\n\n"
+	},
+	"164 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">&quot;</Data></Cell></Row><Row><Cell/></Row></Table></Worksheet></Workbook>"
+	},
+	"165 csv": {
+		"value": "\"\"\"\"\n"
+	},
+	"165 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"String\">&quot;</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"166 csv": {
+		"value": "\"say \"\"hi\"\"\"\n\"\n\"\n\n"
+	},
+	"166 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">\n</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\"></Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"167 csv": {
+		"value": "\n"
+	},
+	"167 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table></Table></Worksheet></Workbook>"
+	},
+	"168 csv": {
+		"value": ",\"a,b\",<b>&amp;</b>,\n"
+	},
+	"168 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell><Data ss:Type=\"String\"></Data></Cell><Cell><Data ss:Type=\"String\">a,b</Data></Cell><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell><Cell/></Row></Table></Worksheet></Workbook>"
+	},
+	"169 csv": {
+		"value": "it's\n\n"
+	},
+	"169 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">it's</Data></Cell></Row><Row><Cell/></Row></Table></Worksheet></Workbook>"
+	},
+	"170 csv": {
+		"value": "\n"
+	},
+	"170 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table></Table></Worksheet></Workbook>"
+	},
+	"171 csv": {
+		"value": "\n"
+	},
+	"171 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table></Table></Worksheet></Workbook>"
+	},
+	"172 csv": {
+		"value": "\"a\r\nb\",\"a\r\nb\",\"a,b\",1234.57\n\"a\r\nb\",-2.50,,\n"
+	},
+	"172 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell><Cell><Data ss:Type=\"String\">a,b</Data></Cell><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell><Data ss:Type=\"String\"></Data></Cell><Cell><Data ss:Type=\"String\"></Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"173 csv": {
+		"value": "\n"
+	},
+	"173 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table></Table></Worksheet></Workbook>"
+	},
+	"174 csv": {
+		"value": "0.00,\"\n\",,\n1234.57,,plain,\"line\nbreak\"\n"
+	},
+	"174 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"Number\">0</Data></Cell><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell/><Cell/></Row><Row><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell><Cell/><Cell><Data ss:Type=\"String\">plain</Data></Cell><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"175 csv": {
+		"value": "\n"
+	},
+	"175 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table></Table></Worksheet></Workbook>"
+	},
+	"176 csv": {
+		"value": "\n"
+	},
+	"176 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table></Table></Worksheet></Workbook>"
+	},
+	"177 csv": {
+		"value": "\n\"\n\"\n"
+	},
+	"177 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"String\"></Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">\n</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"178 csv": {
+		"value": "plain,\"\"\"\",\"\"\"\"\n\"\n\",,\"a,b\"\n"
+	},
+	"178 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\">plain</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell/><Cell><Data ss:Type=\"String\">a,b</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"179 csv": {
+		"value": "\",\",\"line\nbreak\",\"a,b\",\"a,b\"\n-2.50,<b>&amp;</b>,\"\n\",-2.50\n"
+	},
+	"179 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell><Cell><Data ss:Type=\"String\">a,b</Data></Cell><Cell><Data ss:Type=\"String\">a,b</Data></Cell></Row><Row><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"180 csv": {
+		"value": "true,0.00,,\"say \"\"hi\"\"\"\n\",\",\"line\nbreak\",,\",\"\n"
+	},
+	"180 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\">true</Data></Cell><Cell><Data ss:Type=\"Number\">0</Data></Cell><Cell><Data ss:Type=\"String\"></Data></Cell><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell><Cell/><Cell><Data ss:Type=\"String\">,</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"181 csv": {
+		"value": "1234.57\n\nit's\n"
+	},
+	"181 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell></Row><Row><Cell/></Row><Row><Cell><Data ss:Type=\"String\">it's</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"182 csv": {
+		"value": "\n"
+	},
+	"182 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table></Table></Worksheet></Workbook>"
+	},
+	"183 csv": {
+		"value": "\"\n\",\"\"\"\",\"\n\"\n,true,1234.57\nplain,\"\"\"\",\"\"\"\"\n"
+	},
+	"183 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"String\">\n</Data></Cell></Row><Row><Cell/><Cell><Data ss:Type=\"String\">true</Data></Cell><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">plain</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"184 csv": {
+		"value": "\n"
+	},
+	"184 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table></Table></Worksheet></Workbook>"
+	},
+	"185 csv": {
+		"value": "\"\"\"\",,plain\n\"a\r\nb\",\"a\r\nb\",\"a\r\nb\"\n\"line\nbreak\",\"\n\",\n"
+	},
+	"185 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell/><Cell><Data ss:Type=\"String\">plain</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell><Cell><Data ss:Type=\"String\">a\r\nb</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell><Cell><Data ss:Type=\"String\">\n</Data></Cell><Cell><Data ss:Type=\"String\"></Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"186 csv": {
+		"value": "\"say \"\"hi\"\"\",0.00,\"a,b\"\n<b>&amp;</b>,,0.00\nit's,-2.50,it's\n"
+	},
+	"186 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell><Data ss:Type=\"Number\">0</Data></Cell><Cell><Data ss:Type=\"String\">a,b</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell><Cell/><Cell><Data ss:Type=\"Number\">0</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">it's</Data></Cell><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell><Data ss:Type=\"String\">it's</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"187 csv": {
+		"value": "\"a,b\"\n\n<b>&amp;</b>\n"
+	},
+	"187 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"String\">a,b</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\"></Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"188 csv": {
+		"value": "\n<b>&amp;</b>\n"
+	},
+	"188 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell/></Row><Row><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"189 csv": {
+		"value": "\n"
+	},
+	"189 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table></Table></Worksheet></Workbook>"
+	},
+	"190 csv": {
+		"value": "\"a,b\",plain,it's\n-2.50,\"\"\"\",\n\"say \"\"hi\"\"\",0.00,\"\"\"\"\n"
+	},
+	"190 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell><Data ss:Type=\"String\">a,b</Data></Cell><Cell><Data ss:Type=\"String\">plain</Data></Cell><Cell><Data ss:Type=\"String\">it's</Data></Cell></Row><Row><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell/></Row><Row><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell><Data ss:Type=\"Number\">0</Data></Cell><Cell><Data ss:Type=\"String\">&quot;</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"191 csv": {
+		"value": "\"say \"\"hi\"\"\"\nit's\ntrue\n"
+	},
+	"191 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">it's</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">true</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"192 csv": {
+		"value": "\"line\nbreak\",,\n"
+	},
+	"192 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell><Cell><Data ss:Type=\"String\"></Data></Cell><Cell/></Row></Table></Worksheet></Workbook>"
+	},
+	"193 csv": {
+		"value": "\n"
+	},
+	"193 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table></Table></Worksheet></Workbook>"
+	},
+	"194 csv": {
+		"value": "\"line\nbreak\",-2.50,\"a,b\"\n1234.57,plain,\",\"\n\"\"\"\",0.00,0.00\n"
+	},
+	"194 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"a &quot;b&quot; &amp; &lt;c&gt;\"><Table><Row><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell><Cell><Data ss:Type=\"String\">a,b</Data></Cell></Row><Row><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell><Cell><Data ss:Type=\"String\">plain</Data></Cell><Cell><Data ss:Type=\"String\">,</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"Number\">0</Data></Cell><Cell><Data ss:Type=\"Number\">0</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"195 csv": {
+		"value": ",-2.50\n<b>&amp;</b>,plain\n"
+	},
+	"195 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table><Row><Cell/><Cell><Data ss:Type=\"Number\">-2.5</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell><Cell><Data ss:Type=\"String\">plain</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"196 csv": {
+		"value": "\n1234.57\n"
+	},
+	"196 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell/></Row><Row><Cell><Data ss:Type=\"Number\">1234.567</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"197 csv": {
+		"value": "\n"
+	},
+	"197 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Pivot\"><Table></Table></Worksheet></Workbook>"
+	},
+	"198 csv": {
+		"value": "\"\"\"\",,,<b>&amp;</b>\nit's,<b>&amp;</b>,,it's\n,\",\",\"say \"\"hi\"\"\",it's\n"
+	},
+	"198 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"><Table><Row><Cell><Data ss:Type=\"String\">&quot;</Data></Cell><Cell><Data ss:Type=\"String\"></Data></Cell><Cell/><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell></Row><Row><Cell><Data ss:Type=\"String\">it's</Data></Cell><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell><Cell/><Cell><Data ss:Type=\"String\">it's</Data></Cell></Row><Row><Cell/><Cell><Data ss:Type=\"String\">,</Data></Cell><Cell><Data ss:Type=\"String\">say &quot;hi&quot;</Data></Cell><Cell><Data ss:Type=\"String\">it's</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"199 csv": {
+		"value": "\"line\nbreak\",<b>&amp;</b>\n"
+	},
+	"199 xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"\"><Table><Row><Cell><Data ss:Type=\"String\">line\nbreak</Data></Cell><Cell><Data ss:Type=\"String\">&lt;b&gt;&amp;amp;&lt;/b&gt;</Data></Cell></Row></Table></Worksheet></Workbook>"
+	},
+	"empty csv": {
+		"value": "\n"
+	},
+	"empty xml": {
+		"value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><?mso-application progid=\"Excel.Sheet\"?><Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Empty\"><Table></Table></Worksheet></Workbook>"
+	}
+}

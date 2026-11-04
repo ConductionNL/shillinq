@@ -22,7 +22,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
@@ -75,7 +75,7 @@ class DeepLinkRegistrationListener implements IEventListener {
 		}
 
 		// L3: read the configured register slug; fall back to 'shillinq' if unset.
-		$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$registerSlug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($registerSlug === '') {
 			$registerSlug = 'shillinq';
 		}

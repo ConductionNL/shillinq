@@ -41,7 +41,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\CBSExportService;
 use OCP\AppFramework\Controller;
@@ -93,7 +93,7 @@ class CBSSubmissionController extends Controller {
 		private readonly AdministrationContextService $administrationContext,
 		private readonly IGroupManager $groupManager,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
@@ -782,7 +782,7 @@ class CBSSubmissionController extends Controller {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

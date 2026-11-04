@@ -42,7 +42,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\BudgetGridCalculator;
 use OCA\Shillinq\Service\BudgetGridReader;
@@ -134,7 +134,7 @@ class BudgetGridController extends Controller {
 		private readonly AdministrationContextService $administrationContext,
 		private readonly IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 

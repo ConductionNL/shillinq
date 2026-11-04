@@ -44,7 +44,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\BbvMigration;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 
@@ -84,7 +84,7 @@ class RgsAccountMapper {
 	 * @return string
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($slug === '') {
 			return 'shillinq';
 		}
@@ -99,7 +99,7 @@ class RgsAccountMapper {
 	 */
 	private function getConfidenceThreshold(): int {
 		$value = $this->appConfig->getValueString(
-			Application::APP_ID,
+			AppIdentity::APP_ID,
 			'bbv_rgs_mapper_confidence_threshold',
 			(string)self::DEFAULT_CONFIDENCE_THRESHOLD
 		);

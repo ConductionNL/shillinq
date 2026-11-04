@@ -64,7 +64,7 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\OpenRegister\Service\Deferral\ListenerDeferralService;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\BackgroundJob\TenderNedAwardPromotionJob;
 use OCA\Shillinq\Service\BudgetImpactEmitter;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
@@ -243,7 +243,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 		}
 
 		$tenantKvk = trim(
-			$this->appConfig->getValueString(Application::APP_ID, 'tenant_kvk', '')
+			$this->appConfig->getValueString(AppIdentity::APP_ID, 'tenant_kvk', '')
 		);
 		if ($tenantKvk === '') {
 			// No tenant KvK configured — promotion would be ambiguous; skip.
@@ -650,7 +650,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	 * @return string
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($slug === '') {
 			return 'shillinq';
 		}
