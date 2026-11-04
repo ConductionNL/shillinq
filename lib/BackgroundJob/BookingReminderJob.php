@@ -25,7 +25,7 @@ namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\BookingNotificationService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
@@ -134,7 +134,7 @@ class BookingReminderJob extends TimedJob {
 	 */
 	private function processReminderWindow(int $windowMinutes): int {
 		try {
-			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+			$registerSlug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 			if ($registerSlug === '') {
 				$registerSlug = 'shillinq';
 			}

@@ -9,197 +9,149 @@
   @spec openspec/changes/inventory-mobile-scanner/tasks.md#T3.1
 -->
 <template>
-	<section class="receive-op">
-		<h1>{{ t('shillinq', 'Receive Goods') }}</h1>
+	<InventoryOperationForm
+		v-bind="formState"
+		:title="t('shillinq', 'Receive Goods')"
+		:submitLabel="t('shillinq', 'Confirm')"
+		v-on="formEvents">
+		<InventoryLocationField
+			v-model="location"
+			:locations="store.locations"
+			:label="t('shillinq', 'Location')"
+			:selectLabel="t('shillinq', 'Receiving location')"
+			:placeholder="t('shillinq', 'Select a location')" />
 
-		<form class="receive-op__form" @submit.prevent="handleConfirm">
-			<label>
-				<span>{{ t('shillinq', 'Location') }}</span>
-				<select
-					v-model="location"
-					required
-					:aria-label="t('shillinq', 'Receiving location')">
-					<option value="">
-						{{ t('shillinq', 'Select a location') }}
-					</option>
-					<option
-						v-for="loc in store.locations"
-						:key="loc.code"
-						:value="loc.code">
-						{{ loc.name }} ({{ loc.code }})
-					</option>
-				</select>
-			</label>
+		<InventorySkuField v-model="sku" @scan="scanning = true" />
 
-			<label>
-				<span>{{ t('shillinq', 'SKU / barcode') }}</span>
-				<div class="receive-op__sku-row">
-					<input
-						v-model="sku"
-						type="text"
-						required
-						:placeholder="t('shillinq', 'Tap scan or type SKU')"
-						:aria-label="t('shillinq', 'Stock keeping unit')" />
-					<button type="button" @click="scanning = true">
-						{{ t('shillinq', 'Scan') }}
-					</button>
-				</div>
-			</label>
-
-			<label>
-				<span>{{ t('shillinq', 'Quantity') }}</span>
-				<input
-					v-model.number="quantity"
-					type="number"
-					min="0.01"
-					step="0.01"
-					required
-					:aria-label="t('shillinq', 'Quantity received')" />
-			</label>
-
-			<div v-if="error" class="receive-op__error" role="alert">
-				{{ error }}
-			</div>
-			<div v-if="successMessage" class="receive-op__success" role="status">
-				{{ successMessage }}
-			</div>
-
-			<div class="receive-op__actions">
-				<button type="submit" :disabled="submitting">
-					{{ t('shillinq', 'Confirm') }}
-				</button>
-			</div>
-		</form>
-
-		<BarcodeScanner
-			v-if="scanning"
-			@scan="handleScan"
-			@cancel="scanning = false" />
-	</section>
+		<InventoryQuantityField
+			v-model="quantity"
+			:inputLabel="t('shillinq', 'Quantity received')" />
+	</InventoryOperationForm>
 </template>
 
 <script>
-import BarcodeScanner from './BarcodeScanner.vue'
-import { useInventoryMobileScannerStore } from '../../store/modules/inventoryMobileScanner.js'
+import InventoryLocationField from './InventoryLocationField.vue'
+import InventoryOperationForm from './InventoryOperationForm.vue'
+import InventoryQuantityField from './InventoryQuantityField.vue'
+import InventorySkuField from './InventorySkuField.vue'
+import { inventoryOperation } from './inventoryOperation.js'
 
 export default {
 	name: 'ReceiveOp',
-	components: { BarcodeScanner },
+	components: {
+		InventoryLocationField,
+		InventoryOperationForm,
+		InventoryQuantityField,
+		InventorySkuField,
+	},
+
 	data() {
 		return {
+			...inventoryOperation.state(),
 			location: '',
-			sku: '',
 			quantity: null,
-			scanning: false,
-			submitting: false,
-			error: null,
-			successMessage: null,
-			lastSubmittedAt: 0,
 		}
 	},
 
 	computed: {
-		store() {
-			return useInventoryMobileScannerStore()
-		},
+		...inventoryOperation.computed,
 	},
 
 	methods: {
-		handleScan(value) {
-			this.sku = value
-			this.scanning = false
-		},
+		...inventoryOperation.methods,
 
+		/**
+		 * Check the form and the submit guard, then record the receipt.
+		 *
+		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
+		 */
 		async handleConfirm() {
 			this.error = null
 			this.successMessage = null
 
-			if (
-				!this.location
-				|| !this.sku
-				|| !this.quantity
-				|| this.quantity <= 0
-			) {
-				this.error = this.t(
-					'shillinq',
-					'Location, SKU and a positive quantity are required.',
-				)
+			if (!this.receiveFieldsPresent() || !this.claimSubmitSlot()) {
 				return
 			}
+			await this.recordReceipt()
+		},
 
-			// REQ-SYNC-002 idempotency guard — reject duplicate confirms within 5s.
-			const now = Date.now()
-			if (now - this.lastSubmittedAt < 5000) {
-				this.error = this.t(
-					'shillinq',
-					'Already submitted; waiting for server ACK.',
-				)
-				return
-			}
-			this.lastSubmittedAt = now
+		/**
+		 * Whether the location, the SKU or a positive quantity is missing.
+		 *
+		 * @return {boolean} True when the form is incomplete.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
+		 */
+		receiveFieldsMissing() {
+			return (
+				!this.location || !this.sku || !this.quantity || this.quantity <= 0
+			)
+		},
 
-			this.submitting = true
-			try {
-				const result = await this.store.submitOperation({
-					type: 'receive',
-					sku: this.sku,
-					location: this.location,
-					quantity: this.quantity,
-				})
-				this.successMessage = this.t(
-					'shillinq',
-					'Received {qty} units (pending sync)',
-					{ qty: this.quantity },
-				)
-				this.sku = ''
-				this.quantity = null
-				this.lastTransactionId = result.transactionId
-			} catch (e) {
-				this.error =
-					e && e.message
-						? e.message
-						: this.t('shillinq', 'Could not record receipt.')
-			} finally {
-				this.submitting = false
+		/**
+		 * Set the error when the location, the SKU or a positive quantity is
+		 * missing.
+		 *
+		 * @return {boolean} Whether the form is complete.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
+		 */
+		receiveFieldsPresent() {
+			if (!this.receiveFieldsMissing()) {
+				return true
 			}
+			this.error = this.t(
+				'shillinq',
+				'Location, SKU and a positive quantity are required.',
+			)
+			return false
+		},
+
+		/**
+		 * Queue the receipt as a pending operation and report the outcome on
+		 * the form.
+		 *
+		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
+		 */
+		async recordReceipt() {
+			const operation = {
+				type: 'receive',
+				sku: this.sku,
+				location: this.location,
+				quantity: this.quantity,
+			}
+			await this.queueOperation(operation, {
+				queued: (result) => {
+					this.successMessage = this.t(
+						'shillinq',
+						'Received {qty} units (pending sync)',
+						{ qty: this.quantity },
+					)
+					this.sku = ''
+					this.quantity = null
+					this.lastTransactionId = result.transactionId
+				},
+				failed: (e) => this.receiveFailureText(e),
+			})
+		},
+
+		/**
+		 * The message of a failed submit, or a generic one.
+		 *
+		 * @param {Error|object|null} e What the submit threw.
+		 * @return {string} The error to show.
+		 *
+		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
+		 */
+		receiveFailureText(e) {
+			return e && e.message
+				? e.message
+				: this.t('shillinq', 'Could not record receipt.')
 		},
 	},
 }
 </script>
-
-<style scoped>
-.receive-op {
-	display: flex;
-	flex-direction: column;
-	gap: var(--default-grid-baseline, 4px);
-	padding: var(--default-grid-baseline, 4px);
-}
-
-.receive-op__form label {
-	display: flex;
-	flex-direction: column;
-	margin-bottom: var(--default-grid-baseline, 4px);
-}
-
-.receive-op__sku-row {
-	display: flex;
-	gap: var(--default-grid-baseline, 4px);
-}
-
-.receive-op__sku-row input {
-	flex: 1;
-}
-
-.receive-op__error {
-	color: var(--color-error);
-}
-
-.receive-op__success {
-	color: var(--color-success);
-}
-
-.receive-op__actions {
-	display: flex;
-	justify-content: flex-end;
-}
-</style>

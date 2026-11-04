@@ -46,7 +46,7 @@ namespace OCA\Shillinq\Listener;
 use DateTimeImmutable;
 use DateTimeZone;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\Pipelinq\PipelinqAdminNotifier;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
 use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
@@ -105,6 +105,7 @@ final class BookingLifecycleTransitionListener implements IEventListener {
 	 * @param Event $event Event from OpenRegister.
 	 *
 	 * @return void
+	 * @spec openspec/changes/archive/2026-06-14-bookings-pipelinq-customer-bridge-08-lifecycle-events/tasks.md
 	 */
 	public function handle(Event $event): void {
 		if (($event instanceof ObjectTransitionedEvent) === false) {
@@ -143,7 +144,7 @@ final class BookingLifecycleTransitionListener implements IEventListener {
 				$this->logger->warning(
 					'BookingLifecycleTransitionListener: missing appointmentId — skipping publish',
 					[
-						'app' => Application::APP_ID,
+						'app' => AppIdentity::APP_ID,
 						'type' => $eventType,
 					]
 				);
@@ -166,7 +167,7 @@ final class BookingLifecycleTransitionListener implements IEventListener {
 			$this->logger->error(
 				'BookingLifecycleTransitionListener: publish errored',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'exception' => $e->getMessage(),
 				]
 			);
@@ -193,7 +194,7 @@ final class BookingLifecycleTransitionListener implements IEventListener {
 			$this->logger->debug(
 				'BookingLifecycleTransitionListener: published',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'type' => $dto->type(),
 					'externalId' => $dto->externalId(),
 					'contactId' => $dto->contactId(),
@@ -304,7 +305,7 @@ final class BookingLifecycleTransitionListener implements IEventListener {
 				$this->logger->debug(
 					'BookingLifecycleTransitionListener: timestamp field unparseable',
 					[
-						'app' => Application::APP_ID,
+						'app' => AppIdentity::APP_ID,
 						'field' => $key,
 						'reason' => $e->getMessage(),
 					]

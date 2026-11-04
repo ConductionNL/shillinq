@@ -37,7 +37,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Portal\PortalAssertionVerifier;
 use OCA\Shillinq\Service\Payment\PortalPaymentSessionResult;
 use OCA\Shillinq\Service\Payment\PortalPaymentSessionService;
@@ -81,7 +81,7 @@ class PortalPaymentInitiationController extends Controller {
 		private readonly PortalPaymentSessionService $sessionService,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

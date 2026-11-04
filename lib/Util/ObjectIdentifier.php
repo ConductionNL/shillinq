@@ -75,6 +75,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Util;
 
+use OCP\AppFramework\Db\DoesNotExistException;
 use Throwable;
 
 /**
@@ -83,6 +84,14 @@ use Throwable;
  * @spec openspec/specs/inventory-cycle-count/spec.md
  */
 final class ObjectIdentifier {
+
+	/**
+	 * The OpenRegister lookup arguments findOne() passes on.
+	 *
+	 * @var array<string, true>
+	 */
+	private const SCOPE_KEYS = ['_rbac' => true];
+
 	/**
 	 * Resolve the UUID from whatever ObjectService handed back.
 	 *
@@ -197,29 +206,34 @@ final class ObjectIdentifier {
 	 * @param object      $scoped           ObjectService with register + schema already set.
 	 * @param string      $id               The uuid, or the fallback property's value.
 	 * @param string|null $fallbackProperty JSON property to match when $id is not a uuid.
-	 * @param bool        $rbac             False for a caller that authenticates by key, token or
-	 *                                      signature and so holds no OpenRegister group grant.
+	 * @param array       $scope            Named arguments both lookups pass on, e.g.
+	 *                                      `['_rbac' => false]` for a caller that authenticates by
+	 *                                      key, token or signature and so holds no OpenRegister
+	 *                                      group grant. Only the keys in SCOPE_KEYS pass, so a
+	 *                                      caller cannot widen a lookup past the caller's
+	 *                                      organisation.
 	 *
 	 * @return array<string,mixed>|null The record, or null when genuinely absent.
 	 *
 	 * @spec openspec/specs/inventory-cycle-count/spec.md
 	 */
-	public static function findOne(object $scoped, string $id, ?string $fallbackProperty = null, bool $rbac = true): ?array {
+	public static function findOne(object $scoped, string $id, ?string $fallbackProperty = null, array $scope = []): ?array {
 		if ($id === '') {
 			return null;
 		}
 
+		$scope = array_intersect_key($scope, self::SCOPE_KEYS);
+
 		// Its own try/catch, deliberately — find() throws rather than
 		// returning null, so a shared catch would swallow the fallback.
+		$target = self::lookupTarget(scoped: $scoped);
 		try {
-			$found = null;
-			if ($rbac === true) {
-				$found = $scoped->find($id);
-			} else {
-				$found = $scoped->find($id, _rbac: false);
+			$found = $scoped->find($id, ...$target, ...$scope);
+			$record = null;
+			if (self::isInSchema(found: $found, target: $target) === true) {
+				$record = self::record(candidate: $found);
 			}
 
-			$record = self::record(candidate: $found);
 			if ($record !== null) {
 				return $record;
 			}
@@ -232,13 +246,7 @@ final class ObjectIdentifier {
 		}
 
 		try {
-			$query = ['filters' => [$fallbackProperty => $id], 'limit' => 1];
-			$matches = null;
-			if ($rbac === true) {
-				$matches = $scoped->findAll($query);
-			} else {
-				$matches = $scoped->findAll(config: $query, _rbac: false);
-			}
+			$matches = $scoped->findAll(['filters' => [$fallbackProperty => $id], 'limit' => 1], ...$scope);
 		} catch (Throwable $e) {
 			return null;
 		}
@@ -252,6 +260,121 @@ final class ObjectIdentifier {
 
 		return null;
 	}//end findOne()
+
+	/**
+	 * The record with this uuid in the service's register and schema, for a
+	 * caller that must not read a failed lookup as "absent".
+	 *
+	 * A miss (DoesNotExistException) and an object of another schema answer
+	 * null; any other failure of OpenRegister is thrown, so a guard that
+	 * passes on "absent" can refuse instead.
+	 *
+	 * @param object $scoped ObjectService with register + schema already set.
+	 * @param string $id     The uuid.
+	 *
+	 * @return array<string,mixed>|null
+	 *
+	 * @spec openspec/specs/inventory-cycle-count/spec.md
+	 */
+	public static function findOneStrict(object $scoped, string $id): ?array {
+		if ($id === '') {
+			return null;
+		}
+
+		try {
+			return self::record(candidate: self::findScoped(scoped: $scoped, id: $id));
+		} catch (DoesNotExistException $miss) {
+			return null;
+		}
+	}//end findOneStrict()
+
+	/**
+	 * find()'s answer for this id in the service's register and schema, or
+	 * null when it is an object of another schema. A service that does not
+	 * report its scope gets find()'s answer unchanged.
+	 *
+	 * For callers that need the entity rather than its payload. find()'s own
+	 * miss (DoesNotExistException) is not caught, so callers keep their miss
+	 * handling. `$named` passes on to find() as given, e.g. `_rbac: false`.
+	 *
+	 * @param object               $scoped ObjectService with register + schema already set.
+	 * @param string               $id     The uuid, slug or id.
+	 * @param array<string, mixed> $named  Further find() arguments.
+	 *
+	 * @return mixed
+	 *
+	 * @spec openspec/specs/inventory-cycle-count/spec.md
+	 */
+	public static function findScoped(object $scoped, string $id, array $named = []): mixed {
+		$target = self::lookupTarget(scoped: $scoped);
+		$found  = $scoped->find($id, ...$target, ...$named);
+		if (self::isInSchema(found: $found, target: $target) === false) {
+			return null;
+		}
+
+		return $found;
+	}//end findScoped()
+
+	/**
+	 * The register and schema the service is scoped to, as find() arguments.
+	 *
+	 * OpenRegister's find() does not use the register and schema set on the
+	 * service: without them as arguments it searches every schema by id, uuid,
+	 * slug or uri. A service that does not report its scope gets no arguments.
+	 *
+	 * @param object $scoped ObjectService with register + schema already set.
+	 *
+	 * @return array{register?: object, schema?: object}
+	 */
+	private static function lookupTarget(object $scoped): array {
+		if (method_exists($scoped, 'getCurrentRegisterEntity') === false || method_exists($scoped, 'getCurrentSchemaEntity') === false) {
+			return [];
+		}
+
+		$register = $scoped->getCurrentRegisterEntity();
+		$schema   = $scoped->getCurrentSchemaEntity();
+		if ($register === null || $schema === null) {
+			return [];
+		}
+
+		return ['register' => $register, 'schema' => $schema];
+	}//end lookupTarget()
+
+	/**
+	 * Whether find()'s answer is an object of the schema asked for.
+	 *
+	 * OpenRegister's find() retries a uuid miss without the schema, so the
+	 * answer is checked against the schema's id, uuid and slug, read through
+	 * accessor() because OpenRegister's entities serve them through __call. An
+	 * answer that carries no schema cannot be checked and does not count. With no schema
+	 * asked for there is nothing to check.
+	 *
+	 * @param mixed                $found  What find() answered.
+	 * @param array<string, mixed> $target The find() scope from lookupTarget().
+	 *
+	 * @return bool
+	 */
+	private static function isInSchema(mixed $found, array $target): bool {
+		if (isset($target['schema']) === false) {
+			return true;
+		}
+
+		if (is_object($found) === false) {
+			return false;
+		}
+
+		$schema = $target['schema'];
+		$names  = array_diff(
+			[
+				self::accessor(entity: $schema, getter: 'getId'),
+				self::accessor(entity: $schema, getter: 'getUuid'),
+				self::accessor(entity: $schema, getter: 'getSlug'),
+			],
+			['']
+		);
+
+		return in_array(self::accessor(entity: $found, getter: 'getSchema'), $names, true);
+	}//end isInSchema()
 
 	/**
 	 * Normalise a result entry to a record that keeps its uuid as `id`.

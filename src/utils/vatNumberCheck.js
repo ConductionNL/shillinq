@@ -37,36 +37,83 @@ function day(value) {
  * @spec openspec/changes/tax-vat-number-check/tasks.md#task-2.1
  */
 export function vatCheckMessage(result) {
-	const vatId = result.vatId
 	if (result.status === 'valid') {
-		return {
-			kind: 'success',
-			text: t('shillinq', 'VAT number {vatId} is valid (checked on {date}).', {
-				vatId,
-				date: day(result.lastValidAt),
-			}),
-		}
+		return validMessage(result)
 	}
 	if (result.status === 'invalid') {
-		return {
-			kind: 'error',
-			text: t(
-				'shillinq',
-				'VAT number {vatId} is not valid according to VIES.',
-				{ vatId },
-			),
-		}
+		return invalidMessage(result.vatId)
 	}
+	return unreachableMessage(result)
+}
+
+/**
+ * The message for a number VIES confirmed.
+ *
+ * @param {{vatId: string, lastValidAt: string|null}} result The outcome.
+ * @return {{kind: string, text: string}}
+ */
+function validMessage(result) {
+	return {
+		kind: 'success',
+		text: t('shillinq', 'VAT number {vatId} is valid (checked on {date}).', {
+			vatId: result.vatId,
+			date: day(result.lastValidAt),
+		}),
+	}
+}
+
+/**
+ * The message for a number VIES rejected.
+ *
+ * @param {string} vatId The number.
+ * @return {{kind: string, text: string}}
+ */
+function invalidMessage(vatId) {
+	return {
+		kind: 'error',
+		text: t('shillinq', 'VAT number {vatId} is not valid according to VIES.', {
+			vatId,
+		}),
+	}
+}
+
+/**
+ * The message when VIES could not be reached, with the last confirmation if there was one.
+ *
+ * @param {{vatId: string, lastValidAt: string|null}} result The outcome.
+ * @return {{kind: string, text: string}}
+ */
+function unreachableMessage(result) {
 	if (result.lastValidAt) {
-		return {
-			kind: 'warning',
-			text: t(
-				'shillinq',
-				'VIES cannot be reached. VAT number {vatId} was last valid on {date}.',
-				{ vatId, date: day(result.lastValidAt) },
-			),
-		}
+		return lastValidMessage(result)
 	}
+	return unconfirmedMessage(result.vatId)
+}
+
+/**
+ * The message when VIES could not be reached and the number was valid before.
+ *
+ * @param {{vatId: string, lastValidAt: string}} result The outcome.
+ * @return {{kind: string, text: string}}
+ */
+function lastValidMessage(result) {
+	return {
+		kind: 'warning',
+		text: t(
+			'shillinq',
+			'VIES cannot be reached. VAT number {vatId} was last valid on {date}.',
+			{ vatId: result.vatId, date: day(result.lastValidAt) },
+		),
+	}
+}
+
+/**
+ * The message when VIES could not be reached and the number was never confirmed.
+ *
+ * @param {string} vatId The number.
+ * @return {{kind: string, text: string}}
+ */
+function unconfirmedMessage(vatId) {
 	return {
 		kind: 'warning',
 		text: t(
@@ -77,6 +124,9 @@ export function vatCheckMessage(result) {
 	}
 }
 
+/** How each outcome kind is shown. */
+const TOAST = { success: showSuccess, warning: showWarning, error: showError }
+
 /**
  * Check the record's VAT number and show the outcome.
  *
@@ -86,9 +136,7 @@ export function vatCheckMessage(result) {
  * @spec openspec/changes/tax-vat-number-check/tasks.md#task-2.1
  */
 export async function checkVatNumber(type, scope) {
-	const id =
-		(scope && scope.item && scope.item.id)
-		|| window.location.pathname.split('/').pop()
+	const id = recordId(scope)
 	if (!id) {
 		return null
 	}
@@ -100,19 +148,27 @@ export async function checkVatNumber(type, scope) {
 			}),
 		)
 		const message = vatCheckMessage(data)
-		const show = {
-			success: showSuccess,
-			warning: showWarning,
-			error: showError,
-		}[message.kind]
-		show(message.text)
+		TOAST[message.kind](message.text)
 		emit('cn:page:refresh', {})
 		return data
 	} catch (e) {
-		const answer = e && e.response && e.response.data && e.response.data.error
-		showError(answer || t('shillinq', 'The VAT number could not be checked.'))
+		showError(
+			e?.response?.data?.error
+				|| t('shillinq', 'The VAT number could not be checked.'),
+		)
 		return null
 	}
+}
+
+/**
+ * The id of the record the action runs on: the page item, else the last
+ * segment of the address.
+ *
+ * @param {{item: object}|null} scope The page scope.
+ * @return {string} The id, or an empty string.
+ */
+function recordId(scope) {
+	return scope?.item?.id || window.location.pathname.split('/').pop()
 }
 
 /**

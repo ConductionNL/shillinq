@@ -31,13 +31,13 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Listener;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -91,13 +91,13 @@ class BbvAllocationValidationListener implements IEventListener {
 	 * Construct the listener.
 	 *
 	 * @param ListenerSchemaResolver $schemaResolver  Matches the BBV schemas in shillinq's register.
-	 * @param ContainerInterface     $container       DI container for the lazy ObjectService.
+	 * @param ObjectServiceInterface $objectService   Reads the sibling records.
 	 * @param SettingsService        $settingsService Resolves the register slug.
 	 * @param LoggerInterface        $logger          Logger.
 	 */
 	public function __construct(
 		private readonly ListenerSchemaResolver $schemaResolver,
-		private readonly ContainerInterface $container,
+		private readonly ObjectServiceInterface $objectService,
 		private readonly SettingsService $settingsService,
 		private readonly LoggerInterface $logger,
 	) {
@@ -234,7 +234,7 @@ class BbvAllocationValidationListener implements IEventListener {
 	 * @return array<int, array<string, mixed>>
 	 */
 	private function others(string $schema, array $filters, string $self): array {
-		$rows = $this->container->get('OCA\OpenRegister\Service\ObjectService')
+		$rows = $this->objectService
 			->setRegister($this->settingsService->getRegisterSlug())
 			->setSchema($schema)
 			->findAll(
