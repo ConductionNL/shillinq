@@ -23,6 +23,14 @@ use PHPUnit\Framework\TestCase;
  * stub's OpenRegister-like scope.
  *
  * @covers \OCA\Shillinq\PaymentPlan\PaymentPlanService
+ * @uses   \OCA\Shillinq\PaymentPlan\PaymentPlanAllocator
+ * @uses   \OCA\Shillinq\PaymentPlan\PaymentPlanMailer
+ * @uses   \OCA\Shillinq\PaymentPlan\PaymentPlanRefusedException
+ * @uses   \OCA\Shillinq\PaymentPlan\PaymentPlanSchedule
+ * @uses   \OCA\Shillinq\Service\DunningRunService
+ * @uses   \OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner
+ * @uses   \OCA\Shillinq\Util\ObjectIdentifier
+ * @uses   \OCA\Shillinq\Service\SettingsService
  */
 final class Rw124OpenPlanProbeTest extends TestCase {
 	use PaymentPlanFixture;
