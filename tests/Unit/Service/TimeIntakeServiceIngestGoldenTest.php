@@ -274,6 +274,7 @@ final class TimeIntakeServiceIngestGoldenTest extends TestCase {
 			'saved row without an id'          => [['body' => $body, 'save' => ['UrenRegistratie' => 'no-id']]],
 			'saved rows with a self id'        => [['body' => $body, 'save' => ['UrenRegistratie' => 'self-id', 'TimeIntakeBatch' => 'self-id']]],
 			'store lookup fails'               => [['body' => $body, 'save' => ['findAll:UrenRegistratie' => 'throw']]],
+			'batch lookup fails'               => [['body' => $body, 'save' => ['findAll:TimeIntakeBatch' => 'throw']]],
 			'drafting fails'                   => [['body' => $body, 'draft' => 'throw']],
 			'draft with a self id, no number'  => [['body' => $body, 'draft' => ['@self' => ['id' => 'inv-7']]]],
 			'draft without an id'              => [['body' => $body, 'draft' => ['invoiceNumber' => 'X-1']]],
@@ -286,6 +287,38 @@ final class TimeIntakeServiceIngestGoldenTest extends TestCase {
 		];
 
 	}//end scenarios()
+
+	/**
+	 * A store read error in either double-billing guard aborts the ingest:
+	 * no hours row, no batch row and no draft invoice.
+	 *
+	 * @return array<string, array<int, string>>
+	 */
+	public static function guardReads(): array {
+		return [
+			'replay lookup'      => ['TimeIntakeBatch'],
+			'cross-batch dedup'  => ['UrenRegistratie'],
+		];
+
+	}//end guardReads()
+
+	/**
+	 * A failing guard read writes nothing and drafts nothing.
+	 *
+	 * @param string $schema The schema whose read fails.
+	 *
+	 * @return void
+	 */
+	#[DataProvider('guardReads')]
+	public function testAGuardReadErrorWritesNothing(string $schema): void {
+		$actual = $this->runScenario(['body' => self::body(), 'save' => ['findAll:' . $schema => 'throw']]);
+
+		$this->assertSame(\RuntimeException::class, $actual['results'][0]['threw'] ?? null);
+		$this->assertSame([], $actual['drafts']);
+		$saves = array_filter($actual['calls'], static fn (array $call): bool => $call[0] === 'saveObject');
+		$this->assertSame([], array_values($saves));
+
+	}//end testAGuardReadErrorWritesNothing()
 
 	/**
 	 * Every hours row carries the session user and tenant, whatever the
@@ -389,6 +422,59 @@ final class TimeIntakeServiceIngestGoldenTest extends TestCase {
 		parent::tearDownAfterClass();
 
 	}//end tearDownAfterClass()
+
+	/**
+	 * Body fields that must be strings, each given a non-string value.
+	 *
+	 * @return array<string, array<int, mixed>>
+	 */
+	public static function nonStringFields(): array {
+		return [
+			'batchId as a list'           => [['batchId' => ['x']], 'batchId'],
+			'batchId as a number'         => [['batchId' => 7], 'batchId'],
+			'organisationRef as a list'   => [['organisationRef' => ['cust-1']], 'organisationRef'],
+			'period start as a number'    => [['period' => ['start' => 20260601, 'end' => '2026-06-30']], 'start'],
+			'period end as a list'        => [['period' => ['start' => '2026-06-01', 'end' => ['2026-06-30']]], 'end'],
+			'billingModel as a list'      => [['billingModel' => ['t_and_m']], 'billingModel'],
+			'currency as a number'        => [['currency' => 978], 'currency'],
+			'rateCardId as a list'        => [['rateCardId' => ['rc-1']], 'rateCardId'],
+			'projectRef as a boolean'     => [['projectRef' => true], 'projectRef'],
+			'notes as an object'          => [['notes' => ['text' => 'June']], 'notes'],
+			'externalId as a number'      => [['entry' => ['externalId' => 1001]], 'externalId'],
+			'entry date as a list'        => [['entry' => ['date' => ['2026-06-03']]], 'date'],
+			'description as a number'     => [['entry' => ['description' => 5]], 'description'],
+			'rateRef as a list'           => [['entry' => ['rateRef' => ['rc-1']]], 'rateRef'],
+			'entry projectRef as a float' => [['entry' => ['projectRef' => 1.5]], 'projectRef'],
+		];
+
+	}//end nonStringFields()
+
+	/**
+	 * A non-string value in a string field is a 400, before any read or write.
+	 *
+	 * @param array<string, mixed> $change The body change; `entry` changes the second entry.
+	 * @param string               $field  The field the message must name.
+	 *
+	 * @return void
+	 */
+	#[DataProvider('nonStringFields')]
+	public function testANonStringFieldIsRefused(array $change, string $field): void {
+		$body = self::body();
+		if (isset($change['entry']) === true) {
+			$body['entries'][1] = array_merge($body['entries'][1], $change['entry']);
+			unset($change['entry']);
+		}
+
+		$actual = $this->runScenario(['body' => array_merge($body, $change)]);
+
+		$this->assertSame(
+			['threw' => \InvalidArgumentException::class, 'message' => $field . ' must be a string.'],
+			$actual['results'][0]
+		);
+		$this->assertSame([], $actual['calls']);
+		$this->assertSame([], $actual['drafts']);
+
+	}//end testANonStringFieldIsRefused()
 
 	/**
 	 * Run ingest once (or twice) for a scenario and capture what it did.
