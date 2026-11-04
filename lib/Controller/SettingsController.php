@@ -22,7 +22,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use InvalidArgumentException;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -56,7 +56,7 @@ class SettingsController extends Controller {
 		IRequest $request,
 		private SettingsService $settingsService,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -66,7 +66,7 @@ class SettingsController extends Controller {
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-1
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function index(): JSONResponse {
 		return new JSONResponse(
 			$this->settingsService->getSettings()
@@ -98,7 +98,7 @@ class SettingsController extends Controller {
 	 * @spec openspec/specs/app-administration/spec.md
 	 * @spec openspec/changes/portal-pay-row-action-keys/specs/portal-payment-initiation/spec.md (REQ-SPPI-010)
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function update(): JSONResponse {
 		$data = $this->request->getParams();
 		try {
@@ -133,7 +133,7 @@ class SettingsController extends Controller {
 	 *
 	 * @spec openspec/specs/app-administration/spec.md
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function create(): JSONResponse {
 		return $this->update();
 	}//end create()
@@ -148,7 +148,7 @@ class SettingsController extends Controller {
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-2
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function load(): JSONResponse {
 		$result = $this->settingsService->loadConfigurationForced();
 

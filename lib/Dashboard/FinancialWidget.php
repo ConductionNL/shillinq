@@ -31,7 +31,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Dashboard;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\FinancialDashboardService;
 use OCP\Dashboard\IAPIWidgetV2;
@@ -105,7 +105,7 @@ abstract class FinancialWidget implements IAPIWidgetV2 {
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
 	public function getUrl(): ?string {
-		return $this->urls->linkToRouteAbsolute(Application::APP_ID . '.dashboard.page');
+		return $this->urls->linkToRouteAbsolute(AppIdentity::APP_ID . '.dashboard.page');
 
 	}//end getUrl()
 
@@ -188,7 +188,7 @@ abstract class FinancialWidget implements IAPIWidgetV2 {
 			$title,
 			$subtitle,
 			(string)$this->getUrl(),
-			$this->urls->getAbsoluteURL($this->urls->imagePath(Application::APP_ID, 'app-dark.svg')),
+			$this->urls->getAbsoluteURL($this->urls->imagePath(AppIdentity::APP_ID, 'app-dark.svg')),
 			$sinceId
 		);
 

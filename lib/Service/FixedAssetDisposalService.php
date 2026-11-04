@@ -55,7 +55,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\Asset\ReinvestmentReserves;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -483,7 +483,7 @@ class FixedAssetDisposalService {
 		];
 
 		foreach ($map as $key => $configKey) {
-			$value = trim($this->appConfig->getValueString(Application::APP_ID, $configKey, ''));
+			$value = trim($this->appConfig->getValueString(AppIdentity::APP_ID, $configKey, ''));
 			if ($value !== '') {
 				$accounts[$key] = $value;
 			}
@@ -615,7 +615,7 @@ class FixedAssetDisposalService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}
