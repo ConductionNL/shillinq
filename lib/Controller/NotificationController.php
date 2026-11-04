@@ -49,7 +49,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -93,7 +93,7 @@ class NotificationController extends Controller {
 		private readonly AdministrationContextService $context,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
@@ -259,7 +259,7 @@ class NotificationController extends Controller {
 	 *
 	 * @return JSONResponse `{summary: {…}, triggers: [{…}], recentFailures: [{…}]}`.
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function adminMonitor(): JSONResponse {
 		try {
 			$triggers = $this->fetchTriggers();
@@ -324,7 +324,7 @@ class NotificationController extends Controller {
 	 *
 	 * @return JSONResponse `{disabled: N}` or error envelope.
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function adminDisableAll(): JSONResponse {
 		try {
 			$service = $this->resolveObjectService();

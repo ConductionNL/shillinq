@@ -40,7 +40,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\Http\Client\IClientService;
 use OCP\IAppConfig;
 use OCP\Security\ICredentialsManager;
@@ -105,10 +105,11 @@ class LeaseDecideskWebhookService {
 	 * "webhook disabled, surface the event in-app only".
 	 *
 	 * @return string
+	 * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
 	 */
 	public function getWebhookUrl(): string {
 		return $this->appConfig->getValueString(
-			app: Application::APP_ID,
+			app: AppIdentity::APP_ID,
 			key: self::KEY_WEBHOOK_URL,
 			default: ''
 		);
@@ -121,10 +122,11 @@ class LeaseDecideskWebhookService {
 	 * @param string $url The endpoint URL; empty string clears the setting.
 	 *
 	 * @return void
+	 * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
 	 */
 	public function setWebhookUrl(string $url): void {
 		$this->appConfig->setValueString(
-			app: Application::APP_ID,
+			app: AppIdentity::APP_ID,
 			key: self::KEY_WEBHOOK_URL,
 			value: trim($url)
 		);
@@ -138,6 +140,7 @@ class LeaseDecideskWebhookService {
 	 * MUST NOT log the result.
 	 *
 	 * @return string
+	 * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
 	 */
 	public function getWebhookToken(): string {
 		$secret = $this->credentialsManager->retrieve(
@@ -161,6 +164,7 @@ class LeaseDecideskWebhookService {
 	 * @param string $token The bearer token, or '' to clear.
 	 *
 	 * @return void
+	 * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
 	 */
 	public function setWebhookToken(string $token): void {
 		$trimmed = trim($token);
@@ -191,10 +195,11 @@ class LeaseDecideskWebhookService {
 	 * @param array<string,mixed> $event The persisted LeaseReassessmentEvent row.
 	 *
 	 * @return array<string,mixed> The webhook payload.
+	 * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
 	 */
 	public function buildPayload(array $event): array {
 		return [
-			'source' => Application::APP_ID,
+			'source' => AppIdentity::APP_ID,
 			'kind' => 'lease-reassessment-approval-request',
 			'eventId' => ($event['id'] ?? ($event['reassessmentNumber'] ?? null)),
 			'reassessmentNumber' => ($event['reassessmentNumber'] ?? null),
@@ -224,6 +229,7 @@ class LeaseDecideskWebhookService {
 	 * @param array<string,mixed> $event The persisted event row.
 	 *
 	 * @return bool True when the event qualifies for delivery.
+	 * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
 	 */
 	public function shouldDeliver(array $event): bool {
 		if (($event['status'] ?? null) !== 'pending-approval') {
@@ -250,6 +256,7 @@ class LeaseDecideskWebhookService {
 	 * @param array<string,mixed> $event The persisted event row to deliver.
 	 *
 	 * @return bool True on 2xx delivery, false otherwise.
+	 * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
 	 */
 	public function deliver(array $event): bool {
 		if ($this->shouldDeliver(event: $event) === false) {

@@ -30,7 +30,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Dunning;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 
 /**
@@ -110,7 +110,7 @@ final class DunningTemplateRegistry {
 	public function templateIdForStage(int $stageNr): string {
 		$default = (self::DEFAULT_TEMPLATE_IDS[$stageNr] ?? '');
 		return $this->appConfig->getValueString(
-			Application::APP_ID,
+			AppIdentity::APP_ID,
 			'dunning.template.stage_' . $stageNr,
 			$default
 		);

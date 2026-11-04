@@ -72,7 +72,7 @@ namespace OCA\Shillinq\Lifecycle\Action;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\Vat\VatLineStamper;
 use OCA\Shillinq\Lifecycle\PostingStamps;
 use OCP\IAppConfig;
@@ -805,7 +805,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 	 * @return string
 	 */
 	private function account(string $key): string {
-		$configured = trim($this->appConfig->getValueString(Application::APP_ID, $key, ''));
+		$configured = trim($this->appConfig->getValueString(AppIdentity::APP_ID, $key, ''));
 		if ($configured !== '') {
 			return $configured;
 		}
@@ -833,7 +833,7 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

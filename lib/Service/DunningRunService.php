@@ -47,7 +47,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\Dunning\DunningChannelSendResult;
 use OCA\Shillinq\Service\Dunning\DunningLetterComposer;
 use OCA\Shillinq\Service\Dunning\DunningStageDispatcher;
@@ -495,7 +495,7 @@ class DunningRunService {
 		?array $evidenceRefs = null,
 		?DateTimeImmutable $hardDeadline = null,
 	): array {
-		$hardDeadlineDays = max(1, (int)$this->appConfig->getValueString(Application::APP_ID, self::CFG_DISPUTE_PAUSE_DAYS, '60'));
+		$hardDeadlineDays = max(1, (int)$this->appConfig->getValueString(AppIdentity::APP_ID, self::CFG_DISPUTE_PAUSE_DAYS, '60'));
 		$pauseStart = new DateTimeImmutable();
 		$hardDeadline = ($hardDeadline ?? $pauseStart->modify('+' . $hardDeadlineDays . ' days'));
 
@@ -838,7 +838,7 @@ class DunningRunService {
 	 */
 	private function nextVATPeriod(): string {
 		$override = $this->appConfig->getValueString(
-			Application::APP_ID,
+			AppIdentity::APP_ID,
 			'dunning.write_off_default_btw_periode',
 			''
 		);
@@ -878,7 +878,7 @@ class DunningRunService {
 			return false;
 		}
 
-		$lookbackDays = max(1, (int)$this->appConfig->getValueString(Application::APP_ID, self::CFG_ADMIN_ERROR_LOOKBACK_DAYS, '90'));
+		$lookbackDays = max(1, (int)$this->appConfig->getValueString(AppIdentity::APP_ID, self::CFG_ADMIN_ERROR_LOOKBACK_DAYS, '90'));
 		$cutoff = (new DateTimeImmutable())->modify('-' . $lookbackDays . ' days');
 
 		// Primary signal: a paid Invoice on the klant within the lookback window
@@ -1371,7 +1371,7 @@ class DunningRunService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

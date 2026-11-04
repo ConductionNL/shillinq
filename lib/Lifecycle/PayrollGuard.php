@@ -43,7 +43,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -200,7 +200,7 @@ class PayrollGuard {
 		$fraction = self::DEFAULT_INCOME_TAX_CEILING_FRACTION;
 		if ($year !== '') {
 			$configured = $this->appConfig->getValueString(
-				Application::APP_ID,
+				AppIdentity::APP_ID,
 				'payroll_income_tax_ceiling_' . $year,
 				''
 			);
@@ -314,7 +314,7 @@ class PayrollGuard {
 	 * @return string The register slug.
 	 */
 	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

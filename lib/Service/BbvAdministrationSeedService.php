@@ -24,7 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\Seed\SeedImport;
 use OCA\Shillinq\Service\Seed\SeedImporter;
 use OCA\Shillinq\Service\Seed\SeedMessages;
@@ -220,9 +220,9 @@ class BbvAdministrationSeedService {
 	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-006)
 	 */
 	private function recordGateInstallDate(): void {
-		$existingDate = $this->appConfig->getValueString(Application::APP_ID, 'bbv_gate_install_date', '');
+		$existingDate = $this->appConfig->getValueString(AppIdentity::APP_ID, 'bbv_gate_install_date', '');
 		if ($existingDate === '') {
-			$this->appConfig->setValueString(Application::APP_ID, 'bbv_gate_install_date', date('Y-m-d'));
+			$this->appConfig->setValueString(AppIdentity::APP_ID, 'bbv_gate_install_date', date('Y-m-d'));
 		}
 	}//end recordGateInstallDate()
 
