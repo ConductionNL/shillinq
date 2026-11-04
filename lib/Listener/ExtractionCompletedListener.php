@@ -47,6 +47,7 @@ namespace OCA\Shillinq\Listener;
 
 use DateTime;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Extraction\ExtractionPrefillService;
 use OCA\Shillinq\Support\FleetAppId;
 use OCP\EventDispatcher\Event;
@@ -56,6 +57,7 @@ use OCP\Notification\IManager as INotificationManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Turns a docudesk extraction-completed event into a confidence-scored
@@ -89,6 +91,7 @@ class ExtractionCompletedListener implements IEventListener {
 	 * @param ExtractionPrefillService $prefillService Field-mapping service.
 	 * @param INotificationManager $notificationManager NC notification dispatcher.
 	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
+	 * @param AdministrationContextService $administrationContext Resolves the requester's administration.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
@@ -96,6 +99,7 @@ class ExtractionCompletedListener implements IEventListener {
 		private readonly ExtractionPrefillService $prefillService,
 		private readonly INotificationManager $notificationManager,
 		private readonly LoggerInterface $logger,
+		private readonly AdministrationContextService $administrationContext,
 	) {
 
 	}//end __construct()
@@ -106,6 +110,9 @@ class ExtractionCompletedListener implements IEventListener {
 	 * @param Event $event The dispatched event.
 	 *
 	 * @return void
+	 *
+	 * @listener-placement inline correctness — registered on filinq's extraction-completed event, not on an object
+	 * write: it answers the requester's own extraction call, whose caller reads the draft next.
 	 *
 	 * @spec openspec/specs/receipt-extraction-consume/spec.md
 	 */
@@ -239,7 +246,7 @@ class ExtractionCompletedListener implements IEventListener {
 			$rows = $objectService
 				->setRegister($this->register())
 				->setSchema($schema)
-				->findAll(['filters' => ['sourceDocumentUri' => $documentUri]]);
+				->findAll(['filters' => ['sourceDocumentUri' => $documentUri], 'limit' => 1]);
 		} catch (Throwable $e) {
 			$this->logger->info(
 				'ExtractionCompletedListener: OR query unavailable — treating as new draft',
@@ -253,16 +260,14 @@ class ExtractionCompletedListener implements IEventListener {
 		}
 
 		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				return $row;
-			}
+			return ObjectIdentifier::recordWithId(candidate: $row);
 		}
 
 		return null;
 	}//end findBySourceDocumentUri()
 
 	/**
-	 * Resolve an administration for a requesting user via their
+	 * Resolve the requesting user's administration: their first currently valid
 	 * AdministrationMembership, falling back to 'default' (mirrors
 	 * {@see \OCA\Shillinq\Controller\SupplierInvoiceImportController::resolveAdministrationId()}
 	 * for the no-membership case).
@@ -276,28 +281,7 @@ class ExtractionCompletedListener implements IEventListener {
 			return 'default';
 		}
 
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rows = $objectService
-				->setRegister($this->register())
-				->setSchema('AdministrationMembership')
-				->findAll(['filters' => ['userId' => $userId]]);
-		} catch (Throwable $e) {
-			return 'default';
-		}
-
-		if (is_array($rows) === true) {
-			foreach ($rows as $row) {
-				if (is_array($row) === true) {
-					$administrationId = (string)($row['administrationId'] ?? '');
-					if ($administrationId !== '') {
-						return $administrationId;
-					}
-				}
-			}
-		}
-
-		return 'default';
+		return ($this->administrationContext->defaultAdministrationIdForUser(userId: $userId) ?? 'default');
 	}//end resolveAdministrationId()
 
 	/**
@@ -356,9 +340,7 @@ class ExtractionCompletedListener implements IEventListener {
 				->setSchema($schema)
 				->saveObject($object);
 
-			if (is_array($result) === true) {
-				return $result;
-			}
+			return (ObjectIdentifier::recordWithId(candidate: $result) ?? $object);
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'ExtractionCompletedListener: failed to persist extraction draft',
