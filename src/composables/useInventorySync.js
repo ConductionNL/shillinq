@@ -111,6 +111,8 @@ export async function syncDownload(db, since) {
  * @param {IDBDatabase} db Local DB.
  * @return {Promise<{accepted:number,duplicates:number,rejected:Array<object>}>}
  *   Per-status counts plus the rejected ACK rows for client UX.
+ *
+ * @spec openspec/specs/inventory-mobile-scanner/spec.md
  */
 export async function syncUpload(db) {
 	const pending = await readUnsyncedOps(db)
