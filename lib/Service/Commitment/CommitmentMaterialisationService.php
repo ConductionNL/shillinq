@@ -62,7 +62,7 @@ namespace OCA\Shillinq\Service\Commitment;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Lifecycle\BudgetBlocker;
 use OCA\Shillinq\Lifecycle\MandateEnforcer;
 use OCP\EventDispatcher\GenericEvent;
@@ -665,7 +665,7 @@ class CommitmentMaterialisationService {
 	 * @return string
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($slug === '') {
 			return 'shillinq';
 		}

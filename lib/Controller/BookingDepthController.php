@@ -42,7 +42,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\NoShowFeeCaptureService;
 use OCA\Shillinq\Service\RecurringSeriesService;
@@ -88,7 +88,7 @@ class BookingDepthController extends Controller {
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
@@ -192,138 +192,185 @@ class BookingDepthController extends Controller {
 			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		$administrationId = trim((string)$this->request->getParam('administrationId', ''));
-		$seriesId = trim((string)$this->request->getParam('seriesId', ''));
-		$serviceId = trim((string)$this->request->getParam('serviceId', ''));
-		$resourceId = trim((string)$this->request->getParam('resourceId', ''));
-		$startTime = trim((string)$this->request->getParam('startTime', ''));
-		$durationMinutes = (int)$this->request->getParam('durationMinutes', 0);
-		$recurrenceRule = trim((string)$this->request->getParam('recurrenceRule', ''));
-		$customerId = trim((string)$this->request->getParam('customerId', ''));
-
-		if ($administrationId === '' || $seriesId === '' || $serviceId === '' || $resourceId === ''
-			|| $startTime === '' || $durationMinutes <= 0 || $recurrenceRule === ''
-		) {
-			return new JSONResponse(
-				['error' => 'administrationId, seriesId, serviceId, resourceId, startTime, durationMinutes and recurrenceRule are required'],
-				Http::STATUS_BAD_REQUEST,
-			);
+		$input = $this->seriesInput();
+		if ($this->seriesInputComplete(input: $input) === false) {
+			$required = 'administrationId, seriesId, serviceId, resourceId, startTime, durationMinutes and recurrenceRule are required';
+			return new JSONResponse(['error' => $required], Http::STATUS_BAD_REQUEST);
 		}
 
 		// Security-endpoint-guards REQ-001: the request-supplied administrationId
 		// is what will be stamped on the new AppointmentSeries/Appointment
 		// objects, so checking canAccess() against it here (before the object
-		// exists to fetch) is the correct create-time guard — matches the
-		// convention CBSSubmissionController::create() established.
-		if ($this->context->canAccess($administrationId) === false) {
+		// exists to fetch) is the correct create-time guard.
+		if ($this->context->canAccess($input['administrationId']) === false) {
 			return new JSONResponse(['error' => 'Forbidden'], Http::STATUS_FORBIDDEN);
 		}
 
+		return $this->createSeriesWithin(input: $input);
+	}//end createSeries()
+
+	/**
+	 * The series request: trimmed strings plus the integer duration.
+	 *
+	 * @return array<string, string|int> The request fields.
+	 */
+	private function seriesInput(): array {
+		$input = [];
+		foreach (['administrationId', 'seriesId', 'serviceId', 'resourceId', 'startTime', 'recurrenceRule', 'customerId'] as $name) {
+			$input[$name] = trim((string)$this->request->getParam($name, ''));
+		}
+
+		$input['durationMinutes'] = (int)$this->request->getParam('durationMinutes', 0);
+
+		return $input;
+	}//end seriesInput()
+
+	/**
+	 * Whether every required series field is present and the duration positive.
+	 *
+	 * @param array<string, string|int> $input The request fields.
+	 *
+	 * @return bool
+	 */
+	private function seriesInputComplete(array $input): bool {
+		$required = array_intersect_key($input, array_flip(['administrationId', 'seriesId', 'serviceId', 'resourceId', 'startTime', 'recurrenceRule']));
+		return in_array('', $required, true) === false && $input['durationMinutes'] > 0;
+	}//end seriesInputComplete()
+
+	/**
+	 * Create the series once the caller may act within its administration:
+	 * 503 without OpenRegister, 400 when the planner rejects the request, 500
+	 * on any other failure.
+	 *
+	 * @param array<string, string|int> $input The request fields.
+	 *
+	 * @return JSONResponse
+	 */
+	private function createSeriesWithin(array $input): JSONResponse {
 		if ($this->settings->isOpenRegisterAvailable() === false) {
 			return new JSONResponse(['error' => 'OpenRegister unavailable'], Http::STATUS_SERVICE_UNAVAILABLE);
 		}
 
 		try {
-			$resource = $this->loadResource(resourceId: $resourceId);
-			if ($resource === null) {
-				return new JSONResponse(['error' => 'Resource not found'], Http::STATUS_NOT_FOUND);
-			}
-
-			// Security-endpoint-guards REQ-001 hardening: canAccess() above only
-			// proved the caller may act within $administrationId — it does NOT
-			// prove the FETCHED $resource actually belongs to that
-			// administration. Without this check a member of administration A
-			// could pass administrationId=A (their own, so canAccess() passes)
-			// together with a resourceId belonging to administration B and book
-			// appointments against B's resource under A's label — a cross-
-			// tenant IDOR on the Resource object itself.
-			$resourceAdministrationId = (string)($resource['administrationId'] ?? '');
-			if ($resourceAdministrationId !== $administrationId) {
-				return new JSONResponse(['error' => 'Forbidden'], Http::STATUS_FORBIDDEN);
-			}
-
-			$plan = $this->series->planSeries(
-				seriesDef: [
-					'seriesId' => $seriesId,
-					'administrationId' => $administrationId,
-					'serviceId' => $serviceId,
-					'resourceId' => $resourceId,
-					'customerId' => $customerId,
-					'startTime' => $startTime,
-					'durationMinutes' => $durationMinutes,
-					'recurrenceRule' => $recurrenceRule,
-					'openingTime' => (string)($resource['openingTime'] ?? '09:00'),
-					'closingTime' => (string)($resource['closingTime'] ?? '18:00'),
-					'allowOverlap' => (bool)($resource['allowOverlap'] ?? false),
-					'existingAppointments' => $this->loadResourceAppointments(resourceId: $resourceId),
-				]
-			);
-
-			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$registerSlug = $this->settings->getRegisterSlug();
-
-			$objectService->saveObject(
-				object: [
-					'administrationId' => $administrationId,
-					'seriesId' => $seriesId,
-					'serviceId' => $serviceId,
-					'resourceId' => $resourceId,
-					'customerId' => $customerId,
-					'startTime' => $startTime,
-					'durationMinutes' => $durationMinutes,
-					'recurrenceRule' => $recurrenceRule,
-					'status' => 'active',
-					'generatedCount' => count($plan['generated']),
-					'skippedCount' => count($plan['skipped']),
-				],
-				register: $registerSlug,
-				schema: 'AppointmentSeries',
-			);
-
-			foreach ($plan['generated'] as $appointment) {
-				$appointment['appointmentId'] = $seriesId . '-' . ((int)$appointment['recurrenceIndex']);
-				$objectService->saveObject(
-					object: $appointment,
-					register: $registerSlug,
-					schema: 'Appointment',
-				);
-			}
-
-			$this->logger->info(
-				'BookingDepthController: recurring series created',
-				[
-					'seriesId' => $seriesId,
-					'generated' => count($plan['generated']),
-					'skipped' => count($plan['skipped']),
-				]
-			);
-
-			return new JSONResponse(
-				[
-					'seriesId' => $seriesId,
-					'generated' => count($plan['generated']),
-					'skipped' => count($plan['skipped']),
-				],
-				Http::STATUS_OK,
-			);
+			return $this->createSeriesOnResource(input: $input);
 		} catch (\InvalidArgumentException $e) {
 			$this->logger->error('BookingDepthController.createSeries failed', ['exception' => $e]);
-			return new JSONResponse(
-				[
-					'message' => $this->l10n->t('Unable to create the appointment series'),
-					'error' => 'appointment-series-create-failed',
-				],
-				Http::STATUS_BAD_REQUEST,
-			);
+			$message = $this->l10n->t('Unable to create the appointment series');
+			return new JSONResponse(['message' => $message, 'error' => 'appointment-series-create-failed'], Http::STATUS_BAD_REQUEST);
 		} catch (Throwable $e) {
-			$this->logger->error(
-				'BookingDepthController: series creation failed',
-				['seriesId' => $seriesId, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(['error' => 'Series creation failed'], Http::STATUS_INTERNAL_SERVER_ERROR);
+			return $this->seriesCreationFailed(seriesId: $input['seriesId'], error: $e);
 		}//end try
 
-	}//end createSeries()
+	}//end createSeriesWithin()
+
+	/**
+	 * Log an unexpected series failure and answer 500 without its detail.
+	 *
+	 * @param string $seriesId The series being created.
+	 * @param Throwable $error What went wrong.
+	 *
+	 * @return JSONResponse
+	 */
+	private function seriesCreationFailed(string $seriesId, Throwable $error): JSONResponse {
+		$this->logger->error(
+			'BookingDepthController: series creation failed',
+			['seriesId' => $seriesId, 'exception' => $error->getMessage()]
+		);
+		return new JSONResponse(['error' => 'Series creation failed'], Http::STATUS_INTERNAL_SERVER_ERROR);
+	}//end seriesCreationFailed()
+
+	/**
+	 * Plan and store the series on its resource; 404 when the resource is
+	 * missing, 403 when it belongs to another administration.
+	 *
+	 * Security-endpoint-guards REQ-001 hardening: canAccess() only proved the
+	 * caller may act within the request's administration, not that the
+	 * fetched resource belongs to it. Without the ownership check a member of
+	 * administration A could book against administration B's resource under
+	 * A's label, a cross-tenant IDOR on the Resource object.
+	 *
+	 * @param array<string, string|int> $input The request fields.
+	 *
+	 * @return JSONResponse
+	 */
+	private function createSeriesOnResource(array $input): JSONResponse {
+		$resource = $this->loadResource(resourceId: $input['resourceId']);
+		if ($resource === null) {
+			return new JSONResponse(['error' => 'Resource not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		if ((string)($resource['administrationId'] ?? '') !== $input['administrationId']) {
+			return new JSONResponse(['error' => 'Forbidden'], Http::STATUS_FORBIDDEN);
+		}
+
+		$plan = $this->series->planSeries(seriesDef: $this->seriesDefinition(input: $input, resource: $resource));
+		$this->storeSeries(input: $input, plan: $plan);
+
+		$counts = ['generated' => count($plan['generated']), 'skipped' => count($plan['skipped'])];
+		$this->logger->info('BookingDepthController: recurring series created', ['seriesId' => $input['seriesId']] + $counts);
+
+		return new JSONResponse(['seriesId' => $input['seriesId']] + $counts, Http::STATUS_OK);
+	}//end createSeriesOnResource()
+
+	/**
+	 * The definition the series planner works from: the request, the
+	 * resource's opening hours and its existing appointments.
+	 *
+	 * @param array<string, string|int> $input The request fields.
+	 * @param array<string, mixed> $resource The Resource row.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function seriesDefinition(array $input, array $resource): array {
+		return $this->seriesFields(input: $input, order: ['seriesId', 'administrationId']) + [
+			'openingTime' => (string)($resource['openingTime'] ?? '09:00'),
+			'closingTime' => (string)($resource['closingTime'] ?? '18:00'),
+			'allowOverlap' => (bool)($resource['allowOverlap'] ?? false),
+			'existingAppointments' => $this->loadResourceAppointments(resourceId: $input['resourceId']),
+		];
+	}//end seriesDefinition()
+
+	/**
+	 * The request fields of a series object, with the two leading keys in the
+	 * given order.
+	 *
+	 * @param array<string, string|int> $input The request fields.
+	 * @param array<int, string> $order The leading keys.
+	 *
+	 * @return array<string, string|int>
+	 */
+	private function seriesFields(array $input, array $order): array {
+		$fields = [];
+		foreach ([...$order, 'serviceId', 'resourceId', 'customerId', 'startTime', 'durationMinutes', 'recurrenceRule'] as $key) {
+			$fields[$key] = $input[$key];
+		}
+
+		return $fields;
+	}//end seriesFields()
+
+	/**
+	 * Save the AppointmentSeries and every generated Appointment.
+	 *
+	 * @param array<string, string|int> $input The request fields.
+	 * @param array{generated: array<int, array<string, mixed>>, skipped: array<int, mixed>} $plan The planned series.
+	 *
+	 * @return void
+	 */
+	private function storeSeries(array $input, array $plan): void {
+		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
+		$registerSlug  = $this->settings->getRegisterSlug();
+		$series        = $this->seriesFields(input: $input, order: ['administrationId', 'seriesId']) + [
+			'status' => 'active',
+			'generatedCount' => count($plan['generated']),
+			'skippedCount' => count($plan['skipped']),
+		];
+		$objectService->saveObject(object: $series, register: $registerSlug, schema: 'AppointmentSeries');
+
+		foreach ($plan['generated'] as $appointment) {
+			$appointment['appointmentId'] = $input['seriesId'] . '-' . ((int)$appointment['recurrenceIndex']);
+			$objectService->saveObject(object: $appointment, register: $registerSlug, schema: 'Appointment');
+		}
+	}//end storeSeries()
 
 	/**
 	 * Load a single Appointment by its logical appointmentId.

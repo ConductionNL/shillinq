@@ -60,7 +60,7 @@ namespace OCA\Shillinq\Service;
 
 use DateInterval;
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -967,7 +967,7 @@ class MultiPoConsolidationService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

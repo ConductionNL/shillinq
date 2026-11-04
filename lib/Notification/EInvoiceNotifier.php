@@ -33,7 +33,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Notification;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Listener\PeppolDeliveryStatusListener;
 use OCP\IURLGenerator;
 use OCP\L10N\IFactory;
@@ -74,7 +74,7 @@ class EInvoiceNotifier implements INotifier {
 	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-2.2
 	 */
 	public function getID(): string {
-		return Application::APP_ID;
+		return AppIdentity::APP_ID;
 	}//end getID()
 
 	/**
@@ -85,7 +85,7 @@ class EInvoiceNotifier implements INotifier {
 	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-2.2
 	 */
 	public function getName(): string {
-		return $this->l10nFactory->get(Application::APP_ID)->t('Shillinq');
+		return $this->l10nFactory->get(AppIdentity::APP_ID)->t('Shillinq');
 	}//end getName()
 
 	/**
@@ -101,13 +101,13 @@ class EInvoiceNotifier implements INotifier {
 	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-2.2
 	 */
 	public function prepare(INotification $notification, string $languageCode): INotification {
-		if ($notification->getApp() !== Application::APP_ID
+		if ($notification->getApp() !== AppIdentity::APP_ID
 			|| $notification->getSubject() !== PeppolDeliveryStatusListener::NOTIFICATION_SUBJECT_REJECTED
 		) {
 			throw new UnknownNotificationException();
 		}
 
-		$l = $this->l10nFactory->get(Application::APP_ID, $languageCode);
+		$l = $this->l10nFactory->get(AppIdentity::APP_ID, $languageCode);
 		$parameters = $notification->getSubjectParameters();
 		$invoiceNumber = (string)($parameters['invoiceNumber'] ?? '');
 		$detail = trim((string)($parameters['detail'] ?? ''));
@@ -124,7 +124,7 @@ class EInvoiceNotifier implements INotifier {
 
 		if ($invoiceId !== '') {
 			$notification->setLink(
-				rtrim($this->urlGenerator->linkToRouteAbsolute(Application::APP_ID . '.dashboard.page'), '/')
+				rtrim($this->urlGenerator->linkToRouteAbsolute(AppIdentity::APP_ID . '.dashboard.page'), '/')
 				. '/' . self::INVOICE_DETAIL_PATH . rawurlencode($invoiceId)
 			);
 		}

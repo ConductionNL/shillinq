@@ -58,7 +58,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\App\IAppManager;
@@ -167,8 +167,8 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 	 */
 	public function run(IOutput $output): void {
 		// One full pass per installed version: a repair without an upgrade has nothing new to materialise.
-		$version = $this->appManager->getAppVersion(Application::APP_ID);
-		if ($this->appConfig->getValueString(Application::APP_ID, self::DONE_VERSION_KEY, '') === $version) {
+		$version = $this->appManager->getAppVersion(AppIdentity::APP_ID);
+		if ($this->appConfig->getValueString(AppIdentity::APP_ID, self::DONE_VERSION_KEY, '') === $version) {
 			$output->info('Shillinq: calc rematerialisation already complete for ' . $version . ', skipped.');
 			return;
 		}
@@ -202,7 +202,7 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 			);
 
 			if ($this->failures === 0) {
-				$this->appConfig->setValueString(Application::APP_ID, self::DONE_VERSION_KEY, $version);
+				$this->appConfig->setValueString(AppIdentity::APP_ID, self::DONE_VERSION_KEY, $version);
 			}
 		} catch (\Throwable $e) {
 			// Backfill is best-effort: failing it must NOT block the app

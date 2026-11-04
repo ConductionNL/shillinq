@@ -108,137 +108,9 @@ final class SaftReportGenerator implements ReportGeneratorInterface {
 	 * @return GeneratedFile
 	 */
 	public function generate(array $context, string $format): GeneratedFile {
-		$administrationId = $this->contextString($context, 'administrationId');
-		$period = $this->contextString($context, 'period');
-
-		$accounts = $this->loadAll('Account', $this->administrationFilter($context));
-		$transactions = $this->loadAll('GLTransaction', $this->lineFilters($context));
-		$allLines = $this->loadAll('GLLine', $this->lineFilters($context));
-
-		// Group lines by their parent transaction id (or transactionNumber).
-		$linesByTransaction = [];
-		foreach ($allLines as $line) {
-			$key = (string)($line['transactionId'] ?? '');
-			if ($key === '') {
-				continue;
-			}
-
-			$linesByTransaction[$key][] = $line;
-		}
-
-		$writer = new XMLWriter();
-		$writer->openMemory();
-		$writer->setIndent(true);
-		$writer->setIndentString('  ');
-		$writer->startDocument('1.0', 'UTF-8');
-
-		$writer->startElementNs(null, 'AuditFile', self::SAFT_NS);
-
-		// --- Header ---.
-		$writer->startElement('Header');
-		$writer->writeElement('AuditFileVersion', '2.00');
-		$writer->writeElement('AuditFileCountry', 'NL');
-		$writer->writeElement('AuditFileDateCreated', gmdate('Y-m-d'));
-		$writer->writeElement('SoftwareCompanyName', 'Conduction B.V.');
-		$writer->writeElement('SoftwareID', 'Shillinq');
-		$writer->startElement('Company');
-		$writer->writeElement('RegistrationNumber', ($administrationId !== '' ? $administrationId : 'UNKNOWN'));
-		$writer->writeElement('Name', ($administrationId !== '' ? $administrationId : 'Shillinq administration'));
-		$writer->endElement();
-		$writer->writeElement('DefaultCurrencyCode', 'EUR');
-		$writer->startElement('SelectionCriteria');
-		$writer->writeElement('PeriodStart', $period);
-		$writer->writeElement('PeriodEnd', $period);
-		$writer->endElement();
-		$writer->endElement();
-		// End Header.
-		// --- MasterFiles / GeneralLedgerAccounts ---.
-		$writer->startElement('MasterFiles');
-		$writer->startElement('GeneralLedgerAccounts');
-		foreach ($accounts as $account) {
-			$accountNumber = (string)($account['accountNumber'] ?? $account['code'] ?? '');
-			if ($accountNumber === '') {
-				continue;
-			}
-
-			$writer->startElement('Account');
-			$writer->writeElement('AccountID', $accountNumber);
-			$writer->writeElement('AccountDescription', (string)($account['name'] ?? ''));
-			$writer->writeElement('AccountType', (string)($account['accountType'] ?? 'GL'));
-			$parent = (string)($account['parentAccountNumber'] ?? '');
-			if ($parent !== '') {
-				$writer->writeElement('StandardAccountID', $parent);
-			}
-
-			$writer->endElement();
-		}//end foreach
-
-		$writer->endElement();
-		// End GeneralLedgerAccounts.
-		$writer->endElement();
-		// End MasterFiles.
-		// --- GeneralLedgerEntries ---.
-		$writer->startElement('GeneralLedgerEntries');
-		$writer->writeElement('NumberOfEntries', (string)count($transactions));
-
-		$totalDebit = 0.0;
-		$totalCredit = 0.0;
-		foreach ($transactions as $transaction) {
-			$debit = 0.0;
-			$credit = 0.0;
-			$lines = $this->linesFor($transaction, $linesByTransaction);
-			foreach ($lines as $line) {
-				if ((string)($line['side'] ?? '') === 'debit') {
-					$debit += $this->toFloat($line['amount'] ?? 0);
-				} else {
-					$credit += $this->toFloat($line['amount'] ?? 0);
-				}
-			}
-
-			$totalDebit += $debit;
-			$totalCredit += $credit;
-		}
-
-		$writer->writeElement('TotalDebit', $this->money($totalDebit));
-		$writer->writeElement('TotalCredit', $this->money($totalCredit));
-
-		// One Journal wrapping all entries (minimal single-journal SAF-T shape).
-		$writer->startElement('Journal');
-		$writer->writeElement('JournalID', 'GL');
-		$writer->writeElement('Description', 'General ledger');
-		foreach ($transactions as $transaction) {
-			$transactionId = (string)($transaction['id'] ?? $transaction['@self']['id'] ?? $transaction['transactionNumber'] ?? '');
-			$writer->startElement('Transaction');
-			$writer->writeElement('TransactionID', $transactionId);
-			$writer->writeElement('Period', $period);
-			$writer->writeElement('TransactionDate', (string)($transaction['postingDate'] ?? $transaction['valueDate'] ?? ''));
-			$writer->writeElement('Description', (string)($transaction['description'] ?? ''));
-			$writer->writeElement('TransactionType', (string)($transaction['postingKind'] ?? 'N'));
-
-			$lines = $this->linesFor($transaction, $linesByTransaction);
-			$writer->startElement('Lines');
-			foreach ($lines as $line) {
-				$side = ((string)($line['side'] ?? '') === 'debit') ? 'DebitLine' : 'CreditLine';
-				$writer->startElement($side);
-				$writer->writeElement('RecordID', (string)($line['lineNumber'] ?? $line['id'] ?? ''));
-				$writer->writeElement('AccountID', (string)($line['accountNumber'] ?? ''));
-				$writer->writeElement('Description', (string)($line['description'] ?? ''));
-				$writer->writeElement('Amount', $this->money($this->toFloat($line['amount'] ?? 0)));
-				$writer->endElement();
-			}
-
-			$writer->endElement();
-			// End Lines.
-			$writer->endElement();
-			// End Transaction.
-		}//end foreach
-
-		$writer->endElement();
-		// End Journal.
-		$writer->endElement();
-		// End GeneralLedgerEntries.
-		$writer->endElement();
-		// End AuditFile.
+		$data   = $this->loadSaftData(context: $context);
+		$writer = $this->openXmlDocument();
+		$this->writeAuditFile(writer: $writer, data: $data);
 		$writer->endDocument();
 
 		return new GeneratedFile(
@@ -249,6 +121,255 @@ final class SaftReportGenerator implements ReportGeneratorInterface {
 		);
 
 	}//end generate()
+
+	/**
+	 * Write the AuditFile element: header, master files and ledger entries.
+	 *
+	 * @param XMLWriter $writer The active writer.
+	 * @param array<string, mixed> $data The loaded data.
+	 *
+	 * @return void
+	 */
+	private function writeAuditFile(XMLWriter $writer, array $data): void {
+		$writer->startElementNs(null, 'AuditFile', self::SAFT_NS);
+		$this->writeHeader(writer: $writer, data: $data);
+		$this->writeMasterFiles(writer: $writer, accounts: $data['accounts']);
+		$this->writeLedgerEntries(writer: $writer, data: $data);
+		$writer->endElement();
+	}//end writeAuditFile()
+
+	/**
+	 * Load the accounts and the transactions with their lines.
+	 *
+	 * @param array<string,mixed> $context `{ period?, administrationId? }`.
+	 *
+	 * @return array<string, mixed> The loaded rows.
+	 */
+	private function loadSaftData(array $context): array {
+		$data = [
+			'administrationId' => $this->contextString($context, 'administrationId'),
+			'period' => $this->contextString($context, 'period'),
+			'accounts' => $this->loadAll('Account', $this->administrationFilter($context)),
+		];
+
+		$transactions = $this->loadAll('GLTransaction', $this->lineFilters($context));
+		$linesByTransaction = $this->groupLinesByTransaction(lines: $this->loadAll('GLLine', $this->lineFilters($context)));
+
+		$data['entries'] = [];
+		foreach ($transactions as $transaction) {
+			$data['entries'][] = ['transaction' => $transaction, 'lines' => $this->linesFor($transaction, $linesByTransaction)];
+		}
+
+		return $data;
+	}//end loadSaftData()
+
+	/**
+	 * Group lines by their parent transaction id (or transactionNumber).
+	 *
+	 * @param array<int, array<string,mixed>> $lines The GLLine rows.
+	 *
+	 * @return array<string, array<int, array<string,mixed>>>
+	 */
+	private function groupLinesByTransaction(array $lines): array {
+		$linesByTransaction = [];
+		foreach ($lines as $line) {
+			$key = (string)($line['transactionId'] ?? '');
+			if ($key !== '') {
+				$linesByTransaction[$key][] = $line;
+			}
+		}
+
+		return $linesByTransaction;
+	}//end groupLinesByTransaction()
+
+	/**
+	 * Write the Header block.
+	 *
+	 * @param XMLWriter $writer The active writer.
+	 * @param array<string, mixed> $data The loaded data.
+	 *
+	 * @return void
+	 */
+	private function writeHeader(XMLWriter $writer, array $data): void {
+		$writer->startElement('Header');
+		$writer->writeElement('AuditFileVersion', '2.00');
+		$writer->writeElement('AuditFileCountry', 'NL');
+		$writer->writeElement('AuditFileDateCreated', gmdate('Y-m-d'));
+		$writer->writeElement('SoftwareCompanyName', 'Conduction B.V.');
+		$writer->writeElement('SoftwareID', 'Shillinq');
+		$this->writeCompany(writer: $writer, administrationId: $data['administrationId']);
+		$writer->writeElement('DefaultCurrencyCode', 'EUR');
+		$this->writeSelectionCriteria(writer: $writer, period: $data['period']);
+		$writer->endElement();
+	}//end writeHeader()
+
+	/**
+	 * Write the Company block of the header.
+	 *
+	 * @param XMLWriter $writer The active writer.
+	 * @param string $administrationId The administration, '' when none.
+	 *
+	 * @return void
+	 */
+	private function writeCompany(XMLWriter $writer, string $administrationId): void {
+		$writer->startElement('Company');
+		$writer->writeElement('RegistrationNumber', ($administrationId !== '' ? $administrationId : 'UNKNOWN'));
+		$writer->writeElement('Name', ($administrationId !== '' ? $administrationId : 'Shillinq administration'));
+		$writer->endElement();
+	}//end writeCompany()
+
+	/**
+	 * Write the SelectionCriteria block of the header.
+	 *
+	 * @param XMLWriter $writer The active writer.
+	 * @param string $period The report period.
+	 *
+	 * @return void
+	 */
+	private function writeSelectionCriteria(XMLWriter $writer, string $period): void {
+		$writer->startElement('SelectionCriteria');
+		$writer->writeElement('PeriodStart', $period);
+		$writer->writeElement('PeriodEnd', $period);
+		$writer->endElement();
+	}//end writeSelectionCriteria()
+
+	/**
+	 * Write MasterFiles / GeneralLedgerAccounts.
+	 *
+	 * @param XMLWriter $writer The active writer.
+	 * @param array<int, array<string,mixed>> $accounts The Account rows.
+	 *
+	 * @return void
+	 */
+	private function writeMasterFiles(XMLWriter $writer, array $accounts): void {
+		$writer->startElement('MasterFiles');
+		$writer->startElement('GeneralLedgerAccounts');
+		foreach ($accounts as $account) {
+			$this->writeAccount(writer: $writer, account: $account);
+		}
+
+		$writer->endElement();
+		// End GeneralLedgerAccounts.
+		$writer->endElement();
+	}//end writeMasterFiles()
+
+	/**
+	 * Write one Account; an account without a number is skipped.
+	 *
+	 * @param XMLWriter $writer The active writer.
+	 * @param array<string,mixed> $account The Account row.
+	 *
+	 * @return void
+	 */
+	private function writeAccount(XMLWriter $writer, array $account): void {
+		$accountNumber = $this->accountNumber($account);
+		if ($accountNumber === '') {
+			return;
+		}
+
+		$writer->startElement('Account');
+		$writer->writeElement('AccountID', $accountNumber);
+		$writer->writeElement('AccountDescription', (string)($account['name'] ?? ''));
+		$writer->writeElement('AccountType', (string)($account['accountType'] ?? 'GL'));
+		$parent = (string)($account['parentAccountNumber'] ?? '');
+		if ($parent !== '') {
+			$writer->writeElement('StandardAccountID', $parent);
+		}
+
+		$writer->endElement();
+	}//end writeAccount()
+
+	/**
+	 * Write GeneralLedgerEntries: the totals and one Journal wrapping all
+	 * entries (minimal single-journal SAF-T shape).
+	 *
+	 * @param XMLWriter $writer The active writer.
+	 * @param array<string, mixed> $data The loaded data.
+	 *
+	 * @return void
+	 */
+	private function writeLedgerEntries(XMLWriter $writer, array $data): void {
+		$totals = $this->entryTotals(entries: $data['entries']);
+		$writer->startElement('GeneralLedgerEntries');
+		$writer->writeElement('NumberOfEntries', (string)count($data['entries']));
+		$writer->writeElement('TotalDebit', $this->money($totals['debit']));
+		$writer->writeElement('TotalCredit', $this->money($totals['credit']));
+		$writer->startElement('Journal');
+		$writer->writeElement('JournalID', 'GL');
+		$writer->writeElement('Description', 'General ledger');
+		foreach ($data['entries'] as $entry) {
+			$this->writeTransaction(writer: $writer, entry: $entry + ['period' => $data['period']]);
+		}
+
+		$writer->endElement();
+		// End Journal.
+		$writer->endElement();
+	}//end writeLedgerEntries()
+
+	/**
+	 * Sum the debit and credit amounts, per transaction first.
+	 *
+	 * @param array<int, array{transaction: array<string,mixed>, lines: array<int, array<string,mixed>>}> $entries The transactions with their lines.
+	 *
+	 * @return array{debit: float, credit: float}
+	 */
+	private function entryTotals(array $entries): array {
+		$totals = ['debit' => 0.0, 'credit' => 0.0];
+		foreach ($entries as $entry) {
+			$sums = ['debit' => 0.0, 'credit' => 0.0];
+			foreach ($entry['lines'] as $line) {
+				$sums[$this->isDebitLine($line) === true ? 'debit' : 'credit'] += $this->lineAmountValue($line);
+			}
+
+			$totals['debit']  += $sums['debit'];
+			$totals['credit'] += $sums['credit'];
+		}
+
+		return $totals;
+	}//end entryTotals()
+
+	/**
+	 * Write one Transaction with its debit and credit lines.
+	 *
+	 * @param XMLWriter $writer The active writer.
+	 * @param array{transaction: array<string,mixed>, lines: array<int, array<string,mixed>>, period: string} $entry The entry and the period.
+	 *
+	 * @return void
+	 */
+	private function writeTransaction(XMLWriter $writer, array $entry): void {
+		$transaction = $entry['transaction'];
+		$writer->startElement('Transaction');
+		$writer->writeElement('TransactionID', $this->transactionId($transaction));
+		$writer->writeElement('Period', $entry['period']);
+		$writer->writeElement('TransactionDate', (string)($transaction['postingDate'] ?? $transaction['valueDate'] ?? ''));
+		$writer->writeElement('Description', (string)($transaction['description'] ?? ''));
+		$writer->writeElement('TransactionType', (string)($transaction['postingKind'] ?? 'N'));
+		$writer->startElement('Lines');
+		foreach ($entry['lines'] as $line) {
+			$this->writeLine(writer: $writer, line: $line);
+		}
+
+		$writer->endElement();
+		// End Lines.
+		$writer->endElement();
+	}//end writeTransaction()
+
+	/**
+	 * Write one DebitLine or CreditLine.
+	 *
+	 * @param XMLWriter $writer The active writer.
+	 * @param array<string,mixed> $line The GLLine row.
+	 *
+	 * @return void
+	 */
+	private function writeLine(XMLWriter $writer, array $line): void {
+		$writer->startElement($this->isDebitLine($line) === true ? 'DebitLine' : 'CreditLine');
+		$writer->writeElement('RecordID', $this->lineRecordId($line));
+		$writer->writeElement('AccountID', (string)($line['accountNumber'] ?? ''));
+		$writer->writeElement('Description', (string)($line['description'] ?? ''));
+		$writer->writeElement('Amount', $this->money($this->lineAmountValue($line)));
+		$writer->endElement();
+	}//end writeLine()
 
 	/**
 	 * Resolve the GLLine children for a transaction by id or transactionNumber.

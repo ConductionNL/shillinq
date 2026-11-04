@@ -72,6 +72,8 @@ final class PaymentRunReconcileGuard implements LifecycleGuardInterface {
 	 *
 	 * @return GuardResult
 	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleGuardInterface's.
+	 *
 	 * @spec openspec/changes/enforced-schema-authorization/tasks.md#task-2.3
 	 */
 	public function check(array $object, string $action, string $userId): GuardResult {

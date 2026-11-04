@@ -39,10 +39,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Lifecycle precondition guard for ExpenseClaimEntry dual-mode settlement
@@ -86,7 +87,7 @@ class ExpenseReimbursementGuard {
 	 * @return string The non-empty register slug.
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($slug === '') {
 			return 'shillinq';
 		}
@@ -347,10 +348,12 @@ class ExpenseReimbursementGuard {
 					continue;
 				}
 
-				$item = $this->objectService
-					->setRegister($register)
-					->setSchema($check['schema'])
-					->find($stringId);
+				$item = ObjectIdentifier::findScoped(
+					scoped: $this->objectService
+						->setRegister($register)
+						->setSchema($check['schema']),
+					id: $stringId
+				);
 
 				if ($item === null) {
 					continue;
@@ -502,10 +505,12 @@ class ExpenseReimbursementGuard {
 					continue;
 				}
 
-				$item = $this->objectService
-					->setRegister($register)
-					->setSchema($source['schema'])
-					->find($stringId);
+				$item = ObjectIdentifier::findScoped(
+					scoped: $this->objectService
+						->setRegister($register)
+						->setSchema($source['schema']),
+					id: $stringId
+				);
 
 				if ($item === null) {
 					continue;
@@ -550,10 +555,12 @@ class ExpenseReimbursementGuard {
 	private function isGlTransactionReversed(string $glTxnId): bool {
 		$register = $this->getRegisterSlug();
 
-		$txn = $this->objectService
-			->setRegister($register)
-			->setSchema('GLTransaction')
-			->find($glTxnId);
+		$txn = ObjectIdentifier::findScoped(
+			scoped: $this->objectService
+				->setRegister($register)
+				->setSchema('GLTransaction'),
+			id: $glTxnId
+		);
 
 		if ($txn === null) {
 			return false;

@@ -34,7 +34,7 @@ namespace OCA\Shillinq\Service\PublicSector;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 
 /**
@@ -513,7 +513,7 @@ class FidoQuarter {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

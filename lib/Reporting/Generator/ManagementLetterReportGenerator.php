@@ -87,8 +87,29 @@ final class ManagementLetterReportGenerator extends AbstractDocumentReportGenera
 		$audit = $this->runAudit($context);
 
 		$this->addCover($section, 'Management letter', 'Bevindingenrapport — compliance & interne beheersing', $context);
+		$this->writeSalutation(section: $section);
+		$this->writeSummary(section: $section, audit: $audit);
+		$this->writeSeverityBreakdown(section: $section, audit: $audit);
+		$this->writeTypeBreakdown(section: $section, audit: $audit);
+		$this->writeTopViolatedRules(section: $section, audit: $audit);
+		$this->writeRecommendation(section: $section, audit: $audit);
 
-		// --- Aanhef (salutation / introduction) ---
+		$this->addNote(
+			$section,
+			'Deze management letter is automatisch gegenereerd uit de regelmotor (RuleAuditService). '
+			. 'De dekkingsgraad geeft aan welk deel van het machinaal controleerbare corpus vandaag daadwerkelijk wordt afgedwongen.'
+		);
+
+	}//end build()
+
+	/**
+	 * Aanhef: the salutation and introduction.
+	 *
+	 * @param ReportSection $section The block accumulator to fill.
+	 *
+	 * @return void
+	 */
+	private function writeSalutation(ReportSection $section): void {
 		$this->addParagraph(
 			$section,
 			'Geachte directie,'
@@ -99,31 +120,68 @@ final class ManagementLetterReportGenerator extends AbstractDocumentReportGenera
 			. 'getoetst aan het machinaal controleerbare normenkader. Onderstaand treft u onze bevindingen aan, '
 			. 'geordend naar ernst, met een samenvatting van de mate waarin de administratie aan de normen voldoet.'
 		);
+	}//end writeSalutation()
 
-		// --- Samenvatting (management summary) ---
+	/**
+	 * Samenvatting: the management summary table.
+	 *
+	 * @param ReportSection $section The block accumulator to fill.
+	 * @param array<string, mixed> $audit The RuleAuditService report.
+	 *
+	 * @return void
+	 */
+	private function writeSummary(ReportSection $section, array $audit): void {
 		$section->addTextBreak(1);
 		$this->addHeading($section, 'Samenvatting');
-		$objectsChecked = (int)($audit['objectsChecked'] ?? 0);
-		$objectsCompliant = (int)($audit['objectsCompliant'] ?? 0);
-		$withViolations = (int)($audit['objectsWithViolations'] ?? 0);
-		$compliancePct = $objectsChecked > 0 ? round(($objectsCompliant / $objectsChecked) * 100, 1) : 0.0;
+		$this->addDetailsTable($section, $this->summaryRows(audit: $audit));
+	}//end writeSummary()
 
-		$this->addDetailsTable(
-			$section,
-			[
-				'Normenkader (versie)' => (string)($audit['catalogueVersion'] ?? ''),
-				'Regels in corpus' => (string)((int)($audit['corpusTotal'] ?? 0)),
-				'Machinaal controleerbaar' => (string)((int)($audit['machineCheckable'] ?? 0)),
-				'Afdwingbare regels' => (string)((int)($audit['enforceableRules'] ?? 0)),
-				'Dekkingsgraad' => $this->pct($audit['coveragePct'] ?? 0) . ' %',
-				'Objecten gecontroleerd' => (string)$objectsChecked,
-				'Objecten zonder bevindingen' => (string)$objectsCompliant,
-				'Objecten met bevindingen' => (string)$withViolations,
-				'Compliancegraad' => $this->pct($compliancePct) . ' %',
-			]
-		);
+	/**
+	 * The rows of the management summary table.
+	 *
+	 * @param array<string, mixed> $audit The RuleAuditService report.
+	 *
+	 * @return array<string, string>
+	 */
+	private function summaryRows(array $audit): array {
+		return [
+			'Normenkader (versie)' => (string)($audit['catalogueVersion'] ?? ''),
+			'Regels in corpus' => (string)$this->auditInt(audit: $audit, key: 'corpusTotal'),
+			'Machinaal controleerbaar' => (string)$this->auditInt(audit: $audit, key: 'machineCheckable'),
+			'Afdwingbare regels' => (string)$this->auditInt(audit: $audit, key: 'enforceableRules'),
+			'Dekkingsgraad' => $this->pct($audit['coveragePct'] ?? 0) . ' %',
+			'Objecten gecontroleerd' => (string)$this->auditInt(audit: $audit, key: 'objectsChecked'),
+			'Objecten zonder bevindingen' => (string)$this->auditInt(audit: $audit, key: 'objectsCompliant'),
+			'Objecten met bevindingen' => (string)$this->auditInt(audit: $audit, key: 'objectsWithViolations'),
+			'Compliancegraad' => $this->pct($this->compliancePct(audit: $audit)) . ' %',
+		];
+	}//end summaryRows()
 
-		// --- Bevindingen naar ernst (severity breakdown) ---
+	/**
+	 * The share of checked objects without findings, in percent with one decimal.
+	 *
+	 * @param array<string, mixed> $audit The RuleAuditService report.
+	 *
+	 * @return float
+	 */
+	private function compliancePct(array $audit): float {
+		$objectsChecked = $this->auditInt(audit: $audit, key: 'objectsChecked');
+		if ($objectsChecked > 0) {
+			return round(($this->auditInt(audit: $audit, key: 'objectsCompliant') / $objectsChecked) * 100, 1);
+		}
+
+		return 0.0;
+	}//end compliancePct()
+
+	/**
+	 * Bevindingen naar ernst: the severity breakdown.
+	 *
+	 * @param ReportSection $section The block accumulator to fill.
+	 * @param array<string, mixed> $audit The RuleAuditService report.
+	 *
+	 * @return void
+	 */
+	private function writeSeverityBreakdown(ReportSection $section, array $audit): void {
 		$section->addTextBreak(1);
 		$this->addHeading($section, 'Bevindingen naar ernst');
 		$severity = $audit['violationsBySeverity'] ?? [];
@@ -131,91 +189,112 @@ final class ManagementLetterReportGenerator extends AbstractDocumentReportGenera
 			$severity = [];
 		}
 
-		$this->addAmountTable(
-			$section,
-			'Ernst',
-			'Aantal',
-			[
-				['label' => 'Verplicht (mandatory)', 'amount' => (int)($severity['mandatory'] ?? 0)],
-				['label' => 'Voorwaardelijk (conditional)', 'amount' => (int)($severity['conditional'] ?? 0)],
-				['label' => 'Aanbevolen (recommended)', 'amount' => (int)($severity['recommended'] ?? 0)],
-			],
-			[
-				'label' => 'Totaal bevindingen',
-				'amount' => ((int)($severity['mandatory'] ?? 0) + (int)($severity['conditional'] ?? 0) + (int)($severity['recommended'] ?? 0)),
-			],
-			''
-		);
+		$lines = [
+			['label' => 'Verplicht (mandatory)', 'amount' => $this->auditInt(audit: $severity, key: 'mandatory')],
+			['label' => 'Voorwaardelijk (conditional)', 'amount' => $this->auditInt(audit: $severity, key: 'conditional')],
+			['label' => 'Aanbevolen (recommended)', 'amount' => $this->auditInt(audit: $severity, key: 'recommended')],
+		];
+		$total = ['label' => 'Totaal bevindingen', 'amount' => array_sum(array_column($lines, 'amount'))];
+		$this->addAmountTable($section, 'Ernst', 'Aantal', $lines, $total, '');
+	}//end writeSeverityBreakdown()
 
-		// --- Bevindingen per object-type ---
+	/**
+	 * Bevindingen per object-type, when the audit lists types.
+	 *
+	 * @param ReportSection $section The block accumulator to fill.
+	 * @param array<string, mixed> $audit The RuleAuditService report.
+	 *
+	 * @return void
+	 */
+	private function writeTypeBreakdown(ReportSection $section, array $audit): void {
 		$types = $audit['types'] ?? [];
-		if (is_array($types) === true && $types !== []) {
-			$section->addTextBreak(1);
-			$this->addHeading($section, 'Bevindingen per object-type');
-			$typeLines = [];
-			foreach ($types as $typeName => $stat) {
-				if (is_array($stat) === false) {
-					continue;
-				}
-
-				$typeLines[] = [
-					'label' => (string)$typeName . ' (gecontroleerd: ' . (int)($stat['checked'] ?? 0) . ', met bevindingen: ' . (int)($stat['withViolations'] ?? 0) . ')',
-					'amount' => (int)($stat['violations'] ?? 0),
-				];
-			}
-
-			$this->addAmountTable($section, 'Object-type', 'Bevindingen', $typeLines, null, '');
+		if (is_array($types) === false || $types === []) {
+			return;
 		}
 
-		// --- Meest geschonden regels (top violated rules) ---
+		$section->addTextBreak(1);
+		$this->addHeading($section, 'Bevindingen per object-type');
+		$this->addAmountTable($section, 'Object-type', 'Bevindingen', $this->typeLines(types: $types), null, '');
+	}//end writeTypeBreakdown()
+
+	/**
+	 * One table line per object type: its findings, labelled with the checked counts.
+	 *
+	 * @param array<mixed> $types The audit's per-type statistics.
+	 *
+	 * @return array<int, array{label: string, amount: int}>
+	 */
+	private function typeLines(array $types): array {
+		$typeLines = [];
+		foreach (array_filter($types, 'is_array') as $typeName => $stat) {
+			$typeLines[] = [
+				'label' => (string)$typeName . ' (gecontroleerd: ' . $this->auditInt(audit: $stat, key: 'checked')
+					. ', met bevindingen: ' . $this->auditInt(audit: $stat, key: 'withViolations') . ')',
+				'amount' => $this->auditInt(audit: $stat, key: 'violations'),
+			];
+		}
+
+		return $typeLines;
+	}//end typeLines()
+
+	/**
+	 * Belangrijkste bevindingen: the most violated rules, when listed.
+	 *
+	 * @param ReportSection $section The block accumulator to fill.
+	 * @param array<string, mixed> $audit The RuleAuditService report.
+	 *
+	 * @return void
+	 */
+	private function writeTopViolatedRules(ReportSection $section, array $audit): void {
 		$top = $audit['topViolatedRules'] ?? [];
-		if (is_array($top) === true && $top !== []) {
-			$section->addTextBreak(1);
-			$this->addHeading($section, 'Belangrijkste bevindingen');
-			$this->addParagraph(
-				$section,
-				'De onderstaande regels zijn het vaakst overtreden en verdienen prioriteit bij het herstel.'
-			);
+		if (is_array($top) === false || $top === []) {
+			return;
+		}
 
-			$topLines = [];
-			foreach ($top as $entry) {
-				if (is_array($entry) === false) {
-					continue;
-				}
+		$section->addTextBreak(1);
+		$this->addHeading($section, 'Belangrijkste bevindingen');
+		$this->addParagraph($section, 'De onderstaande regels zijn het vaakst overtreden en verdienen prioriteit bij het herstel.');
 
-				$topLines[] = [
-					'label' => (string)($entry['ruleId'] ?? ''),
-					'amount' => (int)($entry['count'] ?? 0),
-				];
-			}
+		$topLines = [];
+		foreach (array_filter($top, 'is_array') as $entry) {
+			$topLines[] = ['label' => (string)($entry['ruleId'] ?? ''), 'amount' => $this->auditInt(audit: $entry, key: 'count')];
+		}
 
-			$this->addAmountTable($section, 'Regel', 'Aantal', $topLines, null, '');
-		}//end if
+		$this->addAmountTable($section, 'Regel', 'Aantal', $topLines, null, '');
+	}//end writeTopViolatedRules()
 
-		// --- Slot (closing) ---
+	/**
+	 * Aanbeveling: the closing recommendation.
+	 *
+	 * @param ReportSection $section The block accumulator to fill.
+	 * @param array<string, mixed> $audit The RuleAuditService report.
+	 *
+	 * @return void
+	 */
+	private function writeRecommendation(ReportSection $section, array $audit): void {
 		$section->addTextBreak(1);
 		$this->addHeading($section, 'Aanbeveling');
-		if ($withViolations === 0 && $objectsChecked > 0) {
-			$this->addParagraph(
-				$section,
-				'Op basis van het machinaal controleerbare normenkader zijn geen bevindingen geconstateerd. '
-				. 'De administratie voldoet aan de getoetste normen.'
-			);
-		} else {
-			$this->addParagraph(
-				$section,
-				'Wij adviseren de geconstateerde bevindingen op te lossen, te beginnen bij de verplichte (mandatory) '
-				. 'bevindingen, en de interne beheersing zodanig in te richten dat herhaling wordt voorkomen.'
-			);
+		$text = 'Wij adviseren de geconstateerde bevindingen op te lossen, te beginnen bij de verplichte (mandatory) '
+			. 'bevindingen, en de interne beheersing zodanig in te richten dat herhaling wordt voorkomen.';
+		if ($this->auditInt(audit: $audit, key: 'objectsWithViolations') === 0 && $this->auditInt(audit: $audit, key: 'objectsChecked') > 0) {
+			$text = 'Op basis van het machinaal controleerbare normenkader zijn geen bevindingen geconstateerd. '
+				. 'De administratie voldoet aan de getoetste normen.';
 		}
 
-		$this->addNote(
-			$section,
-			'Deze management letter is automatisch gegenereerd uit de regelmotor (RuleAuditService). '
-			. 'De dekkingsgraad geeft aan welk deel van het machinaal controleerbare corpus vandaag daadwerkelijk wordt afgedwongen.'
-		);
+		$this->addParagraph($section, $text);
+	}//end writeRecommendation()
 
-	}//end build()
+	/**
+	 * An integer figure of an audit report (0 when absent).
+	 *
+	 * @param array<string, mixed> $audit The audit report or one of its sub-arrays.
+	 * @param string $key The figure's key.
+	 *
+	 * @return int
+	 */
+	private function auditInt(array $audit, string $key): int {
+		return (int)($audit[$key] ?? 0);
+	}//end auditInt()
 
 	/**
 	 * Run the compliance audit, resolving RuleAuditService through the container

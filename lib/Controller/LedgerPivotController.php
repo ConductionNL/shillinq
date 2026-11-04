@@ -27,7 +27,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use InvalidArgumentException;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Pivot\LedgerPivotService;
 use OCP\AppFramework\Controller;
@@ -58,7 +58,7 @@ class LedgerPivotController extends Controller {
 		private readonly LedgerPivotService $pivot,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 

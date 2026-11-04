@@ -73,21 +73,54 @@ export async function loadInvoice(id) {
  * @spec openspec/changes/archive/2026-09-29-receivables-payment-plans/tasks.md#task-4.1
  */
 export function buildPlanRequest(form) {
-	const byAmount = form.mode === 'amount'
+	const instalments = instalmentTerms(form)
 	return {
-		administrationId: String(form.administrationId || ''),
-		customerId: String(form.customerId || ''),
+		administrationId: text(form.administrationId),
+		customerId: text(form.customerId),
 		invoiceIds: [...(form.invoiceIds || [])],
-		instalmentCount: byAmount ? null : Number(form.instalmentCount || 0),
-		instalmentAmount: byAmount ? Number(form.instalmentAmount || 0) : null,
+		instalmentCount: instalments.count,
+		instalmentAmount: instalments.amount,
 		frequency: form.frequency === 'weekly' ? 'weekly' : 'monthly',
-		firstDueDate: String(form.firstDueDate || ''),
+		firstDueDate: text(form.firstDueDate),
 		graceDays: Number(form.graceDays ?? 14),
 		includesCharges: Boolean(form.includesCharges),
-		chargesAmount: form.includesCharges ? Number(form.chargesAmount || 0) : 0,
-		agreedWith: String(form.agreedWith || ''),
-		note: String(form.note || ''),
+		chargesAmount: form.includesCharges ? amount(form.chargesAmount) : 0,
+		agreedWith: text(form.agreedWith),
+		note: text(form.note),
 	}
+}
+
+/**
+ * The instalment count and amount: a plan is set by one of them, the other is null.
+ *
+ * @param {object} form The dialog's values.
+ * @return {{count: number|null, amount: number|null}}
+ */
+function instalmentTerms(form) {
+	if (form.mode === 'amount') {
+		return { count: null, amount: amount(form.instalmentAmount) }
+	}
+	return { count: amount(form.instalmentCount), amount: null }
+}
+
+/**
+ * A field as text, empty when unset.
+ *
+ * @param {string|number|null|undefined} value The field.
+ * @return {string}
+ */
+function text(value) {
+	return String(value || '')
+}
+
+/**
+ * A field as a number, 0 when unset.
+ *
+ * @param {string|number|null|undefined} value The field.
+ * @return {number}
+ */
+function amount(value) {
+	return Number(value || 0)
 }
 
 /**
