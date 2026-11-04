@@ -343,10 +343,7 @@ class DBAFlagGenerationJob extends TimedJob {
 			$modelId = (string)($assignment['modelAgreementId'] ?? '');
 			if ($modelId !== '') {
 				try {
-					$model = ObjectIdentifier::findScoped(
-						scoped: $objectService->setRegister($register)->setSchema('DBAModelovereenkomst'),
-						id: $modelId
-					);
+					$model = ObjectIdentifier::findScoped(scoped: $objectService->setRegister($register)->setSchema('DBAModelovereenkomst'), id: $modelId);
 					$modelArr = $this->toArray(entity: $model);
 					if ($modelArr !== null
 						&& $this->detectModelovereenkomstVerlopen(
