@@ -31,10 +31,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Guard;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Guards BankReconciliation + BankReconciliationMatch lifecycle invariants.
@@ -71,7 +72,7 @@ class BankReconciliationGuard {
 	 * @return string
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($slug === '') {
 			return 'shillinq';
 		}
@@ -362,10 +363,12 @@ class BankReconciliationGuard {
 	 */
 	private function fetchObject(string $schema, string $id): ?array {
 		try {
-			$result = $this->objectService
-				->setRegister($this->getRegisterSlug())
-				->setSchema($schema)
-				->find($id);
+			$result = ObjectIdentifier::findScoped(
+				scoped: $this->objectService
+					->setRegister($this->getRegisterSlug())
+					->setSchema($schema),
+				id: $id
+			);
 
 			// ADR-084: find() is declared `: ?ObjectEntityInterface`, which extends
 			// JsonSerializable — the is_array() arm above was unreachable by type.

@@ -9,123 +9,68 @@
   @spec openspec/changes/inventory-mobile-scanner/tasks.md#T3.3
 -->
 <template>
-	<section class="pick-op">
-		<h1>{{ t('shillinq', 'Pick for Order') }}</h1>
+	<InventoryOperationForm
+		v-bind="formState"
+		:warning="warning"
+		:title="t('shillinq', 'Pick for Order')"
+		:submitLabel="t('shillinq', 'Confirm pick')"
+		v-on="formEvents">
+		<InventoryLocationField
+			v-model="location"
+			:locations="store.locations"
+			:label="t('shillinq', 'Location')"
+			:selectLabel="t('shillinq', 'Pick location')"
+			:placeholder="t('shillinq', 'Select a location')" />
 
-		<form class="pick-op__form" @submit.prevent="handleConfirm">
-			<label>
-				<span>{{ t('shillinq', 'Location') }}</span>
-				<select
-					v-model="location"
-					required
-					:aria-label="t('shillinq', 'Pick location')">
-					<option value="">
-						{{ t('shillinq', 'Select a location') }}
-					</option>
-					<option
-						v-for="loc in store.locations"
-						:key="loc.code"
-						:value="loc.code">
-						{{ loc.name }} ({{ loc.code }})
-					</option>
-				</select>
-			</label>
+		<InventorySkuField v-model="sku" @scan="scanning = true" />
 
-			<label>
-				<span>{{ t('shillinq', 'SKU / barcode') }}</span>
-				<div class="pick-op__sku-row">
-					<input
-						v-model="sku"
-						type="text"
-						required
-						:placeholder="t('shillinq', 'Tap scan or type SKU')"
-						:aria-label="t('shillinq', 'Stock keeping unit')" />
-					<button type="button" @click="scanning = true">
-						{{ t('shillinq', 'Scan') }}
-					</button>
-				</div>
-			</label>
+		<label>
+			<span>{{ t('shillinq', 'Order line id (optional)') }}</span>
+			<input
+				v-model="orderLineId"
+				type="text"
+				:aria-label="t('shillinq', 'Order line id')" />
+		</label>
 
-			<label>
-				<span>{{ t('shillinq', 'Order line id (optional)') }}</span>
-				<input
-					v-model="orderLineId"
-					type="text"
-					:aria-label="t('shillinq', 'Order line id')" />
-			</label>
-
-			<label>
-				<span>{{ t('shillinq', 'Quantity') }}</span>
-				<input
-					v-model.number="quantity"
-					type="number"
-					min="0.01"
-					step="0.01"
-					required
-					:aria-label="t('shillinq', 'Quantity to pick')" />
-			</label>
-
-			<div v-if="error" class="pick-op__error" role="alert">
-				{{ error }}
-			</div>
-			<div v-if="warning" class="pick-op__warning" role="alert">
-				{{ warning }}
-			</div>
-			<div v-if="successMessage" class="pick-op__success" role="status">
-				{{ successMessage }}
-			</div>
-
-			<div class="pick-op__actions">
-				<button type="submit" :disabled="submitting">
-					{{ t('shillinq', 'Confirm pick') }}
-				</button>
-			</div>
-		</form>
-
-		<BarcodeScanner
-			v-if="scanning"
-			@scan="handleScan"
-			@cancel="scanning = false" />
-	</section>
+		<InventoryQuantityField
+			v-model="quantity"
+			:inputLabel="t('shillinq', 'Quantity to pick')" />
+	</InventoryOperationForm>
 </template>
 
 <script>
-import BarcodeScanner from './BarcodeScanner.vue'
+import InventoryLocationField from './InventoryLocationField.vue'
+import InventoryOperationForm from './InventoryOperationForm.vue'
+import InventoryQuantityField from './InventoryQuantityField.vue'
+import InventorySkuField from './InventorySkuField.vue'
 import { readStockQuantity } from '../../composables/useInventoryDb.js'
-import { useInventoryMobileScannerStore } from '../../store/modules/inventoryMobileScanner.js'
-import { claimSubmitSlot } from './claimSubmitSlot.js'
+import { inventoryOperation } from './inventoryOperation.js'
 
 export default {
 	name: 'PickOp',
-	components: { BarcodeScanner },
+	components: {
+		InventoryLocationField,
+		InventoryOperationForm,
+		InventoryQuantityField,
+		InventorySkuField,
+	},
+
 	data() {
 		return {
+			...inventoryOperation.state(),
 			location: '',
-			sku: '',
 			orderLineId: '',
 			quantity: null,
-			scanning: false,
-			submitting: false,
-			error: null,
 			warning: null,
-			successMessage: null,
-			lastSubmittedAt: 0,
 		}
 	},
 
 	computed: {
-		store() {
-			return useInventoryMobileScannerStore()
-		},
+		...inventoryOperation.computed,
 	},
 
 	methods: {
-		claimSubmitSlot,
-
-		handleScan(value) {
-			this.sku = value
-			this.scanning = false
-		},
+		...inventoryOperation.methods,
 
 		/**
 		 * Check the form, the stock and the submit guard in turn, then record
@@ -235,18 +180,15 @@ export default {
 		 * @spec openspec/specs/inventory-mobile-scanner/spec.md
 		 */
 		async recordPick() {
-			this.submitting = true
-			try {
-				await this.store.submitOperation(this.pickOperation())
-				this.successMessage = this.pickDoneMessage()
-				this.sku = ''
-				this.quantity = null
-				this.orderLineId = ''
-			} catch (e) {
-				this.error = this.failureText(e)
-			} finally {
-				this.submitting = false
-			}
+			await this.queueOperation(this.pickOperation(), {
+				queued: () => {
+					this.successMessage = this.pickDoneMessage()
+					this.sku = ''
+					this.quantity = null
+					this.orderLineId = ''
+				},
+				failed: (e) => this.failureText(e),
+			})
 		},
 
 		/**
@@ -296,44 +238,3 @@ export default {
 	},
 }
 </script>
-
-<style scoped>
-.pick-op {
-	display: flex;
-	flex-direction: column;
-	gap: var(--default-grid-baseline, 4px);
-	padding: var(--default-grid-baseline, 4px);
-}
-
-.pick-op__form label {
-	display: flex;
-	flex-direction: column;
-	margin-bottom: var(--default-grid-baseline, 4px);
-}
-
-.pick-op__sku-row {
-	display: flex;
-	gap: var(--default-grid-baseline, 4px);
-}
-
-.pick-op__sku-row input {
-	flex: 1;
-}
-
-.pick-op__error {
-	color: var(--color-error);
-}
-
-.pick-op__warning {
-	color: var(--color-warning);
-}
-
-.pick-op__success {
-	color: var(--color-success);
-}
-
-.pick-op__actions {
-	display: flex;
-	justify-content: flex-end;
-}
-</style>

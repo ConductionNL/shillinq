@@ -31,7 +31,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Guard;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -86,7 +86,7 @@ class BbvComplianceGuard {
 	 * @return string
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($slug === '') {
 			return 'shillinq';
 		}
@@ -223,7 +223,7 @@ class BbvComplianceGuard {
 	 */
 	private function isHistoricPosting(array $line): bool {
 		$installRaw = $this->appConfig->getValueString(
-			Application::APP_ID,
+			AppIdentity::APP_ID,
 			'bbv_installation_date',
 			''
 		);
@@ -617,7 +617,7 @@ class BbvComplianceGuard {
 	 */
 	private function getActiveringsgrensCents(): int {
 		$configured = $this->appConfig->getValueInt(
-			Application::APP_ID,
+			AppIdentity::APP_ID,
 			'bbv_activeringsgrens_cents',
 			5000000
 		);

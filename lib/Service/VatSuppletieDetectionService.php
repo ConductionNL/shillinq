@@ -63,7 +63,7 @@ namespace OCA\Shillinq\Service;
 use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\Vat\VatLineStamper;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -468,7 +468,7 @@ class VatSuppletieDetectionService {
 	 * @return string The created GLTransaction id.
 	 */
 	private function createCorrectionPosting(string $administrationId, string $vatCorrectionId, array $deltas): string {
-		$clearingAccount = $this->appConfig->getValueString(Application::APP_ID, 'vatCorrectionClearingAccount', self::DEFAULT_CLEARING_ACCOUNT);
+		$clearingAccount = $this->appConfig->getValueString(AppIdentity::APP_ID, 'vatCorrectionClearingAccount', self::DEFAULT_CLEARING_ACCOUNT);
 		if ($clearingAccount === '') {
 			$clearingAccount = self::DEFAULT_CLEARING_ACCOUNT;
 		}
@@ -659,7 +659,7 @@ class VatSuppletieDetectionService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

@@ -100,7 +100,10 @@ describe('Receivables management board', () => {
 	it('lists the provider payouts from fields ProviderPayout carries', () => {
 		const fragment = JSON.parse(
 			fs.readFileSync(
-				path.join(ROOT, 'lib/Settings/register.d/receivables-provider-payouts.json'),
+				path.join(
+					ROOT,
+					'lib/Settings/register.d/receivables-provider-payouts.json',
+				),
 				'utf8',
 			),
 		)

@@ -50,7 +50,7 @@ namespace OCA\Shillinq\Listener;
 
 use DateTime;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\Event;
@@ -296,7 +296,7 @@ class PeppolDeliveryStatusListener implements IEventListener {
 		}
 
 		try {
-			$invoice = ObjectIdentifier::recordWithId(candidate: $scoped->find($id));
+			$invoice = ObjectIdentifier::recordWithId(candidate: ObjectIdentifier::findScoped(scoped: $scoped, id: $id));
 			if ($invoice !== null) {
 				return $invoice;
 			}
@@ -346,7 +346,7 @@ class PeppolDeliveryStatusListener implements IEventListener {
 			try {
 				$notification = $this->notificationManager->createNotification();
 				$notification
-					->setApp(Application::APP_ID)
+					->setApp(AppIdentity::APP_ID)
 					->setUser($userId)
 					->setDateTime(new DateTime())
 					->setObject(self::NOTIFICATION_OBJECT_TYPE, $invoiceNumber)
@@ -436,7 +436,7 @@ class PeppolDeliveryStatusListener implements IEventListener {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}
