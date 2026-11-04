@@ -424,6 +424,59 @@ final class TimeIntakeServiceIngestGoldenTest extends TestCase {
 	}//end tearDownAfterClass()
 
 	/**
+	 * Body fields that must be strings, each given a non-string value.
+	 *
+	 * @return array<string, array<int, mixed>>
+	 */
+	public static function nonStringFields(): array {
+		return [
+			'batchId as a list'           => [['batchId' => ['x']], 'batchId'],
+			'batchId as a number'         => [['batchId' => 7], 'batchId'],
+			'organisationRef as a list'   => [['organisationRef' => ['cust-1']], 'organisationRef'],
+			'period start as a number'    => [['period' => ['start' => 20260601, 'end' => '2026-06-30']], 'start'],
+			'period end as a list'        => [['period' => ['start' => '2026-06-01', 'end' => ['2026-06-30']]], 'end'],
+			'billingModel as a list'      => [['billingModel' => ['t_and_m']], 'billingModel'],
+			'currency as a number'        => [['currency' => 978], 'currency'],
+			'rateCardId as a list'        => [['rateCardId' => ['rc-1']], 'rateCardId'],
+			'projectRef as a boolean'     => [['projectRef' => true], 'projectRef'],
+			'notes as an object'          => [['notes' => ['text' => 'June']], 'notes'],
+			'externalId as a number'      => [['entry' => ['externalId' => 1001]], 'externalId'],
+			'entry date as a list'        => [['entry' => ['date' => ['2026-06-03']]], 'date'],
+			'description as a number'     => [['entry' => ['description' => 5]], 'description'],
+			'rateRef as a list'           => [['entry' => ['rateRef' => ['rc-1']]], 'rateRef'],
+			'entry projectRef as a float' => [['entry' => ['projectRef' => 1.5]], 'projectRef'],
+		];
+
+	}//end nonStringFields()
+
+	/**
+	 * A non-string value in a string field is a 400, before any read or write.
+	 *
+	 * @param array<string, mixed> $change The body change; `entry` changes the second entry.
+	 * @param string               $field  The field the message must name.
+	 *
+	 * @return void
+	 */
+	#[DataProvider('nonStringFields')]
+	public function testANonStringFieldIsRefused(array $change, string $field): void {
+		$body = self::body();
+		if (isset($change['entry']) === true) {
+			$body['entries'][1] = array_merge($body['entries'][1], $change['entry']);
+			unset($change['entry']);
+		}
+
+		$actual = $this->runScenario(['body' => array_merge($body, $change)]);
+
+		$this->assertSame(
+			['threw' => \InvalidArgumentException::class, 'message' => $field . ' must be a string.'],
+			$actual['results'][0]
+		);
+		$this->assertSame([], $actual['calls']);
+		$this->assertSame([], $actual['drafts']);
+
+	}//end testANonStringFieldIsRefused()
+
+	/**
 	 * Run ingest once (or twice) for a scenario and capture what it did.
 	 *
 	 * @param array<string, mixed> $scenario The scenario.

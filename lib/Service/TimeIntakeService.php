@@ -528,12 +528,12 @@ class TimeIntakeService {
 	 * @return array{0:string,1:string,2:string,3:string,4:string,5:string,6:?string,7:?string,8:?string,9:array<int,array<string,mixed>>}
 	 */
 	private function parseAndAssertStructure(array $body): array {
-		$batchId = trim((string)($body['batchId'] ?? ''));
+		$batchId = trim((string)$this->stringField(source: $body, key: 'batchId'));
 		if ($batchId === '') {
 			throw new InvalidArgumentException('batchId is required.');
 		}
 
-		$organisationRef = trim((string)($body['organisationRef'] ?? ''));
+		$organisationRef = trim((string)$this->stringField(source: $body, key: 'organisationRef'));
 		if ($organisationRef === '') {
 			throw new InvalidArgumentException('organisationRef is required.');
 		}
@@ -548,8 +548,8 @@ class TimeIntakeService {
 			$period = $body['period'];
 		}
 
-		$periodStart = (string)($period['start'] ?? '');
-		$periodEnd = (string)($period['end'] ?? '');
+		$periodStart = (string)$this->stringField(source: $period, key: 'start');
+		$periodEnd = (string)$this->stringField(source: $period, key: 'end');
 		if ($this->isValidIsoDate(value: $periodStart) === false || $this->isValidIsoDate(value: $periodEnd) === false) {
 			throw new InvalidArgumentException('period.start and period.end must be valid ISO dates.');
 		}
@@ -560,55 +560,36 @@ class TimeIntakeService {
 				throw new InvalidArgumentException('Each entry must be an object.');
 			}
 
-			$externalId = trim((string)($entry['externalId'] ?? ''));
-			$date = (string)($entry['date'] ?? '');
+			$externalId = trim((string)$this->stringField(source: $entry, key: 'externalId'));
+			$date = (string)$this->stringField(source: $entry, key: 'date');
 			if ($externalId === '' || $this->isValidIsoDate(value: $date) === false) {
 				throw new InvalidArgumentException('Each entry requires a non-empty externalId and a valid ISO date.');
 			}
 
-			if (isset($entry['rateRef']) === true) {
-				$rateRef = (string)$entry['rateRef'];
-			} else {
-				$rateRef = null;
-			}
-
-			if (isset($entry['projectRef']) === true) {
-				$entryProjectRef = (string)$entry['projectRef'];
-			} else {
-				$entryProjectRef = null;
-			}
+			$rateRef = $this->stringField(source: $entry, key: 'rateRef');
+			$entryProjectRef = $this->stringField(source: $entry, key: 'projectRef');
 
 			$entries[] = [
 				'externalId' => $externalId,
 				'date' => $date,
 				'minutes' => ($entry['minutes'] ?? null),
-				'description' => (string)($entry['description'] ?? ''),
+				'description' => (string)$this->stringField(source: $entry, key: 'description'),
 				'hourlyRate' => ($entry['hourlyRate'] ?? null),
 				'rateRef' => $rateRef,
 				'projectRef' => $entryProjectRef,
 			];
 		}//end foreach
 
-		$billingModel = (string)($body['billingModel'] ?? '');
-		$currency = (string)($body['currency'] ?? 'EUR');
+		$billingModel = (string)$this->stringField(source: $body, key: 'billingModel');
+		$currency = ($this->stringField(source: $body, key: 'currency') ?? 'EUR');
 
-		if (isset($body['rateCardId']) === true && $body['rateCardId'] !== '') {
-			$requestRateCardId = (string)$body['rateCardId'];
-		} else {
+		$requestRateCardId = $this->stringField(source: $body, key: 'rateCardId');
+		if ($requestRateCardId === '') {
 			$requestRateCardId = null;
 		}
 
-		if (isset($body['projectRef']) === true) {
-			$projectRef = (string)$body['projectRef'];
-		} else {
-			$projectRef = null;
-		}
-
-		if (isset($body['notes']) === true) {
-			$notes = (string)$body['notes'];
-		} else {
-			$notes = null;
-		}
+		$projectRef = $this->stringField(source: $body, key: 'projectRef');
+		$notes = $this->stringField(source: $body, key: 'notes');
 
 		return [
 			$batchId,
@@ -875,6 +856,26 @@ class TimeIntakeService {
 
 		return hash('sha256', $encoded);
 	}//end computePayloadHash()
+
+	/**
+	 * A string field of the request body, or null when it is absent or null.
+	 *
+	 * @param array<string,mixed> $source The object holding the field.
+	 * @param string              $key    The field name.
+	 *
+	 * @throws InvalidArgumentException When the field holds anything but a string.
+	 *
+	 * @return string|null
+	 */
+	private function stringField(array $source, string $key): ?string {
+		$value = ($source[$key] ?? null);
+		if ($value === null || is_string($value) === true) {
+			return $value;
+		}
+
+		throw new InvalidArgumentException(sprintf('%s must be a string.', $key));
+
+	}//end stringField()
 
 	/**
 	 * Validate an ISO 8601 (`YYYY-MM-DD`) date string.
