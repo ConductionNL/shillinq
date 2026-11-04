@@ -5,7 +5,7 @@
  *
  * Mirrors the public `create()` factory + readonly slots that
  * `SpendAnalyticsService` depends on. The real class lives in OpenRegister
- * (lib/Service/Aggregation/AggregationQuery.php) and is present at runtime
+ * (lib/Search/Service/Aggregation/AggregationQuery.php) and is present at runtime
  * inside a deployed Nextcloud tree; this stub only exists so the leaf's unit
  * tests can build the query object without the whole engine on the classpath.
  *
@@ -15,7 +15,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenRegister\Service\Aggregation;
+namespace OCA\OpenRegister\Search\Service\Aggregation;
 
 /**
  * Stub AggregationQuery — value object with the create() factory used by the leaf.
