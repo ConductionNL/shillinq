@@ -31,7 +31,7 @@ namespace OCA\Shillinq\Service\Dunning;
 
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\DunningRunService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -173,7 +173,7 @@ class DunningTickRunner {
 	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-3.1
 	 */
 	public function lastReports(): array {
-		$stored = json_decode($this->appConfig->getValueString(Application::APP_ID, self::REPORT_KEY, '{}', lazy: true), true);
+		$stored = json_decode($this->appConfig->getValueString(AppIdentity::APP_ID, self::REPORT_KEY, '{}', lazy: true), true);
 		if (is_array($stored) === false) {
 			return [];
 		}
@@ -390,7 +390,7 @@ class DunningTickRunner {
 			$stored[(string)$report['administrationId']] = $report;
 		}
 
-		$this->appConfig->setValueString(Application::APP_ID, self::REPORT_KEY, (string)json_encode($stored), lazy: true);
+		$this->appConfig->setValueString(AppIdentity::APP_ID, self::REPORT_KEY, (string)json_encode($stored), lazy: true);
 	}//end storeReports()
 
 	/**
@@ -399,7 +399,7 @@ class DunningTickRunner {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

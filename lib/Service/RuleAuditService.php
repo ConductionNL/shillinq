@@ -31,7 +31,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Standards\RuleCatalogue;
 use OCA\Shillinq\Standards\RuleEngine;
 use OCP\IAppConfig;
@@ -234,7 +234,7 @@ class RuleAuditService {
 	 * @return string The configured register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		return $register === '' ? 'shillinq' : $register;
 	}//end register()
 }//end class

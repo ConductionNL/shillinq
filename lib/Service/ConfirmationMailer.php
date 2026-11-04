@@ -37,7 +37,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IURLGenerator;
 use OCP\Mail\IMailer;
 use Psr\Log\LoggerInterface;
@@ -107,7 +107,7 @@ class ConfirmationMailer {
 	 */
 	private function buildPayload(array $appointment, string $rawToken, string $email): array {
 		$webLink = $this->urlGenerator->linkToRouteAbsolute(
-			Application::APP_ID . '.confirmationApi.portal',
+			AppIdentity::APP_ID . '.confirmationApi.portal',
 		) . '?token=' . rawurlencode($rawToken);
 		$customer = [
 			'id' => (string)($appointment['customerId'] ?? ''),

@@ -31,7 +31,7 @@ namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
 use DomainException;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Relation\RelationBothSidesService;
 use OCA\Shillinq\Service\Relation\RelationLinkService;
@@ -79,7 +79,7 @@ class RelationController extends Controller {
 		private readonly RelationLinkService $links,
 		private readonly RelationBothSidesService $bothSides,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 

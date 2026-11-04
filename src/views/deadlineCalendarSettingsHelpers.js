@@ -59,32 +59,40 @@ export const CATEGORY_META = [
  * @spec openspec/specs/compliance-deadline-calendar/spec.md
  */
 export function normaliseSettings(data) {
-	const categories =
-		data
-		&& typeof data === 'object'
-		&& data.categories
-		&& typeof data.categories === 'object'
-			? data.categories
-			: {}
-
+	const categories = objectOrEmpty(objectOrEmpty(data).categories)
 	return CATEGORY_META.map((meta) => {
-		const raw =
-			categories[meta.id] && typeof categories[meta.id] === 'object'
-				? categories[meta.id]
-				: {}
-		const leadDays = Number.parseInt(raw.leadDays, 10)
+		const raw = objectOrEmpty(categories[meta.id])
 		return {
 			id: meta.id,
 			label: meta.label,
 			description: meta.description,
 			enabled:
 				typeof raw.enabled === 'boolean' ? raw.enabled : meta.defaultEnabled,
-			leadDays:
-				Number.isFinite(leadDays) && leadDays >= 0
-					? leadDays
-					: meta.defaultLeadDays,
+			leadDays: leadDaysOr(raw.leadDays, meta.defaultLeadDays),
 		}
 	})
+}
+
+/**
+ * The value when it is an object, else an empty object.
+ *
+ * @param {unknown} value The value.
+ * @return {object}
+ */
+function objectOrEmpty(value) {
+	return value && typeof value === 'object' ? value : {}
+}
+
+/**
+ * A lead time as a non-negative integer, or the fallback.
+ *
+ * @param {unknown} value The raw lead days.
+ * @param {number} fallback The days when the value is not usable.
+ * @return {number}
+ */
+function leadDaysOr(value, fallback) {
+	const leadDays = Number.parseInt(value, 10)
+	return Number.isFinite(leadDays) && leadDays >= 0 ? leadDays : fallback
 }
 
 /**
@@ -99,13 +107,11 @@ export function buildSavePayload(rows) {
 	const known = new Set(CATEGORY_META.map((meta) => meta.id))
 	const categories = {}
 	for (const row of Array.isArray(rows) ? rows : []) {
-		if (!row || !known.has(row.id)) {
-			continue
-		}
-		const leadDays = Number.parseInt(row.leadDays, 10)
-		categories[row.id] = {
-			enabled: row.enabled === true,
-			leadDays: Number.isFinite(leadDays) && leadDays >= 0 ? leadDays : 0,
+		if (row && known.has(row.id)) {
+			categories[row.id] = {
+				enabled: row.enabled === true,
+				leadDays: leadDaysOr(row.leadDays, 0),
+			}
 		}
 	}
 	return { categories }

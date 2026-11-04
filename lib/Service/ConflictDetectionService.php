@@ -106,107 +106,219 @@ class ConflictDetectionService {
 	 * @return array<int,array<string,mixed>> Conflicting booking records (empty if none).
 	 *
 	 * @throws InvalidArgumentException When times are malformed or end ≤ start.
+	 *
+	 * @spec openspec/specs/bookings/spec.md#req-004
 	 */
-	public function checkConflicts(
-		string $resourceId,
-		string $proposedStart,
-		string $proposedEnd,
-		?string $excludeBookingId = null,
-	): array {
+	public function checkConflicts(string $resourceId, string $proposedStart, string $proposedEnd, ?string $excludeBookingId = null): array {
 		$resourceId = trim($resourceId);
 		if ($resourceId === '') {
 			throw new InvalidArgumentException('resourceId is required for conflict detection');
 		}
 
-		$start = $this->parseTime(value: $proposedStart, label: 'startTime');
-		$end = $this->parseTime(value: $proposedEnd, label: 'endTime');
-
-		if ($end <= $start) {
-			throw new InvalidArgumentException('endTime must be strictly after startTime');
-		}
-
+		$window = $this->proposedWindow(start: $proposedStart, end: $proposedEnd);
 		if ($this->settings->isOpenRegisterAvailable() === false) {
 			$this->logger->warning('Shillinq: conflict detection skipped, OpenRegister unavailable');
 			return [];
 		}
 
+		$window += ['resourceId' => $resourceId, 'exclude' => $excludeBookingId];
+		return $this->conflictsIn(records: $this->loadBookings(resourceId: $resourceId), window: $window);
+	}//end checkConflicts()
+
+	/**
+	 * Parse the proposed window; its end must be strictly after its start.
+	 *
+	 * @param string $start Proposed booking start (ISO 8601 UTC).
+	 * @param string $end Proposed booking end (ISO 8601 UTC).
+	 *
+	 * @return array{start: DateTimeImmutable, end: DateTimeImmutable} The window in UTC.
+	 *
+	 * @throws InvalidArgumentException When a time is malformed or end ≤ start.
+	 */
+	private function proposedWindow(string $start, string $end): array {
+		$window = [
+			'start' => $this->parseTime(value: $start, label: 'startTime'),
+			'end' => $this->parseTime(value: $end, label: 'endTime'),
+		];
+		if ($window['end'] <= $window['start']) {
+			throw new InvalidArgumentException('endTime must be strictly after startTime');
+		}
+
+		return $window;
+	}//end proposedWindow()
+
+	/**
+	 * Read every booking of a resource.
+	 *
+	 * @param string $resourceId Resource identifier (logical key).
+	 *
+	 * @return mixed The stored booking records.
+	 *
+	 * @throws RuntimeException When the lookup fails: the check fails closed so
+	 *                          the caller can surface a 503, never a silent pass.
+	 */
+	private function loadBookings(string $resourceId): mixed {
 		try {
-			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$registerSlug = $this->settings->getRegisterSlug();
-			$records = $objectService
-				->setRegister($registerSlug)
+			return $this->container->get('OCA\\OpenRegister\\Service\\ObjectService')
+				->setRegister($this->settings->getRegisterSlug())
 				->setSchema('Booking')
-				->findAll(
-					[
-						'filters' => [
-							'resource' => $resourceId,
-						],
-						'limit' => 1000,
-					]
-				);
+				->findAll(['filters' => ['resource' => $resourceId], 'limit' => 1000]);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'Shillinq: conflict detection lookup failed',
 				['exception' => $e->getMessage()]
 			);
-			// Fail closed — treat as no-conflict-detected so the caller can
-			// surface a 503; we never silently pass an unverifiable check.
 			throw new RuntimeException('Conflict detection lookup failed', 0, $e);
 		}//end try
 
+	}//end loadBookings()
+
+	/**
+	 * The stored bookings that overlap the proposed window.
+	 *
+	 * @param mixed $records The stored booking records.
+	 * @param array{start: DateTimeImmutable, end: DateTimeImmutable, resourceId: string, exclude: string|null} $window The proposed window.
+	 *
+	 * @return array<int,array<string,mixed>> The conflicting bookings.
+	 */
+	private function conflictsIn(mixed $records, array $window): array {
 		$conflicts = [];
 		foreach ($records as $record) {
-			$row = $this->toArray(object: $record);
-
-			// Skip cancelled bookings — they don't reserve the slot.
-			$status = (string)($row['status'] ?? '');
-			if ($status === 'cancelled') {
-				continue;
+			$conflict = $this->conflictFor(row: $this->toArray(object: $record), window: $window);
+			if ($conflict !== null) {
+				$conflicts[] = $conflict;
 			}
-
-			// Skip the booking being edited.
-			$rowId = (string)($row['bookingId'] ?? '');
-			if ($excludeBookingId !== null && $rowId !== '' && $rowId === $excludeBookingId) {
-				continue;
-			}
-
-			$existingStartRaw = (string)($row['startTime'] ?? '');
-			$existingEndRaw = (string)($row['endTime'] ?? '');
-			if ($existingStartRaw === '' || $existingEndRaw === '') {
-				continue;
-			}
-
-			try {
-				$existingStart = $this->parseTime(value: $existingStartRaw, label: 'existing.startTime');
-				$existingEnd = $this->parseTime(value: $existingEndRaw, label: 'existing.endTime');
-			} catch (InvalidArgumentException $e) {
-				// Don't let one corrupted row poison the whole check.
-				$this->logger->warning(
-					'Shillinq: skipping booking with malformed time during conflict check',
-					[
-						'bookingId' => $rowId,
-						'reason' => $e->getMessage(),
-					]
-				);
-				continue;
-			}
-
-			// Half-open overlap: adjacent windows do NOT conflict.
-			if ($existingStart < $end && $existingEnd > $start) {
-				$conflicts[] = [
-					'bookingId' => $rowId,
-					'calendar' => (string)($row['calendar'] ?? ''),
-					'resource' => (string)($row['resource'] ?? $resourceId),
-					'title' => (string)($row['title'] ?? ''),
-					'startTime' => $existingStart->format('Y-m-d\\TH:i:s\\Z'),
-					'endTime' => $existingEnd->format('Y-m-d\\TH:i:s\\Z'),
-					'status' => $status,
-				];
-			}
-		}//end foreach
+		}
 
 		return $conflicts;
-	}//end checkConflicts()
+	}//end conflictsIn()
+
+	/**
+	 * The conflict entry for one stored booking, null when it does not
+	 * reserve an overlapping slot. Half-open overlap: adjacent windows do
+	 * NOT conflict.
+	 *
+	 * @param array<string,mixed> $row The stored booking.
+	 * @param array{start: DateTimeImmutable, end: DateTimeImmutable, resourceId: string, exclude: string|null} $window The proposed window.
+	 *
+	 * @return array<string,mixed>|null The conflict entry.
+	 */
+	private function conflictFor(array $row, array $window): ?array {
+		if ($this->reservesSlot(row: $row, exclude: $window['exclude']) === false) {
+			return null;
+		}
+
+		$existing = $this->existingWindow(row: $row);
+		if ($existing === null || $this->overlaps(existing: $existing, window: $window) === false) {
+			return null;
+		}
+
+		return $this->conflictEntry(row: $row, existing: $existing + ['resourceId' => $window['resourceId']]);
+	}//end conflictFor()
+
+	/**
+	 * Whether a stored window overlaps the proposed one (half-open).
+	 *
+	 * @param array{start: DateTimeImmutable, end: DateTimeImmutable} $existing The stored booking's window.
+	 * @param array{start: DateTimeImmutable, end: DateTimeImmutable} $window The proposed window.
+	 *
+	 * @return bool True when they overlap.
+	 */
+	private function overlaps(array $existing, array $window): bool {
+		return $existing['start'] < $window['end'] && $existing['end'] > $window['start'];
+	}//end overlaps()
+
+	/**
+	 * The conflict entry reported for an overlapping stored booking.
+	 *
+	 * @param array<string,mixed> $row The stored booking.
+	 * @param array{start: DateTimeImmutable, end: DateTimeImmutable, resourceId: string} $existing Its window and the checked resource.
+	 *
+	 * @return array<string,string> The conflict entry.
+	 */
+	private function conflictEntry(array $row, array $existing): array {
+		return [
+			'bookingId' => $this->field(row: $row, key: 'bookingId'),
+			'calendar' => $this->field(row: $row, key: 'calendar'),
+			'resource' => (string)($row['resource'] ?? $existing['resourceId']),
+			'title' => $this->field(row: $row, key: 'title'),
+			'startTime' => $existing['start']->format('Y-m-d\\TH:i:s\\Z'),
+			'endTime' => $existing['end']->format('Y-m-d\\TH:i:s\\Z'),
+			'status' => $this->field(row: $row, key: 'status'),
+		];
+	}//end conflictEntry()
+
+	/**
+	 * Whether a stored booking reserves its slot: cancelled bookings and the
+	 * booking being edited do not.
+	 *
+	 * @param array<string,mixed> $row The stored booking.
+	 * @param string|null $exclude The booking id being edited, if any.
+	 *
+	 * @return bool True when the booking counts for the check.
+	 */
+	private function reservesSlot(array $row, ?string $exclude): bool {
+		if ($this->field(row: $row, key: 'status') === 'cancelled') {
+			return false;
+		}
+
+		$rowId = $this->field(row: $row, key: 'bookingId');
+		return ($rowId === '' || $rowId !== $exclude);
+	}//end reservesSlot()
+
+	/**
+	 * The stored booking's window in UTC, null when a time is missing or
+	 * malformed (one corrupted row must not poison the whole check).
+	 *
+	 * @param array<string,mixed> $row The stored booking.
+	 *
+	 * @return array{start: DateTimeImmutable, end: DateTimeImmutable}|null The window.
+	 */
+	private function existingWindow(array $row): ?array {
+		$startRaw = $this->field(row: $row, key: 'startTime');
+		$endRaw   = $this->field(row: $row, key: 'endTime');
+		if ($startRaw === '' || $endRaw === '') {
+			return null;
+		}
+
+		return $this->parsedWindow(row: $row);
+	}//end existingWindow()
+
+	/**
+	 * Parse a stored booking's start and end, logging and skipping a
+	 * malformed one.
+	 *
+	 * @param array<string,mixed> $row The stored booking, both times present.
+	 *
+	 * @return array{start: DateTimeImmutable, end: DateTimeImmutable}|null The window.
+	 */
+	private function parsedWindow(array $row): ?array {
+		try {
+			return [
+				'start' => $this->parseTime(value: $this->field(row: $row, key: 'startTime'), label: 'existing.startTime'),
+				'end' => $this->parseTime(value: $this->field(row: $row, key: 'endTime'), label: 'existing.endTime'),
+			];
+		} catch (InvalidArgumentException $e) {
+			$this->logger->warning(
+				'Shillinq: skipping booking with malformed time during conflict check',
+				['bookingId' => $this->field(row: $row, key: 'bookingId'), 'reason' => $e->getMessage()]
+			);
+			return null;
+		}
+
+	}//end parsedWindow()
+
+	/**
+	 * A row field as a string ('' when absent).
+	 *
+	 * @param array<string,mixed> $row The row.
+	 * @param string $key The field.
+	 *
+	 * @return string
+	 */
+	private function field(array $row, string $key): string {
+		return (string)($row[$key] ?? '');
+	}//end field()
 
 	/**
 	 * Acquire a database row-lock on the resource record for the duration

@@ -31,7 +31,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 
@@ -160,7 +160,7 @@ class StockMoveReasonGuard {
 
 		try {
 			$key = 'stockmove_reason_codes_' . $administrationId;
-			$raw = $this->appConfig->getValueString(Application::APP_ID, $key, '');
+			$raw = $this->appConfig->getValueString(AppIdentity::APP_ID, $key, '');
 			if ($raw === '') {
 				return $codes;
 			}

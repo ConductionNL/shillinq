@@ -42,10 +42,11 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Guard;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Save precondition guard for BBV provincie programme assignment on GLLine.
@@ -93,7 +94,7 @@ class ProgrammaLinkGuard {
 	 * @return string
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($slug === '') {
 			return 'shillinq';
 		}
@@ -240,10 +241,12 @@ class ProgrammaLinkGuard {
 	private function fetchStoredProgramme(string $id): ?string {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$result = $objectService
-				->setRegister(register: $this->getRegisterSlug())
-				->setSchema(schema: 'GLLine')
-				->find($id);
+			$result = ObjectIdentifier::findScoped(
+				scoped: $objectService
+					->setRegister(register: $this->getRegisterSlug())
+					->setSchema(schema: 'GLLine'),
+				id: $id
+			);
 
 			if (is_object($result) === true && method_exists($result, 'jsonSerialize') === true) {
 				$result = $result->jsonSerialize();

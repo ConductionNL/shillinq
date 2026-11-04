@@ -27,7 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\Pipelinq\PipelinqConfig;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -68,7 +68,7 @@ class PipelinqSettingsController extends Controller {
 		IRequest $request,
 		private readonly PipelinqConfig $pipelinqConfig,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
@@ -84,7 +84,7 @@ class PipelinqSettingsController extends Controller {
 	 *
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function index(): JSONResponse {
 		return new JSONResponse(
 			[
@@ -108,7 +108,7 @@ class PipelinqSettingsController extends Controller {
 	 *
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function create(): JSONResponse {
 		$endpoint = (string)($this->request->getParam('endpoint') ?? '');
 		$this->pipelinqConfig->setPipelinqEndpoint($endpoint);
@@ -140,7 +140,7 @@ class PipelinqSettingsController extends Controller {
 	 *
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function test(): JSONResponse {
 		return new JSONResponse(
 			$this->pipelinqConfig->testConnection()

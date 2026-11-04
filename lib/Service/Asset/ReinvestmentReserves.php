@@ -32,7 +32,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Asset;
 
 use DomainException;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 
 /**
@@ -79,7 +79,7 @@ class ReinvestmentReserves {
 	 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
 	 */
 	public function reserveAccount(): string {
-		$account = trim($this->appConfig->getValueString(Application::APP_ID, self::CFG_RESERVE_ACCOUNT, ''));
+		$account = trim($this->appConfig->getValueString(AppIdentity::APP_ID, self::CFG_RESERVE_ACCOUNT, ''));
 		if ($account === '') {
 			return self::DEFAULT_RESERVE_ACCOUNT;
 		}
@@ -280,7 +280,7 @@ class ReinvestmentReserves {
 	 */
 	private function releaseAccount(): string {
 		foreach ([self::CFG_RELEASE_ACCOUNT, 'fixed_asset_disposal_gain_account'] as $key) {
-			$account = trim($this->appConfig->getValueString(Application::APP_ID, $key, ''));
+			$account = trim($this->appConfig->getValueString(AppIdentity::APP_ID, $key, ''));
 			if ($account !== '') {
 				return $account;
 			}

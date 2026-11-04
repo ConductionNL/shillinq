@@ -78,7 +78,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -1054,7 +1054,7 @@ class GRIRClearingService {
 			return $account;
 		}
 
-		$fallback = trim($this->appConfig->getValueString(Application::APP_ID, 'inventory_account', ''));
+		$fallback = trim($this->appConfig->getValueString(AppIdentity::APP_ID, 'inventory_account', ''));
 		return $fallback;
 	}//end resolvePoLineAccount()
 
@@ -1088,7 +1088,7 @@ class GRIRClearingService {
 
 		$configured = trim(
 			$this->appConfig->getValueString(
-				Application::APP_ID,
+				AppIdentity::APP_ID,
 				self::CFG_GR_IR_CLEARING_ACCOUNT,
 				self::DEFAULT_GR_IR_CLEARING_ACCOUNT
 			)
@@ -1108,7 +1108,7 @@ class GRIRClearingService {
 	private function accountsPayableAccount(): string {
 		$configured = trim(
 			$this->appConfig->getValueString(
-				Application::APP_ID,
+				AppIdentity::APP_ID,
 				self::CFG_ACCOUNTS_PAYABLE_ACCOUNT,
 				self::DEFAULT_AP_ACCOUNT
 			)
@@ -1128,7 +1128,7 @@ class GRIRClearingService {
 	private function vatPayableAccount(): string {
 		$configured = trim(
 			$this->appConfig->getValueString(
-				Application::APP_ID,
+				AppIdentity::APP_ID,
 				self::CFG_VAT_PAYABLE_ACCOUNT,
 				self::DEFAULT_VAT_ACCOUNT
 			)
@@ -1419,7 +1419,7 @@ class GRIRClearingService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

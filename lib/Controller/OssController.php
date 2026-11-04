@@ -39,7 +39,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\OssRateResolver;
 use OCA\Shillinq\Service\OssReturnGenerator;
@@ -84,7 +84,7 @@ class OssController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly AdministrationContextService $context,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
