@@ -46,7 +46,7 @@ use Psr\Container\ContainerInterface;
  */
 final class AppHostRegistration {
 
-	private const APP_ID = Application::APP_ID;
+	private const APP_ID = AppIdentity::APP_ID;
 
 	/**
 	 * Register the generic settings, metrics provider and store alias.

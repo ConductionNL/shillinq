@@ -61,7 +61,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
 use OCA\Shillinq\Service\Migration\GlLineAdministrationBackfillMigrator;
@@ -228,7 +228,7 @@ class BackfillGlLineAdministration implements IRepairStep {
 		}
 
 		$this->appConfig->setValueString(
-			Application::APP_ID,
+			AppIdentity::APP_ID,
 			GlLineAdministrationBackfillMigrator::GATE_CONFIG_KEY,
 			GlLineAdministrationBackfillMigrator::GATE_CONTRACT_VERSION
 		);
@@ -316,7 +316,7 @@ class BackfillGlLineAdministration implements IRepairStep {
 	 */
 	private function closeGate(): void {
 		$this->appConfig->setValueString(
-			Application::APP_ID,
+			AppIdentity::APP_ID,
 			GlLineAdministrationBackfillMigrator::GATE_CONFIG_KEY,
 			''
 		);

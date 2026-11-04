@@ -28,7 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\PaymentPlan\PaymentPlanBankMatcher;
 use OCA\Shillinq\PaymentPlan\PaymentPlanRefusedException;
 use OCA\Shillinq\PaymentPlan\PaymentPlanService;
@@ -74,7 +74,7 @@ class PaymentPlanController extends Controller {
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
