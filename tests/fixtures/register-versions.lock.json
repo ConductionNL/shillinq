@@ -60,6 +60,10 @@
         {
             "appVersion": "0.5.7-unstable.20261101113027",
             "versionsSha256": "6c8b35f7d7024dee25a4f8fa4e09bad6d446ecc5047f6d1dae8bc411aea5cea9"
+        },
+        {
+            "appVersion": "0.5.7-unstable.20261104120000",
+            "versionsSha256": "bfd80da2815f00ba873d4b039731f78b779d5c75c937761e2a688d97c96d4081"
         }
     ],
     "versions": {
@@ -526,7 +530,7 @@
         "schema:TaxTreatyOverview": "0.1.0",
         "schema:TemporaryDifference": "0.1.0",
         "schema:TenderNedProcurement": "0.1.0",
-        "schema:ThreeWayMatch": "0.1.0",
+        "schema:ThreeWayMatch": "0.2.0",
         "schema:TimeIntakeBatch": "0.1.0",
         "schema:TimelineDeadLetter": "0.1.0",
         "schema:TimelinePublishRetryEntry": "0.1.0",
