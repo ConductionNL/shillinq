@@ -103,6 +103,7 @@ class HandToAccountsPayableActionTest extends TestCase {
 		$this->assertSame(1000.0, $first['lines'][0]['amount']);
 		$this->assertSame('2026-10-01', $first['dueDate']);
 		$this->assertArrayNotHasKey('paymentBlocked', $first);
+		$this->assertSame('si-0457', $first['supplierInvoiceId'], 'the transaction names the invoice it was written for');
 		$this->assertSame(['receive', 'issue'], array_column($this->engine->ran, 'action'));
 		$this->assertSame('issued', end($this->engine->ran)['to']);
 		$this->assertSame($first['id'], $result['apTransactionId']);

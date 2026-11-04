@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Listener;
 
+use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCP\EventDispatcher\Event;
@@ -50,6 +51,13 @@ class SupplierInvoiceApBindingLockListener implements IEventListener {
 	 */
 	public const MESSAGE = 'This invoice has been handed to accounts payable. '
 		. 'Its AP transaction, administration, number, supplier and total can no longer change.';
+
+	/**
+	 * Refusal for a write whose data names another object than the invoice itself.
+	 *
+	 * @var string
+	 */
+	public const ID_MESSAGE = 'The id in the data of this invoice is not the id of the invoice.';
 
 	/**
 	 * The fields that bind an invoice to its AP transaction.
@@ -88,12 +96,37 @@ class SupplierInvoiceApBindingLockListener implements IEventListener {
 			return;
 		}
 
-		$changed = $this->changedBoundField(before: ($old->getObject() ?? []), after: ($new->getObject() ?? []));
-		if ($changed !== null) {
-			$event->setErrors(['message' => self::MESSAGE, 'field' => $changed]);
+		$after = ($new->getObject() ?? []);
+		$errors = $this->idError(entity: $new, data: $after);
+		$changed = $this->changedBoundField(before: ($old->getObject() ?? []), after: $after);
+		if ($errors === [] && $changed !== null) {
+			$errors = ['message' => self::MESSAGE, 'field' => $changed];
+		}
+
+		if ($errors !== []) {
+			$event->setErrors($errors);
 			$event->stopPropagation();
 		}
 	}//end handle()
+
+	/**
+	 * The error when the data carries another id than the entity's uuid. The pay
+	 * guard identifies the invoice by this id, because it receives only the data,
+	 * and refuses a blank one.
+	 *
+	 * @param ObjectEntity         $entity The invoice as it would be saved.
+	 * @param array<string, mixed> $data   Its data.
+	 *
+	 * @return array<string, string>
+	 */
+	private function idError(ObjectEntity $entity, array $data): array {
+		$id = (string)($data['id'] ?? '');
+		if ($id === '' || $id === (string)$entity->getUuid()) {
+			return [];
+		}
+
+		return ['message' => self::ID_MESSAGE, 'field' => 'id'];
+	}//end idError()
 
 	/**
 	 * The first bound field the update changes, or null; nothing is bound before the handover.

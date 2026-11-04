@@ -5347,7 +5347,6 @@ OC.L10N.register(
         "Payment due dates, with amounts and a vendor summary.": "Vervaldata met bedragen en een samenvatting per leverancier.",
         "AP aging report, in three variants: detail, summary and timeline. Bucket thresholds are configurable via IAppConfig['ap.aging.buckets'], defaulting to 30/60/90.": "Ouderdomsanalyse crediteuren in drie weergaven: detail, samenvatting en tijdlijn. De grenzen van de categorieën zijn instelbaar (standaard 30, 60 en 90 dagen).",
         "Open the trial balance filtered to this period. It is the operator's pre-close preview link.": "Open de proefbalans gefilterd op deze periode, als voorbeeld vóór het afsluiten.",
-        "Repository search through OpenRegister's _search over contract number, title and tags. There is no app-local search endpoint.": "Zoeken in het contractenregister op contractnummer, titel en labels.",
         "Default smart filter showing contracts inside the renewal-decision window: status active or expiring, and a renewalDecisionDate within 30 days or already past.": "Standaardfilter dat contracten toont waarvoor binnen 30 dagen een verlengingsbesluit nodig is, of waarvan die datum al verstreken is.",
         "Nextcloud Files references. They link rather than store, and open in the Files viewer.": "Verwijzingen naar Bestanden; er wordt gekoppeld, niet opgeslagen. Opent in de bestandsviewer.",
         "Nextcloud Files references. They link rather than store.": "Verwijzingen naar Bestanden; er wordt gekoppeld, niet opgeslagen.",
