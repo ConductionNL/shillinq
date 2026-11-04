@@ -24,16 +24,19 @@
         "properties": {
           "slug": {
             "type": "string",
+            "title": "Key",
             "description": "Stable key of the policy. The seeded defaults are matched on it, so a repair run never seeds one twice, and DocumentRetention.policyId may name it.",
             "example": "default-financial-5yr"
           },
           "name": {
             "type": "string",
+            "title": "Name",
             "description": "Human-readable name of the retention policy.",
             "example": "Financial Records, Standard (5 years)"
           },
           "documentType": {
             "type": "string",
+            "title": "Document type",
             "description": "Classification of documents this policy governs. Drives policy selection when a DocumentRetention record is created.",
             "enum": [
               "financial-record",
@@ -48,17 +51,20 @@
           },
           "retentionYears": {
             "type": "integer",
+            "title": "Retention period (years)",
             "minimum": 0,
             "description": "Number of whole years a document must be retained from its start-of-retention marker before it becomes eligible for review and disposal.",
             "example": 5
           },
           "legalHoldAllowed": {
             "type": "boolean",
+            "title": "Legal hold allowed",
             "default": true,
             "description": "Whether documents under this policy may be placed on a legal hold (litigation, court order, regulatory investigation) that overrides the standard schedule."
           },
           "exemptionCategories": {
             "type": "array",
+            "title": "Exemption categories",
             "description": "Categories of exemption recognised by this policy (e.g. court-order, regulatory-exception). Used to classify entries appended to DocumentRetention.exceptions[].",
             "items": {
               "type": "string",
@@ -73,12 +79,14 @@
           },
           "administrationId": {
             "type": "string",
+            "title": "Administration",
             "description": "Optional FK to the Administration owning an administration-specific override. When null, the policy is an organization-wide default per REQ-RET-009.",
             "nullable": true,
             "example": "adm-1"
           },
           "description": {
             "type": "string",
+            "title": "Description",
             "description": "Operator-authored explanation of the regulatory basis for the retention period.",
             "nullable": true
           }
@@ -126,28 +134,33 @@
         "properties": {
           "documentId": {
             "type": "string",
+            "title": "Document",
             "description": "Polymorphic FK to the document under retention (Invoice, Receipt, ledger entry, etc.). Stored as the document object UUID.",
             "example": "inv-2024-001"
           },
           "policyId": {
             "type": "string",
+            "title": "Retention policy",
             "description": "FK to the RetentionPolicy.id governing this document.",
             "example": "default-financial-5yr"
           },
           "startDate": {
             "type": "string",
+            "title": "Retention starts",
             "format": "date",
             "description": "Start-of-retention marker (e.g. invoiceDate). The retention clock starts here.",
             "example": "2024-01-15"
           },
           "retentionYears": {
             "type": "integer",
+            "title": "Retention period (years)",
             "minimum": 0,
             "description": "Retention period copied from the governing RetentionPolicy at schedule-creation time, so historical schedules are stable when a policy is later amended.",
             "example": 5
           },
           "retentionEndDate": {
             "type": "string",
+            "title": "Retention ends",
             "format": "date",
             "description": "Read-only computed date: startDate + retentionYears. Document becomes eligible for disposal after this date. Derived via x-openregister-calculations, do not set directly.",
             "readOnly": true,
@@ -156,6 +169,7 @@
           },
           "reviewDueDate": {
             "type": "string",
+            "title": "Review due",
             "format": "date",
             "description": "Read-only computed date: retentionEndDate - 30 days. Archiefwet requires review before disposal. Derived via x-openregister-calculations, do not set directly.",
             "readOnly": true,
@@ -240,22 +254,26 @@
         "properties": {
           "documentId": {
             "type": "string",
+            "title": "Document",
             "description": "Polymorphic FK to the document under retention (UUID of the Invoice, Receipt, ledger entry, etc.).",
             "example": "inv-2024-001"
           },
           "policyId": {
             "type": "string",
+            "title": "Retention policy",
             "description": "FK to the governing RetentionPolicy.id.",
             "example": "default-financial-5yr"
           },
           "scheduleId": {
             "type": "string",
+            "title": "Retention schedule",
             "description": "FK to the RetentionSchedule.id holding the computed dates for this document.",
             "nullable": true,
             "example": "sched-inv-2024-001"
           },
           "status": {
             "type": "string",
+            "title": "Status",
             "description": "Current retention lifecycle state. Managed by the x-openregister-lifecycle engine consuming OR archival-destruction, transitions cannot be skipped.",
             "enum": [
               "active",
@@ -269,6 +287,7 @@
           },
           "reviewDueDate": {
             "type": "string",
+            "title": "Review due",
             "format": "date",
             "description": "Copied from the RetentionSchedule for fast lifecycle-guard evaluation (RetentionGuard::requiresReview). Read-only mirror of the schedule.",
             "readOnly": true,
@@ -277,6 +296,7 @@
           },
           "retentionEndDate": {
             "type": "string",
+            "title": "Retention ends",
             "format": "date",
             "description": "Copied from the RetentionSchedule for fast disposal-eligibility evaluation. Read-only mirror of the schedule.",
             "readOnly": true,
@@ -285,11 +305,13 @@
           },
           "legalHold": {
             "type": "boolean",
+            "title": "Legal hold",
             "default": false,
             "description": "When true, automatic disposal is suspended regardless of retentionEndDate per REQ-RET-005 / REQ-RET-008. Changes are audit-trailed."
           },
           "exceptions": {
             "type": "array",
+            "title": "Exceptions",
             "description": "Structured exception entries (legal holds, court orders, regulatory exemptions) appended over the document's lifetime per REQ-RET-005.",
             "items": {
               "type": "object",
@@ -301,6 +323,7 @@
               "properties": {
                 "type": {
                   "type": "string",
+                  "title": "Kind",
                   "enum": [
                     "litigation",
                     "court-order",
@@ -311,20 +334,24 @@
                 },
                 "reason": {
                   "type": "string",
+                  "title": "Reason",
                   "description": "Free-text justification for the exception."
                 },
                 "authority": {
                   "type": "string",
+                  "title": "Authority",
                   "description": "Issuing authority (e.g. 'District Court Amsterdam').",
                   "nullable": true
                 },
                 "appliedDate": {
                   "type": "string",
+                  "title": "Applied",
                   "format": "date-time",
                   "description": "When the exception was applied."
                 },
                 "clearedDate": {
                   "type": "string",
+                  "title": "Cleared",
                   "format": "date-time",
                   "description": "When the exception was cleared (null while active).",
                   "nullable": true
@@ -335,6 +362,7 @@
           },
           "administrationId": {
             "type": "string",
+            "title": "Administration",
             "description": "FK to the Administration owning the document. Scopes retention queries and IDOR-safe access per ADR-005.",
             "nullable": true,
             "example": "adm-1"

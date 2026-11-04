@@ -82,6 +82,29 @@ final class PaymentReconciliationServiceTest extends TestCase {
 			}
 
 			/**
+			 * Every find(): the id and its RBAC, multitenancy and audit flags, in call order.
+			 *
+			 * @var array<int, array{0: string, 1: bool, 2: bool, 3: bool}>
+			 */
+			public array $findCalls = [];
+
+			/**
+			 * OpenRegister's find() throws on a miss; this double answers every
+			 * id that way, so lookups fall through to their property match.
+			 *
+			 * @param string $id            The id.
+			 * @param bool   $_rbac         Whether OpenRegister RBAC applies.
+			 * @param bool   $_multitenancy Whether the organisation scope applies.
+			 * @param bool   $_audit        Whether the read is audited.
+			 *
+			 * @return array<string, mixed>
+			 */
+			public function find(string $id, bool $_rbac = true, bool $_multitenancy = true, bool $_audit = true): array {
+				$this->findCalls[] = [$id, $_rbac, $_multitenancy, $_audit];
+				throw new \RuntimeException('DoesNotExist');
+			}
+
+			/**
 			 * @param array<string, mixed> $params Query params.
 			 * @param bool                 $_rbac  Whether OpenRegister RBAC applies.
 			 *
@@ -182,6 +205,27 @@ final class PaymentReconciliationServiceTest extends TestCase {
 		// Gateway webhooks hold no Nextcloud session, so no call may ask OpenRegister for a group grant.
 		self::assertNotContains(needle: true, haystack: $stub->rbacFlags);
 	}//end testCaptureSettlesLinkedInvoice()
+
+	/**
+	 * The webhook looks the invoice up by uuid without RBAC and nothing else:
+	 * the organisation scope stays on.
+	 *
+	 * @return void
+	 */
+	public function testWebhookInvoiceLookupPassesOnlyTheRbacFlag(): void {
+		$saved = [];
+		$stub = $this->buildObjectServiceStub(
+			[
+				'PaymentRequest' => [['paymentIntentId' => 'tr_1', 'state' => 'pending', 'invoiceReference' => 'inv-1']],
+				'ARInvoice' => [['id' => 'inv-1', 'state' => 'issued']],
+			],
+			$saved
+		);
+
+		$this->makeService($stub)->reconcile('mollie', ['paymentIntentId' => 'tr_1', 'outcome' => 'captured']);
+
+		self::assertSame([['inv-1', false, true, true]], $stub->findCalls);
+	}//end testWebhookInvoiceLookupPassesOnlyTheRbacFlag()
 
 	/**
 	 * A capture against an already-settled invoice becomes captured_unapplied,

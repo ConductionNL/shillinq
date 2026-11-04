@@ -67,7 +67,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle;
 
 use Closure;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -652,7 +652,7 @@ class QuoteOrderInvoiceGuard {
 	 * @return string The register slug.
 	 */
 	private function resolveRegister(): string {
-		$register = trim($this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq'));
+		$register = trim($this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq'));
 		if ($register === '') {
 			return 'shillinq';
 		}

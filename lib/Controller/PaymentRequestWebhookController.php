@@ -43,7 +43,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\PaymentReconciliationService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -79,7 +79,7 @@ class PaymentRequestWebhookController extends Controller {
 		private PaymentReconciliationService $reconciliation,
 		private LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -211,7 +211,7 @@ class PaymentRequestWebhookController extends Controller {
 		// hardcoded/always-valid stub. Reuse the same secret keys so deposits and
 		// invoice links share one provisioning surface (REQ-APL-004).
 		$secret = $this->appConfig->getValueString(
-			Application::APP_ID,
+			AppIdentity::APP_ID,
 			'deposit_webhook_secret_' . $gateway,
 			''
 		);

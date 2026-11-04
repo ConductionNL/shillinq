@@ -41,7 +41,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\PaymentRun\PaymentRunExportService;
 use OCA\Shillinq\PaymentRun\PaymentRunProposalService;
 use OCA\Shillinq\PaymentRun\PaymentRunReconciliationService;
@@ -91,7 +91,7 @@ class PaymentRunController extends Controller {
 		private readonly ObjectServiceInterface $objectService,
 		private readonly PaymentRunProposalService $proposalService,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 

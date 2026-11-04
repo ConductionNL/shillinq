@@ -27,7 +27,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Enums\DBAConstants;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -78,8 +78,8 @@ class DBAVbarMonitorService {
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
 	public function assess(int $amountCents, float $hours, string $administrationId): array {
-		$vbarGrens = DBAConstants::vbarGrensCents($this->appConfig, Application::APP_ID, $administrationId);
-		$mode = DBAConstants::complianceMode($this->appConfig, Application::APP_ID, $administrationId);
+		$vbarGrens = DBAConstants::vbarGrensCents($this->appConfig, AppIdentity::APP_ID, $administrationId);
+		$mode = DBAConstants::complianceMode($this->appConfig, AppIdentity::APP_ID, $administrationId);
 
 		if ($hours <= 0.0 || $amountCents <= 0) {
 			return [
@@ -154,7 +154,7 @@ class DBAVbarMonitorService {
 			return false;
 		}
 
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			$register = 'shillinq';
 		}

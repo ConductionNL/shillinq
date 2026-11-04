@@ -224,6 +224,7 @@ const REGISTER_SLUG = 'shillinq'
 const EXCEPTION_STATUSES = [
 	'exception_price',
 	'exception_quantity',
+	'exception_date',
 	'exception_missing_grn',
 	'exception_missing_po',
 	'fraud_alert',
@@ -467,10 +468,18 @@ export default {
 			}
 		},
 
+		/**
+		 * The label of a match status.
+		 *
+		 * @param {string} matchStatus The match status.
+		 * @return {string} The translated label.
+		 * @spec openspec/changes/three-way-match-delivery-date-exception/specs/bookkeeping-three-way-matching-engine/spec.md
+		 */
 		statusLabel(matchStatus) {
 			const labels = {
 				exception_price: this.t('shillinq', 'Price exception'),
 				exception_quantity: this.t('shillinq', 'Quantity exception'),
+				exception_date: this.t('shillinq', 'Delivery date exception'),
 				exception_missing_grn: this.t('shillinq', 'GRN missing'),
 				exception_missing_po: this.t('shillinq', 'PO missing'),
 				fraud_alert: this.t('shillinq', 'Fraud alert'),
@@ -557,6 +566,7 @@ export { EXCEPTION_STATUSES }
 
 .twm-exception__pill--exception_price,
 .twm-exception__pill--exception_quantity,
+.twm-exception__pill--exception_date,
 .twm-exception__pill--exception_missing_grn,
 .twm-exception__pill--exception_missing_po {
 	background: var(--color-warning, #c93);

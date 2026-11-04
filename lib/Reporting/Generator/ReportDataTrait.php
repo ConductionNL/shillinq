@@ -44,6 +44,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting\Generator;
 
+use XMLWriter;
+
 /**
  * Common ObjectService access and value formatting for native generators.
  *
@@ -110,7 +112,7 @@ trait ReportDataTrait {
 	private function indexAccountsByNumber(array $accounts): array {
 		$indexed = [];
 		foreach ($accounts as $account) {
-			$number = (string)($account['accountNumber'] ?? $account['code'] ?? '');
+			$number = $this->accountNumber($account);
 			if ($number !== '') {
 				$indexed[$number] = $account;
 			}
@@ -232,4 +234,74 @@ trait ReportDataTrait {
 
 		return $slug . '.' . $extension;
 	}//end fileName()
+
+	/**
+	 * Open an indented UTF-8 XML document in memory.
+	 *
+	 * @return XMLWriter
+	 */
+	private function openXmlDocument(): XMLWriter {
+		$writer = new XMLWriter();
+		$writer->openMemory();
+		$writer->setIndent(true);
+		$writer->setIndentString('  ');
+		$writer->startDocument('1.0', 'UTF-8');
+
+		return $writer;
+	}//end openXmlDocument()
+
+	/**
+	 * An Account row's number (accountNumber, else code; '' when neither).
+	 *
+	 * @param array<string,mixed> $account The Account row.
+	 *
+	 * @return string
+	 */
+	private function accountNumber(array $account): string {
+		return (string)($account['accountNumber'] ?? $account['code'] ?? '');
+	}//end accountNumber()
+
+	/**
+	 * The stable id of a GLTransaction (object id, else transactionNumber).
+	 *
+	 * @param array<string,mixed> $transaction The transaction row.
+	 *
+	 * @return string
+	 */
+	private function transactionId(array $transaction): string {
+		return (string)($transaction['id'] ?? $transaction['@self']['id'] ?? $transaction['transactionNumber'] ?? '');
+	}//end transactionId()
+
+	/**
+	 * A GLLine's record id (lineNumber, else id).
+	 *
+	 * @param array<string,mixed> $line The GLLine row.
+	 *
+	 * @return string
+	 */
+	private function lineRecordId(array $line): string {
+		return (string)($line['lineNumber'] ?? $line['id'] ?? '');
+	}//end lineRecordId()
+
+	/**
+	 * A GLLine's amount as a float (0.0 when absent or not numeric).
+	 *
+	 * @param array<string,mixed> $line The GLLine row.
+	 *
+	 * @return float
+	 */
+	private function lineAmountValue(array $line): float {
+		return $this->toFloat($line['amount'] ?? 0);
+	}//end lineAmountValue()
+
+	/**
+	 * Whether a GLLine is on the debit side.
+	 *
+	 * @param array<string,mixed> $line The GLLine row.
+	 *
+	 * @return bool
+	 */
+	private function isDebitLine(array $line): bool {
+		return (string)($line['side'] ?? '') === 'debit';
+	}//end isDebitLine()
 }//end trait

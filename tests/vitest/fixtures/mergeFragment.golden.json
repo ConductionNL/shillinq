@@ -1,0 +1,8362 @@
+{
+	"0": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/3",
+					"_fragment": 3
+				},
+				{
+					"id": null,
+					"route": "/1",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "C",
+					"route": "/4",
+					"_fragment": 3
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"1": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/4",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": 3
+				},
+				{
+					"id": "B",
+					"route": "/1",
+					"_fragment": 3
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"2": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/3",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": null
+				},
+				{
+					"id": "B",
+					"route": "/0",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "7",
+					"route": "/1",
+					"config": {
+						"widgets": 0
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"3": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": 7,
+					"route": "/2"
+				},
+				{
+					"id": "B",
+					"route": "/1",
+					"config": {
+						"widgets": 0
+					}
+				},
+				{
+					"id": "A",
+					"route": "/2",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "7",
+					"route": "/4",
+					"config": {
+						"widgets": 0
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"4": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/1",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": "frag-a"
+				}
+			]
+		},
+		"kept": [],
+		"shared": [
+			false
+		]
+	},
+	"5": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/3",
+					"_fragment": 3
+				},
+				null,
+				{
+					"id": "C",
+					"route": "/3",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": null
+				},
+				{
+					"id": "A",
+					"route": "/0"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"6": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": null,
+					"route": "/3",
+					"config": {
+						"widgets": 0
+					}
+				},
+				{
+					"id": "B",
+					"route": "/1",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": 3
+				},
+				{
+					"id": "D",
+					"route": "/3",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "C",
+					"route": "/2",
+					"_fragment": "frag-b"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"7": {
+		"result": {
+			"value": {
+				"updated": 2,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "C",
+					"route": "/1",
+					"config": {
+						"widgets": 0
+					}
+				},
+				{
+					"id": "A",
+					"route": "/2",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-a"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"8": {
+		"result": {
+			"value": {
+				"updated": 2,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				"page",
+				{
+					"id": "D",
+					"route": "/2",
+					"_fragment": null
+				},
+				{
+					"id": "C",
+					"route": "/4",
+					"_fragment": "frag-b",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": null,
+					"route": "/2",
+					"config": {
+						"widgets": 0
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"9": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": "x"
+		},
+		"kept": [],
+		"shared": []
+	},
+	"10": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/0",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": "C",
+					"route": "/3",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": "frag-a"
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"11": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/1",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "B",
+					"route": "/1",
+					"config": {
+						"widgets": 2
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"12": {
+		"result": {
+			"value": {
+				"updated": 2,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/2",
+					"_fragment": null
+				},
+				{
+					"id": "B",
+					"route": "/3"
+				},
+				{
+					"id": 7,
+					"route": "/3",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "7",
+					"route": "/4",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": "frag-a"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"13": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "7",
+					"route": "/1",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": null
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false
+		]
+	},
+	"14": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 3
+			}
+		},
+		"manifest": {
+			"pages": [
+				"page",
+				{
+					"id": "C",
+					"route": "/1",
+					"config": {
+						"widgets": 1
+					}
+				},
+				null,
+				{
+					"id": "C",
+					"route": "/1",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "D",
+					"route": "/2",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "B",
+					"route": "/2",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": 3
+				},
+				{
+					"id": "7",
+					"route": "/3",
+					"_fragment": "frag-b"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"15": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 2
+			}
+		},
+		"manifest": {},
+		"kept": [],
+		"shared": []
+	},
+	"16": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": 7,
+					"route": "/0",
+					"config": {
+						"widgets": 1
+					}
+				},
+				{
+					"id": 7,
+					"route": "/0"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"17": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/0"
+				},
+				{
+					"id": "7",
+					"route": "/3",
+					"config": {
+						"widgets": 1
+					}
+				},
+				{
+					"id": "C",
+					"route": "/0",
+					"config": {
+						"widgets": 0
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"18": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "7",
+					"route": "/1",
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "D",
+					"route": "/0",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": "frag-b"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"19": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/0",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-a"
+				},
+				0,
+				{
+					"id": null,
+					"route": "/1",
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "B",
+					"route": "/0",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": 3
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"20": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": 7,
+					"route": "/4",
+					"config": {
+						"widgets": 1
+					}
+				},
+				{
+					"id": "D",
+					"route": "/1"
+				},
+				{
+					"id": "A",
+					"route": "/3",
+					"config": {
+						"widgets": 1
+					}
+				},
+				{
+					"id": "C",
+					"route": "/3",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "7",
+					"route": "/2"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"21": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": "x"
+		},
+		"kept": [],
+		"shared": []
+	},
+	"22": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/1"
+				},
+				0,
+				{
+					"id": "C",
+					"route": "/3",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": 3
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"23": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				"page"
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false
+		]
+	},
+	"24": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 3
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/3"
+				},
+				{
+					"id": "A",
+					"route": "/0",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "7",
+					"route": "/1"
+				},
+				{
+					"id": "B",
+					"route": "/1",
+					"config": {
+						"widgets": 2
+					}
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"25": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": 7,
+					"route": "/4",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": "7",
+					"route": "/3",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": "B",
+					"route": "/4",
+					"_fragment": null
+				},
+				{
+					"id": "C",
+					"route": "/3",
+					"_fragment": 3
+				},
+				{
+					"id": "D",
+					"route": "/2",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": 3
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"26": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/1",
+					"_fragment": null
+				},
+				null,
+				{
+					"id": "B",
+					"route": "/0"
+				},
+				"__undefined",
+				{
+					"id": "D",
+					"route": "/2",
+					"_fragment": null
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"27": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/0"
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false
+		]
+	},
+	"28": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": null,
+					"route": "/2",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": 3
+				},
+				{
+					"id": "B",
+					"route": "/2",
+					"config": {
+						"widgets": 0
+					}
+				},
+				{
+					"id": "B",
+					"route": "/0",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": "D",
+					"route": "/4",
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "7",
+					"route": "/1",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": "C",
+					"route": "/0",
+					"_fragment": "frag-a"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"29": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/0"
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false
+		]
+	},
+	"30": {
+		"result": {
+			"value": {
+				"updated": 2,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/4",
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "A",
+					"route": "/4",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": null
+				},
+				{
+					"id": "A",
+					"route": "/2"
+				},
+				{
+					"id": "B",
+					"route": "/3",
+					"_fragment": 3
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"31": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "C",
+					"route": "/0",
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "D",
+					"route": "/0",
+					"config": {
+						"widgets": 0
+					}
+				},
+				{
+					"id": "A",
+					"route": "/3",
+					"_fragment": "frag-a"
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"32": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "C",
+					"route": "/1",
+					"config": {
+						"widgets": 0
+					}
+				},
+				{
+					"id": "A",
+					"route": "/3"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"33": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/0",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": 3
+				},
+				{
+					"id": "B",
+					"route": "/0"
+				},
+				{
+					"id": "7",
+					"route": "/1",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": "7",
+					"route": "/0",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": "A",
+					"route": "/3",
+					"config": {
+						"widgets": 1
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"34": {
+		"result": {
+			"value": {
+				"updated": 2,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/1",
+					"config": {
+						"widgets": 1
+					}
+				},
+				{
+					"id": "A",
+					"route": "/2",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "C",
+					"route": "/1",
+					"_fragment": null
+				},
+				{
+					"id": "A",
+					"route": "/0",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": "D",
+					"route": "/1",
+					"config": {
+						"widgets": 0
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"35": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/1",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": null
+				},
+				{
+					"id": "C",
+					"route": "/4",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": null
+				},
+				{
+					"id": "7",
+					"route": "/1",
+					"config": {
+						"widgets": 0
+					}
+				},
+				{
+					"id": "C",
+					"route": "/2",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": "frag-b"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"36": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/4",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-b"
+				}
+			]
+		},
+		"kept": [],
+		"shared": [
+			false
+		]
+	},
+	"37": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/1",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": "C",
+					"route": "/2",
+					"config": {
+						"widgets": 0
+					}
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"38": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": null,
+		"kept": [],
+		"shared": []
+	},
+	"39": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": []
+		},
+		"kept": [],
+		"shared": []
+	},
+	"40": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": null,
+					"route": "/0",
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "7",
+					"route": "/3",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": null
+				},
+				{
+					"id": "D",
+					"route": "/0"
+				},
+				{
+					"id": 7,
+					"route": "/3",
+					"_fragment": null
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"41": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": null,
+		"kept": [],
+		"shared": []
+	},
+	"42": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/2",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": 3
+				}
+			]
+		},
+		"kept": [],
+		"shared": [
+			false
+		]
+	},
+	"43": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "C",
+					"route": "/4",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "7",
+					"route": "/0",
+					"_fragment": "frag-a"
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"44": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/2",
+					"config": {
+						"widgets": 1
+					}
+				},
+				{
+					"id": "D",
+					"route": "/0"
+				}
+			]
+		},
+		"kept": [],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"45": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "C",
+					"route": "/1",
+					"config": {
+						"widgets": 2
+					}
+				},
+				0,
+				{
+					"id": "C",
+					"route": "/3",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": null
+				},
+				{
+					"id": null,
+					"route": "/3"
+				},
+				{
+					"id": "B",
+					"route": "/1"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"46": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": []
+		},
+		"kept": [],
+		"shared": []
+	},
+	"47": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "C",
+					"route": "/3"
+				},
+				{
+					"id": null,
+					"route": "/3"
+				},
+				{
+					"id": "7",
+					"route": "/2",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": null
+				},
+				{
+					"id": "D",
+					"route": "/0",
+					"config": {
+						"widgets": 1
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"48": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/2",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": "frag-b"
+				},
+				{
+					"id": 7,
+					"route": "/0",
+					"config": {
+						"widgets": 0
+					}
+				},
+				{
+					"id": "C",
+					"route": "/3",
+					"config": {
+						"widgets": 0
+					}
+				},
+				{
+					"id": "A",
+					"route": "/1",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": null
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"49": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/1",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": 3
+				},
+				{
+					"id": "B",
+					"route": "/1",
+					"_fragment": null
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"50": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/0",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": 3
+				},
+				{
+					"id": "B",
+					"route": "/3"
+				}
+			]
+		},
+		"kept": [],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"51": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/4",
+					"config": {
+						"widgets": 0
+					}
+				},
+				{
+					"id": 7,
+					"route": "/1",
+					"_fragment": null
+				},
+				{
+					"id": 7,
+					"route": "/4"
+				},
+				{
+					"id": "D",
+					"route": "/0",
+					"_fragment": 3
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"52": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/0"
+				},
+				{
+					"id": "D",
+					"route": "/4",
+					"config": {
+						"widgets": 0
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"53": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 3
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": 7,
+					"route": "/1",
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "7",
+					"route": "/4",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "D",
+					"route": "/4"
+				},
+				{
+					"id": "B",
+					"route": "/0",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": 3
+				},
+				{
+					"id": "A",
+					"route": "/2",
+					"config": {
+						"widgets": 1
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"54": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/3",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": 3
+				},
+				{
+					"id": "D",
+					"route": "/3",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": "C",
+					"route": "/0"
+				},
+				{
+					"id": "A",
+					"route": "/2",
+					"config": {
+						"widgets": 2
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"55": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/1",
+					"config": {
+						"widgets": 1
+					}
+				},
+				{
+					"id": "D",
+					"route": "/1",
+					"_fragment": "frag-a"
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"56": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "7",
+					"route": "/2",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-b"
+				},
+				{
+					"id": null,
+					"route": "/2",
+					"_fragment": null
+				},
+				{
+					"id": "A",
+					"route": "/1",
+					"_fragment": 3
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"57": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/1",
+					"_fragment": 3,
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": "B",
+					"route": "/0",
+					"_fragment": null
+				},
+				{
+					"id": "7",
+					"route": "/3",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": null
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"58": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 3
+			}
+		},
+		"manifest": {
+			"pages": "x"
+		},
+		"kept": [],
+		"shared": []
+	},
+	"59": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/3",
+					"config": {
+						"widgets": 0
+					}
+				},
+				{
+					"id": "C",
+					"route": "/4",
+					"config": {
+						"widgets": 0
+					}
+				},
+				{
+					"id": "A",
+					"route": "/1"
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"60": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/0",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": "B",
+					"route": "/1"
+				}
+			]
+		},
+		"kept": [],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"61": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": 7,
+					"route": "/2"
+				},
+				{
+					"id": "7",
+					"route": "/4",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": null
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"62": {
+		"result": {
+			"value": {
+				"updated": 2,
+				"appended": 2
+			}
+		},
+		"manifest": null,
+		"kept": [],
+		"shared": []
+	},
+	"63": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				0,
+				{
+					"id": "B",
+					"route": "/1"
+				},
+				{
+					"id": "C",
+					"route": "/0",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-a"
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"64": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": 7,
+					"route": "/3",
+					"config": {
+						"widgets": 0
+					}
+				},
+				{
+					"id": "D",
+					"route": "/4",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "C",
+					"route": "/1",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "7",
+					"route": "/2",
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "B",
+					"route": "/4",
+					"config": {
+						"widgets": 2
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"65": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				"__undefined",
+				{
+					"id": "C",
+					"route": "/0",
+					"_fragment": 3
+				},
+				{
+					"id": "A",
+					"route": "/1",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": "frag-a"
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"66": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "C",
+					"route": "/1"
+				},
+				{
+					"id": "A",
+					"route": "/3"
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"67": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/3",
+					"config": {
+						"widgets": 1
+					}
+				}
+			]
+		},
+		"kept": [],
+		"shared": [
+			false
+		]
+	},
+	"68": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/4",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "C",
+					"route": "/2",
+					"_fragment": null
+				}
+			]
+		},
+		"kept": [],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"69": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": "x"
+		},
+		"kept": [],
+		"shared": []
+	},
+	"70": {
+		"result": {
+			"value": {
+				"updated": 2,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "7",
+					"route": "/2",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": null
+				},
+				{
+					"id": "A",
+					"route": "/4",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "7",
+					"route": "/1",
+					"_fragment": null
+				},
+				{
+					"id": "D",
+					"route": "/4",
+					"config": {
+						"widgets": 2
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"71": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "C",
+					"route": "/1"
+				}
+			]
+		},
+		"kept": [],
+		"shared": [
+			false
+		]
+	},
+	"72": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				0,
+				{
+					"id": "A",
+					"route": "/0",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "7",
+					"route": "/0",
+					"config": {
+						"widgets": 2
+					}
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"73": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				null,
+				{
+					"id": 7,
+					"route": "/3",
+					"_fragment": null
+				},
+				{
+					"id": "D",
+					"route": "/4",
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "7",
+					"route": "/4",
+					"config": {
+						"widgets": 2
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			true,
+			false,
+			false,
+			false
+		]
+	},
+	"74": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 3
+			}
+		},
+		"manifest": {
+			"pages": "x"
+		},
+		"kept": [],
+		"shared": []
+	},
+	"75": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/1"
+				},
+				{
+					"id": 7,
+					"route": "/4",
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "C",
+					"route": "/3",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": "frag-b"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"76": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "C",
+					"route": "/0",
+					"config": {
+						"widgets": 1
+					}
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false
+		]
+	},
+	"77": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/4"
+				},
+				{
+					"id": null,
+					"route": "/2",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": 7,
+					"route": "/3"
+				},
+				{
+					"id": "D",
+					"route": "/2"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"78": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/2",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": null
+				},
+				{
+					"id": "A",
+					"route": "/0",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": "frag-a"
+				}
+			]
+		},
+		"kept": [],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"79": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "C",
+					"route": "/3",
+					"_fragment": 3
+				},
+				{
+					"id": "D",
+					"route": "/0",
+					"config": {
+						"widgets": 2
+					}
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"80": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": []
+		},
+		"kept": [],
+		"shared": []
+	},
+	"81": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/0"
+				},
+				{
+					"id": 7,
+					"route": "/2",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": 3
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"82": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/1",
+					"config": {
+						"widgets": 1
+					}
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false
+		]
+	},
+	"83": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 2
+			}
+		},
+		"manifest": {},
+		"kept": [],
+		"shared": []
+	},
+	"84": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "C",
+					"route": "/4",
+					"config": {
+						"widgets": 0
+					}
+				},
+				{
+					"id": 7,
+					"route": "/2",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": null,
+					"route": "/4",
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "D",
+					"route": "/2",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": 3
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"85": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": "x"
+		},
+		"kept": [],
+		"shared": []
+	},
+	"86": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": null,
+					"route": "/0",
+					"_fragment": null
+				},
+				{
+					"id": "C",
+					"route": "/4",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": 3
+				},
+				{
+					"id": "B",
+					"route": "/4",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": "frag-a"
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"87": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/0",
+					"_fragment": "frag-a"
+				},
+				{
+					"id": 7,
+					"route": "/4",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": null
+				},
+				{
+					"id": "D",
+					"route": "/2",
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "B",
+					"route": "/0",
+					"config": {
+						"widgets": 0
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"88": {
+		"result": {
+			"value": {
+				"updated": 2,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/0",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": null
+				},
+				{
+					"id": "B",
+					"route": "/2",
+					"config": {
+						"widgets": 1
+					}
+				},
+				{
+					"id": "D",
+					"route": "/1",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": 3
+				},
+				{
+					"id": "A",
+					"route": "/4",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "C",
+					"route": "/3",
+					"config": {
+						"widgets": 2
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"89": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/0",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "D",
+					"route": "/3",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "7",
+					"route": "/1",
+					"config": {
+						"widgets": 1
+					}
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"90": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				"page",
+				{
+					"id": "7",
+					"route": "/0",
+					"config": {
+						"widgets": 0
+					}
+				},
+				{
+					"id": "C",
+					"route": "/2",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": null
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"91": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "7",
+					"route": "/4",
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "D",
+					"route": "/0",
+					"config": {
+						"widgets": 1
+					}
+				},
+				{
+					"id": "B",
+					"route": "/4",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-b"
+				},
+				{
+					"id": 7,
+					"route": "/1",
+					"_fragment": "frag-a"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"92": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/2",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": 3
+				}
+			]
+		},
+		"kept": [],
+		"shared": [
+			false
+		]
+	},
+	"93": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/2",
+					"config": {
+						"widgets": 1
+					}
+				},
+				{
+					"id": "7",
+					"route": "/1",
+					"_fragment": 3
+				},
+				{
+					"id": "B",
+					"route": "/1",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": "frag-b"
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"94": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "C",
+					"route": "/3",
+					"config": {
+						"widgets": 1
+					}
+				},
+				{
+					"id": "7",
+					"route": "/4",
+					"config": {
+						"widgets": 0
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"95": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": 7,
+					"route": "/2",
+					"config": {
+						"widgets": 1
+					}
+				},
+				{
+					"id": "D",
+					"route": "/2",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": "C",
+					"route": "/3",
+					"_fragment": "frag-b"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"96": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": []
+		},
+		"kept": [],
+		"shared": []
+	},
+	"97": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/2",
+					"config": {
+						"widgets": 1
+					}
+				}
+			]
+		},
+		"kept": [],
+		"shared": [
+			false
+		]
+	},
+	"98": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {},
+		"kept": [],
+		"shared": []
+	},
+	"99": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/0",
+					"config": {
+						"widgets": 1
+					}
+				},
+				{
+					"id": "D",
+					"route": "/4",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": "frag-a"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"100": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/3"
+				},
+				{
+					"id": "B",
+					"route": "/2",
+					"config": {
+						"widgets": 2
+					}
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"101": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				0,
+				{
+					"id": "A",
+					"route": "/1",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": 3
+				},
+				{
+					"id": 7,
+					"route": "/4",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "C",
+					"route": "/2",
+					"_fragment": 3
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"102": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": null,
+					"route": "/0",
+					"_fragment": null
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false
+		]
+	},
+	"103": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				0,
+				{
+					"id": "C",
+					"route": "/2",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": null
+				},
+				null,
+				{
+					"id": 7,
+					"route": "/0",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": 3
+				},
+				{
+					"id": "D",
+					"route": "/0"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"104": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/0",
+					"_fragment": null
+				},
+				{
+					"id": "B",
+					"route": "/4",
+					"_fragment": 3
+				}
+			]
+		},
+		"kept": [],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"105": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/2",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "A",
+					"route": "/1",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "C",
+					"route": "/4",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": 3
+				},
+				{
+					"id": "B",
+					"route": "/3"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"106": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/3",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": "A",
+					"route": "/3",
+					"config": {
+						"widgets": 0
+					}
+				},
+				{
+					"id": "D",
+					"route": "/0",
+					"config": {
+						"widgets": 2
+					}
+				},
+				"page"
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"107": {
+		"result": {
+			"value": {
+				"updated": 2,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": null,
+					"route": "/0"
+				},
+				{
+					"id": "B",
+					"route": "/1"
+				},
+				{
+					"id": "D",
+					"route": "/1",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": null
+				},
+				{
+					"id": "D",
+					"route": "/3",
+					"_fragment": 3
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"108": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 1
+			}
+		},
+		"manifest": {},
+		"kept": [],
+		"shared": []
+	},
+	"109": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/3",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "7",
+					"route": "/1"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"110": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 3
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": null,
+					"route": "/4",
+					"_fragment": 3
+				},
+				{
+					"id": null,
+					"route": "/2",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": 7,
+					"route": "/4",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "C",
+					"route": "/2"
+				},
+				{
+					"id": "7",
+					"route": "/2",
+					"config": {
+						"widgets": 0
+					}
+				},
+				{
+					"id": "B",
+					"route": "/4",
+					"_fragment": 3
+				},
+				{
+					"id": "A",
+					"route": "/0",
+					"config": {
+						"widgets": 1
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"111": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": []
+		},
+		"kept": [],
+		"shared": []
+	},
+	"112": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": 7,
+					"route": "/4",
+					"_fragment": "frag-b"
+				},
+				0,
+				{
+					"id": "C",
+					"route": "/3",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": "C",
+					"route": "/1",
+					"_fragment": "frag-a"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"113": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/3",
+					"_fragment": "frag-b",
+					"config": {
+						"widgets": 0
+					}
+				},
+				{
+					"id": "D",
+					"route": "/2",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": "frag-b"
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"114": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/4",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": null,
+					"route": "/0",
+					"_fragment": 3
+				},
+				{
+					"id": "C",
+					"route": "/4"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"115": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/2",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": null
+				},
+				{
+					"id": null,
+					"route": "/2",
+					"_fragment": null
+				},
+				{
+					"id": 7,
+					"route": "/4"
+				},
+				{
+					"id": "C",
+					"route": "/4",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": null
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"116": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "7",
+					"route": "/2",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-b"
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false
+		]
+	},
+	"117": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/1"
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false
+		]
+	},
+	"118": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "7",
+					"route": "/2",
+					"_fragment": 3
+				}
+			]
+		},
+		"kept": [],
+		"shared": [
+			false
+		]
+	},
+	"119": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/4",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": "frag-a"
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false
+		]
+	},
+	"120": {
+		"result": {
+			"value": {
+				"updated": 2,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/4",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": "C",
+					"route": "/4",
+					"config": {
+						"widgets": 1
+					}
+				},
+				null,
+				{
+					"id": "7",
+					"route": "/0",
+					"_fragment": 3
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"121": {
+		"result": {
+			"value": {
+				"updated": 2,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": 7,
+					"route": "/0",
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "A",
+					"route": "/0",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": 3
+				},
+				{
+					"id": "D",
+					"route": "/2",
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "B",
+					"route": "/0",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "7",
+					"route": "/4",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": "frag-b"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"122": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/3",
+					"_fragment": null
+				},
+				{
+					"id": "C",
+					"route": "/0",
+					"config": {
+						"widgets": 1
+					}
+				}
+			]
+		},
+		"kept": [],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"123": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/2",
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "B",
+					"route": "/0"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"124": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": null,
+					"route": "/3",
+					"config": {
+						"widgets": 0
+					}
+				},
+				{
+					"id": "C",
+					"route": "/3",
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "D",
+					"route": "/2",
+					"_fragment": null
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"125": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/3",
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "A",
+					"route": "/3",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": 3
+				}
+			]
+		},
+		"kept": [],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"126": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/0",
+					"config": {
+						"widgets": 2
+					}
+				}
+			]
+		},
+		"kept": [],
+		"shared": [
+			false
+		]
+	},
+	"127": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "7",
+					"route": "/4",
+					"_fragment": "frag-a"
+				},
+				"page",
+				{
+					"id": "A",
+					"route": "/1",
+					"_fragment": "frag-a"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"128": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "C",
+					"route": "/4"
+				},
+				{
+					"id": 7,
+					"route": "/4",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": "C",
+					"route": "/1"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"129": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/4",
+					"_fragment": "frag-b"
+				},
+				null,
+				{
+					"id": "A",
+					"route": "/2",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "D",
+					"route": "/3"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"130": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": 7,
+					"route": "/0",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-a"
+				},
+				"page",
+				{
+					"id": "D",
+					"route": "/2",
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "C",
+					"route": "/4",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": null
+				},
+				{
+					"id": "7",
+					"route": "/3",
+					"config": {
+						"widgets": 2
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			true,
+			false,
+			false,
+			false
+		]
+	},
+	"131": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/1",
+					"_fragment": "frag-b",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": "7",
+					"route": "/4"
+				},
+				{
+					"id": "C",
+					"route": "/2",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "7",
+					"route": "/1",
+					"_fragment": 3
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"132": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": 7,
+					"route": "/2",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "D",
+					"route": "/3",
+					"_fragment": null
+				},
+				{
+					"id": "B",
+					"route": "/0",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": null
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"133": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "C",
+					"route": "/3",
+					"config": {
+						"widgets": 0
+					}
+				},
+				{
+					"id": 7,
+					"route": "/4",
+					"config": {
+						"widgets": 0
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"134": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": "x"
+		},
+		"kept": [],
+		"shared": []
+	},
+	"135": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "7",
+					"route": "/2",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": null
+				},
+				{
+					"id": "C",
+					"route": "/0",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": "frag-a"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"136": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": 7,
+					"route": "/0"
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false
+		]
+	},
+	"137": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/2",
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "B",
+					"route": "/1",
+					"config": {
+						"widgets": 2
+					}
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"138": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": []
+		},
+		"kept": [],
+		"shared": []
+	},
+	"139": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": "x"
+		},
+		"kept": [],
+		"shared": []
+	},
+	"140": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/4",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": 3
+				},
+				{
+					"id": 7,
+					"route": "/0",
+					"config": {
+						"widgets": 1
+					}
+				},
+				{
+					"id": "D",
+					"route": "/2",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": 3
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"141": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": null,
+		"kept": [],
+		"shared": []
+	},
+	"142": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": null,
+					"route": "/3",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": null,
+					"route": "/2",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": 3
+				},
+				{
+					"id": "D",
+					"route": "/4",
+					"_fragment": 3
+				},
+				{
+					"id": "D",
+					"route": "/2",
+					"config": {
+						"widgets": 1
+					}
+				},
+				{
+					"id": "A",
+					"route": "/1",
+					"config": {
+						"widgets": 1
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"143": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": null,
+					"route": "/3",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": 3
+				},
+				{
+					"id": "A",
+					"route": "/4"
+				},
+				{
+					"id": 7,
+					"route": "/4",
+					"config": {
+						"widgets": 1
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"144": {
+		"result": {
+			"value": {
+				"updated": 2,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/3",
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "A",
+					"route": "/4",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "C",
+					"route": "/0",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": 3
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"145": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": []
+		},
+		"kept": [],
+		"shared": []
+	},
+	"146": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": 7,
+					"route": "/1",
+					"_fragment": "frag-b"
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false
+		]
+	},
+	"147": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				"__undefined",
+				{
+					"id": "A",
+					"route": "/0",
+					"_fragment": 3
+				},
+				{
+					"id": null,
+					"route": "/4",
+					"config": {
+						"widgets": 0
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"148": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/0",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": "frag-b"
+				},
+				"__undefined",
+				{
+					"id": null,
+					"route": "/0"
+				},
+				{
+					"id": null,
+					"route": "/0",
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "C",
+					"route": "/2",
+					"config": {
+						"widgets": 1
+					}
+				},
+				{
+					"id": "7",
+					"route": "/3",
+					"config": {
+						"widgets": 1
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"149": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "7",
+					"route": "/1"
+				},
+				{
+					"id": "7",
+					"route": "/0",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "B",
+					"route": "/0",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": 7,
+					"route": "/0",
+					"_fragment": "frag-b"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"150": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 3
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "7",
+					"route": "/0"
+				},
+				{
+					"id": "D",
+					"route": "/2",
+					"config": {
+						"widgets": 1
+					}
+				},
+				{
+					"id": "B",
+					"route": "/0"
+				}
+			]
+		},
+		"kept": [],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"151": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				"__undefined",
+				{
+					"id": "C",
+					"route": "/1",
+					"_fragment": "frag-a",
+					"config": {
+						"widgets": 2
+					}
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"152": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": []
+		},
+		"kept": [],
+		"shared": []
+	},
+	"153": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				"__undefined",
+				{
+					"id": "A",
+					"route": "/0",
+					"_fragment": null
+				},
+				{
+					"id": "7",
+					"route": "/0",
+					"config": {
+						"widgets": 1
+					}
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"154": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": 7,
+					"route": "/2",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": null
+				},
+				{
+					"id": "A",
+					"route": "/1"
+				},
+				{
+					"id": "C",
+					"route": "/0",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "C",
+					"route": "/2"
+				},
+				{
+					"id": "7",
+					"route": "/4",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-a"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"155": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": []
+		},
+		"kept": [],
+		"shared": []
+	},
+	"156": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/4",
+					"config": {
+						"widgets": 1
+					}
+				},
+				{
+					"id": "A",
+					"route": "/4",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": null
+				},
+				{
+					"id": "7",
+					"route": "/0"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"157": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "7",
+					"route": "/1",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": 3
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false
+		]
+	},
+	"158": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 3
+			}
+		},
+		"manifest": null,
+		"kept": [],
+		"shared": []
+	},
+	"159": {
+		"result": {
+			"value": {
+				"updated": 2,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/4",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": null
+				},
+				{
+					"id": "A",
+					"route": "/0",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": 3
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"160": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/4",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": null
+				}
+			]
+		},
+		"kept": [],
+		"shared": [
+			false
+		]
+	},
+	"161": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/3",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "B",
+					"route": "/1",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "C",
+					"route": "/0",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": "C",
+					"route": "/4",
+					"config": {
+						"widgets": 0
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"162": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "7",
+					"route": "/0"
+				},
+				{
+					"id": "C",
+					"route": "/4",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-a"
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"163": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/4",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "C",
+					"route": "/3",
+					"_fragment": "frag-a"
+				}
+			]
+		},
+		"kept": [],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"164": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": []
+		},
+		"kept": [],
+		"shared": []
+	},
+	"165": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "C",
+					"route": "/4",
+					"config": {
+						"widgets": 1
+					}
+				},
+				{
+					"id": null,
+					"route": "/4",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-b"
+				},
+				{
+					"id": null,
+					"route": "/3",
+					"config": {
+						"widgets": 1
+					}
+				},
+				{
+					"id": "D",
+					"route": "/0"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"166": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": null,
+					"route": "/4"
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false
+		]
+	},
+	"167": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": []
+		},
+		"kept": [],
+		"shared": []
+	},
+	"168": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/4",
+					"_fragment": "frag-b"
+				},
+				{
+					"id": 7,
+					"route": "/4",
+					"config": {
+						"widgets": 1
+					}
+				},
+				{
+					"id": "C",
+					"route": "/4",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": null
+				},
+				{
+					"id": "A",
+					"route": "/3",
+					"config": {
+						"widgets": 0
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"169": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/3",
+					"config": {
+						"widgets": 0
+					}
+				}
+			]
+		},
+		"kept": [],
+		"shared": [
+			false
+		]
+	},
+	"170": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": []
+		},
+		"kept": [],
+		"shared": []
+	},
+	"171": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": null,
+					"route": "/2",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "B",
+					"route": "/1",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": 3
+				},
+				{
+					"id": "A",
+					"route": "/0"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"172": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": 7,
+					"route": "/1",
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "C",
+					"route": "/1",
+					"_fragment": 3
+				},
+				{
+					"id": "D",
+					"route": "/1",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": 3
+				},
+				{
+					"id": "A",
+					"route": "/1",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": null
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"173": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/3",
+					"_fragment": null
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false
+		]
+	},
+	"174": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": null,
+					"route": "/4",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": 3
+				},
+				{
+					"id": "7",
+					"route": "/3",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "D",
+					"route": "/4",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": null
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"175": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "7",
+					"route": "/2",
+					"_fragment": null
+				}
+			]
+		},
+		"kept": [],
+		"shared": [
+			false
+		]
+	},
+	"176": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": 7,
+					"route": "/2"
+				},
+				{
+					"id": "D",
+					"route": "/2",
+					"config": {
+						"widgets": 0
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"177": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": null,
+					"route": "/2",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "A",
+					"route": "/0",
+					"config": {
+						"widgets": 0
+					}
+				},
+				{
+					"id": "C",
+					"route": "/0",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": null
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"178": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "7",
+					"route": "/4",
+					"config": {
+						"widgets": 0
+					}
+				},
+				{
+					"id": "C",
+					"route": "/3",
+					"config": {
+						"widgets": 0
+					}
+				},
+				{
+					"id": "C",
+					"route": "/3",
+					"config": {
+						"widgets": 2
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"179": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "C",
+					"route": "/0"
+				},
+				{
+					"id": "7",
+					"route": "/4",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": null
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"180": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "C",
+					"route": "/1"
+				},
+				{
+					"id": "C",
+					"route": "/1",
+					"config": {
+						"widgets": 0
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"181": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": 7,
+					"route": "/1",
+					"config": {
+						"widgets": 1
+					}
+				},
+				{
+					"id": "7",
+					"route": "/4",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": 3
+				},
+				"page"
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			true
+		]
+	},
+	"182": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/1",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "D",
+					"route": "/1",
+					"config": {
+						"widgets": 0
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"183": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 3
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/2",
+					"_fragment": null
+				},
+				{
+					"id": 7,
+					"route": "/3"
+				},
+				{
+					"id": "B",
+					"route": "/3",
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "C",
+					"route": "/3",
+					"config": {
+						"widgets": 1
+					}
+				},
+				{
+					"id": "7",
+					"route": "/4",
+					"config": {
+						"widgets": 0
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"184": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/3",
+					"config": {
+						"widgets": 1
+					}
+				}
+			]
+		},
+		"kept": [],
+		"shared": [
+			false
+		]
+	},
+	"185": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/4",
+					"_fragment": 3
+				},
+				{
+					"id": "A",
+					"route": "/3",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": null,
+					"route": "/4",
+					"_fragment": "frag-b"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"186": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "D",
+					"route": "/1",
+					"_fragment": null
+				},
+				{
+					"id": "B",
+					"route": "/0"
+				}
+			]
+		},
+		"kept": [
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"187": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "C",
+					"route": "/4",
+					"config": {
+						"widgets": 1
+					}
+				}
+			]
+		},
+		"kept": [],
+		"shared": [
+			false
+		]
+	},
+	"188": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": 7,
+					"route": "/2",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": 7,
+					"route": "/1",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "D",
+					"route": "/3",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "A",
+					"route": "/1",
+					"config": {
+						"widgets": 2
+					},
+					"_fragment": 3
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"189": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": 7,
+					"route": "/0",
+					"_fragment": 3
+				},
+				{
+					"id": "D",
+					"route": "/0",
+					"_fragment": "frag-a"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"190": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 3
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/1",
+					"config": {
+						"widgets": 0
+					}
+				},
+				{
+					"id": "7",
+					"route": "/4",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": "C",
+					"route": "/4",
+					"_fragment": "frag-a"
+				}
+			]
+		},
+		"kept": [],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"191": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "A",
+					"route": "/4",
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "D",
+					"route": "/3",
+					"config": {
+						"widgets": 1
+					}
+				},
+				{
+					"id": 7,
+					"route": "/1",
+					"_fragment": "frag-b"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"192": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/3",
+					"_fragment": 3
+				},
+				{
+					"id": null,
+					"route": "/1",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": 7,
+					"route": "/0",
+					"_fragment": null
+				},
+				{
+					"id": "A",
+					"route": "/0",
+					"_fragment": 3
+				},
+				{
+					"id": "C",
+					"route": "/2",
+					"config": {
+						"widgets": 0
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"193": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 3
+			}
+		},
+		"manifest": {},
+		"kept": [],
+		"shared": []
+	},
+	"194": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": null,
+					"route": "/0",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": "B",
+					"route": "/1",
+					"config": {
+						"widgets": 0
+					}
+				},
+				{
+					"id": "7",
+					"route": "/0",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "D",
+					"route": "/3",
+					"config": {
+						"widgets": 1
+					}
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"195": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": null,
+					"route": "/2",
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "C",
+					"route": "/3",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "D",
+					"route": "/0",
+					"config": {
+						"widgets": 1
+					},
+					"_fragment": "frag-a"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false
+		]
+	},
+	"196": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 1
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "7",
+					"route": "/4"
+				}
+			]
+		},
+		"kept": [],
+		"shared": [
+			false
+		]
+	},
+	"197": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": "B",
+					"route": "/3",
+					"config": {
+						"widgets": 2
+					}
+				},
+				{
+					"id": "B",
+					"route": "/4",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": 3
+				},
+				{
+					"id": "A",
+					"route": "/3",
+					"_fragment": "frag-b"
+				},
+				{
+					"id": "7",
+					"route": "/2",
+					"_fragment": null
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"198": {
+		"result": {
+			"value": {
+				"updated": 0,
+				"appended": 0
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": null,
+					"route": "/0",
+					"config": {
+						"widgets": 1
+					}
+				},
+				{
+					"id": "C",
+					"route": "/4"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false
+		]
+	},
+	"199": {
+		"result": {
+			"value": {
+				"updated": 1,
+				"appended": 2
+			}
+		},
+		"manifest": {
+			"pages": [
+				{
+					"id": null,
+					"route": "/3",
+					"_fragment": "frag-a"
+				},
+				{
+					"id": "D",
+					"route": "/3",
+					"config": {
+						"widgets": 1
+					}
+				},
+				{
+					"id": 7,
+					"route": "/0",
+					"config": {
+						"widgets": 0
+					}
+				},
+				{
+					"id": "A",
+					"route": "/3"
+				},
+				{
+					"id": "C",
+					"route": "/3",
+					"config": {
+						"widgets": 0
+					},
+					"_fragment": "frag-b"
+				}
+			]
+		},
+		"kept": [
+			true,
+			true,
+			true
+		],
+		"shared": [
+			false,
+			false,
+			false,
+			false,
+			false
+		]
+	},
+	"0 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"1 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"2 index": {
+		"value": {
+			"__map": [
+				[
+					"B",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"3 index": {
+		"value": {
+			"__map": [
+				[
+					"A",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"4 index": {
+		"value": {
+			"__map": [
+				[
+					"A",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"5 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"6 index": {
+		"value": {
+			"__map": [
+				[
+					"D",
+					"frag-a"
+				],
+				[
+					"C",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"7 index": {
+		"value": {
+			"__map": [
+				[
+					"A",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"8 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"9 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"10 index": {
+		"value": {
+			"__map": [
+				[
+					"C",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"11 index": {
+		"value": {
+			"__map": [
+				[
+					"B",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"12 index": {
+		"value": {
+			"__map": [
+				[
+					"7",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"13 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"14 index": {
+		"value": {
+			"__map": [
+				[
+					"C",
+					"frag-b"
+				],
+				[
+					"D",
+					"frag-a"
+				],
+				[
+					"7",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"15 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"16 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"17 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"18 index": {
+		"value": {
+			"__map": [
+				[
+					"7",
+					"frag-b"
+				],
+				[
+					"D",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"19 index": {
+		"value": {
+			"__map": [
+				[
+					"D",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"20 index": {
+		"value": {
+			"__map": [
+				[
+					"C",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"21 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"22 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"23 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"24 index": {
+		"value": {
+			"__map": [
+				[
+					"A",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"25 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"26 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"27 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"28 index": {
+		"value": {
+			"__map": [
+				[
+					"D",
+					"frag-b"
+				],
+				[
+					"C",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"29 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"30 index": {
+		"value": {
+			"__map": [
+				[
+					"D",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"31 index": {
+		"value": {
+			"__map": [
+				[
+					"C",
+					"frag-a"
+				],
+				[
+					"A",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"32 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"33 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"34 index": {
+		"value": {
+			"__map": [
+				[
+					"A",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"35 index": {
+		"value": {
+			"__map": [
+				[
+					"C",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"36 index": {
+		"value": {
+			"__map": [
+				[
+					"D",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"37 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"38 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"39 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"40 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"41 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"42 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"43 index": {
+		"value": {
+			"__map": [
+				[
+					"C",
+					"frag-a"
+				],
+				[
+					"7",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"44 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"45 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"46 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"47 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"48 index": {
+		"value": {
+			"__map": [
+				[
+					"A",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"49 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"50 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"51 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"52 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"53 index": {
+		"value": {
+			"__map": [
+				[
+					"7",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"54 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"55 index": {
+		"value": {
+			"__map": [
+				[
+					"D",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"56 index": {
+		"value": {
+			"__map": [
+				[
+					"7",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"57 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"58 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"59 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"60 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"61 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"62 index": {
+		"value": {
+			"__map": [
+				[
+					"C",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"63 index": {
+		"value": {
+			"__map": [
+				[
+					"C",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"64 index": {
+		"value": {
+			"__map": [
+				[
+					"D",
+					"frag-b"
+				],
+				[
+					"C",
+					"frag-a"
+				],
+				[
+					"7",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"65 index": {
+		"value": {
+			"__map": [
+				[
+					"A",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"66 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"67 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"68 index": {
+		"value": {
+			"__map": [
+				[
+					"D",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"69 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"70 index": {
+		"value": {
+			"__map": [
+				[
+					"A",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"71 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"72 index": {
+		"value": {
+			"__map": [
+				[
+					"A",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"73 index": {
+		"value": {
+			"__map": [
+				[
+					"D",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"74 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"75 index": {
+		"value": {
+			"__map": [
+				[
+					"C",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"76 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"77 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"78 index": {
+		"value": {
+			"__map": [
+				[
+					"A",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"79 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"80 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"81 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"82 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"83 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"84 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"85 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"86 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"87 index": {
+		"value": {
+			"__map": [
+				[
+					"B",
+					"frag-a"
+				],
+				[
+					"D",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"88 index": {
+		"value": {
+			"__map": [
+				[
+					"A",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"89 index": {
+		"value": {
+			"__map": [
+				[
+					"B",
+					"frag-b"
+				],
+				[
+					"D",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"90 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"91 index": {
+		"value": {
+			"__map": [
+				[
+					"7",
+					"frag-b"
+				],
+				[
+					"B",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"92 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"93 index": {
+		"value": {
+			"__map": [
+				[
+					"B",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"94 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"95 index": {
+		"value": {
+			"__map": [
+				[
+					"C",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"96 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"97 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"98 index": {
+		"value": {
+			"__map": [
+				[
+					"B",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"99 index": {
+		"value": {
+			"__map": [
+				[
+					"D",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"100 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"101 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"102 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"103 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"104 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"105 index": {
+		"value": {
+			"__map": [
+				[
+					"A",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"106 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"107 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"108 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"109 index": {
+		"value": {
+			"__map": [
+				[
+					"D",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"110 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"111 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"112 index": {
+		"value": {
+			"__map": [
+				[
+					"C",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"113 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"114 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"115 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"116 index": {
+		"value": {
+			"__map": [
+				[
+					"7",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"117 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"118 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"119 index": {
+		"value": {
+			"__map": [
+				[
+					"D",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"120 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"121 index": {
+		"value": {
+			"__map": [
+				[
+					"D",
+					"frag-a"
+				],
+				[
+					"B",
+					"frag-b"
+				],
+				[
+					"7",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"122 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"123 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"124 index": {
+		"value": {
+			"__map": [
+				[
+					"C",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"125 index": {
+		"value": {
+			"__map": [
+				[
+					"B",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"126 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"127 index": {
+		"value": {
+			"__map": [
+				[
+					"7",
+					"frag-a"
+				],
+				[
+					"A",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"128 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"129 index": {
+		"value": {
+			"__map": [
+				[
+					"A",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"130 index": {
+		"value": {
+			"__map": [
+				[
+					"D",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"131 index": {
+		"value": {
+			"__map": [
+				[
+					"B",
+					"frag-b"
+				],
+				[
+					"C",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"132 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"133 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"134 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"135 index": {
+		"value": {
+			"__map": [
+				[
+					"C",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"136 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"137 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"138 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"139 index": {
+		"value": {
+			"__map": [
+				[
+					"B",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"140 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"141 index": {
+		"value": {
+			"__map": [
+				[
+					"A",
+					"frag-a"
+				],
+				[
+					"C",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"142 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"143 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"144 index": {
+		"value": {
+			"__map": [
+				[
+					"D",
+					"frag-b"
+				],
+				[
+					"A",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"145 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"146 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"147 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"148 index": {
+		"value": {
+			"__map": [
+				[
+					"A",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"149 index": {
+		"value": {
+			"__map": [
+				[
+					"7",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"150 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"151 index": {
+		"value": {
+			"__map": [
+				[
+					"C",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"152 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"153 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"154 index": {
+		"value": {
+			"__map": [
+				[
+					"C",
+					"frag-a"
+				],
+				[
+					"7",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"155 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"156 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"157 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"158 index": {
+		"value": {
+			"__map": [
+				[
+					"A",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"159 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"160 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"161 index": {
+		"value": {
+			"__map": [
+				[
+					"D",
+					"frag-b"
+				],
+				[
+					"B",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"162 index": {
+		"value": {
+			"__map": [
+				[
+					"C",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"163 index": {
+		"value": {
+			"__map": [
+				[
+					"A",
+					"frag-b"
+				],
+				[
+					"C",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"164 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"165 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"166 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"167 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"168 index": {
+		"value": {
+			"__map": [
+				[
+					"B",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"169 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"170 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"171 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"172 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"173 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"174 index": {
+		"value": {
+			"__map": [
+				[
+					"7",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"175 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"176 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"177 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"178 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"179 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"180 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"181 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"182 index": {
+		"value": {
+			"__map": [
+				[
+					"A",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"183 index": {
+		"value": {
+			"__map": [
+				[
+					"B",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"184 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"185 index": {
+		"value": {
+			"__map": [
+				[
+					"A",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"186 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"187 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"188 index": {
+		"value": {
+			"__map": [
+				[
+					"D",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"189 index": {
+		"value": {
+			"__map": [
+				[
+					"D",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"190 index": {
+		"value": {
+			"__map": [
+				[
+					"C",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"191 index": {
+		"value": {
+			"__map": [
+				[
+					"A",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"192 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"193 index": {
+		"value": {
+			"__map": [
+				[
+					"D",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"194 index": {
+		"value": {
+			"__map": [
+				[
+					"7",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"195 index": {
+		"value": {
+			"__map": [
+				[
+					"C",
+					"frag-a"
+				],
+				[
+					"D",
+					"frag-a"
+				]
+			]
+		}
+	},
+	"196 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"197 index": {
+		"value": {
+			"__map": [
+				[
+					"A",
+					"frag-b"
+				]
+			]
+		}
+	},
+	"198 index": {
+		"value": {
+			"__map": []
+		}
+	},
+	"199 index": {
+		"value": {
+			"__map": [
+				[
+					"C",
+					"frag-b"
+				]
+			]
+		}
+	}
+}

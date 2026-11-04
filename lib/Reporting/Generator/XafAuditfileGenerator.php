@@ -116,134 +116,11 @@ final class XafAuditfileGenerator implements ReportGeneratorInterface {
 	 * @return GeneratedFile
 	 */
 	public function generate(array $context, string $format): GeneratedFile {
-		$administrationId = $this->contextString($context, 'administrationId');
-		$period = $this->contextString($context, 'period');
-		$fiscalYear = $this->fiscalYear($period);
-
-		// Load every source, then re-assert the administration scope in PHP so a
-		// mis-configured or filter-ignoring data layer still cannot leak a row.
-		$accounts = $this->scopeToAdministration($this->loadAll('Account', $this->administrationFilter($context)), $administrationId);
-		$customers = $this->scopeToAdministration($this->loadAll('CustomerMaster', $this->administrationFilter($context)), $administrationId);
-		$payees = $this->scopeToAdministration($this->loadAll('Payee', $this->administrationFilter($context)), $administrationId);
-		$transactions = $this->scopeToAdministration($this->loadAll('GLTransaction', $this->lineFilters($context)), $administrationId);
-		$allLines = $this->loadAll('GLLine', $this->lineFilters($context));
-
-		// In-scope transaction ids — GLLine carries no administrationId, so its
-		// isolation is enforced purely by the transaction join.
-		$transactionIds = [];
-		foreach ($transactions as $transaction) {
-			$tid = $this->transactionId($transaction);
-			if ($tid !== '') {
-				$transactionIds[$tid] = true;
-			}
-		}
-
-		$linesByTransaction = [];
-		foreach ($allLines as $line) {
-			$key = (string)($line['transactionId'] ?? '');
-			if ($key === '' || isset($transactionIds[$key]) === false) {
-				continue;
-			}
-
-			$linesByTransaction[$key][] = $line;
-		}
-
-		$writer = new XMLWriter();
-		$writer->openMemory();
-		$writer->setIndent(true);
-		$writer->setIndentString('  ');
-		$writer->startDocument('1.0', 'UTF-8');
-
+		$data   = $this->loadAuditData(context: $context);
+		$writer = $this->openXmlDocument();
 		$writer->startElementNs(null, 'auditfile', self::XAF_NS);
-
-		// --- header ---.
-		$writer->startElement('header');
-		$writer->writeElement('fiscalYear', $fiscalYear);
-		$writer->writeElement('startDate', $fiscalYear . '-01-01');
-		$writer->writeElement('endDate', $fiscalYear . '-12-31');
-		$writer->writeElement('curCode', 'EUR');
-		$writer->writeElement('dateCreated', gmdate('Y-m-d'));
-		$writer->writeElement('softwareDesc', 'Shillinq');
-		$writer->endElement();
-		// End header.
-		// --- company ---.
-		$writer->startElement('company');
-		$writer->writeElement('companyName', ($administrationId !== '' ? $administrationId : 'Shillinq administration'));
-		$writer->writeElement('companyIdent', ($administrationId !== '' ? $administrationId : 'UNKNOWN'));
-		$writer->writeElement('currencyCode', 'EUR');
-
-		// GeneralLedger (chart of accounts from Account).
-		$writer->startElement('generalLedger');
-		foreach ($accounts as $account) {
-			$accountNumber = (string)($account['accountNumber'] ?? $account['code'] ?? '');
-			if ($accountNumber === '') {
-				continue;
-			}
-
-			$writer->startElement('ledgerAccount');
-			$writer->writeElement('accID', $accountNumber);
-			$writer->writeElement('accDesc', (string)($account['name'] ?? $account['description'] ?? ''));
-			$writer->writeElement('accTp', $this->accountType((string)($account['accountType'] ?? '')));
-			$writer->endElement();
-		}
-
-		$writer->endElement();
-		// End generalLedger.
-		// customersSuppliers (AR customers + AP suppliers).
-		$writer->startElement('customersSuppliers');
-		foreach ($customers as $customer) {
-			$this->writeCustomerSupplier(
-				$writer,
-				'C',
-				(string)($customer['customerId'] ?? ($customer['customerNumber'] ?? '')),
-				$customer
-			);
-		}
-
-		foreach ($payees as $payee) {
-			$this->writeCustomerSupplier(
-				$writer,
-				'S',
-				(string)($payee['vendorNumber'] ?? ''),
-				$payee
-			);
-		}
-
-		$writer->endElement();
-		// End customersSuppliers.
-		// transactions (one journal wrapping all GL transactions).
-		$writer->startElement('transactions');
-		$writer->writeElement('linesCount', (string)$this->countLines($transactions, $linesByTransaction));
-		$writer->writeElement('transactionCount', (string)count($transactions));
-		$writer->startElement('journal');
-		$writer->writeElement('jrnID', 'GL');
-		$writer->writeElement('desc', 'General ledger');
-		$writer->writeElement('jrnTp', 'Z');
-		foreach ($transactions as $transaction) {
-			$writer->startElement('transaction');
-			$writer->writeElement('nr', (string)($transaction['transactionNumber'] ?? $this->transactionId($transaction)));
-			$writer->writeElement('desc', (string)($transaction['description'] ?? ''));
-			$writer->writeElement('trDt', (string)($transaction['postingDate'] ?? ''));
-			foreach ($this->linesFor($transaction, $linesByTransaction) as $line) {
-				$writer->startElement('trLine');
-				$writer->writeElement('nr', (string)($line['lineNumber'] ?? $line['id'] ?? ''));
-				$writer->writeElement('accID', (string)($line['accountNumber'] ?? ''));
-				$writer->writeElement('desc', (string)($line['description'] ?? ''));
-				$writer->writeElement('amnt', $this->money($this->toFloat($line['amount'] ?? 0)));
-				$writer->writeElement('amntTp', ((string)($line['side'] ?? '') === 'debit' ? 'D' : 'C'));
-				$writer->endElement();
-			}
-
-			$writer->endElement();
-			// End transaction.
-		}//end foreach
-
-		$writer->endElement();
-		// End journal.
-		$writer->endElement();
-		// End transactions.
-		$writer->endElement();
-		// End company.
+		$this->writeHeader(writer: $writer, data: $data);
+		$this->writeCompany(writer: $writer, data: $data);
 		$writer->endElement();
 		// End auditfile.
 		$writer->endDocument();
@@ -256,6 +133,234 @@ final class XafAuditfileGenerator implements ReportGeneratorInterface {
 		);
 
 	}//end generate()
+
+	/**
+	 * Load every source, then re-assert the administration scope in PHP so a
+	 * mis-configured or filter-ignoring data layer still cannot leak a row.
+	 *
+	 * @param array<string, mixed> $context `{ period?, administrationId? }`.
+	 *
+	 * @return array<string, mixed> The scoped rows plus the transactions with their lines.
+	 */
+	private function loadAuditData(array $context): array {
+		$administrationId = $this->contextString($context, 'administrationId');
+		$data = ['administrationId' => $administrationId, 'period' => $this->contextString($context, 'period')];
+		foreach (['accounts' => 'Account', 'customers' => 'CustomerMaster', 'payees' => 'Payee'] as $key => $schema) {
+			$data[$key] = $this->scopeToAdministration($this->loadAll($schema, $this->administrationFilter($context)), $administrationId);
+		}
+
+		$transactions = $this->scopeToAdministration($this->loadAll('GLTransaction', $this->lineFilters($context)), $administrationId);
+		$lines = $this->loadAll('GLLine', $this->lineFilters($context));
+		$data['entries'] = $this->transactionEntries(transactions: $transactions, lines: $lines);
+
+		return $data;
+	}//end loadAuditData()
+
+	/**
+	 * Pair every transaction with its lines. GLLine carries no
+	 * administrationId, so its isolation is enforced purely by the join on
+	 * the in-scope transaction ids.
+	 *
+	 * @param array<int, array<string,mixed>> $transactions The in-scope transactions.
+	 * @param array<int, array<string,mixed>> $lines Every loaded GLLine.
+	 *
+	 * @return array<int, array{transaction: array<string,mixed>, lines: array<int, array<string,mixed>>}>
+	 */
+	private function transactionEntries(array $transactions, array $lines): array {
+		$ids = array_filter(array_map($this->transactionId(...), $transactions), static fn (string $id): bool => $id !== '');
+		$transactionIds = array_fill_keys($ids, true);
+
+		$linesByTransaction = [];
+		foreach ($lines as $line) {
+			$key = (string)($line['transactionId'] ?? '');
+			if ($key !== '' && isset($transactionIds[$key]) === true) {
+				$linesByTransaction[$key][] = $line;
+			}
+		}
+
+		return array_map(
+			fn (array $transaction): array => ['transaction' => $transaction, 'lines' => $this->linesFor($transaction, $linesByTransaction)],
+			$transactions
+		);
+	}//end transactionEntries()
+
+	/**
+	 * Write the header block.
+	 *
+	 * @param XMLWriter $writer The active writer.
+	 * @param array<string, mixed> $data The loaded audit data.
+	 *
+	 * @return void
+	 */
+	private function writeHeader(XMLWriter $writer, array $data): void {
+		$fiscalYear = $this->fiscalYear($data['period']);
+		$writer->startElement('header');
+		$writer->writeElement('fiscalYear', $fiscalYear);
+		$writer->writeElement('startDate', $fiscalYear . '-01-01');
+		$writer->writeElement('endDate', $fiscalYear . '-12-31');
+		$writer->writeElement('curCode', 'EUR');
+		$writer->writeElement('dateCreated', gmdate('Y-m-d'));
+		$writer->writeElement('softwareDesc', 'Shillinq');
+		$writer->endElement();
+	}//end writeHeader()
+
+	/**
+	 * Write the company block: ledger, customers and suppliers, transactions.
+	 *
+	 * @param XMLWriter $writer The active writer.
+	 * @param array<string, mixed> $data The loaded audit data.
+	 *
+	 * @return void
+	 */
+	private function writeCompany(XMLWriter $writer, array $data): void {
+		$administrationId = $data['administrationId'];
+		$writer->startElement('company');
+		$writer->writeElement('companyName', ($administrationId !== '' ? $administrationId : 'Shillinq administration'));
+		$writer->writeElement('companyIdent', ($administrationId !== '' ? $administrationId : 'UNKNOWN'));
+		$writer->writeElement('currencyCode', 'EUR');
+		$this->writeGeneralLedger(writer: $writer, accounts: $data['accounts']);
+		$writer->startElement('customersSuppliers');
+		$this->writeCustomers(writer: $writer, customers: $data['customers']);
+		$this->writeSuppliers(writer: $writer, payees: $data['payees']);
+		$writer->endElement();
+		$this->writeTransactions(writer: $writer, entries: $data['entries']);
+		$writer->endElement();
+	}//end writeCompany()
+
+	/**
+	 * Write the generalLedger block (the chart of accounts).
+	 *
+	 * @param XMLWriter $writer The active writer.
+	 * @param array<int, array<string,mixed>> $accounts The Account rows.
+	 *
+	 * @return void
+	 */
+	private function writeGeneralLedger(XMLWriter $writer, array $accounts): void {
+		$writer->startElement('generalLedger');
+		foreach ($accounts as $account) {
+			$this->writeLedgerAccount(writer: $writer, account: $account);
+		}
+
+		$writer->endElement();
+	}//end writeGeneralLedger()
+
+	/**
+	 * Write one ledgerAccount; an account without a number is skipped.
+	 *
+	 * @param XMLWriter $writer The active writer.
+	 * @param array<string,mixed> $account The Account row.
+	 *
+	 * @return void
+	 */
+	private function writeLedgerAccount(XMLWriter $writer, array $account): void {
+		$accountNumber = $this->accountNumber($account);
+		if ($accountNumber === '') {
+			return;
+		}
+
+		$writer->startElement('ledgerAccount');
+		$writer->writeElement('accID', $accountNumber);
+		$writer->writeElement('accDesc', (string)($account['name'] ?? $account['description'] ?? ''));
+		$writer->writeElement('accTp', $this->accountType((string)($account['accountType'] ?? '')));
+		$writer->endElement();
+	}//end writeLedgerAccount()
+
+	/**
+	 * Write the AR customers as customerSupplier blocks of type C.
+	 *
+	 * @param XMLWriter $writer The active writer.
+	 * @param array<int, array<string,mixed>> $customers The CustomerMaster rows.
+	 *
+	 * @return void
+	 */
+	private function writeCustomers(XMLWriter $writer, array $customers): void {
+		foreach ($customers as $customer) {
+			$this->writeCustomerSupplier(
+				$writer,
+				'C',
+				(string)($customer['customerId'] ?? ($customer['customerNumber'] ?? '')),
+				$customer
+			);
+		}
+	}//end writeCustomers()
+
+	/**
+	 * Write the AP suppliers as customerSupplier blocks of type S.
+	 *
+	 * @param XMLWriter $writer The active writer.
+	 * @param array<int, array<string,mixed>> $payees The Payee rows.
+	 *
+	 * @return void
+	 */
+	private function writeSuppliers(XMLWriter $writer, array $payees): void {
+		foreach ($payees as $payee) {
+			$this->writeCustomerSupplier($writer, 'S', (string)($payee['vendorNumber'] ?? ''), $payee);
+		}
+	}//end writeSuppliers()
+
+	/**
+	 * Write the transactions block: one journal wrapping all GL transactions.
+	 *
+	 * @param XMLWriter $writer The active writer.
+	 * @param array<int, array{transaction: array<string,mixed>, lines: array<int, array<string,mixed>>}> $entries The transactions with their lines.
+	 *
+	 * @return void
+	 */
+	private function writeTransactions(XMLWriter $writer, array $entries): void {
+		$writer->startElement('transactions');
+		$writer->writeElement('linesCount', (string)array_sum(array_map(static fn (array $entry): int => count($entry['lines']), $entries)));
+		$writer->writeElement('transactionCount', (string)count($entries));
+		$writer->startElement('journal');
+		$writer->writeElement('jrnID', 'GL');
+		$writer->writeElement('desc', 'General ledger');
+		$writer->writeElement('jrnTp', 'Z');
+		foreach ($entries as $entry) {
+			$this->writeTransaction(writer: $writer, entry: $entry);
+		}
+
+		$writer->endElement();
+		// End journal.
+		$writer->endElement();
+	}//end writeTransactions()
+
+	/**
+	 * Write one transaction with its trLine children.
+	 *
+	 * @param XMLWriter $writer The active writer.
+	 * @param array{transaction: array<string,mixed>, lines: array<int, array<string,mixed>>} $entry The transaction and its lines.
+	 *
+	 * @return void
+	 */
+	private function writeTransaction(XMLWriter $writer, array $entry): void {
+		$transaction = $entry['transaction'];
+		$writer->startElement('transaction');
+		$writer->writeElement('nr', (string)($transaction['transactionNumber'] ?? $this->transactionId($transaction)));
+		$writer->writeElement('desc', (string)($transaction['description'] ?? ''));
+		$writer->writeElement('trDt', (string)($transaction['postingDate'] ?? ''));
+		foreach ($entry['lines'] as $line) {
+			$this->writeTransactionLine(writer: $writer, line: $line);
+		}
+
+		$writer->endElement();
+	}//end writeTransaction()
+
+	/**
+	 * Write one trLine.
+	 *
+	 * @param XMLWriter $writer The active writer.
+	 * @param array<string,mixed> $line The GLLine row.
+	 *
+	 * @return void
+	 */
+	private function writeTransactionLine(XMLWriter $writer, array $line): void {
+		$writer->startElement('trLine');
+		$writer->writeElement('nr', $this->lineRecordId($line));
+		$writer->writeElement('accID', (string)($line['accountNumber'] ?? ''));
+		$writer->writeElement('desc', (string)($line['description'] ?? ''));
+		$writer->writeElement('amnt', $this->money($this->lineAmountValue($line)));
+		$writer->writeElement('amntTp', ($this->isDebitLine($line) === true ? 'D' : 'C'));
+		$writer->endElement();
+	}//end writeTransactionLine()
 
 	/**
 	 * Write one customerSupplier block.
@@ -357,34 +462,6 @@ final class XafAuditfileGenerator implements ReportGeneratorInterface {
 
 		return [];
 	}//end linesFor()
-
-	/**
-	 * The stable id of a GLTransaction (object id, else transactionNumber).
-	 *
-	 * @param array<string,mixed> $transaction The transaction row.
-	 *
-	 * @return string
-	 */
-	private function transactionId(array $transaction): string {
-		return (string)($transaction['id'] ?? $transaction['@self']['id'] ?? $transaction['transactionNumber'] ?? '');
-	}//end transactionId()
-
-	/**
-	 * Total line count across all in-scope transactions (XAF linesCount).
-	 *
-	 * @param array<int, array<string,mixed>> $transactions In-scope transactions.
-	 * @param array<string,array<int,array<string,mixed>>> $linesByTransaction Lines indexed by transactionId.
-	 *
-	 * @return int
-	 */
-	private function countLines(array $transactions, array $linesByTransaction): int {
-		$count = 0;
-		foreach ($transactions as $transaction) {
-			$count += count($this->linesFor($transaction, $linesByTransaction));
-		}
-
-		return $count;
-	}//end countLines()
 
 	/**
 	 * Map a shillinq account type to the XAF account-type code (B balans / P w&v).

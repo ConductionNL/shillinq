@@ -41,7 +41,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Vat;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
@@ -337,7 +337,7 @@ class VatLineBackfill {
 			'input' => [MaterialiseGlTransactionAction::CFG_INPUT_VAT_ACCOUNT, '1230'],
 		];
 		foreach ($accounts as $kind => [$key, $default]) {
-			$configured = trim($this->appConfig->getValueString(Application::APP_ID, $key, ''));
+			$configured = trim($this->appConfig->getValueString(AppIdentity::APP_ID, $key, ''));
 			if ($configured === '') {
 				$configured = $default;
 			}
