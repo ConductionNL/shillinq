@@ -70,7 +70,7 @@ parameters:
         - lib/Lifecycle/FourEyesPaymentRunGuard.php
         - lib/Lifecycle/PaymentRunDuplicateGuard.php
         # RoleFallbackResolver implements the cross-app
-        # OCA\OpenRegister\Service\Notification\RecipientResolverInterface — same
+        # OCA\OpenRegister\Notifications\Service\Notification\RecipientResolverInterface — same
         # non-ignorable "implements unknown interface" class as the guards above.
         - lib/Notification/RoleFallbackResolver.php
         # AppendReopenHistoryAction implements the cross-app
