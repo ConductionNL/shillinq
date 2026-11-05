@@ -117,7 +117,7 @@
                 <referencedClass name="OCA\OpenRegister\Event\ObjectTransitionedEvent"/>
                 <referencedClass name="OCA\OpenRegister\Service\ObjectService"/>
                 <referencedClass name="OCA\OpenRegister\Search\Service\Aggregation\AggregationQuery"/>
-                <referencedClass name="OCA\OpenRegister\Service\Notification\RecipientResolverInterface"/>
+                <referencedClass name="OCA\OpenRegister\Notifications\Service\Notification\RecipientResolverInterface"/>
                 <referencedClass name="OCA\OpenRegister\Service\ConfigurationService"/>
                 <referencedClass name="OCA\OpenRegister\Service\RegisterService"/>
                 <referencedClass name="OCA\OpenRegister\Service\FileService"/>

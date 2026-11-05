@@ -16,12 +16,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenRegister\Service\Notification;
+namespace OCA\OpenRegister\Notifications\Service\Notification;
 
 use OCA\OpenRegister\Db\ObjectEntity;
 
 /**
- * Stub for OCA\OpenRegister\Service\Notification\RecipientResolverInterface
+ * Stub for OCA\OpenRegister\Notifications\Service\Notification\RecipientResolverInterface
  * used by shillinq tests.
  */
 interface RecipientResolverInterface {
