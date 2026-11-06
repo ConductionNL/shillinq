@@ -26,7 +26,7 @@
  updated ThreeWayMatch (the dispute response also carries the dispatch
  envelope) and the panel switches into the "resolved" state.
 
- @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md
+ @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
 -->
 <template>
 	<div class="twm-exception" data-testid="twm-exception-panel">
@@ -224,6 +224,7 @@ const REGISTER_SLUG = 'shillinq'
 const EXCEPTION_STATUSES = [
 	'exception_price',
 	'exception_quantity',
+	'exception_date',
 	'exception_missing_grn',
 	'exception_missing_po',
 	'fraud_alert',
@@ -325,7 +326,7 @@ export default {
 	},
 
 	methods: {
-		/** @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md */
+		/** @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005 */
 		async loadMatch() {
 			this.loading = true
 			try {
@@ -370,7 +371,7 @@ export default {
 			await Promise.all(tasks)
 		},
 
-		/** @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md */
+		/** @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005 */
 		async loadInvoice() {
 			try {
 				const response = await axios.get(
@@ -384,7 +385,7 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md */
+		/** @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005 */
 		async loadPo(poId) {
 			try {
 				const response = await axios.get(
@@ -398,7 +399,7 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md */
+		/** @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005 */
 		async loadGrn(grnId) {
 			try {
 				const response = await axios.get(
@@ -467,10 +468,18 @@ export default {
 			}
 		},
 
+		/**
+		 * The label of a match status.
+		 *
+		 * @param {string} matchStatus The match status.
+		 * @return {string} The translated label.
+		 * @spec openspec/changes/three-way-match-delivery-date-exception/specs/bookkeeping-three-way-matching-engine/spec.md
+		 */
 		statusLabel(matchStatus) {
 			const labels = {
 				exception_price: this.t('shillinq', 'Price exception'),
 				exception_quantity: this.t('shillinq', 'Quantity exception'),
+				exception_date: this.t('shillinq', 'Delivery date exception'),
 				exception_missing_grn: this.t('shillinq', 'GRN missing'),
 				exception_missing_po: this.t('shillinq', 'PO missing'),
 				fraud_alert: this.t('shillinq', 'Fraud alert'),
@@ -557,6 +566,7 @@ export { EXCEPTION_STATUSES }
 
 .twm-exception__pill--exception_price,
 .twm-exception__pill--exception_quantity,
+.twm-exception__pill--exception_date,
 .twm-exception__pill--exception_missing_grn,
 .twm-exception__pill--exception_missing_po {
 	background: var(--color-warning, #c93);

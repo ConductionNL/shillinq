@@ -35,26 +35,25 @@
 </template>
 
 <script>
-import axios from '@nextcloud/axios'
 import { translate as t } from '@nextcloud/l10n'
-import { generateUrl } from '@nextcloud/router'
 import { NcSelect } from '@nextcloud/vue'
-
-const REGISTER_SLUG = 'shillinq'
-const SCHEMA_SLUG = 'Account'
+import { recordPickerMixin } from './recordPickerMixin.js'
 
 export default {
 	name: 'GlAccountPicker',
 	components: { NcSelect },
-	props: {
-		/**
-		 * v-model: the selected glAccountNumber (string).
-		 */
-		modelValue: {
-			type: String,
-			default: '',
-		},
+	mixins: [
+		recordPickerMixin({
+			schema: 'Account',
+			rowsKey: 'accounts',
+			optionKey: 'account',
+			valueOf: (account) => String(account.accountNumber ?? account.id ?? ''),
+			storedValueOf: (account) => String(account.accountNumber || account.id),
+			nameOf: (account) => account?.accountName || account?.name || '',
+		}),
+	],
 
+	props: {
 		/**
 		 * Optional administration scope. When set, the picker filters
 		 * accounts to this administration before applying the text query.
@@ -62,61 +61,6 @@ export default {
 		administrationId: {
 			type: String,
 			default: '',
-		},
-	},
-
-	emits: ['update:modelValue', 'selected'],
-	data() {
-		return {
-			loading: false,
-			query: '',
-			accounts: [],
-			fetchError: '',
-		}
-	},
-
-	computed: {
-		options() {
-			return this.accounts.map((a) => ({
-				value: String(a.accountNumber ?? a.id ?? ''),
-				display: this.formatDisplay(a),
-				account: a,
-			}))
-		},
-
-		filteredOptions() {
-			const q = (this.query || '').trim().toLowerCase()
-			if (!q) {
-				return this.options
-			}
-			return this.options.filter((o) => {
-				const num = String(o.value || '').toLowerCase()
-				const name = (
-					o.account?.accountName
-					|| o.account?.name
-					|| ''
-				).toLowerCase()
-				return num.includes(q) || name.includes(q)
-			})
-		},
-
-		selectedOption() {
-			if (!this.modelValue) {
-				return null
-			}
-			const match = this.options.find(
-				(o) => o.value === String(this.modelValue),
-			)
-			if (match) {
-				return match
-			}
-			// Account list may not have arrived yet — surface the raw value
-			// so the form still shows the number while the fetch completes.
-			return {
-				value: String(this.modelValue),
-				display: String(this.modelValue),
-				account: null,
-			}
 		},
 	},
 
@@ -165,64 +109,28 @@ export default {
 			}).format(numeric / 100)
 		},
 
-		onSearch(query) {
-			this.query = query || ''
+		/**
+		 * The translated text shown when the records cannot be loaded.
+		 *
+		 * @return {string} The text.
+		 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+		 */
+		loadFailedText() {
+			return this.t('shillinq', 'Failed to load chart of accounts.')
 		},
 
-		onSelected(option) {
-			if (!option) {
-				return
-			}
-			this.$emit('selected', option.account || null)
-		},
-
-		onUpdateModelValue(option) {
-			const value = option?.value ?? ''
-			this.$emit('update:modelValue', value)
-			if (option?.account) {
-				this.$emit('selected', option.account)
-			}
-		},
-
+		/**
+		 * Load the records this picker offers.
+		 *
+		 * @return {Promise<void>} Resolves when loaded.
+		 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+		 */
 		async fetchAccounts() {
-			this.loading = true
-			this.fetchError = ''
-			try {
-				const params = { _limit: 500 }
-				if (this.administrationId) {
-					params.administrationId = this.administrationId
-				}
-				const response = await axios.get(
-					generateUrl(
-						`/apps/openregister/api/objects/${REGISTER_SLUG}/${SCHEMA_SLUG}`,
-					),
-					{ params },
-				)
-				const rows =
-					response.data?.results
-					?? response.data?.objects
-					?? response.data
-					?? []
-				this.accounts = Array.isArray(rows) ? rows : []
-				// Surface the selected account once data lands.
-				if (this.modelValue) {
-					const match = this.accounts.find(
-						(a) =>
-							String(a.accountNumber || a.id)
-							=== String(this.modelValue),
-					)
-					if (match) {
-						this.$emit('selected', match)
-					}
-				}
-			} catch (e) {
-				this.accounts = []
-				this.fetchError =
-					e?.response?.data?.error
-					|| this.t('shillinq', 'Failed to load chart of accounts.')
-			} finally {
-				this.loading = false
+			const params = { _limit: 500 }
+			if (this.administrationId) {
+				params.administrationId = this.administrationId
 			}
+			await this.loadRecords(params)
 		},
 	},
 }

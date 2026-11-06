@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BTWAangifte period="2026-Q3" administration="adm-kb" aangifte="NL-2026-Q3" status="draft" valuta="EUR" opgesteld="">
+  <Rubriek code="1a">
+    <Omschrijving>Leveringen/diensten belast met hoog tarief</Omschrijving>
+    <Bedrag>0.00</Bedrag>
+    <Omzetbelasting>0.00</Omzetbelasting>
+  </Rubriek>
+  <Rubriek code="1b">
+    <Omschrijving>Leveringen/diensten belast met laag tarief</Omschrijving>
+    <Bedrag>10000.00</Bedrag>
+    <Omzetbelasting>900.00</Omzetbelasting>
+  </Rubriek>
+  <Rubriek code="1c">
+    <Omschrijving>Leveringen/diensten belast met overige tarieven, behalve 0%</Omschrijving>
+    <Bedrag>0.00</Bedrag>
+    <Omzetbelasting>0.00</Omzetbelasting>
+  </Rubriek>
+  <Rubriek code="1d">
+    <Omschrijving>Privégebruik</Omschrijving>
+    <Bedrag>0.00</Bedrag>
+    <Omzetbelasting>0.00</Omzetbelasting>
+  </Rubriek>
+  <Rubriek code="1e">
+    <Omschrijving>Leveringen/diensten belast met 0% of niet bij u belast</Omschrijving>
+    <Bedrag>0.00</Bedrag>
+    <Omzetbelasting>0.00</Omzetbelasting>
+  </Rubriek>
+  <Rubriek code="2a">
+    <Omschrijving>Leveringen/diensten waarbij de omzetbelasting naar u is verlegd</Omschrijving>
+    <Bedrag>0.00</Bedrag>
+    <Omzetbelasting>0.00</Omzetbelasting>
+  </Rubriek>
+  <Rubriek code="3a">
+    <Omschrijving>Leveringen naar landen buiten de EU</Omschrijving>
+    <Bedrag>0.00</Bedrag>
+    <Omzetbelasting>0.00</Omzetbelasting>
+  </Rubriek>
+  <Rubriek code="3b">
+    <Omschrijving>Leveringen naar landen binnen de EU</Omschrijving>
+    <Bedrag>0.00</Bedrag>
+    <Omzetbelasting>0.00</Omzetbelasting>
+  </Rubriek>
+  <Rubriek code="3c">
+    <Omschrijving>Installatie/afstandsverkopen binnen de EU</Omschrijving>
+    <Bedrag>0.00</Bedrag>
+    <Omzetbelasting>0.00</Omzetbelasting>
+  </Rubriek>
+  <Rubriek code="4a">
+    <Omschrijving>Leveringen/diensten uit landen buiten de EU</Omschrijving>
+    <Bedrag>0.00</Bedrag>
+    <Omzetbelasting>0.00</Omzetbelasting>
+  </Rubriek>
+  <Rubriek code="4b">
+    <Omschrijving>Leveringen/diensten uit landen binnen de EU</Omschrijving>
+    <Bedrag>0.00</Bedrag>
+    <Omzetbelasting>0.00</Omzetbelasting>
+  </Rubriek>
+  <Rubriek code="5a">
+    <Omschrijving>Verschuldigde omzetbelasting</Omschrijving>
+    <Omzetbelasting>900.00</Omzetbelasting>
+  </Rubriek>
+  <Rubriek code="5b">
+    <Omschrijving>Voorbelasting</Omschrijving>
+    <Omzetbelasting>1020.00</Omzetbelasting>
+  </Rubriek>
+  <Rubriek code="5g">
+    <Omschrijving>Totaal te betalen / terug te vragen</Omschrijving>
+    <Omzetbelasting>-120.00</Omzetbelasting>
+  </Rubriek>
+</BTWAangifte>

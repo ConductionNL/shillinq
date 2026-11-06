@@ -25,6 +25,11 @@ namespace OCA\Shillinq\Tests\Unit\Service\Import;
 use OCA\Shillinq\Lifecycle\ImportBatchGuard;
 use OCA\Shillinq\Service\Import\AuditfileParser;
 use OCA\Shillinq\Service\Import\ImportPipelineService;
+use OCA\Shillinq\Service\Import\ImportPosting;
+use OCA\Shillinq\Service\Import\ImportPostingPayloads;
+use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
+use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -33,6 +38,13 @@ use Psr\Log\LoggerInterface;
  * Verifies the fully-real validation / dry-run / post / reverse guards (REQ-AIM-005..009).
  */
 final class ImportPipelineServiceTest extends TestCase {
+
+	/**
+	 * The register the posting writes to; it has no transition engine.
+	 *
+	 * @var InMemoryObjectServiceStub|null
+	 */
+	private ?InMemoryObjectServiceStub $store = null;
 
 	/**
 	 * Build a pipeline with mocked Container + Logger and real parser + guard.
@@ -51,7 +63,18 @@ final class ImportPipelineServiceTest extends TestCase {
 
 		$logger = $this->createMock(LoggerInterface::class);
 
-		return new ImportPipelineService($container, $logger, new AuditfileParser(), new ImportBatchGuard());
+		$settings = $this->createMock(SettingsService::class);
+		$settings->method('getRegisterSlug')->willReturn('shillinq');
+		$this->store = new InMemoryObjectServiceStub(findAllRendersEntities: true);
+		$posting     = new ImportPosting(
+			objectService: $this->store,
+			transitions: new ObjectTransitionRunner(container: $container),
+			payloads: new ImportPostingPayloads(),
+			settings: $settings,
+			logger: $logger
+		);
+
+		return new ImportPipelineService($container, $logger, new AuditfileParser(), new ImportBatchGuard(), $posting);
 	}//end pipeline()
 
 	/**
@@ -188,22 +211,45 @@ final class ImportPipelineServiceTest extends TestCase {
 	}//end testStagedStateChangeForcesRevalidation()
 
 	/**
-	 * Posting an unchanged dry-run batch proceeds (status posted) idempotently false.
+	 * A post that cannot post its opening entry fails and leaves no entry behind.
+	 *
+	 * Before 2 Oct 2026 this read `posted` with nothing written: every refused
+	 * write was caught as a warning.
 	 *
 	 * @return void
 	 */
-	public function testPostConsistentWithDryRunProceeds(): void {
+	public function testAPostThatCannotPostTheOpeningEntryFails(): void {
+		$pipeline = $this->pipeline();
+		$batch = $this->validBatch();
+		$batch['mappings'][] = ['sourceCode' => '1600', 'targetAccount' => '1600', 'mappingSource' => 'rgs-auto', 'confirmed' => true];
+		$batch['stagingPayload']['arOpenItems'] = [];
+		$batch['stagingPayload']['arControlOpeningAmount'] = 0.0;
+		$batch['dryRunReport'] = $pipeline->dryRun($batch);
+
+		$result = $pipeline->post($batch);
+
+		self::assertSame('posting_failed', $result['status']);
+		self::assertContains('posting-refused', array_column($result['findings'], 'code'));
+		self::assertSame([], $this->store->setSchema('JournalEntry')->findAll());
+		self::assertFalse($result['idempotent']);
+	}//end testAPostThatCannotPostTheOpeningEntryFails()
+
+	/**
+	 * Staged open items are refused before anything is written: no path writes them yet.
+	 *
+	 * @return void
+	 */
+	public function testStagedOpenItemsAreRefusedBeforeAnythingIsWritten(): void {
 		$pipeline = $this->pipeline();
 		$batch = $this->validBatch();
 		$batch['dryRunReport'] = $pipeline->dryRun($batch);
 
 		$result = $pipeline->post($batch);
 
-		// No ObjectService in unit context → writes degrade gracefully (warnings),
-		// but the consistency + balance guards pass so status is posted.
-		self::assertSame('posted', $result['status']);
-		self::assertFalse($result['idempotent']);
-	}//end testPostConsistentWithDryRunProceeds()
+		self::assertSame('posting_failed', $result['status']);
+		self::assertSame(['open-items-not-supported'], array_column($result['findings'], 'code'));
+		self::assertSame([], $this->store->setSchema('JournalEntry')->findAll());
+	}//end testStagedOpenItemsAreRefusedBeforeAnythingIsWritten()
 
 	/**
 	 * Re-posting an already-posted batch is a no-op returning existing refs.
@@ -238,28 +284,24 @@ final class ImportPipelineServiceTest extends TestCase {
 	}//end testReverseBlockedWhenPeriodClosed()
 
 	/**
-	 * Reversal in an open period unwinds and reports contacts (never deletes them).
+	 * A reversal whose opening entry cannot be found is refused, not reported as reversed.
+	 *
+	 * Before 2 Oct 2026 this read `reversed` with nothing written.
 	 *
 	 * @return void
 	 */
-	public function testReverseOpenPeriodReportsContacts(): void {
+	public function testAReversalWithoutItsOpeningEntryIsRefused(): void {
 		$batch = [
 			'status' => 'posted',
 			'migrationDate' => '2026-01-01',
-			'postingRefs' => [
-				'openingJournalId' => 'gl-1',
-				'arItemIds' => ['ar-1'],
-				'apItemIds' => ['ap-1'],
-				'masterIds' => ['m-1'],
-				'contactIds' => ['kvk-12345678'],
-			],
+			'postingRefs' => ['openingJournalId' => 'gl-1', 'masterIds' => ['m-1']],
 		];
 
 		$result = $this->pipeline()->reverse($batch, true);
 
-		self::assertSame('reversed', $result['status']);
-		self::assertSame(['kvk-12345678'], $result['reportedContacts']);
-	}//end testReverseOpenPeriodReportsContacts()
+		self::assertSame('posted', $result['status']);
+		self::assertContains('reversal-refused', array_column($result['findings'], 'code'));
+	}//end testAReversalWithoutItsOpeningEntryIsRefused()
 
 	/**
 	 * Idempotency key is stable across calls and changes with scope.

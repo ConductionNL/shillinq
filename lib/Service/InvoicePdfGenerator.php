@@ -75,6 +75,13 @@ class InvoicePdfGenerator {
 	public const HYBRID_XML_FILENAME = 'ubl-invoice.xml';
 
 	/**
+	 * How many invoice lines fit under the summary on the one hybrid PDF page.
+	 *
+	 * @var integer
+	 */
+	private const HYBRID_PAGE_LINES = 45;
+
+	/**
 	 * Generate the renderable invoice payload.
 	 *
 	 * @param array<string,mixed> $invoice BillableInvoice record.
@@ -115,9 +122,10 @@ class InvoicePdfGenerator {
 	 * @param array<string,mixed> $invoice ARInvoice record (or any invoice-shaped
 	 *                                     array carrying invoiceNumber/grossAmount/
 	 *                                     currency).
-	 * @param array<int,array<string,mixed>> $lines Invoice lines (used for the human-readable
-	 *                                              summary only — the XML itself is supplied
-	 *                                              pre-rendered by the caller).
+	 * @param array<int,array<string,mixed>> $lines Invoice lines, printed one per text line on
+	 *                                              the PDF page under the summary (REQ-EINV-009).
+	 *                                              The XML itself is supplied pre-rendered by
+	 *                                              the caller.
 	 * @param string $ublXml The NLCIUS UBL 2.1 XML document to embed
 	 *                       (see {@see \OCA\Shillinq\Service\EInvoice\ArInvoiceUblMapper::toNlciusXml()}).
 	 * @param array<string,mixed> $creditor Creditor (issuing party) details.
@@ -127,6 +135,7 @@ class InvoicePdfGenerator {
 	 *                                                                                      The `pdf` key carries the raw PDF binary (not base64).
 	 *
 	 * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#requirement-req-einv-009-the-hybrid-pdf-shall-print-the-arinvoices-own-lines
 	 */
 	public function generateHybridPdf(
 		array $invoice,
@@ -137,7 +146,7 @@ class InvoicePdfGenerator {
 	): array {
 		$invoiceNumber = (string)($invoice['invoiceNumber'] ?? 'INVOICE');
 		$html = $this->renderHtml(invoice: $invoice, lines: $lines, creditor: $creditor, recipient: $recipient);
-		$pdfBytes = $this->buildHybridPdfBytes(invoice: $invoice, html: $html, xmlContent: $ublXml);
+		$pdfBytes = $this->buildHybridPdfBytes(invoice: $invoice, html: $html, lines: $lines, xmlContent: $ublXml);
 		$filename = sprintf('invoice-%s-hybrid.pdf', $invoiceNumber);
 
 		return [
@@ -163,14 +172,13 @@ class InvoicePdfGenerator {
 	 * (facturx-cii-conformance / REQ-EINV-002).
 	 *
 	 * @param array<string,mixed> $invoice Invoice record (invoiceNumber / grossAmount / currency).
-	 * @param string $html Rendered HTML (used only to derive a one-line summary
-	 *                     shown on the PDF page — the HTML markup itself is
-	 *                     not embedded).
+	 * @param string $html Rendered HTML (the markup itself is not embedded).
+	 * @param array<int,array<string,mixed>> $lines The invoice lines, printed under the summary.
 	 * @param string $xmlContent The UBL XML document to embed.
 	 *
 	 * @return string Raw PDF bytes.
 	 */
-	private function buildHybridPdfBytes(array $invoice, string $html, string $xmlContent): string {
+	private function buildHybridPdfBytes(array $invoice, string $html, array $lines, string $xmlContent): string {
 		unset($html);
 
 		$invoiceNumber = (string)($invoice['invoiceNumber'] ?? '');
@@ -180,7 +188,8 @@ class InvoicePdfGenerator {
 		$now = gmdate('YmdHis') . '+00\'00\'';
 		$xmlFilename = self::HYBRID_XML_FILENAME;
 
-		$contentStream = 'BT /F1 14 Tf 56 770 Td (' . $this->pdfEscape(value: $summaryLine) . ') Tj ET';
+		$contentStream = 'BT /F1 14 Tf 56 770 Td (' . $this->pdfEscape(value: $summaryLine) . ') Tj ET'
+			. $this->lineTextStream(lines: $lines, currency: $currency);
 
 		// Only a dc:title entry — no pdfaid:part/pdfaid:conformance
 		// assertion (see this method's docblock for why: no ICC
@@ -261,6 +270,72 @@ class InvoicePdfGenerator {
 	}//end assemblePdf()
 
 	/**
+	 * One text line per invoice line for the hybrid PDF page, under the
+	 * summary: number, description, quantity x price = amount, VAT rate.
+	 * Amounts carry the currency code, not a symbol: the page font is
+	 * WinAnsi-encoded Helvetica.
+	 *
+	 * @param array<int,array<string,mixed>> $lines The invoice lines.
+	 * @param string $currency The invoice currency code.
+	 *
+	 * @return string The content-stream text block, or '' without lines.
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#requirement-req-einv-009-the-hybrid-pdf-shall-print-the-arinvoices-own-lines
+	 */
+	private function lineTextStream(array $lines, string $currency): string {
+		$text = '';
+		foreach (array_slice($lines, 0, self::HYBRID_PAGE_LINES) as $line) {
+			$row = $this->normaliseLine(line: (array)$line);
+			$printed = sprintf(
+				'%d  %s  %s x %s = %s %s  btw %s%%',
+				$row['number'],
+				$row['description'],
+				$this->fmt(value: $row['quantity']),
+				$this->fmtMoney(value: $row['price']),
+				$this->fmtMoney(value: $row['amount']),
+				$currency,
+				$this->fmt(value: $row['vatRate'])
+			);
+			$text .= ' T* (' . $this->pdfEscape(value: $printed) . ') Tj';
+		}
+
+		if ($text === '') {
+			return '';
+		}
+
+		return ' BT /F1 10 Tf 14 TL 56 746 Td' . $text . ' ET';
+	}//end lineTextStream()
+
+	/**
+	 * Read a line in either shape it arrives in: a BillableInvoiceLine
+	 * (lineNumber, description, billableUnits, rateApplied.rateCents,
+	 * costAmount) or an ARInvoice `invoiceLines` entry (lineId, itemName,
+	 * quantity, netPrice, netAmount). The BillableInvoiceLine keys win, so a
+	 * time-and-expense PDF renders exactly as before.
+	 *
+	 * @param array<string,mixed> $line The line.
+	 *
+	 * @return array{number:int,description:string,quantity:float,price:float,amount:float,vatRate:float}
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#requirement-req-einv-009-the-hybrid-pdf-shall-print-the-arinvoices-own-lines
+	 */
+	private function normaliseLine(array $line): array {
+		$price = (float)($line['netPrice'] ?? 0);
+		if (isset($line['rateApplied']['rateCents']) === true) {
+			$price = ((int)$line['rateApplied']['rateCents']) / 100;
+		}
+
+		return [
+			'number' => (int)($line['lineNumber'] ?? ($line['lineId'] ?? 0)),
+			'description' => (string)($line['description'] ?? ($line['itemName'] ?? '')),
+			'quantity' => (float)($line['billableUnits'] ?? ($line['quantity'] ?? 0)),
+			'price' => $price,
+			'amount' => (float)($line['costAmount'] ?? ($line['netAmount'] ?? 0)),
+			'vatRate' => (float)($line['vatRate'] ?? 21),
+		];
+	}//end normaliseLine()
+
+	/**
 	 * Escape a value for a PDF literal string `(...)` token (backslash,
 	 * parentheses, and control characters).
 	 *
@@ -287,20 +362,15 @@ class InvoicePdfGenerator {
 	private function renderHtml(array $invoice, array $lines, array $creditor, array $recipient): string {
 		$rows = '';
 		foreach ($lines as $line) {
-			if (isset($line['rateApplied']['rateCents']) === true) {
-				$rateValue = ((int)$line['rateApplied']['rateCents']) / 100;
-			} else {
-				$rateValue = 0.0;
-			}
-
+			$row = $this->normaliseLine(line: $line);
 			$rows .= sprintf(
 				'<tr><td>%d</td><td>%s</td><td class="num">%s</td><td class="num">€ %s</td><td class="num">€ %s</td><td class="num">%s%%</td></tr>',
-				(int)($line['lineNumber'] ?? 0),
-				htmlspecialchars((string)($line['description'] ?? ''), ENT_QUOTES),
-				$this->fmt(value: (float)($line['billableUnits'] ?? 0)),
-				$this->fmtMoney(value: $rateValue),
-				$this->fmtMoney(value: (float)($line['costAmount'] ?? 0)),
-				$this->fmt(value: (float)($line['vatRate'] ?? 21))
+				$row['number'],
+				htmlspecialchars($row['description'], ENT_QUOTES),
+				$this->fmt(value: $row['quantity']),
+				$this->fmtMoney(value: $row['price']),
+				$this->fmtMoney(value: $row['amount']),
+				$this->fmt(value: $row['vatRate'])
 			);
 		}
 
@@ -352,7 +422,7 @@ class InvoicePdfGenerator {
 			htmlspecialchars((string)($creditor['vatID'] ?? ''), ENT_QUOTES),
 			htmlspecialchars((string)($creditor['iban'] ?? ''), ENT_QUOTES),
 			htmlspecialchars((string)($recipient['legalName'] ?? ($invoice['customerId'] ?? '')), ENT_QUOTES),
-			htmlspecialchars((string)($recipient['vatID'] ?? ''), ENT_QUOTES),
+			htmlspecialchars((string)($recipient['vatId'] ?? ($recipient['vatID'] ?? '')), ENT_QUOTES),
 			htmlspecialchars((string)($invoice['invoiceDate'] ?? ''), ENT_QUOTES),
 			htmlspecialchars((string)($invoice['dueDate'] ?? ''), ENT_QUOTES),
 			$rows,

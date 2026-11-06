@@ -43,7 +43,7 @@
  *
  * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
  * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
- * @spec openspec/changes/bookkeeping-consolidation-commercial/proposal.md
+ * @spec openspec/specs/bookkeeping-consolidation-commercial/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

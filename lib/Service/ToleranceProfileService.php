@@ -43,7 +43,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+ * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -53,7 +53,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -62,7 +62,7 @@ use Psr\Log\LoggerInterface;
  * Slice 06 — most-specific ToleranceProfile resolution and per-field
  * tolerance evaluation.
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+ * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
  */
 class ToleranceProfileService {
 
@@ -135,7 +135,7 @@ class ToleranceProfileService {
 	 *
 	 * @return array<string,mixed>|null The applicable ToleranceProfile or null.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+	 * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
 	 */
 	public function getApplicableProfile(string $administrationId, array $candidate): ?array {
 		if ($administrationId === '') {
@@ -211,7 +211,7 @@ class ToleranceProfileService {
 	 *
 	 * @return bool True when within tolerance.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+	 * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
 	 */
 	public function evaluateWithinTolerance(int $expectedCents, int $actualCents, ?array $profile): bool {
 		$deltaAbsCents = abs($actualCents - $expectedCents);
@@ -255,7 +255,7 @@ class ToleranceProfileService {
 	 *
 	 * @return bool True when within tolerance.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+	 * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
 	 */
 	public function evaluateQuantityVariance(int $expectedThousandths, int $actualThousandths, ?array $profile): bool {
 		$deltaAbs = abs($actualThousandths - $expectedThousandths);
@@ -287,7 +287,7 @@ class ToleranceProfileService {
 	 *
 	 * @return bool True when within tolerance.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+	 * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
 	 */
 	public function evaluateDateVariance(int $deltaDays, ?array $profile): bool {
 		$deltaAbs = abs($deltaDays);
@@ -373,7 +373,7 @@ class ToleranceProfileService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

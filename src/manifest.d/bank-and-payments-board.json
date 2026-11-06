@@ -1,0 +1,391 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "screens-bank-board",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Board ShBank: the Bank and payments page. The cash position and the counts of accounts, statements and unmatched bank lines, then a view switch over the accounts with their balances, the imported statements, the lines still waiting for a match and the exchange rates. The board navigation's Bank and payments entry opens it; the Banking & Cashflow cluster landing page keeps its own route and menu group."
+	},
+	"menu": [],
+	"pages": [
+		{
+			"id": "BankAndPayments",
+			"route": "/bank",
+			"type": "dashboard",
+			"title": "Bank and payments",
+			"config": {
+				"description": "Your accounts, statements and the bank lines still waiting for a match",
+				"documentationUrl": "https://shillinq.conduction.nl/guides/import-bank-statements",
+				"_boardNote": "Board ShBank. BankAccount has no balance, so the account cards read /api/v1/cash-position: a record list per account with the ledger balance (record-list endpointSource). The board's tab strip is a tabs widget with a count per tab: Accounts (per-account ledger and bank balance from the same endpoint), Statements, Not matched (UnmatchedBankLines, where matching by hand stays on that page's row menu) and Exchange rates.",
+				"headerActions": [
+					{
+						"id": "import-statement",
+						"label": "Import statement",
+						"type": "open-modal",
+						"target": "BankStatementWizard",
+						"icon": "BankTransferIn",
+						"props": {
+							"open": true
+						}
+					},
+					{
+						"id": "connect-bank",
+						"label": "Connect a bank",
+						"handler": "openIntegriqConnections",
+						"icon": "Plus",
+						"variant": "primary"
+					}
+				],
+				"viewLinks": [
+					{
+						"label": "Payment runs",
+						"route": "PaymentRuns"
+					},
+					{
+						"label": "Reconciliations",
+						"route": "Reconciliations"
+					}
+				],
+				"kpiRow": [
+					"cash-position",
+					"accounts-count",
+					"statements-count",
+					"unmatched-count"
+				],
+				"widgets": [
+					{
+						"id": "cash-position",
+						"title": "Cash position",
+						"type": "stat",
+						"content": {
+							"label": "Cash position",
+							"caption": "all accounts together",
+							"icon": "Cash",
+							"format": {
+								"style": "currency",
+								"currency": "EUR",
+								"decimals": 2
+							},
+							"endpointSource": {
+								"url": "/apps/shillinq/api/v1/cash-position"
+							},
+							"valueField": "total"
+						}
+					},
+					{
+						"id": "accounts-count",
+						"title": "Accounts",
+						"type": "stat",
+						"content": {
+							"label": "Accounts",
+							"icon": "BankOutline",
+							"source": {
+								"register": "shillinq",
+								"schema": "BankAccount",
+								"metric": "count"
+							},
+							"clickRoute": "BankAccounts"
+						}
+					},
+					{
+						"id": "statements-count",
+						"title": "Statements",
+						"type": "stat",
+						"content": {
+							"label": "Statements",
+							"icon": "FileDocumentOutline",
+							"source": {
+								"register": "shillinq",
+								"schema": "BankStatement",
+								"metric": "count"
+							},
+							"clickRoute": "BankReconciliation"
+						}
+					},
+					{
+						"id": "unmatched-count",
+						"title": "Not matched",
+						"type": "stat",
+						"content": {
+							"label": "Not matched",
+							"icon": "LinkVariant",
+							"source": {
+								"register": "shillinq",
+								"schema": "BankStatementLine",
+								"metric": "count",
+								"filter": {
+									"status": "unmatched"
+								}
+							},
+							"variantWhen": [
+								{
+									"op": "gt",
+									"value": 0,
+									"variant": "warning"
+								}
+							],
+							"clickRoute": "UnmatchedBankLines"
+						}
+					},
+					{
+						"id": "bank-account-cards",
+						"title": "Accounts",
+						"type": "record-list",
+						"content": {
+							"endpointSource": {
+								"url": "/apps/shillinq/api/v1/cash-position",
+								"responsePath": "accounts"
+							},
+							"title": "{accountName}",
+							"meta": {
+								"parts": [
+									"{iban}",
+									"{ledgerAccountNumber}"
+								]
+							},
+							"trailing": "{ledgerBalance|currency}",
+							"rowRoute": "BankAccountDetail",
+							"rowIdField": "bankAccountId",
+							"emptyText": "No bank accounts yet. Connect a bank or add an account.",
+							"presentation": "cards"
+						}
+					},
+					{
+						"id": "bank-tabs",
+						"title": "Bank",
+						"type": "tabs",
+						"content": {
+							"tabs": [
+								{
+									"widgetId": "bank-accounts",
+									"label": "Accounts",
+									"countFrom": {
+										"register": "shillinq",
+										"schema": "BankAccount"
+									}
+								},
+								{
+									"widgetId": "bank-statements",
+									"label": "Statements",
+									"countFrom": "widget"
+								},
+								{
+									"widgetId": "bank-unmatched",
+									"label": "Not matched",
+									"countFrom": "widget"
+								},
+								{
+									"widgetId": "bank-fx-rates",
+									"label": "Exchange rates",
+									"countFrom": "widget"
+								}
+							]
+						},
+						"showTitle": false
+					},
+					{
+						"id": "bank-accounts",
+						"title": "Accounts",
+						"type": "object-table",
+						"content": {
+							"endpointSource": {
+								"url": "/apps/shillinq/api/v1/cash-position",
+								"responsePath": "accounts"
+							},
+							"emptyText": "No bank accounts yet. Connect a bank or add an account.",
+							"columns": [
+								{
+									"key": "accountName",
+									"label": "Account"
+								},
+								{
+									"key": "iban",
+									"label": "IBAN"
+								},
+								{
+									"key": "ledgerBalance",
+									"label": "Ledger balance",
+									"formatter": "currency",
+									"formatterOptions": {
+										"currency": "EUR",
+										"decimals": 2
+									}
+								},
+								{
+									"key": "bankBalance",
+									"label": "Bank balance",
+									"formatter": "currency",
+									"formatterOptions": {
+										"currency": "EUR",
+										"decimals": 2
+									}
+								},
+								{
+									"key": "bankBalanceDate",
+									"label": "Last statement"
+								}
+							]
+						},
+						"headerLink": {
+							"label": "All accounts",
+							"route": "BankAccounts"
+						}
+					},
+					{
+						"id": "bank-statements",
+						"title": "Statements",
+						"type": "object-table",
+						"content": {
+							"source": {
+								"register": "shillinq",
+								"schema": "BankStatement",
+								"order": {
+									"periodEnd": "desc"
+								},
+								"limit": 10
+							},
+							"rowRoute": "BankReconciliationDetail",
+							"emptyText": "No statements imported yet",
+							"columns": [
+								{
+									"key": "bankAccountIban",
+									"label": "IBAN"
+								},
+								{
+									"key": "periodStart",
+									"label": "From"
+								},
+								{
+									"key": "periodEnd",
+									"label": "To"
+								},
+								{
+									"key": "closingBalance",
+									"label": "Closing balance",
+									"formatter": "currency",
+									"formatterOptions": {
+										"currency": "EUR",
+										"decimals": 2
+									}
+								},
+								{
+									"key": "transactionCount",
+									"label": "Lines"
+								},
+								{
+									"key": "importFormat",
+									"label": "Format"
+								}
+							]
+						}
+					},
+					{
+						"id": "bank-unmatched",
+						"title": "Not matched",
+						"type": "object-table",
+						"content": {
+							"source": {
+								"register": "shillinq",
+								"schema": "BankStatementLine",
+								"filter": {
+									"status": "unmatched"
+								},
+								"order": {
+									"valueDate": "desc"
+								},
+								"limit": 10
+							},
+							"emptyText": "Every bank line is matched",
+							"columns": [
+								{
+									"key": "valueDate",
+									"label": "Date"
+								},
+								{
+									"key": "counterpartyName",
+									"label": "Counterparty"
+								},
+								{
+									"key": "remittanceInfo",
+									"label": "Description"
+								},
+								{
+									"key": "amount",
+									"label": "Amount",
+									"formatter": "currency",
+									"formatterOptions": {
+										"currency": "EUR",
+										"decimals": 2
+									}
+								}
+							]
+						},
+						"headerLink": {
+							"label": "Match by hand",
+							"route": "UnmatchedBankLines"
+						}
+					},
+					{
+						"id": "bank-fx-rates",
+						"title": "Exchange rates",
+						"type": "object-table",
+						"content": {
+							"source": {
+								"register": "shillinq",
+								"schema": "FxRate",
+								"order": {
+									"date": "desc"
+								},
+								"limit": 10
+							},
+							"rowRoute": "FXRateDetail",
+							"emptyText": "No exchange rates yet",
+							"columns": [
+								{
+									"key": "date",
+									"label": "Date"
+								},
+								{
+									"key": "transactionCurrency",
+									"label": "From currency"
+								},
+								{
+									"key": "baseCurrency",
+									"label": "To currency"
+								},
+								{
+									"key": "rate",
+									"label": "Rate"
+								},
+								{
+									"key": "source",
+									"label": "Source"
+								}
+							]
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "layout-bank-account-cards",
+						"widgetId": "bank-account-cards",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 4,
+						"borderless": true,
+						"showTitle": false
+					},
+					{
+						"id": "layout-bank-tabs",
+						"widgetId": "bank-tabs",
+						"gridX": 0,
+						"gridY": 4,
+						"gridWidth": 12,
+						"gridHeight": 8
+					}
+				]
+			}
+		}
+	]
+}

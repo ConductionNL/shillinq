@@ -32,6 +32,75 @@
 <script>
 import { translate as t } from '@nextcloud/l10n'
 import ClusterOverview from '../cluster-overview/ClusterOverview.vue'
+import { translateSections } from '../cluster-overview/clusterSections.js'
+
+// Each label is a function, so its literal t() call runs when the page renders.
+const SECTIONS = [
+	{
+		id: 'banking',
+		label: () => t('shillinq', 'Banking & Treasury'),
+		cards: [
+			{
+				id: 'Treasury',
+				label: () => t('shillinq', 'Treasury'),
+				route: 'TreasuryDashboard',
+			},
+			{
+				id: 'BankAccounts',
+				label: () => t('shillinq', 'Bank Accounts'),
+				route: 'BankAccounts',
+			},
+			{
+				id: 'CurrencyBalances',
+				label: () => t('shillinq', 'Currency Balances'),
+				route: 'CurrencyBalances',
+			},
+			{
+				id: 'FXRates',
+				label: () => t('shillinq', 'FX Rates'),
+				route: 'FXRates',
+			},
+		],
+	},
+	{
+		id: 'reconciliation',
+		label: () => t('shillinq', 'Reconciliation'),
+		cards: [
+			{
+				id: 'Reconciliations',
+				label: () => t('shillinq', 'Reconciliations'),
+				route: 'Reconciliations',
+			},
+			{
+				id: 'VarianceReport',
+				label: () => t('shillinq', 'Variance Report'),
+				route: 'VarianceReport',
+			},
+			{
+				id: 'UnmatchedItems',
+				label: () => t('shillinq', 'Unmatched Items'),
+				route: 'UnmatchedItems',
+			},
+		],
+	},
+	{
+		id: 'cashflow',
+		label: () => t('shillinq', 'Cashflow'),
+		cards: [
+			{
+				id: 'CashflowDashboard',
+				label: () => t('shillinq', 'Cashflow Dashboard'),
+				route: 'CashflowDashboard',
+			},
+			{
+				id: 'CashflowScenarios',
+				label: () => t('shillinq', 'Scenarios'),
+				route: 'CashflowScenarios',
+			},
+		],
+		// A "Budgets" card is reserved here for a later change — not shipped by this one.
+	},
+]
 
 export default {
 	name: 'BankingCashflowOverview',
@@ -45,72 +114,7 @@ export default {
 		 * @spec openspec/changes/nav-six-clusters/specs/nav-clusters/spec.md#req-navc-002
 		 */
 		sections() {
-			return [
-				{
-					id: 'banking',
-					label: this.t('shillinq', 'Banking & Treasury'),
-					cards: [
-						{
-							id: 'Treasury',
-							label: this.t('shillinq', 'Treasury'),
-							route: 'Treasury',
-						},
-						{
-							id: 'BankAccounts',
-							label: this.t('shillinq', 'Bank Accounts'),
-							route: 'BankAccounts',
-						},
-						{
-							id: 'CurrencyBalances',
-							label: this.t('shillinq', 'Currency Balances'),
-							route: 'CurrencyBalances',
-						},
-						{
-							id: 'FXRates',
-							label: this.t('shillinq', 'FX Rates'),
-							route: 'FXRates',
-						},
-					],
-				},
-				{
-					id: 'reconciliation',
-					label: this.t('shillinq', 'Reconciliation'),
-					cards: [
-						{
-							id: 'Reconciliations',
-							label: this.t('shillinq', 'Reconciliations'),
-							route: 'Reconciliations',
-						},
-						{
-							id: 'VarianceReport',
-							label: this.t('shillinq', 'Variance Report'),
-							route: 'VarianceReport',
-						},
-						{
-							id: 'UnmatchedItems',
-							label: this.t('shillinq', 'Unmatched Items'),
-							route: 'UnmatchedItems',
-						},
-					],
-				},
-				{
-					id: 'cashflow',
-					label: this.t('shillinq', 'Cashflow'),
-					cards: [
-						{
-							id: 'CashflowDashboard',
-							label: this.t('shillinq', 'Cashflow Dashboard'),
-							route: 'CashflowDashboard',
-						},
-						{
-							id: 'CashflowScenarios',
-							label: this.t('shillinq', 'Scenarios'),
-							route: 'CashflowScenarios',
-						},
-					],
-					// A "Budgets" card is reserved here for a later change — not shipped by this one.
-				},
-			]
+			return translateSections(SECTIONS)
 		},
 	},
 

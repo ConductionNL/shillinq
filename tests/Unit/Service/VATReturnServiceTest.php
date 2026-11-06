@@ -27,7 +27,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Lifecycle\Action\MaterialiseGlTransactionAction;
 use OCA\Shillinq\Service\VATReturnService;
+use OCA\Shillinq\Tests\Unit\Lifecycle\Action\InMemoryObjectStore;
+use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -96,15 +99,14 @@ final class VATReturnServiceTest extends TestCase {
 	}//end buildService()
 
 	/**
-	 * Build the inline ObjectService stub seeded with accounts + transactions.
+	 * Build the inline ObjectService stub seeded with rows per schema.
 	 *
-	 * @param array<int,array<string,mixed>> $accounts Account fixtures.
-	 * @param array<int,array<string,mixed>> $transactions GLTransaction fixtures.
+	 * @param array<string,array<int,array<string,mixed>>> $seed Rows keyed by schema slug.
 	 *
 	 * @return object
 	 */
-	private function fakeObjectService(array $accounts, array $transactions): object {
-		return new class($accounts, $transactions) {
+	private function fakeObjectService(array $seed = []): object {
+		return new class($seed) {
 			/**
 			 * Records keyed by schema slug.
 			 *
@@ -129,17 +131,20 @@ final class VATReturnServiceTest extends TestCase {
 			/**
 			 * Constructor.
 			 *
-			 * @param array<int,array<string,mixed>> $accounts Account fixtures.
-			 * @param array<int,array<string,mixed>> $transactions GLTransaction fixtures.
+			 * @param array<string,array<int,array<string,mixed>>> $seed Rows keyed by schema slug.
 			 */
-			public function __construct(array $accounts, array $transactions) {
-				$this->data = [
-					'Account' => $accounts,
-					'GLTransaction' => $transactions,
-					'BtwAangifte' => [],
-					'VATDeclaration' => [],
-					'VATLine' => [],
-				];
+			public function __construct(array $seed) {
+				$this->data = array_merge(
+					[
+						'GLTransaction' => [],
+						'GLLine' => [],
+						'VatTariff' => [],
+						'BtwAangifte' => [],
+						'VATDeclaration' => [],
+						'VATLine' => [],
+					],
+					$seed
+				);
 			}//end __construct()
 
 			/**
@@ -268,185 +273,290 @@ final class VATReturnServiceTest extends TestCase {
 	}//end fakeObjectService()
 
 	/**
-	 * createReturn() seeds a draft VATReturn and derives lines from GL.
+	 * Post documents through the real posting mapper and return the rows it
+	 * wrote, so the return is prepared from ledger lines as they are booked.
+	 *
+	 * @param list<array{0: array<string,mixed>, 1: string}> $documents Each document and its source schema.
+	 *
+	 * @return array<string,list<array<string,mixed>>> GLTransaction, GLLine and VatTariff rows.
+	 */
+	private function postedByTheMapper(array $documents): array {
+		$store = new InMemoryObjectStore();
+		$seed = json_decode((string)file_get_contents(__DIR__ . '/../../../lib/Settings/seeds/btw-tariffs-2026.json'), true);
+		$store->rows['VatTariff'] = $seed['tariffs'];
+
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => $default
+		);
+		$action = new MaterialiseGlTransactionAction($store->mock($this), $appConfig, $this->createMock(LoggerInterface::class));
+		foreach ($documents as [$document, $sourceSchema]) {
+			$action->execute($document, [], ['sourceSchema' => $sourceSchema], MaterialiseGlTransactionAction::class);
+		}
+
+		return [
+			'GLTransaction' => $store->savedOf('GLTransaction'),
+			'GLLine' => $store->savedOf('GLLine'),
+			'VatTariff' => $seed['tariffs'],
+		];
+	}//end postedByTheMapper()
+
+	/**
+	 * The design's Korenbloem quarter: a sale of EUR 10,000 at the low tariff
+	 * with EUR 900 VAT, and purchases of EUR 4,000 at the high tariff and
+	 * EUR 2,000 at the low tariff with EUR 1,020 input VAT.
+	 *
+	 * @return list<array{0: array<string,mixed>, 1: string}>
+	 */
+	private function korenbloemQ3(): array {
+		return [
+			[
+				[
+					'id' => 'ar-kb-1', 'invoiceNumber' => '2026-0301', 'invoiceDate' => '2026-08-14',
+					'administrationId' => 'adm-kb', 'currency' => 'EUR', 'grossAmount' => 10900.0, 'netAmount' => 10000.0, 'vatAmount' => 900.0,
+					'invoiceLines' => [['itemName' => 'Brood en banket', 'netAmount' => 10000.0, 'vatCategory' => 'S', 'vatRate' => 9]],
+					'lifecycleState' => 'issued',
+				],
+				'ARInvoice',
+			],
+			[
+				[
+					'id' => 'ap-kb-1', 'invoiceNumber' => 'INK-301', 'invoiceDate' => '2026-08-02', 'administrationId' => 'adm-kb',
+					'totalAmount' => 7020.0, 'taxAmount' => 1020.0,
+					'lines' => [
+						['accountNumber' => '7000', 'amount' => 4000.0, 'description' => 'Oven', 'taxCode' => 'high'],
+						['accountNumber' => '7010', 'amount' => 2000.0, 'description' => 'Meel', 'taxCode' => 'low'],
+					],
+					'state' => 'posted',
+				],
+				'APInvoice',
+			],
+		];
+	}//end korenbloemQ3()
+
+	/**
+	 * Declarations of a prepared return keyed by box.
+	 *
+	 * @param object $stub The ObjectService fake.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	private function declarationsByBox(object $stub): array {
+		$byBox = [];
+		foreach ($stub->dump('VATDeclaration') as $declaration) {
+			$byBox[(string)($declaration['returnBox'] ?? '')] = $declaration;
+		}
+
+		ksort($byBox);
+		return $byBox;
+	}//end declarationsByBox()
+
+	/**
+	 * REQ-VBTW-004 scenario "A quarterly return aggregates the period's
+	 * postings": box 1b shows EUR 10,000 and EUR 900, box 5b EUR 1,020, the
+	 * amount payable is EUR -120. Lines outside the period, on a draft
+	 * transaction or without a box are not in the return, and what is
+	 * written validates against the merged register.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-2.1
 	 */
-	public function testCreateReturnDerivesLinesFromGL(): void {
-		$accounts = [
+	public function testTheKorenbloemQuarterSumsTheBookedLinesPerBox(): void {
+		$documents = $this->korenbloemQ3();
+		$documents[] = [
 			[
-				'accountNumber' => '4000',
-				'name' => 'Omzet hoog tarief',
-				'accountType' => 'revenue',
-				'vatApplicable' => true,
-				'vatRate' => 21.0,
-				'administrationId' => 'adm-1',
+				'id' => 'ar-kb-0', 'invoiceNumber' => '2026-0201', 'invoiceDate' => '2026-06-30',
+				'administrationId' => 'adm-kb', 'currency' => 'EUR', 'grossAmount' => 1210.0, 'netAmount' => 1000.0, 'vatAmount' => 210.0,
+				'invoiceLines' => [['itemName' => 'Juni', 'netAmount' => 1000.0, 'vatCategory' => 'S', 'vatRate' => 21]],
+				'lifecycleState' => 'issued',
 			],
-			[
-				'accountNumber' => '5000',
-				'name' => 'Inkopen hoog tarief',
-				'accountType' => 'expenses',
-				'vatApplicable' => true,
-				'vatRate' => 21.0,
-				'administrationId' => 'adm-1',
-			],
+			'ARInvoice',
 		];
-		$transactions = [
-			[
-				'id' => 'gl-1',
-				'administrationId' => 'adm-1',
-				'transactionDate' => '2026-01-15',
-				'lines' => [
-					['accountNumber' => '4000', 'taxableAmount' => 15000.0, 'taxRate' => 21.0],
-				],
-			],
-			[
-				'id' => 'gl-2',
-				'administrationId' => 'adm-1',
-				'transactionDate' => '2026-02-10',
-				'lines' => [
-					['accountNumber' => '5000', 'taxableAmount' => 10000.0, 'taxRate' => 21.0],
-				],
-			],
+		$rows = $this->postedByTheMapper($documents);
+
+		// A draft transaction in the period, with a stamped line: not booked, so not declared.
+		$rows['GLTransaction'][] = [
+			'id' => 'gl-draft', 'transactionNumber' => 'D-1', 'postingDate' => '2026-09-01', 'periodId' => '2026-09',
+			'currency' => 'EUR', 'description' => 'Concept', 'state' => 'draft', 'administrationId' => 'adm-kb',
+		];
+		$rows['GLLine'][] = [
+			'id' => 'gl-draft-1', 'transactionId' => 'gl-draft', 'lineNumber' => 1, 'accountNumber' => '8000', 'side' => 'credit',
+			'amount' => 500.0, 'currency' => 'EUR', 'administrationId' => 'adm-kb', 'vatTariffCode' => 'high', 'vatReturnBox' => '1a',
+			'vatAmountKind' => 'base',
 		];
 
-		$stub = $this->fakeObjectService($accounts, $transactions);
-		$service = $this->buildService($stub);
-
-		$created = $service->createReturn(
-			administrationId: 'adm-1',
+		$stub = $this->fakeObjectService($rows);
+		$created = $this->buildService($stub)->createReturn(
+			administrationId: 'adm-kb',
 			period: 'quarter',
 			periodYear: 2026,
-			periodNumber: 1,
+			periodNumber: 3,
 			regime: 'standard'
 		);
 
-		self::assertSame('draft', $created['statusCode']);
-		self::assertSame(3150.0, (float)$created['totalVATCollected']);
-		self::assertSame(2100.0, (float)$created['totalVATPaid']);
-		self::assertSame(-1050.0, (float)$created['vatBalance']);
-		self::assertSame(25000.0, (float)$created['totalTaxableAmount']);
-		self::assertCount(2, $stub->dump('VATLine'));
-		self::assertCount(2, $stub->dump('VATDeclaration'));
+		$byBox = $this->declarationsByBox($stub);
+		self::assertSame(['1b', '5b'], array_keys($byBox));
+		self::assertSame(10000.0, $byBox['1b']['totalTaxableAmount']);
+		self::assertSame(900.0, $byBox['1b']['totalVATAmount']);
+		self::assertSame('collected', $byBox['1b']['type']);
+		self::assertSame(0.0, $byBox['5b']['totalTaxableAmount']);
+		self::assertSame(1020.0, $byBox['5b']['totalVATAmount']);
+		self::assertSame('paid', $byBox['5b']['type']);
 
-	}//end testCreateReturnDerivesLinesFromGL()
+		self::assertSame(900.0, (float)$created['totalVATCollected']);
+		self::assertSame(1020.0, (float)$created['totalVATPaid']);
+		self::assertSame(-120.0, round((float)$created['totalVATCollected'] - (float)$created['totalVATPaid'], 2));
+		self::assertSame(10000.0, (float)$created['totalTaxableAmount']);
+
+		// One VAT line per contributing ledger line: the revenue line, the output VAT line and two input VAT lines.
+		$lines = $stub->dump('VATLine');
+		self::assertSame(['1b', '1b', '5b', '5b'], array_map(static fn (array $l): string => $l['returnBox'], $lines));
+		self::assertSame([10000.0, 0.0, 0.0, 0.0], array_map(static fn (array $l): float => $l['taxableAmount'], $lines));
+		self::assertSame([0.0, 900.0, 840.0, 180.0], array_map(static fn (array $l): float => $l['vatAmount'], $lines));
+
+		foreach ($stub->dump('VATDeclaration') as $declaration) {
+			self::assertSame([], RegisterSchema::errors(slug: 'VATDeclaration', object: $declaration));
+		}
+
+		foreach ($lines as $line) {
+			self::assertSame([], RegisterSchema::errors(slug: 'VATLine', object: $line));
+		}
+	}//end testTheKorenbloemQuarterSumsTheBookedLinesPerBox()
 
 	/**
-	 * deriveVATLines() groups by (type, rate) and supports 21% + 9% + 0%.
+	 * The VAT is taken as booked, not recalculated: an invoice that charged
+	 * EUR 7.01 on EUR 33.33 at 21 percent (the stray cent of its breakdown)
+	 * declares EUR 7.01 in box 1a, where base times rate gives EUR 7.00.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-2.1
 	 */
-	public function testDeriveVATLinesGroupsMixedRates(): void {
-		$accounts = [
-			['accountNumber' => '4000', 'name' => 'Hoog', 'accountType' => 'revenue', 'vatApplicable' => true, 'administrationId' => 'adm-1'],
-			['accountNumber' => '4010', 'name' => 'Laag', 'accountType' => 'revenue', 'vatApplicable' => true, 'administrationId' => 'adm-1'],
-			['accountNumber' => '4020', 'name' => 'Export', 'accountType' => 'revenue', 'vatApplicable' => true, 'administrationId' => 'adm-1'],
-		];
-		$transactions = [
+	public function testTheVatIsTakenAsBookedAndNotRecalculatedFromARate(): void {
+		$rows = $this->postedByTheMapper(
 			[
-				'id' => 'gl-1',
-				'administrationId' => 'adm-1',
-				'transactionDate' => '2026-04-15',
-				'lines' => [
-					['accountNumber' => '4000', 'taxableAmount' => 5000.0, 'taxRate' => 21.0],
-					['accountNumber' => '4010', 'taxableAmount' => 2000.0, 'taxRate' => 9.0],
-					['accountNumber' => '4020', 'taxableAmount' => 3000.0, 'taxRate' => 0.0],
+				[
+					[
+						'id' => 'ar-10', 'invoiceNumber' => '2026-0091', 'invoiceDate' => '2026-08-12', 'periodId' => '2026-08',
+						'administrationId' => 'adm-1', 'currency' => 'EUR', 'grossAmount' => 76.67, 'netAmount' => 66.66, 'vatAmount' => 10.01,
+						'invoiceLines' => [
+							['itemName' => 'A', 'netAmount' => 33.33, 'vatCategory' => 'S', 'vatRate' => 21],
+							['itemName' => 'B', 'netAmount' => 33.33, 'vatCategory' => 'S', 'vatRate' => 9],
+						],
+						'vatBreakdown' => [['category' => 'S', 'rate' => 21, 'taxableAmount' => 33.33, 'taxAmount' => 7.0]],
+						'lifecycleState' => 'issued',
+					],
+					'ARInvoice',
 				],
-			],
-		];
-
-		$stub = $this->fakeObjectService($accounts, $transactions);
-		$service = $this->buildService($stub);
-
-		// Seed a return manually so deriveVATLines has a parent.
-		$stub->setSchema('BtwAangifte')->saveObject(
-			[
-				'id' => 'ret-1',
-				'returnNumber' => 'NL-2026-Q2',
-				'period' => 'quarter',
-				'periodYear' => 2026,
-				'periodNumber' => 2,
-				'startDate' => '2026-04-01',
-				'endDate' => '2026-06-30',
-				'regime' => 'standard',
-				'administrationId' => 'adm-1',
-				'statusCode' => 'draft',
 			]
 		);
+		$stub = $this->fakeObjectService($rows);
+		$stub->setSchema('BtwAangifte')->saveObject(
+			['id' => 'ret-q3', 'administrationId' => 'adm-1', 'startDate' => '2026-07-01', 'endDate' => '2026-09-30', 'statusCode' => 'draft']
+		);
 
-		$totals = $service->deriveVATLines(
-			returnId: 'ret-1',
+		$totals = $this->buildService($stub)->deriveVATLines(
+			returnId: 'ret-q3',
 			administrationId: 'adm-1',
-			startDate: '2026-04-01',
-			endDate: '2026-06-30',
+			startDate: '2026-07-01',
+			endDate: '2026-09-30',
 			regime: 'standard'
 		);
 
-		self::assertSame(3, $totals['lineCount']);
-		self::assertSame(1050.0 + 180.0 + 0.0, (float)$totals['totalVATCollected']);
-		self::assertSame(0.0, (float)$totals['totalVATPaid']);
-		// Three declarations: (collected,21), (collected,9), (collected,0).
-		self::assertCount(3, $stub->dump('VATDeclaration'));
-
-	}//end testDeriveVATLinesGroupsMixedRates()
+		$byBox = $this->declarationsByBox($stub);
+		self::assertSame(7.01, $byBox['1a']['totalVATAmount']);
+		self::assertSame(21.0, $byBox['1a']['taxRate']);
+		self::assertSame(3.0, $byBox['1b']['totalVATAmount']);
+		self::assertSame(10.01, $totals['totalVATCollected']);
+		self::assertSame(4, $totals['lineCount']);
+	}//end testTheVatIsTakenAsBookedAndNotRecalculatedFromARate()
 
 	/**
-	 * Reverse-charge lines fold into totalVATPaid (operator self-accounts).
+	 * A reverse-charged purchase declares its base in the box of its tariff
+	 * (2a domestic, 4b from the EU), and its VAT lines say reverse charge.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-2.1
 	 */
-	public function testDeriveVATLinesHandlesReverseCharge(): void {
-		$accounts = [
+	public function testAReverseChargedPurchaseDeclaresItsBaseInTheBoxOfItsTariff(): void {
+		$rows = $this->postedByTheMapper(
 			[
-				'accountNumber' => '5010',
-				'name' => 'EU inkopen',
-				'accountType' => 'expenses',
-				'vatApplicable' => true,
-				'reverseChargeApplicable' => true,
-				'administrationId' => 'adm-1',
-			],
-		];
-		$transactions = [
-			[
-				'id' => 'gl-eu-1',
-				'administrationId' => 'adm-1',
-				'transactionDate' => '2026-04-20',
-				'lines' => [
-					['accountNumber' => '5010', 'taxableAmount' => 9500.0, 'taxRate' => 21.0, 'reverseChargeApplicable' => true],
+				[
+					[
+						'id' => 'ap-10', 'invoiceNumber' => 'INK-91', 'invoiceDate' => '2026-08-03', 'administrationId' => 'adm-1',
+						'totalAmount' => 3000.0, 'taxAmount' => 0,
+						'lines' => [
+							['accountNumber' => '7100', 'amount' => 2000.0, 'description' => 'Onderaanneming', 'taxCode' => 'reverse-charge'],
+							['accountNumber' => '7110', 'amount' => 1000.0, 'description' => 'Machine uit Duitsland', 'taxCode' => 'intra-eu-acquisition'],
+						],
+						'state' => 'posted',
+					],
+					'APInvoice',
 				],
-			],
-		];
-
-		$stub = $this->fakeObjectService($accounts, $transactions);
-		$service = $this->buildService($stub);
-		$stub->setSchema('BtwAangifte')->saveObject(
-			[
-				'id' => 'ret-rc',
-				'administrationId' => 'adm-1',
-				'startDate' => '2026-04-01',
-				'endDate' => '2026-06-30',
-				'regime' => 'reverse-charge',
-				'statusCode' => 'draft',
 			]
 		);
+		$stub = $this->fakeObjectService($rows);
+		$stub->setSchema('BtwAangifte')->saveObject(
+			['id' => 'ret-rc', 'administrationId' => 'adm-1', 'startDate' => '2026-07-01', 'endDate' => '2026-09-30', 'statusCode' => 'draft']
+		);
 
-		$totals = $service->deriveVATLines(
+		$totals = $this->buildService($stub)->deriveVATLines(
 			returnId: 'ret-rc',
 			administrationId: 'adm-1',
-			startDate: '2026-04-01',
-			endDate: '2026-06-30',
-			regime: 'reverse-charge'
+			startDate: '2026-07-01',
+			endDate: '2026-09-30',
+			regime: 'standard'
 		);
 
-		self::assertSame(0.0, (float)$totals['totalVATCollected']);
-		// 9500 * 0.21 = 1995.
-		self::assertSame(1995.0, (float)$totals['totalVATPaid']);
-		self::assertSame(1, $totals['lineCount']);
-		$lines = $stub->dump('VATLine');
-		self::assertSame('reverse-charge', $lines[0]['type']);
-		self::assertTrue($lines[0]['reverseChargeApplicable']);
+		$byBox = $this->declarationsByBox($stub);
+		self::assertSame(['2a', '4b'], array_keys($byBox));
+		self::assertSame(2000.0, $byBox['2a']['totalTaxableAmount']);
+		self::assertSame(1000.0, $byBox['4b']['totalTaxableAmount']);
+		self::assertSame('reverse-charge', $byBox['2a']['type']);
+		self::assertSame(3000.0, $totals['totalTaxableAmount']);
+		foreach ($stub->dump('VATLine') as $line) {
+			self::assertTrue($line['reverseChargeApplicable']);
+			self::assertSame('7', substr((string)$line['glAccountNumber'], 0, 1));
+		}
+	}//end testAReverseChargedPurchaseDeclaresItsBaseInTheBoxOfItsTariff()
 
-	}//end testDeriveVATLinesHandlesReverseCharge()
+	/**
+	 * A credit note books its sale lines on the opposite side, so it lowers
+	 * the box instead of adding to it.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/tax-vat-return-from-books/tasks.md#task-2.1
+	 */
+	public function testALineBookedOnTheOppositeSideLowersItsBox(): void {
+		$rows = $this->postedByTheMapper($this->korenbloemQ3());
+		$rows['GLTransaction'][] = [
+			'id' => 'gl-cn', 'transactionNumber' => 'CN-1', 'postingDate' => '2026-09-10', 'periodId' => '2026-09',
+			'currency' => 'EUR', 'description' => 'Creditnota', 'state' => 'posted', 'administrationId' => 'adm-kb',
+		];
+		foreach ([['8000', 1000.0, 'base'], ['2110', 90.0, 'vat']] as $index => [$account, $amount, $kind]) {
+			$rows['GLLine'][] = [
+				'id' => 'gl-cn-' . $index, 'transactionId' => 'gl-cn', 'lineNumber' => ($index + 1), 'accountNumber' => $account,
+				'side' => 'debit', 'amount' => $amount, 'currency' => 'EUR', 'administrationId' => 'adm-kb',
+				'vatTariffCode' => 'low', 'vatReturnBox' => '1b', 'vatAmountKind' => $kind,
+			];
+		}
+
+		$stub = $this->fakeObjectService($rows);
+		$this->buildService($stub)->createReturn(
+			administrationId: 'adm-kb',
+			period: 'quarter',
+			periodYear: 2026,
+			periodNumber: 3,
+			regime: 'standard'
+		);
+
+		$byBox = $this->declarationsByBox($stub);
+		self::assertSame(9000.0, $byBox['1b']['totalTaxableAmount']);
+		self::assertSame(810.0, $byBox['1b']['totalVATAmount']);
+	}//end testALineBookedOnTheOppositeSideLowersItsBox()
 
 	/**
 	 * KOR regime short-circuits to zero totals (REQ-VAT-004).
@@ -454,7 +564,7 @@ final class VATReturnServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testDeriveVATLinesKorRegimeZeroes(): void {
-		$stub = $this->fakeObjectService([], []);
+		$stub = $this->fakeObjectService();
 		$service = $this->buildService($stub);
 		$stub->setSchema('BtwAangifte')->saveObject(['id' => 'ret-kor', 'statusCode' => 'draft']);
 
@@ -479,7 +589,7 @@ final class VATReturnServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testDeriveVATLinesEmptyGL(): void {
-		$stub = $this->fakeObjectService([], []);
+		$stub = $this->fakeObjectService();
 		$service = $this->buildService($stub);
 		$stub->setSchema('BtwAangifte')->saveObject(['id' => 'ret-empty', 'statusCode' => 'draft']);
 
@@ -503,7 +613,7 @@ final class VATReturnServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testSubmitReturnTransitionsToSubmitted(): void {
-		$stub = $this->fakeObjectService([], []);
+		$stub = $this->fakeObjectService();
 		$service = $this->buildService($stub);
 		$stub->setSchema('BtwAangifte')->saveObject(
 			[
@@ -527,7 +637,7 @@ final class VATReturnServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testSubmitReturnRejectsNonDraft(): void {
-		$stub = $this->fakeObjectService([], []);
+		$stub = $this->fakeObjectService();
 		$service = $this->buildService($stub);
 		$stub->setSchema('BtwAangifte')->saveObject(['id' => 'ret-sub-2', 'statusCode' => 'submitted']);
 
@@ -542,7 +652,7 @@ final class VATReturnServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testRebaseReturnClearsAndRederives(): void {
-		$stub = $this->fakeObjectService([], []);
+		$stub = $this->fakeObjectService();
 		$service = $this->buildService($stub);
 		$stub->setSchema('BtwAangifte')->saveObject(
 			[

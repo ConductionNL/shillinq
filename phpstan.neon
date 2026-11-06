@@ -46,6 +46,9 @@ parameters:
         # Covers Service/Deferral too — scanDirectories recurses, so listing the
         # subdirectory separately would be redundant, not additive.
         - %currentWorkingDirectory%/tests/stubs/OpenRegister/Service
+        # The lifecycle action and guard interfaces (#516), so the posting
+        # handlers in lib/Lifecycle/Action/ stay analysed instead of excluded.
+        - %currentWorkingDirectory%/tests/stubs/OpenRegister/Lifecycle
 
     # PHPDoc @return bool / @return array types are often intentionally broader than the
     # inferred type (e.g. SimpleXMLElement methods, third-party SDKs). Treating PHPDoc
@@ -67,7 +70,7 @@ parameters:
         - lib/Lifecycle/FourEyesPaymentRunGuard.php
         - lib/Lifecycle/PaymentRunDuplicateGuard.php
         # RoleFallbackResolver implements the cross-app
-        # OCA\OpenRegister\Service\Notification\RecipientResolverInterface — same
+        # OCA\OpenRegister\Notifications\Service\Notification\RecipientResolverInterface — same
         # non-ignorable "implements unknown interface" class as the guards above.
         - lib/Notification/RoleFallbackResolver.php
         # AppendReopenHistoryAction implements the cross-app

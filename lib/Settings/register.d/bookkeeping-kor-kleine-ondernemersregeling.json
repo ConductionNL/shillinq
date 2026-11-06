@@ -187,6 +187,25 @@
               "description": "Alleen toegestaan vanaf vroegsteOpzegDatum. KORRevocation met type=VRIJWILLIG_NA_LOCKOUT, revocatieDatum = 1-1 van het volgende kalenderjaar."
             }
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_fiscalist",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "KORAnnualTurnover": {
@@ -338,6 +357,25 @@
               }
             }
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_fiscalist",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "KORThresholdAlert": {
@@ -462,6 +500,25 @@
             "example": "adm-zzp-1",
             "title": "Administration ID"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_fiscalist",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "KORRevocation": {
@@ -612,6 +669,25 @@
             "example": "adm-zzp-1",
             "title": "Administration ID"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_fiscalist",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "KOREUTurnover": {
@@ -750,6 +826,25 @@
             "example": "adm-webshop-1",
             "title": "Administration ID"
           }
+        },
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_fiscalist",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_fiscalist"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       }
     },

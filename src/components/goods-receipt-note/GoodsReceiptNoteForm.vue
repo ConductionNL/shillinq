@@ -14,7 +14,7 @@
  GRN is created, every line is POSTed in sequence, and the form navigates to
  the GoodsReceiptNoteDetail view.
 
- @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+ @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
 -->
 <template>
 	<div class="grn-form">
@@ -287,7 +287,7 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md */
+		/** @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003 */
 		async loadOpenPurchaseOrders() {
 			try {
 				const response = await axios.get(
@@ -313,7 +313,7 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md */
+		/** @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003 */
 		async refreshLines() {
 			if (this.selectedPoIds.length === 0) {
 				this.availableLines = []

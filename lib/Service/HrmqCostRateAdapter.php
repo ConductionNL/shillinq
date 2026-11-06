@@ -30,6 +30,7 @@ namespace OCA\Shillinq\Service;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Ask hrmq what an hour of each person's time costs the employer.
@@ -266,8 +267,10 @@ class HrmqCostRateAdapter {
 	 */
 	private function hrmqObject(string $schema, string $id): ?array {
 		try {
-			$row = $this->container->get(id: 'OCA\\OpenRegister\\Service\\ObjectService')
-				->find(id: $id, register: $this->registerSlug(), schema: $schema);
+			$row = ObjectIdentifier::findScoped(
+				scoped: $this->container->get(id: 'OCA\\OpenRegister\\Service\\ObjectService')->setRegister($this->registerSlug())->setSchema($schema),
+				id: $id
+			);
 		} catch (Throwable $e) {
 			$this->logger->debug(
 				'HrmqCostRateAdapter: ' . $schema . ' ' . $id . ' not readable: ' . $e->getMessage()
@@ -295,11 +298,9 @@ class HrmqCostRateAdapter {
 	private function activeContract(string $employeeId): ?array {
 		try {
 			$rows = $this->container->get(id: 'OCA\\OpenRegister\\Service\\ObjectService')
-				->findAll(
-					register: $this->registerSlug(),
-					schema: 'EmploymentContract',
-					filters: ['employee' => $employeeId, 'status' => 'active']
-				);
+				->setRegister($this->registerSlug())
+				->setSchema('EmploymentContract')
+				->findAll(['filters' => ['employee' => $employeeId, 'status' => 'active']]);
 		} catch (Throwable $e) {
 			$this->logger->debug('HrmqCostRateAdapter: no active contract for ' . $employeeId);
 			return null;

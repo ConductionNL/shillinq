@@ -13,7 +13,7 @@
  *        Body: administrationId, decision, comment (optional).
  *        → 200 with the updated PurchaseOrder; 400 on validation;
  *          401 anonymous; 404 cross-tenant or missing PO; 409 when the
- *          PO is not in pending_approval; 500 without stack trace.
+ *          PO is not waiting for approval; 500 without stack trace.
  *
  * Every endpoint is #[NoAdminRequired] (admin posture is the NC
  * SecurityMiddleware default — controllers without the attribute are
@@ -41,7 +41,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\PurchaseOrderApprovalService;
 use OCP\AppFramework\Controller;
@@ -85,7 +85,7 @@ class PurchaseOrderApprovalController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 

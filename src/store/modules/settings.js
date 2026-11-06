@@ -25,18 +25,10 @@ export const useSettingsStore = defineStore('settings', {
 		async fetchSettings() {
 			this.loading = true
 			try {
-				const response = await fetch(
-					generateUrl('/apps/shillinq/api/settings'),
-					{
-						headers: { requesttoken: OC.requestToken },
-					},
-				)
-				if (response.ok) {
-					const data = await response.json()
-					this.settings = data
-					this.hasOpenRegisters = !!data?.openregisters
-					this.isAdmin = !!data?.isAdmin
-					return data
+				const answer = await settingsRequest(tokenGet())
+				if (answer !== null) {
+					applyLoaded(this, answer.data)
+					return answer.data
 				}
 			} catch (error) {
 				console.error('Failed to fetch settings:', error)
@@ -56,21 +48,10 @@ export const useSettingsStore = defineStore('settings', {
 		async saveSettings(settings) {
 			this.loading = true
 			try {
-				const response = await fetch(
-					generateUrl('/apps/shillinq/api/settings'),
-					{
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-							requesttoken: OC.requestToken,
-						},
-						body: JSON.stringify(settings),
-					},
-				)
-				if (response.ok) {
-					const data = await response.json()
-					this.settings = data
-					return data
+				const answer = await settingsRequest(jsonPost(settings))
+				if (answer !== null) {
+					this.settings = answer.data
+					return answer.data
 				}
 			} catch (error) {
 				console.error('Failed to save settings:', error)
@@ -81,3 +62,56 @@ export const useSettingsStore = defineStore('settings', {
 		},
 	},
 })
+
+/**
+ * Call the shillinq settings endpoint.
+ *
+ * @param {object} init The fetch options.
+ * @return {Promise<{data: object|null}|null>} The parsed body when the answer is ok, else null.
+ */
+async function settingsRequest(init) {
+	const response = await fetch(generateUrl('/apps/shillinq/api/settings'), init)
+	if (!response.ok) {
+		return null
+	}
+	return { data: await response.json() }
+}
+
+/**
+ * The fetch options that POST settings as JSON with the request token.
+ *
+ * @param {object} settings The settings to send.
+ * @return {object}
+ */
+function jsonPost(settings) {
+	return {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			requesttoken: OC.requestToken,
+		},
+		body: JSON.stringify(settings),
+	}
+}
+
+/**
+ * Store loaded settings with the flags they carry.
+ *
+ * @param {object} store The settings store.
+ * @param {object|null} data The loaded settings.
+ * @return {void}
+ */
+function applyLoaded(store, data) {
+	store.settings = data
+	store.hasOpenRegisters = !!data?.openregisters
+	store.isAdmin = !!data?.isAdmin
+}
+
+/**
+ * The fetch options of a GET with the request token.
+ *
+ * @return {object}
+ */
+function tokenGet() {
+	return { headers: { requesttoken: OC.requestToken } }
+}

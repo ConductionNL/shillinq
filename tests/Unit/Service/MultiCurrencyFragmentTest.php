@@ -252,7 +252,7 @@ final class MultiCurrencyFragmentTest extends TestCase {
 			self::assertArrayHasKey($object['@self']['schema'], $schemas);
 
 			if ($object['@self']['schema'] === 'BankAccount') {
-				$bankSlugs[$object['@self']['slug']] = true;
+				$bankSlugs[$object['@self']['id']] = true;
 				$currencies[$object['primaryCurrency']] = true;
 			}
 
@@ -275,7 +275,7 @@ final class MultiCurrencyFragmentTest extends TestCase {
 			self::assertArrayHasKey($iso, $currencies, "Expect a seed BankAccount with primaryCurrency $iso");
 		}
 
-		// Every CurrencyBalance accountId resolves to a seeded BankAccount slug
+		// Every CurrencyBalance accountId resolves to a seeded BankAccount id
 		// (FK invariant for REQ-MC-003).
 		foreach ($balanceRefs as $accountId => $balance) {
 			self::assertArrayHasKey(

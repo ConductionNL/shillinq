@@ -19,7 +19,7 @@ test suite stayed green. No posting arithmetic is added or changed; this
 capability is the missing wiring, plus the three lifecycle/schema/DI
 repairs without which that wiring could never fire (see `design.md` D1–D2).
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: REQ-GLTAX-001: A disposed FixedAsset MUST post a balanced disposal journal
 

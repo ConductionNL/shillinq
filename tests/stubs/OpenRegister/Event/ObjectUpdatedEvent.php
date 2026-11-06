@@ -46,6 +46,15 @@ class ObjectUpdatedEvent extends Event {
 	}//end getObject()
 
 	/**
+	 * Return the updated object (new value), as OpenRegister's event also names it.
+	 *
+	 * @return ObjectEntity|null
+	 */
+	public function getNewObject(): ?ObjectEntity {
+		return $this->object;
+	}//end getNewObject()
+
+	/**
 	 * Return the pre-update object (old value).
 	 *
 	 * @return ObjectEntity|null

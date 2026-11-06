@@ -58,7 +58,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Reporting\ReportCatalogue;
 use OCA\Shillinq\Reporting\ReportGenerationService;
 use OCA\Shillinq\Service\AdministrationContextService;
@@ -108,7 +108,7 @@ class ReportingController extends Controller {
 		private readonly ReportGenerationService $service,
 		private readonly AdministrationContextService $context,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
@@ -192,10 +192,12 @@ class ReportingController extends Controller {
 			return new JSONResponse(['error' => 'missing-report-type'], Http::STATUS_BAD_REQUEST);
 		}
 
-		// ADR-005 / REQ-MA-001 — generating a report against another tenant's
-		// ledger. An empty administrationId means "no administration scope" and
-		// is left to the service; a NAMED administration must be one of ours.
-		if ($administrationId !== '' && $this->context->canAccess(administrationId: $administrationId) === false) {
+		if ($administrationId === '') {
+			return new JSONResponse(['error' => 'missing-administration'], Http::STATUS_BAD_REQUEST);
+		}
+
+		// ADR-005 / REQ-MA-001: the administration must be one of the caller's.
+		if ($this->context->canAccess(administrationId: $administrationId) === false) {
 			return new JSONResponse(['error' => 'not-found'], Http::STATUS_NOT_FOUND);
 		}
 

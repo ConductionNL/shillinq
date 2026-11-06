@@ -207,7 +207,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 				string | null $register = null,
 				string | null $schema = null,
 			): ?object {
-				$this->finds[] = ['id' => $id, 'register' => $register, 'schema' => $schema];
+				$this->finds[] = ['id' => $id, 'register' => $register, 'schema' => ($schema ?? $this->currentSchema)];
 				if ($this->dossier === null) {
 					return null;
 				}

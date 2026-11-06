@@ -374,5 +374,26 @@ final class AdministrationContextServiceTest extends TestCase {
 
 	}//end testExpiredMembershipExcluded()
 
+	/**
+	 * Only a currently valid `eigenaar` membership of that administration makes an owner.
+	 *
+	 * @return void
+	 */
+	public function testIsOwnerOfNeedsAValidOwnerMembershipOfThatAdministration(): void {
+		$this->authenticateAs('anna');
+		$memberships = [
+			['userId' => 'anna', 'administrationId' => 'adm-werk-001', 'role' => 'eigenaar'],
+			['userId' => 'anna', 'administrationId' => 'adm-beheer-001', 'role' => 'boekhouder'],
+			['userId' => 'anna', 'administrationId' => 'adm-oud-001', 'role' => 'eigenaar', 'validUntil' => '2020-12-31'],
+		];
+		$service = $this->buildService($memberships, $this->sampleAdministrations());
+
+		self::assertTrue($service->isOwnerOf('adm-werk-001'));
+		self::assertFalse($service->isOwnerOf('adm-beheer-001'));
+		self::assertFalse($service->isOwnerOf('adm-oud-001'));
+		self::assertFalse($service->isOwnerOf(''));
+
+	}//end testIsOwnerOfNeedsAValidOwnerMembershipOfThatAdministration()
+
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

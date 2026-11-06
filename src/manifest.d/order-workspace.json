@@ -18,11 +18,17 @@
 				"icon": "FileDocumentMultipleOutline",
 				"register": "shillinq",
 				"schema": "OrderPrimitive",
+				"_boardNote": "Board ShOrders: title, count line, Download and New order, counts on the type chips. The Add button read Volgorde toevoegen (the schema title Order translates as Volgorde), so the page names its label.",
+				"showTitle": true,
+				"countSubtitle": "{total} orders",
+				"showCount": false,
+				"addLabel": "New order",
+				"headerButtons": [{ "action": "export" }, { "action": "add", "variant": "primary", "label": "New order" }],
 				"quickFilters": [
-					{ "label": "All", "filter": {}, "default": true },
-					{ "label": "Purchase", "filter": { "orderType": "purchase" } },
-					{ "label": "Subsidie", "filter": { "orderType": "subsidy" } },
-					{ "label": "Engagement", "filter": { "orderType": "engagement" } }
+					{ "label": "All", "filter": {}, "default": true, "showCount": true },
+					{ "label": "Purchase", "filter": { "orderType": "purchase" }, "showCount": true },
+					{ "label": "Subsidie", "filter": { "orderType": "subsidy" }, "showCount": true },
+					{ "label": "Engagement", "filter": { "orderType": "engagement" }, "showCount": true }
 				],
 				"columns": ["orderNumber", "orderType", "counterpartyName", "totalAmount", "orderDate", "state"],
 				"detailRoute": "OrderDetail"

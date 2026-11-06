@@ -161,6 +161,12 @@ final class RegisterLifecycleGuardsResolveTest extends TestCase {
 			'OCA\Shillinq\Guard\SubsidieRepaymentGuard::requireZeroRepaymentBalance',
 			'OCA\Shillinq\Guard\RateScheduleOverlapGuard::requireNonOverlappingWindow',
 			'OCA\Shillinq\Lifecycle\PeriodCloseGuard::trialBalanceVerifies',
+			// #516/#1103: the posting transitions, registered in LedgerPostingRegistration.
+			'OCA\Shillinq\Lifecycle\RuleComplianceGuard::validateTransaction',
+			'OCA\Shillinq\Lifecycle\RuleComplianceGuard::validateInvoice',
+			'OCA\Shillinq\Lifecycle\JournalEntryGuard::canPost',
+			'OCA\Shillinq\Lifecycle\ThreeWayMatchGuard::matches',
+			'OCA\Shillinq\Lifecycle\BalanceGuard::isInvoiceBalanced',
 		];
 
 	}//end fixedTags()
@@ -187,7 +193,12 @@ final class RegisterLifecycleGuardsResolveTest extends TestCase {
 	 * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-4
 	 */
 	public function testEveryFqcnShapedLifecycleRequiresResolves(): void {
+		// Application.php plus the focused registrars it calls
+		// (OrderFulfilmentGateRegistration, LedgerPostingRegistration, ...).
 		$applicationSource = (string)file_get_contents($this->applicationPath);
+		foreach (glob(dirname($this->applicationPath) . '/*Registration.php') as $registrar) {
+			$applicationSource .= (string)file_get_contents($registrar);
+		}
 		$pairs = $this->collectLifecycleRequiresValues();
 		$this->assertNotEmpty($pairs, 'Expected to find at least one x-openregister-lifecycle transition.');
 

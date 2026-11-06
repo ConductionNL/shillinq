@@ -229,7 +229,7 @@ final class PurchaseRequisitionFragmentTest extends TestCase {
 		}
 
 		foreach ($requisitions as $requisition) {
-			$ownLines = array_filter($lines, static fn ($l) => $l['requisitionId'] === $requisition['requisitionNumber']);
+			$ownLines = array_filter($lines, static fn ($l) => $l['requisitionId'] === $requisition['@self']['id']);
 			self::assertNotEmpty(
 				$ownLines,
 				"Seeded Requisition {$requisition['requisitionNumber']} must have at least one RequisitionLine"

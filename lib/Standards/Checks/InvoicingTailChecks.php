@@ -305,7 +305,7 @@ final class InvoicingTailChecks implements CheckProvider {
 				'en16931-br-e-10' => static fn (array $o): bool => self::breakdownHasExemptionReason($o, 'E'),
 
 				// Reverse charge ('AE').
-				'en16931-br-ae-02' => static fn (array $o): bool => self::sellerVatWhenCategory($o, 'AE'),
+				'en16931-br-ae-02' => static fn (array $o): bool => self::reverseChargePartiesIdentified($o),
 				'en16931-br-ae-03' => static fn (array $o): bool => self::sellerVatWhenCollectionCategory($o, 'allowances', 'AE'),
 				'en16931-br-ae-04' => static fn (array $o): bool => self::sellerVatWhenCollectionCategory($o, 'charges', 'AE'),
 				'en16931-br-ae-05' => static fn (array $o): bool => self::lineRateZeroForCategory($o, 'AE'),
@@ -316,7 +316,7 @@ final class InvoicingTailChecks implements CheckProvider {
 				'en16931-br-ae-10' => static fn (array $o): bool => self::breakdownHasExemptionReason($o, 'AE'),
 
 				// Intra-community supply ('K').
-				'en16931-br-ic-02' => static fn (array $o): bool => self::sellerVatWhenCategory($o, 'K'),
+				'en16931-br-ic-02' => static fn (array $o): bool => self::intraCommunityPartiesIdentified($o),
 				'en16931-br-ic-03' => static fn (array $o): bool => self::sellerVatWhenCollectionCategory($o, 'allowances', 'K'),
 				'en16931-br-ic-04' => static fn (array $o): bool => self::sellerVatWhenCollectionCategory($o, 'charges', 'K'),
 				'en16931-br-ic-05' => static fn (array $o): bool => self::lineRateZeroForCategory($o, 'K'),
@@ -902,6 +902,20 @@ final class InvoicingTailChecks implements CheckProvider {
 	}//end breakdownHasCategory()
 
 	/**
+	 * When a line is an intra-community supply ('K'), the seller VAT id (or tax
+	 * representative VAT id) and the buyer VAT id are present (EN 16931
+	 * BR-IC-02). Vacuously true when no line is an intra-community supply.
+	 *
+	 * @param array<string, mixed> $o The ARInvoice.
+	 *
+	 * @return bool
+	 */
+	private static function intraCommunityPartiesIdentified(array $o): bool {
+		return self::sellerVatWhenCategory($o, 'K')
+			&& (self::anyLineCategory($o, 'K') === false || self::present($o, 'buyerVatId'));
+	}//end intraCommunityPartiesIdentified()
+
+	/**
 	 * When a line of category $cat exists, the seller VAT id (or, for an EU rule, a
 	 * tax-representative VAT id) is present (EN 16931 BR-{S,Z,E,AE,IC,G}-02).
 	 * Vacuously true when the category is not used on a line.
@@ -918,6 +932,27 @@ final class InvoicingTailChecks implements CheckProvider {
 
 		return self::present($o, 'sellerVatId') || self::present($o, 'sellerTaxRepVatId');
 	}//end sellerVatWhenCategory()
+
+	/**
+	 * When a line is reverse charged ('AE'), the seller is identified by its VAT
+	 * id, tax registration id or tax representative VAT id, and the buyer by its
+	 * VAT id or legal registration id (EN 16931 BR-AE-02). Vacuously true when no
+	 * line is reverse charged.
+	 *
+	 * @param array<string, mixed> $o The ARInvoice.
+	 *
+	 * @return bool
+	 */
+	private static function reverseChargePartiesIdentified(array $o): bool {
+		if (self::anyLineCategory($o, 'AE') === false) {
+			return true;
+		}
+
+		$sellerIdentified = (self::present($o, 'sellerVatId') || self::present($o, 'sellerTaxRegId')
+			|| self::present($o, 'sellerTaxRepVatId'));
+
+		return $sellerIdentified && (self::present($o, 'buyerVatId') || self::present($o, 'buyerLegalRegId'));
+	}//end reverseChargePartiesIdentified()
 
 	/**
 	 * When a document allowance / charge of category $cat exists, the seller (or tax

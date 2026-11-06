@@ -137,25 +137,18 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
+        "authorization": {
+          "read": [
+            "shillinq_auditor"
+          ]
         }
       },
       "WidgetAccessKeyAuditEntry": {
+        "authorization": {
+          "read": [
+            "shillinq_auditor"
+          ]
+        },
         "slug": "WidgetAccessKeyAuditEntry",
         "icon": "ClipboardTextClockOutline",
         "version": "0.1.0",

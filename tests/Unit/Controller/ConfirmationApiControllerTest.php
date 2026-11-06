@@ -22,6 +22,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 use OCA\Shillinq\Controller\ConfirmationApiController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Booking\ConfirmationTokenService;
+use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -88,6 +89,13 @@ final class ConfirmationApiControllerTest extends TestCase {
 	private LoggerInterface&MockObject $logger;
 
 	/**
+	 * Mock transition runner.
+	 *
+	 * @var ObjectTransitionRunner&MockObject
+	 */
+	private ObjectTransitionRunner&MockObject $transitions;
+
+	/**
 	 * The controller under test.
 	 *
 	 * @var ConfirmationApiController
@@ -108,6 +116,7 @@ final class ConfirmationApiControllerTest extends TestCase {
 		$this->tokens = $this->createMock(ConfirmationTokenService::class);
 		$this->time = $this->createMock(ITimeFactory::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->transitions = $this->createMock(ObjectTransitionRunner::class);
 
 		// OR is always available unless a specific test overrides it.
 		$this->settings->method('isOpenRegisterAvailable')->willReturn(true);
@@ -128,6 +137,7 @@ final class ConfirmationApiControllerTest extends TestCase {
 			$this->tokens,
 			$this->time,
 			$this->createMock(IThrottler::class),
+			$this->transitions,
 			$this->logger,
 		);
 	}//end setUp()
@@ -237,26 +247,90 @@ final class ConfirmationApiControllerTest extends TestCase {
 	}//end testValidateInvalidMapsTo401()
 
 	/**
-	 * A successful confirm returns 200 with the confirmed appointment.
+	 * An anonymous confirm moves the appointment through the declared
+	 * `confirmViaToken` transition and answers only the portal view: the
+	 * customer's contact details and internal ids never reach the link holder.
 	 *
 	 * @return void
 	 */
-	public function testConfirmSuccess(): void {
+	public function testConfirmAnswersOnlyThePortalView(): void {
+		$this->context->method('currentUserId')->willReturn(null);
 		$this->request->method('getParam')->willReturn('rawtoken');
 		$this->tokens->method('validate')->willReturn(
 			['ok' => true, 'reason' => 'ok', 'token' => ['tokenId' => 'tok-1']]
 		);
 
 		$objectService = $this->makeObjectService(
-			[['appointmentId' => 'APT-1', 'status' => 'pending_confirmation']]
+			[
+				[
+					'@self' => ['id' => 'uuid-apt-1'],
+					'appointmentId' => 'APT-1',
+					'status' => 'pending_confirmation',
+				],
+			]
 		);
 		$this->container->method('get')->willReturn($objectService);
 
-		$response = $this->controller->confirm('apt-1');
+		$this->transitions->expects($this->once())
+			->method('runAsSystem')
+			->with(
+				'uuid-apt-1',
+				'confirmViaToken',
+				['confirmedAt' => '2026-05-22T12:30:00Z', 'confirmationTokenId' => 'tok-1']
+			)
+			->willReturn(
+				[
+					'@self' => ['id' => 'uuid-apt-1', 'owner' => 'admin'],
+					'appointmentId' => 'APT-1',
+					'serviceName' => 'Consult',
+					'status' => 'confirmed',
+					'customerEmail' => 'alice@example.nl',
+					'customerPhone' => '+31600000000',
+					'customerId' => 'cust-1',
+					'customerUserId' => 'alice',
+					'administrationId' => 'adm-1',
+					'confirmationTokenId' => 'tok-1',
+				]
+			);
+		$this->tokens->expects($this->once())->method('markRedeemed');
+
+		$response = $this->controller->confirm('APT-1');
 		self::assertSame(Http::STATUS_OK, $response->getStatus());
-		$data = $response->getData();
-		self::assertSame('confirmed', $data['appointment']['status']);
-	}//end testConfirmSuccess()
+		$appointment = $response->getData()['appointment'];
+		self::assertSame('confirmed', $appointment['status']);
+		self::assertSame('APT-1', $appointment['appointmentId']);
+		foreach (['@self', 'customerEmail', 'customerPhone', 'customerId', 'customerUserId', 'administrationId', 'confirmationTokenId'] as $leak) {
+			self::assertArrayNotHasKey($leak, $appointment, $leak . ' leaked to the anonymous caller');
+		}
+
+		self::assertSame([], $objectService->saved, 'confirm wrote the appointment directly instead of through the transition');
+	}//end testConfirmAnswersOnlyThePortalView()
+
+	/**
+	 * When the transition is refused (for instance the appointment is no
+	 * longer pending), the token stays unredeemed and nothing leaks.
+	 *
+	 * @return void
+	 */
+	public function testConfirmRefusedTransitionKeepsTheTokenUnredeemed(): void {
+		$this->request->method('getParam')->willReturn('rawtoken');
+		$this->tokens->method('validate')->willReturn(
+			['ok' => true, 'reason' => 'ok', 'token' => ['tokenId' => 'tok-1']]
+		);
+
+		$objectService = $this->makeObjectService(
+			[['@self' => ['id' => 'uuid-apt-1'], 'appointmentId' => 'APT-1', 'status' => 'cancelled']]
+		);
+		$this->container->method('get')->willReturn($objectService);
+
+		$this->transitions->method('runAsSystem')
+			->willThrowException(new \RuntimeException('Transition "confirmViaToken" is not allowed from state "cancelled".'));
+		$this->tokens->expects($this->never())->method('markRedeemed');
+
+		$response = $this->controller->confirm('APT-1');
+		self::assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		self::assertArrayNotHasKey('appointment', $response->getData());
+	}//end testConfirmRefusedTransitionKeepsTheTokenUnredeemed()
 
 	/**
 	 * Confirming with an already-redeemed token maps to HTTP 403.
@@ -340,6 +414,13 @@ final class ConfirmationApiControllerTest extends TestCase {
 			public array $records;
 
 			/**
+			 * Objects passed to saveObject().
+			 *
+			 * @var array<int,array<string,mixed>>
+			 */
+			public array $saved = [];
+
+			/**
 			 * @param array<int,array<string,mixed>> $records Canned records.
 			 */
 			public function __construct(array $records) {
@@ -365,11 +446,12 @@ final class ConfirmationApiControllerTest extends TestCase {
 			}
 
 			/**
-			 * @param array<string,mixed> $_filters Ignored.
+			 * @param array<string,mixed> $config Ignored.
+			 * @param bool                $_rbac  Ignored.
 			 *
 			 * @return array<int,array<string,mixed>>
 			 */
-			public function findAll(array $_filters = []): array {
+			public function findAll(array $config = [], bool $_rbac = true): array {
 				return $this->records;
 			}
 
@@ -379,10 +461,12 @@ final class ConfirmationApiControllerTest extends TestCase {
 			 * @param array<string,mixed> $object Object payload.
 			 * @param string $register Register slug.
 			 * @param string $schema Schema slug.
+			 * @param bool   $_rbac  Ignored.
 			 *
 			 * @return array<string,mixed>
 			 */
-			public function saveObject(array $object, string $register, string $schema): array {
+			public function saveObject(array $object, string $register, string $schema, bool $_rbac = true): array {
+				$this->saved[] = $object;
 				return $object;
 			}
 		};

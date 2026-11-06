@@ -1,0 +1,43 @@
+{
+	"menu": [
+		{
+			"id": "Overheid",
+			"children": [
+				{ "id": "FeeSchedules", "label": "Fee schedules", "icon": "CashMultiple", "route": "FeeSchedules", "order": 70 }
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "FeeSchedules",
+			"route": "/overheid/fee-schedules",
+			"type": "index",
+			"title": "Fee schedules",
+			"config": {
+				"register": "shillinq",
+				"schema": "FeeSchedule",
+				"columns": [
+					{ "key": "typeValue", "label": "Case type", "sortable": true },
+					{ "key": "intakeChannel", "label": "Channel", "sortable": true },
+					{ "key": "amount", "label": "Amount", "sortable": true },
+					{ "key": "legalBasis.regulation", "label": "Regulation" },
+					{ "key": "legalBasis.article", "label": "Article" },
+					{ "key": "legalBasis.effectiveDate", "label": "Basis in force from" },
+					{ "key": "revenueAccount", "label": "Revenue account", "sortable": true },
+					{ "key": "payAtIntake", "label": "Pay at intake", "sortable": true },
+					{ "key": "validFrom", "label": "Valid from", "sortable": true },
+					{ "key": "validTo", "label": "Valid until", "sortable": true }
+				],
+				"defaultSort": "typeValue",
+				"detailRoute": "FeeScheduleDetail"
+			}
+		},
+		{
+			"id": "FeeScheduleDetail",
+			"route": "/overheid/fee-schedules/:id",
+			"type": "detail",
+			"title": "Fee schedule",
+			"config": { "register": "shillinq", "schema": "FeeSchedule" }
+		}
+	]
+}

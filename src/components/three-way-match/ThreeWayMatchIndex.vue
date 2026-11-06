@@ -22,7 +22,7 @@
  in-memory filter is well-sized; downstream slice 11's audit-trail
  export takes the back-end pagination route).
 
- @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+ @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
 -->
 <template>
 	<div class="twm-index">
@@ -217,6 +217,7 @@ export default {
 			]
 		},
 
+		/** @spec openspec/changes/three-way-match-delivery-date-exception/specs/bookkeeping-three-way-matching-engine/spec.md */
 		statusOptions() {
 			return [
 				{
@@ -234,6 +235,10 @@ export default {
 				{
 					value: 'exception_quantity',
 					label: this.t('shillinq', 'Quantity exception'),
+				},
+				{
+					value: 'exception_date',
+					label: this.t('shillinq', 'Delivery date exception'),
 				},
 				{
 					value: 'exception_missing_grn',
@@ -262,7 +267,7 @@ export default {
 	},
 
 	methods: {
-		/** @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md */
+		/** @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md */
 		async loadMatches() {
 			this.loading = true
 			this.error = ''
@@ -366,12 +371,20 @@ export default {
 			return `${currency} ${(Number(invoice.totalInclVat) / 100).toFixed(2)}`
 		},
 
+		/**
+		 * The label of a match status.
+		 *
+		 * @param {string} statusCode The match status.
+		 * @return {string} The translated label.
+		 * @spec openspec/changes/three-way-match-delivery-date-exception/specs/bookkeeping-three-way-matching-engine/spec.md
+		 */
 		statusLabel(statusCode) {
 			const labels = {
 				auto_approved: this.t('shillinq', 'Auto-approved'),
 				within_tolerance: this.t('shillinq', 'Within tolerance'),
 				exception_price: this.t('shillinq', 'Price exception'),
 				exception_quantity: this.t('shillinq', 'Quantity exception'),
+				exception_date: this.t('shillinq', 'Delivery date exception'),
 				exception_missing_grn: this.t('shillinq', 'Missing GRN'),
 				exception_missing_po: this.t('shillinq', 'Missing PO'),
 				fraud_alert: this.t('shillinq', 'Fraud alert'),
@@ -459,6 +472,7 @@ export default {
 
 .twm-index__pill--exception_price,
 .twm-index__pill--exception_quantity,
+.twm-index__pill--exception_date,
 .twm-index__pill--exception_missing_grn,
 .twm-index__pill--exception_missing_po {
 	background: var(--color-warning);

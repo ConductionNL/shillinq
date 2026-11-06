@@ -1,0 +1,25 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "billable-period-becomes-an-invoice",
+    "adr": "ADR-037 modular register fragment: never edit shillinq_register.json or other fragments. ADR-041: shillinq defines BillablePeriodClosedEvent.",
+    "description": "Gives CustomerMaster an externalReference: the id of this customer in another app. Any app raises BillablePeriodClosedEvent with its account id when a billable period closes (dossiq: a tenant month), and shillinq drafts the invoice for the one customer carrying that id (decision 174, REQ-UMB-005). The fragment moves CustomerMaster to 0.3.0; it sorts after the fragments that set 0.1.0 and 0.2.0, so its version wins the deep merge."
+  },
+  "components": {
+    "schemas": {
+      "CustomerMaster": {
+        "version": "0.3.0",
+        "properties": {
+          "externalReference": {
+            "type": "string",
+            "nullable": true,
+            "title": "External reference",
+            "description": "The id of this customer in another app, such as a dossiq tenant id. A monthly invoice that app asks for is drafted for the customer carrying its id. One customer per id.",
+            "example": "8d2f6a1e-3c47-4b9a-a0e2-71c5d9f3b604"
+          }
+        }
+      }
+    }
+  }
+}

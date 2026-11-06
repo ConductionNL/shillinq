@@ -143,7 +143,95 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // this file argues for and close to the 0.58% it ran with two bumps ago.
 // Not more: the point of restating the ratio is that the next change
 // re-measures rather than inheriting slack.
-const DEFAULT_BUDGET_BYTES = 1_135_500
+//
+// Re-measured 2026-09-29 (ledger-booking-rules): 1,145,582 bytes. Inherited
+// red first: `development` already stood at 1,136,982, 1,482 B over, from the
+// fragments merged since 08-27. This change adds 8,600 B: the posting
+// restrictions settings pages and full copies of JournalDetail and
+// GeneralLedgerDetail (mergePages replaces a page wholesale), their notes
+// trimmed to one line each before measuring. Raised to 1,151,800: 6,218 B of
+// headroom, 0.54%, near the ratio above.
+//
+// Re-measured 2026-09-29 (receivables-payment-plans): 1,155,542 bytes. The
+// stack below (banking-payment-run, purchasing-supplier-invoice-intake) left
+// 1,147,341. This change adds 8,201 B: the Payment plans index and plan page
+// (5,490 B fragment), and on CustomerDetail and ARInvoiceDetail the Agree a
+// payment plan action and the customer's plans list. Raised to 1,162,000:
+// 6,458 B of headroom, 0.56%.
+//
+// Re-measured 2026-09-29 (planning-budget-editing): 1,165,005 bytes. This
+// change adds 9,129 B, all in its own fragment: index and detail pages for
+// budget amendments (with Determine, files and history), the multi-year
+// estimate and the multi-year budget lines, six pages over schemas that had
+// none. Raised to 1,172,000: 6,995 B of headroom, 0.60%.
+//
+// Re-measured 2026-09-29 (public-sector-reserves-and-interest): 1,177,829
+// bytes. The stack below left 1,165,325. This change adds 12,504 B, all in
+// its own fragment written one page per line: index and detail pages for
+// reserves, reserve mutations (with Realise), investments and interest runs
+// (with Calculate, Reopen and Post), and the reserves-over-the-years
+// dashboard, nine pages over four schemas that had none. Raised to
+// 1,184,500: 6,671 B of headroom, 0.56%.
+//
+// Re-measured 2026-09-30 (reporting-relation-both-sides): development held
+// 1,182,125 bytes. This change adds 9,701 B: its own fragment for the
+// Relations both ways report (the linked relations and the suggested links),
+// and on CustomerDetail the Link to a supplier action and five both-sides
+// widgets, and a Both sides action on PayeeDetail. reporting-custom-analysis
+// (#1815) adds 1,292 B beside it, so both together reach 1,193,118. Raised to
+// 1,199,500: 6,382 B of headroom over both, 0.53%.
+//
+// Re-measured 2026-10-01 (assets-method-change-and-reserve): development held
+// 1,198,446 bytes after platform-required-fields (#1821). This change adds
+// 2,224 B: its own fragment for the Reinvestment reserves page and the
+// Revise depreciation, Extra depreciation, Post missed depreciation and Apply
+// reinvestment reserve actions on the asset page, plus their menu entry.
+// Raised to 1,207,000: 6,330 B of headroom, 0.52%.
+//
+// Re-measured 2026-10-05 (receivables-object-request-refund-and-credit 3.2):
+// development held 1,206,673 bytes, 327 B under the budget. This change adds
+// 742 B to ar-invoice-payment-links.json: the Refunds to pay menu entry (a
+// query lens on Payment requests, not a second index page), the Approve and
+// Mark paid row actions and three state filter options. 1,207,415 in all.
+// Raised to 1,213,500: 6,085 B of headroom, 0.50%.
+//
+// Re-measured 2026-10-14 (board navigation, screens round 10): development
+// held 1,211,152 bytes. This change adds 2,531 B: the nav-board-sections.json
+// fragment (the Verkoop, Inkoop, Bank and Boekhouding headings with their 15
+// entries, and the All modules heading) and the root `nav` block (New booking,
+// Help and guidance, footer order). 1,213,683 in all.
+// Raised to 1,219,700: 6,017 B of headroom, 0.50%.
+//
+// Re-measured 2026-10-14 (sales invoice board, screens round 10): the branch
+// it stacks on held 1,218,823 bytes after the sales, purchase and claims list
+// headers. This change adds 979 B to add-shillinq-einvoicing-ubl-peppol.json:
+// the invoice page's tab strip, side column cards, pill and breadcrumb, less
+// the four totals tiles. 1,219,802 in all.
+// Raised to 1,226,000: 6,198 B of headroom, 0.51%.
+//
+// Re-measured 2026-10-15 (liquidity board, screens round 10: board
+// ShLiquiditeit on the cashflow dashboard, four key figures, the forecast
+// chart, the Wet Fido norms, recurring costs and treasury counts): development
+// held 1,220,469 bytes. This change adds 8,088 B. 1,228,557 in all.
+// Raised to 1,234,700: 6,143 B of headroom, 0.50%.
+//
+// Re-measured 2026-10-15 (receivables board, screens round 10: board
+// ShDebiteurenbeheer on the ar-aging page, five age tiles, the open invoices
+// with their reminder step and the payment requests): development held
+// 1,228,532 bytes. This change adds 8,037 B. 1,236,569 in all.
+// Raised to 1,242,800: 6,231 B of headroom, 0.50%.
+//
+// Re-measured 2026-10-15 (bank board, screens round 10: board ShBank, the new
+// bank-and-payments-board.json fragment with the Bank and payments page, its
+// key figures and four views): development held 1,236,569 bytes. This change
+// adds 9,601 B. 1,246,170 in all.
+// Raised to 1,252,500: 6,330 B of headroom, 0.51%.
+//
+// Re-measured 2026-10-16 (provider payouts, board ShDebiteurenbeheer: the
+// fourth tab of the receivables tab strip and its payouts table):
+// development held 1,251,745 bytes. This change adds 1,393 B. 1,253,138 in all.
+// Raised to 1,259,400: 6,262 B of headroom, 0.50%.
+const DEFAULT_BUDGET_BYTES = 1_259_400
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),

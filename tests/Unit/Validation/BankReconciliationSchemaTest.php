@@ -240,16 +240,24 @@ final class BankReconciliationSchemaTest extends TestCase {
 	}//end testReconciliationAggregations()
 
 	/**
-	 * BankReconciliation declares the bookkeeper/auditor RBAC roles per ADR-005.
+	 * BankReconciliation grants the bookkeeper and auditor groups per ADR-005,
+	 * in the authorization block OpenRegister enforces.
 	 *
 	 * @return void
 	 */
 	public function testReconciliationRbacRoles(): void {
-		$schema = $this->fragment['components']['schemas']['BankReconciliation'];
+		$authorization = [];
+		foreach (glob(dirname(__DIR__, 3) . '/lib/Settings/register.d/*.json') as $file) {
+			$schema = (json_decode((string)file_get_contents($file), true)['components']['schemas']['BankReconciliation'] ?? []);
+			$authorization += ($schema['authorization'] ?? []);
+		}
 
-		$roles = $schema['x-openregister-rbac']['roles'];
-		self::assertEqualsCanonicalizing(['create', 'read', 'update'], $roles['bookkeeper']['permissions']);
-		self::assertEqualsCanonicalizing(['read'], $roles['auditor']['permissions']);
+		foreach (['create', 'read', 'update'] as $action) {
+			self::assertContains('shillinq_bookkeeper', $authorization[$action]);
+		}
+
+		self::assertContains('shillinq_auditor', $authorization['read']);
+		self::assertNotContains('shillinq_auditor', $authorization['update']);
 
 	}//end testReconciliationRbacRoles()
 

@@ -26,6 +26,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\WbsoTransactionApiController;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\WbsoRbacResolver;
 use OCA\Shillinq\Service\WbsoTransactionService;
 use OCP\AppFramework\Http;
@@ -88,6 +89,20 @@ final class WbsoTransactionApiControllerTest extends TestCase {
 	private IL10N&MockObject $l10n;
 
 	/**
+	 * Memberships: the caller is a member of adm-1 only.
+	 *
+	 * @var AdministrationContextService&MockObject
+	 */
+	private AdministrationContextService&MockObject $context;
+
+	/**
+	 * Whether the caller's adm-1 membership grants posting.
+	 *
+	 * @var boolean
+	 */
+	private bool $mayPost = true;
+
+	/**
 	 * Controller.
 	 *
 	 * @var WbsoTransactionApiController
@@ -108,6 +123,12 @@ final class WbsoTransactionApiControllerTest extends TestCase {
 		$this->logger = $this->createMock(LoggerInterface::class);
 		$this->l10n = $this->createMock(IL10N::class);
 		$this->l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
+		$this->context = $this->createMock(AdministrationContextService::class);
+		$this->context->method('accessibleAdministrationIds')->willReturn(['adm-1']);
+		$this->context->method('canAccess')->willReturnCallback(static fn (string $administrationId): bool => $administrationId === 'adm-1');
+		$this->context->method('canPostJournalEntry')->willReturnCallback(
+			fn (string $administrationId): bool => $administrationId === 'adm-1' && $this->mayPost
+		);
 
 		$user = $this->createMock(IUser::class);
 		$user->method('getUID')->willReturn('alice');
@@ -120,6 +141,7 @@ final class WbsoTransactionApiControllerTest extends TestCase {
 			userSession: $this->session,
 			logger: $this->logger,
 			l10n: $this->l10n,
+			administrationContext: $this->context,
 		);
 	}//end setUp()
 
@@ -345,4 +367,51 @@ final class WbsoTransactionApiControllerTest extends TestCase {
 		self::assertSame(Http::STATUS_CREATED, $response->getStatus());
 
 	}//end testCreateReturns201()
+	/**
+	 * A bookkeeper role does not let the caller post into an administration they are no member of.
+	 *
+	 * @return void
+	 */
+	public function testPostRefusesAnotherAdministration(): void {
+		$this->request->method('getParam')->willReturn('adm-other');
+		$this->rbac->method('hasAny')->willReturn(true);
+		$this->transactions->expects(self::never())->method('postTransaction');
+
+		$response = $this->controller->post(id: 'tx-1');
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+	}//end testPostRefusesAnotherAdministration()
+
+	/**
+	 * A member whose membership grants no posting is refused.
+	 *
+	 * @return void
+	 */
+	public function testPostRequiresPostingRightsInTheAdministration(): void {
+		$this->mayPost = false;
+		$this->request->method('getParam')->willReturn('adm-1');
+		$this->rbac->method('hasAny')->willReturn(true);
+		$this->transactions->expects(self::never())->method('postTransaction');
+
+		$response = $this->controller->post(id: 'tx-1');
+
+		self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+
+	}//end testPostRequiresPostingRightsInTheAdministration()
+
+	/**
+	 * Reading another administration's transactions reads as not found.
+	 *
+	 * @return void
+	 */
+	public function testIndexRefusesAnotherAdministration(): void {
+		$this->request->method('getParam')->willReturn('adm-other');
+		$this->transactions->expects(self::never())->method('listTransactions');
+
+		$response = $this->controller->index();
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+	}//end testIndexRefusesAnotherAdministration()
 }//end class

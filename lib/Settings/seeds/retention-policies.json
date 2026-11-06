@@ -2,7 +2,7 @@
     "policies": [
         {
             "slug": "default-financial-5yr",
-            "name": "Financial Records — Standard (5 years)",
+            "name": "Financial Records, Standard (5 years)",
             "documentType": "financial-record",
             "retentionYears": 5,
             "legalHoldAllowed": true,

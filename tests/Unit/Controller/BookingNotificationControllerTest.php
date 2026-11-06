@@ -396,6 +396,108 @@ class BookingNotificationControllerTest extends TestCase {
 	}//end testUpdateBookingTriggersMissingTriggersKey()
 
 	/**
+	 * Build a store holding one trigger of booking-123 that records saves.
+	 *
+	 * @return object
+	 */
+	private function buildTriggerStore(): object {
+		// phpcs:disable
+		return new class {
+			public array $saved = [];
+			public array $filters = [];
+			public function setRegister(string $register): static {
+				return $this;
+			}
+			public function setSchema(string $schema): static {
+				return $this;
+			}
+			public function findAll(array $config = []): array {
+				$this->filters[] = ($config['filters'] ?? []);
+				return [['id' => 'trig-1', 'bookingId' => 'booking-123', 'eventType' => 'created', 'active' => true]];
+			}
+			public function saveObject(array $object, string $register = '', string $schema = ''): array {
+				$this->saved[] = $object;
+				return $object;
+			}
+		};
+		// phpcs:enable
+	}//end buildTriggerStore()
+
+	/**
+	 * Sign in a user (an admin, so the booking guard passes) and post a body.
+	 *
+	 * @param array<string,mixed> $body The request body.
+	 *
+	 * @return void
+	 */
+	private function postAsAdmin(array $body): void {
+		$user = $this->createMock(originalClassName: IUser::class);
+		$user->method('getUID')->willReturn('admin');
+		$this->userSession->method('getUser')->willReturn($user);
+		$this->groupManager->method('isAdmin')->willReturn(true);
+		$this->request->method('getParams')->willReturn($body);
+	}//end postAsAdmin()
+
+	/**
+	 * A body naming a trigger of another booking is refused before anything
+	 * is saved: the trigger cannot be overwritten or moved to this booking.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+	 */
+	public function testUpdateBookingTriggersRefusesATriggerOfAnotherBooking(): void {
+		$store = $this->buildTriggerStore();
+		$this->controller = $this->buildController(store: $store);
+		$this->postAsAdmin(body: ['triggers' => [['id' => 'trig-1', 'active' => false], ['id' => 'trig-of-booking-999', 'active' => false]]]);
+
+		$response = $this->controller->updateBookingTriggers(id: 'booking-123');
+
+		static::assertSame(expected: 403, actual: $response->getStatus());
+		static::assertSame(expected: [], actual: $store->saved);
+	}//end testUpdateBookingTriggersRefusesATriggerOfAnotherBooking()
+
+	/**
+	 * The same refusal holds when the id arrives as `@self.id`.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+	 */
+	public function testUpdateBookingTriggersRefusesAForeignIdInSelf(): void {
+		$store = $this->buildTriggerStore();
+		$this->controller = $this->buildController(store: $store);
+		$this->postAsAdmin(body: ['triggers' => [['id' => '', '@self' => ['id' => 'trig-of-booking-999'], 'active' => false]]]);
+
+		$response = $this->controller->updateBookingTriggers(id: 'booking-123');
+
+		static::assertSame(expected: 403, actual: $response->getStatus());
+		static::assertSame(expected: [], actual: $store->saved);
+	}//end testUpdateBookingTriggersRefusesAForeignIdInSelf()
+
+	/**
+	 * The booking's own triggers are updated, and a trigger without an id is
+	 * created on this booking.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+	 */
+	public function testUpdateBookingTriggersSavesTheBookingsOwnTriggers(): void {
+		$store = $this->buildTriggerStore();
+		$this->controller = $this->buildController(store: $store);
+		$this->postAsAdmin(body: ['triggers' => [['id' => 'trig-1', 'active' => false], ['eventType' => 'reminder', 'active' => true]]]);
+
+		$response = $this->controller->updateBookingTriggers(id: 'booking-123');
+
+		static::assertSame(expected: 200, actual: $response->getStatus());
+		static::assertCount(expectedCount: 2, haystack: $store->saved);
+		static::assertSame(expected: 'booking-123', actual: $store->saved[0]['bookingId']);
+		static::assertSame(expected: 'booking-123', actual: $store->saved[1]['bookingId']);
+		static::assertSame(expected: ['bookingId' => 'booking-123'], actual: $store->filters[0]);
+	}//end testUpdateBookingTriggersSavesTheBookingsOwnTriggers()
+
+	/**
 	 * GetNotificationMonitor returns counts for admin.
 	 *
 	 * @return void

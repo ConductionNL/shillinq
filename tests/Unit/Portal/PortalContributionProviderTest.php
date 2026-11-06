@@ -146,17 +146,18 @@ class PortalContributionProviderTest extends TestCase {
 	}//end testClassIsPlainAndDependencyFree()
 
 	/**
-	 * getAudiences() (v2) returns exactly ['customer', 'supplier', 'accountant'].
+	 * getAudiences() (v2) returns exactly ['customer', 'supplier', 'accountant',
+	 * 'parent']; `parent` is how guardians sign in (REQ-SCON-010).
 	 *
 	 * @return void
 	 */
-	public function testGetAudiencesReturnsCustomerSupplierAccountant(): void {
+	public function testGetAudiencesReturnsCustomerSupplierAccountantParent(): void {
 		$this->assertSame(
-			['customer', 'supplier', 'accountant'],
+			['customer', 'supplier', 'accountant', 'parent'],
 			$this->provider->getAudiences()
 		);
 
-	}//end testGetAudiencesReturnsCustomerSupplierAccountant()
+	}//end testGetAudiencesReturnsCustomerSupplierAccountantParent()
 
 	/**
 	 * getAudience() (v1 fallback) returns the primary audience, contained in v2.
@@ -192,6 +193,59 @@ class PortalContributionProviderTest extends TestCase {
 	}//end testGetContributionReturnsNullForNonMatchingSubjects()
 
 	/**
+	 * Every page of every audience names its menu group, and every label is Dutch.
+	 *
+	 * Portaliq's group contract: pages with the same `group` share one heading
+	 * in the site's menu. Without declared pages a menu named them after the
+	 * app ("Shillinq") and in English ("My invoices", "Purchase orders").
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/portal-pages-in-dutch-groups/specs/portal-contribution/spec.md#requirement-every-portal-page-names-its-menu-group-in-dutch
+	 */
+	public function testEveryPageHasAGroupAndEveryLabelIsDutch(): void {
+		$english = '/\\b(My|Pay|Purchase|Sales|Journal|General|Trial|VAT|Invoice|Date|Due|Amount|For|School|will)\\b/';
+		$groups = [
+			'customer' => 'Bestellingen en facturen',
+			'parent' => 'Schoolbijdragen',
+			'supplier' => 'Opdrachten en facturen',
+			'accountant' => 'Administratie',
+		];
+		foreach ($groups as $audience => $group) {
+			$manifest = $this->provider->getContribution(['audience' => $audience]);
+			$this->assertSame($group, $manifest['label'], $audience);
+			$this->assertSame(array_column($manifest['collections'], 'id'), array_column($manifest['pages'], 'id'), $audience);
+			foreach ($manifest['collections'] as $collection) {
+				// A page per collection holds only while every collection is listable.
+				$this->assertTrue($collection['listable'], $collection['id']);
+			}
+
+
+			$labels = [];
+			foreach ($manifest['pages'] as $page) {
+				$this->assertSame($group, $page['group'], $page['id']);
+				$this->assertSame(
+					[['type' => 'collection', 'collection' => $page['id']], ['type' => 'detail', 'collection' => $page['id']]],
+					$page['blocks']
+				);
+				$labels[] = $page['label'];
+			}
+
+			$this->assertSame(array_unique($labels), $labels, $audience . ' has two pages with one name');
+			foreach ($manifest['collections'] as $collection) {
+				$this->assertDoesNotMatchRegularExpression($english, $collection['label'], $collection['id']);
+				foreach ((array)($collection['columns'] ?? []) as $column) {
+					$this->assertDoesNotMatchRegularExpression($english, $column['label'], $collection['id'] . '.' . $column['field']);
+				}
+			}
+
+			foreach ($manifest['actions'] as $action) {
+				$this->assertDoesNotMatchRegularExpression($english, $action['label'], $action['id']);
+			}
+		}//end foreach
+	}//end testEveryPageHasAGroupAndEveryLabelIsDutch()
+
+	/**
 	 * The customer manifest carries the five Wave-1 collections plus the two
 	 * Wave-2 AR-side surfaces (salesInvoices, paymentRequests).
 	 *
@@ -203,9 +257,9 @@ class PortalContributionProviderTest extends TestCase {
 		$manifest = $this->provider->getContribution(self::CUSTOMER_SUBJECT);
 
 		$this->assertIsArray($manifest);
-		$this->assertSame('Shillinq', $manifest['label']);
-		$this->assertCount(1, $manifest['actions'], 'exactly one pay action (REQ-SPPI-006)');
-		$this->assertSame('pay', $manifest['actions'][0]['id']);
+		$this->assertNotSame('Shillinq', $manifest['label']);
+		// pay for invoices, pay-request for requests without one (REQ-SPPI-006, REQ-SPPI-008).
+		$this->assertSame(['pay', 'pay-request'], array_column($manifest['actions'], 'id'));
 		$this->assertSame([], $manifest['notifications']);
 
 		// [schema, scopeField, scopeClaim] per collection id.
@@ -217,6 +271,7 @@ class PortalContributionProviderTest extends TestCase {
 			'contracts' => ['RevenueContract', 'customerId', 'customerId'],
 			'salesInvoices' => ['ARInvoice', 'customerId', 'customerMasterId'],
 			'paymentRequests' => ['PaymentRequest', 'invoiceReference', 'customerMasterId'],
+			'requestPayments' => ['PaymentRequest', 'customerId', 'customerMasterId'],
 		];
 
 		$this->assertSame(array_keys($expected), array_column($manifest['collections'], 'id'));
@@ -303,7 +358,8 @@ class PortalContributionProviderTest extends TestCase {
 			$collections[$collection['id']] = $collection;
 		}
 
-		$this->assertCount(1, $manifest['actions']);
+		// pay-request (REQ-SPPI-008) sits next to pay for requests without an invoice.
+		$this->assertSame(['pay', 'pay-request'], array_column($manifest['actions'], 'id'));
 		$action = $manifest['actions'][0];
 		$this->assertSame('pay', $action['id']);
 		$this->assertSame('endpoint-forward', $action['type']);
@@ -319,9 +375,10 @@ class PortalContributionProviderTest extends TestCase {
 		$this->assertStringNotContainsString('://', $endpoint);
 		$this->assertStringNotContainsString('..', $endpoint);
 
-		// Both AR-side collections reference the action as a rowAction.
+		// The invoices reference pay as their row action; a payment request row
+		// is not an invoice, so it references none (REQ-SPPI-009).
 		$this->assertSame('pay', $collections['salesInvoices']['rowAction']);
-		$this->assertSame('pay', $collections['paymentRequests']['rowAction']);
+		$this->assertArrayNotHasKey('rowAction', $collections['paymentRequests']);
 
 	}//end testCustomerManifestPayActionAndRowAction()
 
@@ -391,7 +448,7 @@ class PortalContributionProviderTest extends TestCase {
 		$manifest = $this->provider->getContribution(self::SUPPLIER_SUBJECT);
 
 		$this->assertIsArray($manifest);
-		$this->assertSame('Shillinq', $manifest['label']);
+		$this->assertNotSame('Shillinq', $manifest['label']);
 		$this->assertSame([], $manifest['actions']);
 		$this->assertSame([], $manifest['notifications']);
 
@@ -480,7 +537,7 @@ class PortalContributionProviderTest extends TestCase {
 		$manifest = $this->provider->getContribution(self::ACCOUNTANT_SUBJECT);
 
 		$this->assertIsArray($manifest);
-		$this->assertSame('Shillinq', $manifest['label']);
+		$this->assertNotSame('Shillinq', $manifest['label']);
 		$this->assertSame([], $manifest['actions']);
 		$this->assertSame([], $manifest['notifications']);
 
@@ -557,7 +614,7 @@ class PortalContributionProviderTest extends TestCase {
 		// Wave-1 customer collections stay first and in order; the two Wave-2
 		// AR surfaces are appended after them.
 		$this->assertSame(
-			['invoices', 'projectInvoices', 'quotes', 'salesOrders', 'contracts', 'salesInvoices', 'paymentRequests'],
+			['invoices', 'projectInvoices', 'quotes', 'salesOrders', 'contracts', 'salesInvoices', 'paymentRequests', 'requestPayments'],
 			array_column($customer['collections'], 'id')
 		);
 
@@ -720,6 +777,66 @@ class PortalContributionProviderTest extends TestCase {
 	}//end testEveryCustomerScopeFieldIsADeclaredObjectReference()
 
 	/**
+	 * Every field a customer or parent collection lists (fields, detail fields
+	 * and columns) is a property its schema declares. The customer invoices
+	 * listed totalAmount, taxAmount, lines, state and ublXml, none of which
+	 * ARInvoice declares, so a customer saw no amount, no lines and no status
+	 * (REQ-SPPI-007).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-007)
+	 */
+	public function testEveryListedFieldIsADeclaredProperty(): void {
+		$schemas = $this->effectiveRegister()['components']['schemas'];
+
+		$checked = 0;
+		foreach ([self::CUSTOMER_SUBJECT, ['audience' => 'parent']] as $subject) {
+			foreach ($this->provider->getContribution($subject)['collections'] as $collection) {
+				$properties = ($schemas[$collection['schema']]['properties'] ?? []);
+				$listed = array_merge(
+					($collection['fields'] ?? []),
+					($collection['detail']['fields'] ?? []),
+					array_column(($collection['columns'] ?? []), 'field')
+				);
+				foreach (array_unique($listed) as $field) {
+					$this->assertArrayHasKey(
+						$field,
+						$properties,
+						$subject['audience'] . ' ' . $collection['id'] . ' lists ' . $field . ', which ' . $collection['schema'] . ' does not declare.'
+					);
+					$checked++;
+				}
+			}
+		}
+
+		$this->assertGreaterThan(20, $checked, 'The walk covered too few fields to mean anything.');
+
+		$invoices = $this->collectionsById($this->provider->getContribution(self::CUSTOMER_SUBJECT))['salesInvoices'];
+		foreach (['grossAmount', 'vatAmount', 'invoiceLines', 'lifecycleState', 'ublRef'] as $field) {
+			$this->assertContains($field, $invoices['fields']);
+		}
+
+		$this->assertSame(['invoiceNumber', 'invoiceDate', 'dueDate', 'grossAmount', 'lifecycleState'], array_column($invoices['columns'], 'field'));
+	}//end testEveryListedFieldIsADeclaredProperty()
+
+	/**
+	 * A manifest's collections keyed by id.
+	 *
+	 * @param array<string, mixed> $manifest The manifest.
+	 *
+	 * @return array<string, array<string, mixed>> The collections by id.
+	 */
+	private function collectionsById(array $manifest): array {
+		$byId = [];
+		foreach ($manifest['collections'] as $collection) {
+			$byId[$collection['id']] = $collection;
+		}
+
+		return $byId;
+	}//end collectionsById()
+
+	/**
 	 * The reverse `via` join must land on the object identity, not on a
 	 * schema property — otherwise a PaymentRequest could be matched to an
 	 * invoice by a value that repeats across administrations.
@@ -748,4 +865,152 @@ class PortalContributionProviderTest extends TestCase {
 		$this->assertSame(1, $joins, 'Expected exactly the paymentRequests via join.');
 
 	}//end testViaJoinMatchesOnObjectIdentity()
+
+	/**
+	 * A parent sees their own contribution invoices and the requests on them,
+	 * scoped by the same customerMasterId claim as a customer, named by the
+	 * amount fields ARInvoice declares, with the voluntary notice and the pay
+	 * action; nothing from the customer's other collections (REQ-SCON-010).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-010)
+	 */
+	public function testTheParentManifestListsTheContributionInvoicesAndThePayAction(): void {
+		$manifest = $this->provider->getContribution(['audience' => 'parent']);
+
+		self::assertIsArray($manifest);
+		$ids = array_column($manifest['collections'], 'id');
+		self::assertSame(['salesInvoices', 'paymentRequests'], $ids);
+
+		$invoices = $manifest['collections'][0];
+		self::assertSame('customerId', $invoices['scopeField']);
+		self::assertSame('customerMasterId', $invoices['scopeClaim']);
+		self::assertSame('pay', $invoices['rowAction']);
+		self::assertContains('grossAmount', $invoices['fields']);
+		self::assertContains('invoiceNote', $invoices['fields']);
+		self::assertNotContains('totalAmount', $invoices['fields']);
+		self::assertContains('invoiceLines', $invoices['fields']);
+		self::assertNotContains('lines', $invoices['fields']);
+		self::assertContains('grossAmount', array_column($invoices['columns'], 'field'));
+
+		$requests = $manifest['collections'][1];
+		self::assertSame('customerMasterId', $requests['scopeClaim']);
+		self::assertContains('description', $requests['fields']);
+
+		self::assertSame('pay', $manifest['actions'][0]['id']);
+		self::assertSame('/apps/shillinq/api/portal/payments/initiate', $manifest['actions'][0]['endpoint']);
+	}//end testTheParentManifestListsTheContributionInvoicesAndThePayAction()
+
+	/**
+	 * A parent can answer the voluntary reminder with "I will not pay": the
+	 * parent manifest declares the decline action next to pay, forwarding only
+	 * the invoice id to an instance-local path; a customer never sees it
+	 * (REQ-SCON-013).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/voluntary-contribution-reminder/specs/school-contributions/spec.md (REQ-SCON-013)
+	 */
+	public function testOnlyTheParentManifestCarriesTheDeclineAction(): void {
+		$parent = $this->provider->getContribution(['audience' => 'parent']);
+		$actions = [];
+		foreach ($parent['actions'] as $action) {
+			$actions[$action['id']] = $action;
+		}
+
+		self::assertSame(['pay', 'decline'], array_keys($actions));
+		$decline = $actions['decline'];
+		// The name the Dutch reminder tells the parent to choose (docudesk-templates.json).
+		self::assertSame('Ik betaal niet', $decline['label']);
+		self::assertSame('endpoint-forward', $decline['type']);
+		self::assertSame('/apps/shillinq/api/portal/contributions/decline', $decline['endpoint']);
+		self::assertSame('POST', $decline['method']);
+		self::assertSame(['invoiceId'], $decline['fields']);
+		self::assertSame('low', $decline['minTrust']);
+
+		$customer = $this->provider->getContribution(self::CUSTOMER_SUBJECT);
+		self::assertSame(['pay', 'pay-request'], array_column($customer['actions'], 'id'));
+	}//end testOnlyTheParentManifestCarriesTheDeclineAction()
+
+	/**
+	 * A customer sees their payment requests that stand without an invoice,
+	 * scoped by the request's own customer reference, and pays one from its
+	 * row: the pay-request action forwards the proven row id as
+	 * paymentRequestId, only for a pending request. A parent sees neither
+	 * (REQ-SPPI-008).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
+	 */
+	public function testARequestWithoutAnInvoiceIsListedAndPayable(): void {
+		$customer = $this->provider->getContribution(self::CUSTOMER_SUBJECT);
+		$requests = $this->collectionsById($customer)['requestPayments'];
+
+		self::assertSame('PaymentRequest', $requests['schema']);
+		self::assertSame('customerId', $requests['scopeField']);
+		self::assertSame('customerMasterId', $requests['scopeClaim']);
+		self::assertArrayNotHasKey('via', $requests);
+		self::assertSame('pay-request', $requests['rowAction']);
+		foreach (['description', 'amount', 'state', 'paymentLink', 'confirmationSummary'] as $field) {
+			self::assertContains($field, $requests['fields']);
+		}
+
+		$actions = array_column($customer['actions'], null, 'id');
+		self::assertSame(
+			[
+				'id' => 'pay-request',
+				'label' => 'Nu betalen',
+				'type' => 'endpoint-forward',
+				'endpoint' => '/apps/shillinq/api/portal/payments/initiate',
+				'method' => 'POST',
+				'minTrust' => 'low',
+				'rowField' => 'paymentRequestId',
+				'rowWhen' => ['field' => 'state', 'in' => ['pending']],
+			],
+			$actions['pay-request']
+		);
+
+		$parent = $this->provider->getContribution(['audience' => 'parent']);
+		self::assertNotContains('requestPayments', array_column($parent['collections'], 'id'));
+		self::assertNotContains('pay-request', array_column($parent['actions'], 'id'));
+	}//end testARequestWithoutAnInvoiceIsListedAndPayable()
+
+	/**
+	 * Portaliq offers a per-row Pay now button only for an action that names
+	 * the body key for the row id and the rows it applies to (portaliq #805).
+	 * The pay action names invoiceId and gates on lifecycleState, the field an
+	 * ARInvoice row carries, with exactly the receiver's payable states; the
+	 * parent's invoice cards show the voluntary notice; payment request rows
+	 * offer nothing (REQ-SPPI-009).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/portal-pay-row-action-keys/specs/portal-payment-initiation/spec.md (REQ-SPPI-009)
+	 */
+	public function testThePayActionNamesItsRowKeyAndItsPayableRows(): void {
+		$payable = (new \ReflectionClassConstant(\OCA\Shillinq\Service\Payment\PortalPaymentSessionService::class, 'PAYABLE_STATES'))->getValue();
+		$invoiceProperties = $this->effectiveRegister()['components']['schemas']['ARInvoice']['properties'];
+
+		foreach ([self::CUSTOMER_SUBJECT, ['audience' => 'parent']] as $subject) {
+			$manifest = $this->provider->getContribution($subject);
+			$pay = array_column($manifest['actions'], null, 'id')['pay'];
+			self::assertSame('invoiceId', $pay['rowField'], $subject['audience']);
+			self::assertSame(['field' => 'lifecycleState', 'in' => $payable], $pay['rowWhen'], $subject['audience']);
+			self::assertArrayHasKey($pay['rowWhen']['field'], $invoiceProperties, 'rowWhen names a field ARInvoice does not declare');
+
+			$collections = $this->collectionsById($manifest);
+			self::assertContains($pay['rowWhen']['field'], $collections['salesInvoices']['fields'], 'the portal cannot evaluate rowWhen on a field the list does not carry');
+			self::assertArrayNotHasKey('rowAction', $collections['paymentRequests'], $subject['audience']);
+		}
+
+		$parentInvoices = $this->collectionsById($this->provider->getContribution(['audience' => 'parent']))['salesInvoices'];
+		self::assertSame('invoiceNote', $parentInvoices['noticeField']);
+		self::assertArrayHasKey('invoiceNote', $invoiceProperties);
+		self::assertContains('invoiceNote', $parentInvoices['fields']);
+
+		$customerInvoices = $this->collectionsById($this->provider->getContribution(self::CUSTOMER_SUBJECT))['salesInvoices'];
+		self::assertArrayNotHasKey('noticeField', $customerInvoices);
+	}//end testThePayActionNamesItsRowKeyAndItsPayableRows()
 }//end class

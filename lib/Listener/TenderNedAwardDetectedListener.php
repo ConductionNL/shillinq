@@ -64,7 +64,7 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\OpenRegister\Service\Deferral\ListenerDeferralService;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\BackgroundJob\TenderNedAwardPromotionJob;
 use OCA\Shillinq\Service\BudgetImpactEmitter;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
@@ -75,6 +75,7 @@ use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * REQ-002 cross-schema promotion listener for the
@@ -242,7 +243,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 		}
 
 		$tenantKvk = trim(
-			$this->appConfig->getValueString(Application::APP_ID, 'tenant_kvk', '')
+			$this->appConfig->getValueString(AppIdentity::APP_ID, 'tenant_kvk', '')
 		);
 		if ($tenantKvk === '') {
 			// No tenant KvK configured — promotion would be ambiguous; skip.
@@ -403,10 +404,9 @@ class TenderNedAwardDetectedListener implements IEventListener {
 		}
 
 		try {
-			$object = $objectService->find(
-				id: $uuid,
-				register: $this->getRegisterSlug(),
-				schema: $schema
+			$object = ObjectIdentifier::findScoped(
+				scoped: $objectService->setRegister($this->getRegisterSlug())->setSchema($schema),
+				id: $uuid
 			);
 		} catch (Throwable $e) {
 			$this->logger->warning(
@@ -650,7 +650,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	 * @return string
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($slug === '') {
 			return 'shillinq';
 		}

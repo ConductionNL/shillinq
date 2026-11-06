@@ -79,6 +79,7 @@ final class ArInvoiceUblMapper {
 	 *                          lifecycle state — no XML is produced (REQ-EINV-001).
 	 *
 	 * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
+	 * @spec openspec/changes/arinvoice-field-backfill-and-bt10/specs/bookkeeping-einvoicing-ubl-peppol/spec.md (REQ-EINV-010)
 	 */
 	public function toNlciusXml(array $arInvoice): string {
 		$lifecycleState = (string)($arInvoice['lifecycleState'] ?? '');
@@ -110,6 +111,14 @@ final class ArInvoiceUblMapper {
 		);
 		$xml .= $this->element(name: 'cbc:DocumentCurrencyCode', value: $currency);
 
+		// BT-10 Buyer reference: the reference the customer gave the invoice,
+		// in UBL order after the currency. No reference, no element (REQ-EINV-010).
+		$buyerReference = trim((string)($arInvoice['customerReference'] ?? ''));
+		if ($buyerReference !== '') {
+			$xml .= $this->element(name: 'cbc:BuyerReference', value: $buyerReference);
+		}
+
+		$xml .= $this->billingReferences(arInvoice: $arInvoice);
 		$xml .= $this->supplierParty(arInvoice: $arInvoice);
 		$xml .= $this->customerParty(arInvoice: $arInvoice);
 
@@ -142,6 +151,42 @@ final class ArInvoiceUblMapper {
 
 		return $xml;
 	}//end toNlciusXml()
+
+	/**
+	 * Render one cac:BillingReference per preceding invoice (BG-3): on a final
+	 * invoice, each down-payment invoice it deducts (sales-down-payments
+	 * REQ-SDP-006). In UBL order they follow BuyerReference and precede the seller.
+	 *
+	 * @param array<string,mixed> $arInvoice The ARInvoice record.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
+	 */
+	private function billingReferences(array $arInvoice): string {
+		$xml = '';
+		foreach ((array)($arInvoice['precedingInvoiceReferences'] ?? []) as $reference) {
+			if (is_array($reference) === false) {
+				continue;
+			}
+
+			$number = trim((string)($reference['reference'] ?? ''));
+			if ($number === '') {
+				continue;
+			}
+
+			$xml .= '<cac:BillingReference><cac:InvoiceDocumentReference>';
+			$xml .= $this->element(name: 'cbc:ID', value: $number);
+			$issueDate = trim((string)($reference['issueDate'] ?? ''));
+			if ($issueDate !== '') {
+				$xml .= $this->element(name: 'cbc:IssueDate', value: $issueDate);
+			}
+
+			$xml .= '</cac:InvoiceDocumentReference></cac:BillingReference>';
+		}
+
+		return $xml;
+	}//end billingReferences()
 
 	/**
 	 * Render the AccountingSupplierParty (seller) block.

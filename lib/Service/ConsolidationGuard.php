@@ -29,10 +29,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Guards financial-statement lifecycle transitions.
@@ -65,7 +66,7 @@ class ConsolidationGuard {
 	 * @return string
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($slug === '') {
 			return 'shillinq';
 		}
@@ -105,10 +106,9 @@ class ConsolidationGuard {
 			// findObject() does not exist — it raised an Error that the
 			// \Throwable arm below swallowed into `return false`, so this
 			// guard denied EVERY finalise without ever reading a FiscalYear.
-			$fiscalYear = $this->objectService->find(
-				id: $fiscalYearId,
-				register: $this->getRegisterSlug(),
-				schema: 'FiscalYear'
+			$fiscalYear = ObjectIdentifier::findScopedOrThrow(
+				scoped: $this->objectService->setRegister($this->getRegisterSlug())->setSchema('FiscalYear'),
+				id: (string)$fiscalYearId
 			);
 
 			if ($fiscalYear === null) {
@@ -160,10 +160,9 @@ class ConsolidationGuard {
 
 		try {
 			// ADR-022: find(), not findObject() — see requireFiscalPeriodClosed().
-			$consolidationGroup = $this->objectService->find(
-				id: $consolidationGroupId,
-				register: $this->getRegisterSlug(),
-				schema: 'ConsolidationGroup'
+			$consolidationGroup = ObjectIdentifier::findScopedOrThrow(
+				scoped: $this->objectService->setRegister($this->getRegisterSlug())->setSchema('ConsolidationGroup'),
+				id: (string)$consolidationGroupId
 			);
 
 			if ($consolidationGroup === null) {
@@ -217,7 +216,8 @@ class ConsolidationGuard {
 	 *
 	 * Returns true unconditionally (publication approval is a role-based check
 	 * handled by the RBAC layer — `controller` role only). This method is the
-	 * OR lifecycle hook point; actual role enforcement is via x-openregister-rbac.
+	 * OR lifecycle hook point; the role is enforced by the `publish`
+	 * transition's `authorization` (`{"role": "controller"}`).
 	 *
 	 * Retained as an explicit seam so the implementing cycle can add operator
 	 * sign-off or digital-signature preconditions without schema changes.
@@ -231,7 +231,7 @@ class ConsolidationGuard {
 	 * @spec openspec/changes/bookkeeping-financial-statements/tasks.md#task-13
 	 */
 	public function requirePublicationApproval(array $statement): bool {
-		// Role-based enforcement (controller only) is declared in x-openregister-rbac.
+		// Role-based enforcement (controller only) is the publish transition's authorization.
 		// This seam is retained for future operator sign-off or digital-signature
 		// preconditions per REQ-FS-007 without requiring schema changes.
 		return true;

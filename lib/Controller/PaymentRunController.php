@@ -41,8 +41,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\PaymentRun\PaymentRunExportService;
+use OCA\Shillinq\PaymentRun\PaymentRunProposalService;
 use OCA\Shillinq\PaymentRun\PaymentRunReconciliationService;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCP\AppFramework\Controller;
@@ -53,6 +54,7 @@ use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * HTTP API for exporting + reconciling a PaymentRun.
@@ -78,6 +80,7 @@ class PaymentRunController extends Controller {
 	 * @param IUserSession $session User session.
 	 * @param LoggerInterface $logger Logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param PaymentRunProposalService $proposalService Drafts a run from the invoices due (banking-payment-run REQ-BPR-002).
 	 */
 	public function __construct(
 		IRequest $request,
@@ -87,8 +90,9 @@ class PaymentRunController extends Controller {
 		private readonly IUserSession $session,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly PaymentRunProposalService $proposalService,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
@@ -151,6 +155,83 @@ class PaymentRunController extends Controller {
 		}//end try
 
 	}//end export()
+
+	/**
+	 * Propose a draft payment run from the supplier invoices due.
+	 *
+	 * Request: administrationId, dueOnOrBefore, debtorAccountIban,
+	 * executionDate, payOnDueDate. 201 with the draft run and the invoices
+	 * left out; 422 when nothing is payable; 403 outside the administration.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-3.2
+	 */
+	#[NoAdminRequired]
+	public function propose(): JSONResponse {
+		if ($this->session->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
+
+		$administrationId = trim((string)$this->request->getParam('administrationId', ''));
+		if ($administrationId === '' || $this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'Not allowed for this administration'], Http::STATUS_FORBIDDEN);
+		}
+
+		$dueOnOrBefore = (string)$this->request->getParam('dueOnOrBefore', '');
+		$executionDate = (string)$this->request->getParam('executionDate', '');
+		$debtorIban = strtoupper(str_replace(' ', '', (string)$this->request->getParam('debtorAccountIban', '')));
+		if ($this->isDate(value: $dueOnOrBefore) === false || $this->isDate(value: $executionDate) === false || $debtorIban === '') {
+			return new JSONResponse(['error' => 'invalid-request'], Http::STATUS_BAD_REQUEST);
+		}
+
+		try {
+			$result = $this->proposalService->propose(
+				administrationId: $administrationId,
+				dueOnOrBefore: $dueOnOrBefore,
+				debtorAccountIban: $debtorIban,
+				executionDate: $executionDate,
+				lineDates: $this->lineDates()
+			);
+		} catch (\Throwable $e) {
+			$this->logger->error('PaymentRunController: proposal failed', ['exception' => $e->getMessage()]);
+			return new JSONResponse(['error' => 'proposal-failed'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+
+		if ($result['paymentRun'] === null) {
+			return new JSONResponse($result + ['error' => 'nothing-due'], Http::STATUS_UNPROCESSABLE_ENTITY);
+		}
+
+		return new JSONResponse($result, Http::STATUS_CREATED);
+
+	}//end propose()
+
+	/**
+	 * The proposal's line date mode from the payOnDueDate flag.
+	 *
+	 * @return string
+	 */
+	private function lineDates(): string {
+		if (filter_var($this->request->getParam('payOnDueDate', false), FILTER_VALIDATE_BOOLEAN) === true) {
+			return PaymentRunProposalService::DATES_DUE;
+		}
+
+		return PaymentRunProposalService::DATES_RUN;
+
+	}//end lineDates()
+
+	/**
+	 * Whether a value is a Y-m-d date.
+	 *
+	 * @param string $value The value.
+	 *
+	 * @return bool
+	 */
+	private function isDate(string $value): bool {
+		$date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+		return $date !== false && $date->format('Y-m-d') === $value;
+
+	}//end isDate()
 
 	/**
 	 * Reconcile an exported PaymentRun against a CAMT.053 statement
@@ -221,10 +302,10 @@ class PaymentRunController extends Controller {
 			return null;
 		}
 
-		$run = $this->objectService
-			->setRegister(self::REGISTER_SLUG)
-			->setSchema('PaymentRun')
-			->find($id);
+		$run = ObjectIdentifier::findScoped(
+			scoped: $this->objectService->setRegister(self::REGISTER_SLUG)->setSchema('PaymentRun'),
+			id: $id
+		);
 
 		if ($run === null) {
 			return null;

@@ -27,6 +27,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\WbsoDocumentApiController;
 use OCA\Shillinq\Service\WbsoDocumentService;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\WbsoRbacResolver;
 use OCP\AppFramework\Http;
 use OCP\IL10N;
@@ -88,6 +89,20 @@ final class WbsoDocumentApiControllerTest extends TestCase {
 	private IL10N&MockObject $l10n;
 
 	/**
+	 * Memberships: the caller is a member of adm-1 only.
+	 *
+	 * @var AdministrationContextService&MockObject
+	 */
+	private AdministrationContextService&MockObject $context;
+
+	/**
+	 * Whether the caller's adm-1 membership grants posting.
+	 *
+	 * @var boolean
+	 */
+	private bool $mayPost = true;
+
+	/**
 	 * Controller.
 	 *
 	 * @var WbsoDocumentApiController
@@ -108,6 +123,12 @@ final class WbsoDocumentApiControllerTest extends TestCase {
 		$this->logger = $this->createMock(LoggerInterface::class);
 		$this->l10n = $this->createMock(IL10N::class);
 		$this->l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
+		$this->context = $this->createMock(AdministrationContextService::class);
+		$this->context->method('accessibleAdministrationIds')->willReturn(['adm-1']);
+		$this->context->method('canAccess')->willReturnCallback(static fn (string $administrationId): bool => $administrationId === 'adm-1');
+		$this->context->method('canPostJournalEntry')->willReturnCallback(
+			fn (string $administrationId): bool => $administrationId === 'adm-1' && $this->mayPost
+		);
 
 		$user = $this->createMock(IUser::class);
 		$user->method('getUID')->willReturn('admin');
@@ -120,6 +141,7 @@ final class WbsoDocumentApiControllerTest extends TestCase {
 			userSession: $this->session,
 			logger: $this->logger,
 			l10n: $this->l10n,
+			administrationContext: $this->context,
 		);
 	}//end setUp()
 
@@ -209,4 +231,18 @@ final class WbsoDocumentApiControllerTest extends TestCase {
 		self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
 
 	}//end testArchiveRequiresAuditorOrAdmin()
+	/**
+	 * Reading another administration's document reads as not found.
+	 *
+	 * @return void
+	 */
+	public function testShowRefusesAnotherAdministration(): void {
+		$this->request->method('getParam')->willReturn('adm-other');
+		$this->documents->expects(self::never())->method('getDocument');
+
+		$response = $this->controller->show(id: 'd-1');
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+	}//end testShowRefusesAnotherAdministration()
 }//end class

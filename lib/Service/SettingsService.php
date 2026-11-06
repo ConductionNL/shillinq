@@ -24,7 +24,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use InvalidArgumentException;
+use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Service\Seed\SeedImport;
+use OCA\Shillinq\Service\Seed\SeedImporter;
+use OCA\Shillinq\Service\Seed\SeedMessages;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -62,6 +66,29 @@ class SettingsService {
 		'rgs_template',
 		'administration_id',
 		'legal_region',
+		self::PORTAL_REDIRECT_KEY,
+	];
+
+	/**
+	 * Where the portal checkout sends the payer back to. Read by
+	 * PortalPaymentSessionService; empty falls back to the instance root
+	 * (REQ-SPPI-010).
+	 *
+	 * @var string
+	 */
+	public const PORTAL_REDIRECT_KEY = 'portal_payment_redirect_url';
+
+	/**
+	 * The single-schema seed files: file, items key, deduplication key,
+	 * schema and log label.
+	 *
+	 * @var array<string, array{0: string, 1: string, 2: string, 3: string, 4: string}>
+	 */
+	private const GENERIC_SEEDS = [
+		'rj270' => ['rj-270-stages.json', 'stages', 'stageId', 'RJ270Stage', 'RJ-270 stages'],
+		'defaultAdministration' => ['administraties/default.json', 'administrations', 'administrationCode', 'Administration', 'Default administration'],
+		'btw' => ['btw-tariffs-2026.json', 'tariffs', 'code', 'VatTariff', 'BTW tariffs'],
+		'taakvelden' => ['bbv-task_fields-2024.json', 'taskFields', 'code', 'BbvTaakveld', 'BBV task_fields'],
 	];
 
 	/**
@@ -110,7 +137,7 @@ class SettingsService {
 	public function getSettings(): array {
 		$settings = [];
 		foreach (self::CONFIG_KEYS as $key) {
-			$settings[$key] = $this->appConfig->getValueString(Application::APP_ID, $key, '');
+			$settings[$key] = $this->appConfig->getValueString(AppIdentity::APP_ID, $key, '');
 		}
 
 		$user = $this->userSession->getUser();
@@ -132,17 +159,51 @@ class SettingsService {
 	 *
 	 * @return array<string,mixed> The updated settings
 	 *
+	 * @throws InvalidArgumentException When the portal return address is not an absolute https address.
+	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-1
+	 * @spec openspec/changes/portal-pay-row-action-keys/specs/portal-payment-initiation/spec.md (REQ-SPPI-010)
 	 */
 	public function updateSettings(array $data): array {
+		// Checked before anything is written, so a refused save stores nothing.
+		if (isset($data[self::PORTAL_REDIRECT_KEY]) === true) {
+			$this->assertPortalRedirect(value: (string)$data[self::PORTAL_REDIRECT_KEY]);
+		}
+
 		foreach (self::CONFIG_KEYS as $key) {
 			if (isset($data[$key]) === true) {
-				$this->appConfig->setValueString(Application::APP_ID, $key, (string)$data[$key]);
+				$this->appConfig->setValueString(AppIdentity::APP_ID, $key, (string)$data[$key]);
 			}
 		}
 
 		return $this->getSettings();
 	}//end updateSettings()
+
+	/**
+	 * Refuse a portal return address that is neither empty nor an absolute
+	 * https address, so the checkout never sends a payer to plain http, a
+	 * script URL or a relative path.
+	 *
+	 * @param string $value The submitted address.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the address is not acceptable.
+	 *
+	 * @spec openspec/changes/portal-pay-row-action-keys/specs/portal-payment-initiation/spec.md (REQ-SPPI-010)
+	 */
+	private function assertPortalRedirect(string $value): void {
+		$value = trim($value);
+		if ($value === '') {
+			return;
+		}
+
+		$scheme = strtolower((string)parse_url($value, PHP_URL_SCHEME));
+		$host = (string)parse_url($value, PHP_URL_HOST);
+		if (filter_var($value, FILTER_VALIDATE_URL) === false || $scheme !== 'https' || $host === '') {
+			throw new InvalidArgumentException('The portal return address must be an absolute https address.');
+		}
+	}//end assertPortalRedirect()
 
 	/**
 	 * Return the configured register slug, falling back to 'shillinq' if unset.
@@ -155,7 +216,7 @@ class SettingsService {
 	 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md
 	 */
 	public function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($slug === '') {
 			return 'shillinq';
 		}
@@ -201,40 +262,25 @@ class SettingsService {
 			return $accountsResult['error'];
 		}
 
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			['seeded' => $seeded, 'skipped' => $skipped] = $this->importAccounts(
-				objectService: $objectService,
-				accounts: $accountsResult['accounts'],
-				administrationId: $administrationId
-			);
-
-			$this->logger->info(
-				'Shillinq: RGS template seeded',
-				[
-					'variant' => $templateVariant,
-					'seeded' => $seeded,
-					'skipped' => $skipped,
-				]
-			);
-
-			return [
-				'success' => true,
-				'message' => 'RGS template seeded successfully.',
-				'seeded' => $seeded,
-				'skipped' => $skipped,
-			];
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq: RGS template seeding failed',
-				['exception' => $e->getMessage()]
-			);
-			return [
-				'success' => false,
-				'message' => $e->getMessage(),
-			];
-		}//end try
-
+		return $this->seedImporter()->import(
+			import: new SeedImport(
+				schema: 'Account',
+				rows: $accountsResult['accounts'],
+				// Deduplication key (accountNumber, administrationId): accounts seeded under an
+				// earlier administrationId stay in OpenRegister and are not matched (M3).
+				match: static fn ($account): array => [
+					'accountNumber' => $account['accountNumber'],
+					'administrationId' => $administrationId,
+				],
+				administrationId: $administrationId,
+			),
+			messages: new SeedMessages(
+				seededLog: 'Shillinq: RGS template seeded',
+				seededMessage: 'RGS template seeded successfully.',
+				failedLog: 'Shillinq: RGS template seeding failed',
+				logContext: ['variant' => $templateVariant],
+			)
+		);
 	}//end seedRgsTemplate()
 
 	/**
@@ -283,59 +329,6 @@ class SettingsService {
 	}//end loadSeedAccounts()
 
 	/**
-	 * Import a list of account records into OpenRegister, skipping existing ones.
-	 *
-	 * Deduplication key is (accountNumber, administrationId). This means that if
-	 * an admin changes the administrationId app config after an initial seed, the
-	 * previously seeded accounts (under the old id) will be orphaned — they remain
-	 * in OpenRegister but are no longer matched on re-seed. To clean up, an admin
-	 * must manually delete accounts with the stale administrationId via the
-	 * OpenRegister UI before re-seeding under the new id (M3).
-	 *
-	 * @param object $objectService OpenRegister ObjectService.
-	 * @param array<mixed> $accounts Account records to import.
-	 * @param string $administrationId The administrationId to stamp.
-	 *
-	 * @return array{seeded: int, skipped: int}
-	 */
-	private function importAccounts(object $objectService, array $accounts, string $administrationId): array {
-		$seeded = 0;
-		$skipped = 0;
-
-		foreach ($accounts as $account) {
-			$account['administrationId'] = $administrationId;
-
-			$registerSlug = $this->getRegisterSlug();
-			$existing = $objectService
-				->setRegister($registerSlug)
-				->setSchema('Account')
-				->findAll(
-					[
-						'filters' => [
-							'accountNumber' => $account['accountNumber'],
-							'administrationId' => $administrationId,
-						],
-						'limit' => 1,
-					]
-				);
-
-			if (empty($existing) === false) {
-				$skipped++;
-				continue;
-			}
-
-			$objectService->saveObject(
-				object: $account,
-				register: $registerSlug,
-				schema: 'Account',
-			);
-			$seeded++;
-		}//end foreach
-
-		return ['seeded' => $seeded, 'skipped' => $skipped];
-	}//end importAccounts()
-
-	/**
 	 * Seed RJ-270 stages from the rj-270-stages.json seed file, idempotently.
 	 *
 	 * Imports the 4 canonical percentage-of-completion stage definitions.
@@ -346,13 +339,7 @@ class SettingsService {
 	 * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-14
 	 */
 	public function seedRj270Stages(): array {
-		return $this->seedGenericFile(
-			seedFileName: 'rj-270-stages.json',
-			itemsKey: 'stages',
-			dedupeKey: 'stageId',
-			schema: 'RJ270Stage',
-			logLabel: 'RJ-270 stages'
-		);
+		return $this->seedGenericFile(seed: 'rj270');
 
 	}//end seedRj270Stages()
 
@@ -378,13 +365,7 @@ class SettingsService {
 	 * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
 	 */
 	public function seedDefaultAdministration(): array {
-		$result = $this->seedGenericFile(
-			seedFileName: 'administraties/default.json',
-			itemsKey: 'administrations',
-			dedupeKey: 'administrationCode',
-			schema: 'Administration',
-			logLabel: 'Default administration'
-		);
+		$result = $this->seedGenericFile(seed: 'defaultAdministration');
 
 		if (($result['success'] ?? false) === true) {
 			$result['administrationCode'] = $this->readDefaultAdministrationCode();
@@ -549,7 +530,7 @@ class SettingsService {
 	}//end readDefaultAdministrationCode()
 
 	/**
-	 * Seed statutory BTW tariffs from vat-tariffs-2026.json, idempotently.
+	 * Seed statutory BTW tariffs from btw-tariffs-2026.json, idempotently.
 	 *
 	 * Imports the current Dutch VAT rates into the VatTariff schema. Deduplication
 	 * key is code. Idempotent on re-run; operator-added rates are preserved.
@@ -559,13 +540,7 @@ class SettingsService {
 	 * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
 	 */
 	public function seedBtwTariffs(): array {
-		return $this->seedGenericFile(
-			seedFileName: 'vat-tariffs-2026.json',
-			itemsKey: 'tariffs',
-			dedupeKey: 'code',
-			schema: 'VatTariff',
-			logLabel: 'BTW tariffs'
-		);
+		return $this->seedGenericFile(seed: 'btw');
 
 	}//end seedBtwTariffs()
 
@@ -580,13 +555,7 @@ class SettingsService {
 	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
 	 */
 	public function seedBbvTaakvelden(): array {
-		return $this->seedGenericFile(
-			seedFileName: 'bbv-task_fields-2024.json',
-			itemsKey: 'taskFields',
-			dedupeKey: 'code',
-			schema: 'BbvTaakveld',
-			logLabel: 'BBV task_fields'
-		);
+		return $this->seedGenericFile(seed: 'taakvelden');
 
 	}//end seedBbvTaakvelden()
 
@@ -754,177 +723,37 @@ class SettingsService {
 	}//end seedFixedAssetsDemo()
 
 	/**
+	 * The per-administration BBV seeds, run with this service's register settings.
+	 *
+	 * @return BbvAdministrationSeedService
+	 *
+	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-006)
+	 */
+	private function bbvAdministrationSeeds(): BbvAdministrationSeedService {
+		return new BbvAdministrationSeedService(
+			settings: $this,
+			importer: $this->seedImporter(),
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+		);
+	}//end bbvAdministrationSeeds()
+
+	/**
 	 * Seed the default RGS → BBV account mapping for a municipal administration
-	 * from rgs-to-bbv-mapping.json, idempotently (REQ-BBV-006). Only runs for
-	 * administrations whose `administrationType` is in {municipality, provincie,
-	 * waterschap}; other types are out of BBV scope.
 	 *
-	 * Deduplication key is (administrationId, accountNumber) — the natural
-	 * uniqueness scope per REQ-BBV-002. Existing records with `_meta.source =
-	 * operator-edited` are NEVER overwritten on re-run; existing `seeded`
-	 * records are left in place so the re-seed is a true no-op until an
-	 * operator edits a row.
+	 * @param string $administrationId The administration id.
+	 * @param string $administrationType The administration type.
 	 *
-	 * Records the BBV gate's install date on app config (`bbv_gate_install_date`)
-	 * the first time a successful seed runs for any administration. The
-	 * BbvComplianceGuard reads this date to enforce forward-only enforcement
-	 * per REQ-BBV-003.
-	 *
-	 * @param string $administrationId The municipal administration's id.
-	 * @param string $administrationType The administration type — must be in
-	 *                                   the municipal set or the seeder
-	 *                                   short-circuits.
-	 *
-	 * @return array<string,mixed> Result with success flag, seeded count,
-	 *                             skipped count.
+	 * @return array<string, mixed> Result with success flag, seeded count, skipped count.
 	 *
 	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-006)
 	 */
 	public function seedBbvAccountMappings(string $administrationId, string $administrationType): array {
-		$municipalTypes = ['municipality', 'provincie', 'waterschap'];
-		if (in_array($administrationType, $municipalTypes, true) === false) {
-			return [
-				'success' => true,
-				'seeded' => 0,
-				'skipped' => 0,
-				'message' => 'Administration type "' . $administrationType . '" is non-municipal; BBV mapping seed skipped per REQ-BBV-006.',
-			];
-		}
-
-		if ($this->isOpenRegisterAvailable() === false) {
-			return [
-				'success' => false,
-				'message' => 'OpenRegister is not installed or enabled.',
-			];
-		}
-
-		if ($administrationId === '') {
-			return [
-				'success' => false,
-				'message' => 'administrationId must not be empty.',
-			];
-		}
-
-		$seedPath = __DIR__ . '/../Settings/seeds/rgs-to-bbv-mapping.json';
-		if (file_exists($seedPath) === false) {
-			return ['success' => false, 'message' => 'Seed file not found: rgs-to-bbv-mapping.json'];
-		}
-
-		$content = file_get_contents($seedPath);
-		if ($content === false) {
-			return ['success' => false, 'message' => 'Failed to read rgs-to-bbv-mapping.json'];
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE) {
-			return ['success' => false, 'message' => 'Failed to parse rgs-to-bbv-mapping.json: ' . json_last_error_msg()];
-		}
-
-		$records = ($data['records'] ?? []);
-		if (empty($records) === true) {
-			return ['success' => false, 'message' => 'Seed file contains no records.'];
-		}
-
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->getRegisterSlug();
-			$seeded = 0;
-			$skipped = 0;
-
-			foreach ($records as $record) {
-				$accountNumber = (string)($record['accountNumber'] ?? '');
-				if ($accountNumber === '') {
-					continue;
-				}
-
-				// Per-administration uniqueness scope per REQ-BBV-002.
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema('BbvAccountMapping')
-					->findAll(
-						[
-							'filters' => [
-								'administrationId' => $administrationId,
-								'accountNumber' => $accountNumber,
-							],
-							'limit' => 1,
-						]
-					);
-
-				if (empty($existing) === false) {
-					// Either a prior seed row or an operator override — never
-					// clobber. The BbvComplianceGuard treats both as valid
-					// mappings; only operator-edited records are intentionally
-					// preserved on re-run per REQ-BBV-006.
-					$skipped++;
-					continue;
-				}
-
-				$record['administrationId'] = $administrationId;
-				$record['_meta'] = ($record['_meta'] ?? []);
-				$record['_meta']['source'] = 'seeded';
-				$record['_meta']['bbvVersion'] = ($data['_meta']['bbvVersion'] ?? '2024');
-
-				$objectService->saveObject(
-					object: $record,
-					register: $registerSlug,
-					schema: 'BbvAccountMapping',
-				);
-				$seeded++;
-			}//end foreach
-
-			// Record the BBV gate's install date the first time any seed runs.
-			// Read-then-write keeps the date stable across upgrades.
-			$existingDate = $this->appConfig->getValueString(
-				Application::APP_ID,
-				'bbv_gate_install_date',
-				''
-			);
-			if ($existingDate === '') {
-				$this->appConfig->setValueString(
-					Application::APP_ID,
-					'bbv_gate_install_date',
-					date('Y-m-d')
-				);
-			}
-
-			$this->logger->info(
-				'Shillinq: BBV account mappings seeded',
-				[
-					'administrationId' => $administrationId,
-					'administrationType' => $administrationType,
-					'seeded' => $seeded,
-					'skipped' => $skipped,
-				]
-			);
-
-			return [
-				'success' => true,
-				'seeded' => $seeded,
-				'skipped' => $skipped,
-			];
-		} catch (\Throwable $e) {
-			$this->logger->warning(
-				'Shillinq: BBV account mapping seed failed',
-				[
-					'administrationId' => $administrationId,
-					'exception' => $e->getMessage(),
-				]
-			);
-
-			return [
-				'success' => false,
-				'message' => 'BBV mapping seed failed: ' . $e->getMessage(),
-			];
-		}//end try
-
+		return $this->bbvAdministrationSeeds()->seedBbvAccountMappings(administrationId: $administrationId, administrationType: $administrationType);
 	}//end seedBbvAccountMappings()
 
 	/**
 	 * Seed default rate-card templates from rate-card-templates.json, idempotently.
-	 *
-	 * Requires a non-empty administrationId; seeding is skipped otherwise (C2).
-	 * Deduplication key is level + effectiveFrom + administrationId.
 	 *
 	 * @param string $administrationId The administrationId to stamp on seeded records.
 	 *
@@ -933,510 +762,68 @@ class SettingsService {
 	 * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-14
 	 */
 	public function seedRateCardTemplates(string $administrationId): array {
-		if ($this->isOpenRegisterAvailable() === false) {
-			return [
-				'success' => false,
-				'message' => 'OpenRegister is not installed or enabled.',
-			];
-		}
-
-		if ($administrationId === '') {
-			return [
-				'success' => false,
-				'message' => 'administrationId must not be empty.',
-			];
-		}
-
-		$seedPath = __DIR__ . '/../Settings/seeds/rate-card-templates.json';
-		if (file_exists($seedPath) === false) {
-			return ['success' => false, 'message' => 'Seed file not found: rate-card-templates.json'];
-		}
-
-		$content = file_get_contents($seedPath);
-		if ($content === false) {
-			return ['success' => false, 'message' => 'Failed to read rate-card-templates.json'];
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE) {
-			return ['success' => false, 'message' => 'Failed to parse rate-card-templates.json: ' . json_last_error_msg()];
-		}
-
-		$rateCards = ($data['rateCards'] ?? []);
-		if (empty($rateCards) === true) {
-			return ['success' => false, 'message' => 'Seed file contains no rateCards.'];
-		}
-
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->getRegisterSlug();
-
-			$seedItems = function () use ($objectService, $registerSlug, $rateCards, $administrationId): array {
-				$seeded = 0;
-				$skipped = 0;
-
-				foreach ($rateCards as $rateCard) {
-					$rateCard['administrationId'] = $administrationId;
-
-					$existing = $objectService
-						->setRegister($registerSlug)
-						->setSchema('RateCard')
-						->findAll(
-							[
-								'filters' => [
-									'level' => $rateCard['level'],
-									'effectiveFrom' => $rateCard['effectiveFrom'],
-									'administrationId' => $administrationId,
-								],
-								'limit' => 1,
-							]
-						);
-
-					if (empty($existing) === false) {
-						$skipped++;
-						continue;
-					}
-
-					$objectService->saveObject(
-						object: $rateCard,
-						register: $registerSlug,
-						schema: 'RateCard',
-					);
-					$seeded++;
-				}//end foreach
-
-				return [
-					'seeded' => $seeded,
-					'skipped' => $skipped,
-				];
-			};
-
-			// Seeding runs user-less (repair step / boot); without elevation
-			// OpenRegister RBAC denies the reads/writes as 'Anonymous' (issue
-			// #508). The guard keeps compatibility with released OR versions
-			// that do not ship runAsSystem() yet.
-			if (method_exists($objectService, 'runAsSystem') === true) {
-				$counts = $objectService->runAsSystem($seedItems);
-			} else {
-				$counts = $seedItems();
-			}
-
-			$seeded = $counts['seeded'];
-			$skipped = $counts['skipped'];
-
-			$this->logger->info(
-				'Shillinq: rate-card templates seeded',
-				[
-					'seeded' => $seeded,
-					'skipped' => $skipped,
-				]
-			);
-
-			return [
-				'success' => true,
-				'message' => 'Rate-card templates seeded successfully.',
-				'seeded' => $seeded,
-				'skipped' => $skipped,
-			];
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq: rate-card templates seeding failed',
-				['exception' => $e->getMessage()]
-			);
-			return [
-				'success' => false,
-				'message' => $e->getMessage(),
-			];
-		}//end try
-
+		return $this->templateSeeds()->seedRateCardTemplates(administrationId: $administrationId);
 	}//end seedRateCardTemplates()
 
 	/**
-	 * Generic seed helper for single-schema seed files that don't require an administrationId.
+	 * Seed a single-schema seed file that needs no administrationId, as the system user.
 	 *
-	 * @param string $seedFileName Name of the seed file under lib/Settings/seeds/.
-	 * @param string $itemsKey Key in the JSON holding the items array.
-	 * @param string $dedupeKey Field used as deduplication key.
-	 * @param string $schema OpenRegister schema slug to import into.
-	 * @param string $logLabel Label for log messages.
+	 * @param string $seed Key in GENERIC_SEEDS.
 	 *
 	 * @return array<string,mixed>
 	 *
 	 * @spec exclude system-context adoption
 	 */
-	private function seedGenericFile(
-		string $seedFileName,
-		string $itemsKey,
-		string $dedupeKey,
-		string $schema,
-		string $logLabel,
-	): array {
+	private function seedGenericFile(string $seed): array {
+		[$seedFileName, $itemsKey, $dedupeKey, $schema, $logLabel] = self::GENERIC_SEEDS[$seed];
 		if ($this->isOpenRegisterAvailable() === false) {
 			return ['success' => false, 'message' => 'OpenRegister is not installed or enabled.'];
 		}
 
-		$seedPath = __DIR__ . '/../Settings/seeds/' . $seedFileName;
-		if (file_exists($seedPath) === false) {
-			return ['success' => false, 'message' => 'Seed file not found: ' . $seedFileName];
+		$importer = $this->seedImporter();
+		$file = $importer->read(fileName: $seedFileName);
+		if (isset($file['error']) === true) {
+			return $file['error'];
 		}
 
-		$content = file_get_contents($seedPath);
-		if ($content === false) {
-			return ['success' => false, 'message' => 'Failed to read ' . $seedFileName];
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE) {
-			return ['success' => false, 'message' => 'Failed to parse ' . $seedFileName . ': ' . json_last_error_msg()];
-		}
-
-		$items = ($data[$itemsKey] ?? []);
+		$items = ($file['data'][$itemsKey] ?? []);
 		if (empty($items) === true) {
 			return ['success' => false, 'message' => 'Seed file ' . $seedFileName . ' contains no ' . $itemsKey . '.'];
 		}
 
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->getRegisterSlug();
-
-			$seedItems = function () use ($objectService, $registerSlug, $items, $dedupeKey, $schema): array {
-				$seeded = 0;
-				$skipped = 0;
-
-				foreach ($items as $item) {
-					$existing = $objectService
-						->setRegister($registerSlug)
-						->setSchema($schema)
-						->findAll(
-							[
-								'filters' => [$dedupeKey => $item[$dedupeKey]],
-								'limit' => 1,
-							]
-						);
-
-					if (empty($existing) === false) {
-						$skipped++;
-						continue;
-					}
-
-					$objectService->saveObject(
-						object: $item,
-						register: $registerSlug,
-						schema: $schema,
-					);
-					$seeded++;
-				}//end foreach
-
-				return [
-					'seeded' => $seeded,
-					'skipped' => $skipped,
-				];
-			};
-
-			// Seeding runs user-less (repair step / boot); without elevation
-			// OpenRegister RBAC denies the reads/writes as 'Anonymous'. The
-			// guard keeps compatibility with released OR versions that do not
-			// ship runAsSystem() yet.
-			if (method_exists($objectService, 'runAsSystem') === true) {
-				$counts = $objectService->runAsSystem($seedItems);
-			} else {
-				$counts = $seedItems();
-			}
-
-			$seeded = $counts['seeded'];
-			$skipped = $counts['skipped'];
-
-			$this->logger->info(
-				'Shillinq: ' . $logLabel . ' seeded',
-				['seeded' => $seeded, 'skipped' => $skipped]
-			);
-
-			return [
-				'success' => true,
-				'message' => $logLabel . ' seeded successfully.',
-				'seeded' => $seeded,
-				'skipped' => $skipped,
-			];
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq: ' . $logLabel . ' seeding failed',
-				['exception' => $e->getMessage()]
-			);
-			return ['success' => false, 'message' => $e->getMessage()];
-		}//end try
-
+		return $importer->importAsSystem(
+			import: new SeedImport(schema: $schema, rows: $items, match: static fn ($item): array => [$dedupeKey => $item[$dedupeKey]]),
+			messages: new SeedMessages(
+				seededLog: 'Shillinq: ' . $logLabel . ' seeded',
+				seededMessage: $logLabel . ' seeded successfully.',
+				failedLog: 'Shillinq: ' . $logLabel . ' seeding failed',
+			)
+		);
 	}//end seedGenericFile()
 
 	/**
 	 * Seed retention rules from the Selectielijst Gemeenten 2020 seed file, idempotently.
 	 *
-	 * Reads lib/Settings/seeds/selectielijst-gemeenten-2020.json and imports
-	 * RetentionRule records via OpenRegister's ObjectService. Already-existing
-	 * records (matched by selectielijstCode + null administrationId) are skipped,
-	 * preserving operator-authored overrides. Per REQ-ARC-002.
-	 *
+
 	 * @return array<string,mixed> Result with success flag, seeded count, skipped count.
 	 *
 	 * @spec openspec/changes/add-shillinq-archiefwet-retention/tasks.md#task-11
 	 */
 	public function seedSelectielijst(): array {
-		if ($this->isOpenRegisterAvailable() === false) {
-			return [
-				'success' => false,
-				'message' => 'OpenRegister is not installed or enabled.',
-			];
-		}
-
-		$seedPath = __DIR__ . '/../Settings/seeds/selectielijst-gemeenten-2020.json';
-		if (file_exists($seedPath) === false) {
-			$this->logger->error('Shillinq: selectielijst-gemeenten-2020.json not found at ' . $seedPath);
-			return [
-				'success' => false,
-				'message' => 'Seed file selectielijst-gemeenten-2020.json not found.',
-			];
-		}
-
-		$content = file_get_contents($seedPath);
-		if ($content === false) {
-			return ['success' => false, 'message' => 'Failed to read selectielijst seed file.'];
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE) {
-			return ['success' => false, 'message' => 'Failed to parse selectielijst seed file: ' . json_last_error_msg()];
-		}
-
-		$rules = ($data['retentionRules'] ?? []);
-		if (empty($rules) === true) {
-			return ['success' => false, 'message' => 'Seed file contains no retention rules.'];
-		}
-
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->getRegisterSlug();
-
-			$seedItems = function () use ($objectService, $registerSlug, $rules): array {
-				$seeded = 0;
-				$skipped = 0;
-
-				foreach ($rules as $rule) {
-					$code = ($rule['selectionListCode'] ?? '');
-					$existing = $objectService
-						->setRegister($registerSlug)
-						->setSchema('RetentionRule')
-						->findAll(
-							[
-								'filters' => [
-									'selectionListCode' => $code,
-									'administrationId' => null,
-								],
-								'limit' => 1,
-							]
-						);
-
-					if (empty($existing) === false) {
-						$skipped++;
-						continue;
-					}
-
-					$objectService->saveObject(
-						object: $rule,
-						register: $registerSlug,
-						schema: 'RetentionRule',
-					);
-					$seeded++;
-				}//end foreach
-
-				return [
-					'seeded' => $seeded,
-					'skipped' => $skipped,
-				];
-			};
-
-			// Seeding runs user-less (repair step / boot); without elevation
-			// OpenRegister RBAC denies the reads/writes as 'Anonymous' (issue
-			// #508). The guard keeps compatibility with released OR versions
-			// that do not ship runAsSystem() yet.
-			if (method_exists($objectService, 'runAsSystem') === true) {
-				$counts = $objectService->runAsSystem($seedItems);
-			} else {
-				$counts = $seedItems();
-			}
-
-			$seeded = $counts['seeded'];
-			$skipped = $counts['skipped'];
-
-			$this->logger->info(
-				'Shillinq: Selectielijst retention rules seeded',
-				[
-					'seeded' => $seeded,
-					'skipped' => $skipped,
-				]
-			);
-
-			return [
-				'success' => true,
-				'message' => 'Selectielijst retention rules seeded.',
-				'seeded' => $seeded,
-				'skipped' => $skipped,
-			];
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq: Selectielijst seeding failed',
-				['exception' => $e->getMessage()]
-			);
-			return [
-				'success' => false,
-				'message' => $e->getMessage(),
-			];
-		}//end try
-
+		return $this->templateSeeds()->seedSelectielijst();
 	}//end seedSelectielijst()
 
 	/**
 	 * Seed example allocation rules from the bundled seed files, idempotently.
 	 *
-	 * Reads all three default seed files from lib/Settings/seeds/allocation-rules/
-	 * and imports AllocationRule records via OpenRegister's ObjectService. Records
-	 * are matched by (name, administrationId) — already-existing records are skipped.
-	 * Seeds ship in lifecycleState: paused for operator review per REQ-CC-004.
-	 *
 	 * @param string $administrationId The administrationId to stamp on seeded records.
-	 *                                 Must be a non-empty tenant-specific identifier (C2).
 	 *
 	 * @return array<string,mixed> Result with success flag, seeded count, skipped count.
 	 *
 	 * @spec openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
 	 */
 	public function seedAllocationRules(string $administrationId): array {
-		if ($this->isOpenRegisterAvailable() === false) {
-			return [
-				'success' => false,
-				'message' => 'OpenRegister is not installed or enabled.',
-			];
-		}
-
-		if ($administrationId === '') {
-			return [
-				'success' => false,
-				'message' => 'administrationId must not be empty.',
-			];
-		}
-
-		$seedFiles = [
-			'overhead-by-headcount.json',
-			'it-by-volume.json',
-			'facility-by-fixed-percentage.json',
-		];
-
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-
-			$seedRules = function () use ($objectService, $seedFiles, $administrationId): array {
-				$seeded = 0;
-				$skipped = 0;
-
-				foreach ($seedFiles as $seedFile) {
-					$seedPath = __DIR__ . '/../Settings/seeds/allocation-rules/' . $seedFile;
-
-					if (file_exists($seedPath) === false) {
-						$this->logger->warning('Shillinq: allocation rule seed file not found at ' . $seedPath);
-						continue;
-					}
-
-					$content = file_get_contents($seedPath);
-					if ($content === false) {
-						$this->logger->warning('Shillinq: failed to read allocation rule seed file: ' . $seedFile);
-						continue;
-					}
-
-					$data = json_decode($content, true);
-					if (json_last_error() !== JSON_ERROR_NONE) {
-						$this->logger->warning('Shillinq: failed to parse allocation rule seed file: ' . $seedFile);
-						continue;
-					}
-
-					// Seed files use the standard ConfigurationService::importFromApp
-					// shape `{ "register": ..., "schema": ..., "objects": [...] }`.
-					// Older variants stored the rules under `allocationRules`; keep
-					// backwards-compat by accepting either.
-					$rules = ($data['objects'] ?? ($data['allocationRules'] ?? []));
-
-					foreach ($rules as $rule) {
-						$rule['administrationId'] = $administrationId;
-
-						$registerSlug = $this->getRegisterSlug();
-						$existing = $objectService
-							->setRegister($registerSlug)
-							->setSchema('AllocationRule')
-							->findAll(
-								[
-									'filters' => [
-										'name' => $rule['name'],
-										'administrationId' => $administrationId,
-									],
-									'limit' => 1,
-								]
-							);
-
-						if (empty($existing) === false) {
-							$skipped++;
-							continue;
-						}
-
-						$objectService->saveObject(
-							object: $rule,
-							register: $registerSlug,
-							schema: 'AllocationRule',
-						);
-						$seeded++;
-					}//end foreach
-				}//end foreach
-
-				return [
-					'seeded' => $seeded,
-					'skipped' => $skipped,
-				];
-			};
-
-			// Seeding runs user-less (repair step / boot); without elevation
-			// OpenRegister RBAC denies the reads/writes as 'Anonymous'. The
-			// guard keeps compatibility with released OR versions that do not
-			// ship runAsSystem() yet.
-			if (method_exists($objectService, 'runAsSystem') === true) {
-				$counts = $objectService->runAsSystem($seedRules);
-			} else {
-				$counts = $seedRules();
-			}
-
-			$seeded = $counts['seeded'];
-			$skipped = $counts['skipped'];
-
-			$this->logger->info(
-				'Shillinq: allocation rule seeds imported',
-				[
-					'seeded' => $seeded,
-					'skipped' => $skipped,
-				]
-			);
-
-			return [
-				'success' => true,
-				'message' => 'Allocation rule seeds imported successfully.',
-				'seeded' => $seeded,
-				'skipped' => $skipped,
-			];
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq: allocation rule seeding failed',
-				['exception' => $e->getMessage()]
-			);
-			return [
-				'success' => false,
-				'message' => $e->getMessage(),
-			];
-		}//end try
-
+		return $this->templateSeeds()->seedAllocationRules(administrationId: $administrationId);
 	}//end seedAllocationRules()
 
 	/**
@@ -1608,7 +995,7 @@ class SettingsService {
 
 			$configurationService = $this->container->get('OCA\OpenRegister\Service\ConfigurationService');
 			$result = $configurationService->importFromApp(
-				appId: Application::APP_ID,
+				appId: AppIdentity::APP_ID,
 				data: $configData,
 				version: $configVersion,
 				force: $force
@@ -1712,394 +1099,75 @@ class SettingsService {
 	}//end runLoadConfiguration()
 
 	/**
-	 * Seed demo Barcode records from inventory-barcodes-demo.json, idempotently.
+	 * The template and reference-rule seeds, run with this service's register settings.
 	 *
-	 * Reads `lib/Settings/seeds/inventory-barcodes-demo.json` and imports
-	 * Barcode records via OpenRegister's ObjectService. Deduplication key is
-	 * `(barcode, uomCode)` per REQ-SKU-011 — re-running the repair step never
-	 * creates duplicates, preserving operator edits. The seeded barcodes
-	 * reference inventory-product-catalog demo SKUs (DV-KAT-SENIOR-2KG,
-	 * VIT-C-1000MG-100CT); when those Products are absent the barcodes still
-	 * load and become discoverable once the products land.
+	 * @return TemplateSeedService
+	 *
+	 * @spec openspec/changes/add-shillinq-archiefwet-retention/tasks.md#task-11
+	 */
+	private function templateSeeds(): TemplateSeedService {
+		return new TemplateSeedService(settings: $this, importer: $this->seedImporter(), logger: $this->logger);
+	}//end templateSeeds()
+
+	/**
+	 * The inventory demo seeds, run with this service's register and administration settings.
+	 *
+	 * @return InventorySeedService
+	 *
+	 * @spec openspec/changes/inventory-stock-tracking/tasks.md#task-12
+	 */
+	private function inventorySeeds(): InventorySeedService {
+		return new InventorySeedService(settings: $this, importer: $this->seedImporter(), logger: $this->logger);
+	}//end inventorySeeds()
+
+	/**
+	 * The importer for seed files under lib/Settings/seeds/.
+	 *
+	 * @return SeedImporter
+	 *
+	 * @spec openspec/changes/inventory-stock-tracking/tasks.md#task-12
+	 */
+	private function seedImporter(): SeedImporter {
+		return new SeedImporter(settings: $this, container: $this->container, logger: $this->logger);
+	}//end seedImporter()
+
+	/**
+	 * Seed demo Barcode records from inventory-barcodes-demo.json, idempotently.
 	 *
 	 * @return array<string, mixed> Result with success flag, seeded count, skipped count, message.
 	 *
 	 * @spec openspec/changes/inventory-barcode-sku/tasks.md#task-15
 	 */
 	public function seedInventoryBarcodes(): array {
-		if ($this->isOpenRegisterAvailable() === false) {
-			return [
-				'success' => false,
-				'message' => 'OpenRegister is not installed or enabled.',
-			];
-		}
-
-		$seedPath = __DIR__ . '/../Settings/seeds/inventory-barcodes-demo.json';
-		if (file_exists($seedPath) === false) {
-			return [
-				'success' => false,
-				'message' => 'Seed file not found: inventory-barcodes-demo.json',
-			];
-		}
-
-		$content = file_get_contents($seedPath);
-		if ($content === false) {
-			return [
-				'success' => false,
-				'message' => 'Failed to read inventory-barcodes-demo.json',
-			];
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE) {
-			return [
-				'success' => false,
-				'message' => 'Failed to parse inventory-barcodes-demo.json: ' . json_last_error_msg(),
-			];
-		}
-
-		$barcodes = ($data['barcodes'] ?? []);
-		if (empty($barcodes) === true) {
-			return [
-				'success' => true,
-				'message' => 'Seed file contains no barcodes, nothing to import.',
-				'seeded' => 0,
-				'skipped' => 0,
-			];
-		}
-
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->getRegisterSlug();
-			$seeded = 0;
-			$skipped = 0;
-
-			foreach ($barcodes as $barcode) {
-				// Deduplication key (barcode, uomCode) — idempotent re-runs per REQ-SKU-011.
-				// ADR-022: use the real ObjectService fluent API (setRegister/setSchema/findAll).
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema('Barcode')
-					->findAll(
-						[
-							'filters' => [
-								'barcode' => ($barcode['barcode'] ?? ''),
-								'uomCode' => ($barcode['uomCode'] ?? ''),
-							],
-							'limit' => 1,
-						]
-					);
-
-				if (empty($existing) === false) {
-					$skipped++;
-					continue;
-				}
-
-				$objectService->saveObject(
-					object: $barcode,
-					register: $registerSlug,
-					schema: 'Barcode',
-				);
-				$seeded++;
-			}//end foreach
-
-			$this->logger->info(
-				'Shillinq: inventory barcodes seeded',
-				['seeded' => $seeded, 'skipped' => $skipped]
-			);
-
-			return [
-				'success' => true,
-				'message' => 'Inventory barcodes seeded successfully.',
-				'seeded' => $seeded,
-				'skipped' => $skipped,
-			];
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq: inventory barcode seeding failed',
-				['exception' => $e->getMessage()]
-			);
-			return [
-				'success' => false,
-				'message' => $e->getMessage(),
-			];
-		}//end try
-
+		return $this->inventorySeeds()->seedInventoryBarcodes();
 	}//end seedInventoryBarcodes()
 
 	/**
 	 * Seed demo InventoryLot records from inventory-lots-demo.json, idempotently.
-	 *
-	 * Reads `lib/Settings/seeds/inventory-lots-demo.json` and imports
-	 * InventoryLot records via OpenRegister's ObjectService. Deduplication key
-	 * is `(administrationId, lotNumber)` per REQ-LOT-002 — re-running the
-	 * repair step never creates duplicates, preserving operator edits. The
-	 * seeded lots reference inventory-product-catalog demo SKUs; when those
-	 * Products are absent the lots still load and become discoverable once
-	 * the products land. Skips silently when no default administration is
-	 * configured (C2 — prevents "default" contamination).
 	 *
 	 * @return array<string, mixed> Result with success flag, seeded count, skipped count, message.
 	 *
 	 * @spec openspec/changes/inventory-lot-batch-expiry/tasks.md#task-14
 	 */
 	public function seedInventoryLots(): array {
-		if ($this->isOpenRegisterAvailable() === false) {
-			return [
-				'success' => false,
-				'message' => 'OpenRegister is not installed or enabled.',
-			];
-		}
-
-		$seedPath = __DIR__ . '/../Settings/seeds/inventory-lots-demo.json';
-		if (file_exists($seedPath) === false) {
-			return [
-				'success' => false,
-				'message' => 'Seed file not found: inventory-lots-demo.json',
-			];
-		}
-
-		$content = file_get_contents($seedPath);
-		if ($content === false) {
-			return [
-				'success' => false,
-				'message' => 'Failed to read inventory-lots-demo.json',
-			];
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE) {
-			return [
-				'success' => false,
-				'message' => 'Failed to parse inventory-lots-demo.json: ' . json_last_error_msg(),
-			];
-		}
-
-		$lots = ($data['lots'] ?? []);
-		if (empty($lots) === true) {
-			return [
-				'success' => true,
-				'message' => 'Seed file contains no lots, nothing to import.',
-				'seeded' => 0,
-				'skipped' => 0,
-			];
-		}
-
-		$settings = $this->getSettings();
-		$administrationId = ($settings['administration_id'] ?? '');
-		if ($administrationId === '') {
-			return [
-				'success' => true,
-				'message' => 'No default administration configured, skipping lot seed.',
-				'seeded' => 0,
-				'skipped' => 0,
-			];
-		}
-
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->getRegisterSlug();
-			$seeded = 0;
-			$skipped = 0;
-
-			foreach ($lots as $lot) {
-				// Deduplication key (administrationId, lotNumber) — idempotent re-runs per REQ-LOT-002.
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema('InventoryLot')
-					->findAll(
-						[
-							'filters' => [
-								'administrationId' => $administrationId,
-								'lotNumber' => ($lot['lotNumber'] ?? ''),
-							],
-							'limit' => 1,
-						]
-					);
-
-				if (empty($existing) === false) {
-					$skipped++;
-					continue;
-				}
-
-				$lot['administrationId'] = $administrationId;
-				$objectService->saveObject(
-					object: $lot,
-					register: $registerSlug,
-					schema: 'InventoryLot',
-				);
-				$seeded++;
-			}//end foreach
-
-			$this->logger->info(
-				'Shillinq: inventory lots seeded',
-				['seeded' => $seeded, 'skipped' => $skipped]
-			);
-
-			return [
-				'success' => true,
-				'message' => 'Inventory lots seeded successfully.',
-				'seeded' => $seeded,
-				'skipped' => $skipped,
-			];
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq: inventory lot seeding failed',
-				['exception' => $e->getMessage()]
-			);
-			return [
-				'success' => false,
-				'message' => $e->getMessage(),
-			];
-		}//end try
-
+		return $this->inventorySeeds()->seedInventoryLots();
 	}//end seedInventoryLots()
 
 	/**
-	 * Seed example InventoryValuation records from
-	 * `inventory-valuation-examples.json`, idempotently per administration.
-	 *
-	 * Deduplication key per REQ-INV-005 is
-	 * `(productId, warehouse, status=active, administrationId)`. When an
-	 * active snapshot for the same tuple already exists the seed entry is
-	 * skipped, preserving operator edits and preventing duplicate active
-	 * snapshots from triggering the uniqueness validation.
+	 * Seed the demo InventoryValuation records, idempotently per administration.
 	 *
 	 * @param string $administrationId Administration scope for the seed.
 	 *
-	 * @return array<string,mixed> Result with success/seeded/skipped/message.
+	 * @return array<string, mixed> Result with success flag, seeded count, skipped count, message.
 	 *
 	 * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-12
 	 */
 	public function seedInventoryValuationExamples(string $administrationId): array {
-		if ($this->isOpenRegisterAvailable() === false) {
-			return [
-				'success' => false,
-				'message' => 'OpenRegister is not installed or enabled.',
-			];
-		}
-
-		if ($administrationId === '') {
-			return [
-				'success' => false,
-				'message' => 'administrationId is required for InventoryValuation seed.',
-			];
-		}
-
-		$seedPath = __DIR__ . '/../Settings/seeds/inventory-valuation-examples.json';
-		if (file_exists($seedPath) === false) {
-			return [
-				'success' => false,
-				'message' => 'Seed file not found: inventory-valuation-examples.json',
-			];
-		}
-
-		$content = file_get_contents($seedPath);
-		if ($content === false) {
-			return [
-				'success' => false,
-				'message' => 'Failed to read inventory-valuation-examples.json',
-			];
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE) {
-			return [
-				'success' => false,
-				'message' => 'Failed to parse inventory-valuation-examples.json: ' . json_last_error_msg(),
-			];
-		}
-
-		$valuations = ($data['valuations'] ?? []);
-		if (empty($valuations) === true) {
-			return [
-				'success' => true,
-				'message' => 'Seed file contains no valuations, nothing to import.',
-				'seeded' => 0,
-				'skipped' => 0,
-			];
-		}
-
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->getRegisterSlug();
-			$seeded = 0;
-			$skipped = 0;
-
-			foreach ($valuations as $valuation) {
-				$productId = (string)($valuation['productId'] ?? '');
-				$warehouse = (string)($valuation['warehouse'] ?? '');
-				if ($productId === '' || $warehouse === '') {
-					continue;
-				}
-
-				// Dedup key (productId, warehouse, status=active, administrationId) per REQ-INV-005.
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema('InventoryValuation')
-					->findAll(
-						[
-							'filters' => [
-								'productId' => $productId,
-								'warehouse' => $warehouse,
-								'status' => 'active',
-								'administrationId' => $administrationId,
-							],
-							'limit' => 1,
-						]
-					);
-
-				if (empty($existing) === false) {
-					$skipped++;
-					continue;
-				}
-
-				$valuation['administrationId'] = $administrationId;
-				$objectService->saveObject(
-					object: $valuation,
-					register: $registerSlug,
-					schema: 'InventoryValuation',
-				);
-				$seeded++;
-			}//end foreach
-
-			$this->logger->info(
-				'Shillinq: inventory valuation examples seeded',
-				['seeded' => $seeded, 'skipped' => $skipped]
-			);
-
-			return [
-				'success' => true,
-				'message' => 'Inventory valuation examples seeded successfully.',
-				'seeded' => $seeded,
-				'skipped' => $skipped,
-			];
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq: inventory valuation example seeding failed',
-				['exception' => $e->getMessage()]
-			);
-			return [
-				'success' => false,
-				'message' => $e->getMessage(),
-			];
-		}//end try
-
+		return $this->inventorySeeds()->seedInventoryValuationExamples(administrationId: $administrationId);
 	}//end seedInventoryValuationExamples()
 
 	/**
-	 * Seed demo InventoryStock records from the three location seed files,
-	 * idempotently per administration.
-	 *
-	 * Reads `lib/Settings/seeds/stock-amsterdam.json`,
-	 * `lib/Settings/seeds/stock-rotterdam.json` and
-	 * `lib/Settings/seeds/stock-utrecht.json` and imports InventoryStock rows
-	 * via OpenRegister's ObjectService. Deduplication key is
-	 * `(administrationId, productSku, locationCode)` per REQ-IST-002 +
-	 * REQ-IST-009 — re-running the repair step never creates duplicates and
-	 * operator edits to quantities persist across upgrades. Skips silently
-	 * when no default administration is configured (C2 — prevents "default"
-	 * contamination of real tenant data).
+	 * Seed the demo InventoryStock records, idempotently per administration.
 	 *
 	 * @param string $administrationId Administration scope for the seed.
 	 *
@@ -2108,642 +1176,62 @@ class SettingsService {
 	 * @spec openspec/changes/inventory-stock-tracking/tasks.md#task-12
 	 */
 	public function seedInventoryStockExamples(string $administrationId): array {
-		if ($this->isOpenRegisterAvailable() === false) {
-			return [
-				'success' => false,
-				'message' => 'OpenRegister is not installed or enabled.',
-			];
-		}
-
-		if ($administrationId === '') {
-			return [
-				'success' => true,
-				'message' => 'No default administration configured, skipping stock seed.',
-				'seeded' => 0,
-				'skipped' => 0,
-			];
-		}
-
-		$seedFiles = [
-			__DIR__ . '/../Settings/seeds/stock-amsterdam.json',
-			__DIR__ . '/../Settings/seeds/stock-rotterdam.json',
-			__DIR__ . '/../Settings/seeds/stock-utrecht.json',
-		];
-
-		$allRows = [];
-		foreach ($seedFiles as $seedPath) {
-			if (file_exists($seedPath) === false) {
-				$this->logger->warning(
-					'Shillinq: InventoryStock seed file missing, skipping',
-					['file' => basename($seedPath)]
-				);
-				continue;
-			}
-
-			$content = file_get_contents($seedPath);
-			if ($content === false) {
-				$this->logger->warning(
-					'Shillinq: failed to read InventoryStock seed file',
-					['file' => basename($seedPath)]
-				);
-				continue;
-			}
-
-			$data = json_decode($content, true);
-			if (json_last_error() !== JSON_ERROR_NONE) {
-				$this->logger->warning(
-					'Shillinq: failed to parse InventoryStock seed file',
-					[
-						'file' => basename($seedPath),
-						'error' => json_last_error_msg(),
-					]
-				);
-				continue;
-			}
-
-			$rows = ($data['stock'] ?? []);
-			foreach ($rows as $row) {
-				$allRows[] = $row;
-			}
-		}//end foreach
-
-		if (empty($allRows) === true) {
-			return [
-				'success' => true,
-				'message' => 'No InventoryStock seed rows found.',
-				'seeded' => 0,
-				'skipped' => 0,
-			];
-		}
-
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->getRegisterSlug();
-			$seeded = 0;
-			$skipped = 0;
-
-			foreach ($allRows as $row) {
-				$productSku = ($row['productSku'] ?? '');
-				$locationCode = ($row['locationCode'] ?? '');
-				if ($productSku === '' || $locationCode === '') {
-					continue;
-				}
-
-				// Deduplication key (administrationId, productSku, locationCode) — REQ-IST-002.
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema('InventoryStock')
-					->findAll(
-						[
-							'filters' => [
-								'administrationId' => $administrationId,
-								'productSku' => $productSku,
-								'locationCode' => $locationCode,
-							],
-							'limit' => 1,
-						]
-					);
-
-				if (empty($existing) === false) {
-					$skipped++;
-					continue;
-				}
-
-				$row['administrationId'] = $administrationId;
-				$objectService->saveObject(
-					object: $row,
-					register: $registerSlug,
-					schema: 'InventoryStock',
-				);
-				$seeded++;
-			}//end foreach
-
-			$this->logger->info(
-				'Shillinq: InventoryStock seeded',
-				['seeded' => $seeded, 'skipped' => $skipped]
-			);
-
-			return [
-				'success' => true,
-				'message' => 'InventoryStock seeded successfully.',
-				'seeded' => $seeded,
-				'skipped' => $skipped,
-			];
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq: InventoryStock seeding failed',
-				['exception' => $e->getMessage()]
-			);
-			return [
-				'success' => false,
-				'message' => $e->getMessage(),
-			];
-		}//end try
-
+		return $this->inventorySeeds()->seedInventoryStockExamples(administrationId: $administrationId);
 	}//end seedInventoryStockExamples()
 
 	/**
-	 * Seed the default `InventoryGLConfig` record for an administration
-	 * (inventory-cogs-posting REQ-CG-001 + Task 11).
-	 *
-	 * Loads the RGS 3.5 MKB defaults (7000 Kostprijs revenue / 1400
-	 * Voorraden / 1800 GR/IR clearing / 7100 Voorraadmutaties) from
-	 * `seeds/inventory-gl-config-2026.json` and writes one row per
-	 * administration via ObjectService. Idempotent: deduplicates on
-	 * administrationId so re-runs preserve operator overrides (the
-	 * config is administration-scoped — one active row per tenant).
-	 * Skipped when administrationId is empty (C2 contamination guard).
+	 * Seed the default InventoryGLConfig for an administration, idempotently.
 	 *
 	 * @param string $administrationId Administration scope for the seed.
 	 *
-	 * @return array<string,mixed> Result with success flag, seeded + skipped counts, message.
+	 * @return array<string, mixed> Result with success flag, seeded count, skipped count, message.
 	 *
 	 * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-11
 	 */
 	public function seedInventoryGLConfig(string $administrationId): array {
-		if ($this->isOpenRegisterAvailable() === false) {
-			return [
-				'success' => false,
-				'message' => 'OpenRegister is not installed or enabled.',
-			];
-		}
-
-		if ($administrationId === '') {
-			return [
-				'success' => false,
-				'message' => 'administrationId must not be empty.',
-			];
-		}
-
-		$seedPath = __DIR__ . '/../Settings/seeds/inventory-gl-config-2026.json';
-		if (file_exists($seedPath) === false) {
-			return [
-				'success' => false,
-				'message' => 'Seed file not found: ' . $seedPath,
-			];
-		}
-
-		$content = file_get_contents($seedPath);
-		if ($content === false) {
-			return [
-				'success' => false,
-				'message' => 'Failed to read seed file.',
-			];
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE) {
-			return [
-				'success' => false,
-				'message' => 'Failed to parse seed file: ' . json_last_error_msg(),
-			];
-		}
-
-		$configs = ($data['configs'] ?? []);
-		if (empty($configs) === true) {
-			return [
-				'success' => true,
-				'message' => 'No InventoryGLConfig entries in seed file.',
-				'seeded' => 0,
-				'skipped' => 0,
-			];
-		}
-
-		$seeded = 0;
-		$skipped = 0;
-
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->getRegisterSlug();
-
-			foreach ($configs as $config) {
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema('InventoryGLConfig')
-					->findAll(
-						[
-							'filters' => ['administrationId' => $administrationId],
-							'limit' => 1,
-						]
-					);
-
-				if (empty($existing) === false) {
-					$skipped++;
-					continue;
-				}
-
-				$config['administrationId'] = $administrationId;
-
-				$objectService->saveObject(
-					object: $config,
-					register: $registerSlug,
-					schema: 'InventoryGLConfig',
-				);
-				$seeded++;
-			}//end foreach
-
-			$this->logger->info(
-				'Shillinq: InventoryGLConfig seeded',
-				[
-					'administrationId' => $administrationId,
-					'seeded' => $seeded,
-					'skipped' => $skipped,
-				]
-			);
-
-			return [
-				'success' => true,
-				'message' => 'InventoryGLConfig seeded successfully.',
-				'seeded' => $seeded,
-				'skipped' => $skipped,
-			];
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq: InventoryGLConfig seeding failed',
-				['exception' => $e->getMessage()]
-			);
-			return [
-				'success' => false,
-				'message' => $e->getMessage(),
-			];
-		}//end try
-
+		return $this->inventorySeeds()->seedInventoryGLConfig(administrationId: $administrationId);
 	}//end seedInventoryGLConfig()
 
 	/**
 	 * Seed the demo BBVProgramme records from
-	 * bbv-waterschappen-programmes-2026-demo.json, idempotently per administration.
 	 *
-	 * Loads the 5 demo programmes (1.1.1, 1.2.1, 2.3.2, 2.4.1, 3.1.0) for fiscal
-	 * year 2026 documented in the bookkeeping-waterschappen-bbv-variant-01-config
-	 * -schemas-seed design and writes them to the BBVProgramme schema via
-	 * ObjectService. Deduplication key is
-	 * (administrationId, programmeCode, fiscalYear) per REQ-BBVW-001 so re-runs
-	 * never create duplicates and operator edits persist across upgrades.
-	 * Skipped when administration_id is not configured (C2 — prevents "default"
-	 * contamination of real tenant data).
+	 * @param string $administrationId The administration id.
 	 *
-	 * @param string $administrationId Administration scope for the seed.
-	 *
-	 * @return array<string, mixed> Result with success flag, seeded + skipped counts, message.
+	 * @return array<string, mixed> Result with success flag, seeded count, skipped count.
 	 *
 	 * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-01-config-schemas-seed/tasks.md#seed-data
 	 */
 	public function seedBbvProgrammes(string $administrationId): array {
-		if ($this->isOpenRegisterAvailable() === false) {
-			return [
-				'success' => false,
-				'message' => 'OpenRegister is not installed or enabled.',
-			];
-		}
-
-		if ($administrationId === '') {
-			return [
-				'success' => false,
-				'message' => 'administrationId is required for BBVProgramme seed.',
-			];
-		}
-
-		$seedPath = __DIR__ . '/../Settings/seeds/bbv-waterschappen-programmes-2026-demo.json';
-		if (file_exists($seedPath) === false) {
-			return [
-				'success' => false,
-				'message' => 'Seed file not found: bbv-waterschappen-programmes-2026-demo.json',
-			];
-		}
-
-		$content = file_get_contents($seedPath);
-		if ($content === false) {
-			return [
-				'success' => false,
-				'message' => 'Failed to read bbv-waterschappen-programmes-2026-demo.json',
-			];
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE) {
-			return [
-				'success' => false,
-				'message' => 'Failed to parse bbv-waterschappen-programmes-2026-demo.json: ' . json_last_error_msg(),
-			];
-		}
-
-		$programmes = ($data['programmes'] ?? []);
-		if (empty($programmes) === true) {
-			return [
-				'success' => true,
-				'message' => 'Seed file contains no programmes, nothing to import.',
-				'seeded' => 0,
-				'skipped' => 0,
-			];
-		}
-
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->getRegisterSlug();
-			$seeded = 0;
-			$skipped = 0;
-
-			foreach ($programmes as $programme) {
-				$programmeCode = (string)($programme['programmeCode'] ?? '');
-				$fiscalYear = ($programme['fiscalYear'] ?? null);
-				if ($programmeCode === '' || $fiscalYear === null) {
-					continue;
-				}
-
-				// Dedup key (administrationId, programmeCode, fiscalYear) per REQ-BBVW-001.
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema('BBVProgramme')
-					->findAll(
-						[
-							'filters' => [
-								'administrationId' => $administrationId,
-								'programmeCode' => $programmeCode,
-								'fiscalYear' => $fiscalYear,
-							],
-							'limit' => 1,
-						]
-					);
-
-				if (empty($existing) === false) {
-					$skipped++;
-					continue;
-				}
-
-				$programme['administrationId'] = $administrationId;
-				$objectService->saveObject(
-					object: $programme,
-					register: $registerSlug,
-					schema: 'BBVProgramme',
-				);
-				$seeded++;
-			}//end foreach
-
-			$this->logger->info(
-				'Shillinq: BBVProgramme demo records seeded',
-				['seeded' => $seeded, 'skipped' => $skipped]
-			);
-
-			return [
-				'success' => true,
-				'message' => 'BBVProgramme demo records seeded successfully.',
-				'seeded' => $seeded,
-				'skipped' => $skipped,
-			];
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq: BBVProgramme demo seeding failed',
-				['exception' => $e->getMessage()]
-			);
-			return [
-				'success' => false,
-				'message' => $e->getMessage(),
-			];
-		}//end try
-
+		return $this->bbvAdministrationSeeds()->seedBbvProgrammes(administrationId: $administrationId);
 	}//end seedBbvProgrammes()
 
 	/**
 	 * Seed the demo BudgetBBVMapping records from
-	 * bbv-waterschappen-programmes-2026-demo.json, idempotently per administration.
 	 *
-	 * Loads the demo allocation split documented in the design: GL 4100 →
-	 * 50/30/20 across programmes 1.1.1/1.2.1/2.4.1 and GL 5000 → 25/75 across
-	 * 2.3.2/2.4.1, all effective for fiscal 2026. Deduplication key is
-	 * (administrationId, glAccountNumber, programmeCode, effectiveFrom) per
-	 * REQ-BBVW-002 so re-runs never create duplicates and operator edits
-	 * persist across upgrades. Skipped when administration_id is not configured
-	 * (C2 — prevents "default" contamination of real tenant data).
+	 * @param string $administrationId The administration id.
 	 *
-	 * @param string $administrationId Administration scope for the seed.
-	 *
-	 * @return array<string, mixed> Result with success flag, seeded + skipped counts, message.
+	 * @return array<string, mixed> Result with success flag, seeded count, skipped count.
 	 *
 	 * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-01-config-schemas-seed/tasks.md#seed-data
 	 */
 	public function seedBudgetBbvMappings(string $administrationId): array {
-		if ($this->isOpenRegisterAvailable() === false) {
-			return [
-				'success' => false,
-				'message' => 'OpenRegister is not installed or enabled.',
-			];
-		}
-
-		if ($administrationId === '') {
-			return [
-				'success' => false,
-				'message' => 'administrationId is required for BudgetBBVMapping seed.',
-			];
-		}
-
-		$seedPath = __DIR__ . '/../Settings/seeds/bbv-waterschappen-programmes-2026-demo.json';
-		if (file_exists($seedPath) === false) {
-			return [
-				'success' => false,
-				'message' => 'Seed file not found: bbv-waterschappen-programmes-2026-demo.json',
-			];
-		}
-
-		$content = file_get_contents($seedPath);
-		if ($content === false) {
-			return [
-				'success' => false,
-				'message' => 'Failed to read bbv-waterschappen-programmes-2026-demo.json',
-			];
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE) {
-			return [
-				'success' => false,
-				'message' => 'Failed to parse bbv-waterschappen-programmes-2026-demo.json: ' . json_last_error_msg(),
-			];
-		}
-
-		$mappings = ($data['mappings'] ?? []);
-		if (empty($mappings) === true) {
-			return [
-				'success' => true,
-				'message' => 'Seed file contains no mappings, nothing to import.',
-				'seeded' => 0,
-				'skipped' => 0,
-			];
-		}
-
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->getRegisterSlug();
-			$seeded = 0;
-			$skipped = 0;
-
-			foreach ($mappings as $mapping) {
-				$glAccountNumber = (string)($mapping['glAccountNumber'] ?? '');
-				$programmeCode = (string)($mapping['programmeCode'] ?? '');
-				$effectiveFrom = (string)($mapping['effectiveFrom'] ?? '');
-				if ($glAccountNumber === '' || $programmeCode === '' || $effectiveFrom === '') {
-					continue;
-				}
-
-				// Dedup key (administrationId, glAccountNumber, programmeCode, effectiveFrom) per REQ-BBVW-002.
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema('BudgetBBVMapping')
-					->findAll(
-						[
-							'filters' => [
-								'administrationId' => $administrationId,
-								'glAccountNumber' => $glAccountNumber,
-								'programmeCode' => $programmeCode,
-								'effectiveFrom' => $effectiveFrom,
-							],
-							'limit' => 1,
-						]
-					);
-
-				if (empty($existing) === false) {
-					$skipped++;
-					continue;
-				}
-
-				$mapping['administrationId'] = $administrationId;
-				$objectService->saveObject(
-					object: $mapping,
-					register: $registerSlug,
-					schema: 'BudgetBBVMapping',
-				);
-				$seeded++;
-			}//end foreach
-
-			$this->logger->info(
-				'Shillinq: BudgetBBVMapping demo records seeded',
-				['seeded' => $seeded, 'skipped' => $skipped]
-			);
-
-			return [
-				'success' => true,
-				'message' => 'BudgetBBVMapping demo records seeded successfully.',
-				'seeded' => $seeded,
-				'skipped' => $skipped,
-			];
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq: BudgetBBVMapping demo seeding failed',
-				['exception' => $e->getMessage()]
-			);
-			return [
-				'success' => false,
-				'message' => $e->getMessage(),
-			];
-		}//end try
-
+		return $this->bbvAdministrationSeeds()->seedBudgetBbvMappings(administrationId: $administrationId);
 	}//end seedBudgetBbvMappings()
 
 	/**
 	 * Seed the default Archiefwet retention policies, idempotently.
 	 *
-	 * Reads lib/Settings/seeds/retention-policies.json and imports the three
-	 * organization-wide default RetentionPolicy records (financial 5yr, tax 7yr,
-	 * general 3yr) per REQ-RET-012. Records are matched by `slug` and skipped when
-	 * already present, preserving operator edits across upgrades. Unlike the chart
-	 * of accounts these policies are organization-wide (no administrationId), so no
-	 * tenant identifier is required.
-	 *
+
 	 * @return array<string,mixed> Result with success flag, seeded count, skipped count.
 	 *
 	 * @spec openspec/specs/bookkeeping-archiefwet-retention/spec.md (Task 13, REQ-RET-012)
 	 */
 	public function seedRetentionPolicies(): array {
-		if ($this->isOpenRegisterAvailable() === false) {
-			return [
-				'success' => false,
-				'message' => 'OpenRegister is not installed or enabled.',
-			];
-		}
-
-		$seedPath = __DIR__ . '/../Settings/seeds/retention-policies.json';
-		if (file_exists($seedPath) === false) {
-			return ['success' => false, 'message' => 'Retention policy seed file not found.'];
-		}
-
-		$content = file_get_contents($seedPath);
-		if ($content === false) {
-			return ['success' => false, 'message' => 'Failed to read retention policy seed file.'];
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE) {
-			return ['success' => false, 'message' => 'Failed to parse retention policy seed file: ' . json_last_error_msg()];
-		}
-
-		$policies = ($data['policies'] ?? []);
-		if (empty($policies) === true) {
-			return ['success' => false, 'message' => 'Retention policy seed file contains no policies.'];
-		}
-
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->getRegisterSlug();
-			$seeded = 0;
-			$skipped = 0;
-
-			foreach ($policies as $policy) {
-				$slug = ($policy['slug'] ?? '');
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema('RetentionPolicy')
-					->findAll(
-						[
-							'filters' => ['slug' => $slug],
-							'limit' => 1,
-						]
-					);
-
-				if (empty($existing) === false) {
-					$skipped++;
-					continue;
-				}
-
-				$objectService->saveObject(
-					object: $policy,
-					register: $registerSlug,
-					schema: 'RetentionPolicy',
-				);
-				$seeded++;
-			}//end foreach
-
-			$this->logger->info(
-				'Shillinq: retention policies seeded',
-				['seeded' => $seeded, 'skipped' => $skipped]
-			);
-
-			return [
-				'success' => true,
-				'message' => 'Retention policies seeded successfully.',
-				'seeded' => $seeded,
-				'skipped' => $skipped,
-			];
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq: retention policy seeding failed',
-				['exception' => $e->getMessage()]
-			);
-			return [
-				'success' => false,
-				'message' => $e->getMessage(),
-			];
-		}//end try
-
+		return $this->templateSeeds()->seedRetentionPolicies();
 	}//end seedRetentionPolicies()
 
 	/**
 	 * Seed mandaat (signing-authority) templates from mandaat-templates.json, idempotently.
-	 *
-	 * Reads lib/Settings/seeds/mandaat-templates.json and imports Mandate records
-	 * via OpenRegister's ObjectService, stamping the tenant administrationId.
-	 * Already-existing records (matched by mandate_code + administrationId) are
-	 * skipped, preserving operator edits. Per REQ-VPL-002. Requires a non-empty
-	 * administrationId (C2).
 	 *
 	 * @param string $administrationId The administrationId to stamp on seeded records.
 	 *
@@ -2752,102 +1240,7 @@ class SettingsService {
 	 * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.7
 	 */
 	public function seedMandateTemplates(string $administrationId): array {
-		if ($this->isOpenRegisterAvailable() === false) {
-			return [
-				'success' => false,
-				'message' => 'OpenRegister is not installed or enabled.',
-			];
-		}
-
-		if ($administrationId === '') {
-			return [
-				'success' => false,
-				'message' => 'administrationId must not be empty.',
-			];
-		}
-
-		$seedPath = __DIR__ . '/../Settings/seeds/mandaat-templates.json';
-		if (file_exists($seedPath) === false) {
-			return ['success' => false, 'message' => 'Seed file not found: mandaat-templates.json'];
-		}
-
-		$content = file_get_contents($seedPath);
-		if ($content === false) {
-			return ['success' => false, 'message' => 'Failed to read mandaat-templates.json'];
-		}
-
-		$data = json_decode($content, true);
-		if (json_last_error() !== JSON_ERROR_NONE) {
-			return ['success' => false, 'message' => 'Failed to parse mandaat-templates.json: ' . json_last_error_msg()];
-		}
-
-		$templates = ($data['mandaatTemplates'] ?? []);
-		if (empty($templates) === true) {
-			return ['success' => false, 'message' => 'Seed file contains no mandaatTemplates.'];
-		}
-
-		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$registerSlug = $this->getRegisterSlug();
-			$seeded = 0;
-			$skipped = 0;
-
-			foreach ($templates as $template) {
-				// _meta-only fields that are not Mandate properties are dropped.
-				unset($template['doelgroep']);
-				$template['administrationId'] = $administrationId;
-
-				$existing = $objectService
-					->setRegister($registerSlug)
-					->setSchema('SpendingMandate')
-					->findAll(
-						[
-							'filters' => [
-								'mandateCode' => $template['mandateCode'],
-								'administrationId' => $administrationId,
-							],
-							'limit' => 1,
-						]
-					);
-
-				if (empty($existing) === false) {
-					$skipped++;
-					continue;
-				}
-
-				$objectService->saveObject(
-					object: $template,
-					register: $registerSlug,
-					schema: 'SpendingMandate',
-				);
-				$seeded++;
-			}//end foreach
-
-			$this->logger->info(
-				'Shillinq: mandaat templates seeded',
-				[
-					'seeded' => $seeded,
-					'skipped' => $skipped,
-				]
-			);
-
-			return [
-				'success' => true,
-				'message' => 'Mandate templates seeded successfully.',
-				'seeded' => $seeded,
-				'skipped' => $skipped,
-			];
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'Shillinq: mandaat template seeding failed',
-				['exception' => $e->getMessage()]
-			);
-			return [
-				'success' => false,
-				'message' => $e->getMessage(),
-			];
-		}//end try
-
+		return $this->templateSeeds()->seedMandateTemplates(administrationId: $administrationId);
 	}//end seedMandateTemplates()
 
 	/**
@@ -2881,7 +1274,7 @@ class SettingsService {
 			$configKey = 'statement_manifest_' . $type;
 
 			// Preserve operator edits: skip when the manifest is already persisted.
-			$existing = $this->appConfig->getValueString(Application::APP_ID, $configKey, '');
+			$existing = $this->appConfig->getValueString(AppIdentity::APP_ID, $configKey, '');
 			if ($existing !== '') {
 				$skipped++;
 				continue;
@@ -2914,7 +1307,7 @@ class SettingsService {
 			}
 
 			$this->appConfig->setValueString(
-				Application::APP_ID,
+				AppIdentity::APP_ID,
 				$configKey,
 				(string)json_encode($decoded)
 			);

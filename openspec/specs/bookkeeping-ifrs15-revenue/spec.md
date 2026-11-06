@@ -19,56 +19,89 @@ This specification defines the requirements for bookkeeping ifrs15 revenue in th
 
 @e2e exclude pure backend/compliance: IFRS 15 revenue recognition — not browser-testable
 
+### Requirement: REQ-IFRS15-001 — Five-step revenue recognition model SHALL be implemented as ten core registers with explicit revenue contract, PO, transaction-price, and allocation structure
 
-### REQ-IFRS15-001: Five-step revenue recognition model SHALL be implemented as ten core registers with explicit contract, PO, transaction-price, and allocation structure
+IFRS 15 revenue recognition SHALL be expressed as ten registers per ADR-024,
+none of which share a schema slug with a register declared by another
+capability:
 
-IFRS 15 revenue recognition SHALL be expressed as ten new registers in
-`lib/Settings/shillinq_register.json` per ADR-024:
-
-- `Contract` — customer contract with identification, dates, transaction price
-  (fixed + variable), currency, signed-at date, modifications history.
-- `PerformanceObligation` — distinct good or service within contract, with
-  satisfaction pattern (point-in-time | over-time) and method (output units,
-  milestones, time-elapsed, cost-to-cost, labour-hours).
-- `TransactionPrice` — decomposed price with fixed, variable, financing adjustment,
-  non-cash consideration, consideration payable to customer.
-- `PriceAllocation` — per-PO allocated amount using relative SSP (IFRS 15.74) or
-  residual method (IFRS 15.79).
-- `RevenueRecognitionEvent` — evidence that a PO moved toward completion (units
-  delivered, % complete via input method, milestone achieved, etc.).
-- `ContractAsset` — derived nightly; right to consideration when recognised > billed.
-- `ContractLiability` — derived nightly; deferred revenue when billed > recognised.
-- `ContractModification` — amendments classified per IFRS 15.18-21 (new contract,
-  cumulative catch-up, prospective).
+- `RevenueContract` — customer contract with identification, dates,
+  transaction price (fixed + variable), currency, signed-at date,
+  modifications history. Named `RevenueContract` (not the bare `Contract`)
+  specifically to avoid colliding with `contract-lifecycle-management`'s
+  generic `Contract` schema, which is the fleet's canonical ADR-051
+  `ns#Contract` implementer; the two are deliberately separate registers for
+  separate bounded contexts (revenue recognition vs. generic contract
+  lifecycle) and MUST NOT be merged, aliased, or share a slug.
+- `PerformanceObligation` — distinct good or service within a
+  `RevenueContract`, with satisfaction pattern (point-in-time | over-time)
+  and method (output units, milestones, time-elapsed, cost-to-cost,
+  labour-hours).
+- `TransactionPrice` — decomposed price with fixed, variable, financing
+  adjustment, non-cash consideration, consideration payable to customer.
+- `PriceAllocation` — per-PO allocated amount using relative SSP
+  (IFRS 15.74) or residual method (IFRS 15.79).
+- `RevenueRecognitionEvent` — evidence that a PO moved toward completion
+  (units delivered, % complete via input method, milestone achieved, etc.).
+- `ContractAsset` — derived nightly; right to consideration when
+  recognised > billed.
+- `ContractLiability` — derived nightly; deferred revenue when
+  billed > recognised.
+- `ContractModification` — amendments to a `RevenueContract` classified per
+  IFRS 15.18-21 (new contract, cumulative catch-up, prospective).
 - `VariableConsiderationAdjustment` — rebates, volume discounts, performance
   bonuses, refund obligations, with periodic re-estimation and constraint.
-- `ContractCostAsset` — incremental costs to obtain or fulfil (sales commission,
-  setup labor), capitalised and amortised per IFRS 15.91-104.
-- `RevenueWaterfall` — per-contract time-series aggregation of transaction price,
-  recognition by period, remaining amount, for 60+ months (IFRS 15.120 disclosure).
+- `ContractCostAsset` — incremental costs to obtain or fulfil a
+  `RevenueContract` (sales commission, setup labor), capitalised and
+  amortised per IFRS 15.91-104.
+- `RevenueWaterfall` — per-`RevenueContract` time-series aggregation of
+  transaction price, recognition by period, remaining amount, for 60+ months
+  (IFRS 15.120 disclosure).
 
-Contracts and POs MUST NOT be embedded in GL transactions or sub-ledger invoice
-rows; they are first-class entities with their own lifecycle, modification history,
-and audit trail. Posting a `RevenueRecognitionEvent` MUST materialise exactly one
-balanced `GLTransaction` per the T1 pattern per REQ-IFRS15-007.
+`RevenueContract`s and POs MUST NOT be embedded in GL transactions or
+sub-ledger invoice rows; they are first-class entities with their own
+lifecycle, modification history, and audit trail. Posting a
+`RevenueRecognitionEvent` MUST materialise exactly one balanced
+`GLTransaction` per the T1 pattern per REQ-IFRS15-007.
 
 #### Scenario: Schema validator accepts a simple one-PO contract
 
 - **GIVEN** the schema
-- **WHEN** a draft contract with one point-in-time PO (implementation service,
-  completed on-site) is saved
-- **THEN** validation MUST pass and `RevenueRecognitionEvent` entries can be added
-  at the PO-completion date.
+- **WHEN** a draft `RevenueContract` with one point-in-time PO
+  (implementation service, completed on-site) is saved
+- **THEN** validation MUST pass using only `RevenueContract`'s own
+  `required` fields (`contractNumber`, `customerId`, `signedAt`,
+  `startDate`, `fixedConsideration`, `currency`, `lifecycleState`,
+  `administrationId`) — no field from `contract-lifecycle-management`'s
+  `Contract` schema (e.g. `contractType`, `status`) MUST be required or
+  present, confirming the two schemas no longer merge
+- AND `RevenueRecognitionEvent` entries can be added at the PO-completion
+  date
 
 #### Scenario: Contract modification is recorded separately, not as inline edit
 
-- **GIVEN** a signed contract C-2026-001
+- **GIVEN** a signed `RevenueContract` C-2026-001
 - **WHEN** a scope change is recorded via `ContractModification` with type =
   "new-distinct-scope" (per IFRS 15.20(a))
-- **THEN** the original contract's POs remain unmodified; a new contract is created
-  with its own POs and allocation.
+- **THEN** the original `RevenueContract`'s POs remain unmodified; a new
+  `RevenueContract` is created with its own POs and allocation
 
-### REQ-IFRS15-002: Transaction price MUST capture fixed consideration, variable-consideration estimate, significant-financing adjustment, non-cash consideration, and consideration-payable-to-customer
+#### Scenario: RevenueContract does not collide with the generic Contract schema
+
+- **GIVEN** both `contract-lifecycle-management` and `bookkeeping-ifrs15-
+  revenue` are imported
+- **WHEN** `components.schemas` is inspected for the merged register
+- **THEN** exactly one full schema definition exists for `Contract` (the
+  generic CLM record) and exactly one full schema definition exists for
+  `RevenueContract` (this capability's record); neither `required` list
+  contains a field the other schema's UI form does not collect
+
+@e2e exclude pure backend/compliance: IFRS 15 revenue recognition — not
+browser-testable at the requirement's own level; route-mount rendering after
+the rename is covered by `contracts-single-home`'s own e2e spec, not
+duplicated here
+
+### Requirement: REQ-IFRS15-002 — Transaction price MUST capture fixed consideration, variable-consideration estimate, significant-financing adjustment, non-cash consideration, and consideration-payable-to-customer
 
 `TransactionPrice` MUST declare the following fields per IFRS 15.50-57:
 
@@ -110,7 +143,7 @@ Schema.org annotation: `schema:PriceSpecification`.
 - **THEN** a `significantFinancingComponent` (approx EUR 100K) MUST be populated
   and disclosed per IFRS 15.60-62.
 
-### REQ-IFRS15-003: Variable consideration MUST be re-estimated at least monthly (or per administration policy), with constraint re-assessment and audit trail
+### Requirement: REQ-IFRS15-003 — Variable consideration MUST be re-estimated at least monthly (or per administration policy), with constraint re-assessment and audit trail
 
 The variable-consideration estimate (rebates, discounts, bonuses, refunds) MUST
 be recalculated at least once per reporting period (default: monthly, customisable
@@ -136,7 +169,7 @@ per administration). Each re-estimation MUST:
   GL is posted (credit revenue, debit accrued revenue), and the revenue waterfall
   is updated.
 
-### REQ-IFRS15-004: Allocation of transaction price MUST default to relative stand-alone selling price (SSP) method, with residual-method support and recalculation on modification
+### Requirement: REQ-IFRS15-004 — Allocation of transaction price MUST default to relative stand-alone selling price (SSP) method, with residual-method support and recalculation on modification
 
 The system SHALL satisfy this requirement: Allocation of transaction price MUST default to relative stand-alone selling price (SSP) method, with residual-method support and recalculation on modification.
 
@@ -180,7 +213,7 @@ Allocation MUST be:
   - PO-1 allocated: EUR 100K (relative SSP)
   - PO-2 allocated: EUR 50K (residual = 150 - 100)
 
-### REQ-IFRS15-005: Over-time performance obligations MUST support input methods (cost-to-cost, labour-hours, machine-hours) and output methods (units delivered, milestones, time-elapsed)
+### Requirement: REQ-IFRS15-005 — Over-time performance obligations MUST support input methods (cost-to-cost, labour-hours, machine-hours) and output methods (units delivered, milestones, time-elapsed)
 
 `PerformanceObligation` MUST declare:
 
@@ -231,7 +264,7 @@ or milestone achieved; no calculation needed.
 - **THEN**: Monthly revenue = EUR 7,143.87 (no further calculation; `RevenueRecognitionEvent`
   entries are auto-generated on 1st of month or on contract anniversary).
 
-### REQ-IFRS15-006: Contract modifications MUST be classified per IFRS 15.18-21 and applied automatically with documented overrideability
+### Requirement: REQ-IFRS15-006 — Contract modifications MUST be classified per IFRS 15.18-21 and applied automatically with documented overrideability
 
 `ContractModification` MUST classify modification type per IFRS 15.18-21:
 
@@ -266,7 +299,7 @@ Classification MUST be overrideable with documented reason (e.g., "Customer insi
   - Revenue for 2026 unchanged (already accrued)
   - Revenue for 2027 updated to EUR 110K; prior allocation unchanged
 
-### REQ-IFRS15-007: Contract asset / contract liability balances MUST be calculated nightly and posted to GL via idempotent reversal + fresh-post job, with full traceability
+### Requirement: REQ-IFRS15-007 — Contract asset / contract liability balances MUST be calculated nightly and posted to GL via idempotent reversal + fresh-post job, with full traceability
 
 Per IFRS 15.116-119, a nightly job MUST:
 
@@ -312,7 +345,7 @@ identical GL lines (no double-posting). Retry-safe via reversal pattern.
 - **THEN**: Reversal + fresh-post cycle yields identical GL lines; no duplicates
   or net-zero lines.
 
-### REQ-IFRS15-008: Revenue waterfall MUST be available per contract and aggregated by segment/customer/product, showing transaction price allocated and recognised by period for 60+ months
+### Requirement: REQ-IFRS15-008 — Revenue waterfall MUST be available per contract and aggregated by segment/customer/product, showing transaction price allocated and recognised by period for 60+ months
 
 `RevenueWaterfall` register MUST store:
 
@@ -359,7 +392,7 @@ Waterfall MUST be:
   - Months 10–12: ~EUR 100K–150K (tail-off)
   - Forecast aligns with project-management milestone schedule
 
-### REQ-IFRS15-009: Costs to obtain and fulfil a contract MUST be capitalised when criteria per IFRS 15.91-95 are met, amortised on PO satisfaction pattern, and tested for impairment
+### Requirement: REQ-IFRS15-009 — Costs to obtain and fulfil a contract MUST be capitalised when criteria per IFRS 15.91-95 are met, amortised on PO satisfaction pattern, and tested for impairment
 
 `ContractCostAsset` register MUST store:
 
@@ -409,7 +442,7 @@ Capitalised costs MUST:
   - GL posting: DR contract-cost-impairment / CR contractcostasset (reduces
     capitalised balance)
 
-### REQ-IFRS15-010: System MUST produce the full IFRS 15.110-129 disclosure pack: revenue disaggregation, contract balance reconciliation, remaining POs, significant judgements, and accounting policies
+### Requirement: REQ-IFRS15-010 — System MUST produce the full IFRS 15.110-129 disclosure pack: revenue disaggregation, contract balance reconciliation, remaining POs, significant judgements, and accounting policies
 
 The disclosure pack MUST include:
 
@@ -474,7 +507,7 @@ All disclosure data MUST be:
   - Policies: "SaaS recognised ratably over subscription term; consulting on
     delivery; costs capitalised as contract-setup labor per IFRS 15.91"
 
-### REQ-IFRS15-011: System MUST support contract-group (combination of contracts) treatment per IFRS 15.17
+### Requirement: REQ-IFRS15-011 — System MUST support contract-group (combination of contracts) treatment per IFRS 15.17
 
 The system SHALL satisfy this requirement: System MUST support contract-group (combination of contracts) treatment per IFRS 15.17.
 

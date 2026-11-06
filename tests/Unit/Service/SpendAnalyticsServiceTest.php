@@ -27,7 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
-use OCA\OpenRegister\Service\Aggregation\AggregationQuery;
+use OCA\OpenRegister\Search\Service\Aggregation\AggregationQuery;
 use OCA\Shillinq\Service\Migration\GlLineAdministrationBackfillMigrator;
 use OCA\Shillinq\Service\SpendAnalyticsService;
 use OCP\IAppConfig;

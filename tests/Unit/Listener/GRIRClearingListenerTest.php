@@ -40,6 +40,7 @@ use OCA\Shillinq\Listener\GRIRClearingListener;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\GoodsReceiptNoteService;
 use OCA\Shillinq\Service\GRIRClearingService;
+use OCA\Shillinq\Service\Purchasing\SupplierInvoiceChecks;
 use OCA\Shillinq\Service\SupplierInvoiceService;
 use OCA\Shillinq\Service\ThreeWayMatchingEngine;
 use OCA\Shillinq\Service\ToleranceProfileService;
@@ -460,6 +461,7 @@ class GRIRClearingListenerTest extends TestCase {
 			administrationContext: $administrationContext,
 			logger: $logger,
 			objectService: new DuckObjectServiceAdapter($os),
+			checks: $this->createStub(SupplierInvoiceChecks::class),
 		);
 		$matchingEngine = new ThreeWayMatchingEngine(
 			appConfig: $appConfig,

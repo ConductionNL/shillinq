@@ -68,7 +68,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-09-gl-gr-ir-clearing/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-009
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -78,7 +78,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -121,7 +121,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * reflects the GRN-accept + settlement + reconciliation triad — each path
  * is a single straight-through compute + post pipeline.
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-09-gl-gr-ir-clearing/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-009
  * @spec openspec/specs/grir-accrual-wiring/spec.md
  *
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
@@ -323,7 +323,7 @@ class GRIRClearingService {
 	 *                           referenced PO line is missing, or the GL
 	 *                           balance invariant fails.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-09-gl-gr-ir-clearing/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-009
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength) Straight-through
 	 * clearing pipeline (resolve → compute → guard → post); splitting it
@@ -475,7 +475,7 @@ class GRIRClearingService {
 	 *                           invoice is missing, or the GL balance
 	 *                           invariant fails.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-09-gl-gr-ir-clearing/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-009
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength) Settlement pipeline
 	 * mirrors createGRIRPosting() — splitting would scatter the balance
@@ -690,7 +690,7 @@ class GRIRClearingService {
 	 *
 	 * @throws \RuntimeException When the administration is inaccessible.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-09-gl-gr-ir-clearing/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-009
 	 */
 	public function reconcileGRIRSaldoForPeriod(string $administrationId, string $periodId): array {
 		$this->assertAccess(administrationId: $administrationId);
@@ -1054,7 +1054,7 @@ class GRIRClearingService {
 			return $account;
 		}
 
-		$fallback = trim($this->appConfig->getValueString(Application::APP_ID, 'inventory_account', ''));
+		$fallback = trim($this->appConfig->getValueString(AppIdentity::APP_ID, 'inventory_account', ''));
 		return $fallback;
 	}//end resolvePoLineAccount()
 
@@ -1088,7 +1088,7 @@ class GRIRClearingService {
 
 		$configured = trim(
 			$this->appConfig->getValueString(
-				Application::APP_ID,
+				AppIdentity::APP_ID,
 				self::CFG_GR_IR_CLEARING_ACCOUNT,
 				self::DEFAULT_GR_IR_CLEARING_ACCOUNT
 			)
@@ -1108,7 +1108,7 @@ class GRIRClearingService {
 	private function accountsPayableAccount(): string {
 		$configured = trim(
 			$this->appConfig->getValueString(
-				Application::APP_ID,
+				AppIdentity::APP_ID,
 				self::CFG_ACCOUNTS_PAYABLE_ACCOUNT,
 				self::DEFAULT_AP_ACCOUNT
 			)
@@ -1128,7 +1128,7 @@ class GRIRClearingService {
 	private function vatPayableAccount(): string {
 		$configured = trim(
 			$this->appConfig->getValueString(
-				Application::APP_ID,
+				AppIdentity::APP_ID,
 				self::CFG_VAT_PAYABLE_ACCOUNT,
 				self::DEFAULT_VAT_ACCOUNT
 			)
@@ -1419,7 +1419,7 @@ class GRIRClearingService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

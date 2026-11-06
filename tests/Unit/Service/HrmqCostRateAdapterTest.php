@@ -65,6 +65,7 @@ class HrmqCostRateServiceStub {
  * structural test below pins that no hrmq type appears in the constructor.
  *
  * @covers \OCA\Shillinq\Service\HrmqCostRateAdapter
+ * @uses \OCA\Shillinq\Util\ObjectIdentifier
  */
 class HrmqCostRateAdapterTest extends TestCase {
 
@@ -90,9 +91,23 @@ class HrmqCostRateAdapterTest extends TestCase {
 			}
 
 			/**
+			 * @return self
+			 */
+			public function setRegister(string $register): self {
+				return $this;
+			}
+
+			/**
+			 * @return self
+			 */
+			public function setSchema(string $schema): self {
+				return $this;
+			}
+
+			/**
 			 * @return mixed The stubbed row.
 			 */
-			public function find(string $id, string $register, string $schema): mixed {
+			public function find(string $id): mixed {
 				if (array_key_exists($id, $this->objects) === false) {
 					throw new RuntimeException('not found');
 				}
@@ -103,8 +118,9 @@ class HrmqCostRateAdapterTest extends TestCase {
 			/**
 			 * @return array<int, mixed> The stubbed contracts.
 			 */
-			public function findAll(string $register, string $schema, array $filters = []): array {
-				return $this->contracts;
+			public function findAll(array $config = [], bool $_rbac = true, bool $_multitenancy = true): array {
+				$employee = (string)($config['filters']['employee'] ?? '');
+				return array_values(array_filter($this->contracts, static fn (array $row): bool => $row['employee'] === $employee));
 			}
 		};
 
@@ -144,6 +160,35 @@ class HrmqCostRateAdapterTest extends TestCase {
 		$rates = $this->adapter($service, ['alice' => ['id' => 'alice']])->ratesFor(['alice']);
 
 		self::assertSame(['alice' => 6250], $rates);
+	}
+
+	/**
+	 * Hrmq receives the person's own active contract, read with OpenRegister's findAll signature.
+	 *
+	 * @return void
+	 */
+	public function testHrmqReceivesThePersonsActiveContract(): void {
+		$service = new class {
+			/**
+			 * The contract hrmq was given.
+			 *
+			 * @var array<string, mixed>|null
+			 */
+			public ?array $contract = null;
+
+			/**
+			 * @return array<string, mixed> The resolved rate.
+			 */
+			public function resolve(array $employee, ?array $contract, string $period, array $extraAdditions): array {
+				$this->contract = $contract;
+				return ['totalCentsPerHour' => 6250];
+			}
+		};
+		$contracts = [['id' => 'c-bob', 'employee' => 'bob'], ['id' => 'c-alice', 'employee' => 'alice']];
+
+		$this->adapter($service, ['alice' => ['id' => 'alice']], $contracts)->ratesFor(['alice']);
+
+		self::assertSame('c-alice', $service->contract['id'] ?? null);
 	}
 
 	/**

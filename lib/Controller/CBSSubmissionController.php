@@ -41,7 +41,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\CBSExportService;
 use OCP\AppFramework\Controller;
@@ -54,6 +54,7 @@ use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * CBS Submission CRUD + lifecycle controller.
@@ -92,7 +93,7 @@ class CBSSubmissionController extends Controller {
 		private readonly AdministrationContextService $administrationContext,
 		private readonly IGroupManager $groupManager,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
@@ -265,10 +266,10 @@ class CBSSubmissionController extends Controller {
 
 		try {
 			$existing = $this->toArray(
-				row: $this->objectService()
-					->setRegister($this->register())
-					->setSchema('CBSSubmission')
-					->find($id)
+				row: ObjectIdentifier::findScopedOrThrow(
+					scoped: $this->objectService()->setRegister($this->register())->setSchema('CBSSubmission'),
+					id: $id
+				)
 			);
 		} catch (\Throwable $e) {
 			return new JSONResponse(
@@ -377,10 +378,10 @@ class CBSSubmissionController extends Controller {
 
 		try {
 			$existing = $this->toArray(
-				row: $this->objectService()
-					->setRegister($this->register())
-					->setSchema('CBSSubmission')
-					->find($id)
+				row: ObjectIdentifier::findScopedOrThrow(
+					scoped: $this->objectService()->setRegister($this->register())->setSchema('CBSSubmission'),
+					id: $id
+				)
 			);
 		} catch (\Throwable $e) {
 			return new JSONResponse(
@@ -458,10 +459,10 @@ class CBSSubmissionController extends Controller {
 
 		try {
 			$existing = $this->toArray(
-				row: $this->objectService()
-					->setRegister($this->register())
-					->setSchema('CBSSubmission')
-					->find($id)
+				row: ObjectIdentifier::findScopedOrThrow(
+					scoped: $this->objectService()->setRegister($this->register())->setSchema('CBSSubmission'),
+					id: $id
+				)
 			);
 		} catch (\Throwable $e) {
 			return new JSONResponse(
@@ -528,10 +529,10 @@ class CBSSubmissionController extends Controller {
 
 		try {
 			$existing = $this->toArray(
-				row: $this->objectService()
-					->setRegister($this->register())
-					->setSchema('CBSSubmission')
-					->find($id)
+				row: ObjectIdentifier::findScopedOrThrow(
+					scoped: $this->objectService()->setRegister($this->register())->setSchema('CBSSubmission'),
+					id: $id
+				)
 			);
 		} catch (\Throwable $e) {
 			return new JSONResponse(
@@ -604,10 +605,10 @@ class CBSSubmissionController extends Controller {
 	 */
 	private function buildShowPayload(string $id): array {
 		$submission = $this->toArray(
-			row: $this->objectService()
-				->setRegister($this->register())
-				->setSchema('CBSSubmission')
-				->find($id)
+			row: ObjectIdentifier::findScopedOrThrow(
+				scoped: $this->objectService()->setRegister($this->register())->setSchema('CBSSubmission'),
+				id: $id
+			)
 		);
 
 		$lines = array_map(
@@ -781,7 +782,7 @@ class CBSSubmissionController extends Controller {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

@@ -45,26 +45,18 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_admin"
+          ],
+          "read": [
+            "shillinq_admin",
+            "shillinq_auditor",
+            "shillinq_bookkeeper"
+          ],
+          "update": [
+            "shillinq_admin"
+          ]
         },
         "type": "object",
         "required": [
@@ -183,31 +175,36 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "employee": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ],
-              "writeStateScope": [
-                "draft"
-              ]
-            },
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
+        "authorization": {
+          "create": [
+            "shillinq_admin",
+            {
+              "group": "shillinq_employee",
+              "match": {
+                "employeeId": "$userId"
+              }
             }
-          }
+          ],
+          "read": [
+            "shillinq_admin",
+            "shillinq_bookkeeper",
+            {
+              "group": "shillinq_employee",
+              "match": {
+                "employeeId": "$userId"
+              }
+            }
+          ],
+          "update": [
+            "shillinq_admin",
+            {
+              "group": "shillinq_employee",
+              "match": {
+                "employeeId": "$userId",
+                "state": "draft"
+              }
+            }
+          ]
         },
         "type": "object",
         "required": [
@@ -329,32 +326,25 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ],
-              "writeStateScope": [
-                "draft"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "administrator": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "submit"
-              ]
+        "authorization": {
+          "create": [
+            "shillinq_admin",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_admin",
+            "shillinq_auditor",
+            "shillinq_bookkeeper"
+          ],
+          "update": [
+            "shillinq_admin",
+            {
+              "group": "shillinq_bookkeeper",
+              "match": {
+                "state": "draft"
+              }
             }
-          }
+          ]
         },
         "type": "object",
         "required": [

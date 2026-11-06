@@ -26,11 +26,12 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Evaluates booking notification triggers and dispatches via openconnector.
@@ -259,7 +260,7 @@ class BookingNotificationService {
 	 */
 	public function recordAuditTrail(array $notification, string $status, string $reason): void {
 		try {
-			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+			$registerSlug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 			if ($registerSlug === '') {
 				$registerSlug = 'shillinq';
 			}
@@ -420,7 +421,7 @@ class BookingNotificationService {
 	 */
 	public function isOptedOut(string $recipient, string $triggerType): bool {
 		try {
-			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+			$registerSlug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 			if ($registerSlug === '') {
 				$registerSlug = 'shillinq';
 			}
@@ -481,7 +482,7 @@ class BookingNotificationService {
 		}
 
 		try {
-			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+			$registerSlug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 			if ($registerSlug === '') {
 				$registerSlug = 'shillinq';
 			}
@@ -561,7 +562,7 @@ class BookingNotificationService {
 		int $windowMinutes = self::DEFAULT_DEDUP_WINDOW_MINUTES,
 	): bool {
 		try {
-			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+			$registerSlug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 			if ($registerSlug === '') {
 				$registerSlug = 'shillinq';
 			}
@@ -675,7 +676,7 @@ class BookingNotificationService {
 	 */
 	private function loadActiveTriggers(string $eventType, ?string $bookingId): array {
 		try {
-			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+			$registerSlug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 			if ($registerSlug === '') {
 				$registerSlug = 'shillinq';
 			}
@@ -714,7 +715,7 @@ class BookingNotificationService {
 	 */
 	private function loadTemplate(string $triggerId, string $eventType): array {
 		try {
-			$registerSlug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+			$registerSlug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 			if ($registerSlug === '') {
 				$registerSlug = 'shillinq';
 			}
@@ -722,10 +723,9 @@ class BookingNotificationService {
 			if ($triggerId !== '') {
 				// ADR-022: use the real ObjectService API (find/findAll);
 				// findObject()/findObjects() do not exist on OpenRegister's ObjectService.
-				$template = $this->objectService->find(
-					id: $triggerId,
-					register: $registerSlug,
-					schema: 'BookingNotificationTemplate'
+				$template = ObjectIdentifier::findScoped(
+					scoped: $this->objectService->setRegister($registerSlug)->setSchema('BookingNotificationTemplate'),
+					id: $triggerId
 				);
 				if ($template !== null) {
 					return $template->jsonSerialize();

@@ -22,6 +22,7 @@ namespace OCA\Shillinq\Tests\Unit\Guard;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Guard\AccountBalanceGuard;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
+use OCA\Shillinq\Tests\Unit\Service\Support\ObjectEntityStub;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -200,6 +201,66 @@ class AccountBalanceGuardTest extends TestCase {
 		self::assertFalse($result, 'Fail-closed: exception must deny archive');
 
 	}//end testRequireZeroBalanceIsFailClosedOnException()
+
+	/**
+	 * requireZeroBalance reads GLLine rows as the entities findAll() returns.
+	 *
+	 * ObjectEntity does not implement ArrayAccess. Subscripting a row threw,
+	 * the fail-closed catch turned that into a denial, and an account with a
+	 * single posting could never be archived even when it balanced.
+	 *
+	 * @return void
+	 */
+	public function testRequireZeroBalanceReadsEntityRows(): void {
+		$lines = [
+			new ObjectEntityStub(payload: ['debit' => 40.0, 'credit' => 0.0]),
+			new ObjectEntityStub(payload: ['debit' => 0.0, 'credit' => 40.0]),
+		];
+		$this->guard = $this->buildGuard(store: $this->buildObjectServiceStub(lines: $lines, closingAccounts: []));
+
+		self::assertTrue(
+			condition: $this->guard->requireZeroBalance(['accountNumber' => '0001', 'administrationId' => 'adm-1']),
+			message: 'A balanced account read as entities must be archivable'
+		);
+
+		$this->guard = $this->buildGuard(
+			store: $this->buildObjectServiceStub(lines: [new ObjectEntityStub(payload: ['debit' => 40.0, 'credit' => 0.0])], closingAccounts: [])
+		);
+		self::assertFalse(
+			condition: $this->guard->requireZeroBalance(['accountNumber' => '0001', 'administrationId' => 'adm-1']),
+			message: 'An unbalanced account read as entities must still be refused'
+		);
+
+	}//end testRequireZeroBalanceReadsEntityRows()
+
+	/**
+	 * requireSingleClosingAccount reads existing closing accounts as entities, so
+	 * re-saving the one closing account is permitted and a second is refused.
+	 *
+	 * @return void
+	 */
+	public function testRequireSingleClosingAccountReadsEntityRows(): void {
+		$existing = [
+			new ObjectEntityStub(
+				payload: ['id' => 'close-uuid', 'accountNumber' => 'CLOSE', 'administrationId' => 'adm-1', 'isClosingAccount' => true]
+			),
+		];
+		$this->guard = $this->buildGuard(store: $this->buildObjectServiceStub(lines: [], closingAccounts: $existing));
+
+		self::assertTrue(
+			condition: $this->guard->requireSingleClosingAccount(
+				['isClosingAccount' => true, 'id' => 'close-uuid', 'accountNumber' => 'CLOSE', 'administrationId' => 'adm-1']
+			),
+			message: 'Re-saving the existing closing account must be permitted'
+		);
+		self::assertFalse(
+			condition: $this->guard->requireSingleClosingAccount(
+				['isClosingAccount' => true, 'id' => 'other-uuid', 'accountNumber' => 'CLOSE-2', 'administrationId' => 'adm-1']
+			),
+			message: 'A second closing account must be refused'
+		);
+
+	}//end testRequireSingleClosingAccountReadsEntityRows()
 
 	/**
 	 * requireSingleClosingAccount returns true trivially when account is not a closing account.

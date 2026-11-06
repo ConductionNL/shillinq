@@ -109,7 +109,7 @@ final class AansluitingenFragmentTest extends TestCase {
 
 		self::assertContains('vat-ledger-return', $schema['properties']['reconciliationType']['enum']);
 		self::assertContains('subledger-gl-control', $schema['properties']['reconciliationType']['enum']);
-		self::assertArrayHasKey('x-openregister-rbac', $schema);
+		self::assertArrayHasKey('authorization', $schema);
 	}//end testAansluitingSchemaShape()
 
 	/**

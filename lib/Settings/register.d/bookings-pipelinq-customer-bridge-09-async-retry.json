@@ -12,6 +12,12 @@
   "components": {
     "schemas": {
       "TimelinePublishRetryEntry": {
+        "authorization": {
+          "read": [
+            "shillinq_booking_administrator",
+            "shillinq_auditor"
+          ]
+        },
         "slug": "TimelinePublishRetryEntry",
         "icon": "TimerSandEmpty",
         "version": "0.1.0",
@@ -106,6 +112,12 @@
         }
       },
       "TimelineDeadLetter": {
+        "authorization": {
+          "read": [
+            "shillinq_booking_administrator",
+            "shillinq_auditor"
+          ]
+        },
         "slug": "TimelineDeadLetter",
         "icon": "EmailAlertOutline",
         "version": "0.1.0",

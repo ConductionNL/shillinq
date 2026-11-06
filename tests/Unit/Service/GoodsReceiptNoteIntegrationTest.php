@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-003
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -65,7 +65,7 @@ final class GoodsReceiptNoteIntegrationTest extends TestCase {
 					'id' => 'po-1',
 					'administrationId' => 'adm-1',
 					'poNumber' => 'PO-2026-adm-1-000003',
-					'lifecycleState' => 'sent',
+					'statusCode' => 'sent',
 				],
 			],
 			'PurchaseOrderLine' => [
@@ -130,7 +130,7 @@ final class GoodsReceiptNoteIntegrationTest extends TestCase {
 
 		// PO transitions to partial_received because 180 < 200 ordered.
 		$po = $stub->rows('PurchaseOrder')[0];
-		self::assertSame('partial_received', $po['lifecycleState']);
+		self::assertSame('partial_received', $po['statusCode']);
 
 	}//end testAcceptCreditsAcceptedAndSkipsRejected()
 
@@ -145,7 +145,7 @@ final class GoodsReceiptNoteIntegrationTest extends TestCase {
 	public function testRejectedQuantityDoesNotMutateInventory(): void {
 		$stub = $this->buildObjectServiceStub([
 			'PurchaseOrder' => [
-				['id' => 'po-9', 'administrationId' => 'adm-1', 'poNumber' => 'PO-X', 'lifecycleState' => 'sent'],
+				['id' => 'po-9', 'administrationId' => 'adm-1', 'poNumber' => 'PO-X', 'statusCode' => 'sent'],
 			],
 			'PurchaseOrderLine' => [
 				[
@@ -210,7 +210,7 @@ final class GoodsReceiptNoteIntegrationTest extends TestCase {
 	public function testAcceptTransitionsToFullyReceived(): void {
 		$stub = $this->buildObjectServiceStub([
 			'PurchaseOrder' => [
-				['id' => 'po-7', 'administrationId' => 'adm-1', 'poNumber' => 'PO-Y', 'lifecycleState' => 'sent'],
+				['id' => 'po-7', 'administrationId' => 'adm-1', 'poNumber' => 'PO-Y', 'statusCode' => 'sent'],
 			],
 			'PurchaseOrderLine' => [
 				[
@@ -248,7 +248,7 @@ final class GoodsReceiptNoteIntegrationTest extends TestCase {
 		$service->acceptGRN(administrationId: 'adm-1', grnId: $grnId);
 
 		$po = $stub->rows('PurchaseOrder')[0];
-		self::assertSame('fully_received', $po['lifecycleState']);
+		self::assertSame('fully_received', $po['statusCode']);
 
 	}//end testAcceptTransitionsToFullyReceived()
 
@@ -261,7 +261,7 @@ final class GoodsReceiptNoteIntegrationTest extends TestCase {
 	public function testAcceptEmptyGrnIsHarmless(): void {
 		$stub = $this->buildObjectServiceStub([
 			'PurchaseOrder' => [
-				['id' => 'po-empty', 'administrationId' => 'adm-1', 'lifecycleState' => 'sent'],
+				['id' => 'po-empty', 'administrationId' => 'adm-1', 'statusCode' => 'sent'],
 			],
 			'PurchaseOrderLine' => [
 				['id' => 'poline-empty', 'poId' => 'po-empty', 'administrationId' => 'adm-1', 'quantityOrdered' => 5.0],
@@ -281,7 +281,7 @@ final class GoodsReceiptNoteIntegrationTest extends TestCase {
 
 		self::assertSame('accepted', $accepted['statusCode']);
 		self::assertCount(0, $stub->rows('StockMove'));
-		self::assertSame('sent', $stub->rows('PurchaseOrder')[0]['lifecycleState']);
+		self::assertSame('sent', $stub->rows('PurchaseOrder')[0]['statusCode']);
 
 	}//end testAcceptEmptyGrnIsHarmless()
 

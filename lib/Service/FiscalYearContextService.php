@@ -51,11 +51,12 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Active-fiscal-year resolver for the BBV consumers (slices 05–08).
@@ -312,7 +313,10 @@ class FiscalYearContextService {
 			// DoesNotExistException for anything that is not a uuid — it does
 			// not return null — so a shared catch would swallow the fallback.
 			try {
-				$single = $this->asRecord(candidate: $scoped->find($administrationId));
+				$single = $this->asRecord(candidate: ObjectIdentifier::findScoped(
+					scoped: $scoped,
+					id: $administrationId
+				));
 				if ($single !== null) {
 					return $single;
 				}
@@ -391,7 +395,7 @@ class FiscalYearContextService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

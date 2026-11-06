@@ -311,9 +311,33 @@
 					{
 						"id": "group-cash-position",
 						"title": "Group cash position",
-						"type": "stats-block",
-						"iconClass": "icon-folder",
-						"props": { "count": 0, "countLabel": "EUR (net of pending sweeps)", "variant": "primary" }
+						"type": "stat",
+						"content": {
+							"label": "Group cash position",
+							"icon": "CashMultiple",
+							"format": { "style": "currency", "currency": "EUR", "decimals": 2 },
+							"endpointSource": { "url": "/apps/shillinq/api/v1/cash-position" },
+							"valueField": "total",
+							"clickRoute": "BankAccounts"
+						}
+					},
+					{
+						"id": "cash-by-account",
+						"title": "Cash per bank account",
+						"type": "object-table",
+						"iconClass": "icon-toggle-filelist",
+						"content": {
+							"endpointSource": { "url": "/apps/shillinq/api/v1/cash-position", "responsePath": "accounts" },
+							"emptyText": "No bank accounts yet.",
+							"columns": [
+								{ "key": "accountName", "label": "Account" },
+								{ "key": "iban", "label": "IBAN" },
+								{ "key": "ledgerAccountNumber", "label": "Ledger account" },
+								{ "key": "ledgerBalance", "label": "Ledger balance", "formatter": "currency", "formatterOptions": { "currency": "EUR", "decimals": 2 } },
+								{ "key": "bankBalance", "label": "Bank balance", "formatter": "currency", "formatterOptions": { "currency": "EUR", "decimals": 2 } },
+								{ "key": "bankBalanceDate", "label": "Bank balance on" }
+							]
+						}
 					},
 					{
 						"id": "fx-exposure",
@@ -352,7 +376,8 @@
 					{ "id": "lg-fx", "widgetId": "fx-exposure", "gridX": 3, "gridY": 0, "gridWidth": 3, "gridHeight": 2 },
 					{ "id": "lg-runway", "widgetId": "liquidity-runway", "gridX": 6, "gridY": 0, "gridWidth": 3, "gridHeight": 2 },
 					{ "id": "lg-dcoh", "widgetId": "days-cash-on-hand", "gridX": 9, "gridY": 0, "gridWidth": 3, "gridHeight": 2 },
-					{ "id": "lg-positions", "widgetId": "fx-positions", "gridX": 0, "gridY": 2, "gridWidth": 12, "gridHeight": 4 }
+					{ "id": "lg-cash-accounts", "widgetId": "cash-by-account", "gridX": 0, "gridY": 2, "gridWidth": 12, "gridHeight": 4 },
+					{ "id": "lg-positions", "widgetId": "fx-positions", "gridX": 0, "gridY": 6, "gridWidth": 12, "gridHeight": 4 }
 				]
 			}
 		}

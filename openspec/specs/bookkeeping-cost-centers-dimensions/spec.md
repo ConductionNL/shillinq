@@ -227,3 +227,82 @@ it does not require any WBSO code in this capability.
   `Project.fiscalYearId`
 - **THEN** the join MUST resolve cleanly using the dimension shape
   declared here, with no schema changes required.
+
+### Requirement: An administration keeps posting restrictions (REQ-LBR-004)
+
+Shillinq SHALL provide a `PostingRestriction` schema per administration with
+`accountPattern`, `costCenterCode`, `projectCode`, `reason`, `validFrom`,
+`validTo` and a lifecycle, and a settings page to list, add and retire
+restrictions.
+
+@e2e exclude the pages are generic index and detail pages of the PostingRestriction schema, held to the menu by tests/vitest/ledgerBookingRules.spec.js
+
+#### Scenario: A controller adds a restriction
+
+- GIVEN a controller on the posting restrictions settings page of Gemeente Voorbeeld
+- WHEN they add account pattern 4600, cost centre KP-100, project P-2026-014 with a reason and save
+- THEN the restriction is listed as active with its reason
+
+### Requirement: A blocked combination cannot be posted (REQ-LBR-005)
+
+When a journal entry or a general ledger transaction made by a person is
+posted, the post guard MUST refuse it if a line's account starts with an
+active restriction's `accountPattern` and the line's cost centre and project
+match the restriction's (an empty value on the restriction matches any),
+on the posting date. The refusal SHALL name the restriction's reason.
+
+@e2e exclude the refusal runs in the post guards, asserted by PostingGuardsThroughAdapterTest::testAGlTransactionOnABlockedCombinationIsRefusedWithTheReason and PostingRestrictionGuardTest::testABlockedCombinationIsRefusedWithItsReason
+
+#### Scenario: A bookkeeper books a sports subsidy on the wrong cost centre
+
+- GIVEN the active restriction for 4600, KP-100 and P-2026-014
+- WHEN a bookkeeper posts a journal entry with a line on 4600 for cost centre KP-100 and project P-2026-014
+- THEN the post is refused with the reason "Sportakkoord-subsidies lopen via Sociaal Domein, niet via bestuursondersteuning"
+
+#### Scenario: The same line on the allowed cost centre posts
+
+- GIVEN the same restriction
+- WHEN the line is on cost centre KP-300 Sociaal Domein
+- THEN the entry posts
+
+### Requirement: A ledger line carries a signed amount (REQ-RSR-001)
+
+`GLLine` SHALL declare `signedAmount`, equal to `amount` for a credit line and
+to minus `amount` for a debit line.
+
+#### Scenario: A cost line is negative
+
+- @e2e exclude pure backend: signedAmount is a register calculation, proven by GlLineResultStampsTest::testACostLineIsNegative against the real fragment
+
+- GIVEN a posted debit line of EUR 3,000 on 4100 Huisvesting
+- WHEN its signed amount is read
+- THEN it is minus EUR 3,000
+
+### Requirement: Only posted profit and loss lines count in a segment result (REQ-RSR-002)
+
+When a transaction posts, each of its lines SHALL be stamped with its
+account class and as counting in results. When a transaction is reversed,
+its lines and the lines of the transaction it reverses SHALL stop counting.
+Segment aggregations MUST include only lines of class `pnl` that count.
+
+#### Scenario: A bank line and a draft are left out
+
+- @e2e exclude pure backend: the stamps and the aggregation filter are proven by GlLineResultStampsTest::testTheSegmentResultOfKp300IsTwelveThousand
+
+- GIVEN posted lines for KP-300 of EUR 40,000 credit on 8200, EUR 25,000 debit on 4000, EUR 3,000 debit on 4100 and EUR 40,000 debit on bank account 1100, and a draft line of EUR 5,000 debit on 4000
+- WHEN the segment result for KP-300 in September 2026 is read
+- THEN it is EUR 12,000
+
+### Requirement: The segment dashboard shows revenue, costs and result (REQ-RSR-003)
+
+The segment dashboard SHALL show, per segment of the chosen type (cost
+centre, cost object, project, analytical dimension) and for the chosen
+period, the revenue, the costs and the result.
+
+#### Scenario: A manager reads Sociaal Domein's September
+
+- @e2e tests/e2e/reporting-segment-results.spec.ts
+
+- GIVEN a manager on the segment P&L dashboard with segment type cost centre and period September 2026
+- WHEN the table loads
+- THEN the row for KP-300 Sociaal Domein shows revenue EUR 40,000, costs EUR 28,000 and result EUR 12,000

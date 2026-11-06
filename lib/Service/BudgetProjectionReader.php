@@ -66,7 +66,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/budget-projection-engine/specs/budget-projection-engine/spec.md#req-bpe-009
+ * @spec openspec/specs/budget-projection-engine/spec.md#req-bpe-009
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -77,7 +77,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -86,7 +86,7 @@ use Throwable;
  * Reads and batches every schema the projection engine needs
  * (REQ-BPE-003, REQ-BPE-009).
  *
- * @spec openspec/changes/budget-projection-engine/specs/budget-projection-engine/spec.md#req-bpe-009
+ * @spec openspec/specs/budget-projection-engine/spec.md#req-bpe-009
  *
  * @SuppressWarnings(PHPMD.BooleanArgumentFlag) `loadContext()`'s
  * `$includeLedgerGroups` flag mirrors {@see BudgetVsActualsReader::loadContext()}'s
@@ -163,7 +163,7 @@ class BudgetProjectionReader {
 	 *     ledgerGroupKeyToIndex: array<string,int>,
 	 * } The assembled context {@see BudgetProjectionService} feeds to the calculator.
 	 *
-	 * @spec openspec/changes/budget-projection-engine/specs/budget-projection-engine/spec.md#req-bpe-009
+	 * @spec openspec/specs/budget-projection-engine/spec.md#req-bpe-009
 	 */
 	public function loadContext(string $administrationId, bool $includeLedgerGroups = false): array {
 		$accountRows = $this->query(schema: self::SCHEMA_ACCOUNT, filters: ['administrationId' => $administrationId]);
@@ -560,7 +560,7 @@ class BudgetProjectionReader {
 	 * @return string The register slug, defaulting to `shillinq`.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

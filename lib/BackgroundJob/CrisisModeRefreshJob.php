@@ -30,6 +30,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\BackgroundJob;
 
+use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
@@ -46,6 +47,7 @@ use Throwable;
  * @spec openspec/changes/zzp-cashflow-13wk/tasks.md#task-21
  */
 class CrisisModeRefreshJob extends TimedJob {
+	use RunsJobAsSystem;
 
 	/**
 	 * Daily interval in seconds.
@@ -76,6 +78,21 @@ class CrisisModeRefreshJob extends TimedJob {
 	}//end __construct()
 
 	/**
+	 * Run the job inside OpenRegister's system context.
+	 *
+	 * @param mixed $argument The job argument.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/specs/schema-authorization/spec.md
+	 */
+	protected function run($argument): void {
+		$this->asSystem(work: function () use ($argument): void {
+			$this->runAsJob(argument: $argument);
+		});
+	}//end run()
+
+	/**
 	 * Re-run aggregations on each horizon flagged as crisis.
 	 *
 	 * @param mixed $argument Job argument (unused).
@@ -87,7 +104,7 @@ class CrisisModeRefreshJob extends TimedJob {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
 	 *     TimedJob::run()'s signature; this job takes no argument.
 	 */
-	protected function run($argument): void {
+	private function runAsJob($argument): void {
 		if ($this->settingsService->isOpenRegisterAvailable() === false) {
 			$this->logger->info('CrisisModeRefreshJob: OR unavailable, skipping.');
 			return;
@@ -158,7 +175,7 @@ class CrisisModeRefreshJob extends TimedJob {
 			);
 		}//end try
 
-	}//end run()
+	}//end runAsJob()
 
 	/**
 	 * Defensive field extractor.

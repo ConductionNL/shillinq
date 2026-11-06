@@ -606,6 +606,100 @@ class FinancialSeriesCalculator {
 	}//end computeKpis()
 
 	/**
+	 * The cash position per bank account and combined (REQ-BCON-004).
+	 *
+	 * Uses the same liquid classification and sign as computeKpis(), so with
+	 * every bank account on a liquid ledger account the total equals its
+	 * `cashPosition`. A ledger account a bank account names counts as liquid
+	 * too. Liquid ledger accounts no bank account names are summed on one
+	 * `other` line. The bank balance is the closing balance of the account's
+	 * most recent statement that carries one.
+	 *
+	 * @param array<string,mixed>            $data         `accounts`, `transactions`, `lines`.
+	 * @param array<int,array<string,mixed>> $bankAccounts BankAccount records.
+	 * @param array<int,array<string,mixed>> $statements   BankStatement records.
+	 *
+	 * @return array{accounts:array<int,array<string,mixed>>,other:float,total:float}
+	 *
+	 * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
+	 */
+	public function cashPositionByAccount(array $data, array $bankAccounts, array $statements): array {
+		$liquid = $this->classifyAccounts(accounts: ($data['accounts'] ?? []))['liquid'];
+		foreach ($bankAccounts as $bankAccount) {
+			$named = $this->toStringValue(value: $bankAccount['ledgerAccountNumber'] ?? null);
+			if ($named !== '') {
+				$liquid[$named] = true;
+			}
+		}
+
+		$balances = [];
+		foreach ($this->postedLinesByMonth(transactions: ($data['transactions'] ?? []), lines: ($data['lines'] ?? [])) as $monthLines) {
+			foreach ($monthLines as $line) {
+				$number = $this->toStringValue(value: $line['accountNumber'] ?? null);
+				if (isset($liquid[$number]) === true) {
+					$balances[$number] = (($balances[$number] ?? 0.0) + $this->signedAmount(line: $line, kind: 'liquid'));
+				}
+			}
+		}
+
+		$latest = $this->latestClosingBalances(statements: $statements);
+		$rows = [];
+		$named = [];
+		foreach ($bankAccounts as $bankAccount) {
+			$ledger = $this->toStringValue(value: $bankAccount['ledgerAccountNumber'] ?? null);
+			$iban = strtoupper(str_replace(' ', '', $this->toStringValue(value: $bankAccount['iban'] ?? null)));
+			$named[$ledger] = true;
+			$rows[] = [
+				'bankAccountId' => $this->toStringValue(value: $bankAccount['id'] ?? ($bankAccount['@self']['id'] ?? null)),
+				'accountName' => $this->toStringValue(value: $bankAccount['accountName'] ?? null),
+				'iban' => $iban,
+				'ledgerAccountNumber' => $ledger,
+				'ledgerBalance' => $this->round2(value: ($balances[$ledger] ?? 0.0)),
+				'bankBalance' => ($latest[$iban]['balance'] ?? null),
+				'bankBalanceDate' => ($latest[$iban]['date'] ?? null),
+			];
+		}
+
+		$other = 0.0;
+		foreach ($balances as $number => $balance) {
+			if (isset($named[$number]) === false) {
+				$other += $balance;
+			}
+		}
+
+		$total = $this->sumValues(values: array_column($rows, 'ledgerBalance')) + $other;
+		return ['accounts' => $rows, 'other' => $this->round2(value: $other), 'total' => $this->round2(value: $total)];
+
+	}//end cashPositionByAccount()
+
+	/**
+	 * The most recent closing balance per IBAN.
+	 *
+	 * @param array<int,array<string,mixed>> $statements BankStatement records.
+	 *
+	 * @return array<string,array{balance:float,date:string}>
+	 */
+	private function latestClosingBalances(array $statements): array {
+		$latest = [];
+		foreach ($statements as $statement) {
+			if (is_numeric($statement['closingBalance'] ?? null) === false) {
+				continue;
+			}
+
+			$iban = strtoupper(str_replace(' ', '', $this->toStringValue(value: $statement['bankAccountIban'] ?? null)));
+			$date = $this->toStringValue(value: $statement['statementDate'] ?? null);
+			if ($iban === '' || (isset($latest[$iban]) === true && strcmp($latest[$iban]['date'], $date) >= 0)) {
+				continue;
+			}
+
+			$latest[$iban] = ['balance' => (float)$statement['closingBalance'], 'date' => $date];
+		}
+
+		return $latest;
+
+	}//end latestClosingBalances()
+
+	/**
 	 * Range-driven KPI metrics: turnover, margin (EUR + %) and billable
 	 * (hours + %) aggregated over an explicit list of month buckets rather
 	 * than the fixed year-to-date / current-month windows computeKpis() uses.

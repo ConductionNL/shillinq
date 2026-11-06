@@ -339,10 +339,11 @@
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
-                  "action": "materialise-gl-transaction",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\MaterialiseGlTransactionAction",
                   "condition": "@self.settlementMode == 'reimbursable'",
-                  "description": "Reimbursable path: debit per expense line credit to expense-payable account (Account.isExpenseControlAccount=true); sets glReimbursableTransactionId. Identical to expense-capture-core pattern but selected only when claim.settlementMode = reimbursable.",
+                  "description": "Reimbursable path: debit per expense line credit to expense-payable account (Account.controlAccountFor=expense-claims); sets glReimbursableTransactionId. Identical to expense-capture-core pattern but selected only when claim.settlementMode = reimbursable.",
                   "actionParameters": {
+                    "sourceSchema": "ExpenseClaimEntry",
                     "register": "shillinq",
                     "targetSchema": "GLTransaction",
                     "settlementMode": "reimbursable",
@@ -379,10 +380,11 @@
                 },
                 {
                   "trigger": "x-openregister-lifecycle-action",
-                  "action": "materialise-gl-transaction",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\MaterialiseGlTransactionAction",
                   "condition": "@self.settlementMode == 'pass-through'",
                   "description": "Pass-through path: debit customer AR account (per Receipt/MileageEntry/PerDiem.passthroughDebitAccountCode, fallback ReimbursementPolicy.passthroughDebitAccountCode), credit cost centres + revenue-deferral on the markup delta. Sets glPassThroughTransactionId. Multiple GL entries are emitted when passThroughCustomerIds.length > 1 (multi-customer).",
                   "actionParameters": {
+                    "sourceSchema": "ExpenseClaimEntry",
                     "register": "shillinq",
                     "targetSchema": "GLTransaction",
                     "settlementMode": "pass-through",
@@ -517,30 +519,20 @@
             "title": "Administration ID"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ],
-              "description": "Bookkeepers configure policies per administration."
-            },
-            "employee": {
-              "permissions": [
-                "read"
-              ],
-              "description": "Employees read-only to see applicable thresholds at claim submission."
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ],
-              "description": "Read-only access for audit."
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_bookkeeper"
+          ]
         }
       },
       "PassThroughMarkupRule": {
@@ -646,30 +638,20 @@
             "title": "Administration ID"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ],
-              "description": "Bookkeepers configure markup rules per administration."
-            },
-            "employee": {
-              "permissions": [
-                "read"
-              ],
-              "description": "Employees read-only to see applicable rates at expense classification."
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ],
-              "description": "Read-only access for audit."
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_bookkeeper"
+          ]
         }
       }
     }

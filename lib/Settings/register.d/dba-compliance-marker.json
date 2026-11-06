@@ -361,34 +361,6 @@
             "save": "OCA\\Shillinq\\Guard\\DBAOpdrachtGuard::validateOnSave"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "ondernemer": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "boekhouder": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "compliance_officer": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "controleur": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-aggregations": {
           "countByRisicoNiveau": {
             "field": "riskLevel",
@@ -406,6 +378,22 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a DBA opdracht is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_ondernemer"
+          ],
+          "read": [
+            "shillinq_ondernemer",
+            "shillinq_bookkeeper",
+            "shillinq_compliance_officer",
+            "shillinq_controleur"
+          ],
+          "update": [
+            "shillinq_ondernemer",
+            "shillinq_bookkeeper",
+            "shillinq_compliance_officer"
+          ]
         }
       },
       "DBAIntake": {
@@ -701,36 +689,24 @@
             "description": "Risico-band afgeleid van totaalScore."
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "ondernemer": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "boekhouder": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "compliance_officer": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "controleur": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a DBA intake is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_ondernemer"
+          ],
+          "read": [
+            "shillinq_ondernemer",
+            "shillinq_bookkeeper",
+            "shillinq_compliance_officer",
+            "shillinq_controleur"
+          ],
+          "update": [
+            "shillinq_ondernemer",
+            "shillinq_compliance_officer"
+          ]
         }
       },
       "DBAModelovereenkomst": {
@@ -843,31 +819,23 @@
             "title": "Sha256"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "ondernemer": {
-              "permissions": [
-                "read",
-                "create"
-              ]
-            },
-            "compliance_officer": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "controleur": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a DBA modelovereenkomst is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_ondernemer",
+            "shillinq_compliance_officer"
+          ],
+          "read": [
+            "shillinq_ondernemer",
+            "shillinq_compliance_officer",
+            "shillinq_controleur"
+          ],
+          "update": [
+            "shillinq_compliance_officer"
+          ]
         }
       },
       "DBARisicoflag": {
@@ -1029,32 +997,6 @@
             "fiscalSource"
           ]
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "ondernemer": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "boekhouder": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "compliance_officer": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "controleur": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-aggregations": {
           "openFlagsPerOpdracht": {
             "field": "assignmentId",
@@ -1075,6 +1017,18 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a DBA risico-flag is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "read": [
+            "shillinq_ondernemer",
+            "shillinq_bookkeeper",
+            "shillinq_compliance_officer",
+            "shillinq_controleur"
+          ],
+          "update": [
+            "shillinq_ondernemer",
+            "shillinq_compliance_officer"
+          ]
         }
       },
       "DBAPortfolioRisico": {
@@ -1233,31 +1187,6 @@
             "title": "Overall Risico"
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "ondernemer": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "boekhouder": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "compliance_officer": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "controleur": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-aggregations": {
           "countByOverallRisico": {
             "field": "overallRisk",
@@ -1269,6 +1198,17 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a DBA portfolio-risico is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "read": [
+            "shillinq_ondernemer",
+            "shillinq_bookkeeper",
+            "shillinq_compliance_officer",
+            "shillinq_controleur"
+          ],
+          "update": [
+            "shillinq_compliance_officer"
+          ]
         }
       },
       "DBAEvidenceDossier": {
@@ -1401,36 +1341,24 @@
             "description": "Score gebaseerd op aanwezigheid van vier verplichte stuk-types: GETEKENDE_OVEREENKOMST, FACTUUR_EERSTE, FACTUUR_LAATSTE, URENSTAAT_KWARTAAL."
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "ondernemer": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ]
-            },
-            "boekhouder": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "compliance_officer": {
-              "permissions": [
-                "read",
-                "update"
-              ]
-            },
-            "controleur": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        },
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a DBA evidence-dossier is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_ondernemer"
+          ],
+          "read": [
+            "shillinq_ondernemer",
+            "shillinq_bookkeeper",
+            "shillinq_compliance_officer",
+            "shillinq_controleur"
+          ],
+          "update": [
+            "shillinq_ondernemer",
+            "shillinq_compliance_officer"
+          ]
         }
       }
     }

@@ -29,7 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
 use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentResult;
 use OCP\IAppConfig;
@@ -172,10 +172,12 @@ class DepositReconciliationService {
 			->setRegister($registerSlug)
 			->setSchema('DepositPayment')
 			->findAll(
-				[
+				config: [
 					'filters' => ['paymentIntentId' => $paymentIntentId],
 					'limit' => 1,
-				]
+				],
+				// Gateway webhooks are authenticated by signature, not by a Nextcloud session.
+				_rbac: false,
 			);
 
 		if (empty($matches) === true) {
@@ -215,6 +217,7 @@ class DepositReconciliationService {
 			object: $deposit,
 			register: $registerSlug,
 			schema: 'DepositPayment',
+			_rbac: false,
 		);
 
 		return self::RESULT_APPLIED;
@@ -252,11 +255,12 @@ class DepositReconciliationService {
 				->setRegister($registerSlug)
 				->setSchema('DepositPayment')
 				->findAll(
-					[
+					config: [
 						'filters' => ['state' => 'pending'],
 						'limit' => $pageSize,
 						'offset' => (($page - 1) * $pageSize),
-					]
+					],
+					_rbac: false,
 				);
 			$batchSize = count($batch);
 
@@ -389,7 +393,7 @@ class DepositReconciliationService {
 	 * @return string The register slug (defaults to 'shillinq').
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($slug === '') {
 			return 'shillinq';
 		}

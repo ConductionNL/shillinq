@@ -897,59 +897,27 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "subsidie-coordinator": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ],
-              "description": "Full CRUD on subsidie-type Orders; initiates lifecycle transitions."
-            },
-            "manager": {
-              "permissions": [
-                "read",
-                "approve"
-              ],
-              "description": "Read + approval authority on subsidie verleen/terugvorderen and purchase approve transitions."
-            },
-            "ondernemer": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ],
-              "description": "Full CRUD on engagement-type Orders (DBA)."
-            },
-            "compliance_officer": {
-              "permissions": [
-                "read",
-                "update"
-              ],
-              "description": "Read + update on engagement-type Orders (DBA compliance)."
-            },
-            "bookkeeper": {
-              "permissions": [
-                "create",
-                "read",
-                "update"
-              ],
-              "description": "Full CRUD on purchase-type Orders; read access to subsidie for reconciliation."
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ],
-              "description": "Read-only access across every order type for compliance audit."
-            },
-            "controleur": {
-              "permissions": [
-                "read"
-              ],
-              "description": "Read-only access on engagement-type Orders (DBA)."
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_ondernemer",
+            "shillinq_subsidie_coordinator"
+          ],
+          "read": [
+            "shillinq_auditor",
+            "shillinq_bookkeeper",
+            "shillinq_compliance_officer",
+            "shillinq_controleur",
+            "shillinq_manager",
+            "shillinq_ondernemer",
+            "shillinq_subsidie_coordinator"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_compliance_officer",
+            "shillinq_ondernemer",
+            "shillinq_subsidie_coordinator"
+          ]
         }
       }
     }

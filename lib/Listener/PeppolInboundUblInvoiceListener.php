@@ -39,7 +39,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -62,7 +62,7 @@ use Throwable;
  *
  * @implements IEventListener<Event>
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
  */
 class PeppolInboundUblInvoiceListener implements IEventListener {
 	/**
@@ -104,7 +104,7 @@ class PeppolInboundUblInvoiceListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#supplierinvoice
 	 */
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectCreatedEvent === false) {

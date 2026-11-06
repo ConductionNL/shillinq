@@ -1,0 +1,62 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "reporting-relation-both-sides",
+    "adr": "ADR-037 modular register fragment: never edit shillinq_register.json",
+    "description": "Links a customer record to the supplier record of the same organisation, so the invoices sent to and received from it can be shown together. RelationLinkService writes the link only after a user confirms it, and refuses a supplier that another customer is linked to already.",
+    "spec": "openspec/specs/bookkeeping-reconciliation-reports/spec.md"
+  },
+  "info": {
+    "version": "0.1.0-reporting-relation-both-sides"
+  },
+  "components": {
+    "schemas": {
+      "CustomerMaster": {
+        "properties": {
+          "payeeId": {
+            "type": "string",
+            "nullable": true,
+            "title": "Supplier record",
+            "description": "The supplier record of the same organisation, when this customer is also a supplier.",
+            "example": "3f1c2b9e-7a44-4a51-9d0e-5b8f7c1e2a90"
+          },
+          "payeeLink": {
+            "type": "object",
+            "nullable": true,
+            "title": "Supplier link",
+            "description": "How the link to the supplier record was made and who confirmed it.",
+            "properties": {
+              "matchedOn": {
+                "type": "string",
+                "enum": ["kvk", "vat", "manual"],
+                "title": "Matched on",
+                "description": "The equal number that suggested the link, or manual for a link made by hand."
+              },
+              "confirmedBy": {
+                "type": "string",
+                "title": "Confirmed by",
+                "description": "The user who confirmed the link."
+              },
+              "confirmedAt": {
+                "type": "string",
+                "format": "date-time",
+                "title": "Confirmed at",
+                "description": "When the link was confirmed."
+              }
+            },
+            "example": { "matchedOn": "kvk", "confirmedBy": "petra", "confirmedAt": "2026-03-01T10:00:00+00:00" }
+          },
+          "dismissedPayeeSuggestions": {
+            "type": "array",
+            "items": { "type": "string" },
+            "title": "Dismissed supplier suggestions",
+            "description": "Supplier records a user said are not this customer, so they are not suggested again.",
+            "example": ["8a0d6f3e-1b2c-4d5e-9f60-7a8b9c0d1e2f"]
+          }
+        }
+      }
+    }
+  },
+  "objects": []
+}

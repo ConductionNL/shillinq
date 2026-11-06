@@ -179,7 +179,7 @@
       `CashflowChartWidget` entry's shape and docblock convention.
 
 ## 5. Frontend — `BudgetGrid` placement (REQ-BCH-001)
-- [ ] Edit `src/views/BudgetGrid.vue` (`budget-grid-view`'s own file, per
+- [x] Edit `src/views/BudgetGrid.vue` (`budget-grid-view`'s own file, per
       that change's "reuses, does not redesign" framing): add a "view
       trend" icon-button per row (`LedgerGroup` and resolved `Account` leaf
       rows alike), `tabindex="0"`/`role="button"`/`:aria-expanded`/
@@ -187,10 +187,12 @@
       grid's own existing expand-toggle pattern. Add `openChartRowId`
       state (single ref, closes any previously open chart on a new
       selection).
-- [ ] Mount `BudgetTrendChart` inline beneath the open row, `scope`/`id`
+- [x] Mount `BudgetTrendChart` inline beneath the open row, `scope`/`id`
       derived from the row's own `LedgerGroup`/`Account` data, `range` from
       the grid's own currently-displayed period range.
-- [ ] Add `data-testid="budget-grid-view-trend-toggle"` per row.
+- [x] Add `data-testid="budget-grid-view-trend-toggle"` per row.
+
+  **Built 9 Oct 2026** (BudgetGrid.vue has landed): a real `<button>` per row with `:aria-expanded`, Enter and Space, `openChartRowId` via `nextOpenChartRow`, the chart in a full-width row beneath, props from `trendChartProps` (src/views/budgetGridHelpers.js); tests/vitest/budgetGridTrend.spec.js. The note below is history.
 
   **NOT IMPLEMENTED — hard blocker, not an oversight: `src/views/
   BudgetGrid.vue` does not exist in this worktree/branch.

@@ -13,6 +13,14 @@
 			"icon": "CreditCardOutline",
 			"route": "PaymentRequests",
 			"order": 24
+		},
+		{
+			"id": "RefundsToPay",
+			"label": "Refunds to pay",
+			"icon": "CashRefund",
+			"route": "PaymentRequests",
+			"query": {"state": "refund_requested"},
+			"order": 25
 		}
 	],
 	"pages": [
@@ -33,6 +41,10 @@
 				],
 				"defaultSort": "capturedAt",
 				"detailRoute": "PaymentRequestDetail",
+				"actions": [
+					{"id": "approve-refund", "label": "Approve", "icon": "CheckCircleOutline", "handler": "approveRefund", "visibleWhen": {"field": "state", "op": "eq", "value": "refund_requested"}},
+					{"id": "mark-refund-paid", "label": "Mark paid", "icon": "BankTransferOut", "handler": "openRefundPaid", "visibleWhen": {"field": "state", "op": "eq", "value": "refund_requested"}}
+				],
 				"filters": [
 					{
 						"key": "state",
@@ -46,7 +58,10 @@
 							{"value": "captured_unapplied", "label": "Captured (unapplied)"},
 							{"value": "failed", "label": "Failed"},
 							{"value": "expired", "label": "Expired"},
-							{"value": "voided", "label": "Voided"}
+							{"value": "voided", "label": "Voided"},
+							{"value": "refund_requested", "label": "Refund requested"},
+							{"value": "refunded", "label": "Refunded"},
+							{"value": "credited", "label": "Credited"}
 						]
 					},
 					{

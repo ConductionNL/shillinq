@@ -42,7 +42,7 @@ namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Controller;
@@ -55,6 +55,7 @@ use OCP\IRequest;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Admin endpoints over the timeline dead-letter queue.
@@ -80,7 +81,7 @@ class TimelineDeadLetterController extends Controller {
 		private readonly ITimeFactory $time,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
@@ -96,7 +97,7 @@ class TimelineDeadLetterController extends Controller {
 	 *
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function index(): JSONResponse {
 		if ($this->settings->isOpenRegisterAvailable() === false) {
 			return new JSONResponse(
@@ -139,7 +140,7 @@ class TimelineDeadLetterController extends Controller {
 			$this->logger->error(
 				'TimelineDeadLetterController: index failed',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'exception' => $e->getMessage(),
 				]
 			);
@@ -166,7 +167,7 @@ class TimelineDeadLetterController extends Controller {
 	 *
 	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
 	 */
-	#[AuthorizedAdminSetting(Application::APP_ID)]
+	#[AuthorizedAdminSetting(AppIdentity::APP_ID)]
 	public function retry(string $id): JSONResponse {
 		if ($this->settings->isOpenRegisterAvailable() === false) {
 			return new JSONResponse(
@@ -261,7 +262,7 @@ class TimelineDeadLetterController extends Controller {
 			$this->logger->info(
 				'TimelineDeadLetterController: dead-letter manually re-queued',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'deadLetter' => $deadId,
 					'retryEntry' => $entryId,
 					'type' => $retry['type'],
@@ -281,7 +282,7 @@ class TimelineDeadLetterController extends Controller {
 			$this->logger->error(
 				'TimelineDeadLetterController: retry failed',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'id' => $id,
 					'exception' => $e->getMessage(),
 				]
@@ -305,10 +306,10 @@ class TimelineDeadLetterController extends Controller {
 	 */
 	private function loadDead(mixed $objectService, string $registerSlug, string $id): ?array {
 		try {
-			$record = $objectService
-				->setRegister($registerSlug)
-				->setSchema('TimelineDeadLetter')
-				->find($id);
+			$record = ObjectIdentifier::findScoped(
+				scoped: $objectService->setRegister($registerSlug)->setSchema('TimelineDeadLetter'),
+				id: $id
+			);
 		} catch (Throwable $e) {
 			return null;
 		}

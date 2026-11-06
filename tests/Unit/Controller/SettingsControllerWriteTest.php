@@ -26,6 +26,7 @@ use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Controller\SettingsController;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -121,6 +122,29 @@ final class SettingsControllerWriteTest extends TestCase {
 		);
 
 	}//end testUpdatePersistsTheRequestParametersAndReturnsTheStoredConfig()
+
+	/**
+	 * A return address the service refuses is a 400 with the reason, not a
+	 * 500 and not a success (REQ-SPPI-010).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/portal-pay-row-action-keys/specs/portal-payment-initiation/spec.md (REQ-SPPI-010)
+	 */
+	public function testAnUnsafeReturnAddressIsRefusedWith400(): void {
+		$this->request->method('getParams')->willReturn(['portal_payment_redirect_url' => 'javascript:alert(1)']);
+		$this->settingsService->method('updateSettings')->willThrowException(
+			new \InvalidArgumentException('The portal return address must be an absolute https address.')
+		);
+
+		foreach ([$this->controller->update(), $this->controller->create()] as $response) {
+			$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+			$this->assertSame(
+				['success' => false, 'error' => 'The portal return address must be an absolute https address.'],
+				$response->getData()
+			);
+		}
+	}//end testAnUnsafeReturnAddressIsRefusedWith400()
 
 	/**
 	 * POST /api/settings is the legacy alias and must write identically.

@@ -1,0 +1,88 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "reporting-relation-both-sides",
+    "adr": "ADR-037 modular manifest fragment",
+    "description": "Relations both ways: every customer that is also a supplier, with invoiced sales, invoiced purchases, open receivable, open payable and net for the chosen period, and the suggested pairs to link. Opened from its card on the Reports page (ADR-112). The customer page shows the same both sides (src/manifest.json CustomerDetail), the supplier page opens it (bookkeeping-accounts-payable-core.json PayeeDetail)."
+  },
+  "pages": [
+    {
+      "id": "RelationsBothWays",
+      "route": "/reports/relations-both-ways",
+      "type": "dashboard",
+      "title": "Relations both ways",
+      "config": {
+        "documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/relations-both-ways",
+        "description": "Customers that are also suppliers, with what you invoiced, what they invoiced and who owes whom.",
+        "headerActions": [{"id": "export-relations", "label": "Export CSV", "type": "handler", "handler": "openRelationsExport", "icon": "DownloadOutline"}],
+        "dateRange": {
+          "enabled": true,
+          "showHeaderPicker": true,
+          "persistKey": "shillinq-relations-both-ways-range",
+          "default": { "preset": "year" },
+          "presets": [
+            { "id": "quarter", "label": "Last 3 months", "days": 91 },
+            { "id": "year", "label": "Last 12 months", "days": 365 },
+            { "id": "two-year", "label": "Last 24 months", "days": 730 }
+          ]
+        },
+        "widgets": [
+          {
+            "id": "relations-both-ways",
+            "title": "Linked relations",
+            "type": "object-table",
+            "content": {
+              "endpointSource": { "url": "/apps/shillinq/api/relations/both-sides", "params": {"from": "@workspace.dateFrom?", "to": "@workspace.dateTo?"}, "responsePath": "relations" },
+              "columns": [
+                { "key": "name", "label": "Relation" },
+                { "key": "sales", "label": "Invoiced sales", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2} },
+                { "key": "purchases", "label": "Invoiced purchases", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2} },
+                { "key": "openReceivable", "label": "Open receivable", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2} },
+                { "key": "openPayable", "label": "Open payable", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2} },
+                { "key": "net", "label": "Net position", "formatter": "currency", "formatterOptions": {"currency": "EUR", "decimals": 2} }
+              ],
+              "rowRoute": "CustomerDetail",
+              "emptyText": "No customer is linked to a supplier record yet. Confirm a suggestion below or link one from the customer page."
+            }
+          },
+          {
+            "id": "relation-suggestions",
+            "title": "Suggested links",
+            "type": "object-table",
+            "content": {
+              "endpointSource": { "url": "/apps/shillinq/api/relations/suggestions", "responsePath": "suggestions" },
+              "columns": [
+                { "key": "customerName", "label": "Customer" },
+                { "key": "payeeName", "label": "Supplier" },
+                { "key": "matchedOn", "label": "Matched on" },
+                { "key": "number", "label": "Number" }
+              ],
+              "actions": [
+                {
+                  "id": "confirm-link",
+                  "label": "Link",
+                  "icon": "LinkVariant",
+                  "handler": "confirmRelationSuggestion",
+                  "description": "Link the customer and the supplier record: they are the same organisation."
+                },
+                {
+                  "id": "dismiss-link",
+                  "label": "Not the same",
+                  "icon": "CloseCircleOutline",
+                  "handler": "dismissRelationSuggestion",
+                  "description": "Stop suggesting this pair."
+                }
+              ],
+              "emptyText": "No customer and supplier share a KvK or VAT number."
+            }
+          }
+        ],
+        "layout": [
+          { "id": "1", "widgetId": "relations-both-ways", "gridX": 0, "gridY": 0, "gridWidth": 12, "gridHeight": 6 },
+          { "id": "2", "widgetId": "relation-suggestions", "gridX": 0, "gridY": 6, "gridWidth": 12, "gridHeight": 4 }
+        ]
+      }
+    }
+  ]
+}

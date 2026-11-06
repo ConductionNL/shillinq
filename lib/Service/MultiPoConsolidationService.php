@@ -48,7 +48,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-07-multi-po-consolidation/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-007
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -60,7 +60,7 @@ namespace OCA\Shillinq\Service;
 
 use DateInterval;
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -94,7 +94,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-07-multi-po-consolidation/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-007
  */
 class MultiPoConsolidationService {
 	/**
@@ -234,7 +234,7 @@ class MultiPoConsolidationService {
 	 *
 	 * @throws \RuntimeException When the administration is inaccessible.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-07-multi-po-consolidation/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-007
 	 */
 	public function enumerateCandidateTuples(
 		string $administrationId,
@@ -385,7 +385,7 @@ class MultiPoConsolidationService {
 	 *                           tuple that is not in the live candidate
 	 *                           set.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-07-multi-po-consolidation/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-007
 	 */
 	public function disambiguateAmbiguousMatches(
 		string $administrationId,
@@ -509,7 +509,7 @@ class MultiPoConsolidationService {
 	 *
 	 * @throws \RuntimeException On cross-tenant access or missing invoice.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-07-multi-po-consolidation/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-007
 	 */
 	public function consolidateInvoice(string $administrationId, string $invoiceId): array {
 		$this->assertAccess(administrationId: $administrationId);
@@ -967,7 +967,7 @@ class MultiPoConsolidationService {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

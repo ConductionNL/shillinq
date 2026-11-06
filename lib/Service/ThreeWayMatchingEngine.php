@@ -57,7 +57,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+ * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -68,7 +68,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -95,7 +95,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Matching is by nature
  * a multi-axis decision (price + qty + date + presence).
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+ * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
  *
  * @SuppressWarnings(PHPMD.CyclomaticComplexity)
  * @SuppressWarnings(PHPMD.ElseExpression)
@@ -209,6 +209,52 @@ class ThreeWayMatchingEngine {
 	private const SCHEMA_THREE_WAY_MATCH = 'ThreeWayMatch';
 
 	/**
+	 * Receipt schema => [line schema, the line field naming the receipt].
+	 *
+	 * Goods receipts come first, so their ids and lines precede service
+	 * receipts in every match.
+	 *
+	 * @var array<string,array{0:string,1:string}>
+	 */
+	private const RECEIPT_LINES = [
+		self::SCHEMA_GRN => [self::SCHEMA_GRN_LINE, 'grnId'],
+		self::SCHEMA_SVC_RECEIPT => [self::SCHEMA_SVC_RECEIPT_LINE, 'serviceReceiptId'],
+	];
+
+	/**
+	 * Receipt schema => the statuses that count as an accepted third leg.
+	 *
+	 * @var array<string,array<int,string>>
+	 */
+	private const ACCEPTED_RECEIPT_STATUSES = [
+		self::SCHEMA_GRN => ['accepted', 'quality_checked'],
+		self::SCHEMA_SVC_RECEIPT => ['accepted'],
+	];
+
+	/**
+	 * Divergence field => the axis that fails when it is out of tolerance.
+	 *
+	 * @var array<string,string>
+	 */
+	private const FAILED_AXIS = [
+		'unitPrice' => 'price',
+		'lineTotal' => 'price',
+		'vat' => 'price',
+		'quantity' => 'quantity',
+	];
+
+	/**
+	 * Outcome => match status, strongest first.
+	 *
+	 * @var array<string,string>
+	 */
+	private const OUTCOME_STATUS = [
+		'price' => self::STATUS_EXCEPTION_PRICE,
+		'quantity' => self::STATUS_EXCEPTION_QUANTITY,
+		'delta' => self::STATUS_WITHIN_TOLERANCE,
+	];
+
+	/**
 	 * Constructor.
 	 *
 	 *                                      — OR's
@@ -270,290 +316,402 @@ class ThreeWayMatchingEngine {
 	 *
 	 * @throws \RuntimeException When the invoice is unknown or cross-tenant.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+	 * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
 	 */
 	public function evaluateMatch(string $administrationId, string $invoiceId): array {
+		$run = $this->openRun(administrationId: $administrationId, invoiceId: $invoiceId);
+
+		// Move the invoice into "matching" so the audit trail captures the
+		// intermediate state. Re-evaluating an already-matched invoice hits
+		// an "illegal transition" guard in setStatus and still writes a new
+		// ThreeWayMatch.
+		$this->safeTransition(administrationId: $run->administrationId, invoiceId: $invoiceId, toStatus: 'matching');
+
+		$poIds = $this->resolvePoIds(administrationId: $run->administrationId, invoice: $run->invoice);
+		if (count($poIds) !== 1) {
+			return $this->routePoException(run: $run, poIds: $poIds);
+		}
+
+		return $this->matchAgainstPo(run: $run, poId: $poIds[0]);
+	}//end evaluateMatch()
+
+	/**
+	 * Load the SupplierInvoice under the caller's administration.
+	 *
+	 * The run takes its administrationId from the invoice record, not from
+	 * the caller; the controller has already asserted the caller can see
+	 * that scope.
+	 *
+	 * @param string $administrationId Administration scope from the controller.
+	 * @param string $invoiceId        SupplierInvoice id.
+	 *
+	 * @return ThreeWayMatchRun
+	 *
+	 * @throws \RuntimeException When the scope is blank or the invoice is unknown.
+	 */
+	private function openRun(string $administrationId, string $invoiceId): ThreeWayMatchRun {
 		if ($administrationId === '') {
 			throw new RuntimeException('administrationId is required');
 		}
 
-		if ($invoiceId === '') {
-			throw new RuntimeException('Supplier invoice not found');
+		$invoice = null;
+		if ($invoiceId !== '') {
+			$invoice = $this->findOne(
+				schema: self::SCHEMA_SUPPLIER_INVOICE,
+				filters: [
+					'id' => $invoiceId,
+					'administrationId' => $administrationId,
+				]
+			);
 		}
 
-		$invoice = $this->findOne(
-			schema: self::SCHEMA_SUPPLIER_INVOICE,
-			filters: [
-				'id' => $invoiceId,
-				'administrationId' => $administrationId,
-			]
-		);
 		if ($invoice === null) {
 			throw new RuntimeException('Supplier invoice not found');
 		}
 
-		// Server-authoritative scope: trust the invoice record's
-		// administrationId, not the caller's claim. The controller has
-		// already asserted the caller can see the same scope.
-		$invoiceAdmin = (string)($invoice['administrationId'] ?? $administrationId);
+		$run = new ThreeWayMatchRun(
+			administrationId: (string)($invoice['administrationId'] ?? $administrationId),
+			invoiceId: $invoiceId
+		);
+		$run->invoice = $invoice;
+		return $run;
+	}//end openRun()
 
-		// Move the invoice into "matching" so the audit trail captures the
-		// intermediate state. Idempotent — re-evaluating an already-matched
-		// invoice will hit an "illegal transition" guard from setStatus and
-		// fall through to writing a new ThreeWayMatch anyway.
-		$this->safeTransition(administrationId: $invoiceAdmin, invoiceId: $invoiceId, toStatus: 'matching');
-
-		// Resolve PO / GRN candidates.
-		$poIds = $this->resolvePoIds(administrationId: $invoiceAdmin, invoice: $invoice);
-
-		// Multi-PO is deferred to slice 07. When more than one PO matches,
-		// we route to exception_missing_po with a `multi_po` divergence
-		// breadcrumb so the consolidator picks it up.
+	/**
+	 * Route an invoice that resolves to no PO, or to more than one, to
+	 * exception_missing_po.
+	 *
+	 * Multi-PO consolidation is member 07's job: the `multi_po` divergence
+	 * hands it the candidate set.
+	 *
+	 * @param ThreeWayMatchRun $run   The evaluation.
+	 * @param array<int,string> $poIds The tenant-validated PO ids.
+	 *
+	 * @return array<string,mixed> The persisted ThreeWayMatch record.
+	 */
+	private function routePoException(ThreeWayMatchRun $run, array $poIds): array {
+		$divergences = [['field' => 'po', 'expected' => 'matched', 'actual' => 'missing']];
 		if (count($poIds) > 1) {
-			return $this->routeToException(
-				administrationId: $invoiceAdmin,
-				invoice: $invoice,
-				matchStatus: self::STATUS_EXCEPTION_MISSING_PO,
-				divergences: [
-					[
-						'field' => 'multi_po',
-						'expected' => 1,
-						'actual' => count($poIds),
-					],
-				],
-				matchedPoIds: $poIds,
-				matchedGrnIds: []
-			);
+			$divergences = [['field' => 'multi_po', 'expected' => 1, 'actual' => count($poIds)]];
 		}
 
-		if ($poIds === []) {
-			return $this->routeToException(
-				administrationId: $invoiceAdmin,
-				invoice: $invoice,
-				matchStatus: self::STATUS_EXCEPTION_MISSING_PO,
-				divergences: [
-					['field' => 'po', 'expected' => 'matched', 'actual' => 'missing'],
-				],
-				matchedPoIds: [],
-				matchedGrnIds: []
-			);
-		}
+		return $this->routeToException(
+			administrationId: $run->administrationId,
+			invoice: $run->invoice,
+			matchStatus: self::STATUS_EXCEPTION_MISSING_PO,
+			divergences: $divergences,
+			matchedPoIds: $poIds,
+			matchedGrnIds: []
+		);
+	}//end routePoException()
 
-		$poId = $poIds[0];
-		$po = $this->findOne(
+	/**
+	 * Match the invoice against its single PO, or route it to
+	 * exception_missing_grn when the PO has no accepted receipt.
+	 *
+	 * @param ThreeWayMatchRun $run  The evaluation.
+	 * @param string           $poId The tenant-validated PO id.
+	 *
+	 * @return array<string,mixed> The persisted ThreeWayMatch record.
+	 */
+	private function matchAgainstPo(ThreeWayMatchRun $run, string $poId): array {
+		$run->poId = $poId;
+		$run->po = $this->findOne(
 			schema: self::SCHEMA_PO,
-			filters: ['id' => $poId, 'administrationId' => $invoiceAdmin]
+			filters: ['id' => $poId, 'administrationId' => $run->administrationId]
 		);
-		$poLines = $this->findAll(
+		$run->poLines = $this->findAll(
 			schema: self::SCHEMA_PO_LINE,
-			filters: ['poId' => $poId, 'administrationId' => $invoiceAdmin]
+			filters: ['poId' => $poId, 'administrationId' => $run->administrationId]
 		);
+		$run->receipts = $this->receiptsForPo(run: $run);
 
-		$grns = $this->findAll(
-			schema: self::SCHEMA_GRN,
-			filters: ['administrationId' => $invoiceAdmin]
+		if ($this->hasAcceptedReceipt(receipts: $run->receipts) === true) {
+			return $this->recordLineMatch(run: $run);
+		}
+
+		return $this->routeToException(
+			administrationId: $run->administrationId,
+			invoice: $run->invoice,
+			matchStatus: self::STATUS_EXCEPTION_MISSING_GRN,
+			divergences: [
+				['field' => 'grn', 'expected' => 'accepted', 'actual' => 'missing'],
+			],
+			matchedPoIds: [$poId],
+			matchedGrnIds: $this->receiptIds(receipts: $run->receipts)
 		);
-		$matchedGrns = [];
-		foreach ($grns as $grn) {
-			$grnPoIds = (array)($grn['poIds'] ?? []);
-			if (in_array($poId, $grnPoIds, true) === true) {
-				$matchedGrns[] = $grn;
-			}
-		}
+	}//end matchAgainstPo()
 
-		// REQ-PO3W-011: a service PurchaseOrderLine will never have a
-		// GoodsReceiptNote — resolve an accepted SvcReceipt (prestatieverklaring)
-		// as the alternative third leg so the matching engine is not
-		// goods-only.
-		$svcReceipts = $this->findAll(
-			schema: self::SCHEMA_SVC_RECEIPT,
-			filters: ['administrationId' => $invoiceAdmin]
-		);
-		$matchedSvcReceipts = [];
-		foreach ($svcReceipts as $svcReceipt) {
-			$svcPoIds = (array)($svcReceipt['poIds'] ?? []);
-			if (in_array($poId, $svcPoIds, true) === true) {
-				$matchedSvcReceipts[] = $svcReceipt;
-			}
-		}
-
-		// No accepted GRN AND no accepted SvcReceipt = exception_missing_grn
-		// (their resolution is operator-driven via the slice-08 exception
-		// UI). Before REQ-PO3W-011 this was the ONLY outcome for a service
-		// PO — every service invoice was permanently stuck here.
-		$hasAcceptedGrn = false;
-		foreach ($matchedGrns as $grn) {
-			$status = (string)($grn['statusCode'] ?? '');
-			if ($status === 'accepted' || $status === 'quality_checked') {
-				$hasAcceptedGrn = true;
-				break;
-			}
-		}
-
-		$hasAcceptedSvcReceipt = false;
-		foreach ($matchedSvcReceipts as $svcReceipt) {
-			$status = (string)($svcReceipt['statusCode'] ?? '');
-			if ($status === 'accepted') {
-				$hasAcceptedSvcReceipt = true;
-				break;
-			}
-		}
-
-		$matchedGrnIds = [];
-		foreach ($matchedGrns as $grn) {
-			$id = (string)($grn['id'] ?? ($grn['@self']['id'] ?? ''));
-			if ($id !== '') {
-				$matchedGrnIds[] = $id;
-			}
-		}
-
-		foreach ($matchedSvcReceipts as $svcReceipt) {
-			$id = (string)($svcReceipt['id'] ?? ($svcReceipt['@self']['id'] ?? ''));
-			if ($id !== '') {
-				// SvcReceipt ids are recorded in matchedGrnIds alongside GRN
-				// ids — both registers feed the same "third leg" concept and
-				// ThreeWayMatch.matchedGrnIds is the historical field name
-				// for it; splitting into a parallel matchedSvcReceiptIds
-				// field would only fragment the audit trail for no benefit.
-				$matchedGrnIds[] = $id;
-			}
-		}
-
-		if ($hasAcceptedGrn === false && $hasAcceptedSvcReceipt === false) {
-			return $this->routeToException(
-				administrationId: $invoiceAdmin,
-				invoice: $invoice,
-				matchStatus: self::STATUS_EXCEPTION_MISSING_GRN,
-				divergences: [
-					['field' => 'grn', 'expected' => 'accepted', 'actual' => 'missing'],
-				],
-				matchedPoIds: [$poId],
-				matchedGrnIds: $matchedGrnIds
-			);
-		}
-
-		// Match invoice lines to (PO line, GRN line) tuples.
-		$invoiceLines = (array)($invoice['lines'] ?? []);
-		$grnLines = [];
-		foreach ($matchedGrns as $grn) {
-			$grnId = (string)($grn['id'] ?? ($grn['@self']['id'] ?? ''));
-			if ($grnId === '') {
-				continue;
-			}
-
-			$rows = $this->findAll(
-				schema: self::SCHEMA_GRN_LINE,
-				filters: ['grnId' => $grnId, 'administrationId' => $invoiceAdmin]
-			);
-			foreach ($rows as $row) {
-				$grnLines[] = $row;
-			}
-		}
-
-		// Merge in SvcReceiptLine rows — they carry the same
-		// quantityAccepted/quantityReceived field names as GoodsReceiptLine
-		// by design (see ServiceReceiptService), so matchLineItems() /
-		// calculateDivergence() need zero receipt-type branching.
-		foreach ($matchedSvcReceipts as $svcReceipt) {
-			$svcReceiptId = (string)($svcReceipt['id'] ?? ($svcReceipt['@self']['id'] ?? ''));
-			if ($svcReceiptId === '') {
-				continue;
-			}
-
-			$rows = $this->findAll(
-				schema: self::SCHEMA_SVC_RECEIPT_LINE,
-				filters: ['serviceReceiptId' => $svcReceiptId, 'administrationId' => $invoiceAdmin]
-			);
-			foreach ($rows as $row) {
-				$grnLines[] = $row;
-			}
-		}
-
+	/**
+	 * Score the invoice lines against the PO and receipt lines, write the
+	 * ThreeWayMatch and move the invoice to matched or exception.
+	 *
+	 * @param ThreeWayMatchRun $run The evaluation, with its PO and receipts.
+	 *
+	 * @return array<string,mixed> The persisted ThreeWayMatch record.
+	 */
+	private function recordLineMatch(ThreeWayMatchRun $run): array {
 		$tuples = $this->matchLineItems(
-			invoiceLines: $invoiceLines,
-			poLines: $poLines,
-			grnLines: $grnLines
+			invoiceLines: (array)($run->invoice['lines'] ?? []),
+			poLines: $run->poLines,
+			grnLines: $this->receiptLines(run: $run)
+		);
+		$scored = $this->scoreTuples(tuples: $tuples, profile: $this->profileFor(run: $run));
+
+		$saved = $this->saveObject(
+			schema: self::SCHEMA_THREE_WAY_MATCH,
+			object: [
+				'invoiceId' => $run->invoiceId,
+				'matchedPoIds' => [$run->poId],
+				'matchedGrnIds' => $this->receiptIds(receipts: $run->receipts),
+				'matchStatus' => $scored['matchStatus'],
+				'divergenceDetails' => $scored['divergences'],
+				'costCenter' => (string)($run->po['costCenter'] ?? ''),
+				'projectCode' => (string)($run->po['projectCode'] ?? ''),
+				'createdAt' => $this->nowIso(),
+				'administrationId' => $run->administrationId,
+			]
 		);
 
-		// Resolve the applicable tolerance profile (most-specific).
-		$profile = $this->toleranceService->getApplicableProfile(
-			administrationId: $invoiceAdmin,
+		$toStatus = 'exception';
+		if (in_array($scored['matchStatus'], [self::STATUS_AUTO_APPROVED, self::STATUS_WITHIN_TOLERANCE], true) === true) {
+			$toStatus = 'matched';
+		}
+
+		$this->safeTransition(administrationId: $run->administrationId, invoiceId: $run->invoiceId, toStatus: $toStatus);
+		return $saved;
+	}//end recordLineMatch()
+
+	/**
+	 * Find the third-leg receipts that reference the PO, per receipt schema.
+	 *
+	 * A service PurchaseOrderLine never has a GoodsReceiptNote, so an
+	 * accepted SvcReceipt (prestatieverklaring) is the alternative third leg
+	 * (REQ-PO3W-011).
+	 *
+	 * @param ThreeWayMatchRun $run The evaluation, with its PO id.
+	 *
+	 * @return array<string,array<int,array<string,mixed>>> Receipt schema => receipts.
+	 */
+	private function receiptsForPo(ThreeWayMatchRun $run): array {
+		$poId = $run->poId;
+		$receipts = [];
+		foreach (array_keys(self::RECEIPT_LINES) as $schema) {
+			$rows = $this->findAll(schema: $schema, filters: ['administrationId' => $run->administrationId]);
+			$receipts[$schema] = array_values(
+				array_filter(
+					$rows,
+					static fn (array $row): bool => in_array($poId, (array)($row['poIds'] ?? []), true)
+				)
+			);
+		}
+
+		return $receipts;
+	}//end receiptsForPo()
+
+	/**
+	 * The ids of the receipts, goods receipts first.
+	 *
+	 * SvcReceipt ids go into matchedGrnIds next to GRN ids: both feed the
+	 * same third leg, and matchedGrnIds is the historical field for it.
+	 *
+	 * @param array<string,array<int,array<string,mixed>>> $receipts Receipt schema => receipts.
+	 *
+	 * @return array<int,string>
+	 */
+	private function receiptIds(array $receipts): array {
+		$ids = [];
+		foreach ($receipts as $rows) {
+			foreach ($rows as $row) {
+				$id = $this->idOf(row: $row);
+				if ($id !== '') {
+					$ids[] = $id;
+				}
+			}
+		}
+
+		return $ids;
+	}//end receiptIds()
+
+	/**
+	 * Whether any receipt is in an accepted status for its schema.
+	 *
+	 * Without one the invoice goes to exception_missing_grn.
+	 *
+	 * @param array<string,array<int,array<string,mixed>>> $receipts Receipt schema => receipts.
+	 *
+	 * @return bool
+	 */
+	private function hasAcceptedReceipt(array $receipts): bool {
+		foreach ($receipts as $schema => $rows) {
+			foreach ($rows as $row) {
+				if (in_array((string)($row['statusCode'] ?? ''), self::ACCEPTED_RECEIPT_STATUSES[$schema], true) === true) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}//end hasAcceptedReceipt()
+
+	/**
+	 * Load the lines of every receipt that has an id.
+	 *
+	 * SvcReceiptLine carries the same quantity field names as
+	 * GoodsReceiptLine (see ServiceReceiptService), so the line matcher
+	 * needs no receipt-type branching.
+	 *
+	 * @param ThreeWayMatchRun $run The evaluation, with its receipts.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function receiptLines(ThreeWayMatchRun $run): array {
+		$lines = [];
+		foreach ($run->receipts as $schema => $rows) {
+			[$lineSchema, $receiptKey] = self::RECEIPT_LINES[$schema];
+			foreach ($rows as $row) {
+				$receiptId = $this->idOf(row: $row);
+				if ($receiptId !== '') {
+					array_push(
+						$lines,
+						...$this->findAll(
+							schema: $lineSchema,
+							filters: [$receiptKey => $receiptId, 'administrationId' => $run->administrationId]
+						)
+					);
+				}
+			}
+		}
+
+		return $lines;
+	}//end receiptLines()
+
+	/**
+	 * Resolve the most-specific applicable ToleranceProfile.
+	 *
+	 * @param ThreeWayMatchRun $run The evaluation, with its PO lines.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function profileFor(ThreeWayMatchRun $run): ?array {
+		$poLines = $run->poLines;
+		return $this->toleranceService->getApplicableProfile(
+			administrationId: $run->administrationId,
 			candidate: [
-				'supplierId' => (string)($invoice['supplierId'] ?? ''),
+				'supplierId' => (string)($run->invoice['supplierId'] ?? ''),
 				'productCategory' => $this->extractProductCategory(poLines: $poLines),
 				'glAccount' => $this->extractGlAccount(poLines: $poLines),
 			]
 		);
+	}//end profileFor()
 
-		// Score every tuple.
+	/**
+	 * Score every line tuple and roll the outcomes up into a match status.
+	 *
+	 * @param array<int,array<string,mixed>> $tuples  Line tuples from matchLineItems().
+	 * @param array<string,mixed>|null       $profile Applicable profile.
+	 *
+	 * @return array{matchStatus: string, divergences: array<int,array<string,mixed>>}
+	 */
+	private function scoreTuples(array $tuples, ?array $profile): array {
+		$toleranceProfileId = $this->profileIdOf(profile: $profile);
 		$divergences = [];
-		$hadPriceFail = false;
-		$hadQtyFail = false;
-		$hadAnyDelta = false;
+		$outcomes = [];
 		foreach ($tuples as $tuple) {
 			$deltaSet = $this->calculateDivergence(
 				invoiceLine: $tuple['invoiceLine'],
 				poLine:      $tuple['poLine'],
 				grnLine:     $tuple['grnLine']
 			);
-
 			foreach ($deltaSet as $delta) {
-				$within = $this->evaluateTolerance(divergence: $delta, profile: $profile);
-				$toleranceProfileId = null;
-				if ($profile !== null) {
-					$toleranceProfileId = (string)($profile['profileId'] ?? ($profile['id'] ?? ''));
-				}
-
+				$outcomes[$this->deltaOutcome(delta: $delta, profile: $profile)] = true;
 				$delta['toleranceProfileId'] = $toleranceProfileId;
 				$divergences[] = $delta;
-
-				if (($delta['deltaCents'] ?? 0) !== 0 || ($delta['deltaPercentage'] ?? 0) !== 0) {
-					$hadAnyDelta = true;
-				}
-
-				if ($within === false) {
-					if ($delta['field'] === 'unitPrice' || $delta['field'] === 'lineTotal' || $delta['field'] === 'vat') {
-						$hadPriceFail = true;
-					} elseif ($delta['field'] === 'quantity') {
-						$hadQtyFail = true;
-					}
-				}
-			}//end foreach
-		}//end foreach
-
-		$matchStatus = self::STATUS_AUTO_APPROVED;
-		if ($hadPriceFail === true) {
-			$matchStatus = self::STATUS_EXCEPTION_PRICE;
-		} elseif ($hadQtyFail === true) {
-			$matchStatus = self::STATUS_EXCEPTION_QUANTITY;
-		} elseif ($hadAnyDelta === true) {
-			$matchStatus = self::STATUS_WITHIN_TOLERANCE;
+			}
 		}
 
-		$match = [
-			'invoiceId' => $invoiceId,
-			'matchedPoIds' => [$poId],
-			'matchedGrnIds' => $matchedGrnIds,
-			'matchStatus' => $matchStatus,
-			'divergenceDetails' => $divergences,
-			'costCenter' => (string)($po['costCenter'] ?? ''),
-			'projectCode' => (string)($po['projectCode'] ?? ''),
-			'createdAt' => $this->nowIso(),
-			'administrationId' => $invoiceAdmin,
+		return [
+			'matchStatus' => $this->rollUpStatus(outcomes: $outcomes),
+			'divergences' => $divergences,
 		];
+	}//end scoreTuples()
 
-		$saved = $this->saveObject(schema: self::SCHEMA_THREE_WAY_MATCH, object: $match);
-
-		// Transition the invoice — matching → matched (auto / within
-		// tolerance) or matching → exception (out of tolerance).
-		if ($matchStatus === self::STATUS_AUTO_APPROVED || $matchStatus === self::STATUS_WITHIN_TOLERANCE) {
-			$this->safeTransition(administrationId: $invoiceAdmin, invoiceId: $invoiceId, toStatus: 'matched');
-		} else {
-			$this->safeTransition(administrationId: $invoiceAdmin, invoiceId: $invoiceId, toStatus: 'exception');
+	/**
+	 * Classify one divergence: a failed price or quantity axis, a delta
+	 * within tolerance, or none.
+	 *
+	 * @param array<string,mixed>      $delta   One divergence.
+	 * @param array<string,mixed>|null $profile Applicable profile.
+	 *
+	 * @return string One of the OUTCOME_STATUS keys, or 'none'.
+	 */
+	private function deltaOutcome(array $delta, ?array $profile): string {
+		$within = $this->evaluateTolerance(divergence: $delta, profile: $profile);
+		if ($within === false && isset(self::FAILED_AXIS[$delta['field']]) === true) {
+			return self::FAILED_AXIS[$delta['field']];
 		}
 
-		return $saved;
-	}//end evaluateMatch()
+		if ($this->hasDelta(delta: $delta) === true) {
+			return 'delta';
+		}
+
+		return 'none';
+	}//end deltaOutcome()
+
+	/**
+	 * Whether a divergence carries a non-zero cents or percentage delta.
+	 *
+	 * @param array<string,mixed> $delta One divergence.
+	 *
+	 * @return bool
+	 */
+	private function hasDelta(array $delta): bool {
+		return ($delta['deltaCents'] ?? 0) !== 0 || ($delta['deltaPercentage'] ?? 0) !== 0;
+	}//end hasDelta()
+
+	/**
+	 * The match status of the strongest outcome: a price failure beats a
+	 * quantity failure, which beats a delta within tolerance.
+	 *
+	 * @param array<string,bool> $outcomes The outcomes seen.
+	 *
+	 * @return string
+	 */
+	private function rollUpStatus(array $outcomes): string {
+		foreach (self::OUTCOME_STATUS as $outcome => $status) {
+			if (isset($outcomes[$outcome]) === true) {
+				return $status;
+			}
+		}
+
+		return self::STATUS_AUTO_APPROVED;
+	}//end rollUpStatus()
+
+	/**
+	 * The id a divergence records for the applied profile.
+	 *
+	 * @param array<string,mixed>|null $profile Applicable profile.
+	 *
+	 * @return string|null Null when no profile applied.
+	 */
+	private function profileIdOf(?array $profile): ?string {
+		if ($profile === null) {
+			return null;
+		}
+
+		return (string)($profile['profileId'] ?? ($profile['id'] ?? ''));
+	}//end profileIdOf()
+
+	/**
+	 * The id of an OpenRegister row: its `id`, else its `@self.id`.
+	 *
+	 * @param array<string,mixed> $row The row.
+	 *
+	 * @return string Empty when the row carries neither.
+	 */
+	private function idOf(array $row): string {
+		return (string)($row['id'] ?? ($row['@self']['id'] ?? ''));
+	}//end idOf()
 
 	/**
 	 * Match invoice lines to (PO line, GRN line) tuples by product code,
@@ -571,7 +729,7 @@ class ThreeWayMatchingEngine {
 	 *
 	 * @return array<int,array{invoiceLine: array<string,mixed>, poLine: array<string,mixed>|null, grnLine: array<string,mixed>|null}>
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+	 * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
 	 */
 	public function matchLineItems(array $invoiceLines, array $poLines, array $grnLines): array {
 		$tuples = [];
@@ -582,7 +740,7 @@ class ThreeWayMatchingEngine {
 			$poLine = $this->findPoLine(poLines: $poLines, productCode: $productCode, lineNumber: $lineNumber);
 			$grnLine = null;
 			if ($poLine !== null) {
-				$poLineId = (string)($poLine['id'] ?? ($poLine['@self']['id'] ?? ''));
+				$poLineId = $this->idOf(row: $poLine);
 				$grnLine = $this->findGrnLine(grnLines: $grnLines, poLineId: $poLineId);
 			}
 
@@ -617,7 +775,7 @@ class ThreeWayMatchingEngine {
 	 *
 	 * @return array<int,array<string,mixed>>
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+	 * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
 	 */
 	public function calculateDivergence(array $invoiceLine, ?array $poLine, ?array $grnLine): array {
 		$deltas = [];
@@ -734,7 +892,7 @@ class ThreeWayMatchingEngine {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+	 * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
 	 */
 	public function evaluateTolerance(array $divergence, ?array $profile): bool {
 		$field = (string)($divergence['field'] ?? '');
@@ -785,7 +943,7 @@ class ThreeWayMatchingEngine {
 	 *
 	 * @return array<string,mixed> The persisted ThreeWayMatch record.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+	 * @spec openspec/specs/bookkeeping-three-way-matching-engine/spec.md
 	 */
 	public function routeToException(
 		string $administrationId,
@@ -795,7 +953,7 @@ class ThreeWayMatchingEngine {
 		array $matchedPoIds,
 		array $matchedGrnIds,
 	): array {
-		$invoiceId = (string)($invoice['id'] ?? ($invoice['@self']['id'] ?? ''));
+		$invoiceId = $this->idOf(row: $invoice);
 		$match = [
 			'invoiceId' => $invoiceId,
 			'matchedPoIds' => $matchedPoIds,
@@ -848,7 +1006,7 @@ class ThreeWayMatchingEngine {
 			return;
 		}
 
-		$matchId = (string)($match['id'] ?? ($match['@self']['id'] ?? ''));
+		$matchId = $this->idOf(row: $match);
 		if ($matchId === '') {
 			return;
 		}
@@ -1186,7 +1344,7 @@ class ThreeWayMatchingEngine {
 	 * @return string
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

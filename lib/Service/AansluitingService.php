@@ -60,12 +60,13 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Lifecycle\AansluitingResolutionGuard;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Computes, explains, resolves, and reopens AansluitingResult records.
@@ -346,12 +347,12 @@ class AansluitingService {
 
 		$currentByKey = [];
 		foreach ($current as $bucket) {
-			$currentByKey[$this->rubriekKey(bucket: $bucket)] = (float)$bucket['totalVATAmount'];
+			$currentByKey[$this->vatReturnService->declarationKey(bucket: $bucket)] = (float)$bucket['totalVATAmount'];
 		}
 
 		$filedByKey = [];
 		foreach ($filed as $bucket) {
-			$filedByKey[$this->rubriekKey(bucket: $bucket)] = (float)$bucket['totalVATAmount'];
+			$filedByKey[$this->vatReturnService->declarationKey(bucket: $bucket)] = (float)$bucket['totalVATAmount'];
 		}
 
 		$lineDeltas = $this->calculator->diffBuckets(bucketsA: $currentByKey, bucketsB: $filedByKey, relationship: 'equal');
@@ -618,18 +619,6 @@ class AansluitingService {
 	}//end findRelatedVatCorrection()
 
 	/**
-	 * Build the type:taxRate rubriek bucket key, matching
-	 * VatSuppletieDetectionService's bucketKey() convention.
-	 *
-	 * @param array<string,mixed> $bucket A VATReturnService declaration bucket.
-	 *
-	 * @return string
-	 */
-	private function rubriekKey(array $bucket): string {
-		return ((string)$bucket['type']) . ':' . number_format((float)$bucket['taxRate'], 2, '.', '');
-	}//end rubriekKey()
-
-	/**
 	 * Fetch an Aansluiting definition by id.
 	 *
 	 * @param string $reconciliationId Aansluiting id.
@@ -637,10 +626,10 @@ class AansluitingService {
 	 * @return array<string,mixed>
 	 */
 	private function fetchReconciliation(string $reconciliationId): array {
-		$definition = $this->objectService
-			->setRegister($this->register())
-			->setSchema('Aansluiting')
-			->find($reconciliationId);
+		$definition = ObjectIdentifier::findScoped(
+			scoped: $this->objectService->setRegister($this->register())->setSchema('Aansluiting'),
+			id: $reconciliationId
+		);
 
 		if ($definition === null) {
 			throw new RuntimeException(sprintf('Aansluiting %s not found', $reconciliationId));
@@ -657,10 +646,10 @@ class AansluitingService {
 	 * @return array<string,mixed>
 	 */
 	private function fetchResult(string $resultId): array {
-		$result = $this->objectService
-			->setRegister($this->register())
-			->setSchema('AansluitingResult')
-			->find($resultId);
+		$result = ObjectIdentifier::findScoped(
+			scoped: $this->objectService->setRegister($this->register())->setSchema('AansluitingResult'),
+			id: $resultId
+		);
 
 		if ($result === null) {
 			throw new RuntimeException(sprintf('AansluitingResult %s not found', $resultId));
@@ -722,7 +711,7 @@ class AansluitingService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

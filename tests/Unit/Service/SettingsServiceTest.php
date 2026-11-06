@@ -113,6 +113,58 @@ class SettingsServiceTest extends TestCase {
 	}//end setUp()
 
 	/**
+	 * The checkout's return address is an operator setting: an absolute https
+	 * address or empty is stored and read back; plain http, a script URL and a
+	 * relative path are refused and nothing is written (REQ-SPPI-010).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/portal-pay-row-action-keys/specs/portal-payment-initiation/spec.md (REQ-SPPI-010)
+	 */
+	public function testThePortalReturnAddressIsStoredOnlyWhenHttps(): void {
+		$this->appManager->method('isInstalled')->willReturn(true);
+		$this->appManager->method('isEnabledForUser')->willReturn(true);
+		$stored = [];
+		$this->appConfig->method('setValueString')->willReturnCallback(
+			static function (string $app, string $key, string $value) use (&$stored): bool {
+				$stored[$key] = $value;
+				return true;
+			}
+		);
+		$this->appConfig->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = '') use (&$stored): string {
+				return ($stored[$key] ?? $default);
+			}
+		);
+
+		$settings = $this->service->updateSettings(['portal_payment_redirect_url' => 'https://portaal.gemeente.example/betalen']);
+		self::assertSame('https://portaal.gemeente.example/betalen', $stored['portal_payment_redirect_url']);
+		self::assertSame('https://portaal.gemeente.example/betalen', $settings['portal_payment_redirect_url']);
+
+		$this->service->updateSettings(['portal_payment_redirect_url' => '']);
+		self::assertSame('', $stored['portal_payment_redirect_url']);
+
+		foreach (['http://portaal.example', 'javascript:alert(1)', '/betalen', 'https://', 'portaal.example'] as $unsafe) {
+			try {
+				$this->service->updateSettings(['portal_payment_redirect_url' => $unsafe, 'register' => 'other']);
+				self::fail('stored an unsafe return address: ' . $unsafe);
+			} catch (\InvalidArgumentException $e) {
+				self::assertStringContainsString('https', $e->getMessage());
+			}
+		}
+
+		self::assertSame('', $stored['portal_payment_redirect_url']);
+		self::assertArrayNotHasKey('register', $stored, 'a refused save must write nothing at all');
+
+		// The key the settings store writes is the key the pay flow reads, or
+		// the operator's address would be saved and never used.
+		self::assertSame(
+			(new \ReflectionClassConstant(\OCA\Shillinq\Service\Payment\PortalPaymentSessionService::class, 'CONFIG_REDIRECT_URL'))->getValue(),
+			SettingsService::PORTAL_REDIRECT_KEY
+		);
+	}//end testThePortalReturnAddressIsStoredOnlyWhenHttps()
+
+	/**
 	 * Test that seedRgsTemplate returns failure when OpenRegister is not available.
 	 *
 	 * @return void

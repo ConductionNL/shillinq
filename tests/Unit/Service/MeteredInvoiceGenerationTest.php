@@ -28,6 +28,7 @@ use OCA\Shillinq\Request\InvoiceGenerationRequest;
 use OCA\Shillinq\Service\BillingModelEngine;
 use OCA\Shillinq\Service\InvoiceDeduplicationService;
 use OCA\Shillinq\Service\InvoiceGenerationService;
+use OCA\Shillinq\Service\Usage\BilledReadings;
 use OCA\Shillinq\Service\RateCardResolver;
 use OCA\Shillinq\Service\RetainerResolver;
 use OCA\Shillinq\Service\UsageRatingCalculator;
@@ -216,6 +217,7 @@ final class MeteredInvoiceGenerationTest extends TestCase {
 					'ratePlanId' => 'urp-api-standard',
 					'periodStart' => '2026-03-01',
 					'periodEnd' => '2026-03-31',
+					'status' => 'rated',
 				],
 			],
 			'BillableInvoice' => [],
@@ -241,6 +243,7 @@ final class MeteredInvoiceGenerationTest extends TestCase {
 			new VATCalculationService(),
 			new UsageRatingCalculator(),
 			objectService: new DuckObjectServiceAdapter($this->objectService),
+			billedReadings: $this->createMock(BilledReadings::class),
 		);
 	}//end setUp()
 

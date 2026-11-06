@@ -147,6 +147,8 @@
 - [x] Wire into bookkeeping-chart-of-accounts:  _(PayrollChartOfAccountsMapping is the canonical RGS 3.5 mapping; PayrollService::bouwLoonjournaalpost references it for every regel. Live GLTransaction posting stays with bookkeeping-chart-of-accounts.)_
   - Loonjournaalpost → GLLine → Account.accountNumber (4001, 4010, 4020, 1610, etc.)
 
+> 5 Oct 2026 (DECISIONS row 65): the four hand-off services named below (PayrollApArHandoffService, PayrollUpaHandoffService, PayrollWkrHandoffService, PayrollLivLkvHandoffService) were removed. Nothing called them, the four target apps were never built, and two read fields their schemas do not have. Payroll moves to humaniq; the wage tax remittance becomes a humaniq hand-off into shillinq.
+
 - [x] Wire into bookkeeping-ap-ar:  _(PayrollApArHandoffService converts an LHAfdracht into two AP transaction payloads (Belastingdienst, UWV) ready for the bookkeeping-ap-ar app to schedule. Runtime APTransaction creation stays with bookkeeping-ap-ar.)_
   - LHAfdracht → APTransaction (payee=Belastingdienst, amount=totaalAfdracht, dueDate=vervaldagAfdracht)
   - Premium SV afdracht → APTransaction (payee=UWV, etc.)

@@ -32,7 +32,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
@@ -49,7 +49,7 @@ use OCA\Shillinq\Service\Peppol\PeppolTransmissionPortInterface;
  * Channel-adapter port for Peppol BIS Ordering 3.0 transmission — a thin
  * alias/extension of the shared {@see PeppolTransmissionPortInterface}.
  *
- * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  */
 interface PeppolTransmissionAdapterInterface extends PeppolTransmissionPortInterface {
@@ -69,7 +69,7 @@ interface PeppolTransmissionAdapterInterface extends PeppolTransmissionPortInter
 	 *
 	 * @throws \RuntimeException When the access point refuses or fails.
 	 *
-	 * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
 	 */
 	public function submitOrder(string $participantId, string $ublOrderXml): string;
 }//end interface

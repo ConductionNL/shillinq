@@ -243,6 +243,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Treasurystatuut is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "KasgeldLimiet": {
@@ -360,6 +379,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Kasgeldlimiet is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "RenteRisicoNorm": {
@@ -500,6 +538,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Rente-risiconorm is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "SchatkistbankierenSaldo": {
@@ -597,6 +654,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Schatkistbankieren-saldo is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "Lening": {
@@ -819,6 +895,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Lening is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "Derivaat": {
@@ -971,12 +1066,31 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Derivaat is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "QuartaalrapportageFido": {
         "slug": "QuartaalrapportageFido",
         "icon": "FileChartOutline",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "Kwartaalrapportage Fido",
         "description": "Verplichte kwartaalrapportage to the toezichthouder (provincie for gemeente, ministerie BZK for provincie/waterschap), auto-generated within 10 working days after quarter-end. Aggregates that quarter's leningen + derivaten mutations, kasgeldlimiet / rente-risiconorm / schatkistbankieren status snapshots and any overrides into the report (quarterlyFidoRollup), then requires co-sign by the treasurer and concerncontroller before transmission. The FidoTreasuryGuard enforces the dual sign-off submit precondition. Lifecycle: draft → signed → submitted → archived.",
         "x-schema-org": "schema:Report",
@@ -1156,6 +1270,19 @@
             }
           },
           "transitions": {
+            "compute": {
+              "from": "draft",
+              "to": "draft",
+              "label": "Compute quarter",
+              "description": "Compute the cash limit, the average net floating debt and the interest risk norm of this quarter, and keep both snapshots on the report (REQ-FDO-011).",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\ComputeFidoQuarterAction",
+                  "description": "Compute both snapshots (ComputeFidoQuarterAction)."
+                }
+              ]
+            },
             "sign": {
               "from": "draft",
               "to": "signed",
@@ -1198,6 +1325,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Kwartaalrapportage Fido is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "TreasuryParagraaf": {
@@ -1298,6 +1444,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Every create, update and delete of a Treasury-paragraaf is written to OpenRegister's immutable audit trail with actor and timestamp."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       }
     },

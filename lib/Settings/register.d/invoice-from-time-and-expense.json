@@ -9,6 +9,27 @@
   "components": {
     "schemas": {
       "BillableInvoice": {
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
+        },
         "slug": "BillableInvoice",
         "icon": "FileDocumentEditOutline",
         "version": "0.1.0",
@@ -222,6 +243,27 @@
         }
       },
       "BillableInvoiceLine": {
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
+        },
         "slug": "BillableInvoiceLine",
         "icon": "FormatListBulletedSquare",
         "version": "0.1.0",
@@ -352,6 +394,27 @@
         }
       },
       "RetainerSchedule": {
+        "authorization": {
+          "create": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "read": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_bookkeeper",
+            "shillinq_ar_controller",
+            "shillinq_controller"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
+        },
         "slug": "RetainerSchedule",
         "icon": "CalendarSyncOutline",
         "version": "0.1.0",

@@ -65,30 +65,27 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "communications-manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ],
-              "description": "Full access: create, edit drafts, publish and archive booking-confirmation templates (booking:template:* per REQ-BET, Task 22)."
-            },
-            "operator": {
-              "permissions": [
-                "read"
-              ],
-              "description": "Read-only access for staff who dispatch bookings but do not edit templates (booking:template:list)."
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ],
-              "description": "Read-only access for audit and compliance inspection."
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_communications_manager",
+            "shillinq_template_administrator"
+          ],
+          "read": [
+            "shillinq_auditor",
+            "shillinq_booking_administrator",
+            "shillinq_communications_manager",
+            "shillinq_operator",
+            "shillinq_template_administrator"
+          ],
+          "update": [
+            "shillinq_booking_administrator",
+            "shillinq_communications_manager",
+            "shillinq_template_administrator"
+          ],
+          "delete": [
+            "shillinq_communications_manager",
+            "shillinq_template_administrator"
+          ]
         },
         "x-openregister-calculations": {
           "activatedAt": {
@@ -283,30 +280,27 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "communications-manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ],
-              "description": "Full access to booking-reminder templates."
-            },
-            "operator": {
-              "permissions": [
-                "read"
-              ],
-              "description": "Read-only access (booking:template:list)."
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ],
-              "description": "Read-only access for audit and compliance inspection."
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_communications_manager",
+            "shillinq_template_administrator"
+          ],
+          "read": [
+            "shillinq_auditor",
+            "shillinq_booking_administrator",
+            "shillinq_communications_manager",
+            "shillinq_operator",
+            "shillinq_template_administrator"
+          ],
+          "update": [
+            "shillinq_booking_administrator",
+            "shillinq_communications_manager",
+            "shillinq_template_administrator"
+          ],
+          "delete": [
+            "shillinq_communications_manager",
+            "shillinq_template_administrator"
+          ]
         },
         "x-openregister-calculations": {
           "activatedAt": {
@@ -508,30 +502,27 @@
             }
           }
         },
-        "x-openregister-rbac": {
-          "roles": {
-            "communications-manager": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ],
-              "description": "Full access to booking-cancellation templates."
-            },
-            "operator": {
-              "permissions": [
-                "read"
-              ],
-              "description": "Read-only access (booking:template:list)."
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ],
-              "description": "Read-only access for audit and compliance inspection."
-            }
-          }
+        "authorization": {
+          "create": [
+            "shillinq_communications_manager",
+            "shillinq_template_administrator"
+          ],
+          "read": [
+            "shillinq_auditor",
+            "shillinq_booking_administrator",
+            "shillinq_communications_manager",
+            "shillinq_operator",
+            "shillinq_template_administrator"
+          ],
+          "update": [
+            "shillinq_booking_administrator",
+            "shillinq_communications_manager",
+            "shillinq_template_administrator"
+          ],
+          "delete": [
+            "shillinq_communications_manager",
+            "shillinq_template_administrator"
+          ]
         },
         "x-openregister-calculations": {
           "activatedAt": {

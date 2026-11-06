@@ -43,7 +43,8 @@ namespace OCA\Shillinq\BackgroundJob;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateResult;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -62,6 +63,7 @@ use Psr\Log\LoggerInterface;
  *     verification of each branch.
  */
 class FxRateImportJob extends TimedJob {
+	use RunsJobAsSystem;
 	/**
 	 * Interval between runs: 86400 seconds = 24 hours (daily ECB cycle).
 	 */
@@ -109,6 +111,21 @@ class FxRateImportJob extends TimedJob {
 	}//end __construct()
 
 	/**
+	 * Run the job inside OpenRegister's system context.
+	 *
+	 * @param mixed $argument The job argument.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/specs/schema-authorization/spec.md
+	 */
+	protected function run(mixed $argument): void {
+		$this->asSystem(work: function () use ($argument): void {
+			$this->runAsJob(argument: $argument);
+		});
+	}//end run()
+
+	/**
 	 * Fetch yesterday's FX rates for the configured pairs and upsert
 	 * them into the FxRate register.
 	 *
@@ -120,7 +137,7 @@ class FxRateImportJob extends TimedJob {
 	 *
 	 * @spec openspec/changes/add-shillinq-multi-currency/tasks.md#task-11
 	 */
-	protected function run(mixed $argument): void {
+	private function runAsJob(mixed $argument): void {
 		$this->logger->info('Shillinq: FxRateImportJob started');
 
 		$asOf = $this->previousBusinessDay();
@@ -197,7 +214,7 @@ class FxRateImportJob extends TimedJob {
 				$asOf
 			)
 		);
-	}//end run()
+	}//end runAsJob()
 
 	/**
 	 * Return the ISO date (YYYY-MM-DD) of the previous business day in
@@ -395,7 +412,7 @@ class FxRateImportJob extends TimedJob {
 	 * @return array<int, array{transaction: string, base: string}>
 	 */
 	private function configuredPairs(): array {
-		$raw = $this->appConfig->getValueString(Application::APP_ID, 'multi_currency_pairs', '');
+		$raw = $this->appConfig->getValueString(AppIdentity::APP_ID, 'multi_currency_pairs', '');
 		if ($raw === '') {
 			return self::DEFAULT_PAIRS;
 		}
@@ -430,7 +447,7 @@ class FxRateImportJob extends TimedJob {
 	 * @return string Register slug.
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($slug === '') {
 			return 'shillinq';
 		}

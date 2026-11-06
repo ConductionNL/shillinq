@@ -61,7 +61,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
@@ -413,7 +413,7 @@ class DBAComplianceGuard {
 	 * @return float The effective VBAR grens in EUR.
 	 */
 	private function resolveVbarGrens(): float {
-		$override = $this->appConfig->getValueString(Application::APP_ID, 'dba_vbar_grens', '');
+		$override = $this->appConfig->getValueString(AppIdentity::APP_ID, 'dba_vbar_grens', '');
 		if ($override !== '' && is_numeric($override) === true) {
 			$value = (float)$override;
 			if ($value > 0.0) {
@@ -465,7 +465,7 @@ class DBAComplianceGuard {
 	 * @return string The register slug.
 	 */
 	private function resolveRegister(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

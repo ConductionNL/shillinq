@@ -46,7 +46,7 @@ namespace OCA\Shillinq\Service\Pipelinq;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -107,7 +107,7 @@ final class PersistentTimelineRetryQueue implements TimelineRetryQueue {
 				$this->logger->warning(
 					'PersistentTimelineRetryQueue: OR not available, falling back to logging',
 					[
-						'app' => Application::APP_ID,
+						'app' => AppIdentity::APP_ID,
 						'type' => $event->type(),
 						'externalId' => $event->externalId(),
 					]
@@ -129,7 +129,7 @@ final class PersistentTimelineRetryQueue implements TimelineRetryQueue {
 				$this->logger->warning(
 					'PersistentTimelineRetryQueue: failed to schedule retry job',
 					[
-						'app' => Application::APP_ID,
+						'app' => AppIdentity::APP_ID,
 						'entryId' => $entryId,
 						'exception' => $e->getMessage(),
 					]
@@ -140,7 +140,7 @@ final class PersistentTimelineRetryQueue implements TimelineRetryQueue {
 			$this->logger->info(
 				'PersistentTimelineRetryQueue: event queued for async retry',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'entryId' => $entryId,
 					'type' => $event->type(),
 					'externalId' => $event->externalId(),
@@ -153,7 +153,7 @@ final class PersistentTimelineRetryQueue implements TimelineRetryQueue {
 			$this->logger->warning(
 				'PersistentTimelineRetryQueue: enqueue failed, falling back to logging',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'type' => $event->type(),
 					'externalId' => $event->externalId(),
 					'exception' => $e->getMessage(),
@@ -197,7 +197,9 @@ final class PersistentTimelineRetryQueue implements TimelineRetryQueue {
 				->saveObject(
 					object: $payload,
 					register: $registerSlug,
-					schema: 'TimelinePublishRetryEntry'
+					schema: 'TimelinePublishRetryEntry',
+					// The retry queue is written by the server on behalf of whoever triggered the publish.
+					_rbac: false,
 				);
 
 			return $this->extractId(result: $saved);
@@ -205,7 +207,7 @@ final class PersistentTimelineRetryQueue implements TimelineRetryQueue {
 			$this->logger->warning(
 				'PersistentTimelineRetryQueue: failed to persist retry entry',
 				[
-					'app' => Application::APP_ID,
+					'app' => AppIdentity::APP_ID,
 					'type' => $event->type(),
 					'externalId' => $event->externalId(),
 					'exception' => $e->getMessage(),

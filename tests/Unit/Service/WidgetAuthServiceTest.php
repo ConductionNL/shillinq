@@ -224,4 +224,56 @@ class WidgetAuthServiceTest extends TestCase {
 
 	}//end testValidateApiKeyRejectsEmptyInputs()
 
+	/**
+	 * Key lookups run for anonymous widget callers against an admin-only
+	 * schema, so they must not be filtered by the caller's group grants.
+	 *
+	 * @return void
+	 */
+	public function testKeyLookupBypassesObjectRbac(): void {
+		$objectService = new class {
+			/**
+			 * @var array<int,bool>
+			 */
+			public array $rbacFlags = [];
+
+			/**
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * @param array<string,mixed> $config Query.
+			 * @param bool                $_rbac  Whether OpenRegister RBAC applies.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $config = [], bool $_rbac = true): array {
+				$this->rbacFlags[] = $_rbac;
+				return [['businessId' => 'salon-001', 'status' => 'active']];
+			}//end findAll()
+		};
+		$this->settings->method('isOpenRegisterAvailable')->willReturn(true);
+		$this->settings->method('getRegisterSlug')->willReturn('shillinq');
+		$this->container->method('get')->willReturn($objectService);
+
+		self::assertNotNull(actual: $this->service->findActiveKeyByBusinessId(businessId: 'salon-001'));
+		self::assertNotNull(actual: $this->service->findKeyByBusinessId(businessId: 'salon-001'));
+		self::assertSame(expected: [false, false], actual: $objectService->rbacFlags);
+
+	}//end testKeyLookupBypassesObjectRbac()
+
 }//end class

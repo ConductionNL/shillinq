@@ -17,8 +17,8 @@
  (ADR-005). The view reflects peppolSentAt / peppolMessageId on success and
  peppolFallbackReason whenever the supplier was not Peppol-registered.
 
- @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
- @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
+ @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
+ @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
 -->
 <template>
 	<div class="po-detail">
@@ -38,7 +38,7 @@
 				<h2>{{ purchaseOrder.poNumber }}</h2>
 				<p>
 					<span class="po-detail__pill">{{
-						purchaseOrder.lifecycleState
+						purchaseOrder.statusCode
 					}}</span>
 					<span
 						>{{ t('shillinq', 'Supplier') }}:
@@ -102,16 +102,16 @@
 						</div>
 						<div class="po-detail__chain-status">
 							<span
-								:class="`po-detail__pill po-detail__pill--${entry.status}`">
-								{{ entry.status }}
+								:class="`po-detail__pill po-detail__pill--${entry.decision}`">
+								{{ entry.decision }}
 							</span>
 							<span
-								v-if="entry.signedAt"
+								v-if="entry.decidedAt"
 								class="po-detail__chain-timestamp">
 								{{ t('shillinq', 'Signed') }}:
-								{{ formatTimestamp(entry.signedAt) }}
-								<template v-if="entry.signedBy">
-									— {{ entry.signedBy }}
+								{{ formatTimestamp(entry.decidedAt) }}
+								<template v-if="entry.userId">
+									({{ entry.userId }})
 								</template>
 							</span>
 						</div>
@@ -215,7 +215,7 @@
 					}}
 				</NcButton>
 				<p
-					v-if="!canSend && purchaseOrder.lifecycleState !== 'sent'"
+					v-if="!canSend && purchaseOrder.statusCode !== 'sent'"
 					class="po-detail__send-hint">
 					{{
 						t(
@@ -225,7 +225,7 @@
 					}}
 				</p>
 				<p
-					v-else-if="purchaseOrder.lifecycleState === 'sent'"
+					v-else-if="purchaseOrder.statusCode === 'sent'"
 					class="po-detail__send-hint"
 					data-testid="po-detail-already-sent">
 					{{
@@ -286,12 +286,13 @@ export default {
 		 * button's disabled state, never permission.
 		 *
 		 * @return {boolean}
+		 * @spec openspec/changes/purchasing-approval-delegation/tasks.md
 		 */
 		canSend() {
 			if (!this.purchaseOrder) {
 				return false
 			}
-			if (this.purchaseOrder.lifecycleState === 'sent') {
+			if (this.purchaseOrder.statusCode === 'sent') {
 				return false
 			}
 			const chain = this.purchaseOrder.approvalChain || []
@@ -299,7 +300,7 @@ export default {
 				return false
 			}
 			return chain.every(
-				(entry) => entry.status === 'approved' && !!entry.signedAt,
+				(entry) => entry.decision === 'approved' && !!entry.decidedAt,
 			)
 		},
 	},
@@ -309,7 +310,7 @@ export default {
 	},
 
 	methods: {
-		/** @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md */
+		/** @spec openspec/specs/bookkeeping-purchase-order-core/spec.md */
 		async loadPurchaseOrder() {
 			this.loading = true
 			try {
@@ -331,7 +332,7 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md */
+		/** @spec openspec/specs/bookkeeping-purchase-order-core/spec.md */
 		async loadRelated() {
 			// The related-records lookups go through the OR REST surface; if the
 			// schemas are not yet registered (e.g. before slice 04/06 ship) we

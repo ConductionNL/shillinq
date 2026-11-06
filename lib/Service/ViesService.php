@@ -40,7 +40,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\Http\Client\IClientService;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -249,7 +249,10 @@ class ViesService {
 		$best = null;
 		$bestTs = -1;
 		foreach ($records as $record) {
-			if ((bool)($record['valid'] ?? false) !== true) {
+			// A result reused during an outage is not fresh evidence: counting it
+			// would date the last valid check to the outage and renew the reuse
+			// window on every outage (tax-vat-number-check).
+			if ((bool)($record['valid'] ?? false) !== true || (bool)($record['outage'] ?? false) === true) {
 				continue;
 			}
 
@@ -411,7 +414,7 @@ class ViesService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

@@ -282,6 +282,25 @@
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on TreasuryAccount with actor (IUserSession), timestamp, action, before/after snapshot, and hash chain per ADR-022 +. Compliance-rule-evaluation results are recorded on the transition to active/monitored; blocking reasons are recorded on suspend transitions. Retention is governed by OR per the T2 bookkeeping-audit-trail spec."
+        },
+        "authorization": {
+          "create": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper"
+          ],
+          "read": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper",
+            "shillinq_controller",
+            "shillinq_auditor"
+          ],
+          "update": [
+            "shillinq_treasurer",
+            "shillinq_bookkeeper"
+          ],
+          "delete": [
+            "shillinq_controller"
+          ]
         }
       },
       "BankingRule": {

@@ -41,6 +41,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
+use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\VendorPerformanceAggregation;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -68,6 +69,7 @@ use Throwable;
  * @spec openspec/changes/bookkeeping-purchase-order-3way-10-vendor-performance/tasks.md
  */
 class VendorPerformanceAggregationJob extends TimedJob {
+	use RunsJobAsSystem;
 
 	/**
 	 * Monthly interval in seconds (30 days).
@@ -120,6 +122,21 @@ class VendorPerformanceAggregationJob extends TimedJob {
 	}//end __construct()
 
 	/**
+	 * Run the job inside OpenRegister's system context.
+	 *
+	 * @param mixed $argument The job argument.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/enforced-schema-authorization/specs/schema-authorization/spec.md
+	 */
+	protected function run($argument): void {
+		$this->asSystem(work: function () use ($argument): void {
+			$this->runAsJob(argument: $argument);
+		});
+	}//end run()
+
+	/**
 	 * Sweep every administration with SupplierInvoice activity in the
 	 * previous calendar month and write VendorPerformance scorecards.
 	 *
@@ -132,7 +149,7 @@ class VendorPerformanceAggregationJob extends TimedJob {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
 	 *     TimedJob::run()'s signature; this job takes no argument.
 	 */
-	protected function run($argument): void {
+	private function runAsJob($argument): void {
 		if ($this->settings->isOpenRegisterAvailable() === false) {
 			$this->logger->info('VendorPerformanceAggregationJob: OR unavailable, skipping.');
 			return;
@@ -191,7 +208,7 @@ class VendorPerformanceAggregationJob extends TimedJob {
 			)
 		);
 
-	}//end run()
+	}//end runAsJob()
 
 	/**
 	 * Compute the YYYY-MM code of the calendar month before $now.

@@ -41,7 +41,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -560,10 +560,9 @@ class BadoControleprotocolService {
 		// the legitimate owner as well as the attacker — measured on a
 		// two-account rig: owner 200 → 404. ObjectService::find() addresses the
 		// object by its identity and is the call the rest of the app uses.
-		$protocol = $this->objects()->find(
-			id: $protocolId,
-			register: $this->register(),
-			schema: 'Controleprotocol'
+		$protocol = ObjectIdentifier::findScoped(
+			scoped: $this->objects()->setRegister($this->register())->setSchema('Controleprotocol'),
+			id: $protocolId
 		);
 
 		if ($protocol === null) {
@@ -655,7 +654,7 @@ class BadoControleprotocolService {
 	 * @return string The register slug.
 	 */
 	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
 			return 'shillinq';
 		}

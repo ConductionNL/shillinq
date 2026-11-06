@@ -71,11 +71,11 @@
 					{ "key": "lifecycleState", "label": "State", "sortable": true }
 				],
 				"defaultSort": "contractNumber",
-				"detailRoute": "ContractDetail"
+				"detailRoute": "RevenueContractDetail"
 			}
 		},
 		{
-			"id": "ContractDetail",
+			"id": "RevenueContractDetail",
 			"route": "/ifrs-15/contracts/:id",
 			"type": "detail",
 			"title": "Contract",

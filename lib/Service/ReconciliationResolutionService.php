@@ -32,10 +32,11 @@ namespace OCA\Shillinq\Service;
 
 use DomainException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use OutOfBoundsException;
 use Psr\Log\LoggerInterface;
+use OCA\Shillinq\Util\ObjectIdentifier;
 
 /**
  * Persists REQ-REC-004 resolutions onto ReconciliationMatch records and
@@ -94,10 +95,10 @@ class ReconciliationResolutionService {
 
 		// Load + validate the parent reconciliation.
 		try {
-			$parent = $this->objectService
-				->setRegister($register)
-				->setSchema('BankReconciliation')
-				->find($reconId);
+			$parent = ObjectIdentifier::findScoped(
+				scoped: $this->objectService->setRegister($register)->setSchema('BankReconciliation'),
+				id: $reconId
+			);
 			$parent = $this->toArray(result: $parent);
 		} catch (\Throwable $e) {
 			throw new OutOfBoundsException(
@@ -120,10 +121,10 @@ class ReconciliationResolutionService {
 
 		// Load + validate the match record.
 		try {
-			$match = $this->objectService
-				->setRegister($register)
-				->setSchema('ReconciliationMatch')
-				->find($matchId);
+			$match = ObjectIdentifier::findScoped(
+				scoped: $this->objectService->setRegister($register)->setSchema('ReconciliationMatch'),
+				id: $matchId
+			);
 			$match = $this->toArray(result: $match);
 		} catch (\Throwable $e) {
 			throw new OutOfBoundsException(
@@ -148,7 +149,9 @@ class ReconciliationResolutionService {
 		$updated = $this->objectService
 			->setRegister($register)
 			->setSchema('ReconciliationMatch')
-			->updateObject(
+			// PatchObject merges; updateObject would replace the match with
+			// these four keys and erase its line, targets and amount.
+			->patchObject(
 				$matchId,
 				[
 					'reconId' => $reconId,
@@ -177,7 +180,7 @@ class ReconciliationResolutionService {
 	 * @return string The register slug.
 	 */
 	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($slug === '') {
 			return 'shillinq';
 		}

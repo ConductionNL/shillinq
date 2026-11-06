@@ -298,18 +298,19 @@ final class OrderPrimitiveSchemaTest extends TestCase {
 	}//end testEveryTransitionIsGatedToItsOwnOrderTypeStates()
 
 	/**
-	 * RBAC roles are declared for every domain the Order primitive folds.
+	 * Every domain the Order primitive folds holds a group in its enforced
+	 * authorization block.
 	 *
 	 * @return void
 	 */
 	public function testOrderSchemaDeclaresRbacRoles(): void {
 		$order = $this->orderSchema();
-		$roles = array_keys($order['x-openregister-rbac']['roles']);
+		$readers = $order['authorization']['read'];
 
-		self::assertContains('subsidie-coordinator', $roles);
-		self::assertContains('bookkeeper', $roles);
-		self::assertContains('ondernemer', $roles);
-		self::assertContains('auditor', $roles);
+		self::assertContains('shillinq_subsidie_coordinator', $readers);
+		self::assertContains('shillinq_bookkeeper', $readers);
+		self::assertContains('shillinq_ondernemer', $readers);
+		self::assertContains('shillinq_auditor', $readers);
 
 	}//end testOrderSchemaDeclaresRbacRoles()
 
