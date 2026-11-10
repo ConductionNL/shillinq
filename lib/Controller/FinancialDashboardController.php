@@ -58,21 +58,8 @@ use Psr\Log\LoggerInterface;
  * GET /api/dashboard/financial-series + /api/dashboard/financial-summary.
  *
  * @spec openspec/specs/financial-dashboard-graphs/spec.md
- *
- * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
- *     #506): early-return refactor deferred pending full behavioral
- *     verification of each branch.
  */
 class FinancialDashboardController extends Controller {
-	/**
-	 * Accepted shape for the from/to bounds: a `YYYY-MM-DD` day, optionally
-	 * followed by a time suffix (the service only reads the first ten
-	 * characters, mirroring the client's `.slice(0, 10)`).
-	 *
-	 * @var string
-	 */
-	private const DATE_PATTERN = '/^\d{4}-\d{2}-\d{2}([T ][0-9:.+\-Z]{1,22})?$/';
-
 	/**
 	 * Constructor for the FinancialDashboardController.
 	 *
@@ -153,23 +140,9 @@ class FinancialDashboardController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function cashPosition(): JSONResponse {
-		if ($this->context->currentUserId() === null) {
-			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
-		}
-
-		// Without a parameter, the administration the user is working in.
-		$administrationId = trim((string)$this->request->getParam('administrationId', ''));
-		if ($administrationId === '') {
-			$administrationId = trim((string)($this->context->buildContext()['activeAdministrationId'] ?? ''));
-		}
-
-		if ($administrationId === '') {
-			return new JSONResponse(['error' => 'No administration selected'], Http::STATUS_BAD_REQUEST);
-		}
-
-		// ADR-005: an administration the caller is not a member of is masked as absent.
-		if ($this->context->canAccess(administrationId: $administrationId) === false) {
-			return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+		$administrationId = $this->cashAdministration();
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
 		}
 
 		try {
@@ -193,15 +166,74 @@ class FinancialDashboardController extends Controller {
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 */
 	private function respond(string $endpoint): JSONResponse {
+		$refusal = $this->accessRefusal();
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$range = new DashboardRange(request: $this->request);
+		$error = $range->error();
+		if ($error !== null) {
+			return new JSONResponse(['error' => $error], Http::STATUS_BAD_REQUEST);
+		}
+
+		return $this->compute(endpoint: $endpoint, range: $range);
+	}//end respond()
+
+	/**
+	 * The authenticated caller's administration for the cash position, in
+	 * check order: authenticated, an administration selected, accessible.
+	 *
+	 * @return string|JSONResponse The administration id, or the refusal.
+	 */
+	private function cashAdministration(): string|JSONResponse {
+		if ($this->context->currentUserId() === null) {
+			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
+		}
+
+		$administrationId = $this->cashAdministrationId();
+		if ($administrationId === '') {
+			return new JSONResponse(['error' => 'No administration selected'], Http::STATUS_BAD_REQUEST);
+		}
+
+		// ADR-005: an administration the caller is not a member of is masked as absent.
+		if ($this->context->canAccess(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		return $administrationId;
+	}//end cashAdministration()
+
+	/**
+	 * The administration the cash position is for: the administrationId
+	 * parameter, or without it the administration the user is working in.
+	 *
+	 * @return string The administration id, '' when none.
+	 */
+	private function cashAdministrationId(): string {
+		$administrationId = trim((string)$this->request->getParam('administrationId', ''));
+		if ($administrationId === '') {
+			$administrationId = trim((string)($this->context->buildContext()['activeAdministrationId'] ?? ''));
+		}
+
+		return $administrationId;
+	}//end cashAdministrationId()
+
+	/**
+	 * The authentication and administration-membership gates of the series
+	 * and summary endpoints.
+	 *
+	 * @return JSONResponse|null The refusal, or null when the caller may proceed.
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 */
+	private function accessRefusal(): ?JSONResponse {
 		// Authentication gate — the NC SecurityMiddleware already rejects
 		// anonymous requests for #[NoAdminRequired] routes; we check
 		// explicitly (ADR-005) so the data layer below can rely on a
 		// resolved user for its RBAC scoping.
 		if ($this->context->currentUserId() === null) {
-			return new JSONResponse(
-				['error' => 'Not authenticated'],
-				Http::STATUS_UNAUTHORIZED
-			);
+			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
 		}
 
 		// GUARD (security-endpoint-guards REQ-001): FinancialDashboardService
@@ -224,68 +256,35 @@ class FinancialDashboardController extends Controller {
 		// user who DOES belong to one administration but not another remains
 		// open — tracked as follow-up work, not silently declared fixed here.
 		if ($this->context->accessibleAdministrationIds() === []) {
-			return new JSONResponse(
-				['error' => 'No accessible administration'],
-				Http::STATUS_FORBIDDEN
-			);
+			return new JSONResponse(['error' => 'No accessible administration'], Http::STATUS_FORBIDDEN);
 		}
 
-		$from = trim((string)$this->request->getParam('from', ''));
-		$to = trim((string)$this->request->getParam('to', ''));
+		return null;
+	}//end accessRefusal()
 
-		if (($from === '') !== ($to === '')) {
-			return new JSONResponse(
-				['error' => 'from and to must be provided together'],
-				Http::STATUS_BAD_REQUEST
-			);
-		}
-
-		if ($from !== '' && preg_match(self::DATE_PATTERN, $from) !== 1) {
-			return new JSONResponse(
-				['error' => 'from must be an ISO-8601 date'],
-				Http::STATUS_BAD_REQUEST
-			);
-		}
-
-		if ($to !== '' && preg_match(self::DATE_PATTERN, $to) !== 1) {
-			return new JSONResponse(
-				['error' => 'to must be an ISO-8601 date'],
-				Http::STATUS_BAD_REQUEST
-			);
-		}
-
-		$fromParam = null;
-		if ($from !== '') {
-			$fromParam = $from;
-		}
-
-		$toParam = null;
-		if ($to !== '') {
-			$toParam = $to;
-		}
-
+	/**
+	 * Dispatch to the series or summary computation; a failure is logged
+	 * with the raw bounds and answered 500 without a stack trace.
+	 *
+	 * @param string         $endpoint Either 'series' or 'summary'.
+	 * @param DashboardRange $range    The validated range.
+	 *
+	 * @return JSONResponse The endpoint payload or an error envelope.
+	 */
+	private function compute(string $endpoint, DashboardRange $range): JSONResponse {
 		try {
-			if ($endpoint === 'series') {
-				$result = $this->dashboard->series(from: $fromParam, to: $toParam);
-			} else {
-				$result = $this->dashboard->summary(from: $fromParam, to: $toParam);
-			}
+			$result = match ($endpoint) {
+				'series' => $this->dashboard->series(from: $range->fromBound(), to: $range->toBound()),
+				default => $this->dashboard->summary(from: $range->fromBound(), to: $range->toBound()),
+			};
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'FinancialDashboardController: failed to compute ' . $endpoint,
-				[
-					'from' => $from,
-					'to' => $to,
-					'exception' => $e->getMessage(),
-				]
+				['from' => $range->from, 'to' => $range->to, 'exception' => $e->getMessage()]
 			);
-
-			return new JSONResponse(
-				['error' => 'Failed to compute financial ' . $endpoint],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
-		}//end try
+			return new JSONResponse(['error' => 'Failed to compute financial ' . $endpoint], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
 
 		return new JSONResponse($result, Http::STATUS_OK);
-	}//end respond()
+	}//end compute()
 }//end class
