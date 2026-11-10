@@ -147,39 +147,95 @@ class VatSuppletieDetectionService {
 	 */
 	public function detect(string $vatReturnId): ?array {
 		$vatReturn = $this->vatReturnService->getReturn(returnId: $vatReturnId);
-		$status = (string)($vatReturn['statusCode'] ?? '');
-		if ($status === '' || $status === 'draft') {
-			$statusLabel = 'unknown';
-			if ($status !== '') {
-				$statusLabel = $status;
-			}
+		$this->assertFiledReturn(vatReturnId: $vatReturnId, vatReturn: $vatReturn);
 
-			throw new RuntimeException(
-				sprintf(
-					'VATReturn %s is %s; only a filed (submitted or later) return can be checked for drift.',
-					$vatReturnId,
-					$statusLabel
-				)
-			);
-		}
-
-		$administrationId = (string)($vatReturn['administrationId'] ?? '');
-		$startDate = (string)($vatReturn['startDate'] ?? '');
-		$endDate = (string)($vatReturn['endDate'] ?? '');
-
-		$filed = $this->vatReturnService->fetchFiledDeclarations(returnId: $vatReturnId);
-		$current = $this->vatReturnService->computeCurrentDeclarations(
-			administrationId: $administrationId,
-			startDate: $startDate,
-			endDate: $endDate
-		);
+		$filed   = $this->vatReturnService->fetchFiledDeclarations(returnId: $vatReturnId);
+		$current = $this->currentDeclarations(vatReturn: $vatReturn);
 
 		if ($this->snapshotsMatch(filed: $filed, current: $current) === true) {
 			return null;
 		}
 
-		$correction = [
-			'administrationId' => $administrationId,
+		$correction = $this->draftCorrection(vatReturnId: $vatReturnId, vatReturn: $vatReturn);
+		$correction['filedSnapshot']   = $filed;
+		$correction['currentSnapshot'] = $current;
+		$correction['detectedAt']      = $this->now();
+
+		$this->applyPeriodNumberFields(correction: $correction, vatReturn: $vatReturn);
+
+		return $this->saveObject(schema: 'VatCorrection', data: $correction);
+	}//end detect()
+
+	/**
+	 * Refuse a VATReturn that has not been filed yet.
+	 *
+	 * @param string              $vatReturnId The VATReturn id.
+	 * @param array<string,mixed> $vatReturn   The VATReturn.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When the return is a draft or has no status.
+	 */
+	private function assertFiledReturn(string $vatReturnId, array $vatReturn): void {
+		$status = (string)($vatReturn['statusCode'] ?? '');
+		if ($status !== '' && $status !== 'draft') {
+			return;
+		}
+
+		throw new RuntimeException(
+			sprintf(
+				'VATReturn %s is %s; only a filed (submitted or later) return can be checked for drift.',
+				$vatReturnId,
+				$this->statusLabel(status: $status)
+			)
+		);
+
+	}//end assertFiledReturn()
+
+	/**
+	 * The status as named in the refusal: the status, or 'unknown' when empty.
+	 *
+	 * @param string $status The VATReturn statusCode.
+	 *
+	 * @return string
+	 */
+	private function statusLabel(string $status): string {
+		if ($status === '') {
+			return 'unknown';
+		}
+
+		return $status;
+
+	}//end statusLabel()
+
+	/**
+	 * The rubriek totals the ledger yields today for the return's period.
+	 *
+	 * @param array<string,mixed> $vatReturn The filed VATReturn.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function currentDeclarations(array $vatReturn): array {
+		return $this->vatReturnService->computeCurrentDeclarations(
+			administrationId: (string)($vatReturn['administrationId'] ?? ''),
+			startDate: (string)($vatReturn['startDate'] ?? ''),
+			endDate: (string)($vatReturn['endDate'] ?? '')
+		);
+
+	}//end currentDeclarations()
+
+	/**
+	 * The draft VatCorrection record for a drifted return, snapshots and
+	 * detection time still to be filled in.
+	 *
+	 * @param string              $vatReturnId The filed VATReturn id.
+	 * @param array<string,mixed> $vatReturn   The filed VATReturn.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function draftCorrection(string $vatReturnId, array $vatReturn): array {
+		return [
+			'administrationId' => (string)($vatReturn['administrationId'] ?? ''),
 			'originalVatReturnId' => $vatReturnId,
 			'originalReturnId' => $vatReturnId,
 			'periodType' => (string)($vatReturn['period'] ?? 'quarter'),
@@ -190,20 +246,17 @@ class VatSuppletieDetectionService {
 			'correctionReason' => 'late-discovery',
 			'currency' => (string)($vatReturn['currency'] ?? 'EUR'),
 			'state' => 'draft',
-			'filedSnapshot' => $filed,
-			'currentSnapshot' => $current,
+			'filedSnapshot' => [],
+			'currentSnapshot' => [],
 			'categoryDeltas' => [],
-			'detectedAt' => $this->now(),
+			'detectedAt' => null,
 			'preparedAt' => null,
 			'thresholdExceeded' => null,
 			'filingDeadline' => null,
 			'glCorrectionTransactionId' => null,
 		];
 
-		$this->applyPeriodNumberFields(correction: $correction, vatReturn: $vatReturn);
-
-		return $this->saveObject(schema: 'VatCorrection', data: $correction);
-	}//end detect()
+	}//end draftCorrection()
 
 	/**
 	 * Compile a `detected` VatCorrection into a `prepared` one: per-rubriek
@@ -219,6 +272,34 @@ class VatSuppletieDetectionService {
 	 * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
 	 */
 	public function prepare(string $vatCorrectionId): array {
+		$correction = $this->fetchDetectedCorrection(vatCorrectionId: $vatCorrectionId);
+		$deltas     = $this->snapshotDeltas(correction: $correction);
+
+		$netCorrection = $this->netCorrection(deltas: $deltas);
+		$preparedAt    = new DateTimeImmutable();
+		$deltasWithAccount = $this->attachAccounts(deltas: $deltas, originalReturnId: $this->originalReturnId(correction: $correction));
+
+		$correction['categoryDeltas'] = $deltasWithAccount;
+		$correction = $this->stampNetCorrection(correction: $correction, netCorrection: $netCorrection);
+		$correction['preparedAt']     = $preparedAt->format(DateTimeInterface::ATOM);
+		$correction['filingDeadline'] = $this->filingDeadline(preparedAt: $preparedAt, thresholdExceeded: $correction['thresholdExceeded']);
+
+		$run = new VatCorrectionPostingRun(administrationId: (string)($correction['administrationId'] ?? ''), vatCorrectionId: $vatCorrectionId);
+		$correction['glCorrectionTransactionId'] = $this->postCorrection(run: $run, deltas: $deltasWithAccount);
+
+		return $this->saveObject(schema: 'VatCorrection', data: $correction);
+	}//end prepare()
+
+	/**
+	 * Fetch a VatCorrection that is still in the detected sub-state.
+	 *
+	 * @param string $vatCorrectionId The VatCorrection id.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @throws RuntimeException When it is not a draft or was already prepared.
+	 */
+	private function fetchDetectedCorrection(string $vatCorrectionId): array {
 		$correction = $this->fetchCorrection(vatCorrectionId: $vatCorrectionId);
 		if ((string)($correction['state'] ?? '') !== 'draft' || ($correction['preparedAt'] ?? null) !== null) {
 			throw new RuntimeException(
@@ -226,10 +307,34 @@ class VatSuppletieDetectionService {
 			);
 		}
 
-		$filed = (array)($correction['filedSnapshot'] ?? []);
-		$current = (array)($correction['currentSnapshot'] ?? []);
-		$deltas = $this->computeDeltas(filed: $filed, current: $current);
+		return $correction;
 
+	}//end fetchDetectedCorrection()
+
+	/**
+	 * The per-rubriek deltas between a correction's filed and current snapshots.
+	 *
+	 * @param array<string,mixed> $correction The VatCorrection.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function snapshotDeltas(array $correction): array {
+		$filed   = (array)($correction['filedSnapshot'] ?? []);
+		$current = (array)($correction['currentSnapshot'] ?? []);
+
+		return $this->computeDeltas(filed: $filed, current: $current);
+
+	}//end snapshotDeltas()
+
+	/**
+	 * The net change in VAT payable, in euros: owed deltas add, deductible
+	 * deltas subtract (REQ-VBTW-014).
+	 *
+	 * @param array<int,array<string,mixed>> $deltas Rubriek deltas.
+	 *
+	 * @return float
+	 */
+	private function netCorrection(array $deltas): float {
 		$netCorrectionCt = 0;
 		foreach ($deltas as $delta) {
 			$deltaCt = (int)round(((float)$delta['deltaVATAmount']) * 100);
@@ -242,41 +347,72 @@ class VatSuppletieDetectionService {
 			}
 		}
 
-		$netCorrection = round(($netCorrectionCt / 100), 2);
-		$thresholdExceeded = (abs($netCorrection) >= self::SUPPLETIE_THRESHOLD_EUR);
-		$preparedAt = new DateTimeImmutable();
+		return round(($netCorrectionCt / 100), 2);
 
-		$administrationId = (string)($correction['administrationId'] ?? '');
-		$originalReturnId = (string)($correction['originalVatReturnId'] ?? ($correction['originalReturnId'] ?? ''));
-		$deltasWithAccount = $this->attachAccounts(deltas: $deltas, originalReturnId: $originalReturnId);
+	}//end netCorrection()
 
-		$correction['categoryDeltas'] = $deltasWithAccount;
-		$correction['correctionAmount'] = $netCorrection;
-		$correction['adjustmentAmount'] = $netCorrection;
-		$correction['thresholdExceeded'] = $thresholdExceeded;
-		$correction['preparedAt'] = $preparedAt->format(DateTimeInterface::ATOM);
+	/**
+	 * The VATReturn a correction belongs to.
+	 *
+	 * @param array<string,mixed> $correction The VatCorrection.
+	 *
+	 * @return string
+	 */
+	private function originalReturnId(array $correction): string {
+		return (string)($correction['originalVatReturnId'] ?? ($correction['originalReturnId'] ?? ''));
 
-		$filingDeadline = null;
-		if ($thresholdExceeded === true) {
-			$deadline = $preparedAt->add(new DateInterval(self::FILING_DEADLINE_INTERVAL));
-			$filingDeadline = $deadline->format('Y-m-d');
+	}//end originalReturnId()
+
+	/**
+	 * Write the net correction and the €1.000-grens decision onto the correction.
+	 *
+	 * @param array<string,mixed> $correction    The VatCorrection.
+	 * @param float               $netCorrection The net correction in euros.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function stampNetCorrection(array $correction, float $netCorrection): array {
+		$correction['correctionAmount']  = $netCorrection;
+		$correction['adjustmentAmount']  = $netCorrection;
+		$correction['thresholdExceeded'] = (abs($netCorrection) >= self::SUPPLETIE_THRESHOLD_EUR);
+
+		return $correction;
+
+	}//end stampNetCorrection()
+
+	/**
+	 * The filing deadline: 8 weeks after preparation when the grens is exceeded.
+	 *
+	 * @param DateTimeImmutable $preparedAt        When the correction was prepared.
+	 * @param bool              $thresholdExceeded Whether the €1.000-grens is exceeded.
+	 *
+	 * @return string|null Y-m-d, or null below the grens.
+	 */
+	private function filingDeadline(DateTimeImmutable $preparedAt, bool $thresholdExceeded): ?string {
+		if ($thresholdExceeded === false) {
+			return null;
 		}
 
-		$correction['filingDeadline'] = $filingDeadline;
+		return $preparedAt->add(new DateInterval(self::FILING_DEADLINE_INTERVAL))->format('Y-m-d');
 
-		$glTransactionId = null;
-		if ($deltasWithAccount !== []) {
-			$glTransactionId = $this->createCorrectionPosting(
-				administrationId: $administrationId,
-				vatCorrectionId: $vatCorrectionId,
-				deltas: $deltasWithAccount
-			);
+	}//end filingDeadline()
+
+	/**
+	 * Compile the draft GL correction posting, when there is anything to book.
+	 *
+	 * @param VatCorrectionPostingRun        $run    The posting run.
+	 * @param array<int,array<string,mixed>> $deltas Rubriek deltas with glAccountNumber attached.
+	 *
+	 * @return string|null The created GLTransaction id, or null without deltas.
+	 */
+	private function postCorrection(VatCorrectionPostingRun $run, array $deltas): ?string {
+		if ($deltas === []) {
+			return null;
 		}
 
-		$correction['glCorrectionTransactionId'] = $glTransactionId;
+		return $this->createCorrectionPosting(run: $run, deltas: $deltas);
 
-		return $this->saveObject(schema: 'VatCorrection', data: $correction);
-	}//end prepare()
+	}//end postCorrection()
 
 	/**
 	 * Whether the filed and current rubriek snapshots are identical (no
@@ -305,6 +441,27 @@ class VatSuppletieDetectionService {
 	 * @return array<int,array{type:string,taxRate:float,returnBox:string,deltaVATAmount:float,deltaTaxableAmount:float}>
 	 */
 	private function computeDeltas(array $filed, array $current): array {
+		$deltas = [];
+		foreach ($this->indexBuckets(filed: $filed, current: $current) as $bucket) {
+			$delta = $this->bucketDelta(bucket: $bucket);
+			if ($delta !== null) {
+				$deltas[] = $delta;
+			}
+		}
+
+		return $deltas;
+	}//end computeDeltas()
+
+	/**
+	 * Index the filed and current buckets by declaration key, each entry
+	 * carrying the filed and the current VAT and taxable amounts.
+	 *
+	 * @param array<int,array<string,mixed>> $filed   Filed snapshot buckets.
+	 * @param array<int,array<string,mixed>> $current Current snapshot buckets.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	private function indexBuckets(array $filed, array $current): array {
 		$byKey = [];
 		foreach ($filed as $bucket) {
 			$key = $this->vatReturnService->declarationKey(bucket: $bucket);
@@ -320,27 +477,35 @@ class VatSuppletieDetectionService {
 			$byKey[$key]['currentTaxable'] = (float)($bucket['totalTaxableAmount'] ?? 0.0);
 		}
 
-		$deltas = [];
-		foreach ($byKey as $bucket) {
-			$deltaVAT = round((($bucket['currentVAT']) - ($bucket['filedVAT'])), 2);
-			$deltaTaxable = round((($bucket['currentTaxable']) - ($bucket['filedTaxable'])), 2);
+		return $byKey;
 
-			// Half-cent epsilon — ignore float noise, not real drift.
-			if (abs($deltaVAT) < 0.005 && abs($deltaTaxable) < 0.005) {
-				continue;
-			}
+	}//end indexBuckets()
 
-			$deltas[] = [
-				'type' => $bucket['type'],
-				'taxRate' => $bucket['taxRate'],
-				'returnBox' => $bucket['returnBox'],
-				'deltaVATAmount' => $deltaVAT,
-				'deltaTaxableAmount' => $deltaTaxable,
-			];
-		}//end foreach
+	/**
+	 * The delta of one indexed bucket, or null when it is float noise.
+	 *
+	 * @param array<string,mixed> $bucket An entry of indexBuckets().
+	 *
+	 * @return array{type:string,taxRate:float,returnBox:string,deltaVATAmount:float,deltaTaxableAmount:float}|null
+	 */
+	private function bucketDelta(array $bucket): ?array {
+		$deltaVAT = round((($bucket['currentVAT']) - ($bucket['filedVAT'])), 2);
+		$deltaTaxable = round((($bucket['currentTaxable']) - ($bucket['filedTaxable'])), 2);
 
-		return $deltas;
-	}//end computeDeltas()
+		// Half-cent epsilon — ignore float noise, not real drift.
+		if (abs($deltaVAT) < 0.005 && abs($deltaTaxable) < 0.005) {
+			return null;
+		}
+
+		return [
+			'type' => $bucket['type'],
+			'taxRate' => $bucket['taxRate'],
+			'returnBox' => $bucket['returnBox'],
+			'deltaVATAmount' => $deltaVAT,
+			'deltaTaxableAmount' => $deltaTaxable,
+		];
+
+	}//end bucketDelta()
 
 	/**
 	 * Ensure a bucket accumulator entry exists with all six keys defaulted
@@ -424,24 +589,11 @@ class VatSuppletieDetectionService {
 	 * @return array<int,array<string,mixed>> Deltas with `glAccountNumber` attached.
 	 */
 	private function attachAccounts(array $deltas, string $originalReturnId): array {
-		$lines = [];
-		if ($originalReturnId !== '') {
-			$lines = $this->objectService
-				->setRegister($this->register())
-				->setSchema('VATLine')
-				->findAll(['filters' => ['returnId' => $originalReturnId]]);
-		}
+		$lines = $this->returnLines(originalReturnId: $originalReturnId);
 
 		$result = [];
 		foreach ($deltas as $delta) {
-			$account = null;
-			foreach ($lines as $line) {
-				if ($this->lineCarries(line: $line, delta: $delta) === true) {
-					$account = (string)($line['glAccountNumber'] ?? '');
-					break;
-				}
-			}
-
+			$account = $this->accountCarrying(lines: $lines, delta: $delta);
 			if ($account === null || $account === '') {
 				$this->logger->warning(
 					'VatSuppletieDetectionService: no original account found for rubriek '
@@ -458,117 +610,259 @@ class VatSuppletieDetectionService {
 	}//end attachAccounts()
 
 	/**
+	 * The persisted VATLine rows of a return; none without a return id.
+	 *
+	 * @param string $originalReturnId The VATReturn id.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function returnLines(string $originalReturnId): array {
+		if ($originalReturnId === '') {
+			return [];
+		}
+
+		return $this->objectService
+			->setRegister($this->register())
+			->setSchema('VATLine')
+			->findAll(['filters' => ['returnId' => $originalReturnId]]);
+
+	}//end returnLines()
+
+	/**
+	 * The GL account of the first line that carries the delta, or null.
+	 *
+	 * @param array<int,array<string,mixed>> $lines The return's VATLine rows.
+	 * @param array<string,mixed>            $delta A delta from computeDeltas().
+	 *
+	 * @return string|null
+	 */
+	private function accountCarrying(array $lines, array $delta): ?string {
+		foreach ($lines as $line) {
+			if ($this->lineCarries(line: $line, delta: $delta) === true) {
+				return (string)($line['glAccountNumber'] ?? '');
+			}
+		}
+
+		return null;
+
+	}//end accountCarrying()
+
+	/**
 	 * Compile a draft GLTransaction booking the correction's per-rubriek
 	 * deltas against their resolved accounts, balanced by an offsetting
 	 * clearing-account line. Never auto-posted (REQ-VBTW-014).
 	 *
-	 * @param string $administrationId Administration scope.
-	 * @param string $vatCorrectionId The VatCorrection id (sourceReference).
+	 * @param VatCorrectionPostingRun        $run    The posting run (administration, VatCorrection id).
 	 * @param array<int,array<string,mixed>> $deltas Rubriek deltas with glAccountNumber attached.
 	 *
 	 * @return string The created GLTransaction id.
 	 */
-	private function createCorrectionPosting(string $administrationId, string $vatCorrectionId, array $deltas): string {
-		$clearingAccount = $this->appConfig->getValueString(AppIdentity::APP_ID, 'vatCorrectionClearingAccount', self::DEFAULT_CLEARING_ACCOUNT);
-		if ($clearingAccount === '') {
-			$clearingAccount = self::DEFAULT_CLEARING_ACCOUNT;
+	private function createCorrectionPosting(VatCorrectionPostingRun $run, array $deltas): string {
+		$run->clearingAccount = $this->clearingAccount();
+		$run->transactionId   = $this->saveCorrectionTransaction(run: $run);
+
+		foreach ($deltas as $delta) {
+			$this->postDeltaLine(run: $run, delta: $delta);
 		}
 
-		$postingDate = (new DateTimeImmutable())->format('Y-m-d');
+		$this->postClearingLine(run: $run);
 
-		$transaction = [
-			'transactionNumber' => sprintf('GLCORR-%s', substr($vatCorrectionId, 0, 12)),
-			'postingDate' => $postingDate,
-			'periodId' => $postingDate,
-			'currency' => 'EUR',
-			'description' => sprintf('BTW-suppletie correctie voor VatCorrection %s', $vatCorrectionId),
-			'sourceReference' => $vatCorrectionId,
-			'state' => 'draft',
-			'administrationId' => $administrationId,
-		];
+		return $run->transactionId;
+	}//end createCorrectionPosting()
 
-		$savedTransaction = $this->saveObject(schema: 'GLTransaction', data: $transaction);
-		$transactionId = (string)($savedTransaction['id'] ?? ($savedTransaction['@self']['id'] ?? ''));
+	/**
+	 * The configured clearing account, else the default one.
+	 *
+	 * @return string
+	 */
+	private function clearingAccount(): string {
+		$clearingAccount = $this->appConfig->getValueString(AppIdentity::APP_ID, 'vatCorrectionClearingAccount', self::DEFAULT_CLEARING_ACCOUNT);
+		if ($clearingAccount === '') {
+			return self::DEFAULT_CLEARING_ACCOUNT;
+		}
+
+		return $clearingAccount;
+
+	}//end clearingAccount()
+
+	/**
+	 * Save the draft GLTransaction header and return its id.
+	 *
+	 * @param VatCorrectionPostingRun $run The posting run.
+	 *
+	 * @return string
+	 *
+	 * @throws RuntimeException When the save returns no identifier.
+	 */
+	private function saveCorrectionTransaction(VatCorrectionPostingRun $run): string {
+		$savedTransaction = $this->saveObject(schema: 'GLTransaction', data: $this->correctionTransaction(run: $run));
+		$transactionId    = (string)($savedTransaction['id'] ?? ($savedTransaction['@self']['id'] ?? ''));
 		if ($transactionId === '') {
 			throw new RuntimeException('GLTransaction save did not return an identifier.');
 		}
 
-		$lineNumber = 0;
-		$totalDebitCt = 0;
-		$totalCreditCt = 0;
+		return $transactionId;
 
-		foreach ($deltas as $delta) {
-			$amountCt = (int)round(abs((float)$delta['deltaVATAmount']) * 100);
-			if ($amountCt <= 0) {
-				continue;
-			}
+	}//end saveCorrectionTransaction()
 
-			$increases = (((float)$delta['deltaVATAmount']) > 0);
-			// Owed (output tax) increase = credit the liability;
-			// deductible increase = debit the asset.
-			$isOwed = $this->isOwed(delta: $delta);
-			$side = 'debit';
-			if ($isOwed === $increases) {
-				$side = 'credit';
-			}
+	/**
+	 * The draft GLTransaction header, posted today.
+	 *
+	 * @param VatCorrectionPostingRun $run The posting run.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function correctionTransaction(VatCorrectionPostingRun $run): array {
+		$postingDate = (new DateTimeImmutable())->format('Y-m-d');
 
-			$account = $clearingAccount;
-			if ((string)($delta['glAccountNumber'] ?? '') !== '') {
-				$account = (string)$delta['glAccountNumber'];
-			}
+		return [
+			'transactionNumber' => sprintf('GLCORR-%s', substr($run->vatCorrectionId, 0, 12)),
+			'postingDate' => $postingDate,
+			'periodId' => $postingDate,
+			'currency' => 'EUR',
+			'description' => sprintf('BTW-suppletie correctie voor VatCorrection %s', $run->vatCorrectionId),
+			'sourceReference' => $run->vatCorrectionId,
+			'state' => 'draft',
+			'administrationId' => $run->administrationId,
+		];
 
-			$lineNumber++;
-			// The administrationId is DENORMALISED onto every line from the same
-			// scope the header carries (REQ-GLS-001) — see
-			// GlLineAdministrationBackfillMigrator. A line written without it
-			// is invisible to its own administration's SpendAnalytics totals
-			// AND flips the backfill completeness gate red instance-wide.
-			$this->saveObject(
-				schema: 'GLLine',
-				data: [
-					'transactionId' => $transactionId,
-					'administrationId' => $administrationId,
-					'lineNumber' => $lineNumber,
-					'accountNumber' => $account,
-					'side' => $side,
-					'amount' => ($amountCt / 100),
-					'currency' => 'EUR',
-					'description' => $this->deltaLabel(delta: $delta),
-				]
-			);
+	}//end correctionTransaction()
 
-			if ($side === 'debit') {
-				$totalDebitCt += $amountCt;
-			} else {
-				$totalCreditCt += $amountCt;
-			}
-		}//end foreach
-
-		$clearingCt = abs($totalDebitCt - $totalCreditCt);
-		if ($clearingCt > 0) {
-			$clearingSide = 'debit';
-			if ($totalDebitCt > $totalCreditCt) {
-				$clearingSide = 'credit';
-			}
-
-			$lineNumber++;
-			$this->saveObject(
-				schema: 'GLLine',
-				data: [
-					'transactionId' => $transactionId,
-					'administrationId' => $administrationId,
-					'lineNumber' => $lineNumber,
-					'accountNumber' => $clearingAccount,
-					'side' => $clearingSide,
-					'amount' => ($clearingCt / 100),
-					'currency' => 'EUR',
-					'description' => 'Suppletie clearing balans',
-				]
-			);
+	/**
+	 * Book one non-zero delta on its own account, else the clearing account.
+	 *
+	 * @param VatCorrectionPostingRun $run   The posting run.
+	 * @param array<string,mixed>     $delta A delta with glAccountNumber attached.
+	 *
+	 * @return void
+	 */
+	private function postDeltaLine(VatCorrectionPostingRun $run, array $delta): void {
+		$amountCt = (int)round(abs((float)$delta['deltaVATAmount']) * 100);
+		if ($amountCt <= 0) {
+			return;
 		}
 
-		return $transactionId;
-	}//end createCorrectionPosting()
+		$side = $this->correctionSide(delta: $delta);
+		$this->saveCorrectionLine(
+			run: $run,
+			line: [
+				'accountNumber' => $this->deltaAccount(run: $run, delta: $delta),
+				'side' => $side,
+				'amount' => ($amountCt / 100),
+				'description' => $this->deltaLabel(delta: $delta),
+			]
+		);
+		$run->addToSide(side: $side, amountCt: $amountCt);
+
+	}//end postDeltaLine()
+
+	/**
+	 * The side a delta books to: an owed (output tax) increase credits the
+	 * liability; a deductible increase debits the asset.
+	 *
+	 * @param array<string,mixed> $delta A delta from computeDeltas().
+	 *
+	 * @return string 'debit' or 'credit'.
+	 */
+	private function correctionSide(array $delta): string {
+		$increases = (((float)$delta['deltaVATAmount']) > 0);
+		if ($this->isOwed(delta: $delta) === $increases) {
+			return 'credit';
+		}
+
+		return 'debit';
+
+	}//end correctionSide()
+
+	/**
+	 * The account a delta books to: its resolved account, else the clearing account.
+	 *
+	 * @param VatCorrectionPostingRun $run   The posting run.
+	 * @param array<string,mixed>     $delta A delta with glAccountNumber attached.
+	 *
+	 * @return string
+	 */
+	private function deltaAccount(VatCorrectionPostingRun $run, array $delta): string {
+		if ((string)($delta['glAccountNumber'] ?? '') !== '') {
+			return (string)$delta['glAccountNumber'];
+		}
+
+		return $run->clearingAccount;
+
+	}//end deltaAccount()
+
+	/**
+	 * Book the clearing line that balances the delta lines, when they do not balance.
+	 *
+	 * @param VatCorrectionPostingRun $run The posting run.
+	 *
+	 * @return void
+	 */
+	private function postClearingLine(VatCorrectionPostingRun $run): void {
+		$clearingCt = abs($run->totalDebitCt - $run->totalCreditCt);
+		if ($clearingCt <= 0) {
+			return;
+		}
+
+		$this->saveCorrectionLine(
+			run: $run,
+			line: [
+				'accountNumber' => $run->clearingAccount,
+				'side' => $this->clearingSide(run: $run),
+				'amount' => ($clearingCt / 100),
+				'description' => 'Suppletie clearing balans',
+			]
+		);
+
+	}//end postClearingLine()
+
+	/**
+	 * The side of the clearing line: credit when the delta lines debit more.
+	 *
+	 * @param VatCorrectionPostingRun $run The posting run.
+	 *
+	 * @return string 'debit' or 'credit'.
+	 */
+	private function clearingSide(VatCorrectionPostingRun $run): string {
+		if ($run->totalDebitCt > $run->totalCreditCt) {
+			return 'credit';
+		}
+
+		return 'debit';
+
+	}//end clearingSide()
+
+	/**
+	 * Save the next GLLine of the correction posting.
+	 *
+	 * The administrationId is DENORMALISED onto every line from the same
+	 * scope the header carries (REQ-GLS-001) — see
+	 * GlLineAdministrationBackfillMigrator. A line written without it
+	 * is invisible to its own administration's SpendAnalytics totals
+	 * AND flips the backfill completeness gate red instance-wide.
+	 *
+	 * @param VatCorrectionPostingRun                                                 $run  The posting run.
+	 * @param array{accountNumber:string,side:string,amount:float,description:string} $line The line's account, side, amount and description.
+	 *
+	 * @return void
+	 */
+	private function saveCorrectionLine(VatCorrectionPostingRun $run, array $line): void {
+		$run->lineNumber++;
+		$this->saveObject(
+			schema: 'GLLine',
+			data: [
+				'transactionId' => $run->transactionId,
+				'administrationId' => $run->administrationId,
+				'lineNumber' => $run->lineNumber,
+				'accountNumber' => $line['accountNumber'],
+				'side' => $line['side'],
+				'amount' => $line['amount'],
+				'currency' => 'EUR',
+				'description' => $line['description'],
+			]
+		);
+
+	}//end saveCorrectionLine()
 
 	/**
 	 * The description of a correction posting line: its box, or its type and
