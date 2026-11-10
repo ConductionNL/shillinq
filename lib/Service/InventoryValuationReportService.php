@@ -106,10 +106,8 @@ class InventoryValuationReportService {
 		$filter->warehouse = (string)$warehouse;
 
 		$cutoff = $this->normaliseCutoff(asOfDate: $asOfDate);
-		return ['asOfDate' => $cutoff] + $this->valuationOf(
-			groups: $this->groupedMoves(filter: $filter, cutoff: $cutoff),
-			administrationId: $administrationId
-		);
+		$groups = $this->groupedMoves(filter: $filter, cutoff: $cutoff);
+		return ['asOfDate' => $cutoff] + $this->valuationOf(groups: $groups, administrationId: $administrationId);
 
 	}//end valuationAsOf()
 
