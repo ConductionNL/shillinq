@@ -7,7 +7,7 @@
  * three immutable / sensitive innovatiebox schemas — `NexusCalculation`,
  * `IBProfitAttribution`, and `CarryForwardLoss` — and records one row per
  * business-relevant lifecycle transition on the subject object's own
- * OpenRegister audit trail, through `AuditTrailMapper::createAuditTrailEntry()`
+ * OpenRegister audit trail, through `AuditTrailMapper::recordObjectEvent()`
  * (hash-chained and immutable; REQ-IBA-008 asks for exactly that, ADR-022).
  * The action is the event type below; the context carries the fields an
  * app-local `InnovatieboxAuditEvent` row carried until gate 23 moved it.
@@ -51,6 +51,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Listener;
 
+use OCA\OpenRegister\Db\AuditTrail\ObjectAuditEvent;
 use OCA\OpenRegister\Db\AuditTrailMapper;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
@@ -436,7 +437,9 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 			static fn (mixed $value): bool => $value !== null
 		);
 		try {
-			$this->auditTrail->createAuditTrailEntry(object: $entity, action: $eventType, context: $context);
+			$this->auditTrail->recordObjectEvent(
+				event: new ObjectAuditEvent(object: $entity, action: $eventType, context: $context)
+			);
 		} catch (Throwable $e) {
 			$this->psrLogger->warning(
 				'InnovatieboxAuditTrailListener: failed to write the audit row',

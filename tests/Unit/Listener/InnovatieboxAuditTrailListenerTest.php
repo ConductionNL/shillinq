@@ -37,6 +37,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Listener;
 
+use OCA\OpenRegister\Db\AuditTrail\ObjectAuditEvent;
 use OCA\OpenRegister\Db\AuditTrailMapper;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
@@ -82,7 +83,7 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase {
 
 	/**
 	 * Build a fake OpenRegister AuditTrailMapper that captures every
-	 * createAuditTrailEntry() call. Each captured call is the context the
+	 * recordObjectEvent() call. Each captured call is the context the
 	 * listener handed over, plus `event_type` (the action) and `object` (the
 	 * entity the row was written on), so the assertions read the same
 	 * fields the InnovatieboxAuditEvent rows used to carry.
@@ -99,25 +100,13 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase {
 			/**
 			 * Capture the audit row without touching OpenRegister.
 			 *
-			 * @param ObjectEntity $object The subject object.
-			 * @param string $action The action.
-			 * @param array<string,mixed> $context The row context.
-			 * @param string|null $actorId Actor id.
-			 * @param string|null $actorName Actor name.
-			 * @param string|null $ipAddress Address.
+			 * @param ObjectAuditEvent $event The object, action and context.
 			 * @return object
 			 */
-			public function createAuditTrailEntry(
-				ObjectEntity $object,
-				string $action,
-				array $context = [],
-				?string $actorId = null,
-				?string $actorName = null,
-				?string $ipAddress = null,
-			): object {
-				$this->calls[] = (['event_type' => $action, 'object' => $object] + $context);
+			public function recordObjectEvent(ObjectAuditEvent $event): object {
+				$this->calls[] = (['event_type' => $event->action, 'object' => $event->object] + $event->context);
 				return new \stdClass();
-			}//end createAuditTrailEntry()
+			}//end recordObjectEvent()
 		};
 	}//end fakeLogger()
 
