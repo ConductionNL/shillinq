@@ -23,9 +23,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\BbvProgrammeBudgetReader;
 use OCA\Shillinq\Service\BudgetProjectionReader;
 use OCA\Shillinq\Service\BudgetVsActualsReader;
+use OCA\Shillinq\Service\LedgerActuals;
 use OCP\IAppConfig;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -173,17 +173,15 @@ final class BudgetReaderLedgerActualsTest extends TestCase {
 	}//end testPostingMonthsAndCents()
 
 	/**
-	 * The BBV reader's transaction references: object id first, then number.
+	 * The transaction references the BBV reader uses: object id first, then number.
 	 *
 	 * @return void
 	 */
 	public function testBbvTransactionRefs(): void {
-		$reader = $this->reader(BbvProgrammeBudgetReader::class, []);
-
-		self::assertSame(['uuid-1', 'T-1'], $this->call($reader, 'transactionRefs', [self::transactions()[0]]));
-		self::assertSame(['uuid-2'], $this->call($reader, 'transactionRefs', [self::transactions()[1]]));
-		self::assertSame(['T-3'], $this->call($reader, 'transactionRefs', [self::transactions()[2]]));
-		self::assertSame([], $this->call($reader, 'transactionRefs', [self::transactions()[4]]));
+		self::assertSame(['uuid-1', 'T-1'], (new LedgerActuals())->transactionRefs(self::transactions()[0]));
+		self::assertSame(['uuid-2'], (new LedgerActuals())->transactionRefs(self::transactions()[1]));
+		self::assertSame(['T-3'], (new LedgerActuals())->transactionRefs(self::transactions()[2]));
+		self::assertSame([], (new LedgerActuals())->transactionRefs(self::transactions()[4]));
 
 	}//end testBbvTransactionRefs()
 
