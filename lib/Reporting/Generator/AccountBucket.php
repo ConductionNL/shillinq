@@ -1,0 +1,58 @@
+<?php
+
+/**
+ * Account bucket
+ *
+ * One group of account lines on a financial statement and the label of its
+ * total row ("Totaal activa", "Totaal kosten").
+ *
+ * @category Reporting
+ * @package  OCA\Shillinq\Reporting\Generator
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @link https://conduction.nl
+ *
+ * @spec exclude The reporting capability has no canonical spec. This tag pointed at
+ *       openspec/changes/reporting-compliance-consolidation (a change directory that
+ *       exists neither under changes nor under changes/archive), and no canonical
+ *       reporting capability exists under openspec/specs either. Tracked in #525.
+ *       Deliberately NOT resolved by writing that spec — authoring the requirement
+ *       a tag is checked against turns the gate green over an unspecified capability.
+ *
+ * KNOWINGLY DANGLING — do not repoint this tag (gate-46, shillinq#499).
+ * The change directory it names was never committed, and the `reporting`
+ * capability has NO canonical spec. One was drafted during gate remediation
+ * and withdrawn: a spec written to fit the code, by the process whose job is
+ * to check the code against a spec, is not a specification anyone agreed to.
+ * Authoring it is the capability owner's decision, not a gate fix. No existing
+ * target is honest either — bookkeeping-iv3-reporting REQ-IV3-004 and
+ * bookkeeping-vat-btw-filing REQ-VBTW-004 forbid the PHP renderers in this
+ * directory, so pointing there would report conformance to a rule this code
+ * breaks.
+ *
+ */
+
+declare(strict_types=1);
+
+namespace OCA\Shillinq\Reporting\Generator;
+
+/**
+ * A labelled group of account lines.
+ */
+final class AccountBucket {
+
+	/**
+	 * Hold the total label and the lines.
+	 *
+	 * @param string                                          $totalLabel Label of the total row.
+	 * @param array<int, array{label: string, amount: float}> $lines      The account lines.
+	 */
+	public function __construct(
+		public readonly string $totalLabel,
+		public readonly array $lines,
+	) {
+	}//end __construct()
+}//end class
