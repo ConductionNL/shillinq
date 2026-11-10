@@ -87,7 +87,7 @@ final class ConsumerCostHold {
 	 */
 	public function apply(CostHoldRequest $request): array {
 		$params = $request->params;
-		if ((float)($params['collectionCostAmount'] ?? 0.0) <= 0.0 || $this->isConsumer(customer: $request->customer, invoice: $request->invoice) === false) {
+		if ($this->chargesAConsumer(request: $request) === false) {
 			return $params;
 		}
 
@@ -101,6 +101,18 @@ final class ConsumerCostHold {
 	}//end apply()
 
 	/**
+	 * Whether the stage charges collection costs to a consumer.
+	 *
+	 * @param CostHoldRequest $request The params and the debtor.
+	 *
+	 * @return bool
+	 */
+	private function chargesAConsumer(CostHoldRequest $request): bool {
+		return (float)($request->params['collectionCostAmount'] ?? 0.0) > 0.0
+			&& $this->isConsumer(customer: $request->customer, invoice: $request->invoice) === true;
+	}//end chargesAConsumer()
+
+	/**
 	 * When the earliest delivered 14-day letter went out, or null when none did.
 	 *
 	 * @param array<int,mixed>               $stages The ladder's stages.
@@ -112,11 +124,7 @@ final class ConsumerCostHold {
 		$letters  = $this->letterStageNumbers(stages: $stages);
 		$earliest = null;
 		foreach ($runs as $run) {
-			$sent = null;
-			if (in_array((int)($run['stageNr'] ?? 0), $letters, true) === true) {
-				$sent = $this->deliveredOn(run: $run);
-			}
-
+			$sent = $this->letterSentOn(run: $run, letters: $letters);
 			if ($sent !== null && ($earliest === null || $sent < $earliest)) {
 				$earliest = $sent;
 			}
@@ -142,6 +150,23 @@ final class ConsumerCostHold {
 
 		return $letters;
 	}//end letterStageNumbers()
+
+	/**
+	 * When a run of a letter stage was delivered, or null when it is not a
+	 * letter run or not a delivered one.
+	 *
+	 * @param array<string,mixed> $run     One DunningRun.
+	 * @param list<int>           $letters The letter stage numbers.
+	 *
+	 * @return DateTimeImmutable|null
+	 */
+	private function letterSentOn(array $run, array $letters): ?DateTimeImmutable {
+		if (in_array((int)($run['stageNr'] ?? 0), $letters, true) === false) {
+			return null;
+		}
+
+		return $this->deliveredOn(run: $run);
+	}//end letterSentOn()
 
 	/**
 	 * When a delivered run went out, or null when it was not delivered or
