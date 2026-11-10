@@ -280,4 +280,42 @@ class FeeScheduleResolutionTest extends TestCase {
 		$service->assertNoOverlap(schedule: $this->row(overrides: ['validFrom' => '']), existing: []);
 
 	}//end testOverlapMessages()
+	/**
+	 * assertAmountsHaveADefault accepts a flat fee and exactly one default
+	 * entry, and names the channels when the default is missing.
+	 *
+	 * @return void
+	 */
+	public function testAmountsNeedExactlyOneDefault(): void {
+		$service  = $this->service(rows: []);
+		$messages = [];
+		foreach ([
+			['amount' => 5.0],
+			['amounts' => []],
+			['amounts' => 'x'],
+			['amounts' => ['junk', ['amount' => 1], ['intakeChannel' => 'web', 'amount' => 2]]],
+			['amounts' => [['intakeChannel' => 'web', 'amount' => 2], 'junk', ['intakeChannel' => 'desk', 'amount' => 3]]],
+			['amounts' => [['amount' => 1], ['intakeChannel' => '', 'amount' => 2]]],
+		] as $schedule) {
+			try {
+				$service->assertAmountsHaveADefault(schedule: $schedule);
+				$messages[] = 'accepted';
+			} catch (InvalidArgumentException $e) {
+				$messages[] = $e->getMessage();
+			}
+		}
+
+		self::assertSame(
+			[
+				'accepted',
+				'accepted',
+				'accepted',
+				'accepted',
+				'This fee names only web, desk and no default, so every other channel would resolve to no fee at all. Add an entry without an intakeChannel.',
+				'This fee names more than one default amount; only one entry may omit its intakeChannel.',
+			],
+			$messages
+		);
+
+	}//end testAmountsNeedExactlyOneDefault()
 }//end class
