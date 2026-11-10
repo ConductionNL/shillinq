@@ -60,7 +60,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use DateTime;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Lifecycle\SupplierInvoiceExceptionApprovalGuard;
 use OCA\Shillinq\Service\PurchaseOrder\CreditNoteRequestAdapterInterface;
@@ -393,13 +392,7 @@ class ExceptionResolutionService {
 		$dispatch = $this->dispatchDispute(filing: $filing);
 		$filing->stamp['resolutionNotes'] = $this->disputeNotes(reason: $filing->reason, dispatch: $dispatch);
 		$persisted = $this->saveObject(schema: self::SCHEMA_THREE_WAY_MATCH, object: array_replace($filing->match, $filing->stamp));
-		$this->notifyRole(
-			administrationId: $filing->administrationId,
-			role: self::ROLE_INKOPER,
-			subject: self::NOTIFICATION_SUBJECT_DISPUTE,
-			matchId: $this->idOf(record: $filing->match),
-			invoice: $filing->invoice
-		);
+		$this->notifyRole(alert: $this->disputeAlert(filing: $filing));
 
 		return ['match' => $persisted, 'dispatch' => $dispatch];
 
@@ -423,6 +416,25 @@ class ExceptionResolutionService {
 		return $reason;
 
 	}//end disputeNotes()
+
+	/**
+	 * The Inkoper escalation for a filed dispute.
+	 *
+	 * @param DisputeFiling $filing A prepared filing.
+	 *
+	 * @return ExceptionAlert
+	 */
+	private function disputeAlert(DisputeFiling $filing): ExceptionAlert {
+		$alert = new ExceptionAlert();
+		$alert->administrationId = $filing->administrationId;
+		$alert->role = self::ROLE_INKOPER;
+		$alert->subject = self::NOTIFICATION_SUBJECT_DISPUTE;
+		$alert->matchId = $this->idOf(record: $filing->match);
+		$alert->invoice = $filing->invoice;
+
+		return $alert;
+
+	}//end disputeAlert()
 
 	/**
 	 * Reject an out-of-tolerance ThreeWayMatch and block the linked
@@ -579,45 +591,44 @@ class ExceptionResolutionService {
 	 */
 	public function notifyOnException(string $administrationId, string $matchId): void {
 		$this->assertAccess(administrationId: $administrationId);
-
 		$match = $this->findOne(
 			schema: self::SCHEMA_THREE_WAY_MATCH,
-			filters: [
-				'id' => $matchId,
-				'administrationId' => $administrationId,
-			]
+			filters: ['id' => $matchId, 'administrationId' => $administrationId]
 		);
-		if ($match === null) {
+		if ($match === null || in_array((string)($match['matchStatus'] ?? ''), self::EXCEPTION_STATUSES, true) === false) {
 			return;
 		}
 
-		if (in_array((string)($match['matchStatus'] ?? ''), self::EXCEPTION_STATUSES, true) === false) {
-			return;
-		}
-
-		$invoiceId = (string)($match['invoiceId'] ?? '');
-		$invoice = null;
-		if ($invoiceId !== '') {
-			$invoice = $this->findOne(
-				schema: self::SCHEMA_SUPPLIER_INVOICE,
-				filters: [
-					'id' => $invoiceId,
-					'administrationId' => $administrationId,
-				]
-			);
-		}
-
-		$role = $this->resolveAlertRole(administrationId: $administrationId, match: $match);
-
-		$this->notifyRole(
-			administrationId: $administrationId,
-			role: $role,
-			subject: self::NOTIFICATION_SUBJECT_EXCEPTION,
-			matchId: $matchId,
-			invoice: $invoice
-		);
+		$alert = new ExceptionAlert();
+		$alert->administrationId = $administrationId;
+		$alert->invoice = $this->alertInvoice(administrationId: $administrationId, match: $match);
+		$alert->role = $this->resolveAlertRole(administrationId: $administrationId, match: $match);
+		$alert->subject = self::NOTIFICATION_SUBJECT_EXCEPTION;
+		$alert->matchId = $matchId;
+		$this->notifyRole(alert: $alert);
 
 	}//end notifyOnException()
+
+	/**
+	 * The match's linked invoice header, or null when unlinked or not found.
+	 *
+	 * @param string              $administrationId Tenant scope.
+	 * @param array<string,mixed> $match            ThreeWayMatch record.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function alertInvoice(string $administrationId, array $match): ?array {
+		$invoiceId = (string)($match['invoiceId'] ?? '');
+		if ($invoiceId === '') {
+			return null;
+		}
+
+		return $this->findOne(
+			schema: self::SCHEMA_SUPPLIER_INVOICE,
+			filters: ['id' => $invoiceId, 'administrationId' => $administrationId]
+		);
+
+	}//end alertInvoice()
 
 	/**
 	 * Compose the UBL CreditNote dispute envelope from the match + the
@@ -699,34 +710,42 @@ class ExceptionResolutionService {
 		}
 
 		foreach ($divergence as $entry) {
-			if (is_array($entry) === false) {
-				continue;
-			}
-
-			$profileId = trim((string)($entry['toleranceProfileId'] ?? ''));
-			if ($profileId === '') {
-				continue;
-			}
-
-			$profile = $this->findOne(
-				schema: self::SCHEMA_TOLERANCE_PROFILE,
-				filters: [
-					'profileId' => $profileId,
-					'administrationId' => $administrationId,
-				]
-			);
-			if ($profile === null) {
-				continue;
-			}
-
-			$routing = trim((string)($profile['exceptionRouting'] ?? ''));
+			$routing = $this->profileRouting(administrationId: $administrationId, entry: $entry);
 			if ($routing !== '') {
 				return $routing;
 			}
-		}//end foreach
+		}
 
 		return self::ROLE_CREDITEUREN_ADMIN;
 	}//end resolveAlertRole()
+
+	/**
+	 * The exceptionRouting tag of the ToleranceProfile a divergence entry
+	 * names, or '' when the entry names none or the profile has no tag.
+	 *
+	 * @param string $administrationId Tenant scope.
+	 * @param mixed  $entry            One divergenceDetails entry.
+	 *
+	 * @return string
+	 */
+	private function profileRouting(string $administrationId, mixed $entry): string {
+		if (is_array($entry) === false) {
+			return '';
+		}
+
+		$profileId = trim((string)($entry['toleranceProfileId'] ?? ''));
+		if ($profileId === '') {
+			return '';
+		}
+
+		$profile = $this->findOne(
+			schema: self::SCHEMA_TOLERANCE_PROFILE,
+			filters: ['profileId' => $profileId, 'administrationId' => $administrationId]
+		);
+
+		return trim((string)($profile['exceptionRouting'] ?? ''));
+
+	}//end profileRouting()
 
 	/**
 	 * Notify every member of the named role on the administration with
@@ -734,68 +753,14 @@ class ExceptionResolutionService {
 	 * pattern (loop AdministrationMembership rows on (administrationId,
 	 * role), createNotification per user, log + continue on failure).
 	 *
-	 * @param string $administrationId Tenant scope.
-	 * @param string $role Membership role.
-	 * @param string $subject NC notification subject.
-	 * @param string $matchId ThreeWayMatch id.
-	 * @param array<string,mixed>|null $invoice Optional invoice header
-	 *                                          for the parameter bag.
+	 * @param ExceptionAlert $alert The alert (tenant, role, subject, match, invoice).
 	 *
 	 * @return void
 	 */
-	private function notifyRole(
-		string $administrationId,
-		string $role,
-		string $subject,
-		string $matchId,
-		?array $invoice,
-	): void {
-		$userIds = $this->findRoleMembers(administrationId: $administrationId, role: $role);
-		if ($userIds === []) {
-			$this->logger->info(
-				'ExceptionResolutionService: no recipients for exception alert',
-				[
-					'administrationId' => $administrationId,
-					'role' => $role,
-					'matchId' => $matchId,
-				]
-			);
-			return;
-		}
-
-		$parameters = [
-			'matchId' => $matchId,
-			'invoiceId' => (string)($invoice['id'] ?? ''),
-			'invoiceNumber' => (string)($invoice['invoiceNumber'] ?? ''),
-			'supplierId' => (string)($invoice['supplierId'] ?? ''),
-			'totalInclVat' => (int)($invoice['totalInclVat'] ?? 0),
-			'currency' => (string)($invoice['currency'] ?? 'EUR'),
-		];
-
-		foreach ($userIds as $userId) {
-			try {
-				$notification = $this->notificationManager->createNotification();
-				$notification
-					->setApp(AppIdentity::APP_ID)
-					->setUser($userId)
-					->setDateTime(new DateTime())
-					->setObject(self::NOTIFICATION_OBJECT_TYPE, $matchId)
-					->setSubject($subject, $parameters);
-				$this->notificationManager->notify($notification);
-			} catch (\Throwable $exception) {
-				$this->logger->warning(
-					'ExceptionResolutionService: failed to dispatch exception notification',
-					[
-						'administrationId' => $administrationId,
-						'userId' => $userId,
-						'role' => $role,
-						'subject' => $subject,
-						'matchId' => $matchId,
-						'exception' => $exception->getMessage(),
-					]
-				);
-			}//end try
-		}//end foreach
+	private function notifyRole(ExceptionAlert $alert): void {
+		$userIds = $this->findRoleMembers(administrationId: $alert->administrationId, role: $alert->role);
+		$notifier = new ExceptionAlertNotifier(notificationManager: $this->notificationManager, logger: $this->logger);
+		$notifier->deliver(alert: $alert, userIds: $userIds);
 
 	}//end notifyRole()
 
@@ -896,21 +861,14 @@ class ExceptionResolutionService {
 		try {
 			$invoice = $this->findOne(
 				schema: self::SCHEMA_SUPPLIER_INVOICE,
-				filters: [
-					'id' => $invoiceId,
-					'administrationId' => $administrationId,
-				]
+				filters: ['id' => $invoiceId, 'administrationId' => $administrationId]
 			);
 			if ($invoice === null) {
 				return;
 			}
 
 			$invoice['statusCode'] = $nextStatus;
-			$this->writeAuthority->during(
-				purpose: SupplierInvoiceExceptionApprovalGuard::PURPOSE,
-				objectId: $this->idOf(record: $invoice),
-				work: fn (): array => $this->saveObject(schema: self::SCHEMA_SUPPLIER_INVOICE, object: $invoice)
-			);
+			$this->saveReleasedInvoice(invoice: $invoice);
 		} catch (\Throwable $exception) {
 			$this->logger->warning(
 				'ExceptionResolutionService: failed to advance invoice status',
@@ -924,6 +882,22 @@ class ExceptionResolutionService {
 		}//end try
 
 	}//end advanceInvoiceStatus()
+
+	/**
+	 * Save an invoice under the exception-approval write release.
+	 *
+	 * @param array<string,mixed> $invoice SupplierInvoice with its new status.
+	 *
+	 * @return void
+	 */
+	private function saveReleasedInvoice(array $invoice): void {
+		$this->writeAuthority->during(
+			purpose: SupplierInvoiceExceptionApprovalGuard::PURPOSE,
+			objectId: $this->idOf(record: $invoice),
+			work: fn (): array => $this->saveObject(schema: self::SCHEMA_SUPPLIER_INVOICE, object: $invoice)
+		);
+
+	}//end saveReleasedInvoice()
 
 	/**
 	 * Extract a record id, handling both top-level `id` and OR's
