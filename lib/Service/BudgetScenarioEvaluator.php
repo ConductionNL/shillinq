@@ -542,70 +542,105 @@ class BudgetScenarioEvaluator {
 	 * @return array{entries:list<array<string,mixed>>,keyToIndex:array<string,int>,childrenByIndex:array<int,list<int>>}
 	 */
 	private function buildLedgerGroupIndex(array $ledgerGroups): array {
-		$entries = [];
-		$keyToIndex = [];
+		$entries = array_map(
+			fn (array $row): array => $this->ledgerGroupEntry(row: $row),
+			array_values($ledgerGroups)
+		);
+		$keyToIndex = $this->ledgerGroupKeys(entries: $entries);
 
-		foreach ($ledgerGroups as $row) {
-			$id = (string)($row['@self']['id'] ?? $row['id'] ?? '');
-			$slug = (string)($row['@self']['slug'] ?? $row['slug'] ?? '');
-			$index = count($entries);
-
-			$parentRef = null;
-			if (($row['parentLedgerGroupId'] ?? null) !== null) {
-				$parentRef = (string)$row['parentLedgerGroupId'];
-			}
-
-			$accountRanges = [];
-			if (is_array($row['accountRanges'] ?? null) === true) {
-				$accountRanges = $row['accountRanges'];
-			}
-
-			$includedAccountNumbers = [];
-			if (is_array($row['includedAccountNumbers'] ?? null) === true) {
-				$includedAccountNumbers = $row['includedAccountNumbers'];
-			}
-
-			$excludedAccountNumbers = [];
-			if (is_array($row['excludedAccountNumbers'] ?? null) === true) {
-				$excludedAccountNumbers = $row['excludedAccountNumbers'];
-			}
-
-			$entries[] = [
-				'id' => $id,
-				'slug' => $slug,
-				'parentRef' => $parentRef,
-				'accountRanges' => $accountRanges,
-				'includedAccountNumbers' => $includedAccountNumbers,
-				'excludedAccountNumbers' => $excludedAccountNumbers,
-			];
-
-			if ($id !== '') {
-				$keyToIndex[$id] = $index;
-			}
-
-			if ($slug !== '' && $slug !== $id) {
-				$keyToIndex[$slug] = $index;
-			}
-		}
-
-		$childrenByIndex = [];
-		foreach ($entries as $index => $entry) {
-			$parentRef = $entry['parentRef'];
-			if ($parentRef === null || $parentRef === '') {
-				continue;
-			}
-
-			$parentIndex = ($keyToIndex[$parentRef] ?? null);
-			if ($parentIndex === null) {
-				continue;
-			}
-
-			$childrenByIndex[$parentIndex][] = $index;
-		}
-
-		return ['entries' => $entries, 'keyToIndex' => $keyToIndex, 'childrenByIndex' => $childrenByIndex];
+		return [
+			'entries' => $entries,
+			'keyToIndex' => $keyToIndex,
+			'childrenByIndex' => $this->childrenByIndex(entries: $entries, keyToIndex: $keyToIndex),
+		];
 
 	}//end buildLedgerGroupIndex()
+
+	/**
+	 * Normalise one LedgerGroup row to its index entry.
+	 *
+	 * @param array<string,mixed> $row The LedgerGroup row.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function ledgerGroupEntry(array $row): array {
+		$parentRef = ($row['parentLedgerGroupId'] ?? null);
+		if ($parentRef !== null) {
+			$parentRef = (string)$parentRef;
+		}
+
+		return [
+			'id' => (string)($row['@self']['id'] ?? $row['id'] ?? ''),
+			'slug' => (string)($row['@self']['slug'] ?? $row['slug'] ?? ''),
+			'parentRef' => $parentRef,
+			'accountRanges' => $this->listOrEmpty(value: ($row['accountRanges'] ?? null)),
+			'includedAccountNumbers' => $this->listOrEmpty(value: ($row['includedAccountNumbers'] ?? null)),
+			'excludedAccountNumbers' => $this->listOrEmpty(value: ($row['excludedAccountNumbers'] ?? null)),
+		];
+
+	}//end ledgerGroupEntry()
+
+	/**
+	 * An array value as-is, anything else as an empty list.
+	 *
+	 * @param mixed $value The raw row value.
+	 *
+	 * @return array<mixed>
+	 */
+	private function listOrEmpty(mixed $value): array {
+		if (is_array($value) === true) {
+			return $value;
+		}
+
+		return [];
+
+	}//end listOrEmpty()
+
+	/**
+	 * Key every entry by its id and, when different, its slug; a later entry
+	 * claiming the same key wins.
+	 *
+	 * @param list<array<string,mixed>> $entries The LedgerGroup entries.
+	 *
+	 * @return array<string,int>
+	 */
+	private function ledgerGroupKeys(array $entries): array {
+		$keyToIndex = [];
+		foreach ($entries as $index => $entry) {
+			if ($entry['id'] !== '') {
+				$keyToIndex[$entry['id']] = $index;
+			}
+
+			if ($entry['slug'] !== '' && $entry['slug'] !== $entry['id']) {
+				$keyToIndex[$entry['slug']] = $index;
+			}
+		}
+
+		return $keyToIndex;
+
+	}//end ledgerGroupKeys()
+
+	/**
+	 * Map each parent's index to its children's indexes; a parent reference
+	 * that resolves to no entry (or is empty) is ignored.
+	 *
+	 * @param list<array<string,mixed>> $entries    The LedgerGroup entries.
+	 * @param array<string,int>         $keyToIndex Key to entry index.
+	 *
+	 * @return array<int,list<int>>
+	 */
+	private function childrenByIndex(array $entries, array $keyToIndex): array {
+		$childrenByIndex = [];
+		foreach ($entries as $index => $entry) {
+			$parentIndex = ($keyToIndex[(string)$entry['parentRef']] ?? null);
+			if ($parentIndex !== null) {
+				$childrenByIndex[$parentIndex][] = $index;
+			}
+		}
+
+		return $childrenByIndex;
+
+	}//end childrenByIndex()
 
 	/**
 	 * Resolve a stable lookup key (preferring id, falling back to slug) for
