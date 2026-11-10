@@ -39,6 +39,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Support;
 
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectDeletion;
 use OCP\IUser;
 
 /**
@@ -373,28 +374,20 @@ final class RacingDefaultObjectServiceDecorator implements ObjectServiceInterfac
 	}//end searchObjects()
 
 	/**
-	 * @param string $uuid The object UUID.
-	 * @param string|int|null $register Register id, UUID or slug.
-	 * @param string|int|null $schema Schema id, UUID or slug.
+	 * @param ObjectDeletion $deletion The uuid, the register and schema, the acting user and whether to delete permanently.
 	 * @param bool $rbac Apply register RBAC.
 	 * @param bool $multitenancy Apply organisation scoping.
 	 * @param bool $retentionSweep Run as part of a retention sweep.
-	 * @param ?IUser $currentUser Explicit acting user.
-	 * @param bool $permanent Delete permanently.
 	 *
 	 * @return bool
 	 */
 	public function deleteObject(
-		string $uuid,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		ObjectDeletion $deletion,
 		bool $rbac = true,
 		bool $multitenancy = true,
-		bool $retentionSweep = false,
-		?IUser $currentUser = null,
-		bool $permanent = false
+		bool $retentionSweep = false
 	): bool {
-		return $this->inner->deleteObject($uuid, $register, $schema, $rbac, $multitenancy, $retentionSweep, $currentUser, $permanent);
+		return $this->inner->deleteObject(deletion: $deletion, _rbac: $rbac, _multitenancy: $multitenancy, _retentionSweep: $retentionSweep);
 
 	}//end deleteObject()
 

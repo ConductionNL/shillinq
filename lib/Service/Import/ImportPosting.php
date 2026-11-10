@@ -31,6 +31,7 @@ namespace OCA\Shillinq\Service\Import;
 
 use DomainException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectDeletion;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -142,7 +143,7 @@ class ImportPosting {
 			}
 
 			foreach ((array)($refs['masterIds'] ?? []) as $masterId) {
-				$this->scoped(schema: 'CustomerMaster')->deleteObject((string)$masterId);
+				$this->scoped(schema: 'CustomerMaster')->deleteObject(deletion: new ObjectDeletion(uuid: (string)$masterId));
 				$reversal['deletedMasterIds'][] = (string)$masterId;
 			}
 		} catch (Throwable $e) {
@@ -319,7 +320,7 @@ class ImportPosting {
 	private function remove(string $schema, array $ids): void {
 		foreach ($ids as $id) {
 			try {
-				$this->scoped(schema: $schema)->deleteObject((string)$id);
+				$this->scoped(schema: $schema)->deleteObject(deletion: new ObjectDeletion(uuid: (string)$id));
 			} catch (Throwable $e) {
 				$this->logger->error(
 					'ImportPosting: could not remove a record of a refused post',

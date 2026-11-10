@@ -51,6 +51,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
+use OCA\OpenRegister\Service\Object\ObjectDeletion;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\VATReturnService;
@@ -478,7 +479,9 @@ class VATReturnController extends Controller {
 			}
 
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$objectService->setRegister(register: 'shillinq')->setSchema(schema: 'BtwAangifte')->deleteObject($returnId);
+			$objectService->setRegister(register: 'shillinq')->setSchema(schema: 'BtwAangifte')->deleteObject(
+				deletion: new ObjectDeletion(uuid: $returnId)
+			);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'VATReturnController: failed to delete VAT return',

@@ -28,6 +28,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Asset;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectDeletion;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -151,7 +153,9 @@ class AssetRecords {
 	 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
 	 */
 	public function delete(string $schema, string $id): void {
-		$this->objectService->deleteObject(uuid: $id, register: $this->settings->getRegisterSlug(), schema: $schema);
+		$this->objectService->deleteObject(
+			deletion: new ObjectDeletion(uuid: $id, target: new ObjectFindTarget(register: $this->settings->getRegisterSlug(), schema: $schema))
+		);
 
 	}//end delete()
 

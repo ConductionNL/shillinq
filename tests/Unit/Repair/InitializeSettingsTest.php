@@ -643,7 +643,8 @@ class InitializeSettingsTest extends TestCase {
 				return $object;
 			}
 
-			public function deleteObject(string $uuid): bool {
+			public function deleteObject(\OCA\OpenRegister\Service\Object\ObjectDeletion $deletion): bool {
+				$uuid = $deletion->uuid;
 				$this->deleted[] = $uuid;
 				return true;
 			}
@@ -738,7 +739,8 @@ class InitializeSettingsTest extends TestCase {
 				return $object;
 			}
 
-			public function deleteObject(string $uuid): bool {
+			public function deleteObject(\OCA\OpenRegister\Service\Object\ObjectDeletion $deletion): bool {
+				$uuid = $deletion->uuid;
 				$this->deleted[] = $uuid;
 				return true;
 			}

@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use OCA\OpenRegister\Service\Object\ObjectDeletion;
 use OCA\Shillinq\Service\BbvSeedService;
 use OCA\Shillinq\Service\Migration\RevenueContractRenameMigrator;
 use OCA\Shillinq\Service\SettingsService;
@@ -430,7 +431,7 @@ class InitializeSettings implements IRepairStep {
 				$objectService
 					->setRegister($registerSlug)
 					->setSchema($rename['from'])
-					->deleteObject($objectId);
+					->deleteObject(deletion: new ObjectDeletion(uuid: $objectId));
 				$migrated++;
 			} catch (\Throwable $e) {
 				$output->warning(

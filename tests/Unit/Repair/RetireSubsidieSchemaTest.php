@@ -201,7 +201,8 @@ class RetireSubsidieSchemaTest extends TestCase {
 				return array_values($rows);
 			}//end findAll()
 
-			public function deleteObject(string $id, bool $_rbac, bool $_multitenancy): void {
+			public function deleteObject(\OCA\OpenRegister\Service\Object\ObjectDeletion $deletion, bool $_rbac, bool $_multitenancy): void {
+				$id = $deletion->uuid;
 				$this->deleted[] = $id;
 
 			}//end deleteObject()
