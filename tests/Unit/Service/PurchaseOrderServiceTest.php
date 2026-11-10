@@ -705,4 +705,58 @@ final class PurchaseOrderServiceTest extends TestCase {
 		self::assertSame(1303, $saved[2]['object']['drawnAmount']);
 
 	}//end testCreateStoresLinesAndDrawsDown()
+	/**
+	 * blockSendUntilApproved refuses an inaccessible tenant, an unknown or
+	 * other-tenant order, an order without a chain and an unsigned chain, each
+	 * without saving; a fully signed order is saved as sent.
+	 *
+	 * @return void
+	 */
+	public function testSendGuardRefusalsAndTheSentSave(): void {
+		$signed = ['decision' => 'approved', 'decidedAt' => '2026-01-02T10:00:00+00:00'];
+		$data   = [
+			'PurchaseOrder' => [
+				['id' => 'po-empty', 'administrationId' => 'adm-1', 'approvalChain' => []],
+				['id' => 'po-open', 'administrationId' => 'adm-1', 'approvalChain' => [$signed, ['decision' => 'pending']]],
+				['id' => 'po-other', 'administrationId' => 'adm-2', 'approvalChain' => [$signed]],
+				['id' => 'po-ok', 'administrationId' => 'adm-1', 'statusCode' => 'approved', 'approvalChain' => [$signed]],
+			],
+		];
+
+		$messages = [];
+		foreach ([['adm-2', 'po-other'], ['adm-1', 'po-missing'], ['adm-1', 'po-other'], ['adm-1', 'po-empty'], ['adm-1', 'po-open']] as [$administrationId, $poId]) {
+			$saved         = [];
+			$notifications = [];
+			$service       = $this->buildService(data: $data, saved: $saved, userId: 'u', accessibleAdministrations: ['adm-1'], notifications: $notifications);
+			try {
+				$service->blockSendUntilApproved($administrationId, $poId);
+				$messages[] = 'accepted';
+			} catch (\RuntimeException $e) {
+				$messages[] = $e->getMessage();
+			}
+
+			self::assertSame([], $saved);
+		}
+
+		self::assertSame(
+			[
+				'Purchase order not found',
+				'Purchase order not found',
+				'Purchase order not found',
+				'Purchase order has no approval chain',
+				'Purchase order cannot be sent: approval chain incomplete',
+			],
+			$messages
+		);
+
+		$saved         = [];
+		$notifications = [];
+		$service       = $this->buildService(data: $data, saved: $saved, userId: 'u', accessibleAdministrations: ['adm-1'], notifications: $notifications);
+		$sent          = $service->blockSendUntilApproved('adm-1', 'po-ok');
+
+		self::assertSame('sent', $sent['statusCode']);
+		self::assertNotSame('', (string)$sent['sentAt']);
+		self::assertSame([['PurchaseOrder', 'po-ok', 'sent']], array_map(static fn (array $row): array => [$row['schema'], $row['object']['id'], $row['object']['statusCode']], $saved));
+
+	}//end testSendGuardRefusalsAndTheSentSave()
 }//end class
