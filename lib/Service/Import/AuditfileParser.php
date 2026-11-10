@@ -69,6 +69,44 @@ class AuditfileParser {
 	public const SEVERITY_WARNING = 'warning';
 
 	/**
+	 * The message of every error finding, by its stable code.
+	 *
+	 * @var array<string,string>
+	 */
+	private const ERROR_MESSAGES = [
+		'empty-input' => 'Auditfile is empty.',
+		'doctype-rejected' => 'Auditfile contains a DOCTYPE or ENTITY declaration and was rejected (XXE protection).',
+		'malformed-xml' => 'Auditfile is not well-formed XML.',
+		'unreadable-file' => 'Auditfile is not readable.',
+		'open-failed' => 'Could not open auditfile for streaming.',
+		'stream-error' => 'Streaming the auditfile failed.',
+		'no-company' => 'No <company> element found in the auditfile.',
+		'transaction-line-missing-amount' => 'A transaction line is missing its <amnt> amount.',
+	];
+
+	/**
+	 * The company identity fields, each with the xpaths tried in order.
+	 *
+	 * @var array<string,list<string>>
+	 */
+	private const COMPANY_FIELDS = [
+		'companyName' => ['//*[local-name()="company"]/*[local-name()="companyName"]'],
+		'kvkNumber' => ['//*[local-name()="company"]/*[local-name()="companyIdent"]'],
+		'taxRegIdent' => [
+			'//*[local-name()="company"]/*[local-name()="taxRegistration"]/*[local-name()="taxRegIdent"]',
+			'//*[local-name()="company"]/*[local-name()="taxRegIdent"]',
+		],
+		'currencyCode' => ['//*[local-name()="company"]/*[local-name()="currencyCode"]'],
+	];
+
+	/**
+	 * The result keys a streamed company fragment adds to.
+	 *
+	 * @var list<string>
+	 */
+	private const MERGED_KEYS = ['ledgerAccounts', 'relations', 'openingBalances', 'journals', 'findings'];
+
+	/**
 	 * Optional logger for diagnostics.
 	 *
 	 * @var LoggerInterface|null
@@ -109,70 +147,75 @@ class AuditfileParser {
 	 */
 	public function parse(string $xml): array {
 		$result = $this->emptyResult();
-
-		$trimmed = trim($xml);
-		if ($trimmed === '') {
-			$result['findings'][] = $this->finding(
-				severity: self::SEVERITY_ERROR,
-				code: 'empty-input',
-				message: 'Auditfile is empty.'
-			);
+		$loaded = $this->loadDocument(xml: trim($xml));
+		if (is_array($loaded) === true) {
+			$result['findings'][] = $loaded;
 			return $result;
+		}
+
+		$result['company']         = $this->parseCompany(doc: $loaded);
+		$result['ledgerAccounts']  = $this->parseLedgerAccounts(doc: $loaded);
+		$result['relations']       = $this->parseRelations(doc: $loaded);
+		$result['openingBalances'] = $this->parseOpeningBalances(doc: $loaded);
+
+		$journalResult      = $this->parseJournals(doc: $loaded);
+		$result['journals'] = $journalResult['journals'];
+		$result['findings'] = array_merge($result['findings'], $journalResult['findings']);
+
+		return $result;
+	}//end parse()
+
+	/**
+	 * The parsed document, or the error finding that refuses it: empty input,
+	 * a DOCTYPE or ENTITY declaration, or XML that is not well formed.
+	 *
+	 * @param string $xml The trimmed auditfile contents.
+	 *
+	 * @return \SimpleXMLElement|array<string,mixed> The document, or the finding.
+	 */
+	private function loadDocument(string $xml): \SimpleXMLElement|array {
+		if ($xml === '') {
+			return $this->error(code: 'empty-input');
 		}
 
 		// XXE-safe: LIBXML_NONET disables network access. We deliberately do
 		// NOT pass LIBXML_NOENT (that flag ENABLES entity substitution). On
 		// PHP 8 / libxml >= 2.9 external entities are not resolved by default,
 		// and we additionally reject any DOCTYPE/entity declaration outright.
-		if (preg_match('/<!DOCTYPE/i', $trimmed) === 1 || preg_match('/<!ENTITY/i', $trimmed) === 1) {
-			$result['findings'][] = $this->finding(
-				severity: self::SEVERITY_ERROR,
-				code: 'doctype-rejected',
-				message: 'Auditfile contains a DOCTYPE or ENTITY declaration and was rejected (XXE protection).'
-			);
-			if ($this->logger !== null) {
-				$this->logger->warning('AuditfileParser: rejected DOCTYPE/ENTITY (XXE protection)');
-			}
-
-			return $result;
+		if (preg_match('/<!DOCTYPE/i', $xml) === 1 || preg_match('/<!ENTITY/i', $xml) === 1) {
+			$this->logger?->warning('AuditfileParser: rejected DOCTYPE/ENTITY (XXE protection)');
+			return $this->error(code: 'doctype-rejected');
 		}
 
-		$previous = libxml_use_internal_errors(true);
-		$doc = simplexml_load_string($trimmed, \SimpleXMLElement::class, LIBXML_NONET);
+		return $this->wellFormedDocument(xml: $xml);
+	}//end loadDocument()
+
+	/**
+	 * The document of well-formed XML, or the malformed-xml finding with the
+	 * first libxml error.
+	 *
+	 * @param string $xml The trimmed auditfile contents.
+	 *
+	 * @return \SimpleXMLElement|array<string,mixed> The document, or the finding.
+	 */
+	private function wellFormedDocument(string $xml): \SimpleXMLElement|array {
+		$previous  = libxml_use_internal_errors(true);
+		$doc       = simplexml_load_string($xml, \SimpleXMLElement::class, LIBXML_NONET);
 		$libErrors = libxml_get_errors();
 		libxml_clear_errors();
 		libxml_use_internal_errors($previous);
+		if ($doc !== false) {
+			return $doc;
+		}
 
-		if ($doc === false) {
-			$detail = '';
-			if (empty($libErrors) === false) {
-				$detail = trim($libErrors[0]->message);
-			}
+		$detail = '';
+		if (empty($libErrors) === false) {
+			$detail = trim($libErrors[0]->message);
+		}
 
-			$result['findings'][] = $this->finding(
-				severity: self::SEVERITY_ERROR,
-				code: 'malformed-xml',
-				message: 'Auditfile is not well-formed XML.',
-				context: ['detail' => $detail]
-			);
-			if ($this->logger !== null) {
-				$this->logger->warning('AuditfileParser: malformed XML', ['detail' => $detail]);
-			}
-
-			return $result;
-		}//end if
-
-		$result['company'] = $this->parseCompany(doc: $doc);
-		$result['ledgerAccounts'] = $this->parseLedgerAccounts(doc: $doc);
-		$result['relations'] = $this->parseRelations(doc: $doc);
-		$result['openingBalances'] = $this->parseOpeningBalances(doc: $doc);
-
-		$journalResult = $this->parseJournals(doc: $doc);
-		$result['journals'] = $journalResult['journals'];
-		$result['findings'] = array_merge($result['findings'], $journalResult['findings']);
-
-		return $result;
-	}//end parse()
+		$this->logger?->warning('AuditfileParser: malformed XML', ['detail' => $detail]);
+		return $this->error(code: 'malformed-xml', context: ['detail' => $detail]);
+	}//end wellFormedDocument()
 
 	/**
 	 * Stream-parse a large auditfile from disk via XMLReader (no DOM load).
@@ -190,89 +233,108 @@ class AuditfileParser {
 	 */
 	public function parseFile(string $path): array {
 		$result = $this->emptyResult();
-
 		if (is_readable($path) === false) {
-			$result['findings'][] = $this->finding(
-				severity: self::SEVERITY_ERROR,
-				code: 'unreadable-file',
-				message: 'Auditfile is not readable.',
-				context: ['path' => $path]
-			);
+			$result['findings'][] = $this->error(code: 'unreadable-file', context: ['path' => $path]);
 			return $result;
 		}
 
+		$read = $this->readCompanies(path: $path);
+		$result['findings'] = $read['findings'];
+		if ($read['opened'] === true && $read['fragments'] === []) {
+			$result['findings'][] = $this->error(code: 'no-company', context: ['path' => $path]);
+		}
+
+		if ($read['fragments'] === []) {
+			return $result;
+		}
+
+		return $this->mergedFragments(result: $result, fragments: $read['fragments']);
+	}//end parseFile()
+
+	/**
+	 * Every top-level <company> subtree of a file, read with XMLReader, and
+	 * the findings of a file that cannot be opened or streamed.
+	 *
+	 * @param string $path Absolute filesystem path to the auditfile.
+	 *
+	 * @return array{opened: bool, fragments: list<string>, findings: list<array<string,mixed>>}
+	 */
+	private function readCompanies(string $path): array {
 		$previous = libxml_use_internal_errors(true);
-		$reader = new XMLReader();
+		$reader   = new XMLReader();
 		// LIBXML_NONET — no network. NOENT is deliberately omitted (it ENABLES
 		// entity substitution). External entities are not resolved by default
 		// on PHP 8 / libxml >= 2.9 (XXE-safe).
 		$opened = $reader->open($path, null, LIBXML_NONET);
 		if ($opened === false) {
 			libxml_use_internal_errors($previous);
-			$result['findings'][] = $this->finding(
-				severity: self::SEVERITY_ERROR,
-				code: 'open-failed',
-				message: 'Could not open auditfile for streaming.',
-				context: ['path' => $path]
-			);
-			return $result;
+			return ['opened' => false, 'fragments' => [], 'findings' => [$this->error(code: 'open-failed', context: ['path' => $path])]];
 		}
 
-		$fragments = [];
+		$read = ['opened' => true, 'fragments' => [], 'findings' => []];
 		try {
-			while ($reader->read() === true) {
-				if ($reader->nodeType === XMLReader::ELEMENT && $reader->localName === 'company') {
-					$fragment = $reader->readOuterXml();
-					if ($fragment !== '') {
-						$fragments[] = $fragment;
-					}
-
-					// Skip the subtree we just buffered.
-					$reader->next();
-				}
-			}
+			$read['fragments'] = $this->companyFragments(reader: $reader);
 		} catch (\Throwable $e) {
-			$result['findings'][] = $this->finding(
-				severity: self::SEVERITY_ERROR,
-				code: 'stream-error',
-				message: 'Streaming the auditfile failed.',
-				context: ['detail' => $e->getMessage()]
-			);
+			$read['findings'][] = $this->error(code: 'stream-error', context: ['detail' => $e->getMessage()]);
 		} finally {
 			$reader->close();
 			libxml_clear_errors();
 			libxml_use_internal_errors($previous);
-		}//end try
-
-		if (empty($fragments) === true) {
-			$result['findings'][] = $this->finding(
-				severity: self::SEVERITY_ERROR,
-				code: 'no-company',
-				message: 'No <company> element found in the auditfile.',
-				context: ['path' => $path]
-			);
-			return $result;
 		}
 
-		// Re-parse each buffered company fragment through the string path so the
-		// two entry points share one normalisation implementation.
-		foreach ($fragments as $fragment) {
-			$wrapped = '<auditfile xmlns="http://www.auditfiles.nl/XAF/3.2">' . $fragment . '</auditfile>';
-			$parsed = $this->parse(xml: $wrapped);
+		return $read;
+	}//end readCompanies()
 
+	/**
+	 * The outer XML of each <company> element the reader meets, skipping the
+	 * subtree it just buffered.
+	 *
+	 * @param XMLReader $reader The opened reader.
+	 *
+	 * @return list<string>
+	 */
+	private function companyFragments(XMLReader $reader): array {
+		$fragments = [];
+		while ($reader->read() === true) {
+			if ($reader->nodeType !== XMLReader::ELEMENT || $reader->localName !== 'company') {
+				continue;
+			}
+
+			$fragment = $reader->readOuterXml();
+			if ($fragment !== '') {
+				$fragments[] = $fragment;
+			}
+
+			$reader->next();
+		}
+
+		return $fragments;
+	}//end companyFragments()
+
+	/**
+	 * The result with each buffered company fragment re-parsed through the
+	 * string path, so the two entry points share one normalisation; the last
+	 * non-empty company identity wins.
+	 *
+	 * @param array<string,mixed> $result    The result so far.
+	 * @param list<string>        $fragments The company fragments.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function mergedFragments(array $result, array $fragments): array {
+		foreach ($fragments as $fragment) {
+			$parsed = $this->parse(xml: '<auditfile xmlns="http://www.auditfiles.nl/XAF/3.2">' . $fragment . '</auditfile>');
 			if ($parsed['company'] !== []) {
 				$result['company'] = $parsed['company'];
 			}
 
-			$result['ledgerAccounts'] = array_merge($result['ledgerAccounts'], $parsed['ledgerAccounts']);
-			$result['relations'] = array_merge($result['relations'], $parsed['relations']);
-			$result['openingBalances'] = array_merge($result['openingBalances'], $parsed['openingBalances']);
-			$result['journals'] = array_merge($result['journals'], $parsed['journals']);
-			$result['findings'] = array_merge($result['findings'], $parsed['findings']);
+			foreach (self::MERGED_KEYS as $key) {
+				$result[$key] = array_merge($result[$key], $parsed[$key]);
+			}
 		}
 
 		return $result;
-	}//end parseFile()
+	}//end mergedFragments()
 
 	/**
 	 * Extract company-level identity from the auditfile.
@@ -283,35 +345,11 @@ class AuditfileParser {
 	 */
 	private function parseCompany(\SimpleXMLElement $doc): array {
 		$company = [];
-
-		$name = $this->firstString(node: $doc, xpath: '//*[local-name()="company"]/*[local-name()="companyName"]');
-		if ($name !== '') {
-			$company['companyName'] = $name;
-		}
-
-		$kvk = $this->firstString(node: $doc, xpath: '//*[local-name()="company"]/*[local-name()="companyIdent"]');
-		if ($kvk !== '') {
-			$company['kvkNumber'] = $kvk;
-		}
-
-		$taxIdent = $this->firstString(
-			node: $doc,
-			xpath: '//*[local-name()="company"]/*[local-name()="taxRegistration"]/*[local-name()="taxRegIdent"]'
-		);
-		if ($taxIdent === '') {
-			$taxIdent = $this->firstString(
-				node: $doc,
-				xpath: '//*[local-name()="company"]/*[local-name()="taxRegIdent"]'
-			);
-		}
-
-		if ($taxIdent !== '') {
-			$company['taxRegIdent'] = $taxIdent;
-		}
-
-		$currency = $this->firstString(node: $doc, xpath: '//*[local-name()="company"]/*[local-name()="currencyCode"]');
-		if ($currency !== '') {
-			$company['currencyCode'] = $currency;
+		foreach (self::COMPANY_FIELDS as $field => $xpaths) {
+			$value = $this->firstOf(node: $doc, xpaths: $xpaths);
+			if ($value !== '') {
+				$company[$field] = $value;
+			}
 		}
 
 		return $company;
@@ -406,32 +444,37 @@ class AuditfileParser {
 
 		foreach ($nodes as $node) {
 			$accountCode = $this->firstString(node: $node, xpath: './*[local-name()="accID"]');
-			if ($accountCode === '') {
-				continue;
+			if ($accountCode !== '') {
+				$lines[] = ['accountCode' => $accountCode] + $this->debitAndCredit(node: $node);
 			}
-
-			$amount = (float)$this->firstString(node: $node, xpath: './*[local-name()="amnt"]');
-			$type = strtoupper($this->firstString(node: $node, xpath: './*[local-name()="amntTp"]'));
-
-			$debit = 0.0;
-			if ($type === 'D') {
-				$debit = $amount;
-			}
-
-			$credit = 0.0;
-			if ($type === 'C') {
-				$credit = $amount;
-			}
-
-			$lines[] = [
-				'accountCode' => $accountCode,
-				'debit' => $debit,
-				'credit' => $credit,
-			];
-		}//end foreach
+		}
 
 		return $lines;
 	}//end parseOpeningBalances()
+
+	/**
+	 * An opening-balance line's amount on its side: D is debit, C is credit,
+	 * anything else neither.
+	 *
+	 * @param \SimpleXMLElement $node The obLine.
+	 *
+	 * @return array{debit: float, credit: float}
+	 */
+	private function debitAndCredit(\SimpleXMLElement $node): array {
+		$amount = (float)$this->firstString(node: $node, xpath: './*[local-name()="amnt"]');
+		$type   = strtoupper($this->firstString(node: $node, xpath: './*[local-name()="amntTp"]'));
+
+		$sides = ['debit' => 0.0, 'credit' => 0.0];
+		if ($type === 'D') {
+			$sides['debit'] = $amount;
+		}
+
+		if ($type === 'C') {
+			$sides['credit'] = $amount;
+		}
+
+		return $sides;
+	}//end debitAndCredit()
 
 	/**
 	 * Extract journals + transaction lines, recording a finding for any
@@ -442,64 +485,80 @@ class AuditfileParser {
 	 * @return array{journals:array<int,array<string,mixed>>,findings:array<int,array<string,mixed>>}
 	 */
 	private function parseJournals(\SimpleXMLElement $doc): array {
-		$journals = [];
-		$findings = [];
+		$parsed = ['journals' => [], 'findings' => []];
 
 		$journalNodes = $doc->xpath('//*[local-name()="transactions"]/*[local-name()="journal"]');
 		if ($journalNodes === false || $journalNodes === null) {
-			return ['journals' => $journals, 'findings' => $findings];
+			return $parsed;
 		}
 
 		foreach ($journalNodes as $journalNode) {
-			$journalId = $this->firstString(node: $journalNode, xpath: './*[local-name()="jrnID"]');
+			$journalId    = $this->firstString(node: $journalNode, xpath: './*[local-name()="jrnID"]');
 			$transactions = [];
+			foreach (($journalNode->xpath('./*[local-name()="transaction"]') ?? []) as $txNode) {
+				$transaction        = $this->parseTransaction(txNode: $txNode, journalId: $journalId);
+				$parsed['findings'] = array_merge($parsed['findings'], $transaction['findings']);
+				$transactions[]     = $transaction['transaction'];
+			}
 
-			$txNodes = $journalNode->xpath('./*[local-name()="transaction"]');
-			foreach (($txNodes ?? []) as $txNode) {
-				$lines = [];
-				$lineNodes = $txNode->xpath('./*[local-name()="trLine"]');
-				foreach (($lineNodes ?? []) as $lineNode) {
-					$accountCode = $this->firstString(node: $lineNode, xpath: './*[local-name()="accID"]');
-					$amountRaw = $this->firstString(node: $lineNode, xpath: './*[local-name()="amnt"]');
+			$parsed['journals'][] = ['journalId' => $journalId, 'transactions' => $transactions];
+		}
 
-					if ($amountRaw === '') {
-						$findings[] = $this->finding(
-							severity: self::SEVERITY_ERROR,
-							code: 'transaction-line-missing-amount',
-							message: 'A transaction line is missing its <amnt> amount.',
-							context: ['journalId' => $journalId, 'accountCode' => $accountCode]
-						);
-						// The row is NOT silently dropped — it is kept with a null
-						// amount so the count is honest and the finding is traceable.
-						$lines[] = [
-							'accountCode' => $accountCode,
-							'amount' => null,
-							'amountType' => strtoupper($this->firstString(node: $lineNode, xpath: './*[local-name()="amntTp"]')),
-						];
-						continue;
-					}
-
-					$lines[] = [
-						'accountCode' => $accountCode,
-						'amount' => (float)$amountRaw,
-						'amountType' => strtoupper($this->firstString(node: $lineNode, xpath: './*[local-name()="amntTp"]')),
-					];
-				}//end foreach
-
-				$transactions[] = [
-					'transactionId' => $this->firstString(node: $txNode, xpath: './*[local-name()="nr"]'),
-					'lines' => $lines,
-				];
-			}//end foreach
-
-			$journals[] = [
-				'journalId' => $journalId,
-				'transactions' => $transactions,
-			];
-		}//end foreach
-
-		return ['journals' => $journals, 'findings' => $findings];
+		return $parsed;
 	}//end parseJournals()
+
+	/**
+	 * One transaction and a finding per line missing its amount; such a line
+	 * is NOT silently dropped — it is kept with a null amount so the count is
+	 * honest and the finding is traceable.
+	 *
+	 * @param \SimpleXMLElement $txNode    The transaction node.
+	 * @param string            $journalId The journal it belongs to.
+	 *
+	 * @return array{transaction: array<string,mixed>, findings: list<array<string,mixed>>}
+	 */
+	private function parseTransaction(\SimpleXMLElement $txNode, string $journalId): array {
+		$lines    = [];
+		$findings = [];
+		foreach (($txNode->xpath('./*[local-name()="trLine"]') ?? []) as $lineNode) {
+			$line = $this->transactionLine(lineNode: $lineNode);
+			if ($line['amount'] === null) {
+				$findings[] = $this->error(
+					code: 'transaction-line-missing-amount',
+					context: ['journalId' => $journalId, 'accountCode' => $line['accountCode']]
+				);
+			}
+
+			$lines[] = $line;
+		}
+
+		return [
+			'transaction' => ['transactionId' => $this->firstString(node: $txNode, xpath: './*[local-name()="nr"]'), 'lines' => $lines],
+			'findings' => $findings,
+		];
+	}//end parseTransaction()
+
+	/**
+	 * One transaction line: its account, its amount (null when missing) and
+	 * its upper-cased amount type.
+	 *
+	 * @param \SimpleXMLElement $lineNode The trLine node.
+	 *
+	 * @return array{accountCode: string, amount: float|null, amountType: string}
+	 */
+	private function transactionLine(\SimpleXMLElement $lineNode): array {
+		$amountRaw = $this->firstString(node: $lineNode, xpath: './*[local-name()="amnt"]');
+		$amount    = null;
+		if ($amountRaw !== '') {
+			$amount = (float)$amountRaw;
+		}
+
+		return [
+			'accountCode' => $this->firstString(node: $lineNode, xpath: './*[local-name()="accID"]'),
+			'amount' => $amount,
+			'amountType' => strtoupper($this->firstString(node: $lineNode, xpath: './*[local-name()="amntTp"]')),
+		];
+	}//end transactionLine()
 
 	/**
 	 * Return the first xpath text match as a trimmed string, or '' if absent.
@@ -519,24 +578,41 @@ class AuditfileParser {
 	}//end firstString()
 
 	/**
-	 * Build a structured finding.
+	 * The first non-empty text of the xpaths, tried in order, or ''.
 	 *
-	 * @param string $severity One of SEVERITY_ERROR / SEVERITY_WARNING.
-	 * @param string $code Stable machine code.
-	 * @param string $message Human-readable message (English source string).
+	 * @param \SimpleXMLElement $node   Context node.
+	 * @param list<string>      $xpaths The xpath expressions.
+	 *
+	 * @return string
+	 */
+	private function firstOf(\SimpleXMLElement $node, array $xpaths): string {
+		foreach ($xpaths as $xpath) {
+			$value = $this->firstString(node: $node, xpath: $xpath);
+			if ($value !== '') {
+				return $value;
+			}
+		}
+
+		return '';
+	}//end firstOf()
+
+	/**
+	 * Build an error-severity finding with its fixed message.
+	 *
+	 * @param string              $code    Stable machine code, a key of ERROR_MESSAGES.
 	 * @param array<string,mixed> $context Optional contextual data.
 	 *
 	 * @return array<string,mixed> The finding.
 	 */
-	private function finding(string $severity, string $code, string $message, array $context = []): array {
+	private function error(string $code, array $context = []): array {
 		return [
-			'severity' => $severity,
+			'severity' => self::SEVERITY_ERROR,
 			'code' => $code,
-			'message' => $message,
+			'message' => self::ERROR_MESSAGES[$code],
 			'context' => $context,
 		];
 
-	}//end finding()
+	}//end error()
 
 	/**
 	 * The empty normalised structure used as a base / fail-closed return.
