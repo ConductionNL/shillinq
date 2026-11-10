@@ -786,5 +786,60 @@
         "exceptions": [],
         "fiscalYears": [],
         "generatedAt": "<masked>"
+    },
+    "facets": {
+        "accountTypes": [
+            {
+                "value": "assets",
+                "label": "Assets",
+                "accountNumbers": [
+                    "0100"
+                ]
+            },
+            {
+                "value": "expenses",
+                "label": "Expenses",
+                "accountNumbers": [
+                    "4100",
+                    "4110"
+                ]
+            }
+        ],
+        "programmes": [
+            {
+                "value": "ruimte",
+                "label": "Ruimte"
+            },
+            {
+                "value": "mobiliteit",
+                "label": "Mobiliteit"
+            },
+            {
+                "value": "water",
+                "label": "Water"
+            },
+            {
+                "value": "milieu",
+                "label": "Milieu"
+            },
+            {
+                "value": "cultuur",
+                "label": "Cultuur"
+            },
+            {
+                "value": "economie",
+                "label": "Economie"
+            },
+            {
+                "value": "bestuur",
+                "label": "Bestuur"
+            }
+        ],
+        "assignmentStatuses": [
+            {
+                "value": "mapped",
+                "label": "Mapped"
+            }
+        ]
     }
 }

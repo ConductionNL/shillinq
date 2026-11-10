@@ -608,7 +608,8 @@ final class BbvProgrammeBudgetServiceTest extends TestCase {
 	}//end testTrendCoversTheWindowAndCarriesThePostedMonth()
 
 	/**
-	 * Golden: the full envelope for a spread of filter combinations, with the
+	 * Golden: the full envelope for a spread of filter combinations and the GL
+	 * line facets, with the
 	 * wall clock masked. Regenerate with BBV_PROGRAMME_GOLDEN_WRITE=1.
 	 *
 	 * @return void
@@ -627,16 +628,17 @@ final class BbvProgrammeBudgetServiceTest extends TestCase {
 			'noneSelected' => $service->programmeBudgetVsActuals(programmes: []),
 			'empty' => $this->subject([])->programmeBudgetVsActuals(),
 		];
+		$facets = $service->glLineFacets();
 		foreach ($cases as $name => $envelope) {
 			$this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $envelope['generatedAt']);
 			$cases[$name]['generatedAt'] = '<masked>';
 		}
 
 		if (getenv('BBV_PROGRAMME_GOLDEN_WRITE') === '1') {
-			file_put_contents($golden, json_encode($cases, (JSON_PRETTY_PRINT | JSON_PRESERVE_ZERO_FRACTION))."\n");
+			file_put_contents($golden, json_encode($cases + ['facets' => $facets], (JSON_PRETTY_PRINT | JSON_PRESERVE_ZERO_FRACTION))."\n");
 		}
 
 		$expected = json_decode((string) file_get_contents($golden), true, 512, JSON_THROW_ON_ERROR);
-		$this->assertSame(json_encode($expected, JSON_PRESERVE_ZERO_FRACTION), json_encode($cases, JSON_PRESERVE_ZERO_FRACTION));
+		$this->assertSame(json_encode($expected, JSON_PRESERVE_ZERO_FRACTION), json_encode($cases + ['facets' => $facets], JSON_PRESERVE_ZERO_FRACTION));
 	}//end testEnvelopesMatchGolden()
 }//end class
