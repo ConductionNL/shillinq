@@ -197,14 +197,7 @@ class TimeIntakeService {
 	 */
 	private function intakeBatch(array $body, array $scope): array {
 		$batch = array_merge($scope, array_combine(self::BATCH_FIELDS, $this->parseAndAssertStructure(body: $body)));
-		$batch['payloadHash'] = $this->computePayloadHash(
-			organisationRef: $batch['organisationRef'],
-			billingModel: $batch['billingModel'],
-			currency: $batch['currency'],
-			periodStart: $batch['periodStart'],
-			periodEnd: $batch['periodEnd'],
-			entries: $batch['entries']
-		);
+		$batch['payloadHash'] = $this->computePayloadHash(batch: $batch);
 
 		return $batch;
 
@@ -357,14 +350,7 @@ class TimeIntakeService {
 	 * @return string
 	 */
 	private function batchRateCardId(array $batch): string {
-		$rateCardId = $this->resolveBatchRateCardId(
-			administrationId: $batch['administrationId'],
-			requestRateCardId: $batch['requestRateCardId'],
-			entries: $batch['entries'],
-			resolvedRates: $batch['rates'],
-			periodStart: $batch['periodStart'],
-			periodEnd: $batch['periodEnd']
-		);
+		$rateCardId = $this->resolveBatchRateCardId(batch: $batch);
 		if ($rateCardId === null) {
 			throw new RuntimeException('rateCardId could not be resolved for this batch.');
 		}
@@ -529,68 +515,16 @@ class TimeIntakeService {
 	 * @return array{0:string,1:string,2:string,3:string,4:string,5:string,6:?string,7:?string,8:?string,9:array<int,array<string,mixed>>}
 	 */
 	private function parseAndAssertStructure(array $body): array {
-		$batchId = trim((string)$this->stringField(source: $body, key: 'batchId'));
-		if ($batchId === '') {
-			throw new InvalidArgumentException('batchId is required.');
-		}
-
-		$organisationRef = trim((string)$this->stringField(source: $body, key: 'organisationRef'));
-		if ($organisationRef === '') {
-			throw new InvalidArgumentException('organisationRef is required.');
-		}
-
-		$entriesRaw = ($body['entries'] ?? null);
-		if (is_array($entriesRaw) === false || count($entriesRaw) === 0) {
-			throw new InvalidArgumentException('entries must be a non-empty array.');
-		}
-
-		$period = [];
-		if (is_array($body['period'] ?? null) === true) {
-			$period = $body['period'];
-		}
-
-		$periodStart = (string)$this->stringField(source: $period, key: 'start');
-		$periodEnd = (string)$this->stringField(source: $period, key: 'end');
-		if ($this->isValidIsoDate(value: $periodStart) === false || $this->isValidIsoDate(value: $periodEnd) === false) {
-			throw new InvalidArgumentException('period.start and period.end must be valid ISO dates.');
-		}
+		[$batchId, $organisationRef] = $this->requiredBatchRefs(body: $body);
+		$entriesRaw = self::requiredEntries(body: $body);
+		[$periodStart, $periodEnd] = $this->requiredPeriod(body: $body);
 
 		$entries = [];
 		foreach ($entriesRaw as $entry) {
-			if (is_array($entry) === false) {
-				throw new InvalidArgumentException('Each entry must be an object.');
-			}
-
-			$externalId = trim((string)$this->stringField(source: $entry, key: 'externalId'));
-			$date = (string)$this->stringField(source: $entry, key: 'date');
-			if ($externalId === '' || $this->isValidIsoDate(value: $date) === false) {
-				throw new InvalidArgumentException('Each entry requires a non-empty externalId and a valid ISO date.');
-			}
-
-			$rateRef = $this->stringField(source: $entry, key: 'rateRef');
-			$entryProjectRef = $this->stringField(source: $entry, key: 'projectRef');
-
-			$entries[] = [
-				'externalId' => $externalId,
-				'date' => $date,
-				'minutes' => ($entry['minutes'] ?? null),
-				'description' => (string)$this->stringField(source: $entry, key: 'description'),
-				'hourlyRate' => ($entry['hourlyRate'] ?? null),
-				'rateRef' => $rateRef,
-				'projectRef' => $entryProjectRef,
-			];
-		}//end foreach
-
-		$billingModel = (string)$this->stringField(source: $body, key: 'billingModel');
-		$currency = ($this->stringField(source: $body, key: 'currency') ?? 'EUR');
-
-		$requestRateCardId = $this->stringField(source: $body, key: 'rateCardId');
-		if ($requestRateCardId === '') {
-			$requestRateCardId = null;
+			$entries[] = $this->parsedEntry(entry: $entry);
 		}
 
-		$projectRef = $this->stringField(source: $body, key: 'projectRef');
-		$notes = $this->stringField(source: $body, key: 'notes');
+		[$billingModel, $currency, $requestRateCardId, $projectRef, $notes] = $this->optionalBatchFields(body: $body);
 
 		return [
 			$batchId,
@@ -606,6 +540,126 @@ class TimeIntakeService {
 		];
 
 	}//end parseAndAssertStructure()
+
+	/**
+	 * The batchId and organisationRef, both required.
+	 *
+	 * @param array<string,mixed> $body Decoded JSON request body.
+	 *
+	 * @throws InvalidArgumentException When either is missing.
+	 *
+	 * @return array{0:string,1:string}
+	 */
+	private function requiredBatchRefs(array $body): array {
+		$batchId = trim((string)$this->stringField(source: $body, key: 'batchId'));
+		if ($batchId === '') {
+			throw new InvalidArgumentException('batchId is required.');
+		}
+
+		$organisationRef = trim((string)$this->stringField(source: $body, key: 'organisationRef'));
+		if ($organisationRef === '') {
+			throw new InvalidArgumentException('organisationRef is required.');
+		}
+
+		return [$batchId, $organisationRef];
+	}//end requiredBatchRefs()
+
+	/**
+	 * The raw entries, which must be a non-empty array.
+	 *
+	 * @param array<string,mixed> $body Decoded JSON request body.
+	 *
+	 * @throws InvalidArgumentException When there are no entries.
+	 *
+	 * @return array<int|string,mixed>
+	 */
+	private static function requiredEntries(array $body): array {
+		$entriesRaw = ($body['entries'] ?? null);
+		if (is_array($entriesRaw) === false || count($entriesRaw) === 0) {
+			throw new InvalidArgumentException('entries must be a non-empty array.');
+		}
+
+		return $entriesRaw;
+	}//end requiredEntries()
+
+	/**
+	 * The period's start and end, both valid ISO dates.
+	 *
+	 * @param array<string,mixed> $body Decoded JSON request body.
+	 *
+	 * @throws InvalidArgumentException When either date is not valid.
+	 *
+	 * @return array{0:string,1:string}
+	 */
+	private function requiredPeriod(array $body): array {
+		$period = [];
+		if (is_array($body['period'] ?? null) === true) {
+			$period = $body['period'];
+		}
+
+		$periodStart = (string)$this->stringField(source: $period, key: 'start');
+		$periodEnd = (string)$this->stringField(source: $period, key: 'end');
+		if ($this->isValidIsoDate(value: $periodStart) === false || $this->isValidIsoDate(value: $periodEnd) === false) {
+			throw new InvalidArgumentException('period.start and period.end must be valid ISO dates.');
+		}
+
+		return [$periodStart, $periodEnd];
+	}//end requiredPeriod()
+
+	/**
+	 * One entry, which must be an object with an externalId and a valid ISO
+	 * date.
+	 *
+	 * @param mixed $entry The raw entry.
+	 *
+	 * @throws InvalidArgumentException When the entry is not valid.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function parsedEntry(mixed $entry): array {
+		if (is_array($entry) === false) {
+			throw new InvalidArgumentException('Each entry must be an object.');
+		}
+
+		$externalId = trim((string)$this->stringField(source: $entry, key: 'externalId'));
+		$date = (string)$this->stringField(source: $entry, key: 'date');
+		if ($externalId === '' || $this->isValidIsoDate(value: $date) === false) {
+			throw new InvalidArgumentException('Each entry requires a non-empty externalId and a valid ISO date.');
+		}
+
+		return [
+			'externalId' => $externalId,
+			'date' => $date,
+			'minutes' => ($entry['minutes'] ?? null),
+			'description' => (string)$this->stringField(source: $entry, key: 'description'),
+			'hourlyRate' => ($entry['hourlyRate'] ?? null),
+			'rateRef' => $this->stringField(source: $entry, key: 'rateRef'),
+			'projectRef' => $this->stringField(source: $entry, key: 'projectRef'),
+		];
+	}//end parsedEntry()
+
+	/**
+	 * The billing model, the currency (EUR by default), the requested rate
+	 * card (null when empty), the project reference and the notes.
+	 *
+	 * @param array<string,mixed> $body Decoded JSON request body.
+	 *
+	 * @return array{0:string,1:string,2:?string,3:?string,4:?string}
+	 */
+	private function optionalBatchFields(array $body): array {
+		$requestRateCardId = $this->stringField(source: $body, key: 'rateCardId');
+		if ($requestRateCardId === '') {
+			$requestRateCardId = null;
+		}
+
+		return [
+			(string)$this->stringField(source: $body, key: 'billingModel'),
+			($this->stringField(source: $body, key: 'currency') ?? 'EUR'),
+			$requestRateCardId,
+			$this->stringField(source: $body, key: 'projectRef'),
+			$this->stringField(source: $body, key: 'notes'),
+		];
+	}//end optionalBatchFields()
 
 	/**
 	 * Build the idempotent-replay response from a stored TimeIntakeBatch row.
@@ -668,70 +722,108 @@ class TimeIntakeService {
 	 * RateCard is found-or-created from the first entry's resolved rate — see
 	 * the class docblock for why this is a per-batch, not per-entry, rate.
 	 *
-	 * @param string $administrationId Tenant scope.
-	 * @param string|null $requestRateCardId Request-level rateCardId, if supplied.
-	 * @param array<int,array<string,mixed>> $entries Normalised entries.
-	 * @param array<string,float> $resolvedRates externalId => resolved euro rate.
-	 * @param string $periodStart ISO date.
-	 * @param string $periodEnd ISO date.
+	 * @param array<string,mixed> $batch The batch: administrationId, requestRateCardId,
+	 *                                   entries, its resolved rates (externalId => euro
+	 *                                   rate) and its period.
 	 *
 	 * @return string|null The RateCard id to use, or null when unresolvable.
 	 */
-	private function resolveBatchRateCardId(
-		string $administrationId,
-		?string $requestRateCardId,
-		array $entries,
-		array $resolvedRates,
-		string $periodStart,
-		string $periodEnd,
-	): ?string {
-		if ($requestRateCardId !== null) {
-			$card = $this->findRateCardById(administrationId: $administrationId, rateCardId: $requestRateCardId);
-			if ($card === null) {
-				return null;
-			}
-
-			return $requestRateCardId;
+	private function resolveBatchRateCardId(array $batch): ?string {
+		if ($batch['requestRateCardId'] !== null) {
+			return $this->requestedRateCardId(batch: $batch);
 		}
 
-		$firstExternalId = (string)($entries[0]['externalId'] ?? '');
-		$firstRate = ($resolvedRates[$firstExternalId] ?? null);
+		$firstExternalId = (string)($batch['entries'][0]['externalId'] ?? '');
+		$firstRate = ($batch['rates'][$firstExternalId] ?? null);
 		if ($firstRate === null) {
 			return null;
 		}
 
-		$existing = $this->findAll(schema: 'RateCard', filters: ['administrationId' => $administrationId, 'hourlyRate' => $firstRate]);
+		return $this->rateCardIdForRate(batch: $batch, rate: $firstRate);
+	}//end resolveBatchRateCardId()
+
+	/**
+	 * The requested rate card's id when it exists in the administration.
+	 *
+	 * @param array<string,mixed> $batch The batch.
+	 *
+	 * @return string|null
+	 */
+	private function requestedRateCardId(array $batch): ?string {
+		$card = $this->findRateCardById(administrationId: $batch['administrationId'], rateCardId: $batch['requestRateCardId']);
+		if ($card === null) {
+			return null;
+		}
+
+		return $batch['requestRateCardId'];
+	}//end requestedRateCardId()
+
+	/**
+	 * The id of the administration's first rate card at this hourly rate, or
+	 * of a rate card created for it over the batch period.
+	 *
+	 * @param array<string,mixed> $batch The batch.
+	 * @param mixed               $rate  The first entry's resolved hourly rate.
+	 *
+	 * @return string|null
+	 */
+	private function rateCardIdForRate(array $batch, mixed $rate): ?string {
+		$existing = $this->findAll(schema: 'RateCard', filters: ['administrationId' => $batch['administrationId'], 'hourlyRate' => $rate]);
 		foreach ($existing as $card) {
 			if (is_array($card) === false) {
 				continue;
 			}
 
-			$id = (string)($card['id'] ?? ($card['@self']['id'] ?? ''));
+			$id = self::recordId(record: $card);
 			if ($id !== '') {
 				return $id;
 			}
 		}
 
+		return $this->createdRateCardId(batch: $batch, rate: $rate);
+	}//end rateCardIdForRate()
+
+	/**
+	 * Create a rate card at this hourly rate over the batch period and return
+	 * its id (null when the store returns none).
+	 *
+	 * @param array<string,mixed> $batch The batch.
+	 * @param mixed               $rate  The hourly rate.
+	 *
+	 * @return string|null
+	 */
+	private function createdRateCardId(array $batch, mixed $rate): ?string {
 		$saved = $this->saveObject(
 			schema: 'RateCard',
 			data: [
-				'administrationId' => $administrationId,
+				'administrationId' => $batch['administrationId'],
 				'level' => 'senior',
 				'currency' => 'EUR',
-				'hourlyRate' => $firstRate,
-				'effectiveFrom' => $periodStart,
-				'effectiveTo' => $periodEnd,
+				'hourlyRate' => $rate,
+				'effectiveFrom' => $batch['periodStart'],
+				'effectiveTo' => $batch['periodEnd'],
 				'description' => 'Auto-generated by the pipelinq time-intake ingress adapter.',
 			]
 		);
 
-		$id = (string)($saved['id'] ?? ($saved['@self']['id'] ?? ''));
+		$id = self::recordId(record: $saved);
 		if ($id === '') {
 			return null;
 		}
 
 		return $id;
-	}//end resolveBatchRateCardId()
+	}//end createdRateCardId()
+
+	/**
+	 * A record's id, from `id` or `@self.id`; '' when it has none.
+	 *
+	 * @param array<string,mixed> $record The record.
+	 *
+	 * @return string
+	 */
+	private static function recordId(array $record): string {
+		return (string)($record['id'] ?? ($record['@self']['id'] ?? ''));
+	}//end recordId()
 
 	/**
 	 * Look up an existing RateCard by its real object id, scoped to the administration.
@@ -812,29 +904,18 @@ class TimeIntakeService {
 	/**
 	 * Compute a stable sha256 fingerprint of the normalised request payload.
 	 *
-	 * @param string $organisationRef Organisation ref.
-	 * @param string $billingModel Billing model.
-	 * @param string $currency Currency.
-	 * @param string $periodStart ISO date.
-	 * @param string $periodEnd ISO date.
-	 * @param array<int,array<string,mixed>> $entries Normalised entries.
+	 * @param array<string,mixed> $batch The batch: organisationRef, billingModel, currency,
+	 *                                   period and normalised entries.
 	 *
 	 * @return string
 	 */
-	private function computePayloadHash(
-		string $organisationRef,
-		string $billingModel,
-		string $currency,
-		string $periodStart,
-		string $periodEnd,
-		array $entries,
-	): string {
+	private function computePayloadHash(array $batch): string {
 		$normalised = [
-			'organisationRef' => $organisationRef,
-			'billingModel' => $billingModel,
-			'currency' => $currency,
-			'periodStart' => $periodStart,
-			'periodEnd' => $periodEnd,
+			'organisationRef' => $batch['organisationRef'],
+			'billingModel' => $batch['billingModel'],
+			'currency' => $batch['currency'],
+			'periodStart' => $batch['periodStart'],
+			'periodEnd' => $batch['periodEnd'],
 			'entries' => array_map(
 				static function (array $entry): array {
 					return [
@@ -845,7 +926,7 @@ class TimeIntakeService {
 						'rateRef' => $entry['rateRef'],
 					];
 				},
-				$entries
+				$batch['entries']
 			),
 		];
 
