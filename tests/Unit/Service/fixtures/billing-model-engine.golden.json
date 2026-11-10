@@ -1,0 +1,557 @@
+{
+    "tm": [
+        {
+            "lineNumber": 1,
+            "sourceType": "time_entry",
+            "sourceId": "1",
+            "description": "Senior Consultant — 1.75 hours @ €120.00\/hr",
+            "billableUnits": 1.75,
+            "rateApplied": {
+                "rateCents": 12000
+            },
+            "markup": 0.0,
+            "costAmountCents": 21000,
+            "vatRate": 21.0,
+            "modelSpecificFields": {
+                "sourceIds": [
+                    "1",
+                    "te-3"
+                ]
+            }
+        },
+        {
+            "lineNumber": 2,
+            "sourceType": "time_entry",
+            "sourceId": "te-2",
+            "description": "Junior — 2 hours @ €80.00\/hr",
+            "billableUnits": 2.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 16000,
+            "vatRate": 0.0,
+            "modelSpecificFields": {
+                "sourceIds": [
+                    "te-2"
+                ]
+            }
+        },
+        {
+            "lineNumber": 3,
+            "sourceType": "time_entry",
+            "sourceId": "te-4",
+            "description": "Senior Consultant — 1 hours @ €150.00\/hr",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 15000,
+            "vatRate": 21.0,
+            "modelSpecificFields": {
+                "sourceIds": [
+                    "te-4"
+                ]
+            }
+        },
+        {
+            "lineNumber": 4,
+            "sourceType": "expense",
+            "sourceId": "7",
+            "description": "Train",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 1250,
+            "vatRate": 21.0,
+            "modelSpecificFields": null
+        },
+        {
+            "lineNumber": 5,
+            "sourceType": "expense",
+            "sourceId": "e2",
+            "description": "Hotel",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 9000,
+            "vatRate": 9.0,
+            "modelSpecificFields": null
+        }
+    ],
+    "tmMarkup": [
+        {
+            "lineNumber": 1,
+            "sourceType": "time_entry",
+            "sourceId": "1",
+            "description": "Senior Consultant — 1.75 hours @ €120.00\/hr",
+            "billableUnits": 1.75,
+            "rateApplied": {
+                "rateCents": 12000
+            },
+            "markup": 12.5,
+            "costAmountCents": 23625,
+            "vatRate": 21.0,
+            "modelSpecificFields": {
+                "sourceIds": [
+                    "1",
+                    "te-3"
+                ]
+            }
+        },
+        {
+            "lineNumber": 2,
+            "sourceType": "time_entry",
+            "sourceId": "te-2",
+            "description": "Junior — 2 hours @ €80.00\/hr",
+            "billableUnits": 2.0,
+            "rateApplied": null,
+            "markup": 12.5,
+            "costAmountCents": 18000,
+            "vatRate": 0.0,
+            "modelSpecificFields": {
+                "sourceIds": [
+                    "te-2"
+                ]
+            }
+        },
+        {
+            "lineNumber": 3,
+            "sourceType": "time_entry",
+            "sourceId": "te-4",
+            "description": "Senior Consultant — 1 hours @ €150.00\/hr",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 12.5,
+            "costAmountCents": 16875,
+            "vatRate": 21.0,
+            "modelSpecificFields": {
+                "sourceIds": [
+                    "te-4"
+                ]
+            }
+        }
+    ],
+    "tmEmpty": [
+        {
+            "lineNumber": 1,
+            "sourceType": "expense",
+            "sourceId": "7",
+            "description": "Train",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 1250,
+            "vatRate": 21.0,
+            "modelSpecificFields": null
+        },
+        {
+            "lineNumber": 2,
+            "sourceType": "expense",
+            "sourceId": "e2",
+            "description": "Hotel",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 9000,
+            "vatRate": 9.0,
+            "modelSpecificFields": null
+        }
+    ],
+    "fixed": [
+        {
+            "lineNumber": 1,
+            "sourceType": "fixed_fee",
+            "sourceId": null,
+            "description": "Website",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 100000,
+            "vatRate": 21.0,
+            "modelSpecificFields": {
+                "informationalHourCount": 12
+            }
+        },
+        {
+            "lineNumber": 2,
+            "sourceType": "expense",
+            "sourceId": "7",
+            "description": "Train",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 1250,
+            "vatRate": 21.0,
+            "modelSpecificFields": null
+        },
+        {
+            "lineNumber": 3,
+            "sourceType": "expense",
+            "sourceId": "e2",
+            "description": "Hotel",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 9000,
+            "vatRate": 9.0,
+            "modelSpecificFields": null
+        }
+    ],
+    "milestone": [
+        {
+            "lineNumber": 1,
+            "sourceType": "fixed_fee",
+            "sourceId": "ms-1",
+            "description": "Go-live",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 25000,
+            "vatRate": 21.0,
+            "modelSpecificFields": {
+                "milestoneId": "ms-1",
+                "milestoneCompletedAt": "2026-02-01",
+                "milestoneName": "Go-live",
+                "milestoneBudget": 25000
+            }
+        },
+        {
+            "lineNumber": 2,
+            "sourceType": "expense",
+            "sourceId": "7",
+            "description": "Train",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 1250,
+            "vatRate": 21.0,
+            "modelSpecificFields": null
+        },
+        {
+            "lineNumber": 3,
+            "sourceType": "expense",
+            "sourceId": "e2",
+            "description": "Hotel",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 9000,
+            "vatRate": 9.0,
+            "modelSpecificFields": null
+        }
+    ],
+    "retainerUnder": [
+        {
+            "lineNumber": 1,
+            "sourceType": "retainer_charge",
+            "sourceId": null,
+            "description": "Support — 2026-02",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 50000,
+            "vatRate": 21.0,
+            "modelSpecificFields": {
+                "retainerMonth": "2026-02"
+            }
+        },
+        {
+            "lineNumber": 2,
+            "sourceType": "expense",
+            "sourceId": "7",
+            "description": "Train",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 1250,
+            "vatRate": 21.0,
+            "modelSpecificFields": null
+        },
+        {
+            "lineNumber": 3,
+            "sourceType": "expense",
+            "sourceId": "e2",
+            "description": "Hotel",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 9000,
+            "vatRate": 9.0,
+            "modelSpecificFields": null
+        }
+    ],
+    "retainerOver": [
+        {
+            "lineNumber": 1,
+            "sourceType": "retainer_charge",
+            "sourceId": null,
+            "description": "Support — 2026-02",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 50000,
+            "vatRate": 21.0,
+            "modelSpecificFields": {
+                "retainerMonth": "2026-02"
+            }
+        },
+        {
+            "lineNumber": 2,
+            "sourceType": "time_entry",
+            "sourceId": null,
+            "description": "Overage — 2.75 hours @ €99.50\/hr",
+            "billableUnits": 2.75,
+            "rateApplied": {
+                "rateCents": 9950,
+                "currency": "EUR",
+                "rateCardVersion": "retainer-overage",
+                "effectiveDate": "2026-01-01"
+            },
+            "markup": 0.0,
+            "costAmountCents": 27363,
+            "vatRate": 21.0,
+            "modelSpecificFields": {
+                "retainerMonth": "2026-02",
+                "overage": true
+            }
+        },
+        {
+            "lineNumber": 3,
+            "sourceType": "expense",
+            "sourceId": "7",
+            "description": "Train",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 1250,
+            "vatRate": 21.0,
+            "modelSpecificFields": null
+        },
+        {
+            "lineNumber": 4,
+            "sourceType": "expense",
+            "sourceId": "e2",
+            "description": "Hotel",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 9000,
+            "vatRate": 9.0,
+            "modelSpecificFields": null
+        }
+    ],
+    "retainerNoThreshold": [
+        {
+            "lineNumber": 1,
+            "sourceType": "retainer_charge",
+            "sourceId": null,
+            "description": "Support — 2026-02",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 50000,
+            "vatRate": 21.0,
+            "modelSpecificFields": {
+                "retainerMonth": "2026-02"
+            }
+        }
+    ],
+    "retainerNoRate": [
+        {
+            "lineNumber": 1,
+            "sourceType": "retainer_charge",
+            "sourceId": null,
+            "description": "Support — 2026-02",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 50000,
+            "vatRate": 21.0,
+            "modelSpecificFields": {
+                "retainerMonth": "2026-02"
+            }
+        }
+    ],
+    "mixed": [
+        {
+            "lineNumber": 1,
+            "sourceType": "retainer_charge",
+            "sourceId": null,
+            "description": "Support — 2026-03",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 50000,
+            "vatRate": 21.0,
+            "modelSpecificFields": {
+                "retainerMonth": "2026-03"
+            }
+        },
+        {
+            "lineNumber": 2,
+            "sourceType": "time_entry",
+            "sourceId": null,
+            "description": "Overage — 1 hours @ €99.50\/hr",
+            "billableUnits": 1.0,
+            "rateApplied": {
+                "rateCents": 9950,
+                "currency": "EUR",
+                "rateCardVersion": "retainer-overage",
+                "effectiveDate": "2026-01-01"
+            },
+            "markup": 0.0,
+            "costAmountCents": 9950,
+            "vatRate": 21.0,
+            "modelSpecificFields": {
+                "retainerMonth": "2026-03",
+                "overage": true
+            }
+        },
+        {
+            "lineNumber": 3,
+            "sourceType": "fixed_fee",
+            "sourceId": null,
+            "description": "Setup",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 7500,
+            "vatRate": 21.0,
+            "modelSpecificFields": {
+                "oneTime": true
+            }
+        },
+        {
+            "lineNumber": 4,
+            "sourceType": "expense",
+            "sourceId": "7",
+            "description": "Train",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 1250,
+            "vatRate": 21.0,
+            "modelSpecificFields": null
+        },
+        {
+            "lineNumber": 5,
+            "sourceType": "expense",
+            "sourceId": "e2",
+            "description": "Hotel",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 9000,
+            "vatRate": 9.0,
+            "modelSpecificFields": null
+        }
+    ],
+    "mixedNoSetup": [
+        {
+            "lineNumber": 1,
+            "sourceType": "retainer_charge",
+            "sourceId": null,
+            "description": "Support — 2026-03",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 50000,
+            "vatRate": 21.0,
+            "modelSpecificFields": {
+                "retainerMonth": "2026-03"
+            }
+        },
+        {
+            "lineNumber": 2,
+            "sourceType": "expense",
+            "sourceId": "7",
+            "description": "Train",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 1250,
+            "vatRate": 21.0,
+            "modelSpecificFields": null
+        },
+        {
+            "lineNumber": 3,
+            "sourceType": "expense",
+            "sourceId": "e2",
+            "description": "Hotel",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 9000,
+            "vatRate": 9.0,
+            "modelSpecificFields": null
+        }
+    ],
+    "usage": [
+        {
+            "lineNumber": 1,
+            "sourceType": "usage",
+            "sourceId": "r1",
+            "description": "API calls",
+            "billableUnits": 1200.0,
+            "rateApplied": {
+                "ratePlanId": "rp-1",
+                "ratingMethod": "tiered",
+                "unitPriceCents": 2
+            },
+            "markup": 0.0,
+            "costAmountCents": 2400,
+            "vatRate": 21.0,
+            "modelSpecificFields": {
+                "meterId": "m1",
+                "resourceType": "api",
+                "unit": "call",
+                "periodStart": "2026-01-01",
+                "periodEnd": "2026-01-31"
+            }
+        },
+        {
+            "lineNumber": 2,
+            "sourceType": "usage",
+            "sourceId": null,
+            "description": "Metered usage",
+            "billableUnits": 0.0,
+            "rateApplied": {
+                "ratePlanId": "",
+                "ratingMethod": "",
+                "unitPriceCents": null
+            },
+            "markup": 0.0,
+            "costAmountCents": 0,
+            "vatRate": 21.0,
+            "modelSpecificFields": {
+                "meterId": "",
+                "resourceType": "",
+                "unit": "",
+                "periodStart": "",
+                "periodEnd": ""
+            }
+        },
+        {
+            "lineNumber": 3,
+            "sourceType": "expense",
+            "sourceId": "7",
+            "description": "Train",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 1250,
+            "vatRate": 21.0,
+            "modelSpecificFields": null
+        },
+        {
+            "lineNumber": 4,
+            "sourceType": "expense",
+            "sourceId": "e2",
+            "description": "Hotel",
+            "billableUnits": 1.0,
+            "rateApplied": null,
+            "markup": 0.0,
+            "costAmountCents": 9000,
+            "vatRate": 9.0,
+            "modelSpecificFields": null
+        }
+    ]
+}
