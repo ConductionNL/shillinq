@@ -364,12 +364,24 @@ class KorThresholdCalculator {
 
 		$month = (int)$match[2];
 		$day   = (int)$match[3];
-		if ($month < 1 || $month > 12 || $day < 1 || $day > 31) {
+		if ($this->isMonthDay(month: $month, day: $day) === false) {
 			return null;
 		}
 
 		return [(int)$match[1], $month, $day];
 	}//end dateParts()
+
+	/**
+	 * Whether a month is 1-12 and a day 1-31.
+	 *
+	 * @param int $month The month number.
+	 * @param int $day   The day number.
+	 *
+	 * @return bool
+	 */
+	private function isMonthDay(int $month, int $day): bool {
+		return $month >= 1 && $month <= 12 && $day >= 1 && $day <= 31;
+	}//end isMonthDay()
 
 	/**
 	 * LockInEindDatum: effectiveDate + 3 years - 1 day, the end of the third
