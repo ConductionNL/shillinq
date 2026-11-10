@@ -27,6 +27,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Usage;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectPatch;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\SettingsService;
 use RuntimeException;
@@ -95,7 +97,13 @@ class BilledReadings {
 
 			$readingId = (string)$line['sourceId'];
 			$this->objectService->setRegister($register)->setSchema('MeterReading')
-				->patchObject($readingId, ['invoiceId' => $invoiceId], $register, 'MeterReading');
+				->patchObject(
+					patch: new ObjectPatch(
+						objectId: $readingId,
+						data: ['invoiceId' => $invoiceId],
+						target: new ObjectFindTarget(register: $register, schema: 'MeterReading')
+					)
+				);
 			$this->transitions->run(objectId: $readingId, action: 'invoice');
 		}
 

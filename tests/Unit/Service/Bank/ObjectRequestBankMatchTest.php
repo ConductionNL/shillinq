@@ -28,6 +28,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Bank;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Service\Object\ObjectPatch;
 use OCA\Shillinq\Listener\BankLineObjectRequestListener;
 use OCA\Shillinq\Service\Bank\InvoiceSettlementService;
 use OCA\Shillinq\Service\Bank\ManualMatchService;
@@ -112,7 +113,7 @@ final class ObjectRequestBankMatchTest extends TestCase {
 			onRan: function (array $record, array $object): void {
 				if ($record['schema'] === 'JournalEntry' && $record['action'] === 'postDirect') {
 					// MaterialiseGlTransactionAction writes the back reference.
-					$this->store->setSchema('JournalEntry')->patchObject($record['objectId'], ['glTransactionId' => 'gl-' . $record['objectId']]);
+					$this->store->setSchema('JournalEntry')->patchObject(patch: new ObjectPatch(objectId: $record['objectId'], data: ['glTransactionId' => 'gl-' . $record['objectId']]));
 				}
 
 				if ($record['schema'] !== 'ReconciliationMatch') {

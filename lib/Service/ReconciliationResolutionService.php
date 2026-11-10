@@ -32,6 +32,7 @@ namespace OCA\Shillinq\Service;
 
 use DomainException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectPatch;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use OutOfBoundsException;
@@ -152,13 +153,12 @@ class ReconciliationResolutionService {
 			// PatchObject merges; updateObject would replace the match with
 			// these four keys and erase its line, targets and amount.
 			->patchObject(
-				$matchId,
-				[
+				patch: new ObjectPatch(objectId: $matchId, data: [
 					'reconId' => $reconId,
 					'resolutionStatus' => $resolutionStatus,
 					'resolutionReason' => $resolutionReason,
 					'matchedAt' => gmdate('Y-m-d\TH:i:s\Z'),
-				]
+				])
 			);
 
 		$this->logger->info(

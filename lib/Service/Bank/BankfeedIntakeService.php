@@ -31,6 +31,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Bank;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectPatch;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Log\LoggerInterface;
@@ -135,8 +136,7 @@ class BankfeedIntakeService {
 		}
 
 		$this->scoped(schema: 'BankAccount')->patchObject(
-			(string)$account['id'],
-			['lastSyncAt' => (string)($data['until'] ?? gmdate('Y-m-d\TH:i:s\Z'))]
+			patch: new ObjectPatch(objectId: (string)$account['id'], data: ['lastSyncAt' => (string)($data['until'] ?? gmdate('Y-m-d\TH:i:s\Z'))])
 		);
 
 		return ['result' => 'written', 'statementId' => $result['statementId'], 'lines' => count($result['written']), 'booked' => $booked];

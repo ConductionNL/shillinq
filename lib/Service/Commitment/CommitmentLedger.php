@@ -38,6 +38,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Commitment;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectPatch;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -334,7 +335,7 @@ class CommitmentLedger {
 	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-3.1
 	 */
 	public function patch(string $schema, string $id, array $data): void {
-		$this->scoped(schema: $schema)->patchObject($id, $data);
+		$this->scoped(schema: $schema)->patchObject(patch: new ObjectPatch(objectId: $id, data: $data));
 
 	}//end patch()
 

@@ -40,6 +40,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Bank;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectPatch;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -539,15 +540,16 @@ class ManualMatchService {
 		// ReconciliationMatchSettlementListener settles the invoices on.
 		$this->transitions->run(objectId: $matchId, action: 'confirm');
 		$this->scoped(schema: 'ReconciliationMatch')->patchObject(
-			$matchId,
-			['state' => 'confirmed', 'confirmedBy' => $actor, 'confirmedAt' => gmdate('Y-m-d\TH:i:s\Z')]
+			patch: new ObjectPatch(
+				objectId: $matchId,
+				data: ['state' => 'confirmed', 'confirmedBy' => $actor, 'confirmedAt' => gmdate('Y-m-d\TH:i:s\Z')]
+			)
 		);
 
 		$lineUuid = (string)($line['id'] ?? '');
 		$this->transitions->run(objectId: $lineUuid, action: 'mark-matched');
 		$this->scoped(schema: 'BankStatementLine')->patchObject(
-			$lineUuid,
-			['matchState' => 'confirmed', 'reconciliationMatchId' => $matchId]
+			patch: new ObjectPatch(objectId: $lineUuid, data: ['matchState' => 'confirmed', 'reconciliationMatchId' => $matchId])
 		);
 
 		$this->logger->info(

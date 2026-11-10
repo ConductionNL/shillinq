@@ -28,6 +28,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Asset;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectPatch;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -136,7 +138,13 @@ class AssetRecords {
 	 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
 	 */
 	public function patch(string $schema, string $id, array $fields): void {
-		$this->objectService->patchObject(objectId: $id, data: $fields, register: $this->settings->getRegisterSlug(), schema: $schema);
+		$this->objectService->patchObject(
+			patch: new ObjectPatch(
+				objectId: $id,
+				data: $fields,
+				target: new ObjectFindTarget(register: $this->settings->getRegisterSlug(), schema: $schema)
+			)
+		);
 
 	}//end patch()
 

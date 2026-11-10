@@ -30,6 +30,7 @@ namespace OCA\Shillinq\Service\Relation;
 
 use JsonSerializable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectPatch;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Util\ObjectIdentifier;
 
@@ -147,7 +148,7 @@ class RelationRecords {
 		$this->objectService
 			->setRegister($this->settings->getRegisterSlug())
 			->setSchema($schema)
-			->patchObject($id, $fields);
+			->patchObject(patch: new ObjectPatch(objectId: $id, data: $fields));
 
 	}//end patch()
 
