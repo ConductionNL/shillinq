@@ -125,6 +125,30 @@ class GRIRReconciliationController extends Controller {
 		}
 
 		$administrationId = $this->scopeParam(name: 'administrationId');
+		$refusal = $this->administrationRefusal(administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$periodId = $this->scopeParam(name: 'periodId');
+		if ($periodId === '') {
+			return new JSONResponse(['error' => 'periodId is required'], Http::STATUS_BAD_REQUEST);
+		}
+
+		return $this->computedSaldo(administrationId: $administrationId, periodId: $periodId);
+	}//end saldo()
+
+	/**
+	 * The 400 without a well-formed administration, or the masked 404 when the
+	 * caller may not access it.
+	 *
+	 * @param string $administrationId The validated administration ('' when blank or malformed).
+	 *
+	 * @return JSONResponse|null The refusal, or null.
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 */
+	private function administrationRefusal(string $administrationId): ?JSONResponse {
 		if ($administrationId === '') {
 			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
 		}
@@ -133,10 +157,21 @@ class GRIRReconciliationController extends Controller {
 			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
 		}
 
-		$periodId = $this->scopeParam(name: 'periodId');
-		if ($periodId === '') {
-			return new JSONResponse(['error' => 'periodId is required'], Http::STATUS_BAD_REQUEST);
-		}
+		return null;
+	}//end administrationRefusal()
+
+	/**
+	 * Reconcile the GR/IR saldo of one period.
+	 *
+	 * @param string $administrationId The authorised administration.
+	 * @param string $periodId         The period.
+	 *
+	 * @return JSONResponse 200 with the balance, 404 / 400 on a refusal, or a logged 500.
+	 *
+	 * @spec openspec/changes/revive-gl-tax-capabilities/specs/revive-gl-tax-capabilities/spec.md
+	 */
+	private function computedSaldo(string $administrationId, string $periodId): JSONResponse {
+		$context = ['administrationId' => $administrationId, 'periodId' => $periodId];
 
 		try {
 			$balance = $this->grirClearingService->reconcileGRIRSaldoForPeriod(
@@ -144,46 +179,81 @@ class GRIRReconciliationController extends Controller {
 				periodId: $periodId
 			);
 		} catch (\RuntimeException $e) {
-			if (str_contains($e->getMessage(), 'not found') === true) {
-				return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
-			}
-
-			// ADR-050 (security-endpoint-guards REQ-003): the raw exception
-			// message used to reach the client directly here; it now goes only
-			// to the server-side log, and the client gets a stable slug + a
-			// localized message.
-			$this->logger->error(
-				'GRIRReconciliationController: invalid request for the GR/IR saldo',
-				[
-					'administrationId' => $administrationId,
-					'periodId' => $periodId,
-					'exception' => $e->getMessage(),
-				]
-			);
-			return new JSONResponse(
-				[
-					'message' => $this->l10n->t('Invalid request for the GR/IR saldo.'),
-					'error' => 'grir-saldo-invalid-request',
-				],
-				Http::STATUS_BAD_REQUEST
-			);
+			return $this->saldoRefused(e: $e, context: $context);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'GRIRReconciliationController: failed to compute the GR/IR saldo',
-				[
-					'administrationId' => $administrationId,
-					'periodId' => $periodId,
-					'exception' => $e->getMessage(),
-				]
-			);
-			return new JSONResponse(
-				['error' => 'Could not compute the GR/IR saldo'],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
-		}//end try
+			return $this->saldoFailed(e: $e, context: $context);
+		}
 
 		return new JSONResponse($balance, Http::STATUS_OK);
-	}//end saldo()
+	}//end computedSaldo()
+
+	/**
+	 * A refused reconciliation: a missing record reads as the administration
+	 * not found; anything else is a logged 400 with a stable slug.
+	 *
+	 * ADR-050 (security-endpoint-guards REQ-003): the raw exception
+	 * message used to reach the client directly here; it now goes only
+	 * to the server-side log, and the client gets a stable slug + a
+	 * localized message.
+	 *
+	 * @param \RuntimeException    $e       The refusal.
+	 * @param array<string, string> $context The administration and period, as log context.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
+	 */
+	private function saldoRefused(\RuntimeException $e, array $context): JSONResponse {
+		if (str_contains($e->getMessage(), 'not found') === true) {
+			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		return $this->invalidSaldoRequest(e: $e, context: $context);
+	}//end saldoRefused()
+
+	/**
+	 * Log an invalid reconciliation request and answer 400 with the stable
+	 * slug and a localized message, never the raw exception text.
+	 *
+	 * @param \RuntimeException    $e       The refusal.
+	 * @param array<string, string> $context The administration and period, as log context.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
+	 */
+	private function invalidSaldoRequest(\RuntimeException $e, array $context): JSONResponse {
+		$this->logger->error(
+			'GRIRReconciliationController: invalid request for the GR/IR saldo',
+			$context + ['exception' => $e->getMessage()]
+		);
+		return new JSONResponse(
+			[
+				'message' => $this->l10n->t('Invalid request for the GR/IR saldo.'),
+				'error' => 'grir-saldo-invalid-request',
+			],
+			Http::STATUS_BAD_REQUEST
+		);
+	}//end invalidSaldoRequest()
+
+	/**
+	 * Log a failed reconciliation and answer 500 without a stack trace.
+	 *
+	 * @param \Throwable            $e       The failure.
+	 * @param array<string, string> $context The administration and period, as log context.
+	 *
+	 * @return JSONResponse
+	 */
+	private function saldoFailed(\Throwable $e, array $context): JSONResponse {
+		$this->logger->error(
+			'GRIRReconciliationController: failed to compute the GR/IR saldo',
+			$context + ['exception' => $e->getMessage()]
+		);
+		return new JSONResponse(
+			['error' => 'Could not compute the GR/IR saldo'],
+			Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+	}//end saldoFailed()
 
 	/**
 	 * Read + validate a scope parameter; '' when blank/malformed.
