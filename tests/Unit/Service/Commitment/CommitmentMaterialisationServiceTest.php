@@ -634,4 +634,86 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 		}
 
 	}//end testContractSpanningYearsSplitsPerBoekjaar()
+	/**
+	 * A PO without budget-coded lines logs and materialises nothing.
+	 *
+	 * @return void
+	 */
+	public function testNoBudgetCodedLinesLogsAndSkips(): void {
+		$infos = [];
+		$this->logger->method('info')->willReturnCallback(
+			static function (string $message, array $context = []) use (&$infos): void {
+				$infos[] = [$message, $context];
+			}
+		);
+
+		$empty = $this->buildService(['Commitment' => [], 'PurchaseOrderLine' => []]);
+		self::assertNull($empty->materialiseFromPurchaseOrder($this->purchaseOrder()));
+		self::assertContains(
+			['CommitmentMaterialisationService: no budget-coded lines — skipping materialisation', ['sourceReference' => 'PO-2026-0207']],
+			$infos
+		);
+		self::assertSame([], $this->objectServiceStub->saved);
+
+	}//end testNoBudgetCodedLinesLogsAndSkips()
+
+	/**
+	 * An override commitment carries its exact reason and the saved draft
+	 * keeps its field order.
+	 *
+	 * @return void
+	 */
+	public function testOverrideDraftShape(): void {
+		$service = $this->buildService(
+			[
+				'Commitment' => [],
+				'CommitmentLine' => [],
+				'Rechtmatigheidsbevinding' => [],
+				'CommitmentBudget' => [$this->budget(['authorised_amount' => 8000000, 'realised_amount' => 7000000])],
+				'SpendingMandate' => [
+					[
+						'administrationId' => 'adm-1',
+						'mandateCode' => 'M-CFO-OVERRIDE',
+						'maximumAmount' => 1000000000,
+						'kind_commitment' => ['purchase_order'],
+						'is_override' => true,
+						'valid_from' => '2020-01-01',
+						'valid_to' => '2999-12-31',
+					],
+				],
+				'PurchaseOrderLine' => [
+					$this->purchaseOrderLine(['lineTotal' => 20000000]),
+					$this->purchaseOrderLine(['lineNumber' => 2, 'lineTotal' => 10000000]),
+				],
+			]
+		);
+
+		$result = $service->materialiseFromPurchaseOrder($this->purchaseOrder());
+
+		self::assertSame(
+			'Automatisch aangegaan onder override-mandaat M-CFO-OVERRIDE bij materialisatie van PO-2026-0207 (budget ontoereikend).',
+			$result['override_reason']
+		);
+		self::assertSame(30000000, $result['total_amount_excl_vat']);
+		$commitmentSaves = array_values(array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'Commitment'));
+		self::assertSame(
+			[
+				'administrationId',
+				'commitmentNumber',
+				'sourceReference',
+				'kind',
+				'status',
+				'total_amount_excl_vat',
+				'counterparty',
+				'rules',
+				'commencementDate',
+				'mandate_applied',
+				'override_reason',
+			],
+			array_slice(array_keys($commitmentSaves[0][1]), 0, 11)
+		);
+		self::assertSame(['kind' => 'supplier', 'contactId' => 'vendor-1'], $commitmentSaves[0][1]['counterparty']);
+		self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}$/', $commitmentSaves[0][1]['commencementDate']);
+
+	}//end testOverrideDraftShape()
 }//end class
