@@ -151,45 +151,74 @@ class KnownCostBudgetWriter {
 	 * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-004
 	 */
 	public function run(string $administrationId): array {
-		$context = $this->reader->loadContext(administrationId: $administrationId);
+		$run = new KnownCostRun();
+		$run->administrationId = $administrationId;
+		$run->context          = $this->reader->loadContext(administrationId: $administrationId);
 
 		$groups = $this->groupByLedgerGroupAndSourceType(
-			recurring: $context['recurring'],
-			ledgerGroupIdByAccount: $context['ledgerGroupIdByAccount']
+			recurring: $run->context['recurring'],
+			ledgerGroupIdByAccount: $run->context['ledgerGroupIdByAccount']
 		);
-
-		$summary = ['created' => 0, 'updated' => 0, 'overridden' => 0, 'skippedFiscalYears' => []];
-		$touchedYears = [];
-
 		foreach ($groups as $group) {
-			foreach ($this->fiscalYearsTouched(rows: $group['rows']) as $fiscalYear) {
-				$touchedYears[$fiscalYear] = true;
-
-				$annualBudgetId = ($context['annualBudgetIdByYear'][$fiscalYear] ?? null);
-				if ($annualBudgetId === null) {
-					$summary['skippedFiscalYears'][$fiscalYear] = true;
-					continue;
-				}
-
-				$this->upsertOne(
-					administrationId: $administrationId,
-					annualBudgetId: $annualBudgetId,
-					ledgerGroupId: $group['ledgerGroupId'],
-					sourceType: $group['sourceType'],
-					fiscalYear: $fiscalYear,
-					rows: $group['rows'],
-					context: $context,
-					summary: $summary
-				);
-			}
+			$this->regenerateGroup(run: $run, group: $group);
 		}
 
 		// `array_keys()` already returns a list.
+		$summary = $run->summary;
 		$summary['skippedFiscalYears'] = array_keys($summary['skippedFiscalYears']);
 
 		return $summary;
 
-	}//end run()
+		}//end run()
+
+	/**
+	 * Regenerate one group for every fiscal year its rows touch; a year with
+	 * no default AnnualBudget is recorded as skipped.
+	 *
+	 * @param KnownCostRun                                                                $run   The run.
+	 * @param array{ledgerGroupId:string,sourceType:string,rows:list<array<string,mixed>>} $group The group.
+	 *
+	 * @return void
+	 */
+	private function regenerateGroup(KnownCostRun $run, array $group): void {
+		foreach ($this->fiscalYearsTouched(rows: $group['rows']) as $fiscalYear) {
+			$annualBudgetId = ($run->context['annualBudgetIdByYear'][$fiscalYear] ?? null);
+			if ($annualBudgetId === null) {
+				$run->summary['skippedFiscalYears'][$fiscalYear] = true;
+				continue;
+			}
+
+			$target = $this->targetFor(group: $group, fiscalYear: $fiscalYear);
+			$target->administrationId = $run->administrationId;
+			$target->annualBudgetId   = $annualBudgetId;
+
+			$outcome = $this->upsertOne(run: $run, target: $target);
+			if ($outcome !== '') {
+				$run->summary[$outcome]++;
+			}
+		}
+	}//end regenerateGroup()
+
+	/**
+	 * The group's target for one fiscal year: its triple, its rows' summed
+	 * monthly cents and their recurIds.
+	 *
+	 * @param array{ledgerGroupId:string,sourceType:string,rows:list<array<string,mixed>>} $group      The group.
+	 * @param int                                                                          $fiscalYear The fiscal year being written.
+	 *
+	 * @return KnownCostTarget
+	 */
+	private function targetFor(array $group, int $fiscalYear): KnownCostTarget {
+		$target = new KnownCostTarget();
+		$target->ledgerGroupId = $group['ledgerGroupId'];
+		$target->sourceType    = $group['sourceType'];
+		$target->monthlyCents  = $this->sumMonthlyCents(rows: $group['rows'], fiscalYear: $fiscalYear);
+		$target->contributingRecurIds = array_values(
+			array_map(static fn (array $row): string => (string)($row['recurId'] ?? ''), $group['rows'])
+		);
+
+		return $target;
+	}//end targetFor()
 
 	/**
 	 * Group `CashflowRecurring` rows by `(ledgerGroupId, sourceType)`
@@ -292,105 +321,65 @@ class KnownCostBudgetWriter {
 	}//end yearOf()
 
 	/**
-	 * Compute the summed monthly cents for one group/fiscal-year, then
-	 * upsert per `design.md` §8b/§8c.
+	 * Upsert one target per `design.md` §8b/§8c and answer the summary
+	 * counter it moves: `created`, `updated`, `overridden`, or '' when an
+	 * already-overridden line is left alone.
 	 *
-	 * @param string $administrationId The administration scope.
-	 * @param string $annualBudgetId The resolved default AnnualBudget id for this fiscal year.
-	 * @param string $ledgerGroupId The group's LedgerGroup id/slug.
-	 * @param string $sourceType `contract` or `recurring`.
-	 * @param integer $fiscalYear The fiscal year being written.
-	 * @param list<array<string,mixed>> $rows The group's CashflowRecurring rows.
-	 * @param array<string,mixed> $context The {@see KnownCostReader::loadContext()} bundle.
-	 * @param array{created:int,updated:int,overridden:int,skippedFiscalYears:array<int,bool>} $summary Run summary, mutated in place.
+	 * The "target gone" reset path (REQ-BKC-005) is checked BEFORE the
+	 * overridden flag, deliberately: an operator's override is scoped to the
+	 * BudgetLine that existed when they made it. Once that specific line is
+	 * deleted there is nothing left for the override to apply to, and
+	 * design.md §8c's own "deleting a derived line resets it to fully
+	 * machine-generated" scenario is explicit that this fires regardless of
+	 * the derivation's prior overridden value.
 	 *
-	 * @return void
+	 * @param KnownCostRun    $run    The run.
+	 * @param KnownCostTarget $target The target with its fresh sums.
+	 *
+	 * @return string
 	 */
-	private function upsertOne(
-		string $administrationId,
-		string $annualBudgetId,
-		string $ledgerGroupId,
-		string $sourceType,
-		int $fiscalYear,
-		array $rows,
-		array $context,
-		array &$summary
-	): void {
-		$monthlyCents = $this->sumMonthlyCents(rows: $rows, fiscalYear: $fiscalYear);
-		$contributingRecurIds = array_values(
-			array_map(static fn (array $row): string => (string)($row['recurId'] ?? ''), $rows)
-		);
-
-		$derivation = $this->findDerivation(
-			derivations: $context['derivations'],
-			annualBudgetId: $annualBudgetId,
-			ledgerGroupId: $ledgerGroupId,
-			sourceType: $sourceType
-		);
-
-		if ($derivation === null) {
-			$this->createFresh(
-				administrationId: $administrationId,
-				annualBudgetId: $annualBudgetId,
-				ledgerGroupId: $ledgerGroupId,
-				sourceType: $sourceType,
-				monthlyCents: $monthlyCents,
-				contributingRecurIds: $contributingRecurIds,
-				existingDerivation: null
-			);
-			$summary['created']++;
-			return;
+	private function upsertOne(KnownCostRun $run, KnownCostTarget $target): string {
+		$target->derivation = $this->findDerivation(derivations: $run->context['derivations'], target: $target);
+		if ($target->derivation === null) {
+			$this->createFresh(target: $target);
+			return 'created';
 		}
 
-		// The "target gone" reset path (REQ-BKC-005) is checked BEFORE the
-		// overridden flag, deliberately: an operator's override is scoped to
-		// the BudgetLine that existed when they made it. Once that specific
-		// line is deleted there is nothing left for the override to apply
-		// to, and design.md §8c's own "deleting a derived line resets it to
-		// fully machine-generated" scenario is explicit that this fires
-		// regardless of the derivation's prior overridden value.
-		$budgetLine = $this->findBudgetLine(budgetLines: $context['budgetLines'], id: (string)($derivation['budgetLineId'] ?? ''));
-		if ($budgetLine === null) {
-			$this->createFresh(
-				administrationId: $administrationId,
-				annualBudgetId: $annualBudgetId,
-				ledgerGroupId: $ledgerGroupId,
-				sourceType: $sourceType,
-				monthlyCents: $monthlyCents,
-				contributingRecurIds: $contributingRecurIds,
-				existingDerivation: $derivation
-			);
-			$summary['created']++;
-			return;
+		$target->budgetLine = $this->findBudgetLine(budgetLines: $run->context['budgetLines'], id: (string)($target->derivation['budgetLineId'] ?? ''));
+		if ($target->budgetLine === null) {
+			$this->createFresh(target: $target);
+			return 'created';
 		}
 
-		if (($derivation['overridden'] ?? false) === true) {
-			// Already flagged, and its target BudgetLine still exists —
-			// left alone until the reset path above fires. No read-back
-			// comparison, no write (design.md §8c).
-			return;
-		}
-
-		$liveAmounts = $this->extractMonthlyAmounts(budgetLine: $budgetLine);
-		$fingerprint = $this->normaliseFingerprint(value: ($derivation['lastGeneratedMonthlyAmounts'] ?? []));
-
-		if ($liveAmounts !== $fingerprint) {
-			// An operator's own edit since the last run — flag, never
-			// overwrite (REQ-BKC-005).
-			$this->updateDerivationOverridden(derivation: $derivation);
-			$summary['overridden']++;
-			return;
-		}
-
-		$this->overwriteWithFreshSum(
-			budgetLine: $budgetLine,
-			derivation: $derivation,
-			monthlyCents: $monthlyCents,
-			contributingRecurIds: $contributingRecurIds
-		);
-		$summary['updated']++;
-
+		return $this->reconcileExisting(target: $target);
 	}//end upsertOne()
+
+	/**
+	 * Reconcile a derivation whose BudgetLine still exists: an overridden one
+	 * is left alone with no read-back and no write; an operator's own edit
+	 * since the last run is flagged, never overwritten (REQ-BKC-005);
+	 * otherwise the line is overwritten with the fresh sum.
+	 *
+	 * @param KnownCostTarget $target The target with its derivation and BudgetLine.
+	 *
+	 * @return string The summary counter moved, or ''.
+	 */
+	private function reconcileExisting(KnownCostTarget $target): string {
+		$derivation = (array)$target->derivation;
+		if (($derivation['overridden'] ?? false) === true) {
+			return '';
+		}
+
+		$liveAmounts = $this->extractMonthlyAmounts(budgetLine: (array)$target->budgetLine);
+		$fingerprint = $this->normaliseFingerprint(value: ($derivation['lastGeneratedMonthlyAmounts'] ?? []));
+		if ($liveAmounts !== $fingerprint) {
+			$this->updateDerivationOverridden(derivation: $derivation);
+			return 'overridden';
+		}
+
+		$this->overwriteWithFreshSum(target: $target);
+		return 'updated';
+	}//end reconcileExisting()
 
 	/**
 	 * Sum every row's `KnownCostScheduleExpander::expand()` output for
@@ -431,17 +420,15 @@ class KnownCostBudgetWriter {
 	 * Find the `BudgetLineDerivation` for one `(annualBudgetId, ledgerGroupId, sourceType)` triple.
 	 *
 	 * @param list<array<string,mixed>> $derivations The loaded BudgetLineDerivation rows.
-	 * @param string $annualBudgetId The AnnualBudget id.
-	 * @param string $ledgerGroupId The LedgerGroup id/slug.
-	 * @param string $sourceType `contract` or `recurring`.
+	 * @param KnownCostTarget $target The triple to match.
 	 *
 	 * @return array<string,mixed>|null The matching derivation, or null when none exists.
 	 */
-	private function findDerivation(array $derivations, string $annualBudgetId, string $ledgerGroupId, string $sourceType): ?array {
+	private function findDerivation(array $derivations, KnownCostTarget $target): ?array {
 		foreach ($derivations as $derivation) {
-			if ((string)($derivation['annualBudgetId'] ?? '') === $annualBudgetId
-				&& (string)($derivation['ledgerGroupId'] ?? '') === $ledgerGroupId
-				&& (string)($derivation['sourceType'] ?? '') === $sourceType
+			if ((string)($derivation['annualBudgetId'] ?? '') === $target->annualBudgetId
+				&& (string)($derivation['ledgerGroupId'] ?? '') === $target->ledgerGroupId
+				&& (string)($derivation['sourceType'] ?? '') === $target->sourceType
 			) {
 				return $derivation;
 			}
@@ -545,34 +532,20 @@ class KnownCostBudgetWriter {
 	 * but the SAME derivation row is repointed at it and its fields reset
 	 * to a fully machine-generated, `overridden: false` state.
 	 *
-	 * @param string $administrationId The administration scope.
-	 * @param string $annualBudgetId The AnnualBudget id.
-	 * @param string $ledgerGroupId The LedgerGroup id/slug.
-	 * @param string $sourceType `contract` or `recurring`.
-	 * @param array<string,int> $monthlyCents The summed `"01".."12" => cents` map.
-	 * @param list<string> $contributingRecurIds Every CashflowRecurring.recurId in the group.
-	 * @param array<string,mixed>|null $existingDerivation The existing, now-orphaned derivation row
-	 *                                                     to reset in place, or null to create a brand-new one.
+	 * @param KnownCostTarget $target The target; its derivation, when set, is the now-orphaned row
+	 *                                to reset in place, else a brand-new derivation is created.
 	 *
 	 * @return void
 	 */
-	private function createFresh(
-		string $administrationId,
-		string $annualBudgetId,
-		string $ledgerGroupId,
-		string $sourceType,
-		array $monthlyCents,
-		array $contributingRecurIds,
-		?array $existingDerivation
-	): void {
+	private function createFresh(KnownCostTarget $target): void {
 		$budgetLinePayload = array_merge(
 			[
-				'administrationId' => $administrationId,
-				'annualBudgetId' => $annualBudgetId,
-				'ledgerGroupId' => $ledgerGroupId,
-				'source' => $sourceType,
+				'administrationId' => $target->administrationId,
+				'annualBudgetId' => $target->annualBudgetId,
+				'ledgerGroupId' => $target->ledgerGroupId,
+				'source' => $target->sourceType,
 			],
-			$this->monthFields(monthlyCents: $monthlyCents)
+			$this->monthFields(monthlyCents: $target->monthlyCents)
 		);
 
 		$savedBudgetLine = $this->serialize(
@@ -581,34 +554,40 @@ class KnownCostBudgetWriter {
 				->setSchema('BudgetLine')
 				->saveObject($budgetLinePayload)
 		);
-		$budgetLineId = (string)($savedBudgetLine['@self']['id'] ?? $savedBudgetLine['id'] ?? '');
+		$this->saveFreshDerivation(target: $target, budgetLineId: (string)($savedBudgetLine['@self']['id'] ?? $savedBudgetLine['id'] ?? ''));
 
+	}//end createFresh()
+
+	/**
+	 * Save the fully machine-generated derivation of a fresh BudgetLine: a
+	 * new row, or the existing orphaned row repointed and reset in place.
+	 *
+	 * @param KnownCostTarget $target       The target.
+	 * @param string          $budgetLineId The fresh BudgetLine's id.
+	 *
+	 * @return void
+	 */
+	private function saveFreshDerivation(KnownCostTarget $target, string $budgetLineId): void {
 		$freshFields = [
-			'administrationId' => $administrationId,
-			'annualBudgetId' => $annualBudgetId,
-			'ledgerGroupId' => $ledgerGroupId,
-			'sourceType' => $sourceType,
+			'administrationId' => $target->administrationId,
+			'annualBudgetId' => $target->annualBudgetId,
+			'ledgerGroupId' => $target->ledgerGroupId,
+			'sourceType' => $target->sourceType,
 			'budgetLineId' => $budgetLineId,
-			'contributingRecurIds' => $contributingRecurIds,
-			'lastGeneratedMonthlyAmounts' => $this->monthlyCentsAsList(monthlyCents: $monthlyCents),
+			'contributingRecurIds' => $target->contributingRecurIds,
+			'lastGeneratedMonthlyAmounts' => $this->monthlyCentsAsList(monthlyCents: $target->monthlyCents),
 			'lastGeneratedAt' => gmdate('Y-m-d\TH:i:s\Z'),
 			'overridden' => false,
 		];
 
-		if ($existingDerivation === null) {
-			$this->objectService
-				->setRegister($this->register())
-				->setSchema('BudgetLineDerivation')
-				->saveObject($freshFields);
+		$scoped = $this->objectService->setRegister($this->register())->setSchema('BudgetLineDerivation');
+		if ($target->derivation === null) {
+			$scoped->saveObject($freshFields);
 			return;
 		}
 
-		$derivationId = (string)($existingDerivation['@self']['id'] ?? $existingDerivation['id'] ?? '');
-		$this->objectService
-			->setRegister($this->register())
-			->setSchema('BudgetLineDerivation')
-			->updateObject($derivationId, array_merge($existingDerivation, $freshFields));
-
+		$derivationId = (string)($target->derivation['@self']['id'] ?? $target->derivation['id'] ?? '');
+		$scoped->updateObject($derivationId, array_merge($target->derivation, $freshFields));
 	}//end createFresh()
 
 	/**
@@ -624,32 +603,25 @@ class KnownCostBudgetWriter {
 	 * (`InMemoryObjectServiceStub::patchObject()`'s own docblock records
 	 * this same real-service behaviour).
 	 *
-	 * @param array<string,mixed> $budgetLine The current, full BudgetLine row.
-	 * @param array<string,mixed> $derivation The current, full BudgetLineDerivation row.
-	 * @param array<string,int> $monthlyCents The summed `"01".."12" => cents` map.
-	 * @param list<string> $contributingRecurIds Every CashflowRecurring.recurId in the group.
+	 * @param KnownCostTarget $target The target with its full BudgetLine and derivation rows.
 	 *
 	 * @return void
 	 */
-	private function overwriteWithFreshSum(
-		array $budgetLine,
-		array $derivation,
-		array $monthlyCents,
-		array $contributingRecurIds
-	): void {
+	private function overwriteWithFreshSum(KnownCostTarget $target): void {
+		$budgetLine   = (array)$target->budgetLine;
+		$derivation   = (array)$target->derivation;
 		$budgetLineId = (string)($budgetLine['@self']['id'] ?? $budgetLine['id'] ?? '');
-		$updatedBudgetLine = array_merge($budgetLine, $this->monthFields(monthlyCents: $monthlyCents));
 		$this->objectService
 			->setRegister($this->register())
 			->setSchema('BudgetLine')
-			->updateObject($budgetLineId, $updatedBudgetLine);
+			->updateObject($budgetLineId, array_merge($budgetLine, $this->monthFields(monthlyCents: $target->monthlyCents)));
 
 		$derivationId = (string)($derivation['@self']['id'] ?? $derivation['id'] ?? '');
 		$updatedDerivation = array_merge(
 			$derivation,
 			[
-				'contributingRecurIds' => $contributingRecurIds,
-				'lastGeneratedMonthlyAmounts' => $this->monthlyCentsAsList(monthlyCents: $monthlyCents),
+				'contributingRecurIds' => $target->contributingRecurIds,
+				'lastGeneratedMonthlyAmounts' => $this->monthlyCentsAsList(monthlyCents: $target->monthlyCents),
 				'lastGeneratedAt' => gmdate('Y-m-d\TH:i:s\Z'),
 				'overridden' => false,
 			]
@@ -713,21 +685,20 @@ class KnownCostBudgetWriter {
 			return $result;
 		}
 
+		$out = null;
 		if (is_object($result) === true && method_exists($result, 'jsonSerialize') === true) {
 			$out = $result->jsonSerialize();
-			if (is_array($out) === true) {
-				return $out;
-			}
 		}
 
-		if (is_object($result) === true && method_exists($result, 'getObject') === true) {
+		if (is_array($out) === false && is_object($result) === true && method_exists($result, 'getObject') === true) {
 			$out = $result->getObject();
-			if (is_array($out) === true) {
-				return $out;
-			}
 		}
 
-		return [];
+		if (is_array($out) === false) {
+			return [];
+		}
+
+		return $out;
 
 	}//end serialize()
 
