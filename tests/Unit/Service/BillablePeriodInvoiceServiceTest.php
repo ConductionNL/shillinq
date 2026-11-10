@@ -310,4 +310,60 @@ final class BillablePeriodInvoiceServiceTest extends TestCase {
 		$this->assertFalse($event->isHandled());
 		$this->assertStringContainsString('VAT table missing', (string)$event->getError());
 	}//end testAFailingDraftIsRefusedNotThrown()
+
+	/**
+	 * Every stored row and the draft request, field for field (the ledger's
+	 * receivedAt is the wall clock and is checked for shape only).
+	 *
+	 * @return void
+	 */
+	public function testTheStoredRowsAndTheRequestAreExact(): void {
+		$store = $this->storeWithCustomer();
+		$store->setSchema('UsageRatePlan')->saveObject(['id' => 'plan-old', 'administrationId' => 'adm-1', 'resourceType' => 'usage', 'ratingMethod' => 'flat', 'unitPriceCents' => 100]);
+		$event = $this->event(
+			lines: [
+				['description' => '  ', 'quantity' => '2', 'unitPrice' => '1.00', 'currency' => 'eur'],
+				['description' => 'api.call', 'quantity' => 1.5, 'unitPrice' => 0.333],
+			]
+		);
+
+		$this->service(store: $store)->invoicePeriod(event: $event);
+
+		$this->assertTrue($event->isHandled(), (string)$event->getError());
+		$strip = static fn (array $row): array => array_diff_key($row, ['id' => 0, 'uuid' => 0, '@self' => 0]);
+		$this->assertSame(
+			[
+				[
+					'administrationId' => 'adm-1', 'meterId' => 'dossiq:t-42', 'customerId' => 'cust-9001', 'resourceType' => 'usage',
+					'quantity' => 2.0, 'unit' => 'unit', 'ratePlanId' => 'plan-old', 'ratedAmount' => 2.0, 'periodStart' => '2026-09-01',
+					'periodEnd' => '2026-09-30', 'description' => 'usage', 'status' => 'rated',
+				],
+				[
+					'administrationId' => 'adm-1', 'meterId' => 'dossiq:t-42', 'customerId' => 'cust-9001', 'resourceType' => 'api.call',
+					'quantity' => 1.5, 'unit' => 'unit', 'ratePlanId' => $store->setSchema('UsageRatePlan')->findAll()[1]['id'], 'ratedAmount' => 0.5,
+					'periodStart' => '2026-09-01', 'periodEnd' => '2026-09-30', 'description' => 'api.call', 'status' => 'rated',
+				],
+			],
+			array_map($strip, $store->setSchema('MeterReading')->findAll())
+		);
+		$this->assertSame(
+			['administrationId' => 'adm-1', 'resourceType' => 'api.call', 'ratingMethod' => 'flat', 'unitPriceCents' => 33, 'name' => 'dossiq api.call', 'unit' => 'unit', 'currency' => 'EUR'],
+			$strip($store->setSchema('UsageRatePlan')->findAll()[1])
+		);
+
+		$batch = $strip($store->setSchema('TimeIntakeBatch')->findAll()[0]);
+		$this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T/', $batch['receivedAt']);
+		unset($batch['receivedAt']);
+		$this->assertSame(
+			[
+				'administrationId' => 'adm-1', 'batchId' => 'dossiq:t-42:2026-09', 'sourceApp' => 'dossiq', 'organisationRef' => 'cust-9001',
+				'currency' => 'EUR', 'periodStart' => '2026-09-01', 'periodEnd' => '2026-09-30', 'entryCount' => 2, 'status' => 'invoiced',
+				'invoiceId' => 'inv-1',
+				'payloadHash' => hash('sha256', (string)json_encode([['description' => 'usage', 'quantity' => 2.0, 'unitPriceCents' => 100], ['description' => 'api.call', 'quantity' => 1.5, 'unitPriceCents' => 33]])),
+			],
+			$batch
+		);
+		$this->assertSame('dossiq, account t-42, 2026-09', $this->drafted[0]->notes);
+		$this->assertSame(['inv-1', 'BIL-2026-0001'], [$event->getResult()['invoiceId'], $event->getResult()['invoiceNumber']]);
+	}//end testTheStoredRowsAndTheRequestAreExact()
 }//end class
