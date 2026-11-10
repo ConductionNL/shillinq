@@ -593,6 +593,8 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 			['id' => 'm-4', 'administrationId' => 'adm-1', 'role' => 'controller', 'userId' => 'u-3'],
 			['id' => 'm-5', 'administrationId' => 'adm-2', 'role' => 'boekhouder', 'userId' => 'u-4'],
 			['id' => 'm-6', 'administrationId' => 'adm-1', 'role' => 'boekhouder', 'userId' => 'u-5'],
+			['id' => 'm-7', 'administrationId' => 'adm-1', 'role' => 'controller', 'userId' => '  '],
+			['id' => 'm-8', 'administrationId' => 'adm-1', 'role' => 'eigenaar'],
 		];
 		$cases = [
 			'delivered' => ['sent', [], ['objectUri' => $uri . '/', 'status' => ' delivered ', 'detail' => 'ok', 'transmissionId' => ' t-9 ']],
