@@ -124,37 +124,67 @@ class PaymentRunController extends Controller {
 		}
 
 		try {
-			$run = $this->resolveRun(id: $id);
-			if ($run === null) {
-				return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+			$run = $this->accessibleRun(id: $id);
+			if ($run instanceof JSONResponse) {
+				return $run;
 			}
 
-			// ADR-005 authorisation guard: the caller must be authorised for the
-			// run's (server-resolved) administration.
-			$administrationId = (string)($run['administrationId'] ?? '');
-			if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-				// Mask as 404 — never leak the run's existence to an unauthorised caller.
-				return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
-			}
-
-			$result = $this->exportService->export(paymentRun: $run);
-
-			if (isset($result['error']) === true) {
-				$status = Http::STATUS_UNPROCESSABLE_ENTITY;
-				if ($result['error'] === 'not-approved') {
-					$status = Http::STATUS_CONFLICT;
-				}
-
-				return new JSONResponse($result, $status);
-			}
-
-			return new JSONResponse($result, Http::STATUS_OK);
+			return $this->resultResponse(result: $this->exportService->export(paymentRun: $run), conflictError: 'not-approved');
 		} catch (\Throwable $e) {
 			$this->logger->error('PaymentRunController.export failed: ' . $e->getMessage());
 			return new JSONResponse(['error' => 'Internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}//end try
 
 	}//end export()
+
+	/**
+	 * The run the caller may act on, or the 404 that answers it.
+	 *
+	 * ADR-005 authorisation guard: the caller must be authorised for the
+	 * run's (server-resolved) administration; a refusal is masked as 404 —
+	 * never leak the run's existence to an unauthorised caller.
+	 *
+	 * @param string $id The PaymentRun id / uuid.
+	 *
+	 * @return array<string, mixed>|JSONResponse The run, or the 404.
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 */
+	private function accessibleRun(string $id): array|JSONResponse {
+		$run = $this->resolveRun(id: $id);
+		if ($run === null) {
+			return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		$administrationId = (string)($run['administrationId'] ?? '');
+		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		return $run;
+	}//end accessibleRun()
+
+	/**
+	 * Answer a service result: 200, or for an error 409 when it is the
+	 * conflicting-state error and 422 otherwise.
+	 *
+	 * @param array<string, mixed> $result        The service result.
+	 * @param string               $conflictError The error that means the run is in the wrong state.
+	 *
+	 * @return JSONResponse
+	 */
+	private function resultResponse(array $result, string $conflictError): JSONResponse {
+		if (isset($result['error']) === false) {
+			return new JSONResponse($result, Http::STATUS_OK);
+		}
+
+		$status = Http::STATUS_UNPROCESSABLE_ENTITY;
+		if ($result['error'] === $conflictError) {
+			$status = Http::STATUS_CONFLICT;
+		}
+
+		return new JSONResponse($result, $status);
+	}//end resultResponse()
 
 	/**
 	 * Propose a draft payment run from the supplier invoices due.
@@ -178,19 +208,31 @@ class PaymentRunController extends Controller {
 			return new JSONResponse(['error' => 'Not allowed for this administration'], Http::STATUS_FORBIDDEN);
 		}
 
-		$dueOnOrBefore = (string)$this->request->getParam('dueOnOrBefore', '');
-		$executionDate = (string)$this->request->getParam('executionDate', '');
-		$debtorIban = strtoupper(str_replace(' ', '', (string)$this->request->getParam('debtorAccountIban', '')));
-		if ($this->isDate(value: $dueOnOrBefore) === false || $this->isDate(value: $executionDate) === false || $debtorIban === '') {
+		$criteria = new DraftRunCriteria(request: $this->request, administrationId: $administrationId);
+		if ($criteria->isComplete() === false) {
 			return new JSONResponse(['error' => 'invalid-request'], Http::STATUS_BAD_REQUEST);
 		}
 
+		return $this->proposed(criteria: $criteria);
+
+	}//end propose()
+
+	/**
+	 * Draft the run; a failing proposal is a logged 500.
+	 *
+	 * @param DraftRunCriteria $criteria The complete proposal form.
+	 *
+	 * @return JSONResponse 201 with the draft run, 422 when nothing is due, or 500.
+	 *
+	 * @spec openspec/changes/archive/2026-09-29-banking-payment-run/tasks.md#task-3.2
+	 */
+	private function proposed(DraftRunCriteria $criteria): JSONResponse {
 		try {
 			$result = $this->proposalService->propose(
-				administrationId: $administrationId,
-				dueOnOrBefore: $dueOnOrBefore,
-				debtorAccountIban: $debtorIban,
-				executionDate: $executionDate,
+				administrationId: $criteria->administrationId,
+				dueOnOrBefore: $criteria->dueOnOrBefore,
+				debtorAccountIban: $criteria->debtorIban,
+				executionDate: $criteria->executionDate,
 				lineDates: $this->lineDates()
 			);
 		} catch (\Throwable $e) {
@@ -198,13 +240,23 @@ class PaymentRunController extends Controller {
 			return new JSONResponse(['error' => 'proposal-failed'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
+		return $this->proposalResponse(result: $result);
+	}//end proposed()
+
+	/**
+	 * 201 with the draft run, or 422 with the skipped list when nothing is due.
+	 *
+	 * @param array<string, mixed> $result The proposal result.
+	 *
+	 * @return JSONResponse
+	 */
+	private function proposalResponse(array $result): JSONResponse {
 		if ($result['paymentRun'] === null) {
 			return new JSONResponse($result + ['error' => 'nothing-due'], Http::STATUS_UNPROCESSABLE_ENTITY);
 		}
 
 		return new JSONResponse($result, Http::STATUS_CREATED);
-
-	}//end propose()
+	}//end proposalResponse()
 
 	/**
 	 * The proposal's line date mode from the payOnDueDate flag.
@@ -219,19 +271,6 @@ class PaymentRunController extends Controller {
 		return PaymentRunProposalService::DATES_RUN;
 
 	}//end lineDates()
-
-	/**
-	 * Whether a value is a Y-m-d date.
-	 *
-	 * @param string $value The value.
-	 *
-	 * @return bool
-	 */
-	private function isDate(string $value): bool {
-		$date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value);
-		return $date !== false && $date->format('Y-m-d') === $value;
-
-	}//end isDate()
 
 	/**
 	 * Reconcile an exported PaymentRun against a CAMT.053 statement
@@ -256,39 +295,39 @@ class PaymentRunController extends Controller {
 		}
 
 		try {
-			$run = $this->resolveRun(id: $id);
-			if ($run === null) {
-				return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
+			$run = $this->accessibleRun(id: $id);
+			if ($run instanceof JSONResponse) {
+				return $run;
 			}
 
-			$administrationId = (string)($run['administrationId'] ?? '');
-			if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-				return new JSONResponse(['error' => 'Not found'], Http::STATUS_NOT_FOUND);
-			}
-
-			$contents = $this->readStatement();
-			if (trim($contents) === '') {
-				return new JSONResponse(['error' => 'Empty statement — nothing to reconcile'], Http::STATUS_BAD_REQUEST);
-			}
-
-			$result = $this->reconciliationService->reconcile(paymentRun: $run, contents: $contents);
-
-			if (isset($result['error']) === true) {
-				$status = Http::STATUS_UNPROCESSABLE_ENTITY;
-				if ($result['error'] === 'not-exported') {
-					$status = Http::STATUS_CONFLICT;
-				}
-
-				return new JSONResponse($result, $status);
-			}
-
-			return new JSONResponse($result, Http::STATUS_OK);
+			return $this->reconciled(run: $run);
 		} catch (\Throwable $e) {
 			$this->logger->error('PaymentRunController.reconcile failed: ' . $e->getMessage());
 			return new JSONResponse(['error' => 'Internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}//end try
 
 	}//end reconcile()
+
+	/**
+	 * Reconcile the run against the supplied statement.
+	 *
+	 * @param array<string, mixed> $run The accessible PaymentRun.
+	 *
+	 * @return JSONResponse 400 on an empty statement, else the mapped service result.
+	 *
+	 * @spec openspec/specs/payment-run-sepa-export/spec.md
+	 */
+	private function reconciled(array $run): JSONResponse {
+		$contents = $this->readStatement();
+		if (trim($contents) === '') {
+			return new JSONResponse(['error' => 'Empty statement — nothing to reconcile'], Http::STATUS_BAD_REQUEST);
+		}
+
+		return $this->resultResponse(
+			result: $this->reconciliationService->reconcile(paymentRun: $run, contents: $contents),
+			conflictError: 'not-exported'
+		);
+	}//end reconciled()
 
 	/**
 	 * Resolve a PaymentRun by id through OpenRegister, normalised to an array.
@@ -325,34 +364,18 @@ class PaymentRunController extends Controller {
 	 * @return string The raw CAMT.053 XML (empty when none supplied).
 	 */
 	private function readStatement(): string {
-		// 1) Multipart file upload.
-		$uploaded = $this->request->getUploadedFile('file');
-		if (is_array($uploaded) === true && isset($uploaded['tmp_name']) === true
-			&& is_uploaded_file((string)$uploaded['tmp_name']) === true
-		) {
-			$raw = file_get_contents((string)$uploaded['tmp_name']);
-			if ($raw === false) {
-				return '';
-			}
+		$reader = new StatementBodyReader(request: $this->request);
 
-			return $raw;
+		// 1) Multipart file upload.
+		$uploaded = $reader->uploadedContents();
+		if ($uploaded !== null) {
+			return $uploaded;
 		}
 
 		// 2) JSON body with raw/base64 contents.
-		$rawBody = file_get_contents('php://input');
-		if ($rawBody !== false && $rawBody !== '') {
-			$decoded = json_decode($rawBody, true);
-			if (is_array($decoded) === true) {
-				$contents = (string)($decoded['contents'] ?? '');
-				if ($contents !== '' && ($decoded['encoding'] ?? '') === 'base64') {
-					$maybe = base64_decode($contents, true);
-					if ($maybe !== false) {
-						$contents = $maybe;
-					}
-				}
-
-				return $contents;
-			}
+		$decoded = $reader->jsonBody();
+		if ($decoded !== null) {
+			return $reader->bodyContents(decoded: $decoded);
 		}
 
 		// 3) Plain request param fallback.

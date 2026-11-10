@@ -207,16 +207,18 @@ class BankStatementImportController extends Controller {
 	 * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
 	 */
 	private function readPayload(): array {
+		$reader = new StatementBodyReader(request: $this->request);
+
 		// 1) Multipart file upload.
-		$uploaded = $this->request->getUploadedFile('file');
-		if ($this->isUpload(uploaded: $uploaded) === true) {
-			return $this->payload(contents: $this->uploadedContents(path: (string)$uploaded['tmp_name']), body: []);
+		$uploaded = $reader->uploadedContents();
+		if ($uploaded !== null) {
+			return $this->payload(contents: $uploaded, body: []);
 		}
 
 		// 2) JSON body with raw/base64 contents.
-		$decoded = $this->jsonBody();
+		$decoded = $reader->jsonBody();
 		if ($decoded !== null) {
-			return $this->payload(contents: $this->bodyContents(decoded: $decoded), body: $decoded);
+			return $this->payload(contents: $reader->bodyContents(decoded: $decoded), body: $decoded);
 		}
 
 		// 3) Plain request params fallback.
@@ -240,75 +242,6 @@ class BankStatementImportController extends Controller {
 			'glAccountId' => (string)($body['glAccountId'] ?? $this->request->getParam('glAccountId', '')),
 		];
 	}//end payload()
-
-	/**
-	 * Whether the 'file' entry is a real multipart upload.
-	 *
-	 * @param mixed $uploaded The uploaded-file entry.
-	 *
-	 * @return bool
-	 */
-	private function isUpload(mixed $uploaded): bool {
-		return is_array($uploaded) === true
-			&& isset($uploaded['tmp_name']) === true
-			&& is_uploaded_file((string)$uploaded['tmp_name']) === true;
-	}//end isUpload()
-
-	/**
-	 * The uploaded file's contents ('' when unreadable).
-	 *
-	 * @param string $path The uploaded temp file.
-	 *
-	 * @return string
-	 */
-	private function uploadedContents(string $path): string {
-		$raw = file_get_contents($path);
-		if ($raw === false) {
-			return '';
-		}
-
-		return $raw;
-	}//end uploadedContents()
-
-	/**
-	 * The decoded JSON request body, or null when there is none or it is not an object/array.
-	 *
-	 * @return array<string,mixed>|null
-	 */
-	private function jsonBody(): ?array {
-		$rawBody = file_get_contents('php://input');
-		if ($rawBody === false || $rawBody === '') {
-			return null;
-		}
-
-		$decoded = json_decode($rawBody, true);
-		if (is_array($decoded) === false) {
-			return null;
-		}
-
-		return $decoded;
-	}//end jsonBody()
-
-	/**
-	 * The body's contents, tolerating base64-wrapped payloads from the browser.
-	 *
-	 * @param array<string,mixed> $decoded The decoded JSON body.
-	 *
-	 * @return string
-	 */
-	private function bodyContents(array $decoded): string {
-		$contents = (string)($decoded['contents'] ?? '');
-		if ($contents === '' || ($decoded['encoding'] ?? '') !== 'base64') {
-			return $contents;
-		}
-
-		$maybe = base64_decode($contents, true);
-		if ($maybe === false) {
-			return $contents;
-		}
-
-		return $maybe;
-	}//end bodyContents()
 
 	/**
 	 * Resolve the administration id server-side (never from the client).
