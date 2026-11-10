@@ -160,4 +160,50 @@ final class AbbLifecycleTransitionRulesTest extends TestCase {
 		}
 
 	}//end testStatusesWithoutTasks()
+
+	/**
+	 * Dependent activities: only for herziening / intrekking, junk skipped,
+	 * id falls back to _id, then empty.
+	 *
+	 * @return void
+	 */
+	public function testFlagDependentActivities(): void {
+		$svc = new AbbLifecycleService();
+		$activities = [['id' => 'a'], 'junk', ['_id' => 'b'], []];
+
+		self::assertSame(
+			[
+				['commercialActivityId' => 'a', 'reason' => 'Exemption ABB R-1 ingetrokken; review activity'],
+				['commercialActivityId' => 'b', 'reason' => 'Exemption ABB R-1 ingetrokken; review activity'],
+				['commercialActivityId' => '', 'reason' => 'Exemption ABB R-1 ingetrokken; review activity'],
+			],
+			$svc->flagDependentActivities($activities, ['status' => 'intrekking', 'reference' => 'R-1'])
+		);
+		self::assertSame(
+			[['commercialActivityId' => 'a', 'reason' => 'Exemption ABB ABB in herziening; review activity']],
+			$svc->flagDependentActivities([['id' => 'a']], ['status' => 'herziening'])
+		);
+		self::assertSame([], $svc->flagDependentActivities($activities, ['status' => 'geldig']));
+		self::assertSame([], $svc->flagDependentActivities($activities, []));
+
+	}//end testFlagDependentActivities()
+
+	/**
+	 * Entering geldig sets nextEvaluation only with a determination date.
+	 *
+	 * @return void
+	 */
+	public function testTransitionToValidSetsNextEvaluationOnlyWithDate(): void {
+		$svc = new AbbLifecycleService();
+		$abb = ['status' => 'bezwaar', 'publicationDate' => 'd', 'notificationAcm' => ['submitted' => true, 'reference' => 'A']];
+
+		$without = $svc->transition($abb, 'geldig');
+		self::assertArrayNotHasKey('nextEvaluation', $without['abb']);
+		self::assertSame([], $without['tasks']);
+
+		$with = $svc->transition($abb + ['determinationDate' => '2026-01-15', 'evaluationCadence' => 'driejaarlijks'], 'geldig');
+		self::assertSame('2029-01-15', $with['abb']['nextEvaluation']);
+		self::assertSame('geldig', $with['abb']['status']);
+
+	}//end testTransitionToValidSetsNextEvaluationOnlyWithDate()
 }//end class
