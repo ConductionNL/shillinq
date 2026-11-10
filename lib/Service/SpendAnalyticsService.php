@@ -92,6 +92,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Search\Service\Aggregation\AggregationLayout;
 use OCA\OpenRegister\Search\Service\Aggregation\AggregationQuery;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\Migration\GlLineAdministrationBackfillMigrator;
@@ -387,7 +388,9 @@ class SpendAnalyticsService {
 			metric: 'sum',
 			field: $metricField,
 			filter: $filter,
-			groupBy: ['field' => $groupField]
+			layout: new AggregationLayout(
+				groupBy: ['field' => $groupField]
+			)
 		);
 
 		$envelope = $runner->runAdhocByRef(

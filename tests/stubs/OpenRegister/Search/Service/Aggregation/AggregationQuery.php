@@ -38,12 +38,12 @@ class AggregationQuery {
 	}//end __construct()
 
 	/**
-	 * Factory mirroring OR's real signature (dateBucket omitted — unused here).
+	 * Factory mirroring OR's real signature (only the layout's groupBy is kept — the rest is unused here).
 	 *
 	 * @param string $metric One of count/sum/avg/min/max.
 	 * @param string|null $field Field for non-count metrics.
 	 * @param array<string,mixed> $filter Filter map.
-	 * @param array<string,mixed>|null $groupBy Optional {field: <name>}.
+	 * @param AggregationLayout|null $layout Optional layout; its groupBy is {field: <name>}.
 	 *
 	 * @return self
 	 */
@@ -51,9 +51,9 @@ class AggregationQuery {
 		string $metric,
 		?string $field = null,
 		array $filter = [],
-		?array $groupBy = null,
+		?AggregationLayout $layout = null,
 	): self {
-		return new self(metric: $metric, field: $field, filter: $filter, groupBy: $groupBy);
+		return new self(metric: $metric, field: $field, filter: $filter, groupBy: $layout?->groupBy);
 	}//end create()
 
 	/**
