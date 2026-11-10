@@ -1,0 +1,790 @@
+{
+    "default": {
+        "scope": {
+            "administrationIds": [
+                "adm-prov-zh"
+            ],
+            "fiscalYear": 2026,
+            "startDate": "2026-01-01",
+            "endDate": "2026-12-31",
+            "currency": "EUR"
+        },
+        "totals": {
+            "totalBudget": 1400000.0,
+            "committed": 200000.0,
+            "spent": 600000.0,
+            "remaining": 600000.0,
+            "remainingRatio": 0.42857142857142855,
+            "utilisation": 0.5714285714285714,
+            "status": "green",
+            "programmeCount": 7
+        },
+        "programmes": {
+            "labels": [
+                "Ruimte",
+                "Mobiliteit",
+                "Water",
+                "Milieu",
+                "Cultuur",
+                "Economie",
+                "Bestuur"
+            ],
+            "budget": [
+                0.0,
+                1000000.0,
+                400000.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+            ],
+            "spent": [
+                0.0,
+                600000.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+            ],
+            "committed": [
+                0.0,
+                200000.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+            ],
+            "rows": [
+                {
+                    "programmeStructure": "ruimte",
+                    "programme": "Ruimte",
+                    "totalBudget": 0.0,
+                    "committed": 0.0,
+                    "spent": 0.0,
+                    "remaining": 0.0,
+                    "overspent": 0.0,
+                    "remainingRatio": 0.0,
+                    "utilisation": 0.0,
+                    "status": "green"
+                },
+                {
+                    "programmeStructure": "mobiliteit",
+                    "programme": "Mobiliteit",
+                    "totalBudget": 1000000.0,
+                    "committed": 200000.0,
+                    "spent": 600000.0,
+                    "remaining": 200000.0,
+                    "overspent": 0.0,
+                    "remainingRatio": 0.2,
+                    "utilisation": 0.8,
+                    "status": "green"
+                },
+                {
+                    "programmeStructure": "water",
+                    "programme": "Water",
+                    "totalBudget": 400000.0,
+                    "committed": 0.0,
+                    "spent": 0.0,
+                    "remaining": 400000.0,
+                    "overspent": 0.0,
+                    "remainingRatio": 1.0,
+                    "utilisation": 0.0,
+                    "status": "green"
+                },
+                {
+                    "programmeStructure": "milieu",
+                    "programme": "Milieu",
+                    "totalBudget": 0.0,
+                    "committed": 0.0,
+                    "spent": 0.0,
+                    "remaining": 0.0,
+                    "overspent": 0.0,
+                    "remainingRatio": 0.0,
+                    "utilisation": 0.0,
+                    "status": "green"
+                },
+                {
+                    "programmeStructure": "cultuur",
+                    "programme": "Cultuur",
+                    "totalBudget": 0.0,
+                    "committed": 0.0,
+                    "spent": 0.0,
+                    "remaining": 0.0,
+                    "overspent": 0.0,
+                    "remainingRatio": 0.0,
+                    "utilisation": 0.0,
+                    "status": "green"
+                },
+                {
+                    "programmeStructure": "economie",
+                    "programme": "Economie",
+                    "totalBudget": 0.0,
+                    "committed": 0.0,
+                    "spent": 0.0,
+                    "remaining": 0.0,
+                    "overspent": 0.0,
+                    "remainingRatio": 0.0,
+                    "utilisation": 0.0,
+                    "status": "green"
+                },
+                {
+                    "programmeStructure": "bestuur",
+                    "programme": "Bestuur",
+                    "totalBudget": 0.0,
+                    "committed": 0.0,
+                    "spent": 0.0,
+                    "remaining": 0.0,
+                    "overspent": 0.0,
+                    "remainingRatio": 0.0,
+                    "utilisation": 0.0,
+                    "status": "green"
+                }
+            ]
+        },
+        "trend": {
+            "months": [
+                "2026-01",
+                "2026-02",
+                "2026-03",
+                "2026-04",
+                "2026-05",
+                "2026-06",
+                "2026-07",
+                "2026-08",
+                "2026-09",
+                "2026-10",
+                "2026-11",
+                "2026-12"
+            ],
+            "cumulativeSpend": [
+                0.0,
+                0.0,
+                600000.0,
+                600000.0,
+                600000.0,
+                600000.0,
+                600000.0,
+                600000.0,
+                600000.0,
+                600000.0,
+                600000.0,
+                600000.0
+            ],
+            "budgetReference": [
+                1400000.0,
+                1400000.0,
+                1400000.0,
+                1400000.0,
+                1400000.0,
+                1400000.0,
+                1400000.0,
+                1400000.0,
+                1400000.0,
+                1400000.0,
+                1400000.0,
+                1400000.0
+            ]
+        },
+        "exceptions": [],
+        "fiscalYears": [
+            2026,
+            2025
+        ],
+        "generatedAt": "<masked>"
+    },
+    "priorYear": {
+        "scope": {
+            "administrationIds": [
+                "adm-prov-zh"
+            ],
+            "fiscalYear": 2025,
+            "startDate": "2025-01-01",
+            "endDate": "2025-12-31",
+            "currency": "EUR"
+        },
+        "totals": {
+            "totalBudget": 777000.0,
+            "committed": 888000.0,
+            "spent": 0.0,
+            "remaining": -111000.0,
+            "remainingRatio": -0.14285714285714285,
+            "utilisation": 1.1428571428571428,
+            "status": "red",
+            "programmeCount": 7
+        },
+        "programmes": {
+            "labels": [
+                "Ruimte",
+                "Mobiliteit",
+                "Water",
+                "Milieu",
+                "Cultuur",
+                "Economie",
+                "Bestuur"
+            ],
+            "budget": [
+                0.0,
+                777000.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+            ],
+            "spent": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+            ],
+            "committed": [
+                0.0,
+                888000.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+            ],
+            "rows": [
+                {
+                    "programmeStructure": "ruimte",
+                    "programme": "Ruimte",
+                    "totalBudget": 0.0,
+                    "committed": 0.0,
+                    "spent": 0.0,
+                    "remaining": 0.0,
+                    "overspent": 0.0,
+                    "remainingRatio": 0.0,
+                    "utilisation": 0.0,
+                    "status": "green"
+                },
+                {
+                    "programmeStructure": "mobiliteit",
+                    "programme": "Mobiliteit",
+                    "totalBudget": 777000.0,
+                    "committed": 888000.0,
+                    "spent": 0.0,
+                    "remaining": -111000.0,
+                    "overspent": 111000.0,
+                    "remainingRatio": -0.14285714285714285,
+                    "utilisation": 1.1428571428571428,
+                    "status": "red"
+                },
+                {
+                    "programmeStructure": "water",
+                    "programme": "Water",
+                    "totalBudget": 0.0,
+                    "committed": 0.0,
+                    "spent": 0.0,
+                    "remaining": 0.0,
+                    "overspent": 0.0,
+                    "remainingRatio": 0.0,
+                    "utilisation": 0.0,
+                    "status": "green"
+                },
+                {
+                    "programmeStructure": "milieu",
+                    "programme": "Milieu",
+                    "totalBudget": 0.0,
+                    "committed": 0.0,
+                    "spent": 0.0,
+                    "remaining": 0.0,
+                    "overspent": 0.0,
+                    "remainingRatio": 0.0,
+                    "utilisation": 0.0,
+                    "status": "green"
+                },
+                {
+                    "programmeStructure": "cultuur",
+                    "programme": "Cultuur",
+                    "totalBudget": 0.0,
+                    "committed": 0.0,
+                    "spent": 0.0,
+                    "remaining": 0.0,
+                    "overspent": 0.0,
+                    "remainingRatio": 0.0,
+                    "utilisation": 0.0,
+                    "status": "green"
+                },
+                {
+                    "programmeStructure": "economie",
+                    "programme": "Economie",
+                    "totalBudget": 0.0,
+                    "committed": 0.0,
+                    "spent": 0.0,
+                    "remaining": 0.0,
+                    "overspent": 0.0,
+                    "remainingRatio": 0.0,
+                    "utilisation": 0.0,
+                    "status": "green"
+                },
+                {
+                    "programmeStructure": "bestuur",
+                    "programme": "Bestuur",
+                    "totalBudget": 0.0,
+                    "committed": 0.0,
+                    "spent": 0.0,
+                    "remaining": 0.0,
+                    "overspent": 0.0,
+                    "remainingRatio": 0.0,
+                    "utilisation": 0.0,
+                    "status": "green"
+                }
+            ]
+        },
+        "trend": {
+            "months": [
+                "2025-01",
+                "2025-02",
+                "2025-03",
+                "2025-04",
+                "2025-05",
+                "2025-06",
+                "2025-07",
+                "2025-08",
+                "2025-09",
+                "2025-10",
+                "2025-11",
+                "2025-12"
+            ],
+            "cumulativeSpend": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+            ],
+            "budgetReference": [
+                777000.0,
+                777000.0,
+                777000.0,
+                777000.0,
+                777000.0,
+                777000.0,
+                777000.0,
+                777000.0,
+                777000.0,
+                777000.0,
+                777000.0,
+                777000.0
+            ]
+        },
+        "exceptions": [
+            {
+                "programmeStructure": "mobiliteit",
+                "programme": "Mobiliteit",
+                "totalBudget": 777000.0,
+                "committed": 888000.0,
+                "spent": 0.0,
+                "remaining": -111000.0,
+                "overspent": 111000.0,
+                "remainingRatio": -0.14285714285714285,
+                "utilisation": 1.1428571428571428,
+                "status": "red"
+            }
+        ],
+        "fiscalYears": [
+            2026,
+            2025
+        ],
+        "generatedAt": "<masked>"
+    },
+    "filtered": {
+        "scope": {
+            "administrationIds": [
+                "adm-prov-zh"
+            ],
+            "fiscalYear": 2026,
+            "startDate": "2026-01-01",
+            "endDate": "2026-12-31",
+            "currency": "EUR"
+        },
+        "totals": {
+            "totalBudget": 1000000.0,
+            "committed": 200000.0,
+            "spent": 600000.0,
+            "remaining": 200000.0,
+            "remainingRatio": 0.2,
+            "utilisation": 0.8,
+            "status": "green",
+            "programmeCount": 2
+        },
+        "programmes": {
+            "labels": [
+                "Mobiliteit",
+                "Water"
+            ],
+            "budget": [
+                1000000.0,
+                0.0
+            ],
+            "spent": [
+                600000.0,
+                0.0
+            ],
+            "committed": [
+                200000.0,
+                0.0
+            ],
+            "rows": [
+                {
+                    "programmeStructure": "mobiliteit",
+                    "programme": "Mobiliteit",
+                    "totalBudget": 1000000.0,
+                    "committed": 200000.0,
+                    "spent": 600000.0,
+                    "remaining": 200000.0,
+                    "overspent": 0.0,
+                    "remainingRatio": 0.2,
+                    "utilisation": 0.8,
+                    "status": "green"
+                },
+                {
+                    "programmeStructure": "water",
+                    "programme": "Water",
+                    "totalBudget": 0.0,
+                    "committed": 0.0,
+                    "spent": 0.0,
+                    "remaining": 0.0,
+                    "overspent": 0.0,
+                    "remainingRatio": 0.0,
+                    "utilisation": 0.0,
+                    "status": "green"
+                }
+            ]
+        },
+        "trend": {
+            "months": [
+                "2026-01",
+                "2026-02",
+                "2026-03",
+                "2026-04",
+                "2026-05",
+                "2026-06",
+                "2026-07",
+                "2026-08",
+                "2026-09",
+                "2026-10",
+                "2026-11",
+                "2026-12"
+            ],
+            "cumulativeSpend": [
+                0.0,
+                0.0,
+                600000.0,
+                600000.0,
+                600000.0,
+                600000.0,
+                600000.0,
+                600000.0,
+                600000.0,
+                600000.0,
+                600000.0,
+                600000.0
+            ],
+            "budgetReference": [
+                1000000.0,
+                1000000.0,
+                1000000.0,
+                1000000.0,
+                1000000.0,
+                1000000.0,
+                1000000.0,
+                1000000.0,
+                1000000.0,
+                1000000.0,
+                1000000.0,
+                1000000.0
+            ]
+        },
+        "exceptions": [],
+        "fiscalYears": [
+            2026,
+            2025
+        ],
+        "generatedAt": "<masked>"
+    },
+    "noneSelected": {
+        "scope": {
+            "administrationIds": [
+                "adm-prov-zh"
+            ],
+            "fiscalYear": 2026,
+            "startDate": "2026-01-01",
+            "endDate": "2026-12-31",
+            "currency": "EUR"
+        },
+        "totals": {
+            "totalBudget": 0.0,
+            "committed": 0.0,
+            "spent": 0.0,
+            "remaining": 0.0,
+            "remainingRatio": 0.0,
+            "utilisation": 0.0,
+            "status": "green",
+            "programmeCount": 0
+        },
+        "programmes": {
+            "labels": [],
+            "budget": [],
+            "spent": [],
+            "committed": [],
+            "rows": []
+        },
+        "trend": {
+            "months": [
+                "2026-01",
+                "2026-02",
+                "2026-03",
+                "2026-04",
+                "2026-05",
+                "2026-06",
+                "2026-07",
+                "2026-08",
+                "2026-09",
+                "2026-10",
+                "2026-11",
+                "2026-12"
+            ],
+            "cumulativeSpend": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+            ],
+            "budgetReference": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+            ]
+        },
+        "exceptions": [],
+        "fiscalYears": [
+            2026,
+            2025
+        ],
+        "generatedAt": "<masked>"
+    },
+    "empty": {
+        "scope": {
+            "administrationIds": [
+                "adm-prov-zh"
+            ],
+            "fiscalYear": 2026,
+            "startDate": "2026-01-01",
+            "endDate": "2026-12-31",
+            "currency": "EUR"
+        },
+        "totals": {
+            "totalBudget": 0.0,
+            "committed": 0.0,
+            "spent": 0.0,
+            "remaining": 0.0,
+            "remainingRatio": 0.0,
+            "utilisation": 0.0,
+            "status": "green",
+            "programmeCount": 7
+        },
+        "programmes": {
+            "labels": [
+                "Ruimte",
+                "Mobiliteit",
+                "Water",
+                "Milieu",
+                "Cultuur",
+                "Economie",
+                "Bestuur"
+            ],
+            "budget": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+            ],
+            "spent": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+            ],
+            "committed": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+            ],
+            "rows": [
+                {
+                    "programmeStructure": "ruimte",
+                    "programme": "Ruimte",
+                    "totalBudget": 0.0,
+                    "committed": 0.0,
+                    "spent": 0.0,
+                    "remaining": 0.0,
+                    "overspent": 0.0,
+                    "remainingRatio": 0.0,
+                    "utilisation": 0.0,
+                    "status": "green"
+                },
+                {
+                    "programmeStructure": "mobiliteit",
+                    "programme": "Mobiliteit",
+                    "totalBudget": 0.0,
+                    "committed": 0.0,
+                    "spent": 0.0,
+                    "remaining": 0.0,
+                    "overspent": 0.0,
+                    "remainingRatio": 0.0,
+                    "utilisation": 0.0,
+                    "status": "green"
+                },
+                {
+                    "programmeStructure": "water",
+                    "programme": "Water",
+                    "totalBudget": 0.0,
+                    "committed": 0.0,
+                    "spent": 0.0,
+                    "remaining": 0.0,
+                    "overspent": 0.0,
+                    "remainingRatio": 0.0,
+                    "utilisation": 0.0,
+                    "status": "green"
+                },
+                {
+                    "programmeStructure": "milieu",
+                    "programme": "Milieu",
+                    "totalBudget": 0.0,
+                    "committed": 0.0,
+                    "spent": 0.0,
+                    "remaining": 0.0,
+                    "overspent": 0.0,
+                    "remainingRatio": 0.0,
+                    "utilisation": 0.0,
+                    "status": "green"
+                },
+                {
+                    "programmeStructure": "cultuur",
+                    "programme": "Cultuur",
+                    "totalBudget": 0.0,
+                    "committed": 0.0,
+                    "spent": 0.0,
+                    "remaining": 0.0,
+                    "overspent": 0.0,
+                    "remainingRatio": 0.0,
+                    "utilisation": 0.0,
+                    "status": "green"
+                },
+                {
+                    "programmeStructure": "economie",
+                    "programme": "Economie",
+                    "totalBudget": 0.0,
+                    "committed": 0.0,
+                    "spent": 0.0,
+                    "remaining": 0.0,
+                    "overspent": 0.0,
+                    "remainingRatio": 0.0,
+                    "utilisation": 0.0,
+                    "status": "green"
+                },
+                {
+                    "programmeStructure": "bestuur",
+                    "programme": "Bestuur",
+                    "totalBudget": 0.0,
+                    "committed": 0.0,
+                    "spent": 0.0,
+                    "remaining": 0.0,
+                    "overspent": 0.0,
+                    "remainingRatio": 0.0,
+                    "utilisation": 0.0,
+                    "status": "green"
+                }
+            ]
+        },
+        "trend": {
+            "months": [
+                "2026-01",
+                "2026-02",
+                "2026-03",
+                "2026-04",
+                "2026-05",
+                "2026-06",
+                "2026-07",
+                "2026-08",
+                "2026-09",
+                "2026-10",
+                "2026-11",
+                "2026-12"
+            ],
+            "cumulativeSpend": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+            ],
+            "budgetReference": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+            ]
+        },
+        "exceptions": [],
+        "fiscalYears": [],
+        "generatedAt": "<masked>"
+    }
+}
