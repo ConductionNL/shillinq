@@ -129,23 +129,8 @@ class CommitmentMaterialisationService {
 			return null;
 		}
 
-		$administrationId = (string)($purchaseOrder['administrationId'] ?? '');
-		$poId = (string)($purchaseOrder['id'] ?? ($purchaseOrder['@self']['id'] ?? ''));
-		$lines = $this->findMany(schema: 'PurchaseOrderLine', filters: ['poId' => $poId]);
-		$ruleInputs = $this->buildRulesFromPurchaseOrderLines(purchaseOrder: $purchaseOrder, lines: $lines);
-
-		$counterparty = [
-			'kind' => 'supplier',
-			'contactId' => (string)($purchaseOrder['supplierId'] ?? ''),
-		];
-
 		return $this->materialise(
-			sourceReference: $sourceReference,
-			kind: 'purchase_order',
-			administrationId: $administrationId,
-			ruleInputs: $ruleInputs,
-			counterparty: $counterparty,
-			failClosed: true
+			source: $this->purchaseOrderSource(purchaseOrder: $purchaseOrder, sourceReference: $sourceReference)
 		);
 
 	}//end materialiseFromPurchaseOrder()
@@ -168,28 +153,10 @@ class CommitmentMaterialisationService {
 			return null;
 		}
 
-		$administrationId = (string)($contract['administrationId'] ?? '');
-		$ruleInputs = $this->buildRulesFromContract(contract: $contract);
-
-		$counterpartyKind = 'other';
-		if ((string)($contract['direction'] ?? '') === 'inbound') {
-			$counterpartyKind = 'supplier';
-		}
-
-		$counterparty = [
-			'kind' => $counterpartyKind,
-			'contactId' => (string)($contract['counterpartyReference'] ?? ''),
-		];
+		$source = $this->contractSource(contract: $contract, sourceReference: $sourceReference);
 
 		try {
-			return $this->materialise(
-				sourceReference: $sourceReference,
-				kind: $this->mapContractKind(contractType: (string)($contract['contractType'] ?? '')),
-				administrationId: $administrationId,
-				ruleInputs: $ruleInputs,
-				counterparty: $counterparty,
-				failClosed: false
-			);
+			return $this->materialise(source: $source);
 		} catch (Throwable $e) {
 			// Defensive: materialise() only throws when failClosed=true.
 			// Caught here too so a future refactor cannot accidentally
@@ -204,92 +171,182 @@ class CommitmentMaterialisationService {
 	}//end materialiseFromContract()
 
 	/**
+	 * The source of an approved PurchaseOrder: its budget-coded lines as
+	 * regels, its supplier as counterparty, fail-closed on budget.
+	 *
+	 * @param array<string, mixed> $purchaseOrder   Approved PurchaseOrder payload.
+	 * @param string               $sourceReference The trimmed poNumber.
+	 *
+	 * @return CommitmentSource
+	 */
+	private function purchaseOrderSource(array $purchaseOrder, string $sourceReference): CommitmentSource {
+		$source = new CommitmentSource();
+		$source->sourceReference  = $sourceReference;
+		$source->kind             = 'purchase_order';
+		$source->administrationId = (string)($purchaseOrder['administrationId'] ?? '');
+
+		$poId = (string)($purchaseOrder['id'] ?? ($purchaseOrder['@self']['id'] ?? ''));
+		$source->ruleInputs = $this->buildRulesFromPurchaseOrderLines(
+			purchaseOrder: $purchaseOrder,
+			lines: $this->findMany(schema: 'PurchaseOrderLine', filters: ['poId' => $poId])
+		);
+
+		$source->counterparty = ['kind' => 'supplier', 'contactId' => (string)($purchaseOrder['supplierId'] ?? '')];
+		$source->failClosed   = true;
+		return $source;
+	}//end purchaseOrderSource()
+
+	/**
+	 * The source of an activated Contract: its regels, its counterparty
+	 * (supplier when inbound, else other), fail-soft on budget.
+	 *
+	 * @param array<string, mixed> $contract        Activated Contract payload.
+	 * @param string               $sourceReference The trimmed contractNumber.
+	 *
+	 * @return CommitmentSource
+	 */
+	private function contractSource(array $contract, string $sourceReference): CommitmentSource {
+		$source = new CommitmentSource();
+		$source->sourceReference  = $sourceReference;
+		$source->administrationId = (string)($contract['administrationId'] ?? '');
+		$source->ruleInputs       = $this->buildRulesFromContract(contract: $contract);
+
+		$counterpartyKind = 'other';
+		if ((string)($contract['direction'] ?? '') === 'inbound') {
+			$counterpartyKind = 'supplier';
+		}
+
+		$source->counterparty = ['kind' => $counterpartyKind, 'contactId' => (string)($contract['counterpartyReference'] ?? '')];
+		$source->kind         = $this->mapContractKind(contractType: (string)($contract['contractType'] ?? ''));
+		$source->failClosed   = false;
+		return $source;
+	}//end contractSource()
+
+	/**
 	 * Core materialisation: idempotency check, guard delegation, persistence,
 	 * and rechtmatigheid linkage. Shared by both source paths (REQ-VPL-010).
 	 *
-	 * @param string $sourceReference Source PO/contract business key (idempotency key).
-	 * @param string $kind Commitment.soort enum value.
-	 * @param string $administrationId Owning administration.
-	 * @param array<int, array<string,mixed>> $ruleInputs Regel inputs built by the source-specific builder.
-	 * @param array<string, mixed> $counterparty Embedded counterparty reference.
-	 * @param bool $failClosed Whether a budget denial should throw (PO) or log (Contract).
+	 * @param CommitmentSource $source The PO or contract to materialise.
 	 *
 	 * @return array<string, mixed>|null The materialised (or pre-existing) Commitment, or null when nothing to do.
 	 *
-	 * @throws InsufficientCommitmentBudgetException When $failClosed and budget denies with no override.
+	 * @throws InsufficientCommitmentBudgetException When fail-closed and budget denies with no override.
 	 */
-	private function materialise(
-		string $sourceReference,
-		string $kind,
-		string $administrationId,
-		array $ruleInputs,
-		array $counterparty,
-		bool $failClosed,
-	): ?array {
-		$existing = $this->findExistingBySourceReference(sourceReference: $sourceReference);
+	private function materialise(CommitmentSource $source): ?array {
+		$existing = $this->findExistingBySourceReference(sourceReference: $source->sourceReference);
 		if ($existing !== null) {
 			// REQ-VPL-010 idempotency: a repeated transition is a no-op.
 			return $existing;
 		}
 
-		if ($ruleInputs === []) {
+		if ($source->ruleInputs === []) {
 			$this->logger->info(
 				'CommitmentMaterialisationService: no budget-coded lines — skipping materialisation',
-				['sourceReference' => $sourceReference]
+				['sourceReference' => $source->sourceReference]
 			);
 			return null;
 		}
 
+		return $this->guardAndPersist(draft: $this->draftFor(source: $source), source: $source);
+	}//end materialise()
+
+	/**
+	 * The draft Commitment for a source, dated today (UTC).
+	 *
+	 * @param CommitmentSource $source The PO or contract to materialise.
+	 *
+	 * @return array<string, mixed> The draft Commitment.
+	 */
+	private function draftFor(CommitmentSource $source): array {
 		$total = 0;
-		foreach ($ruleInputs as $rule) {
+		foreach ($source->ruleInputs as $rule) {
 			$total += (int)($rule['amount_excl_vat'] ?? 0);
 		}
 
-		$draft = [
-			'administrationId' => $administrationId,
-			'commitmentNumber' => $sourceReference,
-			'sourceReference' => $sourceReference,
-			'kind' => $kind,
+		return [
+			'administrationId' => $source->administrationId,
+			'commitmentNumber' => $source->sourceReference,
+			'sourceReference' => $source->sourceReference,
+			'kind' => $source->kind,
 			'status' => 'draft',
 			'total_amount_excl_vat' => $total,
-			'counterparty' => $counterparty,
-			'rules' => $ruleInputs,
+			'counterparty' => $source->counterparty,
+			'rules' => $source->ruleInputs,
 			'commencementDate' => (new DateTimeImmutable('today', new DateTimeZone('UTC')))->format('Y-m-d'),
 		];
+	}//end draftFor()
 
-		// REQ-VPL-002 parity: no sufficient mandate routes to in_approval
-		// (the existing `indienen` semantics) without a budget check — the
-		// fail-closed budget guarantee only applies to the direct-commit path.
-		if ($this->mandate->hasSufficientMandate(commitmentNumber: $sourceReference, object: $draft) === false) {
+	/**
+	 * Run the draft through the mandate and budget guards and persist what
+	 * they allow.
+	 *
+	 * REQ-VPL-002 parity: no sufficient mandate routes to in_approval (the
+	 * existing `indienen` semantics) without a budget check — the fail-closed
+	 * budget guarantee only applies to the direct-commit path.
+	 *
+	 * @param array<string, mixed> $draft  The draft Commitment.
+	 * @param CommitmentSource     $source The PO or contract to materialise.
+	 *
+	 * @return array<string, mixed>|null The saved Commitment, or null when budget denies fail-soft.
+	 *
+	 * @throws InsufficientCommitmentBudgetException When fail-closed and budget denies.
+	 */
+	private function guardAndPersist(array $draft, CommitmentSource $source): ?array {
+		if ($this->mandate->hasSufficientMandate(commitmentNumber: $source->sourceReference, object: $draft) === false) {
 			$draft['status'] = 'in_approval';
-			$saved = $this->persist(draft: $draft, ruleInputs: $ruleInputs);
-			$this->dispatchLawfulnessTrigger(commitment: $saved);
-			return $saved;
+			return $this->persistAndAnnounce(draft: $draft, source: $source);
 		}
 
-		if ($this->budget->canCommit(commitmentNumber: $sourceReference, object: $draft) === false) {
-			if ($failClosed === true) {
-				throw new InsufficientCommitmentBudgetException(
-					sprintf('Insufficient budget to materialise commitment for %s', $sourceReference)
-				);
-			}
-
-			$this->logger->warning(
-				'CommitmentMaterialisationService: budget denied — skipping fail-soft materialisation',
-				['sourceReference' => $sourceReference]
-			);
+		if ($this->budget->canCommit(commitmentNumber: $source->sourceReference, object: $draft) === false) {
+			$this->refuseUnfunded(source: $source);
 			return null;
 		}
 
 		$draft['status'] = 'committed';
+		$draft = $this->withApplicableMandate(draft: $draft, sourceReference: $source->sourceReference);
+		return $this->persistAndAnnounce(draft: $draft, source: $source);
+	}//end guardAndPersist()
 
-		$applied = $this->mandate->resolveApplicableMandate(commitment: $draft);
-		if ($applied !== null) {
-			$draft['mandate_applied'] = (string)($applied['mandateCode'] ?? '');
+	/**
+	 * Refuse an unfunded commitment: throw on the fail-closed path, log and
+	 * skip on the fail-soft one.
+	 *
+	 * @param CommitmentSource $source The PO or contract to materialise.
+	 *
+	 * @return void
+	 *
+	 * @throws InsufficientCommitmentBudgetException When fail-closed.
+	 */
+	private function refuseUnfunded(CommitmentSource $source): void {
+		if ($source->failClosed === true) {
+			throw new InsufficientCommitmentBudgetException(
+				sprintf('Insufficient budget to materialise commitment for %s', $source->sourceReference)
+			);
 		}
 
-		$isOverride = $applied !== null && (bool)($applied['is_override'] ?? false) === true;
-		if ($isOverride === true) {
+		$this->logger->warning(
+			'CommitmentMaterialisationService: budget denied — skipping fail-soft materialisation',
+			['sourceReference' => $source->sourceReference]
+		);
+	}//end refuseUnfunded()
+
+	/**
+	 * The committed draft with the mandate it falls under, and the override
+	 * reason when that mandate is an override.
+	 *
+	 * @param array<string, mixed> $draft           The committed draft.
+	 * @param string               $sourceReference The source business key.
+	 *
+	 * @return array<string, mixed> The draft with its mandate fields.
+	 */
+	private function withApplicableMandate(array $draft, string $sourceReference): array {
+		$applied = $this->mandate->resolveApplicableMandate(commitment: $draft);
+		if ($applied === null) {
+			return $draft;
+		}
+
+		$draft['mandate_applied'] = (string)($applied['mandateCode'] ?? '');
+		if ((bool)($applied['is_override'] ?? false) === true) {
 			$draft['override_reason'] = sprintf(
 				'Automatisch aangegaan onder override-mandaat %s bij materialisatie van %s (budget ontoereikend).',
 				(string)($applied['mandateCode'] ?? ''),
@@ -297,16 +354,28 @@ class CommitmentMaterialisationService {
 			);
 		}
 
-		$saved = $this->persist(draft: $draft, ruleInputs: $ruleInputs);
+		return $draft;
+	}//end withApplicableMandate()
 
-		if ($isOverride === true) {
-			$this->recordOverrideDeviation(commitment: $saved, ruleInputs: $ruleInputs);
+	/**
+	 * Persist the draft with its regels, record the override deviation when
+	 * it was committed under an override, and fire the rechtmatigheid trigger.
+	 *
+	 * @param array<string, mixed> $draft  The draft to persist.
+	 * @param CommitmentSource     $source The PO or contract to materialise.
+	 *
+	 * @return array<string, mixed> The saved Commitment.
+	 */
+	private function persistAndAnnounce(array $draft, CommitmentSource $source): array {
+		$saved = $this->persist(draft: $draft, ruleInputs: $source->ruleInputs);
+
+		if (array_key_exists('override_reason', $draft) === true) {
+			$this->recordOverrideDeviation(commitment: $saved, ruleInputs: $source->ruleInputs);
 		}
 
 		$this->dispatchLawfulnessTrigger(commitment: $saved);
-
 		return $saved;
-	}//end materialise()
+	}//end persistAndAnnounce()
 
 	/**
 	 * Group PurchaseOrderLine rows into regel inputs by budget
