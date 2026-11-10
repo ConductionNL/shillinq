@@ -237,6 +237,7 @@ export default {
 					'/apps/shillinq/api/v2/calendars/{calendarId}/bookings',
 					{ calendarId: this.calendarId },
 				)
+				const payload = this.bookingPayload(force)
 
 				const response = await fetch(url, {
 					method: 'POST',
@@ -244,7 +245,7 @@ export default {
 						'Content-Type': 'application/json',
 						requesttoken: OC.requestToken,
 					},
-					body: JSON.stringify(this.bookingPayload(force)),
+					body: JSON.stringify(payload),
 				})
 				await this.takeBookingResponse(response)
 			} catch (error) {
