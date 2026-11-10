@@ -403,13 +403,34 @@ final class ReconciliationMatchToReportListener implements IEventListener {
 			return '';
 		}
 
-		$filters = ['bankAccountId' => $iban, 'statementPeriodEnd' => $periodEnd, 'reconciliationStatus' => 'in-progress'];
+		return $this->inProgressSessionId(iban: $iban, periodEnd: $periodEnd);
+	}//end openSessionId()
+
+	/**
+	 * The id of the in-progress BankReconciliation for one account and period
+	 * end, or ''.
+	 *
+	 * @param string $iban      The bank account IBAN.
+	 * @param string $periodEnd The statement period end.
+	 *
+	 * @return string
+	 */
+	private function inProgressSessionId(string $iban, string $periodEnd): string {
 		$sessions = $this->objectService
 			->setRegister($this->getRegisterSlug())
 			->setSchema('BankReconciliation')
-			->findAll(['filters' => $filters, 'limit' => 1]);
+			->findAll(
+				[
+					'filters' => [
+						'bankAccountId' => $iban,
+						'statementPeriodEnd' => $periodEnd,
+						'reconciliationStatus' => 'in-progress',
+					],
+					'limit' => 1,
+				]
+			);
 		return (string)($sessions[0]['id'] ?? '');
-	}//end openSessionId()
+	}//end inProgressSessionId()
 
 	/**
 	 * Normalise an OR find result to a plain array.
