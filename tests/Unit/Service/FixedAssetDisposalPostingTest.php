@@ -185,6 +185,8 @@ final class FixedAssetDisposalPostingTest extends TestCase {
 			$this->linesOf($result),
 			array_map(static fn (array $l): array => [$l['object']['accountNumber'], $l['object']['side'], $l['object']['amount']], $lines)
 		);
+		self::assertSame([], array_diff(['0200', '0210'], array_column($this->linesOf($result), 0)));
+		self::assertSame('EUR', $first['currency']);
 	}//end testPostedScheduleSetsTheBookValue()
 
 	/**
