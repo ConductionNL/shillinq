@@ -295,15 +295,46 @@ class WbsoAccountService {
 			throw new InvalidArgumentException('parentAccountNumber must not equal the account itself');
 		}
 
-		$accounts = $this->getAccountsByAdministration(administrationId: $administrationId);
+		$byNumber = $this->accountsByNumber(administrationId: $administrationId);
+		self::assertActiveParent(byNumber: $byNumber, parent: $parent);
+
+		// Walk ancestors. If we encounter $accountNumber, we have a cycle.
+		self::assertAcyclicWithinDepth(byNumber: $byNumber, path: [$accountNumber, $parent]);
+
+	}//end assertHierarchy()
+
+	/**
+	 * The administration's accounts keyed by account number; accounts without
+	 * a number are left out.
+	 *
+	 * @param string $administrationId Administration scope.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	private function accountsByNumber(string $administrationId): array {
 		$byNumber = [];
-		foreach ($accounts as $account) {
+		foreach ($this->getAccountsByAdministration(administrationId: $administrationId) as $account) {
 			$number = (string)($account['accountNumber'] ?? '');
 			if ($number !== '') {
 				$byNumber[$number] = $account;
 			}
 		}
 
+		return $byNumber;
+	}//end accountsByNumber()
+
+	/**
+	 * Refuse a parent that does not exist in the administration or is not
+	 * active.
+	 *
+	 * @param array<string,array<string,mixed>> $byNumber The accounts by number.
+	 * @param string                            $parent   The requested parent number.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the parent is missing or inactive.
+	 */
+	private static function assertActiveParent(array $byNumber, string $parent): void {
 		if (isset($byNumber[$parent]) === false) {
 			throw new InvalidArgumentException('parentAccountNumber does not exist in this administration');
 		}
@@ -311,9 +342,21 @@ class WbsoAccountService {
 		if ((string)($byNumber[$parent]['status'] ?? '') !== 'active') {
 			throw new InvalidArgumentException('parentAccountNumber refers to an account that is not active');
 		}
+	}//end assertActiveParent()
 
-		// Walk ancestors. If we encounter $accountNumber, we have a cycle.
-		$cursor = $parent;
+	/**
+	 * Walk the ancestors from the requested parent and refuse a cycle back to
+	 * the account or a hierarchy deeper than HIERARCHY_MAX_DEPTH.
+	 *
+	 * @param array<string,array<string,mixed>> $byNumber The accounts by number.
+	 * @param array{0:string,1:string}          $path     The account, then its requested parent.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException On a cycle or an excessive depth.
+	 */
+	private static function assertAcyclicWithinDepth(array $byNumber, array $path): void {
+		[$accountNumber, $cursor] = $path;
 		$depth = 1;
 		$seen = [$accountNumber => true];
 		// `$cursor` starts non-empty and is only ever reassigned from a `$next`
@@ -327,14 +370,7 @@ class WbsoAccountService {
 
 			$seen[$cursor] = true;
 			$depth++;
-			if ($depth > self::HIERARCHY_MAX_DEPTH) {
-				throw new InvalidArgumentException(
-					sprintf(
-						'Hierarchy depth must not exceed %d levels',
-						self::HIERARCHY_MAX_DEPTH
-					)
-				);
-			}
+			self::assertDepthAllowed(depth: $depth);
 
 			$next = (string)($byNumber[$cursor]['parentAccountNumber'] ?? '');
 			if ($next === '' || isset($byNumber[$next]) === false) {
@@ -343,8 +379,27 @@ class WbsoAccountService {
 
 			$cursor = $next;
 		}//end while
+	}//end assertAcyclicWithinDepth()
 
-	}//end assertHierarchy()
+	/**
+	 * Refuse a depth beyond HIERARCHY_MAX_DEPTH.
+	 *
+	 * @param int $depth The depth reached.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the depth exceeds the limit.
+	 */
+	private static function assertDepthAllowed(int $depth): void {
+		if ($depth > self::HIERARCHY_MAX_DEPTH) {
+			throw new InvalidArgumentException(
+				sprintf(
+					'Hierarchy depth must not exceed %d levels',
+					self::HIERARCHY_MAX_DEPTH
+				)
+			);
+		}
+	}//end assertDepthAllowed()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
