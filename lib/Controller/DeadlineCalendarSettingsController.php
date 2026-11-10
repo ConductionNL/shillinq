@@ -95,15 +95,7 @@ class DeadlineCalendarSettingsController extends Controller {
 		// endpoint could be pointed at. Cross-user access is structurally
 		// impossible, not merely checked.
 		$userId = $user->getUID();
-		$categories = [];
-		foreach (ComplianceDeadlineCalendarService::CATEGORIES as $category) {
-			$categories[$category] = [
-				'enabled' => $this->calendarService->isCategoryEnabled(userId: $userId, category: $category),
-				'leadDays' => $this->calendarService->leadTimeDays(userId: $userId, category: $category),
-			];
-		}
-
-		return new JSONResponse(data: ['categories' => $categories]);
+		return new JSONResponse(data: ['categories' => $this->currentSettings(userId: $userId)]);
 	}//end index()
 
 	/**
@@ -134,7 +126,20 @@ class DeadlineCalendarSettingsController extends Controller {
 		// user's own preferences — no user id parameter exists on this
 		// endpoint (see class docblock), so cross-user mutation (IDOR) is
 		// structurally impossible rather than merely guarded.
-		$userId = $user->getUID();
+		return $this->updateFor(userId: $user->getUID());
+
+	}//end update()
+
+	/**
+	 * Save the submitted categories for the user, re-publish and answer the saved settings.
+	 *
+	 * @param string $userId The session user.
+	 *
+	 * @return JSONResponse 200 with the saved settings and the publication status; 400 on a malformed payload.
+	 *
+	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
+	 */
+	private function updateFor(string $userId): JSONResponse {
 		$categories = $this->request->getParam('categories');
 		if (is_array($categories) === false) {
 			return new JSONResponse(
@@ -143,35 +148,90 @@ class DeadlineCalendarSettingsController extends Controller {
 			);
 		}
 
+		$this->saveCategories(userId: $userId, categories: $categories);
+
+		return $this->savedResponse(userId: $userId, publication: $this->publishAfterSave(userId: $userId));
+	}//end updateFor()
+
+	/**
+	 * Write the known, well-formed categories of the payload, in order.
+	 * Unknown categories and malformed entries are ignored.
+	 *
+	 * @param string                    $userId     The session user.
+	 * @param array<int|string, mixed>  $categories The submitted categories map.
+	 *
+	 * @return void
+	 */
+	private function saveCategories(string $userId, array $categories): void {
 		foreach ($categories as $category => $settings) {
-			if (is_string($category) === false || is_array($settings) === false) {
-				continue;
+			$change = DeadlineCategoryChange::fromEntry(category: $category, settings: $settings);
+			if ($change !== null) {
+				$this->saveCategory(userId: $userId, change: $change);
 			}
+		}
+	}//end saveCategories()
 
-			if (in_array($category, ComplianceDeadlineCalendarService::CATEGORIES, true) === false) {
-				continue;
-			}
+	/**
+	 * Write one category's submitted toggle, then its lead time.
+	 *
+	 * @param string                 $userId The session user.
+	 * @param DeadlineCategoryChange $change The category's submitted settings.
+	 *
+	 * @return void
+	 */
+	private function saveCategory(string $userId, DeadlineCategoryChange $change): void {
+		$this->saveToggle(userId: $userId, change: $change);
+		$this->saveLeadTime(userId: $userId, change: $change);
+	}//end saveCategory()
 
-			if (array_key_exists('enabled', $settings) === true) {
-				$this->calendarService->setCategoryEnabled(
-					userId: $userId,
-					category: $category,
-					enabled: (bool)$settings['enabled']
-				);
-			}
+	/**
+	 * Write the category's toggle when one was submitted.
+	 *
+	 * @param string                 $userId The session user.
+	 * @param DeadlineCategoryChange $change The category's submitted settings.
+	 *
+	 * @return void
+	 */
+	private function saveToggle(string $userId, DeadlineCategoryChange $change): void {
+		if ($change->enabled !== null) {
+			$this->calendarService->setCategoryEnabled(
+				userId: $userId,
+				category: $change->category,
+				enabled: $change->enabled
+			);
+		}
+	}//end saveToggle()
 
-			if (array_key_exists('leadDays', $settings) === true) {
-				$this->calendarService->setLeadTimeDays(
-					userId: $userId,
-					category: $category,
-					days: (int)$settings['leadDays']
-				);
-			}
-		}//end foreach
+	/**
+	 * Write the category's lead time when one was submitted.
+	 *
+	 * @param string                 $userId The session user.
+	 * @param DeadlineCategoryChange $change The category's submitted settings.
+	 *
+	 * @return void
+	 */
+	private function saveLeadTime(string $userId, DeadlineCategoryChange $change): void {
+		if ($change->leadDays !== null) {
+			$this->calendarService->setLeadTimeDays(
+				userId: $userId,
+				category: $change->category,
+				days: $change->leadDays
+			);
+		}
+	}//end saveLeadTime()
 
-		// Apply immediately: removes VEVENTs of freshly-disabled
-		// categories (REQ-CDC-006). Fail-soft — a calendar-less
-		// instance still saves the toggles.
+	/**
+	 * Apply immediately: removes VEVENTs of freshly-disabled categories
+	 * (REQ-CDC-006). Fail-soft — a calendar-less instance still saves the
+	 * toggles; a degraded publication is logged.
+	 *
+	 * @param string $userId The session user.
+	 *
+	 * @return string The publication status.
+	 *
+	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
+	 */
+	private function publishAfterSave(string $userId): string {
 		$publication = $this->calendarService->publishForUser(userId: $userId);
 		if ($publication['status'] !== 'ok') {
 			$this->logger->info(
@@ -180,20 +240,42 @@ class DeadlineCalendarSettingsController extends Controller {
 			);
 		}
 
-		$saved = [];
+		return $publication['status'];
+	}//end publishAfterSave()
+
+	/**
+	 * The saved settings with the publication status.
+	 *
+	 * @param string $userId      The session user.
+	 * @param string $publication The publication status.
+	 *
+	 * @return JSONResponse
+	 */
+	private function savedResponse(string $userId, string $publication): JSONResponse {
+		return new JSONResponse(
+			data: [
+				'categories' => $this->currentSettings(userId: $userId),
+				'publication' => $publication,
+			]
+		);
+	}//end savedResponse()
+
+	/**
+	 * The user's settings per category: enabled and leadDays.
+	 *
+	 * @param string $userId The session user.
+	 *
+	 * @return array<string, array{enabled: bool, leadDays: int}>
+	 */
+	private function currentSettings(string $userId): array {
+		$categories = [];
 		foreach (ComplianceDeadlineCalendarService::CATEGORIES as $category) {
-			$saved[$category] = [
+			$categories[$category] = [
 				'enabled' => $this->calendarService->isCategoryEnabled(userId: $userId, category: $category),
 				'leadDays' => $this->calendarService->leadTimeDays(userId: $userId, category: $category),
 			];
 		}
 
-		return new JSONResponse(
-			data: [
-				'categories' => $saved,
-				'publication' => $publication['status'],
-			]
-		);
-
-	}//end update()
+		return $categories;
+	}//end currentSettings()
 }//end class
