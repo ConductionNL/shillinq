@@ -576,7 +576,7 @@ class WidgetAuthService {
 	}//end saveObject()
 
 	/**
-	 * Update an object via OR ObjectService.
+	 * Replace an existing object via OR ObjectService::saveObject() with its uuid.
 	 *
 	 * @param string $schema OR schema slug.
 	 * @param string $id Persisted object id.
@@ -592,11 +592,11 @@ class WidgetAuthService {
 		try {
 			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
 			$registerSlug = $this->settings->getRegisterSlug();
-			$saved = $objectService->updateObject(
-				id: $id,
+			$saved = $objectService->saveObject(
 				object: $data,
 				register: $registerSlug,
 				schema: $schema,
+				uuid: $id,
 			);
 
 			return $this->toArray(object: $saved);
