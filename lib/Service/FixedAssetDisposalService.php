@@ -122,6 +122,29 @@ class FixedAssetDisposalService {
 	private const JOURNAL_CODE = 'FA-DISP';
 
 	/**
+	 * The emitter's field names, each with the spellings it accepts in order
+	 * (the shipped schema's first, the demo seed's second; design D4).
+	 *
+	 * @var array<string,list<string>>
+	 */
+	private const FIELD_ALIASES = [
+		'acquisitionCost' => ['acquisitionCost', 'purchaseCost'],
+		'assetAccountNumber' => ['assetAccountNumber', 'capitalizationAccountNumber'],
+		'accumulatedDepAccountNumber' => ['accumulatedDepAccountNumber', 'accumulatedDepreciationAccountNumber'],
+		'disposalProceeds' => ['disposalProceeds', 'salvageProceeds'],
+	];
+
+	/**
+	 * The aliased fields that hold amounts rather than codes.
+	 *
+	 * @var array<string,true>
+	 */
+	private const NUMERIC_FIELDS = [
+		'acquisitionCost' => true,
+		'disposalProceeds' => true,
+	];
+
+	/**
 	 * The result when the asset carries no acquisition cost.
 	 *
 	 * @var array{posted:bool,message:string}
@@ -306,38 +329,34 @@ class FixedAssetDisposalService {
 			]
 		);
 
-		$normalised['acquisitionCost'] = $this->firstNumeric(
-			candidates: [
-				($asset['acquisitionCost'] ?? null),
-				($asset['purchaseCost'] ?? null),
-			]
-		);
-
-		$normalised['assetAccountNumber'] = $this->firstNonEmpty(
-			candidates: [
-				($asset['assetAccountNumber'] ?? null),
-				($asset['capitalizationAccountNumber'] ?? null),
-			]
-		);
-
-		$normalised['accumulatedDepAccountNumber'] = $this->firstNonEmpty(
-			candidates: [
-				($asset['accumulatedDepAccountNumber'] ?? null),
-				($asset['accumulatedDepreciationAccountNumber'] ?? null),
-			]
-		);
-
-		$normalised['disposalProceeds'] = $this->firstNumeric(
-			candidates: [
-				($asset['disposalProceeds'] ?? null),
-				($asset['salvageProceeds'] ?? null),
-			]
-		);
-
+		$normalised = array_merge($normalised, $this->aliasedFields(asset: $asset));
 		$normalised['currency'] = $this->firstNonEmpty(candidates: [($asset['currency'] ?? null), 'EUR']);
 
 		return $normalised;
 	}//end normaliseAsset()
+
+	/**
+	 * The value of every aliased field: the first numeric spelling for an
+	 * amount, the first non-empty one for a code.
+	 *
+	 * @param array<string,mixed> $asset The raw FixedAsset record.
+	 *
+	 * @return array<string,float|string> Field => value, in FIELD_ALIASES order.
+	 */
+	private function aliasedFields(array $asset): array {
+		$fields = [];
+		foreach (self::FIELD_ALIASES as $field => $aliases) {
+			$candidates = array_map(static fn (string $alias): mixed => ($asset[$alias] ?? null), $aliases);
+			if (isset(self::NUMERIC_FIELDS[$field]) === true) {
+				$fields[$field] = $this->firstNumeric(candidates: $candidates);
+				continue;
+			}
+
+			$fields[$field] = $this->firstNonEmpty(candidates: $candidates);
+		}
+
+		return $fields;
+	}//end aliasedFields()
 
 	/**
 	 * Resolve the disposal date from the record (design D4).
