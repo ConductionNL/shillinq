@@ -360,15 +360,45 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 	 * @return array<string, mixed>
 	 */
 	private function resolveStatement(array $context): array {
-		$id = $this->str($context, 'statementId', 'bbvStatementId', 'objectId');
-		if ($id !== '') {
-			$object = $this->loadObject('BbvStatement', $id);
-			if ($object !== null) {
-				return $object;
-			}
+		$explicit = $this->explicitStatement($context);
+		if ($explicit !== null) {
+			return $explicit;
 		}
 
-		$administrationId = $this->str($context, 'administrationId');
+		$candidates = $this->statementCandidates($this->str($context, 'administrationId'));
+		if ($candidates === []) {
+			return [];
+		}
+
+		return $this->statementForPeriod($candidates, $this->str($context, 'period')) ?? $this->preferredStatement($candidates);
+	}//end resolveStatement()
+
+	/**
+	 * The statement the context names by id (statementId, bbvStatementId or
+	 * objectId), or null when it names none or it is not found.
+	 *
+	 * @param array<string, mixed> $context The report context.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function explicitStatement(array $context): array|null {
+		$id = $this->str($context, 'statementId', 'bbvStatementId', 'objectId');
+		if ($id === '') {
+			return null;
+		}
+
+		return $this->loadObject('BbvStatement', $id);
+	}//end explicitStatement()
+
+	/**
+	 * The administration's statements, or every statement when it has none
+	 * (or no administration is given).
+	 *
+	 * @param string $administrationId The administration, or ''.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function statementCandidates(string $administrationId): array {
 		$filters = [];
 		if ($administrationId !== '') {
 			$filters['administrationId'] = $administrationId;
@@ -379,22 +409,44 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 			$candidates = $this->loadObjects('BbvStatement');
 		}
 
-		if ($candidates === []) {
-			return [];
+		return $candidates;
+	}//end statementCandidates()
+
+	/**
+	 * The first statement whose fiscalYear is the period's year, or null.
+	 *
+	 * The BBV fiscalYear is a number; the year is read from every digit of
+	 * the period.
+	 *
+	 * @param array<int, array<string, mixed>> $candidates The candidate statements.
+	 * @param string                           $period     The report period, or ''.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function statementForPeriod(array $candidates, string $period): array|null {
+		$year = preg_replace('/[^0-9]/', '', $period);
+		if ($year === '') {
+			return null;
 		}
 
-		$period = $this->str($context, 'period');
-		if ($period !== '') {
-			// Match the year (the BBV fiscalYear is a number; the period may be '2026' or '2026-...').
-			$year = preg_replace('/[^0-9]/', '', $period);
-			foreach ($candidates as $candidate) {
-				if ($year !== '' && (string)(int)$this->num($candidate, 'fiscalYear') === (string)(int)$year) {
-					return $candidate;
-				}
+		foreach ($candidates as $candidate) {
+			if ((string)(int)$this->num($candidate, 'fiscalYear') === (string)(int)$year) {
+				return $candidate;
 			}
 		}
 
-		// Prefer a jaarstukken document over a begroting when present.
+		return null;
+	}//end statementForPeriod()
+
+	/**
+	 * A jaarstukken document when present (preferred over a begroting),
+	 * else the first statement.
+	 *
+	 * @param array<int, array<string, mixed>> $candidates The candidate statements (non-empty).
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function preferredStatement(array $candidates): array {
 		foreach ($candidates as $candidate) {
 			if ($this->str($candidate, 'documentType') === 'jaarstukken') {
 				return $candidate;
@@ -402,7 +454,7 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 		}
 
 		return $candidates[0];
-	}//end resolveStatement()
+	}//end preferredStatement()
 
 	/**
 	 * Map a documentType enum to a Dutch label.
