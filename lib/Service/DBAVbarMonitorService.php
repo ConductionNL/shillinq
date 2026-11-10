@@ -144,74 +144,137 @@ class DBAVbarMonitorService {
 		int $hourlyRateCents,
 		int $vbarGrensCents,
 	): bool {
+		$objectService = $this->resolveObjectService();
+		if ($objectService === null) {
+			return false;
+		}
+
+		$flag = new VbarFlag(assignmentId: $assignmentId, invoiceId: $invoiceId);
+		$flag->administrationId = $administrationId;
+		$flag->hourlyRateCents = $hourlyRateCents;
+		$flag->vbarGrensCents = $vbarGrensCents;
+		$flag->register = $this->registerSlug();
+		if ($this->openFlagExists(flag: $flag, objectService: $objectService) === true) {
+			return false;
+		}
+
+		return $this->saveFlag(flag: $flag, objectService: $objectService);
+	}//end emitFlag()
+
+	/**
+	 * OpenRegister's object service, or null (with a warning) when it is not
+	 * available.
+	 *
+	 * @return object|null The object service.
+	 */
+	private function resolveObjectService(): ?object {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			return $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'DBAVbarMonitorService: OpenRegister not available, skipping flag.',
 				['exception' => $e->getMessage()]
 			);
-			return false;
+			return null;
 		}
+	}//end resolveObjectService()
 
+	/**
+	 * The configured register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string The register slug.
+	 */
+	private function registerSlug(): string {
 		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
 		if ($register === '') {
-			$register = 'shillinq';
+			return 'shillinq';
 		}
 
+		return $register;
+	}//end registerSlug()
+
+	/**
+	 * Idempotency: true when the assignment already has an OPEN flag for the
+	 * same invoice. A failing check is logged and lets the flag through.
+	 *
+	 * @param VbarFlag $flag          The flag to raise.
+	 * @param object   $objectService OpenRegister's object service.
+	 *
+	 * @return bool Whether an open flag for the invoice exists.
+	 */
+	private function openFlagExists(VbarFlag $flag, object $objectService): bool {
 		try {
-			$existing = $objectService->setRegister($register)->setSchema('DBARisicoflag')->findAll(
+			$existing = $objectService->setRegister($flag->register)->setSchema('DBARisicoflag')->findAll(
 				[
 					'filters' => [
-						'assignmentId' => $assignmentId,
+						'assignmentId' => $flag->assignmentId,
 						'type' => 'VBAR_GRENS_BELOW_THRESHOLD',
 						'status' => 'OPEN',
 					],
 					'limit' => 10,
 				]
 			);
-			foreach ($existing as $entity) {
-				$arr = null;
-				if (is_array($entity) === true) {
-					$arr = $entity;
-				} elseif (method_exists($entity, 'getObject') === true) {
-					$arr = $entity->getObject();
-				}
-
-				if (is_array($arr) === true
-					&& (string)(($arr['details'] ?? [])['invoiceId'] ?? '') === $invoiceId
-				) {
-					return false;
-				}
-			}
+			return $this->flagsInvoice(rows: $existing, invoiceId: $flag->invoiceId);
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'DBAVbarMonitorService: idempotency check failed.',
 				['exception' => $e->getMessage()]
 			);
+			return false;
 		}//end try
+	}//end openFlagExists()
 
+	/**
+	 * True when one of the flag rows (arrays or entities) names the invoice.
+	 *
+	 * @param iterable<mixed> $rows      The open flag rows.
+	 * @param string          $invoiceId The invoice.
+	 *
+	 * @return bool Whether a row flags the invoice.
+	 */
+	private function flagsInvoice(iterable $rows, string $invoiceId): bool {
+		foreach ($rows as $entity) {
+			$arr = $this->flagRow(entity: $entity);
+			if (is_array($arr) === true
+				&& (string)(($arr['details'] ?? [])['invoiceId'] ?? '') === $invoiceId
+			) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end flagsInvoice()
+
+	/**
+	 * A flag row as an array: as it is, or the entity's object payload.
+	 *
+	 * @param mixed $entity The row.
+	 *
+	 * @return mixed The row as an array, or what the entity yields.
+	 */
+	private function flagRow(mixed $entity): mixed {
+		if (is_array($entity) === true) {
+			return $entity;
+		}
+
+		if (method_exists($entity, 'getObject') === true) {
+			return $entity->getObject();
+		}
+
+		return null;
+	}//end flagRow()
+
+	/**
+	 * Write the flag; a failing write is logged and reported as not written.
+	 *
+	 * @param VbarFlag $flag          The flag to raise.
+	 * @param object   $objectService OpenRegister's object service.
+	 *
+	 * @return bool True when the flag was written.
+	 */
+	private function saveFlag(VbarFlag $flag, object $objectService): bool {
 		try {
-			$objectService->setRegister($register)->setSchema('DBARisicoflag')->saveObject(
-				[
-					'administrationId' => $administrationId,
-					'assignmentId' => $assignmentId,
-					'type' => 'VBAR_GRENS_BELOW_THRESHOLD',
-					'detectionMoment' => (new DateTimeImmutable())->format('c'),
-					'severity' => 'MEDIUM',
-					'details' => [
-						'invoiceId' => $invoiceId,
-						'uurtariefCents' => $hourlyRateCents,
-						'vbarGrensCents' => $vbarGrensCents,
-						'peiljaar' => DBAConstants::VBAR_GRENS_PEILJAAR,
-					],
-					'fiscalSource' => 'REQ-DBA-016; VBAR-wetsvoorstel uurtariefgrens (peil ' . DBAConstants::VBAR_GRENS_PEILJAAR . ')',
-					'actionSuggestion' => 'Verhoog het uurtarief of leg een schriftelijke onderbouwing vast '
-						. '(motivatie EUR-grens uitzondering).',
-					'status' => 'OPEN',
-					'displayedInUser' => true,
-				]
-			);
+			$objectService->setRegister($flag->register)->setSchema('DBARisicoflag')->saveObject($this->flagPayload(flag: $flag));
 			return true;
 		} catch (Throwable $e) {
 			$this->logger->error(
@@ -219,6 +282,34 @@ class DBAVbarMonitorService {
 				['exception' => $e->getMessage()]
 			);
 			return false;
-		}//end try
-	}//end emitFlag()
+		}
+	}//end saveFlag()
+
+	/**
+	 * The DBARisicoflag payload.
+	 *
+	 * @param VbarFlag $flag The flag to raise.
+	 *
+	 * @return array<string,mixed> The payload.
+	 */
+	private function flagPayload(VbarFlag $flag): array {
+		return [
+			'administrationId' => $flag->administrationId,
+			'assignmentId' => $flag->assignmentId,
+			'type' => 'VBAR_GRENS_BELOW_THRESHOLD',
+			'detectionMoment' => (new DateTimeImmutable())->format('c'),
+			'severity' => 'MEDIUM',
+			'details' => [
+				'invoiceId' => $flag->invoiceId,
+				'uurtariefCents' => $flag->hourlyRateCents,
+				'vbarGrensCents' => $flag->vbarGrensCents,
+				'peiljaar' => DBAConstants::VBAR_GRENS_PEILJAAR,
+			],
+			'fiscalSource' => 'REQ-DBA-016; VBAR-wetsvoorstel uurtariefgrens (peil ' . DBAConstants::VBAR_GRENS_PEILJAAR . ')',
+			'actionSuggestion' => 'Verhoog het uurtarief of leg een schriftelijke onderbouwing vast '
+				. '(motivatie EUR-grens uitzondering).',
+			'status' => 'OPEN',
+			'displayedInUser' => true,
+		];
+	}//end flagPayload()
 }//end class
