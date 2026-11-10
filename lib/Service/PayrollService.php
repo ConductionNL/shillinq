@@ -179,118 +179,183 @@ class PayrollService {
 		// Resolve the immutable wage-tax table for the period (REQ-PAY-002).
 		$tableRules = $this->resolveTabelRules(administrationId: $administrationId, period: $period, employee: $employee);
 
-		return $this->assemblePaySlip(
-			administrationId: $administrationId,
-			employee: $employee,
-			werkgever: $werkgever,
-			period: $period,
-			periodType: $periodType,
-			tableRules: $tableRules
-		);
+		$run = new PaySlipRun(administrationId: $administrationId, employee: $employee);
+		$run->werkgever = $werkgever;
+		$run->period = $period;
+		$run->periodType = $periodType;
+		$run->tableRules = $tableRules;
+		return $this->assemblePaySlip(run: $run);
 
 	}//end berekenLoonStrook()
 
 	/**
 	 * Assemble the full LoonStrook payload from calculator output.
 	 *
-	 * @param string $administrationId Administration scope.
-	 * @param array<string,mixed> $employee Employee record.
-	 * @param array<string,mixed> $werkgever Employer record.
-	 * @param array<string,mixed> $period Period record.
-	 * @param string $periodType WEEK|4WEKEN|MAAND.
-	 * @param array<int,mixed> $tableRules Wage-tax bracket rows.
+	 * @param PaySlipRun $run The payslip run (employee, employer, period, period type, wage-tax table).
 	 *
 	 * @return array<string,mixed>
 	 */
-	private function assemblePaySlip(
-		string $administrationId,
-		array $employee,
-		array $werkgever,
-		array $period,
-		string $periodType,
-		array $tableRules,
-	): array {
-		// Gross components: basissalaris + tax-free home-office allowance.
-		$basissalaris = (float)($employee['periodeBruto'] ?? $this->periodGrossOutAnnualPay(employee: $employee, periodType: $periodType));
-		$thuiswerkdagen = ((float)($employee['thuiswerkdagenPerWeek'] ?? 0) * $this->wekenInPeriod(periodType: $periodType));
-		$thuiswerkverg = $this->calculator->thuiswerkvergoeding(thuiswerkdagen: $thuiswerkdagen);
+	private function assemblePaySlip(PaySlipRun $run): array {
+		$this->composeGrossPay(run: $run);
+		$run->payrollTax = $this->calculator->loonheffingUitTabel(fiscalPay: $run->fiscalPay, tableRules: $run->tableRules);
+		$premiums = $this->employerPremiums(run: $run);
+		$tail = ['netPaid' => $this->netPaid(run: $run, pension: $premiums['pension'])] + $this->accruals(run: $run);
+
+		return $this->paySlipHead(run: $run) + $premiums + $tail + ['administrationId' => $run->administrationId];
+
+	}//end assemblePaySlip()
+
+	/**
+	 * Gross components: basissalaris + tax-free home-office allowance, their
+	 * total, the tax-free total (allowance + 30% expat exemption) and the
+	 * fiscal pay.
+	 *
+	 * @param PaySlipRun $run The payslip run.
+	 *
+	 * @return void
+	 */
+	private function composeGrossPay(PaySlipRun $run): void {
+		$employee = $run->employee;
+		$run->basissalaris = (float)($employee['periodeBruto'] ?? $this->periodGrossOutAnnualPay(employee: $employee, periodType: $run->periodType));
+		$thuiswerkdagen = ((float)($employee['thuiswerkdagenPerWeek'] ?? 0) * $this->wekenInPeriod(periodType: $run->periodType));
+		$run->thuiswerkvergoeding = $this->calculator->thuiswerkvergoeding(thuiswerkdagen: $thuiswerkdagen);
 		$expatFree = $this->calculator->expat30PctVrijstelling(
-			grossPay: $basissalaris,
+			grossPay: $run->basissalaris,
 			applies: (bool)($employee['expat30PctScheme'] ?? false)
 		);
 
-		$grossComponents = [
-			'basissalaris' => $basissalaris,
-			'thuiswerkvergoeding' => $thuiswerkverg,
+		$run->grossComponents = [
+			'basissalaris' => $run->basissalaris,
+			'thuiswerkvergoeding' => $run->thuiswerkvergoeding,
 		];
-		$totalGross = $this->calculator->totaalBruto(componenten: $grossComponents);
+		$totalGross = $this->calculator->totaalBruto(componenten: $run->grossComponents);
+		$run->grossComponents['totaal_bruto'] = $totalGross;
 
-		$belastingvrijTotaal = $this->calculator->fromCents(
-			cents: ($this->calculator->toCents(amount: $thuiswerkverg) + $this->calculator->toCents(amount: $expatFree))
+		$run->belastingvrijTotaal = $this->calculator->fromCents(
+			cents: ($this->calculator->toCents(amount: $run->thuiswerkvergoeding) + $this->calculator->toCents(amount: $expatFree))
 		);
-		$fiscalPay = $this->calculator->fiscaalLoon(totalGross: $totalGross, belastingvrijTotaal: $belastingvrijTotaal);
-		$contributionPaySV = $basissalaris;
+		$run->fiscalPay = $this->calculator->fiscaalLoon(totalGross: $totalGross, belastingvrijTotaal: $run->belastingvrijTotaal);
+	}//end composeGrossPay()
 
-		$payrollTax = $this->calculator->loonheffingUitTabel(fiscalPay: $fiscalPay, tableRules: $tableRules);
-
-		$svWg = $this->calculator->employerSocialInsurancePremiums(
-			contributionPaySV: $contributionPaySV,
-			periodType: $periodType,
-			awfRate: (string)($werkgever['awfRate'] ?? 'LOW'),
-			kleineWerkgever: true,
-			whkRate: (float)($employee['whkTarief2026'] ?? 0.0),
-			wkoRate: (float)($employee['wkoTarief2026'] ?? 0.0)
-		);
+	/**
+	 * The employer's social insurance premiums, ZVW and pension, over the
+	 * SV contribution pay (the base salary).
+	 *
+	 * @param PaySlipRun $run The payslip run.
+	 *
+	 * @return array<string,mixed> employerSocialInsurancePremiums, zvw and pension.
+	 */
+	private function employerPremiums(PaySlipRun $run): array {
+		$svWg = $this->socialInsurancePremiums(run: $run);
 		$zvw = $this->calculator->zvwWerkgever(
-			contributionPaySV: $contributionPaySV,
-			periodType: $periodType,
-			zvwRate: (string)($werkgever['zvwRate'] ?? 'LOW')
-		);
-		$pensioen = $this->calculator->pensioen(
-			basis: $basissalaris,
-			pctWerkgever: (float)($employee['pensionPremiumPctEmployer'] ?? 0),
-			pctEmployee: (float)($employee['pensionPremiumPctEmployee'] ?? 0)
+			contributionPaySV: $run->basissalaris,
+			periodType: $run->periodType,
+			zvwRate: (string)($run->werkgever['zvwRate'] ?? 'LOW')
 		);
 
-		$netPaid = $this->calculator->nettoBetaald(
-			fiscalPay: $fiscalPay,
-			payrollTax: $payrollTax,
+		return [
+			'employerSocialInsurancePremiums' => $svWg,
+			'zvw' => ['afgedragen_wg' => $zvw['afgedragen_wg'], 'rate' => $zvw['rate']],
+			'pension' => $this->calculator->pensioen(
+				basis: $run->basissalaris,
+				pctWerkgever: (float)($run->employee['pensionPremiumPctEmployer'] ?? 0),
+				pctEmployee: (float)($run->employee['pensionPremiumPctEmployee'] ?? 0)
+			),
+		];
+	}//end employerPremiums()
+
+	/**
+	 * The employer's social insurance premiums (AWF, AOF, WHK, WKO).
+	 *
+	 * @param PaySlipRun $run The payslip run.
+	 *
+	 * @return array<string,mixed> The premiums.
+	 */
+	private function socialInsurancePremiums(PaySlipRun $run): array {
+		return $this->calculator->employerSocialInsurancePremiums(
+			contributionPaySV: $run->basissalaris,
+			periodType: $run->periodType,
+			awfRate: (string)($run->werkgever['awfRate'] ?? 'LOW'),
+			kleineWerkgever: true,
+			whkRate: (float)($run->employee['whkTarief2026'] ?? 0.0),
+			wkoRate: (float)($run->employee['wkoTarief2026'] ?? 0.0)
+		);
+	}//end socialInsurancePremiums()
+
+	/**
+	 * The net pay: fiscal pay minus wage tax and the employee's pension
+	 * share, plus the tax-free total.
+	 *
+	 * @param PaySlipRun          $run     The payslip run.
+	 * @param array<string,mixed> $pension The pension premiums.
+	 *
+	 * @return float The net pay.
+	 */
+	private function netPaid(PaySlipRun $run, array $pension): float {
+		return $this->calculator->nettoBetaald(
+			fiscalPay: $run->fiscalPay,
+			payrollTax: $run->payrollTax,
 			inhoudingSVEmployee: 0.0,
-			pensioenEmployee: (float)$pensioen['premie_wn_aandeel'],
-			belastingvrijTotaal: $belastingvrijTotaal
+			pensioenEmployee: (float)$pension['premie_wn_aandeel'],
+			belastingvrijTotaal: $run->belastingvrijTotaal
 		);
+	}//end netPaid()
 
-		$grossComponents['totaal_bruto'] = $totalGross;
+	/**
+	 * The holiday allowance accrued this period and the year-to-date totals
+	 * it adds to.
+	 *
+	 * @param PaySlipRun $run The payslip run.
+	 *
+	 * @return array<string,mixed> cumulatieven and holidayDaysAccrual.
+	 */
+	private function accruals(PaySlipRun $run): array {
 		$holidayOpbouw = $this->calculator->vakantiegeldOpbouw(
-			totalGross: $basissalaris,
-			pct: (float)($employee['holidayAllowancePct'] ?? 0.08)
+			totalGross: $run->basissalaris,
+			pct: (float)($run->employee['holidayAllowancePct'] ?? 0.08)
 		);
-		$employeeId = (string)($employee['id'] ?? ($employee['@self']['id'] ?? ''));
 		$cumulatieven = $this->stampCumulatieven(
-			administrationId: $administrationId,
-			employeeId: $employeeId,
-			fiscalPay: $fiscalPay,
+			administrationId: $run->administrationId,
+			employeeId: $this->employeeIdOf(run: $run),
+			fiscalPay: $run->fiscalPay,
 			holidayOpbouw: $holidayOpbouw
 		);
 
 		return [
-			'employeeId' => $employeeId,
-			'periodId' => (string)($period['id'] ?? ($period['@self']['id'] ?? '')),
-			'grossComponents' => $grossComponents,
-			'fiscalPay' => $fiscalPay,
-			'contribution_pay_sv' => $contributionPaySV,
-			'payrollTax' => $payrollTax,
-			'inhoudingenSV' => ['totaal_sv_wn' => 0],
-			'employerSocialInsurancePremiums' => $svWg,
-			'zvw' => ['afgedragen_wg' => $zvw['afgedragen_wg'], 'rate' => $zvw['rate']],
-			'pension' => $pensioen,
-			'netPaid' => $netPaid,
 			'cumulatieven' => $cumulatieven,
 			'holidayDaysAccrual' => ['opgebouwdEuro' => $holidayOpbouw],
-			'administrationId' => $administrationId,
 		];
+	}//end accruals()
 
-	}//end assembleLoonStrook()
+	/**
+	 * The identifying and pay fields that open the payslip.
+	 *
+	 * @param PaySlipRun $run The payslip run.
+	 *
+	 * @return array<string,mixed> The opening fields, in payslip order.
+	 */
+	private function paySlipHead(PaySlipRun $run): array {
+		return [
+			'employeeId' => $this->employeeIdOf(run: $run),
+			'periodId' => (string)($run->period['id'] ?? ($run->period['@self']['id'] ?? '')),
+			'grossComponents' => $run->grossComponents,
+			'fiscalPay' => $run->fiscalPay,
+			'contribution_pay_sv' => $run->basissalaris,
+			'payrollTax' => $run->payrollTax,
+			'inhoudingenSV' => ['totaal_sv_wn' => 0],
+		];
+	}//end paySlipHead()
+
+	/**
+	 * The employee's id (top-level or @self).
+	 *
+	 * @param PaySlipRun $run The payslip run.
+	 *
+	 * @return string The employee id.
+	 */
+	private function employeeIdOf(PaySlipRun $run): string {
+		return (string)($run->employee['id'] ?? ($run->employee['@self']['id'] ?? ''));
+	}//end employeeIdOf()
 
 	/**
 	 * Aggregate the period's payslips into an LHAfdracht (REQ-PAY-011).
