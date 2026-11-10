@@ -288,28 +288,11 @@ class ExceptionResolutionService {
 		string $matchId,
 		string $resolutionNotes,
 	): array {
-		$this->assertAccess(administrationId: $administrationId);
-		if ($matchId === '') {
-			throw new RuntimeException('ThreeWayMatch not found');
-		}
-
-		$notes = trim($resolutionNotes);
-		if ($notes === '') {
-			throw new RuntimeException('resolutionNotes is required');
-		}
-
-		$match = $this->loadMatch(administrationId: $administrationId, matchId: $matchId);
-		$this->assertExceptionStatus(match: $match);
-
-		$resolvedBy = $this->currentUserId();
-		$resolvedAt = $this->nowIso();
-
-		$match['resolutionAction'] = self::ACTION_ACCEPTED;
-		$match['resolutionNotes'] = $notes;
-		$match['resolvedBy'] = $resolvedBy;
-		$match['resolvedAt'] = $resolvedAt;
-
-		$persisted = $this->saveObject(schema: self::SCHEMA_THREE_WAY_MATCH, object: $match);
+		$this->assertMatchRequest(administrationId: $administrationId, matchId: $matchId);
+		$notes = $this->requiredText(value: $resolutionNotes, field: 'resolutionNotes');
+		$match = $this->exceptionMatch(administrationId: $administrationId, matchId: $matchId);
+		$stamp = $this->resolutionStamp(action: self::ACTION_ACCEPTED, notes: $notes);
+		$persisted = $this->saveObject(schema: self::SCHEMA_THREE_WAY_MATCH, object: array_replace($match, $stamp));
 
 		// Move the linked invoice out of `exception` into `approved` so
 		// payment is unblocked.
@@ -355,77 +338,91 @@ class ExceptionResolutionService {
 		string $matchId,
 		string $disputeReason,
 	): array {
-		$this->assertAccess(administrationId: $administrationId);
-		if ($matchId === '') {
-			throw new RuntimeException('ThreeWayMatch not found');
-		}
+		$this->assertMatchRequest(administrationId: $administrationId, matchId: $matchId);
+		$filing = new DisputeFiling();
+		$filing->administrationId = $administrationId;
+		$filing->matchId = $matchId;
+		$filing->reason = $this->requiredText(value: $disputeReason, field: 'disputeReason');
+		$this->prepareFiling(filing: $filing);
 
-		$reason = trim($disputeReason);
-		if ($reason === '') {
-			throw new RuntimeException('disputeReason is required');
-		}
+		return $this->submitFiling(filing: $filing);
 
-		$match = $this->loadMatch(administrationId: $administrationId, matchId: $matchId);
-		$this->assertExceptionStatus(match: $match);
+	}//end fileDispute()
 
-		$invoiceId = (string)($match['invoiceId'] ?? '');
-		if ($invoiceId === '') {
+	/**
+	 * Load the exception match and its linked invoice for a dispute, and
+	 * stamp the resolution (resolvedBy/resolvedAt are taken now, before the
+	 * dispatch, so the payload's requestedAt equals the match's resolvedAt).
+	 *
+	 * @param DisputeFiling $filing The filing; match, invoice and stamp are filled in.
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException On a missing match, missing invoice or non-exception status.
+	 */
+	private function prepareFiling(DisputeFiling $filing): void {
+		$filing->match = $this->exceptionMatch(administrationId: $filing->administrationId, matchId: $filing->matchId);
+		$filing->invoiceId = (string)($filing->match['invoiceId'] ?? '');
+		if ($filing->invoiceId === '') {
 			throw new RuntimeException('Match has no linked invoice');
 		}
 
 		$invoice = $this->findOne(
 			schema: self::SCHEMA_SUPPLIER_INVOICE,
-			filters: [
-				'id' => $invoiceId,
-				'administrationId' => $administrationId,
-			]
+			filters: ['id' => $filing->invoiceId, 'administrationId' => $filing->administrationId]
 		);
 		if ($invoice === null) {
 			throw new RuntimeException('Supplier invoice not found');
 		}
 
-		$resolvedBy = $this->currentUserId();
-		$resolvedAt = $this->nowIso();
+		$filing->invoice = $invoice;
+		$filing->stamp = $this->resolutionStamp(action: self::ACTION_CREDIT_NOTE_REQUESTED, notes: $filing->reason);
 
-		$payload = $this->buildDisputePayload(
-			administrationId: $administrationId,
-			match: $match,
-			invoice: $invoice,
-			invoiceId: $invoiceId,
-			reason: $reason,
-			requestedAt: $resolvedAt
-		);
-		$dispatch = $this->dispatchDispute(payload: $payload, match: $match, invoiceId: $invoiceId);
+	}//end prepareFiling()
 
-		$resolutionNotes = $reason;
-		$dispatchId = ($dispatch['dispatchId'] ?? null);
-		if (is_string($dispatchId) === true && $dispatchId !== '') {
-			$resolutionNotes .= ' [creditNoteDispatchId=' . $dispatchId . ']';
-		}
-
-		$match['resolutionAction'] = self::ACTION_CREDIT_NOTE_REQUESTED;
-		$match['resolutionNotes'] = $resolutionNotes;
-		$match['resolvedBy'] = $resolvedBy;
-		$match['resolvedAt'] = $resolvedAt;
-
-		$persisted = $this->saveObject(schema: self::SCHEMA_THREE_WAY_MATCH, object: $match);
-
-		// Payment stays blocked — the invoice remains in `exception`.
-		// Escalate to the Inkoper queue.
+	/**
+	 * Dispatch the credit-note request, record the resolution and escalate to
+	 * the Inkoper queue. Payment stays blocked — the invoice remains in
+	 * `exception`.
+	 *
+	 * @param DisputeFiling $filing A prepared filing.
+	 *
+	 * @return array{match:array<string,mixed>,dispatch:array{accepted:bool,dispatchId:?string,error:?string}}
+	 */
+	private function submitFiling(DisputeFiling $filing): array {
+		$dispatch = $this->dispatchDispute(filing: $filing);
+		$filing->stamp['resolutionNotes'] = $this->disputeNotes(reason: $filing->reason, dispatch: $dispatch);
+		$persisted = $this->saveObject(schema: self::SCHEMA_THREE_WAY_MATCH, object: array_replace($filing->match, $filing->stamp));
 		$this->notifyRole(
-			administrationId: $administrationId,
+			administrationId: $filing->administrationId,
 			role: self::ROLE_INKOPER,
 			subject: self::NOTIFICATION_SUBJECT_DISPUTE,
-			matchId: $this->idOf(record: $match),
-			invoice: $invoice
+			matchId: $this->idOf(record: $filing->match),
+			invoice: $filing->invoice
 		);
 
-		return [
-			'match' => $persisted,
-			'dispatch' => $dispatch,
-		];
+		return ['match' => $persisted, 'dispatch' => $dispatch];
 
-	}//end fileDispute()
+	}//end submitFiling()
+
+	/**
+	 * The dispute reason, suffixed with the credit-note dispatch id when the
+	 * adapter returned one.
+	 *
+	 * @param string                                                $reason   Trimmed dispute reason.
+	 * @param array{accepted:bool,dispatchId:?string,error:?string} $dispatch Adapter outcome.
+	 *
+	 * @return string
+	 */
+	private function disputeNotes(string $reason, array $dispatch): string {
+		$dispatchId = ($dispatch['dispatchId'] ?? null);
+		if (is_string($dispatchId) === true && $dispatchId !== '') {
+			return $reason . ' [creditNoteDispatchId=' . $dispatchId . ']';
+		}
+
+		return $reason;
+
+	}//end disputeNotes()
 
 	/**
 	 * Reject an out-of-tolerance ThreeWayMatch and block the linked
@@ -453,48 +450,114 @@ class ExceptionResolutionService {
 		string $matchId,
 		string $rejectionReason,
 	): array {
-		$this->assertAccess(administrationId: $administrationId);
-		if ($matchId === '') {
-			throw new RuntimeException('ThreeWayMatch not found');
-		}
-
-		$reason = trim($rejectionReason);
-		if ($reason === '') {
-			throw new RuntimeException('rejectionReason is required');
-		}
-
-		$match = $this->loadMatch(administrationId: $administrationId, matchId: $matchId);
-		$this->assertExceptionStatus(match: $match);
-
-		$resolvedBy = $this->currentUserId();
-		$resolvedAt = $this->nowIso();
-
-		$match['resolutionAction'] = self::ACTION_REJECTED;
-		$match['resolutionNotes'] = $reason;
-		$match['resolvedBy'] = $resolvedBy;
-		$match['resolvedAt'] = $resolvedAt;
-
-		$persisted = $this->saveObject(schema: self::SCHEMA_THREE_WAY_MATCH, object: $match);
+		$this->assertMatchRequest(administrationId: $administrationId, matchId: $matchId);
+		$reason = $this->requiredText(value: $rejectionReason, field: 'rejectionReason');
+		$match = $this->exceptionMatch(administrationId: $administrationId, matchId: $matchId);
+		$stamp = $this->resolutionStamp(action: self::ACTION_REJECTED, notes: $reason);
+		$persisted = $this->saveObject(schema: self::SCHEMA_THREE_WAY_MATCH, object: array_replace($match, $stamp));
 
 		// Mark the linked invoice rejected so the payment block is
 		// effective; slice 09 owns the GR/IR reversal posting + stock
 		// restoration. We log a structured marker so the slice-09 engine
 		// can pick the reversal up; no GL movement is made here.
-		$this->advanceInvoiceStatus(
-			administrationId: $administrationId,
-			invoiceId: (string)($match['invoiceId'] ?? ''),
-			nextStatus: 'rejected'
-		);
-		$this->logger->info(
-			'ExceptionResolutionService: invoice rejected — slice-09 GR/IR reversal pending',
-			[
-				'matchId' => $this->idOf(record: $match),
-				'invoiceId' => (string)($match['invoiceId'] ?? ''),
-			]
-		);
+		$this->blockRejectedInvoice(administrationId: $administrationId, match: $match);
 
 		return $persisted;
 	}//end rejectAndBlockPayment()
+
+	/**
+	 * Advance the match's invoice to `rejected` and log the pending GR/IR
+	 * reversal marker.
+	 *
+	 * @param string              $administrationId Tenant scope.
+	 * @param array<string,mixed> $match            ThreeWayMatch record.
+	 *
+	 * @return void
+	 */
+	private function blockRejectedInvoice(string $administrationId, array $match): void {
+		$invoiceId = (string)($match['invoiceId'] ?? '');
+		$this->advanceInvoiceStatus(administrationId: $administrationId, invoiceId: $invoiceId, nextStatus: 'rejected');
+		$this->logger->info(
+			'ExceptionResolutionService: invoice rejected — slice-09 GR/IR reversal pending',
+			['matchId' => $this->idOf(record: $match), 'invoiceId' => $invoiceId]
+		);
+
+	}//end blockRejectedInvoice()
+
+	/**
+	 * Validate the tenant and that a match id was supplied.
+	 *
+	 * @param string $administrationId Tenant scope.
+	 * @param string $matchId          ThreeWayMatch id.
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException On cross-tenant access or an empty match id.
+	 */
+	private function assertMatchRequest(string $administrationId, string $matchId): void {
+		$this->assertAccess(administrationId: $administrationId);
+		if ($matchId === '') {
+			throw new RuntimeException('ThreeWayMatch not found');
+		}
+
+	}//end assertMatchRequest()
+
+	/**
+	 * Trim an operator-supplied text and refuse it when blank.
+	 *
+	 * @param string $value Raw text.
+	 * @param string $field Field name for the refusal message.
+	 *
+	 * @return string The trimmed text.
+	 *
+	 * @throws \RuntimeException When the text is blank.
+	 */
+	private function requiredText(string $value, string $field): string {
+		$text = trim($value);
+		if ($text === '') {
+			throw new RuntimeException($field . ' is required');
+		}
+
+		return $text;
+
+	}//end requiredText()
+
+	/**
+	 * Re-load a tenant-scoped match and require it to be in an exception state.
+	 *
+	 * @param string $administrationId Tenant scope.
+	 * @param string $matchId          ThreeWayMatch id.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @throws \RuntimeException On a missing match or non-exception status.
+	 */
+	private function exceptionMatch(string $administrationId, string $matchId): array {
+		$match = $this->loadMatch(administrationId: $administrationId, matchId: $matchId);
+		$this->assertExceptionStatus(match: $match);
+
+		return $match;
+
+	}//end exceptionMatch()
+
+	/**
+	 * The resolution fields for a disposition, attributed to the session user
+	 * (server-authoritative, never the request body) at the current instant.
+	 *
+	 * @param string $action Resolution action.
+	 * @param string $notes  Resolution notes.
+	 *
+	 * @return array{resolutionAction:string,resolutionNotes:string,resolvedBy:string,resolvedAt:string}
+	 */
+	private function resolutionStamp(string $action, string $notes): array {
+		return [
+			'resolutionAction' => $action,
+			'resolutionNotes' => $notes,
+			'resolvedBy' => $this->currentUserId(),
+			'resolvedAt' => $this->nowIso(),
+		];
+
+	}//end resolutionStamp()
 
 	/**
 	 * Send the exception alert to the crediteuren-administrateur queue
@@ -563,37 +626,27 @@ class ExceptionResolutionService {
 	 * dispute request so fileDispute() stays under the PHPMD method-length
 	 * threshold.
 	 *
-	 * @param string $administrationId Tenant scope.
-	 * @param array<string,mixed> $match ThreeWayMatch record.
-	 * @param array<string,mixed> $invoice SupplierInvoice header.
-	 * @param string $invoiceId Invoice id.
-	 * @param string $reason Dispute reason.
-	 * @param string $requestedAt ISO timestamp.
+	 * @param DisputeFiling $filing A prepared filing (match, invoice, reason, stamp).
 	 *
 	 * @return array<string,mixed> The dispute payload envelope.
 	 */
-	private function buildDisputePayload(
-		string $administrationId,
-		array $match,
-		array $invoice,
-		string $invoiceId,
-		string $reason,
-		string $requestedAt,
-	): array {
+	private function buildDisputePayload(DisputeFiling $filing): array {
+		$invoice = $filing->invoice;
+
 		return [
-			'matchId' => $this->idOf(record: $match),
-			'invoiceId' => $invoiceId,
+			'matchId' => $this->idOf(record: $filing->match),
+			'invoiceId' => $filing->invoiceId,
 			'invoiceNumber' => (string)($invoice['invoiceNumber'] ?? ''),
 			'supplierId' => (string)($invoice['supplierId'] ?? ''),
-			'administrationId' => $administrationId,
+			'administrationId' => $filing->administrationId,
 			'currency' => (string)($invoice['currency'] ?? 'EUR'),
 			'totalExclVat' => (int)($invoice['totalExclVat'] ?? 0),
 			'totalVat' => (int)($invoice['totalVat'] ?? 0),
 			'totalInclVat' => (int)($invoice['totalInclVat'] ?? 0),
-			'reason' => $reason,
-			'divergenceDetails' => ($match['divergenceDetails'] ?? []),
-			'matchedPoIds' => ($match['matchedPoIds'] ?? []),
-			'requestedAt' => $requestedAt,
+			'reason' => $filing->reason,
+			'divergenceDetails' => ($filing->match['divergenceDetails'] ?? []),
+			'matchedPoIds' => ($filing->match['matchedPoIds'] ?? []),
+			'requestedAt' => $filing->stamp['resolvedAt'],
 		];
 
 	}//end buildDisputePayload()
@@ -604,30 +657,24 @@ class ExceptionResolutionService {
 	 * has to unwrap. Best-effort — the canonical record is the
 	 * ThreeWayMatch the caller persists immediately after.
 	 *
-	 * @param array<string,mixed> $payload Dispute envelope.
-	 * @param array<string,mixed> $match ThreeWayMatch record (for log context).
-	 * @param string $invoiceId Invoice id (for log context).
+	 * @param DisputeFiling $filing A prepared filing; its envelope is built here.
 	 *
 	 * @return array{accepted:bool,dispatchId:?string,error:?string}
 	 */
-	private function dispatchDispute(array $payload, array $match, string $invoiceId): array {
+	private function dispatchDispute(DisputeFiling $filing): array {
 		try {
-			return $this->creditNoteAdapter->submitDisputeCreditNote(payload: $payload);
+			return $this->creditNoteAdapter->submitDisputeCreditNote(payload: $this->buildDisputePayload(filing: $filing));
 		} catch (\Throwable $exception) {
 			$this->logger->warning(
 				'ExceptionResolutionService: dispute UBL CreditNote dispatch failed',
 				[
-					'matchId' => $this->idOf(record: $match),
-					'invoiceId' => $invoiceId,
+					'matchId' => $this->idOf(record: $filing->match),
+					'invoiceId' => $filing->invoiceId,
 					'exception' => $exception->getMessage(),
 				]
 			);
 
-			return [
-				'accepted' => false,
-				'dispatchId' => null,
-				'error' => $exception->getMessage(),
-			];
+			return ['accepted' => false, 'dispatchId' => null, 'error' => $exception->getMessage()];
 		}
 
 	}//end dispatchDispute()
