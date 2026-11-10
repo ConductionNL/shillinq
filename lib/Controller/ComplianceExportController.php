@@ -22,10 +22,10 @@
  *  - Cross-tenant access is masked as 404 by AdministrationContextService
  *    (not used here — exports are tenant-agnostic per REQ-RAP-005).
  *
- * The export request itself is recorded in the OR audit-trail by
- * passing through a synthetic `export_request` event when the OR
- * AuditTrailService::recordEvent() method is available, so REQ-RAP-005
- * scenario 3 ("Export audit trail is itself audited") is honoured.
+ * The export request itself is recorded as a structured
+ * `shillinq.compliance.export_request` log entry (REQ-RAP-005 scenario 3).
+ * OpenRegister's audit trail only records events about an object, so an
+ * export, which concerns no single object, cannot go on that chain.
  *
  * @category Controller
  * @package  OCA\Shillinq\Controller
@@ -58,7 +58,6 @@ use OCP\IGroupManager;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -87,12 +86,7 @@ class ComplianceExportController extends Controller {
 	 * @param ComplianceExportService $complianceExportService Read-filter-render service.
 	 * @param IUserSession $userSession Session guard.
 	 * @param IGroupManager $groupManager Group RBAC.
-	 * @param ContainerInterface $container DI container — OR
-	 *                                      audit-trail service is
-	 *                                      fetched lazily for the
-	 *                                      REQ-RAP-005 scenario 3
-	 *                                      export-of-export logging.
-	 * @param LoggerInterface $logger Logger (no PII).
+		 * @param LoggerInterface $logger Logger (no PII).
 	 * @param IL10N $l10n Translation service for ADR-050 error-response messages.
 	 *
 	 * @return void
@@ -102,7 +96,6 @@ class ComplianceExportController extends Controller {
 		private readonly ComplianceExportService $complianceExportService,
 		private readonly IUserSession $userSession,
 		private readonly IGroupManager $groupManager,
-		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
 	) {
@@ -203,13 +196,10 @@ class ComplianceExportController extends Controller {
 	}//end export()
 
 	/**
-	 * Record the export request itself in the OR audit-trail per
-	 * REQ-RAP-005 scenario 3 — the export operation is auditable on
-	 * the same hash-chained channel it queries.
+	 * Record the export request itself per REQ-RAP-005 scenario 3.
 	 *
-	 * Best-effort: if OR's audit-trail service does not expose a
-	 * recordEvent / log method, we log to the app logger instead so
-	 * the request is not silently lost (the controller still succeeds).
+	 * OpenRegister's audit trail records events about one object; an export
+	 * concerns none, so the request goes to the app log as a structured entry.
 	 *
 	 * @param array<string,mixed> $envelope Export envelope.
 	 * @param string $uid Caller UID.
@@ -217,35 +207,21 @@ class ComplianceExportController extends Controller {
 	 * @return void
 	 */
 	private function logExportRequest(array $envelope, string $uid): void {
-		$payload = [
-			'action' => 'export_request',
-			'actor' => $uid,
-			'timestamp' => $envelope['generatedAt'],
-			'scope' => $envelope['scope'],
-			'format' => $envelope['format'],
-			'from' => $envelope['from'],
-			'to' => $envelope['to'],
-			'eventCount' => $envelope['eventCount'],
-			'actorFilter' => $envelope['actorFilter'],
-			'requirementId' => 'REQ-RAP-005',
-		];
-
-		try {
-			$auditService = $this->container->get('OCA\OpenRegister\Service\AuditTrailService');
-			if (method_exists($auditService, 'recordEvent') === true) {
-				$auditService->recordEvent($payload);
-				return;
-			}
-
-			if (method_exists($auditService, 'log') === true) {
-				$auditService->log($payload);
-				return;
-			}
-		} catch (\Throwable $e) {
-			// Fall through to logger fallback below.
-		}
-
-		$this->logger->info('shillinq.compliance.export_request', $payload);
+		$this->logger->info(
+			'shillinq.compliance.export_request',
+			[
+				'action' => 'export_request',
+				'actor' => $uid,
+				'timestamp' => $envelope['generatedAt'],
+				'scope' => $envelope['scope'],
+				'format' => $envelope['format'],
+				'from' => $envelope['from'],
+				'to' => $envelope['to'],
+				'eventCount' => $envelope['eventCount'],
+				'actorFilter' => $envelope['actorFilter'],
+				'requirementId' => 'REQ-RAP-005',
+			]
+		);
 
 	}//end logExportRequest()
 }//end class

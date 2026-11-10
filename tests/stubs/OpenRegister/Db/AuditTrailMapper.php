@@ -49,4 +49,17 @@ class AuditTrailMapper {
 	): object {
 		throw new RuntimeException('AuditTrailMapper stub: override createAuditTrailEntry() in the test.');
 	}//end createAuditTrailEntry()
+
+	/**
+	 * Every audit trail matching a listing's filters and sort (real signature).
+	 *
+	 * @param ListQuery $query The offset, filters, sort and search.
+	 *
+	 * @return array<int, object> The matching entries (AuditTrail entities in OpenRegister).
+	 *
+	 * @throws RuntimeException Always in the stub: a test overrides this method.
+	 */
+	public function findEvery(ListQuery $query): array {
+		throw new RuntimeException('AuditTrailMapper stub: override findEvery() in the test.');
+	}//end findEvery()
 }//end class

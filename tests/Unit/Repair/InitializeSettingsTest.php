@@ -223,13 +223,21 @@ class InitializeSettingsTest extends TestCase {
 		$this->settingsService->method('getRegisterSlug')
 			->willReturn('shillinq');
 
-		// Container get() throws for ScheduledWorkflowMapper so the workflow
-		// registrations (IV3, FixedAssets, BCF) exit via their inner catch blocks
-		// without reaching the outer try/catch in run().
+		// Every lazy container lookup is recorded; none resolves in this test.
+		$requested = [];
 		$this->container->method('get')
-			->willThrowException(new \RuntimeException('Not available in test'));
+			->willReturnCallback(
+				static function (string $id) use (&$requested): never {
+					$requested[] = $id;
+					throw new \RuntimeException('Not available in test');
+				}
+			);
 
 		$this->repairStep->run(output: $this->output);
+
+		// OpenRegister no longer ships a ScheduledWorkflowMapper; the repair
+		// step must not depend on it.
+		self::assertNotContains('OCA\\OpenRegister\\Db\\ScheduledWorkflowMapper', $requested);
 
 	}//end testRunCallsLoadConfigurationAndSeedTemplate()
 

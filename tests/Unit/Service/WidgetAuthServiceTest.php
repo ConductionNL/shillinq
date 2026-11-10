@@ -276,4 +276,84 @@ class WidgetAuthServiceTest extends TestCase {
 
 	}//end testKeyLookupBypassesObjectRbac()
 
+	/**
+	 * Revoking a key replaces the stored WidgetAccessKey under its uuid with
+	 * status `revoked`, through ObjectService::saveObject().
+	 *
+	 * @return void
+	 */
+	public function testRevokeApiKeyPersistsTheRevokedStatus(): void {
+		$objectService = new class {
+			/**
+			 * @var array<int,array<string,mixed>>
+			 */
+			public array $saved = [];
+
+			/**
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * @param array<string,mixed> $config Query.
+			 * @param bool                $_rbac  Whether OpenRegister RBAC applies.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $config = [], bool $_rbac = true): array {
+				return [['id' => 'key-uuid-1', 'businessId' => 'salon-001', 'status' => 'active', 'administrationId' => 'adm-1']];
+			}//end findAll()
+
+			/**
+			 * @param array<string,mixed> $object   Payload.
+			 * @param string|null         $register Register slug.
+			 * @param string|null         $schema   Schema slug.
+			 * @param string|null         $uuid     Uuid of the object to replace.
+			 * @param bool                $_rbac    Whether OpenRegister RBAC applies.
+			 *
+			 * @return array<string,mixed>
+			 */
+			public function saveObject(
+				array $object,
+				?string $register = null,
+				?string $schema = null,
+				?string $uuid = null,
+				bool $_rbac = true,
+			): array {
+				$this->saved[] = ['schema' => $schema, 'uuid' => $uuid, 'object' => $object];
+				return $object;
+			}//end saveObject()
+		};
+		$this->settings->method('isOpenRegisterAvailable')->willReturn(true);
+		$this->settings->method('getRegisterSlug')->willReturn('shillinq');
+		$this->container->method('get')->willReturn($objectService);
+
+		$result = $this->service->revokeApiKey(businessId: 'salon-001', actor: 'admin');
+
+		self::assertTrue(condition: $result['success']);
+		$keyWrites = array_values(
+			array_filter(
+				$objectService->saved,
+				static fn (array $write): bool => $write['schema'] === 'WidgetAccessKey'
+			)
+		);
+		self::assertCount(expectedCount: 1, haystack: $keyWrites);
+		self::assertSame(expected: 'key-uuid-1', actual: $keyWrites[0]['uuid']);
+		self::assertSame(expected: 'revoked', actual: $keyWrites[0]['object']['status']);
+
+	}//end testRevokeApiKeyPersistsTheRevokedStatus()
+
 }//end class

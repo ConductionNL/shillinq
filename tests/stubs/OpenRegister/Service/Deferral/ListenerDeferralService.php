@@ -3,15 +3,10 @@
 /**
  * Minimal ListenerDeferralService stub for unit tests.
  *
- * Mirrors the two methods shillinq calls on OpenRegister's real service
- * (`isDeferralEnabled()` and `defer()`), and records what was deferred so a
- * test can assert the promotion left the caller's write path instead of
- * running on it.
- *
- * The `defer()` signature is kept identical to upstream — including the
- * `$chunkSize` default that shillinq skips via named arguments — so a
- * signature change upstream shows up here as a test failure rather than as a
- * stub that silently accepts a call production would reject.
+ * Mirrors the constructor and the two methods shillinq calls on OpenRegister's
+ * real service (`isDeferralEnabled()` and `defer()`) on openregister main. A
+ * test subclasses it to decide whether deferral is enabled and to record what
+ * was deferred.
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -25,55 +20,62 @@ declare(strict_types=1);
 
 namespace OCA\OpenRegister\Service\Deferral;
 
+use OCA\OpenRegister\Service\OrganisationServiceInterface;
+use OCP\IUserSession;
+use RuntimeException;
+
 /**
  * Stub for OCA\OpenRegister\Service\Deferral\ListenerDeferralService.
  */
 class ListenerDeferralService {
 
 	/**
-	 * Default chunk size, mirroring upstream.
+	 * Default number of entries per queued job.
 	 *
-	 * @var int
+	 * @var integer
 	 */
 	public const DEFAULT_CHUNK_SIZE = 100;
 
 	/**
-	 * Recorded defer() calls.
+	 * Constructor (real signature).
 	 *
-	 * @var array<int, array<string, mixed>>
-	 */
-	public array $deferred = [];
-
-	/**
-	 * Construct the stub.
-	 *
-	 * @param bool $enabled What isDeferralEnabled() should report.
+	 * @param IUserSession                 $userSession   The session.
+	 * @param OrganisationServiceInterface $organisation  The organisation service.
+	 * @param DeferralQueueServices        $queue         The job queue services.
+	 * @param int|null                     $argumentLimit The job argument size limit.
 	 */
 	public function __construct(
-		private readonly bool $enabled = true,
+		private readonly IUserSession $userSession,
+		private readonly OrganisationServiceInterface $organisation,
+		private readonly DeferralQueueServices $queue,
+		private readonly ?int $argumentLimit = null,
 	) {
 
 	}//end __construct()
 
 	/**
-	 * Report whether deferral is on.
+	 * Whether listeners defer their work (real signature).
 	 *
 	 * @return bool
+	 *
+	 * @throws RuntimeException Always in the stub: a test overrides this method.
 	 */
 	public function isDeferralEnabled(): bool {
-		return $this->enabled;
+		throw new RuntimeException('ListenerDeferralService stub: override isDeferralEnabled() in the test.');
 
 	}//end isDeferralEnabled()
 
 	/**
-	 * Record a deferred entry.
+	 * Queue one entry for a background job (real signature).
 	 *
-	 * @param string      $jobClass  Job to run the entry.
-	 * @param array       $entry     Buffered payload.
-	 * @param int         $chunkSize Flush threshold.
-	 * @param string|null $dedupeKey Collapse key.
+	 * @param string               $jobClass  The job class.
+	 * @param array<string, mixed> $entry     The entry.
+	 * @param int                  $chunkSize Entries per job.
+	 * @param string|null          $dedupeKey Key that collapses duplicates.
 	 *
 	 * @return void
+	 *
+	 * @throws RuntimeException Always in the stub: a test overrides this method.
 	 */
 	public function defer(
 		string $jobClass,
@@ -81,12 +83,7 @@ class ListenerDeferralService {
 		int $chunkSize = self::DEFAULT_CHUNK_SIZE,
 		?string $dedupeKey = null,
 	): void {
-		$this->deferred[] = [
-			'jobClass'  => $jobClass,
-			'entry'     => $entry,
-			'chunkSize' => $chunkSize,
-			'dedupeKey' => $dedupeKey,
-		];
+		throw new RuntimeException('ListenerDeferralService stub: override defer() in the test.');
 
 	}//end defer()
 }//end class

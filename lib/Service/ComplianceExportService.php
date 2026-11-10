@@ -14,9 +14,8 @@
  * OpenRegister's audit-trail-immutable channel per ADR-022. This
  * service is a READ-FILTER-RENDER pipeline; logging of the export
  * request itself (per REQ-RAP-005 scenario 3 — "Export audit trail
- * is itself audited") is performed by the controller via the OR
- * audit-trail API so the export operation is captured on the same
- * chain it queries.
+ * is itself audited") is performed by the controller as a structured
+ * app-log entry.
  *
  * The service also supports REQ-RAP-009 (GDPR / AVG subject-access
  * filtering): when called with `scope=subject` and an `actorFilter`,
@@ -43,6 +42,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Db\AuditTrailMapper;
+use OCA\OpenRegister\Db\ListQuery;
+use OCA\OpenRegister\Db\RegisterMapper;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use OCP\IUserSession;
@@ -120,7 +122,7 @@ class ComplianceExportService {
 	 * Constructor.
 	 *
 	 * @param ContainerInterface $container DI container — OR's
-	 *                                      ObjectService is fetched
+	 *                                      audit-trail mappers are fetched
 	 *                                      lazily so unit tests can
 	 *                                      swap an in-memory stub.
 	 * @param IAppConfig $appConfig App config for the OR
@@ -298,12 +300,10 @@ class ComplianceExportService {
 	}//end stripPii()
 
 	/**
-	 * Query the OR audit-trail API (lazily resolved) for events in [from, to].
+	 * Read the OpenRegister audit trail of this app's register in [from, to].
 	 *
-	 * The query intentionally targets the audit-trail endpoint that the
-	 * BookkeepingAuditTrail manifest page already consumes; this keeps
-	 * the pipeline aligned with the UI's view and avoids divergent
-	 * filter semantics.
+	 * The mappers are resolved lazily so the app still boots when
+	 * OpenRegister is absent; the export is then empty and the reason logged.
 	 *
 	 * @param string $from ISO date YYYY-MM-DD.
 	 * @param string $to ISO date YYYY-MM-DD.
@@ -312,65 +312,64 @@ class ComplianceExportService {
 	 */
 	private function queryAuditTrail(string $from, string $to): array {
 		try {
-			$auditService = $this->container->get('OCA\OpenRegister\Service\AuditTrailService');
-		} catch (\Throwable $e) {
-			$this->logger->info(
-				'ComplianceExportService: OR AuditTrailService not resolvable — returning empty result',
-				['exception' => $e->getMessage()]
+			$registerMapper = $this->container->get(RegisterMapper::class);
+			$auditTrailMapper = $this->container->get(AuditTrailMapper::class);
+			$registerId = $registerMapper->find($this->register())->getId();
+			$entries = $auditTrailMapper->findEvery(
+				new ListQuery(filters: ['register' => $registerId], sort: ['created' => 'ASC'])
 			);
-			return [];
-		}
-
-		try {
-			if (method_exists($auditService, 'findInRange') === true) {
-				// @phpstan-ignore-next-line - cross-app OR AuditTrailService; method exists at runtime
-				$rows = $auditService->findInRange(
-					$this->register(),
-					$from . 'T00:00:00Z',
-					$to . 'T23:59:59Z'
-				);
-			} elseif (method_exists($auditService, 'findAll') === true) {
-				$rows = $auditService->findAll(
-					[
-						'filters' => [
-							'register' => $this->register(),
-							'created' => ['>=' => $from . 'T00:00:00Z', '<=' => $to . 'T23:59:59Z'],
-						],
-					]
-				);
-			} else {
-				$this->logger->warning(
-					'ComplianceExportService: OR AuditTrailService has no findInRange/findAll method'
-				);
-				return [];
-			}//end if
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'ComplianceExportService: failed to query OR audit-trail',
 				['exception' => $e->getMessage()]
 			);
 			return [];
-		}//end try
+		}
 
+		$start = $from . 'T00:00:00';
+		$end = $to . 'T23:59:59';
 		$result = [];
-		foreach ((array)$rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
+		foreach ($entries as $entry) {
+			$event = $this->eventOf(entry: $entry->jsonSerialize());
+			$created = substr((string)($event['created'] ?? ''), 0, 19);
+			if ($created < $start || $created > $end) {
 				continue;
 			}
 
-			if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-				$result[] = (array)$row->jsonSerialize();
-				continue;
-			}
-
-			if (is_object($row) === true) {
-				$result[] = json_decode((string)json_encode($row), true) ?? [];
-			}
+			$result[] = $event;
 		}
 
 		return $result;
 	}//end queryAuditTrail()
+
+	/**
+	 * Shape one serialised audit-trail entry as an export event.
+	 *
+	 * The entry stores what changed as `changed[field] = {old, new}`; the
+	 * export compares a before and an after snapshot, so the pairs are split.
+	 *
+	 * @param array<string,mixed> $entry The serialised audit-trail entry.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function eventOf(array $entry): array {
+		$before = [];
+		$after = [];
+		foreach ((array)($entry['changed'] ?? []) as $field => $change) {
+			if (is_array($change) === false || array_key_exists('new', $change) === false) {
+				continue;
+			}
+
+			$before[$field] = ($change['old'] ?? null);
+			$after[$field] = $change['new'];
+		}
+
+		$entry['objectId'] = ($entry['objectUuid'] ?? ($entry['object'] ?? ''));
+		$entry['before'] = $before;
+		$entry['after'] = $after;
+
+		return $entry;
+	}//end eventOf()
 
 	/**
 	 * Convert one OR audit-trail event into the PII-filtered export row.
