@@ -107,48 +107,78 @@ class BillablePeriodInvoiceService {
 	 * @throws InvalidArgumentException When the command is refused.
 	 */
 	private function answer(BillablePeriodClosedEvent $event): void {
-		$sourceApp = trim($event->getSourceApp());
-		$reference = trim($event->getExternalReference());
-		$period    = $event->getPeriod();
-		if ($sourceApp === '' || $reference === '') {
-			throw new InvalidArgumentException('The invoice request names no source app or no external reference.');
-		}
+		$run = $this->runFor(event: $event);
 
-		if (preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $period) !== 1) {
-			throw new InvalidArgumentException(sprintf('The period "%s" is not a month (YYYY-MM).', $period));
-		}
-
-		$lines    = $this->normaliseLines(lines: $event->getLines());
-		$customer = $this->resolveCustomer(reference: $reference);
-		$adminId  = (string)$customer['administrationId'];
-		$batchId  = $sourceApp . ':' . $reference . ':' . $period;
-		$hash     = hash('sha256', (string)json_encode($lines));
-
-		$batch = $this->findBatch(administrationId: $adminId, batchId: $batchId);
+		$batch = $this->findBatch(administrationId: $run->administrationId(), batchId: $run->batchId);
 		if ($batch !== null) {
-			$this->replay(event: $event, batch: $batch, payloadHash: $hash);
+			$this->replay(event: $event, batch: $batch, payloadHash: $run->payloadHash);
 			return;
 		}
 
-		$invoice = $this->draft(
-			customer: $customer,
-			sourceApp: $sourceApp,
-			reference: $reference,
-			period: $period,
-			lines: $lines
-		);
-		$this->recordBatch(
-			customer: $customer,
-			batchId: $batchId,
-			sourceApp: $sourceApp,
-			period: $period,
-			lineCount: count($lines),
-			invoiceId: $invoice['id'],
-			payloadHash: $hash
-		);
+		$invoice = $this->draft(run: $run);
+		$this->recordBatch(run: $run, invoiceId: $invoice['id']);
 
 		$event->accept(invoiceId: $invoice['id'], invoiceNumber: $invoice['number']);
 	}//end answer()
+
+	/**
+	 * Check the command and resolve its customer, lines, ledger key and hash.
+	 *
+	 * @param BillablePeriodClosedEvent $event The command.
+	 *
+	 * @return BillablePeriodRun
+	 *
+	 * @throws InvalidArgumentException When the command is refused.
+	 */
+	private function runFor(BillablePeriodClosedEvent $event): BillablePeriodRun {
+		$sourceApp = trim($event->getSourceApp());
+		$reference = trim($event->getExternalReference());
+		$period    = $event->getPeriod();
+		$this->assertAddressed(sourceApp: $sourceApp, reference: $reference);
+		$this->assertMonth(period: $period);
+
+		$lines = $this->normaliseLines(lines: $event->getLines());
+		return new BillablePeriodRun(
+			customer: $this->resolveCustomer(reference: $reference),
+			sourceApp: $sourceApp,
+			reference: $reference,
+			period: $period,
+			lines: $lines,
+			batchId: $sourceApp . ':' . $reference . ':' . $period,
+			payloadHash: hash('sha256', (string)json_encode($lines)),
+		);
+	}//end runFor()
+
+	/**
+	 * Refuse a command without a source app or an external reference.
+	 *
+	 * @param string $sourceApp The trimmed source app.
+	 * @param string $reference The trimmed external reference.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When either is empty.
+	 */
+	private function assertAddressed(string $sourceApp, string $reference): void {
+		if ($sourceApp === '' || $reference === '') {
+			throw new InvalidArgumentException('The invoice request names no source app or no external reference.');
+		}
+	}//end assertAddressed()
+
+	/**
+	 * Refuse a period that is not a month.
+	 *
+	 * @param string $period The requested period.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When it is not `YYYY-MM`.
+	 */
+	private function assertMonth(string $period): void {
+		if (preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $period) !== 1) {
+			throw new InvalidArgumentException(sprintf('The period "%s" is not a month (YYYY-MM).', $period));
+		}
+	}//end assertMonth()
 
 	/**
 	 * Read every line, refusing the whole request on one unreadable line.
@@ -166,31 +196,60 @@ class BillablePeriodInvoiceService {
 
 		$normalised = [];
 		foreach ($lines as $index => $line) {
-			$quantity  = ($line['quantity'] ?? null);
-			$unitPrice = ($line['unitPrice'] ?? null);
-			$currency  = strtoupper((string)($line['currency'] ?? self::CURRENCY));
-			if (is_numeric($quantity) === false || is_numeric($unitPrice) === false || (float)$quantity <= 0.0) {
-				throw new InvalidArgumentException(sprintf('Line %d has no readable quantity or unit price.', ($index + 1)));
-			}
-
-			if ($currency !== self::CURRENCY) {
-				throw new InvalidArgumentException(sprintf('Line %d is in %s; shillinq drafts this invoice in EUR only.', ($index + 1), $currency));
-			}
-
-			$description = trim((string)($line['description'] ?? ''));
-			if ($description === '') {
-				$description = 'usage';
-			}
-
-			$normalised[] = [
-				'description'    => $description,
-				'quantity'       => (float)$quantity,
-				'unitPriceCents' => (int)round(((float)$unitPrice) * 100),
-			];
-		}//end foreach
+			$normalised[] = $this->normaliseLine(index: $index, line: $line);
+		}
 
 		return $normalised;
 	}//end normaliseLines()
+
+	/**
+	 * One line read as description (default "usage"), quantity and unit price in cents.
+	 *
+	 * @param int                  $index The line's position (0-based).
+	 * @param array<string, mixed> $line  The event's line.
+	 *
+	 * @return array{description:string, quantity:float, unitPriceCents:int}
+	 *
+	 * @throws InvalidArgumentException When the line cannot be priced in EUR.
+	 */
+	private function normaliseLine(int $index, array $line): array {
+		$this->assertPriced(index: $index, line: $line);
+
+		$description = trim((string)($line['description'] ?? ''));
+		if ($description === '') {
+			$description = 'usage';
+		}
+
+		return [
+			'description'    => $description,
+			'quantity'       => (float)$line['quantity'],
+			'unitPriceCents' => (int)round(((float)$line['unitPrice']) * 100),
+		];
+	}//end normaliseLine()
+
+	/**
+	 * Refuse a line without a readable positive quantity and unit price, or
+	 * in another currency than EUR.
+	 *
+	 * @param int                  $index The line's position (0-based).
+	 * @param array<string, mixed> $line  The event's line.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the line cannot be priced in EUR.
+	 */
+	private function assertPriced(int $index, array $line): void {
+		$quantity  = ($line['quantity'] ?? null);
+		$unitPrice = ($line['unitPrice'] ?? null);
+		$currency  = strtoupper((string)($line['currency'] ?? self::CURRENCY));
+		if (is_numeric($quantity) === false || is_numeric($unitPrice) === false || (float)$quantity <= 0.0) {
+			throw new InvalidArgumentException(sprintf('Line %d has no readable quantity or unit price.', ($index + 1)));
+		}
+
+		if ($currency !== self::CURRENCY) {
+			throw new InvalidArgumentException(sprintf('Line %d is in %s; shillinq drafts this invoice in EUR only.', ($index + 1), $currency));
+		}
+	}//end assertPriced()
 
 	/**
 	 * The one customer that carries the reference.
@@ -258,49 +317,24 @@ class BillablePeriodInvoiceService {
 	/**
 	 * Write the meter readings and draft the invoice.
 	 *
-	 * @param array<string, mixed> $customer The CustomerMaster row.
-	 * @param string $sourceApp The asking app.
-	 * @param string $reference The asking app's id for the customer.
-	 * @param string $period `YYYY-MM`.
-	 * @param array<int, array{description:string, quantity:float, unitPriceCents:int}> $lines The lines.
+	 * @param BillablePeriodRun $run The month being drafted.
 	 *
 	 * @return array{id:string, number:string}
 	 */
-	private function draft(array $customer, string $sourceApp, string $reference, string $period, array $lines): array {
-		$adminId     = (string)$customer['administrationId'];
-		$periodStart = $period . '-01';
-		$periodEnd   = date('Y-m-t', (int)strtotime($periodStart));
-		$readingIds  = [];
-		foreach ($lines as $line) {
-			$planId = $this->ratePlanFor(administrationId: $adminId, sourceApp: $sourceApp, line: $line);
-			$saved  = $this->saveObject(
-				schema: 'MeterReading',
-				data: [
-					'administrationId' => $adminId,
-					'meterId'          => $sourceApp . ':' . $reference,
-					'customerId'       => (string)$customer['customerId'],
-					'resourceType'     => $line['description'],
-					'quantity'         => $line['quantity'],
-					'unit'             => 'unit',
-					'ratePlanId'       => $planId,
-					'ratedAmount'      => round(($line['quantity'] * $line['unitPriceCents']) / 100, 2),
-					'periodStart'      => $periodStart,
-					'periodEnd'        => $periodEnd,
-					'description'      => $line['description'],
-					'status'           => 'rated',
-				]
-			);
-			$readingIds[] = $this->idOf(row: $saved);
-		}//end foreach
+	private function draft(BillablePeriodRun $run): array {
+		$readingIds = [];
+		foreach ($run->lines as $line) {
+			$readingIds[] = $this->writeReading(run: $run, line: $line);
+		}
 
 		$invoice = $this->invoices->draftInvoice(
 			request: new InvoiceGenerationRequest(
-				administrationId: $adminId,
+				administrationId: $run->administrationId(),
 				billingModel: 'usage',
-				customerId: (string)$customer['customerId'],
-				fromDate: $periodStart,
-				toDate: $periodEnd,
-				notes: sprintf('%s, account %s, %s', $sourceApp, $reference, $period),
+				customerId: (string)$run->customer['customerId'],
+				fromDate: $run->periodStart(),
+				toDate: $run->periodEnd(),
+				notes: sprintf('%s, account %s, %s', $run->sourceApp, $run->reference, $run->period),
 				meterReadingIds: $readingIds,
 			)
 		);
@@ -309,17 +343,47 @@ class BillablePeriodInvoiceService {
 	}//end draft()
 
 	/**
+	 * Price one line on its flat plan and write it as a rated meter reading.
+	 *
+	 * @param BillablePeriodRun                                             $run  The month being drafted.
+	 * @param array{description:string, quantity:float, unitPriceCents:int} $line The line.
+	 *
+	 * @return string The MeterReading id.
+	 */
+	private function writeReading(BillablePeriodRun $run, array $line): string {
+		$planId = $this->ratePlanFor(run: $run, line: $line);
+		$saved  = $this->saveObject(
+			schema: 'MeterReading',
+			data: [
+				'administrationId' => $run->administrationId(),
+				'meterId'          => $run->sourceApp . ':' . $run->reference,
+				'customerId'       => (string)$run->customer['customerId'],
+				'resourceType'     => $line['description'],
+				'quantity'         => $line['quantity'],
+				'unit'             => 'unit',
+				'ratePlanId'       => $planId,
+				'ratedAmount'      => round(($line['quantity'] * $line['unitPriceCents']) / 100, 2),
+				'periodStart'      => $run->periodStart(),
+				'periodEnd'        => $run->periodEnd(),
+				'description'      => $line['description'],
+				'status'           => 'rated',
+			]
+		);
+
+		return $this->idOf(row: $saved);
+	}//end writeReading()
+
+	/**
 	 * Find or create the flat plan that prices one line at its own unit price.
 	 *
-	 * @param string $administrationId The customer's administration.
-	 * @param string $sourceApp The asking app.
+	 * @param BillablePeriodRun                                             $run  The month being drafted.
 	 * @param array{description:string, quantity:float, unitPriceCents:int} $line The line.
 	 *
 	 * @return string The UsageRatePlan id.
 	 */
-	private function ratePlanFor(string $administrationId, string $sourceApp, array $line): string {
+	private function ratePlanFor(BillablePeriodRun $run, array $line): string {
 		$filters = [
-			'administrationId' => $administrationId,
+			'administrationId' => $run->administrationId(),
 			'resourceType'     => $line['description'],
 			'ratingMethod'     => 'flat',
 			'unitPriceCents'   => $line['unitPriceCents'],
@@ -334,7 +398,7 @@ class BillablePeriodInvoiceService {
 			data: array_merge(
 				$filters,
 				[
-					'name'     => sprintf('%s %s', $sourceApp, $line['description']),
+					'name'     => sprintf('%s %s', $run->sourceApp, $line['description']),
 					'unit'     => 'unit',
 					'currency' => self::CURRENCY,
 				]
@@ -347,41 +411,27 @@ class BillablePeriodInvoiceService {
 	/**
 	 * Record the drafted month in the ledger.
 	 *
-	 * @param array<string, mixed> $customer The CustomerMaster row.
-	 * @param string $batchId `<sourceApp>:<reference>:<period>`.
-	 * @param string $sourceApp The asking app.
-	 * @param string $period `YYYY-MM`.
-	 * @param int $lineCount Number of lines.
-	 * @param string $invoiceId The drafted invoice.
-	 * @param string $payloadHash The hash of the lines.
+	 * @param BillablePeriodRun $run       The month being drafted.
+	 * @param string            $invoiceId The drafted invoice.
 	 *
 	 * @return void
 	 */
-	private function recordBatch(
-		array $customer,
-		string $batchId,
-		string $sourceApp,
-		string $period,
-		int $lineCount,
-		string $invoiceId,
-		string $payloadHash,
-	): void {
-		$periodStart = $period . '-01';
+	private function recordBatch(BillablePeriodRun $run, string $invoiceId): void {
 		$this->saveObject(
 			schema: 'TimeIntakeBatch',
 			data: [
-				'administrationId' => (string)$customer['administrationId'],
-				'batchId'          => $batchId,
-				'sourceApp'        => $sourceApp,
-				'organisationRef'  => (string)$customer['customerId'],
+				'administrationId' => $run->administrationId(),
+				'batchId'          => $run->batchId,
+				'sourceApp'        => $run->sourceApp,
+				'organisationRef'  => (string)$run->customer['customerId'],
 				'currency'         => self::CURRENCY,
-				'periodStart'      => $periodStart,
-				'periodEnd'        => date('Y-m-t', (int)strtotime($periodStart)),
-				'entryCount'       => $lineCount,
+				'periodStart'      => $run->periodStart(),
+				'periodEnd'        => $run->periodEnd(),
+				'entryCount'       => count($run->lines),
 				'status'           => 'invoiced',
 				'invoiceId'        => $invoiceId,
 				'receivedAt'       => date('c'),
-				'payloadHash'      => $payloadHash,
+				'payloadHash'      => $run->payloadHash,
 			]
 		);
 	}//end recordBatch()
