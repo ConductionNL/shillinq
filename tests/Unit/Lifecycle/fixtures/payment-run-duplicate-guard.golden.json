@@ -1,0 +1,465 @@
+{
+    "noId": {
+        "allowed": false,
+        "message": "This payment run cannot be exported: the batch could not be identified for the duplicate-payment check (fail-closed).",
+        "logs": [
+            [
+                "warning",
+                "PaymentRunDuplicateGuard: payment-run id is empty — denying (fail-closed).",
+                {
+                    "action": "export"
+                }
+            ]
+        ],
+        "calls": []
+    },
+    "selfId": {
+        "allowed": true,
+        "message": null,
+        "logs": [],
+        "calls": []
+    },
+    "nonStringId": {
+        "allowed": false,
+        "message": "This payment run cannot be exported: the batch could not be identified for the duplicate-payment check (fail-closed).",
+        "logs": [
+            [
+                "warning",
+                "PaymentRunDuplicateGuard: payment-run id is empty — denying (fail-closed).",
+                {
+                    "action": "export"
+                }
+            ]
+        ],
+        "calls": []
+    },
+    "emptyLines": {
+        "allowed": true,
+        "message": null,
+        "logs": [],
+        "calls": []
+    },
+    "nonArrayLines": {
+        "allowed": false,
+        "message": "This payment run cannot be exported: the duplicate-payment check could not be completed, so the disbursement is blocked (fail-closed).",
+        "logs": [
+            [
+                "error",
+                "PaymentRunDuplicateGuard: a payment line has no apTransactionRef — denying (fail-closed).",
+                {
+                    "paymentRun": "pr-1",
+                    "action": "export"
+                }
+            ]
+        ],
+        "calls": []
+    },
+    "nonArrayLine": {
+        "allowed": false,
+        "message": "This payment run cannot be exported: the duplicate-payment check could not be completed, so the disbursement is blocked (fail-closed).",
+        "logs": [
+            [
+                "error",
+                "PaymentRunDuplicateGuard: a payment line has no apTransactionRef — denying (fail-closed).",
+                {
+                    "paymentRun": "pr-1",
+                    "action": "export"
+                }
+            ]
+        ],
+        "calls": []
+    },
+    "lineWithoutRef": {
+        "allowed": false,
+        "message": "This payment run cannot be exported: the duplicate-payment check could not be completed, so the disbursement is blocked (fail-closed).",
+        "logs": [
+            [
+                "error",
+                "PaymentRunDuplicateGuard: a payment line has no apTransactionRef — denying (fail-closed).",
+                {
+                    "paymentRun": "pr-1",
+                    "action": "export"
+                }
+            ]
+        ],
+        "calls": []
+    },
+    "clean": {
+        "allowed": true,
+        "message": null,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:APTransaction",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:PaymentRun",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "unknownInvoice": {
+        "allowed": false,
+        "message": "This payment run cannot be exported: payment is blocked for invoice ap-2. Remove the line or release the block before exporting.",
+        "logs": [
+            [
+                "warning",
+                "PaymentRunDuplicateGuard: a line pays a blocked or disputed invoice — denying export.",
+                {
+                    "paymentRun": "pr-1",
+                    "action": "export",
+                    "invoices": [
+                        "ap-2"
+                    ]
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:APTransaction",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:PaymentRun",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "paidByState": {
+        "allowed": false,
+        "message": "This payment run cannot be exported: at least one invoice in the batch has already been paid. Remove the settled invoice before exporting; paying it again would be a duplicate payment.",
+        "logs": [
+            [
+                "warning",
+                "PaymentRunDuplicateGuard: a line settles an already-paid invoice — denying export.",
+                {
+                    "paymentRun": "pr-1",
+                    "action": "export"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:APTransaction",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "paidByStatusSlug": {
+        "allowed": false,
+        "message": "This payment run cannot be exported: at least one invoice in the batch has already been paid. Remove the settled invoice before exporting; paying it again would be a duplicate payment.",
+        "logs": [
+            [
+                "warning",
+                "PaymentRunDuplicateGuard: a line settles an already-paid invoice — denying export.",
+                {
+                    "paymentRun": "pr-1",
+                    "action": "export"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:APTransaction",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "paidOtherInvoice": {
+        "allowed": false,
+        "message": "This payment run cannot be exported: payment is blocked for invoice ap-1, ap-2. Remove the line or release the block before exporting.",
+        "logs": [
+            [
+                "warning",
+                "PaymentRunDuplicateGuard: a line pays a blocked or disputed invoice — denying export.",
+                {
+                    "paymentRun": "pr-1",
+                    "action": "export",
+                    "invoices": [
+                        "ap-1",
+                        "ap-2"
+                    ]
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:APTransaction",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:PaymentRun",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "batchedDraft": {
+        "allowed": false,
+        "message": "This payment run cannot be exported: at least one invoice in the batch is already queued in another open or executed payment batch. Remove the duplicate line before exporting to prevent a double payment.",
+        "logs": [
+            [
+                "warning",
+                "PaymentRunDuplicateGuard: a line is already queued in another batch — denying export.",
+                {
+                    "paymentRun": "pr-1",
+                    "action": "export"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:APTransaction",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:PaymentRun",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "batchedExportedByStatus": {
+        "allowed": false,
+        "message": "This payment run cannot be exported: at least one invoice in the batch is already queued in another open or executed payment batch. Remove the duplicate line before exporting to prevent a double payment.",
+        "logs": [
+            [
+                "warning",
+                "PaymentRunDuplicateGuard: a line is already queued in another batch — denying export.",
+                {
+                    "paymentRun": "pr-1",
+                    "action": "export"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:APTransaction",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:PaymentRun",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "ownBatch": {
+        "allowed": true,
+        "message": null,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:APTransaction",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:PaymentRun",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "reconciledOther": {
+        "allowed": true,
+        "message": null,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:APTransaction",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:PaymentRun",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "otherNonArrayLines": {
+        "allowed": true,
+        "message": null,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:APTransaction",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:PaymentRun",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "blocked": {
+        "allowed": false,
+        "message": "This payment run cannot be exported: payment is blocked for invoice 2026-0001, 2026-0002. Remove the line or release the block before exporting.",
+        "logs": [
+            [
+                "warning",
+                "PaymentRunDuplicateGuard: a line pays a blocked or disputed invoice — denying export.",
+                {
+                    "paymentRun": "pr-1",
+                    "action": "export",
+                    "invoices": [
+                        "2026-0001",
+                        "2026-0002"
+                    ]
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:APTransaction",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:PaymentRun",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "noAdministration": {
+        "allowed": true,
+        "message": null,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:APTransaction",
+            {
+                "findAll": {
+                    "filters": []
+                }
+            },
+            "register:shillinq",
+            "schema:PaymentRun",
+            {
+                "findAll": {
+                    "filters": []
+                }
+            }
+        ]
+    },
+    "storeDown": {
+        "allowed": false,
+        "message": "This payment run cannot be exported: the duplicate-payment check could not be completed, so the disbursement is blocked (fail-closed).",
+        "logs": [
+            [
+                "error",
+                "PaymentRunDuplicateGuard: duplicate-payment lookup threw — denying export (fail-closed).",
+                {
+                    "paymentRun": "pr-1",
+                    "action": "export",
+                    "error": "store down"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:APTransaction",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    }
+}
