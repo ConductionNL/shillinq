@@ -424,7 +424,9 @@ final class GoldenCalendarObjects {
 	 *
 	 * @return mixed
 	 */
-	public function saveObject(array $object, string $register, string $schema): mixed {
+	public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null): mixed {
+		$register = $options?->target->register;
+		$schema = $options?->target->schema;
 		$this->saved[] = ['register' => $register, 'schema' => $schema, 'object' => $object];
 		return match ($this->save) {
 			'throws' => throw new RuntimeException('disk full'),

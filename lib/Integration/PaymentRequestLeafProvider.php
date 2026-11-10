@@ -38,6 +38,8 @@ namespace OCA\Shillinq\Integration;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Service\Integration\IntegrationProvider;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\Service\DebtorCreditService;
 use OCA\Shillinq\Service\FeeScheduleService;
 use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
@@ -496,8 +498,9 @@ final class PaymentRequestLeafProvider implements IntegrationProvider {
 
 		$saved = $this->objectService->saveObject(
 			object: $request,
-			register: $this->registerSlug(),
-			schema: self::SCHEMA,
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $this->registerSlug(), schema: self::SCHEMA)
+			),
 			_rbac: ($asSystem === false),
 			_multitenancy: ($asSystem === false),
 		);

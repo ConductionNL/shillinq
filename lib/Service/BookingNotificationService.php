@@ -26,6 +26,8 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -285,8 +287,9 @@ class BookingNotificationService {
 
 			$this->objectService->saveObject(
 				object: $record,
-				register: $registerSlug,
-				schema: 'NotificationDelivery',
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $registerSlug, schema: 'NotificationDelivery')
+				),
 			);
 		} catch (\Throwable $e) {
 			$this->logger->error(

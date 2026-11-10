@@ -496,7 +496,8 @@ class RetireCostProjectStepTest extends TestCase {
 			/**
 			 * @param array<string,mixed> $object
 			 */
-			public function saveObject(array $object, string $register, string $schema, bool $_rbac = true, bool $_multitenancy = true): void {
+			public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): void {
+				$schema = $options?->target->schema;
 				$this->saves[] = ['object' => $object, 'schema' => $schema];
 				// Simulate the saved dimension appearing in existingDimensions for subsequent code-exists checks.
 				$this->existingDimensions[] = $object;

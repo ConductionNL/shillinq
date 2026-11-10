@@ -24,6 +24,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\Service\AppointmentConfirmationService;
 use OCA\Shillinq\Service\ConfirmationMailer;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -168,7 +170,8 @@ final class AppointmentConfirmationServiceTest extends TestCase {
 			 *
 			 * @return array<string,mixed>
 			 */
-			public function saveObject(array $object, string $register = '', string $schema = ''): array {
+			public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null): array {
+				$schema = $options?->target->schema;
 				$schema = ($schema !== '' ? $schema : $this->schema);
 				$key = (string)($object['id'] ?? ($object['tokenId'] ?? ($object['appointmentNumber'] ?? uniqid())));
 				if (isset($object['id']) === false) {
@@ -236,7 +239,7 @@ final class AppointmentConfirmationServiceTest extends TestCase {
 			],
 			$overrides
 		);
-		$this->store->saveObject($appt, 'shillinq', 'Appointment');
+		$this->store->saveObject(object: $appt, options: new ObjectSaveOptions(target: new ObjectFindTarget(register: 'shillinq', schema: 'Appointment')));
 		return $appt;
 	}//end seedAppointment()
 

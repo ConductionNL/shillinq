@@ -331,7 +331,9 @@ class CalendarControllerTest extends TestCase {
 				return $matched;
 			}
 
-			public function saveObject(array $object, string $register, string $schema): array {
+			public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null): array {
+				$register = $options?->target->register;
+				$schema = $options?->target->schema;
 				$this->savedObjects[] = ['object' => $object, 'register' => $register, 'schema' => $schema];
 				// Echo back the object so the controller can shape the response.
 				return array_merge($object, ['@self' => ['id' => 'uuid-saved']]);

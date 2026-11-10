@@ -37,6 +37,8 @@ namespace OCA\Shillinq\BackgroundJob;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -167,7 +169,13 @@ class HorizonRollingJob extends TimedJob {
 				$rolledHorizon = $this->shiftHorizon(horizon: $horizon, monday: $thisMonday);
 				$objectService->setRegister($register);
 				$objectService->setSchema('CashflowForecastHorizon');
-				$objectService->saveObject($rolledHorizon, $register, 'CashflowForecastHorizon', $uuid);
+				$objectService->saveObject(
+					$rolledHorizon,
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $register, schema: 'CashflowForecastHorizon'),
+						uuid: $uuid
+					)
+				);
 				$rolled++;
 			} catch (\Throwable $e) {
 				$errors++;

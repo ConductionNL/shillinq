@@ -42,6 +42,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use DateTimeImmutable;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\IGroupManager;
@@ -176,10 +178,9 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 						->setSchema('engagement')
 						->saveObject(
 							object: $record,
-							register: $registerSlug,
-							schema: 'engagement',
+							options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'engagement')),
 							_rbac: false,
-							_multitenancy: false,
+							_multitenancy: false
 						);
 					$saved++;
 				} catch (\Throwable $e) {

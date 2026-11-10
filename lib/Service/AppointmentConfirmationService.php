@@ -32,6 +32,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCA\Shillinq\Util\TokenValidator;
@@ -157,8 +159,9 @@ class AppointmentConfirmationService {
 		try {
 			$objectService->saveObject(
 				object: $tokenRecord,
-				register: $register,
-				schema: 'ConfirmationToken',
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $register, schema: 'ConfirmationToken')
+				),
 			);
 			$this->logger->info(
 				'Shillinq: confirmation token generated',
@@ -277,8 +280,18 @@ class AppointmentConfirmationService {
 		$token['redeemedAt'] = $now;
 
 		try {
-			$objectService->saveObject(object: $token, register: $register, schema: 'ConfirmationToken');
-			$objectService->saveObject(object: $appointment, register: $register, schema: 'Appointment');
+			$objectService->saveObject(
+				object: $token,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $register, schema: 'ConfirmationToken')
+				)
+			);
+			$objectService->saveObject(
+				object: $appointment,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $register, schema: 'Appointment')
+				)
+			);
 			$this->logger->info(
 				'Shillinq: appointment confirmed',
 				['appointmentId' => $appointmentId, 'action' => 'appointment_confirmed']
@@ -327,7 +340,12 @@ class AppointmentConfirmationService {
 				->findAll(['filters' => ['appointmentId' => $appointmentId, 'status' => 'active']]);
 			foreach ($existing as $tok) {
 				$tok['status'] = 'revoked';
-				$objectService->saveObject(object: $tok, register: $register, schema: 'ConfirmationToken');
+				$objectService->saveObject(
+					object: $tok,
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $register, schema: 'ConfirmationToken')
+					)
+				);
 			}
 		} catch (Throwable $e) {
 			$this->logger->error('Shillinq: failed to revoke prior tokens: ' . $e->getMessage());
@@ -389,7 +407,12 @@ class AppointmentConfirmationService {
 			$appointment['status'] = self::STATUS_CANCELLED;
 			$appointment['cancelledReason'] = 'Confirmation deadline passed';
 			try {
-				$objectService->saveObject(object: $appointment, register: $register, schema: 'Appointment');
+				$objectService->saveObject(
+					object: $appointment,
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $register, schema: 'Appointment')
+					)
+				);
 				$cancelled++;
 				$this->logger->info(
 					'Shillinq: appointment auto-cancelled',

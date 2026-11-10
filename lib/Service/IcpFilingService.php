@@ -34,6 +34,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use RuntimeException;
@@ -304,8 +306,9 @@ class IcpFilingService {
 		try {
 			$this->objectService->saveObject(
 				object: $return,
-				register: $this->register(),
-				schema: 'IcpOpgaaf',
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $this->register(), schema: 'IcpOpgaaf')
+				),
 			);
 
 			return true;

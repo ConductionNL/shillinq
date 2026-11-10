@@ -64,6 +64,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting;
 
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\Files\File;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
@@ -634,8 +636,9 @@ class ReportGenerationService {
 
 			$saved = $objectService->saveObject(
 				object: $record,
-				register: self::REGISTER,
-				schema: self::SCHEMA,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: self::REGISTER, schema: self::SCHEMA)
+				),
 			);
 
 			if (is_object($saved) === true && method_exists($saved, 'jsonSerialize') === true) {

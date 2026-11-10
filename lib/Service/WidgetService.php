@@ -30,6 +30,8 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -407,7 +409,13 @@ class WidgetService {
 	private function storeAppointment(object $objectService, array $request): array {
 		$appointment = $this->appointmentRecord(request: $request);
 		try {
-			$saved = $objectService->saveObject(object: $appointment, register: $this->getRegisterSlug(), schema: 'Appointment', _rbac: false);
+			$saved = $objectService->saveObject(
+				object: $appointment,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $this->getRegisterSlug(), schema: 'Appointment')
+				),
+				_rbac: false
+			);
 		} catch (\Throwable $e) {
 			$context = ['exception' => $e->getMessage(), 'administrationId' => $request['administrationId']];
 			$this->logger->error('WidgetService: appointment save failed', $context);

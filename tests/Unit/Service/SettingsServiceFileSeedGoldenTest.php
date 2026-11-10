@@ -262,7 +262,9 @@ class RecordingFileSeedObjectService {
 	 *
 	 * @return array<string, mixed>
 	 */
-	public function saveObject(mixed $object, mixed $register, mixed $schema): array {
+	public function saveObject(mixed $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null): array {
+		$register = $options?->target->register;
+		$schema = $options?->target->schema;
 		$this->calls[] = ['saveObject' => ['object' => $object, 'register' => $register, 'schema' => $schema]];
 		$this->saves++;
 		if (in_array($this->mode, ['saveFails', 'systemSaveFails'], true) === true && $this->saves === 2) {

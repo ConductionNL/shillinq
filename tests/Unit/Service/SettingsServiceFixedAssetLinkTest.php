@@ -145,7 +145,8 @@ class SettingsServiceFixedAssetLinkTest extends TestCase {
 				return [];
 			}
 
-			public function saveObject(array $object, string $register, string $schema): object {
+			public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null): object {
+				$schema = $options?->target->schema;
 				if ($schema === 'DepreciationSchedule') {
 					$this->savedSchedules[] = $object;
 					return $this->entity(uuid: 'schedule-' . count($this->savedSchedules));

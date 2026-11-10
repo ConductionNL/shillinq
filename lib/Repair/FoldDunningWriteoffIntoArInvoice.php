@@ -51,6 +51,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
+use OCA\OpenRegister\Service\Object\SaveActor;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\IGroupManager;
@@ -201,11 +204,12 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
 
 				$this->objectService->saveObject(
 					object: $invoiceArr,
-					register: $registerSlug,
-					schema: 'ARInvoice',
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $registerSlug, schema: 'ARInvoice'),
+						actor: new SaveActor(currentUser: $actingUser)
+					),
 					_rbac: false,
 					_multitenancy: false,
-					currentUser: $actingUser,
 				);
 				$folded++;
 			}//end foreach

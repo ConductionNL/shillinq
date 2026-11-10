@@ -40,6 +40,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\Portal\PortalSubjectResolver;
 use OCA\Shillinq\Service\Dunning\VoluntaryContributionPolicy;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -230,9 +232,10 @@ class ContributionDeclineService {
 
 		$objectService->saveObject(
 			object: $data,
-			register: self::REGISTER,
-			schema: 'ARInvoice',
-			uuid: (string)$invoice['id'],
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: self::REGISTER, schema: 'ARInvoice'),
+				uuid: (string)$invoice['id']
+			),
 			_rbac: false,
 			_multitenancy: false,
 		);
@@ -274,9 +277,10 @@ class ContributionDeclineService {
 			$data['state'] = 'voided';
 			$objectService->saveObject(
 				object: $data,
-				register: self::REGISTER,
-				schema: 'PaymentRequest',
-				uuid: $uuid,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: self::REGISTER, schema: 'PaymentRequest'),
+					uuid: $uuid
+				),
 				_rbac: false,
 				_multitenancy: false,
 			);

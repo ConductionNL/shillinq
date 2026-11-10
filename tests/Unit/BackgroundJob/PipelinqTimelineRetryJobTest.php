@@ -154,7 +154,8 @@ final class PipelinqTimelineRetryJobTest extends TestCase {
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, ?string $register = null, ?string $schema = null): array {
+			public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null): array {
+				$schema = $options?->target->schema;
 				$effectiveSchema = ($schema ?? (string)$this->schema);
 				$id = (string)($object['id'] ?? ('row-' . count($this->store[$effectiveSchema] ?? [])));
 				$object['id'] = $id;

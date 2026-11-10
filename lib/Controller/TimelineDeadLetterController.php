@@ -42,6 +42,8 @@ namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
 use OCA\Shillinq\Service\SettingsService;
@@ -220,8 +222,7 @@ class TimelineDeadLetterController extends Controller {
 				->setSchema('TimelinePublishRetryEntry')
 				->saveObject(
 					object: $retry,
-					register: $registerSlug,
-					schema: 'TimelinePublishRetryEntry'
+					options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'TimelinePublishRetryEntry'))
 				);
 
 			$entryId = $this->extractId(result: $saved);
@@ -255,8 +256,7 @@ class TimelineDeadLetterController extends Controller {
 				->setSchema('TimelineDeadLetter')
 				->saveObject(
 					object: $dead,
-					register: $registerSlug,
-					schema: 'TimelineDeadLetter'
+					options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'TimelineDeadLetter'))
 				);
 
 			$this->logger->info(

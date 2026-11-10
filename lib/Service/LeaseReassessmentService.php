@@ -44,6 +44,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -461,8 +463,9 @@ class LeaseReassessmentService {
 		try {
 			$saved = $this->objectService()->saveObject(
 				object: $row,
-				register: $this->register(),
-				schema: 'LeaseReassessmentEvent',
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $this->register(), schema: 'LeaseReassessmentEvent')
+				),
 			);
 			if (is_array($saved) === true) {
 				// Task 8.2: fire decidesk approval webhook for material events.

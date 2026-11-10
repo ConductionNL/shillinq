@@ -258,7 +258,8 @@ class BbvSeedServiceTest extends TestCase {
 			 *
 			 * @return void
 			 */
-			public function saveObject(array $object, string $register, string $schema): void {
+			public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null): void {
+				$schema = $options?->target->schema;
 				$this->saved[] = ['object' => $object, 'schema' => $schema];
 				// Add to existingRows so a subsequent invocation in the same run dedupes.
 				$this->existingRows[] = $object;

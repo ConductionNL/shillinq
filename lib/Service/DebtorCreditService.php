@@ -30,6 +30,8 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
@@ -334,8 +336,9 @@ class DebtorCreditService {
 	private function save(string $schema, array $object): string {
 		$saved = $this->objectService->saveObject(
 			object: $object,
-			register: $this->registerSlug(),
-			schema: $schema,
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $this->registerSlug(), schema: $schema)
+			),
 			_rbac: false,
 		);
 

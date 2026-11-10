@@ -23,6 +23,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
+use OCA\OpenRegister\Service\Object\SaveActor;
 use OCA\Shillinq\Standards\RuleEngine;
 use OCP\IUser;
 use Psr\Log\LoggerInterface;
@@ -602,12 +605,14 @@ final class RuleTestDataSeedRun {
 	 */
 	private function save(string $schema, array $write): void {
 		$this->objectService->saveObject(
-			...$write,
-			register: $this->register,
-			schema: $schema,
+			object: $write['object'],
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $this->register, schema: $schema),
+				uuid: ($write['uuid'] ?? null),
+				actor: new SaveActor(currentUser: $this->admin)
+			),
 			_rbac: false,
-			_multitenancy: false,
-			currentUser: $this->admin
+			_multitenancy: false
 		);
 	}//end save()
 

@@ -39,6 +39,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Booking;
 
 use DateTimeZone;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\Service\IcsService;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Support\FleetAppId;
@@ -414,8 +416,9 @@ class ConfirmationTokenService {
 			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
 			$saved = $objectService->saveObject(
 				object: $token,
-				register: $this->settings->getRegisterSlug(),
-				schema: 'ConfirmationToken',
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $this->settings->getRegisterSlug(), schema: 'ConfirmationToken')
+				),
 				_rbac: false,
 			);
 			return $this->toArray(object: $saved);

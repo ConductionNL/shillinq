@@ -27,6 +27,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\Tax;
 
 use DomainException;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\Tax\VatNumberCheck;
 use OCA\Shillinq\Service\ViesService;
@@ -132,7 +134,7 @@ class VatNumberCheckTest extends TestCase {
 	 */
 	public function testViesIsDown(): void {
 		$tenDaysAgo = gmdate('c', (time() - (10 * 86400)));
-		$this->store->saveObject(['vatId' => 'BE0000000000', 'valid' => true, 'outage' => false, 'validationTimestamp' => $tenDaysAgo, 'validUntil' => $tenDaysAgo, 'name' => 'Softwarehuis BVBA', 'address' => 'Gent', 'requestId' => 'R1', 'administrationId' => self::ADMIN], register: 'shillinq', schema: 'ViesValidation');
+		$this->store->saveObject(object: ['vatId' => 'BE0000000000', 'valid' => true, 'outage' => false, 'validationTimestamp' => $tenDaysAgo, 'validUntil' => $tenDaysAgo, 'name' => 'Softwarehuis BVBA', 'address' => 'Gent', 'requestId' => 'R1', 'administrationId' => self::ADMIN], options: new ObjectSaveOptions(target: new ObjectFindTarget(register: 'shillinq', schema: 'ViesValidation')));
 		$check = $this->check(answer: null);
 
 		foreach ([1, 2] as $attempt) {

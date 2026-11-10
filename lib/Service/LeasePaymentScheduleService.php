@@ -30,6 +30,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -142,8 +144,9 @@ class LeasePaymentScheduleService {
 
 			$objectService->saveObject(
 				object: $object,
-				register: $register,
-				schema: 'LeasePaymentSchedule',
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $register, schema: 'LeasePaymentSchedule')
+				),
 			);
 			$written++;
 		}//end foreach

@@ -39,6 +39,8 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use Throwable;
 
 /**
@@ -180,9 +182,10 @@ class StandardsPolicyService {
 		$saved = $this->normalise(
 			$this->objectService->saveObject(
 				object: $payload,
-				register: self::REGISTER_SLUG,
-				schema: self::SCHEMA,
-				uuid: ($existing !== null ? $this->policyId(policy: $existing) : null),
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: self::REGISTER_SLUG, schema: self::SCHEMA),
+					uuid: ($existing !== null ? $this->policyId(policy: $existing) : null)
+				),
 				_rbac: false,
 				_multitenancy: false,
 			)

@@ -32,6 +32,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\Integration\PaymentRequestLeafProvider;
 use OCA\Shillinq\Service\FeeScheduleService;
 use OCA\Shillinq\Service\PaymentActionAuthorizer;
@@ -141,8 +143,9 @@ class PaymentRequestActionController extends Controller {
 		$request['linkSentAt'] = gmdate('Y-m-d\TH:i:s\Z');
 		$this->objectService->saveObject(
 			object: $request,
-			register: $this->registerSlug(),
-			schema: self::SCHEMA,
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $this->registerSlug(), schema: self::SCHEMA)
+			),
 		);
 
 		return new JSONResponse(['sent' => true, 'linkSentAt' => $request['linkSentAt']]);
@@ -232,8 +235,9 @@ class PaymentRequestActionController extends Controller {
 
 		$this->objectService->saveObject(
 			object: $request,
-			register: $this->registerSlug(),
-			schema: self::SCHEMA,
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $this->registerSlug(), schema: self::SCHEMA)
+			),
 		);
 
 		return new JSONResponse(

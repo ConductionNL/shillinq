@@ -469,7 +469,7 @@ class SettingsServiceTest extends TestCase {
 			/**
 			 * @param array<string,mixed> $object
 			 */
-			public function saveObject(array $object, string $register, string $schema): void {
+			public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null): void {
 				$this->saveCalls++;
 			}
 		};
@@ -518,7 +518,7 @@ class SettingsServiceTest extends TestCase {
 			/**
 			 * @param array<string,mixed> $object
 			 */
-			public function saveObject(array $object, string $register, string $schema): void {
+			public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null): void {
 				$this->saveCalls++;
 			}
 		};
@@ -614,7 +614,7 @@ class SettingsServiceTest extends TestCase {
 			/**
 			 * @param array<string,mixed> $object
 			 */
-			public function saveObject(array $object, string $register, string $schema): void {
+			public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null): void {
 				$this->saveCalls++;
 			}
 
@@ -675,7 +675,7 @@ class SettingsServiceTest extends TestCase {
 			/**
 			 * @param array<string,mixed> $object
 			 */
-			public function saveObject(array $object, string $register, string $schema): void {
+			public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null): void {
 				$this->saveCalls++;
 			}
 		};
@@ -724,7 +724,7 @@ class SettingsServiceTest extends TestCase {
 			/**
 			 * @param array<string,mixed> $object
 			 */
-			public function saveObject(array $object, string $register, string $schema): void {
+			public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null): void {
 				$this->saveCalls++;
 			}
 
@@ -785,7 +785,7 @@ class SettingsServiceTest extends TestCase {
 			/**
 			 * @param array<string,mixed> $object
 			 */
-			public function saveObject(array $object, string $register, string $schema): void {
+			public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null): void {
 				$this->saveCalls++;
 			}
 		};

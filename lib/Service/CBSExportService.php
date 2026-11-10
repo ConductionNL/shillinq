@@ -50,6 +50,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use DateTimeInterface;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -660,8 +662,9 @@ class CBSExportService {
 		try {
 			$saved = $this->objectService()->saveObject(
 				object: $object,
-				register: $this->register(),
-				schema: $schema,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $this->register(), schema: $schema)
+				),
 			);
 
 			if (is_array($saved) === true) {

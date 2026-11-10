@@ -293,7 +293,9 @@ final class RecordingBbvSeedObjectService {
 	 *
 	 * @return array<string, mixed>
 	 */
-	public function saveObject(mixed $object, mixed $register, mixed $schema): array {
+	public function saveObject(mixed $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null): array {
+		$register = $options?->target->register;
+		$schema = $options?->target->schema;
 		$this->calls[] = ['saveObject' => ['object' => $object, 'register' => $register, 'schema' => $schema]];
 		$this->saves++;
 		if ($this->mode === 'saveFails' && $this->saves === 2) {

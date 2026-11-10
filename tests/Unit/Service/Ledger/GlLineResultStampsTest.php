@@ -30,6 +30,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service\Ledger;
 
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\Service\Ledger\GlLineResultStamps;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
@@ -344,19 +346,19 @@ class GlLineResultStampsTest extends TestCase {
 	 */
 	public function testAReversalTakesBothOutAndSoDoesAReversalOfTheReversal(): void {
 		$this->stamps()->stampTransaction(self::TX_SEP);
-		$this->store->saveObject(object: ['id' => self::TX_REVERSAL, 'state' => 'posted', 'administrationId' => self::ADMIN, 'reversesTransactionId' => self::TX_SEP], schema: 'GLTransaction');
-		$this->store->saveObject(object: self::line('r1', self::TX_REVERSAL, 1, '4100', 'credit', 3000.0), schema: 'GLLine');
+		$this->store->saveObject(object: ['id' => self::TX_REVERSAL, 'state' => 'posted', 'administrationId' => self::ADMIN, 'reversesTransactionId' => self::TX_SEP], options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'GLTransaction')));
+		$this->store->saveObject(object: self::line('r1', self::TX_REVERSAL, 1, '4100', 'credit', 3000.0), options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'GLLine')));
 		$this->assertTrue($this->stamps()->stampLine($this->lines()['r1']));
 		$this->assertTrue($this->lines()['r1']['countsInResult'], 'the reversal counts until the original is reversed');
 
-		$this->store->saveObject(object: ['id' => self::TX_SEP, 'state' => 'reversed', 'administrationId' => self::ADMIN, 'periodId' => '2026-09'], schema: 'GLTransaction');
+		$this->store->saveObject(object: ['id' => self::TX_SEP, 'state' => 'reversed', 'administrationId' => self::ADMIN, 'periodId' => '2026-09'], options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'GLTransaction')));
 		$this->stamps()->stampReversal(self::TX_SEP);
 		$this->assertFalse($this->lines()['l3']['countsInResult']);
 		$this->assertFalse($this->lines()['r1']['countsInResult']);
 
-		$this->store->saveObject(object: ['id' => self::TX_REVERSAL, 'state' => 'reversed', 'administrationId' => self::ADMIN, 'reversesTransactionId' => self::TX_SEP], schema: 'GLTransaction');
-		$this->store->saveObject(object: ['id' => self::TX_REREVERSAL, 'state' => 'posted', 'administrationId' => self::ADMIN, 'reversesTransactionId' => self::TX_REVERSAL], schema: 'GLTransaction');
-		$this->store->saveObject(object: self::line('rr1', self::TX_REREVERSAL, 1, '4100', 'debit', 3000.0), schema: 'GLLine');
+		$this->store->saveObject(object: ['id' => self::TX_REVERSAL, 'state' => 'reversed', 'administrationId' => self::ADMIN, 'reversesTransactionId' => self::TX_SEP], options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'GLTransaction')));
+		$this->store->saveObject(object: ['id' => self::TX_REREVERSAL, 'state' => 'posted', 'administrationId' => self::ADMIN, 'reversesTransactionId' => self::TX_REVERSAL], options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'GLTransaction')));
+		$this->store->saveObject(object: self::line('rr1', self::TX_REREVERSAL, 1, '4100', 'debit', 3000.0), options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'GLLine')));
 		$this->stamps()->stampLine($this->lines()['rr1']);
 		$this->stamps()->stampReversal(self::TX_REVERSAL);
 

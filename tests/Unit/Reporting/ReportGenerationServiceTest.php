@@ -65,7 +65,9 @@ final class FakeRgsObjectService {
 	 *
 	 * @return array<string, mixed>
 	 */
-	public function saveObject(array $object, string $register, string $schema): array {
+	public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null): array {
+		$register = $options?->target->register;
+		$schema = $options?->target->schema;
 		$this->saved[] = ['object' => $object, 'register' => $register, 'schema' => $schema];
 		return array_merge($object, ['id' => 'saved-' . count($this->saved)]);
 	}//end saveObject()

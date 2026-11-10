@@ -117,13 +117,12 @@ final class InMemoryObjectStore {
 		$service->method('saveObject')->willReturnCallback(
 			function (
 				array $object,
-				?array $extend = [],
-				string|int|null $register = null,
-				string|int|null $schema = null
+				?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null
 			) use (
 				$create,
 				$test
 			): ObjectEntityInterface {
+				$schema = $options?->target->schema;
 				$slug = (string)$schema;
 				if ($slug === $this->failOnSchema) {
 					throw new \RuntimeException('store refused ' . $slug);

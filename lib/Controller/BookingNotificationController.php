@@ -24,6 +24,8 @@ namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\SettingsService;
@@ -156,8 +158,9 @@ class BookingNotificationController extends Controller {
 				$triggerData['bookingId'] = $id;
 				$saved[] = $this->objectService->saveObject(
 					object: $triggerData,
-					register: $registerSlug,
-					schema: 'BookingNotificationTrigger',
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $registerSlug, schema: 'BookingNotificationTrigger')
+					),
 				);
 			}
 
@@ -275,8 +278,9 @@ class BookingNotificationController extends Controller {
 				$trigger['active'] = false;
 				$this->objectService->saveObject(
 					object: $trigger,
-					register: $registerSlug,
-					schema: 'BookingNotificationTrigger',
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $registerSlug, schema: 'BookingNotificationTrigger')
+					),
 				);
 				$disabled++;
 			}

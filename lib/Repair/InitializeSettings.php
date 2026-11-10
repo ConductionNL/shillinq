@@ -24,6 +24,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\Service\BbvSeedService;
 use OCA\Shillinq\Service\Migration\RevenueContractRenameMigrator;
 use OCA\Shillinq\Service\SettingsService;
@@ -421,9 +423,10 @@ class InitializeSettings implements IRepairStep {
 			try {
 				$objectService->saveObject(
 					object: $row,
-					register: $registerSlug,
-					schema: $rename['to'],
-					uuid: $objectId,
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $registerSlug, schema: $rename['to']),
+						uuid: $objectId
+					),
 					// System migration inside a no-session repair step — bypass RBAC.
 					_rbac: false,
 				);
@@ -638,8 +641,7 @@ class InitializeSettings implements IRepairStep {
 			try {
 				$objectService->saveObject(
 					object: $project,
-					register: $registerSlug,
-					schema: 'AnalyticalDimension',
+					options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'AnalyticalDimension')),
 					// System seed inside a no-session repair step — bypass RBAC.
 					_rbac: false,
 				);
@@ -737,8 +739,7 @@ class InitializeSettings implements IRepairStep {
 			try {
 				$objectService->saveObject(
 					object: $costCenter,
-					register: $registerSlug,
-					schema: 'AnalyticalDimension',
+					options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'AnalyticalDimension')),
 					// System seed inside a no-session repair step — bypass RBAC.
 					_rbac: false,
 				);
@@ -1341,8 +1342,7 @@ class InitializeSettings implements IRepairStep {
 
 				$objectService->saveObject(
 					object: $threshold,
-					register: $registerSlug,
-					schema: 'KorThreshold',
+					options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'KorThreshold')),
 					// System seeding runs inside a repair step with no user
 					// session, so the acting identity is Anonymous. Bypass RBAC
 					// (as OpenRegister's own config import does) — otherwise the
@@ -1749,8 +1749,7 @@ class InitializeSettings implements IRepairStep {
 				$policy['administrationId'] = $administrationId;
 				$objectService->saveObject(
 					object: $policy,
-					register: $registerSlug,
-					schema: 'ReimbursementPolicy',
+					options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'ReimbursementPolicy')),
 					// System seed inside a no-session repair step — bypass RBAC.
 					_rbac: false,
 				);
@@ -1851,8 +1850,7 @@ class InitializeSettings implements IRepairStep {
 				$rule['administrationId'] = $administrationId;
 				$objectService->saveObject(
 					object: $rule,
-					register: $registerSlug,
-					schema: 'PassThroughMarkupRule',
+					options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'PassThroughMarkupRule')),
 					// System seed inside a no-session repair step — bypass RBAC.
 					_rbac: false,
 				);

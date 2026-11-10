@@ -25,6 +25,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\Seed\SeedImport;
 use OCA\Shillinq\Service\Seed\SeedImporter;
@@ -483,8 +485,9 @@ class SettingsService {
 					'validUntil' => null,
 					'grantedBy' => $userId,
 				],
-				register: $registerSlug,
-				schema: 'AdministrationMembership',
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $registerSlug, schema: 'AdministrationMembership')
+				),
 			);
 		} catch (\Throwable $e) {
 			$this->logger->error(
@@ -646,8 +649,9 @@ class SettingsService {
 
 				$saved = $objectService->saveObject(
 					object: $asset,
-					register: $registerSlug,
-					schema: 'FixedAsset',
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $registerSlug, schema: 'FixedAsset')
+					),
 				);
 				$seededAssets++;
 
@@ -688,8 +692,9 @@ class SettingsService {
 
 				$objectService->saveObject(
 					object: $schedule,
-					register: $registerSlug,
-					schema: 'DepreciationSchedule',
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $registerSlug, schema: 'DepreciationSchedule')
+					),
 				);
 				$seededSchedules++;
 			}//end foreach
@@ -1443,8 +1448,9 @@ class SettingsService {
 
 					$objectService->saveObject(
 						object: $record,
-						register: $registerSlug,
-						schema: $schema,
+						options: new ObjectSaveOptions(
+							target: new ObjectFindTarget(register: $registerSlug, schema: $schema)
+						),
 					);
 					$totalSeeded++;
 				}//end foreach

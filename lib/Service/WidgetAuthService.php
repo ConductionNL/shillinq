@@ -31,6 +31,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\ICache;
 use OCP\ICacheFactory;
@@ -556,8 +558,9 @@ class WidgetAuthService {
 			$registerSlug = $this->settings->getRegisterSlug();
 			$saved = $objectService->saveObject(
 				object: $data,
-				register: $registerSlug,
-				schema: $schema,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $registerSlug, schema: $schema)
+				),
 				_rbac: false,
 			);
 

@@ -307,7 +307,9 @@ final class FakeDBAObjectService {
 	 *
 	 * @return array<string,mixed> The persisted payload.
 	 */
-	public function saveObject(array $object, string $register, string $schema): array {
+	public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null): array {
+		$register = $options?->target->register;
+		$schema = $options?->target->schema;
 		if (in_array($schema, $this->failingSchemas, true) === true) {
 			throw new \RuntimeException('save refused for ' . $schema);
 		}
