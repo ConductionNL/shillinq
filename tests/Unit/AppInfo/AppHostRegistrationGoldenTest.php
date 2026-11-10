@@ -73,7 +73,9 @@ final class AppHostRegistrationGoldenTest extends TestCase {
 
 		eval(
 			'namespace OCA\\OpenRegister\\AppHost; final class Bootstrap { public static array $calls = [];'
-			. ' public static function aliasStoreController(...$args): void { self::$calls[] = $args; } }'
+			. ' public static function aliasStoreController(\\OCP\\AppFramework\\Bootstrap\\IRegistrationContext $context,'
+			. ' LeafAdoption $adoption): void { self::$calls[] = [\'context\' => $context, \'appId\' => $adoption->appId,'
+			. ' \'controllerNs\' => $adoption->namespace(option: \'controllerNamespace\', suffix: \'Controller\')]; } }'
 		);
 
 		$registered = [];

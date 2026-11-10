@@ -26,6 +26,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\AppInfo;
 
 use OCA\OpenRegister\AppHost\Bootstrap;
+use OCA\OpenRegister\AppHost\LeafAdoption;
 use OCA\Shillinq\Service\Pipelinq\CustomerBridgeMetricsService;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use Psr\Container\ContainerInterface;
@@ -143,8 +144,7 @@ final class AppHostRegistration {
 			try {
 				Bootstrap::aliasStoreController(
 					context: $context,
-					appId: self::APP_ID,
-					controllerNs: 'OCA\\Shillinq\\Controller'
+					adoption: new LeafAdoption(appId: self::APP_ID, options: ['namespace' => 'OCA\\Shillinq'])
 				);
 			} catch (\Throwable) {
 				// An OpenRegister older than the helper, or present but
