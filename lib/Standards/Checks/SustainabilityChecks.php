@@ -54,6 +54,177 @@ namespace OCA\Shillinq\Standards\Checks;
  */
 final class SustainabilityChecks implements CheckProvider, SeedsObjects {
 	/**
+	 * The sample undertaking's net revenue, chosen so the per-revenue intensities
+	 * are clean 2-decimal values: OpenRegister stores `number` at ~2 decimals, which
+	 * would otherwise truncate a realistic-revenue intensity (e.g. 0.00027) to 0.00
+	 * and break the intensity-consistency checks. Test data only.
+	 *
+	 * @var float
+	 */
+	private const SEED_NET_REVENUE = 100000.0;
+
+	/**
+	 * The reporting context of the seeded sample statement.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SEED_REPORTING_CONTEXT = [
+		'reportingPeriod' => 'FY2025',
+		'entityName' => 'Conduction Sample Undertaking B.V.',
+		'netRevenue' => self::SEED_NET_REVENUE,
+		'currency' => 'EUR',
+		'materialityAssessmentDone' => true,
+		'datapointsTagged' => true,
+		'disclosureRequirementsCovered' => ['E1-6', 'E1-5', 'E1-4', 'E2-4', 'E3-4', 'E4-5', 'E5-4', 'E5-5', 'S1-6', 'S1-14', 'G1-4', 'G1-6'],
+		'highClimateImpactSector' => true,
+		'financialSectorEntity' => true,
+	];
+
+	/**
+	 * The seeded GHG scope figures; Scope 3 by GHG-Protocol category sums exactly to Scope 3.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SEED_GHG = [
+		'ghgScope1' => 1200.0,
+		'ghgScope1EtsCoveredPct' => 40.0,
+		'ghgScope2LocationBased' => 800.0,
+		'ghgScope2MarketBased' => 650.0,
+		'ghgScope3' => 18000.0,
+		'scope3Categories' => [
+			['category' => '3-cat-01', 'value' => 12000.0],
+			['category' => '3-cat-04', 'value' => 3500.0],
+			['category' => '3-cat-06', 'value' => 1500.0],
+			['category' => '3-cat-07', 'value' => 1000.0],
+		],
+	];
+
+	/**
+	 * The seeded removals, carbon credits and internal carbon pricing.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SEED_CLIMATE_INSTRUMENTS = [
+		'ghgRemovals' => 150.0,
+		'carbonCreditsCancelled' => 100.0,
+		'internalCarbonPricingApplied' => true,
+		'internalCarbonPrice' => 85.0,
+	];
+
+	/**
+	 * The seeded energy consumption and mix.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SEED_ENERGY = [
+		'energyConsumption' => 40000.0,
+		'energyFossil' => 18000.0,
+		'energyNuclear' => 4000.0,
+		'energyRenewable' => 18000.0,
+	];
+
+	/**
+	 * The seeded ESRS E2 pollution figures.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SEED_POLLUTION = [
+		'pollutantsToAir' => 12.5,
+		'pollutantsToWater' => 3.2,
+		'pollutantsToSoil' => 0.8,
+		'substancesOfConcern' => 45.0,
+		'substancesOfVeryHighConcern' => 2.0,
+	];
+
+	/**
+	 * The seeded ESRS E4 biodiversity and ESRS E5 resource-use figures.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SEED_NATURE_AND_RESOURCES = [
+		'landUseChangeHectares' => 4.0,
+		'sitesNearBiodiversitySensitiveAreas' => 1.0,
+
+		// ESRS E5 — Resource use / circular.
+		'materialsTotalWeight' => 9000.0,
+		'biologicalMaterialsSharePct' => 35.0,
+		'secondaryMaterialsSharePct' => 25.0,
+		'wasteTotalTonnes' => 500.0,
+		'wasteDivertedFromDisposalPct' => 70.0,
+		'wasteDirectedToDisposalPct' => 30.0,
+	];
+
+	/**
+	 * The seeded ESRS S1 own-workforce figures.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SEED_WORKFORCE = [
+		'employeeHeadcount' => 250.0,
+		'employeeHeadcountMale' => 140.0,
+		'employeeHeadcountFemale' => 108.0,
+		'employeeHeadcountOther' => 2.0,
+		'nonEmployees' => 30.0,
+		'collectiveBargainingCoveragePct' => 65.0,
+		'topManagementFemalePct' => 33.0,
+		// Age bands summing to the headcount.
+		'employeeAgeBands' => [
+			['band' => 'under-30', 'count' => 60.0],
+			['band' => '30-50', 'count' => 150.0],
+			['band' => 'over-50', 'count' => 40.0],
+		],
+		'healthSafetyCoveragePct' => 100.0,
+		'recordableAccidents' => 5.0,
+		'workRelatedFatalities' => 0.0,
+		'genderPayGapPct' => 4.2,
+		'ceoPayRatio' => 12.0,
+		'discriminationIncidents' => 0.0,
+		'discriminationFines' => 0.0,
+	];
+
+	/**
+	 * The seeded ESRS G1 business-conduct and IFRS S2 climate risk/opportunity figures.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SEED_CONDUCT_AND_CLIMATE_RISK = [
+		'corruptionIncidents' => 0.0,
+		'corruptionConvictions' => 0.0,
+		'corruptionFines' => 0.0,
+		'averageDaysToPay' => 28.0,
+		'standardPaymentTermDays' => 30.0,
+		'latePaymentProceedings' => 0.0,
+
+		// IFRS S2 — climate risk/opportunity exposure.
+		'financedEmissions' => 5400.0,
+		'transitionRiskAmount' => 2000000.0,
+		'transitionRiskPct' => 8.0,
+		'physicalRiskAmount' => 1500000.0,
+		'physicalRiskPct' => 6.0,
+		'climateOpportunityAmount' => 3000000.0,
+		'climateOpportunityPct' => 12.0,
+		'climateCapitalDeployed' => 4200000.0,
+		'remunerationLinkedToClimatePct' => 15.0,
+		'industryMetrics' => ['EM-EU-110a.1', 'IF-RE-130a.1'],
+	];
+
+	/**
+	 * The seeded cross-cutting targets (ESRS 2 MDR-T + per-matter targets).
+	 *
+	 * @var array<int, array<string, mixed>>
+	 */
+	private const SEED_TARGETS = [
+		['matter' => 'E1', 'baseYear' => 2023, 'targetYear' => 2030, 'value' => 50.0, 'baseline' => 100.0, 'metric' => 'tCO2e', 'targetType' => 'absolute', 'scienceBased' => true, 'progressPct' => 18.0],
+		['matter' => 'E2', 'baseYear' => 2023, 'targetYear' => 2028, 'value' => 5.0, 'baseline' => 12.5, 'metric' => 'tonnes', 'targetType' => 'absolute', 'scienceBased' => false, 'progressPct' => 10.0],
+		['matter' => 'E3', 'baseYear' => 2023, 'targetYear' => 2030, 'value' => 20000.0, 'baseline' => 25000.0, 'metric' => 'm3', 'targetType' => 'absolute', 'scienceBased' => false, 'progressPct' => 12.0],
+		['matter' => 'E4', 'baseYear' => 2023, 'targetYear' => 2030, 'value' => 0.0, 'baseline' => 4.0, 'metric' => 'hectares', 'targetType' => 'absolute', 'scienceBased' => false, 'progressPct' => 25.0],
+		['matter' => 'E5', 'baseYear' => 2023, 'targetYear' => 2030, 'value' => 50.0, 'baseline' => 25.0, 'metric' => 'percent-recycled', 'targetType' => 'intensity', 'scienceBased' => false, 'progressPct' => 20.0],
+		['matter' => 'S2', 'baseYear' => 2024, 'targetYear' => 2027, 'value' => 100.0, 'baseline' => 60.0, 'metric' => 'percent-suppliers-audited', 'targetType' => 'intensity', 'scienceBased' => false, 'progressPct' => 30.0],
+		['matter' => 'S3', 'baseYear' => 2024, 'targetYear' => 2027, 'value' => 0.0, 'baseline' => 3.0, 'metric' => 'community-grievances', 'targetType' => 'absolute', 'scienceBased' => false, 'progressPct' => 40.0],
+		['matter' => 'S4', 'baseYear' => 2024, 'targetYear' => 2027, 'value' => 0.0, 'baseline' => 2.0, 'metric' => 'product-safety-incidents', 'targetType' => 'absolute', 'scienceBased' => false, 'progressPct' => 50.0],
+	];
+
+	/**
 	 * The cross-cutting ESRS material-matter codes (ESRS 1 §AR16) a per-matter target
 	 * may relate to. A target's `matter` must be one of these.
 	 *
@@ -839,170 +1010,83 @@ final class SustainabilityChecks implements CheckProvider, SeedsObjects {
 	 * @return array<string, array<int, array<string, mixed>>>
 	 */
 	public static function seedObjects(): array {
-		// Net revenue chosen so the per-revenue intensities below are clean 2-decimal
-		// values: OpenRegister stores `number` at ~2 decimals, which would otherwise
-		// truncate a realistic-revenue intensity (e.g. 0.00027) to 0.00 and break the
-		// intensity-consistency checks. Test data only.
-		$netRevenue = 100000.0;
-
-		$scope1 = 1200.0;
-		$scope2Location = 800.0;
-		$scope2Market = 650.0;
-		$scope3 = 18000.0;
-		$ghgTotal = ($scope1 + $scope2Location + $scope3);
-		$ghgIntensity = round(($ghgTotal / $netRevenue), 8);
-
-		// Scope 3 by GHG-Protocol category, summing exactly to $scope3.
-		$scope3Categories = [
-			['category' => '3-cat-01', 'value' => 12000.0],
-			['category' => '3-cat-04', 'value' => 3500.0],
-			['category' => '3-cat-06', 'value' => 1500.0],
-			['category' => '3-cat-07', 'value' => 1000.0],
-		];
-
-		$energyTotal = 40000.0;
-		$energyFossil = 18000.0;
-		$energyNuclear = 4000.0;
-		$energyRenewable = 18000.0;
-		$renewableShare = round((($energyRenewable / $energyTotal) * 100.0), 6);
-		$energyIntensity = round(($energyTotal / $netRevenue), 10);
-
-		$waterConsumption = 25000.0;
-		$waterIntensity = round(($waterConsumption / $netRevenue), 10);
-
-		$headcount = 250.0;
-		$headcountMale = 140.0;
-		$headcountFemale = 108.0;
-		$headcountOther = 2.0;
-
-		// Age bands summing to the headcount.
-		$ageBands = [
-			['band' => 'under-30', 'count' => 60.0],
-			['band' => '30-50', 'count' => 150.0],
-			['band' => 'over-50', 'count' => 40.0],
-		];
-
-		$wasteTotal = 500.0;
-		$wasteDivertedPct = 70.0;
-		$wasteDisposedPct = 30.0;
-
-		$materialsTotalWeight = 9000.0;
-		$biologicalSharePct = 35.0;
-		$secondarySharePct = 25.0;
-
-		$statement = [
-			// Reporting context.
-			'reportingPeriod' => 'FY2025',
-			'entityName' => 'Conduction Sample Undertaking B.V.',
-			'netRevenue' => $netRevenue,
-			'currency' => 'EUR',
-			'materialityAssessmentDone' => true,
-			'datapointsTagged' => true,
-			'disclosureRequirementsCovered' => ['E1-6', 'E1-5', 'E1-4', 'E2-4', 'E3-4', 'E4-5', 'E5-4', 'E5-5', 'S1-6', 'S1-14', 'G1-4', 'G1-6'],
-			'highClimateImpactSector' => true,
-			'financialSectorEntity' => true,
-
-			// ESRS E1 — Climate / GHG.
-			'ghgScope1' => $scope1,
-			'ghgScope1EtsCoveredPct' => 40.0,
-			'ghgScope2LocationBased' => $scope2Location,
-			'ghgScope2MarketBased' => $scope2Market,
-			'ghgScope3' => $scope3,
-			'scope3Categories' => $scope3Categories,
-			'ghgTotal' => $ghgTotal,
-			'ghgIntensity' => $ghgIntensity,
-			'ghgRemovals' => 150.0,
-			'carbonCreditsCancelled' => 100.0,
-			'internalCarbonPricingApplied' => true,
-			'internalCarbonPrice' => 85.0,
-
-			// Energy.
-			'energyConsumption' => $energyTotal,
-			'energyFossil' => $energyFossil,
-			'energyNuclear' => $energyNuclear,
-			'energyRenewable' => $energyRenewable,
-			'renewableEnergySharePct' => $renewableShare,
-			'energyIntensity' => $energyIntensity,
-
-			// ESRS E2 — Pollution.
-			'pollutantsToAir' => 12.5,
-			'pollutantsToWater' => 3.2,
-			'pollutantsToSoil' => 0.8,
-			'substancesOfConcern' => 45.0,
-			'substancesOfVeryHighConcern' => 2.0,
-
-			// ESRS E3 — Water.
-			'waterConsumption' => $waterConsumption,
-			'waterConsumptionAtRiskPct' => 15.0,
-			'waterIntensity' => $waterIntensity,
-
-			// ESRS E4 — Biodiversity.
-			'landUseChangeHectares' => 4.0,
-			'sitesNearBiodiversitySensitiveAreas' => 1.0,
-
-			// ESRS E5 — Resource use / circular.
-			'materialsTotalWeight' => $materialsTotalWeight,
-			'biologicalMaterialsSharePct' => $biologicalSharePct,
-			'secondaryMaterialsSharePct' => $secondarySharePct,
-			'wasteTotalTonnes' => $wasteTotal,
-			'wasteDivertedFromDisposalPct' => $wasteDivertedPct,
-			'wasteDirectedToDisposalPct' => $wasteDisposedPct,
-
-			// ESRS S1 — Own workforce.
-			'employeeHeadcount' => $headcount,
-			'employeeHeadcountMale' => $headcountMale,
-			'employeeHeadcountFemale' => $headcountFemale,
-			'employeeHeadcountOther' => $headcountOther,
-			'nonEmployees' => 30.0,
-			'collectiveBargainingCoveragePct' => 65.0,
-			'topManagementFemalePct' => 33.0,
-			'employeeAgeBands' => $ageBands,
-			'healthSafetyCoveragePct' => 100.0,
-			'recordableAccidents' => 5.0,
-			'workRelatedFatalities' => 0.0,
-			'genderPayGapPct' => 4.2,
-			'ceoPayRatio' => 12.0,
-			'discriminationIncidents' => 0.0,
-			'discriminationFines' => 0.0,
-
-			// ESRS G1 — Business conduct.
-			'corruptionIncidents' => 0.0,
-			'corruptionConvictions' => 0.0,
-			'corruptionFines' => 0.0,
-			'averageDaysToPay' => 28.0,
-			'standardPaymentTermDays' => 30.0,
-			'latePaymentProceedings' => 0.0,
-
-			// IFRS S2 — climate risk/opportunity exposure.
-			'financedEmissions' => 5400.0,
-			'transitionRiskAmount' => 2000000.0,
-			'transitionRiskPct' => 8.0,
-			'physicalRiskAmount' => 1500000.0,
-			'physicalRiskPct' => 6.0,
-			'climateOpportunityAmount' => 3000000.0,
-			'climateOpportunityPct' => 12.0,
-			'climateCapitalDeployed' => 4200000.0,
-			'remunerationLinkedToClimatePct' => 15.0,
-			'industryMetrics' => ['EM-EU-110a.1', 'IF-RE-130a.1'],
-
-			// Cross-cutting targets (ESRS 2 MDR-T + per-matter targets).
-			'targets' => [
-				['matter' => 'E1', 'baseYear' => 2023, 'targetYear' => 2030, 'value' => 50.0, 'baseline' => 100.0, 'metric' => 'tCO2e', 'targetType' => 'absolute', 'scienceBased' => true, 'progressPct' => 18.0],
-				['matter' => 'E2', 'baseYear' => 2023, 'targetYear' => 2028, 'value' => 5.0, 'baseline' => 12.5, 'metric' => 'tonnes', 'targetType' => 'absolute', 'scienceBased' => false, 'progressPct' => 10.0],
-				['matter' => 'E3', 'baseYear' => 2023, 'targetYear' => 2030, 'value' => 20000.0, 'baseline' => 25000.0, 'metric' => 'm3', 'targetType' => 'absolute', 'scienceBased' => false, 'progressPct' => 12.0],
-				['matter' => 'E4', 'baseYear' => 2023, 'targetYear' => 2030, 'value' => 0.0, 'baseline' => 4.0, 'metric' => 'hectares', 'targetType' => 'absolute', 'scienceBased' => false, 'progressPct' => 25.0],
-				['matter' => 'E5', 'baseYear' => 2023, 'targetYear' => 2030, 'value' => 50.0, 'baseline' => 25.0, 'metric' => 'percent-recycled', 'targetType' => 'intensity', 'scienceBased' => false, 'progressPct' => 20.0],
-				['matter' => 'S2', 'baseYear' => 2024, 'targetYear' => 2027, 'value' => 100.0, 'baseline' => 60.0, 'metric' => 'percent-suppliers-audited', 'targetType' => 'intensity', 'scienceBased' => false, 'progressPct' => 30.0],
-				['matter' => 'S3', 'baseYear' => 2024, 'targetYear' => 2027, 'value' => 0.0, 'baseline' => 3.0, 'metric' => 'community-grievances', 'targetType' => 'absolute', 'scienceBased' => false, 'progressPct' => 40.0],
-				['matter' => 'S4', 'baseYear' => 2024, 'targetYear' => 2027, 'value' => 0.0, 'baseline' => 2.0, 'metric' => 'product-safety-incidents', 'targetType' => 'absolute', 'scienceBased' => false, 'progressPct' => 50.0],
-			],
-		];
-
 		return [
-			'EsrsStatement' => [$statement],
+			'EsrsStatement' => [self::seedStatement()],
 		];
 
 	}//end seedObjects()
+
+	/**
+	 * The one compliant sample statement, assembled section by section in the
+	 * order its fields are stored.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function seedStatement(): array {
+		return [
+			...self::SEED_REPORTING_CONTEXT,
+			...self::seedClimateFigures(),
+			...self::seedEnergyFigures(),
+			...self::SEED_POLLUTION,
+			...self::seedWaterFigures(),
+			...self::SEED_NATURE_AND_RESOURCES,
+			...self::SEED_WORKFORCE,
+			...self::SEED_CONDUCT_AND_CLIMATE_RISK,
+			'targets' => self::SEED_TARGETS,
+		];
+
+	}//end seedStatement()
+
+	/**
+	 * The seeded ESRS E1 climate figures: the GHG scopes, their total and
+	 * per-revenue intensity, then the removal and pricing figures.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function seedClimateFigures(): array {
+		$ghg = self::SEED_GHG;
+		$ghgTotal = ($ghg['ghgScope1'] + $ghg['ghgScope2LocationBased'] + $ghg['ghgScope3']);
+
+		return [
+			...$ghg,
+			'ghgTotal' => $ghgTotal,
+			'ghgIntensity' => round(($ghgTotal / self::SEED_NET_REVENUE), 8),
+			...self::SEED_CLIMATE_INSTRUMENTS,
+		];
+
+	}//end seedClimateFigures()
+
+	/**
+	 * The seeded energy figures with the renewable share and per-revenue intensity.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function seedEnergyFigures(): array {
+		$energy = self::SEED_ENERGY;
+
+		return [
+			...$energy,
+			'renewableEnergySharePct' => round((($energy['energyRenewable'] / $energy['energyConsumption']) * 100.0), 6),
+			'energyIntensity' => round(($energy['energyConsumption'] / self::SEED_NET_REVENUE), 10),
+		];
+
+	}//end seedEnergyFigures()
+
+	/**
+	 * The seeded ESRS E3 water figures with the per-revenue intensity.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function seedWaterFigures(): array {
+		$waterConsumption = 25000.0;
+
+		return [
+			'waterConsumption' => $waterConsumption,
+			'waterConsumptionAtRiskPct' => 15.0,
+			'waterIntensity' => round(($waterConsumption / self::SEED_NET_REVENUE), 10),
+		];
+
+	}//end seedWaterFigures()
 
 	// ===================== private helpers =====================
 
