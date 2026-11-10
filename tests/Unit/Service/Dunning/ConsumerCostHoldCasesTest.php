@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Dunning;
 
 use DateTimeImmutable;
 use OCA\Shillinq\Service\Dunning\ConsumerCostHold;
+use OCA\Shillinq\Service\Dunning\CostHoldRequest;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -48,14 +49,15 @@ final class ConsumerCostHoldCasesTest extends TestCase {
 			['nr' => 4],
 		];
 
-		$params = (new ConsumerCostHold())->apply(
-			['collectionCostAmount' => 40.0, 'other' => 'kept'],
-			$customer,
-			['buyerVatId' => ($customer['buyerVatId'] ?? '')],
-			$stages,
-			$runs,
-			new DateTimeImmutable('2026-06-01T09:00:00+00:00')
-		);
+		$request = new CostHoldRequest();
+		$request->params   = ['collectionCostAmount' => 40.0, 'other' => 'kept'];
+		$request->customer = $customer;
+		$request->invoice  = ['buyerVatId' => ($customer['buyerVatId'] ?? '')];
+		$request->stages   = $stages;
+		$request->runs     = $runs;
+		$request->now      = new DateTimeImmutable('2026-06-01T09:00:00+00:00');
+
+		$params = (new ConsumerCostHold())->apply($request);
 
 		self::assertSame('kept', $params['other']);
 		return $params['collectionCostAmount'];
@@ -73,7 +75,10 @@ final class ConsumerCostHoldCasesTest extends TestCase {
 		self::assertSame(40.0, $this->costsAfter(['buyerVatId' => 'BE2'], []));
 		self::assertNull($this->costsAfter(['kvkNumber' => '  ', 'vatId' => ''], []));
 
-		$zero = (new ConsumerCostHold())->apply(['collectionCostAmount' => 0], [], [], [], [], new DateTimeImmutable('2026-06-01'));
+		$request         = new CostHoldRequest();
+		$request->params = ['collectionCostAmount' => 0];
+		$request->now    = new DateTimeImmutable('2026-06-01');
+		$zero            = (new ConsumerCostHold())->apply($request);
 		self::assertSame(['collectionCostAmount' => 0], $zero);
 	}//end testOnlyConsumersAreHeld()
 

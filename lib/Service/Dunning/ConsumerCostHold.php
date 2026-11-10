@@ -79,24 +79,20 @@ final class ConsumerCostHold {
 	 * The run's params with the collection costs removed when a consumer's
 	 * 14-day letter period has not passed.
 	 *
-	 * @param array<string,mixed>             $params   The run's params.
-	 * @param array<string,mixed>             $customer The CustomerMaster, or [] when unknown.
-	 * @param array<string,mixed>             $invoice  The invoice.
-	 * @param array<int,mixed>                $stages   The ladder's stages.
-	 * @param array<int,array<string,mixed>>  $runs     The invoice's earlier DunningRuns.
-	 * @param DateTimeImmutable               $now      Now.
+	 * @param CostHoldRequest $request The params, debtor, ladder, runs and moment.
 	 *
 	 * @return array<string,mixed> The params.
 	 *
 	 * @spec openspec/changes/receivables-automatic-dunning/tasks.md#task-2.4
 	 */
-	public function apply(array $params, array $customer, array $invoice, array $stages, array $runs, DateTimeImmutable $now): array {
-		if ((float)($params['collectionCostAmount'] ?? 0.0) <= 0.0 || $this->isConsumer(customer: $customer, invoice: $invoice) === false) {
+	public function apply(CostHoldRequest $request): array {
+		$params = $request->params;
+		if ((float)($params['collectionCostAmount'] ?? 0.0) <= 0.0 || $this->isConsumer(customer: $request->customer, invoice: $request->invoice) === false) {
 			return $params;
 		}
 
-		$letterSince = $this->letterDeliveredOn(stages: $stages, runs: $runs);
-		if ($letterSince !== null && $letterSince <= $now->modify('-' . self::WAIT_DAYS . ' days')) {
+		$letterSince = $this->letterDeliveredOn(stages: $request->stages, runs: $request->runs);
+		if ($letterSince !== null && $letterSince <= $request->now->modify('-' . self::WAIT_DAYS . ' days')) {
 			return $params;
 		}
 
@@ -113,6 +109,30 @@ final class ConsumerCostHold {
 	 * @return DateTimeImmutable|null
 	 */
 	private function letterDeliveredOn(array $stages, array $runs): ?DateTimeImmutable {
+		$letters  = $this->letterStageNumbers(stages: $stages);
+		$earliest = null;
+		foreach ($runs as $run) {
+			$sent = null;
+			if (in_array((int)($run['stageNr'] ?? 0), $letters, true) === true) {
+				$sent = $this->deliveredOn(run: $run);
+			}
+
+			if ($sent !== null && ($earliest === null || $sent < $earliest)) {
+				$earliest = $sent;
+			}
+		}
+
+		return $earliest;
+	}//end letterDeliveredOn()
+
+	/**
+	 * The numbers of the ladder's 14-day letter stages.
+	 *
+	 * @param array<int,mixed> $stages The ladder's stages.
+	 *
+	 * @return list<int>
+	 */
+	private function letterStageNumbers(array $stages): array {
 		$letters = [];
 		foreach ($stages as $stage) {
 			if (is_array($stage) === true && ($stage['statutoryEffect'] ?? null) === self::LETTER_EFFECT) {
@@ -120,28 +140,27 @@ final class ConsumerCostHold {
 			}
 		}
 
-		$earliest = null;
-		foreach ($runs as $run) {
-			if (in_array((int)($run['stageNr'] ?? 0), $letters, true) === false || ($run['deliveryStatus'] ?? null) !== 'DELIVERED') {
-				continue;
-			}
+		return $letters;
+	}//end letterStageNumbers()
 
-			$raw = (string)($run['executedOn'] ?? '');
-			if ($raw === '') {
-				continue;
-			}
-
-			try {
-				$sent = new DateTimeImmutable($raw);
-			} catch (Throwable $e) {
-				continue;
-			}
-
-			if ($earliest === null || $sent < $earliest) {
-				$earliest = $sent;
-			}
+	/**
+	 * When a delivered run went out, or null when it was not delivered or
+	 * carries no readable date.
+	 *
+	 * @param array<string,mixed> $run One DunningRun.
+	 *
+	 * @return DateTimeImmutable|null
+	 */
+	private function deliveredOn(array $run): ?DateTimeImmutable {
+		$raw = (string)($run['executedOn'] ?? '');
+		if (($run['deliveryStatus'] ?? null) !== 'DELIVERED' || $raw === '') {
+			return null;
 		}
 
-		return $earliest;
-	}//end letterDeliveredOn()
+		try {
+			return new DateTimeImmutable($raw);
+		} catch (Throwable $e) {
+			return null;
+		}
+	}//end deliveredOn()
 }//end class
