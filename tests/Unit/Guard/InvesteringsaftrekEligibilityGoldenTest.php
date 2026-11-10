@@ -22,8 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Guard;
 
-namespace OCA\Shillinq\Tests\Unit\Guard;
-
+use OCA\Shillinq\Guard\AssetEligibilityCheck;
 use OCA\Shillinq\Guard\InvesteringsaftrekEligibilityGuard;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -51,11 +50,13 @@ final class InvesteringsaftrekEligibilityGoldenTest extends TestCase {
 		$guard = new InvesteringsaftrekEligibilityGuard(logger: $logger);
 
 		return $guard->classify(
-			acquisitionValue: $facts[0],
-			energyListHit: $facts[1],
-			environmentListHit: $facts[2],
-			vamilPermitted: $facts[3],
-			kiaExcluded: $facts[4]
+			new AssetEligibilityCheck(
+				acquisitionValue: $facts[0],
+				energyListHit: $facts[1],
+				environmentListHit: $facts[2],
+				vamilPermitted: $facts[3],
+				kiaExcluded: $facts[4]
+			)
 		);
 	}//end classified()
 
