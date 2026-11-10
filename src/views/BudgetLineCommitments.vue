@@ -182,8 +182,6 @@ import {
 	normaliseBudgetLineRows,
 } from './budgetLineCommitmentsHelpers.js'
 
-const REGISTER_SLUG = 'shillinq'
-
 export default {
 	name: 'BudgetLineCommitments',
 
@@ -201,7 +199,6 @@ export default {
 			expandedKey: null,
 			drilldownLoading: false,
 			drilldownItems: [],
-			administrationId: '',
 		}
 	},
 
@@ -213,75 +210,29 @@ export default {
 		formatAmount,
 
 		/**
-		 * Resolve the caller's active administration.
+		 * Load the budget lines of the caller's administration. The server
+		 * picks and checks the administration.
 		 *
-		 * The aggregation is scoped by the CALLER, not by its declaration. It
-		 * used to declare `administrationId: "@self.administrationId"`, which
-		 * is not a placeholder OpenRegister implements — it was left literal,
-		 * matched nothing, and the page showed an empty state over live data
-		 * (#1216). A declaration cannot name a per-caller value, so the filter
-		 * is passed from here instead.
-		 *
-		 * Returns '' when the context cannot be read, and loadRows() then
-		 * REFUSES to query rather than falling back to an unscoped call — an
-		 * unscoped aggregation would return every administration's figures,
-		 * which is worse than showing nothing.
-		 *
-		 * @return {Promise<string>} The active administration id, or ''.
 		 * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
 		 */
-		async resolveAdministrationId() {
-			try {
-				const { data } = await axios.get(
-					generateUrl('/apps/shillinq/api/administrations/context'),
-				)
-				return (
-					data?.activeAdministrationId
-					|| data?.administrations?.[0]?.administrationId
-					|| ''
-				)
-			} catch {
-				return ''
-			}
-		},
-
-		/** @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md */
 		async loadRows() {
 			this.loading = true
 			this.errorMessage = ''
 			this.rows = []
 
 			try {
-				this.administrationId = await this.resolveAdministrationId()
-				if (!this.administrationId) {
-					// Deliberately not a fallback to an unscoped call: the
-					// declared filter no longer carries administrationId, so
-					// omitting it here would aggregate across every
-					// administration the register holds.
-					this.errorMessage = this.t(
-						'shillinq',
-						'No active administration — cannot scope budget lines.',
-					)
-					return
-				}
-
-				const url = generateUrl(
-					`/apps/openregister/api/objects/aggregations/${REGISTER_SLUG}/CommitmentLine/committedVsRealisedPerBudgetLine`,
+				const { data } = await axios.get(
+					generateUrl('/apps/shillinq/api/budget-line-commitments'),
 				)
-				// A NARROWING filter (openregister#2852): it may add a
-				// constraint and can never relax one the declaration sets.
-				const { data } = await axios.get(url, {
-					params: { 'filter[administrationId]': this.administrationId },
-				})
 				this.rows = normaliseBudgetLineRows(data)
 			} catch (error) {
 				const status = error?.response?.status
-				if (status === 404 || status === 501) {
+				if (status === 400) {
 					this.errorMessage = this.t(
 						'shillinq',
-						'Aggregation endpoint unavailable on this OpenRegister build.',
+						'No active administration, so the budget lines cannot be shown.',
 					)
-				} else if (status === 401 || status === 403) {
+				} else if (status === 401 || status === 403 || status === 404) {
 					this.errorMessage = this.t(
 						'shillinq',
 						'Permission required to read budget-line data.',
@@ -315,27 +266,11 @@ export default {
 			this.drilldownItems = []
 
 			try {
-				// OpenRegister filters on BARE property params — `?programme=5.1
-				// &costCentre=FAC-2026`. This used to wrap them as
-				// `filters[programme]`, which the objects endpoint does not
-				// read: the request succeeded, matched everything, and then the
-				// unmatched wrapper keys were themselves treated as property
-				// filters that match nothing. Either way it came back
-				// `{"results":[],"total":0}` with HTTP 200 and the drilldown
-				// rendered "No underlying commitments found" over live rows.
-				// Control params keep their underscore (`_limit`); property
-				// filters are bare.
-				const params = { ...drilldownFilters(row), _limit: 100 }
-				const url = generateUrl(
-					`/apps/openregister/api/objects/${REGISTER_SLUG}/CommitmentLine`,
+				const { data } = await axios.get(
+					generateUrl('/apps/shillinq/api/budget-line-commitments/lines'),
+					{ params: drilldownFilters(row) },
 				)
-				const { data } = await axios.get(url, { params })
-				const items = Array.isArray(data?.results)
-					? data.results
-					: Array.isArray(data)
-						? data
-						: []
-				this.drilldownItems = items
+				this.drilldownItems = Array.isArray(data?.results) ? data.results : []
 			} catch (error) {
 				this.drilldownItems = []
 			} finally {
