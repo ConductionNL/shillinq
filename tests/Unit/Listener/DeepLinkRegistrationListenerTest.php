@@ -31,7 +31,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Listener;
 
+use OCA\OpenRegister\Dto\DeepLinkRegistration;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
+use OCA\OpenRegister\Service\DeepLinkRegistryServiceInterface;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCP\EventDispatcher\GenericEvent;
 use OCP\IAppConfig;
@@ -84,11 +87,12 @@ final class DeepLinkRegistrationListenerTest extends TestCase {
 	 */
 	public function testHandleRegistersAccountAndApTransactionDeepLinks(): void {
 		$listener = $this->makeListener();
-		$event = new DeepLinkRegistrationEvent();
+		$registry = $this->registry();
+		$event = new DeepLinkRegistrationEvent($registry);
 
 		$listener->handle($event);
 
-		$registrations = $event->getRegistrations();
+		$registrations = $registry->registrations;
 		$schemaSlugs = array_column($registrations, 'schemaSlug');
 
 		self::assertContains('account', $schemaSlugs);
@@ -141,10 +145,10 @@ final class DeepLinkRegistrationListenerTest extends TestCase {
 	 */
 	private function registrationFor(string $schemaSlug): array {
 		$listener = $this->makeListener();
-		$event = new DeepLinkRegistrationEvent();
-		$listener->handle($event);
+		$registry = $this->registry();
+		$listener->handle(new DeepLinkRegistrationEvent($registry));
 
-		foreach ($event->getRegistrations() as $registration) {
+		foreach ($registry->registrations as $registration) {
 			if ($registration['schemaSlug'] === $schemaSlug) {
 				return $registration;
 			}
@@ -278,4 +282,40 @@ final class DeepLinkRegistrationListenerTest extends TestCase {
 		return '#^' . implode('/', $regexSegments) . '$#';
 	}//end routeToRegex()
 
+	/**
+	 * A deep link registry that keeps every registration as an array.
+	 *
+	 * @return DeepLinkRegistryServiceInterface&object{registrations: array<int, array<string, mixed>>}
+	 */
+	private function registry(): DeepLinkRegistryServiceInterface {
+		return new class implements DeepLinkRegistryServiceInterface {
+			/**
+			 * The registrations, in call order.
+			 *
+			 * @var array<int, array<string, mixed>>
+			 */
+			public array $registrations = [];
+
+			/**
+			 * Keep the registration.
+			 *
+			 * @param DeepLinkRegistration $registration The registration.
+			 *
+			 * @return void
+			 */
+			public function add(DeepLinkRegistration $registration): void {
+				$this->registrations[] = get_object_vars($registration);
+			}
+
+			/**
+			 * Not used by the listener.
+			 *
+			 * @param IEventDispatcher|null $dispatcher The dispatcher.
+			 *
+			 * @return void
+			 */
+			public function requestRegistrations(?IEventDispatcher $dispatcher = null): void {
+			}
+		};
+	}//end registry()
 }//end class

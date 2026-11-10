@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Minimal Register stub mirroring the id accessor of OCA\OpenRegister\Db\Register on openregister main.
+ * Minimal Register stub mirroring the id accessors of OCA\OpenRegister\Db\Register on openregister main.
  *
  * @author    Conduction Development Team <dev@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -20,14 +20,22 @@ namespace OCA\OpenRegister\Db;
  */
 class Register {
 	/**
-	 * Constructor.
+	 * The register's database id.
+	 *
+	 * @var int|null
+	 */
+	private ?int $id = null;
+
+	/**
+	 * Set the database id, as the Nextcloud Entity setter does.
 	 *
 	 * @param int|null $id The register's database id.
+	 *
+	 * @return void
 	 */
-	public function __construct(
-		private readonly ?int $id=null,
-	) {
-	}//end __construct()
+	public function setId(?int $id): void {
+		$this->id = $id;
+	}//end setId()
 
 	/**
 	 * The register's database id.

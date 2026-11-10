@@ -46,7 +46,9 @@ final class ComplianceExportServiceTest extends TestCase {
 	 */
 	public function testExportReadsTheRegisterAuditTrailInsideTheWindow(): void {
 		$registerMapper = $this->createMock(RegisterMapper::class);
-		$registerMapper->expects(self::once())->method('find')->with('shillinq')->willReturn(new Register(id: 7));
+		$register = new Register();
+		$register->setId(7);
+		$registerMapper->expects(self::once())->method('find')->with('shillinq')->willReturn($register);
 
 		$auditTrailMapper = $this->createMock(AuditTrailMapper::class);
 		$auditTrailMapper->expects(self::once())->method('findEvery')->with(

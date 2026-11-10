@@ -33,6 +33,7 @@ class ObjectTransitionedEvent extends Event {
 	 * @param string|null $userId The acting user id.
 	 * @param string $register The register slug.
 	 * @param string $schema The schema slug.
+	 * @param bool $automatic Whether the transition ran without a user (real signature).
 	 */
 	public function __construct(
 		private ObjectEntity $object,
@@ -42,6 +43,7 @@ class ObjectTransitionedEvent extends Event {
 		private ?string $userId,
 		private string $register,
 		private string $schema,
+		private bool $automatic = false,
 	) {
 		parent::__construct();
 
@@ -109,4 +111,13 @@ class ObjectTransitionedEvent extends Event {
 	public function getSchema(): string {
 		return $this->schema;
 	}//end getSchema()
+
+	/**
+	 * Whether the transition ran without a user.
+	 *
+	 * @return bool
+	 */
+	public function isAutomatic(): bool {
+		return $this->automatic;
+	}//end isAutomatic()
 }//end class

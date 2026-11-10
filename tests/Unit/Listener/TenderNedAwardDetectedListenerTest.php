@@ -586,7 +586,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testPromotionIsDeferredWhenDeferralIsEnabled(): void {
-		$deferral = new ListenerDeferralService(enabled: true);
+		$deferral = $this->deferral(enabled: true);
 		[$container, $recorder] = $this->containerAndRecorder([], $deferral);
 		[$listener, $dispatcher] = $this->listener($container, '30280353');
 
@@ -625,7 +625,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testDeferredEntrySurvivesJsonRoundTrip(): void {
-		$deferral = new ListenerDeferralService(enabled: true);
+		$deferral = $this->deferral(enabled: true);
 		[$container] = $this->containerAndRecorder([], $deferral);
 		[$listener] = $this->listener($container, '30280353');
 
@@ -662,7 +662,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testInlineModePromotesSynchronously(): void {
-		$deferral = new ListenerDeferralService(enabled: false);
+		$deferral = $this->deferral(enabled: false);
 		[$container, $recorder] = $this->containerAndRecorder([], $deferral);
 		[$listener, $dispatcher] = $this->listener($container, '30280353');
 
@@ -818,4 +818,58 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 		];
 
 	}//end awardBody()
+
+	/**
+	 * A deferral service that is enabled or not and records what it was asked to defer.
+	 *
+	 * @param bool $enabled Whether deferral is enabled.
+	 *
+	 * @return ListenerDeferralService&object{deferred: array<int, array<string, mixed>>}
+	 */
+	private function deferral(bool $enabled): ListenerDeferralService {
+		return new class($enabled) extends ListenerDeferralService {
+			/**
+			 * What was deferred, in call order.
+			 *
+			 * @var array<int, array<string, mixed>>
+			 */
+			public array $deferred = [];
+
+			/**
+			 * Constructor.
+			 *
+			 * @param bool $enabled Whether deferral is enabled.
+			 */
+			public function __construct(private readonly bool $enabled) {
+			}
+
+			/**
+			 * Whether deferral is enabled.
+			 *
+			 * @return bool
+			 */
+			public function isDeferralEnabled(): bool {
+				return $this->enabled;
+			}
+
+			/**
+			 * Record the deferred entry.
+			 *
+			 * @param string               $jobClass  The job class.
+			 * @param array<string, mixed> $entry     The entry.
+			 * @param int                  $chunkSize Entries per job.
+			 * @param string|null          $dedupeKey Key that collapses duplicates.
+			 *
+			 * @return void
+			 */
+			public function defer(
+				string $jobClass,
+				array $entry,
+				int $chunkSize = self::DEFAULT_CHUNK_SIZE,
+				?string $dedupeKey = null,
+			): void {
+				$this->deferred[] = ['jobClass' => $jobClass, 'entry' => $entry, 'chunkSize' => $chunkSize, 'dedupeKey' => $dedupeKey];
+			}
+		};
+	}//end deferral()
 }//end class

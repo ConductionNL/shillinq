@@ -92,7 +92,7 @@ class TenderNedAwardPromotionJobTest extends TestCase {
 			$this->createMock(ITimeFactory::class),
 			$this->createMock(IUserSession::class),
 			$this->createMock(IUserManager::class),
-			new OrganisationService(),
+			$this->createMock(OrganisationService::class),
 			new NullLogger(),
 			$container
 		);
