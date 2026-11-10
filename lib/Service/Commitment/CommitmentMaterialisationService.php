@@ -394,31 +394,19 @@ class CommitmentMaterialisationService {
 	 * @return array<int, array<string,mixed>> Regel inputs (kostenplaats/grootboekrekening/boekjaar/bedrag_excl_btw/programma).
 	 */
 	private function buildRulesFromPurchaseOrderLines(array $purchaseOrder, array $lines): array {
-		$administrationId = (string)($purchaseOrder['administrationId'] ?? '');
-		$orderCostCenter = (string)($purchaseOrder['costCenter'] ?? '');
-		$orderDate = (string)($purchaseOrder['expectedDeliveryDate'] ?? '');
-
 		$grouped = [];
 		foreach ($lines as $line) {
-			$costCentre = trim((string)($line['costCenter'] ?? $orderCostCenter));
-			$generalLedger = trim((string)($line['glAccount'] ?? ''));
-			$lineDate = (string)($line['expectedDeliveryDate'] ?? $orderDate);
-			$financialYear = $this->resolveFinancialYear(dateString: $lineDate);
-			$amount = (int)($line['lineTotal'] ?? 0);
-
-			$key = $costCentre . '|' . $generalLedger . '|' . $financialYear;
+			$rule = $this->lineRule(purchaseOrder: $purchaseOrder, line: $line);
+			$key  = $rule['costCentre'] . '|' . $rule['generalLedgerAccount'] . '|' . $rule['financialYear'];
 			if (isset($grouped[$key]) === false) {
-				$grouped[$key] = [
-					'costCentre' => $costCentre,
-					'generalLedgerAccount' => $generalLedger,
-					'financialYear' => $financialYear,
-					'amount_excl_vat' => 0,
-				];
+				$grouped[$key] = $rule;
+				$grouped[$key]['amount_excl_vat'] = 0;
 			}
 
-			$grouped[$key]['amount_excl_vat'] += $amount;
-		}//end foreach
+			$grouped[$key]['amount_excl_vat'] += $rule['amount_excl_vat'];
+		}
 
+		$administrationId = (string)($purchaseOrder['administrationId'] ?? '');
 		foreach ($grouped as $key => $rule) {
 			$grouped[$key]['programme'] = $this->resolveProgramma(
 				administrationId: $administrationId,
@@ -429,6 +417,26 @@ class CommitmentMaterialisationService {
 
 		return array_values($grouped);
 	}//end buildRegelsFromPurchaseOrderLines()
+
+	/**
+	 * One PurchaseOrderLine as an ungrouped regel: its coding (falling back
+	 * to the order's cost centre and date) and its line total.
+	 *
+	 * @param array<string, mixed> $purchaseOrder Parent PurchaseOrder payload.
+	 * @param array<string, mixed> $line          One PurchaseOrderLine row.
+	 *
+	 * @return array{costCentre:string,generalLedgerAccount:string,financialYear:int,amount_excl_vat:int}
+	 */
+	private function lineRule(array $purchaseOrder, array $line): array {
+		$lineDate = (string)($line['expectedDeliveryDate'] ?? (string)($purchaseOrder['expectedDeliveryDate'] ?? ''));
+
+		return [
+			'costCentre' => trim((string)($line['costCenter'] ?? (string)($purchaseOrder['costCenter'] ?? ''))),
+			'generalLedgerAccount' => trim((string)($line['glAccount'] ?? '')),
+			'financialYear' => $this->resolveFinancialYear(dateString: $lineDate),
+			'amount_excl_vat' => (int)($line['lineTotal'] ?? 0),
+		];
+	}//end lineRule()
 
 	/**
 	 * Build regel inputs for a Contract (Task 2). A Contract carries a
@@ -452,21 +460,8 @@ class CommitmentMaterialisationService {
 			endDate: (string)($contract['endDate'] ?? '')
 		);
 
-		$yearCount = count($years);
-		if ($yearCount === 0) {
-			return [];
-		}
-
-		$perYear = intdiv($totalCents, $yearCount);
-		$remainder = $totalCents - ($perYear * $yearCount);
-
 		$rules = [];
-		foreach ($years as $index => $financialYear) {
-			$amount = $perYear;
-			if ($index === 0) {
-				$amount += $remainder;
-			}
-
+		foreach ($this->splitPerYear(totalCents: $totalCents, years: $years) as $financialYear => $amount) {
 			$rules[] = [
 				'costCentre' => $costCentre,
 				'generalLedgerAccount' => '',
@@ -482,6 +477,28 @@ class CommitmentMaterialisationService {
 
 		return $rules;
 	}//end buildRegelsFromContract()
+
+	/**
+	 * Split an amount evenly over the boekjaren, the rounding remainder on the
+	 * first year.
+	 *
+	 * @param int        $totalCents The amount in cents.
+	 * @param array<int> $years      The ordered boekjaren.
+	 *
+	 * @return array<int, int> Cents per boekjaar, in year order.
+	 */
+	private function splitPerYear(int $totalCents, array $years): array {
+		$yearCount = count($years);
+		if ($yearCount === 0) {
+			return [];
+		}
+
+		$perYear = intdiv($totalCents, $yearCount);
+		$amounts = array_fill_keys($years, $perYear);
+		$amounts[reset($years)] += ($totalCents - ($perYear * $yearCount));
+
+		return $amounts;
+	}//end splitPerYear()
 
 	/**
 	 * Map a Contract.contractType to the closest Commitment.kind enum
@@ -607,25 +624,12 @@ class CommitmentMaterialisationService {
 			->setSchema(schema: 'Commitment')
 			->saveObject(object: $draft);
 
-		$ruleNumber = 1;
-		foreach ($ruleInputs as $rule) {
+		foreach (array_values($ruleInputs) as $index => $rule) {
+			$rule['ruleNumber'] = ($index + 1);
 			$this->objectService
 				->setRegister(register: $this->getRegisterSlug())
 				->setSchema(schema: 'CommitmentLine')
-				->saveObject(
-					object: [
-						'administrationId' => (string)($draft['administrationId'] ?? ''),
-						'commitment' => (string)($draft['commitmentNumber'] ?? ''),
-						'ruleNumber' => $ruleNumber,
-						'financialYear' => (int)($rule['financialYear'] ?? 0),
-						'amount_excl_vat' => (int)($rule['amount_excl_vat'] ?? 0),
-						'generalLedgerAccount' => (string)($rule['generalLedgerAccount'] ?? ''),
-						'costCentre' => (string)($rule['costCentre'] ?? ''),
-						'programme' => (string)($rule['programme'] ?? ''),
-						'remaining_committed' => (int)($rule['amount_excl_vat'] ?? 0),
-					]
-				);
-			$ruleNumber++;
+				->saveObject(object: $this->commitmentLine(draft: $draft, rule: $rule));
 		}
 
 		// ADR-084: saveObject() is declared `: ObjectEntityInterface`, so the
@@ -634,6 +638,28 @@ class CommitmentMaterialisationService {
 		// reached the caller.
 		return (array)$saved->jsonSerialize();
 	}//end persist()
+
+	/**
+	 * The CommitmentLine row for one numbered regel.
+	 *
+	 * @param array<string, mixed> $draft The Commitment being persisted.
+	 * @param array<string, mixed> $rule  One regel input with its ruleNumber.
+	 *
+	 * @return array<string, mixed> The CommitmentLine fields.
+	 */
+	private function commitmentLine(array $draft, array $rule): array {
+		return [
+			'administrationId' => (string)($draft['administrationId'] ?? ''),
+			'commitment' => (string)($draft['commitmentNumber'] ?? ''),
+			'ruleNumber' => (int)$rule['ruleNumber'],
+			'financialYear' => (int)($rule['financialYear'] ?? 0),
+			'amount_excl_vat' => (int)($rule['amount_excl_vat'] ?? 0),
+			'generalLedgerAccount' => (string)($rule['generalLedgerAccount'] ?? ''),
+			'costCentre' => (string)($rule['costCentre'] ?? ''),
+			'programme' => (string)($rule['programme'] ?? ''),
+			'remaining_committed' => (int)($rule['amount_excl_vat'] ?? 0),
+		];
+	}//end commitmentLine()
 
 	/**
 	 * Record an override-mandate afwijking as a Rechtmatigheidsbevinding
@@ -649,30 +675,10 @@ class CommitmentMaterialisationService {
 	 */
 	private function recordOverrideDeviation(array $commitment, array $ruleInputs): void {
 		try {
-			$first = reset($ruleInputs);
-			$financialYear = (int)($first['financialYear'] ?? (int)(new DateTimeImmutable('today', new DateTimeZone('UTC')))->format('Y'));
-			$amount = ((float)($commitment['total_amount_excl_vat'] ?? 0)) / 100;
-
 			$this->objectService
 				->setRegister(register: $this->getRegisterSlug())
 				->setSchema(schema: 'Rechtmatigheidsbevinding')
-				->saveObject(
-					object: [
-						'administrationId' => (string)($commitment['administrationId'] ?? ''),
-						'findingNumber' => 'RV-' . ($commitment['commitmentNumber'] ?? '') . '-OVERRIDE',
-						'kind' => 'error',
-						'criterium' => 'begroting',
-						'financialYear' => $financialYear,
-						'programme' => (string)($first['programme'] ?? ''),
-						'amount_error' => $amount,
-						'description' => (string)($commitment['override_reason'] ?? ''),
-						'cause' => sprintf(
-							'Commitment %s automatisch aangegaan onder override-mandaat wegens ontoereikende vrije_ruimte.',
-							(string)($commitment['commitmentNumber'] ?? '')
-						),
-						'status' => 'open',
-					]
-				);
+				->saveObject(object: $this->overrideFinding(commitment: $commitment, firstRule: reset($ruleInputs)));
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'CommitmentMaterialisationService: recording override afwijking failed — fail-soft',
@@ -681,6 +687,35 @@ class CommitmentMaterialisationService {
 		}//end try
 
 	}//end recordOverrideAfwijking()
+
+	/**
+	 * The Rechtmatigheidsbevinding for a commitment entered under an
+	 * override-mandate, dated by its first regel (else this year).
+	 *
+	 * @param array<string, mixed>       $commitment Persisted Commitment.
+	 * @param array<string, mixed>|false $firstRule  The first regel input, or false when there is none.
+	 *
+	 * @return array<string, mixed> The finding fields.
+	 */
+	private function overrideFinding(array $commitment, array|false $firstRule): array {
+		$financialYear = (int)($firstRule['financialYear'] ?? (int)(new DateTimeImmutable('today', new DateTimeZone('UTC')))->format('Y'));
+
+		return [
+			'administrationId' => (string)($commitment['administrationId'] ?? ''),
+			'findingNumber' => 'RV-' . ($commitment['commitmentNumber'] ?? '') . '-OVERRIDE',
+			'kind' => 'error',
+			'criterium' => 'begroting',
+			'financialYear' => $financialYear,
+			'programme' => (string)($firstRule['programme'] ?? ''),
+			'amount_error' => (((float)($commitment['total_amount_excl_vat'] ?? 0)) / 100),
+			'description' => (string)($commitment['override_reason'] ?? ''),
+			'cause' => sprintf(
+				'Commitment %s automatisch aangegaan onder override-mandaat wegens ontoereikende vrije_ruimte.',
+				(string)($commitment['commitmentNumber'] ?? '')
+			),
+			'status' => 'open',
+		];
+	}//end overrideFinding()
 
 	/**
 	 * Dispatch the rechtmatigheid commitment-stage trigger event
