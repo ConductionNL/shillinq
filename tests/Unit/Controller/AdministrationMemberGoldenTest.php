@@ -21,6 +21,7 @@
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Controller;
+
 use DomainException;
 use InvalidArgumentException;
 use OCA\Shillinq\Controller\AdministrationMemberController;
