@@ -37,6 +37,9 @@ use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
+use OCA\OpenRegister\Service\Lifecycle\TransitionActor;
+use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
 use OCA\Shillinq\Listener\AnnualReportSignoffRequestListener;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\Signing\SignoffDecisionService;
@@ -147,13 +150,10 @@ final class AnnualReportSignoffRequestListenerTest extends TestCase {
 			->setObject($payload);
 
 		return new ObjectTransitionedEvent(
-			$entity,
-			'opmaken',
-			$from,
-			$to,
-			'bestuurder1',
-			'shillinq',
-			$schema,
+			object: $entity,
+			move: new TransitionMove(action: 'opmaken', from: $from, to: $to),
+			scope: new RegisterSchemaRef(register: 'shillinq', schema: $schema),
+			actor: new TransitionActor(userId: 'bestuurder1'),
 		);
 
 	}//end makeEvent()

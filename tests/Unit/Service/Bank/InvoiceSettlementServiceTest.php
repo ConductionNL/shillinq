@@ -28,6 +28,9 @@ namespace OCA\Shillinq\Tests\Unit\Service\Bank;
 
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
+use OCA\OpenRegister\Service\Lifecycle\TransitionActor;
+use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
 use OCA\Shillinq\Listener\ReconciliationMatchSettlementListener;
 use OCA\Shillinq\Service\Bank\InvoiceSettlementService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
@@ -241,7 +244,7 @@ final class InvoiceSettlementServiceTest extends TestCase {
 		$entity->setSchema('812');
 		$entity->setRegister('7');
 
-		$event = new ObjectTransitionedEvent($entity, 'confirm', 'pending', 'confirmed', 'admin', '7', '812');
+		$event = new ObjectTransitionedEvent(object: $entity, move: new TransitionMove(action: 'confirm', from: 'pending', to: 'confirmed'), scope: new RegisterSchemaRef(register: '7', schema: '812'), actor: new TransitionActor(userId: 'admin'));
 		$listener->handle($event);
 		$listener->handle($event);
 
@@ -266,13 +269,13 @@ final class InvoiceSettlementServiceTest extends TestCase {
 		$match->setObject(['targetType' => 'ar-invoice', 'targetRefs' => ['ar-issued']]);
 		$match->setSchema('812');
 		$match->setRegister('7');
-		$listener->handle(new ObjectTransitionedEvent($match, 'reject', 'pending', 'rejected', 'admin', '7', '812'));
+		$listener->handle(new ObjectTransitionedEvent(object: $match, move: new TransitionMove(action: 'reject', from: 'pending', to: 'rejected'), scope: new RegisterSchemaRef(register: '7', schema: '812'), actor: new TransitionActor(userId: 'admin')));
 
 		$other = new ObjectEntity();
 		$other->setObject(['targetType' => 'ar-invoice', 'targetRefs' => ['ar-issued']]);
 		$other->setSchema('900');
 		$other->setRegister('7');
-		$listener->handle(new ObjectTransitionedEvent($other, 'confirm', 'pending', 'confirmed', 'admin', '7', '900'));
+		$listener->handle(new ObjectTransitionedEvent(object: $other, move: new TransitionMove(action: 'confirm', from: 'pending', to: 'confirmed'), scope: new RegisterSchemaRef(register: '7', schema: '900'), actor: new TransitionActor(userId: 'admin')));
 
 		self::assertSame('issued', $this->stateOf('ARInvoice', 'ar-issued', 'lifecycleState'));
 

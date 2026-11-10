@@ -42,6 +42,8 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
+use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
 use OCA\Shillinq\Listener\BookingLifecycleTransitionListener;
 use OCA\Shillinq\Service\Pipelinq\PipelinqAdminNotifier;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
@@ -205,13 +207,9 @@ final class BookingLifecycleTransitionListenerTest extends TestCase {
 		$entity->setSchema($schema);
 		$entity->setObject($appointment);
 		return new ObjectTransitionedEvent(
-			$entity,
-			'transition',
-			$from,
-			$to,
-			null,
-			'shillinq',
-			$schema
+			object: $entity,
+			move: new TransitionMove(action: 'transition', from: $from, to: $to),
+			scope: new RegisterSchemaRef(register: 'shillinq', schema: $schema),
 		);
 
 	}//end transitionEvent()
