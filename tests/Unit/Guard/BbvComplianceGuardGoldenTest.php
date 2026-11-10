@@ -194,7 +194,8 @@ class BbvComplianceGuardGoldenTest extends TestCase {
 			rows: [['type' => 'financiering'], ['type' => 'lokale-heffingen'], ['type' => 'grondbeleid'], []],
 			config: ['register' => 'reg-x']
 		);
-		self::assertFalse(condition: $guard->requireParagrafenCompleet(['administrationType' => 'province', 'administrationId' => 'p1', 'financialYear' => '2026']));
+		$annualAccounts = ['administrationType' => 'province', 'administrationId' => 'p1', 'financialYear' => '2026'];
+		self::assertFalse(condition: $guard->requireParagrafenCompleet($annualAccounts));
 		self::assertSame(
 			expected: [['reg-x', 'Paragraaf', ['filters' => ['administrationId' => 'p1', 'financialYear' => 2026, 'status' => 'determined']]]],
 			actual: $this->queries
@@ -219,8 +220,17 @@ class BbvComplianceGuardGoldenTest extends TestCase {
 	 * @return void
 	 */
 	public function testParagrafenCompletePasses(): void {
-		$rows = [];
-		foreach (['lokale-heffingen', 'weerstandsvermogen', 'onderhoud-kapitaalgoederen', 'financiering', 'bedrijfsvoering', 'verbonden-partijen', 'grondbeleid'] as $type) {
+		$rows  = [];
+		$types = [
+			'lokale-heffingen',
+			'weerstandsvermogen',
+			'onderhoud-kapitaalgoederen',
+			'financiering',
+			'bedrijfsvoering',
+			'verbonden-partijen',
+			'grondbeleid',
+		];
+		foreach ($types as $type) {
 			$rows[] = ['type' => $type];
 		}
 
@@ -264,7 +274,11 @@ class BbvComplianceGuardGoldenTest extends TestCase {
 			actual: $this->queries
 		);
 		self::assertSame(
-			expected: [['info', 'BbvComplianceGuard: meerjarenraming not sluitend (REQ-BBV-003)', ['administrationId' => 'g1', 'horizon' => 2, 'saldoCents' => -35]]],
+			expected: [[
+				'info',
+				'BbvComplianceGuard: meerjarenraming not sluitend (REQ-BBV-003)',
+				['administrationId' => 'g1', 'horizon' => 2, 'saldoCents' => -35],
+			]],
 			actual: $this->logs
 		);
 	}//end testMeerjarenFirstNegativeHorizonLogged()
@@ -328,11 +342,17 @@ class BbvComplianceGuardGoldenTest extends TestCase {
 	 * @return void
 	 */
 	public function testExemptClassesAndReserveLog(): void {
-		self::assertTrue(condition: $this->guard(rows: [['bbvClassificatie' => 'investering']])->requireLineClassification(['administrationType' => 'municipality', 'accountNumber' => '1']));
-		self::assertTrue(condition: $this->guard(rows: [['bbvClassificatie' => 'balans-overig']])->requireLineClassification(['administrationType' => 'municipality', 'accountNumber' => '1']));
-		self::assertFalse(condition: $this->guard(rows: [['bbvClassificatie' => 'reserve']])->requireLineClassification(['administrationType' => 'municipality', 'accountNumber' => '2', 'taskField' => 0.1]));
+		$line = ['administrationType' => 'municipality', 'accountNumber' => '1'];
+		self::assertTrue(condition: $this->guard(rows: [['bbvClassificatie' => 'investering']])->requireLineClassification($line));
+		self::assertTrue(condition: $this->guard(rows: [['bbvClassificatie' => 'balans-overig']])->requireLineClassification($line));
+		$reserve = ['administrationType' => 'municipality', 'accountNumber' => '2', 'taskField' => 0.1];
+		self::assertFalse(condition: $this->guard(rows: [['bbvClassificatie' => 'reserve']])->requireLineClassification($reserve));
 		self::assertSame(
-			expected: [['info', 'BbvComplianceGuard: reserve mutation off taakveld 0.10 rejected (REQ-BBV-004)', ['accountNumber' => '2', 'taskField' => 0.1]]],
+			expected: [[
+				'info',
+				'BbvComplianceGuard: reserve mutation off taakveld 0.10 rejected (REQ-BBV-004)',
+				['accountNumber' => '2', 'taskField' => 0.1],
+			]],
 			actual: $this->logs
 		);
 	}//end testExemptClassesAndReserveLog()
@@ -379,7 +399,9 @@ class BbvComplianceGuardGoldenTest extends TestCase {
 		$line        = ['administrationType' => 'municipality', 'accountNumber' => '4', 'postingDate' => '2026-01-01'];
 		self::assertFalse(condition: $this->guard(rows: $exploitatie, config: ['bbv_installation_date' => '2026-01-01'])->requireLineClassification($line));
 		self::assertFalse(condition: $this->guard(rows: $exploitatie, config: ['bbv_installation_date' => 'not a date'])->requireLineClassification($line));
-		self::assertFalse(condition: $this->guard(rows: $exploitatie, config: ['bbv_installation_date' => '2026-06-01'])->requireLineClassification(['administrationType' => 'municipality', 'accountNumber' => '4']));
+		$undated = ['administrationType' => 'municipality', 'accountNumber' => '4'];
+		$june    = ['bbv_installation_date' => '2026-06-01'];
+		self::assertFalse(condition: $this->guard(rows: $exploitatie, config: $june)->requireLineClassification($undated));
 		self::assertTrue(condition: $this->guard(rows: $exploitatie, config: ['bbv_installation_date' => '2026-06-01'])->requireLineClassification($line));
 		self::assertCount(expectedCount: 3, haystack: $this->queries);
 		self::assertSame(
@@ -411,7 +433,8 @@ class BbvComplianceGuardGoldenTest extends TestCase {
 	public function testMvaThresholdAndRefusalLog(): void {
 		$mva = ['administrationType' => 'municipality', 'mvaCategory' => 'maatschappelijk-nut', 'acquisitionValueCents' => 5000000];
 		self::assertTrue(condition: $this->guard(rows: [], config: ['bbv_activeringsgrens_cents' => 0])->requireMvaActivation($mva));
-		self::assertTrue(condition: $this->guard(rows: [], config: ['bbv_activeringsgrens_cents' => 100])->requireMvaActivation($mva + ['depreciationPeriodYears' => 1]));
+		$activated = $mva + ['depreciationPeriodYears' => 1];
+		self::assertTrue(condition: $this->guard(rows: [], config: ['bbv_activeringsgrens_cents' => 100])->requireMvaActivation($activated));
 		self::assertFalse(condition: $this->guard(rows: [], config: ['bbv_activeringsgrens_cents' => 100])->requireMvaActivation($mva));
 		self::assertSame(
 			expected: [[
