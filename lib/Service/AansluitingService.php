@@ -144,69 +144,20 @@ class AansluitingService {
 	 * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
 	 */
 	public function compute(string $reconciliationId, string $periodId): array {
-		$definition = $this->fetchReconciliation(reconciliationId: $reconciliationId);
-		$existing = $this->fetchExistingResult(reconciliationId: $reconciliationId, periodId: $periodId);
-
-		$existingStatus = 'open';
-		if ($existing !== null) {
-			$existingStatus = (string)($existing['status'] ?? 'open');
-		}
-
-		if ($existing !== null && $existingStatus !== 'open') {
-			$this->logger->info(
-				'AansluitingService: skipping recompute of a non-open result; reopen() first',
-				['reconciliationId' => $reconciliationId, 'periodId' => $periodId, 'status' => $existingStatus]
-			);
-
-			return $existing;
-		}
-
-		$administrationId = (string)($definition['administrationId'] ?? '');
-		$relationship = (string)($definition['expectedRelationship'] ?? 'equal');
-		$toleranceCents = (int)($definition['toleranceCents'] ?? 100);
-		$reconciliationType = (string)($definition['reconciliationType'] ?? '');
-
-		$resolved = match ($reconciliationType) {
-			'vat-ledger-return' => $this->resolveVatLedgerTaxReturn(administrationId: $administrationId, periodId: $periodId),
-			'subledger-gl-control' => $this->resolveSubledgerGlControl(definition: $definition, administrationId: $administrationId),
-			default => throw new RuntimeException(sprintf('Unsupported aansluitingType "%s"', $reconciliationType)),
-		};
-
-		$differenceCents = $this->calculator->differenceCents(
-			sourceATotal: $resolved['sourceATotal'],
-			sourceBTotal: $resolved['sourceBTotal'],
-			relationship: $relationship
+		$run = new AansluitingComputeRun(
+			reconciliationId: $reconciliationId,
+			periodId: $periodId,
+			definition: $this->fetchReconciliation(reconciliationId: $reconciliationId),
+			existing: $this->fetchExistingResult(reconciliationId: $reconciliationId, periodId: $periodId)
 		);
-		$withinTolerance = $this->calculator->isWithinTolerance(differenceCents: $differenceCents, toleranceCents: $toleranceCents);
 
-		$totalRow = [
-			'bucketKey' => 'TOTAL',
-			'sourceAAmount' => $resolved['sourceATotal'],
-			'sourceBAmount' => $resolved['sourceBTotal'],
-			'deltaAmount' => $this->calculator->fromCents(cents: $differenceCents),
-		];
+		$locked = $this->lockedResult(run: $run);
+		if ($locked !== null) {
+			return $locked;
+		}
 
-		$result = [
-			'reconciliationId' => $reconciliationId,
-			'periodId' => $periodId,
-			'computedAt' => $this->now(),
-			'sourceATotal' => $resolved['sourceATotal'],
-			'sourceBTotal' => $resolved['sourceBTotal'],
-			'differenceCents' => $differenceCents,
-			'withinTolerance' => $withinTolerance,
-			'status' => 'open',
-			'lineDeltas' => array_merge([$totalRow], $resolved['lineDeltas']),
-			'explainedBy' => ($existing['explainedBy'] ?? null),
-			'explainedAt' => ($existing['explainedAt'] ?? null),
-			'explanationReasonCode' => ($existing['explanationReasonCode'] ?? null),
-			'explanationReasonText' => ($existing['explanationReasonText'] ?? null),
-			'resolvedBy' => null,
-			'resolvedAt' => null,
-			'relatedVatCorrectionId' => ($resolved['relatedVatCorrectionId'] ?? null),
-			'administrationId' => $administrationId,
-		];
-
-		if ($withinTolerance === true) {
+		$result = $this->resultRecord(run: $run, resolved: $this->resolveSources(run: $run));
+		if ($result['withinTolerance'] === true) {
 			// REQ-AANS-004: a within-tolerance difference auto-resolves;
 			// nothing for an operator to explain.
 			$result['status'] = 'resolved';
@@ -214,12 +165,133 @@ class AansluitingService {
 			$result['resolvedAt'] = $this->now();
 		}
 
-		if ($existing !== null) {
-			$result['id'] = ($existing['id'] ?? ($existing['@self']['id'] ?? null));
+		if ($run->existing !== null) {
+			$result['id'] = ($run->existing['id'] ?? ($run->existing['@self']['id'] ?? null));
 		}
 
 		return $this->saveObject(schema: 'AansluitingResult', data: $result);
 	}//end compute()
+
+	/**
+	 * The existing result when it is past `open` and so must not be recomputed.
+	 *
+	 * @param AansluitingComputeRun $run The compute request.
+	 *
+	 * @return array<string,mixed>|null The locked result, or null to recompute.
+	 */
+	private function lockedResult(AansluitingComputeRun $run): array|null {
+		if ($run->existing === null) {
+			return null;
+		}
+
+		$existingStatus = (string)($run->existing['status'] ?? 'open');
+		if ($existingStatus === 'open') {
+			return null;
+		}
+
+		$this->logger->info(
+			'AansluitingService: skipping recompute of a non-open result; reopen() first',
+			['reconciliationId' => $run->reconciliationId, 'periodId' => $run->periodId, 'status' => $existingStatus]
+		);
+
+		return $run->existing;
+
+	}//end lockedResult()
+
+	/**
+	 * Resolve both sources for the definition's reconciliation type.
+	 *
+	 * @param AansluitingComputeRun $run The compute request.
+	 *
+	 * @return array<string,mixed> Source totals, line deltas and any VAT correction link.
+	 *
+	 * @throws RuntimeException When the reconciliation type is not supported.
+	 */
+	private function resolveSources(AansluitingComputeRun $run): array {
+		$administrationId = (string)($run->definition['administrationId'] ?? '');
+		$reconciliationType = (string)($run->definition['reconciliationType'] ?? '');
+
+		return match ($reconciliationType) {
+			'vat-ledger-return' => $this->resolveVatLedgerTaxReturn(administrationId: $administrationId, periodId: $run->periodId),
+			'subledger-gl-control' => $this->resolveSubledgerGlControl(definition: $run->definition, administrationId: $administrationId),
+			default => throw new RuntimeException(sprintf('Unsupported aansluitingType "%s"', $reconciliationType)),
+		};
+
+	}//end resolveSources()
+
+	/**
+	 * The open AansluitingResult record for the resolved sources.
+	 *
+	 * @param AansluitingComputeRun $run The compute request.
+	 * @param array<string,mixed> $resolved The resolved sources.
+	 *
+	 * @return array<string,mixed> The result record, before auto-resolution.
+	 */
+	private function resultRecord(AansluitingComputeRun $run, array $resolved): array {
+		$differenceCents = $this->calculator->differenceCents(
+			sourceATotal: $resolved['sourceATotal'],
+			sourceBTotal: $resolved['sourceBTotal'],
+			relationship: (string)($run->definition['expectedRelationship'] ?? 'equal')
+		);
+		$withinTolerance = $this->calculator->isWithinTolerance(
+			differenceCents: $differenceCents,
+			toleranceCents: (int)($run->definition['toleranceCents'] ?? 100)
+		);
+		$totalRow = $this->totalRow(resolved: $resolved, differenceCents: $differenceCents);
+
+		return [
+			'reconciliationId' => $run->reconciliationId,
+			'periodId' => $run->periodId,
+			'computedAt' => $this->now(),
+			'sourceATotal' => $resolved['sourceATotal'],
+			'sourceBTotal' => $resolved['sourceBTotal'],
+			'differenceCents' => $differenceCents,
+			'withinTolerance' => $withinTolerance,
+			'status' => 'open',
+			'lineDeltas' => array_merge([$totalRow], $resolved['lineDeltas']),
+			...$this->carriedExplanation(existing: $run->existing),
+			'resolvedBy' => null,
+			'resolvedAt' => null,
+			'relatedVatCorrectionId' => ($resolved['relatedVatCorrectionId'] ?? null),
+			'administrationId' => (string)($run->definition['administrationId'] ?? ''),
+		];
+
+	}//end resultRecord()
+
+	/**
+	 * The TOTAL drill-down row heading the line deltas.
+	 *
+	 * @param array<string,mixed> $resolved The resolved sources.
+	 * @param integer $differenceCents The difference in cents.
+	 *
+	 * @return array<string,mixed> The total row.
+	 */
+	private function totalRow(array $resolved, int $differenceCents): array {
+		return [
+			'bucketKey' => 'TOTAL',
+			'sourceAAmount' => $resolved['sourceATotal'],
+			'sourceBAmount' => $resolved['sourceBTotal'],
+			'deltaAmount' => $this->calculator->fromCents(cents: $differenceCents),
+		];
+
+	}//end totalRow()
+
+	/**
+	 * The explanation fields an existing open result carries into a recompute.
+	 *
+	 * @param array<string,mixed>|null $existing The existing result, or null.
+	 *
+	 * @return array{explainedBy:mixed,explainedAt:mixed,explanationReasonCode:mixed,explanationReasonText:mixed}
+	 */
+	private function carriedExplanation(array|null $existing): array {
+		return [
+			'explainedBy' => ($existing['explainedBy'] ?? null),
+			'explainedAt' => ($existing['explainedAt'] ?? null),
+			'explanationReasonCode' => ($existing['explanationReasonCode'] ?? null),
+			'explanationReasonText' => ($existing['explanationReasonText'] ?? null),
+		];
+
+	}//end carriedExplanation()
 
 	/**
 	 * Record an operator's explanation for an open AansluitingResult and
