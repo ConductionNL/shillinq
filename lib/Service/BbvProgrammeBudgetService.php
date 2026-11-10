@@ -142,63 +142,108 @@ class BbvProgrammeBudgetService {
 			return $this->emptyEnvelope();
 		}
 
-		$budgetByProgramme = $this->reader->budgetByProgramme(
+		$run = new ProgrammeBudgetRun(
+			administrationIds: $administrationIds,
+			window: $window,
+			programmes: $programmes,
+			statuses: $statuses
+		);
+		$figures = $this->readFigures(run: $run);
+		$figures['selected'] = $this->selectedFor(run: $run, figures: $figures);
+		$figures['rows'] = $this->calculator->buildRows(
+			selected: $figures['selected'],
+			budgetByProgramme: $figures['budget'],
+			spendByProgramme: $figures['spend']['byProgramme'],
+			committedByProgramme: $figures['committed']
+		);
+
+		return $this->envelope(run: $run, figures: $figures);
+
+	}//end programmeBudgetVsActuals()
+
+	/**
+	 * Read budget, spend and commitments per programme, in that order.
+	 *
+	 * @param ProgrammeBudgetRun $run The request scope.
+	 *
+	 * @return array{budget:array<string,float>,spend:array<string,mixed>,committed:array<string,float>} The figures.
+	 */
+	private function readFigures(ProgrammeBudgetRun $run): array {
+		$budget = $this->reader->budgetByProgramme(
 			budgets: $this->reader->budgetsFor(
-				administrationIds: $administrationIds,
-				fiscalYear: $window['fiscalYear'],
-				statuses: $statuses
+				administrationIds: $run->administrationIds,
+				fiscalYear: $run->window['fiscalYear'],
+				statuses: $run->statuses
 			)
 		);
 		$spend = $this->reader->spendByProgramme(
-			administrationIds: $administrationIds,
-			window: $window
+			administrationIds: $run->administrationIds,
+			window: $run->window
 		);
 		$committed = $this->reader->committedByProgramme(
-			administrationIds: $administrationIds,
-			fiscalYear: $window['fiscalYear']
+			administrationIds: $run->administrationIds,
+			fiscalYear: $run->window['fiscalYear']
 		);
 
-		$selected = $this->calculator->selectedProgrammes(
+		return ['budget' => $budget, 'spend' => $spend, 'committed' => $committed];
+
+	}//end readFigures()
+
+	/**
+	 * The programmes to report on: the filter over every programme with figures.
+	 *
+	 * @param ProgrammeBudgetRun $run The request scope.
+	 * @param array<string,mixed> $figures The figures read for it.
+	 *
+	 * @return array<int,string> The selected programme codes.
+	 */
+	private function selectedFor(ProgrammeBudgetRun $run, array $figures): array {
+		return $this->calculator->selectedProgrammes(
 			universe: self::PROGRAMMES,
-			requested: $programmes,
+			requested: $run->programmes,
 			seen: array_merge(
-				array_keys($budgetByProgramme),
-				array_keys($spend['byProgramme']),
-				array_keys($committed)
+				array_keys($figures['budget']),
+				array_keys($figures['spend']['byProgramme']),
+				array_keys($figures['committed'])
 			)
 		);
 
-		$rows = $this->calculator->buildRows(
-			selected: $selected,
-			budgetByProgramme: $budgetByProgramme,
-			spendByProgramme: $spend['byProgramme'],
-			committedByProgramme: $committed
-		);
-		$totals = $this->calculator->totalsFor(rows: $rows);
+	}//end selectedFor()
+
+	/**
+	 * Assemble the dashboard envelope from the selected rows.
+	 *
+	 * @param ProgrammeBudgetRun $run The request scope.
+	 * @param array<string,mixed> $figures The figures, selection and rows.
+	 *
+	 * @return array<string,mixed> The dashboard envelope.
+	 */
+	private function envelope(ProgrammeBudgetRun $run, array $figures): array {
+		$totals = $this->calculator->totalsFor(rows: $figures['rows']);
 
 		return [
 			'scope' => [
-				'administrationIds' => array_values($administrationIds),
-				'fiscalYear' => $window['fiscalYear'],
-				'startDate' => $window['startDate'],
-				'endDate' => $window['endDate'],
+				'administrationIds' => array_values($run->administrationIds),
+				'fiscalYear' => $run->window['fiscalYear'],
+				'startDate' => $run->window['startDate'],
+				'endDate' => $run->window['endDate'],
 				'currency' => 'EUR',
 			],
 			'totals' => $totals,
-			'programmes' => $this->calculator->seriesFor(rows: $rows),
+			'programmes' => $this->calculator->seriesFor(rows: $figures['rows']),
 			'trend' => $this->calculator->trendFor(
-				startDate: $window['startDate'],
-				endDate: $window['endDate'],
-				monthlySpend: $spend['byMonth'],
-				anyProgrammeSelected: ($selected !== []),
+				startDate: $run->window['startDate'],
+				endDate: $run->window['endDate'],
+				monthlySpend: $figures['spend']['byMonth'],
+				anyProgrammeSelected: ($figures['selected'] !== []),
 				totalBudget: (float)$totals['totalBudget']
 			),
-			'exceptions' => $this->calculator->exceptionsFor(rows: $rows),
-			'fiscalYears' => $this->reader->fiscalYearsFor(administrationIds: $administrationIds),
+			'exceptions' => $this->calculator->exceptionsFor(rows: $figures['rows']),
+			'fiscalYears' => $this->reader->fiscalYearsFor(administrationIds: $run->administrationIds),
 			'generatedAt' => gmdate('Y-m-d\TH:i:s\Z'),
 		];
 
-	}//end programmeBudgetVsActuals()
+	}//end envelope()
 
 	/**
 	 * Build the GL-line filter facets the Budget-to-Programme Linker renders
@@ -247,6 +292,24 @@ class BbvProgrammeBudgetService {
 			return ['accountTypes' => [], 'programmes' => [], 'assignmentStatuses' => []];
 		}
 
+		return [
+			'accountTypes' => $this->accountTypeFacets(administrationIds: $administrationIds),
+			'programmes' => $this->programmeFacets(),
+			'assignmentStatuses' => [
+				['value' => 'mapped', 'label' => 'Mapped'],
+			],
+		];
+
+	}//end glLineFacets()
+
+	/**
+	 * The account-type facet: each type with the account numbers carrying it.
+	 *
+	 * @param array<int,string> $administrationIds Administrations the caller may read.
+	 *
+	 * @return array<int,array<string,mixed>> One facet entry per account type, sorted.
+	 */
+	private function accountTypeFacets(array $administrationIds): array {
 		$byType = [];
 		foreach ($this->reader->accountsFor(administrationIds: $administrationIds) as $account) {
 			$type = (string)($account['accountType'] ?? '');
@@ -281,20 +344,24 @@ class BbvProgrammeBudgetService {
 			];
 		}
 
+		return $accountTypes;
+
+	}//end accountTypeFacets()
+
+	/**
+	 * The programme facet: the seven declared programme codes.
+	 *
+	 * @return array<int,array<string,string>> One facet entry per programme.
+	 */
+	private function programmeFacets(): array {
 		$programmes = [];
 		foreach (self::PROGRAMMES as $code) {
 			$programmes[] = ['value' => $code, 'label' => $this->calculator->humanise(code: $code)];
 		}
 
-		return [
-			'accountTypes' => $accountTypes,
-			'programmes' => $programmes,
-			'assignmentStatuses' => [
-				['value' => 'mapped', 'label' => 'Mapped'],
-			],
-		];
+		return $programmes;
 
-	}//end glLineFacets()
+	}//end programmeFacets()
 
 	/**
 	 * Resolve the fiscal-year window to report on.
