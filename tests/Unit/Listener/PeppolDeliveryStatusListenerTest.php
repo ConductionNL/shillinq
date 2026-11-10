@@ -106,6 +106,13 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 	private array $notificationState = [];
 
 	/**
+	 * Logger handed to the listener; null means a NullLogger.
+	 *
+	 * @var LoggerInterface|null
+	 */
+	private ?LoggerInterface $listenerLogger = null;
+
+	/**
 	 * Fresh store per test.
 	 *
 	 * @return void
@@ -505,7 +512,7 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 			ContainerInterface::class => $container,
 			IAppConfig::class => $appConfig,
 			INotificationManager::class => $this->notificationManager(),
-			LoggerInterface::class => new NullLogger(),
+			LoggerInterface::class => ($this->listenerLogger ?? new NullLogger()),
 			ListenerSchemaResolver::class => new ListenerSchemaResolver(
 				container: $container,
 				settingsService: $settings,
@@ -570,4 +577,101 @@ final class PeppolDeliveryStatusListenerTest extends TestCase {
 
 		return $manager;
 	}//end notificationManager()
+
+	/**
+	 * Golden: the stored invoice, notifications and log records for every
+	 * delivery-status outcome. Regenerate with PEPPOL_DELIVERY_GOLDEN_WRITE=1.
+	 *
+	 * @return void
+	 */
+	public function testOutcomesMatchGolden(): void {
+		$uri = 'openregister://shillinq/ARInvoice/' . self::INVOICE_ID;
+		$members = [
+			['id' => 'm-1', 'administrationId' => 'adm-1', 'role' => 'debiteurenadmin', 'userId' => 'u-1'],
+			['id' => 'm-2', 'administrationId' => 'adm-1', 'role' => 'eigenaar', 'userId' => ' u-1 '],
+			['id' => 'm-3', 'administrationId' => 'adm-1', 'role' => 'crediteurenadmin', 'userId' => 'u-2'],
+			['id' => 'm-4', 'administrationId' => 'adm-1', 'role' => 'controller', 'userId' => 'u-3'],
+			['id' => 'm-5', 'administrationId' => 'adm-2', 'role' => 'boekhouder', 'userId' => 'u-4'],
+			['id' => 'm-6', 'administrationId' => 'adm-1', 'role' => 'boekhouder', 'userId' => 'u-5'],
+		];
+		$cases = [
+			'delivered' => ['sent', [], ['objectUri' => $uri . '/', 'status' => ' delivered ', 'detail' => 'ok', 'transmissionId' => ' t-9 ']],
+			'noUri' => ['sent', [], ['status' => 'delivered']],
+			'noStatus' => ['sent', [], ['objectUri' => $uri]],
+			'unknownInvoice' => ['sent', [], ['objectUri' => 'openregister://shillinq/ARInvoice/nope', 'status' => 'delivered']],
+			'illegal' => ['delivered', [], ['objectUri' => $uri, 'status' => 'sent']],
+			'fromNotSent' => ['', [], ['objectUri' => $uri, 'status' => 'sent']],
+			'rejected' => ['queued', $members, ['objectUri' => $uri, 'status' => 'rejected', 'detail' => 'Unknown participant']],
+			'rejectedAgain' => ['rejected', $members, ['objectUri' => $uri, 'status' => 'rejected']],
+			'byNumber' => ['sent', [], ['objectUri' => 'openregister://shillinq/ARInvoice/2026-0051', 'status' => 'delivered']],
+		];
+
+		$actual = [];
+		foreach ($cases as $name => [$status, $memberships, $data]) {
+			$actual[$name] = $this->goldenOutcome(status: $status, memberships: $memberships, data: $data);
+		}
+
+		$golden = __DIR__ . '/fixtures/peppol-delivery-status.golden.json';
+		if (getenv('PEPPOL_DELIVERY_GOLDEN_WRITE') === '1') {
+			file_put_contents($golden, json_encode($actual, (JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) . "\n");
+		}
+
+		self::assertSame(json_decode((string)file_get_contents($golden), true, 512, JSON_THROW_ON_ERROR), $actual);
+
+	}//end testOutcomesMatchGolden()
+
+	/**
+	 * Run one delivery-status event over a fresh store.
+	 *
+	 * @param string $status The invoice's current delivery status ('' for none).
+	 * @param array<int,array<string,mixed>> $memberships Memberships to seed.
+	 * @param array<string,mixed> $data The CloudEvent data.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function goldenOutcome(string $status, array $memberships, array $data): array {
+		$this->store = new OpenRegisterFaithfulObjectService();
+		$this->notifications = [];
+		$this->seedInvoice(deliveryStatus: $status);
+		if ($status === '') {
+			$this->store->seed(schema: 'ARInvoice', rows: [['id' => self::INVOICE_ID, 'invoiceNumber' => '2026-0051']]);
+		}
+
+		if ($memberships !== []) {
+			$this->store->seed(schema: 'AdministrationMembership', rows: $memberships);
+		}
+
+		$logger = new class extends \Psr\Log\AbstractLogger {
+
+			/**
+			 * Captured records.
+			 *
+			 * @var array<int,array<int,mixed>>
+			 */
+			public array $records = [];
+
+			/**
+			 * Record a log call.
+			 *
+			 * @param mixed $level Level.
+			 * @param \Stringable|string $message Message.
+			 * @param array<string,mixed> $context Context.
+			 *
+			 * @return void
+			 */
+			public function log($level, \Stringable|string $message, array $context = []): void {
+				$this->records[] = [(string)$level, (string)$message, $context];
+			}
+		};
+		$this->listenerLogger = $logger;
+		$this->listener()->handle($this->deliveryStatus(data: $data));
+		$this->listenerLogger = null;
+
+		return [
+			'invoices' => $this->store->dump(schema: 'ARInvoice'),
+			'notifications' => $this->notifications,
+			'logs' => $logger->records,
+		];
+
+	}//end goldenOutcome()
 }//end class
