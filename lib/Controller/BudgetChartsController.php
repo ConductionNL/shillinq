@@ -61,20 +61,6 @@ use Throwable;
  */
 class BudgetChartsController extends Controller {
 	/**
-	 * Accepted shape for `from`/`to`: a `YYYY-MM` fiscal month.
-	 *
-	 * @var string
-	 */
-	private const MONTH_PATTERN = '/^\d{4}-\d{2}$/';
-
-	/**
-	 * Accepted shape for an OpenRegister object identifier (id, UUID or slug).
-	 *
-	 * @var string
-	 */
-	private const ID_PATTERN = '/^[A-Za-z0-9_.\-]{1,64}$/';
-
-	/**
 	 * Constructor for the BudgetChartsController.
 	 *
 	 * @param IRequest $request The request object.
@@ -124,19 +110,32 @@ class BudgetChartsController extends Controller {
 			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		$administrationId = trim((string)$this->request->getParam('administrationId', ''));
-		if ($administrationId === '' || preg_match(self::ID_PATTERN, $administrationId) !== 1) {
+		$query = new ChartSeriesQuery(request: $this->request);
+		$refusal = $this->administrationRefusal(query: $query) ?? $this->parameterRefusal(query: $query);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		return $this->resolve(query: $query);
+	}//end series()
+
+	/**
+	 * The administration checks: well-formed, then the membership check
+	 * (a failing check is a logged 500, a refusal a masked 404).
+	 *
+	 * @param ChartSeriesQuery $query The request parameters.
+	 *
+	 * @return JSONResponse|null The refusal, or null when the caller may proceed.
+	 */
+	private function administrationRefusal(ChartSeriesQuery $query): ?JSONResponse {
+		if ($query->administrationValid() === false) {
 			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
 		}
 
 		try {
-			$allowed = $this->context->canAccess(administrationId: $administrationId);
+			$allowed = $this->context->canAccess(administrationId: $query->administrationId);
 		} catch (Throwable $e) {
-			$this->logger->error(
-				'BudgetChartsController: administration access check failed',
-				['exception' => $e->getMessage()]
-			);
-
+			$this->logger->error('BudgetChartsController: administration access check failed', ['exception' => $e->getMessage()]);
 			return new JSONResponse(['error' => 'Authorization failure'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
@@ -145,40 +144,63 @@ class BudgetChartsController extends Controller {
 			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
 		}
 
-		$from = trim((string)$this->request->getParam('from', ''));
-		$to = trim((string)$this->request->getParam('to', ''));
-		if (preg_match(self::MONTH_PATTERN, $from) !== 1 || preg_match(self::MONTH_PATTERN, $to) !== 1) {
+		return null;
+	}//end administrationRefusal()
+
+	/**
+	 * The shape checks of the month range and the annual budget override.
+	 *
+	 * @param ChartSeriesQuery $query The request parameters.
+	 *
+	 * @return JSONResponse|null The refusal, or null when the parameters are valid.
+	 */
+	private function parameterRefusal(ChartSeriesQuery $query): ?JSONResponse {
+		if ($query->monthsValid() === false) {
 			return new JSONResponse(['error' => 'from and to must be YYYY-MM'], Http::STATUS_BAD_REQUEST);
 		}
 
-		$annualBudgetId = trim((string)$this->request->getParam('annualBudgetId', ''));
-		if ($annualBudgetId !== '' && preg_match(self::ID_PATTERN, $annualBudgetId) !== 1) {
+		if ($query->budgetValid() === false) {
 			return new JSONResponse(['error' => 'annualBudgetId must be a valid identifier'], Http::STATUS_BAD_REQUEST);
 		}
 
-		$resolvedAnnualBudgetId = null;
-		if ($annualBudgetId !== '') {
-			$resolvedAnnualBudgetId = $annualBudgetId;
-		}
+		return null;
+	}//end parameterRefusal()
 
+	/**
+	 * Compute the series; a service refusal is a 400 with its message, any
+	 * other failure a logged 500 without a stack trace.
+	 *
+	 * @param ChartSeriesQuery $query The validated request parameters.
+	 *
+	 * @return JSONResponse The chart-series payload or an error envelope.
+	 */
+	private function resolve(ChartSeriesQuery $query): JSONResponse {
 		try {
 			$result = $this->service->resolveSeries(
-				administrationId: $administrationId,
-				from: $from,
-				to: $to,
-				annualBudgetId: $resolvedAnnualBudgetId
+				administrationId: $query->administrationId, from: $query->from, to: $query->to, annualBudgetId: $query->annualBudget()
 			);
 		} catch (InvalidArgumentException $e) {
 			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
 		} catch (Throwable $e) {
-			$this->logger->error(
-				'BudgetChartsController: failed to compute chart series',
-				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
-			);
-
-			return new JSONResponse(['error' => 'Failed to compute chart series'], Http::STATUS_INTERNAL_SERVER_ERROR);
+			return $this->seriesFailed(administrationId: $query->administrationId, e: $e);
 		}
 
 		return new JSONResponse($result, Http::STATUS_OK);
-	}//end series()
+	}//end resolve()
+
+	/**
+	 * Log an unexpected series failure and answer a generic 500 (no stack trace).
+	 *
+	 * @param string    $administrationId The administration reported on.
+	 * @param Throwable $e                The failure.
+	 *
+	 * @return JSONResponse The 500 response.
+	 */
+	private function seriesFailed(string $administrationId, Throwable $e): JSONResponse {
+		$this->logger->error(
+			'BudgetChartsController: failed to compute chart series',
+			['administrationId' => $administrationId, 'exception' => $e->getMessage()]
+		);
+		return new JSONResponse(['error' => 'Failed to compute chart series'], Http::STATUS_INTERNAL_SERVER_ERROR);
+	}//end seriesFailed()
 }//end class
