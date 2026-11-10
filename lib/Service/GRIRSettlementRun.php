@@ -139,4 +139,99 @@ final class GRIRSettlementRun {
 	) {
 		$this->invoiceId = (string)($threeWayMatch['invoiceId'] ?? '');
 	}//end __construct()
+
+	/**
+	 * Keep the invoice with its totals; totalInclVat defaults to excl + VAT
+	 * when the invoice does not carry it.
+	 *
+	 * @param array<string,mixed> $invoice The supplier invoice.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-009
+	 */
+	public function useInvoice(array $invoice): void {
+		$this->invoice = $invoice;
+		$this->totalExclVat = (int)($invoice['totalExclVat'] ?? 0);
+		$this->totalVat = (int)($invoice['totalVat'] ?? 0);
+		$this->totalInclVat = (int)($invoice['totalInclVat'] ?? ($this->totalExclVat + $this->totalVat));
+	}//end useInvoice()
+
+	/**
+	 * True when the invoice carries a positive excl-VAT or incl-VAT total.
+	 *
+	 * @return bool Whether there is anything to settle.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-009
+	 */
+	public function hasMonetaryValue(): bool {
+		return $this->totalExclVat > 0 || $this->totalInclVat > 0;
+	}//end hasMonetaryValue()
+
+	/**
+	 * True when the excl or the VAT leg carries an amount.
+	 *
+	 * @return bool Whether a settlement leg has an amount.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-009
+	 */
+	public function hasLegAmounts(): bool {
+		return $this->totalExclVat !== 0 || $this->totalVat !== 0;
+	}//end hasLegAmounts()
+
+	/**
+	 * The settlement lines per REQ-PO3W-009 settlement leg:
+	 * DR GR/IR Clearing  (excl VAT) - closes the receipt-side clearing
+	 *                                 balance accumulated at GRN time;
+	 * DR VAT Input       (VAT)      - the input VAT the supplier charged us,
+	 *                                 which we reclaim on our VAT return (RGS
+	 *                                 3.5 "inputVat"). The spec calls this
+	 *                                 account "VAT Payable" by its credit-side
+	 *                                 label; on a purchase invoice the entry
+	 *                                 is on the debit side, so it balances
+	 *                                 against the AP leg;
+	 * CR Accounts Payable (incl VAT) - what we owe the supplier.
+	 *
+	 * The tax-only edge (excl == 0, vat > 0) yields a balanced 2-line
+	 * DR VAT / CR AP entry without the clearing leg.
+	 *
+	 * @return array<int,array<string,mixed>> The settlement lines.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-009
+	 */
+	public function lines(): array {
+		$legs = [];
+		if ($this->totalExclVat > 0) {
+			$legs[] = ['accountNumber' => $this->clearingAccount, 'side' => 'debit', 'amountCents' => $this->totalExclVat];
+		}
+
+		if ($this->totalVat > 0) {
+			$legs[] = ['accountNumber' => $this->vatAccount, 'side' => 'debit', 'amountCents' => $this->totalVat];
+		}
+
+		$legs[] = ['accountNumber' => $this->apAccount, 'side' => 'credit', 'amountCents' => ($this->totalExclVat + $this->totalVat)];
+
+		$lines = [];
+		foreach ($legs as $leg) {
+			$lines[] = $this->line(leg: $leg);
+		}
+
+		return $lines;
+	}//end lines()
+
+	/**
+	 * One settlement line: the leg's account, side and amount plus the
+	 * description and dimensions every line carries.
+	 *
+	 * @param array<string,mixed> $leg accountNumber, side and amountCents.
+	 *
+	 * @return array<string,mixed> The settlement line.
+	 */
+	private function line(array $leg): array {
+		return $leg + [
+			'description' => $this->description,
+			'costCenter' => $this->costCenter,
+			'projectCode' => $this->projectCode,
+		];
+	}//end line()
 }//end class
