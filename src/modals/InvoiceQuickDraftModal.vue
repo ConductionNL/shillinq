@@ -197,6 +197,7 @@ import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcDialog, NcSelect } from '@nextcloud/vue'
 import GlAccountPicker from '../components/BudgetBBVMapping/GlAccountPicker.vue'
 import {
+	applyQuickDraftPrefs,
 	buildQuickDraftRequest,
 	computeTotals,
 	defaultDraftLine,
@@ -373,19 +374,7 @@ export default {
 				this.form.glAccount = String(customer.defaultGlAccount)
 			}
 			// Apply last-used per-customer preferences (REQ-IQD-004).
-			const prefs = loadQuickDraftPrefs(option.value)
-			if (prefs) {
-				if (prefs.glAccount) this.form.glAccount = String(prefs.glAccount)
-				const line = this.form.lines[0]
-				if (line) {
-					if (prefs.description && !line.description)
-						line.description = prefs.description
-					if (prefs.unitPrice && !line.unitPrice)
-						line.unitPrice = prefs.unitPrice
-					if (prefs.vatCode !== undefined && prefs.vatCode !== null)
-						line.vatRate = prefs.vatCode
-				}
-			}
+			applyQuickDraftPrefs(this.form, loadQuickDraftPrefs(option.value))
 			this.recomputeDueDate(customer)
 		},
 
