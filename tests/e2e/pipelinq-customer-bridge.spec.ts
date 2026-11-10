@@ -67,7 +67,7 @@ test.describe('pipelinq customer-bridge — admin configuration panel', () => {
 		await expect(page.getByRole('main')).toBeVisible({ timeout: 10_000 })
 
 		// The integration panel ships the heading "Pipelinq integration"
-		// — see src/views/settings/PipelinqIntegration.vue. We assert
+		// — the fields section on the admin page. We assert
 		// via text rather than a CSS hook so an @nextcloud/vue bump
 		// can re-organise the DOM without breaking the test.
 		const heading = page
@@ -88,7 +88,7 @@ test.describe('pipelinq customer-bridge — admin configuration panel', () => {
 		page,
 	}) => {
 		// Find inputs by their associated <label> text — the labels are
-		// "API endpoint" + "API token" in PipelinqIntegration.vue.
+		// "API endpoint" + "API token" on the admin page.
 		const endpoint = page.getByLabel(/API endpoint/i).first()
 		const token = page.getByLabel(/API token/i).first()
 
@@ -153,7 +153,7 @@ test.describe('pipelinq customer-bridge — admin configuration panel', () => {
 		}
 
 		// Pre-condition: the button must be enabled once an endpoint
-		// is set. PipelinqIntegration.vue disables it on empty endpoint.
+		// is set.
 		const endpoint = page.getByLabel(/API endpoint/i).first()
 		if (await endpoint.isVisible().catch(() => false)) {
 			// Use a syntactically valid URL so the form-validation in

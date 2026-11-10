@@ -15,7 +15,14 @@
 		@reimported="onReimported">
 		<Settings v-if="storesReady" />
 
-		<PipelinqIntegration v-if="storesReady" />
+		<CnSettingsFieldsSection
+			appId="shillinq"
+			:name="t('shillinq', 'Pipelinq integration')"
+			:description="t('shillinq', 'The connection to Pipelinq, which adds customer details to bookings.')"
+			:url="pipelinqSettingsUrl"
+			saveMethod="POST"
+			:fields="pipelinqFields"
+			data-testid="admin-section-pipelinq" />
 
 		<template
 			v-for="section in pageSections"
@@ -40,13 +47,13 @@
 <script>
 import {
 	CnAdminSettingsShell,
+	CnSettingsFieldsSection,
 	CnSettingsSection,
 	CnToggleTableWidget,
 } from '@conduction/nextcloud-vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton } from '@nextcloud/vue'
-import PipelinqIntegration from './PipelinqIntegration.vue'
 import Settings from './Settings.vue'
 import requiredFieldsFragment from '../../manifest.d/platform-required-fields.json'
 import { initializeStores } from '../../store/store.js'
@@ -55,11 +62,11 @@ export default {
 	name: 'AdminRoot',
 	components: {
 		CnAdminSettingsShell,
+		CnSettingsFieldsSection,
 		CnSettingsSection,
 		CnToggleTableWidget,
 		NcButton,
 		Settings,
-		PipelinqIntegration,
 	},
 
 	/**
@@ -86,6 +93,31 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * Where the Pipelinq connection is read and saved.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
+		 */
+		pipelinqSettingsUrl() {
+			return generateUrl('/apps/shillinq/api/pipelinq/settings')
+		},
+
+		/**
+		 * The Pipelinq connection: its address, its token (never shown, only
+		 * replaced) and a connection test.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
+		 */
+		pipelinqFields() {
+			return [
+				{ key: 'endpoint', label: 'API endpoint', type: 'text', placeholder: 'https://pipelinq.example.com/api', pattern: '^https?://.+', patternMessage: 'Enter an address that starts with https://' },
+				{ key: 'token', label: 'API token', type: 'secret', setKey: 'hasToken', hint: 'Stored in the Nextcloud secrets store and never shown again. Paste a new token to replace it.' },
+				{ key: 'test', label: 'Test connection', type: 'action', url: generateUrl('/apps/shillinq/api/pipelinq/settings/test'), okPath: 'success', resultPath: 'message' },
+			]
+		},
+
 		/**
 		 * Board ShInstellingen's sections whose settings live on their own
 		 * app page: each is a tab that names what it holds and opens that page.
