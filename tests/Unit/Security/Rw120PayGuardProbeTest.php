@@ -109,15 +109,13 @@ final class Rw120PayGuardProbeTest extends TestCase {
 			}
 			public function find(
 				int|string $id,
-				?array $_extend = [],
-				bool $files = false,
-				$register = null,
-				$schema = null,
+				?\OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions $options = null,
 				bool $_rbac = true,
-				bool $_multitenancy = true,
-				bool $_render = true,
-				bool $_audit = true
+				bool $_multitenancy = true
 			): ObjectEntity {
+				$register = $options?->register;
+				$schema = $options?->schema;
+				$_audit = ($options?->audit ?? true);
 				$this->test->calls[] = ['find', $id, $register, $schema, $_rbac, $_multitenancy, $_audit];
 				// find() scopes only by its arguments (OR callFindScope), never the setters' state.
 				$hit = $this->lookup($id, $register, $schema, $_multitenancy);

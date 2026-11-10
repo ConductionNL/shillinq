@@ -39,6 +39,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Support;
 
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\IUser;
 
 /**
@@ -161,29 +162,19 @@ final class RacingDefaultObjectServiceDecorator implements ObjectServiceInterfac
 
 	/**
 	 * @param int|string $id Object id, UUID or slug.
-	 * @param ?array $extend Relations to expand.
-	 * @param bool $files Include file metadata.
-	 * @param string|int|null $register Register override.
-	 * @param string|int|null $schema Schema override.
+	 * @param ObjectFindOptions|null $options Register, schema, extend, files, render and audit.
 	 * @param bool $rbac Apply register RBAC.
 	 * @param bool $multitenancy Apply organisation scoping.
-	 * @param bool $render Render the entity.
-	 * @param bool $audit Write an audit entry.
 	 *
 	 * @return ?ObjectEntityInterface
 	 */
 	public function find(
 		int|string $id,
-		?array $extend = [],
-		bool $files = false,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		?ObjectFindOptions $options = null,
 		bool $rbac = true,
-		bool $multitenancy = true,
-		bool $render = true,
-		bool $audit = true
+		bool $multitenancy = true
 	): ?ObjectEntityInterface {
-		return $this->inner->find($id, $extend, $files, $register, $schema, $rbac, $multitenancy, $render, $audit);
+		return $this->inner->find(id: $id, options: $options, _rbac: $rbac, _multitenancy: $multitenancy);
 
 	}//end find()
 
@@ -310,10 +301,7 @@ final class RacingDefaultObjectServiceDecorator implements ObjectServiceInterfac
 
 	/**
 	 * @param string $id Object id, UUID or slug.
-	 * @param ?array $extend Relations to expand.
-	 * @param bool $files Include file metadata.
-	 * @param string|int|null $register Register override.
-	 * @param string|int|null $schema Schema override.
+	 * @param ObjectFindOptions|null $options Register, schema, extend, files, render and audit.
 	 * @param bool $rbac Apply register RBAC.
 	 * @param bool $multitenancy Apply organisation scoping.
 	 *
@@ -321,14 +309,11 @@ final class RacingDefaultObjectServiceDecorator implements ObjectServiceInterfac
 	 */
 	public function findSilent(
 		string $id,
-		?array $extend = [],
-		bool $files = false,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		?ObjectFindOptions $options = null,
 		bool $rbac = true,
 		bool $multitenancy = true
 	): ObjectEntityInterface {
-		return $this->inner->findSilent($id, $extend, $files, $register, $schema, $rbac, $multitenancy);
+		return $this->inner->findSilent(id: $id, options: $options, _rbac: $rbac, _multitenancy: $multitenancy);
 
 	}//end findSilent()
 

@@ -787,20 +787,15 @@ final class DunningTickRunnerTest extends TestCase {
 			 */
 			public function find(
 				int|string $id,
-				?array $_extend = [],
-				bool $files = false,
-				mixed $register = null,
-				mixed $schema = null,
+				?\OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions $options = null,
 				bool $_rbac = true,
-				bool $_multitenancy = true,
-				bool $_render = true,
-				bool $_audit = true
+				bool $_multitenancy = true
 			): ?\OCA\OpenRegister\Contract\ObjectEntityInterface {
 				if ($_multitenancy === true && $this->trusted() === false) {
 					return null;
 				}
 
-				return parent::find($id, $_extend, $files, $register, $schema, $_rbac, $_multitenancy, $_render, $_audit);
+				return parent::find(id: $id, options: $options, _rbac: $_rbac, _multitenancy: $_multitenancy);
 			}
 		};
 	}//end userlessStore()

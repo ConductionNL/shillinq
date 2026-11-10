@@ -73,7 +73,9 @@ final class ObjectIdentifierScopedFindTest extends TestCase {
 			public function getCurrentSchemaEntity(): ?object {
 				return $this->schema;
 			}
-			public function find(string $id, ?object $register = null, ?object $schema = null, bool $_rbac = true): ObjectEntity {
+			public function find(string $id, ?\OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions $options = null, bool $_rbac = true): ObjectEntity {
+				$register = $options?->register;
+				$schema = $options?->schema;
 				$this->calls[] = ['find', $id, $register?->getSlug(), $schema?->getSlug(), $_rbac];
 				$hit = $this->lookup(id: $id, schema: $schema);
 				if ($hit === null && $schema !== null && preg_match('/^[0-9a-f-]{36}$/', $id) === 1) {

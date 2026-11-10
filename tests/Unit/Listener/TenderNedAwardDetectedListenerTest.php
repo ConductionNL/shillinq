@@ -202,11 +202,10 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 			 */
 			public function find(
 				string | int $id,
-				?array $_extend = [],
-				bool $files = false,
-				string | null $register = null,
-				string | null $schema = null,
+				?\OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions $options = null,
 			): ?object {
+				$register = $options?->register;
+				$schema = $options?->schema;
 				$this->finds[] = ['id' => $id, 'register' => $register, 'schema' => ($schema ?? $this->currentSchema)];
 				if ($this->dossier === null) {
 					return null;

@@ -48,6 +48,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Support;
 
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\IUser;
 use RuntimeException;
 
@@ -269,28 +270,19 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 * Find one row on the active schema by id or uuid.
 	 *
 	 * @param int|string      $id            Object id, UUID or slug.
-	 * @param ?array          $_extend       Relations to expand (ignored).
-	 * @param bool            $files         Include file metadata (ignored).
-	 * @param string|int|null $register      Register override (ignored).
-	 * @param string|int|null $schema        Schema override, when given.
+	 * @param ObjectFindOptions|null $options Register, schema, extend, files, render and audit.
 	 * @param bool            $_rbac         Apply register RBAC (ignored).
 	 * @param bool            $_multitenancy Apply organisation scoping (ignored).
-	 * @param bool            $_render       Render the entity (ignored).
-	 * @param bool            $_audit        Write an audit entry (ignored).
 	 *
 	 * @return ?ObjectEntityInterface
 	 */
 	public function find(
 		int|string $id,
-		?array $_extend = [],
-		bool $files = false,
-		mixed $register = null,
-		mixed $schema = null,
+		?ObjectFindOptions $options = null,
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $_render = true,
-		bool $_audit = true
+		bool $_multitenancy = true
 	): ?ObjectEntityInterface {
+		$schema = $options?->schema;
 		$target = null;
 		if ($schema !== null) {
 			$target = is_object($schema) === true ? (string)$schema->getSlug() : (string)$schema;
@@ -863,7 +855,7 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	): ObjectEntityInterface {
 		// The schema argument is honoured as OpenRegister honours it: a patch
 		// made while another schema is active must land on the named one.
-		$existing = $this->find(id: $objectId, schema: $schema);
+		$existing = $this->find(id: $objectId, options: new ObjectFindOptions(schema: $schema));
 		$merged   = $data;
 		if ($existing !== null) {
 			$merged = array_merge($existing->getObject(), $data);
@@ -932,10 +924,7 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 * Find without audit or read events.
 	 *
 	 * @param string          $id            Object id, UUID or slug.
-	 * @param ?array          $_extend       Relations to expand (ignored).
-	 * @param bool            $files         Include file metadata (ignored).
-	 * @param string|int|null $register      Register override (ignored).
-	 * @param string|int|null $schema        Schema override, when given.
+	 * @param ObjectFindOptions|null $options Register, schema, extend, files, render and audit.
 	 * @param bool            $_rbac         Apply register RBAC (ignored).
 	 * @param bool            $_multitenancy Apply organisation scoping (ignored).
 	 *
@@ -943,14 +932,11 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 */
 	public function findSilent(
 		string $id,
-		?array $_extend = [],
-		bool $files = false,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		?ObjectFindOptions $options = null,
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): ObjectEntityInterface {
-		$found = $this->find(id: $id, schema: $schema);
+		$found = $this->find(id: $id, options: new ObjectFindOptions(schema: $options?->schema));
 		if ($found === null) {
 			throw new RuntimeException('InMemoryObjectServiceStub: no object ' . $id);
 		}

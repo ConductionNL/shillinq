@@ -31,6 +31,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Bank;
 
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\Shillinq\Listener\ReconciliationMatchSettlementListener;
 use OCA\Shillinq\Service\Bank\InvoiceSettlementService;
 use OCA\Shillinq\Service\Bank\ManualMatchRefusedException;
@@ -194,7 +195,7 @@ final class ManualMatchServiceTest extends TestCase {
 	 * @return array<string,mixed>
 	 */
 	private function stored(string $schema, string $id): array {
-		return $this->store->find($id, schema: $schema)->getObject();
+		return $this->store->find($id, options: new ObjectFindOptions(schema: $schema))->getObject();
 
 	}//end stored()
 

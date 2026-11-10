@@ -391,10 +391,7 @@ class ConsolidationGuardTest extends TestCase {
 			 */
 			public function find(
 				string|int $id,
-				?array $_extend = [],
-				bool $files = false,
-				mixed $register = null,
-				mixed $schema = null,
+				?\OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions $options = null,
 			): ?object {
 				if ($this->findReturn === null) {
 					return null;

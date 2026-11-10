@@ -19,6 +19,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Reporting\Schedule;
 
 use DateTimeImmutable;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\Shillinq\Reporting\ReportGenerationService;
 use OCA\Shillinq\Reporting\Schedule\ReportRecipientPolicy;
 use OCA\Shillinq\Reporting\Schedule\ReportScheduleCalendar;
@@ -169,7 +170,7 @@ class ScheduledReportRunnerTest extends TestCase {
 	 * @return array<string, mixed> The stored schedule.
 	 */
 	private function stored(): array {
-		$found = $this->store->find(id: 'sched-1', schema: 'ReportSchedule');
+		$found = $this->store->find(id: 'sched-1', options: new ObjectFindOptions(schema: 'ReportSchedule'));
 		self::assertNotNull($found);
 		$row = $found->getObject();
 		unset($row['id'], $row['owner']);

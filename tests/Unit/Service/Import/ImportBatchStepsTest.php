@@ -30,6 +30,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\Import;
 
 use DomainException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
 use OCA\Shillinq\AppInfo\GuardTagServices;
 use OCA\Shillinq\Lifecycle\Action\ImportBatchAction;
@@ -224,7 +225,7 @@ final class ImportBatchStepsTest extends TestCase {
 			 * @return object
 			 */
 			public function transition(string $objectId, string $action, array $data = []): object {
-				$entry = $this->store->find($objectId, schema: 'JournalEntry');
+				$entry = $this->store->find($objectId, options: new ObjectFindOptions(schema: 'JournalEntry'));
 				if ($entry !== null && $this->guard->canPost($entry->getObject()) !== true) {
 					throw new \RuntimeException('The journal entry ' . $objectId . ' cannot be posted.');
 				}

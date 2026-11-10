@@ -26,6 +26,7 @@ use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectDeletedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\Shillinq\Listener\AssignmentHoursListener;
 use OCA\Shillinq\Repair\BackfillAssignmentHours;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
@@ -220,7 +221,7 @@ class AssignmentHoursListenerTest extends TestCase {
 	 * @return array<string, mixed>
 	 */
 	private function stored(string $schema, string $id): array {
-		return $this->store->find(id: $id, schema: $schema)->getObject();
+		return $this->store->find(id: $id, options: new ObjectFindOptions(schema: $schema))->getObject();
 
 	}//end stored()
 
