@@ -45,10 +45,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use Throwable;
 
 /**
  * Reads every schema `BudgetScenarioEvaluator` needs, batched to exactly 5
@@ -217,7 +215,7 @@ class BudgetScenarioReader {
 	 * Run one property-filtered query against the shillinq register.
 	 *
 	 * A failure is logged and answered as an empty result set: a missing
-	 * schema must not stop evaluation from computing whatever it can.
+	 * schema must not stop the reader from computing whatever it can.
 	 *
 	 * @param string $schema The schema slug.
 	 * @param array<string,mixed> $filters Property filters (never `id`).
@@ -225,49 +223,12 @@ class BudgetScenarioReader {
 	 * @return list<array<string,mixed>> The matching records as plain arrays.
 	 */
 	private function query(string $schema, array $filters): array {
-		try {
-			$rows = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->findAll(['filters' => $filters]);
-		} catch (Throwable $e) {
-			$this->logger->error(
-				'BudgetScenarioReader: failed to query OpenRegister',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			return [];
-		}
+		$query = new RegisterQuery(
+			register: new ShillinqRegister(appConfig: $this->appConfig, objectService: $this->objectService),
+			failureLog: new QueryFailureLog(logger: $this->logger, component: 'BudgetScenarioReader'),
+		);
 
-		$result = [];
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
-				continue;
-			}
-
-			if (is_object($row) === true && method_exists($row, 'getObject') === true) {
-				$payload = $row->getObject();
-				if (is_array($payload) === true) {
-					$result[] = $payload;
-				}
-			}
-		}
-
-		return $result;
+		return $query->rows(schema: $schema, filters: $filters);
 
 	}//end query()
-
-	/**
-	 * Resolve the OpenRegister register slug from app config.
-	 *
-	 * @return string The register slug, defaulting to `shillinq`.
-	 */
-	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
-	}//end register()
 }//end class
