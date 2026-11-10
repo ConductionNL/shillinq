@@ -476,201 +476,332 @@ class GRIRClearingService {
 	 *                           invariant fails.
 	 *
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-009
-	 *
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength) Settlement pipeline
-	 * mirrors createGRIRPosting() — splitting would scatter the balance
-	 * invariant across helpers.
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)  Multiple guard branches
-	 * cover the configured-account, tax-only, and missing-line edges; all
-	 * paths converge on the same balanced-posting call.
-	 * @SuppressWarnings(PHPMD.NPathComplexity)       Same as CyclomaticComplexity.
 	 */
 	public function settleGRIRPosting(string $administrationId, array $threeWayMatch): array {
 		$this->assertAccess(administrationId: $administrationId);
 
-		$invoiceId = (string)($threeWayMatch['invoiceId'] ?? '');
-		if ($invoiceId === '') {
+		$run = new GRIRSettlementRun(administrationId: $administrationId, threeWayMatch: $threeWayMatch);
+		$this->loadSettlementInvoice(run: $run);
+		$skipped = $this->prepareSettlement(run: $run);
+		if ($skipped !== null) {
+			return $skipped;
+		}
+
+		$lines = $this->settlementLines(run: $run);
+		return $this->postBalancedTransaction(
+			administrationId: $administrationId,
+			transaction: $this->settlementHeader(run: $run),
+			lines: $lines
+		);
+
+	}//end settleGRIRPosting()
+
+	/**
+	 * Load the invoice the match names and read its totals.
+	 *
+	 * @param GRIRSettlementRun $run The settlement run.
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException When the match names no invoice or it is missing.
+	 */
+	private function loadSettlementInvoice(GRIRSettlementRun $run): void {
+		if ($run->invoiceId === '') {
 			throw new RuntimeException('settleGRIRPosting requires invoiceId on the ThreeWayMatch');
 		}
 
 		$invoice = $this->findOne(
 			schema: self::SCHEMA_INVOICE,
 			filters: [
-				'id' => $invoiceId,
-				'administrationId' => $administrationId,
+				'id' => $run->invoiceId,
+				'administrationId' => $run->administrationId,
 			]
 		);
 		if ($invoice === null) {
 			throw new RuntimeException('Supplier invoice not found for settlement');
 		}
 
-		$totalExclVat = (int)($invoice['totalExclVat'] ?? 0);
-		$totalVat = (int)($invoice['totalVat'] ?? 0);
-		$totalInclVat = (int)($invoice['totalInclVat'] ?? ($totalExclVat + $totalVat));
+		$this->readInvoiceTotals(run: $run, invoice: $invoice);
+	}//end loadSettlementInvoice()
 
-		if ($totalExclVat <= 0 && $totalInclVat <= 0) {
-			return [
-				'posted' => false,
-				'message' => 'Invoice has no monetary value to settle',
-			];
+	/**
+	 * Keep the invoice on the run with its totals; totalInclVat defaults to
+	 * excl + VAT when the invoice does not carry it.
+	 *
+	 * @param GRIRSettlementRun   $run     The settlement run.
+	 * @param array<string,mixed> $invoice The supplier invoice.
+	 *
+	 * @return void
+	 */
+	private function readInvoiceTotals(GRIRSettlementRun $run, array $invoice): void {
+		$run->invoice = $invoice;
+		$run->totalExclVat = (int)($invoice['totalExclVat'] ?? 0);
+		$run->totalVat = (int)($invoice['totalVat'] ?? 0);
+		$run->totalInclVat = (int)($invoice['totalInclVat'] ?? ($run->totalExclVat + $run->totalVat));
+	}//end readInvoiceTotals()
+
+	/**
+	 * Resolve everything the posting needs, or the not-posted result that
+	 * stops it: an invoice without value, unconfigured accounts, or nothing
+	 * left to post on the excl/VAT legs.
+	 *
+	 * @param GRIRSettlementRun $run The settlement run.
+	 *
+	 * @return array<string,mixed>|null The not-posted result, or null to post.
+	 */
+	private function prepareSettlement(GRIRSettlementRun $run): ?array {
+		if ($this->hasMonetaryValue(run: $run) === false) {
+			return $this->notPosted(message: 'Invoice has no monetary value to settle');
 		}
 
-		// Resolve the first matched PO line so we can preserve costCenter +
-		// projectCode on every settlement line (REQ-PO3W-009 — dimensional
-		// reporting contract). The matching engine guarantees at least one
-		// PO line is present on an approved match.
+		$this->resolveSettlementAccounts(run: $run);
+		$refusal = $this->settlementAccountRefusal(run: $run);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$this->describeSettlement(run: $run);
+		return $this->emptyLegsRefusal(run: $run);
+	}//end prepareSettlement()
+
+	/**
+	 * True when the invoice carries a positive excl-VAT or incl-VAT total.
+	 *
+	 * @param GRIRSettlementRun $run The settlement run.
+	 *
+	 * @return bool Whether there is anything to settle.
+	 */
+	private function hasMonetaryValue(GRIRSettlementRun $run): bool {
+		return $run->totalExclVat > 0 || $run->totalInclVat > 0;
+	}//end hasMonetaryValue()
+
+	/**
+	 * Defensive: the not-posted result when neither the excl nor the VAT leg
+	 * carries an amount.
+	 *
+	 * @param GRIRSettlementRun $run The settlement run.
+	 *
+	 * @return array<string,mixed>|null The not-posted result, or null.
+	 */
+	private function emptyLegsRefusal(GRIRSettlementRun $run): ?array {
+		if ($run->totalExclVat === 0 && $run->totalVat === 0) {
+			return $this->notPosted(message: 'Invoice carries no excl/vat amount to settle');
+		}
+
+		return null;
+	}//end emptyLegsRefusal()
+
+	/**
+	 * Resolve the first matched PO line so costCenter + projectCode are
+	 * preserved on every settlement line (REQ-PO3W-009 — dimensional
+	 * reporting contract), and the accounts the posting uses. The matching
+	 * engine guarantees at least one PO line is present on an approved match.
+	 *
+	 * @param GRIRSettlementRun $run The settlement run.
+	 *
+	 * @return void
+	 */
+	private function resolveSettlementAccounts(GRIRSettlementRun $run): void {
 		$matchedPoLine = $this->resolveFirstMatchedPoLine(
-			administrationId: $administrationId,
-			threeWayMatch: $threeWayMatch
+			administrationId: $run->administrationId,
+			threeWayMatch: $run->threeWayMatch
 		);
 
-		$costCenter = trim((string)(($matchedPoLine['costCenter'] ?? '')));
-		$projectCode = trim((string)(($matchedPoLine['projectCode'] ?? '')));
+		$run->costCenter = trim((string)(($matchedPoLine['costCenter'] ?? '')));
+		$run->projectCode = trim((string)(($matchedPoLine['projectCode'] ?? '')));
 		$toleranceProfileId = $this->toleranceProfileId(poLine: $matchedPoLine);
 
-		$clearingAccount = $this->grIrClearingAccount(toleranceProfileId: $toleranceProfileId);
-		$apAccount = $this->accountsPayableAccount();
-		$vatAccount = $this->vatPayableAccount();
+		$run->clearingAccount = $this->grIrClearingAccount(toleranceProfileId: $toleranceProfileId);
+		$run->apAccount = $this->accountsPayableAccount();
+		$run->vatAccount = $this->vatPayableAccount();
+	}//end resolveSettlementAccounts()
 
-		if ($clearingAccount === '' || $apAccount === '') {
+	/**
+	 * The not-posted result when a settlement account is not configured.
+	 *
+	 * @param GRIRSettlementRun $run The settlement run.
+	 *
+	 * @return array<string,mixed>|null The not-posted result, or null.
+	 */
+	private function settlementAccountRefusal(GRIRSettlementRun $run): ?array {
+		if ($run->clearingAccount === '' || $run->apAccount === '') {
 			$this->logger->warning(
 				'GRIRClearingService: settlement accounts not configured; settlement posting skipped',
 				[
-					'invoiceId' => $invoiceId,
-					'clearingAccount' => $clearingAccount,
-					'apAccount' => $apAccount,
+					'invoiceId' => $run->invoiceId,
+					'clearingAccount' => $run->clearingAccount,
+					'apAccount' => $run->apAccount,
 				]
 			);
-			return [
-				'posted' => false,
-				'message' => 'Settlement accounts not configured',
-			];
+			return $this->notPosted(message: 'Settlement accounts not configured');
 		}
 
-		if ($totalVat > 0 && $vatAccount === '') {
+		return $this->vatAccountRefusal(run: $run);
+	}//end settlementAccountRefusal()
+
+	/**
+	 * The not-posted result when the invoice carries VAT but no VAT account
+	 * is configured.
+	 *
+	 * @param GRIRSettlementRun $run The settlement run.
+	 *
+	 * @return array<string,mixed>|null The not-posted result, or null.
+	 */
+	private function vatAccountRefusal(GRIRSettlementRun $run): ?array {
+		if ($run->totalVat > 0 && $run->vatAccount === '') {
 			$this->logger->warning(
 				'GRIRClearingService: VAT account not configured; settlement posting skipped',
-				['invoiceId' => $invoiceId]
+				['invoiceId' => $run->invoiceId]
 			);
-			return [
-				'posted' => false,
-				'message' => 'VAT settlement account not configured',
-			];
+			return $this->notPosted(message: 'VAT settlement account not configured');
 		}
 
-		$matchId = (string)($threeWayMatch['id'] ?? ($threeWayMatch['@self']['id'] ?? ''));
-		$invoiceNumber = (string)($invoice['invoiceNumber'] ?? '');
+		return null;
+	}//end vatAccountRefusal()
 
-		$sourceReference = $invoiceId;
-		if ($matchId !== '') {
-			$sourceReference = $matchId;
-		}
+	/**
+	 * A not-posted result envelope.
+	 *
+	 * @param string $message Why nothing was posted.
+	 *
+	 * @return array{posted:false,message:string}
+	 */
+	private function notPosted(string $message): array {
+		return [
+			'posted' => false,
+			'message' => $message,
+		];
+	}//end notPosted()
 
-		$invoiceLabel = $invoiceId;
-		if ($invoiceNumber !== '') {
-			$invoiceLabel = $invoiceNumber;
-		}
+	/**
+	 * Derive the match id, invoice number, description and posting date.
+	 *
+	 * @param GRIRSettlementRun $run The settlement run.
+	 *
+	 * @return void
+	 */
+	private function describeSettlement(GRIRSettlementRun $run): void {
+		$match = $run->threeWayMatch;
+		$run->matchId = (string)($match['id'] ?? ($match['@self']['id'] ?? ''));
+		$run->invoiceNumber = (string)($run->invoice['invoiceNumber'] ?? '');
 
-		$matchLabel = 'n/a';
-		if ($matchId !== '') {
-			$matchLabel = $matchId;
-		}
-
-		$description = sprintf(
+		$run->description = sprintf(
 			'GR/IR settlement — invoice %s — match %s',
-			$invoiceLabel,
-			$matchLabel
+			$this->nonEmptyOr(value: $run->invoiceNumber, fallback: $run->invoiceId),
+			$this->nonEmptyOr(value: $run->matchId, fallback: 'n/a')
 		);
-		$postingDate = $this->postingDate(grn: $invoice);
+		$run->postingDate = $this->postingDate(grn: $run->invoice);
+	}//end describeSettlement()
 
-		// Build settlement lines per REQ-PO3W-009 settlement leg:
-		// DR GR/IR Clearing  (excl VAT) - closes the receipt-side clearing
-		// balance accumulated at GRN time;
-		// DR VAT Input       (VAT)      - the input VAT the supplier charged
-		// us, which we'll reclaim on our VAT
-		// return (RGS 3.5 "inputVat").
-		// The spec calls this account "VAT
-		// Payable" by its credit-side label;
-		// on a purchase invoice the entry is
-		// on the debit side, so the entry
-		// balances against the AP leg below.
-		// CR Accounts Payable (incl VAT) - what we owe the supplier.
-		//
-		// Tax-only edge (excl == 0, vat > 0) materialises a balanced
-		// 2-line DR VAT / CR AP entry without the clearing leg.
-		$clearingDebit = $totalExclVat;
-		$vatDebit = $totalVat;
-		$apCredit = ($clearingDebit + $vatDebit);
-
-		if ($clearingDebit === 0 && $vatDebit === 0) {
-			// Defensive: nothing to post.
-			return [
-				'posted' => false,
-				'message' => 'Invoice carries no excl/vat amount to settle',
-			];
+	/**
+	 * A value, or a fallback when the value is empty.
+	 *
+	 * @param string      $value    The preferred value.
+	 * @param string|null $fallback The value used when it is empty.
+	 *
+	 * @return string|null The value or the fallback.
+	 */
+	private function nonEmptyOr(string $value, ?string $fallback): ?string {
+		if ($value !== '') {
+			return $value;
 		}
+
+		return $fallback;
+	}//end nonEmptyOr()
+
+	/**
+	 * The settlement lines per REQ-PO3W-009 settlement leg:
+	 * DR GR/IR Clearing  (excl VAT) - closes the receipt-side clearing
+	 *                                 balance accumulated at GRN time;
+	 * DR VAT Input       (VAT)      - the input VAT the supplier charged us,
+	 *                                 which we reclaim on our VAT return (RGS
+	 *                                 3.5 "inputVat"). The spec calls this
+	 *                                 account "VAT Payable" by its credit-side
+	 *                                 label; on a purchase invoice the entry
+	 *                                 is on the debit side, so it balances
+	 *                                 against the AP leg;
+	 * CR Accounts Payable (incl VAT) - what we owe the supplier.
+	 *
+	 * The tax-only edge (excl == 0, vat > 0) yields a balanced 2-line
+	 * DR VAT / CR AP entry without the clearing leg.
+	 *
+	 * @param GRIRSettlementRun $run The settlement run.
+	 *
+	 * @return array<int,array<string,mixed>> The settlement lines.
+	 */
+	private function settlementLines(GRIRSettlementRun $run): array {
+		$legs = [];
+		if ($run->totalExclVat > 0) {
+			$legs[] = ['accountNumber' => $run->clearingAccount, 'side' => 'debit', 'amountCents' => $run->totalExclVat];
+		}
+
+		if ($run->totalVat > 0) {
+			$legs[] = ['accountNumber' => $run->vatAccount, 'side' => 'debit', 'amountCents' => $run->totalVat];
+		}
+
+		$legs[] = ['accountNumber' => $run->apAccount, 'side' => 'credit', 'amountCents' => ($run->totalExclVat + $run->totalVat)];
 
 		$lines = [];
-		if ($clearingDebit > 0) {
-			$lines[] = [
-				'accountNumber' => $clearingAccount,
-				'side' => 'debit',
-				'amountCents' => $clearingDebit,
-				'description' => $description,
-				'costCenter' => $costCenter,
-				'projectCode' => $projectCode,
-			];
+		foreach ($legs as $leg) {
+			$lines[] = $this->settlementLine(run: $run, leg: $leg);
 		}
 
-		if ($vatDebit > 0) {
-			$lines[] = [
-				'accountNumber' => $vatAccount,
-				'side' => 'debit',
-				'amountCents' => $vatDebit,
-				'description' => $description,
-				'costCenter' => $costCenter,
-				'projectCode' => $projectCode,
-			];
-		}
+		return $lines;
+	}//end settlementLines()
 
-		$lines[] = [
-			'accountNumber' => $apAccount,
-			'side' => 'credit',
-			'amountCents' => $apCredit,
-			'description' => $description,
-			'costCenter' => $costCenter,
-			'projectCode' => $projectCode,
+	/**
+	 * One settlement line: the leg's account, side and amount plus the
+	 * description and dimensions every line carries.
+	 *
+	 * @param GRIRSettlementRun   $run The settlement run.
+	 * @param array<string,mixed> $leg accountNumber, side and amountCents.
+	 *
+	 * @return array<string,mixed> The settlement line.
+	 */
+	private function settlementLine(GRIRSettlementRun $run, array $leg): array {
+		return $leg + [
+			'description' => $run->description,
+			'costCenter' => $run->costCenter,
+			'projectCode' => $run->projectCode,
 		];
+	}//end settlementLine()
 
-		$headerMatchId = null;
-		if ($matchId !== '') {
-			$headerMatchId = $matchId;
-		}
-
-		$transactionData = [
-			'transactionNumber' => $this->settlementTransactionNumber(
-				invoiceNumber: $invoiceNumber,
-				matchId: $matchId,
-				invoiceId: $invoiceId
-			),
+	/**
+	 * The settlement GLTransaction header.
+	 *
+	 * @param GRIRSettlementRun $run The settlement run.
+	 *
+	 * @return array<string,mixed> The transaction header.
+	 */
+	private function settlementHeader(GRIRSettlementRun $run): array {
+		return [
+			'transactionNumber' => $this->settlementNumber(run: $run),
 			'journalCode' => self::JOURNAL_CODE_SETTLEMENT,
-			'postingDate' => $postingDate,
-			'periodId' => $this->periodId(postingDate: $postingDate),
+			'postingDate' => $run->postingDate,
+			'periodId' => $this->periodId(postingDate: $run->postingDate),
 			'currency' => 'EUR',
-			'description' => $description,
-			'sourceReference' => $sourceReference,
-			'threeWayMatchId' => $headerMatchId,
+			'description' => $run->description,
+			'sourceReference' => $this->nonEmptyOr(value: $run->matchId, fallback: $run->invoiceId),
+			'threeWayMatchId' => $this->nonEmptyOr(value: $run->matchId, fallback: null),
 			'state' => 'draft',
-			'administrationId' => $administrationId,
+			'administrationId' => $run->administrationId,
 		];
+	}//end settlementHeader()
 
-		return $this->postBalancedTransaction(
-			administrationId: $administrationId,
-			transaction: $transactionData,
-			lines: $lines
+	/**
+	 * The settlement transaction number for the run's invoice and match.
+	 *
+	 * @param GRIRSettlementRun $run The settlement run.
+	 *
+	 * @return string The transaction number.
+	 */
+	private function settlementNumber(GRIRSettlementRun $run): string {
+		return $this->settlementTransactionNumber(
+			invoiceNumber: $run->invoiceNumber,
+			matchId: $run->matchId,
+			invoiceId: $run->invoiceId
 		);
-
-	}//end settleGRIRPosting()
+	}//end settlementNumber()
 
 	/**
 	 * Compute the GR/IR clearing account saldo for a fiscal period
