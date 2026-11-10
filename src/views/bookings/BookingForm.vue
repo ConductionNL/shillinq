@@ -238,46 +238,64 @@ export default {
 					{ calendarId: this.calendarId },
 				)
 
-				const payload = {
-					title: this.form.title,
-					startTime: this.toUtcIso(this.form.startTime),
-					endTime: this.toUtcIso(this.form.endTime),
-					attendee: this.form.attendee,
-					confirm: this.form.status === 'confirmed',
-					overrideConflict: force === true,
-				}
-
 				const response = await fetch(url, {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
 						requesttoken: OC.requestToken,
 					},
-					body: JSON.stringify(payload),
+					body: JSON.stringify(this.bookingPayload(force)),
 				})
-
-				if (response.status === 409) {
-					const body = await response.json()
-					this.conflicts = body.conflicts || []
-					this.showConflictDialog = true
-					return
-				}
-
-				if (response.status === 201) {
-					const created = await response.json()
-					this.$emit('booking:created', created)
-					this.reset()
-					return
-				}
-
-				const errBody = await response.json().catch(() => ({}))
-				this.validationError =
-					errBody.error || t('shillinq', 'Failed to create booking')
+				await this.takeBookingResponse(response)
 			} catch (error) {
 				this.validationError = t('shillinq', 'Failed to create booking')
 			} finally {
 				this.submitting = false
 			}
+		},
+
+		/**
+		 * The booking to create from the form; a conflict is overridden only
+		 * when explicitly forced.
+		 *
+		 * @param {*} force True to override a conflict.
+		 * @return {object}
+		 */
+		bookingPayload(force) {
+			return {
+				title: this.form.title,
+				startTime: this.toUtcIso(this.form.startTime),
+				endTime: this.toUtcIso(this.form.endTime),
+				attendee: this.form.attendee,
+				confirm: this.form.status === 'confirmed',
+				overrideConflict: force === true,
+			}
+		},
+
+		/**
+		 * Act on the create response: show the conflicts (409), announce the
+		 * booking and reset the form (201), or show the refusal.
+		 *
+		 * @param {Response} response The create response.
+		 */
+		async takeBookingResponse(response) {
+			if (response.status === 409) {
+				const body = await response.json()
+				this.conflicts = body.conflicts || []
+				this.showConflictDialog = true
+				return
+			}
+
+			if (response.status === 201) {
+				const created = await response.json()
+				this.$emit('booking:created', created)
+				this.reset()
+				return
+			}
+
+			const errBody = await response.json().catch(() => ({}))
+			this.validationError =
+				errBody.error || t('shillinq', 'Failed to create booking')
 		},
 
 		/**
