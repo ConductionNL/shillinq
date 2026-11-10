@@ -30,6 +30,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\PaymentPlan;
 
 use DateTime;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\Shillinq\PaymentPlan\PaymentPlanAllocator;
 use OCA\Shillinq\PaymentPlan\PaymentPlanBankMatcher;
 use OCA\Shillinq\PaymentPlan\PaymentPlanMailer;
@@ -311,7 +312,7 @@ trait PaymentPlanFixture {
 	 * @return array<string,mixed>
 	 */
 	private function stored(string $schema, string $id): array {
-		return $this->store->find($id, schema: $schema)->getObject();
+		return $this->store->find($id, options: new ObjectFindOptions(schema: $schema))->getObject();
 
 	}//end stored()
 

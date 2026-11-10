@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Lifecycle\GuardResult;
 use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
@@ -115,7 +116,7 @@ final class SupplierInvoicePayGuard implements LifecycleGuardInterface {
 		$register = $this->settingsService->getRegisterSlug();
 		try {
 			$found = $this->container->get('OCA\OpenRegister\Service\ObjectService')
-				->find($id, register: $register, schema: 'APTransaction', _rbac: false);
+				->find(id: $id, options: new ObjectFindOptions(register: $register, schema: 'APTransaction'), _rbac: false);
 		} catch (\OCP\AppFramework\Db\DoesNotExistException | \RuntimeException $notFound) {
 			return null;
 		}

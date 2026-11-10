@@ -25,6 +25,7 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\Shillinq\Listener\GLLineResultStampListener;
 use OCA\Shillinq\Repair\StampGlLineResults;
 use OCA\Shillinq\Service\Ledger\GlLineResultStamps;
@@ -118,7 +119,7 @@ class GLLineResultStampListenerTest extends TestCase {
 	 * @return array<string, mixed>
 	 */
 	private function line(string $id): array {
-		return $this->store->find(id: $id, schema: 'GLLine')->getObject();
+		return $this->store->find(id: $id, options: new ObjectFindOptions(schema: 'GLLine'))->getObject();
 
 	}//end line()
 

@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service\Bank;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use RuntimeException;
@@ -72,7 +73,7 @@ final class LifecycleFaithfulTransitionEngine {
 	public function transition(string $objectId, string $action, array $data = []): object {
 		foreach ($this->schemas as $schema) {
 			// A uuid missed in a schema is retried without it, so the answer can be another schema's row.
-			$entity = $this->store->find($objectId, schema: $schema);
+			$entity = $this->store->find($objectId, options: new ObjectFindOptions(schema: $schema));
 			if ($entity === null || $entity->getSchema() !== $schema) {
 				continue;
 			}

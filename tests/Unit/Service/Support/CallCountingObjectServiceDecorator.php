@@ -38,6 +38,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Support;
 
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\IUser;
 
 /**
@@ -107,29 +108,19 @@ final class CallCountingObjectServiceDecorator implements ObjectServiceInterface
 
 	/**
 	 * @param int|string $id Object id, UUID or slug.
-	 * @param ?array $_extend Relations to expand.
-	 * @param bool $files Include file metadata.
-	 * @param string|int|null $register Register override.
-	 * @param string|int|null $schema Schema override.
+	 * @param ObjectFindOptions|null $options Register, schema, extend, files, render and audit.
 	 * @param bool $_rbac Apply register RBAC.
 	 * @param bool $_multitenancy Apply organisation scoping.
-	 * @param bool $_render Render the entity.
-	 * @param bool $_audit Write an audit entry.
 	 *
 	 * @return ?ObjectEntityInterface
 	 */
 	public function find(
 		int|string $id,
-		?array $_extend = [],
-		bool $files = false,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		?ObjectFindOptions $options = null,
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $_render = true,
-		bool $_audit = true
+		bool $_multitenancy = true
 	): ?ObjectEntityInterface {
-		return $this->inner->find($id, $_extend, $files, $register, $schema, $_rbac, $_multitenancy, $_render, $_audit);
+		return $this->inner->find(id: $id, options: $options, _rbac: $_rbac, _multitenancy: $_multitenancy);
 
 	}//end find()
 
@@ -254,10 +245,7 @@ final class CallCountingObjectServiceDecorator implements ObjectServiceInterface
 
 	/**
 	 * @param string $id Object id, UUID or slug.
-	 * @param ?array $_extend Relations to expand.
-	 * @param bool $files Include file metadata.
-	 * @param string|int|null $register Register override.
-	 * @param string|int|null $schema Schema override.
+	 * @param ObjectFindOptions|null $options Register, schema, extend, files, render and audit.
 	 * @param bool $_rbac Apply register RBAC.
 	 * @param bool $_multitenancy Apply organisation scoping.
 	 *
@@ -265,14 +253,11 @@ final class CallCountingObjectServiceDecorator implements ObjectServiceInterface
 	 */
 	public function findSilent(
 		string $id,
-		?array $_extend = [],
-		bool $files = false,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		?ObjectFindOptions $options = null,
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): ObjectEntityInterface {
-		return $this->inner->findSilent($id, $_extend, $files, $register, $schema, $_rbac, $_multitenancy);
+		return $this->inner->findSilent(id: $id, options: $options, _rbac: $_rbac, _multitenancy: $_multitenancy);
 
 	}//end findSilent()
 

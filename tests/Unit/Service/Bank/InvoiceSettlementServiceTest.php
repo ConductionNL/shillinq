@@ -28,6 +28,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Bank;
 
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\Shillinq\Listener\ReconciliationMatchSettlementListener;
 use OCA\Shillinq\Service\Bank\InvoiceSettlementService;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
@@ -115,7 +116,7 @@ final class InvoiceSettlementServiceTest extends TestCase {
 	 * @return string
 	 */
 	private function stateOf(string $schema, string $id, string $field): string {
-		return (string)$this->store->find($id, schema: $schema)->getObject()[$field];
+		return (string)$this->store->find($id, options: new ObjectFindOptions(schema: $schema))->getObject()[$field];
 
 	}//end stateOf()
 
