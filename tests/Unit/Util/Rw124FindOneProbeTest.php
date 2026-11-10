@@ -102,7 +102,9 @@ final class Rw124FindOneProbeTest extends TestCase {
 				}
 				throw new RuntimeException('DoesNotExist');
 			}
-			public function find(int|string $id, ?array $_extend = [], bool $files = false, $register = null, $schema = null, bool $_rbac = true, bool $_multitenancy = true, bool $_render = true, bool $_audit = true): ?ObjectEntity {
+			public function find(int|string $id, ?\OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): ?ObjectEntity {
+				$register = $options?->register;
+				$schema = $options?->schema;
 				$reg = $register === null ? null : (int)$register->getId();
 				$sch = $schema === null ? null : (int)$schema->getId();
 				$this->calls[] = ['find', (string)$id, $reg, $sch, $_rbac];

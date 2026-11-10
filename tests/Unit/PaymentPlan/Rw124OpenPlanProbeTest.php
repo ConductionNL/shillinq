@@ -80,14 +80,9 @@ final class Rw124OpenPlanProbeTest extends TestCase {
 		$this->store = new class() extends \OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub {
 			public function find(
 				int|string $id,
-				?array $_extend = [],
-				bool $files = false,
-				mixed $register = null,
-				mixed $schema = null,
+				?\OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions $options = null,
 				bool $_rbac = true,
-				bool $_multitenancy = true,
-				bool $_render = true,
-				bool $_audit = true
+				bool $_multitenancy = true
 			): ?\OCA\OpenRegister\Contract\ObjectEntityInterface {
 				throw new \RuntimeException('OpenRegister is down');
 			}

@@ -855,7 +855,7 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	): ObjectEntityInterface {
 		// The schema argument is honoured as OpenRegister honours it: a patch
 		// made while another schema is active must land on the named one.
-		$existing = $this->find(id: $objectId, schema: $schema);
+		$existing = $this->find(id: $objectId, options: new ObjectFindOptions(schema: $schema));
 		$merged   = $data;
 		if ($existing !== null) {
 			$merged = array_merge($existing->getObject(), $data);

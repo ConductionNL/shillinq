@@ -75,6 +75,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Util;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Throwable;
 
@@ -228,7 +229,7 @@ final class ObjectIdentifier {
 		// returning null, so a shared catch would swallow the fallback.
 		$target = self::lookupTarget(scoped: $scoped);
 		try {
-			$found = $scoped->find($id, ...$target, ...$scope);
+			$found = $scoped->find($id, ...self::findArguments(target: $target, flags: $scope));
 			$record = null;
 			if (self::isInSchema(found: $found, target: $target) === true) {
 				$record = self::record(candidate: $found);
@@ -295,7 +296,8 @@ final class ObjectIdentifier {
 	 *
 	 * For callers that need the entity rather than its payload. find()'s own
 	 * miss (DoesNotExistException) is not caught, so callers keep their miss
-	 * handling. `$named` passes on to find() as given, e.g. `_rbac: false`.
+	 * handling. `$named` carries the `_rbac` and `_multitenancy` flags find()
+	 * receives; any other key is ignored.
 	 *
 	 * @param object               $scoped ObjectService with register + schema already set.
 	 * @param string               $id     The uuid, slug or id.
@@ -307,7 +309,7 @@ final class ObjectIdentifier {
 	 */
 	public static function findScoped(object $scoped, string $id, array $named = []): mixed {
 		$target = self::lookupTarget(scoped: $scoped);
-		$found  = $scoped->find($id, ...$target, ...$named);
+		$found  = $scoped->find($id, ...self::findArguments(target: $target, flags: $named));
 		if (self::isInSchema(found: $found, target: $target) === false) {
 			return null;
 		}
@@ -331,7 +333,7 @@ final class ObjectIdentifier {
 	 */
 	public static function findScopedOrThrow(object $scoped, string $id): mixed {
 		$target = self::lookupTarget(scoped: $scoped);
-		$found  = $scoped->find($id, ...$target);
+		$found  = $scoped->find($id, ...self::findArguments(target: $target, flags: []));
 		if ($found !== null && self::isInSchema(found: $found, target: $target) === false) {
 			throw new DoesNotExistException('No object with this id in the schema asked for.');
 		}
@@ -340,7 +342,7 @@ final class ObjectIdentifier {
 	}//end findScopedOrThrow()
 
 	/**
-	 * The register and schema the service is scoped to, as find() arguments.
+	 * The register and schema the service is scoped to.
 	 *
 	 * OpenRegister's find() does not use the register and schema set on the
 	 * service: without them as arguments it searches every schema by id, uuid,
@@ -363,6 +365,33 @@ final class ObjectIdentifier {
 
 		return ['register' => $register, 'schema' => $schema];
 	}//end lookupTarget()
+
+	/**
+	 * The named find() arguments beyond the id, in openregister's find() shape.
+	 *
+	 * The scope from lookupTarget() becomes `options`, and only the `_rbac` and
+	 * `_multitenancy` flags pass, as booleans. An argument at its default is left
+	 * out, so a lookup with no scope and no flags is `find($id)`.
+	 *
+	 * @param array<string, mixed> $target The find() scope from lookupTarget().
+	 * @param array<string, mixed> $flags  The caller's `_rbac` / `_multitenancy` flags.
+	 *
+	 * @return array{options?: ObjectFindOptions, _rbac?: bool, _multitenancy?: bool}
+	 */
+	private static function findArguments(array $target, array $flags): array {
+		$arguments = [];
+		if ($target !== []) {
+			$arguments['options'] = new ObjectFindOptions(register: $target['register'], schema: $target['schema']);
+		}
+
+		foreach (['_rbac', '_multitenancy'] as $flag) {
+			if (array_key_exists($flag, $flags) === true && (bool)$flags[$flag] === false) {
+				$arguments[$flag] = false;
+			}
+		}
+
+		return $arguments;
+	}//end findArguments()
 
 	/**
 	 * Whether find()'s answer is an object of the schema asked for.
