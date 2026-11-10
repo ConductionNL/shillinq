@@ -51,7 +51,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -230,7 +229,7 @@ class GoodsReceiptNoteService {
 			'administrationId' => $administrationId,
 		];
 
-		return $this->saveObject(schema: self::SCHEMA_GRN, object: $grn);
+		return $this->records()->saveObject(schema: self::SCHEMA_GRN, object: $grn);
 	}//end createGRN()
 
 	/**
@@ -259,7 +258,7 @@ class GoodsReceiptNoteService {
 		$this->assertAccess(administrationId: $administrationId);
 		$inspector = $this->requireSessionUser();
 
-		$grn = $this->findOne(
+		$grn = $this->records()->findOne(
 			schema: self::SCHEMA_GRN,
 			filters: [
 				'id' => $grnId,
@@ -275,7 +274,7 @@ class GoodsReceiptNoteService {
 			throw new RuntimeException('poLineId is required');
 		}
 
-		$poLine = $this->findOne(
+		$poLine = $this->records()->findOne(
 			schema: self::SCHEMA_PO_LINE,
 			filters: [
 				'id' => $poLineId,
@@ -342,7 +341,7 @@ class GoodsReceiptNoteService {
 			'administrationId' => $administrationId,
 		];
 
-		return $this->saveObject(schema: self::SCHEMA_GRN_LINE, object: $line);
+		return $this->records()->saveObject(schema: self::SCHEMA_GRN_LINE, object: $line);
 	}//end addGRNLine()
 
 	/**
@@ -365,7 +364,7 @@ class GoodsReceiptNoteService {
 	public function qualityCheckPass(string $administrationId, string $grnId): array {
 		$this->assertAccess(administrationId: $administrationId);
 
-		$grn = $this->findOne(
+		$grn = $this->records()->findOne(
 			schema: self::SCHEMA_GRN,
 			filters: [
 				'id' => $grnId,
@@ -384,7 +383,7 @@ class GoodsReceiptNoteService {
 		$grn['statusCode'] = 'quality_checked';
 		$grn['qualityCheckPassed'] = true;
 
-		return $this->saveObject(schema: self::SCHEMA_GRN, object: $grn);
+		return $this->records()->saveObject(schema: self::SCHEMA_GRN, object: $grn);
 	}//end qualityCheckPass()
 
 	/**
@@ -422,7 +421,7 @@ class GoodsReceiptNoteService {
 	public function acceptGRN(string $administrationId, string $grnId): array {
 		$this->assertAccess(administrationId: $administrationId);
 
-		$grn = $this->findOne(
+		$grn = $this->records()->findOne(
 			schema: self::SCHEMA_GRN,
 			filters: [
 				'id' => $grnId,
@@ -439,7 +438,7 @@ class GoodsReceiptNoteService {
 		}
 
 		$grnRecordId = (string)($grn['id'] ?? ($grn['@self']['id'] ?? $grnId));
-		$grnLines = $this->findAll(
+		$grnLines = $this->records()->findAll(
 			schema: self::SCHEMA_GRN_LINE,
 			filters: [
 				'grnId' => $grnRecordId,
@@ -463,7 +462,7 @@ class GoodsReceiptNoteService {
 		}
 
 		$grn['statusCode'] = 'accepted';
-		$persisted = $this->saveObject(schema: self::SCHEMA_GRN, object: $grn);
+		$persisted = $this->records()->saveObject(schema: self::SCHEMA_GRN, object: $grn);
 
 		// Update originating PO lifecycle: every PO referenced by the GRN
 		// (multi-PO supported per REQ-GRN-001) is set to partial_received or
@@ -500,7 +499,7 @@ class GoodsReceiptNoteService {
 	public function uploadPhotos(string $administrationId, string $grnId, array $photoFileIds): array {
 		$this->assertAccess(administrationId: $administrationId);
 
-		$grn = $this->findOne(
+		$grn = $this->records()->findOne(
 			schema: self::SCHEMA_GRN,
 			filters: [
 				'id' => $grnId,
@@ -517,7 +516,7 @@ class GoodsReceiptNoteService {
 
 		$grn['photos'] = $merged;
 
-		return $this->saveObject(schema: self::SCHEMA_GRN, object: $grn);
+		return $this->records()->saveObject(schema: self::SCHEMA_GRN, object: $grn);
 	}//end uploadPhotos()
 
 	/**
@@ -543,7 +542,7 @@ class GoodsReceiptNoteService {
 			return;
 		}
 
-		$poLine = $this->findOne(
+		$poLine = $this->records()->findOne(
 			schema: self::SCHEMA_PO_LINE,
 			filters: [
 				'id' => $poLineId,
@@ -606,7 +605,7 @@ class GoodsReceiptNoteService {
 			'lifecycleState' => 'posted',
 		];
 
-		$this->saveObject(schema: self::SCHEMA_STOCK_MOVE, object: $stockMove);
+		$this->records()->saveObject(schema: self::SCHEMA_STOCK_MOVE, object: $stockMove);
 
 	}//end postReceiptStockMove()
 
@@ -624,7 +623,7 @@ class GoodsReceiptNoteService {
 	 * @return void
 	 */
 	private function updatePurchaseOrderReceiptLifecycle(string $administrationId, string $poId): void {
-		$po = $this->findOne(
+		$po = $this->records()->findOne(
 			schema: self::SCHEMA_PO,
 			filters: [
 				'id' => $poId,
@@ -635,7 +634,7 @@ class GoodsReceiptNoteService {
 			return;
 		}
 
-		$poLines = $this->findAll(
+		$poLines = $this->records()->findAll(
 			schema: self::SCHEMA_PO_LINE,
 			filters: [
 				'poId' => $poId,
@@ -645,7 +644,7 @@ class GoodsReceiptNoteService {
 
 		// Total accepted per PO-line across every GRN line that targets it.
 		$acceptedByPoLine = [];
-		$allGrnLines = $this->findAll(
+		$allGrnLines = $this->records()->findAll(
 			schema: self::SCHEMA_GRN_LINE,
 			filters: [
 				'administrationId' => $administrationId,
@@ -694,7 +693,7 @@ class GoodsReceiptNoteService {
 		}
 
 		$po['statusCode'] = $newLifecycle;
-		$this->saveObject(schema: self::SCHEMA_PO, object: $po);
+		$this->records()->saveObject(schema: self::SCHEMA_PO, object: $po);
 
 	}//end updatePurchaseOrderReceiptLifecycle()
 
@@ -726,6 +725,18 @@ class GoodsReceiptNoteService {
 	}//end buildMovementNumber()
 
 	/**
+	 * The record store on the app's register, logging as this service.
+	 *
+	 * @return SchemaRecordStore The record store.
+	 */
+	private function records(): SchemaRecordStore {
+		return new SchemaRecordStore(
+			binding: new RegisterBinding(objectService: $this->objectService, appConfig: $this->appConfig),
+			log: new RecordStoreLog(logger: $this->logger, source: 'GoodsReceiptNoteService')
+		);
+	}//end records()
+
+	/**
 	 * Generate a per-administration GRN number for the current year.
 	 *
 	 * Format: GRN-{year}-{administrationCode}-{6-digit-sequence}.
@@ -736,7 +747,7 @@ class GoodsReceiptNoteService {
 	 */
 	private function generateGrnNumber(string $administrationId): string {
 		$year = (int)date('Y');
-		$existing = $this->findAll(
+		$existing = $this->records()->findAll(
 			schema: self::SCHEMA_GRN,
 			filters: ['administrationId' => $administrationId]
 		);
@@ -790,7 +801,7 @@ class GoodsReceiptNoteService {
 	 */
 	private function assertPurchaseOrdersAccessible(string $administrationId, array $poIds): void {
 		foreach ($poIds as $poId) {
-			$po = $this->findOne(
+			$po = $this->records()->findOne(
 				schema: self::SCHEMA_PO,
 				filters: [
 					'id' => $poId,
@@ -891,105 +902,6 @@ class GoodsReceiptNoteService {
 	private function thousandths(float $value): int {
 		return (int)round(($value * 1000.0), 0, PHP_ROUND_HALF_UP);
 	}//end thousandths()
-
-	/**
-	 * Persist an object via OpenRegister's real ObjectService API
-	 * (saveObject).
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $object The object to persist.
-	 *
-	 * @return array<string,mixed> The persisted record (id stamped by OR).
-	 *
-	 * @throws \RuntimeException When the persistence call fails.
-	 */
-	private function saveObject(string $schema, array $object): array {
-		try {
-			$result = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->saveObject($object);
-
-			// ADR-084: saveObject() is declared `: ObjectEntityInterface`, so the
-			// is_array() arm here was unreachable by type and this helper returned
-			// the INPUT on every save — silently discarding the id/uuid the store
-			// had just generated, which callers then read back as empty.
-			return (array)$result->jsonSerialize();
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'GoodsReceiptNoteService: failed to persist object',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			throw new RuntimeException('Failed to persist ' . $schema);
-		}
-
-	}//end saveObject()
-
-	/**
-	 * Fetch one record via the real ObjectService API (findAll then first).
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $filters Equality filters.
-	 *
-	 * @return array<string,mixed>|null
-	 */
-	private function findOne(string $schema, array $filters): ?array {
-		$rows = $this->findAll(schema: $schema, filters: $filters);
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				return $row;
-			}
-		}
-
-		return null;
-	}//end findOne()
-
-	/**
-	 * Fetch all matching records via the real ObjectService API (findAll).
-	 *
-	 * @param string $schema OR schema slug.
-	 * @param array<string,mixed> $filters Equality filters.
-	 *
-	 * @return array<int,array<string,mixed>>
-	 */
-	private function findAll(string $schema, array $filters): array {
-		try {
-			$rows = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->findAll(['filters' => $filters]);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'GoodsReceiptNoteService: failed to query OpenRegister',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			return [];
-		}
-
-		$result = [];
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
-			}
-		}
-
-		return $result;
-	}//end findAll()
-
-	/**
-	 * Resolve the OpenRegister register slug from app config (defaults to
-	 * "shillinq").
-	 *
-	 * @return string
-	 */
-	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
-	}//end register()
 
 	/**
 	 * Assert the caller can access the requested administration; mask as
