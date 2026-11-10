@@ -82,6 +82,10 @@ final class WmoComplianceCalculatorGoldenTest extends TestCase {
 			[$line('a', 0.1, 1.0), $line('b', 0.7, 9.01), $line('', 0.0, 0.0)],
 			$calc->splitTransaction(originalAmount: 10.01, ruleTargets: [['costObject' => 'a', 'ratio' => 0.1], ['costObject' => 'b', 'ratio' => 0.7], []])
 		);
+		$this->assertSame(
+			[$line('a', 0.3, -0.08), $line('b', 0.2, -0.02)],
+			$calc->splitTransaction(originalAmount: -0.10, ruleTargets: [['costObject' => 'a', 'ratio' => 0.3], ['costObject' => 'b', 'ratio' => 0.2]])
+		);
 		$this->assertSame([], $calc->splitTransaction(originalAmount: 10.0, ruleTargets: []));
 
 	}//end testSplitTransactionGolden()
