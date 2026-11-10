@@ -48,6 +48,8 @@ namespace OCA\Shillinq\Tests\Unit\Service\Support;
 
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\IUser;
 use RuntimeException;
 
@@ -383,34 +385,19 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 * Capture a saved object; stamp an id when absent, update in place otherwise.
 	 *
 	 * @param array           $object        Object payload.
-	 * @param ?array          $extend        Relations to expand (ignored).
-	 * @param string|int|null $register      Register override (ignored).
-	 * @param string|int|null $schema        Schema override, when given.
-	 * @param ?string         $uuid          Explicit UUID (ignored).
+	 * @param ObjectSaveOptions $options The target, uuid, extend, files, policy and actor.
 	 * @param bool            $_rbac         Apply register RBAC (ignored).
 	 * @param bool            $_multitenancy Apply organisation scoping (ignored).
-	 * @param bool            $silent        Suppress events (ignored).
-	 * @param bool            $_validation   Validate against the schema (ignored).
-	 * @param ?array          $uploadedFiles Files uploaded alongside (ignored).
-	 * @param ?IUser          $currentUser   Explicit acting user (ignored).
-	 * @param bool            $failIfExists  Fail instead of updating (ignored).
 	 *
 	 * @return ObjectEntityInterface
 	 */
 	public function saveObject(
 		array $object,
-		?array $extend = [],
-		string|int|null $register = null,
-		string|int|null $schema = null,
-		?string $uuid = null,
+		ObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $silent = false,
-		bool $_validation = true,
-		?array $uploadedFiles = null,
-		?IUser $currentUser = null,
-		bool $failIfExists = false
+		bool $_multitenancy = true
 	): ObjectEntityInterface {
+		$schema = $options->target->schema;
 		$target = $this->schema;
 		if ($schema !== null) {
 			$target = (string)$schema;
@@ -871,7 +858,7 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 
 		$merged['id'] = $objectId;
 
-		return $this->saveObject(object: $merged, schema: $schema);
+		return $this->saveObject(object: $merged, options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: $schema)));
 
 	}//end patchObject()
 

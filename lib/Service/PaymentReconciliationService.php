@@ -52,6 +52,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -357,8 +359,9 @@ class PaymentReconciliationService {
 				$record['failureReason'] = $refusal;
 				$this->objectService->saveObject(
 					object: $record,
-					register: $registerSlug,
-					schema: $schema,
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $registerSlug, schema: $schema)
+					),
 					_rbac: false,
 				);
 				return ['result' => self::RESULT_UNAPPLIED, 'schema' => $schema];
@@ -376,8 +379,9 @@ class PaymentReconciliationService {
 				$record['state'] = 'captured_unapplied';
 				$this->objectService->saveObject(
 					object: $record,
-					register: $registerSlug,
-					schema: $schema,
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $registerSlug, schema: $schema)
+					),
 					_rbac: false,
 				);
 				return ['result' => self::RESULT_UNAPPLIED, 'schema' => $schema];
@@ -392,8 +396,9 @@ class PaymentReconciliationService {
 
 		$this->objectService->saveObject(
 			object: $record,
-			register: $registerSlug,
-			schema: $schema,
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $registerSlug, schema: $schema)
+			),
 			_rbac: false,
 		);
 
@@ -497,8 +502,9 @@ class PaymentReconciliationService {
 
 			$objectService->saveObject(
 				object: $invoice,
-				register: $registerSlug,
-				schema: 'ARInvoice',
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $registerSlug, schema: 'ARInvoice')
+				),
 				_rbac: false,
 			);
 
@@ -630,8 +636,9 @@ class PaymentReconciliationService {
 		try {
 			$saved = $this->objectService->saveObject(
 				object: $journal,
-				register: $registerSlug,
-				schema: 'JournalEntry',
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $registerSlug, schema: 'JournalEntry')
+				),
 				_rbac: false,
 			);
 			$journalId = ObjectIdentifier::resolve(saved: $saved);

@@ -51,6 +51,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
 use OCA\Shillinq\Service\SettingsService;
@@ -237,8 +239,9 @@ class StampJournalTypeOnGlTransactions implements IRepairStep {
 
 				$objectService->saveObject(
 					object: $transaction,
-					register: $registerSlug,
-					schema: 'GLTransaction',
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $registerSlug, schema: 'GLTransaction')
+					),
 					_rbac: false,
 					_multitenancy: false,
 				);
@@ -331,8 +334,9 @@ class StampJournalTypeOnGlTransactions implements IRepairStep {
 
 				$objectService->saveObject(
 					object: $transaction,
-					register: $registerSlug,
-					schema: 'GLTransaction',
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $registerSlug, schema: 'GLTransaction')
+					),
 					_rbac: false,
 					_multitenancy: false,
 				);

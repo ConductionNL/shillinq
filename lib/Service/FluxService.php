@@ -37,6 +37,8 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeInterface;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -634,8 +636,9 @@ class FluxService {
 
 			$this->objectService->saveObject(
 				object: $run,
-				register: $this->register(),
-				schema: 'FluxRun',
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $this->register(), schema: 'FluxRun')
+				),
 			);
 
 			foreach ($items as $item) {
@@ -644,16 +647,18 @@ class FluxService {
 
 				$this->objectService->saveObject(
 					object: $item,
-					register: $this->register(),
-					schema: 'FluxItem',
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $this->register(), schema: 'FluxItem')
+					),
 				);
 
 				foreach ($attributions as $attribution) {
 					$attribution['fluxItemId'] = $item['glAccountNumber'] . '@' . $fluxRunId;
 					$this->objectService->saveObject(
 						object: $attribution,
-						register: $this->register(),
-						schema: 'FluxAttribution',
+						options: new ObjectSaveOptions(
+							target: new ObjectFindTarget(register: $this->register(), schema: 'FluxAttribution')
+						),
 					);
 				}
 			}

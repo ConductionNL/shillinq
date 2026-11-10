@@ -24,6 +24,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\Seed\SeedImport;
 use OCA\Shillinq\Service\Seed\SeedImporter;
@@ -202,7 +204,12 @@ class BbvAdministrationSeedService {
 			$record['_meta']['source'] = 'seeded';
 			$record['_meta']['bbvVersion'] = ($data['_meta']['bbvVersion'] ?? '2024');
 
-			$objectService->saveObject(object: $record, register: $registerSlug, schema: 'BbvAccountMapping');
+			$objectService->saveObject(
+				object: $record,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $registerSlug, schema: 'BbvAccountMapping')
+				)
+			);
 			$counts['seeded']++;
 		}//end foreach
 

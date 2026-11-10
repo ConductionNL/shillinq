@@ -44,6 +44,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -439,7 +441,12 @@ class StockReservationGuard {
 				'version' => 1,
 			];
 
-			$this->objectService->saveObject(object: $row, register: $this->register(), schema: 'InventoryStock');
+			$this->objectService->saveObject(
+				object: $row,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $this->register(), schema: 'InventoryStock')
+				)
+			);
 			return true;
 		} catch (\Throwable $e) {
 			$this->logger->error(

@@ -72,6 +72,8 @@ namespace OCA\Shillinq\Lifecycle\Action;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use DateTimeImmutable;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\Vat\VatLineStamper;
 use OCA\Shillinq\Lifecycle\PostingStamps;
@@ -641,7 +643,12 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 	private function write(array $header, array $lines, string $sourceId): string {
 		$register = $this->register();
 		$transactionId = $this->idOf(
-			saved: $this->objectService->saveObject(object: $header, register: $register, schema: 'GLTransaction')->jsonSerialize()
+			saved: $this->objectService->saveObject(
+				object: $header,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $register, schema: 'GLTransaction')
+				)
+			)->jsonSerialize()
 		);
 		if ($transactionId === '') {
 			throw new RuntimeException(sprintf('The ledger transaction for %s was not saved.', (string)$header['sourceReference']));
@@ -679,7 +686,12 @@ class MaterialiseGlTransactionAction implements LifecycleActionInterface {
 				}
 
 				$written[] = $this->idOf(
-					saved: $this->objectService->saveObject(object: $row, register: $register, schema: 'GLLine')->jsonSerialize()
+					saved: $this->objectService->saveObject(
+						object: $row,
+						options: new ObjectSaveOptions(
+							target: new ObjectFindTarget(register: $register, schema: 'GLLine')
+						)
+					)->jsonSerialize()
 				);
 			}//end foreach
 		} catch (\Throwable $e) {

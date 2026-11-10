@@ -40,6 +40,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\IAppConfig;
 
 /**
@@ -131,8 +133,9 @@ final class ContractCostRollupService {
 
 		$this->objectService->saveObject(
 			object: $contract,
-			register: $this->registerSlug(),
-			schema: self::SCHEMA,
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $this->registerSlug(), schema: self::SCHEMA)
+			),
 		);
 
 		return $contract;

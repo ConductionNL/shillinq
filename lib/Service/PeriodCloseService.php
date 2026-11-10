@@ -39,6 +39,8 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeInterface;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
@@ -538,8 +540,9 @@ class PeriodCloseService {
 	private function persist(array $record): array {
 		$this->objectService->saveObject(
 			object: $record,
-			register: $this->register(),
-			schema: 'FiscalPeriod',
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $this->register(), schema: 'FiscalPeriod')
+			),
 		);
 
 		return $record;

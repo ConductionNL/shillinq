@@ -42,6 +42,8 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
@@ -319,8 +321,9 @@ final class ContributionRaiseService {
 	private function save(array $object, string $schema): string {
 		$saved = $this->objectService->saveObject(
 			object: $object,
-			register: $this->registerSlug(),
-			schema: $schema,
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $this->registerSlug(), schema: $schema)
+			),
 			_rbac: false,
 		);
 

@@ -29,6 +29,8 @@ namespace OCA\Shillinq\Service;
 use DomainException;
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 
@@ -126,8 +128,9 @@ class AdministrationMembershipService {
 
 		$saved = $this->objectService->saveObject(
 			object: $membership,
-			register: $this->register(),
-			schema: 'AdministrationMembership',
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $this->register(), schema: 'AdministrationMembership')
+			),
 			_rbac: false,
 			_multitenancy: false,
 		);

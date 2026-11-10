@@ -48,6 +48,8 @@ namespace OCA\Shillinq\Service\Treasury;
 
 use DateTimeImmutable;
 use DateTimeInterface;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
@@ -341,8 +343,9 @@ class FxRevaluationService {
 
 		$this->objectService->saveObject(
 			object: $record,
-			register: $this->register(),
-			schema: 'FXPosition',
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $this->register(), schema: 'FXPosition')
+			),
 		);
 
 	}//end persistPosition()
@@ -411,8 +414,9 @@ class FxRevaluationService {
 
 		$this->objectService->saveObject(
 			object: $posting,
-			register: $this->register(),
-			schema: 'FxRevaluationPosting',
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $this->register(), schema: 'FxRevaluationPosting')
+			),
 		);
 
 	}//end persistRevaluationPosting()

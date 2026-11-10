@@ -45,6 +45,8 @@ namespace OCA\Shillinq\Lifecycle\Action;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use RuntimeException;
@@ -145,7 +147,12 @@ class EvaluateAllocationRulesAction implements LifecycleActionInterface {
 				foreach ($this->allocationLines(rule: $rule, ruleId: $ruleId, line: $line, transaction: $objectData) as $row) {
 					$row['transactionId'] = $transactionId;
 					$row['lineNumber'] = $nextLineNumber++;
-					$this->objectService->saveObject(object: $row, register: $this->register(), schema: 'GLLine');
+					$this->objectService->saveObject(
+						object: $row,
+						options: new ObjectSaveOptions(
+							target: new ObjectFindTarget(register: $this->register(), schema: 'GLLine')
+						)
+					);
 				}
 			}
 		}//end foreach

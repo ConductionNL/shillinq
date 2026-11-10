@@ -56,6 +56,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
 use OCA\Shillinq\Service\Migration\GlLineFiscalYearBackfillMigrator;
@@ -242,9 +244,10 @@ class BackfillGlLineFiscalYear implements IRepairStep {
 				// sees and writes every tenant's rows.
 				$this->objectService->saveObject(
 					object: $row,
-					register: $registerSlug,
-					schema: GlLineFiscalYearBackfillMigrator::SCHEMA_GL_LINE,
-					uuid: $objectId,
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $registerSlug, schema: GlLineFiscalYearBackfillMigrator::SCHEMA_GL_LINE),
+						uuid: $objectId
+					),
 					_rbac: false,
 					_multitenancy: false,
 				);

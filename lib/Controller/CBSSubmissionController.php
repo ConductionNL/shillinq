@@ -41,6 +41,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\CBSExportService;
@@ -339,8 +341,9 @@ class CBSSubmissionController extends Controller {
 			compute: fn (): array => $this->toArray(
 				row: $this->objectService()->saveObject(
 					object: $body,
-					register: $this->register(),
-					schema: 'CBSSubmission',
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $this->register(), schema: 'CBSSubmission')
+					),
 				)
 			),
 			context: ['administrationId' => (string)$body['administrationId']],
@@ -422,8 +425,9 @@ class CBSSubmissionController extends Controller {
 			compute: fn (): array => $this->toArray(
 				row: $this->objectService()->saveObject(
 					object: $body,
-					register: $this->register(),
-					schema: 'CBSSubmission',
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $this->register(), schema: 'CBSSubmission')
+					),
 				)
 			),
 			context: ['id' => $id],

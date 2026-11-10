@@ -38,6 +38,8 @@ namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\BackgroundJob\Support\RunsJobAsSystem;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -292,8 +294,9 @@ class LotExpiryAlertJob extends TimedJob {
 
 		$objectService->saveObject(
 			object: $alert,
-			register: $registerSlug,
-			schema: 'ExpiryAlert',
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $registerSlug, schema: 'ExpiryAlert')
+			),
 		);
 
 		return 1;

@@ -37,6 +37,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
@@ -209,8 +211,9 @@ class LoadCbsSeedsStep implements IRepairStep {
 				// permission to 'create'" — mirrors the OR ImportHandler fix.
 				$objectService->saveObject(
 					object: $payload,
-					register: $registerSlug,
-					schema: $schema,
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $registerSlug, schema: $schema)
+					),
 					_rbac: false,
 					_multitenancy: false,
 				);

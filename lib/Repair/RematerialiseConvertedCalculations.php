@@ -58,6 +58,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
+use OCA\OpenRegister\Service\Object\SaveActor;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
@@ -293,11 +296,12 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 			try {
 				$objectService->saveObject(
 					object: $arr,
-					register: $registerSlug,
-					schema: $schema,
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $registerSlug, schema: $schema),
+						actor: new SaveActor(currentUser: $admin)
+					),
 					_rbac: false,
 					_multitenancy: false,
-					currentUser: $admin,
 				);
 				$resaved++;
 			} catch (\Throwable $e) {

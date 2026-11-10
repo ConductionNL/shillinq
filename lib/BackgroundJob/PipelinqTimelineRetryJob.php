@@ -50,6 +50,8 @@ namespace OCA\Shillinq\BackgroundJob;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
 use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
@@ -419,8 +421,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 			->setSchema('TimelinePublishRetryEntry')
 			->saveObject(
 				object: $entry,
-				register: $registerSlug,
-				schema: 'TimelinePublishRetryEntry'
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'TimelinePublishRetryEntry'))
 			);
 
 	}//end saveEntry()
@@ -493,8 +494,7 @@ class PipelinqTimelineRetryJob extends QueuedJob {
 				->setSchema('TimelineDeadLetter')
 				->saveObject(
 					object: $dead,
-					register: $registerSlug,
-					schema: 'TimelineDeadLetter'
+					options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $registerSlug, schema: 'TimelineDeadLetter'))
 				);
 		} catch (Throwable $e) {
 			$this->logger->error(

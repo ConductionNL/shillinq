@@ -40,6 +40,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\Http\Client\IClientService;
 use OCP\IAppConfig;
@@ -367,8 +369,9 @@ class ViesService {
 		try {
 			$this->objectService->saveObject(
 				object: $record,
-				register: $this->register(),
-				schema: 'ViesValidation',
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $this->register(), schema: 'ViesValidation')
+				),
 			);
 			$saved = true;
 		} catch (\Throwable $e) {

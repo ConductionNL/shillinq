@@ -47,6 +47,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenRegister\Contract;
 
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\IUser;
 
 /**
@@ -125,33 +126,17 @@ interface ObjectServiceInterface {
 	 * Create or update an object.
 	 *
 	 * @param array $object Object payload.
-	 * @param ?array $extend Relations to expand.
-	 * @param string|int|null $register Register override.
-	 * @param string|int|null $schema Schema override.
-	 * @param ?string $uuid Explicit UUID.
+	 * @param ObjectSaveOptions $options The target, uuid, extend, files, policy and actor.
 	 * @param bool $_rbac Apply register RBAC.
 	 * @param bool $_multitenancy Apply organisation scoping.
-	 * @param bool $silent Suppress events.
-	 * @param bool $_validation Validate against the schema.
-	 * @param ?array $uploadedFiles Files uploaded alongside.
-	 * @param ?IUser $currentUser Explicit acting user.
-	 * @param bool $failIfExists Fail instead of updating.
 	 *
 	 * @return ObjectEntityInterface
 	 */
 	public function saveObject(
 		array $object,
-		?array $extend = [],
-		string|int|null $register = null,
-		string|int|null $schema = null,
-		?string $uuid = null,
+		ObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $silent = false,
-		bool $_validation = true,
-		?array $uploadedFiles = null,
-		?IUser $currentUser = null,
-		bool $failIfExists = false
+		bool $_multitenancy = true
 	): ObjectEntityInterface;
 
 	/**

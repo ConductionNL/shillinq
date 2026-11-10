@@ -58,6 +58,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\IAppConfig;
 
 /**
@@ -264,8 +266,9 @@ final class LegesIntakeStepService {
 
 		$saved = $this->objectService->saveObject(
 			object: $request,
-			register: $this->registerSlug(),
-			schema: self::SCHEMA_REQUEST,
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $this->registerSlug(), schema: self::SCHEMA_REQUEST)
+			),
 		);
 
 		$written = $saved->getObject();

@@ -35,6 +35,8 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -315,8 +317,9 @@ final class ContributionDebtorResolver {
 				'administrationId' => $administrationId,
 				'lifecycleState' => 'active',
 			],
-			register: $this->registerSlug(),
-			schema: self::CUSTOMER,
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $this->registerSlug(), schema: self::CUSTOMER)
+			),
 			_rbac: false,
 		);
 

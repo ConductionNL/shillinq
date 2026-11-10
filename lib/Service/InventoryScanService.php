@@ -41,6 +41,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -537,8 +539,9 @@ class InventoryScanService {
 	private function saveObject(string $schema, array $object): void {
 		$this->objectService->saveObject(
 			object: $object,
-			register: $this->getRegisterSlug(),
-			schema: $schema,
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $this->getRegisterSlug(), schema: $schema)
+			),
 		);
 
 	}//end saveObject()

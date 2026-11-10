@@ -31,6 +31,8 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use RuntimeException;
@@ -113,8 +115,9 @@ class ObjectRequestInvoiceService {
 
 		$saved = $this->objectService->saveObject(
 			object: $invoice,
-			register: $this->registerSlug(),
-			schema: 'ARInvoice',
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $this->registerSlug(), schema: 'ARInvoice')
+			),
 			_rbac: false,
 		);
 

@@ -35,6 +35,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Enums\DBAConstants;
 use OCA\Shillinq\Guard\DBAOpdrachtGuard;
@@ -183,7 +185,10 @@ class DBAController extends Controller {
 		$body['administrationId'] = (string)($assignment['administrationId'] ?? '');
 
 		try {
-			$intake = $os->saveObject(object: $body, register: $register, schema: 'DBAIntake');
+			$intake = $os->saveObject(
+				object: $body,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'DBAIntake'))
+			);
 		} catch (Throwable $e) {
 			$this->logger->error('DBA saveIntake failed', ['exception' => $e->getMessage()]);
 			return $this->error(message: 'Opslaan intake mislukt', code: Http::STATUS_INTERNAL_SERVER_ERROR);
@@ -200,7 +205,10 @@ class DBAController extends Controller {
 		$assignment['actueleRisicoscore'] = $total;
 		$assignment['riskLevel'] = $riskLevel;
 		try {
-			$os->saveObject(object: $assignment, register: $register, schema: 'DBAOpdracht');
+			$os->saveObject(
+				object: $assignment,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'DBAOpdracht'))
+			);
 		} catch (Throwable $e) {
 			$this->logger->error('DBA opdracht update failed', ['exception' => $e->getMessage()]);
 		}
@@ -279,7 +287,10 @@ class DBAController extends Controller {
 		$assignment['wbaValidTo'] = (new DateTimeImmutable())
 			->modify('+' . DBAConstants::WBA_GELDIGHEID_DAGEN . ' days')->format('Y-m-d');
 		try {
-			$updated = $os->saveObject(object: $assignment, register: $register, schema: 'DBAOpdracht');
+			$updated = $os->saveObject(
+				object: $assignment,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'DBAOpdracht'))
+			);
 		} catch (Throwable $e) {
 			return $this->error(message: 'WBA-upload mislukt', code: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
@@ -324,7 +335,10 @@ class DBAController extends Controller {
 		}
 
 		try {
-			$updated = $os->saveObject(object: $assignment, register: $register, schema: 'DBAOpdracht');
+			$updated = $os->saveObject(
+				object: $assignment,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'DBAOpdracht'))
+			);
 		} catch (Throwable $e) {
 			return $this->error(message: 'Beeindiging mislukt', code: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
@@ -401,7 +415,10 @@ class DBAController extends Controller {
 		$this->ensureAdministrationAccess(assignment: $assignment);
 		$assignment['intermediaryMode'] = $enabled;
 		try {
-			$updated = $os->saveObject(object: $assignment, register: $register, schema: 'DBAOpdracht');
+			$updated = $os->saveObject(
+				object: $assignment,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'DBAOpdracht'))
+			);
 		} catch (Throwable $e) {
 			return $this->error(message: 'Tussenkomst-mode opslaan mislukt', code: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
@@ -444,7 +461,10 @@ class DBAController extends Controller {
 		}
 
 		try {
-			$updated = $os->saveObject(object: $dossier, register: $register, schema: 'DBAEvidenceDossier');
+			$updated = $os->saveObject(
+				object: $dossier,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'DBAEvidenceDossier'))
+			);
 		} catch (Throwable $e) {
 			return $this->error(message: 'Consent opslaan mislukt', code: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
@@ -483,7 +503,10 @@ class DBAController extends Controller {
 		$this->ensureAdministrationAccess(assignment: $assignment);
 		$assignment['perspective'] = 'CLIENT';
 		try {
-			$os->saveObject(object: $assignment, register: $register, schema: 'DBAOpdracht');
+			$os->saveObject(
+				object: $assignment,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'DBAOpdracht'))
+			);
 		} catch (Throwable $e) {
 			$this->logger->warning('Inhuur-intake perspectief update failed', ['exception' => $e->getMessage()]);
 		}
