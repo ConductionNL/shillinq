@@ -58,6 +58,18 @@ use Throwable;
  */
 final class BBVComplianceWidget {
 	/**
+	 * The status buckets every envelope starts with, in display order.
+	 *
+	 * @var array<string,int>
+	 */
+	private const EMPTY_COUNTS = [
+		'unconfigured' => 0,
+		'on-track' => 0,
+		'at-risk' => 0,
+		'non-compliant' => 0,
+	];
+
+	/**
 	 * Construct the widget with DI dependencies.
 	 *
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
@@ -106,62 +118,81 @@ final class BBVComplianceWidget {
 	public function buildEnvelope(?int $fiscalYear = null, ?string $administrationId = null): array {
 		$programmes = $this->loadProgrammes(fiscalYear: $fiscalYear, administrationId: $administrationId);
 		$mappings = $this->loadMappings(fiscalYear: $fiscalYear, administrationId: $administrationId);
+		$tally = $this->programmeTally(programmes: $programmes, fiscalYear: $fiscalYear);
 
-		$rows = [];
-		$totalBudget = 0;
-		$totalYtdSpend = 0;
-		$counts = [
-			'unconfigured' => 0,
-			'on-track' => 0,
-			'at-risk' => 0,
-			'non-compliant' => 0,
+		return [
+			'widgets' => $this->widgetDeclarations(),
+			'programmes' => $tally['rows'],
+			'mappings' => $mappings,
+			'counts' => $tally['counts'],
+			'summary' => self::summary(tally: $tally, mappingCount: count($mappings)),
+			'generatedAt' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM),
 		];
+	}//end buildEnvelope()
 
+	/**
+	 * Each programme with its compliance figures, the status histogram and the totals.
+	 *
+	 * @param array<int,array<string,mixed>> $programmes The programme rows.
+	 * @param int|null                       $fiscalYear Optional fiscal year passed to the compliance service.
+	 *
+	 * @return array{rows: array<int,array<string,mixed>>, counts: array<string,int>, totalBudget: int|float, totalYtdSpend: int|float}
+	 */
+	private function programmeTally(array $programmes, ?int $fiscalYear): array {
+		$tally = ['rows' => [], 'counts' => self::EMPTY_COUNTS, 'totalBudget' => 0, 'totalYtdSpend' => 0];
 		foreach ($programmes as $programme) {
-			$envelope = $this->compliance->computeComplianceStatus(
-				programme: $programme,
-				fiscalYear: $fiscalYear
-			);
-			$status = $envelope['status'];
-			if (array_key_exists($status, $counts) === false) {
-				$counts[$status] = 0;
-			}
-
-			$counts[$status]++;
-			$totalBudget += $envelope['budget'];
-			$totalYtdSpend += $envelope['ytdSpend'];
-
-			$rows[] = ($programme + [
+			$envelope = $this->compliance->computeComplianceStatus(programme: $programme, fiscalYear: $fiscalYear);
+			$tally = self::counted(tally: $tally, envelope: $envelope);
+			$tally['rows'][] = ($programme + [
 				'totalBudget' => $envelope['budget'],
 				'ytdSpend' => $envelope['ytdSpend'],
 				'utilization' => $envelope['utilization'],
 				'complianceStatus' => $envelope['status'],
 			]);
-		}//end foreach
-
-		$summaryUtilization = 0.0;
-		if ($totalBudget > 0) {
-			$summaryUtilization = ((float)$totalYtdSpend / (float)$totalBudget);
 		}
 
-		$summary = [
-			'programmeCount' => count($rows),
-			'mappingCount' => count($mappings),
-			'totalBudget' => $totalBudget,
-			'totalYtdSpend' => $totalYtdSpend,
-			'utilization' => $summaryUtilization,
-		];
+		return $tally;
+	}//end programmeTally()
+
+	/**
+	 * The tally with one more programme's status and amounts added.
+	 *
+	 * @param array<string,mixed> $tally    The tally so far.
+	 * @param array<string,mixed> $envelope The programme's compliance envelope.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function counted(array $tally, array $envelope): array {
+		$status = $envelope['status'];
+		$tally['counts'][$status] = (($tally['counts'][$status] ?? 0) + 1);
+		$tally['totalBudget'] += $envelope['budget'];
+		$tally['totalYtdSpend'] += $envelope['ytdSpend'];
+
+		return $tally;
+	}//end counted()
+
+	/**
+	 * The totals across the programmes; utilization is spend over budget, 0 without a budget.
+	 *
+	 * @param array<string,mixed> $tally        The programme tally.
+	 * @param int                 $mappingCount The number of mappings.
+	 *
+	 * @return array<string,int|float>
+	 */
+	private static function summary(array $tally, int $mappingCount): array {
+		$summaryUtilization = 0.0;
+		if ($tally['totalBudget'] > 0) {
+			$summaryUtilization = ((float)$tally['totalYtdSpend'] / (float)$tally['totalBudget']);
+		}
 
 		return [
-			'widgets' => $this->widgetDeclarations(),
-			'programmes' => $rows,
-			'mappings' => $mappings,
-			'counts' => $counts,
-			'summary' => $summary,
-			'generatedAt' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM),
+			'programmeCount' => count($tally['rows']),
+			'mappingCount' => $mappingCount,
+			'totalBudget' => $tally['totalBudget'],
+			'totalYtdSpend' => $tally['totalYtdSpend'],
+			'utilization' => $summaryUtilization,
 		];
-
-	}//end buildEnvelope()
+	}//end summary()
 
 	/**
 	 * Slice-05 widget declarations — kept identical to the Vue dashboard
@@ -191,15 +222,9 @@ final class BBVComplianceWidget {
 	 * @return array<int,array<string,mixed>>
 	 */
 	private function loadProgrammes(?int $fiscalYear, ?string $administrationId): array {
-		return $this->findAllRows(
-			schema: 'BBVProgramme',
-			filters: $this->scopedFilters(
-				base: ['status' => 'active'],
-				fiscalYear: $fiscalYear,
-				administrationId: $administrationId
-			)
-		);
+		$filters = self::withFiscalYear(filters: ['status' => 'active'], fiscalYear: $fiscalYear);
 
+		return $this->findAllRows(schema: 'BBVProgramme', filters: self::withAdministration(filters: $filters, administrationId: $administrationId));
 	}//end loadProgrammes()
 
 	/**
@@ -221,37 +246,40 @@ final class BBVComplianceWidget {
 	 */
 	private function loadMappings(?int $fiscalYear, ?string $administrationId): array {
 		unset($fiscalYear);
-		return $this->findAllRows(
-			schema: 'BudgetBBVMapping',
-			filters: $this->scopedFilters(
-				base: [],
-				fiscalYear: null,
-				administrationId: $administrationId
-			)
-		);
-
+		return $this->findAllRows(schema: 'BudgetBBVMapping', filters: self::withAdministration(filters: [], administrationId: $administrationId));
 	}//end loadMappings()
 
 	/**
-	 * Build a filters map, dropping null scopes.
+	 * The filters with the fiscal year added, when one is given.
 	 *
-	 * @param array<string,mixed> $base Base filters.
-	 * @param int|null $fiscalYear Optional fiscal year.
-	 * @param string|null $administrationId Optional administration.
+	 * @param array<string,mixed> $filters    The filters so far.
+	 * @param int|null            $fiscalYear Optional fiscal year.
 	 *
 	 * @return array<string,mixed>
 	 */
-	private function scopedFilters(array $base, ?int $fiscalYear, ?string $administrationId): array {
+	private static function withFiscalYear(array $filters, ?int $fiscalYear): array {
 		if ($fiscalYear !== null) {
-			$base['fiscalYear'] = $fiscalYear;
+			$filters['fiscalYear'] = $fiscalYear;
 		}
 
+		return $filters;
+	}//end withFiscalYear()
+
+	/**
+	 * The filters with the administration added, when a non-empty one is given.
+	 *
+	 * @param array<string,mixed> $filters          The filters so far.
+	 * @param string|null         $administrationId Optional administration.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function withAdministration(array $filters, ?string $administrationId): array {
 		if ($administrationId !== null && $administrationId !== '') {
-			$base['administrationId'] = $administrationId;
+			$filters['administrationId'] = $administrationId;
 		}
 
-		return $base;
-	}//end scopedFilters()
+		return $filters;
+	}//end withAdministration()
 
 	/**
 	 * FindAll wrapper that returns plain arrays.
@@ -266,36 +294,33 @@ final class BBVComplianceWidget {
 			return [];
 		}
 
-		try {
-			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$registerSlug = $this->settings->getRegisterSlug();
-			$records = $objectService
-				->setRegister($registerSlug)
-				->setSchema($schema)
-				->findAll(
-					[
-						'filters' => $filters,
-						'limit' => 1000,
-					]
-				);
-		} catch (Throwable $e) {
-			$this->logger->error(
-				'Shillinq BBV compliance widget: register lookup failed',
-				[
-					'schema' => $schema,
-					'exception' => $e->getMessage(),
-				]
-			);
-			return [];
-		}//end try
-
+		$records = $this->lookup(schema: $schema, filters: $filters);
 		$rows = [];
-		foreach ($records as $record) {
+		foreach (($records ?? []) as $record) {
 			$rows[] = $this->toArray(object: $record);
 		}
 
 		return $rows;
 	}//end findAllRows()
+
+	/**
+	 * Up to 1000 records of a schema; a failed lookup is logged.
+	 *
+	 * @param string              $schema  OR schema slug.
+	 * @param array<string,mixed> $filters OR filter map.
+	 *
+	 * @return array<int|string,mixed>|null The records, or null when the lookup failed.
+	 */
+	private function lookup(string $schema, array $filters): ?array {
+		try {
+			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
+			$registerSlug = $this->settings->getRegisterSlug();
+			return $objectService->setRegister($registerSlug)->setSchema($schema)->findAll(['filters' => $filters, 'limit' => 1000]);
+		} catch (Throwable $e) {
+			$this->logger->error('Shillinq BBV compliance widget: register lookup failed', ['schema' => $schema, 'exception' => $e->getMessage()]);
+			return null;
+		}
+	}//end lookup()
 
 	/**
 	 * Normalise an OR object handle to a plain array.
@@ -309,20 +334,30 @@ final class BBVComplianceWidget {
 			return $object;
 		}
 
-		if (is_object($object) === true && method_exists($object, 'getObject') === true) {
-			$payload = $object->getObject();
-			if (is_array($payload) === true) {
-				return $payload;
-			}
+		if (is_object($object) === false) {
+			return [];
 		}
 
-		if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
-			$payload = $object->jsonSerialize();
-			if (is_array($payload) === true) {
-				return $payload;
+		return self::objectPayload(object: $object);
+	}//end toArray()
+
+	/**
+	 * An entity's payload: getObject() when it answers an array, else jsonSerialize() when it does, else [].
+	 *
+	 * @param object $object An OR entity.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function objectPayload(object $object): array {
+		foreach (['getObject', 'jsonSerialize'] as $method) {
+			if (method_exists($object, $method) === true) {
+				$payload = $object->$method();
+				if (is_array($payload) === true) {
+					return $payload;
+				}
 			}
 		}
 
 		return [];
-	}//end toArray()
+	}//end objectPayload()
 }//end class
