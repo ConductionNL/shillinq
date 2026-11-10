@@ -496,25 +496,30 @@ class PurchaseOrderApprovalService {
 			return $current;
 		}
 
-		$fullyApproved = true;
-		foreach ($chain as $entry) {
-			if (is_array($entry) === false) {
-				continue;
-			}
-
-			$entryDecision = (string)($entry['decision'] ?? '');
-			if ($entryDecision !== self::DECISION_APPROVED) {
-				$fullyApproved = false;
-				break;
-			}
-		}
-
-		if ($fullyApproved === true) {
+		if ($this->isFullyApproved(chain: $chain) === true) {
 			return 'approved';
 		}
 
 		return $current;
 	}//end nextLifecycleState()
+
+	/**
+	 * Whether every entry of the chain is approved; a malformed entry is
+	 * skipped.
+	 *
+	 * @param array<int|string,mixed> $chain The approval chain.
+	 *
+	 * @return bool
+	 */
+	private function isFullyApproved(array $chain): bool {
+		foreach ($chain as $entry) {
+			if (is_array($entry) === true && (string)($entry['decision'] ?? '') !== self::DECISION_APPROVED) {
+				return false;
+			}
+		}
+
+		return true;
+	}//end isFullyApproved()
 
 	/**
 	 * Load a PurchaseOrder by id, scoped to the administration so a
