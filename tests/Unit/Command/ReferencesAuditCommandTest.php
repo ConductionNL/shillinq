@@ -115,25 +115,19 @@ class ReferencesAuditCommandTest extends TestCase {
 			}
 
 			/**
-			 * @param string $objectId The object id.
-			 * @param array<string, mixed> $data The patch.
-			 * @param string|null $register The register.
-			 * @param string|null $schema The schema.
+			 * @param \OCA\OpenRegister\Service\Object\ObjectPatch $patch The object id, patch, register and schema.
 			 * @param bool $_rbac RBAC flag.
 			 * @param bool $_multitenancy Multitenancy flag.
 			 *
 			 * @return array<string, mixed> The patch, echoed.
 			 */
 			public function patchObject(
-				string $objectId,
-				array $data,
-				?string $register = null,
-				?string $schema = null,
+				\OCA\OpenRegister\Service\Object\ObjectPatch $patch,
 				bool $_rbac = true,
 				bool $_multitenancy = true,
 			): array {
-				$this->test->writes[] = ['id' => $objectId, 'data' => $data];
-				return $data;
+				$this->test->writes[] = ['id' => $patch->objectId, 'data' => $patch->data];
+				return $patch->data;
 			}
 		};
 

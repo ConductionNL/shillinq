@@ -100,8 +100,8 @@ class ObjectRequestSettledListenerTest extends TestCase {
 		);
 		$this->objectService = $this->createMock(ObjectServiceInterface::class);
 		$this->objectService->method('patchObject')->willReturnCallback(
-			function (string $objectId, array $data, $register = null, $schema = null): ObjectEntity {
-				$this->patches[] = ['id' => $objectId, 'data' => $data, 'register' => $register, 'schema' => $schema];
+			function (\OCA\OpenRegister\Service\Object\ObjectPatch $patch): ObjectEntity {
+				$this->patches[] = ['id' => $patch->objectId, 'data' => $patch->data, 'register' => $patch->target->register, 'schema' => $patch->target->schema];
 				return new ObjectEntity();
 			}
 		);

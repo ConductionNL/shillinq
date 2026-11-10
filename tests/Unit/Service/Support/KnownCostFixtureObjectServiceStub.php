@@ -48,6 +48,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Support;
 use LogicException;
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectPatch;
 use OCP\IUser;
 use RuntimeException;
 
@@ -332,25 +333,20 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 	 * `null` clears the stored value; nested associative arrays merge
 	 * recursively; lists (JSON arrays) are replaced wholesale.
 	 *
-	 * @param string $objectId The object UUID or id.
-	 * @param array $data The partial data to merge. Omitted keys are preserved.
-	 * @param string|int|null $register Register override (ignored).
-	 * @param string|int|null $schema Schema override, when given.
+	 * @param ObjectPatch $patch The object id, the fields to merge, the register and schema, and the acting user.
 	 * @param bool $_rbac Apply register RBAC (ignored).
 	 * @param bool $_multitenancy Apply organisation scoping (ignored).
-	 * @param ?IUser $currentUser Explicit acting user (ignored).
 	 *
 	 * @return ObjectEntityInterface
 	 */
 	public function patchObject(
-		string $objectId,
-		array $data,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		ObjectPatch $patch,
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		?IUser $currentUser = null
+		bool $_multitenancy = true
 	): ObjectEntityInterface {
+		$objectId = $patch->objectId;
+		$data = $patch->data;
+		$schema = $patch->target->schema;
 		$target = $this->schema;
 		if ($schema !== null) {
 			$target = (string)$schema;

@@ -37,6 +37,8 @@ namespace OCA\Shillinq\Reporting\Schedule;
 
 use DateTimeImmutable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectPatch;
 use OCA\Shillinq\Reporting\ReportGenerationService;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\AdministrationContextService;
@@ -245,10 +247,11 @@ class ScheduledReportRunner {
 	 */
 	private function save(string $scheduleId, array $patch): void {
 		$this->objectService->patchObject(
-			objectId: $scheduleId,
-			data: $patch,
-			register: $this->settings->getRegisterSlug(),
-			schema: 'ReportSchedule',
+			patch: new ObjectPatch(
+				objectId: $scheduleId,
+				data: $patch,
+				target: new ObjectFindTarget(register: $this->settings->getRegisterSlug(), schema: 'ReportSchedule')
+			),
 			_rbac: false,
 			_multitenancy: false
 		);

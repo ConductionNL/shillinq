@@ -47,6 +47,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenRegister\Contract;
 
+use OCA\OpenRegister\Service\Object\ObjectPatch;
 use OCP\IUser;
 
 /**
@@ -208,24 +209,16 @@ interface ObjectServiceInterface {
 	 * Nextcloud tree, where the real OpenRegister interface — not this stub —
 	 * is the one that is actually loaded.
 	 *
-	 * @param string $objectId The object UUID or id.
-	 * @param array $data The partial data to merge. Omitted keys are preserved.
-	 * @param string|int|null $register Register id, UUID or slug.
-	 * @param string|int|null $schema Schema id, UUID or slug.
+	 * @param ObjectPatch $patch The object id, the fields to merge, the register and schema, and the acting user.
 	 * @param bool $_rbac Apply register RBAC.
 	 * @param bool $_multitenancy Apply organisation scoping.
-	 * @param ?IUser $currentUser Explicit acting user; null uses the session.
 	 *
 	 * @return ObjectEntityInterface
 	 */
 	public function patchObject(
-		string $objectId,
-		array $data,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		ObjectPatch $patch,
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		?IUser $currentUser = null
+		bool $_multitenancy = true
 	): ObjectEntityInterface;
 
 	/**

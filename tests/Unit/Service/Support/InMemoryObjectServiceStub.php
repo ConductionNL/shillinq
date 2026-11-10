@@ -48,6 +48,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Support;
 
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectPatch;
 use OCP\IUser;
 use RuntimeException;
 
@@ -842,25 +843,20 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 * dependency bump. `patchObject()` is the method that genuinely merges, so
 	 * it is modelled with the same read-merge-write this file already performs.
 	 *
-	 * @param string          $objectId      The object UUID or id.
-	 * @param array           $data          The fields to merge.
-	 * @param string|int|null $register      Register id, UUID or slug (ignored).
-	 * @param string|int|null $schema        Schema id, UUID or slug (ignored).
+	 * @param ObjectPatch $patch The object id, the fields to merge, the register and schema, and the acting user.
 	 * @param bool            $_rbac         Apply register RBAC (ignored).
 	 * @param bool            $_multitenancy Apply organisation scoping (ignored).
-	 * @param ?IUser          $currentUser   Acting user (ignored).
 	 *
 	 * @return ObjectEntityInterface
 	 */
 	public function patchObject(
-		string $objectId,
-		array $data,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		ObjectPatch $patch,
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		?IUser $currentUser = null
+		bool $_multitenancy = true
 	): ObjectEntityInterface {
+		$objectId = $patch->objectId;
+		$data = $patch->data;
+		$schema = $patch->target->schema;
 		// The schema argument is honoured as OpenRegister honours it: a patch
 		// made while another schema is active must land on the named one.
 		$existing = $this->find(id: $objectId, schema: $schema);

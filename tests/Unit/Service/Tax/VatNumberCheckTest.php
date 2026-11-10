@@ -27,6 +27,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\Tax;
 
 use DomainException;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectPatch;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\Tax\VatNumberCheck;
 use OCA\Shillinq\Service\ViesService;
@@ -113,7 +115,7 @@ class VatNumberCheckTest extends TestCase {
 	 * @return void
 	 */
 	public function testAnInvalidNumberIsRecordedAsInvalid(): void {
-		$this->store->patchObject(objectId: self::MULLER, data: ['vatIdValidatedAt' => '2026-08-01T10:00:00+00:00'], register: 'shillinq', schema: 'CustomerMaster');
+		$this->store->patchObject(patch: new ObjectPatch(objectId: self::MULLER, data: ['vatIdValidatedAt' => '2026-08-01T10:00:00+00:00'], target: new ObjectFindTarget(register: 'shillinq', schema: 'CustomerMaster')));
 
 		$result = $this->check(answer: '{"valid": false}')->checkRecord('customer', $this->record('CustomerMaster', self::MULLER));
 

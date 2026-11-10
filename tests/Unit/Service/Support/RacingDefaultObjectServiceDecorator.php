@@ -39,6 +39,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Support;
 
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectPatch;
 use OCP\IUser;
 
 /**
@@ -283,28 +284,20 @@ final class RacingDefaultObjectServiceDecorator implements ObjectServiceInterfac
 	}//end updateObject()
 
 	/**
-	 * @param string $objectId Object id, UUID or slug.
-	 * @param array $data The partial data to merge.
-	 * @param string|int|null $register Register id, UUID or slug.
-	 * @param string|int|null $schema Schema id, UUID or slug.
+	 * @param ObjectPatch $patch The object id, the fields to merge, the register and schema, and the acting user.
 	 * @param bool $rbac Apply register RBAC.
 	 * @param bool $multitenancy Apply organisation scoping.
-	 * @param ?IUser $currentUser Explicit acting user.
 	 *
 	 * @return ObjectEntityInterface
 	 *
 	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
 	 */
 	public function patchObject(
-		string $objectId,
-		array $data,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		ObjectPatch $patch,
 		bool $rbac = true,
-		bool $multitenancy = true,
-		?IUser $currentUser = null
+		bool $multitenancy = true
 	): ObjectEntityInterface {
-		return $this->inner->patchObject($objectId, $data, $register, $schema, $rbac, $multitenancy, $currentUser);
+		return $this->inner->patchObject(patch: $patch, _rbac: $rbac, _multitenancy: $multitenancy);
 
 	}//end patchObject()
 

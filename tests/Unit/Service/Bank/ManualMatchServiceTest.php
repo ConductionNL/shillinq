@@ -31,6 +31,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Bank;
 
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Service\Object\ObjectPatch;
 use OCA\Shillinq\Listener\ReconciliationMatchSettlementListener;
 use OCA\Shillinq\Service\Bank\InvoiceSettlementService;
 use OCA\Shillinq\Service\Bank\ManualMatchRefusedException;
@@ -118,7 +119,7 @@ final class ManualMatchServiceTest extends TestCase {
 			onRan: function (array $record, array $object) use (&$settlementListener): void {
 				if ($record['schema'] === 'JournalEntry' && $record['action'] === 'postDirect') {
 					// MaterialiseGlTransactionAction writes the back reference.
-					$this->store->setSchema('JournalEntry')->patchObject($record['objectId'], ['glTransactionId' => 'gl-' . $record['objectId']]);
+					$this->store->setSchema('JournalEntry')->patchObject(patch: new ObjectPatch(objectId: $record['objectId'], data: ['glTransactionId' => 'gl-' . $record['objectId']]));
 				}
 
 				if ($record['schema'] === 'ReconciliationMatch') {
@@ -351,7 +352,7 @@ final class ManualMatchServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testBankAccountWithoutLedgerAccountIsRefused(): void {
-		$this->store->setSchema('BankAccount')->patchObject('ba-1', ['ledgerAccountNumber' => '']);
+		$this->store->setSchema('BankAccount')->patchObject(patch: new ObjectPatch(objectId: 'ba-1', data: ['ledgerAccountNumber' => '']));
 		$service = $this->service();
 
 		$this->expectExceptionMessage('Set the ledger account of bank account NL91BANK0417164300 first.');
@@ -365,7 +366,7 @@ final class ManualMatchServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testReconciledStatementIsRefused(): void {
-		$this->store->setSchema('BankStatement')->patchObject('stmt-1', ['lifecycleState' => 'reconciled']);
+		$this->store->setSchema('BankStatement')->patchObject(patch: new ObjectPatch(objectId: 'stmt-1', data: ['lifecycleState' => 'reconciled']));
 		$service = $this->service();
 
 		$this->expectExceptionMessage('The bank statement of this line is already reconciled.');

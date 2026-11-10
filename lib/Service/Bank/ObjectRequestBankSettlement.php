@@ -32,6 +32,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Bank;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectPatch;
 use OCA\Shillinq\Service\PaymentRevenueAccountResolver;
 use OCA\Shillinq\Service\PaymentSettlementService;
 use OCA\Shillinq\Service\SettingsService;
@@ -122,7 +123,7 @@ class ObjectRequestBankSettlement {
 			}
 		}
 
-		$this->scoped(schema: 'PaymentRequest')->patchObject($requestId, $patch);
+		$this->scoped(schema: 'PaymentRequest')->patchObject(patch: new ObjectPatch(objectId: $requestId, data: $patch));
 
 		return $outcome;
 	}//end settle()

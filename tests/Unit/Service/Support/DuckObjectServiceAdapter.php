@@ -67,6 +67,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Support;
 use LogicException;
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectPatch;
 use OCP\IUser;
 use RuntimeException;
 
@@ -578,25 +579,21 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 	 * `saveObject()` it never declared and the adapter would refuse — which
 	 * reads as "the patch was never persisted" rather than as a missing double.
 	 *
-	 * @param string          $objectId      The object UUID or id.
-	 * @param array           $data          The fields to merge.
-	 * @param string|int|null $register      Register id, UUID or slug.
-	 * @param string|int|null $schema        Schema id, UUID or slug.
+	 * @param ObjectPatch $patch The object id, the fields to merge, the register and schema, and the acting user.
 	 * @param bool            $_rbac         Apply register RBAC (ignored).
 	 * @param bool            $_multitenancy Apply organisation scoping (ignored).
-	 * @param ?IUser          $currentUser   Acting user (ignored).
 	 *
 	 * @return ObjectEntityInterface
 	 */
 	public function patchObject(
-		string $objectId,
-		array $data,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		ObjectPatch $patch,
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		?IUser $currentUser = null
+		bool $_multitenancy = true
 	): ObjectEntityInterface {
+		$objectId = $patch->objectId;
+		$data = $patch->data;
+		$register = $patch->target->register;
+		$schema = $patch->target->schema;
 		if (method_exists($this->inner, 'patchObject') === true) {
 			return $this->entity(
 				value: $this->invokeInner(

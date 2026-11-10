@@ -33,6 +33,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\PaymentPlan;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectPatch;
 use OCA\Shillinq\Service\Lifecycle\ObjectTransitionRunner;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -242,7 +243,7 @@ class PaymentPlanAllocator {
 		}
 
 		$id = (string)$instalment['id'];
-		$this->scoped(schema: 'PaymentPlanInstalment')->patchObject($id, $patch);
+		$this->scoped(schema: 'PaymentPlanInstalment')->patchObject(patch: new ObjectPatch(objectId: $id, data: $patch));
 		if ($paidInFull === true) {
 			$this->transitions->run(objectId: $id, action: 'pay');
 		}
@@ -261,7 +262,9 @@ class PaymentPlanAllocator {
 		$id = (string)$invoice['id'];
 		$due = max(0, (int)round((float)($invoice['amountDue'] ?? 0) * 100) - $cents);
 		$paid = ((int)round((float)($invoice['paidAmount'] ?? 0) * 100) + $cents);
-		$this->scoped(schema: 'ARInvoice')->patchObject($id, ['amountDue' => ($due / 100.0), 'paidAmount' => ($paid / 100.0)]);
+		$this->scoped(schema: 'ARInvoice')->patchObject(
+			patch: new ObjectPatch(objectId: $id, data: ['amountDue' => ($due / 100.0), 'paidAmount' => ($paid / 100.0)])
+		);
 		if ($due > 0) {
 			return;
 		}

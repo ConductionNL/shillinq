@@ -37,6 +37,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Project;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectPatch;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Util\ObjectIdentifier;
@@ -385,10 +387,11 @@ class AssignmentHours {
 	 */
 	private function patch(string $schema, string $objectId, array $data): void {
 		$this->objectService->patchObject(
-			objectId: $objectId,
-			data: $data,
-			register: $this->settings->getRegisterSlug(),
-			schema: $schema,
+			patch: new ObjectPatch(
+				objectId: $objectId,
+				data: $data,
+				target: new ObjectFindTarget(register: $this->settings->getRegisterSlug(), schema: $schema)
+			),
 			_rbac: false,
 			_multitenancy: false
 		);

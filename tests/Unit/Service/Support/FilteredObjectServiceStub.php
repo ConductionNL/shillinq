@@ -43,6 +43,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Support;
 
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectPatch;
 use OCP\IUser;
 
 /**
@@ -273,24 +274,16 @@ final class FilteredObjectServiceStub implements ObjectServiceInterface {
 	/**
 	 * Not modelled.
 	 *
-	 * @param string $objectId Object id, UUID or slug.
-	 * @param array $data The partial data to merge.
-	 * @param string|int|null $register Register id, UUID or slug.
-	 * @param string|int|null $schema Schema id, UUID or slug.
+	 * @param ObjectPatch $patch The object id, the fields to merge, the register and schema, and the acting user.
 	 * @param bool $_rbac Apply register RBAC.
 	 * @param bool $_multitenancy Apply organisation scoping.
-	 * @param ?IUser $currentUser Explicit acting user.
 	 *
 	 * @return ObjectEntityInterface
 	 */
 	public function patchObject(
-		string $objectId,
-		array $data,
-		string|int|null $register = null,
-		string|int|null $schema = null,
+		ObjectPatch $patch,
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		?IUser $currentUser = null
+		bool $_multitenancy = true
 	): ObjectEntityInterface {
 		$this->unsupported(method: 'patchObject');
 
