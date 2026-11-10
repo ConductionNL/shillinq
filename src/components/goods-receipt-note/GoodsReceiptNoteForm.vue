@@ -470,6 +470,7 @@ export default {
 				quantityReceived: state.quantityReceived,
 				quantityAccepted:
 					state.quantityAccepted || state.quantityReceived,
+
 				quantityRejected: state.quantityRejected || 0,
 				rejectionReason: state.rejectionReason,
 				batchReference: state.batchReference,
