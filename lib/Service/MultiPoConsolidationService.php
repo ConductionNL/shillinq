@@ -244,22 +244,33 @@ class MultiPoConsolidationService {
 		$this->assertAccess(administrationId: $administrationId);
 
 		$supplierId = trim((string)($invoice['supplierId'] ?? ''));
-		if ($supplierId === '') {
-			return [];
-		}
-
 		$productCode = trim((string)($invoiceLine['productCode'] ?? ''));
-		if ($productCode === '') {
+		if ($supplierId === '' || $productCode === '') {
 			// Without a product code we cannot enumerate candidates — this
 			// is the missing-PO exception path (the caller writes the
 			// exception_missing_po ThreeWayMatch directly).
 			return [];
 		}
 
-		$invoiceDate = trim((string)($invoice['invoiceDate'] ?? ''));
-		$window = $this->dateWindow(anchor: $invoiceDate, days: self::DATE_PROXIMITY_DAYS);
+		$search = new CandidateTupleSearch(administrationId: $administrationId, productCode: $productCode);
+		$search->window = $this->dateWindow(anchor: trim((string)($invoice['invoiceDate'] ?? '')), days: self::DATE_PROXIMITY_DAYS);
+		$search->supplierPoIds = $this->supplierPoIds(administrationId: $administrationId, supplierId: $supplierId);
+		if ($search->supplierPoIds === []) {
+			return [];
+		}
 
-		// Step 1 — supplier-scoped POs.
+		return $this->candidateTuples(search: $search);
+	}//end enumerateCandidateTuples()
+
+	/**
+	 * Step 1 — the ids of the supplier's purchase orders, as keys.
+	 *
+	 * @param string $administrationId Tenant scope.
+	 * @param string $supplierId       The invoice's supplier.
+	 *
+	 * @return array<string,true> The supplier PO ids, or [] when there are none.
+	 */
+	private function supplierPoIds(string $administrationId, string $supplierId): array {
 		$supplierPos = $this->findAll(
 			schema: self::SCHEMA_PURCHASE_ORDER,
 			filters: [
@@ -267,87 +278,123 @@ class MultiPoConsolidationService {
 				'supplierId' => $supplierId,
 			]
 		);
-		if ($supplierPos === []) {
-			return [];
-		}
 
 		$supplierPoIds = [];
 		foreach ($supplierPos as $purchaseOrder) {
 			$supplierPoIds[$this->idOf(record: $purchaseOrder)] = true;
 		}
 
-		// Step 2 — PO lines for the product, scoped to supplier POs and
-		// within the date window. We pull PO lines on the product code
-		// and reject those whose poId is not in the supplier-scoped set
-		// OR whose expectedDeliveryDate is outside the window.
+		return $supplierPoIds;
+	}//end supplierPoIds()
+
+	/**
+	 * Step 2 — PO lines for the product, scoped to the supplier POs and
+	 * within the date window, each with its GRN-line candidates. PO lines
+	 * are pulled on the product code; those whose poId is not in the
+	 * supplier-scoped set or whose expectedDeliveryDate is outside the
+	 * window are rejected.
+	 *
+	 * @param CandidateTupleSearch $search The search.
+	 *
+	 * @return array<int,array<string,mixed>> The candidate tuples.
+	 */
+	private function candidateTuples(CandidateTupleSearch $search): array {
 		$candidatePoLines = $this->findAll(
 			schema: self::SCHEMA_PO_LINE,
 			filters: [
-				'administrationId' => $administrationId,
-				'productOrServiceCode' => $productCode,
+				'administrationId' => $search->administrationId,
+				'productOrServiceCode' => $search->productCode,
 			]
 		);
 
 		$tuples = [];
 		foreach ($candidatePoLines as $poLine) {
-			$poId = trim((string)($poLine['poId'] ?? ''));
-			if ($poId === '' || isset($supplierPoIds[$poId]) === false) {
-				continue;
+			if ($this->isCandidatePoLine(search: $search, poLine: $poLine) === true) {
+				$tuples = array_merge($tuples, $this->poLineTuples(search: $search, poLine: $poLine));
 			}
-
-			$deliveryDate = trim((string)($poLine['expectedDeliveryDate'] ?? ''));
-			if ($this->withinWindow(date: $deliveryDate, window: $window) === false) {
-				continue;
-			}
-
-			$poLineId = $this->idOf(record: $poLine);
-			if ($poLineId === '') {
-				continue;
-			}
-
-			// Step 3 — GRN lines back-referencing this PO line.
-			$grnLines = $this->findAll(
-				schema: self::SCHEMA_GRN_LINE,
-				filters: [
-					'administrationId' => $administrationId,
-					'poLineId' => $poLineId,
-				]
-			);
-
-			if ($grnLines === []) {
-				// PO-only candidate (no GRN yet — services or pre-receipt).
-				$tuples[] = [
-					'poLineId' => $poLineId,
-					'poId' => $poId,
-					'grnLineId' => null,
-					'grnId' => null,
-					'productCode' => $productCode,
-					'expectedDeliveryDate' => $deliveryDate,
-					'matchSource' => 'po-only',
-				];
-				continue;
-			}
-
-			foreach ($grnLines as $grnLine) {
-				$grnLineId = $this->idOf(record: $grnLine);
-				if ($grnLineId === '') {
-					continue;
-				}
-
-				$tuples[] = [
-					'poLineId' => $poLineId,
-					'poId' => $poId,
-					'grnLineId' => $grnLineId,
-					'grnId' => trim((string)($grnLine['grnId'] ?? '')),
-					'productCode' => $productCode,
-					'expectedDeliveryDate' => $deliveryDate,
-					'matchSource' => 'po-grn',
-				];
-			}
-		}//end foreach
+		}
 
 		return $tuples;
-	}//end enumerateCandidateTuples()
+	}//end candidateTuples()
+
+	/**
+	 * True when a PO line belongs to a supplier PO, falls in the date window
+	 * and has an id.
+	 *
+	 * @param CandidateTupleSearch $search The search.
+	 * @param array<string,mixed>  $poLine The PO line.
+	 *
+	 * @return bool Whether the PO line is a candidate.
+	 */
+	private function isCandidatePoLine(CandidateTupleSearch $search, array $poLine): bool {
+		$poId = trim((string)($poLine['poId'] ?? ''));
+		if ($poId === '' || isset($search->supplierPoIds[$poId]) === false) {
+			return false;
+		}
+
+		$deliveryDate = trim((string)($poLine['expectedDeliveryDate'] ?? ''));
+		if ($this->withinWindow(date: $deliveryDate, window: $search->window) === false) {
+			return false;
+		}
+
+		return $this->idOf(record: $poLine) !== '';
+	}//end isCandidatePoLine()
+
+	/**
+	 * Step 3 — the tuples of one candidate PO line: one per GRN line that
+	 * back-references it, or a single PO-only tuple when there is none
+	 * (services or pre-receipt).
+	 *
+	 * @param CandidateTupleSearch $search The search.
+	 * @param array<string,mixed>  $poLine The candidate PO line.
+	 *
+	 * @return array<int,array<string,mixed>> The PO line's tuples.
+	 */
+	private function poLineTuples(CandidateTupleSearch $search, array $poLine): array {
+		$base = [
+			'poLineId' => $this->idOf(record: $poLine),
+			'poId' => trim((string)($poLine['poId'] ?? '')),
+			'productCode' => $search->productCode,
+			'expectedDeliveryDate' => trim((string)($poLine['expectedDeliveryDate'] ?? '')),
+		];
+		$grnLines = $this->findAll(
+			schema: self::SCHEMA_GRN_LINE,
+			filters: [
+				'administrationId' => $search->administrationId,
+				'poLineId' => $base['poLineId'],
+			]
+		);
+		$tuples = [];
+		foreach ($this->grnFields(grnLines: $grnLines) as $grn) {
+			$tuples[] = $search->tuple(base: $base, grn: $grn);
+		}
+
+		return $tuples;
+	}//end poLineTuples()
+
+	/**
+	 * The GRN side of a PO line's tuples: one po-grn entry per GRN line with
+	 * an id, or a single po-only entry when no GRN line back-references it.
+	 *
+	 * @param array<int,array<string,mixed>> $grnLines The GRN lines back-referencing the PO line.
+	 *
+	 * @return array<int,array<string,mixed>> grnLineId, grnId and matchSource per tuple.
+	 */
+	private function grnFields(array $grnLines): array {
+		if ($grnLines === []) {
+			return [['grnLineId' => null, 'grnId' => null, 'matchSource' => 'po-only']];
+		}
+
+		$fields = [];
+		foreach ($grnLines as $grnLine) {
+			$grnLineId = $this->idOf(record: $grnLine);
+			if ($grnLineId !== '') {
+				$fields[] = ['grnLineId' => $grnLineId, 'grnId' => trim((string)($grnLine['grnId'] ?? '')), 'matchSource' => 'po-grn'];
+			}
+		}
+
+		return $fields;
+	}//end grnFields()
 
 	/**
 	 * Record the operator's chosen candidate tuple for an ambiguous
@@ -396,92 +443,139 @@ class MultiPoConsolidationService {
 	): array {
 		$this->assertAccess(administrationId: $administrationId);
 
-		if ($invoiceId === '') {
-			throw new RuntimeException('Supplier invoice not found');
-		}
+		$run = new DisambiguationRun(administrationId: $administrationId, invoiceId: $invoiceId);
+		$run->invoiceLineNumber = $invoiceLineNumber;
+		$run->chosenPoLineId = $chosenPoLineId;
+		$run->chosenGrnLineId = $chosenGrnLineId;
+		return $this->recordChoice(run: $run);
 
-		if ($invoiceLineNumber < 1) {
-			throw new RuntimeException('Invalid invoiceLineNumber');
-		}
+	}//end disambiguateAmbiguousMatches()
 
-		if ($chosenPoLineId === '') {
-			throw new RuntimeException('chosenPoLineId is required');
-		}
-
-		$invoice = $this->findOne(
-			schema: self::SCHEMA_SUPPLIER_INVOICE,
-			filters: [
-				'id' => $invoiceId,
-				'administrationId' => $administrationId,
-			]
-		);
-		if ($invoice === null) {
-			throw new RuntimeException('Supplier invoice not found');
-		}
-
-		$invoiceLine = $this->locateInvoiceLine(
-			invoice: $invoice,
-			invoiceLineNumber: $invoiceLineNumber
-		);
+	/**
+	 * Validate the choice, re-enumerate the live candidates, pick the chosen
+	 * one and write its ThreeWayMatch with the choice snapshot.
+	 *
+	 * @param DisambiguationRun $run The disambiguation run.
+	 *
+	 * @return array<string,mixed> The persisted ThreeWayMatch record.
+	 *
+	 * @throws \RuntimeException On an invalid request, missing invoice or line, or a forged choice.
+	 */
+	private function recordChoice(DisambiguationRun $run): array {
+		$this->assertChoiceRequest(run: $run);
+		$invoice = $this->requireInvoice(administrationId: $run->administrationId, invoiceId: $run->invoiceId);
+		$invoiceLine = $this->locateInvoiceLine(invoice: $invoice, invoiceLineNumber: $run->invoiceLineNumber);
 		if ($invoiceLine === null) {
 			throw new RuntimeException('Invoice line not found');
 		}
 
-		$candidates = $this->enumerateCandidateTuples(
-			administrationId: $administrationId,
+		$run->candidates = $this->enumerateCandidateTuples(
+			administrationId: $run->administrationId,
 			invoice: $invoice,
 			invoiceLine: $invoiceLine
 		);
+		$this->pickChosenCandidate(run: $run);
 
-		$chosen = null;
-		$rejectedPoLineIds = [];
-		foreach ($candidates as $candidate) {
-			$sameLine = ((string)$candidate['poLineId'] === $chosenPoLineId);
-			if ($chosenGrnLineId === '') {
-				$sameGrn = ($candidate['grnLineId'] === null || $candidate['grnLineId'] === '');
-			} else {
-				$sameGrn = ((string)($candidate['grnLineId'] ?? '') === $chosenGrnLineId);
-			}
+		$lineMatch = new InvoiceLineMatch(administrationId: $run->administrationId, invoiceId: $run->invoiceId);
+		$lineMatch->candidate = (array)$run->chosen;
+		$lineMatch->invoiceLineNumber = $run->invoiceLineNumber;
+		$lineMatch->disambiguationChoice = $this->choiceSnapshot(run: $run);
+		$lineMatch->matchStatus = self::MATCH_STATUS_AUTO_APPROVED;
+		return $this->writeMatchRecord(lineMatch: $lineMatch);
+	}//end recordChoice()
 
-			if ($sameLine === true && $sameGrn === true) {
-				$chosen = $candidate;
+	/**
+	 * Refuse a choice without invoice, with an invalid line number or
+	 * without a chosen PO line.
+	 *
+	 * @param DisambiguationRun $run The disambiguation run.
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException When the request is invalid.
+	 */
+	private function assertChoiceRequest(DisambiguationRun $run): void {
+		if ($run->invoiceId === '') {
+			throw new RuntimeException('Supplier invoice not found');
+		}
+
+		if ($run->invoiceLineNumber < 1) {
+			throw new RuntimeException('Invalid invoiceLineNumber');
+		}
+
+		if ($run->chosenPoLineId === '') {
+			throw new RuntimeException('chosenPoLineId is required');
+		}
+	}//end assertChoiceRequest()
+
+	/**
+	 * Find the candidate matching the chosen (PO line, GRN line) pair and
+	 * collect the PO lines the choice rejects.
+	 *
+	 * @param DisambiguationRun $run The disambiguation run.
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException When the chosen pair is not in the candidate set.
+	 */
+	private function pickChosenCandidate(DisambiguationRun $run): void {
+		foreach ($run->candidates as $candidate) {
+			$sameLine = ((string)$candidate['poLineId'] === $run->chosenPoLineId);
+			if ($sameLine === true && $this->isChosenGrnLine(run: $run, candidate: $candidate) === true) {
+				$run->chosen = $candidate;
 				continue;
 			}
 
 			if ($sameLine === false) {
-				$rejectedPoLineIds[(string)$candidate['poLineId']] = true;
+				$run->rejectedPoLineIds[(string)$candidate['poLineId']] = true;
 			}
 		}
 
-		if ($chosen === null) {
+		if ($run->chosen === null) {
 			throw new RuntimeException('Chosen tuple is not in the candidate set');
 		}
+	}//end pickChosenCandidate()
 
-		$persistedGrnLineId = null;
-		if ($chosenGrnLineId !== '') {
-			$persistedGrnLineId = $chosenGrnLineId;
+	/**
+	 * True when a candidate carries the chosen GRN line — or none, when no
+	 * GRN line was chosen.
+	 *
+	 * @param DisambiguationRun   $run       The disambiguation run.
+	 * @param array<string,mixed> $candidate The candidate tuple.
+	 *
+	 * @return bool Whether the GRN side matches the choice.
+	 */
+	private function isChosenGrnLine(DisambiguationRun $run, array $candidate): bool {
+		if ($run->chosenGrnLineId === '') {
+			return ($candidate['grnLineId'] === null || $candidate['grnLineId'] === '');
 		}
 
-		$disambiguationChoice = [
-			'candidateCount' => count($candidates),
-			'chosenPoLineId' => $chosenPoLineId,
+		return ((string)($candidate['grnLineId'] ?? '') === $run->chosenGrnLineId);
+	}//end isChosenGrnLine()
+
+	/**
+	 * The disambiguationChoice snapshot of a recorded choice.
+	 *
+	 * @param DisambiguationRun $run The disambiguation run.
+	 *
+	 * @return array<string,mixed> candidateCount, chosen ids, rejected PO lines, chosenBy, chosenAt.
+	 */
+	private function choiceSnapshot(DisambiguationRun $run): array {
+		$persistedGrnLineId = null;
+		if ($run->chosenGrnLineId !== '') {
+			$persistedGrnLineId = $run->chosenGrnLineId;
+		}
+
+		return [
+			'candidateCount' => count($run->candidates),
+			'chosenPoLineId' => $run->chosenPoLineId,
 			'chosenGrnLineId' => $persistedGrnLineId,
 			// `array_keys()` already returns a list.
-			'rejectedPoLineIds' => array_keys($rejectedPoLineIds),
+			'rejectedPoLineIds' => array_keys($run->rejectedPoLineIds),
 			'chosenBy' => $this->currentUserId(),
 			'chosenAt' => $this->nowIso(),
 		];
-
-		return $this->writeMatchRecord(
-			administrationId: $administrationId,
-			invoiceId: $invoiceId,
-			invoiceLineNumber: $invoiceLineNumber,
-			candidate: $chosen,
-			disambiguationChoice: $disambiguationChoice,
-			matchStatus: self::MATCH_STATUS_AUTO_APPROVED
-		);
-
-	}//end disambiguateAmbiguousMatches()
+	}//end choiceSnapshot()
 
 	/**
 	 * Orchestrate the full multi-PO consolidation fan-out for one invoice.
@@ -514,6 +608,29 @@ class MultiPoConsolidationService {
 	public function consolidateInvoice(string $administrationId, string $invoiceId): array {
 		$this->assertAccess(administrationId: $administrationId);
 
+		$run = new InvoiceConsolidationRun(administrationId: $administrationId, invoiceId: $invoiceId);
+		$run->invoice = $this->requireInvoice(administrationId: $administrationId, invoiceId: $invoiceId);
+
+		$results = [];
+		foreach ($this->invoiceLines(invoice: $run->invoice) as $lineIndex => $line) {
+			$run->lineNumber = (int)($line['lineNumber'] ?? ($lineIndex + 1));
+			$results[] = $this->consolidateLine(run: $run, line: $line);
+		}
+
+		return $results;
+	}//end consolidateInvoice()
+
+	/**
+	 * The invoice with the given id in the administration.
+	 *
+	 * @param string $administrationId Tenant scope.
+	 * @param string $invoiceId        SupplierInvoice id.
+	 *
+	 * @return array<string,mixed> The invoice.
+	 *
+	 * @throws \RuntimeException When the id is empty or the invoice is missing.
+	 */
+	private function requireInvoice(string $administrationId, string $invoiceId): array {
 		if ($invoiceId === '') {
 			throw new RuntimeException('Supplier invoice not found');
 		}
@@ -529,193 +646,209 @@ class MultiPoConsolidationService {
 			throw new RuntimeException('Supplier invoice not found');
 		}
 
-		$lines = $this->invoiceLines(invoice: $invoice);
-		if ($lines === []) {
-			return [];
+		return $invoice;
+	}//end requireInvoice()
+
+	/**
+	 * Consolidate one invoice line: no candidate is a missing-PO exception,
+	 * several are left pending for the operator, one is written as a trio.
+	 *
+	 * @param InvoiceConsolidationRun $run  The consolidation run.
+	 * @param array<string,mixed>     $line The invoice line.
+	 *
+	 * @return array<string,mixed> The line result.
+	 */
+	private function consolidateLine(InvoiceConsolidationRun $run, array $line): array {
+		$candidates = $this->enumerateCandidateTuples(
+			administrationId: $run->administrationId,
+			invoice: $run->invoice,
+			invoiceLine: $line
+		);
+		if ($candidates === []) {
+			return $this->recordMissingPo(run: $run, line: $line);
 		}
 
-		$results = [];
-		foreach ($lines as $lineIndex => $line) {
-			$lineNumber = (int)($line['lineNumber'] ?? ($lineIndex + 1));
+		if (count($candidates) > 1) {
+			// Ambiguous — surface to the operator; no ThreeWayMatch yet.
+			return $run->result(outcome: ['status' => 'pending', 'matchId' => null, 'candidateCount' => count($candidates)]);
+		}
 
-			$candidates = $this->enumerateCandidateTuples(
-				administrationId: $administrationId,
-				invoice: $invoice,
-				invoiceLine: $line
-			);
+		return $this->recordSingleCandidate(run: $run, candidate: $candidates[0]);
+	}//end consolidateLine()
 
-			if ($candidates === []) {
-				$missing = $this->writeMatchRecord(
-					administrationId: $administrationId,
-					invoiceId: $invoiceId,
-					invoiceLineNumber: $lineNumber,
-					candidate: [
-						'poLineId' => null,
-						'poId' => null,
-						'grnLineId' => null,
-						'grnId' => null,
-						'productCode' => trim((string)($line['productCode'] ?? '')),
-					],
-					disambiguationChoice: null,
-					matchStatus: self::MATCH_STATUS_MISSING_PO
-				);
+	/**
+	 * Write the exception_missing_po ThreeWayMatch for a line without
+	 * candidates.
+	 *
+	 * @param InvoiceConsolidationRun $run  The consolidation run.
+	 * @param array<string,mixed>     $line The invoice line.
+	 *
+	 * @return array<string,mixed> The line result.
+	 */
+	private function recordMissingPo(InvoiceConsolidationRun $run, array $line): array {
+		$lineMatch = $this->consolidationMatch(run: $run, matchStatus: self::MATCH_STATUS_MISSING_PO);
+		$lineMatch->candidate = [
+			'poLineId' => null,
+			'poId' => null,
+			'grnLineId' => null,
+			'grnId' => null,
+			'productCode' => trim((string)($line['productCode'] ?? '')),
+		];
+		$missing = $this->writeMatchRecord(lineMatch: $lineMatch);
 
-				$results[] = [
-					'invoiceLineNumber' => $lineNumber,
-					'status' => 'exception',
-					'matchId' => $this->idOf(record: $missing),
-					'candidateCount' => 0,
-				];
-				continue;
-			}//end if
+		return $run->result(outcome: ['status' => 'exception', 'matchId' => $this->idOf(record: $missing), 'candidateCount' => 0]);
+	}//end recordMissingPo()
 
-			if (count($candidates) > 1) {
-				// Ambiguous — surface to the operator; no ThreeWayMatch yet.
-				$results[] = [
-					'invoiceLineNumber' => $lineNumber,
-					'status' => 'pending',
-					'matchId' => null,
-					'candidateCount' => count($candidates),
-				];
-				continue;
-			}
-
-			$candidate = $candidates[0];
-			$matchStatus = self::MATCH_STATUS_AUTO_APPROVED;
-			if ($candidate['grnLineId'] === null) {
-				$matchStatus = self::MATCH_STATUS_MISSING_GRN;
-			}
-
-			$persisted = $this->writeMatchRecord(
-				administrationId: $administrationId,
-				invoiceId: $invoiceId,
-				invoiceLineNumber: $lineNumber,
-				candidate: $candidate,
-				disambiguationChoice: null,
-				matchStatus: $matchStatus
-			);
-
+	/**
+	 * Write the trio ThreeWayMatch of a line with exactly one candidate: auto
+	 * approved with a GRN line, a missing-GRN exception without one (the
+	 * matching engine reclassifies on divergence).
+	 *
+	 * @param InvoiceConsolidationRun $run       The consolidation run.
+	 * @param array<string,mixed>     $candidate The single candidate.
+	 *
+	 * @return array<string,mixed> The line result.
+	 */
+	private function recordSingleCandidate(InvoiceConsolidationRun $run, array $candidate): array {
+		$matchStatus = self::MATCH_STATUS_AUTO_APPROVED;
+		$lineStatus = 'auto';
+		if ($candidate['grnLineId'] === null) {
+			$matchStatus = self::MATCH_STATUS_MISSING_GRN;
 			$lineStatus = 'exception';
-			if ($matchStatus === self::MATCH_STATUS_AUTO_APPROVED) {
-				$lineStatus = 'auto';
-			}
+		}
 
-			$results[] = [
-				'invoiceLineNumber' => $lineNumber,
-				'status' => $lineStatus,
-				'matchId' => $this->idOf(record: $persisted),
-				'candidateCount' => 1,
-			];
-		}//end foreach
+		$lineMatch = $this->consolidationMatch(run: $run, matchStatus: $matchStatus);
+		$lineMatch->candidate = $candidate;
+		$persisted = $this->writeMatchRecord(lineMatch: $lineMatch);
 
-		return $results;
-	}//end consolidateInvoice()
+		return $run->result(outcome: ['status' => $lineStatus, 'matchId' => $this->idOf(record: $persisted), 'candidateCount' => 1]);
+	}//end recordSingleCandidate()
+
+	/**
+	 * A ThreeWayMatch to write for the run's line, without a choice.
+	 *
+	 * @param InvoiceConsolidationRun $run         The consolidation run.
+	 * @param string                  $matchStatus The initial match status.
+	 *
+	 * @return InvoiceLineMatch The match to write.
+	 */
+	private function consolidationMatch(InvoiceConsolidationRun $run, string $matchStatus): InvoiceLineMatch {
+		$lineMatch = new InvoiceLineMatch(administrationId: $run->administrationId, invoiceId: $run->invoiceId);
+		$lineMatch->invoiceLineNumber = $run->lineNumber;
+		$lineMatch->matchStatus = $matchStatus;
+		return $lineMatch;
+	}//end consolidationMatch()
 
 	/**
 	 * Persist one ThreeWayMatch record for a (PO line, GRN line, invoice
 	 * line) trio.
 	 *
-	 * @param string $administrationId Tenant scope.
-	 * @param string $invoiceId SupplierInvoice id.
-	 * @param int $invoiceLineNumber 1-based line position.
-	 * @param array<string,mixed> $candidate Tuple snapshot.
-	 * @param array<string,mixed>|null $disambiguationChoice Operator's choice (null when unambiguous).
-	 * @param string $matchStatus Initial match status.
+	 * @param InvoiceLineMatch $lineMatch The match to write.
 	 *
 	 * @return array<string,mixed> The persisted match record.
 	 */
-	private function writeMatchRecord(
-		string $administrationId,
-		string $invoiceId,
-		int $invoiceLineNumber,
-		array $candidate,
-		?array $disambiguationChoice,
-		string $matchStatus,
-	): array {
-		$matchedPoIds = [];
-		if (isset($candidate['poId']) === true && $candidate['poId'] !== '') {
-			$matchedPoIds[] = (string)$candidate['poId'];
-		}
-
-		$matchedGrnIds = [];
-		if (isset($candidate['grnId']) === true && $candidate['grnId'] !== '') {
-			$matchedGrnIds[] = (string)$candidate['grnId'];
-		}
-
-		$record = [
-			'invoiceId' => $invoiceId,
-			'invoiceLineNumber' => $invoiceLineNumber,
-			'productCode' => ($candidate['productCode'] ?? null),
-			'poLineId' => ($candidate['poLineId'] ?? null),
-			'grnLineId' => ($candidate['grnLineId'] ?? null),
-			'matchedPoIds' => $matchedPoIds,
-			'matchedGrnIds' => $matchedGrnIds,
-			'matchStatus' => $matchStatus,
-			'divergenceDetails' => [],
-			'disambiguationChoice' => $disambiguationChoice,
-			'createdAt' => $this->nowIso(),
-			'administrationId' => $administrationId,
-		];
-
-		$persisted = $this->saveObject(schema: self::SCHEMA_THREE_WAY_MATCH, object: $record);
+	private function writeMatchRecord(InvoiceLineMatch $lineMatch): array {
+		$persisted = $this->saveObject(schema: self::SCHEMA_THREE_WAY_MATCH, object: $this->matchPayload(lineMatch: $lineMatch));
 
 		// Slice 07 — write the PO link back to the SupplierInvoice document so
 		// a consumer reading the invoice sees the per-line PO links inline
 		// (REQ-PO3W-007). On the missing-PO exception path the link fields
 		// are NULL but the matchId is still recorded so the UI can show the
 		// exception status without traversing ThreeWayMatch records.
-		$matchId = $this->idOf(record: $persisted);
-		$linkedPoLineId = ($candidate['poLineId'] ?? null);
-		$linkedPoId = ($candidate['poId'] ?? null);
-		$linkedGrnLineId = ($candidate['grnLineId'] ?? null);
+		$this->linkInvoiceLine(lineMatch: $lineMatch, matchId: $this->idOf(record: $persisted));
 
-		$projectedPoLineId = null;
-		$projectedPoId = null;
-		$projectedGrnLineId = null;
-		$projectedMatchId = null;
-		if ($linkedPoLineId !== null) {
-			$projectedPoLineId = (string)$linkedPoLineId;
-		}
+		return $persisted;
+	}//end writeMatchRecord()
 
-		if ($linkedPoId !== null) {
-			$projectedPoId = (string)$linkedPoId;
-		}
+	/**
+	 * The ThreeWayMatch payload of a line match.
+	 *
+	 * @param InvoiceLineMatch $lineMatch The match to write.
+	 *
+	 * @return array<string,mixed> The record.
+	 */
+	private function matchPayload(InvoiceLineMatch $lineMatch): array {
+		$candidate = $lineMatch->candidate;
+		return [
+			'invoiceId' => $lineMatch->invoiceId,
+			'invoiceLineNumber' => $lineMatch->invoiceLineNumber,
+			'productCode' => ($candidate['productCode'] ?? null),
+			'poLineId' => ($candidate['poLineId'] ?? null),
+			'grnLineId' => ($candidate['grnLineId'] ?? null),
+			'matchedPoIds' => $lineMatch->presentIds(key: 'poId'),
+			'matchedGrnIds' => $lineMatch->presentIds(key: 'grnId'),
+			'matchStatus' => $lineMatch->matchStatus,
+			'divergenceDetails' => [],
+			'disambiguationChoice' => $lineMatch->disambiguationChoice,
+			'createdAt' => $this->nowIso(),
+			'administrationId' => $lineMatch->administrationId,
+		];
+	}//end matchPayload()
 
-		if ($linkedGrnLineId !== null) {
-			$projectedGrnLineId = (string)$linkedGrnLineId;
-		}
-
-		if ($matchId !== '') {
-			$projectedMatchId = $matchId;
-		}
-
+	/**
+	 * Project the line's PO links onto the SupplierInvoice. The inline link
+	 * is a best-effort projection — the canonical record is the ThreeWayMatch
+	 * just persisted, so a failure to update the invoice document MUST NOT
+	 * roll back the engine: it is logged and the run continues.
+	 *
+	 * @param InvoiceLineMatch $lineMatch The written match.
+	 * @param string           $matchId   The persisted match id ('' when none).
+	 *
+	 * @return void
+	 */
+	private function linkInvoiceLine(InvoiceLineMatch $lineMatch, string $matchId): void {
+		$candidate = $lineMatch->candidate;
 		try {
 			$this->supplierInvoiceService->linkInvoiceLineToPo(
-				administrationId: $administrationId,
-				invoiceId: $invoiceId,
-				invoiceLineNumber: $invoiceLineNumber,
-				linkedPoLineId: $projectedPoLineId,
-				linkedPoId: $projectedPoId,
-				linkedGrnLineId: $projectedGrnLineId,
-				linkedMatchId: $projectedMatchId
+				administrationId: $lineMatch->administrationId,
+				invoiceId: $lineMatch->invoiceId,
+				invoiceLineNumber: $lineMatch->invoiceLineNumber,
+				linkedPoLineId: $this->stringOrNull(value: ($candidate['poLineId'] ?? null)),
+				linkedPoId: $this->stringOrNull(value: ($candidate['poId'] ?? null)),
+				linkedGrnLineId: $this->stringOrNull(value: ($candidate['grnLineId'] ?? null)),
+				linkedMatchId: $this->idOrNull(id: $matchId)
 			);
 		} catch (\Throwable $e) {
-			// Inline-link is a best-effort projection — the canonical
-			// record is the ThreeWayMatch we just persisted, so a failure
-			// to update the invoice document MUST NOT roll back the
-			// engine. Log + continue.
 			$this->logger->warning(
 				'MultiPoConsolidationService: failed to link invoice line to PO',
 				[
-					'invoiceId' => $invoiceId,
-					'invoiceLineNumber' => $invoiceLineNumber,
+					'invoiceId' => $lineMatch->invoiceId,
+					'invoiceLineNumber' => $lineMatch->invoiceLineNumber,
 					'exception' => $e->getMessage(),
 				]
 			);
 		}//end try
+	}//end linkInvoiceLine()
 
-		return $persisted;
-	}//end writeMatchRecord()
+	/**
+	 * A value as a string, or null when it is null.
+	 *
+	 * @param mixed $value The value.
+	 *
+	 * @return string|null The string, or null.
+	 */
+	private function stringOrNull(mixed $value): ?string {
+		if ($value === null) {
+			return null;
+		}
+
+		return (string)$value;
+	}//end stringOrNull()
+
+	/**
+	 * An id, or null when it is empty.
+	 *
+	 * @param string $id The id.
+	 *
+	 * @return string|null The id, or null.
+	 */
+	private function idOrNull(string $id): ?string {
+		if ($id === '') {
+			return null;
+		}
+
+		return $id;
+	}//end idOrNull()
 
 	/**
 	 * Extract the embedded invoice lines from a SupplierInvoice record.
