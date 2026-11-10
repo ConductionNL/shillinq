@@ -247,20 +247,20 @@ final class BudgetReaderLedgerActualsTest extends TestCase {
 	}//end testMembersFromAccountRows()
 
 	/**
-	 * Range test edge cases, on both readers.
+	 * Range edge cases: inclusive bounds, numeric comparison, a pair with a
+	 * missing bound contains nothing, a non-numeric number is never in range.
 	 *
 	 * @return void
 	 */
-	public function testInAnyRange(): void {
-		foreach ([BudgetProjectionReader::class, BudgetVsActualsReader::class] as $class) {
-			$reader = $this->reader($class, []);
-			$ranges = [['from' => '100', 'to' => '200'], ['from' => '300']];
-			self::assertTrue($this->call($reader, 'inAnyRange', ['100', $ranges]), $class);
-			self::assertTrue($this->call($reader, 'inAnyRange', ['200.0', $ranges]), $class);
-			self::assertFalse($this->call($reader, 'inAnyRange', ['300', $ranges]), $class);
-			self::assertFalse($this->call($reader, 'inAnyRange', ['1e2x', $ranges]), $class);
-			self::assertFalse($this->call($reader, 'inAnyRange', ['150', []]), $class);
-		}
+	public function testRangeEdgeCases(): void {
+		$reader = $this->reader(BudgetProjectionReader::class, []);
+		$group = ['accountRanges' => [['from' => '100', 'to' => '200'], ['from' => '300']]];
 
-	}//end testInAnyRange()
+		self::assertSame(
+			['100', '200.0', '150'],
+			$this->call($reader, 'resolveMembers', [$group, ['100', '200.0', '300', '1e2x', '150', '99']])
+		);
+		self::assertSame([], $this->call($reader, 'resolveMembers', [['accountRanges' => []], ['150']]));
+
+	}//end testRangeEdgeCases()
 }//end class
