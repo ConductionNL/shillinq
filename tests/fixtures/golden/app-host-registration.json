@@ -38,12 +38,22 @@
         "built": {
             "class": "OCA\\OpenRegister\\AppHost\\Settings\\GenericAdminSettings",
             "args": {
-                "appId": "shillinq",
-                "sectionId": "shillinq",
-                "priority": 10,
-                "appManager": "get:OCP\\App\\IAppManager",
-                "initialState": "get:OCP\\AppFramework\\Services\\IInitialState",
-                "appConfig": "get:OCP\\IAppConfig"
+                "placement": {
+                    "class": "OCA\\OpenRegister\\AppHost\\Settings\\SettingsPlacement",
+                    "args": {
+                        "appId": "shillinq",
+                        "sectionId": "shillinq",
+                        "priority": 10
+                    }
+                },
+                "services": {
+                    "class": "OCA\\OpenRegister\\AppHost\\Settings\\AdminFormServices",
+                    "args": {
+                        "appManager": "get:OCP\\App\\IAppManager",
+                        "initialState": "get:OCP\\AppFramework\\Services\\IInitialState",
+                        "appConfig": "get:OCP\\IAppConfig"
+                    }
+                }
             }
         }
     },
@@ -52,11 +62,21 @@
         "built": {
             "class": "OCA\\OpenRegister\\AppHost\\Settings\\GenericSettingsSection",
             "args": {
-                "sectionId": "shillinq",
-                "name": "Shillinq",
-                "appId": "shillinq",
-                "iconFile": "app-dark.svg",
-                "priority": 75,
+                "placement": {
+                    "class": "OCA\\OpenRegister\\AppHost\\Settings\\SettingsPlacement",
+                    "args": {
+                        "appId": "shillinq",
+                        "sectionId": "shillinq",
+                        "priority": 75
+                    }
+                },
+                "appearance": {
+                    "class": "OCA\\OpenRegister\\AppHost\\Settings\\SectionAppearance",
+                    "args": {
+                        "name": "Shillinq",
+                        "iconFile": "app-dark.svg"
+                    }
+                },
                 "urlGenerator": "get:OCP\\IURLGenerator"
             }
         }

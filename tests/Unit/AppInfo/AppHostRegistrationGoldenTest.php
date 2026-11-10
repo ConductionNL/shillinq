@@ -59,6 +59,9 @@ final class AppHostRegistrationGoldenTest extends TestCase {
 		'OCA\\OpenRegister\\AppHost\\Controller\\GenericMetricsController',
 		'OCA\\OpenRegister\\AppHost\\Settings\\GenericAdminSettings',
 		'OCA\\OpenRegister\\AppHost\\Settings\\GenericSettingsSection',
+		'OCA\\OpenRegister\\AppHost\\Settings\\SettingsPlacement',
+		'OCA\\OpenRegister\\AppHost\\Settings\\SectionAppearance',
+		'OCA\\OpenRegister\\AppHost\\Settings\\AdminFormServices',
 	];
 
 	/**
