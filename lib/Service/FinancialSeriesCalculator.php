@@ -126,10 +126,6 @@ class FinancialSeriesCalculator {
 	 * @return array<int,string> Month keys, ascending.
 	 *
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
-	 *
-	 * @SuppressWarnings(PHPMD.CountInLoopExpression) $months grows inside the
-	 *     loop body — the loop bound is genuinely the running count, it
-	 *     cannot be hoisted.
 	 */
 	public function monthsInRange(string $from, string $to): array {
 		if ($from === '' || $to === '') {
@@ -142,9 +138,25 @@ class FinancialSeriesCalculator {
 			return [];
 		}
 
+		return $this->monthKeysBetween(start: $start, endKey: $end->format('Y-m'));
+	}//end monthsInRange()
+
+	/**
+	 * Month keys from a start day's month up to an end key, at most
+	 * {@see MAX_RANGE_MONTHS}.
+	 *
+	 * @param DateTimeImmutable $start  The first day.
+	 * @param string            $endKey The last month key.
+	 *
+	 * @return array<int,string>
+	 *
+	 * @SuppressWarnings(PHPMD.CountInLoopExpression) $months grows inside the
+	 *     loop body — the loop bound is genuinely the running count, it
+	 *     cannot be hoisted.
+	 */
+	private function monthKeysBetween(DateTimeImmutable $start, string $endKey): array {
 		$months = [];
-		$index = (((int)$start->format('Y')) * 12) + ((int)$start->format('n') - 1);
-		$endKey = $end->format('Y-m');
+		$index  = (((int)$start->format('Y')) * 12) + ((int)$start->format('n') - 1);
 		while (count($months) < self::MAX_RANGE_MONTHS) {
 			$key = $this->monthKeyFromIndex(index: $index);
 			if ($key > $endKey) {
@@ -156,7 +168,7 @@ class FinancialSeriesCalculator {
 		}
 
 		return $months;
-	}//end monthsInRange()
+	}//end monthKeysBetween()
 
 	/**
 	 * Classify the chart of accounts into the sets the dashboard needs.
@@ -207,13 +219,25 @@ class FinancialSeriesCalculator {
 			return $type;
 		}
 
-		$name = $this->toStringValue(value: $account['name'] ?? null);
-		if (preg_match('/^10/', $number) === 1 || preg_match('/\b(bank|kas|cash)\b/i', $name) === 1) {
+		if ($this->looksLiquid(number: $number, name: $this->toStringValue(value: $account['name'] ?? null)) === true) {
 			return 'liquid';
 		}
 
 		return null;
 	}//end accountClass()
+
+	/**
+	 * Whether an asset account looks like bank/cash: its number starts with
+	 * `10`, or its name says bank, kas or cash.
+	 *
+	 * @param string $number The account number.
+	 * @param string $name   The account name.
+	 *
+	 * @return bool
+	 */
+	private function looksLiquid(string $number, string $name): bool {
+		return preg_match('/^10/', $number) === 1 || preg_match('/\b(bank|kas|cash)\b/i', $name) === 1;
+	}//end looksLiquid()
 
 	/**
 	 * Index posted GL lines by month. Lines are matched to their parent
@@ -405,21 +429,9 @@ class FinancialSeriesCalculator {
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
 	 */
 	public function billableSeries(array $entries, array $months): array {
-		$billableByMonth = [];
-		$totalByMonth = [];
-		foreach ($entries as $entry) {
-			$key = $this->monthKey(dateStr: ($entry['date'] ?? null));
-			if ($key === null) {
-				continue;
-			}
-
-			$hours = $this->toFloat(value: $entry['hours'] ?? null);
-
-			$totalByMonth[$key] = (($totalByMonth[$key] ?? 0.0) + $hours);
-			if ($this->toFloat(value: $entry['recognisedRate'] ?? null) > 0) {
-				$billableByMonth[$key] = (($billableByMonth[$key] ?? 0.0) + $hours);
-			}
-		}
+		$hours = $this->hoursByMonth(entries: $entries);
+		$totalByMonth    = $hours['total'];
+		$billableByMonth = $hours['billable'];
 
 		$billable = [];
 		$nonBillable = [];
@@ -439,6 +451,32 @@ class FinancialSeriesCalculator {
 		];
 
 	}//end billableSeries()
+
+	/**
+	 * Total and billable hours per month; billable = `recognisedRate` above
+	 * zero, and an entry without a readable date is skipped.
+	 *
+	 * @param array<int,array<string,mixed>> $entries UrenRegistratie objects.
+	 *
+	 * @return array{total: array<string,float>, billable: array<string,float>}
+	 */
+	private function hoursByMonth(array $entries): array {
+		$byMonth = ['total' => [], 'billable' => []];
+		foreach ($entries as $entry) {
+			$key = $this->monthKey(dateStr: ($entry['date'] ?? null));
+			if ($key === null) {
+				continue;
+			}
+
+			$hours = $this->toFloat(value: $entry['hours'] ?? null);
+			$byMonth['total'][$key] = (($byMonth['total'][$key] ?? 0.0) + $hours);
+			if ($this->toFloat(value: $entry['recognisedRate'] ?? null) > 0) {
+				$byMonth['billable'][$key] = (($byMonth['billable'][$key] ?? 0.0) + $hours);
+			}
+		}
+
+		return $byMonth;
+	}//end hoursByMonth()
 
 	/**
 	 * Open-receivables table rows from ARInvoice objects, sorted by due date
