@@ -114,119 +114,181 @@ class CogsPosterService {
 			];
 		}
 
-		$cogsAccount = $this->cogsAccount();
-		$inventoryAccount = $this->inventoryAccount();
-
-		if ($cogsAccount === '' || $inventoryAccount === '') {
-			$this->logger->warning(
-				'CogsPosterService: GL accounts not configured — marking valuation adjusted',
-				[
-					'movementNumber' => ($move['movementNumber'] ?? null),
-					'cogsAccount' => $cogsAccount,
-					'inventoryAccount' => $inventoryAccount,
-				]
-			);
-
-			$valuation['status'] = 'adjusted';
-			$valuation['pendingCogs'] = true;
-			$savedValuation = $this->saveValuation(data: $valuation);
-
-			return [
-				'posted' => false,
-				'valuation' => $savedValuation,
-				'message' => 'GL accounts not configured; valuation marked adjusted',
-			];
+		$run = new CogsPostingRun(move: $move, cogsCents: $cogsCents);
+		$run->valuation = $valuation;
+		$run->cogsAccount = $this->cogsAccount();
+		$run->inventoryAccount = $this->inventoryAccount();
+		if ($run->cogsAccount === '' || $run->inventoryAccount === '') {
+			return $this->markUnconfigured(run: $run);
 		}
 
-		$administrationId = (string)($move['administrationId'] ?? '');
-		$sourceReference = (string)($move['id'] ?? ($move['movementNumber'] ?? ''));
-		$description = $this->describe(move: $move, cogsCents: $cogsCents);
-
 		try {
-			$transaction = $this->saveTransaction(
-				data: [
-					'transactionNumber' => $this->transactionNumber(move: $move),
-					'postingDate' => $this->postingDate(move: $move),
-					'periodId' => $this->periodId(move: $move),
-					'currency' => 'EUR',
-					'description' => $description,
-					'sourceReference' => $sourceReference,
-					'state' => 'draft',
-					'administrationId' => $administrationId,
-				]
-			);
-
-			$transactionId = (string)($transaction['id'] ?? ($transaction['@self']['id'] ?? ''));
-
-			$cogsAmount = round(($cogsCents / 100), 2);
-
-			// The administrationId is DENORMALISED onto every line from the header
-			// above (REQ-GLS-001) — see GlLineAdministrationBackfillMigrator.
-			// A line written without it is invisible to its own
-			// administration's SpendAnalytics totals AND flips the backfill
-			// completeness gate red for the whole instance.
-			$this->saveLine(
-				data: [
-					'transactionId' => $transactionId,
-					'administrationId' => $administrationId,
-					'lineNumber' => 1,
-					'accountNumber' => $cogsAccount,
-					'side' => 'debit',
-					'amount' => $cogsAmount,
-					'currency' => 'EUR',
-					'description' => $description,
-				]
-			);
-
-			$this->saveLine(
-				data: [
-					'transactionId' => $transactionId,
-					'administrationId' => $administrationId,
-					'lineNumber' => 2,
-					'accountNumber' => $inventoryAccount,
-					'side' => 'credit',
-					'amount' => $cogsAmount,
-					'currency' => 'EUR',
-					'description' => $description,
-				]
-			);
-
-			// PendingCogs cleared on a successful post.
-			if (((bool)($valuation['pendingCogs'] ?? false)) === true) {
-				$valuation['pendingCogs'] = false;
-				$valuation = $this->saveValuation(data: $valuation);
-			}
-
-			return [
-				'posted' => true,
-				'transaction' => $transaction,
-				'valuation' => $valuation,
-				'cogsCents' => $cogsCents,
-				'message' => 'COGS posted',
-			];
+			return $this->postBalanced(run: $run);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'CogsPosterService: failed to post COGS',
-				[
-					'movementNumber' => ($move['movementNumber'] ?? null),
-					'cogsCents' => $cogsCents,
-					'exception' => $e->getMessage(),
-				]
-			);
-
-			// Fail-soft: mark valuation pending so operator sees the gap.
-			$valuation['status'] = 'adjusted';
-			$valuation['pendingCogs'] = true;
-			$savedValuation = $this->saveValuation(data: $valuation);
-
-			return [
-				'posted' => false,
-				'valuation' => $savedValuation,
-				'message' => 'COGS posting raised: ' . $e->getMessage(),
-			];
+			return $this->markFailed(run: $run, error: $e);
 		}//end try
 
 	}//end postCogs()
+
+	/**
+	 * GL accounts not configured: warn, mark the valuation adjusted with
+	 * pending COGS and report it.
+	 *
+	 * @param CogsPostingRun $run The posting run.
+	 *
+	 * @return array<string,mixed> Result envelope.
+	 */
+	private function markUnconfigured(CogsPostingRun $run): array {
+		$this->logger->warning(
+			'CogsPosterService: GL accounts not configured — marking valuation adjusted',
+			[
+				'movementNumber' => ($run->move['movementNumber'] ?? null),
+				'cogsAccount' => $run->cogsAccount,
+				'inventoryAccount' => $run->inventoryAccount,
+			]
+		);
+
+		return [
+			'posted' => false,
+			'valuation' => $this->savePendingValuation(valuation: $run->valuation),
+			'message' => 'GL accounts not configured; valuation marked adjusted',
+		];
+	}//end markUnconfigured()
+
+	/**
+	 * Fail-soft: log the failed post and mark the valuation pending so the
+	 * operator sees the gap.
+	 *
+	 * @param CogsPostingRun $run   The posting run.
+	 * @param \Throwable     $error What the store raised.
+	 *
+	 * @return array<string,mixed> Result envelope.
+	 */
+	private function markFailed(CogsPostingRun $run, \Throwable $error): array {
+		$this->logger->error(
+			'CogsPosterService: failed to post COGS',
+			[
+				'movementNumber' => ($run->move['movementNumber'] ?? null),
+				'cogsCents' => $run->cogsCents,
+				'exception' => $error->getMessage(),
+			]
+		);
+
+		return [
+			'posted' => false,
+			'valuation' => $this->savePendingValuation(valuation: $run->valuation),
+			'message' => 'COGS posting raised: ' . $error->getMessage(),
+		];
+	}//end markFailed()
+
+	/**
+	 * Save a valuation marked adjusted with pending COGS.
+	 *
+	 * @param array<string,mixed> $valuation The valuation snapshot.
+	 *
+	 * @return array<string,mixed> The saved valuation.
+	 */
+	private function savePendingValuation(array $valuation): array {
+		$valuation['status'] = 'adjusted';
+		$valuation['pendingCogs'] = true;
+		return $this->saveValuation(data: $valuation);
+	}//end savePendingValuation()
+
+	/**
+	 * Persist the balanced GLTransaction (header + COGS debit + inventory
+	 * credit) and clear a pending-COGS flag on the valuation.
+	 *
+	 * @param CogsPostingRun $run The posting run.
+	 *
+	 * @return array<string,mixed> Result envelope.
+	 */
+	private function postBalanced(CogsPostingRun $run): array {
+		$description = $this->describe(move: $run->move, cogsCents: $run->cogsCents);
+		$transaction = $this->saveTransaction(data: $this->transactionHeader(run: $run, description: $description));
+		$transactionId = (string)($transaction['id'] ?? ($transaction['@self']['id'] ?? ''));
+		$this->saveLines(run: $run, header: ['transactionId' => $transactionId, 'description' => $description]);
+
+		return [
+			'posted' => true,
+			'transaction' => $transaction,
+			'valuation' => $this->clearPendingCogs(valuation: $run->valuation),
+			'cogsCents' => $run->cogsCents,
+			'message' => 'COGS posted',
+		];
+	}//end postBalanced()
+
+	/**
+	 * PendingCogs cleared (and saved) on a successful post; a valuation
+	 * without pending COGS is returned as it is.
+	 *
+	 * @param array<string,mixed> $valuation The valuation snapshot.
+	 *
+	 * @return array<string,mixed> The valuation.
+	 */
+	private function clearPendingCogs(array $valuation): array {
+		if (((bool)($valuation['pendingCogs'] ?? false)) === true) {
+			$valuation['pendingCogs'] = false;
+			return $this->saveValuation(data: $valuation);
+		}
+
+		return $valuation;
+	}//end clearPendingCogs()
+
+	/**
+	 * The GLTransaction header of the posting.
+	 *
+	 * @param CogsPostingRun $run         The posting run.
+	 * @param string         $description The posting description.
+	 *
+	 * @return array<string,mixed> The header.
+	 */
+	private function transactionHeader(CogsPostingRun $run, string $description): array {
+		return [
+			'transactionNumber' => $this->transactionNumber(move: $run->move),
+			'postingDate' => $this->postingDate(move: $run->move),
+			'periodId' => $this->periodId(move: $run->move),
+			'currency' => 'EUR',
+			'description' => $description,
+			'sourceReference' => (string)($run->move['id'] ?? ($run->move['movementNumber'] ?? '')),
+			'state' => 'draft',
+			'administrationId' => (string)($run->move['administrationId'] ?? ''),
+		];
+	}//end transactionHeader()
+
+	/**
+	 * Save the COGS debit (line 1) and the inventory credit (line 2).
+	 *
+	 * The administrationId is DENORMALISED onto every line from the header
+	 * (REQ-GLS-001) — see GlLineAdministrationBackfillMigrator. A line
+	 * written without it is invisible to its own administration's
+	 * SpendAnalytics totals AND flips the backfill completeness gate red for
+	 * the whole instance.
+	 *
+	 * @param CogsPostingRun       $run    The posting run.
+	 * @param array<string,string> $header The saved header's transactionId and description.
+	 *
+	 * @return void
+	 */
+	private function saveLines(CogsPostingRun $run, array $header): void {
+		$legs = [
+			['lineNumber' => 1, 'accountNumber' => $run->cogsAccount, 'side' => 'debit'],
+			['lineNumber' => 2, 'accountNumber' => $run->inventoryAccount, 'side' => 'credit'],
+		];
+		foreach ($legs as $leg) {
+			$this->saveLine(
+				data: [
+					'transactionId' => $header['transactionId'],
+					'administrationId' => (string)($run->move['administrationId'] ?? ''),
+					'lineNumber' => $leg['lineNumber'],
+					'accountNumber' => $leg['accountNumber'],
+					'side' => $leg['side'],
+					'amount' => round(($run->cogsCents / 100), 2),
+					'currency' => 'EUR',
+					'description' => $header['description'],
+				]
+			);
+		}
+	}//end saveLines()
 
 	/**
 	 * Compose the human-readable description per REQ-INV-007.
