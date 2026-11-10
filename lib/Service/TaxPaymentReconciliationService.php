@@ -46,6 +46,19 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  */
 class TaxPaymentReconciliationService {
 	/**
+	 * The answer for a payment that is not found in the administration.
+	 *
+	 * @var array<string,mixed>
+	 */
+	private const NO_PAYMENT = [
+		'matched' => false,
+		'paymentAmount' => 0.0,
+		'glAmount' => 0.0,
+		'variance' => 0.0,
+		'glLineCount' => 0,
+	];
+
+	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
@@ -72,27 +85,10 @@ class TaxPaymentReconciliationService {
 	public function reconcile(string $administrationId, string $paymentId): array {
 		$payment = $this->findPayment(administrationId: $administrationId, paymentId: $paymentId);
 		if ($payment === null) {
-			return [
-				'matched' => false,
-				'paymentAmount' => 0.0,
-				'glAmount' => 0.0,
-				'variance' => 0.0,
-				'glLineCount' => 0,
-			];
+			return self::NO_PAYMENT;
 		}
 
-		$account = (string)($payment['linkedGLAccount'] ?? '');
-		$paymentDate = (string)($payment['paymentDate'] ?? '');
-		$periodId = $this->periodFromDate(date: $paymentDate);
-
-		$glCents = 0;
-		$count = 0;
-		if ($account !== '' && $periodId !== '') {
-			[$glCents, $count] = $this->glMovementForAccount(
-				periodId: $periodId,
-				accountNumber: $account
-			);
-		}
+		[$glCents, $count] = $this->paymentGlMovement(payment: $payment);
 
 		$paymentCents = $this->calculator->toCents(amount: ($payment['amount'] ?? 0));
 		$varianceCents = ($glCents - $paymentCents);
@@ -106,6 +102,28 @@ class TaxPaymentReconciliationService {
 		];
 
 	}//end reconcile()
+
+	/**
+	 * The GL movement in cents and its line count on the payment's account in
+	 * the payment's period; none without an account or a period.
+	 *
+	 * @param array<string,mixed> $payment The tax payment.
+	 *
+	 * @return array{0:int,1:int}
+	 */
+	private function paymentGlMovement(array $payment): array {
+		$account = (string)($payment['linkedGLAccount'] ?? '');
+		$periodId = $this->periodFromDate(date: (string)($payment['paymentDate'] ?? ''));
+		if ($account === '' || $periodId === '') {
+			return [0, 0];
+		}
+
+		return $this->glMovementForAccount(
+			periodId: $periodId,
+			accountNumber: $account
+		);
+
+	}//end paymentGlMovement()
 
 	/**
 	 * Derive the quarterly period identifier (e.g. 2025-Q2) from an ISO date.
