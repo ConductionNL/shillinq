@@ -219,7 +219,7 @@ class FinancialSeriesCalculator {
 			return $type;
 		}
 
-		if ($this->looksLiquid(number: $number, name: $this->toStringValue(value: $account['name'] ?? null)) === true) {
+		if ($this->isBankOrCash(number: $number, name: $this->toStringValue(value: $account['name'] ?? null)) === true) {
 			return 'liquid';
 		}
 
@@ -235,9 +235,9 @@ class FinancialSeriesCalculator {
 	 *
 	 * @return bool
 	 */
-	private function looksLiquid(string $number, string $name): bool {
+	private function isBankOrCash(string $number, string $name): bool {
 		return preg_match('/^10/', $number) === 1 || preg_match('/\b(bank|kas|cash)\b/i', $name) === 1;
-	}//end looksLiquid()
+	}//end isBankOrCash()
 
 	/**
 	 * Index posted GL lines by month. Lines are matched to their parent
@@ -369,31 +369,14 @@ class FinancialSeriesCalculator {
 			}
 
 			if (isset($classes['liquid'][$number]) === true) {
-				$totals = $this->withCashMovement(totals: $totals, movement: $this->signedAmount(line: $line, kind: 'liquid'));
+				$movement = $this->signedAmount(line: $line, kind: 'liquid');
+				$totals['cashIn']  += max(0.0, $movement);
+				$totals['cashOut'] += max(0.0, -$movement);
 			}
 		}
 
 		return $totals;
 	}//end monthTotals()
-
-	/**
-	 * The totals with a liquid movement booked as cash in (positive or zero)
-	 * or cash out.
-	 *
-	 * @param array{revenue: float, costs: float, cashIn: float, cashOut: float} $totals   The month's totals.
-	 * @param float                                                              $movement The signed liquid movement.
-	 *
-	 * @return array{revenue: float, costs: float, cashIn: float, cashOut: float}
-	 */
-	private function withCashMovement(array $totals, float $movement): array {
-		if ($movement >= 0) {
-			$totals['cashIn'] += $movement;
-			return $totals;
-		}
-
-		$totals['cashOut'] += -$movement;
-		return $totals;
-	}//end withCashMovement()
 
 	/**
 	 * One month's series values, rounded: revenue, costs, margin, margin
