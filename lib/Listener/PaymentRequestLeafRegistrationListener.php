@@ -85,6 +85,27 @@ final class PaymentRequestLeafRegistrationListener implements IEventListener {
 	public const PANEL_SURFACES = ['detail-page', 'single-entity'];
 
 	/**
+	 * Label and icon of the payment-request leaves.
+	 *
+	 * @var array{label: string, icon: string}
+	 */
+	private const PAYMENT_REQUESTS_LOOK = ['label' => 'Payment requests', 'icon' => 'CreditCardOutline'];
+
+	/**
+	 * Label and icon of the contract leaves.
+	 *
+	 * @var array{label: string, icon: string}
+	 */
+	private const CONTRACT_LOOK = ['label' => 'Contract', 'icon' => 'FileDocumentOutline'];
+
+	/**
+	 * Label and icon of the financial-document leaves.
+	 *
+	 * @var array{label: string, icon: string}
+	 */
+	private const DOCUMENTS_LOOK = ['label' => 'Financial documents', 'icon' => 'FileDocumentMultipleOutline'];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param PaymentRequestLeafProvider $provider The data-provider half.
@@ -114,88 +135,82 @@ final class PaymentRequestLeafRegistrationListener implements IEventListener {
 			return;
 		}
 
-		$event->registerLeaf(
-			new LeafDescriptor(
-				id: PaymentRequestLeafProvider::LEAF_ID,
-				label: 'Payment requests',
-				icon: 'CreditCardOutline',
-				kinds: [LeafDescriptor::KIND_DATA_PROVIDER],
-				requiredApp: 'shillinq',
-				group: 'Finance',
-				requiresPermission: PaymentRequestLeafProvider::ACTION_REQUEST,
-			),
-			$this->provider,
-		);
-
-		$event->registerLeaf(
-			new LeafDescriptor(
-				id: self::PANEL_ID,
-				label: 'Payment requests',
-				icon: 'CreditCardOutline',
-				kinds: [LeafDescriptor::KIND_RENDER_SURFACE],
-				requiredApp: 'shillinq',
-				group: 'Finance',
-				surfaces: self::PANEL_SURFACES,
-				renderMode: LeafDescriptor::RENDER_MODE_MOUNT,
-			),
-			null,
-		);
-
-		// Spec fees-payments-and-the-contract-register REQ-FPCR-006 — the case app
-		// names the contract and reads its term, counterparty and remaining
-		// value from here, so no case ever carries a stale copy of an agreement.
-		$event->registerLeaf(
-			new LeafDescriptor(
-				id: ContractLeafProvider::LEAF_ID,
-				label: 'Contract',
-				icon: 'FileDocumentOutline',
-				kinds: [LeafDescriptor::KIND_DATA_PROVIDER],
-				requiredApp: 'shillinq',
-				group: 'Finance',
-			),
-			$this->contracts,
-		);
-
-		// Spec financial-documents-on-any-object REQ-FDO-002: every quote,
-		// invoice, credit note, payment request and payout linked to the object.
-		$event->registerLeaf(
-			new LeafDescriptor(
-				id: FinancialDocumentLeafProvider::LEAF_ID,
-				label: 'Financial documents',
-				icon: 'FileDocumentMultipleOutline',
-				kinds: [LeafDescriptor::KIND_DATA_PROVIDER],
-				requiredApp: 'shillinq',
-				group: 'Finance',
-			),
-			$this->documents,
-		);
-
-		$event->registerLeaf(
-			new LeafDescriptor(
-				id: self::DOCUMENTS_PANEL_ID,
-				label: 'Financial documents',
-				icon: 'FileDocumentMultipleOutline',
-				kinds: [LeafDescriptor::KIND_RENDER_SURFACE],
-				requiredApp: 'shillinq',
-				group: 'Finance',
-				surfaces: self::PANEL_SURFACES,
-				renderMode: LeafDescriptor::RENDER_MODE_MOUNT,
-			),
-			null,
-		);
-
-		$event->registerLeaf(
-			new LeafDescriptor(
-				id: self::CONTRACT_PANEL_ID,
-				label: 'Contract',
-				icon: 'FileDocumentOutline',
-				kinds: [LeafDescriptor::KIND_RENDER_SURFACE],
-				requiredApp: 'shillinq',
-				group: 'Finance',
-				surfaces: self::PANEL_SURFACES,
-				renderMode: LeafDescriptor::RENDER_MODE_MOUNT,
-			),
-			null,
-		);
+		foreach ($this->leaves() as [$descriptor, $provider]) {
+			$event->registerLeaf($descriptor, $provider);
+		}
 	}//end handle()
+
+	/**
+	 * Every leaf this app contributes, in registration order, with the
+	 * provider that answers it (null for a render surface).
+	 *
+	 * @return list<array{0: LeafDescriptor, 1: object|null}> The leaves.
+	 */
+	private function leaves(): array {
+		return [
+			[
+				new LeafDescriptor(
+					id: PaymentRequestLeafProvider::LEAF_ID,
+					label: 'Payment requests',
+					icon: 'CreditCardOutline',
+					kinds: [LeafDescriptor::KIND_DATA_PROVIDER],
+					requiredApp: 'shillinq',
+					group: 'Finance',
+					requiresPermission: PaymentRequestLeafProvider::ACTION_REQUEST,
+				),
+				$this->provider,
+			],
+			[$this->panelLeaf(id: self::PANEL_ID, look: self::PAYMENT_REQUESTS_LOOK), null],
+			// Spec fees-payments-and-the-contract-register REQ-FPCR-006 — the case app
+			// names the contract and reads its term, counterparty and remaining
+			// value from here, so no case ever carries a stale copy of an agreement.
+			[$this->dataLeaf(id: ContractLeafProvider::LEAF_ID, look: self::CONTRACT_LOOK), $this->contracts],
+			// Spec financial-documents-on-any-object REQ-FDO-002: every quote,
+			// invoice, credit note, payment request and payout linked to the object.
+			[$this->dataLeaf(id: FinancialDocumentLeafProvider::LEAF_ID, look: self::DOCUMENTS_LOOK), $this->documents],
+			[$this->panelLeaf(id: self::DOCUMENTS_PANEL_ID, look: self::DOCUMENTS_LOOK), null],
+			[$this->panelLeaf(id: self::CONTRACT_PANEL_ID, look: self::CONTRACT_LOOK), null],
+		];
+	}//end leaves()
+
+	/**
+	 * A Finance data-provider leaf without a permission of its own.
+	 *
+	 * @param string                             $id   The leaf id.
+	 * @param array{label: string, icon: string} $look The label and icon.
+	 *
+	 * @return LeafDescriptor The descriptor.
+	 */
+	private function dataLeaf(string $id, array $look): LeafDescriptor {
+		return new LeafDescriptor(
+			id: $id,
+			label: $look['label'],
+			icon: $look['icon'],
+			kinds: [LeafDescriptor::KIND_DATA_PROVIDER],
+			requiredApp: 'shillinq',
+			group: 'Finance',
+		);
+	}//end dataLeaf()
+
+	/**
+	 * A Finance render-surface panel mounted on the detail and single-entity
+	 * surfaces.
+	 *
+	 * @param string                             $id   The panel id.
+	 * @param array{label: string, icon: string} $look The label and icon.
+	 *
+	 * @return LeafDescriptor The descriptor.
+	 */
+	private function panelLeaf(string $id, array $look): LeafDescriptor {
+		return new LeafDescriptor(
+			id: $id,
+			label: $look['label'],
+			icon: $look['icon'],
+			kinds: [LeafDescriptor::KIND_RENDER_SURFACE],
+			requiredApp: 'shillinq',
+			group: 'Finance',
+			surfaces: self::PANEL_SURFACES,
+			renderMode: LeafDescriptor::RENDER_MODE_MOUNT,
+		);
+	}//end panelLeaf()
 }//end class
