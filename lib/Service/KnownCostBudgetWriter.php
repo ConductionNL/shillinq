@@ -685,22 +685,31 @@ class KnownCostBudgetWriter {
 			return $result;
 		}
 
-		$out = null;
-		if (is_object($result) === true && method_exists($result, 'jsonSerialize') === true) {
-			$out = $result->jsonSerialize();
+		return ($this->arrayFrom(result: $result, method: 'jsonSerialize') ?? $this->arrayFrom(result: $result, method: 'getObject') ?? []);
+
+	}//end serialize()
+
+	/**
+	 * What an object result's `jsonSerialize()` or `getObject()` returns,
+	 * when the result has that method and it returns an array.
+	 *
+	 * @param mixed  $result The save/update result.
+	 * @param string $method `jsonSerialize` or `getObject`.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function arrayFrom(mixed $result, string $method): ?array {
+		if (is_object($result) === false || method_exists($result, $method) === false) {
+			return null;
 		}
 
-		if (is_array($out) === false && is_object($result) === true && method_exists($result, 'getObject') === true) {
-			$out = $result->getObject();
-		}
-
+		$out = $result->$method();
 		if (is_array($out) === false) {
-			return [];
+			return null;
 		}
 
 		return $out;
-
-	}//end serialize()
+	}//end arrayFrom()
 
 	/**
 	 * Resolve the OpenRegister register slug from app config.
