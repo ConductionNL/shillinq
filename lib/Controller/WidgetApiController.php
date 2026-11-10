@@ -457,15 +457,12 @@ class WidgetApiController extends Controller {
 	 * @return string|null
 	 */
 	private function slotError(array $payload): ?string {
-		if ($payload['serviceId'] === '' || $payload['resourceId'] === ''
-			|| $payload['startTime'] === '' || $payload['endTime'] === ''
-		) {
+		if ($this->missesSlotField(payload: $payload) === true) {
 			return 'serviceId, resourceId, startTime and endTime are required.';
 		}
 
-		$isoPattern = '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/';
-		if ((bool)preg_match($isoPattern, $payload['startTime']) === false
-			|| (bool)preg_match($isoPattern, $payload['endTime']) === false
+		if ($this->isIsoUtc(time: $payload['startTime']) === false
+			|| $this->isIsoUtc(time: $payload['endTime']) === false
 		) {
 			return 'startTime and endTime must be ISO 8601 UTC (YYYY-MM-DDTHH:MM:SSZ).';
 		}
@@ -473,6 +470,36 @@ class WidgetApiController extends Controller {
 		return null;
 
 	}//end slotError()
+
+	/**
+	 * Whether the service, resource, start or end time is empty.
+	 *
+	 * @param array<string,string> $payload The booking payload.
+	 *
+	 * @return bool
+	 */
+	private function missesSlotField(array $payload): bool {
+		foreach (['serviceId', 'resourceId', 'startTime', 'endTime'] as $field) {
+			if ($payload[$field] === '') {
+				return true;
+			}
+		}
+
+		return false;
+
+	}//end missesSlotField()
+
+	/**
+	 * Whether a time is ISO 8601 UTC to the second (YYYY-MM-DDTHH:MM:SSZ).
+	 *
+	 * @param string $time The time to check.
+	 *
+	 * @return bool
+	 */
+	private function isIsoUtc(string $time): bool {
+		return (bool)preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $time);
+
+	}//end isIsoUtc()
 
 	/**
 	 * Check the customer display name (1-255 characters, letters only).
@@ -508,14 +535,25 @@ class WidgetApiController extends Controller {
 			return 'Please enter a valid email address.';
 		}
 
-		$phone = $payload['customerPhone'];
+		return $this->phoneError(phone: $payload['customerPhone']);
+
+	}//end contactError()
+
+	/**
+	 * Check the optional phone number (E.164).
+	 *
+	 * @param string $phone Customer phone, '' when not given.
+	 *
+	 * @return string|null
+	 */
+	private function phoneError(string $phone): ?string {
 		if ($phone !== '' && (bool)preg_match('/^\+?[1-9]\d{1,14}$/', $phone) === false) {
 			return 'Phone number must be E.164 (e.g. +31612345678).';
 		}
 
 		return null;
 
-	}//end contactError()
+	}//end phoneError()
 
 	/**
 	 * Check the optional notes (at most 500 characters).
@@ -555,6 +593,18 @@ class WidgetApiController extends Controller {
 			return $this->serverError(message: 'Booking failed. Please try again later.');
 		}
 
+		return $this->appointmentCreated(result: $result);
+
+	}//end appointmentResponse()
+
+	/**
+	 * Build the 201 Created response; never echoes customer PII.
+	 *
+	 * @param array<string,mixed> $result Result of WidgetService::createAppointment().
+	 *
+	 * @return JSONResponse
+	 */
+	private function appointmentCreated(array $result): JSONResponse {
 		return new JSONResponse(
 			data: [
 				'appointmentId' => (string)($result['appointmentId'] ?? ''),
@@ -564,7 +614,7 @@ class WidgetApiController extends Controller {
 			statusCode: Http::STATUS_CREATED,
 		);
 
-	}//end appointmentResponse()
+	}//end appointmentCreated()
 
 	/**
 	 * Build a 400 Bad Request JSON response.
