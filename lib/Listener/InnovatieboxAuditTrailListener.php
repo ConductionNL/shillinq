@@ -95,6 +95,36 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 	private const SCHEMA_LOSS = 'carryforwardloss';
 
 	/**
+	 * The NexusCalculation fields an audit row carries.
+	 *
+	 * @var list<string>
+	 */
+	private const NEXUS_DETAIL_KEYS = [
+		'own_rd_cost',
+		'rd_cost_outsourced_third_parties',
+		'rd_cost_outsourced_affiliated',
+		'uplift_factor',
+		'nexusbreuk_ongecapt',
+		'nexus_fraction_applied',
+	];
+
+	/**
+	 * The IBProfitAttribution fields an audit row carries.
+	 *
+	 * @var list<string>
+	 */
+	private const PROFIT_DETAIL_KEYS = [
+		'method',
+		'gross_revenue_asset',
+		'qualifying_profit_for_nexus',
+		'qualifying_profit_after_nexus',
+		'effective_rate',
+		'vpb_on_innovation_share',
+		'benefit_innovation_box',
+		'flat_rate_cap_applied',
+	];
+
+	/**
 	 * Construct the listener.
 	 *
 	 * @param AuditTrailMapper $auditTrail OpenRegister's hash-chained audit trail: every
@@ -158,108 +188,121 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 		$schema = $this->normaliseSchema(schema: $this->schemaResolver->schemaSlug(entity: $entity));
 		$data = $this->extractObjectArray(entity: $entity);
 
-		if ($schema === self::SCHEMA_NEXUS) {
-			$this->append(
-				entity: $entity,
-				options: [
-					'event_type' => InnovatieboxAuditEventLogger::EVENT_NEXUS_CALCULATED,
-					'administrationId' => (string)($data['administrationId'] ?? ''),
-					'financialYear' => $this->intOrNull(value: $data['financialYear'] ?? null),
-					'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
-					'subject_schema' => 'NexusCalculation',
-					'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
-					'details' => $this->slice(
-						data: $data,
-						keys: [
-							'own_rd_cost',
-							'rd_cost_outsourced_third_parties',
-							'rd_cost_outsourced_affiliated',
-							'uplift_factor',
-							'nexusbreuk_ongecapt',
-							'nexus_fraction_applied',
-						]
-					),
-				]
-			);
-			return;
-		}//end if
-
-		if ($schema === self::SCHEMA_PROFIT) {
-			$this->append(
-				entity: $entity,
-				options: [
-					'event_type' => InnovatieboxAuditEventLogger::EVENT_PROFIT_CREATED,
-					'administrationId' => (string)($data['administrationId'] ?? ''),
-					'financialYear' => $this->intOrNull(value: $data['financialYear'] ?? null),
-					'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
-					'subject_schema' => 'IBProfitAttribution',
-					'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
-					'details' => $this->slice(
-						data: $data,
-						keys: [
-							'method',
-							'gross_revenue_asset',
-							'qualifying_profit_for_nexus',
-							'qualifying_profit_after_nexus',
-							'effective_rate',
-							'vpb_on_innovation_share',
-							'benefit_innovation_box',
-							'flat_rate_cap_applied',
-						]
-					),
-				]
-			);
-
-			// Twin event: a forfaitair election that hit the EUR 25k cap
-			// emits ForfaitairCap.applied so the Belastingdienst defence can
-			// see the binding cap and the resulting benefit reduction (task
-			// 5.4 + REQ-IBA-003).
-			if ($this->isForfaitairCapHit(data: $data) === true) {
-				$kwalifFor = (float)($data['qualifying_profit_for_nexus'] ?? 0);
-				$kwalifAfter = (float)($data['qualifying_profit_after_nexus'] ?? 0);
-				$this->append(
-					entity: $entity,
-					options: [
-						'event_type' => InnovatieboxAuditEventLogger::EVENT_FORFAITAIR_CAP_APPLIED,
-						'administrationId' => (string)($data['administrationId'] ?? ''),
-						'financialYear' => $this->intOrNull(value: $data['financialYear'] ?? null),
-						'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
-						'subject_schema' => 'IBProfitAttribution',
-						'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
-						'reason' => 'cap_hit',
-						'details' => [
-							'voor_cap' => $kwalifFor,
-							'na_cap' => $kwalifAfter,
-							'benefit_reduction' => max(0.0, ($kwalifFor - $kwalifAfter)),
-							'forfaitair_cap_eur' => 25000,
-						],
-					]
-				);
-			}//end if
-
-			return;
-		}//end if
-
-		if ($schema === self::SCHEMA_LOSS) {
-			$this->append(
-				entity: $entity,
-				options: [
-					'event_type' => InnovatieboxAuditEventLogger::EVENT_LOSS_CREATED,
-					'administrationId' => (string)($data['administrationId'] ?? ''),
-					'financialYear' => $this->intOrNull(value: $data['origin_boekjaar'] ?? ($data['financialYear'] ?? null)),
-					'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
-					'subject_schema' => 'CarryForwardLoss',
-					'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
-					'details' => $this->slice(
-						data: $data,
-						keys: ['origin_boekjaar', 'oorspronkelijk_bedrag', 'balance_after', 'status']
-					),
-				]
-			);
-			return;
-		}
+		match ($schema) {
+			self::SCHEMA_NEXUS => $this->recordNexusCalculated(entity: $entity, data: $data),
+			self::SCHEMA_PROFIT => $this->recordProfitCreated(entity: $entity, data: $data),
+			self::SCHEMA_LOSS => $this->recordLossCreated(entity: $entity, data: $data),
+			default => null,
+		};
 
 	}//end handleCreated()
+
+	/**
+	 * NexusCalculation.calculated, with the R&D breakdown sliced into the details.
+	 *
+	 * @param ObjectEntity        $entity The created NexusCalculation.
+	 * @param array<string,mixed> $data   Its payload.
+	 *
+	 * @return void
+	 */
+	private function recordNexusCalculated(ObjectEntity $entity, array $data): void {
+		$this->append(
+			entity: $entity,
+			options: [
+				'event_type' => InnovatieboxAuditEventLogger::EVENT_NEXUS_CALCULATED,
+				'administrationId' => (string)($data['administrationId'] ?? ''),
+				'financialYear' => $this->intOrNull(value: $data['financialYear'] ?? null),
+				'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
+				'subject_schema' => 'NexusCalculation',
+				'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
+				'details' => $this->slice(data: $data, keys: self::NEXUS_DETAIL_KEYS),
+			]
+		);
+	}//end recordNexusCalculated()
+
+	/**
+	 * IBProfitAttribution.created, plus — when a forfaitair election hit the
+	 * EUR 25k cap — the ForfaitairCap.applied twin.
+	 *
+	 * @param ObjectEntity        $entity The created IBProfitAttribution.
+	 * @param array<string,mixed> $data   Its payload.
+	 *
+	 * @return void
+	 */
+	private function recordProfitCreated(ObjectEntity $entity, array $data): void {
+		$this->append(
+			entity: $entity,
+			options: [
+				'event_type' => InnovatieboxAuditEventLogger::EVENT_PROFIT_CREATED,
+				'administrationId' => (string)($data['administrationId'] ?? ''),
+				'financialYear' => $this->intOrNull(value: $data['financialYear'] ?? null),
+				'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
+				'subject_schema' => 'IBProfitAttribution',
+				'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
+				'details' => $this->slice(data: $data, keys: self::PROFIT_DETAIL_KEYS),
+			]
+		);
+
+		if ($this->isForfaitairCapHit(data: $data) === true) {
+			$this->recordForfaitairCap(entity: $entity, data: $data);
+		}
+	}//end recordProfitCreated()
+
+	/**
+	 * Twin event: a forfaitair election that hit the EUR 25k cap emits
+	 * ForfaitairCap.applied so the Belastingdienst defence can see the binding
+	 * cap and the resulting benefit reduction (task 5.4 + REQ-IBA-003).
+	 *
+	 * @param ObjectEntity        $entity The created IBProfitAttribution.
+	 * @param array<string,mixed> $data   Its payload.
+	 *
+	 * @return void
+	 */
+	private function recordForfaitairCap(ObjectEntity $entity, array $data): void {
+		$kwalifFor = (float)($data['qualifying_profit_for_nexus'] ?? 0);
+		$kwalifAfter = (float)($data['qualifying_profit_after_nexus'] ?? 0);
+		$this->append(
+			entity: $entity,
+			options: [
+				'event_type' => InnovatieboxAuditEventLogger::EVENT_FORFAITAIR_CAP_APPLIED,
+				'administrationId' => (string)($data['administrationId'] ?? ''),
+				'financialYear' => $this->intOrNull(value: $data['financialYear'] ?? null),
+				'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
+				'subject_schema' => 'IBProfitAttribution',
+				'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
+				'reason' => 'cap_hit',
+				'details' => [
+					'voor_cap' => $kwalifFor,
+					'na_cap' => $kwalifAfter,
+					'benefit_reduction' => max(0.0, ($kwalifFor - $kwalifAfter)),
+					'forfaitair_cap_eur' => 25000,
+				],
+			]
+		);
+	}//end recordForfaitairCap()
+
+	/**
+	 * CarryForwardLoss.created, dated by its origin year (else its financial year).
+	 *
+	 * @param ObjectEntity        $entity The created CarryForwardLoss.
+	 * @param array<string,mixed> $data   Its payload.
+	 *
+	 * @return void
+	 */
+	private function recordLossCreated(ObjectEntity $entity, array $data): void {
+		$this->append(
+			entity: $entity,
+			options: [
+				'event_type' => InnovatieboxAuditEventLogger::EVENT_LOSS_CREATED,
+				'administrationId' => (string)($data['administrationId'] ?? ''),
+				'financialYear' => $this->intOrNull(value: $data['origin_boekjaar'] ?? ($data['financialYear'] ?? null)),
+				'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
+				'subject_schema' => 'CarryForwardLoss',
+				'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
+				'details' => $this->slice(data: $data, keys: ['origin_boekjaar', 'oorspronkelijk_bedrag', 'balance_after', 'status']),
+			]
+		);
+	}//end recordLossCreated()
 
 	/**
 	 * Handle an update event — finalisation, blocked amendment, or loss offset.
