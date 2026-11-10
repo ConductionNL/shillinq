@@ -503,6 +503,11 @@ final class AbstractDocumentReportGeneratorTest extends TestCase {
 			if ($call !== null) {
 				$this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $call['options']['adHocData']['meta']['generatedAt']);
 				$call['options']['adHocData']['meta']['generatedAt'] = '<masked>';
+				$call['options']['adHocData']['report']['blocks'][0]['meta'] = preg_replace(
+					'/^Gegenereerd: .*$/',
+					'Gegenereerd: <masked>',
+					$call['options']['adHocData']['report']['blocks'][0]['meta']
+				);
 			}
 
 			$actual[$name] = ['outcome' => $outcome, 'call' => $call, 'loads' => $generator->loadObjectsCalls];
