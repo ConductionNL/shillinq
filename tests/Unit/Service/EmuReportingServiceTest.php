@@ -364,6 +364,41 @@ class EmuReportingServiceTest extends TestCase {
 	}//end testMapIv3UnresolvedReturnsNull()
 
 	/**
+	 * Characterisation: an empty explicit iv3 and an unmapped taakveld fall
+	 * through to the account map, where the longest matching prefix wins and
+	 * non-matching prefixes are ignored; an empty account maps to nothing.
+	 *
+	 * @return void
+	 */
+	public function testMapIv3FallsThroughToTheFirstLongestPrefix(): void {
+		$accountMap = [
+			'4'   => ['hoofdstuk' => 'C'],
+			'48'  => ['hoofdstuk' => 'A'],
+			'49'  => ['hoofdstuk' => 'B'],
+			'481' => ['hoofdstuk' => 'F'],
+			'7'   => ['hoofdstuk' => 'D'],
+		];
+		$item       = ['iv3' => [], 'taskField' => '9.9', 'accountNumber' => '4810'];
+		$taskMap    = ['4.2' => ['hoofdstuk' => '4']];
+
+		self::assertSame(
+			expected: ['hoofdstuk' => 'F'],
+			actual: $this->service->mapIv3Classification(item: $item, taskFieldMap: $taskMap, accountMap: $accountMap)
+		);
+		self::assertSame(
+			expected: ['hoofdstuk' => 'C'],
+			actual: $this->service->mapIv3Classification(item: ['accountNumber' => '40'], accountMap: $accountMap)
+		);
+		self::assertNull(
+			actual: $this->service->mapIv3Classification(item: ['taskField' => '4.3', 'accountNumber' => ''], accountMap: $accountMap)
+		);
+		self::assertNull(
+			actual: $this->service->mapIv3Classification(item: ['accountNumber' => '55'], accountMap: $accountMap)
+		);
+
+	}//end testMapIv3FallsThroughToTheFirstLongestPrefix()
+
+	/**
 	 * Task 25 / REQ-EMU-005: S.1313 counterparty resolves to intern-S1313.
 	 *
 	 * @return void
