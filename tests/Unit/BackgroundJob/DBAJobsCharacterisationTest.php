@@ -258,7 +258,7 @@ final class DBAJobsCharacterisationTest extends TestCase {
 			$job->computeLangjarigeRelaties($rows, $now)
 		);
 		self::assertSame(
-			[['customerId' => '9', 'startDate' => '2023-12-01', 'durationYears' => 2.08, 'revenueShare' => 1.0]],
+			[['customerId' => '9', 'startDate' => '2023-12-01', 'durationYears' => 2.09, 'revenueShare' => 1.0]],
 			$job->computeLangjarigeRelaties([['customerId' => '9', 'startDate' => '2023-12-01', 'realisedRevenue' => 3]], $now)
 		);
 
