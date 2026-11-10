@@ -248,7 +248,11 @@ class ReinvestmentReserves {
 			throw new DomainException('The asset has no asset account to lower.');
 		}
 
-		$run->text = sprintf('Herinvesteringsreserve %s op %s', (string)($run->reserve['disposedAssetNumber'] ?? ''), (string)($asset['assetNumber'] ?? ''));
+		$run->text = sprintf(
+			'Herinvesteringsreserve %s op %s',
+			(string)($run->reserve['disposedAssetNumber'] ?? ''),
+			(string)($asset['assetNumber'] ?? '')
+		);
 		$run->date = substr((string)($asset['acquisitionDate'] ?? ($asset['purchaseDate'] ?? date('Y-m-d'))), 0, 10);
 		$run->journalId = $this->records->postJournal(
 			journal: $this->journal(
