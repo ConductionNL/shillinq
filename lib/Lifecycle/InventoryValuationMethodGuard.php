@@ -83,21 +83,7 @@ class InventoryValuationMethodGuard {
 	 */
 	public function checkZeroStock(array $valuation): bool {
 		try {
-			$quantity = (float)($valuation['quantity'] ?? 0);
-			if ($quantity > 0) {
-				$this->logger->info(
-					'InventoryValuationMethodGuard: transition denied — non-zero stock',
-					[
-						'productId' => ($valuation['productId'] ?? null),
-						'warehouse' => ($valuation['warehouse'] ?? null),
-						'quantity' => $quantity,
-						'valuationMethod' => ($valuation['valuationMethod'] ?? null),
-					]
-				);
-				return false;
-			}
-
-			return true;
+			return $this->stockIsZero(valuation: $valuation);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'InventoryValuationMethodGuard: checkZeroStock failed — denying transition (fail-closed)',
@@ -107,6 +93,46 @@ class InventoryValuationMethodGuard {
 		}//end try
 
 	}//end checkZeroStock()
+
+	/**
+	 * Whether the on-hand quantity is zero (or missing); non-zero stock is
+	 * logged.
+	 *
+	 * @param array<string,mixed> $valuation The InventoryValuation record.
+	 *
+	 * @return bool
+	 */
+	private function stockIsZero(array $valuation): bool {
+		$quantity = (float)($valuation['quantity'] ?? 0);
+		if ($quantity > 0) {
+			$this->logger->info(
+				'InventoryValuationMethodGuard: transition denied — non-zero stock',
+				$this->stockContext(valuation: $valuation, quantity: $quantity)
+			);
+			return false;
+		}
+
+		return true;
+
+	}//end stockIsZero()
+
+	/**
+	 * The log context of a non-zero stock refusal.
+	 *
+	 * @param array<string,mixed> $valuation The InventoryValuation record.
+	 * @param float               $quantity  The on-hand quantity.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function stockContext(array $valuation, float $quantity): array {
+		return [
+			'productId' => ($valuation['productId'] ?? null),
+			'warehouse' => ($valuation['warehouse'] ?? null),
+			'quantity' => $quantity,
+			'valuationMethod' => ($valuation['valuationMethod'] ?? null),
+		];
+
+	}//end stockContext()
 
 	/**
 	 * Predicate: no other active InventoryValuation snapshot exists for
@@ -125,58 +151,7 @@ class InventoryValuationMethodGuard {
 	 */
 	public function checkUniqueActiveSnapshot(array $proposed): bool {
 		try {
-			$productId = (string)($proposed['productId'] ?? '');
-			$warehouse = (string)($proposed['warehouse'] ?? '');
-			$administrationId = (string)($proposed['administrationId'] ?? '');
-			$selfId = (string)($proposed['id'] ?? ($proposed['@self']['id'] ?? ''));
-
-			// Snapshots without the tuple coordinates are accepted — the
-			// schema-level required-fields validation handles those cases.
-			if ($productId === '' || $warehouse === '' || $administrationId === '') {
-				return true;
-			}
-
-			$existing = $this->objectService
-				->setRegister($this->register())
-				->setSchema('InventoryValuation')
-				->findAll(
-					[
-						'filters' => [
-							'productId' => $productId,
-							'warehouse' => $warehouse,
-							'status' => 'active',
-							'administrationId' => $administrationId,
-						],
-					]
-				);
-
-			foreach ($existing as $row) {
-				$rowId = '';
-				if (is_array($row) === true) {
-					$rowId = (string)($row['id'] ?? ($row['@self']['id'] ?? ''));
-				} elseif (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-					$data = $row->jsonSerialize();
-					if (is_array($data) === true) {
-						$rowId = (string)($data['id'] ?? ($data['@self']['id'] ?? ''));
-					}
-				}
-
-				if ($rowId !== '' && $rowId === $selfId) {
-					continue;
-				}
-
-				$this->logger->info(
-					'InventoryValuationMethodGuard: duplicate active snapshot blocked',
-					[
-						'productId' => $productId,
-						'warehouse' => $warehouse,
-						'administrationId' => $administrationId,
-					]
-				);
-				return false;
-			}//end foreach
-
-			return true;
+			return $this->tupleIsFree(proposed: $proposed);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'InventoryValuationMethodGuard: checkUniqueActiveSnapshot failed — denying (fail-closed)',
@@ -186,6 +161,132 @@ class InventoryValuationMethodGuard {
 		}//end try
 
 	}//end checkUniqueActiveSnapshot()
+
+	/**
+	 * Whether no active snapshot other than the proposed one holds its
+	 * (productId, warehouse, administrationId) tuple; a duplicate is logged.
+	 *
+	 * @param array<string,mixed> $proposed The proposed InventoryValuation record.
+	 *
+	 * @return bool
+	 */
+	private function tupleIsFree(array $proposed): bool {
+		$tuple = $this->snapshotTuple(proposed: $proposed);
+
+		// Snapshots without the tuple coordinates are accepted — the
+		// schema-level required-fields validation handles those cases.
+		if (in_array('', $tuple, true) === true) {
+			return true;
+		}
+
+		$selfId = (string)($proposed['id'] ?? ($proposed['@self']['id'] ?? ''));
+		if ($this->hasOtherRow(rows: $this->activeSnapshots(tuple: $tuple), selfId: $selfId) === false) {
+			return true;
+		}
+
+		$this->logger->info('InventoryValuationMethodGuard: duplicate active snapshot blocked', $tuple);
+		return false;
+
+	}//end tupleIsFree()
+
+	/**
+	 * The proposed snapshot's (productId, warehouse, administrationId) tuple.
+	 *
+	 * @param array<string,mixed> $proposed The proposed InventoryValuation record.
+	 *
+	 * @return array{productId:string,warehouse:string,administrationId:string}
+	 */
+	private function snapshotTuple(array $proposed): array {
+		return [
+			'productId' => (string)($proposed['productId'] ?? ''),
+			'warehouse' => (string)($proposed['warehouse'] ?? ''),
+			'administrationId' => (string)($proposed['administrationId'] ?? ''),
+		];
+
+	}//end snapshotTuple()
+
+	/**
+	 * The active InventoryValuation rows holding the tuple.
+	 *
+	 * @param array{productId:string,warehouse:string,administrationId:string} $tuple The snapshot coordinates.
+	 *
+	 * @return array<mixed>
+	 */
+	private function activeSnapshots(array $tuple): array {
+		return $this->objectService
+			->setRegister($this->register())
+			->setSchema('InventoryValuation')
+			->findAll(
+				[
+					'filters' => [
+						'productId' => $tuple['productId'],
+						'warehouse' => $tuple['warehouse'],
+						'status' => 'active',
+						'administrationId' => $tuple['administrationId'],
+					],
+				]
+			);
+
+	}//end activeSnapshots()
+
+	/**
+	 * Whether any row is not the proposed snapshot itself; a row without a
+	 * readable id always counts as another.
+	 *
+	 * @param array<mixed> $rows   The active rows.
+	 * @param string       $selfId The proposed snapshot's id, or ''.
+	 *
+	 * @return bool
+	 */
+	private function hasOtherRow(array $rows, string $selfId): bool {
+		foreach ($rows as $row) {
+			$rowId = $this->rowId(row: $row);
+			if ($rowId === '' || $rowId !== $selfId) {
+				return true;
+			}
+		}
+
+		return false;
+
+	}//end hasOtherRow()
+
+	/**
+	 * A row's id (`id`, else `@self.id`), for an array or a serialisable
+	 * entity; '' when there is none.
+	 *
+	 * @param mixed $row A findAll() row.
+	 *
+	 * @return string
+	 */
+	private function rowId(mixed $row): string {
+		$data = $this->rowData(row: $row);
+		return (string)($data['id'] ?? ($data['@self']['id'] ?? ''));
+
+	}//end rowId()
+
+	/**
+	 * A row as an array, or null when it is neither an array nor an entity
+	 * serialising to one.
+	 *
+	 * @param mixed $row A findAll() row.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function rowData(mixed $row): array|null {
+		if (is_array($row) === true) {
+			return $row;
+		}
+
+		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+			$data = $row->jsonSerialize();
+			if (is_array($data) === true) {
+				return $data;
+			}
+		}
+
+		return null;
+
+	}//end rowData()
 
 	/**
 	 * Resolve the OR register slug, defaulting to 'shillinq'.
