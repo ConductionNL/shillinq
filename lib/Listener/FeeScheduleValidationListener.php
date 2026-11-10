@@ -38,8 +38,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use InvalidArgumentException;
-use OCA\OpenRegister\Event\ObjectCreatingEvent;
-use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\Shillinq\Service\FeeScheduleService;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCP\EventDispatcher\Event;
@@ -87,39 +85,30 @@ class FeeScheduleValidationListener implements IEventListener {
 	 * @spec openspec/changes/leges-at-intake/specs/object-payment-requests/spec.md (REQ-SOPR-006)
 	 */
 	public function handle(Event $event): void {
-		$entity = null;
-		if ($event instanceof ObjectCreatingEvent === true) {
-			$entity = $event->getObject();
-		}
-
-		if ($event instanceof ObjectUpdatingEvent === true) {
-			$entity = $event->getNewObject();
-		}
-
-		if ($entity === null) {
+		$write = new PreSaveWrite();
+		$entity = $write->incomingEntity(event: $event);
+		if ($entity === null || $this->schemaResolver->matchesSchema(entity: $entity, expectedSlug: self::SCHEMA_SLUG) === false) {
 			return;
 		}
 
-		if ($this->schemaResolver->matchesSchema(entity: $entity, expectedSlug: self::SCHEMA_SLUG) === false) {
+		$reason = $this->ruleViolation(schedule: $write->payload(entity: $entity));
+		if ($reason === null) {
 			return;
 		}
 
-		$data = [];
-		if (method_exists($entity, 'getObject') === true) {
-			$data = ($entity->getObject() ?? []);
-		}
+		$this->refuse(event: $event, reason: $reason);
 
-		if (is_array($data) === false) {
-			$data = [];
-		}
+	}//end handle()
 
-		try {
-			$this->feeSchedules->assertNoOverlap(schedule: $data);
-			return;
-		} catch (InvalidArgumentException $e) {
-			$reason = $e->getMessage();
-		}
-
+	/**
+	 * Log the refusal and veto the write with the broken rule.
+	 *
+	 * @param Event  $event  The OpenRegister pre-save event.
+	 * @param string $reason The broken rule.
+	 *
+	 * @return void
+	 */
+	private function refuse(Event $event, string $reason): void {
 		$this->logger->warning(
 			'Shillinq: refused a FeeSchedule write that breaks a fee-schedule rule',
 			['reason' => $reason]
@@ -133,5 +122,22 @@ class FeeScheduleValidationListener implements IEventListener {
 		);
 		$event->stopPropagation();
 
-	}//end handle()
+	}//end refuse()
+
+	/**
+	 * The fee-schedule rule the schedule breaks, or null when it keeps them all.
+	 *
+	 * @param array<string, mixed> $schedule The schedule being written.
+	 *
+	 * @return string|null
+	 */
+	private function ruleViolation(array $schedule): string|null {
+		try {
+			$this->feeSchedules->assertNoOverlap(schedule: $schedule);
+			return null;
+		} catch (InvalidArgumentException $e) {
+			return $e->getMessage();
+		}
+
+	}//end ruleViolation()
 }//end class
