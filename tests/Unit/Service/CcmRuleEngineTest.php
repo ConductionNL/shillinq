@@ -394,5 +394,28 @@ class CcmRuleEngineTest extends TestCase {
 
 	}//end testSeedSoD01FiresOnConflict()
 
+	/**
+	 * Characterisation: time-is-within reads the upstream-resolved window flag,
+	 * an empty none-of never fires, a non-empty any-of without a match is false,
+	 * and an unknown operator reaching evaluate() fails closed with a warning.
+	 *
+	 * @return void
+	 */
+	public function testWindowFlagEmptyCompoundsAndUnknownLeaf(): void {
+		$within = ['time-is-within' => ['posted_at', 'last-day-of-period']];
+		self::assertTrue($this->fire($within, ['fields' => ['posted_at_within_window' => 1]]));
+		self::assertFalse($this->fire($within, ['fields' => ['posted_at' => '2026-01-31']]));
+		self::assertFalse($this->fire(['none-of' => []], ['fields' => []]));
+		self::assertFalse($this->fire(['any-of' => [['field-equals' => ['a', 'x']]]], ['fields' => ['a' => 'y']]));
+		self::assertFalse($this->fire(['not' => ['field-equals' => ['a', 'y']]], ['fields' => ['a' => 'y']]));
+
+		$this->logger->expects(self::once())
+			->method('warning')
+			->with('CcmRuleEngine: unknown operator at evaluation: bogus-op');
+		$result = $this->engine->evaluate(['tree' => ['all-of' => [['bogus-op' => ['x']]]]], ['fields' => []]);
+		self::assertSame(['fired' => false, 'diagnostics' => []], $result);
+
+	}//end testWindowFlagEmptyCompoundsAndUnknownLeaf()
+
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class
