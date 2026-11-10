@@ -159,13 +159,33 @@ final class BudgetGridEnvelopeGoldenTest extends TestCase {
 			file_put_contents($golden, $actual);
 		}
 
-		// Decoded and compared with a delta, so the percentage row does not
-		// depend on the float serialisation of the PHP build.
-		self::assertEqualsWithDelta(
-			json_decode((string)file_get_contents($golden), true),
-			json_decode($actual, true),
-			0.000000001
+		// Floats are rounded on both sides, so the percentage row does not
+		// depend on the float serialisation of the PHP build; keys, their
+		// order, types and every other value are compared exactly.
+		self::assertSame(
+			self::rounded(value: json_decode((string)file_get_contents($golden), true)),
+			self::rounded(value: json_decode($actual, true))
 		);
 
 	}//end testEnvelopeMatchesTheGolden()
+
+	/**
+	 * The value with every float rounded to 9 decimals.
+	 *
+	 * @param mixed $value The value.
+	 *
+	 * @return mixed
+	 */
+	private static function rounded(mixed $value): mixed {
+		if (is_float($value) === true) {
+			return round($value, 9);
+		}
+
+		if (is_array($value) === false) {
+			return $value;
+		}
+
+		return array_map(static fn (mixed $item): mixed => self::rounded(value: $item), $value);
+
+	}//end rounded()
 }//end class
