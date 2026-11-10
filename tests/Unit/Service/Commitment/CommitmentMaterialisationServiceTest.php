@@ -715,5 +715,43 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 		self::assertSame(['kind' => 'supplier', 'contactId' => 'vendor-1'], $commitmentSaves[0][1]['counterparty']);
 		self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}$/', $commitmentSaves[0][1]['commencementDate']);
 
+		$lineSaves = array_values(array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'CommitmentLine'));
+		self::assertSame(
+			[
+				[
+					'CommitmentLine',
+					[
+						'administrationId' => 'adm-1',
+						'commitment' => 'PO-2026-0207',
+						'ruleNumber' => 1,
+						'financialYear' => 2026,
+						'amount_excl_vat' => 30000000,
+						'generalLedgerAccount' => '4400',
+						'costCentre' => 'FAC-2026',
+						'programme' => '5.1',
+						'remaining_committed' => 30000000,
+					],
+				],
+			],
+			$lineSaves
+		);
+
+		$findingSaves = array_values(array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'Rechtmatigheidsbevinding'));
+		self::assertSame(
+			[
+				'administrationId' => 'adm-1',
+				'findingNumber' => 'RV-PO-2026-0207-OVERRIDE',
+				'kind' => 'error',
+				'criterium' => 'begroting',
+				'financialYear' => 2026,
+				'programme' => '5.1',
+				'amount_error' => 300000.0,
+				'description' => 'Automatisch aangegaan onder override-mandaat M-CFO-OVERRIDE bij materialisatie van PO-2026-0207 (budget ontoereikend).',
+				'cause' => 'Commitment PO-2026-0207 automatisch aangegaan onder override-mandaat wegens ontoereikende vrije_ruimte.',
+				'status' => 'open',
+			],
+			$findingSaves[0][1]
+		);
+
 	}//end testOverrideDraftShape()
 }//end class
