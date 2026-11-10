@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\GlAdjustmentPosting;
 use OCA\Shillinq\Service\InventoryGlAdjustmentPoster;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
@@ -67,6 +68,28 @@ final class InventoryGlAdjustmentPostingTest extends TestCase {
 	}//end poster()
 
 	/**
+	 * Post through postAdjustment() with the fields of the former post() call.
+	 *
+	 * @param InventoryGlAdjustmentPoster $poster The poster.
+	 * @param array<string,mixed>         $fields administrationId, debitAccount, creditAccount, amountCents,
+	 *                                            journalCode, description, sourceReference, postingDate, periodId.
+	 *
+	 * @return array<string,mixed> The result envelope.
+	 */
+	private function postFields(InventoryGlAdjustmentPoster $poster, array $fields): array {
+		$posting = new GlAdjustmentPosting(administrationId: $fields['administrationId'], journalCode: $fields['journalCode']);
+		$posting->debitAccount = $fields['debitAccount'];
+		$posting->creditAccount = $fields['creditAccount'];
+		$posting->amountCents = $fields['amountCents'];
+		$posting->description = $fields['description'];
+		$posting->sourceReference = $fields['sourceReference'];
+		$posting->postingDate = $fields['postingDate'];
+		$posting->periodId = $fields['periodId'];
+		return $poster->postAdjustment(posting: $posting);
+
+	}//end postFields()
+
+	/**
 	 * Post with the given posting date and amount.
 	 *
 	 * @param InventoryGlAdjustmentPoster $poster      The poster.
@@ -75,7 +98,20 @@ final class InventoryGlAdjustmentPostingTest extends TestCase {
 	 * @return array<string,mixed> The result envelope.
 	 */
 	private function postWith(InventoryGlAdjustmentPoster $poster, string $postingDate): array {
-		return $poster->post('adm-1', '1300', '1305', 1005, 'NRV', 'Write-down', 'SKU-9', $postingDate, '2026-Q3');
+		return $this->postFields(
+			$poster,
+			[
+				'administrationId' => 'adm-1',
+				'debitAccount' => '1300',
+				'creditAccount' => '1305',
+				'amountCents' => 1005,
+				'journalCode' => 'NRV',
+				'description' => 'Write-down',
+				'sourceReference' => 'SKU-9',
+				'postingDate' => $postingDate,
+				'periodId' => '2026-Q3',
+			]
+		);
 
 	}//end postWith()
 
@@ -146,7 +182,20 @@ final class InventoryGlAdjustmentPostingTest extends TestCase {
 		);
 		self::assertSame(
 			['posted' => false, 'message' => 'GL accounts not configured'],
-			$poster->post('adm-1', '', '1305', 5, 'LAND', 'x', 'r', '2026-01-01', 'p')
+			$this->postFields(
+				$poster,
+				[
+					'administrationId' => 'adm-1',
+					'debitAccount' => '',
+					'creditAccount' => '1305',
+					'amountCents' => 5,
+					'journalCode' => 'LAND',
+					'description' => 'x',
+					'sourceReference' => 'r',
+					'postingDate' => '2026-01-01',
+					'periodId' => 'p',
+				]
+			)
 		);
 
 		// phpcs:disable Generic.Commenting.DocComment,Squiz.Commenting,PEAR.Commenting
