@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Service\Import\ImportBatchSteps;
 use RuntimeException;
@@ -55,20 +56,19 @@ class ImportBatchAction implements LifecycleActionInterface {
 	/**
 	 * Return the batch with the step's result and follow-up state.
 	 *
-	 * @param array<string,mixed> $objectData   The batch with the transition applied.
-	 * @param array<string,mixed> $previousData The batch before.
-	 * @param array<string,mixed> $parameters   Declared parameters: `step`.
-	 * @param string              $actionName   The action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the batch with the transition applied.
+	 *                                        Its parameters are the declared declared parameters: `step`.
 	 *
 	 * @return array<string,mixed> The batch to save.
 	 *
 	 * @throws RuntimeException When the declaration names no known step.
 	 *
 	 * @spec openspec/changes/platform-administration-import/specs/administration-import-migration/spec.md
-	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+		$parameters = $context->parameters;
+
 		$step = (string)($parameters['step'] ?? '');
 		if (in_array($step, self::STEPS, true) === false) {
 			throw new RuntimeException(sprintf('ImportBatchAction does not know the step "%s".', $step));

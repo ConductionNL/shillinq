@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\DownPaymentGuard;
 use OCA\Shillinq\Service\Sales\DownPaymentService;
 use OCA\Shillinq\Service\SettingsService;
@@ -94,7 +95,14 @@ final class DownPaymentGuardTest extends TestCase {
 
 		$this->expectException(RuntimeException::class);
 		$this->expectExceptionMessage('Down payment 2026-0412 was already deducted on invoice 2026-0587.');
-		$guard->execute($second, [], ['step' => 'check'], DownPaymentGuard::class);
+		$guard->execute(
+			new LifecycleActionContext(
+				objectData: $second,
+				previousData: [],
+				parameters: ['step' => 'check'],
+				actionName: DownPaymentGuard::class
+			)
+		);
 
 	}//end testTheCheckRefusesASecondDeductionNamingTheFirstInvoice()
 
@@ -108,8 +116,22 @@ final class DownPaymentGuardTest extends TestCase {
 		$second['id'] = 'ar-kitchen';
 		$second['invoiceNumber'] = '2026-0587';
 
-		self::assertSame($second, $guard->execute($second, [], ['step' => 'check'], DownPaymentGuard::class), 'its own deduction passes');
-		self::assertSame($second, $guard->execute($second, [], ['step' => 'stamp'], DownPaymentGuard::class));
+		self::assertSame($second, $guard->execute(
+			new LifecycleActionContext(
+				objectData: $second,
+				previousData: [],
+				parameters: ['step' => 'check'],
+				actionName: DownPaymentGuard::class
+			)
+		), 'its own deduction passes');
+		self::assertSame($second, $guard->execute(
+			new LifecycleActionContext(
+				objectData: $second,
+				previousData: [],
+				parameters: ['step' => 'stamp'],
+				actionName: DownPaymentGuard::class
+			)
+		));
 		$stamped = $this->store->setSchema('ARInvoice')->find('ar-dp')->getObject();
 		self::assertSame('ar-kitchen', $stamped['downPayment']['deductedOnInvoiceId']);
 
@@ -124,7 +146,14 @@ final class DownPaymentGuardTest extends TestCase {
 		[$guard, $second] = $this->guardAndSecondFinal();
 
 		$this->expectException(RuntimeException::class);
-		$guard->execute($second, [], ['step' => 'later'], DownPaymentGuard::class);
+		$guard->execute(
+			new LifecycleActionContext(
+				objectData: $second,
+				previousData: [],
+				parameters: ['step' => 'later'],
+				actionName: DownPaymentGuard::class
+			)
+		);
 
 	}//end testAnUnknownStepIsRefused()
 }//end class

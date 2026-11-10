@@ -28,6 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Service\PublicSector\InterestAllocationService;
 
@@ -51,18 +52,17 @@ class InterestAllocationAction implements LifecycleActionInterface {
 	/**
 	 * Run the declared step on the run.
 	 *
-	 * @param array<string,mixed> $objectData   The run after the transition.
-	 * @param array<string,mixed> $previousData The run before it.
-	 * @param array<string,mixed> $parameters   The declared actionParameters, with `step`.
-	 * @param string              $actionName   The declared action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the run after the transition. Its
+	 *                                        parameters are the declared actionParameters, with `step`.
 	 *
 	 * @return array<string,mixed> The run, calculated or posted.
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
-	 *
 	 * @spec openspec/specs/bookkeeping-programmabegroting/spec.md
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+		$parameters = $context->parameters;
+
 		if (($parameters['step'] ?? '') === 'post') {
 			return $this->interest->post(run: $objectData);
 		}

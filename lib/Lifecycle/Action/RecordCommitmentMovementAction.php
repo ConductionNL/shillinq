@@ -30,6 +30,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Service\Commitment\CommitmentLedger;
 use OCP\IUserSession;
@@ -56,18 +57,17 @@ class RecordCommitmentMovementAction implements LifecycleActionInterface {
 	/**
 	 * Record the movement the declared kind names.
 	 *
-	 * @param array<string,mixed> $objectData   The commitment after the transition.
-	 * @param array<string,mixed> $previousData The commitment before it.
-	 * @param array<string,mixed> $parameters   The declared actionParameters, with `kind`.
-	 * @param string              $actionName   The declared action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the commitment after the transition. Its
+	 *                                        parameters are the declared actionParameters, with `kind`.
 	 *
 	 * @return array<string,mixed> The commitment, unchanged.
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
-	 *
 	 * @spec openspec/changes/archive/2026-09-29-planning-commitment-year-end/tasks.md#task-1.2
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+		$parameters = $context->parameters;
+
 		$user = $this->userSession->getUser();
 		$uid = 'system';
 		if ($user !== null) {

@@ -25,6 +25,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Service\Usage\MeterReadingRating;
 
@@ -48,18 +49,15 @@ class RateMeterReadingAction implements LifecycleActionInterface {
 	/**
 	 * Return the reading with its rated amount; a reading without a plan is refused.
 	 *
-	 * @param array<string,mixed> $objectData   The reading with the transition applied.
-	 * @param array<string,mixed> $previousData The reading before.
-	 * @param array<string,mixed> $parameters   Declared parameters (none).
-	 * @param string              $actionName   The action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the reading with the transition applied.
 	 *
 	 * @return array<string,mixed> The reading to save.
 	 *
 	 * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
-	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+
 		return $this->rating->rate(reading: $objectData);
 
 	}//end execute()

@@ -25,6 +25,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Service\Asset\FixedAssetDepreciation;
 
@@ -48,18 +49,16 @@ class ExtraDepreciationAction implements LifecycleActionInterface {
 	/**
 	 * Post the extra line and return the asset with its new monthly amount and book value.
 	 *
-	 * @param array<string,mixed> $objectData   The asset with the transition's inputs merged in.
-	 * @param array<string,mixed> $previousData The asset before.
-	 * @param array<string,mixed> $parameters   Declared parameters (none).
-	 * @param string              $actionName   The action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the asset with the transition's inputs
+	 *                                        merged in.
 	 *
 	 * @return array<string,mixed> The asset to save.
 	 *
 	 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
-	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+
 		return $this->depreciation->extra(asset: $objectData);
 
 	}//end execute()

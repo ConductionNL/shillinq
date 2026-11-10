@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\PublicSector;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\InterestAllocationAction;
 use OCA\Shillinq\Lifecycle\Action\RealiseReserveMutationAction;
 use OCA\Shillinq\Service\KapitaallastenCalculator;
@@ -87,7 +88,14 @@ trait PublicSectorFixture {
 					}
 
 					if ($executor !== null) {
-						$object = $executor->execute($object, [], ($step['actionParameters'] ?? []), $step['action']);
+						$object = $executor->execute(
+							new LifecycleActionContext(
+								objectData: $object,
+								previousData: [],
+								parameters: ($step['actionParameters'] ?? []),
+								actionName: $step['action']
+							)
+						);
 						$store->setSchema($record['schema'])->saveObject($object);
 					}
 				}

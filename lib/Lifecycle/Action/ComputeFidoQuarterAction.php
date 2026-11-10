@@ -27,6 +27,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle\Action;
 
 use InvalidArgumentException;
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use OCA\Shillinq\Service\PublicSector\FidoQuarter;
 
@@ -50,20 +51,17 @@ class ComputeFidoQuarterAction implements LifecycleActionInterface {
 	/**
 	 * Return the report with its cash and interest risk snapshots.
 	 *
-	 * @param array<string,mixed> $objectData   The report with the transition applied.
-	 * @param array<string,mixed> $previousData The report before.
-	 * @param array<string,mixed> $parameters   Declared parameters (none).
-	 * @param string              $actionName   The action name.
+	 * @param LifecycleActionContext $context The transition; its objectData is the report with the transition applied.
 	 *
 	 * @return array<string,mixed> The report to save.
 	 *
 	 * @throws InvalidArgumentException When the report names no quarter Q1 to Q4.
 	 *
 	 * @spec openspec/changes/public-sector-quarterly-returns/specs/bookkeeping-wet-fido-treasury/spec.md
-	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The signature is LifecycleActionInterface's.
 	 */
-	public function execute(array $objectData, array $previousData, array $parameters, string $actionName): array {
+	public function execute(LifecycleActionContext $context): array {
+		$objectData = $context->objectData;
+
 		$quarter = (string)($objectData['quarter'] ?? '');
 		if (preg_match('/^Q([1-4])$/', $quarter, $match) !== 1) {
 			throw new InvalidArgumentException('A Fido report needs a quarter from Q1 to Q4 before it can be computed.');

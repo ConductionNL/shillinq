@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle\Action;
 
+use OCA\OpenRegister\Lifecycle\LifecycleActionContext;
 use OCA\Shillinq\Lifecycle\Action\StampPostingAction;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -61,10 +62,12 @@ final class StampPostingActionTest extends TestCase {
 	 */
 	public function testThePostIsStampedWithThePostingUser(): void {
 		$result = $this->action('alice')->execute(
-			['id' => 'gl-1', 'postingDate' => '2026-09-20', 'state' => 'posted'],
-			['id' => 'gl-1', 'postingDate' => '2026-09-20', 'state' => 'draft'],
-			[],
-			StampPostingAction::class
+			new LifecycleActionContext(
+				objectData: ['id' => 'gl-1', 'postingDate' => '2026-09-20', 'state' => 'posted'],
+				previousData: ['id' => 'gl-1', 'postingDate' => '2026-09-20', 'state' => 'draft'],
+				parameters: [],
+				actionName: StampPostingAction::class
+			)
 		);
 
 		self::assertTrue($result['postingLocked']);
@@ -80,7 +83,14 @@ final class StampPostingActionTest extends TestCase {
 	 * @return void
 	 */
 	public function testAPostWithoutASessionIsRecordedAsTheSystem(): void {
-		$result = $this->action(null)->execute(['id' => 'gl-1', 'postingDate' => '2026-09-20'], [], [], StampPostingAction::class);
+		$result = $this->action(null)->execute(
+			new LifecycleActionContext(
+				objectData: ['id' => 'gl-1', 'postingDate' => '2026-09-20'],
+				previousData: [],
+				parameters: [],
+				actionName: StampPostingAction::class
+			)
+		);
 
 		self::assertSame('system', $result['auditTrail'][0]['user']);
 	}//end testAPostWithoutASessionIsRecordedAsTheSystem()
