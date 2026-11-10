@@ -20,7 +20,6 @@
 
 declare(strict_types=1);
 
-
 namespace OCA\Shillinq\Tests\Unit\PaymentRun;
 
 use OCA\Shillinq\PaymentRun\Generator\PaymentRunCsvGenerator;
