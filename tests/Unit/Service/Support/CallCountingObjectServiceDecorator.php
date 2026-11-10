@@ -38,6 +38,9 @@ namespace OCA\Shillinq\Tests\Unit\Service\Support;
 
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\ObjectSelection;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
+use OCA\OpenRegister\Kernel\Contracts\SearchOptions;
 use OCP\IUser;
 
 /**
@@ -191,8 +194,7 @@ final class CallCountingObjectServiceDecorator implements ObjectServiceInterface
 	}//end count()
 
 	/**
-	 * @param string $registerSlug The register slug.
-	 * @param string $schemaSlug The schema slug.
+	 * @param RegisterSchemaRef $target The register and schema to search.
 	 * @param array $filters Equality filters.
 	 * @param bool $_rbac Apply register RBAC.
 	 * @param bool $_multitenancy Apply organisation scoping.
@@ -200,13 +202,12 @@ final class CallCountingObjectServiceDecorator implements ObjectServiceInterface
 	 * @return array|int
 	 */
 	public function searchObjectsBySlug(
-		string $registerSlug,
-		string $schemaSlug,
+		RegisterSchemaRef $target,
 		array $filters = [],
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): array|int {
-		return $this->inner->searchObjectsBySlug($registerSlug, $schemaSlug, $filters, $_rbac, $_multitenancy);
+		return $this->inner->searchObjectsBySlug(target: $target, filters: $filters, _rbac: $_rbac, _multitenancy: $_multitenancy);
 
 	}//end searchObjectsBySlug()
 
@@ -298,9 +299,7 @@ final class CallCountingObjectServiceDecorator implements ObjectServiceInterface
 	 * @param array $query The search query.
 	 * @param bool $_rbac Apply register RBAC.
 	 * @param bool $_multitenancy Apply organisation scoping.
-	 * @param ?array $ids Restrict to these ids.
-	 * @param ?string $uses Restrict to objects used by this one.
-	 * @param ?array $views Restrict to these views.
+	 * @param SearchOptions $options The ids, uses and views to restrict to.
 	 *
 	 * @return array|int
 	 */
@@ -308,11 +307,9 @@ final class CallCountingObjectServiceDecorator implements ObjectServiceInterface
 		array $query = [],
 		bool $_rbac = true,
 		bool $_multitenancy = true,
-		?array $ids = null,
-		?string $uses = null,
-		?array $views = null
+		SearchOptions $options = new SearchOptions()
 	): array|int {
-		return $this->inner->searchObjects($query, $_rbac, $_multitenancy, $ids, $uses, $views);
+		return $this->inner->searchObjects(query: $query, _rbac: $_rbac, _multitenancy: $_multitenancy, options: $options);
 
 	}//end searchObjects()
 
@@ -346,10 +343,7 @@ final class CallCountingObjectServiceDecorator implements ObjectServiceInterface
 	 * @param array $query The search query.
 	 * @param bool $_rbac Apply register RBAC.
 	 * @param bool $_multitenancy Apply organisation scoping.
-	 * @param bool $deleted Include soft-deleted objects.
-	 * @param ?array $ids Restrict to these ids.
-	 * @param ?string $uses Restrict to objects used by this one.
-	 * @param ?array $views Restrict to these views.
+	 * @param SearchOptions $options The ids, uses and views to restrict to.
 	 *
 	 * @return array
 	 */
@@ -357,12 +351,9 @@ final class CallCountingObjectServiceDecorator implements ObjectServiceInterface
 		array $query = [],
 		bool $_rbac = true,
 		bool $_multitenancy = true,
-		bool $deleted = false,
-		?array $ids = null,
-		?string $uses = null,
-		?array $views = null
+		SearchOptions $options = new SearchOptions()
 	): array {
-		return $this->inner->searchObjectsPaginated($query, $_rbac, $_multitenancy, $deleted, $ids, $uses, $views);
+		return $this->inner->searchObjectsPaginated(query: $query, _rbac: $_rbac, _multitenancy: $_multitenancy, options: $options);
 
 	}//end searchObjectsPaginated()
 
@@ -557,8 +548,7 @@ final class CallCountingObjectServiceDecorator implements ObjectServiceInterface
 	 * @param array $query The search query.
 	 * @param bool $_rbac Apply register RBAC.
 	 * @param bool $_multitenancy Apply organisation scoping.
-	 * @param ?array $ids Restrict to these ids.
-	 * @param ?string $uses Restrict to objects used by this one.
+	 * @param ObjectSelection $selection The ids and uses to restrict to.
 	 *
 	 * @return int
 	 */
@@ -566,10 +556,9 @@ final class CallCountingObjectServiceDecorator implements ObjectServiceInterface
 		array $query = [],
 		bool $_rbac = true,
 		bool $_multitenancy = true,
-		?array $ids = null,
-		?string $uses = null
+		ObjectSelection $selection = new ObjectSelection()
 	): int {
-		return $this->inner->countSearchObjects($query, $_rbac, $_multitenancy, $ids, $uses);
+		return $this->inner->countSearchObjects(query: $query, _rbac: $_rbac, _multitenancy: $_multitenancy, selection: $selection);
 
 	}//end countSearchObjects()
 }//end class

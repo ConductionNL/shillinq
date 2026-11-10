@@ -48,6 +48,9 @@ namespace OCA\Shillinq\Tests\Unit\Service\Support;
 
 use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\ObjectSelection;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
+use OCA\OpenRegister\Kernel\Contracts\SearchOptions;
 use OCP\IUser;
 use RuntimeException;
 
@@ -478,9 +481,7 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 * @param array   $query         The search query.
 	 * @param bool    $_rbac         Apply register RBAC.
 	 * @param bool    $_multitenancy Apply organisation scoping.
-	 * @param ?array  $ids           Restrict to these ids.
-	 * @param ?string $uses          Restrict to objects used by this one.
-	 * @param ?array  $views         Restrict to these views.
+	 * @param SearchOptions $options The ids, uses and views to restrict to.
 	 *
 	 * @return array|int
 	 */
@@ -488,9 +489,7 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 		array $query = [],
 		bool $_rbac = true,
 		bool $_multitenancy = true,
-		?array $ids = null,
-		?string $uses = null,
-		?array $views = null
+		SearchOptions $options = new SearchOptions()
 	): array|int {
 		$this->unsupported(method: 'searchObjects');
 
@@ -543,10 +542,7 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 * @param array   $query         The search query.
 	 * @param bool    $_rbac         Apply register RBAC.
 	 * @param bool    $_multitenancy Apply organisation scoping.
-	 * @param bool    $deleted       Include soft-deleted objects.
-	 * @param ?array  $ids           Restrict to these ids.
-	 * @param ?string $uses          Restrict to objects used by this one.
-	 * @param ?array  $views         Restrict to these views.
+	 * @param SearchOptions $options The ids, uses and views to restrict to.
 	 *
 	 * @return array
 	 */
@@ -554,10 +550,7 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 		array $query = [],
 		bool $_rbac = true,
 		bool $_multitenancy = true,
-		bool $deleted = false,
-		?array $ids = null,
-		?string $uses = null,
-		?array $views = null
+		SearchOptions $options = new SearchOptions()
 	): array {
 		$this->unsupported(method: 'searchObjectsPaginated');
 
@@ -566,8 +559,7 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	/**
 	 * Not modelled.
 	 *
-	 * @param string $registerSlug  The register slug.
-	 * @param string $schemaSlug    The schema slug.
+	 * @param RegisterSchemaRef $target The register and schema to search.
 	 * @param array  $filters       Equality filters.
 	 * @param bool   $_rbac         Apply register RBAC.
 	 * @param bool   $_multitenancy Apply organisation scoping.
@@ -575,14 +567,13 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 * @return array|int
 	 */
 	public function searchObjectsBySlug(
-		string $registerSlug,
-		string $schemaSlug,
+		RegisterSchemaRef $target,
 		array $filters = [],
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): array|int {
-		return $this->setRegister(register: $registerSlug)
-			->setSchema(schema: $schemaSlug)
+		return $this->setRegister(register: $target->register)
+			->setSchema(schema: $target->schema)
 			->findAll(config: ['filters' => $filters]);
 
 	}//end searchObjectsBySlug()
@@ -965,8 +956,7 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	 * @param array   $query         The search query.
 	 * @param bool    $_rbac         Apply register RBAC.
 	 * @param bool    $_multitenancy Apply organisation scoping.
-	 * @param ?array  $ids           Restrict to these ids.
-	 * @param ?string $uses          Restrict to objects used by this one.
+	 * @param ObjectSelection $selection The ids and uses to restrict to.
 	 *
 	 * @return int
 	 */
@@ -974,8 +964,7 @@ class InMemoryObjectServiceStub implements ObjectServiceInterface {
 		array $query = [],
 		bool $_rbac = true,
 		bool $_multitenancy = true,
-		?array $ids = null,
-		?string $uses = null
+		ObjectSelection $selection = new ObjectSelection()
 	): int {
 		$this->unsupported(method: 'countSearchObjects');
 
