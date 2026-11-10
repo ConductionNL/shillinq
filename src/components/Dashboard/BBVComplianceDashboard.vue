@@ -111,6 +111,7 @@ import BBVComplianceChart from './BBVComplianceChart.vue'
 import BBVKPICards from './BBVKPICards.vue'
 import BBVProgrammeTable from './BBVProgrammeTable.vue'
 import BBVTrendChart from './BBVTrendChart.vue'
+import { administrationOptions, fetchAdministrationContext } from '../../utils/administrationContext.js'
 
 export default {
 	name: 'BBVComplianceDashboard',
@@ -235,16 +236,10 @@ export default {
 		t,
 		async loadAdministrationContext() {
 			try {
-				const response = await axios.get(
-					generateUrl('/apps/shillinq/api/administrations/context'),
-				)
-				const admins = response.data?.administrations || []
-				this.administrationOptions = admins.map((a) => ({
-					value: a.administrationId,
-					label: a.name || a.administrationCode || a.administrationId,
-				}))
-				if (response.data?.activeAdministrationId) {
-					this.administrationId = response.data.activeAdministrationId
+				const context = await fetchAdministrationContext()
+				this.administrationOptions = administrationOptions(context)
+				if (context?.activeAdministrationId) {
+					this.administrationId = context.activeAdministrationId
 				}
 			} catch (e) {
 				// Inline error; the dashboard still renders an empty envelope.

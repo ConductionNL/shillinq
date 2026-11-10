@@ -184,6 +184,7 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcAppContent, NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
+import { administrationOptions, fetchAdministrationContext } from '../utils/administrationContext.js'
 
 const REGISTER_SLUG = 'shillinq'
 
@@ -289,16 +290,10 @@ export default {
 		async loadAdministrationContext() {
 			this.loading = true
 			try {
-				const response = await axios.get(
-					generateUrl('/apps/shillinq/api/administrations/context'),
-				)
-				const admins = response.data?.administrations || []
-				this.administrationOptions = admins.map((a) => ({
-					value: a.administrationId,
-					label: a.name || a.administrationCode || a.administrationId,
-				}))
+				const context = await fetchAdministrationContext()
+				this.administrationOptions = administrationOptions(context)
 				this.administrationId =
-					response.data?.activeAdministrationId
+					context?.activeAdministrationId
 					|| this.administrationOptions[0]?.value
 					|| ''
 			} catch {

@@ -196,6 +196,7 @@ import { CnDataTable } from '@conduction/nextcloud-vue'
 import axios from '@nextcloud/axios'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
+import { administrationLabel, fetchAdministrationContext } from '../../utils/administrationContext.js'
 
 export default {
 	name: 'GeneratedReportsIndex',
@@ -338,14 +339,10 @@ export default {
 		 */
 		async loadAdministrationContext() {
 			try {
-				const response = await axios.get(
-					generateUrl('/apps/shillinq/api/administrations/context'),
-				)
-				const admins = response.data?.administrations || []
+				const context = await fetchAdministrationContext()
 				const names = {}
-				for (const a of admins) {
-					names[a.administrationId] =
-						a.name || a.administrationCode || a.administrationId
+				for (const a of context?.administrations || []) {
+					names[a.administrationId] = administrationLabel(a)
 				}
 				this.administrationNames = names
 			} catch (e) {
