@@ -76,6 +76,66 @@ namespace OCA\Shillinq\Standards\Checks;
  */
 final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 	/**
+	 * The fields both seeded BbvStatement samples share.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SEED_BBV_BASE = [
+		'administrationId' => 'adm-shillinq-bbv-1',
+		'jurisdiction' => 'NL',
+		'entityType' => 'municipality',
+		'fiscalYear' => 2026,
+		'currency' => 'EUR',
+		'paragraphs' => self::BBV_PARAGRAPHS,
+		'taskFields' => [
+			['code' => '0.1', 'name' => 'Bestuur', 'estimatedRevenue' => 120000.00, 'estimatedExpense' => 480000.00],
+			['code' => '2.1', 'name' => 'Verkeer en vervoer', 'estimatedRevenue' => 50000.00, 'estimatedExpense' => 900000.00],
+			['code' => '5.2', 'name' => 'Sportaccommodaties', 'estimatedRevenue' => 75000.00, 'estimatedExpense' => 260000.00],
+		],
+		'fixedAssets' => [
+			['name' => 'Gemeentehuis', 'kind' => 'tangible', 'capitalised' => true, 'acquisitionCost' => 4200000.00, 'valuationBasis' => 'acquisitionCost'],
+			['name' => 'Softwarelicentie GIS', 'kind' => 'intangible', 'capitalised' => true, 'acquisitionCost' => 85000.00, 'valuationBasis' => 'productionCost'],
+		],
+	];
+
+	/**
+	 * The fields of the seeded begroting (budget) sample on top of the shared base.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SEED_BBV_BUDGET = [
+		'documentType' => 'begroting',
+		'parts' => ['beleidsbegroting', 'financielebegroting'],
+		'programmePlan' => [
+			'programmes' => [
+				['code' => '1', 'name' => 'Bestuur en ondersteuning'],
+				['code' => '2', 'name' => 'Verkeer, vervoer en waterstaat'],
+			],
+			'generalFundingSources' => 38500000.00,
+			'overhead' => 6200000.00,
+			'vpbCharge' => 0.00,
+			'unforeseen' => 150000.00,
+		],
+	];
+
+	/**
+	 * The fields of the seeded jaarstukken (annual report) sample on top of the
+	 * shared base.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SEED_BBV_JAARSTUKKEN = [
+		'documentType' => 'jaarstukken',
+		'parts' => ['jaarverslag', 'annualAccounts'],
+		'annualAccounts' => [
+			'overviewRevenueExpenses' => true,
+			'balance' => true,
+			'lawfulnessAccountability' => true,
+			'auditorsStatement' => true,
+		],
+	];
+
+	/**
 	 * The data seedSpec() returns; see there.
 	 *
 	 * @var array<string, mixed>
@@ -528,56 +588,11 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 	 * @return array<string, array<int, array<string, mixed>>>
 	 */
 	public static function seedObjects(): array {
-		$paragraphs = self::BBV_PARAGRAPHS;
-
-		$taskFields = [
-			['code' => '0.1', 'name' => 'Bestuur', 'estimatedRevenue' => 120000.00, 'estimatedExpense' => 480000.00],
-			['code' => '2.1', 'name' => 'Verkeer en vervoer', 'estimatedRevenue' => 50000.00, 'estimatedExpense' => 900000.00],
-			['code' => '5.2', 'name' => 'Sportaccommodaties', 'estimatedRevenue' => 75000.00, 'estimatedExpense' => 260000.00],
-		];
-
-		$fixedAssets = [
-			['name' => 'Gemeentehuis', 'kind' => 'tangible', 'capitalised' => true, 'acquisitionCost' => 4200000.00, 'valuationBasis' => 'acquisitionCost'],
-			['name' => 'Softwarelicentie GIS', 'kind' => 'intangible', 'capitalised' => true, 'acquisitionCost' => 85000.00, 'valuationBasis' => 'productionCost'],
-		];
-
-		$base = [
-			'administrationId' => 'adm-shillinq-bbv-1',
-			'jurisdiction' => 'NL',
-			'entityType' => 'municipality',
-			'fiscalYear' => 2026,
-			'currency' => 'EUR',
-			'paragraphs' => $paragraphs,
-			'taskFields' => $taskFields,
-			'fixedAssets' => $fixedAssets,
-		];
-
-		$budget = $base;
-		$budget['documentType'] = 'begroting';
-		$budget['parts'] = ['beleidsbegroting', 'financielebegroting'];
-		$budget['programmePlan'] = [
-			'programmes' => [
-				['code' => '1', 'name' => 'Bestuur en ondersteuning'],
-				['code' => '2', 'name' => 'Verkeer, vervoer en waterstaat'],
-			],
-			'generalFundingSources' => 38500000.00,
-			'overhead' => 6200000.00,
-			'vpbCharge' => 0.00,
-			'unforeseen' => 150000.00,
-		];
-
-		$jaarstukken = $base;
-		$jaarstukken['documentType'] = 'jaarstukken';
-		$jaarstukken['parts'] = ['jaarverslag', 'annualAccounts'];
-		$jaarstukken['annualAccounts'] = [
-			'overviewRevenueExpenses' => true,
-			'balance' => true,
-			'lawfulnessAccountability' => true,
-			'auditorsStatement' => true,
-		];
-
 		return [
-			'BbvStatement' => [$budget, $jaarstukken],
+			'BbvStatement' => [
+				[...self::SEED_BBV_BASE, ...self::SEED_BBV_BUDGET],
+				[...self::SEED_BBV_BASE, ...self::SEED_BBV_JAARSTUKKEN],
+			],
 		];
 
 	}//end seedObjects()
