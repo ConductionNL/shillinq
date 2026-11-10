@@ -522,4 +522,84 @@ class GRIRClearingListenerTest extends TestCase {
 	}//end testGoodsReceiptAcceptThenInvoiceMatchPostsBalancedGRIRAccrual()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
+
+	/**
+	 * Build a transition event for the given schema, target state and payload.
+	 *
+	 * @param string               $schema  Schema identifier as the event reports it.
+	 * @param string               $to      The state reached.
+	 * @param array<string, mixed> $payload Object payload.
+	 *
+	 * @return ObjectTransitionedEvent
+	 */
+	private function transition(string $schema, string $to, array $payload): ObjectTransitionedEvent {
+		return $this->createConfiguredMock(
+			ObjectTransitionedEvent::class,
+			['getObject' => $this->entity($schema, $payload), 'getTo' => $to, 'getSchema' => $schema]
+		);
+
+	}//end transition()
+
+	/**
+	 * A namespaced, padded schema identifier is still recognised.
+	 *
+	 * @return void
+	 */
+	public function testNamespacedSchemaIsRecognised(): void {
+		$payload = ['id' => 'grn-1', 'administrationId' => ' adm-1 '];
+		$this->grirClearingService->expects(self::once())
+			->method('postGRIRForGoodsReceiptAccept')
+			->with('adm-1', $payload);
+
+		$this->listener->handle($this->transition(' shillinq/GoodsReceiptNote ', 'accepted', $payload));
+
+	}//end testNamespacedSchemaIsRecognised()
+
+	/**
+	 * The invoice id falls back to @self.id; without any id nothing is settled.
+	 *
+	 * @return void
+	 */
+	public function testInvoiceIdFallsBackToSelfAndIsRequired(): void {
+		$this->grirClearingService->expects(self::once())
+			->method('settleGRIRForMatchedInvoice')
+			->with('adm-1', 'inv-self');
+
+		$this->listener->handle($this->transition('SupplierInvoice', 'matched', ['@self' => ['id' => 'inv-self'], 'administrationId' => 'adm-1']));
+		$this->listener->handle($this->transition('SupplierInvoice', 'matched', ['administrationId' => 'adm-1']));
+
+	}//end testInvoiceIdFallsBackToSelfAndIsRequired()
+
+	/**
+	 * Each schema reacts only to its own target state.
+	 *
+	 * @return void
+	 */
+	public function testEachSchemaReactsOnlyToItsOwnState(): void {
+		$this->grirClearingService->expects(self::never())->method('postGRIRForGoodsReceiptAccept');
+		$this->grirClearingService->expects(self::never())->method('postGRIRForServiceReceiptAccept');
+		$this->grirClearingService->expects(self::never())->method('settleGRIRForMatchedInvoice');
+
+		$payload = ['id' => 'x-1', 'administrationId' => 'adm-1'];
+		$this->listener->handle($this->transition('SvcReceipt', 'matched', $payload));
+		$this->listener->handle($this->transition('SupplierInvoice', 'accepted', $payload));
+		$this->listener->handle($this->transition('GoodsReceiptNote', 'matched', $payload));
+		$this->listener->handle($this->transition('xgoodsreceiptnote', 'accepted', $payload));
+
+	}//end testEachSchemaReactsOnlyToItsOwnState()
+
+	/**
+	 * A blank administration and a non-transition event are ignored.
+	 *
+	 * @return void
+	 */
+	public function testBlankAdministrationAndOtherEventsAreIgnored(): void {
+		$this->grirClearingService->expects(self::never())->method('postGRIRForGoodsReceiptAccept');
+		$this->logger->expects(self::never())->method('error');
+
+		$this->listener->handle($this->transition('GoodsReceiptNote', 'accepted', ['administrationId' => '  ']));
+
+		$this->listener->handle(new \OCP\EventDispatcher\Event());
+
+	}//end testBlankAdministrationAndOtherEventsAreIgnored()
 }//end class
