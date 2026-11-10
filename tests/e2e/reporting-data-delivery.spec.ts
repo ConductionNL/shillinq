@@ -50,11 +50,19 @@ test.describe('reporting-data-delivery', () => {
 			}),
 		)
 		await page.route(
-			'**/apps/openregister/api/objects/shillinq/ReportSchedule',
+			'**/apps/shillinq/api/report-schedules',
 			(route) => {
 				const body = route.request().postDataJSON()
 				posted.push(body)
-				return route.fulfill({ json: { id: 'sched-1', ...body } })
+				return route.fulfill({
+					status: 201,
+					json: {
+						id: 'sched-1',
+						...body,
+						status: 'active',
+						nextRunAt: '2026-10-05T00:00:00+00:00',
+					},
+				})
 			},
 		)
 
@@ -78,8 +86,9 @@ test.describe('reporting-data-delivery', () => {
 			periodRule: 'previous-period',
 			recipients: ['group:controllers'],
 			folderPath: '/Rapportages/Maand',
-			status: 'active',
 		})
-		expect(String(posted[0].nextRunAt)).toMatch(/-05T00:00:00/)
+		expect(posted[0]).not.toHaveProperty('status')
+		expect(posted[0]).not.toHaveProperty('nextRunAt')
+		await expect(page.getByTestId('generate-report-scheduled')).toContainText('2026-10-05')
 	})
 })
