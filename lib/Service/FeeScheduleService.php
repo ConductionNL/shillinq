@@ -236,10 +236,22 @@ final class FeeScheduleService {
 		$lookup->intakeChannel = $intakeChannel;
 		$lookup->onDate        = $onDate;
 
+		return $this->resolveLookup(lookup: $lookup);
+	}//end resolveForObject()
+
+	/**
+	 * Walk the register's schedules for the first one that applies to the
+	 * looked-up object, and price it for that object.
+	 *
+	 * @param FeeObjectLookup $lookup The object and what is asked of it.
+	 *
+	 * @return array<string, mixed>|null The schedule with its amount resolved, or null.
+	 */
+	private function resolveLookup(FeeObjectLookup $lookup): ?array {
 		$rows = $this->objectService
 			->setRegister($this->registerSlug())
 			->setSchema(self::SCHEMA)
-			->findAll(['filters' => ['register' => $register], 'limit' => 500]);
+			->findAll(['filters' => ['register' => $lookup->register], 'limit' => 500]);
 
 		foreach ($rows as $row) {
 			$tuple = $this->objectTuple(row: $row, lookup: $lookup);
@@ -247,15 +259,15 @@ final class FeeScheduleService {
 				continue;
 			}
 
-			$lookup->variant = (string)($object[(string)($row['variantProperty'] ?? 'variant')] ?? '');
+			$lookup->variant = (string)($lookup->object[(string)($row['variantProperty'] ?? 'variant')] ?? '');
 			$resolved        = $this->resolveVariantFirst(tuple: $tuple, lookup: $lookup);
 			if ($resolved !== null) {
-				return (new FeeCalculation())->applyTo(schedule: $resolved, object: $object);
+				return (new FeeCalculation())->applyTo(schedule: $resolved, object: $lookup->object);
 			}
 		}
 
 		return null;
-	}//end resolveForObject()
+	}//end resolveLookup()
 
 	/**
 	 * The tuple a stored row asks the object for, or null when the row is for
@@ -446,21 +458,8 @@ final class FeeScheduleService {
 			return;
 		}
 
-		$defaults = 0;
-		$channels = [];
-		foreach ($amounts as $entry) {
-			if (is_array($entry) === false) {
-				continue;
-			}
-
-			$channel = (string)($entry['intakeChannel'] ?? '');
-			if ($channel === '') {
-				$defaults++;
-				continue;
-			}
-
-			$channels[] = $channel;
-		}
+		$channels = $this->entryChannels(amounts: $amounts);
+		$defaults = count(array_keys($channels, '', true));
 
 		if ($defaults === 0) {
 			throw new InvalidArgumentException(
@@ -475,6 +474,25 @@ final class FeeScheduleService {
 			throw new InvalidArgumentException('This fee names more than one default amount; only one entry may omit its intakeChannel.');
 		}
 	}//end assertAmountsHaveADefault()
+
+	/**
+	 * The intake channel of every entry of an `amounts` list, in order; a
+	 * default entry is an empty string and a malformed entry is skipped.
+	 *
+	 * @param array<mixed> $amounts The amounts list.
+	 *
+	 * @return list<string> One channel per well-formed entry.
+	 */
+	private function entryChannels(array $amounts): array {
+		$channels = [];
+		foreach ($amounts as $entry) {
+			if (is_array($entry) === true) {
+				$channels[] = (string)($entry['intakeChannel'] ?? '');
+			}
+		}
+
+		return $channels;
+	}//end entryChannels()
 
 	/**
 	 * The citation as an administrator reads it beside the amount
