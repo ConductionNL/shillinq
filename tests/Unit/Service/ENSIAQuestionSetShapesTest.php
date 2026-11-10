@@ -83,7 +83,7 @@ final class ENSIAQuestionSetShapesTest extends TestCase {
 			],
 		];
 
-		$result = $this->loaderOver(json_encode($seed))->load(2031, ['BIO', 7 => 'DigiD'], 'cyc', 'adm');
+		$result = $this->loaderOver(json_encode($seed))->load(2031, ['BIO', 7 => 'DigiD', ''], 'cyc', 'adm');
 
 		self::assertSame(
 			[
