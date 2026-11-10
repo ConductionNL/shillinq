@@ -479,74 +479,95 @@ export default {
 			if (!this.canSubmit) {
 				return
 			}
+			await this.submitWith(
+				async () => {
+					const response = await axios.post(
+						generateUrl('/apps/shillinq/api/reporting/generate'),
+						this.generateRequest(),
+					)
+					this.$emit('generated', response.data || {})
+				},
+				() => this.t('shillinq', 'Report generation failed'),
+			)
+		},
+
+		async onSchedule() {
+			if (!this.canSchedule) {
+				return
+			}
+			await this.submitWith(
+				async () => {
+					const payload = this.scheduleRequest()
+					const response = await axios.post(
+						generateUrl(
+							'/apps/openregister/api/objects/shillinq/ReportSchedule',
+						),
+						payload,
+					)
+					this.scheduledMessage = this.t(
+						'shillinq',
+						'Scheduled. The first run is on {date}.',
+						{ date: payload.nextRunAt.slice(0, 10) },
+					)
+					this.$emit('scheduled', response.data || payload)
+				},
+				() => this.t('shillinq', 'The schedule could not be saved'),
+			)
+		},
+
+		/**
+		 * Run a submission with the busy flag set and the error cleared; a
+		 * failure shows the server's error, else the fallback text.
+		 *
+		 * @param {() => Promise<void>} action The request and what follows it.
+		 * @param {() => string} fallback Returns the text for a failure without a server error.
+		 */
+		async submitWith(action, fallback) {
 			this.submitting = true
 			this.error = ''
 			try {
-				const response = await axios.post(
-					generateUrl('/apps/shillinq/api/reporting/generate'),
-					{
-						reportType: this.report.id,
-						administrationId: this.form.administrationId,
-						format: this.form.format,
-						periodType: this.form.periodType,
-						periodYear: this.form.periodYear,
-						periodNumber:
-							this.form.periodType === 'year'
-								? null
-								: this.form.periodNumber,
-						period: this.periodLabel(),
-					},
-				)
-				this.$emit('generated', response.data || {})
+				await action()
 			} catch (e) {
-				this.error =
-					e?.response?.data?.error
-					|| this.t('shillinq', 'Report generation failed')
+				this.error = e?.response?.data?.error || fallback()
 			} finally {
 				this.submitting = false
 			}
 		},
 
 		/**
-		 * Save the dialog's report and format as a report schedule.
+		 * The report generation request; a year has no period number.
 		 *
-		 * @spec openspec/changes/reporting-data-delivery/specs/report-delivery/spec.md
+		 * @return {object}
 		 */
-		async onSchedule() {
-			if (!this.canSchedule) {
-				return
+		generateRequest() {
+			return {
+				reportType: this.report.id,
+				administrationId: this.form.administrationId,
+				format: this.form.format,
+				periodType: this.form.periodType,
+				periodYear: this.form.periodYear,
+				periodNumber:
+					this.form.periodType === 'year' ? null : this.form.periodNumber,
+
+				period: this.periodLabel(),
 			}
-			this.submitting = true
-			this.error = ''
-			try {
-				const payload = schedulePayload(
-					this.report,
-					{
-						...this.schedule,
-						administrationId: this.form.administrationId,
-						format: this.form.format,
-					},
-					new Date(),
-				)
-				const response = await axios.post(
-					generateUrl(
-						'/apps/openregister/api/objects/shillinq/ReportSchedule',
-					),
-					payload,
-				)
-				this.scheduledMessage = this.t(
-					'shillinq',
-					'Scheduled. The first run is on {date}.',
-					{ date: payload.nextRunAt.slice(0, 10) },
-				)
-				this.$emit('scheduled', response.data || payload)
-			} catch (e) {
-				this.error =
-					e?.response?.data?.error
-					|| this.t('shillinq', 'The schedule could not be saved')
-			} finally {
-				this.submitting = false
-			}
+		},
+
+		/**
+		 * The ReportSchedule to save, with its first run from now.
+		 *
+		 * @return {object}
+		 */
+		scheduleRequest() {
+			return schedulePayload(
+				this.report,
+				{
+					...this.schedule,
+					administrationId: this.form.administrationId,
+					format: this.form.format,
+				},
+				new Date(),
+			)
 		},
 
 		/**
