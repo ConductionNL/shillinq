@@ -144,48 +144,17 @@ class BbvComplianceGuard {
 	 * @return array<string,mixed>|null Administration record or null when
 	 *                                  not resolvable.
 	 */
-	private function findAdministration(string $administrationId): ?array {
+	private function findAdministration(string $administrationId): array|null {
 		if ($administrationId === '') {
 			return null;
 		}
 
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$matches = $objectService
-				->setRegister($this->getRegisterSlug())
-				->setSchema('Administration')
-				->findAll(
-					[
-						'filters' => [
-							'administrationCode' => $administrationId,
-						],
-						'limit' => 1,
-					]
-				);
-
-			if (empty($matches) === false) {
-				return $matches[0];
-			}
-
 			// Fall back to id-based lookup for installs that key on
 			// OpenRegister's internal id rather than the business code.
-			$byId = $objectService
-				->setRegister($this->getRegisterSlug())
-				->setSchema('Administration')
-				->findAll(
-					[
-						'filters' => [
-							'id' => $administrationId,
-						],
-						'limit' => 1,
-					]
-				);
-
-			if (empty($byId) === false) {
-				return $byId[0];
-			}
-
-			return null;
+			return $this->firstAdministration(objectService: $objectService, filters: ['administrationCode' => $administrationId])
+				?? $this->firstAdministration(objectService: $objectService, filters: ['id' => $administrationId]);
 		} catch (\Throwable $e) {
 			$this->logger->debug(
 				'BbvComplianceGuard: administration lookup failed; bypassing gate',
@@ -195,6 +164,28 @@ class BbvComplianceGuard {
 		}//end try
 
 	}//end findAdministration()
+
+	/**
+	 * The first Administration matching the filters, or null.
+	 *
+	 * @param object               $objectService OpenRegister's ObjectService.
+	 * @param array<string,string> $filters       The lookup filters.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function firstAdministration(object $objectService, array $filters): array|null {
+		$matches = $objectService
+			->setRegister($this->getRegisterSlug())
+			->setSchema('Administration')
+			->findAll(['filters' => $filters, 'limit' => 1]);
+
+		if (empty($matches) === false) {
+			return $matches[0];
+		}
+
+		return null;
+
+	}//end firstAdministration()
 
 	/**
 	 * Resolve every GLLine row belonging to the candidate GLTransaction.
@@ -211,18 +202,7 @@ class BbvComplianceGuard {
 		}
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			return $objectService
-				->setRegister($this->getRegisterSlug())
-				->setSchema('GLLine')
-				->findAll(
-					[
-						'filters' => [
-							'transactionId' => $transactionId,
-						],
-						'limit' => 1000,
-					]
-				);
+			return $this->linesOf(transactionId: $transactionId);
 		} catch (\Throwable $e) {
 			$this->logger->debug(
 				'BbvComplianceGuard: GLLine lookup failed; bypassing gate',
@@ -234,6 +214,29 @@ class BbvComplianceGuard {
 	}//end findTransactionLines()
 
 	/**
+	 * The GLLine rows of one transaction.
+	 *
+	 * @param string $transactionId The parent transaction id.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function linesOf(string $transactionId): array {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		return $objectService
+			->setRegister($this->getRegisterSlug())
+			->setSchema('GLLine')
+			->findAll(
+				[
+					'filters' => [
+						'transactionId' => $transactionId,
+					],
+					'limit' => 1000,
+				]
+			);
+
+	}//end linesOf()
+
+	/**
 	 * Look up the BbvAccountMapping for (administrationId, accountNumber).
 	 * Returns null when no mapping exists or the schema is unavailable.
 	 *
@@ -242,31 +245,13 @@ class BbvComplianceGuard {
 	 *
 	 * @return array<string,mixed>|null The mapping or null when missing.
 	 */
-	private function findMapping(string $administrationId, string $accountNumber): ?array {
+	private function findMapping(string $administrationId, string $accountNumber): array|null {
 		if ($administrationId === '' || $accountNumber === '') {
 			return null;
 		}
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$matches = $objectService
-				->setRegister($this->getRegisterSlug())
-				->setSchema('BbvAccountMapping')
-				->findAll(
-					[
-						'filters' => [
-							'administrationId' => $administrationId,
-							'accountNumber' => $accountNumber,
-						],
-						'limit' => 1,
-					]
-				);
-
-			if (empty($matches) === true) {
-				return null;
-			}
-
-			return $matches[0];
+			return $this->firstMapping(administrationId: $administrationId, accountNumber: $accountNumber);
 		} catch (\Throwable $e) {
 			$this->logger->debug(
 				'BbvComplianceGuard: BbvAccountMapping lookup failed; treating as missing',
@@ -280,6 +265,37 @@ class BbvComplianceGuard {
 		}//end try
 
 	}//end findMapping()
+
+	/**
+	 * The first BbvAccountMapping of (administrationId, accountNumber), or null.
+	 *
+	 * @param string $administrationId The owning administration id.
+	 * @param string $accountNumber    The RGS account number.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function firstMapping(string $administrationId, string $accountNumber): array|null {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$matches = $objectService
+			->setRegister($this->getRegisterSlug())
+			->setSchema('BbvAccountMapping')
+			->findAll(
+				[
+					'filters' => [
+						'administrationId' => $administrationId,
+						'accountNumber' => $accountNumber,
+					],
+					'limit' => 1,
+				]
+			);
+
+		if (empty($matches) === true) {
+			return null;
+		}
+
+		return $matches[0];
+
+	}//end firstMapping()
 
 	/**
 	 * Precondition: every GLLine on this transaction MUST have a non-archived
@@ -314,65 +330,110 @@ class BbvComplianceGuard {
 	 * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-003)
 	 */
 	public function allLinesMappedForMunicipalAdmin(array $transaction): bool {
-		$administrationId = (string)($transaction['administrationId'] ?? '');
-		if ($administrationId === '') {
-			// Cannot classify — BalanceGuard handles malformed headers.
+		$administrationType = $this->municipalType(administrationId: (string)($transaction['administrationId'] ?? ''));
+		if ($administrationType === null || $this->gateApplies(transaction: $transaction) === false) {
 			return true;
 		}
 
+		$context = $this->unmappedLine(transaction: $transaction, administrationType: $administrationType);
+		if ($context === null) {
+			return true;
+		}
+
+		$this->logger->info(
+			'BbvComplianceGuard: blocking GLTransaction.post — unmapped account on municipal administration',
+			$context
+		);
+		return false;
+	}//end allLinesMappedForMunicipalAdmin()
+
+	/**
+	 * The municipal administration type the gate applies to, or null when
+	 * the administration cannot be classified (no id — BalanceGuard handles
+	 * malformed headers; not yet in OR on bootstrap) or is not municipal
+	 * (REQ-BBV-003: the gate does not apply).
+	 *
+	 * @param string $administrationId The transaction's administration.
+	 *
+	 * @return string|null
+	 */
+	private function municipalType(string $administrationId): string|null {
 		$administration = $this->findAdministration(administrationId: $administrationId);
 		if ($administration === null) {
-			// Administration not yet present in OR (bootstrap) — permissive.
-			return true;
+			return null;
 		}
 
 		$administrationType = (string)($administration['administrationType'] ?? '');
 		if (in_array($administrationType, self::MUNICIPAL_TYPES, true) === false) {
-			// Non-municipal — gate not applicable (REQ-BBV-003).
-			return true;
+			return null;
 		}
 
+		return $administrationType;
+	}//end municipalType()
+
+	/**
+	 * Whether the gate is active (the BBV seed ran) and the posting is not a
+	 * historic one dated before its installation (REQ-BBV-003 forward-only).
+	 *
+	 * @param array<string,mixed> $transaction The GLTransaction record.
+	 *
+	 * @return bool
+	 */
+	private function gateApplies(array $transaction): bool {
 		$gateInstallDate = $this->getGateInstallDate();
 		if ($gateInstallDate === null) {
-			// BBV seed has never run; gate not yet active.
-			return true;
+			return false;
 		}
 
 		$postingDate = (string)($transaction['postingDate'] ?? '');
-		if ($postingDate !== '' && strcmp($postingDate, $gateInstallDate) < 0) {
-			// Historic posting (REQ-BBV-003 forward-only).
-			return true;
-		}
+		return $postingDate === '' || strcmp($postingDate, $gateInstallDate) >= 0;
+	}//end gateApplies()
 
+	/**
+	 * The log context of the first line whose account has no mapping for the
+	 * administration, or null when every line is mapped. Lines without an
+	 * account, and a transaction without lines, are BalanceGuard's business.
+	 *
+	 * @param array<string,mixed> $transaction        The GLTransaction record.
+	 * @param string              $administrationType The municipal administration type.
+	 *
+	 * @return array<string,string>|null
+	 */
+	private function unmappedLine(array $transaction, string $administrationType): array|null {
+		$administrationId = (string)($transaction['administrationId'] ?? '');
 		$transactionId = (string)($transaction['id'] ?? $transaction['uuid'] ?? '');
-		$lines = $this->findTransactionLines(transactionId: $transactionId);
-		if (empty($lines) === true) {
-			// BalanceGuard handles transactions without lines.
-			return true;
+		$accountNumber = $this->firstUnmappedAccount(
+			administrationId: $administrationId,
+			lines: $this->findTransactionLines(transactionId: $transactionId)
+		);
+		if ($accountNumber === '') {
+			return null;
 		}
 
+		return [
+			'administrationId' => $administrationId,
+			'administrationType' => $administrationType,
+			'accountNumber' => $accountNumber,
+			'transactionId' => $transactionId,
+		];
+	}//end unmappedLine()
+
+	/**
+	 * The first line account without a mapping for the administration, or ''.
+	 *
+	 * @param string                         $administrationId The owning administration id.
+	 * @param array<int,array<string,mixed>> $lines            The transaction's lines.
+	 *
+	 * @return string
+	 */
+	private function firstUnmappedAccount(string $administrationId, array $lines): string {
 		foreach ($lines as $line) {
 			$accountNumber = (string)($line['accountNumber'] ?? '');
-			if ($accountNumber === '') {
-				// BalanceGuard handles malformed lines.
-				continue;
+			if ($accountNumber !== '' && $this->findMapping(administrationId: $administrationId, accountNumber: $accountNumber) === null) {
+				return $accountNumber;
 			}
+		}
 
-			$mapping = $this->findMapping(administrationId: $administrationId, accountNumber: $accountNumber);
-			if ($mapping === null) {
-				$this->logger->info(
-					'BbvComplianceGuard: blocking GLTransaction.post — unmapped account on municipal administration',
-					[
-						'administrationId' => $administrationId,
-						'administrationType' => $administrationType,
-						'accountNumber' => $accountNumber,
-						'transactionId' => $transactionId,
-					]
-				);
-				return false;
-			}
-		}//end foreach
-
-		return true;
-	}//end allLinesMappedForMunicipalAdmin()
+		return '';
+	}//end firstUnmappedAccount()
 }//end class
