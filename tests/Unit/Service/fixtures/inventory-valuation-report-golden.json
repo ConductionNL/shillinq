@@ -1,0 +1,184 @@
+{
+    "all": {
+        "asOfDate": "2026-03-31T23:59:59Z",
+        "totalValue": 211.0,
+        "totalQuantity": 23.0,
+        "lines": [
+            {
+                "sku": "FF-1",
+                "warehouse": "WH-A",
+                "method": "FIFO",
+                "quantity": 13.0,
+                "unitCost": 7.7692,
+                "totalValue": 101.0
+            },
+            {
+                "sku": "FF-1",
+                "warehouse": "WH-B",
+                "method": "FIFO",
+                "quantity": 4.0,
+                "unitCost": 6.0,
+                "totalValue": 24.0
+            },
+            {
+                "sku": "AV-1",
+                "warehouse": "WH-A",
+                "method": "average",
+                "quantity": 4.0,
+                "unitCost": 20.0,
+                "totalValue": 80.0
+            },
+            {
+                "sku": "ZZ-1",
+                "warehouse": "WH-A",
+                "method": "FIFO",
+                "quantity": 2.0,
+                "unitCost": 3.0,
+                "totalValue": 6.0
+            }
+        ]
+    },
+    "sku": {
+        "asOfDate": "2026-03-31T00:00:00Z",
+        "totalValue": 125.0,
+        "totalQuantity": 17.0,
+        "lines": [
+            {
+                "sku": "FF-1",
+                "warehouse": "WH-A",
+                "method": "FIFO",
+                "quantity": 13.0,
+                "unitCost": 7.7692,
+                "totalValue": 101.0
+            },
+            {
+                "sku": "FF-1",
+                "warehouse": "WH-B",
+                "method": "FIFO",
+                "quantity": 4.0,
+                "unitCost": 6.0,
+                "totalValue": 24.0
+            }
+        ]
+    },
+    "warehouse": {
+        "asOfDate": "2026-02-15T23:59:59Z",
+        "totalValue": 24.0,
+        "totalQuantity": 4.0,
+        "lines": [
+            {
+                "sku": "FF-1",
+                "warehouse": "WH-B",
+                "method": "FIFO",
+                "quantity": 4.0,
+                "unitCost": 6.0,
+                "totalValue": 24.0
+            }
+        ]
+    },
+    "empty filters": {
+        "asOfDate": "2026-06-30T23:59:59Z",
+        "totalValue": 311.0,
+        "totalQuantity": 73.0,
+        "lines": [
+            {
+                "sku": "FF-1",
+                "warehouse": "WH-A",
+                "method": "FIFO",
+                "quantity": 63.0,
+                "unitCost": 3.1905,
+                "totalValue": 201.0
+            },
+            {
+                "sku": "FF-1",
+                "warehouse": "WH-B",
+                "method": "FIFO",
+                "quantity": 4.0,
+                "unitCost": 6.0,
+                "totalValue": 24.0
+            },
+            {
+                "sku": "AV-1",
+                "warehouse": "WH-A",
+                "method": "average",
+                "quantity": 4.0,
+                "unitCost": 20.0,
+                "totalValue": 80.0
+            },
+            {
+                "sku": "ZZ-1",
+                "warehouse": "WH-A",
+                "method": "FIFO",
+                "quantity": 2.0,
+                "unitCost": 3.0,
+                "totalValue": 6.0
+            }
+        ]
+    },
+    "other tenant": {
+        "asOfDate": "2026-06-30T23:59:59Z",
+        "totalValue": 0.0,
+        "totalQuantity": 0.0,
+        "lines": []
+    },
+    "ageing fifo": {
+        "asOfDate": "2026-05-15T23:59:59Z",
+        "sku": "FF-1",
+        "warehouse": "WH-A",
+        "totalValue": 201.0,
+        "buckets": {
+            "0-30": 100.0,
+            "31-60": 45.0,
+            "61-90": 0.0,
+            "90+": 56.0
+        }
+    },
+    "ageing average": {
+        "asOfDate": "2026-04-30T23:59:59Z",
+        "sku": "AV-1",
+        "warehouse": "WH-A",
+        "totalValue": 80.0,
+        "buckets": {
+            "0-30": 0.0,
+            "31-60": 80.0,
+            "61-90": 0.0,
+            "90+": 0.0
+        }
+    },
+    "turnover fifo": {
+        "from": "2026-01-31T23:59:59Z",
+        "to": "2026-03-31T23:59:59Z",
+        "method": "FIFO",
+        "cogs": 64.0,
+        "averageInventoryValue": 75.5,
+        "turnoverRatio": 0.8477,
+        "daysOnHand": 69.6
+    },
+    "turnover average": {
+        "from": "2026-02-28T23:59:59Z",
+        "to": "2026-03-31T23:59:59Z",
+        "method": "average",
+        "cogs": 230.0,
+        "averageInventoryValue": 155.0,
+        "turnoverRatio": 1.4839,
+        "daysOnHand": 20.89
+    },
+    "turnover empty": {
+        "from": "2025-01-01T23:59:59Z",
+        "to": "2025-01-01T23:59:59Z",
+        "method": "FIFO",
+        "cogs": 0.0,
+        "averageInventoryValue": 0.0,
+        "turnoverRatio": 0.0,
+        "daysOnHand": 0.0
+    },
+    "turnover no cogs": {
+        "from": "2026-03-21T23:59:59Z",
+        "to": "2026-04-30T23:59:59Z",
+        "method": "FIFO",
+        "cogs": 0.0,
+        "averageInventoryValue": 101.0,
+        "turnoverRatio": 0.0,
+        "daysOnHand": 0.0
+    }
+}
