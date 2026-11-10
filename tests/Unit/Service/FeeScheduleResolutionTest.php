@@ -75,13 +75,13 @@ class FeeScheduleResolutionTest extends TestCase {
 			}
 		};
 
-		$appConfig = $this->createMock(originalClassName: IAppConfig::class);
+		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturn('shillinq');
 
 		return new FeeScheduleService(
 			objectService: new DuckObjectServiceAdapter(inner: $double),
 			appConfig: $appConfig,
-			logger: $this->createMock(originalClassName: LoggerInterface::class),
+			logger: $this->createMock(LoggerInterface::class),
 		);
 	}//end service()
 
@@ -143,13 +143,13 @@ class FeeScheduleResolutionTest extends TestCase {
 		];
 		$service = $this->service(rows: $rows);
 
-		self::assertSame(expected: 'c', actual: $service->resolve(tuple: $this->tuple(), intakeChannel: 'desk', onDate: '2026-06-01')['id']);
-		self::assertSame(expected: 'a', actual: $service->resolve(tuple: $this->tuple(), intakeChannel: 'web', onDate: '2026-06-01')['id']);
-		self::assertSame(expected: 'a', actual: $service->resolve(tuple: $this->tuple(), intakeChannel: '', onDate: '2026-06-01')['id']);
+		self::assertSame('c', $service->resolve(tuple: $this->tuple(), intakeChannel: 'desk', onDate: '2026-06-01')['id']);
+		self::assertSame('a', $service->resolve(tuple: $this->tuple(), intakeChannel: 'web', onDate: '2026-06-01')['id']);
+		self::assertSame('a', $service->resolve(tuple: $this->tuple(), intakeChannel: '', onDate: '2026-06-01')['id']);
 
 		$onlyDesk = $this->service(rows: [$this->row(overrides: ['intakeChannel' => 'desk'])]);
-		self::assertNull(actual: $onlyDesk->resolve(tuple: $this->tuple(), intakeChannel: 'web', onDate: '2026-06-01'));
-		self::assertNull(actual: $onlyDesk->resolve(tuple: $this->tuple(), intakeChannel: 'desk', onDate: '2028-06-01'));
+		self::assertNull($onlyDesk->resolve(tuple: $this->tuple(), intakeChannel: 'web', onDate: '2026-06-01'));
+		self::assertNull($onlyDesk->resolve(tuple: $this->tuple(), intakeChannel: 'desk', onDate: '2028-06-01'));
 
 	}//end testResolvePicksTheChannelThenTheFirstDefault()
 
@@ -162,12 +162,12 @@ class FeeScheduleResolutionTest extends TestCase {
 		$service = $this->service(rows: []);
 
 		self::assertSame(
-			expected: ['amount' => 5.0, 'amounts' => [], 'amountChannel' => ''],
-			actual: $service->applyChannelAmount(schedule: ['amount' => 5.0, 'amounts' => []], intakeChannel: 'desk')
+			['amount' => 5.0, 'amounts' => [], 'amountChannel' => ''],
+			$service->applyChannelAmount(schedule: ['amount' => 5.0, 'amounts' => []], intakeChannel: 'desk')
 		);
 		self::assertSame(
-			expected: ['amounts' => 'x', 'amountChannel' => ''],
-			actual: $service->applyChannelAmount(schedule: ['amounts' => 'x'], intakeChannel: '')
+			['amounts' => 'x', 'amountChannel' => ''],
+			$service->applyChannelAmount(schedule: ['amounts' => 'x'], intakeChannel: '')
 		);
 
 		$amounts = [
@@ -181,20 +181,20 @@ class FeeScheduleResolutionTest extends TestCase {
 		$schedule = ['amount' => 1.0, 'currency' => 'CHF', 'amounts' => $amounts];
 
 		self::assertSame(
-			expected: ['amount' => 4.0, 'currency' => 'GBP', 'amounts' => $amounts, 'amountChannel' => 'desk'],
-			actual: $service->applyChannelAmount(schedule: $schedule, intakeChannel: 'desk')
+			['amount' => 4.0, 'currency' => 'GBP', 'amounts' => $amounts, 'amountChannel' => 'desk'],
+			$service->applyChannelAmount(schedule: $schedule, intakeChannel: 'desk')
 		);
 		self::assertSame(
-			expected: ['amount' => 10.5, 'currency' => 'CHF', 'amounts' => $amounts, 'amountChannel' => ''],
-			actual: $service->applyChannelAmount(schedule: $schedule, intakeChannel: 'post')
+			['amount' => 10.5, 'currency' => 'CHF', 'amounts' => $amounts, 'amountChannel' => ''],
+			$service->applyChannelAmount(schedule: $schedule, intakeChannel: 'post')
 		);
 		self::assertSame(
-			expected: ['amount' => 10.5, 'amounts' => [['amount' => '10.5']], 'currency' => 'EUR', 'amountChannel' => ''],
-			actual: $service->applyChannelAmount(schedule: ['amount' => 1.0, 'amounts' => [['amount' => '10.5']]], intakeChannel: '')
+			['amount' => 10.5, 'amounts' => [['amount' => '10.5']], 'currency' => 'EUR', 'amountChannel' => ''],
+			$service->applyChannelAmount(schedule: ['amount' => 1.0, 'amounts' => [['amount' => '10.5']]], intakeChannel: '')
 		);
 		self::assertSame(
-			expected: ['currency' => 'CHF', 'amounts' => [['intakeChannel' => 'web', 'amount' => 7]], 'amountChannel' => 'none'],
-			actual: $service->applyChannelAmount(
+			['currency' => 'CHF', 'amounts' => [['intakeChannel' => 'web', 'amount' => 7]], 'amountChannel' => 'none'],
+			$service->applyChannelAmount(
 				schedule: ['amount' => 1.0, 'currency' => 'CHF', 'amounts' => [['intakeChannel' => 'web', 'amount' => 7]]],
 				intakeChannel: ''
 			)
@@ -223,17 +223,17 @@ class FeeScheduleResolutionTest extends TestCase {
 		$service = $this->service(rows: $rows);
 
 		$plain = $service->resolveForObject('dossiq', 'Zaak', ['caseType' => 'bouwvergunning'], '', '2026-06-01');
-		self::assertSame(expected: 'type', actual: $plain['id']);
-		self::assertSame(expected: 100.0, actual: $plain['amount']);
+		self::assertSame('type', $plain['id']);
+		self::assertSame(100.0, $plain['amount']);
 
 		$variant = $service->resolveForObject('dossiq', 'Zaak', ['caseType' => 'bouwvergunning', 'variant' => 'klein'], '', '2026-06-01');
-		self::assertSame(expected: 'variant', actual: $variant['id']);
+		self::assertSame('variant', $variant['id']);
 
 		$noVariantMatch = $service->resolveForObject('dossiq', 'Zaak', ['caseType' => 'bouwvergunning', 'variant' => 'groot'], '', '2026-06-01');
-		self::assertSame(expected: 'type', actual: $noVariantMatch['id']);
+		self::assertSame('type', $noVariantMatch['id']);
 
-		self::assertNull(actual: $service->resolveForObject('dossiq', 'Zaak', ['caseType' => 'kapvergunning'], '', '2026-06-01'));
-		self::assertNull(actual: $service->resolveForObject('dossiq', 'Zaak', [], '', '2026-06-01'));
+		self::assertNull($service->resolveForObject('dossiq', 'Zaak', ['caseType' => 'kapvergunning'], '', '2026-06-01'));
+		self::assertNull($service->resolveForObject('dossiq', 'Zaak', [], '', '2026-06-01'));
 
 	}//end testResolveForObjectWalksTheRows()
 
@@ -266,17 +266,17 @@ class FeeScheduleResolutionTest extends TestCase {
 		}
 
 		self::assertSame(
-			expected: [
+			[
 				'This fee overlaps the schedule valid from 2026-01-01 to 2026-12-31 (fs-1); close that one before opening this.',
 				'This fee overlaps the schedule valid from 2026-01-01; close that one before opening this.',
 				'This fee overlaps the schedule valid from 2026-01-01 (fs-9); close that one before opening this.',
 			],
-			actual: $messages
+			$messages
 		);
 
 		$before = [$this->row(overrides: ['id' => 'fs-new']), $this->row(overrides: ['validTo' => '2026-05-31'])];
 		$service->assertNoOverlap(schedule: $new, existing: $before);
-		$this->expectExceptionMessage(message: 'A fee schedule needs a validFrom');
+		$this->expectExceptionMessage('A fee schedule needs a validFrom');
 		$service->assertNoOverlap(schedule: $this->row(overrides: ['validFrom' => '']), existing: []);
 
 	}//end testOverlapMessages()
