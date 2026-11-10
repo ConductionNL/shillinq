@@ -246,6 +246,7 @@ import { showError, showSuccess } from '@nextcloud/dialogs'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import GenerateReportDialog from '../../modals/GenerateReportDialog.vue'
+import { administrationOptions, fetchAdministrationContext } from '../../utils/administrationContext.js'
 import { reportViewCategories, reportViews } from './reportViews.js'
 
 export default {
@@ -387,17 +388,10 @@ export default {
 		 */
 		async loadAdministrationContext() {
 			try {
-				const response = await axios.get(
-					generateUrl('/apps/shillinq/api/administrations/context'),
-				)
-				const admins = response.data?.administrations || []
-				this.administrationOptions = admins.map((a) => ({
-					value: a.administrationId,
-					label: a.name || a.administrationCode || a.administrationId,
-				}))
-				if (response.data?.activeAdministrationId) {
-					this.activeAdministrationId =
-						response.data.activeAdministrationId
+				const context = await fetchAdministrationContext()
+				this.administrationOptions = administrationOptions(context)
+				if (context?.activeAdministrationId) {
+					this.activeAdministrationId = context.activeAdministrationId
 				}
 			} catch (e) {
 				this.administrationOptions = []
