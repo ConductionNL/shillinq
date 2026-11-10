@@ -193,109 +193,19 @@ class IntercompanyMatchingService {
 	 * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-12
 	 */
 	public function matchRelationPeriod(string $relationId, string $periodId, array $rates = []): array {
-		$objectService = $this->objectService();
-		$register = $this->register();
+		$run = new IntercompanyMatchRun(relationId: $relationId, periodId: $periodId);
+		$run->rates = $rates;
+		$run->register = $this->register();
 
-		$relations = $objectService
-			->setRegister($register)
-			->setSchema('IntercompanyRelation')
-			->findAll(['filters' => ['relationId' => $relationId]]);
-		$relation = ($relations[0] ?? []);
+		$this->loadSides(run: $run);
+		$match = $this->matchRecord(run: $run);
+		$this->warnOnRollForwardGap(run: $run);
 
-		$administrationId = (string)($relation['administrationId'] ?? '');
-		$entityAId = (string)($relation['entityAId'] ?? '');
-		$entityBId = (string)($relation['entityBId'] ?? '');
-
-		$transactions = $objectService
-			->setRegister($register)
-			->setSchema('IntercompanyTransaction')
-			->findAll(['filters' => ['relationId' => $relationId]]);
-
-		$split = $this->splitSides(transactions: $transactions, entityAId: $entityAId, entityBId: $entityBId);
-		$sideA = $split['sideA'];
-		$sideB = $split['sideB'];
-		$idsA = $split['idsA'];
-		$idsB = $split['idsB'];
-		$hasFx = $split['hasFx'];
-
-		$totalACents = $this->calculator->sumSideCents(transactions: $sideA, rates: $rates);
-		$totalBCents = $this->calculator->sumSideCents(transactions: $sideB, rates: $rates);
-		$mismatchC = $this->calculator->mismatchCents(totalACents: $totalACents, totalBCents: $totalBCents);
-		$mismatchPct = $this->calculator->mismatchPercentage(totalACents: $totalACents, totalBCents: $totalBCents);
-
-		$within = $this->calculator->isWithinTolerance(
-			mismatchCents: $mismatchC,
-			mismatchPercentage: $mismatchPct,
-			toleranceAbsolute: (float)($relation['toleranceAbsolute'] ?? 10.0),
-			toleranceRelative: (float)($relation['toleranceRelative'] ?? 0.5),
-			method: 'max-of-absolute-relative'
-		);
-
-		$status = $this->calculator->matchStatus(
-			totalACents: $totalACents,
-			totalBCents: $totalBCents,
-			withinTolerance: $within
-		);
-
-		$match = [
-			'matchId' => 'match-' . $relationId . '-' . $periodId,
-			'periodId' => $periodId,
-			'relationId' => $relationId,
-			'entityATransactionIds' => $idsA,
-			'entityBTransactionIds' => $idsB,
-			'totalAmountA' => $this->calculator->fromCents(cents: $totalACents),
-			'totalAmountB' => $this->calculator->fromCents(cents: $totalBCents),
-			'mismatchAmount' => $this->calculator->fromCents(cents: $mismatchC),
-			'mismatchPercentage' => $mismatchPct,
-			'matchStatus' => $status,
-			'administrationId' => $administrationId,
-		];
-
-		// REQ-ICE-008: warn on roll-forward inconsistency before persisting the match.
-		$priorPeriodId = '';
-		$existingMatches = $objectService
-			->setRegister($register)
-			->setSchema('IntercompanyMatch')
-			->findAll(['filters' => ['relationId' => $relationId]]);
-		foreach ($existingMatches as $existingMatch) {
-			$candidate = (string)($existingMatch['periodId'] ?? '');
-			if ($candidate === $periodId || $candidate === '') {
-				continue;
-			}
-
-			if ($priorPeriodId === '' || strcmp($candidate, $priorPeriodId) > 0) {
-				$priorPeriodId = $candidate;
-			}
-		}//end foreach
-
-		$rollForwardOk = $priorPeriodId === ''
-			|| $this->isRollForwardConsistent(
-				relationId: $relationId,
-				priorPeriodId: $priorPeriodId,
-				currentPeriodId: $periodId
-			);
-		if ($rollForwardOk === false) {
-			$this->logger->warning(
-				'IntercompanyMatchingService: roll-forward inconsistency — possible backdated change (REQ-ICE-008)',
-				['relationId' => $relationId, 'priorPeriodId' => $priorPeriodId, 'currentPeriodId' => $periodId]
-			);
-		}
-
-		$persisted = $objectService
-			->setRegister($register)
+		$persisted = $this->objectService()
+			->setRegister($run->register)
 			->setSchema('IntercompanyMatch')
 			->saveObject($match);
-
-		if ($status === 'perfect-match' || $status === 'within-tolerance') {
-			$this->generateElimination(
-				match: $match,
-				relation: $relation,
-				totalACents: $totalACents,
-				totalBCents: $totalBCents
-			);
-		} elseif ($status === 'outside-tolerance') {
-			$this->raiseMismatch(match: $match, hasFx: $hasFx);
-		}
+		$this->followUpMatch(run: $run, match: $match);
 
 		if (is_array($persisted) === true) {
 			return $persisted;
@@ -303,6 +213,178 @@ class IntercompanyMatchingService {
 
 		return $match;
 	}//end matchRelationPeriod()
+
+	/**
+	 * Read the relation and its transactions, and split them per side.
+	 *
+	 * @param IntercompanyMatchRun $run The match run.
+	 *
+	 * @return void
+	 */
+	private function loadSides(IntercompanyMatchRun $run): void {
+		$relations = $this->objectService()
+			->setRegister($run->register)
+			->setSchema('IntercompanyRelation')
+			->findAll(['filters' => ['relationId' => $run->relationId]]);
+		$run->relation = ($relations[0] ?? []);
+
+		$transactions = $this->objectService()
+			->setRegister($run->register)
+			->setSchema('IntercompanyTransaction')
+			->findAll(['filters' => ['relationId' => $run->relationId]]);
+
+		$run->sides = $this->splitSides(
+			transactions: $transactions,
+			entityAId: (string)($run->relation['entityAId'] ?? ''),
+			entityBId: (string)($run->relation['entityBId'] ?? '')
+		);
+	}//end loadSides()
+
+	/**
+	 * Total both sides, evaluate the tolerance and build the match record.
+	 *
+	 * @param IntercompanyMatchRun $run The match run.
+	 *
+	 * @return array<string,mixed> The IntercompanyMatch payload.
+	 */
+	private function matchRecord(IntercompanyMatchRun $run): array {
+		$run->totalACents = $this->calculator->sumSideCents(transactions: $run->sides['sideA'], rates: $run->rates);
+		$run->totalBCents = $this->calculator->sumSideCents(transactions: $run->sides['sideB'], rates: $run->rates);
+		$run->mismatchCents = $this->calculator->mismatchCents(totalACents: $run->totalACents, totalBCents: $run->totalBCents);
+		$run->mismatchPercentage = $this->calculator->mismatchPercentage(totalACents: $run->totalACents, totalBCents: $run->totalBCents);
+		$run->status = $this->matchStatus(run: $run);
+
+		return [
+			'matchId' => 'match-' . $run->relationId . '-' . $run->periodId,
+			'periodId' => $run->periodId,
+			'relationId' => $run->relationId,
+			'entityATransactionIds' => $run->sides['idsA'],
+			'entityBTransactionIds' => $run->sides['idsB'],
+			'totalAmountA' => $this->calculator->fromCents(cents: $run->totalACents),
+			'totalAmountB' => $this->calculator->fromCents(cents: $run->totalBCents),
+			'mismatchAmount' => $this->calculator->fromCents(cents: $run->mismatchCents),
+			'mismatchPercentage' => $run->mismatchPercentage,
+			'matchStatus' => $run->status,
+			'administrationId' => (string)($run->relation['administrationId'] ?? ''),
+		];
+	}//end matchRecord()
+
+	/**
+	 * The match status: the side totals judged against the relation's
+	 * absolute and relative tolerance.
+	 *
+	 * @param IntercompanyMatchRun $run The match run.
+	 *
+	 * @return string The match status.
+	 */
+	private function matchStatus(IntercompanyMatchRun $run): string {
+		$within = $this->calculator->isWithinTolerance(
+			mismatchCents: $run->mismatchCents,
+			mismatchPercentage: $run->mismatchPercentage,
+			toleranceAbsolute: (float)($run->relation['toleranceAbsolute'] ?? 10.0),
+			toleranceRelative: (float)($run->relation['toleranceRelative'] ?? 0.5),
+			method: 'max-of-absolute-relative'
+		);
+
+		return $this->calculator->matchStatus(
+			totalACents: $run->totalACents,
+			totalBCents: $run->totalBCents,
+			withinTolerance: $within
+		);
+	}//end matchStatus()
+
+	/**
+	 * REQ-ICE-008: warn on roll-forward inconsistency with the latest other
+	 * matched period before the match is persisted.
+	 *
+	 * @param IntercompanyMatchRun $run The match run.
+	 *
+	 * @return void
+	 */
+	private function warnOnRollForwardGap(IntercompanyMatchRun $run): void {
+		$priorPeriodId = $this->latestPeriodId(periodIds: $this->otherMatchedPeriods(run: $run));
+		$rollForwardOk = $priorPeriodId === ''
+			|| $this->isRollForwardConsistent(
+				relationId: $run->relationId,
+				priorPeriodId: $priorPeriodId,
+				currentPeriodId: $run->periodId
+			);
+		if ($rollForwardOk === false) {
+			$this->logger->warning(
+				'IntercompanyMatchingService: roll-forward inconsistency — possible backdated change (REQ-ICE-008)',
+				['relationId' => $run->relationId, 'priorPeriodId' => $priorPeriodId, 'currentPeriodId' => $run->periodId]
+			);
+		}
+	}//end warnOnRollForwardGap()
+
+	/**
+	 * The periods of the relation's existing matches other than the run's
+	 * own (and other than blank).
+	 *
+	 * @param IntercompanyMatchRun $run The match run.
+	 *
+	 * @return array<int,string> The other matched period ids.
+	 */
+	private function otherMatchedPeriods(IntercompanyMatchRun $run): array {
+		$existingMatches = $this->objectService()
+			->setRegister($run->register)
+			->setSchema('IntercompanyMatch')
+			->findAll(['filters' => ['relationId' => $run->relationId]]);
+
+		$periodIds = [];
+		foreach ($existingMatches as $existingMatch) {
+			$candidate = (string)($existingMatch['periodId'] ?? '');
+			if ($candidate !== $run->periodId && $candidate !== '') {
+				$periodIds[] = $candidate;
+			}
+		}
+
+		return $periodIds;
+	}//end otherMatchedPeriods()
+
+	/**
+	 * The latest period id (by strcmp), or '' when there is none.
+	 *
+	 * @param array<int,string> $periodIds The period ids.
+	 *
+	 * @return string The latest period id.
+	 */
+	private function latestPeriodId(array $periodIds): string {
+		$latest = '';
+		foreach ($periodIds as $periodId) {
+			if ($latest === '' || strcmp($periodId, $latest) > 0) {
+				$latest = $periodId;
+			}
+		}
+
+		return $latest;
+	}//end latestPeriodId()
+
+	/**
+	 * Follow a persisted match up: a perfect or within-tolerance match gets a
+	 * balanced EliminationJournal, an outside-tolerance match an
+	 * IntercompanyMismatch in the exception queue.
+	 *
+	 * @param IntercompanyMatchRun $run   The match run.
+	 * @param array<string,mixed>  $match The IntercompanyMatch payload.
+	 *
+	 * @return void
+	 */
+	private function followUpMatch(IntercompanyMatchRun $run, array $match): void {
+		if (in_array($run->status, ['perfect-match', 'within-tolerance'], true) === true) {
+			$this->generateElimination(
+				match: $match,
+				relation: $run->relation,
+				totalACents: $run->totalACents,
+				totalBCents: $run->totalBCents
+			);
+			return;
+		}
+
+		if ($run->status === 'outside-tolerance') {
+			$this->raiseMismatch(match: $match, hasFx: $run->sides['hasFx']);
+		}
+	}//end followUpMatch()
 
 	/**
 	 * Split a relation's transactions into A-side and B-side buckets (REQ-ICE-003).
