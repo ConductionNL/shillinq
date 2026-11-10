@@ -76,6 +76,49 @@ namespace OCA\Shillinq\Standards\Checks;
  */
 final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 	/**
+	 * The data seedSpec() returns; see there.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SEED_SPEC = [
+		'ARInvoice' => [
+			// Triangulation / SME tail off by default — the existing domestic
+			// sales invoices are neither a triangular transaction nor under the
+			// small-enterprise exemption, so arts. 141/197/282 pass vacuously.
+			'triangulation' => false,
+			'smeExemptionApplied' => false,
+		],
+		'APTransaction' => [
+			// Single-use, unadjusted purchases by default, so arts. 173/184 pass
+			// vacuously on the existing purchase rows.
+			'mixedUse' => false,
+			'deductionAdjusted' => false,
+		],
+		'GLTransaction' => [
+			// A compliant FR FEC export descriptor.
+			'fecExport' => [
+				'fileType' => 'text',
+				'delimiter' => 'pipe',
+				'encoding' => 'iso-8859-15',
+				'fileName' => '123456789FEC20261231.txt',
+			],
+			// A compliant NF525 perpetual-closing record (gapless, signed).
+			'nf525Closing' => [
+				'period' => 'daily',
+				'perpetualTotal' => 125000.00,
+				'sequenceNumber' => 4210,
+				'signature' => 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6',
+			],
+			// A compliant PT certified-invoicing chain link.
+			'ptChain' => [
+				'atcud' => 'CSDF7T5H-3210',
+				'hash' => '0f1e2d3c4b5a69788796a5b4c3d2e1f0',
+				'previousHash' => 'ffeeddccbbaa99887766554433221100',
+			],
+		],
+	];
+
+	/**
 	 * The seven mandatory BBV paragraphs (art. 9 BBV): local levies, resilience
 	 * capacity (weerstandsvermogen), maintenance of capital goods (onderhoud
 	 * kapitaalgoederen), financing, operational management (bedrijfsvoering),
@@ -137,126 +180,331 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 	 */
 	public static function checks(): array {
 		return [
-			'ARInvoice' => [
-				// --- Triangulation simplification (art. 141). ---
-				// The intermediary B's intra-Community acquisition is exempt where
-				// the goods move directly to a final customer C in a third Member
-				// State who accounts for the VAT under reverse charge: the three
-				// parties are in three different Member States, the goods are
-				// delivered directly to C, and C's VAT id (the reverse-charge
-				// debtor) is identified. Vacuous when this is not a triangulation.
-				'vatdir-art141-triangulation-simplification' => static fn (array $o): bool => (self::truthy($o, 'triangulation') === false
-					|| self::triangulationConditionsWith($o)),
-
-				// --- Reverse charge on triangulation (art. 197). ---
-				// VAT is payable by the final customer C where the art.-141
-				// conditions are met AND a compliant invoice is issued — the
-				// invoice carries the reverse-charge mention. Vacuous otherwise.
-				'vatdir-art197-reverse-charge-triangulation' => static fn (array $o): bool => (self::truthy($o, 'triangulation') === false
-					|| (self::triangulationConditionsWith($o) && self::hasReverseChargeMention($o))),
-
-				// --- SME turnover exemption (art. 282). ---
-				// A small enterprise applying the exemption has an annual turnover
-				// below the national threshold (and, where it uses the cross-border
-				// SME scheme, a Union-wide turnover at most EUR 100 000). Vacuous
-				// when the exemption is not applied.
-				'vatdir-art282-smes-exemption' => static fn (array $o): bool => (self::truthy($o, 'smeExemptionApplied') === false
-					|| self::smeExemptionConsistent($o)),
-			],
-			'APTransaction' => [
-				// --- Pro-rata deduction on mixed use (art. 173). ---
-				// Where a purchase is used for both deductible and non-deductible
-				// transactions, only the pro-rata proportion is deductible: a valid
-				// percentage (0..100) is recorded and the deductible VAT equals the
-				// input VAT times that proportion. Vacuous for single-use purchases.
-				'vatdir-art173-pro-rata-deduction' => static fn (array $o): bool => (self::truthy($o, 'mixedUse') === false
-					|| self::proRataConsistent($o)),
-
-				// --- Adjustment of deductions (art. 184). ---
-				// Where an initial deduction is later adjusted, the adjustment amount
-				// is recorded; for capital goods a multi-year revision period (NL:
-				// 5y movables / 10y immovable) is recorded as a positive number of
-				// years. Vacuous when no adjustment is made.
-				'vatdir-art184-adjustment-deductions' => static fn (array $o): bool => (self::truthy($o, 'deductionAdjusted') === false
-					|| self::adjustmentConsistent($o)),
-			],
-			'GLTransaction' => [
-				// --- FR FEC file format & naming (fr-fec-format). ---
-				// The Fichier des Écritures Comptables is a flat text or XML file,
-				// tab- or pipe-delimited, named SIREN + 'FEC' + closing date
-				// (YYYYMMDD). Enforced on the recorded export descriptor. Vacuous
-				// until an export descriptor is attached.
-				'fr-fec-format' => static fn (array $o): bool => (self::hasFecExport($o) === false
-					|| self::fecExportFormatOk($o)),
-
-				// --- NF525 secured archive / grand total (fr-nf525-secured-archive). ---
-				// Certified cash software produces periodic closing totals (grand
-				// total perpétuel) secured and archived as an unbroken sequence:
-				// a perpetual running total, a gapless sequence number and an
-				// integrity signature. Vacuous until a closing record is attached.
-				'fr-nf525-secured-archive' => static fn (array $o): bool => (self::hasNf525Closing($o) === false
-					|| self::nf525ClosingOk($o)),
-
-				// --- PT certified chained invoicing (pt-certified-invoicing-software). ---
-				// Each document carries a chained ATCUD / hash ensuring an unbroken,
-				// tamper-evident sequence: the ATCUD, the document hash and the
-				// previous document's hash are all present (chain link). Vacuous
-				// until the certified-invoicing chain is attached.
-				'pt-certified-invoicing-software' => static fn (array $o): bool => (self::hasPtChain($o) === false
-					|| self::ptChainOk($o)),
-			],
-			'BbvStatement' => [
-				// --- Budget structure (art. 7 BBV). ---
-				// The begroting consists of a policy budget (beleidsbegroting =
-				// programmaplan + paragraphs) and a financial budget (financiële
-				// begroting = overzicht baten/lasten + financiële positie).
-				'bbv-art7-begroting-structure' => static fn (array $o): bool => self::isBudgetDoc($o) === false
-					|| (self::hasPart($o, 'beleidsbegroting')
-					&& self::hasPart($o, 'financielebegroting')),
-
-				// --- Programme plan content (art. 8 BBV). ---
-				// The programmaplan sets out the programmes, the algemene
-				// dekkingsmiddelen, the overhead, the VPB charge and the amount for
-				// unforeseen expenditure (onvoorzien).
-				'bbv-art8-programmaplan' => static fn (array $o): bool => self::isBudgetDoc($o) === false
-					|| self::programmaplanComplete($o),
-
-				// --- Mandatory paragraphs (art. 9 BBV). ---
-				// Both the begroting and the jaarstukken include the seven mandatory
-				// paragraphs (local levies, weerstandsvermogen, onderhoud
-				// kapitaalgoederen, financiering, bedrijfsvoering, verbonden
-				// partijen, grondbeleid).
-				'bbv-art9-mandatory-paragraphs' => static fn (array $o): bool => self::allParagraphsPresent($o),
-
-				// --- Annual accounts composition (art. 24 BBV). ---
-				// The jaarstukken consist of the jaarverslag (programmaverantwoording
-				// + paragraphs) and the jaarrekening (overzicht baten/lasten, balans,
-				// rechtmatigheidsverantwoording and accountantsverklaring).
-				'bbv-art24-jaarstukken' => static fn (array $o): bool => self::isAccountsDoc($o) === false
-					|| self::jaarstukkenComplete($o),
-
-				// --- Capitalisation of fixed assets (art. 59 BBV). ---
-				// Tangible/intangible fixed assets meeting the activation criteria
-				// are capitalised: each declared fixed asset is flagged geactiveerd
-				// (capitalised) on the balance sheet.
-				'bbv-art59-activeren' => static fn (array $o): bool => self::fixedAssetsActivated($o),
-
-				// --- Valuation at acquisition/production cost (art. 62 BBV). ---
-				// Assets are valued at verkrijgings- of vervaardigingsprijs: each
-				// declared fixed asset records a non-negative acquisition-or-
-				// production cost and is valued on that basis.
-				'bbv-art62-verkrijgingsprijs' => static fn (array $o): bool => self::fixedAssetsValuedAtCost($o),
-
-				// --- Taakvelden overview (bbv-taakvelden-overview). ---
-				// The begroting and jaarstukken include the mandatory overview of
-				// estimated revenues and expenses per taakveld: a non-empty list of
-				// taakveld lines, each with a code and a numeric estimated revenue
-				// and expense, enabling inter-municipal comparison.
-				'bbv-taakvelden-overview' => static fn (array $o): bool => self::taskFieldsComplete($o),
-			],
+			'ARInvoice' => self::arInvoiceChecks(),
+			'APTransaction' => self::apTransactionChecks(),
+			'GLTransaction' => self::glTransactionChecks(),
+			'BbvStatement' => self::bbvStatementChecks(),
 		];
 
 	}//end checks()
+
+	/**
+	 * The ARInvoice predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function arInvoiceChecks(): array {
+		return [
+			// --- Triangulation simplification (art. 141). ---
+			'vatdir-art141-triangulation-simplification' => self::vatdirArt141TriangulationSimplification(...),
+
+			// --- Reverse charge on triangulation (art. 197). ---
+			'vatdir-art197-reverse-charge-triangulation' => self::vatdirArt197ReverseChargeTriangulation(...),
+
+			// --- SME turnover exemption (art. 282). ---
+			'vatdir-art282-smes-exemption' => self::vatdirArt282SmesExemption(...),
+		];
+
+	}//end arInvoiceChecks()
+
+	/**
+	 * The APTransaction predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function apTransactionChecks(): array {
+		return [
+			// --- Pro-rata deduction on mixed use (art. 173). ---
+			'vatdir-art173-pro-rata-deduction' => self::vatdirArt173ProRataDeduction(...),
+
+			// --- Adjustment of deductions (art. 184). ---
+			'vatdir-art184-adjustment-deductions' => self::vatdirArt184AdjustmentDeductions(...),
+		];
+
+	}//end apTransactionChecks()
+
+	/**
+	 * The GLTransaction predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function glTransactionChecks(): array {
+		return [
+			// --- FR FEC file format & naming (fr-fec-format). ---
+			'fr-fec-format' => self::frFecFormat(...),
+
+			// --- NF525 secured archive / grand total (fr-nf525-secured-archive). ---
+			'fr-nf525-secured-archive' => self::frNf525SecuredArchive(...),
+
+			// --- PT certified chained invoicing (pt-certified-invoicing-software). ---
+			'pt-certified-invoicing-software' => self::ptCertifiedInvoicingSoftware(...),
+		];
+
+	}//end glTransactionChecks()
+
+	/**
+	 * The BbvStatement predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function bbvStatementChecks(): array {
+		return [
+			// --- Budget structure (art. 7 BBV). ---
+			'bbv-art7-begroting-structure' => self::bbvArt7BegrotingStructure(...),
+
+			// --- Programme plan content (art. 8 BBV). ---
+			'bbv-art8-programmaplan' => self::bbvArt8Programmaplan(...),
+
+			// --- Mandatory paragraphs (art. 9 BBV). ---
+			'bbv-art9-mandatory-paragraphs' => self::bbvArt9MandatoryParagraphs(...),
+
+			// --- Annual accounts composition (art. 24 BBV). ---
+			'bbv-art24-jaarstukken' => self::bbvArt24Jaarstukken(...),
+
+			// --- Capitalisation of fixed assets (art. 59 BBV). ---
+			'bbv-art59-activeren' => self::bbvArt59Activeren(...),
+
+			// --- Valuation at acquisition/production cost (art. 62 BBV). ---
+			'bbv-art62-verkrijgingsprijs' => self::bbvArt62Verkrijgingsprijs(...),
+
+			// --- Taakvelden overview (bbv-taakvelden-overview). ---
+			'bbv-taakvelden-overview' => self::bbvTaakveldenOverview(...),
+		];
+
+	}//end bbvStatementChecks()
+
+	/**
+	 * The intermediary B's intra-Community acquisition is exempt where
+	 * the goods move directly to a final customer C in a third Member
+	 * State who accounts for the VAT under reverse charge: the three
+	 * parties are in three different Member States, the goods are
+	 * delivered directly to C, and C's VAT id (the reverse-charge
+	 * debtor) is identified. Vacuous when this is not a triangulation.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function vatdirArt141TriangulationSimplification(array $o): bool {
+		return (self::truthy($o, 'triangulation') === false
+			|| self::triangulationConditionsWith($o));
+
+	}//end vatdirArt141TriangulationSimplification()
+
+	/**
+	 * VAT is payable by the final customer C where the art.-141
+	 * conditions are met AND a compliant invoice is issued — the
+	 * invoice carries the reverse-charge mention. Vacuous otherwise.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function vatdirArt197ReverseChargeTriangulation(array $o): bool {
+		return (self::truthy($o, 'triangulation') === false
+			|| (self::triangulationConditionsWith($o) && self::hasReverseChargeMention($o)));
+
+	}//end vatdirArt197ReverseChargeTriangulation()
+
+	/**
+	 * A small enterprise applying the exemption has an annual turnover
+	 * below the national threshold (and, where it uses the cross-border
+	 * SME scheme, a Union-wide turnover at most EUR 100 000). Vacuous
+	 * when the exemption is not applied.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function vatdirArt282SmesExemption(array $o): bool {
+		return (self::truthy($o, 'smeExemptionApplied') === false
+			|| self::smeExemptionConsistent($o));
+
+	}//end vatdirArt282SmesExemption()
+
+	/**
+	 * Where a purchase is used for both deductible and non-deductible
+	 * transactions, only the pro-rata proportion is deductible: a valid
+	 * percentage (0..100) is recorded and the deductible VAT equals the
+	 * input VAT times that proportion. Vacuous for single-use purchases.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function vatdirArt173ProRataDeduction(array $o): bool {
+		return (self::truthy($o, 'mixedUse') === false
+			|| self::proRataConsistent($o));
+
+	}//end vatdirArt173ProRataDeduction()
+
+	/**
+	 * Where an initial deduction is later adjusted, the adjustment amount
+	 * is recorded; for capital goods a multi-year revision period (NL:
+	 * 5y movables / 10y immovable) is recorded as a positive number of
+	 * years. Vacuous when no adjustment is made.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function vatdirArt184AdjustmentDeductions(array $o): bool {
+		return (self::truthy($o, 'deductionAdjusted') === false
+			|| self::adjustmentConsistent($o));
+
+	}//end vatdirArt184AdjustmentDeductions()
+
+	/**
+	 * The Fichier des Écritures Comptables is a flat text or XML file,
+	 * tab- or pipe-delimited, named SIREN + 'FEC' + closing date
+	 * (YYYYMMDD). Enforced on the recorded export descriptor. Vacuous
+	 * until an export descriptor is attached.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function frFecFormat(array $o): bool {
+		return (self::hasFecExport($o) === false
+			|| self::fecExportFormatOk($o));
+
+	}//end frFecFormat()
+
+	/**
+	 * Certified cash software produces periodic closing totals (grand
+	 * total perpétuel) secured and archived as an unbroken sequence:
+	 * a perpetual running total, a gapless sequence number and an
+	 * integrity signature. Vacuous until a closing record is attached.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function frNf525SecuredArchive(array $o): bool {
+		return (self::hasNf525Closing($o) === false
+			|| self::nf525ClosingOk($o));
+
+	}//end frNf525SecuredArchive()
+
+	/**
+	 * Each document carries a chained ATCUD / hash ensuring an unbroken,
+	 * tamper-evident sequence: the ATCUD, the document hash and the
+	 * previous document's hash are all present (chain link). Vacuous
+	 * until the certified-invoicing chain is attached.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function ptCertifiedInvoicingSoftware(array $o): bool {
+		return (self::hasPtChain($o) === false
+			|| self::ptChainOk($o));
+
+	}//end ptCertifiedInvoicingSoftware()
+
+	/**
+	 * The begroting consists of a policy budget (beleidsbegroting =
+	 * programmaplan + paragraphs) and a financial budget (financiële
+	 * begroting = overzicht baten/lasten + financiële positie).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function bbvArt7BegrotingStructure(array $o): bool {
+		return self::isBudgetDoc($o) === false
+			|| (self::hasPart($o, 'beleidsbegroting')
+			&& self::hasPart($o, 'financielebegroting'));
+
+	}//end bbvArt7BegrotingStructure()
+
+	/**
+	 * The programmaplan sets out the programmes, the algemene
+	 * dekkingsmiddelen, the overhead, the VPB charge and the amount for
+	 * unforeseen expenditure (onvoorzien).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function bbvArt8Programmaplan(array $o): bool {
+		return self::isBudgetDoc($o) === false
+			|| self::programmaplanComplete($o);
+
+	}//end bbvArt8Programmaplan()
+
+	/**
+	 * Both the begroting and the jaarstukken include the seven mandatory
+	 * paragraphs (local levies, weerstandsvermogen, onderhoud
+	 * kapitaalgoederen, financiering, bedrijfsvoering, verbonden
+	 * partijen, grondbeleid).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function bbvArt9MandatoryParagraphs(array $o): bool {
+		return self::allParagraphsPresent($o);
+
+	}//end bbvArt9MandatoryParagraphs()
+
+	/**
+	 * The jaarstukken consist of the jaarverslag (programmaverantwoording
+	 * + paragraphs) and the jaarrekening (overzicht baten/lasten, balans,
+	 * rechtmatigheidsverantwoording and accountantsverklaring).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function bbvArt24Jaarstukken(array $o): bool {
+		return self::isAccountsDoc($o) === false
+			|| self::jaarstukkenComplete($o);
+
+	}//end bbvArt24Jaarstukken()
+
+	/**
+	 * Tangible/intangible fixed assets meeting the activation criteria
+	 * are capitalised: each declared fixed asset is flagged geactiveerd
+	 * (capitalised) on the balance sheet.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function bbvArt59Activeren(array $o): bool {
+		return self::fixedAssetsActivated($o);
+
+	}//end bbvArt59Activeren()
+
+	/**
+	 * Assets are valued at verkrijgings- of vervaardigingsprijs: each
+	 * declared fixed asset records a non-negative acquisition-or-
+	 * production cost and is valued on that basis.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function bbvArt62Verkrijgingsprijs(array $o): bool {
+		return self::fixedAssetsValuedAtCost($o);
+
+	}//end bbvArt62Verkrijgingsprijs()
+
+	/**
+	 * The begroting and jaarstukken include the mandatory overview of
+	 * estimated revenues and expenses per taakveld: a non-empty list of
+	 * taakveld lines, each with a code and a numeric estimated revenue
+	 * and expense, enabling inter-municipal comparison.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function bbvTaakveldenOverview(array $o): bool {
+		return self::taskFieldsComplete($o);
+
+	}//end bbvTaakveldenOverview()
 
 	/**
 	 * Field defaults backfilled onto the EXISTING ARInvoice / APTransaction /
@@ -268,43 +516,7 @@ final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects {
 	 * @return array<string, array<string, mixed>>
 	 */
 	public static function seedSpec(): array {
-		return [
-			'ARInvoice' => [
-				// Triangulation / SME tail off by default — the existing domestic
-				// sales invoices are neither a triangular transaction nor under the
-				// small-enterprise exemption, so arts. 141/197/282 pass vacuously.
-				'triangulation' => false,
-				'smeExemptionApplied' => false,
-			],
-			'APTransaction' => [
-				// Single-use, unadjusted purchases by default, so arts. 173/184 pass
-				// vacuously on the existing purchase rows.
-				'mixedUse' => false,
-				'deductionAdjusted' => false,
-			],
-			'GLTransaction' => [
-				// A compliant FR FEC export descriptor.
-				'fecExport' => [
-					'fileType' => 'text',
-					'delimiter' => 'pipe',
-					'encoding' => 'iso-8859-15',
-					'fileName' => '123456789FEC20261231.txt',
-				],
-				// A compliant NF525 perpetual-closing record (gapless, signed).
-				'nf525Closing' => [
-					'period' => 'daily',
-					'perpetualTotal' => 125000.00,
-					'sequenceNumber' => 4210,
-					'signature' => 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6',
-				],
-				// A compliant PT certified-invoicing chain link.
-				'ptChain' => [
-					'atcud' => 'CSDF7T5H-3210',
-					'hash' => '0f1e2d3c4b5a69788796a5b4c3d2e1f0',
-					'previousHash' => 'ffeeddccbbaa99887766554433221100',
-				],
-			],
-		];
+		return self::SEED_SPEC;
 
 	}//end seedSpec()
 
