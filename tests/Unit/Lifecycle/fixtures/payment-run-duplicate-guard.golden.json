@@ -377,6 +377,31 @@
             }
         ]
     },
+    "otherBatchOtherInvoice": {
+        "allowed": true,
+        "message": null,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:APTransaction",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:PaymentRun",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
     "blocked": {
         "allowed": false,
         "message": "This payment run cannot be exported: payment is blocked for invoice 2026-0001, 2026-0002. Remove the line or release the block before exporting.",

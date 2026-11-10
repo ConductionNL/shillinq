@@ -91,6 +91,13 @@ final class PaymentRunDuplicateGuardGoldenTest extends TestCase {
 					'PaymentRun' => ['junk', ['id' => 'pr-5', 'lifecycleState' => 'approved', 'paymentLines' => 'x']],
 				],
 			],
+			'otherBatchOtherInvoice' => [
+				$batch,
+				[
+					'APTransaction' => $invoices,
+					'PaymentRun' => [['id' => 'pr-6', 'lifecycleState' => 'approved', 'paymentLines' => [['apTransactionRef' => 'ap-7'], ['amount' => 1]]]],
+				],
+			],
 			'blocked' => [
 				$batch,
 				[
