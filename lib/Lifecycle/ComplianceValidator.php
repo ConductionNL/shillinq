@@ -108,60 +108,7 @@ class ComplianceValidator {
 		}
 
 		try {
-			$rules = $this->objectService
-				->setRegister($this->getRegisterSlug())
-				->setSchema('BankingRule')
-				->findAll(
-					[
-						'filters' => [
-							'isActive' => true,
-							'administrationId' => $administrationId,
-						],
-					]
-				);
-
-			if (count($rules) === 0) {
-				$this->logger->debug(
-					'ComplianceValidator: no active BankingRules found for administration — transition permitted',
-					['accountId' => $accountId, 'administrationId' => $administrationId]
-				);
-				return true;
-			}
-
-			$blockingFailures = [];
-			foreach ($rules as $rule) {
-				$passed = $this->evaluateRule(rule: $rule, account: $account, objectService: $this->objectService);
-				if ($passed === false) {
-					$severity = ($rule['severity'] ?? 'blocking');
-					if ($severity === 'blocking') {
-						$blockingFailures[] = ($rule['ruleNumber'] ?? 'unknown');
-					}
-
-					$this->logger->info(
-						'ComplianceValidator: rule failed',
-						[
-							'accountId' => $accountId,
-							'ruleNumber' => ($rule['ruleNumber'] ?? 'unknown'),
-							'ruleType' => ($rule['ruleType'] ?? 'unknown'),
-							'severity' => $severity,
-						]
-					);
-				}
-			}
-
-			if (count($blockingFailures) > 0) {
-				$this->logger->warning(
-					'ComplianceValidator: blocking rules failed — denying transition',
-					['accountId' => $accountId, 'failedRules' => $blockingFailures]
-				);
-				return false;
-			}
-
-			$this->logger->debug(
-				'ComplianceValidator: all active blocking rules passed',
-				['accountId' => $accountId, 'rulesEvaluated' => count($rules)]
-			);
-			return true;
+			return $this->rulesPass(account: $account, rules: $this->activeRules(administrationId: $administrationId));
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'ComplianceValidator: rule evaluation failed — denying transition (fail-closed)',
@@ -171,6 +118,108 @@ class ComplianceValidator {
 		}//end try
 
 	}//end isCompliant()
+
+	/**
+	 * The active BankingRule records of the administration.
+	 *
+	 * @param mixed $administrationId The administration id.
+	 *
+	 * @return array<int, mixed> The rules.
+	 */
+	private function activeRules(mixed $administrationId): array {
+		return $this->objectService
+			->setRegister($this->getRegisterSlug())
+			->setSchema('BankingRule')
+			->findAll(
+				[
+					'filters' => [
+						'isActive' => true,
+						'administrationId' => $administrationId,
+					],
+				]
+			);
+	}//end activeRules()
+
+	/**
+	 * Whether every blocking rule passes; no rules at all permits the
+	 * transition.
+	 *
+	 * @param array<string, mixed> $account TreasuryAccount object array.
+	 * @param array<int, mixed>    $rules   The active BankingRules.
+	 *
+	 * @return bool True when no blocking rule fails.
+	 */
+	private function rulesPass(array $account, array $rules): bool {
+		$accountId = $this->accountRef(account: $account);
+		if (count($rules) === 0) {
+			$this->logger->debug(
+				'ComplianceValidator: no active BankingRules found for administration — transition permitted',
+				['accountId' => $accountId, 'administrationId' => $account['administrationId']]
+			);
+			return true;
+		}
+
+		$blockingFailures = $this->blockingFailures(account: $account, rules: $rules);
+		if (count($blockingFailures) > 0) {
+			$this->logger->warning(
+				'ComplianceValidator: blocking rules failed — denying transition',
+				['accountId' => $accountId, 'failedRules' => $blockingFailures]
+			);
+			return false;
+		}
+
+		$this->logger->debug(
+			'ComplianceValidator: all active blocking rules passed',
+			['accountId' => $accountId, 'rulesEvaluated' => count($rules)]
+		);
+		return true;
+	}//end rulesPass()
+
+	/**
+	 * Evaluate every rule, logging each failure; answer the rule numbers of
+	 * the failed blocking rules.
+	 *
+	 * @param array<string, mixed> $account TreasuryAccount object array.
+	 * @param array<int, mixed>    $rules   The active BankingRules.
+	 *
+	 * @return list<mixed> The failed blocking rule numbers.
+	 */
+	private function blockingFailures(array $account, array $rules): array {
+		$blockingFailures = [];
+		foreach ($rules as $rule) {
+			if ($this->evaluateRule(rule: $rule, account: $account) === true) {
+				continue;
+			}
+
+			$severity = ($rule['severity'] ?? 'blocking');
+			if ($severity === 'blocking') {
+				$blockingFailures[] = ($rule['ruleNumber'] ?? 'unknown');
+			}
+
+			$this->logger->info(
+				'ComplianceValidator: rule failed',
+				[
+					'accountId' => $this->accountRef(account: $account),
+					'ruleNumber' => ($rule['ruleNumber'] ?? 'unknown'),
+					'ruleType' => ($rule['ruleType'] ?? 'unknown'),
+					'severity' => $severity,
+				]
+			);
+		}
+
+		return $blockingFailures;
+	}//end blockingFailures()
+
+	/**
+	 * The account as named in the audit log: id, else accountNumber, else 'unknown'.
+	 *
+	 * @param array<string, mixed> $account TreasuryAccount object array.
+	 *
+	 * @return mixed The reference.
+	 */
+	private function accountRef(array $account): mixed {
+		return ($account['id'] ?? $account['accountNumber'] ?? 'unknown');
+	}//end accountRef()
 
 	/**
 	 * Evaluate a single BankingRule against the treasury account.
@@ -186,20 +235,17 @@ class ComplianceValidator {
 	 *
 	 * @param array<string, mixed> $rule BankingRule object.
 	 * @param array<string, mixed> $account TreasuryAccount object.
-	 * @param object $objectService OR ObjectService, already resolved by the caller
-	 *                              (reused here so a duplicate-IBAN lookup does not
-	 *                              re-fetch the service from the container).
 	 *
 	 * @return bool True when the rule passes.
 	 */
-	private function evaluateRule(array $rule, array $account, object $objectService): bool {
+	private function evaluateRule(array $rule, array $account): bool {
 		$ruleType = ($rule['ruleType'] ?? '');
 		$criteria = ($rule['evaluationCriteria'] ?? []);
 
 		return match ($ruleType) {
 			'iban-format' => $this->evaluateIbanFormat(criteria: $criteria, account: $account),
 			'approval-required' => $this->evaluateApprovalRequired(criteria: $criteria, account: $account),
-			'segregation' => $this->evaluateSegregation(criteria: $criteria, account: $account, objectService: $objectService),
+			'segregation' => $this->evaluateSegregation(criteria: $criteria, account: $account),
 			default => true,
 		};
 
@@ -248,7 +294,6 @@ class ComplianceValidator {
 	 *
 	 * @param array<string, mixed> $criteria Rule's evaluationCriteria (checkDuplicates).
 	 * @param array<string, mixed> $account TreasuryAccount object under evaluation.
-	 * @param object $objectService OR ObjectService (already resolved by the caller).
 	 *
 	 * @return bool True when no duplicate IBAN exists in the administration (or the
 	 *              duplicate check is explicitly disabled via checkDuplicates=false);
@@ -256,81 +301,26 @@ class ComplianceValidator {
 	 *
 	 * @spec openspec/specs/bookkeeping-schatkistbankieren/spec.md
 	 */
-	private function evaluateSegregation(array $criteria, array $account, object $objectService): bool {
+	private function evaluateSegregation(array $criteria, array $account): bool {
 		$checkDuplicates = ($criteria['checkDuplicates'] ?? true);
 		if ($checkDuplicates === false) {
 			// Rule explicitly configured to skip the duplicate-IBAN check.
 			return true;
 		}
 
-		$iban = ($account['iban'] ?? '');
-		$administrationId = ($account['administrationId'] ?? '');
-		$accountId = ($account['id'] ?? null);
-		$accountNumber = ($account['accountNumber'] ?? null);
-		$logAccountRef = ($accountId ?? $accountNumber ?? 'unknown');
-
-		if ($iban === '' || $administrationId === '') {
-			$this->logger->warning(
-				'ComplianceValidator: segregation check indeterminate — missing iban or administrationId; denying (fail-closed, NOT a pass)',
-				['accountId' => $logAccountRef, 'administrationId' => $administrationId]
-			);
+		$siblings = $this->ibanSiblings(account: $account);
+		if ($siblings === null) {
 			return false;
 		}
 
-		try {
-			$siblings = $objectService
-				->setRegister($this->getRegisterSlug())
-				->setSchema('TreasuryAccount')
-				->findAll(
-					[
-						'filters' => [
-							'administrationId' => $administrationId,
-							'iban' => $iban,
-						],
-					]
-				);
-		} catch (\Throwable $e) {
-			$this->logger->warning(
-				'ComplianceValidator: segregation check indeterminate — TreasuryAccount lookup failed; denying (fail-closed, NOT a pass)',
-				['accountId' => $logAccountRef, 'administrationId' => $administrationId, 'exception' => $e->getMessage()]
-			);
-			return false;
-		}
-
-		if (is_array($siblings) === false) {
-			$this->logger->warning(
-				'ComplianceValidator: segregation check indeterminate — unexpected lookup result; denying (fail-closed, NOT a pass)',
-				['accountId' => $logAccountRef, 'administrationId' => $administrationId]
-			);
-			return false;
-		}
-
-		$conflictingAccountIds = [];
-		foreach ($siblings as $sibling) {
-			if (is_array($sibling) === false) {
-				continue;
-			}
-
-			$siblingId = ($sibling['id'] ?? null);
-			$siblingNumber = ($sibling['accountNumber'] ?? null);
-
-			$isSelf = ($accountId !== null && $siblingId === $accountId)
-				|| ($accountId === null && $accountNumber !== null && $siblingNumber === $accountNumber);
-
-			if ($isSelf === true) {
-				continue;
-			}
-
-			$conflictingAccountIds[] = ($siblingId ?? $siblingNumber ?? 'unknown');
-		}
-
+		$conflictingAccountIds = $this->conflictingAccountIds(account: $account, siblings: $siblings);
 		if (count($conflictingAccountIds) > 0) {
 			$this->logger->warning(
 				'ComplianceValidator: segregation rule violation — duplicate IBAN within administration',
 				[
-					'accountId' => $logAccountRef,
-					'administrationId' => $administrationId,
-					'iban' => $iban,
+					'accountId' => $this->accountRef(account: $account),
+					'administrationId' => ($account['administrationId'] ?? ''),
+					'iban' => ($account['iban'] ?? ''),
 					'conflictingAccountIds' => $conflictingAccountIds,
 				]
 			);
@@ -339,6 +329,96 @@ class ComplianceValidator {
 
 		return true;
 	}//end evaluateSegregation()
+
+	/**
+	 * The TreasuryAccounts of the administration sharing this account's IBAN,
+	 * or null — logged as indeterminate, never as a pass — when the IBAN or
+	 * administration is missing or the lookup fails.
+	 *
+	 * @param array<string, mixed> $account TreasuryAccount object under evaluation.
+	 *
+	 * @return array<int, mixed>|null The siblings, or null when indeterminate.
+	 */
+	private function ibanSiblings(array $account): array|null {
+		$iban = ($account['iban'] ?? '');
+		$administrationId = ($account['administrationId'] ?? '');
+		$context = ['accountId' => $this->accountRef(account: $account), 'administrationId' => $administrationId];
+		if ($iban === '' || $administrationId === '') {
+			$this->logger->warning(
+				'ComplianceValidator: segregation check indeterminate — missing iban or administrationId; denying (fail-closed, NOT a pass)',
+				$context
+			);
+			return null;
+		}
+
+		return $this->lookupSiblings(account: $account, context: $context);
+	}//end ibanSiblings()
+
+	/**
+	 * Look the IBAN up among the administration's TreasuryAccounts.
+	 *
+	 * @param array<string, mixed> $account TreasuryAccount object under evaluation.
+	 * @param array<string, mixed> $context The log context (account, administration).
+	 *
+	 * @return array<int, mixed>|null The siblings, or null when the lookup failed.
+	 */
+	private function lookupSiblings(array $account, array $context): array|null {
+		try {
+			$siblings = $this->objectService
+				->setRegister($this->getRegisterSlug())
+				->setSchema('TreasuryAccount')
+				->findAll(['filters' => ['administrationId' => $account['administrationId'], 'iban' => $account['iban']]]);
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'ComplianceValidator: segregation check indeterminate — TreasuryAccount lookup failed; denying (fail-closed, NOT a pass)',
+				$context + ['exception' => $e->getMessage()]
+			);
+			return null;
+		}
+
+		return $siblings;
+	}//end lookupSiblings()
+
+	/**
+	 * The references of the siblings that are other accounts (not this one).
+	 *
+	 * @param array<string, mixed> $account  TreasuryAccount object under evaluation.
+	 * @param array<int, mixed>    $siblings TreasuryAccounts sharing the IBAN.
+	 *
+	 * @return list<mixed> The conflicting account references.
+	 */
+	private function conflictingAccountIds(array $account, array $siblings): array {
+		$conflicting = [];
+		foreach ($siblings as $sibling) {
+			if (is_array($sibling) === false || $this->isSameAccount(account: $account, sibling: $sibling) === true) {
+				continue;
+			}
+
+			$conflicting[] = ($sibling['id'] ?? $sibling['accountNumber'] ?? 'unknown');
+		}
+
+		return $conflicting;
+	}//end conflictingAccountIds()
+
+	/**
+	 * Whether a sibling is the account itself: by id when the account has
+	 * one, else by accountNumber.
+	 *
+	 * @param array<string, mixed> $account The account under evaluation.
+	 * @param array<string, mixed> $sibling A TreasuryAccount sharing the IBAN.
+	 *
+	 * @return bool True when the sibling is this account.
+	 */
+	private function isSameAccount(array $account, array $sibling): bool {
+		$accountId = ($account['id'] ?? null);
+		if ($accountId !== null) {
+			return ($sibling['id'] ?? null) === $accountId;
+		}
+
+		$accountNumber = ($account['accountNumber'] ?? null);
+
+		return $accountNumber !== null && ($sibling['accountNumber'] ?? null) === $accountNumber;
+	}//end isSameAccount()
 
 	/**
 	 * Check that the account's approvalStatus satisfies the approval-required rule.
