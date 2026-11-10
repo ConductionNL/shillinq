@@ -55,6 +55,32 @@ class KorThresholdCalculator {
 	public const STANDARD_VAT_RATE = 0.21;
 
 	/**
+	 * Branche flags that argue against a KOR-NL aanmelding, checked in this
+	 * order, each with its advisory (REQ-KOR-010).
+	 *
+	 * @var array<string,array{verdict:string,reason:string}>
+	 */
+	private const BRANCHE_ADVISORIES = [
+		'fiscaleEenheid' => [
+			'verdict' => 'BLOCK',
+			'reason' => 'KOR aanmelden door een fiscale unit is niet mogelijk; '
+				. 'de unit zelf moet aanmelden, niet een individuele deelnemer.',
+		],
+		'art11Vrijstelling' => [
+			'verdict' => 'BLOCK',
+			'reason' => 'Onderneming valt volledig onder art. 11 OB; KOR levert geen voordeel en blokkeert voorbelasting-aftrek.',
+		],
+		'vrijgesteldEnBelast' => [
+			'verdict' => 'WARN',
+			'reason' => 'Mixed-use vrijgesteld + belast: effective KOR-threshold wordt calculated over alleen het belaste deel.',
+		],
+		'intracommunautair' => [
+			'verdict' => 'WARN',
+			'reason' => 'Bedrijf doet structureel intracommunautaire leveringen; overweeg OSS-regime als alternatief.',
+		],
+	];
+
+	/**
 	 * Convert a money amount to integer cents.
 	 *
 	 * @param mixed $amount Money amount (float|int|numeric-string|null).
@@ -272,16 +298,14 @@ class KorThresholdCalculator {
 	public function plusThreeYears(string $date): string {
 		// Validate strictly as YYYY-MM-DD; pure string arithmetic avoids a
 		// DateTime dependency and keeps the leveringsdatum + 3 year deterministic.
-		if (preg_match('/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/', $date, $match) !== 1) {
+		$parts = $this->dateParts(date: $date);
+		if ($parts === null) {
 			return '';
 		}
 
-		$year = ((int)$match[1] + 3);
-		$month = (int)$match[2];
-		$day = (int)$match[3];
-		if ($month < 1 || $month > 12 || $day < 1 || $day > 31) {
-			return '';
-		}
+		$year  = ($parts[0] + 3);
+		$month = $parts[1];
+		$day   = $parts[2];
 
 		// Clamp 29 February to 28 February when +3 years lands on a non-leap year.
 		if ($month === 2 && $day === 29 && checkdate(2, 29, $year) === false) {
@@ -307,56 +331,16 @@ class KorThresholdCalculator {
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
 	public function lockInWindow(string $effectiveDate): ?array {
-		if (preg_match('/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/', $effectiveDate, $match) !== 1) {
+		$parts = $this->dateParts(date: $effectiveDate);
+		if ($parts === null) {
 			return null;
 		}
 
-		$year = ((int)$match[1] + 3);
-		$month = (int)$match[2];
-		$day = (int)$match[3];
-		if ($month < 1 || $month > 12 || $day < 1 || $day > 31) {
+		$lockInEinde   = $this->lockInEndDate(parts: $parts);
+		$vroegsteOpzeg = $this->earliestTerminationDate(lockInEndDate: $lockInEinde);
+		if ($vroegsteOpzeg === null) {
 			return null;
 		}
-
-		// LockInEindDatum: effectiveDate - 1 day + 3 years = end of third calendar year.
-		// For a 1-1 ingangsdatum, that is 31-12 of (year + 2). We model the general
-		// case as +3 years - 1 day; for the canonical 1-1 start the prior day is 31-12.
-		if ($month === 1 && $day === 1) {
-			$lockInYear = ($year - 1);
-			$lockInEinde = sprintf('%04d-12-31', $lockInYear);
-		} else {
-			$priorDay = ($day - 1);
-			$priorMonth = $month;
-			if ($priorDay < 1) {
-				$priorMonth = ($month - 1);
-				if ($priorMonth < 1) {
-					$priorMonth = 12;
-					$year -= 1;
-				}
-
-				$priorDay = (int)date('t', strtotime(sprintf('%04d-%02d-01', $year, $priorMonth)));
-			}
-
-			$lockInEinde = sprintf('%04d-%02d-%02d', $year, $priorMonth, $priorDay);
-		}
-
-		// Vroegste opzeg-date = three months before lockInEinde, rounded to the
-		// first day of that month (canonical opt-out window opens 1 October when
-		// lockInEinde is 31 December).
-		if (preg_match('/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/', $lockInEinde, $m2) !== 1) {
-			return null;
-		}
-
-		$lyear = (int)$m2[1];
-		$lmonth = (int)$m2[2];
-		$opzegMonth = ($lmonth - 2);
-		$opzegYear = $lyear;
-		if ($opzegMonth < 1) {
-			$opzegMonth += 12;
-			$opzegYear -= 1;
-		}
-
-		$vroegsteOpzeg = sprintf('%04d-%02d-01', $opzegYear, $opzegMonth);
 
 		return [
 			'lockInEndDate' => $lockInEinde,
@@ -364,6 +348,76 @@ class KorThresholdCalculator {
 		];
 
 	}//end lockInWindow()
+
+	/**
+	 * Year, month and day of a strict YYYY-MM-DD date whose month is 1-12 and
+	 * whose day is 1-31.
+	 *
+	 * @param string $date The date.
+	 *
+	 * @return array{0:int,1:int,2:int}|null Year, month, day; null when invalid.
+	 */
+	private function dateParts(string $date): ?array {
+		if (preg_match('/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/', $date, $match) !== 1) {
+			return null;
+		}
+
+		$month = (int)$match[2];
+		$day   = (int)$match[3];
+		if ($month < 1 || $month > 12 || $day < 1 || $day > 31) {
+			return null;
+		}
+
+		return [(int)$match[1], $month, $day];
+	}//end dateParts()
+
+	/**
+	 * LockInEindDatum: effectiveDate + 3 years - 1 day, the end of the third
+	 * calendar year for the canonical 1-1 start.
+	 *
+	 * @param array{0:int,1:int,2:int} $parts The effective date's year, month and day.
+	 *
+	 * @return string The lock-in end as YYYY-MM-DD.
+	 */
+	private function lockInEndDate(array $parts): string {
+		$year       = ($parts[0] + 3);
+		$priorMonth = $parts[1];
+		$priorDay   = ($parts[2] - 1);
+		if ($priorDay < 1) {
+			$priorMonth = ($priorMonth - 1);
+			if ($priorMonth < 1) {
+				$priorMonth = 12;
+				$year      -= 1;
+			}
+
+			$priorDay = (int)date('t', strtotime(sprintf('%04d-%02d-01', $year, $priorMonth)));
+		}
+
+		return sprintf('%04d-%02d-%02d', $year, $priorMonth, $priorDay);
+	}//end lockInEndDate()
+
+	/**
+	 * Vroegste opzeg-date: three months before the lock-in end, on the first
+	 * day of that month (1 October when the lock-in ends on 31 December).
+	 *
+	 * @param string $lockInEndDate The lock-in end as YYYY-MM-DD.
+	 *
+	 * @return string|null The earliest termination date, or null when unreadable.
+	 */
+	private function earliestTerminationDate(string $lockInEndDate): ?string {
+		if (preg_match('/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/', $lockInEndDate, $match) !== 1) {
+			return null;
+		}
+
+		$opzegYear  = (int)$match[1];
+		$opzegMonth = ((int)$match[2] - 2);
+		if ($opzegMonth < 1) {
+			$opzegMonth += 12;
+			$opzegYear  -= 1;
+		}
+
+		return sprintf('%04d-%02d-01', $opzegYear, $opzegMonth);
+	}//end earliestTerminationDate()
 
 	/**
 	 * Decide whether a vrijwillige opzegging is permitted at a moment in time (REQ-KOR-007).
@@ -406,27 +460,8 @@ class KorThresholdCalculator {
 	 */
 	public function perLidstaatAggregate(array $invoices, array $thresholdsPerMemberState, int $year): array {
 		$defaultDrempelCents = $this->toCents(amount: 100000);
-		$cents = [];
-		foreach ($invoices as $invoice) {
-			if ((string)($invoice['vrijstellingsGrondslag'] ?? '') !== 'KOR_ART25_OB') {
-				continue;
-			}
-
-			$lidstaat = strtoupper((string)($invoice['lidstaat'] ?? ''));
-			if ($lidstaat === '') {
-				continue;
-			}
-
-			$leveringsDatum = (string)($invoice['leveringsDatum'] ?? '');
-			if (substr($leveringsDatum, 0, 4) !== (string)$year) {
-				continue;
-			}
-
-			$cents[$lidstaat] = (($cents[$lidstaat] ?? 0) + $this->toCents(amount: ($invoice['amount'] ?? 0)));
-		}
-
 		$result = [];
-		foreach ($cents as $lidstaat => $revenueCents) {
+		foreach ($this->korEuRevenueCents(invoices: $invoices, year: $year) as $lidstaat => $revenueCents) {
 			$thresholdCents = ($defaultDrempelCents);
 			if (isset($thresholdsPerMemberState[$lidstaat]) === true) {
 				$thresholdCents = $this->toCents(amount: $thresholdsPerMemberState[$lidstaat]);
@@ -442,6 +477,41 @@ class KorThresholdCalculator {
 		ksort($result);
 		return $result;
 	}//end perLidstaatAggregate()
+
+	/**
+	 * KOR-EU revenue in cents per upper-cased lidstaat code, for the invoices
+	 * of one calendar year that carry a lidstaat.
+	 *
+	 * @param array<int,array<string,mixed>> $invoices KOR-EU AR-invoice records.
+	 * @param int                            $year     Calendar year to bound the aggregation.
+	 *
+	 * @return array<string,int> Revenue cents per lidstaat, in first-seen order.
+	 */
+	private function korEuRevenueCents(array $invoices, int $year): array {
+		$cents = [];
+		foreach ($invoices as $invoice) {
+			$lidstaat = strtoupper((string)($invoice['lidstaat'] ?? ''));
+			if ($this->countsForKorEu(invoice: $invoice, year: $year) === true) {
+				$cents[$lidstaat] = (($cents[$lidstaat] ?? 0) + $this->toCents(amount: ($invoice['amount'] ?? 0)));
+			}
+		}
+
+		return $cents;
+	}//end korEuRevenueCents()
+
+	/**
+	 * Whether an invoice is a KOR-EU supply with a lidstaat, delivered in the year.
+	 *
+	 * @param array<string,mixed> $invoice One AR-invoice record.
+	 * @param int                 $year    The calendar year.
+	 *
+	 * @return bool
+	 */
+	private function countsForKorEu(array $invoice, int $year): bool {
+		return (string)($invoice['vrijstellingsGrondslag'] ?? '') === 'KOR_ART25_OB'
+			&& strtoupper((string)($invoice['lidstaat'] ?? '')) !== ''
+			&& substr((string)($invoice['leveringsDatum'] ?? ''), 0, 4) === (string)$year;
+	}//end countsForKorEu()
 
 	/**
 	 * Resolve a branche-specifieke advisory for a KOR-NL aanmelding (REQ-KOR-010).
@@ -461,37 +531,10 @@ class KorThresholdCalculator {
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
 	public function brancheCompatibility(array $branche): array {
-		$isFiscaleEenheid = (bool)($branche['fiscaleEenheid'] ?? false);
-		if ($isFiscaleEenheid === true) {
-			return [
-				'verdict' => 'BLOCK',
-				'reason' => 'KOR aanmelden door een fiscale unit is niet mogelijk; '
-					. 'de unit zelf moet aanmelden, niet een individuele deelnemer.',
-			];
-		}
-
-		$fullExempt = (bool)($branche['art11Vrijstelling'] ?? false);
-		if ($fullExempt === true) {
-			return [
-				'verdict' => 'BLOCK',
-				'reason' => 'Onderneming valt volledig onder art. 11 OB; KOR levert geen voordeel en blokkeert voorbelasting-aftrek.',
-			];
-		}
-
-		$isMixed = (bool)($branche['vrijgesteldEnBelast'] ?? false);
-		if ($isMixed === true) {
-			return [
-				'verdict' => 'WARN',
-				'reason' => 'Mixed-use vrijgesteld + belast: effective KOR-threshold wordt calculated over alleen het belaste deel.',
-			];
-		}
-
-		$isIntra = (bool)($branche['intracommunautair'] ?? false);
-		if ($isIntra === true) {
-			return [
-				'verdict' => 'WARN',
-				'reason' => 'Bedrijf doet structureel intracommunautaire leveringen; overweeg OSS-regime als alternatief.',
-			];
+		foreach (self::BRANCHE_ADVISORIES as $flag => $advisory) {
+			if ((bool)($branche[$flag] ?? false) === true) {
+				return $advisory;
+			}
 		}
 
 		return ['verdict' => 'OK', 'reason' => 'Geen branche-specifieke contra-indicaties; KOR is geschikt.'];
