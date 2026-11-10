@@ -29,6 +29,8 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\AccountantsdossierExportService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
+use OCA\Shillinq\Tests\Unit\Service\Support\OpenRegisterFaithfulObjectService;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -144,4 +146,47 @@ final class AccountantsdossierSummaryGoldenTest extends TestCase {
 		self::assertSame($golden[$key], $html);
 
 	}//end testSummaryMatchesGolden()
+
+	/**
+	 * The whole dossier envelope over a seeded register: collection order,
+	 * finding selection, manifest, ledger, hash and summary. The generation
+	 * timestamp and the package id derived from it are masked.
+	 *
+	 * @return void
+	 */
+	public function testDossierEnvelopeMatchesGolden(): void {
+		$store = new OpenRegisterFaithfulObjectService();
+		$store->seed(schema: 'Controleprotocol', rows: [['id' => 'cp-1', 'auditYear' => 2026, 'organisationId' => 'gem-1', 'organisationType' => 'gemeente', 'version' => 'v1']]);
+		$store->seed(schema: 'ToleranceMatrix', rows: [['id' => 't2', 'protocol' => 'cp-1', 'topic' => 'z'], ['id' => 't1', 'protocol' => 'cp-1', 'topic' => 'a'], ['id' => 't3', 'protocol' => 'other', 'topic' => 'm']]);
+		$store->seed(schema: 'Materialiteit', rows: [['id' => 'm2', 'protocol' => 'cp-1', 'scope' => 'sisa'], ['id' => 'm1', 'protocol' => 'cp-1', 'scope' => 'jaarrekening', 'base' => 100]]);
+		$store->seed(schema: 'AuditSample', rows: [['id' => 's2', 'protocol' => 'cp-1', 'extractedAt' => '2026-02-02'], ['id' => 's1', 'protocol' => 'cp-1', 'extractedAt' => '2026-01-01']]);
+		$store->seed(schema: 'AuditFinding', rows: [['id' => 'f3', 'sample' => 's2', 'amount' => 3], ['id' => 'f1', 'sample' => 's1', 'amount' => 1], ['id' => 'f9', 'sample' => 'sx'], ['id' => 'f0', 'sample' => '']]);
+		$store->seed(schema: 'VerklaringDraft', rows: [['id' => 'v1', 'protocol' => 'cp-1', 'proposedOpinion' => 'goedkeurend']]);
+		$store->seed(schema: 'SiSaAssurance', rows: [['id' => 'q2', 'protocol' => 'cp-1', 'schemeCode' => 'B'], ['id' => 'q1', 'protocol' => 'cp-1', 'schemeCode' => 'A']]);
+
+		$service = new AccountantsdossierExportService(
+			$this->createMock(IAppConfig::class),
+			$this->createMock(IUserSession::class),
+			$this->createMock(LoggerInterface::class),
+			new DuckObjectServiceAdapter($store)
+		);
+		$envelope = $service->buildDossier(protocolId: 'cp-1');
+		$masked = str_replace(
+			[$envelope['packageId'], $envelope['generatedAt']],
+			['<packageId>', '<generatedAt>'],
+			(string)json_encode($envelope, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+		);
+		$masked = (string)preg_replace('/urn:uuid:[0-9a-f-]{36}/', 'urn:uuid:<uuid>', $masked);
+
+		$golden = json_decode((string)file_get_contents(self::GOLDEN), true);
+		if (getenv('SHILLINQ_RECORD_GOLDEN') === '1') {
+			$golden['dossier envelope'] = json_decode($masked, true);
+			file_put_contents(self::GOLDEN, json_encode($golden, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n");
+			$this->addToAssertionCount(1);
+			return;
+		}
+
+		self::assertSame($golden['dossier envelope'], json_decode($masked, true));
+
+	}//end testDossierEnvelopeMatchesGolden()
 }//end class
