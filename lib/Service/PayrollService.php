@@ -53,6 +53,61 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  */
 class PayrollService {
 	/**
+	 * The journal totals (integer cents) before any payslip is added.
+	 *
+	 * @var array<string,int>
+	 */
+	private const EMPTY_JOURNAL_TOTALS = [
+		'gross' => 0,
+		'free' => 0,
+		'svWg' => 0,
+		'zvw' => 0,
+		'pensWg' => 0,
+		'pensWn' => 0,
+		'lh' => 0,
+		'net' => 0,
+	];
+
+	/**
+	 * The Loonjournaalpost rules in order: debit lines gross wages, tax-free
+	 * allowances, employer social charges, employer ZVW, employer pension;
+	 * credit lines net payable, wage tax payable, SV+ZVW payable, pension
+	 * payable (employer + employee). Each sums the named journal totals.
+	 *
+	 * @var list<array{rekening:string,name:string,side:string,totals:list<string>}>
+	 */
+	private const JOURNAL_RULES = [
+		['rekening' => PayrollChartOfAccountsMapping::ACC_BRUTOLONEN, 'name' => 'Brutolonen', 'side' => 'debet', 'totals' => ['gross']],
+		[
+			'rekening' => PayrollChartOfAccountsMapping::ACC_BELASTINGVRIJE_VERGOEDINGEN,
+			'name' => 'Belastingvrije vergoedingen',
+			'side' => 'debet',
+			'totals' => ['free'],
+		],
+		['rekening' => PayrollChartOfAccountsMapping::ACC_SOCIALE_LASTEN_WG, 'name' => 'Sociale lasten WG', 'side' => 'debet', 'totals' => ['svWg']],
+		['rekening' => PayrollChartOfAccountsMapping::ACC_ZVW_WG, 'name' => 'ZVW-bijdrage WG', 'side' => 'debet', 'totals' => ['zvw']],
+		['rekening' => PayrollChartOfAccountsMapping::ACC_PENSIOEN_WG, 'name' => 'Pensioenpremie WG', 'side' => 'debet', 'totals' => ['pensWg']],
+		[
+			'rekening' => PayrollChartOfAccountsMapping::ACC_TE_BETALEN_NETTO_LOON,
+			'name' => 'Te betalen netto loon',
+			'side' => 'credit',
+			'totals' => ['net'],
+		],
+		['rekening' => PayrollChartOfAccountsMapping::ACC_AF_TE_DRAGEN_LH, 'name' => 'Af te dragen loonheffing', 'side' => 'credit', 'totals' => ['lh']],
+		[
+			'rekening' => PayrollChartOfAccountsMapping::ACC_AF_TE_DRAGEN_PREMIES_SV_ZVW,
+			'name' => 'Af te dragen premies SV+ZVW',
+			'side' => 'credit',
+			'totals' => ['svWg', 'zvw'],
+		],
+		[
+			'rekening' => PayrollChartOfAccountsMapping::ACC_AF_TE_DRAGEN_PENSIOEN,
+			'name' => 'Af te dragen pensioenpremie',
+			'side' => 'credit',
+			'totals' => ['pensWg', 'pensWn'],
+		],
+	];
+	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
@@ -315,99 +370,87 @@ class PayrollService {
 	public function bouwLoonjournaalpost(string $administrationId, string $periodId): array {
 		$stroken = $this->findAll(schema: 'LoonStrook', administrationId: $administrationId, filters: ['periodId' => $periodId]);
 
-		$grossC = 0;
-		$freeC = 0;
-		$svWgC = 0;
-		$zvwC = 0;
-		$pensWgC = 0;
-		$pensWnC = 0;
-		$lhC = 0;
-		$netC = 0;
-		foreach ($stroken as $s) {
-			$totalGross = (float)($s['grossComponents']['totaal_bruto'] ?? 0);
-			$free = (float)($s['grossComponents']['thuiswerkvergoeding'] ?? 0);
-			$grossC += ($this->calculator->toCents(amount: $totalGross) - $this->calculator->toCents(amount: $free));
-			$freeC += $this->calculator->toCents(amount: $free);
-			$svWgC += $this->calculator->toCents(amount: ($s['employerSocialInsurancePremiums']['totaal_werkgever'] ?? 0));
-			$zvwC += $this->calculator->toCents(amount: ($s['zvw']['afgedragen_wg'] ?? 0));
-			$pensWgC += $this->calculator->toCents(amount: ($s['pension']['premie_wg_aandeel'] ?? 0));
-			$pensWnC += $this->calculator->toCents(amount: ($s['pension']['premie_wn_aandeel'] ?? 0));
-			$lhC += $this->calculator->toCents(amount: ($s['payrollTax'] ?? 0));
-			$netC += $this->calculator->toCents(amount: ($s['netPaid'] ?? 0));
-		}//end foreach
+		$totals = self::EMPTY_JOURNAL_TOTALS;
+		foreach ($stroken as $strook) {
+			$totals = $this->addStrookCents(totals: $totals, strook: $strook);
+		}
 
-		$f = (fn (int $c): float => $this->calculator->fromCents(cents: $c));
-
-		$rules = [
-			[
-				'rekening' => PayrollChartOfAccountsMapping::ACC_BRUTOLONEN,
-				'name' => 'Brutolonen',
-				'debet' => $f($grossC),
-				'credit' => 0.0,
-			],
-			[
-				'rekening' => PayrollChartOfAccountsMapping::ACC_BELASTINGVRIJE_VERGOEDINGEN,
-				'name' => 'Belastingvrije vergoedingen',
-				'debet' => $f($freeC),
-				'credit' => 0.0,
-			],
-			[
-				'rekening' => PayrollChartOfAccountsMapping::ACC_SOCIALE_LASTEN_WG,
-				'name' => 'Sociale lasten WG',
-				'debet' => $f($svWgC),
-				'credit' => 0.0,
-			],
-			[
-				'rekening' => PayrollChartOfAccountsMapping::ACC_ZVW_WG,
-				'name' => 'ZVW-bijdrage WG',
-				'debet' => $f($zvwC),
-				'credit' => 0.0,
-			],
-			[
-				'rekening' => PayrollChartOfAccountsMapping::ACC_PENSIOEN_WG,
-				'name' => 'Pensioenpremie WG',
-				'debet' => $f($pensWgC),
-				'credit' => 0.0,
-			],
-			[
-				'rekening' => PayrollChartOfAccountsMapping::ACC_TE_BETALEN_NETTO_LOON,
-				'name' => 'Te betalen netto loon',
-				'debet' => 0.0,
-				'credit' => $f($netC),
-			],
-			[
-				'rekening' => PayrollChartOfAccountsMapping::ACC_AF_TE_DRAGEN_LH,
-				'name' => 'Af te dragen loonheffing',
-				'debet' => 0.0,
-				'credit' => $f($lhC),
-			],
-			[
-				'rekening' => PayrollChartOfAccountsMapping::ACC_AF_TE_DRAGEN_PREMIES_SV_ZVW,
-				'name' => 'Af te dragen premies SV+ZVW',
-				'debet' => 0.0,
-				'credit' => $f(($svWgC + $zvwC)),
-			],
-			[
-				'rekening' => PayrollChartOfAccountsMapping::ACC_AF_TE_DRAGEN_PENSIOEN,
-				'name' => 'Af te dragen pensioenpremie',
-				'debet' => 0.0,
-				'credit' => $f(($pensWgC + $pensWnC)),
-			],
-		];
-
-		$debetTotal = ($grossC + $freeC + $svWgC + $zvwC + $pensWgC);
-		$creditTotal = ($netC + $lhC + $svWgC + $zvwC + $pensWgC + $pensWnC);
-		$balanced = ($debetTotal === $creditTotal);
+		$rules = [];
+		foreach (self::JOURNAL_RULES as $rule) {
+			$rules[] = $this->journalRule(rule: $rule, totals: $totals);
+		}
 
 		return [
 			'periodId' => $periodId,
 			'date' => (string)date('Y-m-d'),
 			'rules' => $rules,
-			'balanced' => $balanced,
+			'balanced' => $this->isBalanced(totals: $totals),
 			'administrationId' => $administrationId,
 		];
 
 	}//end bouwLoonjournaalpost()
+
+	/**
+	 * Add one payslip's amounts, in integer cents, to the journal totals.
+	 * Gross wages exclude the tax-free home-office allowance, which has its
+	 * own total.
+	 *
+	 * @param array<string,int>   $totals The totals so far.
+	 * @param array<string,mixed> $strook The LoonStrook.
+	 *
+	 * @return array<string,int> The new totals.
+	 */
+	private function addStrookCents(array $totals, array $strook): array {
+		$free = (float)($strook['grossComponents']['thuiswerkvergoeding'] ?? 0);
+		$totalGrossC = $this->calculator->toCents(amount: (float)($strook['grossComponents']['totaal_bruto'] ?? 0));
+		$totals['gross'] += ($totalGrossC - $this->calculator->toCents(amount: $free));
+		$totals['free'] += $this->calculator->toCents(amount: $free);
+		$totals['svWg'] += $this->calculator->toCents(amount: ($strook['employerSocialInsurancePremiums']['totaal_werkgever'] ?? 0));
+		$totals['zvw'] += $this->calculator->toCents(amount: ($strook['zvw']['afgedragen_wg'] ?? 0));
+		$totals['pensWg'] += $this->calculator->toCents(amount: ($strook['pension']['premie_wg_aandeel'] ?? 0));
+		$totals['pensWn'] += $this->calculator->toCents(amount: ($strook['pension']['premie_wn_aandeel'] ?? 0));
+		$totals['lh'] += $this->calculator->toCents(amount: ($strook['payrollTax'] ?? 0));
+		$totals['net'] += $this->calculator->toCents(amount: ($strook['netPaid'] ?? 0));
+		return $totals;
+	}//end addStrookCents()
+
+	/**
+	 * One journal rule: its account and name, with the sum of its totals on
+	 * its side (debet or credit) and 0.0 on the other.
+	 *
+	 * @param array{rekening:string,name:string,side:string,totals:list<string>} $rule   The rule definition.
+	 * @param array<string,int>                                                   $totals The journal totals.
+	 *
+	 * @return array<string,mixed> The rule.
+	 */
+	private function journalRule(array $rule, array $totals): array {
+		$cents = 0;
+		foreach ($rule['totals'] as $total) {
+			$cents += $totals[$total];
+		}
+
+		$entry = [
+			'rekening' => $rule['rekening'],
+			'name' => $rule['name'],
+			'debet' => 0.0,
+			'credit' => 0.0,
+		];
+		$entry[$rule['side']] = $this->calculator->fromCents(cents: $cents);
+		return $entry;
+	}//end journalRule()
+
+	/**
+	 * True when the journal's debits equal its credits in integer cents.
+	 *
+	 * @param array<string,int> $totals The journal totals.
+	 *
+	 * @return bool Whether the journal balances.
+	 */
+	private function isBalanced(array $totals): bool {
+		$debetTotal = ($totals['gross'] + $totals['free'] + $totals['svWg'] + $totals['zvw'] + $totals['pensWg']);
+		$creditTotal = ($totals['net'] + $totals['lh'] + $totals['svWg'] + $totals['zvw'] + $totals['pensWg'] + $totals['pensWn']);
+		return ($debetTotal === $creditTotal);
+	}//end isBalanced()
 
 	/*
 	 * NO PAYROLL PERSISTENCE HERE.
