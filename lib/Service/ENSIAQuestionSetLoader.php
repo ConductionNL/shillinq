@@ -56,6 +56,16 @@ class ENSIAQuestionSetLoader {
 	private const DEFAULT_SEED = __DIR__ . '/../Settings/seeds/ensia-vng-2026.json';
 
 	/**
+	 * What load() answers when the seed cannot be read.
+	 *
+	 * @var array{questionSetVersion: string, vragen: array<int,array<string,mixed>>}
+	 */
+	private const UNKNOWN_SET = [
+		'questionSetVersion' => 'unknown',
+		'vragen' => [],
+	];
+
+	/**
 	 * Construct the loader.
 	 *
 	 * @param string|null $seedPath Optional override of the default seed
@@ -91,10 +101,7 @@ class ENSIAQuestionSetLoader {
 	public function load(int $year, array $domeinen, string $cyclusId, string $administrationId): array {
 		$payload = $this->readSeed();
 		if ($payload === null) {
-			return [
-				'questionSetVersion' => 'unknown',
-				'vragen' => [],
-			];
+			return self::UNKNOWN_SET;
 		}
 
 		$scope = new ENSIAQuestionScope();
