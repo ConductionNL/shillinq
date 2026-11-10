@@ -230,15 +230,11 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 	 * @return void
 	 */
 	private function recordProfitCreated(ObjectEntity $entity, array $data): void {
+		$row = $this->profitRow(entity: $entity, data: $data);
 		$this->append(
 			entity: $entity,
-			options: [
+			options: $row + [
 				'event_type' => InnovatieboxAuditEventLogger::EVENT_PROFIT_CREATED,
-				'administrationId' => (string)($data['administrationId'] ?? ''),
-				'financialYear' => $this->intOrNull(value: $data['financialYear'] ?? null),
-				'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
-				'subject_schema' => 'IBProfitAttribution',
-				'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
 				'details' => $this->slice(data: $data, keys: self::PROFIT_DETAIL_KEYS),
 			]
 		);
@@ -259,27 +255,52 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 	 * @return void
 	 */
 	private function recordForfaitairCap(ObjectEntity $entity, array $data): void {
-		$kwalifFor = (float)($data['qualifying_profit_for_nexus'] ?? 0);
-		$kwalifAfter = (float)($data['qualifying_profit_after_nexus'] ?? 0);
+		$row = $this->profitRow(entity: $entity, data: $data);
 		$this->append(
 			entity: $entity,
-			options: [
+			options: $row + [
 				'event_type' => InnovatieboxAuditEventLogger::EVENT_FORFAITAIR_CAP_APPLIED,
-				'administrationId' => (string)($data['administrationId'] ?? ''),
-				'financialYear' => $this->intOrNull(value: $data['financialYear'] ?? null),
-				'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
-				'subject_schema' => 'IBProfitAttribution',
-				'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
 				'reason' => 'cap_hit',
-				'details' => [
-					'voor_cap' => $kwalifFor,
-					'na_cap' => $kwalifAfter,
-					'benefit_reduction' => max(0.0, ($kwalifFor - $kwalifAfter)),
-					'forfaitair_cap_eur' => 25000,
-				],
+				'details' => $this->forfaitairCapDetails(data: $data),
 			]
 		);
 	}//end recordForfaitairCap()
+
+	/**
+	 * The subject fields shared by both IBProfitAttribution create rows.
+	 *
+	 * @param ObjectEntity        $entity The created IBProfitAttribution.
+	 * @param array<string,mixed> $data   Its payload.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function profitRow(ObjectEntity $entity, array $data): array {
+		return [
+			'administrationId' => (string)($data['administrationId'] ?? ''),
+			'financialYear' => $this->intOrNull(value: $data['financialYear'] ?? null),
+			'qualifying_asset_id' => $this->stringOrNull(value: $data['qualifying_asset_id'] ?? null),
+			'subject_schema' => 'IBProfitAttribution',
+			'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
+		];
+	}//end profitRow()
+
+	/**
+	 * Before/after cap figures for the ForfaitairCap.applied twin.
+	 *
+	 * @param array<string,mixed> $data The IBProfitAttribution payload.
+	 *
+	 * @return array<string,float|int>
+	 */
+	private function forfaitairCapDetails(array $data): array {
+		$kwalifFor = (float)($data['qualifying_profit_for_nexus'] ?? 0);
+		$kwalifAfter = (float)($data['qualifying_profit_after_nexus'] ?? 0);
+		return [
+			'voor_cap' => $kwalifFor,
+			'na_cap' => $kwalifAfter,
+			'benefit_reduction' => max(0.0, ($kwalifFor - $kwalifAfter)),
+			'forfaitair_cap_eur' => 25000,
+		];
+	}//end forfaitairCapDetails()
 
 	/**
 	 * CarryForwardLoss.created, dated by its origin year (else its financial year).
