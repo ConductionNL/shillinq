@@ -172,8 +172,8 @@ class HorizonRollingJob extends TimedJob {
 				$objectService->saveObject(
 					$rolledHorizon,
 					options: new ObjectSaveOptions(
-						target: new ObjectFindTarget(register: 'CashflowForecastHorizon', schema: $uuid),
-						extend: $register
+						target: new ObjectFindTarget(register: $register, schema: 'CashflowForecastHorizon'),
+						uuid: $uuid
 					)
 				);
 				$rolled++;

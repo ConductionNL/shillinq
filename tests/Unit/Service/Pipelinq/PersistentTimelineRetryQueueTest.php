@@ -146,7 +146,9 @@ final class PersistentTimelineRetryQueueTest extends TestCase {
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, ?string $register = null, ?string $schema = null, bool $_rbac = true): array {
+			public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null, bool $_rbac = true): array {
+				$register = $options?->target->register;
+				$schema = $options?->target->schema;
 				$this->saved[] = [
 					'register' => ($register ?? $this->register),
 					'schema' => ($schema ?? $this->schema),
@@ -193,7 +195,7 @@ final class PersistentTimelineRetryQueueTest extends TestCase {
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, ?string $register = null, ?string $schema = null, bool $_rbac = true): array {
+			public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null, bool $_rbac = true): array {
 				throw new \RuntimeException('OR write failed');
 			}//end saveObject()
 		};

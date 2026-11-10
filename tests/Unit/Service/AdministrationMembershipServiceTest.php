@@ -98,7 +98,8 @@ final class AdministrationMembershipServiceTest extends TestCase {
 		$objects->method('setSchema')->willReturnSelf();
 		$objects->method('findAll')->willReturnCallback(static fn (): array => $store->existing);
 		$objects->method('saveObject')->willReturnCallback(
-			function (array $object, ?array $extend, $register, $schema) use ($store): ObjectEntityInterface {
+			function (array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null) use ($store): ObjectEntityInterface {
+				$schema = $options?->target->schema;
 				$store->saved[] = ['object' => $object, 'schema' => $schema];
 				$entity = $this->createMock(ObjectEntityInterface::class);
 				$entity->method('jsonSerialize')->willReturn($object);

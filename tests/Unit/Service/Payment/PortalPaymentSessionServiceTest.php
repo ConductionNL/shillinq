@@ -213,13 +213,13 @@ final class PortalPaymentObjectServiceStub {
 	 */
 	public function saveObject(
 		array|object $object,
-		?array $extend = [],
-		mixed $register = null,
-		mixed $schema = null,
-		?string $uuid = null,
+		?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null,
 		bool $_rbac = true,
-		bool $_multitenancy = true,
+		bool $_multitenancy = true
 	): array {
+		$register = $options?->target->register;
+		$schema = $options?->target->schema;
+		$uuid = $options?->uuid;
 		if ($this->throwOnSaveObject === true) {
 			throw new RuntimeException('OpenRegister write failed');
 		}

@@ -148,7 +148,10 @@ final class DeclineObjectServiceFake {
 	 *
 	 * @return array<string, mixed>
 	 */
-	public function saveObject(array|object $object, ?array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null, bool $_rbac = true, bool $_multitenancy = true): array {
+	public function saveObject(array|object $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): array {
+		$register = $options?->target->register;
+		$schema = $options?->target->schema;
+		$uuid = $options?->uuid;
 		$this->saved[] = ['schema' => $schema, 'object' => (array)$object, 'uuid' => $uuid, 'rbac' => $_rbac];
 		if ($uuid !== null) {
 			$this->data[(string)$register][(string)$schema][$uuid] = (array)$object;

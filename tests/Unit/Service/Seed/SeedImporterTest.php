@@ -147,7 +147,7 @@ final class SeedImporterTest extends TestCase {
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, mixed $register, mixed $schema): array {
+			public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null): array {
 				$this->calls[] = 'save ' . $object['code'];
 				return $object;
 			}

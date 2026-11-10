@@ -628,7 +628,7 @@ class WidgetServiceTest extends TestCase {
 			 * @param bool                $_rbac Whether OpenRegister RBAC applies.
 			 * @return array<string,mixed>|null
 			 */
-			public function saveObject(array $object, string $register = '', string $schema = '', bool $_rbac = true): ?array {
+			public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null, bool $_rbac = true): ?array {
 				$this->rbacFlags[] = $_rbac;
 				$this->lastSaved = $object;
 				return $this->saved;

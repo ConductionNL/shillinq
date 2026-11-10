@@ -307,7 +307,9 @@ final class GoldenWidgetObjects {
 	 *
 	 * @return mixed
 	 */
-	public function saveObject(array $object, string $register, string $schema, bool $_rbac = true): mixed {
+	public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null, bool $_rbac = true): mixed {
+		$register = $options?->target->register;
+		$schema = $options?->target->schema;
 		$this->saved[] = ['object' => $object, 'register' => $register, 'schema' => $schema, 'rbac' => $_rbac];
 		return match ($this->save) {
 			'throws' => throw new RuntimeException('disk full'),

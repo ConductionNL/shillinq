@@ -333,7 +333,7 @@ final class FxRateImportJobTest extends TestCase {
 			public function findAll(array $opts): array {
 				return [];
 			}
-			public function saveObject(array $object, string $register, string $schema, ?string $uuid = null): void {
+			public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null): void {
 				$this->saved++;
 				$this->lastObject = $object;
 			}
@@ -386,7 +386,7 @@ final class FxRateImportJobTest extends TestCase {
 				// Pretend a duplicate exists.
 				return [['transactionCurrency' => 'USD', 'baseCurrency' => 'EUR']];
 			}
-			public function saveObject(array $object, string $register, string $schema, ?string $uuid = null): void {
+			public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null): void {
 				$this->saved++;
 			}
 		};
@@ -433,7 +433,7 @@ final class FxRateImportJobTest extends TestCase {
 			public function findAll(array $opts): array {
 				return [];
 			}
-			public function saveObject(array $object, string $register, string $schema, ?string $uuid = null): void {
+			public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null): void {
 				$this->saved++;
 			}
 		};

@@ -25,6 +25,8 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\Listener\GLLineResultStampListener;
 use OCA\Shillinq\Repair\StampGlLineResults;
 use OCA\Shillinq\Service\Ledger\GlLineResultStamps;
@@ -144,7 +146,7 @@ class GLLineResultStampListenerTest extends TestCase {
 	 */
 	public function testTheReverseTransitionTakesTheLinesOut(): void {
 		$this->stamps()->stampTransaction(Seed::TX_SEP);
-		$this->store->saveObject(object: ['id' => Seed::TX_SEP, 'state' => 'reversed', 'administrationId' => Seed::ADMIN], schema: 'GLTransaction');
+		$this->store->saveObject(object: ['id' => Seed::TX_SEP, 'state' => 'reversed', 'administrationId' => Seed::ADMIN], options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'GLTransaction')));
 		$transaction = $this->entity('GLTransaction', ['id' => Seed::TX_SEP, 'state' => 'reversed']);
 
 		$this->listener()->handle(new ObjectTransitionedEvent($transaction, 'reverse', 'posted', 'reversed', 'controller', 'shillinq', 'GLTransaction'));

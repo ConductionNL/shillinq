@@ -302,7 +302,7 @@ class FxRateImportJob extends TimedJob {
 		try {
 			$objectService->setRegister($register);
 			$objectService->setSchema('FxRate');
-			$objectService->saveObject($record, options: new ObjectSaveOptions(target: new ObjectFindTarget(register: 'FxRate'), extend: $register));
+			$objectService->saveObject($record, options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: 'FxRate')));
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'Shillinq FxRateImportJob: failed to save FxRate',

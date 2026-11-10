@@ -130,7 +130,8 @@ class StandardsPolicyServiceTest extends TestCase {
 			)
 		);
 		$objects->method('saveObject')->willReturnCallback(
-			function (array $object, ?array $extend, $register, $schema, ?string $uuid) use (&$saved): ObjectEntityInterface {
+			function (array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null) use (&$saved): ObjectEntityInterface {
+				$uuid = $options?->uuid;
 				$saved[] = ['object' => $object, 'uuid' => $uuid];
 				$entity = $this->createMock(ObjectEntityInterface::class);
 				$entity->method('jsonSerialize')->willReturn(['@self' => ['id' => $uuid]] + $object);

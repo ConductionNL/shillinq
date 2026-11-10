@@ -322,7 +322,9 @@ final class GoldenSeriesObjects {
 	 *
 	 * @return array<string, mixed>
 	 */
-	public function saveObject(array $object, string $register, string $schema): array {
+	public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null): array {
+		$register = $options?->target->register;
+		$schema = $options?->target->schema;
 		$this->saved[] = ['register' => $register, 'schema' => $schema, 'object' => $object];
 		if ($this->resource === 'saveFails' && $schema === 'Appointment') {
 			throw new RuntimeException('disk full');

@@ -638,7 +638,8 @@ class InitializeSettingsTest extends TestCase {
 			 * @param array<string,mixed> $object
 			 * @return array<string,mixed>
 			 */
-			public function saveObject(array $object, string $register, string $schema, string $uuid, bool $_rbac = true): array {
+			public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null, bool $_rbac = true): array {
+				$uuid = $options?->uuid;
 				$this->saved[] = $uuid;
 				return $object;
 			}
@@ -729,7 +730,8 @@ class InitializeSettingsTest extends TestCase {
 			 * @param array<string,mixed> $object
 			 * @return array<string,mixed>
 			 */
-			public function saveObject(array $object, string $register, string $schema, string $uuid, bool $_rbac = true): array {
+			public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null, bool $_rbac = true): array {
+				$uuid = $options?->uuid;
 				if ($uuid === 'obj-fail') {
 					throw new \RuntimeException('save failed');
 				}

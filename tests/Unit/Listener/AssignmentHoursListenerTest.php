@@ -26,6 +26,8 @@ use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectDeletedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCA\Shillinq\Listener\AssignmentHoursListener;
 use OCA\Shillinq\Repair\BackfillAssignmentHours;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
@@ -206,7 +208,7 @@ class AssignmentHoursListenerTest extends TestCase {
 	 */
 	private function book(string $id, float $hours): void {
 		$row = $this->hour(id: $id, hours: $hours, assignment: self::ASSIGNMENT);
-		$this->store->saveObject(object: $row, schema: 'UrenRegistratie');
+		$this->store->saveObject(object: $row, options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'UrenRegistratie')));
 		$this->listener()->handle(new ObjectCreatedEvent($this->entity('UrenRegistratie', $row)));
 
 	}//end book()
@@ -315,7 +317,7 @@ class AssignmentHoursListenerTest extends TestCase {
 	public function testAChangedHourReSumsBothAssignments(): void {
 		$old = $this->hour(id: 'u1', hours: 10, assignment: self::ASSIGNMENT);
 		$new = $this->hour(id: 'u1', hours: 4, assignment: self::OTHER_ASSIGNMENT);
-		$this->store->saveObject(object: $new, schema: 'UrenRegistratie');
+		$this->store->saveObject(object: $new, options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'UrenRegistratie')));
 
 		$this->listener()->handle(new ObjectUpdatedEvent($this->entity('UrenRegistratie', $new), $this->entity('UrenRegistratie', $old)));
 
@@ -345,7 +347,7 @@ class AssignmentHoursListenerTest extends TestCase {
 		$this->book(id: 'u10', hours: 6);
 		$warned = $this->stored('ProjectAssignment', self::ASSIGNMENT);
 		$raised = array_merge($warned, ['estimatedHours' => 110]);
-		$this->store->saveObject(object: $raised, schema: 'ProjectAssignment');
+		$this->store->saveObject(object: $raised, options: new ObjectSaveOptions(target: new ObjectFindTarget(schema: 'ProjectAssignment')));
 		$this->saved = [];
 
 		$this->listener()->handle(new ObjectUpdatedEvent($this->entity('ProjectAssignment', $raised), $this->entity('ProjectAssignment', $warned)));

@@ -369,12 +369,11 @@ abstract class InventoryMobileScannerStubObjectService {
 	/**
 	 * Save an object.
 	 *
-	 * @param mixed $object Object payload.
-	 * @param string|null $register Optional register.
-	 * @param string|null $schema Optional schema.
+	 * @param mixed                                               $object  Object payload.
+	 * @param \OCA\OpenRegister\Service\Object\ObjectSaveOptions|null $options Register, schema and the rest.
 	 *
 	 * @return mixed
 	 */
-	abstract public function saveObject(mixed $object, ?string $register = null, ?string $schema = null): mixed;
+	abstract public function saveObject(mixed $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null): mixed;
 
 }//end class

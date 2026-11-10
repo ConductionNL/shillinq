@@ -222,7 +222,8 @@ final class BookingDepthControllerTest extends TestCase {
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, string $register, string $schema): array {
+			public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null): array {
+				$schema = $options?->target->schema;
 				$this->saved[] = ['schema' => $schema, 'object' => $object];
 				return $object;
 			}//end saveObject()

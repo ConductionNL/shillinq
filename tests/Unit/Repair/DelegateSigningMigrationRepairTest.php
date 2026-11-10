@@ -185,7 +185,7 @@ class DelegateSigningMigrationRepairTest extends TestCase {
 			/**
 			 * @param array<string,mixed> $object
 			 */
-			public function saveObject(array $object, string $register, string $schema, bool $_rbac, bool $_multitenancy): void {
+			public function saveObject(array $object, ?\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = null, bool $_rbac, bool $_multitenancy): void {
 				if ($this->throwOnSave === true) {
 					throw new \RuntimeException('saveObject failed');
 				}
