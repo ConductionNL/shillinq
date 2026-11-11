@@ -105,6 +105,27 @@ class ThreeWayMatchController extends Controller {
 		}
 
 		$administrationId = $this->scopeParam(name: 'administrationId');
+		$refusal = $this->administrationRefusal(administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$invoiceId = $this->scopeParam(name: 'invoiceId');
+		if ($invoiceId === '') {
+			return new JSONResponse(['error' => 'invoiceId is required'], Http::STATUS_BAD_REQUEST);
+		}
+
+		return $this->evaluated(administrationId: $administrationId, invoiceId: $invoiceId);
+	}//end evaluate()
+
+	/**
+	 * The 400 for a blank or malformed administration id, then the masked 404 for a non-member.
+	 *
+	 * @param string $administrationId The checked administrationId, or ''.
+	 *
+	 * @return JSONResponse|null The refusal, or null for a member.
+	 */
+	private function administrationRefusal(string $administrationId): ?JSONResponse {
 		if ($administrationId === '') {
 			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
 		}
@@ -113,32 +134,32 @@ class ThreeWayMatchController extends Controller {
 			return new JSONResponse(['error' => 'Supplier invoice not found'], Http::STATUS_NOT_FOUND);
 		}
 
-		$invoiceId = $this->scopeParam(name: 'invoiceId');
-		if ($invoiceId === '') {
-			return new JSONResponse(['error' => 'invoiceId is required'], Http::STATUS_BAD_REQUEST);
-		}
+		return null;
+	}//end administrationRefusal()
 
+	/**
+	 * Evaluate the match; a service refusal is mapped, anything else is logged and a 500.
+	 *
+	 * @param string $administrationId The authorised administration.
+	 * @param string $invoiceId        The checked invoice id.
+	 *
+	 * @return JSONResponse
+	 */
+	private function evaluated(string $administrationId, string $invoiceId): JSONResponse {
 		try {
-			$match = $this->matchingEngine->evaluateMatch(
-				administrationId: $administrationId,
-				invoiceId:        $invoiceId
-			);
+			$match = $this->matchingEngine->evaluateMatch(administrationId: $administrationId, invoiceId: $invoiceId);
 		} catch (\RuntimeException $e) {
 			return $this->mapRuntimeException(exception: $e);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'ThreeWayMatchController: failed to evaluate match',
-				[
-					'administrationId' => $administrationId,
-					'invoiceId' => $invoiceId,
-					'exception' => $e->getMessage(),
-				]
+				['administrationId' => $administrationId, 'invoiceId' => $invoiceId, 'exception' => $e->getMessage()]
 			);
 			return new JSONResponse(['error' => 'Could not evaluate three-way match'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
 		return new JSONResponse($match, Http::STATUS_OK);
-	}//end evaluate()
+	}//end evaluated()
 
 	/**
 	 * Read + validate a scope parameter; '' when blank/malformed.
