@@ -46,6 +46,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Reporting\Generator;
 
 use OCA\Shillinq\Reporting\ReportSection;
+use OCA\Shillinq\Reporting\ReportTable;
 
 /**
  * Renders BBV jaarstukken / programmaverantwoording from a BbvStatement object.
@@ -97,17 +98,7 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 
 		// --- Kerngegevens ---
 		$this->addHeading($section, 'Kerngegevens');
-		$this->addDetailsTable(
-			$section,
-			[
-				'Documenttype' => $this->documentTypeLabel($this->str($statement, 'documentType')),
-				'Soort lichaam' => $this->entityTypeLabel($this->str($statement, 'entityType')),
-				'Jurisdictie' => $this->str($statement, 'jurisdiction'),
-				'Boekjaar' => $this->str($statement, 'fiscalYear'),
-				'Valuta' => $currency,
-				'Onderdelen' => $this->joinList($statement['parts'] ?? []),
-			]
-		);
+		$this->addDetailsTable($section, $this->keyFacts(statement: $statement, currency: $currency));
 
 		// --- Programmaplan (art. 8) ---
 		$section->addTextBreak(1);
@@ -133,6 +124,26 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 	}//end build()
 
 	/**
+	 * The kerngegevens rows of a statement.
+	 *
+	 * @param array<string, mixed> $statement The BbvStatement object.
+	 * @param string               $currency  The presentation currency.
+	 *
+	 * @return array<string, string>
+	 */
+	private function keyFacts(array $statement, string $currency): array {
+		return [
+			'Documenttype' => $this->documentTypeLabel($this->str($statement, 'documentType')),
+			'Soort lichaam' => $this->entityTypeLabel($this->str($statement, 'entityType')),
+			'Jurisdictie' => $this->str($statement, 'jurisdiction'),
+			'Boekjaar' => $this->str($statement, 'fiscalYear'),
+			'Valuta' => $currency,
+			'Onderdelen' => $this->joinList($statement['parts'] ?? []),
+		];
+
+	}//end keyFacts()
+
+	/**
 	 * Build the programmaplan section: the programmes plus the general cover
 	 * funds, overhead, VPB charge and onvoorzien.
 	 *
@@ -150,44 +161,61 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 			$plan = [];
 		}
 
-		$programmes = $plan['programmes'] ?? [];
-		if (is_array($programmes) === true && $programmes !== []) {
-			$table = $section->addTable('reportTable');
-			$table->addRow();
-			$table->addCell(4, ['bgColor' => self::ACCENT_COLOUR])
-				->addText('Code', 'tableHeader');
-			$table->addCell(12, ['bgColor' => self::ACCENT_COLOUR])
-				->addText('Programma', 'tableHeader');
+		$this->addProgrammes(section: $section, programmes: ($plan['programmes'] ?? []));
 
-			foreach ($programmes as $programme) {
-				if (is_array($programme) === false) {
-					continue;
-				}
+		$section->addTextBreak(1);
+		$this->addAmountTable($section, 'Algemene posten', 'Bedrag', $this->generalItems(plan: $plan), null, $currency);
 
+	}//end buildProgrammaplan()
+
+	/**
+	 * The programmes table, or a note when the plan holds none.
+	 *
+	 * @param ReportSection $section    The block accumulator.
+	 * @param mixed         $programmes The plan's programmes.
+	 *
+	 * @return void
+	 */
+	private function addProgrammes(ReportSection $section, mixed $programmes): void {
+		if (is_array($programmes) === false || $programmes === []) {
+			$this->addNote($section, 'Geen programma\'s opgenomen in het programmaplan.');
+			return;
+		}
+
+		$table = $section->addTable('reportTable');
+		$table->addRow();
+		$table->addCell(4, ['bgColor' => self::ACCENT_COLOUR])
+			->addText('Code', 'tableHeader');
+		$table->addCell(12, ['bgColor' => self::ACCENT_COLOUR])
+			->addText('Programma', 'tableHeader');
+
+		foreach ($programmes as $programme) {
+			if (is_array($programme) === true) {
 				$table->addRow();
 				$table->addCell(4)->addText($this->str($programme, 'code'), 'value');
 				$table->addCell(12)->addText($this->str($programme, 'name'), 'value');
 			}
-		} else {
-			$this->addNote($section, 'Geen programma\'s opgenomen in het programmaplan.');
 		}
 
-		$section->addTextBreak(1);
-		$this->addAmountTable(
-			$section,
-			'Algemene posten',
-			'Bedrag',
-			[
-				['label' => 'Algemene dekkingsmiddelen', 'amount' => $this->num($plan, 'generalFundingSources')],
-				['label' => 'Overhead', 'amount' => $this->num($plan, 'overhead')],
-				['label' => 'Heffing vennootschapsbelasting (VPB)', 'amount' => $this->num($plan, 'vpbCharge')],
-				['label' => 'Onvoorzien', 'amount' => $this->num($plan, 'unforeseen')],
-			],
-			null,
-			$currency
-		);
+	}//end addProgrammes()
 
-	}//end buildProgrammaplan()
+	/**
+	 * The general items of the programmaplan: cover funds, overhead, VPB
+	 * charge and onvoorzien.
+	 *
+	 * @param array<string, mixed> $plan The programme plan.
+	 *
+	 * @return list<array{label: string, amount: float}>
+	 */
+	private function generalItems(array $plan): array {
+		return [
+			['label' => 'Algemene dekkingsmiddelen', 'amount' => $this->num($plan, 'generalFundingSources')],
+			['label' => 'Overhead', 'amount' => $this->num($plan, 'overhead')],
+			['label' => 'Heffing vennootschapsbelasting (VPB)', 'amount' => $this->num($plan, 'vpbCharge')],
+			['label' => 'Onvoorzien', 'amount' => $this->num($plan, 'unforeseen')],
+		];
+
+	}//end generalItems()
 
 	/**
 	 * List the mandatory BBV paragraphs (art. 9), flagging which of the seven
@@ -242,12 +270,7 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 			return;
 		}
 
-		$table = $section->addTable('reportTable');
-		$table->addRow();
-		foreach (['Code', 'Taakveld', 'Baten', 'Lasten'] as $head) {
-			$table->addCell(4, ['bgColor' => self::ACCENT_COLOUR])
-				->addText($head, 'tableHeader');
-		}
+		$table = $this->taskFieldTable(section: $section);
 
 		$totalRevenue = 0.0;
 		$totalExpense = 0.0;
@@ -268,12 +291,44 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 			$table->addCell(4)->addText($this->money($expense, $currency), 'amount', ['alignment' => 'end']);
 		}
 
-		$table->addRow();
-		$table->addCell(8, ['bgColor' => 'EEF2FF', 'gridSpan' => 2])->addText('Totaal', 'amountBold');
-		$table->addCell(4, ['bgColor' => 'EEF2FF'])->addText($this->money($totalRevenue, $currency), 'amountBold', ['alignment' => 'end']);
-		$table->addCell(4, ['bgColor' => 'EEF2FF'])->addText($this->money($totalExpense, $currency), 'amountBold', ['alignment' => 'end']);
+		$this->addTaskFieldTotal(table: $table, totals: ['revenue' => $totalRevenue, 'expense' => $totalExpense, 'currency' => $currency]);
 
 	}//end buildTaakvelden()
+
+	/**
+	 * A new taakvelden table with its header row.
+	 *
+	 * @param ReportSection $section The block accumulator.
+	 *
+	 * @return ReportTable
+	 */
+	private function taskFieldTable(ReportSection $section): ReportTable {
+		$table = $section->addTable('reportTable');
+		$table->addRow();
+		foreach (['Code', 'Taakveld', 'Baten', 'Lasten'] as $head) {
+			$table->addCell(4, ['bgColor' => self::ACCENT_COLOUR])
+				->addText($head, 'tableHeader');
+		}
+
+		return $table;
+
+	}//end taskFieldTable()
+
+	/**
+	 * The totals row of the taakvelden table.
+	 *
+	 * @param ReportTable          $table  The taakvelden table.
+	 * @param array<string, mixed> $totals revenue, expense and currency.
+	 *
+	 * @return void
+	 */
+	private function addTaskFieldTotal(ReportTable $table, array $totals): void {
+		$table->addRow();
+		$table->addCell(8, ['bgColor' => 'EEF2FF', 'gridSpan' => 2])->addText('Totaal', 'amountBold');
+		$table->addCell(4, ['bgColor' => 'EEF2FF'])->addText($this->money($totals['revenue'], $totals['currency']), 'amountBold', ['alignment' => 'end']);
+		$table->addCell(4, ['bgColor' => 'EEF2FF'])->addText($this->money($totals['expense'], $totals['currency']), 'amountBold', ['alignment' => 'end']);
+
+	}//end addTaskFieldTotal()
 
 	/**
 	 * Build the jaarrekening composition (art. 24): which components are present.
@@ -328,14 +383,9 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 				continue;
 			}
 
-			$cost = $this->num($asset, 'acquisitionCost');
-			$total += $cost;
-			$kind = $this->str($asset, 'kind') === 'intangible' ? 'immaterieel' : 'materieel';
-			$capit = (($asset['capitalised'] ?? false) === true ? 'geactiveerd' : 'niet geactiveerd');
-			$lines[] = [
-				'label' => $this->str($asset, 'name') . ' (' . $kind . ', ' . $capit . ')',
-				'amount' => $cost,
-			];
+			$line = $this->fixedAssetLine(asset: $asset);
+			$total += $line['amount'];
+			$lines[] = $line;
 		}
 
 		$this->addAmountTable(
@@ -348,6 +398,24 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 		);
 
 	}//end buildFixedAssets()
+
+	/**
+	 * The amount-table line of one fixed asset: its name, kind and
+	 * capitalisation, and its acquisition cost.
+	 *
+	 * @param array<string, mixed> $asset The fixed asset.
+	 *
+	 * @return array{label: string, amount: float}
+	 */
+	private function fixedAssetLine(array $asset): array {
+		$kind = $this->str($asset, 'kind') === 'intangible' ? 'immaterieel' : 'materieel';
+		$capit = (($asset['capitalised'] ?? false) === true ? 'geactiveerd' : 'niet geactiveerd');
+		return [
+			'label' => $this->str($asset, 'name') . ' (' . $kind . ', ' . $capit . ')',
+			'amount' => $this->num($asset, 'acquisitionCost'),
+		];
+
+	}//end fixedAssetLine()
 
 	/**
 	 * Resolve the BbvStatement object for the report. A statementId / bbvStatementId
