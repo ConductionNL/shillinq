@@ -271,6 +271,16 @@ export const ALL_ACTIONS = [
 ]
 
 /**
+ * The row acts in the order they are offered: the row kind and payment
+ * states they apply to, and the grant that must be exactly true.
+ */
+const ROW_ACTS = [
+	{ kind: 'invoice', states: ['outstanding'], grant: 'requestPayment', acts: ['request-payment'] },
+	{ kind: 'invoice', states: ['outstanding', 'paid'], grant: 'creditInvoice', acts: ['credit-invoice'] },
+	{ kind: 'payment-request', states: ['outstanding'], grant: 'administerPayments', acts: ['send-link', 'record-payment'] },
+]
+
+/**
  * Which acts a row offers, given the caller's grants and the placement's actions.
  *
  * @param {object} row One row of the leaf.
@@ -285,29 +295,12 @@ export function actsForRow(row, acts, allowed) {
 	if (!row || row.restricted === true) {
 		return []
 	}
-	const offered = []
-	if (
-		row.kind === 'invoice'
-		&& row.paymentState === 'outstanding'
-		&& acts.requestPayment === true
-	) {
-		offered.push('request-payment')
-	}
-	if (
-		row.kind === 'invoice'
-		&& ['outstanding', 'paid'].includes(row.paymentState)
-		&& acts.creditInvoice === true
-	) {
-		offered.push('credit-invoice')
-	}
-	if (
-		row.kind === 'payment-request'
-		&& row.paymentState === 'outstanding'
-		&& acts.administerPayments === true
-	) {
-		offered.push('send-link', 'record-payment')
-	}
-	return offered.filter((act) => allowed.includes(act))
+	return ROW_ACTS
+		.filter((rule) => rule.kind === row.kind
+			&& rule.states.includes(row.paymentState)
+			&& acts[rule.grant] === true)
+		.flatMap((rule) => rule.acts)
+		.filter((act) => allowed.includes(act))
 }
 
 /**
