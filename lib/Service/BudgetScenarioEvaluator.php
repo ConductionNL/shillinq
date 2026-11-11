@@ -86,20 +86,7 @@ class BudgetScenarioEvaluator {
 	 *
 	 * @var list<string>
 	 */
-	private const MONTH_FIELDS = [
-		'month01Amount',
-		'month02Amount',
-		'month03Amount',
-		'month04Amount',
-		'month05Amount',
-		'month06Amount',
-		'month07Amount',
-		'month08Amount',
-		'month09Amount',
-		'month10Amount',
-		'month11Amount',
-		'month12Amount',
-	];
+	private const MONTH_FIELDS = BudgetMonthFields::FIELDS;
 
 	/**
 	 * The hypothetical-schedule arithmetic for `RECURRING_*` modifiers.
@@ -726,22 +713,7 @@ class BudgetScenarioEvaluator {
 	 * @return string|null The entry's id or slug, or null when neither is set.
 	 */
 	private function keyForIndex(int $index, array $entries): ?string {
-		$entry = ($entries[$index] ?? null);
-		if ($entry === null) {
-			return null;
-		}
-
-		$id = (string)($entry['id'] ?? '');
-		if ($id !== '') {
-			return $id;
-		}
-
-		$slug = (string)($entry['slug'] ?? '');
-		if ($slug !== '') {
-			return $slug;
-		}
-
-		return null;
+		return LedgerGroupEntryKey::of(entry: ($entries[$index] ?? null));
 
 	}//end keyForIndex()
 
@@ -753,12 +725,7 @@ class BudgetScenarioEvaluator {
 	 * @return string The field name; `month01Amount` for any out-of-range input.
 	 */
 	private function monthField(int $monthNumber): string {
-		$fieldIndex = ($monthNumber - 1);
-		if ($fieldIndex < 0 || $fieldIndex > 11) {
-			return self::MONTH_FIELDS[0];
-		}
-
-		return self::MONTH_FIELDS[$fieldIndex];
+		return BudgetMonthFields::of(monthNumber: $monthNumber);
 
 	}//end monthField()
 
