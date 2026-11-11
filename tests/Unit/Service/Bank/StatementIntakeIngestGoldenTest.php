@@ -18,7 +18,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\Bank;
 
 use OCA\Shillinq\Service\Bank\StatementIntakeService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\AbstractLogger;
@@ -48,7 +48,7 @@ final class StatementIntakeIngestGoldenTest extends TestCase {
 			$this->calls = [];
 			$service = new StatementIntakeService(
 				objectService: new DuckObjectServiceAdapter($this->store(stored: $stored, noId: $noId)),
-				settings: $this->createConfiguredMock(SettingsService::class, ['getRegisterSlug' => 'shillinq']),
+				registerLocation: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']),
 				logger: $this->logger(),
 			);
 			$out = $service->ingest('adm-1', $iban, $lines, $meta);

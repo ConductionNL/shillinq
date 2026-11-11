@@ -60,7 +60,7 @@ use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\ObligationTaskBridge;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -93,7 +93,7 @@ class ContractObligationTaskListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService Shillinq settings (register slug).
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param ObligationTaskBridge $bridge NC Tasks / Deck glue.
 	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface $logger Logger.
@@ -104,7 +104,7 @@ class ContractObligationTaskListener implements IEventListener {
 	 * @return void
 	 */
 	public function __construct(
-		private readonly SettingsService $settingsService,
+		private readonly RegisterLocation $registerLocation,
 		private readonly ObligationTaskBridge $bridge,
 		private readonly ListenerSchemaResolver $schemaResolver,
 		private readonly LoggerInterface $logger,
@@ -248,7 +248,7 @@ class ContractObligationTaskListener implements IEventListener {
 		}
 
 		$this->objectService
-			->setRegister($this->settingsService->getRegisterSlug())
+			->setRegister($this->registerLocation->getRegisterSlug())
 			->setSchema(self::SCHEMA)
 			->updateObject($id, $updates);
 

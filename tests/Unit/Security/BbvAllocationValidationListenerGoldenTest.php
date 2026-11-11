@@ -15,7 +15,7 @@ use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\Shillinq\Listener\BbvAllocationValidationListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\EventDispatcher\Event;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -101,7 +101,7 @@ final class BbvAllocationValidationListenerGoldenTest extends TestCase {
 
 		$resolver = $this->createMock(ListenerSchemaResolver::class);
 		$resolver->method('matchesSchema')->willReturnCallback(static fn ($e, string $expectedSlug): bool => $expectedSlug === $schema);
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq-register');
 		$logger = $this->createMock(LoggerInterface::class);
 
@@ -111,7 +111,7 @@ final class BbvAllocationValidationListenerGoldenTest extends TestCase {
 			$type = (string)$param->getType();
 			$args[] = match ($type) {
 				ListenerSchemaResolver::class => $resolver,
-				SettingsService::class => $settings,
+				RegisterLocation::class => $settings,
 				LoggerInterface::class => $logger,
 				ContainerInterface::class => $this->container($objectService),
 				ObjectServiceInterface::class => $objectService,

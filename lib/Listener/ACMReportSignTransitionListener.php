@@ -55,7 +55,7 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\Signing\SigningDelegationService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -96,7 +96,7 @@ class ACMReportSignTransitionListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService Shillinq settings (register slug).
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param SigningDelegationService $signingService The document-signing request service.
 	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
 	 * @param LoggerInterface $logger Logger.
@@ -107,7 +107,7 @@ class ACMReportSignTransitionListener implements IEventListener {
 	 * @return void
 	 */
 	public function __construct(
-		private readonly SettingsService $settingsService,
+		private readonly RegisterLocation $registerLocation,
 		private readonly SigningDelegationService $signingService,
 		private readonly ListenerSchemaResolver $schemaResolver,
 		private readonly LoggerInterface $logger,
@@ -269,7 +269,7 @@ class ACMReportSignTransitionListener implements IEventListener {
 	 */
 	private function persist(string $id, array $updates): void {
 		$this->objectService
-			->setRegister($this->settingsService->getRegisterSlug())
+			->setRegister($this->registerLocation->getRegisterSlug())
 			->setSchema(self::SCHEMA)
 			->updateObject($id, $updates);
 

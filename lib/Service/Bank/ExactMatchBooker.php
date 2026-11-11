@@ -32,7 +32,7 @@ namespace OCA\Shillinq\Service\Bank;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\PaymentPlan\PaymentPlanBankMatcher;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -55,14 +55,14 @@ class ExactMatchBooker {
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object surface.
 	 * @param ManualMatchService     $matches       Writes and confirms the match.
-	 * @param SettingsService        $settings      Register slug.
+	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface        $logger        Logger.
 	 * @param PaymentPlanBankMatcher|null $plans    Books a line naming a payment plan's reference to that plan.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
 		private readonly ManualMatchService $matches,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly LoggerInterface $logger,
 		private readonly ?PaymentPlanBankMatcher $plans = null,
 	) {
@@ -280,7 +280,7 @@ class ExactMatchBooker {
 	private function openInvoices(string $schema, string $administrationId): array {
 		$open = ['ARInvoice' => ['issued', 'overdue'], 'APTransaction' => ['issued', 'overdue']][$schema];
 		$field = InvoiceSettlementService::STATE_FIELDS[$schema];
-		$rows = $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema($schema)
+		$rows = $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema($schema)
 			->findAll(['filters' => ['administrationId' => $administrationId], 'limit' => 5000]);
 		$invoices = [];
 		foreach ($rows as $row) {

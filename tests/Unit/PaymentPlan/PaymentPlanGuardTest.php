@@ -24,7 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\PaymentPlan;
 
 use OCA\Shillinq\Lifecycle\PaymentPlanGuard;
 use OCA\Shillinq\PaymentPlan\PaymentPlanSchedule;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use PHPUnit\Framework\TestCase;
@@ -47,7 +47,7 @@ final class PaymentPlanGuardTest extends TestCase {
 			$rows[] = ['id' => 'inst-' . $index, 'planId' => 'plan-7', 'instalmentNumber' => ($index + 1), 'dueDate' => '2026-11-01', 'amount' => $amount, 'administrationId' => 'adm-hoekstra'];
 		}
 
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		return new PaymentPlanGuard(new InMemoryObjectServiceStub(['PaymentPlanInstalment' => $rows]), $settings, new PaymentPlanSchedule(), $this->createMock(LoggerInterface::class));
 	}//end guard()

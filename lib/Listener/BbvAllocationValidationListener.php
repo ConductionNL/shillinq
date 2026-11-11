@@ -35,7 +35,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -92,13 +92,13 @@ class BbvAllocationValidationListener implements IEventListener {
 	 *
 	 * @param ListenerSchemaResolver $schemaResolver  Matches the BBV schemas in shillinq's register.
 	 * @param ObjectServiceInterface $objectService   Reads the sibling records.
-	 * @param SettingsService        $settingsService Resolves the register slug.
+	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param LoggerInterface        $logger          Logger.
 	 */
 	public function __construct(
 		private readonly ListenerSchemaResolver $schemaResolver,
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settingsService,
+		private readonly RegisterLocation $registerLocation,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -260,7 +260,7 @@ class BbvAllocationValidationListener implements IEventListener {
 	 */
 	private function others(string $schema, array $filters, string $self): array {
 		$rows = $this->objectService
-			->setRegister($this->settingsService->getRegisterSlug())
+			->setRegister($this->registerLocation->getRegisterSlug())
 			->setSchema($schema)
 			->findAll(
 				['filters' => array_filter($filters, static fn ($v): bool => $v !== null && $v !== ''), 'limit' => 1000],

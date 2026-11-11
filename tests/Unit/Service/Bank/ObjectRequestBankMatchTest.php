@@ -42,6 +42,7 @@ use OCA\Shillinq\Service\ObjectPaymentRequestValidator;
 use OCA\Shillinq\Service\PaymentRequestFinder;
 use OCA\Shillinq\Service\PaymentRevenueAccountResolver;
 use OCA\Shillinq\Service\PaymentSettlementService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
@@ -163,7 +164,7 @@ final class ObjectRequestBankMatchTest extends TestCase {
 				settings: $settings,
 				settlements: $settlements,
 				revenueAccounts: new PaymentRevenueAccountResolver(appConfig: $appConfig),
-				invoices: new InvoiceSettlementService(objectService: $this->store, transitions: $runner, settings: $settings, logger: $logger),
+				invoices: new InvoiceSettlementService(objectService: $this->store, transitions: $runner, registerLocation: $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), logger: $logger),
 				manualMatch: $manual,
 				logger: $logger,
 			),

@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\PaymentPlan;
 
 use OCA\Shillinq\Service\Bank\ExactMatchBooker;
 use OCA\Shillinq\Service\Bank\ManualMatchService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use Psr\Log\LoggerInterface;
 use PHPUnit\Framework\TestCase;
@@ -113,7 +114,7 @@ final class PaymentPlanBankMatcherTest extends TestCase {
 		$line = $this->line('line-feed', 403.33, 'RGL-2026-0007 termijn 1');
 		$logger = $this->createMock(LoggerInterface::class);
 		$matches = new ManualMatchService($this->store, $this->runner(), $this->settings(), $logger);
-		$booker = new ExactMatchBooker($this->store, $matches, $this->settings(), $logger, $this->matcher());
+		$booker = new ExactMatchBooker($this->store, $matches, $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), $logger, $this->matcher());
 
 		$match = $booker->book($line);
 

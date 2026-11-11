@@ -51,7 +51,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCA\Shillinq\Service\AdministrationContextService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -76,7 +76,7 @@ class NotificationController extends Controller {
 	 *
 	 * @param IRequest $request Request object.
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-	 * @param SettingsService $settings Register slug + OR availability.
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param IUserSession $userSession Logged-in user — the 401 anonymous-rejection guard only.
 	 * @param AdministrationContextService $context RBAC guard — the per-booking authorization gate (ADR-005).
 	 * @param LoggerInterface $logger Logger for failure paths.
@@ -84,7 +84,7 @@ class NotificationController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private readonly ContainerInterface $container,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly IUserSession $userSession,
 		private readonly AdministrationContextService $context,
 		private readonly LoggerInterface $logger,
@@ -264,7 +264,7 @@ class NotificationController extends Controller {
 	private function findTriggerBySlug(object $service, string $slug): ?array {
 		$items = $service->findAll(
 			[
-				'register' => $this->settings->getRegisterSlug(),
+				'register' => $this->registerLocation->getRegisterSlug(),
 				'schema' => 'BookingNotificationTrigger',
 				'filters' => ['slug' => $slug],
 				'limit' => 1,
@@ -365,7 +365,7 @@ class NotificationController extends Controller {
 		// identifier canAccessBooking() already accepts.
 		return ObjectIdentifier::findOne(
 			scoped: $service
-				->setRegister($this->settings->getRegisterSlug())
+				->setRegister($this->registerLocation->getRegisterSlug())
 				->setSchema('Booking'),
 			id: $bookingId,
 			fallbackProperty: 'bookingId'
@@ -755,7 +755,7 @@ class NotificationController extends Controller {
 		}
 
 		try {
-			$items = $service->findAll(['register' => $this->settings->getRegisterSlug()] + $query);
+			$items = $service->findAll(['register' => $this->registerLocation->getRegisterSlug()] + $query);
 		} catch (Throwable $e) {
 			$this->logger->warning($failureLog, ['error' => $e->getMessage()]);
 			return [];

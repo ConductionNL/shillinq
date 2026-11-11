@@ -33,7 +33,7 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Lifecycle\GuardResult;
 use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
 use OCA\Shillinq\PaymentPlan\PaymentPlanSchedule;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -62,13 +62,13 @@ final class PaymentPlanGuard implements LifecycleGuardInterface {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object surface.
-	 * @param SettingsService        $settings      Register slug.
+	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param PaymentPlanSchedule    $schedule      The cent-exact sum check.
 	 * @param LoggerInterface        $logger        Logger for fail-closed diagnostics.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly PaymentPlanSchedule $schedule,
 		private readonly LoggerInterface $logger,
 	) {
@@ -114,7 +114,7 @@ final class PaymentPlanGuard implements LifecycleGuardInterface {
 
 		try {
 			$rows = $this->objectService
-				->setRegister($this->settings->getRegisterSlug())
+				->setRegister($this->registerLocation->getRegisterSlug())
 				->setSchema('PaymentPlanInstalment')
 				->findAll(['filters' => ['planId' => $planId], 'limit' => 1000]);
 		} catch (Throwable $e) {
