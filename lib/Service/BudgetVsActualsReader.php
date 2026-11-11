@@ -306,64 +306,98 @@ class BudgetVsActualsReader {
 	private function buildLedgerGroupIndex(array $rows, array $accounts): array {
 		$entries = [];
 		$keyToIndex = [];
-
 		foreach ($rows as $row) {
-			$id = (string)($row['@self']['id'] ?? $row['id'] ?? '');
-			$slug = (string)($row['@self']['slug'] ?? $row['slug'] ?? '');
-			$code = (string)($row['code'] ?? '');
-			$index = count($entries);
-
-			$parentRef = null;
-			if (($row['parentLedgerGroupId'] ?? null) !== null) {
-				$parentRef = (string)$row['parentLedgerGroupId'];
-			}
-
-			$entries[] = [
-				'id' => $id,
-				'slug' => $slug,
-				'parentRef' => $parentRef,
-				'memberAccountNumbers' => $this->resolveMembers(ledgerGroup: $row, accounts: $accounts),
-			];
-
-			if ($id !== '') {
-				$keyToIndex[$id] = $index;
-			}
-
-			if ($slug !== '' && $slug !== $id) {
-				$keyToIndex[$slug] = $index;
-			}
-
-			// `code` is the THIRD accepted parent key, and the one the shipped
-			// seed actually stores (see the register fragment's
-			// parentLedgerGroupId description). `code` is unique within an
-			// administration, which is exactly the scope $rows covers —
-			// LedgerGroup rows are loaded per administrationId. First writer
-			// wins so an id/slug key is never shadowed by a colliding code.
-			if ($code !== '' && isset($keyToIndex[$code]) === false) {
-				$keyToIndex[$code] = $index;
-			}
+			$entry = self::ledgerGroupEntry(row: $row);
+			$entry['memberAccountNumbers'] = $this->resolveMembers(ledgerGroup: $row, accounts: $accounts);
+			$keyToIndex = self::withEntryKeys(
+				keyToIndex: $keyToIndex,
+				keys: ['index' => count($entries), 'id' => $entry['id'], 'slug' => $entry['slug'], 'code' => (string)($row['code'] ?? '')]
+			);
+			$entries[] = $entry;
 		}
 
-		$childrenByIndex = [];
-		foreach ($entries as $index => $entry) {
-			$parentRef = $entry['parentRef'];
-			if ($parentRef === null || $parentRef === '') {
-				continue;
-			}
-
-			$parentIndex = ($keyToIndex[$parentRef] ?? null);
-			if ($parentIndex === null) {
-				// Unresolved parent reference — treated as a root rather than
-				// silently dropped from the tree.
-				continue;
-			}
-
-			$childrenByIndex[$parentIndex][] = $index;
-		}
-
-		return ['entries' => $entries, 'keyToIndex' => $keyToIndex, 'childrenByIndex' => $childrenByIndex];
+		return [
+			'entries' => $entries,
+			'keyToIndex' => $keyToIndex,
+			'childrenByIndex' => self::childrenByIndex(entries: $entries, keyToIndex: $keyToIndex),
+		];
 
 	}//end buildLedgerGroupIndex()
+
+	/**
+	 * The id, slug and parent reference of one LedgerGroup row.
+	 *
+	 * @param array<string,mixed> $row The LedgerGroup row.
+	 *
+	 * @return array{id: string, slug: string, parentRef: ?string}
+	 */
+	private static function ledgerGroupEntry(array $row): array {
+		$parentRef = null;
+		if (($row['parentLedgerGroupId'] ?? null) !== null) {
+			$parentRef = (string)$row['parentLedgerGroupId'];
+		}
+
+		return [
+			'id' => (string)($row['@self']['id'] ?? $row['id'] ?? ''),
+			'slug' => (string)($row['@self']['slug'] ?? $row['slug'] ?? ''),
+			'parentRef' => $parentRef,
+		];
+
+	}//end ledgerGroupEntry()
+
+	/**
+	 * Register an entry under its id, its slug (when distinct) and its code.
+	 *
+	 * `code` is the THIRD accepted parent key, and the one the shipped seed
+	 * actually stores (see the register fragment's parentLedgerGroupId
+	 * description). `code` is unique within an administration, which is
+	 * exactly the scope the rows cover — LedgerGroup rows are loaded per
+	 * administrationId. First writer wins so an id/slug key is never shadowed
+	 * by a colliding code.
+	 *
+	 * @param array<string,int>                                      $keyToIndex The keys so far.
+	 * @param array{index: int, id: string, slug: string, code: string} $keys       The entry's index and keys.
+	 *
+	 * @return array<string,int>
+	 */
+	private static function withEntryKeys(array $keyToIndex, array $keys): array {
+		if ($keys['id'] !== '') {
+			$keyToIndex[$keys['id']] = $keys['index'];
+		}
+
+		if ($keys['slug'] !== '' && $keys['slug'] !== $keys['id']) {
+			$keyToIndex[$keys['slug']] = $keys['index'];
+		}
+
+		if ($keys['code'] !== '' && isset($keyToIndex[$keys['code']]) === false) {
+			$keyToIndex[$keys['code']] = $keys['index'];
+		}
+
+		return $keyToIndex;
+
+	}//end withEntryKeys()
+
+	/**
+	 * Child entry indexes per parent index. An unresolved parent reference
+	 * leaves the entry a root rather than silently dropping it from the tree.
+	 *
+	 * @param list<array<string,mixed>> $entries    The entries.
+	 * @param array<string,int>         $keyToIndex Key => entry index.
+	 *
+	 * @return array<int,list<int>>
+	 */
+	private static function childrenByIndex(array $entries, array $keyToIndex): array {
+		$childrenByIndex = [];
+		foreach ($entries as $index => $entry) {
+			$parentIndex = ($keyToIndex[(string)$entry['parentRef']] ?? null);
+			if ($entry['parentRef'] !== null && $entry['parentRef'] !== '' && $parentIndex !== null) {
+				$childrenByIndex[$parentIndex][] = $index;
+			}
+		}
+
+		return $childrenByIndex;
+
+	}//end childrenByIndex()
 
 	/**
 	 * Resolve one LedgerGroup's member account numbers: every account whose
