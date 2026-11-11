@@ -366,7 +366,7 @@ class GRIRClearingService {
 			throw new RuntimeException('GR/IR posting requires a poLineId on the GRN line');
 		}
 
-		$poLine = $this->findOne(
+		$poLine = $this->records()->findOne(
 			schema: self::SCHEMA_PO_LINE,
 			filters: [
 				'id' => $poLineId,
@@ -544,7 +544,7 @@ class GRIRClearingService {
 			throw new RuntimeException('settleGRIRPosting requires invoiceId on the ThreeWayMatch');
 		}
 
-		$invoice = $this->findOne(
+		$invoice = $this->records()->findOne(
 			schema: self::SCHEMA_INVOICE,
 			filters: [
 				'id' => $run->invoiceId,
@@ -766,7 +766,7 @@ class GRIRClearingService {
 		$this->assertAccess(administrationId: $administrationId);
 
 		$clearingAccount = $this->grIrClearingAccount(toleranceProfileId: null);
-		$lines = $this->findAll(
+		$lines = $this->records()->findAll(
 			schema: self::SCHEMA_GL_LINE,
 			filters: [
 				'accountNumber' => $clearingAccount,
@@ -888,7 +888,7 @@ class GRIRClearingService {
 			];
 		}
 
-		$matches = $this->findAll(
+		$matches = $this->records()->findAll(
 			schema: self::SCHEMA_THREE_WAY_MATCH,
 			filters: [
 				'invoiceId' => $invoiceId,
@@ -953,7 +953,7 @@ class GRIRClearingService {
 			];
 		}
 
-		$lines = $this->findAll(
+		$lines = $this->records()->findAll(
 			schema: $lineSchema,
 			filters: [
 				$parentField => $receiptId,
@@ -1144,7 +1144,7 @@ class GRIRClearingService {
 	 */
 	private function grIrClearingAccount(?string $toleranceProfileId): string {
 		if ($toleranceProfileId !== null && $toleranceProfileId !== '') {
-			$profile = $this->findOne(
+			$profile = $this->records()->findOne(
 				schema: self::SCHEMA_TOLERANCE_PROFILE,
 				filters: ['id' => $toleranceProfileId]
 			);
@@ -1255,7 +1255,7 @@ class GRIRClearingService {
 	private function resolveFirstMatchedPoLine(string $administrationId, array $threeWayMatch): array {
 		$matchedPoLineIds = $this->stringArray(input: ($threeWayMatch['matchedPoLineIds'] ?? []));
 		foreach ($matchedPoLineIds as $poLineId) {
-			$poLine = $this->findOne(
+			$poLine = $this->records()->findOne(
 				schema: self::SCHEMA_PO_LINE,
 				filters: [
 					'id' => $poLineId,
@@ -1269,7 +1269,7 @@ class GRIRClearingService {
 
 		$matchedPoIds = $this->stringArray(input: ($threeWayMatch['matchedPoIds'] ?? []));
 		foreach ($matchedPoIds as $poId) {
-			$rows = $this->findAll(
+			$rows = $this->records()->findAll(
 				schema: self::SCHEMA_PO_LINE,
 				filters: [
 					'poId' => $poId,
@@ -1360,6 +1360,18 @@ class GRIRClearingService {
 	}//end postingDate()
 
 	/**
+	 * The record store on the app's register, logging as this service.
+	 *
+	 * @return SchemaRecordStore The record store.
+	 */
+	private function records(): SchemaRecordStore {
+		return new SchemaRecordStore(
+			binding: new RegisterBinding(objectService: $this->objectService, appConfig: $this->appConfig),
+			log: new RecordStoreLog(logger: $this->logger, source: 'GRIRClearingService')
+		);
+	}//end records()
+
+	/**
 	 * Quarter identifier (yyyy-Qn) from a yyyy-mm-dd posting date.
 	 *
 	 * @param string $postingDate Posting date.
@@ -1433,55 +1445,6 @@ class GRIRClearingService {
 
 		return $saved->getObject();
 	}//end saveOnSchema()
-
-	/**
-	 * Find one record via the real ObjectService API (findAll then first).
-	 *
-	 * @param string $schema Schema slug.
-	 * @param array<string,mixed> $filters Equality filters.
-	 *
-	 * @return array<string,mixed>|null
-	 */
-	private function findOne(string $schema, array $filters): ?array {
-		$rows = $this->findAll(schema: $schema, filters: $filters);
-		foreach ($rows as $row) {
-			return $row;
-		}
-
-		return null;
-	}//end findOne()
-
-	/**
-	 * Find all records via the real ObjectService API (findAll).
-	 *
-	 * @param string $schema Schema slug.
-	 * @param array<string,mixed> $filters Equality filters.
-	 *
-	 * @return array<int,array<string,mixed>>
-	 */
-	private function findAll(string $schema, array $filters): array {
-		try {
-			$rows = $this->objectService
-				->setRegister($this->register())
-				->setSchema($schema)
-				->findAll(['filters' => $filters]);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'GRIRClearingService: failed to query OpenRegister',
-				['schema' => $schema, 'exception' => $e->getMessage()]
-			);
-			return [];
-		}
-
-		$result = [];
-		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$result[] = $row;
-			}
-		}
-
-		return $result;
-	}//end findAll()
 
 	/**
 	 * Resolve the OR register slug from app config.
