@@ -263,9 +263,9 @@ final class InvoicingTailChecks implements CheckProvider {
 				'en16931-br-64' => static fn (array $o): bool => self::lineIdentifierSchemed($o, 'itemStandardId', 'itemStandardIdScheme'),
 				// BR-65: item classification identifier (BT-158) carries a scheme on every line.
 				'en16931-br-65' => static fn (array $o): bool => self::lineIdentifierSchemed($o, 'itemClassificationId', 'itemClassificationIdScheme'),
-				// BR-CL-03: invoice currency code (BT-5) drawn from ISO 4217 alpha-3.
+				// BR-CL-03: invoice currency code (BT-5) drawn from ISO 4217 alpha-3, written as listed.
 				'en16931-br-cl-03' => static fn (array $o): bool => in_array(
-					strtoupper(trim((string)($o['currency'] ?? ''))),
+					(string)($o['currency'] ?? ''),
 					self::ISO_CURRENCIES,
 					true
 				),

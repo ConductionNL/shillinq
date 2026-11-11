@@ -1,0 +1,256 @@
+{
+    "full": {
+        "context": {
+            "scenarios": [
+                {
+                    "id": "sc-1",
+                    "administrationId": "adm-1"
+                },
+                {
+                    "@self": {
+                        "id": "sc-2"
+                    },
+                    "administrationId": "adm-1"
+                },
+                {
+                    "administrationId": "adm-1",
+                    "name": "no id"
+                }
+            ],
+            "modifiersByScenarioId": {
+                "sc-1": [
+                    {
+                        "id": "m-1",
+                        "scenarioId": "sc-1"
+                    },
+                    {
+                        "id": "m-3",
+                        "scenarioId": "sc-1"
+                    }
+                ],
+                "sc-2": [
+                    {
+                        "id": "m-2",
+                        "scenarioId": "sc-2"
+                    }
+                ]
+            },
+            "cashflowRecurringRows": [
+                {
+                    "recurId": "r-1",
+                    "administrationId": "adm-1"
+                }
+            ],
+            "budgetLines": [
+                {
+                    "id": "bl-1",
+                    "annualBudgetId": "ab-1"
+                }
+            ],
+            "ledgerGroups": [
+                {
+                    "id": "lg-1",
+                    "administrationId": "adm-1"
+                }
+            ]
+        },
+        "calls": [
+            [
+                "BudgetScenario",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "BudgetScenarioModifier",
+                {
+                    "filters": {
+                        "scenarioId": {
+                            "in": [
+                                "sc-1",
+                                "sc-2"
+                            ]
+                        }
+                    }
+                }
+            ],
+            [
+                "CashflowRecurring",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "BudgetLine",
+                {
+                    "filters": {
+                        "annualBudgetId": {
+                            "in": [
+                                "ab-1"
+                            ]
+                        }
+                    }
+                }
+            ],
+            [
+                "LedgerGroup",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ]
+        ]
+    },
+    "noBudgets": {
+        "context": {
+            "scenarios": [
+                {
+                    "id": "sc-1",
+                    "administrationId": "adm-1"
+                },
+                {
+                    "@self": {
+                        "id": "sc-2"
+                    },
+                    "administrationId": "adm-1"
+                },
+                {
+                    "administrationId": "adm-1",
+                    "name": "no id"
+                }
+            ],
+            "modifiersByScenarioId": {
+                "sc-1": [
+                    {
+                        "id": "m-1",
+                        "scenarioId": "sc-1"
+                    },
+                    {
+                        "id": "m-3",
+                        "scenarioId": "sc-1"
+                    }
+                ],
+                "sc-2": [
+                    {
+                        "id": "m-2",
+                        "scenarioId": "sc-2"
+                    }
+                ]
+            },
+            "cashflowRecurringRows": [
+                {
+                    "recurId": "r-1",
+                    "administrationId": "adm-1"
+                }
+            ],
+            "budgetLines": [],
+            "ledgerGroups": [
+                {
+                    "id": "lg-1",
+                    "administrationId": "adm-1"
+                }
+            ]
+        },
+        "calls": [
+            [
+                "BudgetScenario",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "BudgetScenarioModifier",
+                {
+                    "filters": {
+                        "scenarioId": {
+                            "in": [
+                                "sc-1",
+                                "sc-2"
+                            ]
+                        }
+                    }
+                }
+            ],
+            [
+                "CashflowRecurring",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "LedgerGroup",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ]
+        ]
+    },
+    "noScenarios": {
+        "context": {
+            "scenarios": [],
+            "modifiersByScenarioId": [],
+            "cashflowRecurringRows": [],
+            "budgetLines": [
+                {
+                    "id": "bl-1",
+                    "annualBudgetId": "ab-1"
+                },
+                {
+                    "id": "bl-2",
+                    "annualBudgetId": "ab-2"
+                }
+            ],
+            "ledgerGroups": []
+        },
+        "calls": [
+            [
+                "BudgetScenario",
+                {
+                    "filters": {
+                        "administrationId": "adm-9"
+                    }
+                }
+            ],
+            [
+                "CashflowRecurring",
+                {
+                    "filters": {
+                        "administrationId": "adm-9"
+                    }
+                }
+            ],
+            [
+                "BudgetLine",
+                {
+                    "filters": {
+                        "annualBudgetId": {
+                            "in": [
+                                "ab-2",
+                                "ab-1"
+                            ]
+                        }
+                    }
+                }
+            ],
+            [
+                "LedgerGroup",
+                {
+                    "filters": {
+                        "administrationId": "adm-9"
+                    }
+                }
+            ]
+        ]
+    }
+}

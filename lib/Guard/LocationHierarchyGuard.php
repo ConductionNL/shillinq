@@ -125,23 +125,14 @@ class LocationHierarchyGuard {
 
 		$visited = [$locationId => true];
 		$current = $parentLocationId;
-
 		while ($current !== null) {
 			if (isset($visited[$current]) === true) {
-				throw new InvalidArgumentException(
-					'Circular reference detected in location hierarchy.'
-				);
+				throw new InvalidArgumentException('Circular reference detected in location hierarchy.');
 			}
 
 			$visited[$current] = true;
-			$parent = $allLocations[$current] ?? null;
-			if ($parent === null) {
-				$current = null;
-			} else {
-				$current = $parent['parentLocationId'] ?? null;
-			}
+			$current           = self::parentOf(locationId: $current, allLocations: $allLocations);
 		}
-
 	}//end validateNoCircle()
 
 	/**
@@ -212,17 +203,11 @@ class LocationHierarchyGuard {
 	 * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-7
 	 */
 	public function computeDepth(array $location, array $allLocations): int {
-		$depth = 0;
-		$current = $location['parentLocationId'] ?? null;
-
+		$depth   = 0;
+		$current = ($location['parentLocationId'] ?? null);
 		while ($current !== null) {
 			$depth++;
-			$parent = $allLocations[$current] ?? null;
-			if ($parent === null) {
-				$current = null;
-			} else {
-				$current = $parent['parentLocationId'] ?? null;
-			}
+			$current = self::parentOf(locationId: $current, allLocations: $allLocations);
 		}
 
 		return $depth;
@@ -246,16 +231,32 @@ class LocationHierarchyGuard {
 			return 'Empty';
 		}
 
-		if ($capacity !== null && $capacity > 0.0 && $stockQuantity > $capacity) {
+		if ($capacity === null || $capacity <= 0.0) {
+			return 'In Stock';
+		}
+
+		return self::capacityBadge(stockQuantity: $stockQuantity, capacity: $capacity);
+	}//end stockBadge()
+
+	/**
+	 * The badge for a positive stock against a positive capacity: over it, below a tenth of it, or in between.
+	 *
+	 * @param float $stockQuantity The stock, above zero.
+	 * @param float $capacity      The capacity, above zero.
+	 *
+	 * @return string
+	 */
+	private static function capacityBadge(float $stockQuantity, float $capacity): string {
+		if ($stockQuantity > $capacity) {
 			return 'Over Capacity';
 		}
 
-		if ($capacity !== null && $capacity > 0.0 && $stockQuantity < ($capacity * 0.1)) {
+		if ($stockQuantity < ($capacity * 0.1)) {
 			return 'Low Stock';
 		}
 
 		return 'In Stock';
-	}//end stockBadge()
+	}//end capacityBadge()
 
 	/**
 	 * Compute depth from a parent id (used in validateDepth).
@@ -292,4 +293,21 @@ class LocationHierarchyGuard {
 
 		return $ids;
 	}//end directChildIds()
+
+	/**
+	 * The parent of a location, or null when the location is unknown or has none.
+	 *
+	 * @param mixed                $locationId   The location id.
+	 * @param array<string, mixed> $allLocations All locations keyed by id.
+	 *
+	 * @return mixed The parent id, or null.
+	 */
+	private static function parentOf(mixed $locationId, array $allLocations): mixed {
+		$location = ($allLocations[$locationId] ?? null);
+		if ($location === null) {
+			return null;
+		}
+
+		return ($location['parentLocationId'] ?? null);
+	}//end parentOf()
 }//end class

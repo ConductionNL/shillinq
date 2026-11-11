@@ -170,28 +170,20 @@ class BcfCompensationCalculator {
 		$breakdown = [];
 		foreach ($accountNumbers as $accountNumber) {
 			$accountNumber = (string)$accountNumber;
-			$mapping = ($mappingsByAccount[$accountNumber] ?? null);
-			if ($this->isCompensable(mapping: $mapping) === false) {
+			$line = $this->compensationLine(
+				mapping: ($mappingsByAccount[$accountNumber] ?? null),
+				amount: ($amountsByAccount[$accountNumber] ?? 0)
+			);
+			if ($line === null) {
 				continue;
 			}
 
-			$amountCents = $this->toCents(amount: ($amountsByAccount[$accountNumber] ?? 0));
-			if ($amountCents <= 0) {
-				continue;
-			}
-
-			$percentage = $this->clampPercentage(percentage: ($mapping['compensablePercentage'] ?? 0));
-			$compensableCents = $this->weightedCents(amountCents: $amountCents, percentage: $percentage);
-			if ($compensableCents <= 0) {
-				continue;
-			}
-
-			$totalCents += $compensableCents;
+			$totalCents += $line['compensableCents'];
 			$breakdown[] = [
 				'accountNumber' => $accountNumber,
-				'amount' => $this->fromCents(cents: $amountCents),
-				'compensablePercentage' => $percentage,
-				'compensableAmount' => $this->fromCents(cents: $compensableCents),
+				'amount' => $this->fromCents(cents: $line['amountCents']),
+				'compensablePercentage' => $line['percentage'],
+				'compensableAmount' => $this->fromCents(cents: $line['compensableCents']),
 			];
 		}//end foreach
 
@@ -201,6 +193,35 @@ class BcfCompensationCalculator {
 		];
 
 	}//end computeCompensation()
+
+	/**
+	 * The cents, percentage and weighted cents of one compensable posting.
+	 *
+	 * @param array<string,mixed>|null $mapping The account's BBV mapping, if any.
+	 * @param mixed $amount The posted amount in currency units.
+	 *
+	 * @return array{amountCents: int, percentage: int, compensableCents: int}|null
+	 *         Null when the account is not compensable or nothing positive remains.
+	 */
+	private function compensationLine(array|null $mapping, mixed $amount): array|null {
+		if ($this->isCompensable(mapping: $mapping) === false) {
+			return null;
+		}
+
+		$amountCents = $this->toCents(amount: $amount);
+		if ($amountCents <= 0) {
+			return null;
+		}
+
+		$percentage = $this->clampPercentage(percentage: ($mapping['compensablePercentage'] ?? 0));
+		$compensableCents = $this->weightedCents(amountCents: $amountCents, percentage: $percentage);
+		if ($compensableCents <= 0) {
+			return null;
+		}
+
+		return ['amountCents' => $amountCents, 'percentage' => $percentage, 'compensableCents' => $compensableCents];
+
+	}//end compensationLine()
 
 	/**
 	 * Decide whether a draft claim may transition to submitted (REQ-BCF-003).

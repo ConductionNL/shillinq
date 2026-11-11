@@ -85,8 +85,7 @@
 
 <script>
 import { CnDataTable } from '@conduction/nextcloud-vue'
-import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
+import { fetchEnvelope, isNoAdministration, rowsOf } from './catalogEnvelope.js'
 
 export default {
 	name: 'ProductAttributeCatalogIndex',
@@ -211,33 +210,43 @@ export default {
 			this.loading = true
 			this.error = ''
 			try {
-				const response = await axios.get(
-					generateUrl('/apps/shillinq/api/inventory/product-attributes'),
-				)
-				const payload = response.data || {}
-				this.attributes = Array.isArray(payload.attributes)
-					? payload.attributes
-					: []
-				this.source = payload.source || 'contract'
-				this.authoritative = payload.authoritative === true
+				this.applyAttributes(await fetchEnvelope('/apps/shillinq/api/inventory/product-attributes'))
 			} catch (e) {
 				this.attributes = []
-				// See ProductCatalogIndex.vue: 403 is an answer, not a failure.
-				if (e?.response?.status === 403) {
-					this.error = this.t(
-						'shillinq',
-						'You have no administration yet, so there is no inventory to show. Ask an administrator for access.',
-					)
-					return
-				}
-
-				this.error = this.t(
-					'shillinq',
-					'Could not load the product attribute definitions.',
-				)
+				this.error = this.attributesError(e)
 			} finally {
 				this.loading = false
 			}
+		},
+
+		/**
+		 * Take the rows, the answering side and its authority from the envelope.
+		 *
+		 * @param {object} envelope The envelope.
+		 * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-004
+		 */
+		applyAttributes(envelope) {
+			this.attributes = rowsOf(envelope, 'attributes')
+			this.source = envelope.source || 'contract'
+			this.authoritative = envelope.authoritative === true
+		},
+
+		/**
+		 * The message for a failed load.
+		 *
+		 * @param {Error} e The failure.
+		 * @return {string} The message.
+		 * @spec openspec/specs/inventory-product-catalog/spec.md#req-ipc-004
+		 */
+		attributesError(e) {
+			// See ProductCatalogIndex.vue: 403 is an answer, not a failure.
+			if (isNoAdministration(e)) {
+				return this.t(
+					'shillinq',
+					'You have no administration yet, so there is no inventory to show. Ask an administrator for access.',
+				)
+			}
+			return this.t('shillinq', 'Could not load the product attribute definitions.')
 		},
 	},
 }

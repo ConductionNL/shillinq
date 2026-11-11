@@ -90,10 +90,11 @@ class ExpenseClaimGuard {
 	 */
 	public function requireCostCentresAndItems(array $claim): bool {
 		try {
-			$receiptIds = (array)($claim['receiptIds'] ?? []);
-			$mileageIds = (array)($claim['mileageIds'] ?? []);
-			$perDiemIds = (array)($claim['perDiemIds'] ?? []);
-			$allItemIds = array_merge($receiptIds, $mileageIds, $perDiemIds);
+			$allItemIds = array_merge(
+				(array)($claim['receiptIds'] ?? []),
+				(array)($claim['mileageIds'] ?? []),
+				(array)($claim['perDiemIds'] ?? [])
+			);
 
 			if (count($allItemIds) === 0) {
 				$this->logger->info(
@@ -103,12 +104,7 @@ class ExpenseClaimGuard {
 				return false;
 			}
 
-			return $this->allItemsHaveCostCentres(
-				claimId: (string)($claim['id'] ?? ''),
-				receiptIds: $receiptIds,
-				mileageIds: $mileageIds,
-				perDiemIds: $perDiemIds,
-			);
+			return $this->allItemsHaveCostCentres(claim: $claim);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'ExpenseClaimGuard: requireCostCentresAndItems failed — denying submit (fail-closed)',
@@ -138,17 +134,7 @@ class ExpenseClaimGuard {
 	 */
 	public function requireOpenPeriodAndCostCentres(array $claim): bool {
 		try {
-			$receiptIds = (array)($claim['receiptIds'] ?? []);
-			$mileageIds = (array)($claim['mileageIds'] ?? []);
-			$perDiemIds = (array)($claim['perDiemIds'] ?? []);
-
-			if ($this->allItemsHaveCostCentres(
-				claimId: (string)($claim['id'] ?? ''),
-				receiptIds: $receiptIds,
-				mileageIds: $mileageIds,
-				perDiemIds: $perDiemIds,
-			) === false
-			) {
+			if ($this->allItemsHaveCostCentres(claim: $claim) === false) {
 				return false;
 			}
 
@@ -164,59 +150,27 @@ class ExpenseClaimGuard {
 	}//end requireOpenPeriodAndCostCentres()
 
 	/**
-	 * Verify that all linked expense items have a non-empty costCentreCode.
+	 * Whether every linked receipt, mileage entry and per-diem carries a cost centre.
 	 *
-	 * Iterates Receipt, MileageEntry, and PerDiem records by ID and verifies
-	 * that each has a non-null, non-empty costCentreCode field. Returns false
-	 * on the first item missing a cost centre.
+	 * @param array<string, mixed> $claim The ExpenseClaim.
 	 *
-	 * @param string $claimId Claim ID for log context.
-	 * @param array<string> $receiptIds Receipt record IDs.
-	 * @param array<string> $mileageIds MileageEntry record IDs.
-	 * @param array<string> $perDiemIds PerDiem record IDs.
-	 *
-	 * @return bool True when all items have costCentreCode.
-	 *
-	 * @spec openspec/changes/expense-capture-core/tasks.md#task-9
+	 * @return bool False, with the item logged, at the first missing or uncoded item.
 	 */
-	private function allItemsHaveCostCentres(
-		string $claimId,
-		array $receiptIds,
-		array $mileageIds,
-		array $perDiemIds,
-	): bool {
+	private function allItemsHaveCostCentres(array $claim): bool {
 		$register = $this->getRegisterSlug();
 
 		$checks = [
-			['schema' => 'Receipt', 'ids' => $receiptIds],
-			['schema' => 'MileageEntry', 'ids' => $mileageIds],
-			['schema' => 'PerDiem', 'ids' => $perDiemIds],
+			['schema' => 'Receipt', 'ids' => (array)($claim['receiptIds'] ?? [])],
+			['schema' => 'MileageEntry', 'ids' => (array)($claim['mileageIds'] ?? [])],
+			['schema' => 'PerDiem', 'ids' => (array)($claim['perDiemIds'] ?? [])],
 		];
 
 		foreach ($checks as $check) {
 			foreach ($check['ids'] as $itemId) {
-				$item = ObjectIdentifier::findScoped(
-					scoped: $this->objectService->setRegister(register: $register)->setSchema(schema: $check['schema']),
-					id: (string)$itemId
-				);
-
-				// ADR-084: find() returns an ObjectEntityInterface, which extends
-				// JsonSerializable ONLY and does not implement ArrayAccess. The
-				// previous `$item['costCentreCode']` raised
-				// `Error: Cannot use object of type … as array` -- which `??`
-				// cannot suppress -- and requireOpenPeriodAndCostCentres()'s
-				// catch (\Throwable) turned that into `return false`, so the
-				// guard DENIED EVERY claim carrying a linked item. getObject()
-				// is declared on the contract and returns the body as an array.
-				$costCentreCode = '';
-				if ($item !== null) {
-					$costCentreCode = (string)($item->getObject()['costCentreCode'] ?? '');
-				}
-
-				if ($item === null || trim(string: $costCentreCode) === '') {
+				if ($this->costCentreCode(lookup: ['register' => $register, 'schema' => $check['schema']], itemId: (string)$itemId) === '') {
 					$this->logger->info(
 						'ExpenseClaimGuard: item missing costCentreCode — denying transition',
-						['claimId' => $claimId, 'schema' => $check['schema'], 'itemId' => $itemId]
+						['claimId' => (string)($claim['id'] ?? ''), 'schema' => $check['schema'], 'itemId' => $itemId]
 					);
 					return false;
 				}
@@ -225,6 +179,34 @@ class ExpenseClaimGuard {
 
 		return true;
 	}//end allItemsHaveCostCentres()
+
+	/**
+	 * The trimmed costCentreCode of a linked item; '' when the item is missing.
+	 *
+	 * ADR-084: find() returns an ObjectEntityInterface, which extends
+	 * JsonSerializable ONLY and does not implement ArrayAccess. Reading it as
+	 * an array raised `Error: Cannot use object of type … as array` -- which
+	 * `??` cannot suppress -- and the callers' catch (\Throwable) turned that
+	 * into a denial of every claim carrying a linked item. getObject() is
+	 * declared on the contract and returns the body as an array.
+	 *
+	 * @param array{register: string, schema: string} $lookup The register and item schema.
+	 * @param string $itemId The item id.
+	 *
+	 * @return string The cost centre code.
+	 */
+	private function costCentreCode(array $lookup, string $itemId): string {
+		$item = ObjectIdentifier::findScoped(
+			scoped: $this->objectService->setRegister(register: $lookup['register'])->setSchema(schema: $lookup['schema']),
+			id: $itemId
+		);
+		if ($item === null) {
+			return '';
+		}
+
+		return trim(string: (string)($item->getObject()['costCentreCode'] ?? ''));
+
+	}//end costCentreCode()
 
 	/**
 	 * Check that the FiscalYear covering the claim's fromDate is in state 'open'.
@@ -246,20 +228,7 @@ class ExpenseClaimGuard {
 		$adminId = (string)($claim['administrationId'] ?? '');
 
 		try {
-			$register = $this->getRegisterSlug();
-
-			$years = $this->objectService
-				->setRegister(register: $register)
-				->setSchema(schema: 'FiscalYear')
-				->findAll(
-					[
-						'filters' => [
-							'administrationId' => $adminId,
-							'startDate' => ['lte' => $fromDate],
-							'endDate' => ['gte' => $fromDate],
-						],
-					]
-				);
+			$years = $this->fiscalYearsCovering(administrationId: $adminId, date: $fromDate);
 		} catch (\Throwable) {
 			// FiscalYear register not yet available (T1 state) — permit posting.
 			$this->logger->debug(
@@ -281,4 +250,28 @@ class ExpenseClaimGuard {
 		$year = reset(array: $years);
 		return ($year['state'] ?? '') === 'open';
 	}//end isFiscalPeriodOpen()
+
+	/**
+	 * The administration's FiscalYears whose period covers the date.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $date The ISO date.
+	 *
+	 * @return array<int|string, mixed> The fiscal years.
+	 */
+	private function fiscalYearsCovering(string $administrationId, string $date): array {
+		return $this->objectService
+			->setRegister(register: $this->getRegisterSlug())
+			->setSchema(schema: 'FiscalYear')
+			->findAll(
+				[
+					'filters' => [
+						'administrationId' => $administrationId,
+						'startDate' => ['lte' => $date],
+						'endDate' => ['gte' => $date],
+					],
+				]
+			);
+
+	}//end fiscalYearsCovering()
 }//end class

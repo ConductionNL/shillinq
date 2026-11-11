@@ -53,6 +53,24 @@ class DBAScoreCalculator {
 	];
 
 	/**
+	 * Deliveroo-criteria flags: key => [default when absent, value that scores, points].
+	 *
+	 * Exclusiviteit and a contract not followed in practice raise the risk;
+	 * missing specialist work, own customers, own advertising or a model
+	 * agreement raise it as well.
+	 *
+	 * @var array<string, array{0: bool, 1: bool, 2: int}>
+	 */
+	private const DELIVEROO_FLAGS = [
+		'excluding' => [false, true, 8],
+		'natureActivitiesSpecialist' => [false, false, 6],
+		'ownCustomers' => [false, false, 6],
+		'ownReclame' => [false, false, 4],
+		'modelAgreementPresent' => [false, false, 4],
+		'actualExecutionFollowsContract' => [true, false, 2],
+	];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param LoggerInterface $logger Nextcloud logger for computation diagnostics.
@@ -77,52 +95,68 @@ class DBAScoreCalculator {
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
 	 */
 	public function computeTotal(array $intake): int {
-		$gezag = $this->subtotalGezag(intake: $intake);
-		$arbeid = $this->subtotalArbeid(intake: $intake);
-		$financieel = $this->subtotalFinancieel(intake: $intake);
-		$deliveroo = $this->subtotalDeliveroo(intake: $intake);
+		$subtotals = [
+			'gezag' => $this->subtotalGezag(intake: $intake),
+			'arbeid' => $this->subtotalArbeid(intake: $intake),
+			'financieel' => $this->subtotalFinancieel(intake: $intake),
+			'deliveroo' => $this->subtotalDeliveroo(intake: $intake),
+		];
+		$booster = $this->booster(intake: $intake);
+		$total = $this->clamp(value: (array_sum($subtotals) + $booster), max: 100);
 
-		$base = $gezag + $arbeid + $financieel + $deliveroo;
-
-		$booster = 0;
-		$deliverooBlock = $this->arrayOrEmpty(value: ($intake['deliverooCriteria'] ?? []));
-		$arbeidBlock = $this->arrayOrEmpty(value: ($intake['personalLabour'] ?? []));
-
-		$excluding = (bool)($deliverooBlock['excluding'] ?? false);
-		$duration = (string)($deliverooBlock['durationRelationship'] ?? '');
-		if ($excluding === true && in_array($duration, ['1_TO_2_YEAR', 'MEER_DAN_2_YEAR'], true) === true) {
-			$booster += 5;
-		}
-
-		$vervBaar = (int)($arbeidBlock['replaceableScore'] ?? 0);
-		$vervActual = (int)($arbeidBlock['replacementActualScore'] ?? 0);
-		if ($vervBaar < 5 && $vervActual >= 10) {
-			$booster += 5;
-		}
-
-		$total = $base + $booster;
-		if ($total < 0) {
-			$total = 0;
-		}
-
-		if ($total > 100) {
-			$total = 100;
-		}
-
-		$this->logger->debug(
-			'DBAScoreCalculator: computed total',
-			[
-				'gezag' => $gezag,
-				'arbeid' => $arbeid,
-				'financieel' => $financieel,
-				'deliveroo' => $deliveroo,
-				'booster' => $booster,
-				'total' => $total,
-			]
-		);
+		$this->logger->debug('DBAScoreCalculator: computed total', $subtotals + ['booster' => $booster, 'total' => $total]);
 
 		return $total;
 	}//end computeTotal()
+
+	/**
+	 * The conditional boosters: +5 when exclusief AND duurRelatie >= 1y; +5 when
+	 * vervangbaarheid is theoretisch (vervangbaarScore < 5 AND vervangingFeitelijkScore >= 10).
+	 *
+	 * @param array<string,mixed> $intake The DBAIntake object.
+	 *
+	 * @return int 0, 5 or 10.
+	 */
+	private function booster(array $intake): int {
+		$deliverooBlock = $this->arrayOrEmpty(value: ($intake['deliverooCriteria'] ?? []));
+		$arbeidBlock = $this->arrayOrEmpty(value: ($intake['personalLabour'] ?? []));
+
+		return self::exclusiveLongBooster(block: $deliverooBlock) + self::theoreticalReplacementBooster(block: $arbeidBlock);
+	}//end booster()
+
+	/**
+	 * +5 for an exclusive relationship of a year or more.
+	 *
+	 * @param array<string,mixed> $block The deliverooCriteria block.
+	 *
+	 * @return int 0 or 5.
+	 */
+	private static function exclusiveLongBooster(array $block): int {
+		$excluding = (bool)($block['excluding'] ?? false);
+		$duration = (string)($block['durationRelationship'] ?? '');
+		if ($excluding === true && in_array($duration, ['1_TO_2_YEAR', 'MEER_DAN_2_YEAR'], true) === true) {
+			return 5;
+		}
+
+		return 0;
+	}//end exclusiveLongBooster()
+
+	/**
+	 * +5 when replacement is possible on paper but not in practice.
+	 *
+	 * @param array<string,mixed> $block The personalLabour block.
+	 *
+	 * @return int 0 or 5.
+	 */
+	private static function theoreticalReplacementBooster(array $block): int {
+		$vervBaar = (int)($block['replaceableScore'] ?? 0);
+		$vervActual = (int)($block['replacementActualScore'] ?? 0);
+		if ($vervBaar < 5 && $vervActual >= 10) {
+			return 5;
+		}
+
+		return 0;
+	}//end theoreticalReplacementBooster()
 
 	/**
 	 * Compute the gezagsverhouding subtotal (max 20).
@@ -137,7 +171,7 @@ class DBAScoreCalculator {
 		$result = (int)($block['kwaResultFreeScore'] ?? 0);
 		$teamMeeting = (int)($block['participatesInTeamMeetingScore'] ?? 0);
 		$value = ($instructies + $result + $teamMeeting);
-		return $this->clamp(value: $value, min: 0, max: 20);
+		return $this->clamp(value: $value, max: 20);
 	}//end subtotalGezag()
 
 	/**
@@ -150,7 +184,7 @@ class DBAScoreCalculator {
 	public function subtotalArbeid(array $intake): int {
 		$block = $this->arrayOrEmpty(value: ($intake['personalLabour'] ?? []));
 		$value = (int)($block['replaceableScore'] ?? 0) + (int)($block['replacementActualScore'] ?? 0);
-		return $this->clamp(value: $value, min: 0, max: 20);
+		return $this->clamp(value: $value, max: 20);
 	}//end subtotalArbeid()
 
 	/**
@@ -166,7 +200,7 @@ class DBAScoreCalculator {
 		$risk = (int)($block['paymentRiskScore'] ?? 0);
 		$investment = (int)($block['investmentOwnResourcesScore'] ?? 0);
 		$value = ($frequency + $risk + $investment);
-		return $this->clamp(value: $value, min: 0, max: 20);
+		return $this->clamp(value: $value, max: 20);
 	}//end subtotalFinancieel()
 
 	/**
@@ -183,36 +217,14 @@ class DBAScoreCalculator {
 	public function subtotalDeliveroo(array $intake): int {
 		$block = $this->arrayOrEmpty(value: ($intake['deliverooCriteria'] ?? []));
 
-		$score = 0;
-
-		$duration = (string)($block['durationRelationship'] ?? '');
-		$score += self::DUUR_POINTS[$duration] ?? 0;
-
-		if ((bool)($block['excluding'] ?? false) === true) {
-			$score += 8;
+		$score = (self::DUUR_POINTS[(string)($block['durationRelationship'] ?? '')] ?? 0);
+		foreach (self::DELIVEROO_FLAGS as $key => [$default, $scoringValue, $points]) {
+			if ((bool)($block[$key] ?? $default) === $scoringValue) {
+				$score += $points;
+			}
 		}
 
-		if ((bool)($block['natureActivitiesSpecialist'] ?? false) === false) {
-			$score += 6;
-		}
-
-		if ((bool)($block['ownCustomers'] ?? false) === false) {
-			$score += 6;
-		}
-
-		if ((bool)($block['ownReclame'] ?? false) === false) {
-			$score += 4;
-		}
-
-		if ((bool)($block['modelAgreementPresent'] ?? false) === false) {
-			$score += 4;
-		}
-
-		if ((bool)($block['actualExecutionFollowsContract'] ?? true) === false) {
-			$score += 2;
-		}
-
-		return $this->clamp(value: $score, min: 0, max: 40);
+		return $this->clamp(value: $score, max: 40);
 	}//end subtotalDeliveroo()
 
 	/**
@@ -245,17 +257,16 @@ class DBAScoreCalculator {
 	}//end arrayOrEmpty()
 
 	/**
-	 * Clamp a value to a [min, max] range.
+	 * Clamp a value to [0, max].
 	 *
 	 * @param int $value Input value.
-	 * @param int $min Lower bound.
-	 * @param int $max Upper bound.
+	 * @param int $max   Upper bound.
 	 *
 	 * @return int The clamped value.
 	 */
-	private function clamp(int $value, int $min, int $max): int {
-		if ($value < $min) {
-			return $min;
+	private function clamp(int $value, int $max): int {
+		if ($value < 0) {
+			return 0;
 		}
 
 		if ($value > $max) {

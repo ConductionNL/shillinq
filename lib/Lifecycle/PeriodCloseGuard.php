@@ -295,22 +295,7 @@ class PeriodCloseGuard {
 				return true;
 			}
 
-			foreach ($items as $item) {
-				if (is_array($item) === false) {
-					continue;
-				}
-
-				$category = (string)($item['category'] ?? '');
-				if (in_array($category, self::MANDATORY_CATEGORIES, true) === false) {
-					continue;
-				}
-
-				if (($item['resolved'] ?? false) !== true) {
-					return false;
-				}
-			}
-
-			return true;
+			return self::hasOpenMandatoryItem(items: $items) === false;
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'PeriodCloseGuard: mandatoryChecklistResolved check failed — denying close (fail-closed)',
@@ -320,6 +305,30 @@ class PeriodCloseGuard {
 		}//end try
 
 	}//end mandatoryChecklistResolved()
+
+	/**
+	 * Whether any checklist item of a mandatory category is not resolved
+	 * (`resolved` strictly true); non-array items are ignored.
+	 *
+	 * @param array<mixed> $items The period's taskChecklistItems.
+	 *
+	 * @return bool
+	 */
+	private static function hasOpenMandatoryItem(array $items): bool {
+		foreach ($items as $item) {
+			if (is_array($item) === false) {
+				continue;
+			}
+
+			$mandatory = in_array((string)($item['category'] ?? ''), self::MANDATORY_CATEGORIES, true);
+			if ($mandatory === true && ($item['resolved'] ?? false) !== true) {
+				return true;
+			}
+		}
+
+		return false;
+
+	}//end hasOpenMandatoryItem()
 
 	/**
 	 * Returns true iff the bank-reconciliation suspense worklist is empty for the

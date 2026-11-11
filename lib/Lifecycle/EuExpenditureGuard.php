@@ -172,26 +172,7 @@ class EuExpenditureGuard {
 				return false;
 			}
 
-			$presentTypes = $this->resolvePresentDocumentTypes(euExpenditureId: $expenditureId);
-
-			$required = $this->resolveRequiredEvidence(
-				fonds: $this->resolveProjectFonds(euProjectId: (string)($expenditure['euProjectId'] ?? '')),
-				costCategory: $costCategory
-			);
-			foreach ($required as $type) {
-				if (in_array($type, $presentTypes, true) === false) {
-					return false;
-				}
-			}
-
-			// REQ-EUF-005: aanbestedingsplichtige uitgave vereist een aanbestedingsdossier.
-			if (($expenditure['procurementRequired'] ?? false) === true
-				&& in_array('aanbestedingsdossier', $presentTypes, true) === false
-			) {
-				return false;
-			}
-
-			return true;
+			return $this->evidenceComplete(expenditure: $expenditure, expenditureId: $expenditureId);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'EuExpenditureGuard: submit completeness check failed — denying submit transition (fail-closed)',
@@ -200,6 +181,50 @@ class EuExpenditureGuard {
 			return false;
 		}//end try
 	}//end canSubmit()
+
+	/**
+	 * Whether every required bewijsstuk, and any required aanbestedingsdossier, is linked.
+	 *
+	 * @param array<string,mixed> $expenditure The EuExpenditure.
+	 * @param string $expenditureId The expenditure id the documents link to.
+	 *
+	 * @return bool True when the evidence is complete.
+	 */
+	private function evidenceComplete(array $expenditure, string $expenditureId): bool {
+		$presentTypes = $this->resolvePresentDocumentTypes(euExpenditureId: $expenditureId);
+
+		$required = $this->resolveRequiredEvidence(
+			fonds: $this->resolveProjectFonds(euProjectId: (string)($expenditure['euProjectId'] ?? '')),
+			costCategory: (string)($expenditure['costCategory'] ?? '')
+		);
+		if ($this->allPresent(required: $required, presentTypes: $presentTypes) === false) {
+			return false;
+		}
+
+		// REQ-EUF-005: aanbestedingsplichtige uitgave vereist een aanbestedingsdossier.
+		return ($expenditure['procurementRequired'] ?? false) !== true
+			|| in_array('aanbestedingsdossier', $presentTypes, true) === true;
+
+	}//end evidenceComplete()
+
+	/**
+	 * Whether every required document type is among the present ones.
+	 *
+	 * @param array<string> $required The required document-type enums.
+	 * @param array<string> $presentTypes The linked document-type enums.
+	 *
+	 * @return bool True when none is missing.
+	 */
+	private function allPresent(array $required, array $presentTypes): bool {
+		foreach ($required as $type) {
+			if (in_array($type, $presentTypes, true) === false) {
+				return false;
+			}
+		}
+
+		return true;
+
+	}//end allPresent()
 
 	/**
 	 * Resolve the EuExpenditure object, preferring the supplied object and

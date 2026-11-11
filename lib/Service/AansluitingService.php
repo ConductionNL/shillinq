@@ -417,15 +417,8 @@ class AansluitingService {
 		);
 		$filed = $this->vatReturnService->fetchFiledDeclarations(returnId: $returnId);
 
-		$currentByKey = [];
-		foreach ($current as $bucket) {
-			$currentByKey[$this->vatReturnService->declarationKey(bucket: $bucket)] = (float)$bucket['totalVATAmount'];
-		}
-
-		$filedByKey = [];
-		foreach ($filed as $bucket) {
-			$filedByKey[$this->vatReturnService->declarationKey(bucket: $bucket)] = (float)$bucket['totalVATAmount'];
-		}
+		$currentByKey = $this->vatTotalsByKey(buckets: $current);
+		$filedByKey = $this->vatTotalsByKey(buckets: $filed);
 
 		$lineDeltas = $this->calculator->diffBuckets(bucketsA: $currentByKey, bucketsB: $filedByKey, relationship: 'equal');
 
@@ -437,6 +430,24 @@ class AansluitingService {
 		];
 
 	}//end resolveBtwLedgerAangifte()
+
+	/**
+	 * The VAT amount of each declaration bucket, by declaration key (a later
+	 * bucket with the same key wins).
+	 *
+	 * @param array<int,array<string,mixed>> $buckets The declaration buckets.
+	 *
+	 * @return array<string,float>
+	 */
+	private function vatTotalsByKey(array $buckets): array {
+		$byKey = [];
+		foreach ($buckets as $bucket) {
+			$byKey[$this->vatReturnService->declarationKey(bucket: $bucket)] = (float)$bucket['totalVATAmount'];
+		}
+
+		return $byKey;
+
+	}//end vatTotalsByKey()
 
 	/**
 	 * Resolve source A (GL control account cumulative balance) / source B
@@ -458,24 +469,11 @@ class AansluitingService {
 			accountNumber: $controlAccountNumber
 		);
 
-		$openItems = [];
-		if ($subLedgerType === 'ar') {
-			$openItems = $this->openArInvoices(administrationId: $administrationId);
-		} elseif ($subLedgerType === 'ap') {
-			$openItems = $this->openApTransactions(administrationId: $administrationId);
-		}
-
-		$sourceBTotal = 0.0;
-		$itemBuckets = [];
-		foreach ($openItems as $item) {
-			$itemId = (string)($item['itemId'] ?? '');
-			if ($itemId === '') {
-				continue;
-			}
-
-			$sourceBTotal += $item['amount'];
-			$itemBuckets[$itemId] = $item['amount'];
-		}
+		$open = self::openItemTotals(
+			openItems: $this->openSubledgerItems(subLedgerType: $subLedgerType, administrationId: $administrationId)
+		);
+		$sourceBTotal = $open['total'];
+		$itemBuckets = $open['buckets'];
 
 		// Item-level rows only decompose sourceB (the GL control account
 		// does not decompose per open item), so bucketsA is empty here — the
@@ -496,6 +494,50 @@ class AansluitingService {
 	}//end resolveSubledgerGlControl()
 
 	/**
+	 * The open items of the AR or AP subledger; none for any other type.
+	 *
+	 * @param string $subLedgerType    'ar' or 'ap'.
+	 * @param string $administrationId Administration scope.
+	 *
+	 * @return array<int,array{itemId:string,amount:float}>
+	 */
+	private function openSubledgerItems(string $subLedgerType, string $administrationId): array {
+		if ($subLedgerType === 'ar') {
+			return $this->openArInvoices(administrationId: $administrationId);
+		}
+
+		if ($subLedgerType === 'ap') {
+			return $this->openApTransactions(administrationId: $administrationId);
+		}
+
+		return [];
+
+	}//end openSubledgerItems()
+
+	/**
+	 * The total of the open items with an id, in order, and the amount of each
+	 * by item id (a repeated id adds to the total, its last amount is kept as
+	 * the bucket); items without an id are skipped.
+	 *
+	 * @param array<int,array{itemId:string,amount:float}> $openItems The open items.
+	 *
+	 * @return array{total: float, buckets: array<string,float>}
+	 */
+	private static function openItemTotals(array $openItems): array {
+		$totals = ['total' => 0.0, 'buckets' => []];
+		foreach ($openItems as $item) {
+			$itemId = (string)($item['itemId'] ?? '');
+			if ($itemId !== '') {
+				$totals['total'] += $item['amount'];
+				$totals['buckets'][$itemId] = $item['amount'];
+			}
+		}
+
+		return $totals;
+
+	}//end openItemTotals()
+
+	/**
 	 * Sum a GL account's all-time cumulative balance (debit - credit, whole
 	 * cents) across every non-eliminated GLLine for the administration. A
 	 * balance-sheet control account's tie-out target is its life-to-date
@@ -513,18 +555,7 @@ class AansluitingService {
 		}
 
 		$register = $this->register();
-
-		$transactions = $this->objectService
-			->setRegister($register)
-			->setSchema('GLTransaction')
-			->findAll(['filters' => ['administrationId' => $administrationId]]);
-		$transactionIds = [];
-		foreach ($transactions as $transaction) {
-			$id = (string)($transaction['id'] ?? ($transaction['@self']['id'] ?? ''));
-			if ($id !== '') {
-				$transactionIds[$id] = true;
-			}
-		}
+		$transactionIds = $this->transactionIdSet(register: $register, administrationId: $administrationId);
 
 		$lines = $this->objectService
 			->setRegister($register)
@@ -533,25 +564,60 @@ class AansluitingService {
 
 		$balanceCents = 0;
 		foreach ($lines as $line) {
-			if (($line['eliminationFlag'] ?? false) === true) {
-				continue;
+			$counts = (($line['eliminationFlag'] ?? false) !== true);
+			if ($transactionIds !== [] && isset($transactionIds[(string)($line['transactionId'] ?? '')]) === false) {
+				$counts = false;
 			}
 
-			$transactionId = (string)($line['transactionId'] ?? '');
-			if ($transactionIds !== [] && isset($transactionIds[$transactionId]) === false) {
-				continue;
-			}
-
-			$cents = $this->calculator->toCents(amount: ($line['amount'] ?? 0));
-			if (($line['side'] ?? '') === 'debit') {
-				$balanceCents += $cents;
-			} else {
-				$balanceCents -= $cents;
+			if ($counts === true) {
+				$balanceCents += $this->signedCents(line: $line);
 			}
 		}
 
 		return $this->calculator->fromCents(cents: $balanceCents);
 	}//end controlAccountBalance()
+
+	/**
+	 * The ids of the administration's GL transactions, as a set.
+	 *
+	 * @param string $register         The register.
+	 * @param string $administrationId Administration scope.
+	 *
+	 * @return array<string,bool>
+	 */
+	private function transactionIdSet(string $register, string $administrationId): array {
+		$transactions = $this->objectService
+			->setRegister($register)
+			->setSchema('GLTransaction')
+			->findAll(['filters' => ['administrationId' => $administrationId]]);
+		$ids = [];
+		foreach ($transactions as $transaction) {
+			$id = (string)($transaction['id'] ?? ($transaction['@self']['id'] ?? ''));
+			if ($id !== '') {
+				$ids[$id] = true;
+			}
+		}
+
+		return $ids;
+
+	}//end transactionIdSet()
+
+	/**
+	 * A GL line's amount in whole cents, positive for debit, negative otherwise.
+	 *
+	 * @param array<string,mixed> $line The GLLine.
+	 *
+	 * @return int
+	 */
+	private function signedCents(array $line): int {
+		$cents = $this->calculator->toCents(amount: ($line['amount'] ?? 0));
+		if (($line['side'] ?? '') === 'debit') {
+			return $cents;
+		}
+
+		return (-1 * $cents);
+
+	}//end signedCents()
 
 	/**
 	 * Fetch every ARInvoice for the administration in an "open" lifecycle

@@ -123,33 +123,7 @@ class BudgetScenarioReader {
 	 */
 	public function loadContext(string $administrationId, array $annualBudgetIds): array {
 		$scenarios = $this->query(schema: self::SCHEMA_SCENARIO, filters: ['administrationId' => $administrationId]);
-
-		$scenarioIds = [];
-		foreach ($scenarios as $scenario) {
-			$id = (string)($scenario['id'] ?? $scenario['@self']['id'] ?? '');
-			if ($id !== '') {
-				$scenarioIds[] = $id;
-			}
-		}
-
-		$modifiers = [];
-		if ($scenarioIds !== []) {
-			$modifiers = $this->query(
-				schema: self::SCHEMA_MODIFIER,
-				filters: ['scenarioId' => ['in' => $scenarioIds]]
-			);
-		}
-
-		$modifiersByScenarioId = [];
-		foreach ($modifiers as $modifier) {
-			$scenarioId = (string)($modifier['scenarioId'] ?? '');
-			if ($scenarioId === '') {
-				continue;
-			}
-
-			$modifiersByScenarioId[$scenarioId][] = $modifier;
-		}
-
+		$modifiersByScenarioId = $this->modifiersByScenarioId(scenarioIds: self::scenarioIds(scenarios: $scenarios));
 		$cashflowRecurringRows = $this->query(
 			schema: self::SCHEMA_CASHFLOW_RECURRING,
 			filters: ['administrationId' => $administrationId]
@@ -177,6 +151,52 @@ class BudgetScenarioReader {
 		];
 
 	}//end loadContext()
+
+	/**
+	 * The non-empty ids of the scenarios, in order.
+	 *
+	 * @param array<int,array<string,mixed>> $scenarios The BudgetScenario rows.
+	 *
+	 * @return list<string>
+	 */
+	private static function scenarioIds(array $scenarios): array {
+		$ids = [];
+		foreach ($scenarios as $scenario) {
+			$id = (string)($scenario['id'] ?? $scenario['@self']['id'] ?? '');
+			if ($id !== '') {
+				$ids[] = $id;
+			}
+		}
+
+		return $ids;
+
+	}//end scenarioIds()
+
+	/**
+	 * The scenarios' modifiers grouped by scenarioId (one query; none at all
+	 * without scenarios); modifiers without a scenarioId are dropped.
+	 *
+	 * @param list<string> $scenarioIds The scenario ids.
+	 *
+	 * @return array<string,list<array<string,mixed>>>
+	 */
+	private function modifiersByScenarioId(array $scenarioIds): array {
+		if ($scenarioIds === []) {
+			return [];
+		}
+
+		$grouped = [];
+		$modifiers = $this->query(schema: self::SCHEMA_MODIFIER, filters: ['scenarioId' => ['in' => $scenarioIds]]);
+		foreach ($modifiers as $modifier) {
+			$scenarioId = (string)($modifier['scenarioId'] ?? '');
+			if ($scenarioId !== '') {
+				$grouped[$scenarioId][] = $modifier;
+			}
+		}
+
+		return $grouped;
+
+	}//end modifiersByScenarioId()
 
 	/**
 	 * Resolve every AnnualBudget id for one administration + fiscal year —
