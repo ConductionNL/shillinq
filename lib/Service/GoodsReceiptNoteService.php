@@ -420,7 +420,34 @@ class GoodsReceiptNoteService {
 	 */
 	public function acceptGRN(string $administrationId, string $grnId): array {
 		$this->assertAccess(administrationId: $administrationId);
+		$grn = $this->findGrn(administrationId: $administrationId, grnId: $grnId);
+		$this->assertNotTerminal(grn: $grn);
 
+		$acceptance = new GrnAcceptance(
+			administrationId: $administrationId,
+			grn: $grn,
+			grnRecordId: (string)($grn['id'] ?? ($grn['@self']['id'] ?? $grnId))
+		);
+		$this->postAcceptedLineMoves(acceptance: $acceptance);
+
+		$grn['statusCode'] = 'accepted';
+		$persisted = $this->records()->saveObject(schema: self::SCHEMA_GRN, object: $grn);
+		$this->updateReceivedPurchaseOrders(acceptance: $acceptance, persisted: $persisted);
+
+		return $persisted;
+	}//end acceptGRN()
+
+	/**
+	 * Load a GRN of the administration.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $grnId GRN id.
+	 *
+	 * @return array<string,mixed> The GoodsReceiptNote.
+	 *
+	 * @throws \RuntimeException When the GRN is missing.
+	 */
+	private function findGrn(string $administrationId, string $grnId): array {
 		$grn = $this->records()->findOne(
 			schema: self::SCHEMA_GRN,
 			filters: [
@@ -432,52 +459,74 @@ class GoodsReceiptNoteService {
 			throw new RuntimeException('Goods receipt note not found');
 		}
 
+		return $grn;
+	}//end findGrn()
+
+	/**
+	 * Refuse a GRN that is already accepted or rejected.
+	 *
+	 * @param array<string,mixed> $grn The GoodsReceiptNote.
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException When the GRN is in a terminal state.
+	 */
+	private function assertNotTerminal(array $grn): void {
 		$statusCode = (string)($grn['statusCode'] ?? '');
 		if (in_array($statusCode, ['accepted', 'rejected'], true) === true) {
 			throw new RuntimeException('Goods receipt note is in a terminal state');
 		}
 
-		$grnRecordId = (string)($grn['id'] ?? ($grn['@self']['id'] ?? $grnId));
+	}//end assertNotTerminal()
+
+	/**
+	 * Post a StockMove credit per accepted line of the GRN.
+	 *
+	 * @param GrnAcceptance $acceptance The GRN being accepted.
+	 *
+	 * @return void
+	 */
+	private function postAcceptedLineMoves(GrnAcceptance $acceptance): void {
 		$grnLines = $this->records()->findAll(
 			schema: self::SCHEMA_GRN_LINE,
 			filters: [
-				'grnId' => $grnRecordId,
-				'administrationId' => $administrationId,
+				'grnId' => $acceptance->grnRecordId,
+				'administrationId' => $acceptance->administrationId,
 			]
 		);
 
 		// Post a StockMove credit per accepted line (rejected quantities never
 		// mutate stock per the slice-04 design D3).
 		foreach ($grnLines as $line) {
-			$accepted = (float)($line['quantityAccepted'] ?? 0);
-			if ($accepted <= 0.0) {
-				continue;
+			if ((float)($line['quantityAccepted'] ?? 0) > 0.0) {
+				$this->postReceiptStockMove(acceptance: $acceptance, grnLine: $line);
 			}
-
-			$this->postReceiptStockMove(
-				administrationId: $administrationId,
-				grn: $grn,
-				grnLine: $line
-			);
 		}
 
-		$grn['statusCode'] = 'accepted';
-		$persisted = $this->records()->saveObject(schema: self::SCHEMA_GRN, object: $grn);
+	}//end postAcceptedLineMoves()
 
-		// Update originating PO lifecycle: every PO referenced by the GRN
-		// (multi-PO supported per REQ-GRN-001) is set to partial_received or
-		// fully_received depending on whether every PO-line has now been
-		// fully received.
-		$poIds = $this->stringArray(input: ($persisted['poIds'] ?? $grn['poIds'] ?? []));
+	/**
+	 * Update the lifecycle of every PO the accepted GRN references.
+	 *
+	 * Every PO referenced by the GRN (multi-PO supported per REQ-GRN-001) is
+	 * set to partial_received or fully_received depending on whether every
+	 * PO-line has now been fully received.
+	 *
+	 * @param GrnAcceptance $acceptance The GRN being accepted.
+	 * @param array<string,mixed> $persisted The persisted, accepted GRN.
+	 *
+	 * @return void
+	 */
+	private function updateReceivedPurchaseOrders(GrnAcceptance $acceptance, array $persisted): void {
+		$poIds = $this->stringArray(input: ($persisted['poIds'] ?? $acceptance->grn['poIds'] ?? []));
 		foreach ($poIds as $poId) {
 			$this->updatePurchaseOrderReceiptLifecycle(
-				administrationId: $administrationId,
+				administrationId: $acceptance->administrationId,
 				poId: $poId
 			);
 		}
 
-		return $persisted;
-	}//end acceptGRN()
+	}//end updateReceivedPurchaseOrders()
 
 	/**
 	 * Append docudesk file-id references to the GRN's photos[] array.
@@ -498,17 +547,7 @@ class GoodsReceiptNoteService {
 	 */
 	public function uploadPhotos(string $administrationId, string $grnId, array $photoFileIds): array {
 		$this->assertAccess(administrationId: $administrationId);
-
-		$grn = $this->records()->findOne(
-			schema: self::SCHEMA_GRN,
-			filters: [
-				'id' => $grnId,
-				'administrationId' => $administrationId,
-			]
-		);
-		if ($grn === null) {
-			throw new RuntimeException('Goods receipt note not found');
-		}
+		$grn = $this->findGrn(administrationId: $administrationId, grnId: $grnId);
 
 		$existing = $this->stringArray(input: ($grn['photos'] ?? []));
 		$incoming = $this->stringArray(input: $photoFileIds);
@@ -530,71 +569,119 @@ class GoodsReceiptNoteService {
 	 * double-accept is rejected by the (administrationId, movementNumber)
 	 * unique index on StockMove.
 	 *
-	 * @param string $administrationId Administration scope.
-	 * @param array<string,mixed> $grn The GRN being accepted.
+	 * @param GrnAcceptance $acceptance The GRN being accepted.
 	 * @param array<string,mixed> $grnLine The GRN line being credited.
 	 *
 	 * @return void
 	 */
-	private function postReceiptStockMove(string $administrationId, array $grn, array $grnLine): void {
+	private function postReceiptStockMove(GrnAcceptance $acceptance, array $grnLine): void {
 		$poLineId = trim((string)($grnLine['poLineId'] ?? ''));
 		if ($poLineId === '') {
 			return;
 		}
 
-		$poLine = $this->records()->findOne(
-			schema: self::SCHEMA_PO_LINE,
-			filters: [
-				'id' => $poLineId,
-				'administrationId' => $administrationId,
-			]
-		);
+		$poLine = $this->findReceiptPoLine(acceptance: $acceptance, poLineId: $poLineId);
 		if ($poLine === null) {
-			// Defensive: a missing PO line at this point should not happen —
-			// addGRNLine already validated. Skip the StockMove rather than
-			// crashing the accept transaction; the caller still sees a logged
-			// warning so the divergence surfaces.
-			$this->logger->warning(
-				'GoodsReceiptNoteService: PO line missing on accept; StockMove skipped',
-				[
-					'poLineId' => $poLineId,
-					'grnId' => ($grn['id'] ?? null),
-				]
-			);
+			$this->warnMissingPoLine(acceptance: $acceptance, poLineId: $poLineId);
 			return;
 		}
 
-		$itemId = (string)($poLine['productOrServiceCode'] ?? '');
-		$unitPriceCents = (int)($poLine['unitPrice'] ?? 0);
-		$unitCost = ((float)$unitPriceCents) / 100.0;
-		$quantity = (float)($grnLine['quantityAccepted'] ?? 0);
+		$stockMove = $this->receiptStockMove(acceptance: $acceptance, line: new GrnLineReceipt(grnLine: $grnLine, poLine: $poLine));
+		$this->records()->saveObject(schema: self::SCHEMA_STOCK_MOVE, object: $stockMove);
 
-		// UnitCost is integer cents on the PO line (ADR-022) — converting back
-		// to euro for the StockMove which uses multipleOf 0.01.
-		$grnNumber = (string)($grn['grnNumber'] ?? '');
-		$grnLineId = (string)($grnLine['id'] ?? ($grnLine['@self']['id'] ?? ''));
-		$movementNumber = $this->buildMovementNumber(grnNumber: $grnNumber, grnLineId: $grnLineId);
-		$poId = (string)($poLine['poId'] ?? '');
-		$referenceUri = self::REFERENCE_DOCUMENT_URI_PREFIX . $poId;
-		$destinationCode = trim((string)($grnLine['destinationLocationId'] ?? ($grn['destinationLocationId'] ?? '')));
+	}//end postReceiptStockMove()
 
-		if ($destinationCode !== '') {
-			$destinationLocationId = $destinationCode;
-		} else {
-			$destinationLocationId = null;
-		}
+	/**
+	 * Load the PO line an accepted GRN line receives against.
+	 *
+	 * @param GrnAcceptance $acceptance The GRN being accepted.
+	 * @param string $poLineId PO line id.
+	 *
+	 * @return array<string,mixed>|null The PurchaseOrderLine, or null.
+	 */
+	private function findReceiptPoLine(GrnAcceptance $acceptance, string $poLineId): ?array {
+		return $this->records()->findOne(
+			schema: self::SCHEMA_PO_LINE,
+			filters: [
+				'id' => $poLineId,
+				'administrationId' => $acceptance->administrationId,
+			]
+		);
+	}//end findReceiptPoLine()
 
-		$stockMove = [
-			'movementNumber' => $movementNumber,
-			'itemId' => $itemId,
-			'quantity' => $quantity,
-			'unitCost' => $unitCost,
+	/**
+	 * Log a PO line that is missing on accept.
+	 *
+	 * Defensive: a missing PO line at this point should not happen —
+	 * addGRNLine already validated. Skip the StockMove rather than
+	 * crashing the accept transaction; the caller still sees a logged
+	 * warning so the divergence surfaces.
+	 *
+	 * @param GrnAcceptance $acceptance The GRN being accepted.
+	 * @param string $poLineId The missing PO line id.
+	 *
+	 * @return void
+	 */
+	private function warnMissingPoLine(GrnAcceptance $acceptance, string $poLineId): void {
+		$this->logger->warning(
+			'GoodsReceiptNoteService: PO line missing on accept; StockMove skipped',
+			[
+				'poLineId' => $poLineId,
+				'grnId' => ($acceptance->grn['id'] ?? null),
+			]
+		);
+
+	}//end warnMissingPoLine()
+
+	/**
+	 * Build the posted StockMove credit of one accepted GRN line.
+	 *
+	 * @param GrnAcceptance $acceptance The GRN being accepted.
+	 * @param GrnLineReceipt $line The GRN line with its PO line.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function receiptStockMove(GrnAcceptance $acceptance, GrnLineReceipt $line): array {
+		return $this->receivedGoods(acceptance: $acceptance, line: $line) + $this->postedMoveState(administrationId: $acceptance->administrationId);
+	}//end receiptStockMove()
+
+	/**
+	 * The goods part of a receipt StockMove: what moved, how many, at what cost, to where and why.
+	 *
+	 * UnitCost is integer cents on the PO line (ADR-022) — converted back
+	 * to euro for the StockMove which uses multipleOf 0.01.
+	 *
+	 * @param GrnAcceptance $acceptance The GRN being accepted.
+	 * @param GrnLineReceipt $line The GRN line with its PO line.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function receivedGoods(GrnAcceptance $acceptance, GrnLineReceipt $line): array {
+		$grnNumber = (string)($acceptance->grn['grnNumber'] ?? '');
+
+		return [
+			'movementNumber' => $this->buildMovementNumber(grnNumber: $grnNumber, grnLineId: $line->grnLineId()),
+			'itemId' => (string)($line->poLine['productOrServiceCode'] ?? ''),
+			'quantity' => (float)($line->grnLine['quantityAccepted'] ?? 0),
+			'unitCost' => ((float)(int)($line->poLine['unitPrice'] ?? 0)) / 100.0,
 			'movementType' => self::STOCK_MOVE_TYPE_RECEIPT,
 			'sourceLocationId' => null,
-			'destinationLocationId' => $destinationLocationId,
-			'referenceDocumentUri' => $referenceUri,
+			'destinationLocationId' => $this->receiptDestination(acceptance: $acceptance, line: $line),
+			'referenceDocumentUri' => self::REFERENCE_DOCUMENT_URI_PREFIX . (string)($line->poLine['poId'] ?? ''),
 			'movementReason' => self::STOCK_MOVE_REASON_NORMAL,
-			'notes' => 'Receipt for ' . $grnNumber . ' / PO line ' . $poLineId,
+			'notes' => 'Receipt for ' . $grnNumber . ' / PO line ' . $line->poLineId(),
+		];
+	}//end receivedGoods()
+
+	/**
+	 * The state part of a receipt StockMove: posted and locked straight away.
+	 *
+	 * @param string $administrationId Administration scope.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function postedMoveState(string $administrationId): array {
+		return [
 			'draftedAt' => $this->nowIso(),
 			'postedAt' => $this->nowIso(),
 			'cancelledAt' => null,
@@ -604,10 +691,24 @@ class GoodsReceiptNoteService {
 			'offsetOfMoveId' => null,
 			'lifecycleState' => 'posted',
 		];
+	}//end postedMoveState()
 
-		$this->records()->saveObject(schema: self::SCHEMA_STOCK_MOVE, object: $stockMove);
+	/**
+	 * The destination location of a receipt: the line's, else the GRN's, else none.
+	 *
+	 * @param GrnAcceptance $acceptance The GRN being accepted.
+	 * @param GrnLineReceipt $line The GRN line with its PO line.
+	 *
+	 * @return string|null
+	 */
+	private function receiptDestination(GrnAcceptance $acceptance, GrnLineReceipt $line): ?string {
+		$destinationCode = trim((string)($line->grnLine['destinationLocationId'] ?? ($acceptance->grn['destinationLocationId'] ?? '')));
+		if ($destinationCode === '') {
+			return null;
+		}
 
-	}//end postReceiptStockMove()
+		return $destinationCode;
+	}//end receiptDestination()
 
 	/**
 	 * Update a single PurchaseOrder's lifecycle after a GRN accept.
