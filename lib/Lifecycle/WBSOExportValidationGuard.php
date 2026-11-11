@@ -88,49 +88,12 @@ class WBSOExportValidationGuard {
 	 * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
 	 */
 	public function requireEligibleEntries(array $export): bool {
-		$administrationId = (string)($export['administrationId'] ?? '');
-		$periodStart = (string)($export['periodStart'] ?? '');
-		$periodEnd = (string)($export['periodEnd'] ?? '');
-
-		$administrationFilter = null;
-		if ($administrationId !== '') {
-			$administrationFilter = $administrationId;
-		}
-
-		$dateFilter = null;
-		if ($periodStart !== '' && $periodEnd !== '') {
-			$dateFilter = ['gte' => $periodStart, 'lte' => $periodEnd];
-		}
+		$filters = $this->entryFilters(export: $export);
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$entries = $objectService
-				->setRegister($this->register())
-				->setSchema('UrenRegistratie')
-				->findAll(
-					[
-						'filters' => array_filter(
-							[
-								'administrationId' => $administrationFilter,
-								'date' => $dateFilter,
-							],
-							static fn ($v) => $v !== null
-						),
-					]
-				);
-
-			if (is_array($entries) === false) {
-				$entries = [];
-			}
-
-			foreach ($entries as $entry) {
-				if (empty($entry['wbsoTagId']) === true || empty($entry['activityCodeId']) === true) {
-					$this->logger->info(
-						'WBSOExportValidationGuard: entry missing wbsoTagId/activityCodeId — denying validate',
-						['entryId' => ($entry['id'] ?? null)]
-					);
-					return false;
-				}
+			$entries = $this->entriesFor(filters: $filters);
+			if ($this->allTagged(entries: $entries) === false) {
+				return false;
 			}
 
 			$this->checkActivityCodeEligibility(entries: $entries);
@@ -145,6 +108,82 @@ class WBSOExportValidationGuard {
 		}//end try
 
 	}//end requireEligibleEntries()
+
+	/**
+	 * The UrenRegistratie filters: administration and period, each only when known.
+	 *
+	 * @param array<string, mixed> $export The WBSOExportLog object.
+	 *
+	 * @return array<string, mixed> The non-null filters.
+	 */
+	private function entryFilters(array $export): array {
+		$administrationId = (string)($export['administrationId'] ?? '');
+		$periodStart = (string)($export['periodStart'] ?? '');
+		$periodEnd = (string)($export['periodEnd'] ?? '');
+
+		$administrationFilter = null;
+		if ($administrationId !== '') {
+			$administrationFilter = $administrationId;
+		}
+
+		$dateFilter = null;
+		if ($periodStart !== '' && $periodEnd !== '') {
+			$dateFilter = ['gte' => $periodStart, 'lte' => $periodEnd];
+		}
+
+		return array_filter(
+			[
+				'administrationId' => $administrationFilter,
+				'date' => $dateFilter,
+			],
+			static fn ($v) => $v !== null
+		);
+
+	}//end entryFilters()
+
+	/**
+	 * The UrenRegistratie entries matching the filters; empty on a non-array answer.
+	 *
+	 * @param array<string, mixed> $filters The entry filters.
+	 *
+	 * @return array<int|string, mixed> The entries.
+	 */
+	private function entriesFor(array $filters): array {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$entries = $objectService
+			->setRegister($this->register())
+			->setSchema('UrenRegistratie')
+			->findAll(['filters' => $filters]);
+
+		if (is_array($entries) === false) {
+			return [];
+		}
+
+		return $entries;
+
+	}//end entriesFor()
+
+	/**
+	 * Whether every entry carries both a WBSO tag and an activity code.
+	 *
+	 * @param array<int|string, mixed> $entries The UrenRegistratie entries.
+	 *
+	 * @return bool False at the first untagged entry, which is logged.
+	 */
+	private function allTagged(array $entries): bool {
+		foreach ($entries as $entry) {
+			if (empty($entry['wbsoTagId']) === true || empty($entry['activityCodeId']) === true) {
+				$this->logger->info(
+					'WBSOExportValidationGuard: entry missing wbsoTagId/activityCodeId — denying validate',
+					['entryId' => ($entry['id'] ?? null)]
+				);
+				return false;
+			}
+		}
+
+		return true;
+
+	}//end allTagged()
 
 	/**
 	 * Best-effort eligibility cross-check against WBSOActivityCode.isAllowed.
@@ -182,15 +221,28 @@ class WBSOExportValidationGuard {
 				return;
 			}
 
-			if (is_array($codes) === true && $codes !== [] && ($codes[0]['isAllowed'] ?? true) !== true) {
-				$this->logger->warning(
-					'WBSOExportValidationGuard: entry references a non-allowed WBSOActivityCode',
-					['entryId' => ($entry['id'] ?? null), 'activityCode' => $activityCodeId]
-				);
-			}
+			$this->flagNonAllowedCode(entry: $entry, codes: $codes);
 		}//end foreach
 
 	}//end checkActivityCodeEligibility()
+
+	/**
+	 * Warn when the entry's activity code is found and not allowed.
+	 *
+	 * @param array<string,mixed> $entry The UrenRegistratie entry.
+	 * @param mixed $codes The WBSOActivityCode lookup result.
+	 *
+	 * @return void
+	 */
+	private function flagNonAllowedCode(array $entry, mixed $codes): void {
+		if (is_array($codes) === true && $codes !== [] && ($codes[0]['isAllowed'] ?? true) !== true) {
+			$this->logger->warning(
+				'WBSOExportValidationGuard: entry references a non-allowed WBSOActivityCode',
+				['entryId' => ($entry['id'] ?? null), 'activityCode' => ($entry['activityCodeId'] ?? null)]
+			);
+		}
+
+	}//end flagNonAllowedCode()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
