@@ -83,6 +83,10 @@
         "allowed": true,
         "calls": []
     },
+    "DB-leadingNumber": {
+        "allowed": false,
+        "calls": []
+    },
     "DB-missing": {
         "allowed": false,
         "calls": []
@@ -103,6 +107,10 @@
         "allowed": true,
         "calls": []
     },
+    "CDC-leadingNumber": {
+        "allowed": false,
+        "calls": []
+    },
     "CDC-missing": {
         "allowed": false,
         "calls": []
@@ -121,6 +129,10 @@
     },
     "hybrid-numericString": {
         "allowed": true,
+        "calls": []
+    },
+    "hybrid-leadingNumber": {
+        "allowed": false,
         "calls": []
     },
     "hybrid-missing": {

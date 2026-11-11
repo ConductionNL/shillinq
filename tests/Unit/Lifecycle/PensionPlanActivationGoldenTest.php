@@ -82,7 +82,8 @@ final class PensionPlanActivationGoldenTest extends TestCase {
 			'throws' => ['p', $plan(['pensionableSalaryDefinition' => new \stdClass()])],
 		];
 		foreach (['DB', 'CDC', 'hybrid'] as $type) {
-			foreach (['zero' => 0, 'negative' => -1, 'text' => 'abc', 'numericString' => '0.5', 'missing' => null] as $label => $rate) {
+			$rates = ['zero' => 0, 'negative' => -1, 'text' => 'abc', 'numericString' => '0.5', 'leadingNumber' => '5abc', 'missing' => null];
+			foreach ($rates as $label => $rate) {
 				$cases[$type.'-'.$label] = ['p', $plan(['planType' => $type, 'accrualRate' => $rate])];
 			}
 		}
