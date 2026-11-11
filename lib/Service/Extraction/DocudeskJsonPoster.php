@@ -64,6 +64,8 @@ final class DocudeskJsonPoster {
 	 * @return IResponse The response.
 	 *
 	 * @throws \Throwable When encoding or the transport fails.
+	 *
+	 * @spec openspec/specs/receipt-extraction-consume/spec.md
 	 */
 	public function post(string $url, array $body): IResponse {
 		return $this->client->post(

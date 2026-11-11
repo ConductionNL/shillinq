@@ -78,9 +78,23 @@ final class DocudeskClientsCharacterisationTest extends TestCase {
 	private function logger(): AbstractLogger {
 		$test = $this;
 		return new class($test) extends AbstractLogger {
+			/**
+			 * Hold the test that records the lines.
+			 *
+			 * @param DocudeskClientsCharacterisationTest $test The test.
+			 */
 			public function __construct(private DocudeskClientsCharacterisationTest $test) {
 			}
 
+			/**
+			 * Record one line on the test.
+			 *
+			 * @param mixed              $level   The level.
+			 * @param \Stringable|string $message The message.
+			 * @param array<mixed>       $context The context.
+			 *
+			 * @return void
+			 */
 			public function log($level, \Stringable|string $message, array $context = []): void {
 				$this->test->record(level: (string)$level, message: (string)$message, context: $context);
 			}
@@ -181,6 +195,11 @@ final class DocudeskClientsCharacterisationTest extends TestCase {
 		return new GlAccountSuggestionClient(clientService: $this->clients($answer), urlGenerator: $this->urls($url), logger: $this->logger());
 	}//end suggestion()
 
+	/**
+	 * An accepted extraction posts the body with the shared options and logs the status.
+	 *
+	 * @return void
+	 */
 	public function testExtractionPostsTheBodyWithTheSharedOptionsAndLogsTheStatus(): void {
 		$result = $this->extraction($this->response(201, '{"uuid":"u-9"}'))->requestExtraction(documentUri: 'docudesk://a/b', docType: 'receipt');
 
@@ -195,22 +214,45 @@ final class DocudeskClientsCharacterisationTest extends TestCase {
 		);
 	}//end testExtractionPostsTheBodyWithTheSharedOptionsAndLogsTheStatus()
 
+	/**
+	 * A non-2xx answer is not a success but still yields the id it carries.
+	 *
+	 * @return void
+	 */
 	public function testANon2xxExtractionAnswerIsNotASuccessButKeepsItsId(): void {
 		$result = $this->extraction($this->response(500, '{"id":"e-1"}'))->requestExtraction(documentUri: 'd', docType: 'receipt');
 
 		self::assertSame(['success' => false, 'statusCode' => 500, 'error' => null, 'extractionId' => 'e-1'], $result);
 	}//end testANon2xxExtractionAnswerIsNotASuccessButKeepsItsId()
 
+	/**
+	 * An unresolvable route is logged and nothing is posted.
+	 *
+	 * @return void
+	 */
 	public function testAnUnresolvableExtractionRouteIsLoggedAndPostsNothing(): void {
 		$result = $this->extraction($this->response(200, ''), null)->requestExtraction(documentUri: 'd', docType: 'receipt');
 
 		self::assertSame(['success' => false, 'statusCode' => 0, 'error' => 'docudesk is not available', 'extractionId' => null], $result);
 		self::assertSame([], $this->posted);
-		self::assertSame([['warning', 'DocudeskExtractionClient: docudesk route unavailable — docudesk may not be installed', ['exception' => 'no route']]], $this->logged);
+		self::assertSame(
+			[['warning', 'DocudeskExtractionClient: docudesk route unavailable — docudesk may not be installed', ['exception' => 'no route']]],
+			$this->logged
+		);
 	}//end testAnUnresolvableExtractionRouteIsLoggedAndPostsNothing()
 
+	/**
+	 * A transport failure carrying a response reports that response's status.
+	 *
+	 * @return void
+	 */
 	public function testAFailedExtractionCarriesTheStatusOfItsResponse(): void {
 		$failure = new class('refused') extends RuntimeException {
+			/**
+			 * The response the failure carries.
+			 *
+			 * @return IResponse The response.
+			 */
 			public function getResponse(): IResponse {
 				return DocudeskClientsCharacterisationTest::$failureResponse;
 			}
@@ -221,14 +263,30 @@ final class DocudeskClientsCharacterisationTest extends TestCase {
 
 		self::assertSame(['success' => false, 'statusCode' => 422, 'error' => 'docudesk request failed', 'extractionId' => null], $result);
 		self::assertSame(
-			[['warning', 'DocudeskExtractionClient: extraction request failed', ['documentUri' => 'd', 'docType' => 'receipt', 'status' => 422, 'exception' => 'refused']]],
+			[
+				[
+					'warning',
+					'DocudeskExtractionClient: extraction request failed',
+					['documentUri' => 'd', 'docType' => 'receipt', 'status' => 422, 'exception' => 'refused'],
+				],
+			],
 			$this->logged
 		);
 	}//end testAFailedExtractionCarriesTheStatusOfItsResponse()
 
+	/**
+	 * A transport failure without a response reports status 0.
+	 *
+	 * @return void
+	 */
 	public function testAFailedExtractionWithoutAResponseHasStatusZero(): void {
 		$failure = new class('gone') extends RuntimeException {
-			public function getResponse(): ?IResponse {
+			/**
+			 * The failure carries no response.
+			 *
+			 * @return null
+			 */
+			public function getResponse(): null {
 				return null;
 			}
 		};
@@ -244,6 +302,11 @@ final class DocudeskClientsCharacterisationTest extends TestCase {
 	 */
 	public static ?IResponse $failureResponse = null;
 
+	/**
+	 * A suggestion posts the candidates and answers the decoded body.
+	 *
+	 * @return void
+	 */
 	public function testASuggestionPostsTheCandidatesAndAnswersTheDecodedBody(): void {
 		$result = $this->suggestion($this->response(200, '{"source":"history"}'))
 			->requestSuggestion(extractionId: 'ext-1', candidateAccounts: [['code' => '4300', 'label' => 'K/O']]);
@@ -256,6 +319,11 @@ final class DocudeskClientsCharacterisationTest extends TestCase {
 		self::assertSame([], $this->logged);
 	}//end testASuggestionPostsTheCandidatesAndAnswersTheDecodedBody()
 
+	/**
+	 * A non-2xx or non-JSON suggestion answer is a failure with its status.
+	 *
+	 * @return void
+	 */
 	public function testAnUnexpectedSuggestionAnswerIsAFailureWithItsStatus(): void {
 		$expected = ['success' => false, 'statusCode' => 503, 'error' => 'docudesk returned an unexpected response', 'suggestion' => null];
 		self::assertSame($expected, $this->suggestion($this->response(503, '{"a":1}'))->requestSuggestion(extractionId: 'e', candidateAccounts: []));
@@ -264,6 +332,11 @@ final class DocudeskClientsCharacterisationTest extends TestCase {
 		self::assertSame($expected, $this->suggestion($this->response(200, 'not json'))->requestSuggestion(extractionId: 'e', candidateAccounts: []));
 	}//end testAnUnexpectedSuggestionAnswerIsAFailureWithItsStatus()
 
+	/**
+	 * Route and transport failures are logged and degrade.
+	 *
+	 * @return void
+	 */
 	public function testSuggestionFailuresAreLoggedAndDegrade(): void {
 		$noRoute = $this->suggestion($this->response(200, '{}'), null)->requestSuggestion(extractionId: 'e', candidateAccounts: []);
 		$failed  = $this->suggestion(new RuntimeException('refused'))->requestSuggestion(extractionId: 'e', candidateAccounts: []);
@@ -279,6 +352,11 @@ final class DocudeskClientsCharacterisationTest extends TestCase {
 		);
 	}//end testSuggestionFailuresAreLoggedAndDegrade()
 
+	/**
+	 * A correction without a label posts only the code and logs the status.
+	 *
+	 * @return void
+	 */
 	public function testACorrectionWithoutALabelPostsTheCodeAndLogsTheStatus(): void {
 		$result = $this->suggestion($this->response(409, ''))->postCorrection(extractionId: 'e-2', accountCode: '4900', accountLabel: null);
 
@@ -290,6 +368,11 @@ final class DocudeskClientsCharacterisationTest extends TestCase {
 		);
 	}//end testACorrectionWithoutALabelPostsTheCodeAndLogsTheStatus()
 
+	/**
+	 * Correction failures are logged and never throw; a 2xx is a success.
+	 *
+	 * @return void
+	 */
 	public function testCorrectionFailuresAreLoggedAndNeverThrow(): void {
 		$noRoute = $this->suggestion($this->response(200, ''), null)->postCorrection(extractionId: 'e', accountCode: '1', accountLabel: 'L');
 		$failed  = $this->suggestion(new RuntimeException('timeout'))->postCorrection(extractionId: 'e', accountCode: '1', accountLabel: 'L');
@@ -301,7 +384,11 @@ final class DocudeskClientsCharacterisationTest extends TestCase {
 		self::assertSame(
 			[
 				['info', 'GlAccountSuggestionClient: docudesk corrections route unavailable — booking history not fed', ['exception' => 'no route']],
-				['warning', 'GlAccountSuggestionClient: booking correction failed — local booking unaffected', ['extractionId' => 'e', 'accountCode' => '1', 'exception' => 'timeout']],
+				[
+					'warning',
+					'GlAccountSuggestionClient: booking correction failed — local booking unaffected',
+					['extractionId' => 'e', 'accountCode' => '1', 'exception' => 'timeout'],
+				],
 				['info', 'GlAccountSuggestionClient: booking correction posted', ['extractionId' => 'e', 'accountCode' => '1', 'status' => 204]],
 			],
 			$this->logged

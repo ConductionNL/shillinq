@@ -49,6 +49,8 @@ final class BookingCorrection {
 	 * The correction body docudesk reads: the fields that carry a value.
 	 *
 	 * @return array{fields: array<string,string>} The body.
+	 *
+	 * @spec openspec/specs/gl-account-suggestion-consume/spec.md
 	 */
 	public function body(): array {
 		return [
