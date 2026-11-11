@@ -75,15 +75,6 @@ class DocudeskExtractionClient {
 	public const ROUTE_NAME = 'docudesk.extraction.financial';
 
 	/**
-	 * Request timeout in seconds — the endpoint itself only needs to accept
-	 * the request and dispatch OCR/extraction asynchronously
-	 * (`callbackEvent: true`), so a short budget is enough.
-	 *
-	 * @var int
-	 */
-	private const REQUEST_TIMEOUT_SECONDS = 10;
-
-	/**
 	 * Constructor.
 	 *
 	 * @param IClientService $clientService NC HTTP client factory.
@@ -120,77 +111,127 @@ class DocudeskExtractionClient {
 	 * @spec openspec/specs/gl-account-suggestion-consume/spec.md
 	 */
 	public function requestExtraction(string $documentUri, string $docType): array {
-		try {
-			$url = $this->urlGenerator->linkToRouteAbsolute(self::ROUTE_NAME);
-		} catch (Throwable $e) {
-			$this->logger->warning(
-				'DocudeskExtractionClient: docudesk route unavailable — docudesk may not be installed',
-				['exception' => $e->getMessage()]
-			);
-			return [
-				'success' => false,
-				'statusCode' => 0,
-				'error' => 'docudesk is not available',
-				'extractionId' => null,
-			];
+		$url = $this->routeUrl();
+		if ($url === null) {
+			return self::failure(statusCode: 0, error: 'docudesk is not available');
 		}
 
-		$client = $this->clientService->newClient();
-		$body = [
+		$poster = new DocudeskJsonPoster(client: $this->clientService->newClient());
+		$body   = [
 			'documentUri' => $documentUri,
 			'docType' => $docType,
 			'callbackEvent' => true,
 		];
 
 		try {
-			$response = $client->post(
-				$url,
-				[
-					'timeout' => self::REQUEST_TIMEOUT_SECONDS,
-					'connect_timeout' => self::REQUEST_TIMEOUT_SECONDS,
-					'headers' => [
-						'Content-Type' => 'application/json',
-						'Accept' => 'application/json',
-					],
-					'body' => json_encode($body, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES),
-				]
-			);
-
-			$status = $response->getStatusCode();
-			$this->logger->info(
-				'DocudeskExtractionClient: extraction requested',
-				['documentUri' => $documentUri, 'docType' => $docType, 'status' => $status]
-			);
-
-			return [
-				'success' => ($status >= 200 && $status < 300),
-				'statusCode' => $status,
-				'error' => null,
-				'extractionId' => $this->extractExtractionId(response: $response),
-			];
+			return $this->accepted(response: $poster->post(url: $url, body: $body), request: $body);
 		} catch (Throwable $e) {
-			$status = 0;
-			if (method_exists($e, 'getResponse') === true) {
-				$errorResponse = $e->getResponse();
-				if ($errorResponse !== null) {
-					$status = $errorResponse->getStatusCode();
-				}
-			}
-
-			$this->logger->warning(
-				'DocudeskExtractionClient: extraction request failed',
-				['documentUri' => $documentUri, 'docType' => $docType, 'status' => $status, 'exception' => $e->getMessage()]
-			);
-
-			return [
-				'success' => false,
-				'statusCode' => $status,
-				'error' => 'docudesk request failed',
-				'extractionId' => null,
-			];
-		}//end try
+			return $this->refused(failure: $e, request: $body);
+		}
 
 	}//end requestExtraction()
+
+	/**
+	 * The absolute extraction route, or null (logged) when docudesk's route
+	 * cannot be resolved.
+	 *
+	 * @return string|null The URL, or null.
+	 */
+	private function routeUrl(): ?string {
+		try {
+			return $this->urlGenerator->linkToRouteAbsolute(self::ROUTE_NAME);
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'DocudeskExtractionClient: docudesk route unavailable — docudesk may not be installed',
+				['exception' => $e->getMessage()]
+			);
+			return null;
+		}
+
+	}//end routeUrl()
+
+	/**
+	 * Log the answered request and read the outcome from the response.
+	 *
+	 * @param IResponse           $response The HTTP response.
+	 * @param array<string,mixed> $request  The posted body.
+	 *
+	 * @return array{success: bool, statusCode: int, error: null, extractionId: string|null}
+	 */
+	private function accepted(IResponse $response, array $request): array {
+		$status = $response->getStatusCode();
+		$this->logger->info(
+			'DocudeskExtractionClient: extraction requested',
+			['documentUri' => $request['documentUri'], 'docType' => $request['docType'], 'status' => $status]
+		);
+
+		return [
+			'success' => ($status >= 200 && $status < 300),
+			'statusCode' => $status,
+			'error' => null,
+			'extractionId' => $this->extractExtractionId(response: $response),
+		];
+
+	}//end accepted()
+
+	/**
+	 * Log a failed request and answer the failure with the status docudesk
+	 * answered, if any.
+	 *
+	 * @param Throwable           $failure The failure.
+	 * @param array<string,mixed> $request The posted body.
+	 *
+	 * @return array{success: bool, statusCode: int, error: string, extractionId: null}
+	 */
+	private function refused(Throwable $failure, array $request): array {
+		$status = self::failureStatus(failure: $failure);
+		$this->logger->warning(
+			'DocudeskExtractionClient: extraction request failed',
+			['documentUri' => $request['documentUri'], 'docType' => $request['docType'], 'status' => $status, 'exception' => $failure->getMessage()]
+		);
+
+		return self::failure(statusCode: $status, error: 'docudesk request failed');
+
+	}//end refused()
+
+	/**
+	 * The HTTP status a transport failure carries, or 0 when it has none.
+	 *
+	 * @param Throwable $failure The failure.
+	 *
+	 * @return int The status.
+	 */
+	private static function failureStatus(Throwable $failure): int {
+		if (method_exists($failure, 'getResponse') === false) {
+			return 0;
+		}
+
+		$errorResponse = $failure->getResponse();
+		if ($errorResponse === null) {
+			return 0;
+		}
+
+		return $errorResponse->getStatusCode();
+
+	}//end failureStatus()
+
+	/**
+	 * A failed outcome without an extraction id.
+	 *
+	 * @param int    $statusCode The status docudesk answered, or 0.
+	 * @param string $error      The error.
+	 *
+	 * @return array{success: bool, statusCode: int, error: string, extractionId: null}
+	 */
+	private static function failure(int $statusCode, string $error): array {
+		return [
+			'success' => false,
+			'statusCode' => $statusCode,
+			'error' => $error,
+			'extractionId' => null,
+		];
+
+	}//end failure()
 
 	/**
 	 * Read the `financialExtraction` object id out of the synchronous
