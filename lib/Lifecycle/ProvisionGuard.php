@@ -74,11 +74,6 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * any exception or malformed input denies the transition (CWE-863).
  *
  * @spec openspec/specs/bookkeeping-voorzieningen-claims/spec.md
- *
- * @SuppressWarnings(PHPMD.CyclomaticComplexity)
- * @SuppressWarnings(PHPMD.NPathComplexity)
- * Pre-existing debt (issue #506): inherent branch complexity in this
- * domain logic; deferred pending a dedicated refactor.
  */
 class ProvisionGuard {
 
@@ -140,84 +135,8 @@ class ProvisionGuard {
 	public function canActivateProvision(string $provisionId, ?array $object = null): bool {
 		try {
 			$provision = $this->resolveObject(schema: 'Provision', id: $provisionId, object: $object);
-			if ($provision === null) {
-				return false;
-			}
 
-			// REQ-PROV-001 three-criteria toets: legal/constructive obligation classification.
-			$obligation = (string)($provision['legalOrConstructiveObligation'] ?? '');
-			if (in_array($obligation, ['legal', 'constructive'], true) === false) {
-				return false;
-			}
-
-			// REQ-PROV-001 three-criteria toets: obligating event narrative.
-			if (trim((string)($provision['obligatingEvent'] ?? '')) === '') {
-				return false;
-			}
-
-			// REQ-PROV-001 / REQ-PROV-007 three-criteria toets: probability > 0.5.
-			$probability = $provision['probabilityOfOutflow'] ?? null;
-			if (is_numeric($probability) === false || (float)$probability <= 0.5) {
-				return false;
-			}
-
-			// REQ-PROV-001 three-criteria toets: reliable estimate present.
-			$bestEstimate = $provision['bestEstimate'] ?? null;
-			if (is_numeric($bestEstimate) === false || (float)$bestEstimate <= 0.0) {
-				return false;
-			}
-
-			// REQ-PROV-001 three-criteria toets: bestEstimate rationale narrative.
-			if (trim((string)($provision['bestEstimateRationale'] ?? '')) === '') {
-				return false;
-			}
-
-			// REQ-PROV-003 disconteringsvoet enforcement: when long-term outflow
-			// is material, discountRateApplied MUST be populated.
-			$timing = (array)($provision['expectedTiming'] ?? []);
-			$longTerm = $timing['longTerm'] ?? 0;
-			if (is_numeric($longTerm) === true && (float)$longTerm > 0.0) {
-				$rate = $provision['discountRateApplied'] ?? null;
-				if (is_numeric($rate) === false || (float)$rate <= 0.0) {
-					return false;
-				}
-			}
-
-			// REQ-PROV-005 herstructurering plan timeliness + communication.
-			$provisionType = (string)($provision['provisionType'] ?? '');
-			if ($provisionType === 'restructuring') {
-				if ($this->canActivateHerstructurering(provision: $provision) === false) {
-					return false;
-				}
-			}
-
-			// REQ-PROV-006 claims-voorziening legal advice memo gate.
-			if ($provisionType === 'claims') {
-				if ($this->canActivateClaims(provision: $provision) === false) {
-					return false;
-				}
-			}
-
-			// REQ-PROV-010 / REQ-PROV-018 materiality peer-review + CFO sign-off.
-			if ($this->isMaterial(provision: $provision) === true) {
-				if (trim((string)($provision['peerReviewer'] ?? '')) === '') {
-					return false;
-				}
-
-				if (trim((string)($provision['peerReviewDate'] ?? '')) === '') {
-					return false;
-				}
-
-				if (trim((string)($provision['cfoApprover'] ?? '')) === '') {
-					return false;
-				}
-
-				if (trim((string)($provision['cfoApprovalDate'] ?? '')) === '') {
-					return false;
-				}
-			}
-
-			return true;
+			return $provision !== null && $this->isActivationReady(provision: $provision) === true;
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'ProvisionGuard: provision activation check failed — denying transition (fail-closed)',
@@ -248,32 +167,8 @@ class ProvisionGuard {
 	public function canCloseMovement(string $movementId, ?array $object = null): bool {
 		try {
 			$movement = $this->resolveObject(schema: 'ProvisionMovement', id: $movementId, object: $object);
-			if ($movement === null) {
-				return false;
-			}
 
-			if (trim((string)($movement['provision'] ?? '')) === '') {
-				return false;
-			}
-
-			if (trim((string)($movement['period'] ?? '')) === '') {
-				return false;
-			}
-
-			if (is_numeric($movement['openingBalance'] ?? null) === false) {
-				return false;
-			}
-
-			if (is_numeric($movement['closingBalance'] ?? null) === false) {
-				return false;
-			}
-
-			$entries = (array)($movement['linkedJournalEntries'] ?? []);
-			if (count($entries) === 0) {
-				return false;
-			}
-
-			return true;
+			return $movement !== null && $this->isMovementClosable(movement: $movement) === true;
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'ProvisionGuard: movement close check failed — denying transition (fail-closed)',
@@ -283,6 +178,148 @@ class ProvisionGuard {
 		}//end try
 
 	}//end canCloseMovement()
+
+	/**
+	 * REQ-PROV-004 / REQ-PROV-016: provision FK, period, numeric opening and
+	 * closing balances and at least one linked journal entry.
+	 *
+	 * @param array<string,mixed> $movement The ProvisionMovement payload.
+	 *
+	 * @return bool True when the movement is complete enough to close.
+	 */
+	private function isMovementClosable(array $movement): bool {
+		return $this->isFilled(record: $movement, field: 'provision') === true
+			&& $this->isFilled(record: $movement, field: 'period') === true
+			&& is_numeric($movement['openingBalance'] ?? null) === true
+			&& is_numeric($movement['closingBalance'] ?? null) === true
+			&& count((array)($movement['linkedJournalEntries'] ?? [])) > 0;
+
+	}//end isMovementClosable()
+
+	/**
+	 * Run the activation checks in order: recognition, discounting, linked
+	 * detail, materiality sign-off. The first failing check stops the run.
+	 *
+	 * @param array<string,mixed> $provision The provision payload.
+	 *
+	 * @return bool True when every activation check passes.
+	 */
+	private function isActivationReady(array $provision): bool {
+		return $this->meetsRecognitionCriteria(provision: $provision) === true
+			&& $this->hasDiscountRateWhenLongTerm(provision: $provision) === true
+			&& $this->linkedDetailIsReady(provision: $provision) === true
+			&& $this->hasMaterialitySignOffs(provision: $provision) === true;
+
+	}//end isActivationReady()
+
+	/**
+	 * REQ-PROV-001 / REQ-PROV-007 three-criteria toets: legal/constructive
+	 * obligation, obligating event, probability > 0.5, a positive best estimate
+	 * and its rationale.
+	 *
+	 * @param array<string,mixed> $provision The provision payload.
+	 *
+	 * @return bool True when the recognition criteria are met.
+	 */
+	private function meetsRecognitionCriteria(array $provision): bool {
+		$obligation = (string)($provision['legalOrConstructiveObligation'] ?? '');
+
+		return in_array($obligation, ['legal', 'constructive'], true) === true
+			&& $this->isFilled(record: $provision, field: 'obligatingEvent') === true
+			&& $this->isNumberAbove(value: $provision['probabilityOfOutflow'] ?? null, floor: 0.5) === true
+			&& $this->isNumberAbove(value: $provision['bestEstimate'] ?? null, floor: 0.0) === true
+			&& $this->isFilled(record: $provision, field: 'bestEstimateRationale') === true;
+
+	}//end meetsRecognitionCriteria()
+
+	/**
+	 * REQ-PROV-003 disconteringsvoet: when long-term outflow is material,
+	 * discountRateApplied MUST be a positive number.
+	 *
+	 * @param array<string,mixed> $provision The provision payload.
+	 *
+	 * @return bool True when no discount rate is needed or one is present.
+	 */
+	private function hasDiscountRateWhenLongTerm(array $provision): bool {
+		$timing = (array)($provision['expectedTiming'] ?? []);
+		if ($this->isNumberAbove(value: $timing['longTerm'] ?? 0, floor: 0.0) === false) {
+			return true;
+		}
+
+		return $this->isNumberAbove(value: $provision['discountRateApplied'] ?? null, floor: 0.0);
+
+	}//end hasDiscountRateWhenLongTerm()
+
+	/**
+	 * REQ-PROV-005 / REQ-PROV-006: a restructuring or claims provision needs an
+	 * activation-ready linked detail; other types need none.
+	 *
+	 * @param array<string,mixed> $provision The provision payload.
+	 *
+	 * @return bool True when the linked detail (if any is required) is ready.
+	 */
+	private function linkedDetailIsReady(array $provision): bool {
+		$provisionType = (string)($provision['provisionType'] ?? '');
+		if ($provisionType === 'restructuring') {
+			return $this->canActivateHerstructurering(provision: $provision);
+		}
+
+		if ($provisionType === 'claims') {
+			return $this->canActivateClaims(provision: $provision);
+		}
+
+		return true;
+
+	}//end linkedDetailIsReady()
+
+	/**
+	 * REQ-PROV-010 / REQ-PROV-018: a material provision needs peer review and
+	 * CFO sign-off, each with its date.
+	 *
+	 * @param array<string,mixed> $provision The provision payload.
+	 *
+	 * @return bool True when the provision is immaterial or fully signed off.
+	 */
+	private function hasMaterialitySignOffs(array $provision): bool {
+		if ($this->isMaterial(provision: $provision) === false) {
+			return true;
+		}
+
+		foreach (['peerReviewer', 'peerReviewDate', 'cfoApprover', 'cfoApprovalDate'] as $field) {
+			if ($this->isFilled(record: $provision, field: $field) === false) {
+				return false;
+			}
+		}
+
+		return true;
+
+	}//end hasMaterialitySignOffs()
+
+	/**
+	 * True when the field holds a non-blank string value.
+	 *
+	 * @param array<string,mixed> $record The record to read.
+	 * @param string              $field  The field name.
+	 *
+	 * @return bool True when the trimmed value is not empty.
+	 */
+	private function isFilled(array $record, string $field): bool {
+		return trim((string)($record[$field] ?? '')) !== '';
+
+	}//end isFilled()
+
+	/**
+	 * True when the value is numeric and strictly greater than the floor.
+	 *
+	 * @param mixed $value The value to test.
+	 * @param float $floor The exclusive lower bound.
+	 *
+	 * @return bool True when the value is a number above the floor.
+	 */
+	private function isNumberAbove(mixed $value, float $floor): bool {
+		return is_numeric($value) === true && (float)$value > $floor;
+
+	}//end isNumberAbove()
 
 	/**
 	 * Returns true when the herstructureringsvoorziening linked detail satisfies
@@ -295,20 +332,24 @@ class ProvisionGuard {
 	 *              activation-ready.
 	 */
 	private function canActivateHerstructurering(array $provision): bool {
-		$detailId = (string)($provision['linkedRestructuringProvisionDetail'] ?? '');
-		if ($detailId === '') {
-			return false;
-		}
-
 		$detail = $this->resolveObject(
 			schema: 'HerstructureringsvoorzieningDetail',
-			id: $detailId,
+			id: (string)($provision['linkedRestructuringProvisionDetail'] ?? ''),
 			object: null
 		);
-		if ($detail === null) {
-			return false;
-		}
 
+		return $detail !== null && $this->planIsTimelyAndCommunicated(detail: $detail) === true;
+	}//end canActivateHerstructurering()
+
+	/**
+	 * IAS 37 §72 / §75: the detailed plan is dated, dated on or before the
+	 * balance date (when one is set), and communicated to at least one party.
+	 *
+	 * @param array<string,mixed> $detail The Herstructureringsvoorziening detail.
+	 *
+	 * @return bool True when the plan is timely and communicated.
+	 */
+	private function planIsTimelyAndCommunicated(array $detail): bool {
 		$planDate = (string)($detail['detailedPlanDate'] ?? '');
 		if ($planDate === '') {
 			return false;
@@ -321,12 +362,9 @@ class ProvisionGuard {
 
 		// IAS 37 §72: the detailed plan must exist on or before the balance date.
 		$balanceDate = (string)($detail['balanceDate'] ?? '');
-		if ($balanceDate !== '' && strcmp($planDate, $balanceDate) > 0) {
-			return false;
-		}
 
-		return true;
-	}//end canActivateHerstructurering()
+		return $balanceDate === '' || strcmp($planDate, $balanceDate) <= 0;
+	}//end planIsTimelyAndCommunicated()
 
 	/**
 	 * Returns true when the claims-voorziening linked detail carries the
@@ -337,25 +375,13 @@ class ProvisionGuard {
 	 * @return bool True when the linked Claims detail has a legalAdviceMemo FK.
 	 */
 	private function canActivateClaims(array $provision): bool {
-		$detailId = (string)($provision['linkedClaimsProvisionDetail'] ?? '');
-		if ($detailId === '') {
-			return false;
-		}
-
 		$detail = $this->resolveObject(
 			schema: 'ClaimsVoorzieningDetail',
-			id: $detailId,
+			id: (string)($provision['linkedClaimsProvisionDetail'] ?? ''),
 			object: null
 		);
-		if ($detail === null) {
-			return false;
-		}
 
-		if (trim((string)($detail['legalAdviceMemo'] ?? '')) === '') {
-			return false;
-		}
-
-		return true;
+		return $detail !== null && $this->isFilled(record: $detail, field: 'legalAdviceMemo') === true;
 	}//end canActivateClaims()
 
 	/**
@@ -377,16 +403,25 @@ class ProvisionGuard {
 			return true;
 		}
 
-		$balanceTotal = $provision['priorYearBalanceTotal'] ?? null;
-		if (is_numeric($balanceTotal) === true && (float)$balanceTotal > 0.0) {
-			$ratio = $best / (float)$balanceTotal;
-			if ($ratio > self::MATERIALITY_BALANCE_RATIO) {
-				return true;
-			}
+		return $this->exceedsBalanceRatio(best: $best, balanceTotal: $provision['priorYearBalanceTotal'] ?? null);
+	}//end isMaterial()
+
+	/**
+	 * True when the estimate is more than 1% of a positive prior-year balance
+	 * total (REQ-PROV-018).
+	 *
+	 * @param float $best         The best estimate.
+	 * @param mixed $balanceTotal The prior-year balance total.
+	 *
+	 * @return bool True when the ratio crosses the threshold.
+	 */
+	private function exceedsBalanceRatio(float $best, mixed $balanceTotal): bool {
+		if ($this->isNumberAbove(value: $balanceTotal, floor: 0.0) === false) {
+			return false;
 		}
 
-		return false;
-	}//end isMaterial()
+		return ($best / (float)$balanceTotal) > self::MATERIALITY_BALANCE_RATIO;
+	}//end exceedsBalanceRatio()
 
 	/**
 	 * Resolve the object under transition, preferring the supplied in-flight
