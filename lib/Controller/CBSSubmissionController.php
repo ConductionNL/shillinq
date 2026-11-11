@@ -254,33 +254,9 @@ class CBSSubmissionController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function show(string $id): JSONResponse {
-		$auth = $this->requireUser();
-		if ($auth !== null) {
-			return $auth;
-		}
-
-		$error = $this->validateId(value: $id, label: 'id');
-		if ($error !== null) {
-			return $error;
-		}
-
-		try {
-			$existing = $this->toArray(
-				row: ObjectIdentifier::findScopedOrThrow(
-					scoped: $this->objectService()->setRegister($this->register())->setSchema('CBSSubmission'),
-					id: $id
-				)
-			);
-		} catch (\Throwable $e) {
-			return new JSONResponse(
-				['error' => 'cbs-submission-not-found', 'message' => 'CBS submission not found'],
-				Http::STATUS_NOT_FOUND
-			);
-		}
-
-		$accessError = $this->requireAdministrationAccess(administrationId: (string)($existing['administrationId'] ?? ''));
-		if ($accessError !== null) {
-			return $accessError;
+		$existing = $this->accessibleSubmission(id: $id);
+		if ($existing instanceof JSONResponse) {
+			return $existing;
 		}
 
 		return $this->run(
@@ -517,18 +493,75 @@ class CBSSubmissionController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function generate(string $id): JSONResponse {
+		$existing = $this->accessibleSubmission(id: $id);
+		if ($existing instanceof JSONResponse) {
+			return $existing;
+		}
+
+		if ((string)($existing['status'] ?? 'draft') !== 'draft') {
+			return $this->notDraftConflict();
+		}
+
+		return $this->runGeneration(existing: $existing, id: $id);
+
+	}//end generate()
+
+	/**
+	 * The submission a request about one id works on, read once the caller, the
+	 * id and the submission's administration have been checked; otherwise the
+	 * refusal: 401 without a user, 400 for a missing or malformed id, 404 when
+	 * the submission cannot be read, 403 outside the caller's administrations.
+	 *
+	 * @param string $id The CBSSubmission id.
+	 *
+	 * @return array<string,mixed>|JSONResponse The submission, or the refusal.
+	 */
+	private function accessibleSubmission(string $id): array|JSONResponse {
+		$refusal = $this->requestRefusal(id: $id);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$existing = $this->findSubmission(id: $id);
+		if ($existing instanceof JSONResponse) {
+			return $existing;
+		}
+
+		$accessError = $this->requireAdministrationAccess(administrationId: (string)($existing['administrationId'] ?? ''));
+		if ($accessError !== null) {
+			return $accessError;
+		}
+
+		return $existing;
+	}//end accessibleSubmission()
+
+	/**
+	 * The refusal of a request about one id before anything is read: 401
+	 * without a user, 400 for a missing or malformed id; null when it may go on.
+	 *
+	 * @param string $id The CBSSubmission id.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function requestRefusal(string $id): ?JSONResponse {
 		$auth = $this->requireUser();
 		if ($auth !== null) {
 			return $auth;
 		}
 
-		$error = $this->validateId(value: $id, label: 'id');
-		if ($error !== null) {
-			return $error;
-		}
+		return $this->validateId(value: $id, label: 'id');
+	}//end requestRefusal()
 
+	/**
+	 * Read one submission by id, or the 404 when it cannot be read.
+	 *
+	 * @param string $id The CBSSubmission id.
+	 *
+	 * @return array<string,mixed>|JSONResponse The submission, or the 404.
+	 */
+	private function findSubmission(string $id): array|JSONResponse {
 		try {
-			$existing = $this->toArray(
+			return $this->toArray(
 				row: ObjectIdentifier::findScopedOrThrow(
 					scoped: $this->objectService()->setRegister($this->register())->setSchema('CBSSubmission'),
 					id: $id
@@ -540,22 +573,33 @@ class CBSSubmissionController extends Controller {
 				Http::STATUS_NOT_FOUND
 			);
 		}
+	}//end findSubmission()
 
-		$accessError = $this->requireAdministrationAccess(administrationId: (string)($existing['administrationId'] ?? ''));
-		if ($accessError !== null) {
-			return $accessError;
-		}
+	/**
+	 * The 409 for regenerating a submission that is no longer a draft.
+	 *
+	 * @return JSONResponse
+	 */
+	private function notDraftConflict(): JSONResponse {
+		return new JSONResponse(
+			[
+				'error' => 'conflict',
+				'message' => 'Only draft submissions may be regenerated',
+			],
+			Http::STATUS_CONFLICT,
+		);
+	}//end notDraftConflict()
 
-		if ((string)($existing['status'] ?? 'draft') !== 'draft') {
-			return new JSONResponse(
-				[
-					'error' => 'conflict',
-					'message' => 'Only draft submissions may be regenerated',
-				],
-				Http::STATUS_CONFLICT,
-			);
-		}
-
+	/**
+	 * Run the export pipeline over a draft submission's reporting period and
+	 * organization. The period dates are read before the run, as before.
+	 *
+	 * @param array<string,mixed> $existing The draft submission.
+	 * @param string              $id       The CBSSubmission id, for the log context.
+	 *
+	 * @return JSONResponse
+	 */
+	private function runGeneration(array $existing, string $id): JSONResponse {
 		$start = new DateTimeImmutable((string)$existing['reportingPeriodStartDate']);
 		$end = new DateTimeImmutable((string)$existing['reportingPeriodEndDate']);
 
@@ -565,16 +609,26 @@ class CBSSubmissionController extends Controller {
 				administrationId: (string)$existing['administrationId'],
 				periodStart: $start,
 				periodEnd: $end,
-				organization: [
-					'legalName' => (string)($existing['organizationLegalName'] ?? ''),
-					'kvkNumber' => (string)($existing['kvkNumber'] ?? ''),
-					'taxIdentificationNumber' => (string)($existing['taxIdentificationNumber'] ?? ''),
-				],
+				organization: $this->organization(existing: $existing),
 			),
 			context: ['id' => $id, 'administrationId' => (string)$existing['administrationId']],
 		);
+	}//end runGeneration()
 
-	}//end generate()
+	/**
+	 * The organization metadata a submission is filed under.
+	 *
+	 * @param array<string,mixed> $existing The submission.
+	 *
+	 * @return array{legalName: string, kvkNumber: string, taxIdentificationNumber: string}
+	 */
+	private function organization(array $existing): array {
+		return [
+			'legalName' => (string)($existing['organizationLegalName'] ?? ''),
+			'kvkNumber' => (string)($existing['kvkNumber'] ?? ''),
+			'taxIdentificationNumber' => (string)($existing['taxIdentificationNumber'] ?? ''),
+		];
+	}//end organization()
 
 	/**
 	 * Build the filters array for the list endpoint from request params.
