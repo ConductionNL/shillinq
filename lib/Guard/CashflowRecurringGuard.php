@@ -116,23 +116,7 @@ class CashflowRecurringGuard {
 	 */
 	public function validateOnSave(array $recurring): bool {
 		try {
-			if ($this->hasNonNegativeAmount(recurring: $recurring) === false) {
-				return false;
-			}
-
-			if ($this->hasConsistentRecurrenceAnchor(recurring: $recurring) === false) {
-				return false;
-			}
-
-			if ($this->hasValidValidityWindow(recurring: $recurring) === false) {
-				return false;
-			}
-
-			if ($this->hasApplicableIndexation(recurring: $recurring) === false) {
-				return false;
-			}
-
-			return $this->hasConsistentContractWindow(recurring: $recurring);
+			return $this->passesEveryCheck(recurring: $recurring);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'CashflowRecurringGuard: validateOnSave failed — denying save (fail-closed)',
@@ -147,6 +131,51 @@ class CashflowRecurringGuard {
 	}//end validateOnSave()
 
 	/**
+	 * Run the consistency checks in order, stopping at the first that fails.
+	 *
+	 * @param array<string, mixed> $recurring Recurring object array.
+	 *
+	 * @return bool True when every check passes.
+	 */
+	private function passesEveryCheck(array $recurring): bool {
+		return $this->hasNonNegativeAmount(recurring: $recurring) === true
+			&& $this->hasConsistentRecurrenceAnchor(recurring: $recurring) === true
+			&& $this->hasValidValidityWindow(recurring: $recurring) === true
+			&& $this->hasApplicableIndexation(recurring: $recurring) === true
+			&& $this->hasConsistentContractWindow(recurring: $recurring) === true;
+	}//end passesEveryCheck()
+
+	/**
+	 * Log why a save is denied, with the recurId, and deny it.
+	 *
+	 * @param string               $message   The denial reason.
+	 * @param array<string, mixed> $recurring Recurring object array.
+	 *
+	 * @return bool Always false.
+	 */
+	private function denySave(string $message, array $recurring): bool {
+		$this->logger->info($message, ['recurId' => ($recurring['recurId'] ?? 'unknown')]);
+		return false;
+	}//end denySave()
+
+	/**
+	 * Log why a save falls outside its linked Contract's window, with the
+	 * recurId and the contractReference, and deny it.
+	 *
+	 * @param string               $message   The denial reason.
+	 * @param array<string, mixed> $recurring Recurring object array.
+	 *
+	 * @return bool Always false.
+	 */
+	private function denyOutsideContract(string $message, array $recurring): bool {
+		$this->logger->info(
+			$message,
+			['recurId' => ($recurring['recurId'] ?? 'unknown'), 'contractReference' => (string)($recurring['contractReference'] ?? '')]
+		);
+		return false;
+	}//end denyOutsideContract()
+
+	/**
 	 * The base amount must be present and non-negative.
 	 *
 	 * @param array<string, mixed> $recurring Recurring object array.
@@ -158,11 +187,10 @@ class CashflowRecurringGuard {
 			|| is_numeric($recurring['standardAmount']) === false
 			|| (float)$recurring['standardAmount'] < 0.0
 		) {
-			$this->logger->info(
-				'CashflowRecurringGuard: missing or negative standaardBedrag — denying save',
-				['recurId' => ($recurring['recurId'] ?? 'unknown')]
+			return $this->denySave(
+				message: 'CashflowRecurringGuard: missing or negative standaardBedrag — denying save',
+				recurring: $recurring
 			);
-			return false;
 		}
 
 		return true;
@@ -182,36 +210,58 @@ class CashflowRecurringGuard {
 		$frequency = (string)($recurring['frequency'] ?? '');
 
 		if (in_array($frequency, self::MONTHLY_FREQUENCIES, true) === true) {
-			if ($this->isValidDayOfMonth(value: ($recurring['dagFromMonth'] ?? null)) === false) {
-				$this->logger->info(
-					'CashflowRecurringGuard: MAANDELIJKS requires a valid dagVanMaand (1-31) — denying save',
-					['recurId' => ($recurring['recurId'] ?? 'unknown')]
-				);
-				return false;
-			}
+			return $this->hasMonthlyAnchor(recurring: $recurring);
 		}
 
 		if ($frequency === 'ANNUALLY') {
-			$month = ($recurring['monthOfYear'] ?? null);
-			if (is_int($month) === false || $month < 1 || $month > 12) {
-				$this->logger->info(
-					'CashflowRecurringGuard: JAARLIJKS requires a valid maandVanJaar (1-12) — denying save',
-					['recurId' => ($recurring['recurId'] ?? 'unknown')]
-				);
-				return false;
-			}
-
-			if ($this->isValidDayOfMonth(value: ($recurring['dagFromMonth'] ?? 1)) === false) {
-				$this->logger->info(
-					'CashflowRecurringGuard: JAARLIJKS requires a valid dagVanMaand (1-31) — denying save',
-					['recurId' => ($recurring['recurId'] ?? 'unknown')]
-				);
-				return false;
-			}
-		}//end if
+			return $this->hasAnnualAnchor(recurring: $recurring);
+		}
 
 		return true;
 	}//end hasConsistentRecurrenceAnchor()
+
+	/**
+	 * A monthly item needs a valid dagVanMaand (1-31).
+	 *
+	 * @param array<string, mixed> $recurring Recurring object array.
+	 *
+	 * @return bool True when the day anchor is valid.
+	 */
+	private function hasMonthlyAnchor(array $recurring): bool {
+		if ($this->isValidDayOfMonth(value: ($recurring['dagFromMonth'] ?? null)) === false) {
+			return $this->denySave(
+				message: 'CashflowRecurringGuard: MAANDELIJKS requires a valid dagVanMaand (1-31) — denying save',
+				recurring: $recurring
+			);
+		}
+
+		return true;
+	}//end hasMonthlyAnchor()
+
+	/**
+	 * An annual item needs a valid maandVanJaar (1-12) and dagVanMaand (1-31, default 1).
+	 *
+	 * @param array<string, mixed> $recurring Recurring object array.
+	 *
+	 * @return bool True when the month and day anchors are valid.
+	 */
+	private function hasAnnualAnchor(array $recurring): bool {
+		if ($this->isValidMonthOfYear(value: ($recurring['monthOfYear'] ?? null)) === false) {
+			return $this->denySave(
+				message: 'CashflowRecurringGuard: JAARLIJKS requires a valid maandVanJaar (1-12) — denying save',
+				recurring: $recurring
+			);
+		}
+
+		if ($this->isValidDayOfMonth(value: ($recurring['dagFromMonth'] ?? 1)) === false) {
+			return $this->denySave(
+				message: 'CashflowRecurringGuard: JAARLIJKS requires a valid dagVanMaand (1-31) — denying save',
+				recurring: $recurring
+			);
+		}
+
+		return true;
+	}//end hasAnnualAnchor()
 
 	/**
 	 * The geldigVan must parse, and geldigTot (if present) must not precede it.
@@ -223,38 +273,57 @@ class CashflowRecurringGuard {
 	private function hasValidValidityWindow(array $recurring): bool {
 		$from = $this->parseDate(value: (string)($recurring['validFrom'] ?? ''));
 		if ($from === null) {
-			$this->logger->info(
-				'CashflowRecurringGuard: missing or unparseable geldigVan — denying save',
-				['recurId' => ($recurring['recurId'] ?? 'unknown')]
+			return $this->denySave(
+				message: 'CashflowRecurringGuard: missing or unparseable geldigVan — denying save',
+				recurring: $recurring
 			);
-			return false;
 		}
 
-		$toRaw = ($recurring['validTo'] ?? null);
-		if ($toRaw === null || $toRaw === '') {
+		return $this->hasValidToFrom(recurring: $recurring, from: $from);
+	}//end hasValidValidityWindow()
+
+	/**
+	 * A geldigTot, when present, must parse and must not precede geldigVan.
+	 *
+	 * @param array<string, mixed> $recurring Recurring object array.
+	 * @param DateTimeImmutable    $from      The parsed geldigVan.
+	 *
+	 * @return bool True when geldigTot is absent or well-ordered.
+	 */
+	private function hasValidToFrom(array $recurring, DateTimeImmutable $from): bool {
+		$toRaw = $this->rawValidTo(recurring: $recurring);
+		if ($toRaw === null) {
 			// Indefinite window is valid.
 			return true;
 		}
 
-		$tot = $this->parseDate(value: (string)$toRaw);
+		$tot = $this->parseDate(value: $toRaw);
 		if ($tot === null) {
-			$this->logger->info(
-				'CashflowRecurringGuard: unparseable geldigTot — denying save',
-				['recurId' => ($recurring['recurId'] ?? 'unknown')]
-			);
-			return false;
+			return $this->denySave(message: 'CashflowRecurringGuard: unparseable geldigTot — denying save', recurring: $recurring);
 		}
 
 		if ($tot < $from) {
-			$this->logger->info(
-				'CashflowRecurringGuard: geldigTot precedes geldigVan — denying save',
-				['recurId' => ($recurring['recurId'] ?? 'unknown')]
-			);
-			return false;
+			return $this->denySave(message: 'CashflowRecurringGuard: geldigTot precedes geldigVan — denying save', recurring: $recurring);
 		}
 
 		return true;
-	}//end hasValidValidityWindow()
+	}//end hasValidToFrom()
+
+	/**
+	 * The geldigTot as given, or null when absent or empty (an indefinite window).
+	 *
+	 * @param array<string, mixed> $recurring Recurring object array.
+	 *
+	 * @return string|null The raw validTo.
+	 */
+	private function rawValidTo(array $recurring): ?string {
+		$toRaw = ($recurring['validTo'] ?? null);
+		if ($toRaw === null || $toRaw === '') {
+			return null;
+		}
+
+		return (string)$toRaw;
+	}//end rawValidTo()
 
 	/**
 	 * CPI indexing is only applicable to annual recurrences (REQ-CF-005).
@@ -270,11 +339,10 @@ class CashflowRecurringGuard {
 		}
 
 		if ((string)($recurring['frequency'] ?? '') !== 'ANNUALLY') {
-			$this->logger->info(
-				'CashflowRecurringGuard: CPI_AFGELOPEN_JAAR indexing only applies to JAARLIJKS items — denying save',
-				['recurId' => ($recurring['recurId'] ?? 'unknown')]
+			return $this->denySave(
+				message: 'CashflowRecurringGuard: CPI_AFGELOPEN_JAAR indexing only applies to JAARLIJKS items — denying save',
+				recurring: $recurring
 			);
-			return false;
 		}
 
 		return true;
@@ -307,6 +375,22 @@ class CashflowRecurringGuard {
 			return true;
 		}
 
+		return $this->startsWithinContract(recurring: $recurring, contract: $contract);
+
+	}//end hasConsistentContractWindow()
+
+	/**
+	 * validFrom must not precede the Contract's startDate (open when the
+	 * Contract has none); then validTo is checked against its endDate.
+	 *
+	 * @param array<string, mixed> $recurring Recurring object array.
+	 * @param array<string, mixed> $contract  The linked Contract.
+	 *
+	 * @return bool True when the window falls within the Contract's.
+	 *
+	 * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-002
+	 */
+	private function startsWithinContract(array $recurring, array $contract): bool {
 		$from = $this->parseDate(value: (string)($recurring['validFrom'] ?? ''));
 		if ($from === null) {
 			// The hasValidValidityWindow() check already denies this case;
@@ -316,36 +400,59 @@ class CashflowRecurringGuard {
 
 		$contractStart = $this->parseDate(value: (string)($contract['startDate'] ?? ''));
 		if ($contractStart !== null && $from < $contractStart) {
-			$this->logger->info(
-				'CashflowRecurringGuard: validFrom precedes the linked Contract\'s startDate — denying save',
-				['recurId' => ($recurring['recurId'] ?? 'unknown'), 'contractReference' => $contractReference]
+			return $this->denyOutsideContract(
+				message: 'CashflowRecurringGuard: validFrom precedes the linked Contract\'s startDate — denying save',
+				recurring: $recurring
 			);
-			return false;
 		}
 
-		$toRaw = ($recurring['validTo'] ?? null);
-		if ($toRaw === null || $toRaw === '') {
-			return true;
-		}
+		return $this->endsWithinContract(recurring: $recurring, contract: $contract);
+	}//end startsWithinContract()
 
-		$to = $this->parseDate(value: (string)$toRaw);
+	/**
+	 * validTo, when set, must not follow the Contract's endDate (open when the
+	 * Contract has none).
+	 *
+	 * @param array<string, mixed> $recurring Recurring object array.
+	 * @param array<string, mixed> $contract  The linked Contract.
+	 *
+	 * @return bool True when validTo is absent or within the Contract's end.
+	 *
+	 * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-002
+	 */
+	private function endsWithinContract(array $recurring, array $contract): bool {
+		$to = $this->parsedValidTo(recurring: $recurring);
 		if ($to === null) {
-			// The hasValidValidityWindow() check already denies this case.
+			// Indefinite, or unparseable — the hasValidValidityWindow() check already denies the latter.
 			return true;
 		}
 
 		$contractEnd = $this->parseDate(value: (string)($contract['endDate'] ?? ''));
 		if ($contractEnd !== null && $to > $contractEnd) {
-			$this->logger->info(
-				'CashflowRecurringGuard: validTo follows the linked Contract\'s endDate — denying save',
-				['recurId' => ($recurring['recurId'] ?? 'unknown'), 'contractReference' => $contractReference]
+			return $this->denyOutsideContract(
+				message: 'CashflowRecurringGuard: validTo follows the linked Contract\'s endDate — denying save',
+				recurring: $recurring
 			);
-			return false;
 		}
 
 		return true;
+	}//end endsWithinContract()
 
-	}//end hasConsistentContractWindow()
+	/**
+	 * The parsed geldigTot, or null when absent, empty or unparseable.
+	 *
+	 * @param array<string, mixed> $recurring Recurring object array.
+	 *
+	 * @return DateTimeImmutable|null The parsed validTo.
+	 */
+	private function parsedValidTo(array $recurring): ?DateTimeImmutable {
+		$toRaw = $this->rawValidTo(recurring: $recurring);
+		if ($toRaw === null) {
+			return null;
+		}
+
+		return $this->parseDate(value: $toRaw);
+	}//end parsedValidTo()
 
 	/**
 	 * Fetch the Contract a `contractReference` points at (by id, UUID or
@@ -364,21 +471,33 @@ class CashflowRecurringGuard {
 				id: $contractReference
 			);
 
-			if ($result === null) {
-				return null;
-			}
-
-			$serialized = $result->jsonSerialize();
-			if (is_array($serialized) === true) {
-				return $serialized;
-			}
-
-			return null;
+			return $this->contractArray(result: $result);
 		} catch (\Throwable) {
 			return null;
 		}//end try
 
 	}//end fetchContract()
+
+	/**
+	 * The found Contract as an array, or null when none was found or it does
+	 * not serialise to one.
+	 *
+	 * @param mixed $result The lookup result.
+	 *
+	 * @return array<string, mixed>|null The Contract object array, or null.
+	 */
+	private function contractArray(mixed $result): ?array {
+		if ($result === null) {
+			return null;
+		}
+
+		$serialized = $result->jsonSerialize();
+		if (is_array($serialized) === true) {
+			return $serialized;
+		}
+
+		return null;
+	}//end contractArray()
 
 	/**
 	 * Resolve the OpenRegister register slug from app config.
@@ -405,6 +524,17 @@ class CashflowRecurringGuard {
 	private function isValidDayOfMonth(mixed $value): bool {
 		return (is_int($value) === true && $value >= 1 && $value <= 31);
 	}//end isValidDayOfMonth()
+
+	/**
+	 * Validate a month-of-year integer in the inclusive range 1-12.
+	 *
+	 * @param mixed $value The candidate month value.
+	 *
+	 * @return bool True when value is an integer in [1,12].
+	 */
+	private function isValidMonthOfYear(mixed $value): bool {
+		return (is_int($value) === true && $value >= 1 && $value <= 12);
+	}//end isValidMonthOfYear()
 
 	/**
 	 * Parse an ISO date string into an immutable date, or null on failure.

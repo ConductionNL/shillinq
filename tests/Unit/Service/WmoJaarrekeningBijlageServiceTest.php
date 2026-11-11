@@ -123,4 +123,85 @@ final class WmoJaarrekeningBijlageServiceTest extends TestCase {
 
 	}//end testToMarkdown()
 
+	/**
+	 * Golden: every row field, the header and the summary of a composed bijlage.
+	 */
+	public function testComposeGolden(): void {
+		$bijlage = $this->svc->compose([
+			'fiscalYear' => 2025,
+			'administrationId' => 'adm-g',
+			'activities' => [
+				['id' => 'a-1', 'code' => 'C1', 'name' => 'Eén', 'isExempted' => true, 'exemptionDecisionId' => 'D-9'],
+				'not-an-activity',
+				['_id' => 'a-2', 'code' => 'C2', 'name' => 'Twee'],
+				['code' => 'C3'],
+			],
+			'definitiefIkpByActivity' => ['a-1' => ['totalCost' => 300.0], 'a-2' => ['totalCost' => 0]],
+			'omzetByActivity' => ['a-1' => 100.0, 'a-2' => 5.0, 'C3' => 0],
+			'priorYearIkpByActivity' => ['a-1' => ['totalCost' => 3.0]],
+			'priorYearOmzetByActivity' => ['a-1' => 2.0],
+			'manualOverridesByActivity' => ['a-2' => '3'],
+		]);
+
+		self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+00:00$/', $bijlage['generatedAt']);
+		unset($bijlage['generatedAt']);
+		self::assertSame(
+			[
+				'format' => 'WMO-jaarrekening-bijlage-2024',
+				'fiscalYear' => '2025',
+				'administrationId' => 'adm-g',
+				'activities' => [
+					[
+						'commercialActivityId' => 'a-1', 'code' => 'C1', 'name' => 'Eén', 'revenue' => 100.0,
+						'integralCostPrice' => 300.0, 'costRecoveryRatio' => 0.3333, 'compliant' => false,
+						'complianceColor' => 'rood', 'priorYearOmzet' => 2.0, 'priorYearIntegraleKostprijs' => 3.0,
+						'priorYearRatio' => 0.6667, 'abbReference' => 'D-9', 'manualOverrides' => 0,
+					],
+					[
+						'commercialActivityId' => 'a-2', 'code' => 'C2', 'name' => 'Twee', 'revenue' => 5.0,
+						'integralCostPrice' => 0.0, 'costRecoveryRatio' => null, 'compliant' => true,
+						'complianceColor' => 'groen', 'priorYearOmzet' => 0.0, 'priorYearIntegraleKostprijs' => 0.0,
+						'priorYearRatio' => null, 'abbReference' => null, 'manualOverrides' => 3,
+					],
+					[
+						'commercialActivityId' => 'C3', 'code' => 'C3', 'name' => '', 'revenue' => 0.0,
+						'integralCostPrice' => 0.0, 'costRecoveryRatio' => null, 'compliant' => true,
+						'complianceColor' => 'groen', 'priorYearOmzet' => 0.0, 'priorYearIntegraleKostprijs' => 0.0,
+						'priorYearRatio' => null, 'abbReference' => null, 'manualOverrides' => 0,
+					],
+				],
+				'summary' => ['total' => 3, 'compliant' => 2, 'nonCompliant' => 1],
+			],
+			$bijlage
+		);
+
+	}//end testComposeGolden()
+
+	/**
+	 * Golden: the full Markdown of a bijlage, including skipped rows and defaults.
+	 */
+	public function testToMarkdownGolden(): void {
+		$md = $this->svc->toMarkdown([
+			'fiscalYear' => '2025',
+			'format' => 'F',
+			'activities' => [
+				['code' => 'A', 'name' => 'Alpha', 'revenue' => 1.5, 'integralCostPrice' => 2, 'costRecoveryRatio' => 0.75, 'compliant' => false, 'abbReference' => null],
+				'skip',
+				['code' => 'B', 'name' => 'Beta', 'revenue' => 3, 'integralCostPrice' => 1, 'costRecoveryRatio' => null, 'compliant' => true, 'abbReference' => 'R-1'],
+			],
+			'summary' => ['compliant' => 1, 'total' => 2],
+		]);
+
+		self::assertSame(
+			"# WMO-bijlage jaarrekening 2025\n\n_Format: F_\n\n"
+			. "| Code | Naam | Omzet | Integrale Kostprijs | Ratio | Compliant | ABB |\n"
+			. "|------|------|-------|---------------------|-------|-----------|-----|\n"
+			. "| A | Alpha | 1.50 | 2.00 | 0.75 | rood | — |\n"
+			. "| B | Beta | 3.00 | 1.00 | — | groen | R-1 |\n"
+			. "\n**Samenvatting**: 1 compliant / 2 totaal",
+			$md
+		);
+
+	}//end testToMarkdownGolden()
+
 }//end class

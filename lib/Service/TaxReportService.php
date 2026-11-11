@@ -117,42 +117,71 @@ class TaxReportService {
 	 * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-25
 	 */
 	public function computeAnnual(string $administrationId, int $fiscalYear): array {
-		$quarters = [];
-		$revenue = 0.0;
-		$operating = 0.0;
-		$nonOperating = 0.0;
-		$special = 0.0;
-		$untagged = 0;
-		for ($quarter = 1; $quarter <= 4; $quarter++) {
-			$statement = $this->computeQuarter(
-				administrationId: $administrationId,
-				fiscalYear: $fiscalYear,
-				quarter: $quarter
-			);
-			$quarters[] = $statement;
-			$revenue += $statement['revenue'];
-			$operating += $statement['operatingExpenses'];
-			$nonOperating += $statement['nonOperating'];
-			$special += $statement['specialDeductions'];
-			$untagged += $statement['untaggedCount'];
-		}
-
-		$net = ($revenue - $operating + $nonOperating - $special);
+		$quarters = $this->quarterStatements(administrationId: $administrationId, fiscalYear: $fiscalYear);
+		$totals = $this->annualTotals(quarters: $quarters);
+		$net = ($totals['revenue'] - $totals['operatingExpenses'] + $totals['nonOperating'] - $totals['specialDeductions']);
 
 		return [
 			'administrationId' => $administrationId,
 			'fiscalYear' => $fiscalYear,
 			'quarters' => $quarters,
-			'revenue' => $revenue,
-			'operatingExpenses' => $operating,
-			'nonOperating' => $nonOperating,
-			'specialDeductions' => $special,
+			'revenue' => $totals['revenue'],
+			'operatingExpenses' => $totals['operatingExpenses'],
+			'nonOperating' => $totals['nonOperating'],
+			'specialDeductions' => $totals['specialDeductions'],
 			'netTaxableIncome' => $net,
-			'untaggedCount' => $untagged,
+			'untaggedCount' => $totals['untaggedCount'],
 			'estimatedLiability' => $this->calculator->estimateLiability(netTaxableIncome: $net),
 		];
 
 	}//end computeAnnual()
+
+	/**
+	 * The four quarterly statements of a fiscal year, Q1 first.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param int    $fiscalYear       Fiscal year.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function quarterStatements(string $administrationId, int $fiscalYear): array {
+		$quarters = [];
+		for ($quarter = 1; $quarter <= 4; $quarter++) {
+			$quarters[] = $this->computeQuarter(
+				administrationId: $administrationId,
+				fiscalYear: $fiscalYear,
+				quarter: $quarter
+			);
+		}
+
+		return $quarters;
+
+	}//end quarterStatements()
+
+	/**
+	 * The bucket totals and untagged count summed over the quarters, in order.
+	 *
+	 * @param array<int,array<string,mixed>> $quarters The quarterly statements.
+	 *
+	 * @return array{revenue:float,operatingExpenses:float,nonOperating:float,specialDeductions:float,untaggedCount:int}
+	 */
+	private function annualTotals(array $quarters): array {
+		$totals = [
+			'revenue' => 0.0,
+			'operatingExpenses' => 0.0,
+			'nonOperating' => 0.0,
+			'specialDeductions' => 0.0,
+			'untaggedCount' => 0,
+		];
+		foreach ($quarters as $statement) {
+			foreach (array_keys($totals) as $key) {
+				$totals[$key] += $statement[$key];
+			}
+		}
+
+		return $totals;
+
+	}//end annualTotals()
 
 	/**
 	 * Fetch the GLLine rows for a period, joined with their Account type.

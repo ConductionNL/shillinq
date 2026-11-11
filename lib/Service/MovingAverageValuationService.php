@@ -51,16 +51,12 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Imperative moving-average engine driving {@see CogsPosterService}.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
- * @SuppressWarnings(PHPMD.ElseExpression)         Pre-existing style debt (issue
- *     #506): early-return refactor deferred pending full behavioral
- *     verification of each branch.
  *
  * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-8
  */
@@ -100,46 +96,15 @@ class MovingAverageValuationService {
 	 * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-8
 	 */
 	public function processStockMove(array $move): array {
-		$movementType = (string)($move['movementType'] ?? '');
-		if (in_array($movementType, ['receipt', 'issue'], true) === false) {
-			return [
-				'processed' => false,
-				'message' => 'movementType ' . $movementType . ' is not an average trigger',
-			];
+		$key = new StockMoveValuationKey(move: $move);
+		$refusal = $key->refusal(triggerLabel: 'an average trigger');
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
-		$productId = (string)($move['itemId'] ?? '');
-		if ($movementType === 'receipt') {
-			$warehouse = (string)($move['destinationLocationId'] ?? '');
-		} else {
-			$warehouse = (string)($move['sourceLocationId'] ?? '');
-		}
-
-		$administrationId = (string)($move['administrationId'] ?? '');
-		$moveUuid = (string)($move['uuid'] ?? ($move['@self']['uuid'] ?? ($move['id'] ?? '')));
-
-		if ($productId === '' || $warehouse === '' || $administrationId === '' || $moveUuid === '') {
-			return [
-				'processed' => false,
-				'message' => 'StockMove missing itemId / location / administrationId / uuid',
-			];
-		}
-
-		$valuation = $this->findOrCreateValuation(
-			productId: $productId,
-			warehouse: $warehouse,
-			administrationId: $administrationId
-		);
-
-		if ((string)($valuation['lastStockMoveUuid'] ?? '') === $moveUuid) {
-			$this->logger->info(
-				'MovingAverageValuationService: idempotent retry — skipping',
-				[
-					'productId' => $productId,
-					'warehouse' => $warehouse,
-					'moveUuid' => $moveUuid,
-				]
-			);
+		$valuation = $this->findOrCreateValuation(key: $key);
+		if ($key->isRetryOf(valuation: $valuation) === true) {
+			$this->logger->info('MovingAverageValuationService: idempotent retry — skipping', $key->logContext());
 			return [
 				'processed' => false,
 				'valuation' => $valuation,
@@ -148,171 +113,131 @@ class MovingAverageValuationService {
 			];
 		}
 
-		$rcvQty = (float)($move['quantity'] ?? 0);
-		$rcvCost = (float)($move['unitCost'] ?? 0);
+		if ($key->movementType === 'receipt') {
+			return $this->processReceipt(key: $key, valuation: $valuation);
+		}
+
+		return $this->processIssue(key: $key, valuation: $valuation);
+
+	}//end processStockMove()
+
+	/**
+	 * Recalculate the moving average for a receipt.
+	 *
+	 * New unitCost = (cur_qty * cur_cost + rcv_qty * rcv_cost) / new_qty,
+	 * rounded to 4 dp per design.md D3; totalValue = newQty * newCost rounded
+	 * to 2 dp via integer cents.
+	 *
+	 * @param StockMoveValuationKey $key       The receipt's valuation key.
+	 * @param array<string,mixed>   $valuation Current snapshot.
+	 *
+	 * @return array<string,mixed> Result envelope.
+	 */
+	private function processReceipt(StockMoveValuationKey $key, array $valuation): array {
+		$rcvQty = (float)($key->move['quantity'] ?? 0);
+		$rcvCost = (float)($key->move['unitCost'] ?? 0);
 		$curQty = (float)($valuation['quantity'] ?? 0);
 		$curCost = (float)($valuation['unitCost'] ?? 0);
 
-		if ($movementType === 'receipt') {
-			$newQty = ($curQty + $rcvQty);
-			// New unitCost = (cur_qty * cur_cost + rcv_qty * rcv_cost) / new_qty,
-			// rounded to 4 dp per design.md D3.
-			$newCost = 0.0;
-			if ($newQty > 0) {
-				$newCost = round(((($curQty * $curCost) + ($rcvQty * $rcvCost)) / $newQty), 4);
-			}
+		$newQty = ($curQty + $rcvQty);
+		$newCost = 0.0;
+		if ($newQty > 0) {
+			$newCost = round(((($curQty * $curCost) + ($rcvQty * $rcvCost)) / $newQty), 4);
+		}
 
-			// TotalValue = newQty * newCost rounded to 2 dp via integer cents.
-			$totalCents = (int)round(($newQty * $newCost) * 100);
-			$valuation['quantity'] = round($newQty, 2);
-			$valuation['unitCost'] = $newCost;
-			$valuation['totalValue'] = round(($totalCents / 100), 2);
-			$valuation['date'] = (string)($move['postedAt'] ?? ($move['draftedAt'] ?? ''));
-			$valuation['lastStockMoveUuid'] = $moveUuid;
+		$position = new AveragePosition(quantity: $newQty, unitCost: $newCost);
+		return [
+			'processed' => true,
+			'valuation' => $this->saveValuation(data: $key->stamp(valuation: $position->applyTo(valuation: $valuation))),
+			'cogsCents' => 0,
+			'message' => 'receipt processed (moving-average recalculated)',
+		];
+	}//end processReceipt()
 
-			$saved = $this->saveValuation(data: $valuation);
+	/**
+	 * Book an issue: COGS at the current unitCost; quantity decremented (and
+	 * clamped at zero); cost retained.
+	 *
+	 * @param StockMoveValuationKey $key       The issue's valuation key.
+	 * @param array<string,mixed>   $valuation Current snapshot.
+	 *
+	 * @return array<string,mixed> Result envelope.
+	 */
+	private function processIssue(StockMoveValuationKey $key, array $valuation): array {
+		$curCost = (float)($valuation['unitCost'] ?? 0);
+		$cogsCents = (int)round(((float)($key->move['quantity'] ?? 0) * $curCost) * 100);
+		$position = new AveragePosition(quantity: $this->remainingQuantity(key: $key, valuation: $valuation), unitCost: $curCost);
 
-			return [
-				'processed' => true,
-				'valuation' => $saved,
-				'cogsCents' => 0,
-				'message' => 'receipt processed (moving-average recalculated)',
-			];
-		}//end if
+		return [
+			'processed' => true,
+			'valuation' => $this->saveValuation(data: $key->stamp(valuation: $position->applyTo(valuation: $valuation))),
+			'cogsCents' => $cogsCents,
+			'message' => 'issue processed (COGS at current average)',
+		];
 
-		// Issue: COGS at current unitCost; quantity decremented; cost retained.
-		$cogsCents = (int)round(($rcvQty * $curCost) * 100);
-		$newQty = ($curQty - $rcvQty);
+	}//end processIssue()
+
+	/**
+	 * The quantity left after an issue, clamped to zero (with a warning)
+	 * when the issue exceeds the current quantity.
+	 *
+	 * @param StockMoveValuationKey $key       The issue's valuation key.
+	 * @param array<string,mixed>   $valuation Current snapshot.
+	 *
+	 * @return float The remaining quantity.
+	 */
+	private function remainingQuantity(StockMoveValuationKey $key, array $valuation): float {
+		$outboundQty = (float)($key->move['quantity'] ?? 0);
+		$curQty = (float)($valuation['quantity'] ?? 0);
+		$newQty = ($curQty - $outboundQty);
 		if ($newQty < 0) {
 			$this->logger->warning(
 				'MovingAverageValuationService: outbound exceeds current quantity — clamped to zero',
 				[
-					'productId' => $productId,
-					'warehouse' => $warehouse,
+					'productId' => $key->productId,
+					'warehouse' => $key->warehouse,
 					'curQty' => $curQty,
-					'outboundQty' => $rcvQty,
+					'outboundQty' => $outboundQty,
 				]
 			);
 			$newQty = 0.0;
 		}
 
-		$totalCents = (int)round(($newQty * $curCost) * 100);
-		$valuation['quantity'] = round($newQty, 2);
-		$valuation['unitCost'] = $curCost;
-		$valuation['totalValue'] = round(($totalCents / 100), 2);
-		$valuation['date'] = (string)($move['postedAt'] ?? ($move['draftedAt'] ?? ''));
-		$valuation['lastStockMoveUuid'] = $moveUuid;
-
-		$saved = $this->saveValuation(data: $valuation);
-
-		return [
-			'processed' => true,
-			'valuation' => $saved,
-			'cogsCents' => $cogsCents,
-			'message' => 'issue processed (COGS at current average)',
-		];
-
-	}//end processStockMove()
+		return $newQty;
+	}//end remainingQuantity()
 
 	/**
-	 * Locate the active InventoryValuation snapshot for the tuple, or
-	 * create one on the fly (average method, status=active).
+	 * Locate the active InventoryValuation snapshot for the move's product,
+	 * warehouse and administration, or create one on the fly (average
+	 * method, status=active).
 	 *
-	 * @param string $productId Product id.
-	 * @param string $warehouse Warehouse location id.
-	 * @param string $administrationId Tenant scope.
+	 * @param StockMoveValuationKey $key The move's valuation key.
 	 *
 	 * @return array<string,mixed> The snapshot record.
 	 */
-	private function findOrCreateValuation(
-		string $productId,
-		string $warehouse,
-		string $administrationId,
-	): array {
-		$existing = $this->objectService
-			->setRegister($this->register())
-			->setSchema('InventoryValuation')
-			->findAll(
-				[
-					'filters' => [
-						'productId' => $productId,
-						'warehouse' => $warehouse,
-						'status' => 'active',
-						'administrationId' => $administrationId,
-					],
-					'limit' => 1,
-				]
-			);
-
-		if (count($existing) > 0) {
-			return $this->asArray(row: $existing[0]);
-		}
-
-		return [
-			'productId' => $productId,
-			'warehouse' => $warehouse,
-			'quantity' => 0.0,
-			'unitCost' => 0.0,
-			'totalValue' => 0.0,
-			'valuationMethod' => 'average',
-			'date' => '',
-			'status' => 'active',
-			'administrationId' => $administrationId,
-			'pendingCogs' => false,
-		];
-
+	private function findOrCreateValuation(StockMoveValuationKey $key): array {
+		return ($this->valuations()->findActive(key: $key, register: $this->register()) ?? $key->newValuation(valuationMethod: 'average'));
 	}//end findOrCreateValuation()
 
 	/**
-	 * Persist the snapshot via OR's ObjectService.
+	 * Persist the InventoryValuation snapshot.
 	 *
-	 * @param array<string,mixed> $data The snapshot data.
+	 * @param array<string,mixed> $data The snapshot.
 	 *
-	 * @return array<string,mixed> Persisted snapshot (with id).
+	 * @return array<string,mixed> The stored snapshot.
 	 */
 	private function saveValuation(array $data): array {
-		$saved = $this->objectService
-			->setRegister($this->register())
-			->setSchema('InventoryValuation')
-			->saveObject($data);
-
-		// ADR-084: saveObject() is declared `: ObjectEntityInterface`, so the
-		// is_array() test was constant — asArray() is the only path that runs.
-		return $this->asArray(row: $saved);
+		return $this->valuations()->save(data: $data, register: $this->register());
 	}//end saveValuation()
 
 	/**
-	 * Normalise an OR Object / array to a plain array<string,mixed>.
+	 * The InventoryValuation store, refusing unsupported rows as this service.
 	 *
-	 * @param mixed $row Raw row from ObjectService.
-	 *
-	 * @return array<string,mixed>
+	 * @return InventoryValuationStore The store.
 	 */
-	private function asArray(mixed $row): array {
-		if (is_array($row) === true) {
-			return $row;
-		}
-
-		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-			$out = $row->jsonSerialize();
-			if (is_array($out) === true) {
-				return $out;
-			}
-
-			return [];
-		}
-
-		if (is_object($row) === true && method_exists($row, 'getObject') === true) {
-			$out = $row->getObject();
-			if (is_array($out) === true) {
-				return $out;
-			}
-
-			return [];
-		}
-
-		throw new RuntimeException('MovingAverageValuationService: unsupported row type from ObjectService');
-	}//end asArray()
+	private function valuations(): InventoryValuationStore {
+		return new InventoryValuationStore(objectService: $this->objectService, source: 'MovingAverageValuationService');
+	}//end valuations()
 
 	/**
 	 * Resolve the OR register slug, defaulting to 'shillinq'.

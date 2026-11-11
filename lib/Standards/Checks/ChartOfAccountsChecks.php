@@ -55,6 +55,60 @@ namespace OCA\Shillinq\Standards\Checks;
  */
 class ChartOfAccountsChecks implements CheckProvider {
 	/**
+	 * SKR04: the account types allowed per account class.
+	 *
+	 * @var array<int, array<int, string>>
+	 */
+	private const SKR04_CLASS_TYPES = [
+		'0' => ['assets', 'equity'],
+		'1' => ['assets'],
+		'2' => ['equity', 'liabilities'],
+		'3' => ['liabilities'],
+		'4' => ['revenue', 'expenses'],
+		'5' => ['revenue', 'expenses'],
+		'6' => ['revenue', 'expenses'],
+		'7' => ['revenue', 'expenses'],
+	];
+
+	/**
+	 * Belgian PCMN: the account types allowed per account class.
+	 *
+	 * @var array<int, array<int, string>>
+	 */
+	private const PCMN_CLASS_TYPES = [
+		'1' => ['equity', 'liabilities'],
+		'2' => ['assets'],
+		'3' => ['assets'],
+		'4' => ['assets', 'liabilities'],
+		'5' => ['assets', 'liabilities'],
+		'6' => ['expenses'],
+		'7' => ['revenue'],
+	];
+
+	/**
+	 * Spanish PGC: the account types allowed per account group; the same split as
+	 * the Belgian PCMN classes.
+	 *
+	 * @var array<int, array<int, string>>
+	 */
+	private const PGC_GROUP_TYPES = self::PCMN_CLASS_TYPES;
+
+	/**
+	 * The data seedSpec() returns; see there.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const SEED_SPEC = [
+		'Account' => [
+			// Hierarchical alphabetic RGS reference code (RGS rgs-coa-standard-codes).
+			'rgsCode' => 'BLimVap',
+			// Unique numeric RGS reference number mapped to the SBR taxonomy element
+			// (RGS rgs-code-structure).
+			'rgsReferenceNumber' => '10101010',
+		],
+	];
+
+	/**
 	 * Per-object-type, per-rule predicates for the `chart-of-accounts` domain.
 	 *
 	 * @return array<string, array<string, callable>>
@@ -62,59 +116,226 @@ class ChartOfAccountsChecks implements CheckProvider {
 	public static function checks(): array {
 		return [
 			'Account' => [
-				// --- RGS (NL) — standardised reference codes / structure. ---
-				// rgs-coa-standard-codes: the account is mapped to a standardised RGS
-				// reference code (enabling uniform SBR exchange to KvK/Belastingdienst/CBS).
-				'rgs-coa-standard-codes' => static fn (array $o): bool => self::present($o, 'rgsCode'),
-				// rgs-code-structure: the account carries BOTH a hierarchical RGS reference
-				// code (alphabetic, hierarchical) AND a unique numeric RGS reference number
-				// that maps one-to-one to the SBR taxonomy element.
-				'rgs-code-structure' => static fn (array $o): bool => (self::rgsCodeShapeOk((string)($o['rgsCode'] ?? ''))
-					&& self::rgsNumberShapeOk((string)($o['rgsReferenceNumber'] ?? ''))),
-
-				// --- PCG (FR) — plan comptable général, seven decimal classes. ---
-				// pcg-common-coa: the account number follows the PCG decimal numbering of
-				// the (1..8) classes — a purely numeric code whose leading digit is 1-8.
-				'pcg-common-coa' => static fn (array $o): bool => self::numericClassCode($o, 1, 8),
-				// pcg-class-1 (comptes de capitaux): equity, reserves, results, regulated
-				// provisions and long-term borrowings — equity or liabilities.
-				'pcg-class-1-capitaux' => static fn (array $o): bool => self::classTypeOk($o, '1', ['equity', 'liabilities']),
-				// pcg-class-2 (comptes d'immobilisations): intangible/tangible/financial
-				// fixed assets and their depreciation/impairment — assets.
-				'pcg-class-2-immobilisations' => static fn (array $o): bool => self::classTypeOk($o, '2', ['assets']),
-				// pcg-class-3 (comptes de stocks et en-cours): inventories / WIP — assets.
-				'pcg-class-3-stocks' => static fn (array $o): bool => self::classTypeOk($o, '3', ['assets']),
-				// pcg-class-4 (comptes de tiers): receivables and payables (suppliers,
-				// customers, personnel, State incl. TVA) — assets or liabilities.
-				'pcg-class-4-tiers' => static fn (array $o): bool => self::classTypeOk($o, '4', ['assets', 'liabilities']),
-				// pcg-class-5 (comptes financiers): bank, cash, marketable securities and
-				// other treasury — assets (or short-term bank liabilities).
-				'pcg-class-5-financiers' => static fn (array $o): bool => self::classTypeOk($o, '5', ['assets', 'liabilities']),
-				// pcg-class-6 (comptes de charges): expenses by nature plus income tax.
-				'pcg-class-6-charges' => static fn (array $o): bool => self::classTypeOk($o, '6', ['expenses']),
-				// pcg-class-7 (comptes de produits): income by nature.
-				'pcg-class-7-produits' => static fn (array $o): bool => self::classTypeOk($o, '7', ['revenue']),
-				// (pcg-class-8-special dropped: its predicate was effectively always-true for any
-				// well-formed numeric account number and asserted nothing about accountType, so it
-				// added no real enforcement value — flagged by the workflow verify stage.)
-				// --- SKR04 (DE) — Abschlussgliederung class ranges. ---
-				// skr04-class-mapping: class 0 fixed assets/equity, 1 financial & current
-				// assets, 2 equity & provisions, 3 liabilities, 4-7 income/expenses.
-				'skr04-class-mapping' => static fn (array $o): bool => self::skr04ClassOk($o),
-
-				// --- PCMN/MAR (BE) — minimum standardised chart of accounts. ---
-				// be-mar-pcmn-chart: classes 1-5 balance sheet, 6-7 income statement; the
-				// leading-digit class must be consistent with the account type.
-				'be-mar-pcmn-chart' => static fn (array $o): bool => self::pcmnClassOk($o),
-
-				// --- PGC (ES) — cuadro de cuentas, seven groups. ---
-				// es-pgc-cuadro-cuentas: coded in seven groups (1 financiación básica …
-				// 7 ventas e ingresos); the leading-digit group must match the account type.
-				'es-pgc-cuadro-cuentas' => static fn (array $o): bool => self::pgcGroupOk($o),
+				...self::dutchAndFrenchAccountChecks(),
+				...self::frenchFinancialAndOtherPlanChecks(),
 			],
 		];
 
 	}//end checks()
+
+	/**
+	 * The Dutch RGS and French PCG class 1-4 predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function dutchAndFrenchAccountChecks(): array {
+		return [
+			// --- RGS (NL) — standardised reference codes / structure. ---
+			'rgs-coa-standard-codes' => self::rgsCoaStandardCodes(...),
+			'rgs-code-structure' => self::rgsCodeStructure(...),
+
+			// --- PCG (FR) — plan comptable général, seven decimal classes. ---
+			'pcg-common-coa' => self::pcgCommonCoa(...),
+			'pcg-class-1-capitaux' => self::pcgClass1Capitaux(...),
+			'pcg-class-2-immobilisations' => self::pcgClass2Immobilisations(...),
+			'pcg-class-3-stocks' => self::pcgClass3Stocks(...),
+			'pcg-class-4-tiers' => self::pcgClass4Tiers(...),
+		];
+
+	}//end dutchAndFrenchAccountChecks()
+
+	/**
+	 * The French PCG class 5-7 and other national chart predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function frenchFinancialAndOtherPlanChecks(): array {
+		return [
+			'pcg-class-5-financiers' => self::pcgClass5Financiers(...),
+			'pcg-class-6-charges' => self::pcgClass6Charges(...),
+			'pcg-class-7-produits' => self::pcgClass7Produits(...),
+			// --- SKR04 (DE) — Abschlussgliederung class ranges. ---
+			'skr04-class-mapping' => self::skr04ClassMapping(...),
+
+			// --- PCMN/MAR (BE) — minimum standardised chart of accounts. ---
+			'be-mar-pcmn-chart' => self::beMarPcmnChart(...),
+
+			// --- PGC (ES) — cuadro de cuentas, seven groups. ---
+			'es-pgc-cuadro-cuentas' => self::esPgcCuadroCuentas(...),
+		];
+
+	}//end frenchFinancialAndOtherPlanChecks()
+
+	/**
+	 * rgs-coa-standard-codes: the account is mapped to a standardised RGS
+	 * reference code (enabling uniform SBR exchange to KvK/Belastingdienst/CBS).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function rgsCoaStandardCodes(array $o): bool {
+		return self::present($o, 'rgsCode');
+
+	}//end rgsCoaStandardCodes()
+
+	/**
+	 * rgs-code-structure: the account carries BOTH a hierarchical RGS reference
+	 * code (alphabetic, hierarchical) AND a unique numeric RGS reference number
+	 * that maps one-to-one to the SBR taxonomy element.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function rgsCodeStructure(array $o): bool {
+		return (self::rgsCodeShapeOk((string)($o['rgsCode'] ?? ''))
+			&& self::rgsNumberShapeOk((string)($o['rgsReferenceNumber'] ?? '')));
+
+	}//end rgsCodeStructure()
+
+	/**
+	 * pcg-common-coa: the account number follows the PCG decimal numbering of
+	 * the (1..8) classes — a purely numeric code whose leading digit is 1-8.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function pcgCommonCoa(array $o): bool {
+		return self::numericClassCode($o, 1, 8);
+
+	}//end pcgCommonCoa()
+
+	/**
+	 * pcg-class-1 (comptes de capitaux): equity, reserves, results, regulated
+	 * provisions and long-term borrowings — equity or liabilities.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function pcgClass1Capitaux(array $o): bool {
+		return self::classTypeOk($o, '1', ['equity', 'liabilities']);
+
+	}//end pcgClass1Capitaux()
+
+	/**
+	 * pcg-class-2 (comptes d'immobilisations): intangible/tangible/financial
+	 * fixed assets and their depreciation/impairment — assets.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function pcgClass2Immobilisations(array $o): bool {
+		return self::classTypeOk($o, '2', ['assets']);
+
+	}//end pcgClass2Immobilisations()
+
+	/**
+	 * pcg-class-3 (comptes de stocks et en-cours): inventories / WIP — assets.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function pcgClass3Stocks(array $o): bool {
+		return self::classTypeOk($o, '3', ['assets']);
+
+	}//end pcgClass3Stocks()
+
+	/**
+	 * pcg-class-4 (comptes de tiers): receivables and payables (suppliers,
+	 * customers, personnel, State incl. TVA) — assets or liabilities.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function pcgClass4Tiers(array $o): bool {
+		return self::classTypeOk($o, '4', ['assets', 'liabilities']);
+
+	}//end pcgClass4Tiers()
+
+	/**
+	 * pcg-class-5 (comptes financiers): bank, cash, marketable securities and
+	 * other treasury — assets (or short-term bank liabilities).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function pcgClass5Financiers(array $o): bool {
+		return self::classTypeOk($o, '5', ['assets', 'liabilities']);
+
+	}//end pcgClass5Financiers()
+
+	/**
+	 * pcg-class-6 (comptes de charges): expenses by nature plus income tax.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function pcgClass6Charges(array $o): bool {
+		return self::classTypeOk($o, '6', ['expenses']);
+
+	}//end pcgClass6Charges()
+
+	/**
+	 * pcg-class-7 (comptes de produits): income by nature.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function pcgClass7Produits(array $o): bool {
+		return self::classTypeOk($o, '7', ['revenue']);
+
+	}//end pcgClass7Produits()
+
+	/**
+	 * (pcg-class-8-special dropped: its predicate was effectively always-true for any
+	 * well-formed numeric account number and asserted nothing about accountType, so it
+	 * added no real enforcement value — flagged by the workflow verify stage.)
+	 * skr04-class-mapping: class 0 fixed assets/equity, 1 financial & current
+	 * assets, 2 equity & provisions, 3 liabilities, 4-7 income/expenses.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function skr04ClassMapping(array $o): bool {
+		return self::skr04ClassOk($o);
+
+	}//end skr04ClassMapping()
+
+	/**
+	 * be-mar-pcmn-chart: classes 1-5 balance sheet, 6-7 income statement; the
+	 * leading-digit class must be consistent with the account type.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function beMarPcmnChart(array $o): bool {
+		return self::pcmnClassOk($o);
+
+	}//end beMarPcmnChart()
+
+	/**
+	 * es-pgc-cuadro-cuentas: coded in seven groups (1 financiación básica …
+	 * 7 ventas e ingresos); the leading-digit group must match the account type.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function esPgcCuadroCuentas(array $o): bool {
+		return self::pgcGroupOk($o);
+
+	}//end esPgcCuadroCuentas()
 
 	/**
 	 * Test-data field defaults this provider's checks expect on Account. The RGS
@@ -127,15 +348,7 @@ class ChartOfAccountsChecks implements CheckProvider {
 	 * @return array<string, array<string, mixed>>
 	 */
 	public static function seedSpec(): array {
-		return [
-			'Account' => [
-				// Hierarchical alphabetic RGS reference code (RGS rgs-coa-standard-codes).
-				'rgsCode' => 'BLimVap',
-				// Unique numeric RGS reference number mapped to the SBR taxonomy element
-				// (RGS rgs-code-structure).
-				'rgsReferenceNumber' => '10101010',
-			],
-		];
+		return self::SEED_SPEC;
 
 	}//end seedSpec()
 
@@ -227,28 +440,7 @@ class ChartOfAccountsChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function skr04ClassOk(array $o): bool {
-		$class = self::accountClass($o);
-		if ($class === '') {
-			return false;
-		}
-
-		$type = (string)($o['accountType'] ?? '');
-		$allowed = [
-			'0' => ['assets', 'equity'],
-			'1' => ['assets'],
-			'2' => ['equity', 'liabilities'],
-			'3' => ['liabilities'],
-			'4' => ['revenue', 'expenses'],
-			'5' => ['revenue', 'expenses'],
-			'6' => ['revenue', 'expenses'],
-			'7' => ['revenue', 'expenses'],
-		];
-
-		if (array_key_exists($class, $allowed) === false) {
-			return true;
-		}
-
-		return in_array($type, $allowed[$class], true);
+		return self::typeAllowedForClass($o, self::SKR04_CLASS_TYPES);
 	}//end skr04ClassOk()
 
 	/**
@@ -268,27 +460,7 @@ class ChartOfAccountsChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function pcmnClassOk(array $o): bool {
-		$class = self::accountClass($o);
-		if ($class === '') {
-			return false;
-		}
-
-		$type = (string)($o['accountType'] ?? '');
-		$allowed = [
-			'1' => ['equity', 'liabilities'],
-			'2' => ['assets'],
-			'3' => ['assets'],
-			'4' => ['assets', 'liabilities'],
-			'5' => ['assets', 'liabilities'],
-			'6' => ['expenses'],
-			'7' => ['revenue'],
-		];
-
-		if (array_key_exists($class, $allowed) === false) {
-			return true;
-		}
-
-		return in_array($type, $allowed[$class], true);
+		return self::typeAllowedForClass($o, self::PCMN_CLASS_TYPES);
 	}//end pcmnClassOk()
 
 	/**
@@ -309,28 +481,31 @@ class ChartOfAccountsChecks implements CheckProvider {
 	 * @return bool
 	 */
 	private static function pgcGroupOk(array $o): bool {
+		return self::typeAllowedForClass($o, self::PGC_GROUP_TYPES);
+	}//end pgcGroupOk()
+
+	/**
+	 * The account's type is one $allowed lists for its class; an account without a
+	 * class fails, a class $allowed does not list passes.
+	 *
+	 * @param array<string, mixed>              $o       The Account.
+	 * @param array<int, array<int, string>>    $allowed The allowed types per class.
+	 *
+	 * @return bool
+	 */
+	private static function typeAllowedForClass(array $o, array $allowed): bool {
 		$class = self::accountClass($o);
 		if ($class === '') {
 			return false;
 		}
 
 		$type = (string)($o['accountType'] ?? '');
-		$allowed = [
-			'1' => ['equity', 'liabilities'],
-			'2' => ['assets'],
-			'3' => ['assets'],
-			'4' => ['assets', 'liabilities'],
-			'5' => ['assets', 'liabilities'],
-			'6' => ['expenses'],
-			'7' => ['revenue'],
-		];
-
 		if (array_key_exists($class, $allowed) === false) {
 			return true;
 		}
 
 		return in_array($type, $allowed[$class], true);
-	}//end pgcGroupOk()
+	}//end typeAllowedForClass()
 
 	/**
 	 * An RGS reference code is well-shaped: a hierarchical alphabetic code of at least

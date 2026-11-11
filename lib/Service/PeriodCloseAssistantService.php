@@ -55,6 +55,22 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-8
  */
 class PeriodCloseAssistantService {
+
+	/**
+	 * Flag categories in emission order, with their severity. Unreconciled bank
+	 * receipts are informational (design D3 — "should verify"); the aged
+	 * suspense worklist is a BLOCKER (payment-control-guards REQ-PCG-002/003:
+	 * the close is refused while it is non-empty), so it is an error.
+	 *
+	 * @var array<string,string>
+	 */
+	private const FLAG_SEVERITIES = [
+		'ap' => 'warning',
+		'ar' => 'warning',
+		'bank' => 'info',
+		'expense-claims' => 'warning',
+		'suspense' => 'error',
+	];
 	/**
 	 * Construct the service.
 	 *
@@ -82,21 +98,9 @@ class PeriodCloseAssistantService {
 	 */
 	public function analyse(string $administrationId, string $periodId, string $endDate = ''): array {
 		$detections = [
-			'ap' => $this->detectOpenSubLedger(
-				administrationId: $administrationId,
-				periodId: $periodId,
-				subLedgerType: 'ap'
-			),
-			'ar' => $this->detectOpenSubLedger(
-				administrationId: $administrationId,
-				periodId: $periodId,
-				subLedgerType: 'ar'
-			),
-			'bank' => $this->detectUnreconciledBankReceipts(
-				administrationId: $administrationId,
-				periodId: $periodId,
-				endDate: $endDate
-			),
+			'ap' => $this->detectOpenSubLedger(administrationId: $administrationId, periodId: $periodId, subLedgerType: 'ap'),
+			'ar' => $this->detectOpenSubLedger(administrationId: $administrationId, periodId: $periodId, subLedgerType: 'ar'),
+			'bank' => $this->detectUnreconciledBankReceipts(administrationId: $administrationId, periodId: $periodId, endDate: $endDate),
 			'expense-claims' => $this->detectOutstandingExpenseClaims(administrationId: $administrationId),
 			'suspense' => $this->detectAgedSuspense(administrationId: $administrationId, endDate: $endDate),
 		];
@@ -120,64 +124,62 @@ class PeriodCloseAssistantService {
 	 * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-8
 	 */
 	public function detectOpenSubLedger(string $administrationId, string $periodId, string $subLedgerType): array {
-		$register = $this->register();
+		$draftIds = $this->draftTransactionIds(administrationId: $administrationId, periodId: $periodId);
+		if ($draftIds === []) {
+			return ['count' => 0, 'total' => 0.0];
+		}
 
-		$transactions = $this->objectService
-			->setRegister($register)
-			->setSchema('GLTransaction')
-			->findAll(
-				[
-					'filters' => [
-						'administrationId' => $administrationId,
-						'periodId' => $periodId,
-						'state' => 'draft',
-					],
-				]
-			);
+		$lines = $this->find(schema: 'GLLine', filters: ['periodId' => $periodId, 'subLedgerType' => $subLedgerType]);
 
+		return $this->draftLineSummary(lines: $lines, draftIds: $draftIds);
+
+	}//end detectOpenSubLedger()
+
+	/**
+	 * The ids of the period's draft GLTransactions, as a set.
+	 *
+	 * @param string $administrationId The administration scope.
+	 * @param string $periodId         The period.
+	 *
+	 * @return array<string,true>
+	 */
+	private function draftTransactionIds(string $administrationId, string $periodId): array {
+		$filters = ['administrationId' => $administrationId, 'periodId' => $periodId, 'state' => 'draft'];
 		$draftIds = [];
-		foreach ($transactions as $transaction) {
+		foreach ($this->find(schema: 'GLTransaction', filters: $filters) as $transaction) {
 			$id = $this->idOf(record: (array)$transaction);
 			if ($id !== '') {
 				$draftIds[$id] = true;
 			}
 		}
 
-		if ($draftIds === []) {
-			return ['count' => 0, 'total' => 0.0];
-		}
+		return $draftIds;
 
-		$lines = $this->objectService
-			->setRegister($register)
-			->setSchema('GLLine')
-			->findAll(
-				[
-					'filters' => [
-						'periodId' => $periodId,
-						'subLedgerType' => $subLedgerType,
-					],
-				]
-			);
+	}//end draftTransactionIds()
 
+	/**
+	 * Distinct draft transactions and the cent total of their matching lines.
+	 *
+	 * @param array<int,mixed>   $lines    GLLines of the sub-ledger type.
+	 * @param array<string,true> $draftIds Draft transaction ids.
+	 *
+	 * @return array{count:int, total:float}
+	 */
+	private function draftLineSummary(array $lines, array $draftIds): array {
 		$matchedTransactions = [];
 		$totalCents = 0;
 		foreach ($lines as $line) {
 			$line = (array)$line;
 			$transactionId = (string)($line['transactionId'] ?? '');
-			if (isset($draftIds[$transactionId]) === false) {
-				continue;
+			if (isset($draftIds[$transactionId]) === true) {
+				$matchedTransactions[$transactionId] = true;
+				$totalCents += (int)round(((float)($line['amount'] ?? 0)) * 100);
 			}
-
-			$matchedTransactions[$transactionId] = true;
-			$totalCents += (int)round(((float)($line['amount'] ?? 0)) * 100);
 		}
 
-		return [
-			'count' => count($matchedTransactions),
-			'total' => ((float)$totalCents / 100),
-		];
+		return ['count' => count($matchedTransactions), 'total' => ((float)$totalCents / 100)];
 
-	}//end detectOpenSubLedger()
+	}//end draftLineSummary()
 
 	/**
 	 * Count bank statements in the period that have no posted GL match (REQ-PC-004).
@@ -195,57 +197,75 @@ class PeriodCloseAssistantService {
 	 * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-8
 	 */
 	public function detectUnreconciledBankReceipts(string $administrationId, string $periodId, string $endDate = ''): array {
-		$register = $this->register();
+		$statements = $this->statementsWithMovements(
+			statements: $this->find(schema: 'BankStatement', filters: ['administrationId' => $administrationId]),
+			endDate: $endDate
+		);
+		$postedReferences = $this->postedReferences(administrationId: $administrationId, periodId: $periodId);
+		$unreconciled = count(
+			array_filter($statements, fn (array $statement): bool => $this->isUnposted(statement: $statement, postedReferences: $postedReferences))
+		);
 
-		$statements = $this->objectService
-			->setRegister($register)
-			->setSchema('BankStatement')
-			->findAll(['filters' => ['administrationId' => $administrationId]]);
+		return ['count' => $unreconciled, 'total' => (float)$unreconciled];
+	}//end detectUnreconciledBankReceipts()
 
-		// Posted GL transactions for the period — their sourceReference set lets
-		// us recognise statements that have already been reconciled / posted.
-		$posted = $this->objectService
-			->setRegister($register)
-			->setSchema('GLTransaction')
-			->findAll(
-				[
-					'filters' => [
-						'administrationId' => $administrationId,
-						'periodId' => $periodId,
-						'state' => 'posted',
-					],
-				]
-			);
+	/**
+	 * The statements reporting movements, dated on or before the period end
+	 * when one is given.
+	 *
+	 * @param array<int,mixed> $statements BankStatements of the administration.
+	 * @param string           $endDate    The period end date (ISO date); '' to skip date filtering.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function statementsWithMovements(array $statements, string $endDate): array {
+		$kept = [];
+		foreach ($statements as $statement) {
+			$statement = (array)$statement;
+			$inPeriod = ($endDate === '' || (string)($statement['statementDate'] ?? '') <= $endDate);
+			if ((int)($statement['transactionCount'] ?? 0) > 0 && $inPeriod === true) {
+				$kept[] = $statement;
+			}
+		}
 
+		return $kept;
+	}//end statementsWithMovements()
+
+	/**
+	 * The sourceReference set of the period's posted GL transactions — the
+	 * statements they point at have already been reconciled / posted.
+	 *
+	 * @param string $administrationId The administration scope.
+	 * @param string $periodId         The period.
+	 *
+	 * @return array<string,true>
+	 */
+	private function postedReferences(string $administrationId, string $periodId): array {
+		$filters = ['administrationId' => $administrationId, 'periodId' => $periodId, 'state' => 'posted'];
 		$postedReferences = [];
-		foreach ($posted as $transaction) {
+		foreach ($this->find(schema: 'GLTransaction', filters: $filters) as $transaction) {
 			$reference = (string)(((array)$transaction)['sourceReference'] ?? '');
 			if ($reference !== '') {
 				$postedReferences[$reference] = true;
 			}
 		}
 
-		$unreconciled = 0;
-		foreach ($statements as $statement) {
-			$statement = (array)$statement;
-			if ((int)($statement['transactionCount'] ?? 0) <= 0) {
-				continue;
-			}
+		return $postedReferences;
+	}//end postedReferences()
 
-			if ($endDate !== '' && (string)($statement['statementDate'] ?? '') > $endDate) {
-				continue;
-			}
+	/**
+	 * Whether no posted GL transaction points at a statement.
+	 *
+	 * @param array<string,mixed> $statement        A BankStatement.
+	 * @param array<string,true>  $postedReferences Posted sourceReferences.
+	 *
+	 * @return boolean
+	 */
+	private function isUnposted(array $statement, array $postedReferences): bool {
+		$statementId = $this->idOf(record: $statement);
 
-			$statementId = $this->idOf(record: $statement);
-			if ($statementId !== '' && isset($postedReferences[$statementId]) === true) {
-				continue;
-			}
-
-			$unreconciled++;
-		}//end foreach
-
-		return ['count' => $unreconciled, 'total' => (float)$unreconciled];
-	}//end detectUnreconciledBankReceipts()
+		return $statementId === '' || isset($postedReferences[$statementId]) === false;
+	}//end isUnposted()
 
 	/**
 	 * Count expense claims awaiting approval / reimbursement (REQ-PC-004).
@@ -257,18 +277,7 @@ class PeriodCloseAssistantService {
 	 * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-8
 	 */
 	public function detectOutstandingExpenseClaims(string $administrationId): array {
-		$claims = $this->objectService
-			->setRegister($this->register())
-			->setSchema('ExpenseClaimEntry')
-			->findAll(
-				[
-					'filters' => [
-						'administrationId' => $administrationId,
-						'approvalState' => 'pending',
-					],
-				]
-			);
-
+		$claims = $this->find(schema: 'ExpenseClaimEntry', filters: ['administrationId' => $administrationId, 'approvalState' => 'pending']);
 		$count = 0;
 		$totalCents = 0;
 		foreach ($claims as $claim) {
@@ -321,72 +330,38 @@ class PeriodCloseAssistantService {
 	public function generateFlags(array $detections): array {
 		$now = (new DateTimeImmutable())->format(DateTimeInterface::ATOM);
 		$flags = [];
-
-		$payable = ($detections['ap'] ?? ['count' => 0, 'total' => 0.0]);
-		if ($payable['count'] > 0) {
-			$flags[] = [
-				'id' => 'flag-ap',
-				'severity' => 'warning',
-				'category' => 'ap',
-				'message' => $payable['count'] . ' outstanding AP transaction(s) totalling '
-					. $this->euro(amount: $payable['total']) . ' require payment or accrual before period close',
-				'detectedAt' => $now,
-			];
-		}
-
-		$receivable = ($detections['ar'] ?? ['count' => 0, 'total' => 0.0]);
-		if ($receivable['count'] > 0) {
-			$flags[] = [
-				'id' => 'flag-ar',
-				'severity' => 'warning',
-				'category' => 'ar',
-				'message' => $receivable['count'] . ' outstanding AR transaction(s) totalling '
-					. $this->euro(amount: $receivable['total']) . ' are not yet collected or provisioned',
-				'detectedAt' => $now,
-			];
-		}
-
-		$bank = ($detections['bank'] ?? ['count' => 0, 'total' => 0.0]);
-		if ($bank['count'] > 0) {
-			$flags[] = [
-				'id' => 'flag-bank',
-				'severity' => 'info',
-				'category' => 'bank',
-				'message' => $bank['count'] . ' bank statement(s) in this period have no matching GL posting',
-				'detectedAt' => $now,
-			];
-		}
-
-		$claims = ($detections['expense-claims'] ?? ['count' => 0, 'total' => 0.0]);
-		if ($claims['count'] > 0) {
-			$flags[] = [
-				'id' => 'flag-expense-claims',
-				'severity' => 'warning',
-				'category' => 'expense-claims',
-				'message' => $claims['count'] . ' expense claim(s) totalling '
-					. $this->euro(amount: $claims['total']) . ' are awaiting approval or reimbursement',
-				'detectedAt' => $now,
-			];
-		}
-
-		// Payment-control-guards REQ-PCG-002/003: the aged suspense worklist is a
-		// BLOCKER (the close is refused while it is non-empty), so it is surfaced
-		// as an error-severity flag, not a warning.
-		$suspense = ($detections['suspense'] ?? ['count' => 0, 'total' => 0.0, 'oldest' => 0]);
-		if ($suspense['count'] > 0) {
-			$flags[] = [
-				'id' => 'flag-suspense',
-				'severity' => 'error',
-				'category' => 'suspense',
-				'message' => $suspense['count'] . ' unmatched bank/suspense item(s) totalling '
-					. $this->euro(amount: $suspense['total']) . ' remain (oldest '
-					. ((int)($suspense['oldest'] ?? 0)) . ' day(s) outstanding) — the period cannot be closed until they are resolved',
-				'detectedAt' => $now,
-			];
+		foreach (self::FLAG_SEVERITIES as $category => $severity) {
+			$detection = ($detections[$category] ?? ['count' => 0, 'total' => 0.0]);
+			if ($detection['count'] > 0) {
+				$message = $this->flagMessage(category: $category, detection: $detection);
+				$flags[] = ['id' => 'flag-' . $category, 'severity' => $severity, 'category' => $category, 'message' => $message, 'detectedAt' => $now];
+			}
 		}
 
 		return $flags;
 	}//end generateFlags()
+
+	/**
+	 * The operator-facing text of one category's flag.
+	 *
+	 * @param string                                       $category  The flag category.
+	 * @param array{count:int,total:float,oldest?:int}     $detection The category's detection summary.
+	 *
+	 * @return string
+	 */
+	private function flagMessage(string $category, array $detection): string {
+		$count = (string)$detection['count'];
+		$total = $this->euro(amount: $detection['total']);
+
+		return match ($category) {
+			'ap' => $count . ' outstanding AP transaction(s) totalling ' . $total . ' require payment or accrual before period close',
+			'ar' => $count . ' outstanding AR transaction(s) totalling ' . $total . ' are not yet collected or provisioned',
+			'bank' => $count . ' bank statement(s) in this period have no matching GL posting',
+			'expense-claims' => $count . ' expense claim(s) totalling ' . $total . ' are awaiting approval or reimbursement',
+			default => $count . ' unmatched bank/suspense item(s) totalling ' . $total . ' remain (oldest '
+				. ((int)($detection['oldest'] ?? 0)) . ' day(s) outstanding) — the period cannot be closed until they are resolved',
+		};
+	}//end flagMessage()
 
 	/**
 	 * Format a euro amount for a flag message.
@@ -428,4 +403,16 @@ class PeriodCloseAssistantService {
 
 		return $register;
 	}//end register()
+
+	/**
+	 * Query one schema of the configured register.
+	 *
+	 * @param string              $schema  The schema slug.
+	 * @param array<string,mixed> $filters Property filters.
+	 *
+	 * @return array<int,mixed>
+	 */
+	private function find(string $schema, array $filters): array {
+		return $this->objectService->setRegister($this->register())->setSchema($schema)->findAll(['filters' => $filters]);
+	}//end find()
 }//end class

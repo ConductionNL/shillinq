@@ -96,37 +96,36 @@ class InnovatieboxController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function aggregation(): JSONResponse {
-		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
-		$financialYear = trim((string)$this->request->getParam('financialYear', ''));
-
-		$error = $this->requireAdministration(administrationId: $administrationId);
+		$scope = new InnovatieboxYear(request: $this->request);
+		$error = $this->scopeRefusal(scope: $scope);
 		if ($error !== null) {
 			return $error;
 		}
 
-		$yearError = $this->requireYear(financialYear: $financialYear);
-		if ($yearError !== null) {
-			return $yearError;
-		}
+		return $this->aggregated(scope: $scope);
+	}//end aggregation()
 
+	/**
+	 * Aggregate the year; a failure is a logged 500.
+	 *
+	 * @param InnovatieboxYear $scope The validated scope.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-006
+	 */
+	private function aggregated(InnovatieboxYear $scope): JSONResponse {
 		try {
 			$result = $this->aggregation->aggregate(
-				administrationId: $administrationId,
-				financialYear: (int)$financialYear
+				administrationId: $scope->administrationId,
+				financialYear: $scope->year()
 			);
 		} catch (\Throwable $e) {
-			return $this->fail(
-				message: 'Failed to compute innovatiebox aggregation',
-				context: [
-					'administrationId' => $administrationId,
-					'financialYear' => $financialYear,
-					'exception' => $e->getMessage(),
-				]
-			);
+			return $this->fail(message: 'Failed to compute innovatiebox aggregation', context: $scope->logContext(e: $e));
 		}
 
 		return new JSONResponse($result, Http::STATUS_OK);
-	}//end aggregation()
+	}//end aggregated()
 
 	/**
 	 * Recalculate a nexus break for a what-if scenario without persisting (REQ-IBA-009).
@@ -161,12 +160,55 @@ class InnovatieboxController extends Controller {
 			return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		$eigen = $this->request->getParam('own_rd_cost', null);
-		$derden = $this->request->getParam('uitbesteed_derden', null);
-		$verbonden = $this->request->getParam('uitbesteed_verbonden', null);
+		$amounts = $this->postedAmounts();
+		$refusal = $this->amountRefusal(amounts: $amounts);
+		if ($refusal !== null) {
+			return $refusal;
+		}
 
-		foreach (['own_rd_cost' => $eigen, 'uitbesteed_derden' => $derden, 'uitbesteed_verbonden' => $verbonden] as $name => $value) {
-			if ($value === null || is_numeric($value) === false || (float)$value < 0.0) {
+		return $this->nexusBreak(amounts: $amounts);
+	}//end scenario()
+
+	/**
+	 * The posted R&D cost amounts by parameter name (null when absent).
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function postedAmounts(): array {
+		return [
+			'own_rd_cost' => $this->request->getParam('own_rd_cost', null),
+			'uitbesteed_derden' => $this->request->getParam('uitbesteed_derden', null),
+			'uitbesteed_verbonden' => $this->request->getParam('uitbesteed_verbonden', null),
+		];
+	}//end postedAmounts()
+
+	/**
+	 * The nexus break of the validated amounts.
+	 *
+	 * @param array<string, mixed> $amounts The validated amounts.
+	 *
+	 * @return JSONResponse
+	 */
+	private function nexusBreak(array $amounts): JSONResponse {
+		$result = $this->nexus->calculateNexusBreak(
+			eigenRdCost: (float)$amounts['own_rd_cost'],
+			uitbesteedDerden: (float)$amounts['uitbesteed_derden'],
+			uitbesteedVerbonden: (float)$amounts['uitbesteed_verbonden']
+		);
+
+		return new JSONResponse($result, Http::STATUS_OK);
+	}//end nexusBreak()
+
+	/**
+	 * The 400 for the first amount that is missing, not numeric or negative.
+	 *
+	 * @param array<string, mixed> $amounts The posted amounts by name.
+	 *
+	 * @return JSONResponse|null The refusal, or null.
+	 */
+	private function amountRefusal(array $amounts): ?JSONResponse {
+		foreach ($amounts as $name => $value) {
+			if ($this->isNonNegativeNumber(value: $value) === false) {
 				return new JSONResponse(
 					['error' => $name . ' must be a non-negative number'],
 					Http::STATUS_BAD_REQUEST
@@ -174,14 +216,19 @@ class InnovatieboxController extends Controller {
 			}
 		}
 
-		$result = $this->nexus->calculateNexusBreak(
-			eigenRdCost: (float)$eigen,
-			uitbesteedDerden: (float)$derden,
-			uitbesteedVerbonden: (float)$verbonden
-		);
+		return null;
+	}//end amountRefusal()
 
-		return new JSONResponse($result, Http::STATUS_OK);
-	}//end scenario()
+	/**
+	 * Whether a value is given, numeric and not negative.
+	 *
+	 * @param mixed $value The posted value.
+	 *
+	 * @return bool
+	 */
+	private function isNonNegativeNumber(mixed $value): bool {
+		return $value !== null && is_numeric($value) === true && (float)$value >= 0.0;
+	}//end isNonNegativeNumber()
 
 	/**
 	 * Run the doorsnijdingsverbod year-end check (REQ-IBA-004).
@@ -198,37 +245,36 @@ class InnovatieboxController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function doorsnijdingsverbod(): JSONResponse {
-		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
-		$financialYear = trim((string)$this->request->getParam('financialYear', ''));
-
-		$error = $this->requireAdministration(administrationId: $administrationId);
+		$scope = new InnovatieboxYear(request: $this->request);
+		$error = $this->scopeRefusal(scope: $scope);
 		if ($error !== null) {
 			return $error;
 		}
 
-		$yearError = $this->requireYear(financialYear: $financialYear);
-		if ($yearError !== null) {
-			return $yearError;
-		}
+		return $this->checkedForDuplication(scope: $scope);
+	}//end doorsnijdingsverbod()
 
+	/**
+	 * Check the year for doubly-claimed costs; a failure is a logged 500.
+	 *
+	 * @param InnovatieboxYear $scope The validated scope.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-006
+	 */
+	private function checkedForDuplication(InnovatieboxYear $scope): JSONResponse {
 		try {
 			$result = $this->doorsnijden->validateNoDuplication(
-				administrationId: $administrationId,
-				financialYear: (int)$financialYear
+				administrationId: $scope->administrationId,
+				financialYear: $scope->year()
 			);
 		} catch (\Throwable $e) {
-			return $this->fail(
-				message: 'Failed to run doorsnijdingsverbod check',
-				context: [
-					'administrationId' => $administrationId,
-					'financialYear' => $financialYear,
-					'exception' => $e->getMessage(),
-				]
-			);
+			return $this->fail(message: 'Failed to run doorsnijdingsverbod check', context: $scope->logContext(e: $e));
 		}
 
 		return new JSONResponse($result, Http::STATUS_OK);
-	}//end doorsnijdingsverbod()
+	}//end checkedForDuplication()
 
 	/**
 	 * Render the SBR/XBRL + docudesk PDF hand-off payload for the Vpb
@@ -252,20 +298,31 @@ class InnovatieboxController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function export(): JSONResponse {
-		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
-		$financialYear = trim((string)$this->request->getParam('financialYear', ''));
+		$scope = new InnovatieboxYear(request: $this->request);
 		$method = trim((string)$this->request->getParam('method', 'per_asset_afpelmethode'));
 
-		$error = $this->requireAdministration(administrationId: $administrationId);
+		$error = $this->scopeRefusal(scope: $scope) ?? $this->methodRefusal(method: $method);
 		if ($error !== null) {
 			return $error;
 		}
 
-		$yearError = $this->requireYear(financialYear: $financialYear);
-		if ($yearError !== null) {
-			return $yearError;
-		}
+		$export = new InnovatieboxExport(scope: $scope, method: $method);
+		try {
+			return $this->exported(export: $export);
+		} catch (\Throwable $e) {
+			return $this->fail(message: 'Failed to render innovatiebox SBR/PDF export', context: $export->logContext(e: $e));
+		}//end try
 
+	}//end export()
+
+	/**
+	 * The 400 for an export method outside the allowlist.
+	 *
+	 * @param string $method The trimmed method.
+	 *
+	 * @return JSONResponse|null The refusal, or null.
+	 */
+	private function methodRefusal(string $method): ?JSONResponse {
 		$allowed = ['per_asset_afpelmethode', 'flat_rate_25pct', 'cost_plus'];
 		if (in_array($method, $allowed, true) === false) {
 			return new JSONResponse(
@@ -274,43 +331,78 @@ class InnovatieboxController extends Controller {
 			);
 		}
 
-		try {
-			$aggregation = $this->aggregation->aggregate(
-				administrationId: $administrationId,
-				financialYear: (int)$financialYear
-			);
+		return null;
+	}//end methodRefusal()
 
-			$sbr = $this->sbrExport->toSbrInstancePayload(
-				aggregation: $aggregation,
-				administrationId: $administrationId,
-				financialYear: (int)$financialYear,
-				method: $method
-			);
-
-			$pdf = $this->sbrExport->toPdfRenderContext(
-				aggregation: $aggregation,
-				administrationId: $administrationId,
-				financialYear: (int)$financialYear,
-				method: $method
-			);
-		} catch (\Throwable $e) {
-			return $this->fail(
-				message: 'Failed to render innovatiebox SBR/PDF export',
-				context: [
-					'administrationId' => $administrationId,
-					'financialYear' => $financialYear,
-					'method' => $method,
-					'exception' => $e->getMessage(),
-				]
-			);
-		}//end try
-
-		return new JSONResponse(
-			['sbr' => $sbr, 'pdf' => $pdf],
-			Http::STATUS_OK
+	/**
+	 * The SBR instance payload and the PDF render context of one aggregation.
+	 *
+	 * @param InnovatieboxExport $export The export request.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-006
+	 */
+	private function exported(InnovatieboxExport $export): JSONResponse {
+		$aggregation = $this->aggregation->aggregate(
+			administrationId: $export->scope->administrationId,
+			financialYear: $export->scope->year()
 		);
 
-	}//end export()
+		return new JSONResponse(
+			[
+				'sbr' => $this->sbrPayload(export: $export, aggregation: $aggregation),
+				'pdf' => $this->pdfContext(export: $export, aggregation: $aggregation),
+			],
+			Http::STATUS_OK
+		);
+	}//end exported()
+
+	/**
+	 * The SBR instance payload of the aggregation.
+	 *
+	 * @param InnovatieboxExport   $export      The export request.
+	 * @param array<string, mixed> $aggregation The aggregation.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function sbrPayload(InnovatieboxExport $export, array $aggregation): array {
+		return $this->sbrExport->toSbrInstancePayload(
+			aggregation: $aggregation,
+			administrationId: $export->scope->administrationId,
+			financialYear: $export->scope->year(),
+			method: $export->method
+		);
+	}//end sbrPayload()
+
+	/**
+	 * The PDF render context of the aggregation.
+	 *
+	 * @param InnovatieboxExport   $export      The export request.
+	 * @param array<string, mixed> $aggregation The aggregation.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function pdfContext(InnovatieboxExport $export, array $aggregation): array {
+		return $this->sbrExport->toPdfRenderContext(
+			aggregation: $aggregation,
+			administrationId: $export->scope->administrationId,
+			financialYear: $export->scope->year(),
+			method: $export->method
+		);
+	}//end pdfContext()
+
+	/**
+	 * The 400 for a missing or malformed administration, then for a malformed year.
+	 *
+	 * @param InnovatieboxYear $scope The request scope.
+	 *
+	 * @return JSONResponse|null The refusal, or null.
+	 */
+	private function scopeRefusal(InnovatieboxYear $scope): ?JSONResponse {
+		return $this->requireAdministration(administrationId: $scope->administrationId)
+			?? $this->requireYear(financialYear: $scope->financialYear);
+	}//end scopeRefusal()
 
 	/**
 	 * Validate the administration_id parameter (REQ-IBA-008).

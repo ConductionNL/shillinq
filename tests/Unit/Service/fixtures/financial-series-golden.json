@@ -1,0 +1,221 @@
+{
+    "months range": [
+        "2025-11",
+        "2025-12",
+        "2026-01",
+        "2026-02"
+    ],
+    "months bad": [
+        [],
+        [],
+        []
+    ],
+    "classes": {
+        "revenue": {
+            "8000": true
+        },
+        "expenses": {
+            "4000": true
+        },
+        "liquid": {
+            "1000": true,
+            "1100": true
+        }
+    },
+    "series": {
+        "months": [
+            "2026-01",
+            "2026-02",
+            "2026-03",
+            "2026-04"
+        ],
+        "revenue": [
+            1000.0,
+            0.0,
+            -50.0,
+            0.0
+        ],
+        "costs": [
+            0.0,
+            300.33,
+            0.0,
+            0.0
+        ],
+        "margin": [
+            1000.0,
+            -300.33,
+            -50.0,
+            0.0
+        ],
+        "marginPct": [
+            100.0,
+            null,
+            null,
+            null
+        ],
+        "cashIn": [
+            1000.0,
+            0.0,
+            0.0,
+            0.0
+        ],
+        "cashOut": [
+            0.0,
+            300.33,
+            0.0,
+            0.0
+        ],
+        "cashNet": [
+            1000.0,
+            -300.33,
+            0.0,
+            0.0
+        ]
+    },
+    "series empty": {
+        "months": [],
+        "revenue": [],
+        "costs": [],
+        "margin": [],
+        "marginPct": [],
+        "cashIn": [],
+        "cashOut": [],
+        "cashNet": []
+    },
+    "billable": {
+        "billable": [
+            4.0,
+            0.0,
+            6.0,
+            0.0
+        ],
+        "nonBillable": [
+            0.0,
+            0.0,
+            2.0,
+            0.0
+        ],
+        "pct": [
+            100.0,
+            null,
+            75.0,
+            null
+        ]
+    },
+    "ar": [
+        {
+            "id": "i4",
+            "invoiceNumber": "",
+            "party": "Beta",
+            "invoiceDate": "",
+            "dueDate": "2026-01-20",
+            "amount": 0.0,
+            "state": "issued",
+            "overdue": true
+        },
+        {
+            "id": "i1",
+            "invoiceNumber": "F1",
+            "party": "Acme",
+            "invoiceDate": "2026-02-10",
+            "dueDate": "2026-03-10",
+            "amount": 121.0,
+            "state": "issued",
+            "overdue": true
+        },
+        {
+            "id": "i2",
+            "invoiceNumber": "F2",
+            "party": "c9",
+            "invoiceDate": "",
+            "dueDate": "2026-04-30",
+            "amount": 50.5,
+            "state": "overdue",
+            "overdue": true
+        }
+    ],
+    "ap": [
+        {
+            "id": "a2",
+            "invoiceNumber": "",
+            "party": "Gamma",
+            "invoiceDate": "",
+            "dueDate": "",
+            "amount": 19.99,
+            "state": "received",
+            "overdue": false
+        },
+        {
+            "id": "a1",
+            "invoiceNumber": "V1",
+            "party": "Delta",
+            "invoiceDate": "",
+            "dueDate": "2026-03-20",
+            "amount": 80.0,
+            "state": "partially-paid",
+            "overdue": false
+        }
+    ],
+    "kpis": {
+        "turnoverYtd": 950.0,
+        "marginYtd": 649.67,
+        "marginPctYtd": 68.39,
+        "openArAmount": 171.5,
+        "openArCount": 3,
+        "openApAmount": 99.99,
+        "openApCount": 2,
+        "billableHours": 6.0,
+        "billablePct": 75.0,
+        "cashPosition": 699.67
+    },
+    "kpis empty": {
+        "turnoverYtd": 0.0,
+        "marginYtd": 0.0,
+        "marginPctYtd": null,
+        "openArAmount": 0.0,
+        "openArCount": 0,
+        "openApAmount": 0.0,
+        "openApCount": 0,
+        "billableHours": 0.0,
+        "billablePct": null,
+        "cashPosition": 0.0
+    },
+    "range kpis": {
+        "turnover": 950.0,
+        "margin": 649.67,
+        "marginPct": 68.39,
+        "billableHours": 10.0,
+        "billablePct": 83.33
+    },
+    "range kpis empty": {
+        "turnover": 0.0,
+        "margin": 0.0,
+        "marginPct": null,
+        "billableHours": 0.0,
+        "billablePct": null
+    },
+    "cash by account": {
+        "accounts": [
+            {
+                "bankAccountId": "b1",
+                "accountName": "ING",
+                "iban": "NL01ING0001",
+                "ledgerAccountNumber": "1100",
+                "ledgerBalance": -300.33,
+                "bankBalance": 20.0,
+                "bankBalanceDate": "2026-03-01"
+            },
+            {
+                "bankAccountId": "b2",
+                "accountName": "Spaar",
+                "iban": "NL02RABO0002",
+                "ledgerAccountNumber": "2000",
+                "ledgerBalance": 50.0,
+                "bankBalance": null,
+                "bankBalanceDate": null
+            }
+        ],
+        "other": 1000.0,
+        "total": 749.67
+    }
+}

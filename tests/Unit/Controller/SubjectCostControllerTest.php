@@ -354,4 +354,51 @@ final class SubjectCostControllerTest extends TestCase {
 
 		self::assertSame(Http::STATUS_OK, $controller->index()->getStatus());
 	}
+	/**
+	 * The refusal bodies, the trimmed inputs passed on, and the failure log context.
+	 *
+	 * @return void
+	 */
+	public function testRefusalBodiesTrimmedInputsAndFailureLog(): void {
+		$this->context->method('currentUserId')->willReturn('alice');
+		$this->context->method('accessibleAdministrationIds')->willReturn(['adm-1']);
+		$this->withParams(['subjectApp' => ' dossiq ', 'subjectId' => ' case-1 ', 'period' => ' 2026-03 ']);
+		$this->costs->expects(self::once())->method('costFor')
+			->with('dossiq', 'case-1', ['adm-1'], '2026-03')
+			->willThrowException(new RuntimeException('boom'));
+		$this->logger->expects(self::once())->method('error')->with(
+			'SubjectCostController: failed to compute a subject cost',
+			['subjectApp' => 'dossiq', 'subjectId' => 'case-1', 'exception' => 'boom']
+		);
+
+		self::assertSame(['error' => 'Failed to compute the subject cost'], $this->controller()->index()->getData());
+	}
+
+	/**
+	 * Each refusal answers its own error body.
+	 *
+	 * @return void
+	 */
+	public function testRefusalBodies(): void {
+		$this->context->method('currentUserId')->willReturnOnConsecutiveCalls(null, 'alice', 'alice', 'alice', 'alice');
+		$this->context->method('accessibleAdministrationIds')->willReturn([]);
+		$this->context->method('canAccess')->willReturn(false);
+		$params = [];
+		$this->request->method('getParam')->willReturnCallback(
+			static function (string $name, mixed $default = null) use (&$params): mixed {
+				return ($params[$name] ?? $default);
+			}
+		);
+		$controller = $this->controller();
+
+		self::assertSame(['error' => 'Not authenticated'], $controller->index()->getData());
+		$params = ['subjectApp' => 'dossiq'];
+		self::assertSame(['error' => 'subjectApp and subjectId are required'], $controller->index()->getData());
+		$params = ['subjectApp' => 'dossiq', 'subjectId' => 'c', 'period' => '2026-3'];
+		self::assertSame(['error' => 'period must be YYYY-MM'], $controller->index()->getData());
+		$params = ['subjectApp' => 'dossiq', 'subjectId' => 'c', 'administrationId' => 'adm-9'];
+		self::assertSame(['error' => 'Not found'], $controller->index()->getData());
+		$params = ['subjectApp' => 'dossiq', 'subjectId' => 'c'];
+		self::assertSame(['error' => 'No accessible administration'], $controller->index()->getData());
+	}
 }//end class

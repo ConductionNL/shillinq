@@ -56,14 +56,42 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-26
  */
 class WbsoAccountApiController extends Controller {
-	use WbsoAdministrationScopeTrait;
-
 	/**
 	 * Identifier-safe slug pattern (REQ-WBSO-005 / ADR-005).
 	 *
 	 * @var string
 	 */
 	private const ID_PATTERN = '/^[A-Za-z0-9_.\\-]{1,64}$/';
+
+	/**
+	 * The fields a new account is created from, when sent.
+	 *
+	 * @var array<int,string>
+	 */
+	private const CREATE_FIELDS = [
+		'accountNumber',
+		'name',
+		'accountType',
+		'parentAccountNumber',
+		'status',
+		'currency',
+		'description',
+		'vatApplicable',
+	];
+
+	/**
+	 * The fields an account update may change, when sent.
+	 *
+	 * @var array<int,string>
+	 */
+	private const UPDATE_FIELDS = [
+		'name',
+		'parentAccountNumber',
+		'status',
+		'currency',
+		'description',
+		'vatApplicable',
+	];
 
 	/**
 	 * Construct the controller.
@@ -97,14 +125,9 @@ class WbsoAccountApiController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
-		$authError = $this->requireAuthenticatedReader();
-		if ($authError !== null) {
-			return $authError;
-		}
-
-		$administrationId = $this->resolveAdministration();
-		if ($administrationId === null) {
-			return $this->administrationNotFound();
+		$administrationId = $this->guard()->read();
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
 		}
 
 		try {
@@ -113,13 +136,7 @@ class WbsoAccountApiController extends Controller {
 			return $this->fail(message: 'Failed to load accounts', context: ['exception' => $e->getMessage()]);
 		}
 
-		return new JSONResponse(
-			[
-				'accounts' => $rows,
-				'canCreate' => $this->rbac->hasAny(['administrator']),
-			],
-			Http::STATUS_OK
-		);
+		return $this->withCanCreate(body: ['accounts' => $rows]);
 
 	}//end index()
 
@@ -132,14 +149,9 @@ class WbsoAccountApiController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function hierarchy(): JSONResponse {
-		$authError = $this->requireAuthenticatedReader();
-		if ($authError !== null) {
-			return $authError;
-		}
-
-		$administrationId = $this->resolveAdministration();
-		if ($administrationId === null) {
-			return $this->administrationNotFound();
+		$administrationId = $this->guard()->read();
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
 		}
 
 		try {
@@ -148,13 +160,7 @@ class WbsoAccountApiController extends Controller {
 			return $this->fail(message: 'Failed to load chart-of-accounts', context: ['exception' => $e->getMessage()]);
 		}
 
-		return new JSONResponse(
-			[
-				'tree' => $tree,
-				'canCreate' => $this->rbac->hasAny(['administrator']),
-			],
-			Http::STATUS_OK
-		);
+		return $this->withCanCreate(body: ['tree' => $tree]);
 
 	}//end hierarchy()
 
@@ -169,34 +175,22 @@ class WbsoAccountApiController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function show(string $accountNumber): JSONResponse {
-		$authError = $this->requireAuthenticatedReader();
-		if ($authError !== null) {
-			return $authError;
-		}
-
-		$administrationId = $this->resolveAdministration();
-		if ($administrationId === null) {
-			return $this->administrationNotFound();
+		$administrationId = $this->guard()->read();
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
 		}
 
 		if (preg_match(self::ID_PATTERN, $accountNumber) !== 1) {
-			return new JSONResponse(['error' => 'Invalid accountNumber'], Http::STATUS_BAD_REQUEST);
+			return $this->invalidAccountNumber();
 		}
 
 		try {
-			$row = $this->accounts->getAccountByNumber(
-				administrationId: $administrationId,
-				accountNumber: $accountNumber,
-			);
+			$row = $this->accountByNumber(administrationId: $administrationId, accountNumber: $accountNumber);
 		} catch (\Throwable $e) {
 			return $this->fail(message: 'Failed to load account', context: ['exception' => $e->getMessage()]);
 		}
 
-		if ($row === null) {
-			return new JSONResponse(['error' => 'Account not found'], Http::STATUS_NOT_FOUND);
-		}
-
-		return new JSONResponse($row, Http::STATUS_OK);
+		return $this->rowOrNotFound(row: $row);
 	}//end show()
 
 	/**
@@ -208,47 +202,17 @@ class WbsoAccountApiController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function create(): JSONResponse {
-		$authError = $this->requireAuthenticatedReader();
-		if ($authError !== null) {
-			return $authError;
+		$administrationId = $this->guard()->write(roles: ['administrator'], refusal: 'Administrator role required');
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
 		}
 
-		if ($this->rbac->hasAny(['administrator']) === false) {
-			return new JSONResponse(['error' => 'Administrator role required'], Http::STATUS_FORBIDDEN);
-		}
-
-		$administrationId = $this->resolveAdministration();
-		if ($administrationId === null) {
-			return $this->administrationNotFound();
-		}
-
-		$payload = $this->collectPayload(
-			fields: [
-				'accountNumber',
-				'name',
-				'accountType',
-				'parentAccountNumber',
-				'status',
-				'currency',
-				'description',
-				'vatApplicable',
-			]
-		);
+		$payload = $this->collectPayload(fields: self::CREATE_FIELDS);
 
 		try {
 			$row = $this->accounts->createAccount(administrationId: $administrationId, payload: $payload);
 		} catch (InvalidArgumentException $e) {
-			$this->logger->error(
-				'WbsoAccountApiController: account creation payload rejected',
-				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(
-				[
-					'message' => $this->l10n->t('Unable to create account: the submitted details are invalid'),
-					'error' => 'wbso-account-create-failed',
-				],
-				Http::STATUS_BAD_REQUEST,
-			);
+			return $this->invalidAccount(administrationId: $administrationId, failure: $e);
 		} catch (\Throwable $e) {
 			return $this->fail(message: 'Failed to create account', context: ['exception' => $e->getMessage()]);
 		}
@@ -267,77 +231,17 @@ class WbsoAccountApiController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function update(string $accountNumber): JSONResponse {
-		$authError = $this->requireAuthenticatedReader();
-		if ($authError !== null) {
-			return $authError;
-		}
-
-		if ($this->rbac->hasAny(['administrator']) === false) {
-			return new JSONResponse(['error' => 'Administrator role required'], Http::STATUS_FORBIDDEN);
-		}
-
-		$administrationId = $this->resolveAdministration();
-		if ($administrationId === null) {
-			return $this->administrationNotFound();
+		$administrationId = $this->guard()->write(roles: ['administrator'], refusal: 'Administrator role required');
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
 		}
 
 		if (preg_match(self::ID_PATTERN, $accountNumber) !== 1) {
-			return new JSONResponse(['error' => 'Invalid accountNumber'], Http::STATUS_BAD_REQUEST);
+			return $this->invalidAccountNumber();
 		}
 
-		$payload = $this->collectPayload(
-			fields: [
-				'name',
-				'parentAccountNumber',
-				'status',
-				'currency',
-				'description',
-				'vatApplicable',
-			]
-		);
-
-		try {
-			$row = $this->accounts->updateAccount(
-				administrationId: $administrationId,
-				accountNumber: $accountNumber,
-				payload: $payload,
-			);
-		} catch (InvalidArgumentException $e) {
-			// Match "not found" vs validation distinct status codes.
-			if ($e->getMessage() === 'Account not found') {
-				return new JSONResponse(['error' => 'Account not found'], Http::STATUS_NOT_FOUND);
-			}
-
-			$this->logger->error(
-				'WbsoAccountApiController: account update payload rejected',
-				['administrationId' => $administrationId, 'accountNumber' => $accountNumber, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(
-				[
-					'message' => $this->l10n->t('Unable to update account: the submitted details are invalid'),
-					'error' => 'wbso-account-update-failed',
-				],
-				Http::STATUS_BAD_REQUEST,
-			);
-		} catch (\Throwable $e) {
-			return $this->fail(message: 'Failed to update account', context: ['exception' => $e->getMessage()]);
-		}
-
-		return new JSONResponse($row, Http::STATUS_OK);
+		return $this->updateAccount(administrationId: $administrationId, accountNumber: $accountNumber);
 	}//end update()
-
-	/**
-	 * Common precondition: a user must be authenticated to read any data.
-	 *
-	 * @return JSONResponse|null
-	 */
-	private function requireAuthenticatedReader(): ?JSONResponse {
-		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
-		}
-
-		return null;
-	}//end requireAuthenticatedReader()
 
 	/**
 	 * Collect a request payload from query params or JSON body.
@@ -373,4 +277,162 @@ class WbsoAccountApiController extends Controller {
 
 		return new JSONResponse(['error' => $message], Http::STATUS_INTERNAL_SERVER_ERROR);
 	}//end fail()
+
+	/**
+	 * The access steps of this API.
+	 *
+	 * @return WbsoActionGuard
+	 */
+	private function guard(): WbsoActionGuard {
+		return new WbsoActionGuard(
+			caller: new WbsoCallerCheck(userSession: $this->userSession, rbac: $this->rbac),
+			scope: new WbsoAdministrationScope(request: $this->request, administrationContext: $this->administrationContext),
+		);
+
+	}//end guard()
+
+	/**
+	 * A listing response, with whether the caller may create accounts.
+	 *
+	 * @param array<string,mixed> $body The listing.
+	 *
+	 * @return JSONResponse
+	 */
+	private function withCanCreate(array $body): JSONResponse {
+		$body['canCreate'] = $this->rbac->hasAny(['administrator']);
+		return new JSONResponse($body, Http::STATUS_OK);
+
+	}//end withCanCreate()
+
+	/**
+	 * The 400 for a malformed account number.
+	 *
+	 * @return JSONResponse
+	 */
+	private function invalidAccountNumber(): JSONResponse {
+		return new JSONResponse(['error' => 'Invalid accountNumber'], Http::STATUS_BAD_REQUEST);
+
+	}//end invalidAccountNumber()
+
+	/**
+	 * Answer an account the service rejected as invalid with a 400.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param InvalidArgumentException $failure The rejection.
+	 *
+	 * @return JSONResponse
+	 */
+	private function invalidAccount(string $administrationId, InvalidArgumentException $failure): JSONResponse {
+		$this->logger->error(
+			'WbsoAccountApiController: account creation payload rejected',
+			['administrationId' => $administrationId, 'exception' => $failure->getMessage()]
+		);
+		return new JSONResponse(
+			[
+				'message' => $this->l10n->t('Unable to create account: the submitted details are invalid'),
+				'error' => 'wbso-account-create-failed',
+			],
+			Http::STATUS_BAD_REQUEST,
+		);
+
+	}//end invalidAccount()
+
+	/**
+	 * Update the account with the fields the request sends: 404 when the
+	 * service does not know it, 400 when the update is invalid.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $accountNumber The account.
+	 *
+	 * @return JSONResponse
+	 */
+	private function updateAccount(string $administrationId, string $accountNumber): JSONResponse {
+		$payload = $this->collectPayload(fields: self::UPDATE_FIELDS);
+
+		try {
+			$row = $this->accounts->updateAccount(
+				administrationId: $administrationId,
+				accountNumber: $accountNumber,
+				payload: $payload,
+			);
+		} catch (InvalidArgumentException $e) {
+			return $this->rejectedUpdate(context: ['administrationId' => $administrationId, 'accountNumber' => $accountNumber], failure: $e);
+		} catch (\Throwable $e) {
+			return $this->fail(message: 'Failed to update account', context: ['exception' => $e->getMessage()]);
+		}
+
+		return new JSONResponse($row, Http::STATUS_OK);
+
+	}//end updateAccount()
+
+	/**
+	 * Answer an update the service rejected: 404 for an unknown account,
+	 * otherwise a logged 400.
+	 *
+	 * @param array<string,string> $context The administration and account, for the log.
+	 * @param InvalidArgumentException $failure The rejection.
+	 *
+	 * @return JSONResponse
+	 */
+	private function rejectedUpdate(array $context, InvalidArgumentException $failure): JSONResponse {
+		// Match "not found" vs validation distinct status codes.
+		if ($failure->getMessage() === 'Account not found') {
+			return new JSONResponse(['error' => 'Account not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		return $this->invalidUpdate(context: $context + ['exception' => $failure->getMessage()]);
+
+	}//end rejectedUpdate()
+
+	/**
+	 * Answer an update the service rejected as invalid with a logged 400.
+	 *
+	 * @param array<string,string> $context The log context.
+	 *
+	 * @return JSONResponse
+	 */
+	private function invalidUpdate(array $context): JSONResponse {
+		$this->logger->error('WbsoAccountApiController: account update payload rejected', $context);
+		return new JSONResponse(
+			[
+				'message' => $this->l10n->t('Unable to update account: the submitted details are invalid'),
+				'error' => 'wbso-account-update-failed',
+			],
+			Http::STATUS_BAD_REQUEST,
+		);
+
+	}//end invalidUpdate()
+
+	/**
+	 * Look the account up by its number.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $accountNumber The account number.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function accountByNumber(string $administrationId, string $accountNumber): ?array {
+		return $this->accounts->getAccountByNumber(
+			administrationId: $administrationId,
+			accountNumber: $accountNumber,
+		);
+
+	}//end accountByNumber()
+
+	/**
+	 * The account, or a 404 when there is none.
+	 *
+	 * @param array<string,mixed>|null $row The account.
+	 *
+	 * @return JSONResponse
+	 */
+	private function rowOrNotFound(?array $row): JSONResponse {
+		if ($row === null) {
+			return new JSONResponse(['error' => 'Account not found'], Http::STATUS_NOT_FOUND);
+		}
+
+		return new JSONResponse($row, Http::STATUS_OK);
+
+	}//end rowOrNotFound()
+
 }//end class

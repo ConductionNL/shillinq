@@ -56,16 +56,12 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Imperative FIFO cost layer engine driving {@see CogsPosterService}.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
- * @SuppressWarnings(PHPMD.ElseExpression)         Pre-existing style debt (issue
- *     #506): early-return refactor deferred pending full behavioral
- *     verification of each branch.
  *
  * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-7
  */
@@ -106,129 +102,61 @@ class FifoValuationService {
 	 * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-7
 	 */
 	public function processStockMove(array $move): array {
-		$movementType = (string)($move['movementType'] ?? '');
-		if (in_array($movementType, ['receipt', 'issue'], true) === false) {
-			// Transfer / manufacture / repack don't drive FIFO valuation directly.
-			return [
-				'processed' => false,
-				'message' => 'movementType ' . $movementType . ' is not a FIFO trigger',
-			];
+		$key = new StockMoveValuationKey(move: $move);
+		// Transfer / manufacture / repack don't drive FIFO valuation directly.
+		$refusal = $key->refusal(triggerLabel: 'a FIFO trigger');
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
-		$productId = (string)($move['itemId'] ?? '');
-		if ($movementType === 'receipt') {
-			$warehouse = (string)($move['destinationLocationId'] ?? '');
-		} else {
-			$warehouse = (string)($move['sourceLocationId'] ?? '');
+		$valuation = $this->findOrCreateValuation(key: $key);
+		if ($key->isRetryOf(valuation: $valuation) === true) {
+			// Idempotent retry guard per REQ-INV-003 scenario.
+			return $this->skipRetry(key: $key, valuation: $valuation);
 		}
 
-		$administrationId = (string)($move['administrationId'] ?? '');
-		$moveUuid = (string)($move['uuid'] ?? ($move['@self']['uuid'] ?? ($move['id'] ?? '')));
-
-		if ($productId === '' || $warehouse === '' || $administrationId === '' || $moveUuid === '') {
-			return [
-				'processed' => false,
-				'message' => 'StockMove missing itemId / location / administrationId / uuid',
-			];
+		if ($key->movementType === 'receipt') {
+			return $this->processReceipt(key: $key, valuation: $valuation);
 		}
 
-		$valuation = $this->findOrCreateValuation(
-			productId: $productId,
-			warehouse: $warehouse,
-			administrationId: $administrationId
-		);
-
-		// Idempotent retry guard per REQ-INV-003 scenario.
-		if ((string)($valuation['lastStockMoveUuid'] ?? '') === $moveUuid) {
-			$this->logger->info(
-				'FifoValuationService: idempotent retry — skipping',
-				[
-					'productId' => $productId,
-					'warehouse' => $warehouse,
-					'moveUuid' => $moveUuid,
-				]
-			);
-			return [
-				'processed' => false,
-				'valuation' => $valuation,
-				'cogsCents' => 0,
-				'cogsBasis' => [],
-				'message' => 'idempotent retry',
-			];
-		}
-
-		if ($movementType === 'receipt') {
-			return $this->processReceipt(
-				move: $move,
-				valuation: $valuation,
-				moveUuid: $moveUuid,
-				productId: $productId,
-				warehouse: $warehouse,
-				administrationId: $administrationId
-			);
-		}
-
-		return $this->processIssue(
-			move: $move,
-			valuation: $valuation,
-			moveUuid: $moveUuid,
-			productId: $productId,
-			warehouse: $warehouse,
-			administrationId: $administrationId
-		);
+		return $this->processIssue(key: $key, valuation: $valuation);
 
 	}//end processStockMove()
 
 	/**
-	 * Recompute the snapshot from open inbound lots, no COGS to post.
+	 * Log and skip a move the valuation already recorded.
 	 *
-	 * @param array<string,mixed> $move The receipt StockMove.
-	 * @param array<string,mixed> $valuation Current snapshot.
-	 * @param string $moveUuid Idempotency key.
-	 * @param string $productId Product / item id.
-	 * @param string $warehouse Warehouse location id.
-	 * @param string $administrationId Tenant scope.
+	 * @param StockMoveValuationKey $key       The move's valuation key.
+	 * @param array<string,mixed>   $valuation The active valuation.
 	 *
 	 * @return array<string,mixed> Result envelope.
 	 */
-	private function processReceipt(
-		array $move,
-		array $valuation,
-		string $moveUuid,
-		string $productId,
-		string $warehouse,
-		string $administrationId,
-	): array {
-		$openLots = $this->openInboundLots(
-			productId: $productId,
-			warehouse: $warehouse,
-			administrationId: $administrationId
-		);
+	private function skipRetry(StockMoveValuationKey $key, array $valuation): array {
+		$this->logger->info('FifoValuationService: idempotent retry — skipping', $key->logContext());
+		return [
+			'processed' => false,
+			'valuation' => $valuation,
+			'cogsCents' => 0,
+			'cogsBasis' => [],
+			'message' => 'idempotent retry',
+		];
+	}//end skipRetry()
 
-		$consumedQty = $this->consumedQtyFromHistory(
-			productId: $productId,
-			warehouse: $warehouse,
-			administrationId: $administrationId
-		);
-
-		$remainingLots = $this->residualLotsAfterConsumption(
-			openLots: $openLots,
-			consumedQty: $consumedQty
-		);
-
-		$snapshot = $this->snapshotFromLots(remainingLots: $remainingLots);
-
-		$valuation['quantity'] = $snapshot['quantity'];
-		$valuation['unitCost'] = $snapshot['unitCost'];
-		$valuation['totalValue'] = $snapshot['totalValue'];
-		$valuation['date'] = (string)($move['postedAt'] ?? ($move['draftedAt'] ?? ''));
-		$valuation['lastStockMoveUuid'] = $moveUuid;
-
-		$saved = $this->saveValuation(data: $valuation);
+	/**
+	 * Recompute the snapshot from open inbound lots, no COGS to post.
+	 *
+	 * @param StockMoveValuationKey $key       The receipt's valuation key.
+	 * @param array<string,mixed>   $valuation Current snapshot.
+	 *
+	 * @return array<string,mixed> Result envelope.
+	 */
+	private function processReceipt(StockMoveValuationKey $key, array $valuation): array {
+		$remainingLots = $this->availableLots(key: $key, excludeMoveUuid: null);
+		$valuation = $key->stamp(valuation: $this->withSnapshot(valuation: $valuation, remainingLots: $remainingLots));
 
 		return [
 			'processed' => true,
-			'valuation' => $saved,
+			'valuation' => $this->saveValuation(data: $valuation),
 			'cogsCents' => 0,
 			'cogsBasis' => [],
 			'message' => 'receipt processed',
@@ -237,26 +165,15 @@ class FifoValuationService {
 	}//end processReceipt()
 
 	/**
-	 * Walk open lots oldest-first, deduct outbound qty, return cogs basis.
+	 * Consume the oldest lots for an issue and post its COGS basis.
 	 *
-	 * @param array<string,mixed> $move The issue StockMove.
-	 * @param array<string,mixed> $valuation Current snapshot.
-	 * @param string $moveUuid Idempotency key.
-	 * @param string $productId Product / item id.
-	 * @param string $warehouse Warehouse location id.
-	 * @param string $administrationId Tenant scope.
+	 * @param StockMoveValuationKey $key       The issue's valuation key.
+	 * @param array<string,mixed>   $valuation Current snapshot.
 	 *
-	 * @return array<string,mixed> Result envelope including cogsBasis.
+	 * @return array<string,mixed> Result envelope.
 	 */
-	private function processIssue(
-		array $move,
-		array $valuation,
-		string $moveUuid,
-		string $productId,
-		string $warehouse,
-		string $administrationId,
-	): array {
-		$outboundQty = (float)($move['quantity'] ?? 0);
+	private function processIssue(StockMoveValuationKey $key, array $valuation): array {
+		$outboundQty = (float)($key->move['quantity'] ?? 0);
 		if ($outboundQty <= 0) {
 			return [
 				'processed' => false,
@@ -264,93 +181,77 @@ class FifoValuationService {
 			];
 		}
 
-		$openLots = $this->openInboundLots(
-			productId: $productId,
-			warehouse: $warehouse,
-			administrationId: $administrationId
-		);
-
 		// Subtract historical outbound consumption (excluding the current move).
-		$consumedQty = $this->consumedQtyFromHistory(
-			productId: $productId,
-			warehouse: $warehouse,
-			administrationId: $administrationId,
-			excludeMoveUuid: $moveUuid
-		);
-		$availableLots = $this->residualLotsAfterConsumption(
-			openLots: $openLots,
-			consumedQty: $consumedQty
-		);
+		$allocation = new FifoIssueAllocation(outboundQty: $outboundQty);
+		$allocation->allocate(availableLots: $this->availableLots(key: $key, excludeMoveUuid: $key->moveUuid));
+		$this->warnOnShortfall(key: $key, allocation: $allocation);
 
-		$totalAvailable = 0.0;
-		foreach ($availableLots as $lot) {
-			$totalAvailable += (float)$lot['quantity'];
-		}
-
-		if ($totalAvailable + 1e-9 < $outboundQty) {
-			$this->logger->warning(
-				'FifoValuationService: outbound exceeds available FIFO lots — partial allocation',
-				[
-					'productId' => $productId,
-					'warehouse' => $warehouse,
-					'outboundQty' => $outboundQty,
-					'totalAvailable' => $totalAvailable,
-				]
-			);
-		}
-
-		// Walk lots oldest-first, deduct, build cogs basis.
-		$remaining = $outboundQty;
-		$cogsBasis = [];
-		$cogsCents = 0;
-		$residualLots = [];
-
-		foreach ($availableLots as $lot) {
-			$lotQty = (float)$lot['quantity'];
-			$lotCost = (float)$lot['unitCost'];
-			if ($remaining <= 0) {
-				$residualLots[] = $lot;
-				continue;
-			}
-
-			$take = min($lotQty, $remaining);
-			$takeCents = (int)round($take * $lotCost * 100);
-			$cogsCents += $takeCents;
-			$cogsBasis[] = [
-				'lotCost' => $lotCost,
-				'quantity' => $take,
-			];
-			$remaining -= $take;
-
-			$left = ($lotQty - $take);
-			if ($left > 0) {
-				$residualLots[] = [
-					'quantity' => $left,
-					'unitCost' => $lotCost,
-					'postedAt' => $lot['postedAt'],
-				];
-			}
-		}//end foreach
-
-		$snapshot = $this->snapshotFromLots(remainingLots: $residualLots);
-
-		$valuation['quantity'] = $snapshot['quantity'];
-		$valuation['unitCost'] = $snapshot['unitCost'];
-		$valuation['totalValue'] = $snapshot['totalValue'];
-		$valuation['date'] = (string)($move['postedAt'] ?? ($move['draftedAt'] ?? ''));
-		$valuation['lastStockMoveUuid'] = $moveUuid;
-
-		$saved = $this->saveValuation(data: $valuation);
-
+		$valuation = $key->stamp(valuation: $this->withSnapshot(valuation: $valuation, remainingLots: $allocation->residualLots));
 		return [
 			'processed' => true,
-			'valuation' => $saved,
-			'cogsCents' => $cogsCents,
-			'cogsBasis' => $cogsBasis,
+			'valuation' => $this->saveValuation(data: $valuation),
+			'cogsCents' => $allocation->cogsCents,
+			'cogsBasis' => $allocation->cogsBasis,
 			'message' => 'issue processed',
 		];
 
 	}//end processIssue()
+
+	/**
+	 * Warn when an issue asks for more than the available FIFO lots hold.
+	 *
+	 * @param StockMoveValuationKey $key        The issue's valuation key.
+	 * @param FifoIssueAllocation   $allocation The allocation over the available lots.
+	 *
+	 * @return void
+	 */
+	private function warnOnShortfall(StockMoveValuationKey $key, FifoIssueAllocation $allocation): void {
+		if ($allocation->isShort() === true) {
+			$this->logger->warning(
+				'FifoValuationService: outbound exceeds available FIFO lots — partial allocation',
+				[
+					'productId' => $key->productId,
+					'warehouse' => $key->warehouse,
+					'outboundQty' => $allocation->outboundQty,
+					'totalAvailable' => $allocation->totalAvailable,
+				]
+			);
+		}
+	}//end warnOnShortfall()
+
+	/**
+	 * The open inbound lots left after historical outbound consumption.
+	 *
+	 * @param StockMoveValuationKey $key             The move's valuation key.
+	 * @param string|null           $excludeMoveUuid An issue to leave out of the history.
+	 *
+	 * @return array<int,array<string,mixed>> The remaining lots, oldest first.
+	 */
+	private function availableLots(StockMoveValuationKey $key, ?string $excludeMoveUuid): array {
+		$openLots = $this->openInboundLots(key: $key);
+		$consumedQty = $this->consumedQtyFromHistory(key: $key, excludeMoveUuid: $excludeMoveUuid);
+
+		return $this->residualLotsAfterConsumption(
+			openLots: $openLots,
+			consumedQty: $consumedQty
+		);
+	}//end availableLots()
+
+	/**
+	 * A valuation with the quantity, unit cost and total value of a lot set.
+	 *
+	 * @param array<string,mixed>            $valuation     The snapshot.
+	 * @param array<int,array<string,mixed>> $remainingLots The lots it holds.
+	 *
+	 * @return array<string,mixed> The updated snapshot.
+	 */
+	private function withSnapshot(array $valuation, array $remainingLots): array {
+		$snapshot = $this->snapshotFromLots(remainingLots: $remainingLots);
+		$valuation['quantity'] = $snapshot['quantity'];
+		$valuation['unitCost'] = $snapshot['unitCost'];
+		$valuation['totalValue'] = $snapshot['totalValue'];
+		return $valuation;
+	}//end withSnapshot()
 
 	/**
 	 * Compute snapshot (quantity, weighted-avg unitCost, totalValue) from
@@ -427,35 +328,29 @@ class FifoValuationService {
 	 * Load all posted, non-cancelled inbound StockMove records for the
 	 * (product, warehouse, administration) tuple, ordered chronologically.
 	 *
-	 * @param string $productId Product id.
-	 * @param string $warehouse Destination location id (the warehouse).
-	 * @param string $administrationId Tenant scope.
+	 * @param StockMoveValuationKey $key The move's valuation key (product, warehouse, tenant).
 	 *
 	 * @return array<int,array{quantity: float, unitCost: float, postedAt: string}>
 	 */
-	private function openInboundLots(
-		string $productId,
-		string $warehouse,
-		string $administrationId,
-	): array {
+	private function openInboundLots(StockMoveValuationKey $key): array {
 		$rows = $this->objectService
 			->setRegister($this->register())
 			->setSchema('StockMove')
 			->findAll(
 				[
 					'filters' => [
-						'itemId' => $productId,
-						'destinationLocationId' => $warehouse,
+						'itemId' => $key->productId,
+						'destinationLocationId' => $key->warehouse,
 						'movementType' => 'receipt',
 						'lifecycleState' => 'posted',
-						'administrationId' => $administrationId,
+						'administrationId' => $key->administrationId,
 					],
 				]
 			);
 
 		$lots = [];
 		foreach ($rows as $row) {
-			$data = $this->asArray(row: $row);
+			$data = $this->valuations()->toArray(row: $row);
 			$lots[] = [
 				'quantity' => (float)($data['quantity'] ?? 0),
 				'unitCost' => (float)($data['unitCost'] ?? 0),
@@ -475,37 +370,30 @@ class FifoValuationService {
 	 * Sum quantity of posted, non-cancelled outbound StockMove rows for
 	 * the same tuple — used to derive historical consumption.
 	 *
-	 * @param string $productId Product id.
-	 * @param string $warehouse Source location id (the warehouse).
-	 * @param string $administrationId Tenant scope.
-	 * @param string|null $excludeMoveUuid Optional uuid to exclude (the current move).
+	 * @param StockMoveValuationKey $key             The move's valuation key (product, warehouse, tenant).
+	 * @param string|null           $excludeMoveUuid Optional uuid to exclude (the current move).
 	 *
 	 * @return float Total consumed quantity.
 	 */
-	private function consumedQtyFromHistory(
-		string $productId,
-		string $warehouse,
-		string $administrationId,
-		?string $excludeMoveUuid = null,
-	): float {
+	private function consumedQtyFromHistory(StockMoveValuationKey $key, ?string $excludeMoveUuid): float {
 		$rows = $this->objectService
 			->setRegister($this->register())
 			->setSchema('StockMove')
 			->findAll(
 				[
 					'filters' => [
-						'itemId' => $productId,
-						'sourceLocationId' => $warehouse,
+						'itemId' => $key->productId,
+						'sourceLocationId' => $key->warehouse,
 						'movementType' => 'issue',
 						'lifecycleState' => 'posted',
-						'administrationId' => $administrationId,
+						'administrationId' => $key->administrationId,
 					],
 				]
 			);
 
 		$consumed = 0.0;
 		foreach ($rows as $row) {
-			$data = $this->asArray(row: $row);
+			$data = $this->valuations()->toArray(row: $row);
 			$uuid = (string)($data['uuid'] ?? ($data['@self']['uuid'] ?? ($data['id'] ?? '')));
 			if ($excludeMoveUuid !== null && $uuid === $excludeMoveUuid) {
 				continue;
@@ -518,104 +406,37 @@ class FifoValuationService {
 	}//end consumedQtyFromHistory()
 
 	/**
-	 * Locate the active InventoryValuation snapshot for the tuple, or
-	 * create one on the fly (FIFO method, status=active).
+	 * Locate the active InventoryValuation snapshot for the move's product,
+	 * warehouse and administration, or create one on the fly (FIFO
+	 * method, status=active).
 	 *
-	 * @param string $productId Product id.
-	 * @param string $warehouse Warehouse location id.
-	 * @param string $administrationId Tenant scope.
+	 * @param StockMoveValuationKey $key The move's valuation key.
 	 *
 	 * @return array<string,mixed> The snapshot record.
 	 */
-	private function findOrCreateValuation(
-		string $productId,
-		string $warehouse,
-		string $administrationId,
-	): array {
-		$existing = $this->objectService
-			->setRegister($this->register())
-			->setSchema('InventoryValuation')
-			->findAll(
-				[
-					'filters' => [
-						'productId' => $productId,
-						'warehouse' => $warehouse,
-						'status' => 'active',
-						'administrationId' => $administrationId,
-					],
-					'limit' => 1,
-				]
-			);
-
-		if (count($existing) > 0) {
-			return $this->asArray(row: $existing[0]);
-		}
-
-		return [
-			'productId' => $productId,
-			'warehouse' => $warehouse,
-			'quantity' => 0.0,
-			'unitCost' => 0.0,
-			'totalValue' => 0.0,
-			'valuationMethod' => 'FIFO',
-			'date' => '',
-			'status' => 'active',
-			'administrationId' => $administrationId,
-			'pendingCogs' => false,
-		];
-
+	private function findOrCreateValuation(StockMoveValuationKey $key): array {
+		return ($this->valuations()->findActive(key: $key, register: $this->register()) ?? $key->newValuation(valuationMethod: 'FIFO'));
 	}//end findOrCreateValuation()
 
 	/**
-	 * Persist the snapshot via OR's ObjectService.
+	 * Persist the InventoryValuation snapshot.
 	 *
-	 * @param array<string,mixed> $data The snapshot data.
+	 * @param array<string,mixed> $data The snapshot.
 	 *
-	 * @return array<string,mixed> Persisted snapshot (with id).
+	 * @return array<string,mixed> The stored snapshot.
 	 */
 	private function saveValuation(array $data): array {
-		$saved = $this->objectService
-			->setRegister($this->register())
-			->setSchema('InventoryValuation')
-			->saveObject($data);
-
-		// ADR-084: saveObject() is declared `: ObjectEntityInterface`, so the
-		// is_array() test was constant — asArray() is the only path that runs.
-		return $this->asArray(row: $saved);
+		return $this->valuations()->save(data: $data, register: $this->register());
 	}//end saveValuation()
 
 	/**
-	 * Normalise an OR Object / array to a plain array<string,mixed>.
+	 * The InventoryValuation store, refusing unsupported rows as this service.
 	 *
-	 * @param mixed $row Raw row from ObjectService.
-	 *
-	 * @return array<string,mixed>
+	 * @return InventoryValuationStore The store.
 	 */
-	private function asArray(mixed $row): array {
-		if (is_array($row) === true) {
-			return $row;
-		}
-
-		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-			$out = $row->jsonSerialize();
-			if (is_array($out) === true) {
-				return $out;
-			}
-
-			return [];
-		}
-
-		if (is_object($row) === true && method_exists($row, 'getObject') === true) {
-			$out = $row->getObject();
-			if (is_array($out) === true) {
-				return $out;
-			}
-
-			return [];
-		}
-
-		throw new RuntimeException('FifoValuationService: unsupported row type from ObjectService');
-	}//end asArray()
+	private function valuations(): InventoryValuationStore {
+		return new InventoryValuationStore(objectService: $this->objectService, source: 'FifoValuationService');
+	}//end valuations()
 
 	/**
 	 * Resolve the OR register slug, defaulting to 'shillinq'.

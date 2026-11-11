@@ -90,48 +90,62 @@ class RevenueCutoffService {
 	 * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#task-17
 	 */
 	public function compute(string $administrationId, string $periodEnd, array $billedByContract = []): array {
+		$run = new CutoffRun();
+		$run->administrationId = $administrationId;
+		$run->periodEnd = $periodEnd;
+		$run->billedByContract = $billedByContract;
 		$contracts = $this->fetchContracts(administrationId: $administrationId);
-		$recognised = $this->recognisedByContract(administrationId: $administrationId, periodEnd: $periodEnd);
-		$allocated = $this->allocatedByContract(administrationId: $administrationId);
-
-		$rows = [];
-		$contractIds = array_unique(array_merge(array_keys($contracts), array_keys($recognised)));
+		$run->recognised = $this->recognisedByContract(administrationId: $administrationId, periodEnd: $periodEnd);
+		$run->allocated = $this->allocatedByContract(administrationId: $administrationId);
+		$contractIds = array_unique(array_merge(array_keys($contracts), array_keys($run->recognised)));
 		sort($contractIds);
-		foreach ($contractIds as $contractId) {
-			$cumulativeRecognised = (float)($recognised[$contractId]['cumulative'] ?? 0.0);
-			$periodRecognised = (float)($recognised[$contractId]['period'] ?? 0.0);
-			$cumulativeBilled = (float)($billedByContract[$contractId] ?? 0.0);
-			$allocatedPrice = (float)($allocated[$contractId] ?? 0.0);
+		$rows = array_map(fn (int|string $contractId): array => $this->cutoffRow(contractId: $contractId, run: $run), $contractIds);
 
-			$split = $this->calculator->contractAssetLiability(
-				cumulativeRecognised: $cumulativeRecognised,
-				cumulativeBilled: $cumulativeBilled
-			);
-			$remaining = $this->calculator->remainingAmount(
-				transactionPriceAllocated: $allocatedPrice,
-				cumulativeRecognised: $cumulativeRecognised
-			);
-
-			$rows[] = [
-				'contractId' => (string)$contractId,
-				'periodEnd' => $periodEnd,
-				'transactionPriceAllocated' => $allocatedPrice,
-				'cumulativeRecognised' => $cumulativeRecognised,
-				'periodRecognised' => $periodRecognised,
-				'cumulativeBilled' => $cumulativeBilled,
-				'remainingAmount' => $remaining,
-				'contractAsset' => $split['asset'],
-				'contractLiability' => $split['liability'],
-				'administrationId' => $administrationId,
-			];
-		}//end foreach
-
-		return [
-			'data' => $rows,
-			'total' => count($rows),
-		];
+		return ['data' => $rows, 'total' => count($rows)];
 
 	}//end compute()
+
+	/**
+	 * One contract's cut-off row.
+	 *
+	 * @param int|string $contractId Contract id (an int for a numeric contract number).
+	 * @param CutoffRun  $run        The run.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function cutoffRow(int|string $contractId, CutoffRun $run): array {
+		return ['contractId' => (string)$contractId, 'periodEnd' => $run->periodEnd]
+			+ $this->cutoffFigures(contractId: $contractId, run: $run)
+			+ ['administrationId' => $run->administrationId];
+
+	}//end cutoffRow()
+
+	/**
+	 * A contract's allocated price, recognised and billed amounts, remaining
+	 * amount and contract asset / liability split.
+	 *
+	 * @param int|string $contractId Contract id.
+	 * @param CutoffRun  $run        The run.
+	 *
+	 * @return array<string,float>
+	 */
+	private function cutoffFigures(int|string $contractId, CutoffRun $run): array {
+		$cumulativeRecognised = (float)($run->recognised[$contractId]['cumulative'] ?? 0.0);
+		$cumulativeBilled = (float)($run->billedByContract[$contractId] ?? 0.0);
+		$allocatedPrice = (float)($run->allocated[$contractId] ?? 0.0);
+		$split = $this->calculator->contractAssetLiability(cumulativeRecognised: $cumulativeRecognised, cumulativeBilled: $cumulativeBilled);
+
+		return [
+			'transactionPriceAllocated' => $allocatedPrice,
+			'cumulativeRecognised' => $cumulativeRecognised,
+			'periodRecognised' => (float)($run->recognised[$contractId]['period'] ?? 0.0),
+			'cumulativeBilled' => $cumulativeBilled,
+			'remainingAmount' => $this->calculator->remainingAmount(transactionPriceAllocated: $allocatedPrice, cumulativeRecognised: $cumulativeRecognised),
+			'contractAsset' => $split['asset'],
+			'contractLiability' => $split['liability'],
+		];
+
+	}//end cutoffFigures()
 
 	/**
 	 * Fetch the administration's contracts keyed by contractNumber (REQ-IFRS15-007).
@@ -141,13 +155,8 @@ class RevenueCutoffService {
 	 * @return array<string,array<string,mixed>> contractNumber => Contract object.
 	 */
 	private function fetchContracts(string $administrationId): array {
-		$contracts = $this->objectService
-			->setRegister($this->register())
-			->setSchema('RevenueContract')
-			->findAll(['filters' => ['administrationId' => $administrationId]]);
-
 		$byNumber = [];
-		foreach ($contracts as $contract) {
+		foreach ($this->find(schema: 'RevenueContract', administrationId: $administrationId) as $contract) {
 			$number = (string)($contract['contractNumber'] ?? '');
 			if ($number !== '') {
 				$byNumber[$number] = $contract;
@@ -166,35 +175,58 @@ class RevenueCutoffService {
 	 * @return array<string,array{cumulative:float,period:float}> contractId => recognised amounts.
 	 */
 	private function recognisedByContract(string $administrationId, string $periodEnd): array {
-		$events = $this->objectService
-			->setRegister($this->register())
-			->setSchema('RevenueRecognitionEvent')
-			->findAll(['filters' => ['administrationId' => $administrationId]]);
-
 		$byContract = [];
-		foreach ($events as $event) {
-			$contractId = (string)($event['contractId'] ?? '');
-			if ($contractId === '') {
-				continue;
-			}
-
-			$end = (string)($event['periodEnd'] ?? '');
-			// Events with periodEnd after the cut-off date are out of scope.
-			if ($end !== '' && $end > $periodEnd) {
-				continue;
-			}
-
-			if (isset($byContract[$contractId]) === false) {
-				$byContract[$contractId] = ['cumulativeCents' => 0, 'periodCents' => 0];
-			}
-
+		foreach ($this->countedEvents(administrationId: $administrationId, periodEnd: $periodEnd) as $event) {
+			$contractId = (string)$event['contractId'];
 			$cents = $this->calculator->toCents(amount: ($event['recognisedAmount'] ?? 0));
+			$byContract[$contractId] ??= ['cumulativeCents' => 0, 'periodCents' => 0];
 			$byContract[$contractId]['cumulativeCents'] += $cents;
-			if ($end === $periodEnd) {
+			if ((string)($event['periodEnd'] ?? '') === $periodEnd) {
 				$byContract[$contractId]['periodCents'] += $cents;
 			}
-		}//end foreach
+		}
 
+		return $this->recognisedAmounts(byContract: $byContract);
+	}//end recognisedByContract()
+
+	/**
+	 * The administration's recognition events that count towards the cut-off.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $periodEnd        Period-end date of the cut-off.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function countedEvents(string $administrationId, string $periodEnd): array {
+		return array_filter(
+			$this->find(schema: 'RevenueRecognitionEvent', administrationId: $administrationId),
+			fn (array $event): bool => $this->isCounted(event: $event, periodEnd: $periodEnd)
+		);
+	}//end countedEvents()
+
+	/**
+	 * Whether an event counts towards the cut-off: it names a contract and its
+	 * periodEnd is absent or not after the cut-off date.
+	 *
+	 * @param array<string,mixed> $event     A RevenueRecognitionEvent.
+	 * @param string              $periodEnd Period-end date of the cut-off.
+	 *
+	 * @return boolean
+	 */
+	private function isCounted(array $event, string $periodEnd): bool {
+		$end = (string)($event['periodEnd'] ?? '');
+
+		return (string)($event['contractId'] ?? '') !== '' && ($end === '' || ($end > $periodEnd) === false);
+	}//end isCounted()
+
+	/**
+	 * Cent sums per contract as money.
+	 *
+	 * @param array<string,array{cumulativeCents:int,periodCents:int}> $byContract Cent sums.
+	 *
+	 * @return array<string,array{cumulative:float,period:float}>
+	 */
+	private function recognisedAmounts(array $byContract): array {
 		$result = [];
 		foreach ($byContract as $contractId => $amounts) {
 			$result[$contractId] = [
@@ -204,7 +236,7 @@ class RevenueCutoffService {
 		}
 
 		return $result;
-	}//end recognisedByContract()
+	}//end recognisedAmounts()
 
 	/**
 	 * Sum the allocated transaction price per contract from PriceAllocation rows (REQ-IFRS15-004).
@@ -214,28 +246,16 @@ class RevenueCutoffService {
 	 * @return array<string,float> contractId => total allocated price.
 	 */
 	private function allocatedByContract(string $administrationId): array {
-		$allocations = $this->objectService
-			->setRegister($this->register())
-			->setSchema('PriceAllocation')
-			->findAll(['filters' => ['administrationId' => $administrationId]]);
-
 		$byContract = [];
-		foreach ($allocations as $allocation) {
+		foreach ($this->find(schema: 'PriceAllocation', administrationId: $administrationId) as $allocation) {
 			$contractId = (string)($allocation['contractId'] ?? '');
-			if ($contractId === '') {
-				continue;
+			if ($contractId !== '') {
+				$cents = $this->calculator->toCents(amount: ($allocation['allocatedAmount'] ?? 0));
+				$byContract[$contractId] = (($byContract[$contractId] ?? 0) + $cents);
 			}
-
-			$cents = $this->calculator->toCents(amount: ($allocation['allocatedAmount'] ?? 0));
-			$byContract[$contractId] = (($byContract[$contractId] ?? 0) + $cents);
 		}
 
-		$result = [];
-		foreach ($byContract as $contractId => $cents) {
-			$result[$contractId] = $this->calculator->fromCents(cents: $cents);
-		}
-
-		return $result;
+		return array_map(fn (int $cents): float => $this->calculator->fromCents(cents: $cents), $byContract);
 	}//end allocatedByContract()
 
 	/**
@@ -251,4 +271,16 @@ class RevenueCutoffService {
 
 		return $register;
 	}//end register()
+
+	/**
+	 * Every record of a schema in one administration.
+	 *
+	 * @param string $schema           Schema slug.
+	 * @param string $administrationId Administration scope.
+	 *
+	 * @return array<int,mixed>
+	 */
+	private function find(string $schema, string $administrationId): array {
+		return $this->objectService->setRegister($this->register())->setSchema($schema)->findAll(['filters' => ['administrationId' => $administrationId]]);
+	}//end find()
 }//end class

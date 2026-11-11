@@ -165,26 +165,37 @@ export default {
 					{ contents: this.fileContents },
 				)
 				this.result = response.data
-				if (this.result.result === 'full') {
-					showSuccess(t('shillinq', 'Payment run reconciled.'))
-					emit('cn:widget:refresh', { widget: 'PaymentRunDetail' })
-					this.$emit('reconciled', this.result)
-				} else {
-					showError(
-						t('shillinq', 'Partial match — the run stays exported.'),
-					)
-				}
+				this.announceReconciliation()
 			} catch (error) {
-				const message =
-					error.response
-					&& error.response.data
-					&& error.response.data.error
-						? error.response.data.error
-						: t('shillinq', 'Could not reconcile the payment run.')
-				showError(message)
+				showError(this.reconcileError(error))
 			} finally {
 				this.submitting = false
 			}
+		},
+
+		/**
+		 * Announce the outcome: a full match is reconciled, a partial one stays exported.
+		 */
+		announceReconciliation() {
+			if (this.result.result !== 'full') {
+				showError(t('shillinq', 'Partial match — the run stays exported.'))
+				return
+			}
+			showSuccess(t('shillinq', 'Payment run reconciled.'))
+			emit('cn:widget:refresh', { widget: 'PaymentRunDetail' })
+			this.$emit('reconciled', this.result)
+		},
+
+		/**
+		 * The message of a failed reconciliation: the server's error, else a generic one.
+		 *
+		 * @param {object} error The request error.
+		 * @return {string}
+		 */
+		reconcileError(error) {
+			return error.response?.data?.error
+				? error.response.data.error
+				: t('shillinq', 'Could not reconcile the payment run.')
 		},
 
 		onClose() {

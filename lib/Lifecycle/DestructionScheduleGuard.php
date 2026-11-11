@@ -170,41 +170,15 @@ class DestructionScheduleGuard {
 	 * @return bool True if the transition is allowed; false otherwise.
 	 */
 	public function canTransition(string $from, string $to, array $record, array $options = []): bool {
-		if (in_array($from, self::STATES, true) === false || in_array($to, self::STATES, true) === false) {
-			return false;
-		}
-
-		if ($from === $to) {
-			return false;
-		}
-
-		// Destruction-completed is terminal.
-		if ($from === self::STATE_COMPLETED) {
-			return false;
-		}
-
-		// Active -> marked-for-destruction: compliance officer + 7+ years.
-		if ($from === self::STATE_ACTIVE && $to === self::STATE_MARKED) {
-			return $this->isComplianceOfficer(options: $options)
-				&& $this->isOlderThanRetentionFloor(record: $record, options: $options);
-		}
-
-		// Active -> destruction-completed: NOT allowed (must go via marked).
-		if ($from === self::STATE_ACTIVE && $to === self::STATE_COMPLETED) {
-			return false;
-		}
-
-		// Marked -> active: allowed (rollback / unmark).
-		if ($from === self::STATE_MARKED && $to === self::STATE_ACTIVE) {
-			return true;
-		}
-
-		// Marked -> destruction-completed: compliance officer / system.
-		if ($from === self::STATE_MARKED && $to === self::STATE_COMPLETED) {
-			return $this->isComplianceOfficerOrSystem(options: $options);
-		}
-
-		return false;
+		// Only three arrows exist; everything else (unknown states, self-loops,
+		// anything out of the terminal state, active -> completed) is refused.
+		return match ($from . '>' . $to) {
+			self::STATE_ACTIVE . '>' . self::STATE_MARKED => $this->isComplianceOfficer(options: $options)
+				&& $this->isOlderThanRetentionFloor(record: $record, options: $options),
+			self::STATE_MARKED . '>' . self::STATE_ACTIVE => true,
+			self::STATE_MARKED . '>' . self::STATE_COMPLETED => $this->isComplianceOfficerOrSystem(options: $options),
+			default => false,
+		};
 	}//end canTransition()
 
 	/**

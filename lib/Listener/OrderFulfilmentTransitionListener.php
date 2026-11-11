@@ -95,40 +95,17 @@ class OrderFulfilmentTransitionListener implements IEventListener {
 		}
 
 		try {
-			if ($event->getTo() !== 'completed') {
-				return;
-			}
-
-			$entity = $event->getObject();
-			if ($entity === null) {
-				return;
-			}
-
-			$schema = $this->schemaResolver->schemaSlug(entity: $entity);
-			if ($this->isOrderFulfilmentSchema(schema: $schema) === false) {
-				return;
-			}
-
-			$oplevering = $entity->getObject();
-			if (is_array($oplevering) === false) {
+			$oplevering = $this->completedFulfilment(event: $event);
+			if ($oplevering === null) {
 				return;
 			}
 
 			// REQ-005 / Task 5.3 — always emit the milestone-completed event.
 			$this->emitter->emitMilestoneCompleted(oplevering: $oplevering);
 
-			// REQ-006 — outbound sync only when this is the approved
-			// eindoplevering (the buyer-side gate; vendor-completed
-			// openrules are denied earlier by RBAC).
-			if ((string)($oplevering['deliveryType'] ?? '') !== 'eindoplevering') {
-				return;
+			if ($this->isApprovedEindoplevering(oplevering: $oplevering) === true) {
+				$this->sync->syncCompletion(oplevering: $oplevering);
 			}
-
-			if (((bool)($oplevering['approved'] ?? false)) !== true) {
-				return;
-			}
-
-			$this->sync->syncCompletion(oplevering: $oplevering);
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'OrderFulfilmentTransitionListener: fail-soft on completion',
@@ -137,6 +114,48 @@ class OrderFulfilmentTransitionListener implements IEventListener {
 		}//end try
 
 	}//end handle()
+
+	/**
+	 * The OrderFulfilment this transition completed, or null for any other transition.
+	 *
+	 * @param ObjectTransitionedEvent $event OR transition event.
+	 *
+	 * @return array<string,mixed>|null The fulfilment.
+	 */
+	private function completedFulfilment(ObjectTransitionedEvent $event): array|null {
+		if ($event->getTo() !== 'completed') {
+			return null;
+		}
+
+		$entity = $event->getObject();
+		if ($entity === null || $this->isOrderFulfilmentSchema(schema: $this->schemaResolver->schemaSlug(entity: $entity)) === false) {
+			return null;
+		}
+
+		$oplevering = $entity->getObject();
+		if (is_array($oplevering) === false) {
+			return null;
+		}
+
+		return $oplevering;
+
+	}//end completedFulfilment()
+
+	/**
+	 * Whether the fulfilment is the approved eindoplevering (REQ-006).
+	 *
+	 * Outbound sync only follows the buyer-side approval of the final
+	 * delivery; vendor-completed openrules are denied earlier by RBAC.
+	 *
+	 * @param array<string,mixed> $oplevering The fulfilment.
+	 *
+	 * @return bool True when the completion must be synced.
+	 */
+	private function isApprovedEindoplevering(array $oplevering): bool {
+		return (string)($oplevering['deliveryType'] ?? '') === 'eindoplevering'
+			&& ((bool)($oplevering['approved'] ?? false)) === true;
+
+	}//end isApprovedEindoplevering()
 
 	/**
 	 * Check whether the schema slug is OrderFulfilment.

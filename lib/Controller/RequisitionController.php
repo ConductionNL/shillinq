@@ -100,56 +100,17 @@ class RequisitionController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function create(): JSONResponse {
-		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		$administrationId = $this->newRequisitionAdministration();
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
 		}
-
-		$administrationId = $this->scopeParam(name: 'administrationId');
-		if ($administrationId === '') {
-			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
-		}
-
-		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
-		}
-
-		$payload = [
-			'programme' => trim((string)$this->request->getParam('programme', '')),
-			'financialYear' => (int)$this->request->getParam('financialYear', 0),
-			'neededByDate' => trim((string)$this->request->getParam('neededByDate', '')),
-			'justification' => trim((string)$this->request->getParam('justification', '')),
-			'kind' => trim((string)$this->request->getParam('kind', '')),
-			'preferredSupplierId' => trim((string)$this->request->getParam('preferredSupplierId', '')),
-			'lines' => (array)$this->request->getParam('lines', []),
-		];
 
 		try {
-			$requisition = $this->requisitionService->createRequisition(
-				administrationId: $administrationId,
-				payload: $payload
-			);
+			$requisition = $this->requisitionService->createRequisition(administrationId: $administrationId, payload: $this->createPayload());
 		} catch (\RuntimeException $e) {
-			// Validation refusal from the service (missing/invalid field, no
-			// lines, non-positive total) — the exception's own text is never
-			// placed in the response body (ADR-050 / REQ-003); it is logged
-			// server-side and the client gets a stable slug + localized text.
-			$this->logger->error(
-				'RequisitionController.create rejected',
-				['administrationId' => $administrationId, 'exception' => $e]
-			);
-			return new JSONResponse(
-				[
-					'message' => $this->l10n->t('Requisition could not be created; check the required fields'),
-					'error' => 'requisition-create-invalid',
-				],
-				Http::STATUS_BAD_REQUEST,
-			);
+			return $this->createRejected(administrationId: $administrationId, e: $e);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'RequisitionController: failed to create requisition',
-				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(['error' => 'Could not create requisition'], Http::STATUS_INTERNAL_SERVER_ERROR);
+			return $this->failed(action: 'create', context: ['administrationId' => $administrationId, 'exception' => $e]);
 		}
 
 		return new JSONResponse($requisition, Http::STATUS_CREATED);
@@ -172,21 +133,9 @@ class RequisitionController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function submit(string $id): JSONResponse {
-		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-		}
-
-		if (preg_match(self::ID_PATTERN, $id) !== 1) {
-			return new JSONResponse(['error' => 'Invalid requisition id'], Http::STATUS_BAD_REQUEST);
-		}
-
-		$administrationId = $this->scopeParam(name: 'administrationId');
-		if ($administrationId === '') {
-			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
-		}
-
-		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-			return new JSONResponse(['error' => 'Requisition not found'], Http::STATUS_NOT_FOUND);
+		$administrationId = $this->requisitionAdministration(id: $id);
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
 		}
 
 		try {
@@ -194,14 +143,8 @@ class RequisitionController extends Controller {
 				administrationId: $administrationId,
 				requisitionId: $id
 			);
-		} catch (\RuntimeException $e) {
-			return $this->mapRuntimeError(e: $e);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'RequisitionController: failed to submit requisition',
-				['requisitionId' => $id, 'administrationId' => $administrationId, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(['error' => 'Could not submit requisition'], Http::STATUS_INTERNAL_SERVER_ERROR);
+			return $this->failed(action: 'submit', context: $this->failureContext(id: $id, e: $e));
 		}
 
 		return new JSONResponse($requisition, Http::STATUS_OK);
@@ -226,38 +169,17 @@ class RequisitionController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function approve(string $id): JSONResponse {
-		$user = $this->userSession->getUser();
-		if ($user === null) {
-			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-		}
-
-		if (preg_match(self::ID_PATTERN, $id) !== 1) {
-			return new JSONResponse(['error' => 'Invalid requisition id'], Http::STATUS_BAD_REQUEST);
-		}
-
-		$administrationId = $this->scopeParam(name: 'administrationId');
-		if ($administrationId === '') {
-			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
-		}
-
-		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-			return new JSONResponse(['error' => 'Requisition not found'], Http::STATUS_NOT_FOUND);
+		$administrationId = $this->requisitionAdministration(id: $id);
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
 		}
 
 		try {
 			$requisition = $this->requisitionService->approveRequisition(
-				administrationId: $administrationId,
-				requisitionId: $id,
-				approverId: $user->getUID()
+				administrationId: $administrationId, requisitionId: $id, approverId: $this->currentUid()
 			);
-		} catch (\RuntimeException $e) {
-			return $this->mapRuntimeError(e: $e);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'RequisitionController: failed to approve requisition',
-				['requisitionId' => $id, 'administrationId' => $administrationId, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(['error' => 'Could not approve requisition'], Http::STATUS_INTERNAL_SERVER_ERROR);
+			return $this->failed(action: 'approve', context: $this->failureContext(id: $id, e: $e));
 		}
 
 		return new JSONResponse($requisition, Http::STATUS_OK);
@@ -280,41 +202,18 @@ class RequisitionController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function reject(string $id): JSONResponse {
-		$user = $this->userSession->getUser();
-		if ($user === null) {
-			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		$administrationId = $this->requisitionAdministration(id: $id);
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
 		}
-
-		if (preg_match(self::ID_PATTERN, $id) !== 1) {
-			return new JSONResponse(['error' => 'Invalid requisition id'], Http::STATUS_BAD_REQUEST);
-		}
-
-		$administrationId = $this->scopeParam(name: 'administrationId');
-		if ($administrationId === '') {
-			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
-		}
-
-		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-			return new JSONResponse(['error' => 'Requisition not found'], Http::STATUS_NOT_FOUND);
-		}
-
-		$reason = trim((string)$this->request->getParam('reason', ''));
 
 		try {
 			$requisition = $this->requisitionService->rejectRequisition(
-				administrationId: $administrationId,
-				requisitionId: $id,
-				rejectorId: $user->getUID(),
-				reason: $reason
+				administrationId: $administrationId, requisitionId: $id,
+				rejectorId: $this->currentUid(), reason: $this->trimmedParam(name: 'reason')
 			);
-		} catch (\RuntimeException $e) {
-			return $this->mapRuntimeError(e: $e);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'RequisitionController: failed to reject requisition',
-				['requisitionId' => $id, 'administrationId' => $administrationId, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(['error' => 'Could not reject requisition'], Http::STATUS_INTERNAL_SERVER_ERROR);
+			return $this->failed(action: 'reject', context: $this->failureContext(id: $id, e: $e));
 		}
 
 		return new JSONResponse($requisition, Http::STATUS_OK);
@@ -340,6 +239,46 @@ class RequisitionController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function convert(string $id): JSONResponse {
+		$administrationId = $this->requisitionAdministration(id: $id);
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
+		}
+
+		try {
+			$result = $this->conversionService->convertToPurchaseOrder(
+				administrationId: $administrationId,
+				requisitionId: $id
+			);
+		} catch (\Throwable $e) {
+			return $this->failed(action: 'convert', context: $this->failureContext(id: $id, e: $e));
+		}
+
+		return new JSONResponse($result, Http::STATUS_OK);
+	}//end convert()
+
+	/**
+	 * Resolve the administration for a new requisition: user check, then the
+	 * administration scope (cross-tenant masked as "Administration not found").
+	 *
+	 * @return string|JSONResponse The administration id, or the refusal.
+	 */
+	private function newRequisitionAdministration(): string|JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
+
+		return $this->scopedAdministration(notFound: 'Administration not found');
+	}//end newRequisitionAdministration()
+
+	/**
+	 * Resolve the administration for an existing requisition: user check, the
+	 * id pattern, then the administration scope (masked as "Requisition not found").
+	 *
+	 * @param string $id The requisition id (path parameter).
+	 *
+	 * @return string|JSONResponse The administration id, or the refusal.
+	 */
+	private function requisitionAdministration(string $id): string|JSONResponse {
 		if ($this->userSession->getUser() === null) {
 			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
 		}
@@ -348,32 +287,127 @@ class RequisitionController extends Controller {
 			return new JSONResponse(['error' => 'Invalid requisition id'], Http::STATUS_BAD_REQUEST);
 		}
 
+		return $this->scopedAdministration(notFound: 'Requisition not found');
+	}//end requisitionAdministration()
+
+	/**
+	 * Read the administrationId scope parameter and check the caller may access it.
+	 *
+	 * @param string $notFound The error text for an inaccessible administration.
+	 *
+	 * @return string|JSONResponse The administration id, or the refusal.
+	 */
+	private function scopedAdministration(string $notFound): string|JSONResponse {
 		$administrationId = $this->scopeParam(name: 'administrationId');
 		if ($administrationId === '') {
 			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
 		}
 
 		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-			return new JSONResponse(['error' => 'Requisition not found'], Http::STATUS_NOT_FOUND);
+			return new JSONResponse(['error' => $notFound], Http::STATUS_NOT_FOUND);
 		}
 
-		try {
-			$result = $this->conversionService->convertToPurchaseOrder(
-				administrationId: $administrationId,
-				requisitionId: $id
-			);
-		} catch (\RuntimeException $e) {
+		return $administrationId;
+	}//end scopedAdministration()
+
+	/**
+	 * Read the create payload from the request body.
+	 *
+	 * @return array<string, mixed> The trimmed/cast create payload.
+	 */
+	private function createPayload(): array {
+		return [
+			'programme' => $this->trimmedParam(name: 'programme'),
+			'financialYear' => (int)$this->request->getParam('financialYear', 0),
+			'neededByDate' => $this->trimmedParam(name: 'neededByDate'),
+			'justification' => $this->trimmedParam(name: 'justification'),
+			'kind' => $this->trimmedParam(name: 'kind'),
+			'preferredSupplierId' => $this->trimmedParam(name: 'preferredSupplierId'),
+			'lines' => (array)$this->request->getParam('lines', []),
+		];
+	}//end createPayload()
+
+	/**
+	 * Read a request parameter as a trimmed string ('' when absent).
+	 *
+	 * @param string $name Parameter name.
+	 *
+	 * @return string The trimmed value.
+	 */
+	private function trimmedParam(string $name): string {
+		return trim((string)$this->request->getParam($name, ''));
+	}//end trimmedParam()
+
+	/**
+	 * Answer a validation refusal from the create service call.
+	 *
+	 * The exception's own text is never placed in the response body (ADR-050 /
+	 * REQ-003); it is logged server-side and the client gets a stable slug plus
+	 * localized text.
+	 *
+	 * @param string            $administrationId The administration id.
+	 * @param \RuntimeException $e                The service refusal.
+	 *
+	 * @return JSONResponse 400 with the localized message.
+	 */
+	private function createRejected(string $administrationId, \RuntimeException $e): JSONResponse {
+		$this->logger->error(
+			'RequisitionController.create rejected',
+			['administrationId' => $administrationId, 'exception' => $e]
+		);
+		return new JSONResponse(
+			[
+				'message' => $this->l10n->t('Requisition could not be created; check the required fields'),
+				'error' => 'requisition-create-invalid',
+			],
+			Http::STATUS_BAD_REQUEST,
+		);
+	}//end createRejected()
+
+	/**
+	 * Build the log context of a failed action on an existing requisition.
+	 *
+	 * @param string     $id The requisition id.
+	 * @param \Throwable $e  The failure.
+	 *
+	 * @return array<string, mixed> requisitionId, administrationId and exception.
+	 */
+	private function failureContext(string $id, \Throwable $e): array {
+		return [
+			'requisitionId' => $id,
+			'administrationId' => $this->scopeParam(name: 'administrationId'),
+			'exception' => $e,
+		];
+	}//end failureContext()
+
+	/**
+	 * Answer a failed action: service refusals map via mapRuntimeError, any
+	 * other failure is logged with its message and answered 500.
+	 *
+	 * @param string               $action  The action key in FAILURES.
+	 * @param array<string, mixed> $context The log context; 'exception' holds the failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function failed(string $action, array $context): JSONResponse {
+		$e = $context['exception'];
+		if ($e instanceof \RuntimeException) {
 			return $this->mapRuntimeError(e: $e);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'RequisitionController: failed to convert requisition',
-				['requisitionId' => $id, 'administrationId' => $administrationId, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(['error' => 'Could not convert requisition'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
-		return new JSONResponse($result, Http::STATUS_OK);
-	}//end convert()
+		$context['exception'] = $e->getMessage();
+		$this->logger->error('RequisitionController: failed to '.$action.' requisition', $context);
+		return new JSONResponse(['error' => 'Could not '.$action.' requisition'], Http::STATUS_INTERNAL_SERVER_ERROR);
+	}//end failed()
+
+	/**
+	 * The UID of the logged-in user (the access step already refused anonymous callers).
+	 *
+	 * @return string The user id.
+	 */
+	private function currentUid(): string {
+		return $this->userSession->getUser()->getUID();
+	}//end currentUid()
 
 	/**
 	 * Map a RuntimeException from the service layer to the appropriate HTTP
@@ -402,13 +436,8 @@ class RequisitionController extends Controller {
 			);
 		}
 
-		return new JSONResponse(
-			[
-				'message' => $this->l10n->t('Requisition is not in a state that allows this action'),
-				'error' => 'requisition-invalid-state',
-			],
-			Http::STATUS_CONFLICT,
-		);
+		$message = $this->l10n->t('Requisition is not in a state that allows this action');
+		return new JSONResponse(['message' => $message, 'error' => 'requisition-invalid-state'], Http::STATUS_CONFLICT);
 	}//end mapRuntimeError()
 
 	/**

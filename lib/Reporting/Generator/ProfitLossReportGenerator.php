@@ -49,12 +49,8 @@ use OCA\Shillinq\Reporting\ReportSection;
 
 /**
  * Renders a profit-and-loss account from revenue/expense account totals.
- *
- * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
- *     #506): early-return refactor deferred pending full behavioral
- *     verification of each branch.
  */
-final class ProfitLossReportGenerator extends AbstractDocumentReportGenerator {
+final class ProfitLossReportGenerator extends AbstractStatementReportGenerator {
 	/**
 	 * Dutch `accountType` tokens accepted on READ, normalised to the English
 	 * bucket names this app uses internally.
@@ -118,69 +114,14 @@ final class ProfitLossReportGenerator extends AbstractDocumentReportGenerator {
 	protected function build(ReportSection $section, array $context): void {
 		$administrationId = $this->str($context, 'administrationId');
 		$accounts = $this->loadAccounts($administrationId);
-
-		$currency = 'EUR';
-		foreach ($accounts as $account) {
-			$accountCurrency = $this->str($account, 'currency');
-			if ($accountCurrency !== '') {
-				$currency = $accountCurrency;
-				break;
-			}
-		}
+		$run = new StatementRun(section: $section, currency: $this->accountsCurrency($accounts));
 
 		[$revenueLines, $expenseLines, $movements] = $this->classify($accounts, $administrationId);
 
-		$totalRevenue = $this->total($revenueLines);
-		$totalExpense = $this->total($expenseLines);
-		$result = ($totalRevenue - $totalExpense);
-
 		$this->addCover($section, 'Winst- en verliesrekening', 'Resultatenrekening over de periode', $context);
-
-		// --- Opbrengsten ---
-		$this->addHeading($section, 'Opbrengsten');
-		$this->addAmountTable(
-			$section,
-			'Rekening',
-			'Bedrag',
-			$revenueLines,
-			['label' => 'Totaal opbrengsten', 'amount' => $totalRevenue],
-			$currency
-		);
-
-		// --- Kosten ---
-		$section->addTextBreak(1);
-		$this->addHeading($section, 'Kosten');
-		$this->addAmountTable(
-			$section,
-			'Rekening',
-			'Bedrag',
-			$expenseLines,
-			['label' => 'Totaal kosten', 'amount' => $totalExpense],
-			$currency
-		);
-
-		// --- Resultaat ---
-		$section->addTextBreak(1);
-		$this->addHeading($section, 'Resultaat');
-		$this->addAmountTable(
-			$section,
-			'Resultaatbepaling',
-			'Bedrag',
-			[
-				['label' => 'Totaal opbrengsten', 'amount' => $totalRevenue],
-				['label' => 'Totaal kosten', 'amount' => (-1 * $totalExpense)],
-			],
-			['label' => ($result >= 0.0 ? 'Resultaat (winst)' : 'Resultaat (verlies)'), 'amount' => $result],
-			$currency
-		);
-
-		$section->addTextBreak(1);
-		$this->addNote(
-			$section,
-			'Het resultaat is bepaald als het saldo van opbrengsten en kosten over de periode. '
-			. 'Bedragen zijn afgeleid uit de grootboekrekeningen van het type opbrengst en kosten'
-			. ($movements === true ? ', aangevuld met de geboekte grootboekmutaties.' : '.')
-		);
+		$this->addRevenueAndCosts($run, [$revenueLines, $expenseLines]);
+		$this->addResult($run);
+		$this->addBasisNote($run, $movements);
 
 		if ($revenueLines === [] && $expenseLines === []) {
 			$this->addNote($section, 'Er zijn geen resultaatrekeningen gevonden voor deze administratie.');
@@ -189,51 +130,67 @@ final class ProfitLossReportGenerator extends AbstractDocumentReportGenerator {
 	}//end build()
 
 	/**
-	 * Load the Account objects for the administration (all accounts when no
-	 * administration is supplied).
+	 * The Opbrengsten and Kosten tables; sets the credit side (revenue) and
+	 * the debit side (expenses).
 	 *
-	 * @param string $administrationId The administration scope (may be empty).
+	 * @param StatementRun                 $run   The rendering in progress.
+	 * @param array{0: array<int, mixed>, 1: array<int, mixed>} $lines The revenue and the expense lines.
 	 *
-	 * @return array<int, array<string, mixed>>
+	 * @return void
 	 */
-	private function loadAccounts(string $administrationId): array {
-		$filters = [];
-		if ($administrationId !== '') {
-			$filters['administrationId'] = $administrationId;
-		}
+	private function addRevenueAndCosts(StatementRun $run, array $lines): void {
+		// --- Opbrengsten ---
+		$this->addHeading($run->section, 'Opbrengsten');
+		$run->creditTotal = $this->addAccountTable($run, new AccountBucket(totalLabel: 'Totaal opbrengsten', lines: $lines[0]));
 
-		$accounts = $this->loadObjects('Account', $filters);
-		if ($accounts === [] && $filters !== []) {
-			$accounts = $this->loadObjects('Account');
-		}
-
-		return $this->dedupeAccounts($accounts);
-	}//end loadAccounts()
+		// --- Kosten ---
+		$run->section->addTextBreak(1);
+		$this->addHeading($run->section, 'Kosten');
+		$run->debitTotal = $this->addAccountTable($run, new AccountBucket(totalLabel: 'Totaal kosten', lines: $lines[1]));
+	}//end addRevenueAndCosts()
 
 	/**
-	 * Collapse the chart of accounts to one row per (administration, account key)
-	 * so an unscoped read does not double-count the same general-ledger account.
-	 * The first occurrence wins.
+	 * The Resultaat table: revenue minus expenses, labelled profit or loss.
 	 *
-	 * @param array<int, array<string, mixed>> $accounts The Account objects.
+	 * @param StatementRun $run The rendering in progress.
 	 *
-	 * @return array<int, array<string, mixed>>
+	 * @return void
 	 */
-	private function dedupeAccounts(array $accounts): array {
-		$seen = [];
-		$out = [];
-		foreach ($accounts as $account) {
-			$key = $this->str($account, 'administrationId') . '|' . $this->accountKey($account);
-			if (isset($seen[$key]) === true) {
-				continue;
-			}
+	private function addResult(StatementRun $run): void {
+		$result = ($run->creditTotal - $run->debitTotal);
 
-			$seen[$key] = true;
-			$out[] = $account;
-		}
+		$run->section->addTextBreak(1);
+		$this->addHeading($run->section, 'Resultaat');
+		$this->addAmountTable(
+			$run->section,
+			'Resultaatbepaling',
+			'Bedrag',
+			[
+				['label' => 'Totaal opbrengsten', 'amount' => $run->creditTotal],
+				['label' => 'Totaal kosten', 'amount' => (-1 * $run->debitTotal)],
+			],
+			['label' => ($result >= 0.0 ? 'Resultaat (winst)' : 'Resultaat (verlies)'), 'amount' => $result],
+			$run->currency
+		);
+	}//end addResult()
 
-		return $out;
-	}//end dedupeAccounts()
+	/**
+	 * The note on how the result was determined.
+	 *
+	 * @param StatementRun $run           The rendering in progress.
+	 * @param bool         $usedMovements Whether GLLine movements filled in missing amounts.
+	 *
+	 * @return void
+	 */
+	private function addBasisNote(StatementRun $run, bool $usedMovements): void {
+		$run->section->addTextBreak(1);
+		$this->addNote(
+			$run->section,
+			'Het resultaat is bepaald als het saldo van opbrengsten en kosten over de periode. '
+			. 'Bedragen zijn afgeleid uit de grootboekrekeningen van het type opbrengst en kosten'
+			. ($usedMovements === true ? ', aangevuld met de geboekte grootboekmutaties.' : '.')
+		);
+	}//end addBasisNote()
 
 	/**
 	 * Classify accounts into revenue and expense lines with their amounts.
@@ -244,42 +201,28 @@ final class ProfitLossReportGenerator extends AbstractDocumentReportGenerator {
 	 * @return array{0: array<int, array{label: string, amount: float}>, 1: array<int, array{label: string, amount: float}>, 2: bool}
 	 */
 	private function classify(array $accounts, string $administrationId): array {
-		$revenue = [];
-		$expense = [];
-		$usedMoves = false;
+		$lines = ['revenue' => [], 'expense' => []];
 		$movements = null;
 
 		foreach ($accounts as $account) {
 			$type = strtolower($this->str($account, 'accountType', 'type', 'category'));
 			$bucket = (self::ACCOUNT_TYPE_ALIASES[$type] ?? null);
-
 			if ($bucket === null) {
 				continue;
 			}
 
 			$amount = $this->accountAmount($account);
 			if ($amount === null) {
-				if ($movements === null) {
-					$movements = $this->deriveMovements($administrationId);
-				}
-
-				$usedMoves = true;
-				$code = $this->accountKey($account);
-				$net = ($movements[$code] ?? 0.0);
+				$movements ??= $this->deriveMovements($administrationId);
+				$net = ($movements[$this->accountKey($account)] ?? 0.0);
 				// Net = debit - credit. Revenue is credit-natured, expense debit-natured.
 				$amount = $bucket === 'revenue' ? (-1 * $net) : $net;
 			}
 
-			$label = $this->accountLabel($account);
-			$line = ['label' => $label, 'amount' => abs($amount)];
-			if ($bucket === 'revenue') {
-				$revenue[] = $line;
-			} else {
-				$expense[] = $line;
-			}
-		}//end foreach
+			$lines[$bucket][] = ['label' => $this->accountLabel($account), 'amount' => abs($amount)];
+		}
 
-		return [$revenue, $expense, $usedMoves];
+		return [$lines['revenue'], $lines['expense'], $movements !== null];
 	}//end classify()
 
 	/**
@@ -298,80 +241,4 @@ final class ProfitLossReportGenerator extends AbstractDocumentReportGenerator {
 
 		return null;
 	}//end accountAmount()
-
-	/**
-	 * Derive net debit-minus-credit movements per account code from GLLine.
-	 *
-	 * @param string $administrationId The administration scope (may be empty).
-	 *
-	 * @return array<string, float> accountNumber => net (debit - credit).
-	 */
-	private function deriveMovements(string $administrationId): array {
-		$filters = [];
-		if ($administrationId !== '') {
-			$filters['administrationId'] = $administrationId;
-		}
-
-		$lines = $this->loadObjects('GLLine', $filters);
-		if ($lines === [] && $filters !== []) {
-			$lines = $this->loadObjects('GLLine');
-		}
-
-		$balances = [];
-		foreach ($lines as $line) {
-			$code = $this->str($line, 'accountNumber', 'accountId', 'account');
-			if ($code === '') {
-				continue;
-			}
-
-			$amount = $this->num($line, 'amount', 'baseCurrencyAmount', 'transactionAmount');
-			$side = strtolower($this->str($line, 'side', 'drcr'));
-			$signed = $side === 'credit' ? (-1 * $amount) : $amount;
-
-			$balances[$code] = (($balances[$code] ?? 0.0) + $signed);
-		}
-
-		return $balances;
-	}//end deriveMovements()
-
-	/**
-	 * The account's join key (accountNumber preferred).
-	 *
-	 * @param array<string, mixed> $account The Account object.
-	 *
-	 * @return string
-	 */
-	private function accountKey(array $account): string {
-		return $this->str($account, 'accountNumber', 'code', 'rgsCode', 'id');
-	}//end accountKey()
-
-	/**
-	 * A display label for an account row: "<number> <name>".
-	 *
-	 * @param array<string, mixed> $account The Account object.
-	 *
-	 * @return string
-	 */
-	private function accountLabel(array $account): string {
-		$number = $this->str($account, 'accountNumber', 'code', 'rgsCode');
-		$name = $this->str($account, 'name', 'accountName', 'title', 'description');
-		$label = trim($number . ' ' . $name);
-		return $label !== '' ? $label : ('Rekening ' . $this->str($account, 'id'));
-	}//end accountLabel()
-
-	/**
-	 * Sum the amounts in a set of lines.
-	 *
-	 * @param array<int, array{label: string, amount: float}> $lines The lines.
-	 *
-	 * @return float
-	 */
-	private function total(array $lines): float {
-		$sum = 0.0;
-		foreach ($lines as $row) {
-			$sum += (float)($row['amount'] ?? 0.0);
-		}
-
-		return $sum;
-	}//end total()
 }//end class

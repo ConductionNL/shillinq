@@ -49,14 +49,27 @@ use Psr\Log\LoggerInterface;
 
 /**
  * General-ledger CSV generator built natively from GLLine + Account.
- *
- * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
- *     #506): early-return refactor deferred pending full behavioral
- *     verification of each branch.
  */
 final class GeneralLedgerReportGenerator implements ReportGeneratorInterface {
 
 	use ReportDataTrait;
+
+	/**
+	 * The CSV header row.
+	 *
+	 * @var list<string>
+	 */
+	private const HEADER = [
+		'accountNumber',
+		'accountName',
+		'lineNumber',
+		'transactionId',
+		'date',
+		'description',
+		'debit',
+		'credit',
+		'runningBalance',
+	];
 
 	/**
 	 * Construct the general-ledger report generator.
@@ -101,7 +114,30 @@ final class GeneralLedgerReportGenerator implements ReportGeneratorInterface {
 		$lines = $this->loadAll('GLLine', $this->lineFilters($context));
 		$accounts = $this->indexAccountsByNumber($this->loadAll('Account', $this->administrationFilter($context)));
 
-		// Group lines by accountNumber.
+		$rows = [self::HEADER];
+		foreach ($this->linesByAccount(lines: $lines) as $accountNumber => $accountLines) {
+			$card = ['accountNumber' => (string)$accountNumber, 'accountName' => (string)($accounts[$accountNumber]['name'] ?? '')];
+			array_push($rows, ...$this->cardRows(card: $card, lines: $accountLines));
+		}
+
+		return new GeneratedFile(
+			fileName: $this->fileName('general-ledger', $context, 'csv'),
+			mimeType: 'text/csv',
+			format: 'csv',
+			content: $this->csvContent(rows: $rows),
+		);
+
+	}//end generate()
+
+	/**
+	 * Group lines by accountNumber (`(unassigned)` when empty), accounts in
+	 * key order.
+	 *
+	 * @param list<array<string, mixed>> $lines The GL lines.
+	 *
+	 * @return array<string, list<array<string, mixed>>> accountNumber => lines.
+	 */
+	private function linesByAccount(array $lines): array {
 		$byAccount = [];
 		foreach ($lines as $line) {
 			$accountNumber = (string)($line['accountNumber'] ?? '');
@@ -114,78 +150,72 @@ final class GeneralLedgerReportGenerator implements ReportGeneratorInterface {
 
 		ksort($byAccount);
 
-		$handle = fopen('php://temp', 'r+');
-		fputcsv(
-			$handle,
-			[
-				'accountNumber',
-				'accountName',
-				'lineNumber',
-				'transactionId',
-				'date',
-				'description',
-				'debit',
-				'credit',
-				'runningBalance',
-			]
-		);
+		return $byAccount;
+	}//end linesByAccount()
 
-		foreach ($byAccount as $accountNumber => $accountLines) {
-			$accountName = (string)($accounts[$accountNumber]['name'] ?? '');
-			$running = 0.0;
+	/**
+	 * One account card: its lines in stable order (lineNumber, then
+	 * transactionId) with debit, credit and the running balance.
+	 *
+	 * @param array{accountNumber: string, accountName: string} $card  The account.
+	 * @param list<array<string, mixed>>                       $lines The account's lines.
+	 *
+	 * @return list<list<string>> The CSV rows.
+	 */
+	private function cardRows(array $card, array $lines): array {
+		usort($lines, self::compareCardLines(...));
 
-			// Stable order within a card: by lineNumber then transactionId.
-			usort(
-				$accountLines,
-				static function (array $left, array $right): int {
-					$byLine = (((int)($left['lineNumber'] ?? 0)) <=> ((int)($right['lineNumber'] ?? 0)));
-					if ($byLine !== 0) {
-						return $byLine;
-					}
+		$rows = [];
+		$running = 0.0;
+		foreach ($lines as $line) {
+			[$debit, $credit] = $this->debitCredit(line: $line);
+			$running += ($debit - $credit);
+			$rows[] = [
+				$card['accountNumber'],
+				$card['accountName'],
+				(string)($line['lineNumber'] ?? ''),
+				(string)($line['transactionId'] ?? ''),
+				(string)($line['postingDate'] ?? $line['valueDate'] ?? ''),
+				(string)($line['description'] ?? ''),
+				$this->money($debit),
+				$this->money($credit),
+				$this->money($running),
+			];
+		}
 
-					return strcmp((string)($left['transactionId'] ?? ''), (string)($right['transactionId'] ?? ''));
-				}
-			);
+		return $rows;
+	}//end cardRows()
 
-			foreach ($accountLines as $line) {
-				$amount = $this->toFloat($line['amount'] ?? 0);
-				$debit = 0.0;
-				$credit = 0.0;
-				if ((string)($line['side'] ?? '') === 'debit') {
-					$debit = $amount;
-					$running += $amount;
-				} else {
-					$credit = $amount;
-					$running -= $amount;
-				}
+	/**
+	 * The line's amount on its own side: [debit, credit].
+	 *
+	 * @param array<string, mixed> $line The GL line.
+	 *
+	 * @return array{0: float, 1: float} The debit and credit amounts.
+	 */
+	private function debitCredit(array $line): array {
+		$amount = $this->toFloat($line['amount'] ?? 0);
+		if ((string)($line['side'] ?? '') === 'debit') {
+			return [$amount, 0.0];
+		}
 
-				fputcsv(
-					$handle,
-					[
-						$accountNumber,
-						$accountName,
-						(string)($line['lineNumber'] ?? ''),
-						(string)($line['transactionId'] ?? ''),
-						(string)($line['postingDate'] ?? $line['valueDate'] ?? ''),
-						(string)($line['description'] ?? ''),
-						$this->money($debit),
-						$this->money($credit),
-						$this->money($running),
-					]
-				);
-			}//end foreach
-		}//end foreach
+		return [0.0, $amount];
+	}//end debitCredit()
 
-		rewind($handle);
-		$content = (string)stream_get_contents($handle);
-		fclose($handle);
+	/**
+	 * Stable order within a card: by lineNumber, then transactionId.
+	 *
+	 * @param array<string, mixed> $left  One line.
+	 * @param array<string, mixed> $right The other line.
+	 *
+	 * @return int The comparison.
+	 */
+	private static function compareCardLines(array $left, array $right): int {
+		$byLine = (((int)($left['lineNumber'] ?? 0)) <=> ((int)($right['lineNumber'] ?? 0)));
+		if ($byLine !== 0) {
+			return $byLine;
+		}
 
-		return new GeneratedFile(
-			fileName: $this->fileName('general-ledger', $context, 'csv'),
-			mimeType: 'text/csv',
-			format: 'csv',
-			content: $content,
-		);
-
-	}//end generate()
+		return strcmp((string)($left['transactionId'] ?? ''), (string)($right['transactionId'] ?? ''));
+	}//end compareCardLines()
 }//end class

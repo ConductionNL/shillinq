@@ -46,10 +46,6 @@ namespace OCA\Shillinq\Service;
  * (REQ-ENSIA-001).
  *
  * @spec openspec/specs/bookkeeping-ensia-zelfevaluatie/spec.md
- *
- * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
- *     #506): early-return refactor deferred pending full behavioral
- *     verification of each branch.
  */
 class ENSIAQuestionSetLoader {
 	/**
@@ -58,6 +54,16 @@ class ENSIAQuestionSetLoader {
 	 * @var string
 	 */
 	private const DEFAULT_SEED = __DIR__ . '/../Settings/seeds/ensia-vng-2026.json';
+
+	/**
+	 * What load() answers when the seed cannot be read.
+	 *
+	 * @var array{questionSetVersion: string, vragen: array<int,array<string,mixed>>}
+	 */
+	private const UNKNOWN_SET = [
+		'questionSetVersion' => 'unknown',
+		'vragen' => [],
+	];
 
 	/**
 	 * Construct the loader.
@@ -93,78 +99,111 @@ class ENSIAQuestionSetLoader {
 	 * } The loaded version stamp + per-question records.
 	 */
 	public function load(int $year, array $domeinen, string $cyclusId, string $administrationId): array {
-		$path = $this->seedPath ?? self::DEFAULT_SEED;
+		$payload = $this->readSeed();
+		if ($payload === null) {
+			return self::UNKNOWN_SET;
+		}
 
+		$scope = new ENSIAQuestionScope();
+		$scope->domains          = array_fill_keys(array_map('strval', $domeinen), true);
+		$scope->cyclusId         = $cyclusId;
+		$scope->administrationId = $administrationId;
+
+		return [
+			'questionSetVersion' => (string)($payload['questionSetVersion'] ?? sprintf('BIO-1.04-%d', $year)),
+			'vragen' => $this->vragenFor(payload: $payload, scope: $scope),
+		];
+
+	}//end load()
+
+	/**
+	 * The decoded seed, or null when it is missing, unreadable or not a JSON
+	 * object.
+	 *
+	 * @return array<mixed>|null
+	 */
+	private function readSeed(): ?array {
+		$path = $this->seedPath ?? self::DEFAULT_SEED;
 		if (file_exists($path) === false || is_readable($path) === false) {
-			return [
-				'questionSetVersion' => 'unknown',
-				'vragen' => [],
-			];
+			return null;
 		}
 
 		$raw = file_get_contents($path);
 		if ($raw === false) {
-			return [
-				'questionSetVersion' => 'unknown',
-				'vragen' => [],
-			];
+			return null;
 		}
 
 		$payload = json_decode($raw, true);
 		if (is_array($payload) === false) {
-			return [
-				'questionSetVersion' => 'unknown',
-				'vragen' => [],
-			];
+			return null;
 		}
 
-		$version = (string)($payload['questionSetVersion'] ?? sprintf('BIO-1.04-%d', $year));
-		$catalog = $payload['vragen'] ?? [];
+		return $payload;
+	}//end readSeed()
 
+	/**
+	 * One Evaluatievraag per catalogue question in a selected domain, in
+	 * catalogue order.
+	 *
+	 * @param array<mixed>       $payload The decoded seed.
+	 * @param ENSIAQuestionScope $scope   The selection and its stamps.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function vragenFor(array $payload, ENSIAQuestionScope $scope): array {
+		$catalog = ($payload['vragen'] ?? []);
 		if (is_array($catalog) === false) {
-			$catalog = [];
-		}
-
-		$domeinSet = [];
-		foreach ($domeinen as $d) {
-			$domeinSet[(string)$d] = true;
+			return [];
 		}
 
 		$vragen = [];
-		foreach ($catalog as $q) {
-			if (is_array($q) === false) {
-				continue;
+		foreach ($catalog as $question) {
+			if (is_array($question) === true && $this->inScope(question: $question, scope: $scope) === true) {
+				$vragen[] = $this->evaluatievraag(question: $question, scope: $scope);
 			}
+		}
 
-			$domain = (string)($q['domain'] ?? '');
-			if ($domain === '' || isset($domeinSet[$domain]) === false) {
-				continue;
-			}
+		return $vragen;
+	}//end vragenFor()
 
-			if (isset($q['normniveau']) === true) {
-				$normniveau = (int)$q['normniveau'];
-			} else {
-				$normniveau = null;
-			}
+	/**
+	 * Whether a question names a domain, and one that is selected.
+	 *
+	 * @param array<string,mixed> $question The catalogue question.
+	 * @param ENSIAQuestionScope  $scope    The selection.
+	 *
+	 * @return bool
+	 */
+	private function inScope(array $question, ENSIAQuestionScope $scope): bool {
+		$domain = (string)($question['domain'] ?? '');
+		return $domain !== '' && isset($scope->domains[$domain]) === true;
+	}//end inScope()
 
-			$vragen[] = [
-				'cyclusId' => $cyclusId,
-				'administrationId' => $administrationId,
-				'domain' => $domain,
-				'subject' => (string)($q['subject'] ?? ''),
-				'questionCode' => (string)($q['questionCode'] ?? ''),
-				'questionText' => (string)($q['questionText'] ?? ''),
-				'answerType' => (string)($q['answerType'] ?? 'ja-nee-nvt'),
-				'normniveau' => $normniveau,
-				'peerReviewStatus' => 'nog-niet-beoordeeld',
-				'supportingDocuments' => [],
-			];
-		}//end foreach
+	/**
+	 * The Evaluatievraag record for one catalogue question.
+	 *
+	 * @param array<string,mixed> $question The catalogue question.
+	 * @param ENSIAQuestionScope  $scope    The stamps.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function evaluatievraag(array $question, ENSIAQuestionScope $scope): array {
+		$normniveau = null;
+		if (isset($question['normniveau']) === true) {
+			$normniveau = (int)$question['normniveau'];
+		}
 
 		return [
-			'questionSetVersion' => $version,
-			'vragen' => $vragen,
+			'cyclusId' => $scope->cyclusId,
+			'administrationId' => $scope->administrationId,
+			'domain' => (string)$question['domain'],
+			'subject' => (string)($question['subject'] ?? ''),
+			'questionCode' => (string)($question['questionCode'] ?? ''),
+			'questionText' => (string)($question['questionText'] ?? ''),
+			'answerType' => (string)($question['answerType'] ?? 'ja-nee-nvt'),
+			'normniveau' => $normniveau,
+			'peerReviewStatus' => 'nog-niet-beoordeeld',
+			'supportingDocuments' => [],
 		];
-
-	}//end load()
+	}//end evaluatievraag()
 }//end class

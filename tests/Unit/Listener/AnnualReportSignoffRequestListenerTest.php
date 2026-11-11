@@ -37,6 +37,9 @@ use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
+use OCA\OpenRegister\Service\Lifecycle\TransitionActor;
+use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
 use OCA\Shillinq\Listener\AnnualReportSignoffRequestListener;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\Signing\SignoffDecisionService;
@@ -147,13 +150,10 @@ final class AnnualReportSignoffRequestListenerTest extends TestCase {
 			->setObject($payload);
 
 		return new ObjectTransitionedEvent(
-			$entity,
-			'opmaken',
-			$from,
-			$to,
-			'bestuurder1',
-			'shillinq',
-			$schema,
+			object: $entity,
+			move: new TransitionMove(action: 'opmaken', from: $from, to: $to),
+			scope: new RegisterSchemaRef(register: 'shillinq', schema: $schema),
+			actor: new TransitionActor(userId: 'bestuurder1'),
 		);
 
 	}//end makeEvent()
@@ -264,4 +264,21 @@ final class AnnualReportSignoffRequestListenerTest extends TestCase {
 		self::assertCount(0, $this->updates);
 
 	}//end testNonMatchingEventTypeIsIgnored()
+
+	/**
+	 * The id falls back to the entity, a namespaced schema matches, and a
+	 * result without reference or outcome persists a null reference and
+	 * `pending` — never an approval.
+	 *
+	 * @return void
+	 */
+	public function testEntityIdFallbackAndMinimalResult(): void {
+		$listener = $this->makeListener([]);
+
+		$listener->handle($this->makeEvent(['administrationId' => 'adm-1'], schema: 'shillinq/annualreport', id: 'ar-7'));
+
+		self::assertSame('ar-7', $this->signoffCalls[0][0]['id']);
+		self::assertSame([['id' => 'ar-7', 'decisionRef' => null, 'decisionOutcome' => 'pending']], $this->updates);
+
+	}//end testEntityIdFallbackAndMinimalResult()
 }//end class

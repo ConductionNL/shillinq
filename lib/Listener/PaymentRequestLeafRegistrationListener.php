@@ -32,7 +32,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\RegisterLeafProvidersEvent;
+use OCA\OpenRegister\Service\Integration\LeafAvailability;
 use OCA\OpenRegister\Service\Integration\LeafDescriptor;
+use OCA\OpenRegister\Service\Integration\LeafIdentity;
+use OCA\OpenRegister\Service\Integration\LeafRendering;
 use OCA\Shillinq\Integration\ContractLeafProvider;
 use OCA\Shillinq\Integration\FinancialDocumentLeafProvider;
 use OCA\Shillinq\Integration\PaymentRequestLeafProvider;
@@ -116,27 +119,35 @@ final class PaymentRequestLeafRegistrationListener implements IEventListener {
 
 		$event->registerLeaf(
 			new LeafDescriptor(
-				id: PaymentRequestLeafProvider::LEAF_ID,
-				label: 'Payment requests',
-				icon: 'CreditCardOutline',
+				identity: new LeafIdentity(
+					id: PaymentRequestLeafProvider::LEAF_ID,
+					label: 'Payment requests',
+					icon: 'CreditCardOutline',
+					group: 'Finance',
+				),
 				kinds: [LeafDescriptor::KIND_DATA_PROVIDER],
-				requiredApp: 'shillinq',
-				group: 'Finance',
-				requiresPermission: PaymentRequestLeafProvider::ACTION_REQUEST,
+				availability: new LeafAvailability(
+					requiredApp: 'shillinq',
+					requiresPermission: PaymentRequestLeafProvider::ACTION_REQUEST,
+				),
 			),
 			$this->provider,
 		);
 
 		$event->registerLeaf(
 			new LeafDescriptor(
-				id: self::PANEL_ID,
-				label: 'Payment requests',
-				icon: 'CreditCardOutline',
+				identity: new LeafIdentity(
+					id: self::PANEL_ID,
+					label: 'Payment requests',
+					icon: 'CreditCardOutline',
+					group: 'Finance',
+				),
 				kinds: [LeafDescriptor::KIND_RENDER_SURFACE],
-				requiredApp: 'shillinq',
-				group: 'Finance',
-				surfaces: self::PANEL_SURFACES,
-				renderMode: LeafDescriptor::RENDER_MODE_MOUNT,
+				availability: new LeafAvailability(requiredApp: 'shillinq'),
+				rendering: new LeafRendering(
+					surfaces: self::PANEL_SURFACES,
+					renderMode: LeafDescriptor::RENDER_MODE_MOUNT,
+				),
 			),
 			null,
 		);
@@ -146,12 +157,14 @@ final class PaymentRequestLeafRegistrationListener implements IEventListener {
 		// value from here, so no case ever carries a stale copy of an agreement.
 		$event->registerLeaf(
 			new LeafDescriptor(
-				id: ContractLeafProvider::LEAF_ID,
-				label: 'Contract',
-				icon: 'FileDocumentOutline',
+				identity: new LeafIdentity(
+					id: ContractLeafProvider::LEAF_ID,
+					label: 'Contract',
+					icon: 'FileDocumentOutline',
+					group: 'Finance',
+				),
 				kinds: [LeafDescriptor::KIND_DATA_PROVIDER],
-				requiredApp: 'shillinq',
-				group: 'Finance',
+				availability: new LeafAvailability(requiredApp: 'shillinq'),
 			),
 			$this->contracts,
 		);
@@ -160,40 +173,50 @@ final class PaymentRequestLeafRegistrationListener implements IEventListener {
 		// invoice, credit note, payment request and payout linked to the object.
 		$event->registerLeaf(
 			new LeafDescriptor(
-				id: FinancialDocumentLeafProvider::LEAF_ID,
-				label: 'Financial documents',
-				icon: 'FileDocumentMultipleOutline',
+				identity: new LeafIdentity(
+					id: FinancialDocumentLeafProvider::LEAF_ID,
+					label: 'Financial documents',
+					icon: 'FileDocumentMultipleOutline',
+					group: 'Finance',
+				),
 				kinds: [LeafDescriptor::KIND_DATA_PROVIDER],
-				requiredApp: 'shillinq',
-				group: 'Finance',
+				availability: new LeafAvailability(requiredApp: 'shillinq'),
 			),
 			$this->documents,
 		);
 
 		$event->registerLeaf(
 			new LeafDescriptor(
-				id: self::DOCUMENTS_PANEL_ID,
-				label: 'Financial documents',
-				icon: 'FileDocumentMultipleOutline',
+				identity: new LeafIdentity(
+					id: self::DOCUMENTS_PANEL_ID,
+					label: 'Financial documents',
+					icon: 'FileDocumentMultipleOutline',
+					group: 'Finance',
+				),
 				kinds: [LeafDescriptor::KIND_RENDER_SURFACE],
-				requiredApp: 'shillinq',
-				group: 'Finance',
-				surfaces: self::PANEL_SURFACES,
-				renderMode: LeafDescriptor::RENDER_MODE_MOUNT,
+				availability: new LeafAvailability(requiredApp: 'shillinq'),
+				rendering: new LeafRendering(
+					surfaces: self::PANEL_SURFACES,
+					renderMode: LeafDescriptor::RENDER_MODE_MOUNT,
+				),
 			),
 			null,
 		);
 
 		$event->registerLeaf(
 			new LeafDescriptor(
-				id: self::CONTRACT_PANEL_ID,
-				label: 'Contract',
-				icon: 'FileDocumentOutline',
+				identity: new LeafIdentity(
+					id: self::CONTRACT_PANEL_ID,
+					label: 'Contract',
+					icon: 'FileDocumentOutline',
+					group: 'Finance',
+				),
 				kinds: [LeafDescriptor::KIND_RENDER_SURFACE],
-				requiredApp: 'shillinq',
-				group: 'Finance',
-				surfaces: self::PANEL_SURFACES,
-				renderMode: LeafDescriptor::RENDER_MODE_MOUNT,
+				availability: new LeafAvailability(requiredApp: 'shillinq'),
+				rendering: new LeafRendering(
+					surfaces: self::PANEL_SURFACES,
+					renderMode: LeafDescriptor::RENDER_MODE_MOUNT,
+				),
 			),
 			null,
 		);

@@ -43,6 +43,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\AppIdentity;
+use OCA\Shillinq\Reporting\GeneratedFile;
 use OCA\Shillinq\Reporting\Generator\XafAuditfileGenerator;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCP\AppFramework\Controller;
@@ -101,10 +102,48 @@ class AdministrationExportController extends Controller {
 		}
 
 		$administrationId = trim($id);
+		$refusal = $this->exportRefusal(administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$rendered = $this->renderedXaf(administrationId: $administrationId);
+		if ($rendered instanceof JSONResponse) {
+			return $rendered;
+		}
+
+		return $this->download(administrationId: $administrationId, rendered: $rendered);
+
+	}//end exportXaf()
+
+	/**
+	 * The 400 for a malformed id, or the access refusal.
+	 *
+	 * @param string $administrationId The trimmed administration id.
+	 *
+	 * @return JSONResponse|null The refusal, or null when the caller may export.
+	 *
+	 * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
+	 */
+	private function exportRefusal(string $administrationId): ?JSONResponse {
 		if ($this->isValidIdentifier(identifier: $administrationId) === false) {
 			return new JSONResponse(['error' => 'Invalid administration id'], Http::STATUS_BAD_REQUEST);
 		}
 
+		return $this->accessRefusal(administrationId: $administrationId);
+	}//end exportRefusal()
+
+	/**
+	 * A failing membership check is a logged 500; a non-member is masked as
+	 * 404 — never confirm administration existence (REQ-MA-001).
+	 *
+	 * @param string $administrationId The administration.
+	 *
+	 * @return JSONResponse|null The refusal, or null when the caller is a member.
+	 *
+	 * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
+	 */
+	private function accessRefusal(string $administrationId): ?JSONResponse {
 		try {
 			$allowed = $this->context->canAccess(administrationId: $administrationId);
 		} catch (\Throwable $e) {
@@ -116,23 +155,24 @@ class AdministrationExportController extends Controller {
 		}
 
 		if ($allowed === false) {
-			// Mask non-membership as 404 — never confirm administration existence (REQ-MA-001).
 			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
 		}
 
-		$period = trim((string)$this->request->getParam('period', ''));
-		$context = [
-			'administrationId' => $administrationId,
-			'period' => $period,
-		];
+		return null;
+	}//end accessRefusal()
+
+	/**
+	 * Render the XAF for the requested period; a failure is a logged 500.
+	 *
+	 * @param string $administrationId The administration.
+	 *
+	 * @return GeneratedFile|JSONResponse
+	 */
+	private function renderedXaf(string $administrationId): GeneratedFile|JSONResponse {
+		$context = $this->xafContext(administrationId: $administrationId);
 
 		try {
-			$generator = $this->container->get(XafAuditfileGenerator::class);
-			if (($generator instanceof XafAuditfileGenerator) === false) {
-				throw new RuntimeException('XAF generator unavailable');
-			}
-
-			$rendered = $generator->generate($context, 'xml');
+			return $this->xafGenerator()->generate($context, 'xml');
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'AdministrationExportController: XAF generation failed',
@@ -140,9 +180,49 @@ class AdministrationExportController extends Controller {
 			);
 			return new JSONResponse(['error' => 'Export generation failed'], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
+	}//end renderedXaf()
 
-		$full = $this->isTruthy(value: $this->request->getParam('full', ''));
-		if ($full === false) {
+	/**
+	 * The generator context: the administration and the requested period.
+	 *
+	 * @param string $administrationId The administration.
+	 *
+	 * @return array<string, string>
+	 */
+	private function xafContext(string $administrationId): array {
+		$period = trim((string)$this->request->getParam('period', ''));
+		return [
+			'administrationId' => $administrationId,
+			'period' => $period,
+		];
+	}//end xafContext()
+
+	/**
+	 * The XAF generator from the container.
+	 *
+	 * @return XafAuditfileGenerator
+	 *
+	 * @throws RuntimeException When the container does not hold one.
+	 */
+	private function xafGenerator(): XafAuditfileGenerator {
+		$generator = $this->container->get(XafAuditfileGenerator::class);
+		if (($generator instanceof XafAuditfileGenerator) === false) {
+			throw new RuntimeException('XAF generator unavailable');
+		}
+
+		return $generator;
+	}//end xafGenerator()
+
+	/**
+	 * Download the XAF itself, or with a truthy "full" a ZIP of it and its attachments.
+	 *
+	 * @param string        $administrationId The administration.
+	 * @param GeneratedFile $rendered         The rendered XAF.
+	 *
+	 * @return Response
+	 */
+	private function download(string $administrationId, GeneratedFile $rendered): Response {
+		if ($this->isTruthy(value: $this->request->getParam('full', '')) === false) {
 			return new DataDownloadResponse(
 				$rendered->content,
 				$rendered->fileName,
@@ -150,18 +230,22 @@ class AdministrationExportController extends Controller {
 			);
 		}
 
+		return $this->zipDownload(administrationId: $administrationId, rendered: $rendered);
+	}//end download()
+
+	/**
+	 * Download the XAF bundled with its attachments; a bundling failure is a logged 500.
+	 *
+	 * @param string        $administrationId The administration.
+	 * @param GeneratedFile $rendered         The rendered XAF.
+	 *
+	 * @return Response
+	 */
+	private function zipDownload(string $administrationId, GeneratedFile $rendered): Response {
 		try {
-			$zipBytes = $this->bundleZip(
-				administrationId: $administrationId,
-				xafFileName: $rendered->fileName,
-				xafContent: $rendered->content
-			);
+			$zipBytes = $this->bundleZip(administrationId: $administrationId, rendered: $rendered);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'AdministrationExportController: XAF ZIP bundling failed',
-				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(['error' => 'Export bundling failed'], Http::STATUS_INTERNAL_SERVER_ERROR);
+			return $this->bundlingFailed(administrationId: $administrationId, e: $e);
 		}
 
 		return new DataDownloadResponse(
@@ -169,8 +253,23 @@ class AdministrationExportController extends Controller {
 			'xaf-' . $administrationId . '.zip',
 			'application/zip',
 		);
+	}//end zipDownload()
 
-	}//end exportXaf()
+	/**
+	 * Log a failed bundling and answer 500.
+	 *
+	 * @param string     $administrationId The administration.
+	 * @param \Throwable $e                The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function bundlingFailed(string $administrationId, \Throwable $e): JSONResponse {
+		$this->logger->error(
+			'AdministrationExportController: XAF ZIP bundling failed',
+			['administrationId' => $administrationId, 'exception' => $e->getMessage()]
+		);
+		return new JSONResponse(['error' => 'Export bundling failed'], Http::STATUS_INTERNAL_SERVER_ERROR);
+	}//end bundlingFailed()
 
 	/**
 	 * Bundle the XAF document plus the administration's attached documents into a ZIP.
@@ -181,15 +280,36 @@ class AdministrationExportController extends Controller {
 	 * least the audit file. Documents live in NC Files, so this references/streams
 	 * them rather than duplicating storage.
 	 *
-	 * @param string $administrationId The administration scope.
-	 * @param string $xafFileName The XAF entry file name.
-	 * @param string $xafContent The XAF bytes.
+	 * @param string        $administrationId The administration scope.
+	 * @param GeneratedFile $rendered         The XAF entry: file name and bytes.
 	 *
 	 * @return string The ZIP archive bytes.
 	 *
 	 * @throws RuntimeException When ZIP support is unavailable or the archive cannot be written.
 	 */
-	private function bundleZip(string $administrationId, string $xafFileName, string $xafContent): string {
+	private function bundleZip(string $administrationId, GeneratedFile $rendered): string {
+		$tmp = $this->zipTempFile();
+		$zip = $this->openZip(tmp: $tmp);
+
+		$zip->addFromString($rendered->fileName, $rendered->content);
+		$this->addAttachments(zip: $zip, administrationId: $administrationId);
+
+		$zip->close();
+
+		$bytes = (string)file_get_contents($tmp);
+		$this->removeTempFile(tmp: $tmp);
+
+		return $bytes;
+	}//end bundleZip()
+
+	/**
+	 * A temp file for the ZIP.
+	 *
+	 * @return string The temp file path.
+	 *
+	 * @throws RuntimeException Without the ZIP extension or a temp file.
+	 */
+	private function zipTempFile(): string {
 		if (class_exists(ZipArchive::class) === false) {
 			throw new RuntimeException('ZIP extension unavailable');
 		}
@@ -199,42 +319,78 @@ class AdministrationExportController extends Controller {
 			throw new RuntimeException('Could not allocate a temp file for the ZIP');
 		}
 
+		return $tmp;
+	}//end zipTempFile()
+
+	/**
+	 * Open the ZIP archive over the temp file; on failure the temp file is removed.
+	 *
+	 * @param string $tmp The temp file.
+	 *
+	 * @return ZipArchive
+	 *
+	 * @throws RuntimeException When the archive cannot be opened.
+	 */
+	private function openZip(string $tmp): ZipArchive {
 		$zip = new ZipArchive();
 		if ($zip->open($tmp, (ZipArchive::CREATE | ZipArchive::OVERWRITE)) !== true) {
-			if (file_exists($tmp) === true) {
-				unlink($tmp);
-			}
-
+			$this->removeTempFile(tmp: $tmp);
 			throw new RuntimeException('Could not open the ZIP archive');
 		}
 
-		$zip->addFromString($xafFileName, $xafContent);
+		return $zip;
+	}//end openZip()
 
-		foreach ($this->attachedDocumentFileIds(administrationId: $administrationId) as $fileId) {
-			try {
-				$nodes = $this->rootFolder->getById($fileId);
-				$node = ($nodes[0] ?? null);
-				if ($node !== null && method_exists($node, 'getContent') === true) {
-					$zip->addFromString('documents/' . $node->getName(), $node->getContent());
-				}
-			} catch (\Throwable $e) {
-				// Best-effort: a single unreadable attachment must not fail the export.
-				$this->logger->warning(
-					'AdministrationExportController: skipped an unreadable attachment',
-					['fileId' => $fileId, 'exception' => $e->getMessage()]
-				);
-			}
-		}
-
-		$zip->close();
-
-		$bytes = (string)file_get_contents($tmp);
+	/**
+	 * Remove the temp file when it exists.
+	 *
+	 * @param string $tmp The temp file.
+	 *
+	 * @return void
+	 */
+	private function removeTempFile(string $tmp): void {
 		if (file_exists($tmp) === true) {
 			unlink($tmp);
 		}
+	}//end removeTempFile()
 
-		return $bytes;
-	}//end bundleZip()
+	/**
+	 * Add the administration's attached documents under documents/.
+	 *
+	 * @param ZipArchive $zip              The open archive.
+	 * @param string     $administrationId The administration.
+	 *
+	 * @return void
+	 */
+	private function addAttachments(ZipArchive $zip, string $administrationId): void {
+		foreach ($this->attachedDocumentFileIds(administrationId: $administrationId) as $fileId) {
+			$this->addAttachment(zip: $zip, fileId: $fileId);
+		}
+	}//end addAttachments()
+
+	/**
+	 * Add one attached document. Best-effort: a single unreadable attachment
+	 * must not fail the export, so a failure is logged and skipped.
+	 *
+	 * @param ZipArchive $zip    The open archive.
+	 * @param int        $fileId The attachment's file id.
+	 *
+	 * @return void
+	 */
+	private function addAttachment(ZipArchive $zip, int $fileId): void {
+		try {
+			$nodes = $this->rootFolder->getById($fileId);
+			$node = ($nodes[0] ?? null);
+			if ($node !== null && method_exists($node, 'getContent') === true) {
+				$zip->addFromString('documents/' . $node->getName(), $node->getContent());
+			}
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'AdministrationExportController: skipped an unreadable attachment',
+				['fileId' => $fileId, 'exception' => $e->getMessage()]
+			);
+		}
+	}//end addAttachment()
 
 	/**
 	 * Resolve the NC-Files fileIds attached to the administration's documents.
@@ -248,6 +404,25 @@ class AdministrationExportController extends Controller {
 	 * @return array<int, int>
 	 */
 	private function attachedDocumentFileIds(string $administrationId): array {
+		$ids = [];
+		foreach ($this->documentRows(administrationId: $administrationId) as $row) {
+			$fileId = $this->fileIdOf(row: $row);
+			if ($fileId !== null) {
+				$ids[] = $fileId;
+			}
+		}
+
+		return $ids;
+	}//end attachedDocumentFileIds()
+
+	/**
+	 * The administration's Document rows ([] when they cannot be read).
+	 *
+	 * @param string $administrationId The administration.
+	 *
+	 * @return array<int|string, mixed>
+	 */
+	private function documentRows(string $administrationId): array {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$rows = $objectService
@@ -258,30 +433,47 @@ class AdministrationExportController extends Controller {
 			return [];
 		}
 
-		$ids = [];
-		$rowList = [];
 		if (is_array($rows) === true) {
-			$rowList = $rows;
+			return $rows;
 		}
 
-		foreach ($rowList as $row) {
-			$data = $row;
-			if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-				$data = (array)$row->jsonSerialize();
-			}
+		return [];
+	}//end documentRows()
 
-			if (is_array($data) === false) {
-				continue;
-			}
-
-			$fileId = ($data['fileId'] ?? null);
-			if (is_int($fileId) === true || (is_string($fileId) === true && ctype_digit($fileId) === true)) {
-				$ids[] = (int)$fileId;
-			}
+	/**
+	 * A Document row's numeric file id, or null.
+	 *
+	 * @param mixed $row The row (an array, or an entity that serialises to one).
+	 *
+	 * @return integer|null
+	 */
+	private function fileIdOf(mixed $row): int|null {
+		$data = $row;
+		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+			$data = (array)$row->jsonSerialize();
 		}
 
-		return $ids;
-	}//end attachedDocumentFileIds()
+		if (is_array($data) === false) {
+			return null;
+		}
+
+		return $this->numericId(value: ($data['fileId'] ?? null));
+	}//end fileIdOf()
+
+	/**
+	 * An integer, or a string of digits, as an int; null otherwise.
+	 *
+	 * @param mixed $value The value.
+	 *
+	 * @return integer|null
+	 */
+	private function numericId(mixed $value): int|null {
+		if (is_int($value) === true || (is_string($value) === true && ctype_digit($value) === true)) {
+			return (int)$value;
+		}
+
+		return null;
+	}//end numericId()
 
 	/**
 	 * Validate an administration identifier slug before touching the data layer.

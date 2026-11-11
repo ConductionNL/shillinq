@@ -74,6 +74,22 @@ export function spreadAmounts(yearly) {
  * @spec openspec/changes/archive/2026-09-29-planning-budget-editing/tasks.md#task-1.1
  */
 export function nextCell(key, at, rowCount, atStart = true, atEnd = true) {
+	const next = movedCell(key, { at, atStart, atEnd })
+	if (next === null || !insideGrid(next, rowCount)) {
+		return null
+	}
+	return next
+}
+
+/**
+ * The cell a key moves to, before the grid bounds are checked; null for a key
+ * that does not move, or a sideways move while the caret is not at that edge.
+ *
+ * @param {string} key The key.
+ * @param {{at: {row:number,col:number}, atStart: boolean, atEnd: boolean}} caret The current cell and caret edges.
+ * @return {{row:number,col:number}|null}
+ */
+function movedCell(key, { at, atStart, atEnd }) {
 	const moves = {
 		ArrowUp: { row: at.row - 1, col: at.col },
 		ArrowDown: { row: at.row + 1, col: at.col },
@@ -81,17 +97,19 @@ export function nextCell(key, at, rowCount, atStart = true, atEnd = true) {
 		ArrowLeft: atStart ? { row: at.row, col: at.col - 1 } : null,
 		ArrowRight: atEnd ? { row: at.row, col: at.col + 1 } : null,
 	}
-	const next = moves[key] ?? null
-	if (
-		next === null
-		|| next.row < 0
-		|| next.row >= rowCount
-		|| next.col < 0
-		|| next.col > 11
-	) {
-		return null
-	}
-	return next
+	return moves[key] ?? null
+}
+
+/**
+ * The cell lies inside the grid: a row of the grid and one of its 12 month
+ * columns.
+ *
+ * @param {{row:number,col:number}} cell The cell.
+ * @param {number} rowCount The number of rows.
+ * @return {boolean}
+ */
+function insideGrid(cell, rowCount) {
+	return cell.row >= 0 && cell.row < rowCount && cell.col >= 0 && cell.col <= 11
 }
 
 /**

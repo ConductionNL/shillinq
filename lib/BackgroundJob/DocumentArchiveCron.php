@@ -129,61 +129,8 @@ class DocumentArchiveCron extends TimedJob {
 		}
 
 		try {
-			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$registerSlug = $this->settings->getRegisterSlug();
-
-			$filed = $objectService
-				->setRegister($registerSlug)
-				->setSchema('Document')
-				->findAll(
-					[
-						'filters' => ['status' => 'filed'],
-						'limit' => 5000,
-					]
-				);
-
-			$archived = 0;
-			$skipped = 0;
-			$failed = 0;
-			foreach ($filed as $row) {
-				$documentId = (string)($row['id'] ?? ($row['documentNumber'] ?? ''));
-				$administrationId = (string)($row['administrationId'] ?? '');
-				$filedAt = (string)($row['filedAt'] ?? ($row['documentDate'] ?? ''));
-
-				if ($documentId === '' || $administrationId === '') {
-					$skipped++;
-					continue;
-				}
-
-				if ($this->documents->isRetentionElapsed(filedAt: $filedAt) === false) {
-					$skipped++;
-					continue;
-				}
-
-				try {
-					$this->documents->archiveDocument(
-						administrationId: $administrationId,
-						documentId: $documentId,
-						reason: self::SYSTEM_REASON,
-						allowEarly: false,
-					);
-					$archived++;
-				} catch (Throwable $e) {
-					$failed++;
-					$this->logger->warning(
-						'DocumentArchiveCron: failed to archive document ' . $documentId,
-						[
-							'administrationId' => $administrationId,
-							'exception' => $e->getMessage(),
-						]
-					);
-				}
-			}//end foreach
-
-			$this->logger->info(
-				'DocumentArchiveCron: archived=' . $archived . ' skipped=' . $skipped . ' failed=' . $failed
-				. ' (sampled ' . count($filed) . ' filed documents).'
-			);
+			$filed = $this->filedDocuments();
+			$this->logTally(tally: $this->archiveAll(filed: $filed), sampled: count($filed));
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'DocumentArchiveCron failed: ' . $e->getMessage(),
@@ -192,4 +139,118 @@ class DocumentArchiveCron extends TimedJob {
 		}//end try
 
 	}//end runAsJob()
+
+	/**
+	 * Log the run's counts.
+	 *
+	 * @param ArchiveTally $tally   The run's counts.
+	 * @param int          $sampled How many filed documents were read.
+	 *
+	 * @return void
+	 */
+	private function logTally(ArchiveTally $tally, int $sampled): void {
+		$this->logger->info(
+			'DocumentArchiveCron: archived=' . $tally->archived . ' skipped=' . $tally->skipped . ' failed=' . $tally->failed
+			. ' (sampled ' . $sampled . ' filed documents).'
+		);
+	}//end logTally()
+
+	/**
+	 * The filed Documents (up to 5000).
+	 *
+	 * @return array<int, mixed>
+	 */
+	private function filedDocuments(): array {
+		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
+		$registerSlug = $this->settings->getRegisterSlug();
+
+		return $objectService
+			->setRegister($registerSlug)
+			->setSchema('Document')
+			->findAll(
+				[
+					'filters' => ['status' => 'filed'],
+					'limit' => 5000,
+				]
+			);
+	}//end filedDocuments()
+
+	/**
+	 * Archive every filed document whose retention has elapsed, counting the outcomes.
+	 *
+	 * @param array<int, mixed> $filed The filed Document rows.
+	 *
+	 * @return ArchiveTally
+	 *
+	 * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-29
+	 */
+	private function archiveAll(array $filed): ArchiveTally {
+		$tally = new ArchiveTally();
+		foreach ($filed as $row) {
+			$this->archiveOne(tally: $tally, document: new ArchivableDocument(row: $row));
+		}
+
+		return $tally;
+	}//end archiveAll()
+
+	/**
+	 * Skip an unidentified document or one still within the retention
+	 * boundary; archive any other.
+	 *
+	 * @param ArchiveTally       $tally    The run's counts.
+	 * @param ArchivableDocument $document The filed document.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-29
+	 */
+	private function archiveOne(ArchiveTally $tally, ArchivableDocument $document): void {
+		if ($document->isIdentified() === false || $this->documents->isRetentionElapsed(filedAt: $document->filedAt) === false) {
+			$tally->skipped++;
+			return;
+		}
+
+		$this->tryArchive(tally: $tally, document: $document);
+	}//end archiveOne()
+
+	/**
+	 * Archive one document; a failure is counted and logged, never fatal.
+	 *
+	 * @param ArchiveTally       $tally    The run's counts.
+	 * @param ArchivableDocument $document The document past its retention boundary.
+	 *
+	 * @return void
+	 */
+	private function tryArchive(ArchiveTally $tally, ArchivableDocument $document): void {
+		try {
+			$this->documents->archiveDocument(
+				administrationId: $document->administrationId,
+				documentId: $document->documentId,
+				reason: self::SYSTEM_REASON,
+				allowEarly: false,
+			);
+			$tally->archived++;
+		} catch (Throwable $e) {
+			$tally->failed++;
+			$this->logArchiveFailure(document: $document, e: $e);
+		}
+	}//end tryArchive()
+
+	/**
+	 * Log a document that could not be archived.
+	 *
+	 * @param ArchivableDocument $document The document.
+	 * @param Throwable          $e        The failure.
+	 *
+	 * @return void
+	 */
+	private function logArchiveFailure(ArchivableDocument $document, Throwable $e): void {
+		$this->logger->warning(
+			'DocumentArchiveCron: failed to archive document ' . $document->documentId,
+			[
+				'administrationId' => $document->administrationId,
+				'exception' => $e->getMessage(),
+			]
+		);
+	}//end logArchiveFailure()
 }//end class

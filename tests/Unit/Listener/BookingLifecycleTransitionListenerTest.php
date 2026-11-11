@@ -42,6 +42,8 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
+use OCA\OpenRegister\Service\Lifecycle\TransitionMove;
 use OCA\Shillinq\Listener\BookingLifecycleTransitionListener;
 use OCA\Shillinq\Service\Pipelinq\PipelinqAdminNotifier;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
@@ -205,13 +207,9 @@ final class BookingLifecycleTransitionListenerTest extends TestCase {
 		$entity->setSchema($schema);
 		$entity->setObject($appointment);
 		return new ObjectTransitionedEvent(
-			$entity,
-			'transition',
-			$from,
-			$to,
-			null,
-			'shillinq',
-			$schema
+			object: $entity,
+			move: new TransitionMove(action: 'transition', from: $from, to: $to),
+			scope: new RegisterSchemaRef(register: 'shillinq', schema: $schema),
 		);
 
 	}//end transitionEvent()
@@ -618,4 +616,40 @@ final class BookingLifecycleTransitionListenerTest extends TestCase {
 
 	}//end testSuccessLogsAtDebug()
 
+	/**
+	 * The timestamp prefers updatedAt, falls back to createdAt past an
+	 * unparseable one (with a debug line), a cancellation without a reason
+	 * carries no reason key, and a missing appointmentId is warned about with
+	 * the event type.
+	 *
+	 * @return void
+	 */
+	public function testTimestampFallbackReasonAndMissingId(): void {
+		$publishCalls = [];
+		$enqueueCalls = [];
+		$adminCalls = [];
+		[$adapter, $queue, $notifier] = $this->deps(outcome: TimelinePublishOutcome::Success, publishCalls: $publishCalls, enqueueCalls: $enqueueCalls, adminCalls: $adminCalls);
+		$logger = $this->recordingLogger();
+		$listener = new BookingLifecycleTransitionListener(pipelinq: $adapter, retryQueue: $queue, adminAlerts: $notifier, logger: $logger);
+
+		$listener->handle($this->transitionEvent(to: ' Cancelled ', appointment: ['appointmentId' => 'b-9', 'pipelinqContactId' => 'pl-9', 'updatedAt' => 'garbage', 'createdAt' => '2026-01-02T03:04:05Z', 'cancellationReason' => '  ']));
+		$listener->handle($this->transitionEvent(to: 'completed', appointment: ['appointmentId' => '', 'pipelinqContactId' => 'pl-9']));
+		$listener->handle($this->transitionEvent(to: 'confirmed', appointment: ['appointmentId' => 'b-8', 'pipelinqContactId' => '  ']));
+
+		self::assertCount(1, $publishCalls);
+		$payload = $publishCalls[0]->toPayload();
+		self::assertSame(TimelineEventDto::TYPE_BOOKING_CANCELLED, $publishCalls[0]->type());
+		self::assertSame('2026-01-02T03:04:05Z', $payload['timestamp']);
+		self::assertArrayNotHasKey('cancellationReason', $payload['metadata']);
+		self::assertSame(
+			[
+				['debug', 'BookingLifecycleTransitionListener: timestamp field unparseable', 'updatedAt'],
+				['debug', 'BookingLifecycleTransitionListener: published', null],
+				['warning', 'BookingLifecycleTransitionListener: missing appointmentId — skipping publish', null],
+			],
+			array_map(static fn (array $r): array => [$r['level'], $r['message'], ($r['context']['field'] ?? null)], $logger->records)
+		);
+		self::assertSame(['app' => 'shillinq', 'type' => TimelineEventDto::TYPE_BOOKING_COMPLETED], $logger->records[2]['context']);
+
+	}//end testTimestampFallbackReasonAndMissingId()
 }//end class

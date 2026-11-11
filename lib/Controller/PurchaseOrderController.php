@@ -104,23 +104,26 @@ class PurchaseOrderController extends Controller {
 		}
 
 		$administrationId = $this->scopeParam(name: 'administrationId');
-		if ($administrationId === '') {
-			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
-		}
-
 		// IDOR check — mask cross-tenant as 404 (ADR-005).
-		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+		$refusal = $this->administrationRefusal(administrationId: $administrationId, notFound: 'Administration not found');
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
-		$payload = [
-			'supplierId' => trim((string)$this->request->getParam('supplierId', '')),
-			'costCenter' => trim((string)$this->request->getParam('costCenter', '')),
-			'projectCode' => trim((string)$this->request->getParam('projectCode', '')),
-			'currency' => trim((string)$this->request->getParam('currency', 'EUR')),
-			'lines' => (array)$this->request->getParam('lines', []),
-			'notes' => (string)$this->request->getParam('notes', ''),
-		];
+		return $this->created(administrationId: $administrationId);
+	}//end create()
+
+	/**
+	 * Create the purchase order from the posted form.
+	 *
+	 * @param string $administrationId The authorised administration.
+	 *
+	 * @return JSONResponse 201 with the order, 400 on a validation refusal, or a logged 500.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-core/spec.md
+	 */
+	private function created(string $administrationId): JSONResponse {
+		$payload = $this->orderPayload();
 
 		try {
 			$po = $this->purchaseOrderService->createPurchaseOrder(
@@ -128,33 +131,73 @@ class PurchaseOrderController extends Controller {
 				payload: $payload
 			);
 		} catch (\RuntimeException $e) {
-			$this->logger->error(
-				'PurchaseOrderController: purchase order creation rejected',
-				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(
-				[
-					'message' => $this->l10n->t('Unable to create purchase order — check the required fields'),
-					'error' => 'purchase-order-create-invalid',
-				],
-				Http::STATUS_BAD_REQUEST
-			);
+			return $this->creationRejected(administrationId: $administrationId, e: $e);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'PurchaseOrderController: failed to create purchase order',
-				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(
-				[
-					'message' => $this->l10n->t('Unable to create purchase order'),
-					'error' => 'purchase-order-create-failed',
-				],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+			return $this->creationFailed(administrationId: $administrationId, e: $e);
 		}
 
 		return new JSONResponse($po, Http::STATUS_CREATED);
-	}//end create()
+	}//end created()
+
+	/**
+	 * The posted purchase order form.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function orderPayload(): array {
+		return [
+			'supplierId' => trim((string)$this->request->getParam('supplierId', '')),
+			'costCenter' => trim((string)$this->request->getParam('costCenter', '')),
+			'projectCode' => trim((string)$this->request->getParam('projectCode', '')),
+			'currency' => trim((string)$this->request->getParam('currency', 'EUR')),
+			'lines' => (array)$this->request->getParam('lines', []),
+			'notes' => (string)$this->request->getParam('notes', ''),
+		];
+	}//end orderPayload()
+
+	/**
+	 * Log a refused creation and answer 400 without the exception.
+	 *
+	 * @param string            $administrationId The administration.
+	 * @param \RuntimeException $e                The refusal.
+	 *
+	 * @return JSONResponse
+	 */
+	private function creationRejected(string $administrationId, \RuntimeException $e): JSONResponse {
+		$this->logger->error(
+			'PurchaseOrderController: purchase order creation rejected',
+			['administrationId' => $administrationId, 'exception' => $e->getMessage()]
+		);
+		return new JSONResponse(
+			[
+				'message' => $this->l10n->t('Unable to create purchase order — check the required fields'),
+				'error' => 'purchase-order-create-invalid',
+			],
+			Http::STATUS_BAD_REQUEST
+		);
+	}//end creationRejected()
+
+	/**
+	 * Log a failed creation and answer 500 without a stack trace.
+	 *
+	 * @param string     $administrationId The administration.
+	 * @param \Throwable $e                The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function creationFailed(string $administrationId, \Throwable $e): JSONResponse {
+		$this->logger->error(
+			'PurchaseOrderController: failed to create purchase order',
+			['administrationId' => $administrationId, 'exception' => $e->getMessage()]
+		);
+		return new JSONResponse(
+			[
+				'message' => $this->l10n->t('Unable to create purchase order'),
+				'error' => 'purchase-order-create-failed',
+			],
+			Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+	}//end creationFailed()
 
 	/**
 	 * Preview the approval-chain that would be assigned for a given amount.
@@ -214,45 +257,18 @@ class PurchaseOrderController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function send(string $id): JSONResponse {
-		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		$transition = $this->orderTransition(id: $id, transition: 'send');
+		if ($transition instanceof JSONResponse) {
+			return $transition;
 		}
 
-		if (preg_match(self::ID_PATTERN, $id) !== 1) {
-			return new JSONResponse(['error' => 'Invalid purchase order id'], Http::STATUS_BAD_REQUEST);
-		}
-
-		$administrationId = $this->scopeParam(name: 'administrationId');
-		if ($administrationId === '') {
-			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
-		}
-
-		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-			return new JSONResponse(['error' => 'Purchase order not found'], Http::STATUS_NOT_FOUND);
-		}
-
-		try {
-			$po = $this->purchaseOrderService->blockSendUntilApproved(
-				administrationId: $administrationId,
-				purchaseOrderId: $id
-			);
-		} catch (\RuntimeException $e) {
-			// Distinguish missing PO (404) from incomplete chain (409).
-			$message = $e->getMessage();
-			if (str_contains($message, 'not found') === true) {
-				return new JSONResponse(['error' => $message], Http::STATUS_NOT_FOUND);
-			}
-
-			return new JSONResponse(['error' => $message], Http::STATUS_CONFLICT);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'PurchaseOrderController: failed to advance purchase order',
-				['purchaseOrderId' => $id, 'administrationId' => $administrationId, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(['error' => 'Could not advance purchase order'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}
-
-		return new JSONResponse($po, Http::STATUS_OK);
+		return $this->transitioned(
+			transition: $transition,
+			act: fn (): array => $this->purchaseOrderService->blockSendUntilApproved(
+				administrationId: $transition->administrationId,
+				purchaseOrderId: $transition->purchaseOrderId
+			)
+		);
 	}//end send()
 
 	/**
@@ -277,44 +293,18 @@ class PurchaseOrderController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function transmitPeppol(string $id): JSONResponse {
-		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		$transition = $this->orderTransition(id: $id, transition: 'peppol');
+		if ($transition instanceof JSONResponse) {
+			return $transition;
 		}
 
-		if (preg_match(self::ID_PATTERN, $id) !== 1) {
-			return new JSONResponse(['error' => 'Invalid purchase order id'], Http::STATUS_BAD_REQUEST);
-		}
-
-		$administrationId = $this->scopeParam(name: 'administrationId');
-		if ($administrationId === '') {
-			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
-		}
-
-		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-			return new JSONResponse(['error' => 'Purchase order not found'], Http::STATUS_NOT_FOUND);
-		}
-
-		try {
-			$po = $this->purchaseOrderService->sendToPeppol(
-				administrationId: $administrationId,
-				purchaseOrderId: $id
-			);
-		} catch (\RuntimeException $e) {
-			$message = $e->getMessage();
-			if (str_contains($message, 'not found') === true) {
-				return new JSONResponse(['error' => $message], Http::STATUS_NOT_FOUND);
-			}
-
-			return new JSONResponse(['error' => $message], Http::STATUS_CONFLICT);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'PurchaseOrderController: Peppol transmission failed',
-				['purchaseOrderId' => $id, 'administrationId' => $administrationId, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(['error' => 'Could not transmit purchase order'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}
-
-		return new JSONResponse($po, Http::STATUS_OK);
+		return $this->transitioned(
+			transition: $transition,
+			act: fn (): array => $this->purchaseOrderService->sendToPeppol(
+				administrationId: $transition->administrationId,
+				purchaseOrderId: $transition->purchaseOrderId
+			)
+		);
 	}//end transmitPeppol()
 
 	/**
@@ -336,47 +326,19 @@ class PurchaseOrderController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function transmitEmail(string $id): JSONResponse {
-		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		$transition = $this->orderTransition(id: $id, transition: 'email');
+		if ($transition instanceof JSONResponse) {
+			return $transition;
 		}
 
-		if (preg_match(self::ID_PATTERN, $id) !== 1) {
-			return new JSONResponse(['error' => 'Invalid purchase order id'], Http::STATUS_BAD_REQUEST);
-		}
-
-		$administrationId = $this->scopeParam(name: 'administrationId');
-		if ($administrationId === '') {
-			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
-		}
-
-		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-			return new JSONResponse(['error' => 'Purchase order not found'], Http::STATUS_NOT_FOUND);
-		}
-
-		$fallbackReason = trim((string)$this->request->getParam('fallbackReason', ''));
-
-		try {
-			$po = $this->purchaseOrderService->sendToPDFEmail(
-				administrationId: $administrationId,
-				purchaseOrderId: $id,
-				fallbackReason: $fallbackReason
-			);
-		} catch (\RuntimeException $e) {
-			$message = $e->getMessage();
-			if (str_contains($message, 'not found') === true) {
-				return new JSONResponse(['error' => $message], Http::STATUS_NOT_FOUND);
-			}
-
-			return new JSONResponse(['error' => $message], Http::STATUS_CONFLICT);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'PurchaseOrderController: PDF+email transmission failed',
-				['purchaseOrderId' => $id, 'administrationId' => $administrationId, 'exception' => $e->getMessage()]
-			);
-			return new JSONResponse(['error' => 'Could not transmit purchase order'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}
-
-		return new JSONResponse($po, Http::STATUS_OK);
+		return $this->transitioned(
+			transition: $transition,
+			act: fn (): array => $this->purchaseOrderService->sendToPDFEmail(
+				administrationId: $transition->administrationId,
+				purchaseOrderId: $transition->purchaseOrderId,
+				fallbackReason: trim((string)$this->request->getParam('fallbackReason', ''))
+			)
+		);
 	}//end transmitEmail()
 
 	/**
@@ -394,4 +356,84 @@ class PurchaseOrderController extends Controller {
 
 		return $value;
 	}//end scopeParam()
+
+	/**
+	 * The authorised transition, or the refusal: 401 anonymous, 400 on a
+	 * malformed id or without a well-formed administration, a masked 404
+	 * outside the administration — in that order.
+	 *
+	 * @param string $id         The purchase order id.
+	 * @param string $transition send, peppol or email.
+	 *
+	 * @return PurchaseOrderTransition|JSONResponse
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
+	 */
+	private function orderTransition(string $id, string $transition): PurchaseOrderTransition|JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
+
+		if (preg_match(self::ID_PATTERN, $id) !== 1) {
+			return new JSONResponse(['error' => 'Invalid purchase order id'], Http::STATUS_BAD_REQUEST);
+		}
+
+		$administrationId = $this->scopeParam(name: 'administrationId');
+		return $this->administrationRefusal(administrationId: $administrationId, notFound: 'Purchase order not found')
+			?? new PurchaseOrderTransition(purchaseOrderId: $id, administrationId: $administrationId, transition: $transition);
+	}//end orderTransition()
+
+	/**
+	 * The 400 without a well-formed administration, or the masked 404 when the
+	 * caller may not access it (ADR-005).
+	 *
+	 * @param string $administrationId The validated administration ('' when blank or malformed).
+	 * @param string $notFound         The 404 error, naming what is masked.
+	 *
+	 * @return JSONResponse|null The refusal, or null.
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
+	 */
+	private function administrationRefusal(string $administrationId, string $notFound): ?JSONResponse {
+		if ($administrationId === '') {
+			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
+		}
+
+		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => $notFound], Http::STATUS_NOT_FOUND);
+		}
+
+		return null;
+	}//end administrationRefusal()
+
+	/**
+	 * Make the transition: 200 with the order; a refusal is 404 when the order
+	 * is missing and 409 otherwise (an incomplete chain); any other failure a
+	 * logged 500.
+	 *
+	 * @param PurchaseOrderTransition $transition The authorised transition.
+	 * @param callable                $act        The service call making it.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-002
+	 */
+	private function transitioned(PurchaseOrderTransition $transition, callable $act): JSONResponse {
+		try {
+			$po = $act();
+		} catch (\RuntimeException $e) {
+			// Distinguish missing PO (404) from incomplete chain (409).
+			$message = $e->getMessage();
+			if (str_contains($message, 'not found') === true) {
+				return new JSONResponse(['error' => $message], Http::STATUS_NOT_FOUND);
+			}
+
+			return new JSONResponse(['error' => $message], Http::STATUS_CONFLICT);
+		} catch (\Throwable $e) {
+			$this->logger->error($transition->failureLog(), $transition->logContext(exception: $e));
+			return new JSONResponse(['error' => $transition->failureError()], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+
+		return new JSONResponse($po, Http::STATUS_OK);
+	}//end transitioned()
 }//end class

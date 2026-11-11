@@ -72,41 +72,68 @@ class MeterReadingImportService {
 	 * @spec openspec/changes/sales-usage-billing/specs/usage-metered-billing/spec.md
 	 */
 	public function import(string $administrationId, array $rows): array {
-		$created = [];
-		$refused = [];
-		$plans   = [];
-		foreach (array_values($rows) as $index => $row) {
-			$number  = ($index + 1);
-			$reading = $this->reading(administrationId: $administrationId, row: (array)$row);
-			if (is_string($reading) === true) {
-				$refused[] = ['row' => $number, 'reason' => $reading];
-				continue;
-			}
+		$run = new MeterReadingImportRun(administrationId: $administrationId);
+		foreach ($rows as $row) {
+			$run->row++;
+			$this->importRow(run: $run, row: (array)$row);
+		}
 
-			if (isset($reading['ratePlanId']) === false) {
-				$type = (string)$reading['resourceType'];
-				if (array_key_exists($type, $plans) === false) {
-					$plans[$type] = $this->planIdFor(administrationId: $administrationId, resourceType: $type);
-				}
-
-				if ($plans[$type] !== null) {
-					$reading['ratePlanId'] = $plans[$type];
-				}
-			}
-
-			try {
-				$saved = ObjectIdentifier::recordWithId(candidate: $this->scoped(schema: 'MeterReading')->saveObject($reading));
-			} catch (Throwable $e) {
-				$refused[] = ['row' => $number, 'reason' => $this->l10n->t('The register refused the row: %s', [$e->getMessage()])];
-				continue;
-			}
-
-			$created[] = (string)($saved['id'] ?? '');
-		}//end foreach
-
-		return ['created' => $created, 'refused' => $refused];
+		return $run->result();
 
 	}//end import()
+
+	/**
+	 * Create the reading one row describes, or refuse the row.
+	 *
+	 * @param MeterReadingImportRun $run The import in progress.
+	 * @param array<string,mixed>   $row The row.
+	 *
+	 * @return void
+	 */
+	private function importRow(MeterReadingImportRun $run, array $row): void {
+		$reading = $this->reading(administrationId: $run->administrationId, row: $row);
+		if (is_string($reading) === true) {
+			$run->refuse(reason: $reading);
+			return;
+		}
+
+		$reading = $this->withRatePlan(run: $run, reading: $reading);
+		try {
+			$saved = ObjectIdentifier::recordWithId(candidate: $this->scoped(schema: 'MeterReading')->saveObject($reading));
+		} catch (Throwable $e) {
+			$run->refuse(reason: $this->l10n->t('The register refused the row: %s', [$e->getMessage()]));
+			return;
+		}
+
+		$run->created[] = (string)($saved['id'] ?? '');
+
+	}//end importRow()
+
+	/**
+	 * The reading with its administration's single rate plan for the resource type, unless it names one.
+	 *
+	 * @param MeterReadingImportRun $run     The import in progress; it keeps the plan per type.
+	 * @param array<string,mixed>   $reading The reading.
+	 *
+	 * @return array<string,mixed> The reading.
+	 */
+	private function withRatePlan(MeterReadingImportRun $run, array $reading): array {
+		if (isset($reading['ratePlanId']) === true) {
+			return $reading;
+		}
+
+		$type = (string)$reading['resourceType'];
+		if (array_key_exists($type, $run->plans) === false) {
+			$run->plans[$type] = $this->planIdFor(administrationId: $run->administrationId, resourceType: $type);
+		}
+
+		if ($run->plans[$type] !== null) {
+			$reading['ratePlanId'] = $run->plans[$type];
+		}
+
+		return $reading;
+
+	}//end withRatePlan()
 
 	/**
 	 * The reading a row describes, or the reason it cannot be one.

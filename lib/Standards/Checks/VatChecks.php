@@ -89,101 +89,356 @@ class VatChecks implements CheckProvider {
 	public static function checks(): array {
 		return [
 			'ARInvoice' => [
-				// --- Tax point (chargeable event) — VAT Directive art. 63. ---
-				// The supply date / value-added-tax point must be stated so the moment
-				// VAT became chargeable is recorded on the invoice.
-				'vatdir-art63-tax-point-supply' => static fn (array $o): bool => (self::present($o, 'supplyDate')
-					|| self::present($o, 'taxPointDate') || self::present($o, 'invoiceDate')),
-
-				// --- Obligation to invoice — VAT Directive art. 220. ---
-				// An invoice exists for the supply: it carries a number and an issue date.
-				'vatdir-art220-obligation-to-invoice' => static fn (array $o): bool => (self::present($o, 'invoiceNumber')
-					&& self::present($o, 'invoiceDate')),
-
-				// --- Taxable amount — VAT Directive art. 73. ---
-				// The consideration (net taxable amount) is stated and non-negative, and
-				// — when broken down per rate — reconciles to the sum of the breakdown.
-				'vatdir-art73-taxable-amount' => static fn (array $o): bool => self::taxableAmountStated($o),
-				// art. 78: the taxable base per category reconciles to the line net of
-				// that category (i.e. it already includes the line consideration); the
-				// sum of breakdown taxable amounts equals the document line net total.
-				'vatdir-art78-taxable-amount-inclusions' => static fn (array $o): bool => self::breakdownTaxableReconciles($o),
-				// art. 79: document-level early-payment/discount reductions are modelled
-				// as allowances that REDUCE the base — the taxable base must equal line
-				// net minus document allowances plus document charges.
-				'vatdir-art79-taxable-amount-exclusions' => static fn (array $o): bool => self::baseNetOfAllowances($o),
-
-				// --- VAT rate stated and within directive bounds. ---
-				// art. 93: the applicable rate is stated on every rated breakdown group.
-				'vatdir-art93-rate-applicable' => static fn (array $o): bool => self::ratedGroupsHaveRate($o),
-				// art. 96: a single standard rate — at most one distinct positive standard
-				// rate across the Standard-rated ('S') breakdown groups of the invoice.
-				'vatdir-art96-standard-rate-single' => static fn (array $o): bool => self::singleStandardRate($o),
-				// art. 97: the standard rate shall not be lower than 15 %.
-				'vatdir-art97-standard-rate-minimum' => static fn (array $o): bool => self::standardRateAtLeast($o, 15.0),
-				// art. 98: a reduced rate (a positive rate below the 15 % standard floor)
-				// shall not be lower than 5 %.
-				'vatdir-art98-reduced-rates' => static fn (array $o): bool => self::reducedRateAtLeast($o, 5.0),
-
-				// --- Reverse charge / exemption mentions on the invoice (art. 226(11a) / 138). ---
-				// art. 226(11a): where the customer is liable (a reverse-charge 'AE'
-				// category appears) the invoice must carry the words 'Reverse charge'.
-				'vatdir-art226-11a-reverse-charge-mention' => static fn (array $o): bool => (self::anyCategory($o, 'AE') === false
-					|| self::noteContains($o, 'reverse charge')),
-				// art. 138 exempt mention: where an intra-Community supply ('K') appears
-				// the invoice must reference the applicable provision / that it is exempt.
-				'vatdir-art138-exempt-mention' => static fn (array $o): bool => (self::anyCategory($o, 'K') === false
-					|| self::noteContains($o, '138') || self::noteContains($o, 'intra-community')
-					|| self::noteContains($o, 'intra-communautaire') || self::noteContains($o, 'exempt')),
-
-				// --- Intra-Community supply exemption (arts. 138). ---
-				// art. 138: an exempt intra-Community supply ('K') carries no VAT — the
-				// 'K' breakdown groups must have a zero tax amount and a zero/absent rate.
-				'vatdir-art138-ics-exemption' => static fn (array $o): bool => self::categoryUntaxed($o, 'K'),
-				// art. 138 substantive condition: an ICS requires the supplier's own VAT
-				// id AND a customer VAT id issued by a DIFFERENT Member State than departure.
-				'vatdir-art138-vatid-substantive' => static fn (array $o): bool => (self::anyCategory($o, 'K') === false
-					|| (self::present($o, 'sellerVatId')
-					&& self::vatIdShapeOk((string)($o['buyerVatId'] ?? ''))
-					&& self::differentMemberState($o))),
-
-				// --- Export exemption (art. 146). ---
-				// An export ('G') line is exempt with deduction: zero VAT on the 'G' group.
-				'vatdir-art146-export-exemption' => static fn (array $o): bool => self::categoryUntaxed($o, 'G'),
-
-				// --- Cross-border B2B reverse charge for services (art. 196). ---
-				// A reverse-charge ('AE') supply must carry zero VAT and identify both the
-				// supplier and the (liable) taxable customer by VAT id.
-				'vatdir-art196-reverse-charge-b2b-services' => static fn (array $o): bool => (self::anyCategory($o, 'AE') === false
-					|| (self::categoryUntaxed($o, 'AE') && self::present($o, 'sellerVatId')
-					&& self::vatIdShapeOk((string)($o['buyerVatId'] ?? '')))),
-
-				// --- VIES validation (recommended). ---
-				// Where a customer VAT id is supplied for an exempt ICS ('K'), it must be a
-				// well-formed VIES VAT identifier (country prefix + body).
-				'vies-vatid-validation' => static fn (array $o): bool => (self::anyCategory($o, 'K') === false
-					|| self::vatIdShapeOk((string)($o['buyerVatId'] ?? ''))),
-
-				// --- Rounding (conditional). ---
-				// The header VAT amount must reconcile to the sum of the per-category tax
-				// amounts within the national one-cent rounding tolerance (art. 226-derived).
-				'vat-rounding-line-or-total' => static fn (array $o): bool => self::vatRoundsToBreakdown($o),
+				...self::arInvoiceChargeAndRateChecks(),
+				...self::arInvoiceExemptionAndReverseChargeChecks(),
 			],
-			'APTransaction' => [
-				// --- Intra-Community acquisition is taxable (art. 2(1)(b)). ---
-				// A purchase invoice records the consideration and the (reverse-charged)
-				// acquisition VAT: both the total and the tax amount must be stated numbers.
-				'vatdir-art2-1b-ica-taxable' => static fn (array $o): bool => (self::numericPresent($o, 'totalAmount')
-					&& self::numericPresent($o, 'taxAmount')),
-				// --- Tax point on the received invoice (art. 63). ---
-				'vatdir-art63-tax-point-supply' => static fn (array $o): bool => self::present($o, 'invoiceDate'),
-				// --- Taxable amount on the received invoice (art. 73). ---
-				'vatdir-art73-taxable-amount' => static fn (array $o): bool => (self::numericPresent($o, 'totalAmount')
-					&& (float)($o['totalAmount'] ?? 0) >= 0),
-			],
+			'APTransaction' => self::apTransactionChecks(),
 		];
 
 	}//end checks()
+
+	/**
+	 * The ARInvoice tax-point, invoicing, taxable-amount and rate predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function arInvoiceChargeAndRateChecks(): array {
+		return [
+			// --- Tax point (chargeable event) — VAT Directive art. 63. ---
+			'vatdir-art63-tax-point-supply' => self::art63TaxPointSupply(...),
+
+			// --- Obligation to invoice — VAT Directive art. 220. ---
+			'vatdir-art220-obligation-to-invoice' => self::art220ObligationToInvoice(...),
+
+			// --- Taxable amount — VAT Directive art. 73. ---
+			'vatdir-art73-taxable-amount' => self::art73TaxableAmount(...),
+			'vatdir-art78-taxable-amount-inclusions' => self::art78TaxableAmountInclusions(...),
+			'vatdir-art79-taxable-amount-exclusions' => self::art79TaxableAmountExclusions(...),
+
+			// --- VAT rate stated and within directive bounds. ---
+			'vatdir-art93-rate-applicable' => self::art93RateApplicable(...),
+			'vatdir-art96-standard-rate-single' => self::art96StandardRateSingle(...),
+			'vatdir-art97-standard-rate-minimum' => self::art97StandardRateMinimum(...),
+			'vatdir-art98-reduced-rates' => self::art98ReducedRates(...),
+		];
+
+	}//end arInvoiceChargeAndRateChecks()
+
+	/**
+	 * The ARInvoice reverse-charge, exemption, VIES and rounding predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function arInvoiceExemptionAndReverseChargeChecks(): array {
+		return [
+			// --- Reverse charge / exemption mentions on the invoice (art. 226(11a) / 138). ---
+			'vatdir-art226-11a-reverse-charge-mention' => self::art22611aReverseChargeMention(...),
+			'vatdir-art138-exempt-mention' => self::art138ExemptMention(...),
+
+			// --- Intra-Community supply exemption (arts. 138). ---
+			'vatdir-art138-ics-exemption' => self::art138IcsExemption(...),
+			'vatdir-art138-vatid-substantive' => self::art138VatidSubstantive(...),
+
+			// --- Export exemption (art. 146). ---
+			'vatdir-art146-export-exemption' => self::art146ExportExemption(...),
+
+			// --- Cross-border B2B reverse charge for services (art. 196). ---
+			'vatdir-art196-reverse-charge-b2b-services' => self::art196ReverseChargeB2bServices(...),
+
+			// --- VIES validation (recommended). ---
+			'vies-vatid-validation' => self::viesVatidValidation(...),
+
+			// --- Rounding (conditional). ---
+			'vat-rounding-line-or-total' => self::vatRoundingLineOrTotal(...),
+		];
+
+	}//end arInvoiceExemptionAndReverseChargeChecks()
+
+	/**
+	 * The APTransaction predicates, keyed by rule id, in registry order.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function apTransactionChecks(): array {
+		return [
+			// --- Intra-Community acquisition is taxable (art. 2(1)(b)). ---
+			'vatdir-art2-1b-ica-taxable' => self::art21bIcaTaxable(...),
+			// --- Tax point on the received invoice (art. 63). ---
+			'vatdir-art63-tax-point-supply' => self::art63TaxPointSupply2(...),
+			// --- Taxable amount on the received invoice (art. 73). ---
+			'vatdir-art73-taxable-amount' => self::art73TaxableAmount2(...),
+		];
+
+	}//end apTransactionChecks()
+
+	/**
+	 * The supply date / value-added-tax point must be stated so the moment
+	 * VAT became chargeable is recorded on the invoice.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art63TaxPointSupply(array $o): bool {
+		return (self::present($o, 'supplyDate')
+			|| self::present($o, 'taxPointDate') || self::present($o, 'invoiceDate'));
+
+	}//end art63TaxPointSupply()
+
+	/**
+	 * An invoice exists for the supply: it carries a number and an issue date.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art220ObligationToInvoice(array $o): bool {
+		return (self::present($o, 'invoiceNumber')
+			&& self::present($o, 'invoiceDate'));
+
+	}//end art220ObligationToInvoice()
+
+	/**
+	 * The consideration (net taxable amount) is stated and non-negative, and
+	 * — when broken down per rate — reconciles to the sum of the breakdown.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art73TaxableAmount(array $o): bool {
+		return self::taxableAmountStated($o);
+
+	}//end art73TaxableAmount()
+
+	/**
+	 * art. 78: the taxable base per category reconciles to the line net of
+	 * that category (i.e. it already includes the line consideration); the
+	 * sum of breakdown taxable amounts equals the document line net total.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art78TaxableAmountInclusions(array $o): bool {
+		return self::breakdownTaxableReconciles($o);
+
+	}//end art78TaxableAmountInclusions()
+
+	/**
+	 * art. 79: document-level early-payment/discount reductions are modelled
+	 * as allowances that REDUCE the base — the taxable base must equal line
+	 * net minus document allowances plus document charges.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art79TaxableAmountExclusions(array $o): bool {
+		return self::baseNetOfAllowances($o);
+
+	}//end art79TaxableAmountExclusions()
+
+	/**
+	 * art. 93: the applicable rate is stated on every rated breakdown group.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art93RateApplicable(array $o): bool {
+		return self::ratedGroupsHaveRate($o);
+
+	}//end art93RateApplicable()
+
+	/**
+	 * art. 96: a single standard rate — at most one distinct positive standard
+	 * rate across the Standard-rated ('S') breakdown groups of the invoice.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art96StandardRateSingle(array $o): bool {
+		return self::singleStandardRate($o);
+
+	}//end art96StandardRateSingle()
+
+	/**
+	 * art. 97: the standard rate shall not be lower than 15 %.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art97StandardRateMinimum(array $o): bool {
+		return self::standardRateAtLeast($o, 15.0);
+
+	}//end art97StandardRateMinimum()
+
+	/**
+	 * art. 98: a reduced rate (a positive rate below the 15 % standard floor)
+	 * shall not be lower than 5 %.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art98ReducedRates(array $o): bool {
+		return self::reducedRateAtLeast($o, 5.0);
+
+	}//end art98ReducedRates()
+
+	/**
+	 * art. 226(11a): where the customer is liable (a reverse-charge 'AE'
+	 * category appears) the invoice must carry the words 'Reverse charge'.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art22611aReverseChargeMention(array $o): bool {
+		return (self::anyCategory($o, 'AE') === false
+			|| self::noteContains($o, 'reverse charge'));
+
+	}//end art22611aReverseChargeMention()
+
+	/**
+	 * art. 138 exempt mention: where an intra-Community supply ('K') appears
+	 * the invoice must reference the applicable provision / that it is exempt.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art138ExemptMention(array $o): bool {
+		return (self::anyCategory($o, 'K') === false
+			|| self::noteContains($o, '138') || self::noteContains($o, 'intra-community')
+			|| self::noteContains($o, 'intra-communautaire') || self::noteContains($o, 'exempt'));
+
+	}//end art138ExemptMention()
+
+	/**
+	 * art. 138: an exempt intra-Community supply ('K') carries no VAT — the
+	 * 'K' breakdown groups must have a zero tax amount and a zero/absent rate.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art138IcsExemption(array $o): bool {
+		return self::categoryUntaxed($o, 'K');
+
+	}//end art138IcsExemption()
+
+	/**
+	 * art. 138 substantive condition: an ICS requires the supplier's own VAT
+	 * id AND a customer VAT id issued by a DIFFERENT Member State than departure.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art138VatidSubstantive(array $o): bool {
+		return (self::anyCategory($o, 'K') === false
+			|| (self::present($o, 'sellerVatId')
+			&& self::vatIdShapeOk((string)($o['buyerVatId'] ?? ''))
+			&& self::differentMemberState($o)));
+
+	}//end art138VatidSubstantive()
+
+	/**
+	 * An export ('G') line is exempt with deduction: zero VAT on the 'G' group.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art146ExportExemption(array $o): bool {
+		return self::categoryUntaxed($o, 'G');
+
+	}//end art146ExportExemption()
+
+	/**
+	 * A reverse-charge ('AE') supply must carry zero VAT and identify both the
+	 * supplier and the (liable) taxable customer by VAT id.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art196ReverseChargeB2bServices(array $o): bool {
+		return (self::anyCategory($o, 'AE') === false
+			|| (self::categoryUntaxed($o, 'AE') && self::present($o, 'sellerVatId')
+			&& self::vatIdShapeOk((string)($o['buyerVatId'] ?? ''))));
+
+	}//end art196ReverseChargeB2bServices()
+
+	/**
+	 * Where a customer VAT id is supplied for an exempt ICS ('K'), it must be a
+	 * well-formed VIES VAT identifier (country prefix + body).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function viesVatidValidation(array $o): bool {
+		return (self::anyCategory($o, 'K') === false
+			|| self::vatIdShapeOk((string)($o['buyerVatId'] ?? '')));
+
+	}//end viesVatidValidation()
+
+	/**
+	 * The header VAT amount must reconcile to the sum of the per-category tax
+	 * amounts within the national one-cent rounding tolerance (art. 226-derived).
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function vatRoundingLineOrTotal(array $o): bool {
+		return self::vatRoundsToBreakdown($o);
+
+	}//end vatRoundingLineOrTotal()
+
+	/**
+	 * A purchase invoice records the consideration and the (reverse-charged)
+	 * acquisition VAT: both the total and the tax amount must be stated numbers.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art21bIcaTaxable(array $o): bool {
+		return (self::numericPresent($o, 'totalAmount')
+			&& self::numericPresent($o, 'taxAmount'));
+
+	}//end art21bIcaTaxable()
+
+	/**
+	 * Rule vatdir-art63-tax-point-supply holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art63TaxPointSupply2(array $o): bool {
+		return self::present($o, 'invoiceDate');
+
+	}//end art63TaxPointSupply2()
+
+	/**
+	 * Rule vatdir-art73-taxable-amount holds.
+	 *
+	 * @param array<string, mixed> $o The object.
+	 *
+	 * @return bool
+	 */
+	private static function art73TaxableAmount2(array $o): bool {
+		return (self::numericPresent($o, 'totalAmount')
+			&& (float)($o['totalAmount'] ?? 0) >= 0);
+
+	}//end art73TaxableAmount2()
 
 	/**
 	 * Test-data field defaults this provider's checks expect on ARInvoice. Seeded

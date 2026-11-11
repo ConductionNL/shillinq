@@ -171,23 +171,9 @@ class DownPaymentController extends Controller {
 	 * @return array<string,mixed>
 	 */
 	private function panel(array $invoice): array {
-		$isDraft = (string)($invoice['lifecycleState'] ?? '') === 'draft';
-		$isDownPayment = (string)(($invoice['downPayment'] ?? [])['kind'] ?? '') === 'down-payment';
 		$openOrders = [];
-		if ($isDraft === true && $isDownPayment === false) {
-			foreach ($this->service->openDownPayments(invoice: $invoice) as $downPayment) {
-				$group = (array)($downPayment['downPayment'] ?? []);
-				$key = (string)($group['orderReference'] ?? '');
-				$openOrders[$key]['orderReference'] = $key;
-				$openOrders[$key]['orderLabel'] = (string)($group['orderLabel'] ?? $key);
-				$openOrders[$key]['grossAmount'] = round((($openOrders[$key]['grossAmount'] ?? 0) + (float)($downPayment['grossAmount'] ?? 0)), 2);
-				$openOrders[$key]['downPayments'][] = [
-					'id' => (string)($downPayment['id'] ?? ''),
-					'invoiceNumber' => (string)($downPayment['invoiceNumber'] ?? ''),
-					'grossAmount' => (float)($downPayment['grossAmount'] ?? 0),
-					'paid' => ($downPayment['lifecycleState'] ?? '') === 'paid',
-				];
-			}
+		if (self::takesDeductions(invoice: $invoice) === true) {
+			$openOrders = $this->openOrders(invoice: $invoice);
 		}
 
 		return [
@@ -197,8 +183,59 @@ class DownPaymentController extends Controller {
 			'openOrders' => array_values($openOrders),
 			'canDeduct' => $openOrders !== [],
 		];
-
 	}//end panel()
+
+	/**
+	 * Whether the invoice is a draft that is not itself a down payment, so open down payments may be deducted onto it.
+	 *
+	 * @param array<string,mixed> $invoice The invoice.
+	 *
+	 * @return bool
+	 */
+	private static function takesDeductions(array $invoice): bool {
+		$isDraft       = (string)($invoice['lifecycleState'] ?? '') === 'draft';
+		$isDownPayment = (string)(($invoice['downPayment'] ?? [])['kind'] ?? '') === 'down-payment';
+		return $isDraft === true && $isDownPayment === false;
+	}//end takesDeductions()
+
+	/**
+	 * The customer's open down payments, grouped per order reference.
+	 *
+	 * @param array<string,mixed> $invoice The invoice.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	private function openOrders(array $invoice): array {
+		$openOrders = [];
+		foreach ($this->service->openDownPayments(invoice: $invoice) as $downPayment) {
+			$openOrders = self::withDownPayment(openOrders: $openOrders, downPayment: $downPayment);
+		}
+
+		return $openOrders;
+	}//end openOrders()
+
+	/**
+	 * Add one down payment to its order's group: the latest label, the rounded running total and the line.
+	 *
+	 * @param array<string,array<string,mixed>> $openOrders  The groups so far.
+	 * @param array<string,mixed>               $downPayment The down payment.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	private static function withDownPayment(array $openOrders, array $downPayment): array {
+		$group = (array)($downPayment['downPayment'] ?? []);
+		$key   = (string)($group['orderReference'] ?? '');
+		$openOrders[$key]['orderReference'] = $key;
+		$openOrders[$key]['orderLabel']     = (string)($group['orderLabel'] ?? $key);
+		$openOrders[$key]['grossAmount']    = round((($openOrders[$key]['grossAmount'] ?? 0) + (float)($downPayment['grossAmount'] ?? 0)), 2);
+		$openOrders[$key]['downPayments'][] = [
+			'id' => (string)($downPayment['id'] ?? ''),
+			'invoiceNumber' => (string)($downPayment['invoiceNumber'] ?? ''),
+			'grossAmount' => (float)($downPayment['grossAmount'] ?? 0),
+			'paid' => ($downPayment['lifecycleState'] ?? '') === 'paid',
+		];
+		return $openOrders;
+	}//end withDownPayment()
 
 	/**
 	 * The invoice when it exists and the caller may see its administration.

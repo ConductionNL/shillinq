@@ -60,6 +60,79 @@ class LeaseDisclosureService {
 	private const ASSET_CLASSES = ['vehicle', 'real-estate', 'IT-hardware', 'machinery', 'other'];
 
 	/**
+	 * The totals the CSV export lists, in order.
+	 *
+	 * @var array<int,string>
+	 */
+	private const CSV_TOTALS = [
+		'totalRouAdditionsInPeriod',
+		'totalRouDepreciationInPeriod',
+		'totalRouDisposalsInPeriod',
+		'totalLeaseLiabilityCurrent',
+		'totalLeaseLiabilityNoncurrent',
+		'totalInterestExpense',
+		'totalShortTermLeaseExpense',
+		'totalLowValueLeaseExpense',
+		'totalVariableLeaseExpense',
+	];
+
+	/**
+	 * The totals the HTML note lists, in order.
+	 *
+	 * @var array<int,string>
+	 */
+	private const HTML_TOTALS = [
+		'totalLeaseLiabilityCurrent',
+		'totalLeaseLiabilityNoncurrent',
+		'totalInterestExpense',
+		'totalShortTermLeaseExpense',
+		'totalLowValueLeaseExpense',
+		'totalVariableLeaseExpense',
+	];
+
+	/**
+	 * IFRS 16 facts of the XBRL skeleton (rough mapping to the IFRS
+	 * taxonomy) => the disclosure total they read.
+	 *
+	 * @var array<string,string>
+	 */
+	private const XBRL_FACTS = [
+		'ifrs-full:RightofuseAssets' => 'totalRouAsset',
+		'ifrs-full:LeaseLiabilitiesCurrent' => 'totalLeaseLiabilityCurrent',
+		'ifrs-full:LeaseLiabilitiesNoncurrent' => 'totalLeaseLiabilityNoncurrent',
+		'ifrs-full:InterestExpenseOnLeaseLiabilities' => 'totalInterestExpense',
+		'ifrs-full:ExpenseRelatingToShorttermLeases' => 'totalShortTermLeaseExpense',
+		'ifrs-full:ExpenseRelatingToLeasesOfLowvalueAssets' => 'totalLowValueLeaseExpense',
+		'ifrs-full:ExpenseRelatingToVariableLeasePayments' => 'totalVariableLeaseExpense',
+	];
+
+	/**
+	 * The disclosure note labels per language.
+	 *
+	 * @var array<string,array<string,string>>
+	 */
+	private const NOTE_LABELS = [
+		'nl' => [
+			'title' => 'IFRS 16-toelichting',
+			'rouByClass' => 'Boekwaarde gebruiksrechtactivum per activaklasse',
+			'maturity' => 'Looptijdanalyse (niet-verdisconteerd)',
+			'weightedIbr' => 'Gewogen gemiddelde marginale rentevoet per activaklasse',
+			'totals' => 'Overige toelichtingen',
+			'narrative' => 'Toelichting op de leaseactiviteiten',
+			'footerNote' => 'Opgesteld op basis van IFRS 16.51–60. Een externe PDF-render levert het ondertekende exemplaar.',
+		],
+		'en' => [
+			'title' => 'IFRS 16 Disclosure Note',
+			'rouByClass' => 'Closing right-of-use asset by class',
+			'maturity' => 'Undiscounted maturity analysis',
+			'weightedIbr' => 'Weighted-average incremental borrowing rate by class',
+			'totals' => 'Other disclosures',
+			'narrative' => 'Qualitative narrative',
+			'footerNote' => 'Compiled per IFRS 16.51–60. A signed PDF copy is produced by the docudesk render pipeline.',
+		],
+	];
+
+	/**
 	 * Construct the service.
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
@@ -185,37 +258,63 @@ class LeaseDisclosureService {
 	 * @spec openspec/specs/bookkeeping-lease-disclosures/spec.md
 	 */
 	private function accumulateLease(array $acc, array $lease): array {
-		$class = (string)($lease['assetClass'] ?? 'other');
-		if (in_array($class, self::ASSET_CLASSES, true) === false) {
-			$class = 'other';
-		}
-
+		$class = $this->assetClassOf(lease: $lease);
 		$classification = (string)($lease['classification'] ?? '');
 
 		// Exempt leases carry straight-line expense, no RoU / liability (REQ-LE-003).
-		if ($classification === 'short-term-exempt' || $classification === 'low-value-exempt') {
-			$periods = $this->calculator->scheduleLength(lease: $lease);
-			$expense = $this->calculator->toCents(amount: ($lease['basePaymentAmount'] ?? 0)) * $periods;
-			if ($classification === 'short-term-exempt') {
-				$acc['shortTermCents'] += $expense;
-				return $acc;
-			}
-
-			$acc['lowValueCents'] += $expense;
-			return $acc;
+		if (in_array($classification, ['short-term-exempt', 'low-value-exempt'], true) === true) {
+			return $this->accumulateExempt(acc: $acc, lease: $lease);
 		}
 
-		if ($classification !== 'IFRS16-capitalised') {
-			return $acc;
+		$rows = [];
+		if ($classification === 'IFRS16-capitalised') {
+			$rows = $this->calculator->buildSchedule(lease: $lease);
 		}
 
-		$rows = $this->calculator->buildSchedule(lease: $lease);
 		if ($rows === []) {
 			return $acc;
 		}
 
 		return $this->accumulateCapitalised(acc: $acc, lease: $lease, class: $class, rows: $rows);
 	}//end accumulateLease()
+
+	/**
+	 * The lease's asset class, `other` when it names none of ASSET_CLASSES.
+	 *
+	 * @param array<string,mixed> $lease One LeaseContract array.
+	 *
+	 * @return string
+	 */
+	private function assetClassOf(array $lease): string {
+		$class = (string)($lease['assetClass'] ?? 'other');
+		if (in_array($class, self::ASSET_CLASSES, true) === false) {
+			return 'other';
+		}
+
+		return $class;
+	}//end assetClassOf()
+
+	/**
+	 * Add an exempt lease's straight-line expense to the short-term or
+	 * low-value total.
+	 *
+	 * @param array<string,mixed> $acc   The running aggregate.
+	 * @param array<string,mixed> $lease One exempt LeaseContract array.
+	 *
+	 * @return array<string,mixed> The updated aggregate.
+	 */
+	private function accumulateExempt(array $acc, array $lease): array {
+		$periods = $this->calculator->scheduleLength(lease: $lease);
+		$expense = $this->calculator->toCents(amount: ($lease['basePaymentAmount'] ?? 0)) * $periods;
+		$total = 'lowValueCents';
+		if ((string)($lease['classification'] ?? '') === 'short-term-exempt') {
+			$total = 'shortTermCents';
+		}
+
+		$acc[$total] += $expense;
+
+		return $acc;
+	}//end accumulateExempt()
 
 	/**
 	 * Fold a capitalised lease's amortization schedule into the aggregate.
@@ -362,55 +461,89 @@ class LeaseDisclosureService {
 	 * @spec openspec/specs/bookkeeping-lease-disclosures/spec.md
 	 */
 	public function exportToCSV(array $disclosure): string {
-		$rows = [['section', 'label', 'value']];
+		return $this->joinCsv(
+			rows: array_merge(
+				[['section', 'label', 'value']],
+				$this->csvHeaderRows(disclosure: $disclosure),
+				$this->keyedRows(section: 'rou-by-class', values: (array)($disclosure['closingRouByClass'] ?? [])),
+				$this->keyedRows(section: 'maturity-analysis', values: (array)($disclosure['maturityAnalysis'] ?? [])),
+				$this->keyedRows(section: 'weighted-average-ibr', values: (array)($disclosure['weightedAverageIbrByClass'] ?? [])),
+				$this->keyedRows(section: 'totals', values: $this->presentTotals(disclosure: $disclosure, keys: self::CSV_TOTALS)),
+				$this->csvNarrativeRows(disclosure: $disclosure)
+			)
+		);
+	}//end exportToCSV()
 
-		$rows[] = ['header', 'fiscalPeriod', (string)($disclosure['fiscalPeriod'] ?? '')];
-		$rows[] = ['header', 'administrationId', (string)($disclosure['administrationId'] ?? '')];
-
+	/**
+	 * The CSV header rows: fiscal period, administration and materialisation.
+	 *
+	 * @param array<string,mixed> $disclosure The disclosure payload.
+	 *
+	 * @return array<int,array<int,string>>
+	 */
+	private function csvHeaderRows(array $disclosure): array {
+		$materialized = 'false';
 		if (empty($disclosure['materializedAtPeriodClose']) === false) {
 			$materialized = 'true';
-		} else {
-			$materialized = 'false';
 		}
 
-		$rows[] = ['header', 'materializedAtPeriodClose', $materialized];
+		return [
+			['header', 'fiscalPeriod', (string)($disclosure['fiscalPeriod'] ?? '')],
+			['header', 'administrationId', (string)($disclosure['administrationId'] ?? '')],
+			['header', 'materializedAtPeriodClose', $materialized],
+		];
+	}//end csvHeaderRows()
 
-		foreach ((array)($disclosure['closingRouByClass'] ?? []) as $class => $value) {
-			$rows[] = ['rou-by-class', (string)$class, $this->csvNumber(value: $value)];
+	/**
+	 * One CSV row per key → value of a section, values as two-decimal numbers.
+	 *
+	 * @param string              $section Section name.
+	 * @param array<string,mixed> $values  Key → value.
+	 *
+	 * @return array<int,array<int,string>>
+	 */
+	private function keyedRows(string $section, array $values): array {
+		$rows = [];
+		foreach ($values as $key => $value) {
+			$rows[] = [$section, (string)$key, $this->csvNumber(value: $value)];
 		}
 
-		foreach ((array)($disclosure['maturityAnalysis'] ?? []) as $bucket => $value) {
-			$rows[] = ['maturity-analysis', (string)$bucket, $this->csvNumber(value: $value)];
-		}
+		return $rows;
+	}//end keyedRows()
 
-		foreach ((array)($disclosure['weightedAverageIbrByClass'] ?? []) as $class => $value) {
-			$rows[] = ['weighted-average-ibr', (string)$class, $this->csvNumber(value: $value)];
-		}
-
-		foreach ([
-			'totalRouAdditionsInPeriod',
-			'totalRouDepreciationInPeriod',
-			'totalRouDisposalsInPeriod',
-			'totalLeaseLiabilityCurrent',
-			'totalLeaseLiabilityNoncurrent',
-			'totalInterestExpense',
-			'totalShortTermLeaseExpense',
-			'totalLowValueLeaseExpense',
-			'totalVariableLeaseExpense',
-		] as $key) {
-			if (array_key_exists($key, $disclosure) === false) {
-				continue;
+	/**
+	 * The listed totals the disclosure carries (null values included), in list order.
+	 *
+	 * @param array<string,mixed> $disclosure The disclosure payload.
+	 * @param array<int,string>   $keys       Total keys, in output order.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function presentTotals(array $disclosure, array $keys): array {
+		$totals = [];
+		foreach ($keys as $key) {
+			if (array_key_exists($key, $disclosure) === true) {
+				$totals[$key] = $disclosure[$key];
 			}
-
-			$rows[] = ['totals', $key, $this->csvNumber(value: $disclosure[$key])];
 		}
 
-		if (isset($disclosure['qualitativeNarrative']) === true) {
-			$rows[] = ['narrative', 'qualitativeNarrative', (string)$disclosure['qualitativeNarrative']];
+		return $totals;
+	}//end presentTotals()
+
+	/**
+	 * The narrative row, when the disclosure carries one.
+	 *
+	 * @param array<string,mixed> $disclosure The disclosure payload.
+	 *
+	 * @return array<int,array<int,string>>
+	 */
+	private function csvNarrativeRows(array $disclosure): array {
+		if (isset($disclosure['qualitativeNarrative']) === false) {
+			return [];
 		}
 
-		return $this->joinCsv(rows: $rows);
-	}//end exportToCSV()
+		return [['narrative', 'qualitativeNarrative', (string)$disclosure['qualitativeNarrative']]];
+	}//end csvNarrativeRows()
 
 	/**
 	 * Render the disclosure note as a self-contained HTML document for the
@@ -435,64 +568,74 @@ class LeaseDisclosureService {
 	 * @spec openspec/specs/bookkeeping-lease-disclosures/spec.md
 	 */
 	public function exportDisclosureNoteToHtml(array $disclosure, string $language = 'en'): string {
-		if ($language === 'nl') {
-			$lang = 'nl';
-		} else {
-			$lang = 'en';
-		}
-
+		$lang = $this->noteLanguage(language: $language);
 		$labels = $this->disclosureLabels(language: $lang);
+		$title = $this->escape(text: $labels['title']) . ' ' . $this->escape(text: (string)($disclosure['fiscalPeriod'] ?? ''));
 
-		$fiscalPeriod = htmlspecialchars(
-			string: (string)($disclosure['fiscalPeriod'] ?? ''),
-			flags: (ENT_QUOTES | ENT_HTML5),
-			encoding: 'UTF-8'
-		);
-
-		$html = '<!DOCTYPE html><html lang="' . $lang . '"><head><meta charset="UTF-8">';
-		$html .= '<title>' . htmlspecialchars(
-			string: $labels['title'],
-			flags: (ENT_QUOTES | ENT_HTML5),
-			encoding: 'UTF-8'
-		) . ' ' . $fiscalPeriod . '</title>';
-		$html .= '</head><body>';
-		$html .= '<h1>' . htmlspecialchars(string: $labels['title'], flags: (ENT_QUOTES | ENT_HTML5), encoding: 'UTF-8') . ' ' . $fiscalPeriod . '</h1>';
-
-		$html .= $this->htmlSection(heading: $labels['rouByClass'], rows: (array)($disclosure['closingRouByClass'] ?? []));
-		$html .= $this->htmlSection(heading: $labels['maturity'], rows: (array)($disclosure['maturityAnalysis'] ?? []));
-		$html .= $this->htmlSection(heading: $labels['weightedIbr'], rows: (array)($disclosure['weightedAverageIbrByClass'] ?? []));
-
-		$totals = [];
-		foreach ([
-			'totalLeaseLiabilityCurrent',
-			'totalLeaseLiabilityNoncurrent',
-			'totalInterestExpense',
-			'totalShortTermLeaseExpense',
-			'totalLowValueLeaseExpense',
-			'totalVariableLeaseExpense',
-		] as $key) {
-			if (array_key_exists($key, $disclosure) === true) {
-				$totals[$key] = $disclosure[$key];
-			}
-		}
-
-		$html .= $this->htmlSection(heading: $labels['totals'], rows: $totals);
-
-		$narrative = (string)($disclosure['qualitativeNarrative'] ?? '');
-		if ($narrative !== '') {
-			$html .= '<h2>' . htmlspecialchars(string: $labels['narrative'], flags: (ENT_QUOTES | ENT_HTML5), encoding: 'UTF-8') . '</h2>';
-			$html .= '<p>' . nl2br(string: htmlspecialchars(string: $narrative, flags: (ENT_QUOTES | ENT_HTML5), encoding: 'UTF-8')) . '</p>';
-		}
-
-		$html .= '<footer><p><em>' . htmlspecialchars(
-			string: $labels['footerNote'],
-			flags: (ENT_QUOTES | ENT_HTML5),
-			encoding: 'UTF-8'
-		) . '</em></p></footer>';
-		$html .= '</body></html>';
-
-		return $html;
+		return '<!DOCTYPE html><html lang="' . $lang . '"><head><meta charset="UTF-8"><title>' . $title . '</title></head><body>'
+			. '<h1>' . $title . '</h1>'
+			. $this->htmlSections(disclosure: $disclosure, labels: $labels)
+			. $this->htmlNarrative(disclosure: $disclosure, labels: $labels)
+			. '<footer><p><em>' . $this->escape(text: $labels['footerNote']) . '</em></p></footer></body></html>';
 	}//end exportDisclosureNoteToHtml()
+
+	/**
+	 * The note language: Dutch when asked for, English otherwise.
+	 *
+	 * @param string $language Requested ISO 639-1 code.
+	 *
+	 * @return string 'nl' or 'en'.
+	 */
+	private function noteLanguage(string $language): string {
+		if ($language === 'nl') {
+			return 'nl';
+		}
+
+		return 'en';
+	}//end noteLanguage()
+
+	/**
+	 * The RoU, maturity, IBR and totals sections of the note.
+	 *
+	 * @param array<string,mixed>  $disclosure The disclosure payload.
+	 * @param array<string,string> $labels     Localised labels.
+	 *
+	 * @return string
+	 */
+	private function htmlSections(array $disclosure, array $labels): string {
+		return $this->htmlSection(heading: $labels['rouByClass'], rows: (array)($disclosure['closingRouByClass'] ?? []))
+			. $this->htmlSection(heading: $labels['maturity'], rows: (array)($disclosure['maturityAnalysis'] ?? []))
+			. $this->htmlSection(heading: $labels['weightedIbr'], rows: (array)($disclosure['weightedAverageIbrByClass'] ?? []))
+			. $this->htmlSection(heading: $labels['totals'], rows: $this->presentTotals(disclosure: $disclosure, keys: self::HTML_TOTALS));
+	}//end htmlSections()
+
+	/**
+	 * The narrative heading and paragraph, when the narrative is not empty.
+	 *
+	 * @param array<string,mixed>  $disclosure The disclosure payload.
+	 * @param array<string,string> $labels     Localised labels.
+	 *
+	 * @return string
+	 */
+	private function htmlNarrative(array $disclosure, array $labels): string {
+		$narrative = (string)($disclosure['qualitativeNarrative'] ?? '');
+		if ($narrative === '') {
+			return '';
+		}
+
+		return '<h2>' . $this->escape(text: $labels['narrative']) . '</h2><p>' . nl2br(string: $this->escape(text: $narrative)) . '</p>';
+	}//end htmlNarrative()
+
+	/**
+	 * HTML-escape text for the note.
+	 *
+	 * @param string $text Raw text.
+	 *
+	 * @return string
+	 */
+	private function escape(string $text): string {
+		return htmlspecialchars(string: $text, flags: (ENT_QUOTES | ENT_HTML5), encoding: 'UTF-8');
+	}//end escape()
 
 	/**
 	 * Render the disclosure note for the Phase-2 PDF pipeline (Task 10.2).
@@ -515,17 +658,11 @@ class LeaseDisclosureService {
 	 * @spec openspec/specs/bookkeeping-lease-disclosures/spec.md
 	 */
 	public function exportDisclosureNoteToPDF(array $disclosure, string $language = 'en'): array {
-		if ($language === 'nl') {
-			$lang = 'nl';
-		} else {
-			$lang = 'en';
-		}
-
 		return [
 			'kind' => 'lease-disclosure-note',
 			'fiscalPeriod' => ($disclosure['fiscalPeriod'] ?? ''),
 			'administrationId' => ($disclosure['administrationId'] ?? ''),
-			'language' => $lang,
+			'language' => $this->noteLanguage(language: $language),
 			'status' => 'pending-pdf-pipeline',
 			'html' => $this->exportDisclosureNoteToHtml(disclosure: $disclosure, language: $language),
 		];
@@ -553,31 +690,16 @@ class LeaseDisclosureService {
 	 */
 	public function exportToXBRL(array $disclosure): array {
 		$period = (string)($disclosure['fiscalPeriod'] ?? '');
-
+		$periodSegment = 'period';
 		if ($period !== '') {
 			$periodSegment = str_replace(' ', '_', $period);
-		} else {
-			$periodSegment = 'period';
 		}
-
-		$contextRef = ('ctx-' . $periodSegment);
-
-		$facts = [
-			// IFRS 16 RoU totals (rough mapping to the IFRS taxonomy).
-			'ifrs-full:RightofuseAssets' => (float)($disclosure['totalRouAsset'] ?? 0),
-			'ifrs-full:LeaseLiabilitiesCurrent' => (float)($disclosure['totalLeaseLiabilityCurrent'] ?? 0),
-			'ifrs-full:LeaseLiabilitiesNoncurrent' => (float)($disclosure['totalLeaseLiabilityNoncurrent'] ?? 0),
-			'ifrs-full:InterestExpenseOnLeaseLiabilities' => (float)($disclosure['totalInterestExpense'] ?? 0),
-			'ifrs-full:ExpenseRelatingToShorttermLeases' => (float)($disclosure['totalShortTermLeaseExpense'] ?? 0),
-			'ifrs-full:ExpenseRelatingToLeasesOfLowvalueAssets' => (float)($disclosure['totalLowValueLeaseExpense'] ?? 0),
-			'ifrs-full:ExpenseRelatingToVariableLeasePayments' => (float)($disclosure['totalVariableLeaseExpense'] ?? 0),
-		];
 
 		return [
 			'kind' => 'lease-disclosure-xbrl',
 			'status' => 'pending-sbr-xbrl-reporting',
-			'contextRef' => $contextRef,
-			'facts' => $facts,
+			'contextRef' => ('ctx-' . $periodSegment),
+			'facts' => array_map(static fn (string $key): float => (float)($disclosure[$key] ?? 0), self::XBRL_FACTS),
 			'taxonomy' => 'ifrs-full-2024',
 			'note' => 'Skeleton: full ESEF iXBRL wrapper + taxonomy linkbase land with the bookkeeping-sbr-xbrl-reporting change.',
 		];
@@ -592,27 +714,7 @@ class LeaseDisclosureService {
 	 * @return array<string,string>
 	 */
 	private function disclosureLabels(string $language): array {
-		if ($language === 'nl') {
-			return [
-				'title' => 'IFRS 16-toelichting',
-				'rouByClass' => 'Boekwaarde gebruiksrechtactivum per activaklasse',
-				'maturity' => 'Looptijdanalyse (niet-verdisconteerd)',
-				'weightedIbr' => 'Gewogen gemiddelde marginale rentevoet per activaklasse',
-				'totals' => 'Overige toelichtingen',
-				'narrative' => 'Toelichting op de leaseactiviteiten',
-				'footerNote' => 'Opgesteld op basis van IFRS 16.51–60. Een externe PDF-render levert het ondertekende exemplaar.',
-			];
-		}
-
-		return [
-			'title' => 'IFRS 16 Disclosure Note',
-			'rouByClass' => 'Closing right-of-use asset by class',
-			'maturity' => 'Undiscounted maturity analysis',
-			'weightedIbr' => 'Weighted-average incremental borrowing rate by class',
-			'totals' => 'Other disclosures',
-			'narrative' => 'Qualitative narrative',
-			'footerNote' => 'Compiled per IFRS 16.51–60. A signed PDF copy is produced by the docudesk render pipeline.',
-		];
+		return (self::NOTE_LABELS[$language] ?? self::NOTE_LABELS['en']);
 
 	}//end disclosureLabels()
 
@@ -630,18 +732,13 @@ class LeaseDisclosureService {
 			return '';
 		}
 
-		$html = '<h2>' . htmlspecialchars(string: $heading, flags: (ENT_QUOTES | ENT_HTML5), encoding: 'UTF-8') . '</h2>';
-		$html .= '<table><tbody>';
+		$html = '<h2>' . $this->escape(text: $heading) . '</h2><table><tbody>';
 		foreach ($rows as $label => $value) {
-			$html .= '<tr><th scope="row">'
-				. htmlspecialchars(string: (string)$label, flags: (ENT_QUOTES | ENT_HTML5), encoding: 'UTF-8')
-				. '</th><td>'
-				. htmlspecialchars(string: $this->csvNumber(value: $value), flags: (ENT_QUOTES | ENT_HTML5), encoding: 'UTF-8')
-				. '</td></tr>';
+			$cell = $this->escape(text: $this->csvNumber(value: $value));
+			$html .= '<tr><th scope="row">' . $this->escape(text: (string)$label) . '</th><td>' . $cell . '</td></tr>';
 		}
 
-		$html .= '</tbody></table>';
-		return $html;
+		return $html . '</tbody></table>';
 	}//end htmlSection()
 
 	/**
@@ -665,21 +762,26 @@ class LeaseDisclosureService {
 	private function joinCsv(array $rows): string {
 		$lines = [];
 		foreach ($rows as $row) {
-			$escaped = [];
-			foreach ($row as $cell) {
-				$cell = (string)$cell;
-				if (str_contains($cell, ',') === true || str_contains($cell, '"') === true || str_contains($cell, "\n") === true) {
-					$cell = '"' . str_replace('"', '""', $cell) . '"';
-				}
-
-				$escaped[] = $cell;
-			}
-
-			$lines[] = implode(',', $escaped);
+			$lines[] = implode(',', array_map(fn (mixed $cell): string => $this->csvCell(cell: (string)$cell), $row));
 		}
 
 		return implode("\n", $lines) . "\n";
 	}//end joinCsv()
+
+	/**
+	 * RFC 4180-quote a cell that carries a comma, quote or newline.
+	 *
+	 * @param string $cell Raw cell.
+	 *
+	 * @return string
+	 */
+	private function csvCell(string $cell): string {
+		if (str_contains($cell, ',') === true || str_contains($cell, '"') === true || str_contains($cell, "\n") === true) {
+			return '"' . str_replace('"', '""', $cell) . '"';
+		}
+
+		return $cell;
+	}//end csvCell()
 
 	/**
 	 * Qualitative narrative seed for the disclosure note (IFRS 16.59, REQ-LD-001).

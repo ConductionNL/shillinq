@@ -53,6 +53,13 @@ use Throwable;
  * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
  */
 class InnovatieboxAuditEventLogger {
+
+	/**
+	 * The optional event fields, copied in this order when set.
+	 *
+	 * @var array<int,string>
+	 */
+	private const OPTIONAL_FIELDS = ['financialYear', 'qualifying_asset_id', 'subject_schema', 'subject_id', 'reason', 'details'];
 	/**
 	 * Event type constants — mirror the enum on the InnovatieboxAuditEvent
 	 * schema (lib/Settings/register.d/bookkeeping-innovatiebox-administratie.json).
@@ -100,56 +107,75 @@ class InnovatieboxAuditEventLogger {
 	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
 	 */
 	public function record(array $options): bool {
-		$eventType = (string)($options['event_type'] ?? '');
-		$administrationId = (string)($options['administrationId'] ?? '');
-
-		if ($eventType === '' || $administrationId === '') {
-			$this->logger->warning(
-				'InnovatieboxAuditEventLogger: missing required event_type or administrationId',
-				['options' => $options]
-			);
+		if ((string)($options['event_type'] ?? '') === '' || (string)($options['administrationId'] ?? '') === '') {
+			$this->logger->warning('InnovatieboxAuditEventLogger: missing required event_type or administrationId', ['options' => $options]);
 			return false;
 		}
 
-		$event = [
-			'event_type' => $eventType,
-			'event_timestamp' => (new DateTimeImmutable())->format(DateTimeInterface::ATOM),
-			'administrationId' => $administrationId,
-		];
+		return $this->persist(event: $this->eventOf(options: $options));
+	}//end record()
 
+	/**
+	 * The event to append: type, UTC timestamp, administration, the acting
+	 * user when there is one, then every optional field that is set.
+	 *
+	 * @param array<string,mixed> $options Event payload.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function eventOf(array $options): array {
+		$event = [
+			'event_type' => (string)$options['event_type'],
+			'event_timestamp' => (new DateTimeImmutable())->format(DateTimeInterface::ATOM),
+			'administrationId' => (string)$options['administrationId'],
+		];
 		$user = $this->userSession->getUser();
 		if ($user !== null) {
 			$event['actor_uid'] = $user->getUID();
 		}
 
-		foreach (['financialYear', 'qualifying_asset_id', 'subject_schema', 'subject_id', 'reason', 'details'] as $optional) {
-			if (array_key_exists($optional, $options) === true && $options[$optional] !== null) {
-				$event[$optional] = $options[$optional];
+		return ($event + $this->optionalFields(options: $options));
+	}//end eventOf()
+
+	/**
+	 * The optional fields that are set, in OPTIONAL_FIELDS order.
+	 *
+	 * @param array<string,mixed> $options Event payload.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function optionalFields(array $options): array {
+		$fields = [];
+		foreach (self::OPTIONAL_FIELDS as $optional) {
+			if (isset($options[$optional]) === true) {
+				$fields[$optional] = $options[$optional];
 			}
 		}
 
+		return $fields;
+	}//end optionalFields()
+
+	/**
+	 * Append the event. Never let an audit-log write break the subject
+	 * schema's write path: the schema mutation is the source of legal truth,
+	 * the audit log is the defence — a failure is logged and answered false.
+	 *
+	 * @param array<string,mixed> $event The event.
+	 *
+	 * @return boolean
+	 */
+	private function persist(array $event): bool {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$objectService
-				->setRegister($this->register())
-				->setSchema('InnovatieboxAuditEvent')
-				->saveObject($event);
+			$objectService->setRegister($this->register())->setSchema('InnovatieboxAuditEvent')->saveObject($event);
 		} catch (Throwable $e) {
-			// Never let an audit-log write break the subject schema's write
-			// path; the schema mutation is the source of legal truth, the
-			// audit log is the defence. Log + return false.
-			$this->logger->warning(
-				'InnovatieboxAuditEventLogger: failed to persist audit event',
-				[
-					'event_type' => $eventType,
-					'exception' => $e->getMessage(),
-				]
-			);
+			$context = ['event_type' => $event['event_type'], 'exception' => $e->getMessage()];
+			$this->logger->warning('InnovatieboxAuditEventLogger: failed to persist audit event', $context);
 			return false;
-		}//end try
+		}
 
 		return true;
-	}//end record()
+	}//end persist()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.

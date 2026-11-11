@@ -83,21 +83,11 @@ class OpenBalanceGuard {
 	 * to avoid IEEE-754 float drift. Open = lifecycleState NOT in the excluded
 	 * set. Returns the balance in cents, or null when the schema is unavailable.
 	 *
-	 * @param string $schema 'APInvoice' or 'ARInvoice'.
-	 * @param string $partyField 'vendorId' or 'customerId'.
-	 * @param string $partyId The party identifier.
-	 * @param string $adminId The administration identifier.
-	 * @param array<string> $excluded lifecycleState values to exclude.
+	 * @param OpenBalanceQuery $query The invoices that make up the balance.
 	 *
 	 * @return int|null Balance in cents, or null when the schema is not present.
 	 */
-	private function openBalanceCents(
-		string $schema,
-		string $partyField,
-		string $partyId,
-		string $adminId,
-		array $excluded,
-	): ?int {
+	private function openBalanceCents(OpenBalanceQuery $query): int|null {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 		} catch (\Throwable $e) {
@@ -106,46 +96,64 @@ class OpenBalanceGuard {
 		}
 
 		try {
-			$pageSize = 500;
-			$page = 1;
-			$cents = 0;
-			do {
-				$batch = $objectService
-					->setRegister($this->getRegisterSlug())
-					->setSchema($schema)
-					->findAll(
-						[
-							'filters' => [
-								$partyField => $partyId,
-								'administrationId' => $adminId,
-							],
-							'limit' => $pageSize,
-							'offset' => (($page - 1) * $pageSize),
-						]
-					);
-
-				foreach ($batch as $invoice) {
-					if (in_array(($invoice['lifecycleState'] ?? ''), $excluded, true) === true) {
-						continue;
-					}
-
-					$cents += (int)round(((float)($invoice['grossAmount'] ?? 0)) * 100);
-				}
-
-				$batchSize = count($batch);
-				$page++;
-			} while ($batchSize === $pageSize);
-
-			return $cents;
+			return $this->sumOpenPages(objectService: $objectService, query: $query);
 		} catch (\Throwable $e) {
 			$this->logger->debug(
 				'OpenBalanceGuard: balance query failed (schema likely absent)',
-				['schema' => $schema, 'exception' => $e->getMessage()]
+				['schema' => $query->schema, 'exception' => $e->getMessage()]
 			);
 			return null;
 		}//end try
 
 	}//end openBalanceCents()
+
+	/**
+	 * Read every page of matching invoices and sum the open ones, in cents.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param OpenBalanceQuery $query The invoices that make up the balance.
+	 *
+	 * @return integer The open balance in cents.
+	 */
+	private function sumOpenPages(object $objectService, OpenBalanceQuery $query): int {
+		$page = 1;
+		$cents = 0;
+		do {
+			$batch = $objectService
+				->setRegister($this->getRegisterSlug())
+				->setSchema($query->schema)
+				->findAll($query->pageArgs(page: $page));
+
+			$cents += $this->openCents(batch: $batch, excluded: $query->excluded);
+			$batchSize = count($batch);
+			$page++;
+		} while ($batchSize === OpenBalanceQuery::PAGE_SIZE);
+
+		return $cents;
+
+	}//end sumOpenPages()
+
+	/**
+	 * The gross amount, in cents, of the invoices in a page that are still open.
+	 *
+	 * @param mixed $batch One page of invoices.
+	 * @param array<string> $excluded lifecycleState values to exclude.
+	 *
+	 * @return integer The page's open amount in cents.
+	 */
+	private function openCents(mixed $batch, array $excluded): int {
+		$cents = 0;
+		foreach ($batch as $invoice) {
+			if (in_array(($invoice['lifecycleState'] ?? ''), $excluded, true) === true) {
+				continue;
+			}
+
+			$cents += (int)round(((float)($invoice['grossAmount'] ?? 0)) * 100);
+		}
+
+		return $cents;
+
+	}//end openCents()
 
 	/**
 	 * Read a single master record (vendor or customer) by its business key.
@@ -201,11 +209,13 @@ class OpenBalanceGuard {
 	 */
 	public function vendorBalanceZero(array $vendor): bool {
 		$cents = $this->openBalanceCents(
-			schema: 'APInvoice',
-			partyField: 'vendorId',
-			partyId: (string)($vendor['vendorId'] ?? ''),
-			adminId: (string)($vendor['administrationId'] ?? ''),
-			excluded: ['paid', 'voided']
+			query: new OpenBalanceQuery(
+				schema: 'APInvoice',
+				partyField: 'vendorId',
+				partyId: (string)($vendor['vendorId'] ?? ''),
+				adminId: (string)($vendor['administrationId'] ?? ''),
+				excluded: ['paid', 'voided']
+			)
 		);
 
 		return ($cents === null || $cents === 0);
@@ -223,11 +233,13 @@ class OpenBalanceGuard {
 	 */
 	public function customerBalanceZero(array $customer): bool {
 		$cents = $this->openBalanceCents(
-			schema: 'ARInvoice',
-			partyField: 'customerId',
-			partyId: (string)($customer['customerId'] ?? ''),
-			adminId: (string)($customer['administrationId'] ?? ''),
-			excluded: ['paid', 'written-off']
+			query: new OpenBalanceQuery(
+				schema: 'ARInvoice',
+				partyField: 'customerId',
+				partyId: (string)($customer['customerId'] ?? ''),
+				adminId: (string)($customer['administrationId'] ?? ''),
+				excluded: ['paid', 'written-off']
+			)
 		);
 
 		return ($cents === null || $cents === 0);
@@ -315,11 +327,13 @@ class OpenBalanceGuard {
 		}
 
 		$outstandingCents = $this->openBalanceCents(
-			schema: 'ARInvoice',
-			partyField: 'customerId',
-			partyId: (string)($invoice['customerId'] ?? ''),
-			adminId: (string)($invoice['administrationId'] ?? ''),
-			excluded: ['paid', 'written-off']
+			query: new OpenBalanceQuery(
+				schema: 'ARInvoice',
+				partyField: 'customerId',
+				partyId: (string)($invoice['customerId'] ?? ''),
+				adminId: (string)($invoice['administrationId'] ?? ''),
+				excluded: ['paid', 'written-off']
+			)
 		);
 
 		if ($outstandingCents === null) {

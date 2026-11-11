@@ -390,4 +390,52 @@ final class PostingGuardsThroughAdapterTest extends TestCase {
 		$transaction['journalCode'] = 'GRIR-SETTLE';
 		self::assertTrue($adapter->check($transaction, 'post', 'alice')->isAllowed());
 	}//end testASubLedgerDraftOnAControlAccountPostsAndAManualOneDoesNot()
+
+	/**
+	 * Characterisation: the exact log records and results of validateTransaction
+	 * for a balanced post, an unbalanced post, a payload without an id and a
+	 * store that fails while reading the lines.
+	 *
+	 * @return void
+	 */
+	public function testValidateTransactionRecordsArePinned(): void {
+		$records = [];
+		$logger = $this->createMock(LoggerInterface::class);
+		foreach (['warning', 'info', 'error'] as $level) {
+			$logger->method($level)->willReturnCallback(
+				static function (string $message, array $context = []) use (&$records, $level): void {
+					$records[] = [$level, $message, $context];
+				}
+			);
+		}
+
+		$this->store->rows['GLLine'] = [
+			['id' => 'l1', 'transactionId' => 'gl-1', 'accountNumber' => '4000', 'side' => 'debit', 'amount' => 1200.0],
+			['id' => 'l2', 'transactionId' => 'MEM-2026-0001', 'accountNumber' => '1100', 'side' => 'credit', 'amount' => 1200.0],
+		];
+		$guard = new RuleComplianceGuard($this->appConfig(), $logger, $this->balanceGuard(), $this->store->mock($this), $this->restrictions());
+		$transaction = [
+			'id' => 'gl-1',
+			'transactionNumber' => 'MEM-2026-0001',
+			'postingDate' => '2026-03-14',
+			'sourceReference' => 'bank-statement-7',
+			'administrationId' => 'adm-1',
+			'state' => 'posted',
+		];
+
+		$outcomes = [];
+		$outcomes['balanced'] = [$guard->validateTransaction($transaction), $records];
+		$records = [];
+		$this->store->rows['GLLine'][1]['amount'] = 1000.0;
+		$outcomes['unbalanced'] = [$guard->validateTransaction($transaction), $records];
+		$records = [];
+		$outcomes['noId'] = [$guard->validateTransaction(['state' => 'posted']), $records];
+
+		$golden = __DIR__ . '/fixtures/rule-compliance-validate-transaction.golden.json';
+		if (getenv('RULE_COMPLIANCE_GOLDEN_WRITE') === '1') {
+			file_put_contents($golden, json_encode($outcomes, (JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) . "\n");
+		}
+
+		self::assertSame(json_decode((string)file_get_contents($golden), true, 512, JSON_THROW_ON_ERROR), $outcomes);
+	}//end testValidateTransactionRecordsArePinned()
 }//end class

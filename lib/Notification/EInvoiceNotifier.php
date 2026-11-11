@@ -38,7 +38,6 @@ use OCA\Shillinq\Listener\PeppolDeliveryStatusListener;
 use OCP\IURLGenerator;
 use OCP\L10N\IFactory;
 use OCP\Notification\INotification;
-use OCP\Notification\INotifier;
 use OCP\Notification\UnknownNotificationException;
 
 /**
@@ -46,7 +45,7 @@ use OCP\Notification\UnknownNotificationException;
  *
  * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-2.2
  */
-class EInvoiceNotifier implements INotifier {
+class EInvoiceNotifier extends AppNotifier {
 	/**
 	 * The SPA path of an AR invoice's detail page (`ARInvoiceDetail` in src/manifest.json).
 	 *
@@ -55,38 +54,24 @@ class EInvoiceNotifier implements INotifier {
 	private const INVOICE_DETAIL_PATH = 'bookkeeping/accounts-receivable/';
 
 	/**
+	 * The notification subject this notifier renders.
+	 *
+	 * @var string
+	 */
+	protected const SUBJECT = PeppolDeliveryStatusListener::NOTIFICATION_SUBJECT_REJECTED;
+
+	/**
 	 * Construct the notifier.
 	 *
-	 * @param IFactory $l10nFactory The l10n factory for per-language rendering.
-	 * @param IURLGenerator $urlGenerator Builds the link to the invoice.
+	 * @param IFactory      $l10nFactory  The l10n factory for per-language rendering.
+	 * @param IURLGenerator $urlGenerator Builds the invoice deep link.
 	 */
 	public function __construct(
-		private readonly IFactory $l10nFactory,
+		IFactory $l10nFactory,
 		private readonly IURLGenerator $urlGenerator,
 	) {
+		parent::__construct(l10nFactory: $l10nFactory);
 	}//end __construct()
-
-	/**
-	 * The notifier id (app id).
-	 *
-	 * @return string The identifier.
-	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-2.2
-	 */
-	public function getID(): string {
-		return AppIdentity::APP_ID;
-	}//end getID()
-
-	/**
-	 * The human-readable notifier name.
-	 *
-	 * @return string The name.
-	 *
-	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-2.2
-	 */
-	public function getName(): string {
-		return $this->l10nFactory->get(AppIdentity::APP_ID)->t('Shillinq');
-	}//end getName()
 
 	/**
 	 * Prepare an `einvoice_delivery_rejected` notification for display.
@@ -101,13 +86,7 @@ class EInvoiceNotifier implements INotifier {
 	 * @spec openspec/changes/sales-einvoice-exchange/tasks.md#task-2.2
 	 */
 	public function prepare(INotification $notification, string $languageCode): INotification {
-		if ($notification->getApp() !== AppIdentity::APP_ID
-			|| $notification->getSubject() !== PeppolDeliveryStatusListener::NOTIFICATION_SUBJECT_REJECTED
-		) {
-			throw new UnknownNotificationException();
-		}
-
-		$l = $this->l10nFactory->get(AppIdentity::APP_ID, $languageCode);
+		$l = $this->ownedL10n(notification: $notification, languageCode: $languageCode);
 		$parameters = $notification->getSubjectParameters();
 		$invoiceNumber = (string)($parameters['invoiceNumber'] ?? '');
 		$detail = trim((string)($parameters['detail'] ?? ''));
