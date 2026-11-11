@@ -213,10 +213,19 @@ final class PaymentWebhookIntakeCharacterisationTest extends TestCase {
 	 *
 	 * @param array<string,mixed>|string $payload The payload (array is JSON-encoded).
 	 *
+	 * @param string $gateway The gateway whose signing scheme to use.
+	 * @param int|null $timestamp The Stripe signing time, null for now.
+	 *
 	 * @return array{body:string,header:string,secret:string}
 	 */
-	private static function signed(array|string $payload): array {
+	private static function signed(array|string $payload, string $gateway = 'mollie', ?int $timestamp = null): array {
 		$body = is_string($payload) === true ? $payload : (string)json_encode($payload);
+		if ($gateway === 'stripe') {
+			$timestamp ??= time();
+			$header = 't=' . $timestamp . ',v1=' . hash_hmac('sha256', $timestamp . '.' . $body, self::SECRET);
+			return ['body' => $body, 'header' => $header, 'secret' => self::SECRET];
+		}
+
 		return ['body' => $body, 'header' => hash_hmac('sha256', $body, self::SECRET), 'secret' => self::SECRET];
 
 	}//end signed()
@@ -271,8 +280,12 @@ final class PaymentWebhookIntakeCharacterisationTest extends TestCase {
 			'json scalar' => ['mollie', self::signed('"text"'), 'malformed-payload', 400],
 			'mollie open status' => ['mollie', self::signed(['id' => 'tr_1', 'status' => 'open']), 'unparseable-event', 400],
 			'mollie no id' => ['mollie', self::signed(['status' => 'paid']), 'unparseable-event', 400],
-			'stripe unknown type' => ['stripe', self::signed(['type' => 'customer.created', 'data' => ['object' => ['id' => 'pi_1']]]), 'unparseable-event', 400],
-			'stripe no id' => ['stripe', self::signed(['type' => 'payment_intent.succeeded']), 'unparseable-event', 400],
+			'stripe unknown type' => ['stripe', self::signed(['type' => 'customer.created', 'data' => ['object' => ['id' => 'pi_1']]], 'stripe'), 'unparseable-event', 400],
+			'stripe no id' => ['stripe', self::signed(['type' => 'payment_intent.succeeded'], 'stripe'), 'unparseable-event', 400],
+			'stripe signature over the body alone' => ['stripe', ['body' => $body, 'header' => 't=' . time() . ',v1=' . $sig, 'secret' => self::SECRET], 'invalid-signature', 400],
+			'stripe signature without a timestamp' => ['stripe', ['body' => $body, 'header' => 'v1=' . $sig, 'secret' => self::SECRET], 'invalid-signature', 400],
+			'stripe timestamp older than five minutes' => ['stripe', self::signed($paid, 'stripe', time() - 301), 'invalid-signature', 400],
+			'stripe timestamp more than five minutes ahead' => ['stripe', self::signed($paid, 'stripe', time() + 301), 'invalid-signature', 400],
 		];
 
 	}//end refusedCalls()
@@ -307,7 +320,7 @@ final class PaymentWebhookIntakeCharacterisationTest extends TestCase {
 		$recon = $this->createMock(DepositReconciliationService::class);
 		$recon->method('reconcile')->willReturn(DepositReconciliationService::RESULT_APPLIED);
 		$this->deposit(self::signed(['id' => 'tr_1', 'status' => 'paid']), $recon)->handle('MOLLIE');
-		$stripe = self::signed(['type' => 'payment_intent.succeeded', 'data' => ['object' => ['id' => 'pi_1']]]);
+		$stripe = self::signed(['type' => 'payment_intent.succeeded', 'data' => ['object' => ['id' => 'pi_1']]], 'stripe');
 		$this->deposit($stripe, $recon)->handle('Stripe');
 
 		self::assertSame(['X-Mollie-Signature', 'Stripe-Signature'], $this->headersAsked);
@@ -319,15 +332,15 @@ final class PaymentWebhookIntakeCharacterisationTest extends TestCase {
 	}//end testGatewaySelectsHeaderAndSecretKey()
 
 	/**
-	 * The signature is compared trimmed and lower-cased; Stripe's v1 segment is used.
+	 * The signature is compared trimmed and lower-cased; every Stripe v1 value is tried.
 	 *
 	 * @return array<string,array{0:string,1:callable}>
 	 */
 	public static function acceptedSignatures(): array {
 		return [
 			'mollie upper case padded' => ['mollie', static fn (string $sig): string => '  ' . strtoupper($sig) . ' '],
-			'stripe plain' => ['stripe', static fn (string $sig): string => $sig],
-			'stripe v1 among parts' => ['stripe', static fn (string $sig): string => 't=1, v0=abc , v1=' . $sig . ',v1=ffff'],
+			'stripe timestamped' => ['stripe', static fn (string $header): string => $header],
+			'stripe v1 among parts' => ['stripe', static fn (string $header): string => str_replace(',v1=', ', v0=abc , v1=ffff, v1=', $header)],
 		];
 
 	}//end acceptedSignatures()
@@ -348,7 +361,7 @@ final class PaymentWebhookIntakeCharacterisationTest extends TestCase {
 			$payload = ['type' => 'payment_intent.succeeded', 'data' => ['object' => ['id' => 'pi_1']]];
 		}
 
-		$call = self::signed($payload);
+		$call = self::signed($payload, $gateway);
 		$call['header'] = $spell($call['header']);
 
 		$deposit = $this->createMock(DepositReconciliationService::class);
@@ -427,7 +440,7 @@ final class PaymentWebhookIntakeCharacterisationTest extends TestCase {
 		$recon->expects(self::once())->method('reconcile')->with(...$arguments)
 			->willReturn(DepositReconciliationService::RESULT_APPLIED);
 
-		$response = $this->deposit(self::signed($payload), $recon)->handle($gateway);
+		$response = $this->deposit(self::signed($payload, $gateway), $recon)->handle($gateway);
 
 		self::assertSame([200, ['status' => 'applied']], [$response->getStatus(), $response->getData()]);
 
@@ -478,7 +491,7 @@ final class PaymentWebhookIntakeCharacterisationTest extends TestCase {
 		$recon->expects(self::once())->method('reconcile')->with($gateway, self::identicalTo($event))
 			->willReturn(['result' => 'applied']);
 
-		$response = $this->paymentRequest(self::signed($payload), $recon)->handle($gateway);
+		$response = $this->paymentRequest(self::signed($payload, $gateway), $recon)->handle($gateway);
 
 		self::assertSame([200, ['status' => 'applied']], [$response->getStatus(), $response->getData()]);
 
