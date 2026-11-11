@@ -89,37 +89,69 @@ class BcfClaimController extends Controller {
 		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
 		$claimQuarter = trim((string)$this->request->getParam('claim_quarter', ''));
 
+		$refusal = $this->inputRefusal(administrationId: $administrationId, claimQuarter: $claimQuarter)
+			?? $this->accessRefusal(administrationId: $administrationId);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		return $this->computed(administrationId: $administrationId, claimQuarter: $claimQuarter);
+	}//end compensation()
+
+	/**
+	 * The 400 for a missing administration or quarter, then for a malformed one.
+	 *
+	 * Reject obviously malformed identifiers before touching the data layer
+	 * (REQ-BCF-010) — administration/quarter identifiers are short slugs.
+	 *
+	 * @param string $administrationId The trimmed administration id.
+	 * @param string $claimQuarter     The trimmed claim quarter.
+	 *
+	 * @return JSONResponse|null The refusal, or null.
+	 */
+	private function inputRefusal(string $administrationId, string $claimQuarter): ?JSONResponse {
 		if ($administrationId === '') {
-			return new JSONResponse(
-				['error' => 'administration_id is required'],
-				Http::STATUS_BAD_REQUEST
-			);
+			return $this->badRequest(error: 'administration_id is required');
 		}
 
 		if ($claimQuarter === '') {
-			return new JSONResponse(
-				['error' => 'claim_quarter is required'],
-				Http::STATUS_BAD_REQUEST
-			);
+			return $this->badRequest(error: 'claim_quarter is required');
 		}
 
-		// Reject obviously malformed identifiers before touching the data layer
-		// (REQ-BCF-010) — administration/quarter identifiers are short slugs.
-		if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
-			return new JSONResponse(
-				['error' => 'administration_id must be a valid administration identifier'],
-				Http::STATUS_BAD_REQUEST
-			);
+		return $this->shapeRefusal(administrationId: $administrationId, claimQuarter: $claimQuarter);
+	}//end inputRefusal()
+
+	/**
+	 * The 400 for a malformed administration or quarter.
+	 *
+	 * @param string $administrationId The administration id.
+	 * @param string $claimQuarter     The claim quarter.
+	 *
+	 * @return JSONResponse|null The refusal, or null.
+	 */
+	private function shapeRefusal(string $administrationId, string $claimQuarter): ?JSONResponse {
+		if ($this->isSlug(value: $administrationId) === false) {
+			return $this->badRequest(error: 'administration_id must be a valid administration identifier');
 		}
 
-		if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $claimQuarter) !== 1) {
-			return new JSONResponse(
-				['error' => 'claim_quarter must be a valid quarter identifier'],
-				Http::STATUS_BAD_REQUEST
-			);
+		if ($this->isSlug(value: $claimQuarter) === false) {
+			return $this->badRequest(error: 'claim_quarter must be a valid quarter identifier');
 		}
 
-		// Per-object IDOR guard (ADR-005 Rule 3): 403 when user lacks administration membership.
+		return null;
+	}//end shapeRefusal()
+
+	/**
+	 * Per-object IDOR guard (ADR-005 Rule 3): 403 when the user lacks
+	 * administration membership.
+	 *
+	 * @param string $administrationId The administration.
+	 *
+	 * @return JSONResponse|null The refusal, or null.
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 */
+	private function accessRefusal(string $administrationId): ?JSONResponse {
 		if ($this->context->canAccess(administrationId: $administrationId) === false) {
 			return new JSONResponse(
 				['error' => 'Access to this administration is not allowed'],
@@ -127,27 +159,77 @@ class BcfClaimController extends Controller {
 			);
 		}
 
+		return null;
+	}//end accessRefusal()
+
+	/**
+	 * Whether a value is a short slug.
+	 *
+	 * @param string $value The value.
+	 *
+	 * @return bool
+	 */
+	private function isSlug(string $value): bool {
+		return preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $value) === 1;
+	}//end isSlug()
+
+	/**
+	 * A 400 with an error.
+	 *
+	 * @param string $error The error.
+	 *
+	 * @return JSONResponse
+	 */
+	private function badRequest(string $error): JSONResponse {
+		return new JSONResponse(
+			['error' => $error],
+			Http::STATUS_BAD_REQUEST
+		);
+	}//end badRequest()
+
+	/**
+	 * Compute the compensable VAT of the quarter; a failure is a logged 500.
+	 *
+	 * @param string $administrationId The authorised administration.
+	 * @param string $claimQuarter     The claim quarter.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
+	 */
+	private function computed(string $administrationId, string $claimQuarter): JSONResponse {
 		try {
 			$result = $this->bcfClaimService->computeClaim(
 				administrationId: $administrationId,
 				claimQuarter: $claimQuarter
 			);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'BcfClaimController: failed to compute compensable VAT',
-				[
-					'administrationId' => $administrationId,
-					'claimQuarter' => $claimQuarter,
-					'exception' => $e->getMessage(),
-				]
-			);
-
-			return new JSONResponse(
-				['error' => 'Failed to compute compensable VAT'],
-				Http::STATUS_INTERNAL_SERVER_ERROR
+			return $this->computeFailed(
+				context: ['administrationId' => $administrationId, 'claimQuarter' => $claimQuarter],
+				e: $e
 			);
 		}//end try
 
 		return new JSONResponse($result, Http::STATUS_OK);
-	}//end compensation()
+	}//end computed()
+
+	/**
+	 * Log a failed computation and answer 500 without a leak.
+	 *
+	 * @param array<string, string> $context The administration and quarter, as log context.
+	 * @param \Throwable            $e       The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function computeFailed(array $context, \Throwable $e): JSONResponse {
+		$this->logger->error(
+			'BcfClaimController: failed to compute compensable VAT',
+			$context + ['exception' => $e->getMessage()]
+		);
+
+		return new JSONResponse(
+			['error' => 'Failed to compute compensable VAT'],
+			Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+	}//end computeFailed()
 }//end class
