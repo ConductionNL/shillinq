@@ -72,6 +72,18 @@ use OCA\Shillinq\Util\ObjectIdentifier;
  */
 class VATReturnService {
 	/**
+	 * The totals a KOR return carries: KOR exempts both collected and paid VAT (REQ-VAT-004).
+	 *
+	 * @var array{totalVATCollected:float,totalVATPaid:float,vatBalance:float,totalTaxableAmount:float}
+	 */
+	private const KOR_TOTALS = [
+		'totalVATCollected' => 0.0,
+		'totalVATPaid' => 0.0,
+		'vatBalance' => 0.0,
+		'totalTaxableAmount' => 0.0,
+	];
+
+	/**
 	 * Construct the service with lazy DI of OpenRegister's ObjectService.
 	 *
 	 * @param IAppConfig $appConfig App config for the register slug.
@@ -177,70 +189,22 @@ class VATReturnService {
 	): array {
 		if ($regime === 'kor') {
 			// KOR exempts both collected and paid VAT (REQ-VAT-004).
-			$this->updateReturnTotals(
-				returnId: $returnId,
-				totalVATCollected: 0.0,
-				totalVATPaid: 0.0,
-				vatBalance: 0.0,
-				totalTaxableAmount: 0.0
-			);
-			return [
-				'lineCount' => 0,
-				'totalVATCollected' => 0.0,
-				'totalVATPaid' => 0.0,
-				'vatBalance' => 0.0,
-				'totalTaxableAmount' => 0.0,
-			];
+			$this->updateReturnTotals(returnId: $returnId, totals: self::KOR_TOTALS);
+			return ['lineCount' => 0] + self::KOR_TOTALS;
 		}
 
 		$scan = $this->scanRubrieken(administrationId: $administrationId, startDate: $startDate, endDate: $endDate);
-		$declarationsByKey = $scan['declarationsByKey'];
-		$totalVATCollectedCt = $scan['totalVATCollectedCt'];
-		$totalVATPaidCt = $scan['totalVATPaidCt'];
-		$totalTaxableCt = $scan['totalTaxableCt'];
-		$lineNumber = $scan['lineNumber'];
 
 		// Persist declarations + their lines.
-		foreach ($declarationsByKey as $group) {
-			$declarationId = $this->persistDeclaration(
-				returnId: $returnId,
-				administrationId: $administrationId,
-				returnBox: $group['returnBox'],
-				type: $group['type'],
-				taxRate: $group['taxRate'],
-				totalVATCents: $group['totalVATAmountCents'],
-				totalTaxableCents: $group['totalTaxableCents'],
-				lineCount: $group['lineCount']
-			);
-
-			foreach ($group['pendingLines'] as $line) {
-				$line['returnId'] = $returnId;
-				$line['declarationId'] = $declarationId;
-				$line['administrationId'] = $administrationId;
-				$this->saveObject(schema: 'VATLine', data: $line);
-			}
+		$scope = new VatReturnScope(returnId: $returnId, administrationId: $administrationId);
+		foreach ($scan['declarationsByKey'] as $group) {
+			$this->persistDeclarationGroup(scope: $scope, group: $group);
 		}
 
-		$totalVATCollected = $this->fromCents(cents: $totalVATCollectedCt);
-		$totalVATPaid = $this->fromCents(cents: $totalVATPaidCt);
-		$vatBalance = $this->fromCents(cents: ($totalVATPaidCt - $totalVATCollectedCt));
-		$totalTaxable = $this->fromCents(cents: $totalTaxableCt);
+		$totals = $this->scanTotals(scan: $scan);
+		$this->updateReturnTotals(returnId: $returnId, totals: $totals);
 
-		$this->updateReturnTotals(
-			returnId: $returnId,
-			totalVATCollected: $totalVATCollected,
-			totalVATPaid: $totalVATPaid,
-			vatBalance: $vatBalance,
-			totalTaxableAmount: $totalTaxable
-		);
-
-		return [
-			'lineCount' => $lineNumber,
-			'totalVATCollected' => $totalVATCollected,
-			'totalVATPaid' => $totalVATPaid,
-			'vatBalance' => $vatBalance,
-			'totalTaxableAmount' => $totalTaxable,
-		];
+		return ['lineCount' => $scan['lineNumber']] + $totals;
 
 	}//end deriveVATLines()
 
@@ -611,76 +575,118 @@ class VATReturnService {
 	}//end buildReturnNumber()
 
 	/**
+	 * Persist one scanned declaration group: its VATDeclaration row, then each of its VATLine rows.
+	 *
+	 * @param VatReturnScope $scope The return and administration the rows belong to.
+	 * @param array<string,mixed> $group One entry of the scan's declarationsByKey.
+	 *
+	 * @return void
+	 */
+	private function persistDeclarationGroup(VatReturnScope $scope, array $group): void {
+		$declarationId = $this->persistDeclaration(scope: $scope, group: $group);
+
+		foreach ($group['pendingLines'] as $line) {
+			$line['returnId'] = $scope->returnId;
+			$line['declarationId'] = $declarationId;
+			$line['administrationId'] = $scope->administrationId;
+			$this->saveObject(schema: 'VATLine', data: $line);
+		}
+
+	}//end persistDeclarationGroup()
+
+	/**
 	 * Persist (or upsert) a VATDeclaration row and return its id.
 	 *
-	 * @param string $returnId Parent VATReturn id.
-	 * @param string $administrationId Administration scope.
-	 * @param string $returnBox The VAT return box the declaration totals.
-	 * @param string $type collected | paid | reverse-charge.
-	 * @param float $taxRate VAT rate % (the box's tariff rate, 0 when the box mixes tariffs).
-	 * @param int $totalVATCents VAT amount in cents.
-	 * @param int $totalTaxableCents Taxable amount in cents.
-	 * @param int $lineCount Number of underlying VATLine rows.
+	 * @param VatReturnScope $scope The return and administration the declaration belongs to.
+	 * @param array<string,mixed> $group One entry of the scan's declarationsByKey.
 	 *
 	 * @return string The persisted VATDeclaration id.
 	 */
-	private function persistDeclaration(
-		string $returnId,
-		string $administrationId,
-		string $returnBox,
-		string $type,
-		float $taxRate,
-		int $totalVATCents,
-		int $totalTaxableCents,
-		int $lineCount,
-	): string {
-		$declarationNumber = sprintf(
+	private function persistDeclaration(VatReturnScope $scope, array $group): string {
+		$declaration = $this->declarationRecord(scope: $scope, group: $group);
+		$persisted = $this->saveObject(schema: 'VATDeclaration', data: $declaration);
+
+		return (string)($persisted['id'] ?? ($persisted['@self']['id'] ?? $declaration['declarationNumber']));
+	}//end persistDeclaration()
+
+	/**
+	 * Build the VATDeclaration row for one scanned group.
+	 *
+	 * The group carries the VAT return box the declaration totals, its type
+	 * (collected | paid | reverse-charge), the box's tariff rate (0 when the box
+	 * mixes tariffs), the VAT and taxable totals in cents and the number of
+	 * underlying VATLine rows.
+	 *
+	 * @param VatReturnScope $scope The return and administration the declaration belongs to.
+	 * @param array<string,mixed> $group One entry of the scan's declarationsByKey.
+	 *
+	 * @return array<string,mixed> The declaration row.
+	 */
+	private function declarationRecord(VatReturnScope $scope, array $group): array {
+		return [
+			'declarationNumber' => $this->declarationNumber(returnId: $scope->returnId, returnBox: $group['returnBox']),
+			'returnId' => $scope->returnId,
+			'returnBox' => $group['returnBox'],
+			'type' => $group['type'],
+			'taxRate' => $group['taxRate'],
+			'totalVATAmount' => $this->fromCents(cents: $group['totalVATAmountCents']),
+			'totalTaxableAmount' => $this->fromCents(cents: $group['totalTaxableCents']),
+			'lineCount' => $group['lineCount'],
+			'administrationId' => $scope->administrationId,
+		];
+	}//end declarationRecord()
+
+	/**
+	 * Build the declarationNumber of a return's box.
+	 *
+	 * @param string $returnId Parent VATReturn id.
+	 * @param string $returnBox The VAT return box.
+	 *
+	 * @return string The declaration number (e.g. VAT-<return>-1A).
+	 */
+	private function declarationNumber(string $returnId, string $returnBox): string {
+		return sprintf(
 			'VAT-%s-%s',
 			substr(string: $returnId, offset: 0, length: 32),
 			strtoupper(string: $returnBox)
 		);
+	}//end declarationNumber()
 
-		$declaration = [
-			'declarationNumber' => $declarationNumber,
-			'returnId' => $returnId,
-			'returnBox' => $returnBox,
-			'type' => $type,
-			'taxRate' => $taxRate,
-			'totalVATAmount' => $this->fromCents(cents: $totalVATCents),
-			'totalTaxableAmount' => $this->fromCents(cents: $totalTaxableCents),
-			'lineCount' => $lineCount,
-			'administrationId' => $administrationId,
+	/**
+	 * Convert the scan's cent totals to the return totals.
+	 *
+	 * @param array<string,mixed> $scan The result of scanRubrieken().
+	 *
+	 * @return array{totalVATCollected:float,totalVATPaid:float,vatBalance:float,totalTaxableAmount:float}
+	 */
+	private function scanTotals(array $scan): array {
+		return [
+			'totalVATCollected' => $this->fromCents(cents: $scan['totalVATCollectedCt']),
+			'totalVATPaid' => $this->fromCents(cents: $scan['totalVATPaidCt']),
+			'vatBalance' => $this->fromCents(cents: ($scan['totalVATPaidCt'] - $scan['totalVATCollectedCt'])),
+			'totalTaxableAmount' => $this->fromCents(cents: $scan['totalTaxableCt']),
 		];
-
-		$persisted = $this->saveObject(schema: 'VATDeclaration', data: $declaration);
-
-		return (string)($persisted['id'] ?? ($persisted['@self']['id'] ?? $declarationNumber));
-	}//end persistDeclaration()
+	}//end scanTotals()
 
 	/**
 	 * Re-write the rolled-up totals on the parent VATReturn.
 	 *
+	 * The totals are the sum of collected VAT, the sum of paid + reverse-charge
+	 * VAT, the balance (totalVATPaid - totalVATCollected) and the sum of
+	 * taxable amounts.
+	 *
 	 * @param string $returnId VATReturn id.
-	 * @param float $totalVATCollected Sum of collected VAT.
-	 * @param float $totalVATPaid Sum of paid + reverse-charge VAT.
-	 * @param float $vatBalance totalVATPaid - totalVATCollected.
-	 * @param float $totalTaxableAmount Sum of taxable amounts.
+	 * @param array{totalVATCollected:float,totalVATPaid:float,vatBalance:float,totalTaxableAmount:float} $totals The totals.
 	 *
 	 * @return void
 	 */
-	private function updateReturnTotals(
-		string $returnId,
-		float $totalVATCollected,
-		float $totalVATPaid,
-		float $vatBalance,
-		float $totalTaxableAmount,
-	): void {
+	private function updateReturnTotals(string $returnId, array $totals): void {
 		$vatReturn = $this->fetchReturn(returnId: $returnId);
 
-		$vatReturn['totalVATCollected'] = $totalVATCollected;
-		$vatReturn['totalVATPaid'] = $totalVATPaid;
-		$vatReturn['vatBalance'] = $vatBalance;
-		$vatReturn['totalTaxableAmount'] = $totalTaxableAmount;
+		$vatReturn['totalVATCollected'] = $totals['totalVATCollected'];
+		$vatReturn['totalVATPaid'] = $totals['totalVATPaid'];
+		$vatReturn['vatBalance'] = $totals['vatBalance'];
+		$vatReturn['totalTaxableAmount'] = $totals['totalTaxableAmount'];
 
 		$this->saveObject(schema: 'BtwAangifte', data: $vatReturn);
 
