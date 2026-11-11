@@ -32,7 +32,7 @@ use OCA\Shillinq\Repair\FoldDunningWriteoffIntoArInvoice;
 use OCA\Shillinq\Repair\FoldExpensesAndHoursIntoProject;
 use OCA\Shillinq\Repair\StampJournalTypeOnGlTransactions;
 use OCA\Shillinq\Repair\UnifyAnalyticalDimensions;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IGroupManager;
 use OCP\Migration\IOutput;
@@ -124,12 +124,12 @@ final class RepairStepRegisterSlugTest extends TestCase {
 	}//end setUp()
 
 	/**
-	 * A settings double whose slug lookup returns 'finance'.
+	 * A register-location double whose slug lookup returns 'finance'.
 	 *
-	 * @return SettingsService The double.
+	 * @return RegisterLocation The double.
 	 */
-	private function financeSlug(): SettingsService {
-		$settings = $this->createMock(SettingsService::class);
+	private function financeSlug(): RegisterLocation {
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->expects($this->once())->method('getRegisterSlug')->willReturn('finance');
 
 		return $settings;
@@ -137,12 +137,12 @@ final class RepairStepRegisterSlugTest extends TestCase {
 	}//end financeSlug()
 
 	/**
-	 * A settings double whose slug lookup throws.
+	 * A register-location double whose slug lookup throws.
 	 *
-	 * @return SettingsService The double.
+	 * @return RegisterLocation The double.
 	 */
-	private function failingSlug(): SettingsService {
-		$settings = $this->createMock(SettingsService::class);
+	private function failingSlug(): RegisterLocation {
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willThrowException(new RuntimeException('config down'));
 
 		return $settings;

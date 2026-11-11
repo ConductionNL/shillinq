@@ -43,7 +43,7 @@ namespace OCA\Shillinq\Repair;
 
 use DateTimeImmutable;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\Migration\IOutput;
@@ -61,13 +61,13 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settingsService The settings service (register slug).
+	 * @param RegisterLocation $settingsService Where the register lives (slug + OpenRegister availability).
 	 * @param IGroupManager $groupManager The group manager (resolve an admin IUser).
 	 * @param LoggerInterface $logger The logger interface.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
 	 */
 	public function __construct(
-		private SettingsService $settingsService,
+		private RegisterLocation $settingsService,
 		private IGroupManager $groupManager,
 		private LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,

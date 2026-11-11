@@ -34,7 +34,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Seeds an administration's BBV records through OpenRegister's ObjectService.
  *
- * SettingsService runs these seeds and supplies the OpenRegister availability
+ * SettingsService runs these seeds; RegisterLocation supplies the OpenRegister availability
  * check and the register slug.
  *
  * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-006)
@@ -65,7 +65,7 @@ class BbvAdministrationSeedService {
 	/**
 	 * Constructor for the BbvAdministrationSeedService.
 	 *
-	 * @param SettingsService $settings The settings service
+	 * @param RegisterLocation $settings Where the register lives (slug + OpenRegister availability).
 	 * @param SeedImporter $importer The seed file importer
 	 * @param IAppConfig $appConfig The app config, for the BBV gate install date
 	 * @param LoggerInterface $logger The logger
@@ -73,7 +73,7 @@ class BbvAdministrationSeedService {
 	 * @return void
 	 */
 	public function __construct(
-		private SettingsService $settings,
+		private RegisterLocation $settings,
 		private SeedImporter $importer,
 		private IAppConfig $appConfig,
 		private LoggerInterface $logger,
