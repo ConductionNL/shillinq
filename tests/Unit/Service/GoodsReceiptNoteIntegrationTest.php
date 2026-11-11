@@ -376,6 +376,40 @@ final class GoodsReceiptNoteIntegrationTest extends TestCase {
 	}//end testAcceptRefusesOutsideItsAdministrationAndOnTerminalNotes()
 
 	/**
+	 * Golden for the photo upload guards: an inaccessible or empty
+	 * administration and a GRN of another administration are refused before
+	 * anything is written; the accessible GRN gets the merged photos.
+	 *
+	 * @return void
+	 */
+	public function testUploadPhotosRefusesOutsideItsAdministration(): void {
+		$refusals = [
+			['adm-2', 'grn-1', 'Administration not found'],
+			['', 'grn-1', 'administrationId is required'],
+			['adm-1', 'grn-other', 'Goods receipt note not found'],
+		];
+		foreach ($refusals as [$administrationId, $grnId, $message]) {
+			$stub = $this->buildObjectServiceStub($this->acceptFixture());
+			$service = $this->buildService(stub: $stub, userId: 'warehouse-01', accessibleAdministrations: ['adm-1', 'adm-3']);
+			try {
+				$service->uploadPhotos(administrationId: $administrationId, grnId: $grnId, photoFileIds: ['file-9']);
+				self::fail('Expected a refusal for ' . $grnId . ' in "' . $administrationId . '"');
+			} catch (\RuntimeException $e) {
+				self::assertSame($message, $e->getMessage());
+			}
+
+			self::assertArrayNotHasKey('photos', $stub->rows('GoodsReceiptNote')[0]);
+			self::assertArrayNotHasKey('photos', $stub->rows('GoodsReceiptNote')[1]);
+		}
+
+		$stub = $this->buildObjectServiceStub($this->acceptFixture());
+		$service = $this->buildService(stub: $stub, userId: 'warehouse-01', accessibleAdministrations: ['adm-1']);
+		$updated = $service->uploadPhotos(administrationId: 'adm-1', grnId: 'grn-1', photoFileIds: ['file-9', 'file-9']);
+		self::assertSame(['file-9'], $updated['photos']);
+
+	}//end testUploadPhotosRefusesOutsideItsAdministration()
+
+	/**
 	 * The records of the accept goldens: one received GRN with five lines, a
 	 * GRN of another administration and a terminal GRN.
 	 *
