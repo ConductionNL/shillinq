@@ -254,44 +254,69 @@ class InvoiceFromBookingGuard {
 	 * @spec openspec/changes/bookings-deposit-to-invoice/tasks.md#task-8
 	 */
 	public function buildLineItems(array $order, int $depositCreditCents): array {
-		$netCents = (int)($order['basePrice'] ?? 0);
-		$taxRate = (int)($order['taxRate'] ?? self::DEFAULT_TAX_RATE);
-		$taxCents = $this->vatOn(netCents: $netCents, taxRate: $taxRate);
-
-		$lines = [
-			[
-				'administrationId' => (string)($order['administrationId'] ?? ''),
-				'lineNumber' => 1,
-				'lineType' => 'service',
-				'description' => (string)($order['description'] ?? 'Booking service'),
-				'quantity' => 1,
-				'unitPrice' => $netCents,
-				'lineAmount' => $netCents,
-				'taxRate' => $taxRate,
-				'taxAmount' => $taxCents,
-				'grossAmount' => ($netCents + $taxCents),
-			],
-		];
-
+		$lines = [$this->serviceLine(order: $order)];
 		if ($depositCreditCents > 0) {
-			$creditCents = (0 - $depositCreditCents);
-			// REQ-DI-004: deposit was already taxed at collection — credit carries 0% VAT.
-			$lines[] = [
-				'administrationId' => (string)($order['administrationId'] ?? ''),
-				'lineNumber' => 2,
-				'lineType' => 'deposit_credit',
-				'description' => 'Deposit Credit Applied',
-				'quantity' => 1,
-				'unitPrice' => $creditCents,
-				'lineAmount' => $creditCents,
-				'taxRate' => 0,
-				'taxAmount' => 0,
-				'grossAmount' => $creditCents,
-			];
+			$lines[] = $this->depositCreditLine(order: $order, depositCreditCents: $depositCreditCents);
 		}
 
 		return $lines;
 	}//end buildLineItems()
+
+	/**
+	 * Line 1: the booking service at the order's price and VAT rate.
+	 *
+	 * @param array<string,mixed> $order The booking order.
+	 *
+	 * @return array<string,mixed> The service line.
+	 */
+	private function serviceLine(array $order): array {
+		$netCents = (int)($order['basePrice'] ?? 0);
+		$taxRate = (int)($order['taxRate'] ?? self::DEFAULT_TAX_RATE);
+		$taxCents = $this->vatOn(netCents: $netCents, taxRate: $taxRate);
+
+		return [
+			'administrationId' => (string)($order['administrationId'] ?? ''),
+			'lineNumber' => 1,
+			'lineType' => 'service',
+			'description' => (string)($order['description'] ?? 'Booking service'),
+			'quantity' => 1,
+			'unitPrice' => $netCents,
+			'lineAmount' => $netCents,
+			'taxRate' => $taxRate,
+			'taxAmount' => $taxCents,
+			'grossAmount' => ($netCents + $taxCents),
+		];
+
+	}//end serviceLine()
+
+	/**
+	 * Line 2: the negative deposit credit at 0% VAT.
+	 *
+	 * REQ-DI-004: the deposit was already taxed at collection, so the credit
+	 * carries 0% VAT.
+	 *
+	 * @param array<string,mixed> $order The booking order.
+	 * @param int $depositCreditCents The positive deposit credit in cents.
+	 *
+	 * @return array<string,mixed> The credit line.
+	 */
+	private function depositCreditLine(array $order, int $depositCreditCents): array {
+		$creditCents = (0 - $depositCreditCents);
+
+		return [
+			'administrationId' => (string)($order['administrationId'] ?? ''),
+			'lineNumber' => 2,
+			'lineType' => 'deposit_credit',
+			'description' => 'Deposit Credit Applied',
+			'quantity' => 1,
+			'unitPrice' => $creditCents,
+			'lineAmount' => $creditCents,
+			'taxRate' => 0,
+			'taxAmount' => 0,
+			'grossAmount' => $creditCents,
+		];
+
+	}//end depositCreditLine()
 
 	/**
 	 * Compute net/VAT/gross totals for a set of invoice lines (REQ-DI-003/004).
