@@ -276,4 +276,21 @@ final class ACMReportSignTransitionListenerTest extends TestCase {
 		self::assertCount(0, $this->updates);
 
 	}//end testNonMatchingEventTypeIsIgnored()
+
+	/**
+	 * The subject id falls back to the entity id and is stamped on the
+	 * object sent for signing; a result without status or reference
+	 * persists only `requested`; a namespaced slug matches.
+	 *
+	 * @return void
+	 */
+	public function testEntityIdFallbackAndMinimalResult(): void {
+		$listener = $this->makeListener([], schemaSlug: ' shillinq/ACMReport ');
+
+		$listener->handle($this->makeEvent(['administrationId' => 'adm-1', 'signingStatus' => 'draft'], id: 'acm-7'));
+
+		self::assertSame('acm-7', $this->signingCalls[0][0]['id']);
+		self::assertSame([['id' => 'acm-7', 'signingStatus' => 'requested']], $this->updates);
+
+	}//end testEntityIdFallbackAndMinimalResult()
 }//end class
