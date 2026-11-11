@@ -145,6 +145,28 @@ class ReinvestmentReserves {
 	 * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
 	 */
 	public function apply(array $asset): array {
+		$run = new ReserveApplicationRun(asset: $asset, reserve: $this->openReserveFor(asset: $asset));
+		$this->decideAmount(run: $run);
+		$this->postApplication(run: $run);
+		$this->recordApplication(run: $run);
+
+		$asset['fiscalCostBasis'] = (($run->basis - $run->applied) / 100);
+		$asset['reserveAmountApplied'] = null;
+
+		return $asset;
+
+	}//end apply()
+
+	/**
+	 * The open reserve the asset names, within the asset's administration.
+	 *
+	 * @param array<string,mixed> $asset The replacement asset.
+	 *
+	 * @return array<string,mixed> The reserve.
+	 *
+	 * @throws DomainException When the reserve is not open or belongs to another administration.
+	 */
+	private function openReserveFor(array $asset): array {
 		$reserve = $this->records->find(schema: self::SCHEMA, id: trim((string)($asset['reinvestmentReserveId'] ?? '')));
 		if ($reserve === null || (string)($reserve['lifecycleState'] ?? '') !== 'open') {
 			throw new DomainException('Choose an open reinvestment reserve.');
@@ -154,59 +176,148 @@ class ReinvestmentReserves {
 			throw new DomainException('The reinvestment reserve belongs to another administration.');
 		}
 
-		$cost = self::cents(amount: ($asset['acquisitionCost'] ?? ($asset['purchaseCost'] ?? 0)));
-		$basis = $cost;
+		return $reserve;
+	}//end openReserveFor()
+
+	/**
+	 * Decide the amount: the requested amount when one is given, else as much
+	 * as both the reserve's remainder and the asset's fiscal basis allow.
+	 *
+	 * @param ReserveApplicationRun $run The application in progress.
+	 *
+	 * @return void
+	 *
+	 * @throws DomainException When the amount is not between 0.01 and what fits.
+	 */
+	private function decideAmount(ReserveApplicationRun $run): void {
+		$run->basis = $this->fiscalBasis(asset: $run->asset);
+		$left = (self::cents(amount: ($run->reserve['amount'] ?? 0)) - self::cents(amount: ($run->reserve['appliedAmount'] ?? 0)));
+		$fits = min($left, $run->basis);
+		$run->applied = $this->requestedOr(asset: $run->asset, default: $fits);
+
+		if ($run->applied <= 0 || $run->applied > $left || $run->applied > $run->basis) {
+			throw new DomainException(sprintf('Apply between 0.01 and %s.', number_format(($fits / 100), 2, '.', '')));
+		}
+	}//end decideAmount()
+
+	/**
+	 * The asset's fiscal cost basis in cents: its own when set, else its cost.
+	 *
+	 * @param array<string,mixed> $asset The replacement asset.
+	 *
+	 * @return int The basis.
+	 */
+	private function fiscalBasis(array $asset): int {
 		if (isset($asset['fiscalCostBasis']) === true) {
-			$basis = self::cents(amount: $asset['fiscalCostBasis']);
+			return self::cents(amount: $asset['fiscalCostBasis']);
 		}
 
-		$left = (self::cents(amount: ($reserve['amount'] ?? 0)) - self::cents(amount: ($reserve['appliedAmount'] ?? 0)));
-		$applied = min($left, $basis);
+		return self::cents(amount: ($asset['acquisitionCost'] ?? ($asset['purchaseCost'] ?? 0)));
+	}//end fiscalBasis()
+
+	/**
+	 * The requested amount in cents when a positive one is given, else the default.
+	 *
+	 * @param array<string,mixed> $asset   The replacement asset.
+	 * @param int                 $default The amount that fits.
+	 *
+	 * @return int The amount to apply.
+	 */
+	private function requestedOr(array $asset, int $default): int {
 		if (isset($asset['reserveAmountApplied']) === true && (float)$asset['reserveAmountApplied'] > 0) {
-			$applied = self::cents(amount: $asset['reserveAmountApplied']);
+			return self::cents(amount: $asset['reserveAmountApplied']);
 		}
 
-		if ($applied <= 0 || $applied > $left || $applied > $basis) {
-			throw new DomainException(sprintf('Apply between 0.01 and %s.', number_format((min($left, $basis) / 100), 2, '.', '')));
-		}
+		return $default;
+	}//end requestedOr()
 
+	/**
+	 * Post the application: debit the reserve account, credit the asset
+	 * account, dated at the asset's acquisition.
+	 *
+	 * @param ReserveApplicationRun $run The application with its amount.
+	 *
+	 * @return void
+	 *
+	 * @throws DomainException When the asset has no asset account.
+	 */
+	private function postApplication(ReserveApplicationRun $run): void {
+		$asset = $run->asset;
 		$assetAccount = (string)($asset['assetAccountNumber'] ?? ($asset['capitalizationAccountNumber'] ?? ''));
 		if ($assetAccount === '') {
 			throw new DomainException('The asset has no asset account to lower.');
 		}
 
-		$text = sprintf('Herinvesteringsreserve %s op %s', (string)($reserve['disposedAssetNumber'] ?? ''), (string)($asset['assetNumber'] ?? ''));
-		$date = substr((string)($asset['acquisitionDate'] ?? ($asset['purchaseDate'] ?? date('Y-m-d'))), 0, 10);
-		$journalId = $this->records->postJournal(
+		$run->text = sprintf(
+			'Herinvesteringsreserve %s op %s',
+			(string)($run->reserve['disposedAssetNumber'] ?? ''),
+			(string)($asset['assetNumber'] ?? '')
+		);
+		$run->date = substr((string)($asset['acquisitionDate'] ?? ($asset['purchaseDate'] ?? date('Y-m-d'))), 0, 10);
+		$run->journalId = $this->records->postJournal(
 			journal: $this->journal(
 				administrationId: (string)$asset['administrationId'],
-				number: sprintf(
-					'HIR-%s-%s',
-					str_replace('-', '', $date),
-					substr(hash('sha256', (string)$reserve['id'] . '|' . (string)($asset['id'] ?? '')), 0, 8)
-				),
-				date: $date,
-				description: $text,
-				lines: [
-					[
-						'accountNumber' => (string)($reserve['reserveAccountNumber'] ?? $this->reserveAccount()),
-						'side' => 'debit',
-						'amount' => ($applied / 100),
-						'description' => $text,
-					],
-					['accountNumber' => $assetAccount, 'side' => 'credit', 'amount' => ($applied / 100), 'description' => $text],
-				]
+				number: $this->applicationNumber(run: $run),
+				date: $run->date,
+				description: $run->text,
+				lines: $this->applicationLines(run: $run, assetAccount: $assetAccount)
 			)
 		);
+	}//end postApplication()
 
-		$appliedTotal = (self::cents(amount: ($reserve['appliedAmount'] ?? 0)) + $applied);
+	/**
+	 * The two journal lines: debit the reserve account (the reserve's own,
+	 * else the configured one), credit the asset account.
+	 *
+	 * @param ReserveApplicationRun $run          The application with its amount and text.
+	 * @param string                $assetAccount The asset account to lower.
+	 *
+	 * @return list<array<string,mixed>> The lines.
+	 */
+	private function applicationLines(ReserveApplicationRun $run, string $assetAccount): array {
+		return [
+			[
+				'accountNumber' => (string)($run->reserve['reserveAccountNumber'] ?? $this->reserveAccount()),
+				'side' => 'debit',
+				'amount' => ($run->applied / 100),
+				'description' => $run->text,
+			],
+			['accountNumber' => $assetAccount, 'side' => 'credit', 'amount' => ($run->applied / 100), 'description' => $run->text],
+		];
+	}//end applicationLines()
+
+	/**
+	 * The journal number: HIR-<date>-<hash of reserve and asset>.
+	 *
+	 * @param ReserveApplicationRun $run The application with its date.
+	 *
+	 * @return string The number.
+	 */
+	private function applicationNumber(ReserveApplicationRun $run): string {
+		return sprintf(
+			'HIR-%s-%s',
+			str_replace('-', '', $run->date),
+			substr(hash('sha256', (string)$run->reserve['id'] . '|' . (string)($run->asset['id'] ?? '')), 0, 8)
+		);
+	}//end applicationNumber()
+
+	/**
+	 * Record the application on the reserve; a fully used reserve is applied.
+	 *
+	 * @param ReserveApplicationRun $run The posted application.
+	 *
+	 * @return void
+	 */
+	private function recordApplication(ReserveApplicationRun $run): void {
+		$reserve = $run->reserve;
+		$appliedTotal = (self::cents(amount: ($reserve['appliedAmount'] ?? 0)) + $run->applied);
 		$applications = (array)($reserve['applications'] ?? []);
 		$applications[] = [
-			'assetRef' => (string)($asset['id'] ?? ''),
-			'assetNumber' => (string)($asset['assetNumber'] ?? ''),
-			'amount' => ($applied / 100),
-			'journalEntryId' => $journalId,
-			'appliedOn' => $date,
+			'assetRef' => (string)($run->asset['id'] ?? ''),
+			'assetNumber' => (string)($run->asset['assetNumber'] ?? ''),
+			'amount' => ($run->applied / 100),
+			'journalEntryId' => $run->journalId,
+			'appliedOn' => $run->date,
 		];
 		$fields = [
 			'appliedAmount' => ($appliedTotal / 100),
@@ -218,13 +329,7 @@ class ReinvestmentReserves {
 		}
 
 		$this->records->patch(schema: self::SCHEMA, id: (string)$reserve['id'], fields: $fields);
-
-		$asset['fiscalCostBasis'] = (($basis - $applied) / 100);
-		$asset['reserveAmountApplied'] = null;
-
-		return $asset;
-
-	}//end apply()
+	}//end recordApplication()
 
 	/**
 	 * Release every open reserve past its expiry with a remainder to profit.
