@@ -86,6 +86,22 @@ class CycleCountService {
 	public const VARIANCE_REASON = 'cycle-count-variance';
 
 	/**
+	 * The counted-side fields of a freshly snapshotted line, all still empty,
+	 * in payload order.
+	 *
+	 * @var array<string,mixed>
+	 */
+	private const UNCOUNTED_LINE_FIELDS = [
+		'countedValue' => null,
+		'quantityVariance' => null,
+		'valueVariance' => null,
+		'requiresReason' => false,
+		'reasonCode' => null,
+		'notes' => null,
+		'adjustmentStockMoveId' => null,
+	];
+
+	/**
 	 * Construct the service.
 	 *
 	 * @param IAppConfig $appConfig App config — used to read register
@@ -123,89 +139,7 @@ class CycleCountService {
 	 */
 	public function snapshotScope(array $count): bool {
 		try {
-			$countId = (string)($count['countId'] ?? '');
-			$administrationId = (string)($count['administrationId'] ?? '');
-			$countType = (string)($count['countType'] ?? '');
-			if ($countId === '' || $administrationId === '' || $countType === '') {
-				$this->logger->info(
-					'CycleCountService: snapshot denied — required fields missing',
-					['countId' => ($count['countId'] ?? null)]
-				);
-				return false;
-			}
-
-			if ($this->countHasLines(administrationId: $administrationId, countId: $countId) === true) {
-				$this->logger->info(
-					'CycleCountService: snapshot skipped — lines already exist',
-					['countId' => $countId]
-				);
-				return true;
-			}
-
-			$stockRows = $this->findInScopeStock(
-				administrationId: $administrationId,
-				countType: $countType,
-				locationFilter: (string)($count['locationFilter'] ?? ''),
-				categoryFilter: (string)($count['categoryFilter'] ?? '')
-			);
-
-			if ($stockRows === []) {
-				$this->logger->info(
-					'CycleCountService: snapshot produced zero lines (empty scope)',
-					['countId' => $countId]
-				);
-				return true;
-			}
-
-			$sequence = 0;
-			foreach ($stockRows as $stock) {
-				if (is_array($stock) === false) {
-					continue;
-				}
-
-				$sku = (string)($stock['sku'] ?? '');
-				$locationId = (string)($stock['locationId'] ?? '');
-				if ($sku === '' || $locationId === '') {
-					continue;
-				}
-
-				$productName = null;
-				if (isset($stock['productName']) === true) {
-					$productName = (string)$stock['productName'];
-				}
-
-				$sequence++;
-				$lineId = sprintf('%s-%03d', $countId, $sequence);
-				$unitCost = $this->numericOrZero(value: $stock['unitCost'] ?? null);
-				$expectedQ = $this->numericOrZero(value: $stock['quantity'] ?? null);
-				$expectedValCts = (int)round(($this->cents(value: $expectedQ) * $this->cents(value: $unitCost)) / 100);
-				$line = [
-					'lineId' => $lineId,
-					'countId' => $countId,
-					'sku' => $sku,
-					'productName' => $productName,
-					'locationId' => $locationId,
-					'expectedQuantity' => $expectedQ,
-					'countedQuantity' => null,
-					'unitCost' => $unitCost,
-					'expectedValue' => $this->fromCents(cents: $expectedValCts),
-					'countedValue' => null,
-					'quantityVariance' => null,
-					'valueVariance' => null,
-					'requiresReason' => false,
-					'reasonCode' => null,
-					'notes' => null,
-					'adjustmentStockMoveId' => null,
-					'administrationId' => $administrationId,
-				];
-
-				$this->objectService
-					->setRegister($this->register())
-					->setSchema('InventoryCycleCountLine')
-					->saveObject($line);
-			}//end foreach
-
-			return true;
+			return $this->snapshotCount(count: $count);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'CycleCountService: snapshot failed — denying submit (fail-closed)',
@@ -218,6 +152,164 @@ class CycleCountService {
 		}//end try
 
 	}//end snapshotScope()
+
+	/**
+	 * Deny an incomplete count, skip one that already has lines, otherwise
+	 * snapshot its in-scope stock.
+	 *
+	 * @param array<string,mixed> $count The InventoryCycleCount payload being transitioned.
+	 *
+	 * @return bool False only when required fields are missing.
+	 */
+	private function snapshotCount(array $count): bool {
+		$scope = CycleCountScope::fromCount(count: $count);
+		if ($scope->isComplete() === false) {
+			$this->logSnapshot(message: 'CycleCountService: snapshot denied — required fields missing', countId: ($count['countId'] ?? null));
+			return false;
+		}
+
+		if ($this->countHasLines(administrationId: $scope->administrationId, countId: $scope->countId) === true) {
+			$this->logSnapshot(message: 'CycleCountService: snapshot skipped — lines already exist', countId: $scope->countId);
+			return true;
+		}
+
+		$this->snapshotStock(scope: $scope);
+		return true;
+	}//end snapshotCount()
+
+	/**
+	 * Save one InventoryCycleCountLine per countable in-scope stock row,
+	 * numbered <countId>-001, -002, ... in stock order.
+	 *
+	 * @param CycleCountScope $scope The count being snapshotted.
+	 *
+	 * @return void
+	 */
+	private function snapshotStock(CycleCountScope $scope): void {
+		$stockRows = $this->findInScopeStock(scope: $scope);
+		if ($stockRows === []) {
+			$this->logSnapshot(message: 'CycleCountService: snapshot produced zero lines (empty scope)', countId: $scope->countId);
+			return;
+		}
+
+		$sequence = 0;
+		foreach ($this->countableStock(stockRows: $stockRows) as $stock) {
+			$sequence++;
+			// The line id leads the payload, ahead of the fields read from the stock row.
+			$lineId = sprintf('%s-%03d', $scope->countId, $sequence);
+			$this->saveRow(schema: 'InventoryCycleCountLine', payload: (['lineId' => $lineId] + $this->lineFromStock(stock: $stock, scope: $scope)));
+		}
+	}//end snapshotStock()
+
+	/**
+	 * Log a snapshot outcome for a count at info level.
+	 *
+	 * @param string $message The log message.
+	 * @param mixed  $countId The count identifier as given.
+	 *
+	 * @return void
+	 */
+	private function logSnapshot(string $message, mixed $countId): void {
+		$this->logger->info($message, ['countId' => $countId]);
+	}//end logSnapshot()
+
+	/**
+	 * The stock rows a line can be made for: arrays with a sku and a location.
+	 *
+	 * @param array<int,mixed> $stockRows In-scope stock rows.
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private function countableStock(array $stockRows): array {
+		$countable = [];
+		foreach ($stockRows as $stock) {
+			if ($this->isCountable(stock: $stock) === true) {
+				$countable[] = $stock;
+			}
+		}
+
+		return $countable;
+	}//end countableStock()
+
+	/**
+	 * Whether a stock row is an array carrying a non-empty sku and location.
+	 *
+	 * @param mixed $stock One stock row.
+	 *
+	 * @return bool
+	 */
+	private function isCountable(mixed $stock): bool {
+		return is_array($stock) === true
+			&& (string)($stock['sku'] ?? '') !== ''
+			&& (string)($stock['locationId'] ?? '') !== '';
+	}//end isCountable()
+
+	/**
+	 * The line payload for one stock row (without its line id): the expected
+	 * quantity and value from the snapshot, every counted field still empty.
+	 *
+	 * @param array<string,mixed> $stock A countable stock row.
+	 * @param CycleCountScope     $scope The count being snapshotted.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function lineFromStock(array $stock, CycleCountScope $scope): array {
+		$unitCost = $this->numericOrZero(value: $stock['unitCost'] ?? null);
+		$expectedQ = $this->numericOrZero(value: $stock['quantity'] ?? null);
+		return [
+			'countId' => $scope->countId,
+			'sku' => (string)$stock['sku'],
+			'productName' => $this->productName(stock: $stock),
+			'locationId' => (string)$stock['locationId'],
+			'expectedQuantity' => $expectedQ,
+			'countedQuantity' => null,
+			'unitCost' => $unitCost,
+			'expectedValue' => $this->expectedValue(quantity: $expectedQ, unitCost: $unitCost),
+		] + self::UNCOUNTED_LINE_FIELDS + ['administrationId' => $scope->administrationId];
+	}//end lineFromStock()
+
+	/**
+	 * The stock row's product name as a string, or null when it has none.
+	 *
+	 * @param array<string,mixed> $stock A stock row.
+	 *
+	 * @return string|null
+	 */
+	private function productName(array $stock): ?string {
+		if (isset($stock['productName']) === true) {
+			return (string)$stock['productName'];
+		}
+
+		return null;
+	}//end productName()
+
+	/**
+	 * Expected value of a snapshot line: quantity x unit cost in integer cents.
+	 *
+	 * @param float $quantity The expected quantity.
+	 * @param float $unitCost The unit cost.
+	 *
+	 * @return float
+	 */
+	private function expectedValue(float $quantity, float $unitCost): float {
+		$expectedValCts = (int)round(($this->cents(value: $quantity) * $this->cents(value: $unitCost)) / 100);
+		return $this->fromCents(cents: $expectedValCts);
+	}//end expectedValue()
+
+	/**
+	 * Save one object in a schema of the register.
+	 *
+	 * @param string              $schema  The schema to save in.
+	 * @param array<string,mixed> $payload The object payload.
+	 *
+	 * @return mixed Whatever ObjectService::saveObject returned.
+	 */
+	private function saveRow(string $schema, array $payload): mixed {
+		return $this->objectService
+			->setRegister($this->register())
+			->setSchema($schema)
+			->saveObject($payload);
+	}//end saveRow()
 
 	/**
 	 * Emit variance adjustment StockMoves per REQ-ICC-007.
@@ -410,11 +502,7 @@ class CycleCountService {
 	 * @return bool False when the save returned no id; true otherwise.
 	 */
 	private function saveVarianceMove(CycleCountAdjustmentRun $run, array $line): bool {
-		$move = $this->varianceMove(run: $run, line: $line);
-		$saved = $this->objectService
-			->setRegister($this->register())
-			->setSchema('StockMove')
-			->saveObject($move);
+		$saved = $this->saveRow(schema: 'StockMove', payload: $this->varianceMove(run: $run, line: $line));
 
 		$stockMoveId = $this->extractId(saved: $saved);
 		if ($stockMoveId === '') {
@@ -542,10 +630,7 @@ class CycleCountService {
 	public function recalculateLine(array $line): array {
 		$refreshed = $this->varianceGate->recalculateLine(line: $line);
 		try {
-			$this->objectService
-				->setRegister($this->register())
-				->setSchema('InventoryCycleCountLine')
-				->saveObject($refreshed);
+			$this->saveRow(schema: 'InventoryCycleCountLine', payload: $refreshed);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'CycleCountService: recalculateLine persist failed',
@@ -575,55 +660,19 @@ class CycleCountService {
 	/**
 	 * Query InventoryStock for the in-scope rows per REQ-ICC-008.
 	 *
-	 * @param string $administrationId Administration scope.
-	 * @param string $countType 'full' or 'partial'.
-	 * @param string $locationFilter Optional location id for partial counts.
-	 * @param string $categoryFilter Optional product category for partial counts.
+	 * @param CycleCountScope $scope The count being snapshotted.
 	 *
-	 * @return array<int,array<string,mixed>>
+	 * @return array<int,array<string,mixed>> The rows, or [] when the lookup fails.
 	 */
-	private function findInScopeStock(
-		string $administrationId,
-		string $countType,
-		string $locationFilter,
-		string $categoryFilter,
-	): array {
+	private function findInScopeStock(CycleCountScope $scope): array {
 		try {
-			$filters = ['administrationId' => $administrationId];
-
-			if ($countType === 'partial' && $locationFilter !== '') {
-				$filters['locationId'] = $locationFilter;
-			}
-
-			// ADR-084: findAll() is declared `: array`, never null. Its ELEMENTS
-			// are ObjectEntity rows, not arrays: snapshotScope() skips any row
-			// that is not an array, so without this every snapshot produced zero
-			// lines on a real instance.
-			$rows = $this->asArrays(
-				rows: $this->objectService
-					->setRegister($this->register())
-					->setSchema('InventoryStock')
-					->findAll(['filters' => $filters])
-			);
-
-			// Category filter requires a Product lookup. Fall back to client-side
-			// filter (the volume of stock rows per administration is bounded by SKU
-			// count + location count, which is small for the SMB target).
-			if ($countType === 'partial' && $categoryFilter !== '' && $locationFilter === '') {
-				$rows = $this->filterByCategory(
-					stockRows: $rows,
-					administrationId: $administrationId,
-					category: $categoryFilter
-				);
-			}
-
-			return $rows;
+			return $this->readScopeStock(scope: $scope);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'CycleCountService: findInScopeStock failed',
 				[
-					'administrationId' => $administrationId,
-					'countType' => $countType,
+					'administrationId' => $scope->administrationId,
+					'countType' => $scope->countType,
 					'exception' => $e->getMessage(),
 				]
 			);
@@ -633,76 +682,49 @@ class CycleCountService {
 	}//end findInScopeStock()
 
 	/**
+	 * Read the stock rows of the scope, applying the category filter when the
+	 * count is scoped by category alone.
+	 *
+	 * @param CycleCountScope $scope The count being snapshotted.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function readScopeStock(CycleCountScope $scope): array {
+		// ADR-084: findAll() is declared `: array`, never null. Its ELEMENTS
+		// are ObjectEntity rows, not arrays: snapshotScope() skips any row
+		// that is not an array, so without normalising every snapshot produced
+		// zero lines on a real instance.
+		$rows = $this->findRows(schema: 'InventoryStock', filters: $scope->stockFilters());
+
+		// Category filter requires a Product lookup. Fall back to client-side
+		// filter (the volume of stock rows per administration is bounded by SKU
+		// count + location count, which is small for the SMB target).
+		if ($scope->filtersByCategoryOnly() === true) {
+			$rows = $this->filterByCategory(stockRows: $rows, scope: $scope);
+		}
+
+		return $rows;
+	}//end readScopeStock()
+
+	/**
 	 * Client-side category filter for partial counts scoped by category.
 	 * Reads the Product schema for each distinct sku in the stock rows and
 	 * keeps only the stock rows whose product's category matches.
 	 *
 	 * @param array<int,array<string,mixed>> $stockRows Pre-filtered stock rows.
-	 * @param string $administrationId Administration scope.
-	 * @param string $category Product category to match.
+	 * @param CycleCountScope                $scope     The count, carrying administration and category.
 	 *
-	 * @return array<int,array<string,mixed>>
+	 * @return array<int,array<string,mixed>> The matching rows, or [] when a lookup fails.
 	 */
-	private function filterByCategory(array $stockRows, string $administrationId, string $category): array {
+	private function filterByCategory(array $stockRows, CycleCountScope $scope): array {
 		try {
-			$skuToCategory = [];
-			$rawSkus = [];
-			foreach ($stockRows as $row) {
-				if (isset($row['sku']) === true) {
-					$rawSkus[] = (string)$row['sku'];
-				}
-			}
-
-			$skus = array_values(
-				array_unique(
-					array_filter(
-						$rawSkus,
-						static fn (string $s): bool => $s !== ''
-					)
-				)
-			);
-			foreach ($skus as $sku) {
-				// ADR-084: this passed a filter ARRAY to find(int|string $id), which
-				// looks up a single object by identifier — it never applied the
-				// filters, and the is_array() test on its ObjectEntityInterface
-				// result was false regardless, so every SKU was categorised ''.
-				// findAll() is the filtered lookup; its rows are entities, so they
-				// are normalised before the category is read.
-				$products = $this->asArrays(
-					rows: $this->objectService
-						->setRegister($this->register())
-						->setSchema('Product')
-						->findAll(
-							[
-								'filters' => [
-									'administrationId' => $administrationId,
-									'sku' => $sku,
-								],
-							]
-						)
-				);
-				$product = ($products[0] ?? null);
-				$cat = '';
-				if (is_array($product) === true && isset($product['category']) === true) {
-					$cat = (string)$product['category'];
-				}
-
-				$skuToCategory[$sku] = $cat;
-			}
-
-			return array_values(
-				array_filter(
-					$stockRows,
-					static fn (array $row): bool => isset($row['sku']) === true
-						&& ($skuToCategory[(string)$row['sku']] ?? '') === $category
-				)
-			);
+			return $this->rowsInCategory(stockRows: $stockRows, scope: $scope);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'CycleCountService: filterByCategory failed',
 				[
-					'administrationId' => $administrationId,
-					'category' => $category,
+					'administrationId' => $scope->administrationId,
+					'category' => $scope->categoryFilter,
 					'exception' => $e->getMessage(),
 				]
 			);
@@ -710,6 +732,75 @@ class CycleCountService {
 		}//end try
 
 	}//end filterByCategory()
+
+	/**
+	 * Keep the stock rows whose product carries the scope's category.
+	 *
+	 * @param array<int,array<string,mixed>> $stockRows Pre-filtered stock rows.
+	 * @param CycleCountScope                $scope     The count, carrying administration and category.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function rowsInCategory(array $stockRows, CycleCountScope $scope): array {
+		$skuToCategory = [];
+		foreach ($this->distinctSkus(stockRows: $stockRows) as $sku) {
+			$skuToCategory[$sku] = $this->productCategory(sku: $sku, administrationId: $scope->administrationId);
+		}
+
+		$category = $scope->categoryFilter;
+		return array_values(
+			array_filter(
+				$stockRows,
+				static fn (array $row): bool => isset($row['sku']) === true
+					&& ($skuToCategory[(string)$row['sku']] ?? '') === $category
+			)
+		);
+	}//end rowsInCategory()
+
+	/**
+	 * The distinct non-empty skus of the stock rows, in first-seen order.
+	 *
+	 * @param array<int,array<string,mixed>> $stockRows Stock rows.
+	 *
+	 * @return list<string>
+	 */
+	private function distinctSkus(array $stockRows): array {
+		$skus = [];
+		foreach ($stockRows as $row) {
+			if (isset($row['sku']) === true && (string)$row['sku'] !== '') {
+				$skus[] = (string)$row['sku'];
+			}
+		}
+
+		return array_values(array_unique($skus));
+	}//end distinctSkus()
+
+	/**
+	 * The category of the administration's product with this sku ('' when the
+	 * product is unknown or has no category).
+	 *
+	 * @param string $sku              The sku.
+	 * @param string $administrationId Administration scope.
+	 *
+	 * @return string
+	 */
+	private function productCategory(string $sku, string $administrationId): string {
+		// ADR-084: this passed a filter ARRAY to find(int|string $id), which
+		// looks up a single object by identifier — it never applied the
+		// filters, so every SKU was categorised ''. findAll() is the filtered
+		// lookup; its rows are entities, so they are normalised before the
+		// category is read.
+		$filters = [
+			'administrationId' => $administrationId,
+			'sku' => $sku,
+		];
+		$product = ($this->findRows(schema: 'Product', filters: $filters)[0] ?? null);
+		if (is_array($product) === true && isset($product['category']) === true) {
+			return (string)$product['category'];
+		}
+
+		return '';
+	}//end productCategory()
 
 	/**
 	 * Fetch all InventoryCycleCountLine rows for a count.
@@ -721,22 +812,14 @@ class CycleCountService {
 	 */
 	private function findLinesForCount(string $administrationId, string $countId): array {
 		try {
-			// ADR-084: findAll() is declared `: array`, never null. Its rows are
-			// entities; emitAdjustments() skips any line that is not an array, so
-			// they are normalised here or no adjustment is ever posted.
-			return $this->asArrays(
-				rows: $this->objectService
-					->setRegister($this->register())
-					->setSchema('InventoryCycleCountLine')
-					->findAll(
-						[
-							'filters' => [
-								'administrationId' => $administrationId,
-								'countId' => $countId,
-							],
-						]
-					)
-			);
+			// ADR-084: findAll() rows are entities; emitAdjustments() skips any
+			// line that is not an array, so findRows() normalises them or no
+			// adjustment is ever posted.
+			$filters = [
+				'administrationId' => $administrationId,
+				'countId' => $countId,
+			];
+			return $this->findRows(schema: 'InventoryCycleCountLine', filters: $filters);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'CycleCountService: findLinesForCount failed',
@@ -749,6 +832,23 @@ class CycleCountService {
 		}//end try
 
 	}//end findLinesForCount()
+
+	/**
+	 * Query one schema with filters and normalise the rows to arrays.
+	 *
+	 * @param string              $schema  The schema to query.
+	 * @param array<string,mixed> $filters The findAll() filters.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function findRows(string $schema, array $filters): array {
+		return $this->asArrays(
+			rows: $this->objectService
+				->setRegister($this->register())
+				->setSchema($schema)
+				->findAll(['filters' => $filters])
+		);
+	}//end findRows()
 
 	/**
 	 * Extract the OR id from a saveObject return value (entity or array shape).
@@ -809,21 +909,39 @@ class CycleCountService {
 	private function asArrays(array $rows): array {
 		$out = [];
 		foreach ($rows as $row) {
-			if (is_array($row) === true) {
-				$out[] = $row;
-				continue;
-			}
-
-			if ($row instanceof \JsonSerializable) {
-				$serialized = $row->jsonSerialize();
-				if (is_array($serialized) === true) {
-					$out[] = $serialized;
-				}
+			$array = $this->rowAsArray(row: $row);
+			if ($array !== null) {
+				$out[] = $array;
 			}
 		}
 
 		return $out;
 	}//end asArrays()
+
+	/**
+	 * One row as an array: an array as is, an entity as its jsonSerialize()
+	 * payload, anything else as null.
+	 *
+	 * @param mixed $row One row from ObjectService::findAll().
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function rowAsArray(mixed $row): ?array {
+		if (is_array($row) === true) {
+			return $row;
+		}
+
+		if (($row instanceof \JsonSerializable) === false) {
+			return null;
+		}
+
+		$serialized = $row->jsonSerialize();
+		if (is_array($serialized) === true) {
+			return $serialized;
+		}
+
+		return null;
+	}//end rowAsArray()
 
 	/**
 	 * Resolve the OpenRegister register slug, defaulting to 'shillinq'.
