@@ -264,4 +264,21 @@ final class AnnualReportSignoffRequestListenerTest extends TestCase {
 		self::assertCount(0, $this->updates);
 
 	}//end testNonMatchingEventTypeIsIgnored()
+
+	/**
+	 * The id falls back to the entity, a namespaced schema matches, and a
+	 * result without reference or outcome persists a null reference and
+	 * `pending` — never an approval.
+	 *
+	 * @return void
+	 */
+	public function testEntityIdFallbackAndMinimalResult(): void {
+		$listener = $this->makeListener([]);
+
+		$listener->handle($this->makeEvent(['administrationId' => 'adm-1'], schema: 'shillinq/annualreport', id: 'ar-7'));
+
+		self::assertSame('ar-7', $this->signoffCalls[0][0]['id']);
+		self::assertSame([['id' => 'ar-7', 'decisionRef' => null, 'decisionOutcome' => 'pending']], $this->updates);
+
+	}//end testEntityIdFallbackAndMinimalResult()
 }//end class
