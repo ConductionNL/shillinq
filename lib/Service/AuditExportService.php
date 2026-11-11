@@ -364,8 +364,26 @@ HTML;
 	 * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
 	 */
 	public function buildLedger(array $bundle): array {
-		$events = [];
+		$events = $this->bundleEvents(bundle: $bundle);
+		usort($events, self::eventOrder(...));
 
+		return [
+			'events' => $events,
+			'summary' => self::ledgerSummary(bundle: $bundle, eventCount: count($events)),
+		];
+
+	}//end buildLedger()
+
+	/**
+	 * Every event of the bundle, unsorted: purchase orders, goods receipts,
+	 * the invoice, then the three-way matches.
+	 *
+	 * @param array<string,mixed> $bundle The collected lifecycle bundle.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function bundleEvents(array $bundle): array {
+		$events = [];
 		foreach ($bundle['purchaseOrders'] as $purchaseOrder) {
 			$events = array_merge($events, $this->purchaseOrderEvents(purchaseOrder: $purchaseOrder));
 		}
@@ -375,31 +393,49 @@ HTML;
 		}
 
 		$events = array_merge($events, $this->supplierInvoiceEvents(invoice: $bundle['invoice']));
-
 		foreach ($bundle['threeWayMatches'] as $match) {
 			$events = array_merge($events, $this->threeWayMatchEvents(match: $match));
 		}
 
-		usort(
-			$events,
-			static function (array $left, array $right): int {
-				$leftAt = (string)($left['timestamp'] ?? '');
-				$rightAt = (string)($right['timestamp'] ?? '');
-				if ($leftAt === $rightAt) {
-					return strcmp((string)($left['event'] ?? ''), (string)($right['event'] ?? ''));
-				}
+		return $events;
 
-				return ($leftAt <=> $rightAt);
-			}
-		);
+	}//end bundleEvents()
 
-		$summary = [
+	/**
+	 * Ledger order: timestamp ascending, ties broken by event kind.
+	 *
+	 * @param array<string,mixed> $left  One event.
+	 * @param array<string,mixed> $right The other.
+	 *
+	 * @return int
+	 */
+	private static function eventOrder(array $left, array $right): int {
+		$leftAt = (string)($left['timestamp'] ?? '');
+		$rightAt = (string)($right['timestamp'] ?? '');
+		if ($leftAt === $rightAt) {
+			return strcmp((string)($left['event'] ?? ''), (string)($right['event'] ?? ''));
+		}
+
+		return ($leftAt <=> $rightAt);
+
+	}//end eventOrder()
+
+	/**
+	 * The ledger summary.
+	 *
+	 * @param array<string,mixed> $bundle     The collected lifecycle bundle.
+	 * @param int                 $eventCount The number of ledger events.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function ledgerSummary(array $bundle, int $eventCount): array {
+		return [
 			'invoiceId' => (string)($bundle['invoice']['id'] ?? ''),
 			'invoiceNumber' => (string)($bundle['invoice']['invoiceNumber'] ?? ''),
 			'supplierId' => (string)($bundle['invoice']['supplierId'] ?? ''),
 			'totalInclVat' => (int)($bundle['invoice']['totalInclVat'] ?? 0),
 			'currency' => (string)($bundle['invoice']['currency'] ?? 'EUR'),
-			'eventCount' => count($events),
+			'eventCount' => $eventCount,
 			'purchaseOrderIds' => array_values(
 				array_filter(
 					array_map(
@@ -410,19 +446,50 @@ HTML;
 			),
 		];
 
-		return [
-			'events' => $events,
-			'summary' => $summary,
-		];
+	}//end ledgerSummary()
 
-	}//end buildLedger()
+	/**
+	 * One ledger event.
+	 *
+	 * @param array{event: string, timestamp: string, actor: string, objectType: string, objectId: string} $head    The event head.
+	 * @param array<string,mixed>                                                                         $details Its details.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function ledgerEvent(array $head, array $details): array {
+		return $head + ['details' => $details];
+
+	}//end ledgerEvent()
+
+	/**
+	 * A record's id, from `id` or else `@self.id`.
+	 *
+	 * @param array<string,mixed> $record The OR record.
+	 *
+	 * @return string
+	 */
+	private static function recordId(array $record): string {
+		return (string)($record['id'] ?? ($record['@self']['id'] ?? ''));
+
+	}//end recordId()
+
+	/**
+	 * The events that apply, in order.
+	 *
+	 * @param array<int,array<string,mixed>|null> $events Events, null where not applicable.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private static function presentEvents(array $events): array {
+		return array_values(array_filter($events, static fn (?array $event): bool => $event !== null));
+
+	}//end presentEvents()
 
 	/**
 	 * Extract every lifecycle event from a PurchaseOrder record:
 	 *  - po_created             (timestamp = createdAt; actor = requesterId)
 	 *  - po_approval_decision*  (one per non-pending chain entry; actor = userId)
-	 *  - po_sent                (timestamp = peppolSentAt; actor = transmitter)
-	 *  - po_lifecycle_state     (the current lifecycleState — terminal marker)
+	 *  - po_sent_to_supplier    (timestamp = peppolSentAt; actor = transmitter)
 	 *
 	 * @param array<string,mixed> $purchaseOrder PurchaseOrder OR record.
 	 *
@@ -430,67 +497,112 @@ HTML;
 	 */
 	private function purchaseOrderEvents(array $purchaseOrder): array {
 		$events = [];
-		$poId = (string)($purchaseOrder['id'] ?? ($purchaseOrder['@self']['id'] ?? ''));
-
 		$createdAt = (string)($purchaseOrder['createdAt'] ?? '');
 		if ($createdAt !== '') {
-			$events[] = [
-				'event' => 'po_created',
-				'timestamp' => $createdAt,
-				'actor' => (string)($purchaseOrder['requesterId'] ?? ''),
-				'objectType' => self::SCHEMA_PURCHASE_ORDER,
-				'objectId' => $poId,
-				'details' => [
-					'poNumber' => (string)($purchaseOrder['poNumber'] ?? ''),
-					'supplierId' => (string)($purchaseOrder['supplierId'] ?? ''),
-					'totalAmount' => (float)($purchaseOrder['totalAmount'] ?? 0.0),
-					'currency' => (string)($purchaseOrder['currency'] ?? 'EUR'),
-					'costCenter' => (string)($purchaseOrder['costCenter'] ?? ''),
-					'projectCode' => (string)($purchaseOrder['projectCode'] ?? ''),
-				],
-			];
+			$events[] = self::purchaseOrderCreatedEvent(purchaseOrder: $purchaseOrder);
 		}
 
-		$chain = (array)($purchaseOrder['approvalChain'] ?? []);
-		foreach ($chain as $entry) {
-			if (is_array($entry) === false) {
-				continue;
-			}
+		$events = array_merge($events, self::approvalDecisionEvents(purchaseOrder: $purchaseOrder));
 
-			$decision = (string)($entry['decision'] ?? '');
-			if ($decision === 'pending' || $decision === '') {
-				continue;
-			}
-
-			$events[] = [
-				'event' => 'po_approval_decision',
-				'timestamp' => (string)($entry['decidedAt'] ?? $createdAt),
-				'actor' => (string)($entry['userId'] ?? ''),
-				'objectType' => self::SCHEMA_PURCHASE_ORDER,
-				'objectId' => $poId,
-				'details' => [
-					'decision' => $decision,
-					'comment' => (string)($entry['comment'] ?? ''),
-				],
-			];
-		}//end foreach
-
-		$peppolSentAt = (string)($purchaseOrder['peppolSentAt'] ?? '');
-		if ($peppolSentAt !== '') {
-			$events[] = [
-				'event' => 'po_sent_to_supplier',
-				'timestamp' => $peppolSentAt,
-				'actor' => 'peppol_transmitter',
-				'objectType' => self::SCHEMA_PURCHASE_ORDER,
-				'objectId' => $poId,
-				'details' => [
-					'peppolMessageId' => (string)($purchaseOrder['peppolMessageId'] ?? ''),
-				],
-			];
+		if ((string)($purchaseOrder['peppolSentAt'] ?? '') !== '') {
+			$events[] = self::ledgerEvent(
+				head: array_replace(
+					self::purchaseOrderHead(event: 'po_sent_to_supplier', purchaseOrder: $purchaseOrder),
+					[
+						'timestamp' => (string)$purchaseOrder['peppolSentAt'],
+						'actor' => 'peppol_transmitter',
+					]
+				),
+				details: ['peppolMessageId' => (string)($purchaseOrder['peppolMessageId'] ?? '')]
+			);
 		}
 
 		return $events;
 	}//end purchaseOrderEvents()
+
+	/**
+	 * The `po_created` event of a purchase order with a createdAt.
+	 *
+	 * @param array<string,mixed> $purchaseOrder PurchaseOrder OR record.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function purchaseOrderCreatedEvent(array $purchaseOrder): array {
+		return self::ledgerEvent(
+			head: array_replace(
+					self::purchaseOrderHead(event: 'po_created', purchaseOrder: $purchaseOrder),
+					[
+					'timestamp' => (string)($purchaseOrder['createdAt'] ?? ''),
+					'actor' => (string)($purchaseOrder['requesterId'] ?? ''),
+					]
+				),
+			details: [
+				'poNumber' => (string)($purchaseOrder['poNumber'] ?? ''),
+				'supplierId' => (string)($purchaseOrder['supplierId'] ?? ''),
+				'totalAmount' => (float)($purchaseOrder['totalAmount'] ?? 0.0),
+				'currency' => (string)($purchaseOrder['currency'] ?? 'EUR'),
+				'costCenter' => (string)($purchaseOrder['costCenter'] ?? ''),
+				'projectCode' => (string)($purchaseOrder['projectCode'] ?? ''),
+			]
+		);
+
+	}//end purchaseOrderCreatedEvent()
+
+	/**
+	 * One `po_approval_decision` event per decided approval-chain entry; a
+	 * decision without a decidedAt is stamped with the order's createdAt.
+	 *
+	 * @param array<string,mixed> $purchaseOrder PurchaseOrder OR record.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private static function approvalDecisionEvents(array $purchaseOrder): array {
+		$events = [];
+		foreach ((array)($purchaseOrder['approvalChain'] ?? []) as $entry) {
+			$decision = '';
+			if (is_array($entry) === true) {
+				$decision = (string)($entry['decision'] ?? '');
+			}
+
+			if ($decision === 'pending' || $decision === '') {
+				continue;
+			}
+
+			$events[] = self::ledgerEvent(
+				head: array_replace(
+					self::purchaseOrderHead(event: 'po_approval_decision', purchaseOrder: $purchaseOrder),
+					[
+						'timestamp' => (string)($entry['decidedAt'] ?? ($purchaseOrder['createdAt'] ?? '')),
+						'actor' => (string)($entry['userId'] ?? ''),
+					]
+				),
+				details: ['decision' => $decision, 'comment' => (string)($entry['comment'] ?? '')]
+			);
+		}
+
+		return $events;
+
+	}//end approvalDecisionEvents()
+
+	/**
+	 * The head of a purchase-order event, in ledger key order, with an empty
+	 * timestamp and actor for the caller to fill in.
+	 *
+	 * @param string              $event         The event kind.
+	 * @param array<string,mixed> $purchaseOrder PurchaseOrder OR record.
+	 *
+	 * @return array<string,string>
+	 */
+	private static function purchaseOrderHead(string $event, array $purchaseOrder): array {
+		return [
+			'event' => $event,
+			'timestamp' => '',
+			'actor' => '',
+			'objectType' => self::SCHEMA_PURCHASE_ORDER,
+			'objectId' => self::recordId(record: $purchaseOrder),
+		];
+
+	}//end purchaseOrderHead()
 
 	/**
 	 * Extract every lifecycle event from a GoodsReceiptNote record.
@@ -500,41 +612,65 @@ HTML;
 	 * @return array<int,array<string,mixed>>
 	 */
 	private function goodsReceiptEvents(array $grn): array {
-		$events = [];
-		$grnId = (string)($grn['id'] ?? ($grn['@self']['id'] ?? ''));
+		return self::presentEvents(events: [self::goodsReceivedEvent(grn: $grn), self::goodsReceiptStateEvent(grn: $grn)]);
+	}//end goodsReceiptEvents()
 
-		$receivedAt = (string)($grn['receivedAt'] ?? '');
-		if ($receivedAt !== '') {
-			$events[] = [
+	/**
+	 * The `grn_received` event, or null without a receivedAt.
+	 *
+	 * @param array<string,mixed> $grn GoodsReceiptNote OR record.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private static function goodsReceivedEvent(array $grn): ?array {
+		if ((string)($grn['receivedAt'] ?? '') === '') {
+			return null;
+		}
+
+		return self::ledgerEvent(
+			head: [
 				'event' => 'grn_received',
-				'timestamp' => $receivedAt,
+				'timestamp' => (string)$grn['receivedAt'],
 				'actor' => (string)($grn['receivedBy'] ?? ''),
 				'objectType' => self::SCHEMA_GOODS_RECEIPT_NOTE,
-				'objectId' => $grnId,
-				'details' => [
-					'grnNumber' => (string)($grn['grnNumber'] ?? ''),
-					'photoCount' => count((array)($grn['photos'] ?? [])),
-				],
-			];
+				'objectId' => self::recordId(record: $grn),
+			],
+			details: [
+				'grnNumber' => (string)($grn['grnNumber'] ?? ''),
+				'photoCount' => count((array)($grn['photos'] ?? [])),
+			]
+		);
+
+	}//end goodsReceivedEvent()
+
+	/**
+	 * The `grn_lifecycle_state` event, or null for a draft or status-less note.
+	 *
+	 * @param array<string,mixed> $grn GoodsReceiptNote OR record.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private static function goodsReceiptStateEvent(array $grn): ?array {
+		$statusCode = (string)($grn['statusCode'] ?? '');
+		if ($statusCode === '' || $statusCode === 'draft') {
+			return null;
 		}
 
-		$statusCode = (string)($grn['statusCode'] ?? '');
-		if ($statusCode !== '' && $statusCode !== 'draft') {
-			$events[] = [
+		return self::ledgerEvent(
+			head: [
 				'event' => 'grn_lifecycle_state',
-				'timestamp' => $receivedAt,
+				'timestamp' => (string)($grn['receivedAt'] ?? ''),
 				'actor' => (string)($grn['receivedBy'] ?? 'system'),
 				'objectType' => self::SCHEMA_GOODS_RECEIPT_NOTE,
-				'objectId' => $grnId,
-				'details' => [
-					'statusCode' => $statusCode,
-					'qualityCheckPassed' => (bool)($grn['qualityCheckPassed'] ?? false),
-				],
-			];
-		}
+				'objectId' => self::recordId(record: $grn),
+			],
+			details: [
+				'statusCode' => $statusCode,
+				'qualityCheckPassed' => (bool)($grn['qualityCheckPassed'] ?? false),
+			]
+		);
 
-		return $events;
-	}//end goodsReceiptEvents()
+	}//end goodsReceiptStateEvent()
 
 	/**
 	 * Extract every lifecycle event from a SupplierInvoice record.
@@ -544,42 +680,66 @@ HTML;
 	 * @return array<int,array<string,mixed>>
 	 */
 	private function supplierInvoiceEvents(array $invoice): array {
-		$events = [];
-		$invoiceId = (string)($invoice['id'] ?? ($invoice['@self']['id'] ?? ''));
+		return self::presentEvents(events: [self::invoiceReceivedEvent(invoice: $invoice), self::invoiceStateEvent(invoice: $invoice)]);
+	}//end supplierInvoiceEvents()
 
-		$peppolReceivedAt = (string)($invoice['peppolReceivedAt'] ?? '');
-		if ($peppolReceivedAt !== '') {
-			$events[] = [
+	/**
+	 * The `invoice_received` event, or null without a peppolReceivedAt.
+	 *
+	 * @param array<string,mixed> $invoice SupplierInvoice OR record.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private static function invoiceReceivedEvent(array $invoice): ?array {
+		if ((string)($invoice['peppolReceivedAt'] ?? '') === '') {
+			return null;
+		}
+
+		return self::ledgerEvent(
+			head: [
 				'event' => 'invoice_received',
-				'timestamp' => $peppolReceivedAt,
+				'timestamp' => (string)$invoice['peppolReceivedAt'],
 				'actor' => 'peppol_receiver',
 				'objectType' => self::SCHEMA_SUPPLIER_INVOICE,
-				'objectId' => $invoiceId,
-				'details' => [
-					'invoiceNumber' => (string)($invoice['invoiceNumber'] ?? ''),
-					'supplierId' => (string)($invoice['supplierId'] ?? ''),
-					'totalInclVat' => (int)($invoice['totalInclVat'] ?? 0),
-					'currency' => (string)($invoice['currency'] ?? 'EUR'),
-				],
-			];
+				'objectId' => self::recordId(record: $invoice),
+			],
+			details: [
+				'invoiceNumber' => (string)($invoice['invoiceNumber'] ?? ''),
+				'supplierId' => (string)($invoice['supplierId'] ?? ''),
+				'totalInclVat' => (int)($invoice['totalInclVat'] ?? 0),
+				'currency' => (string)($invoice['currency'] ?? 'EUR'),
+			]
+		);
+
+	}//end invoiceReceivedEvent()
+
+	/**
+	 * The `invoice_lifecycle_state` event, or null without a statusCode.
+	 *
+	 * @param array<string,mixed> $invoice SupplierInvoice OR record.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private static function invoiceStateEvent(array $invoice): ?array {
+		$statusCode = (string)($invoice['statusCode'] ?? '');
+		if ($statusCode === '') {
+			return null;
 		}
 
-		$statusCode = (string)($invoice['statusCode'] ?? '');
-		if ($statusCode !== '') {
-			$events[] = [
+		return self::ledgerEvent(
+			head: [
 				'event' => 'invoice_lifecycle_state',
-				'timestamp' => $peppolReceivedAt,
+				'timestamp' => (string)($invoice['peppolReceivedAt'] ?? ''),
 				'actor' => 'system',
 				'objectType' => self::SCHEMA_SUPPLIER_INVOICE,
-				'objectId' => $invoiceId,
-				'details' => [
-					'statusCode' => $statusCode,
-				],
-			];
-		}
+				'objectId' => self::recordId(record: $invoice),
+			],
+			details: [
+				'statusCode' => $statusCode,
+			]
+		);
 
-		return $events;
-	}//end supplierInvoiceEvents()
+	}//end invoiceStateEvent()
 
 	/**
 	 * Extract every lifecycle event from a ThreeWayMatch record.
@@ -589,43 +749,66 @@ HTML;
 	 * @return array<int,array<string,mixed>>
 	 */
 	private function threeWayMatchEvents(array $match): array {
-		$events = [];
-		$matchId = (string)($match['id'] ?? ($match['@self']['id'] ?? ''));
+		return self::presentEvents(events: [self::matchEvaluatedEvent(match: $match), self::matchResolvedEvent(match: $match)]);
+	}//end threeWayMatchEvents()
 
-		$createdAt = (string)($match['createdAt'] ?? '');
-		if ($createdAt !== '') {
-			$events[] = [
+	/**
+	 * The `match_evaluated` event, or null without a createdAt.
+	 *
+	 * @param array<string,mixed> $match ThreeWayMatch OR record.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private static function matchEvaluatedEvent(array $match): ?array {
+		if ((string)($match['createdAt'] ?? '') === '') {
+			return null;
+		}
+
+		return self::ledgerEvent(
+			head: [
 				'event' => 'match_evaluated',
-				'timestamp' => $createdAt,
+				'timestamp' => (string)$match['createdAt'],
 				'actor' => 'matching_engine',
 				'objectType' => self::SCHEMA_THREE_WAY_MATCH,
-				'objectId' => $matchId,
-				'details' => [
-					'matchStatus' => (string)($match['matchStatus'] ?? ''),
-					'matchedPoIds' => (array)($match['matchedPoIds'] ?? []),
-					'matchedGrnIds' => (array)($match['matchedGrnIds'] ?? []),
-					'divergenceDetails' => (array)($match['divergenceDetails'] ?? []),
-				],
-			];
+				'objectId' => self::recordId(record: $match),
+			],
+			details: [
+				'matchStatus' => (string)($match['matchStatus'] ?? ''),
+				'matchedPoIds' => (array)($match['matchedPoIds'] ?? []),
+				'matchedGrnIds' => (array)($match['matchedGrnIds'] ?? []),
+				'divergenceDetails' => (array)($match['divergenceDetails'] ?? []),
+			]
+		);
+
+	}//end matchEvaluatedEvent()
+
+	/**
+	 * The `match_resolved` event, or null without a resolvedAt.
+	 *
+	 * @param array<string,mixed> $match ThreeWayMatch OR record.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private static function matchResolvedEvent(array $match): ?array {
+		if ((string)($match['resolvedAt'] ?? '') === '') {
+			return null;
 		}
 
-		$resolvedAt = (string)($match['resolvedAt'] ?? '');
-		if ($resolvedAt !== '') {
-			$events[] = [
+		return self::ledgerEvent(
+			head: [
 				'event' => 'match_resolved',
-				'timestamp' => $resolvedAt,
+				'timestamp' => (string)$match['resolvedAt'],
 				'actor' => (string)($match['resolvedBy'] ?? ''),
 				'objectType' => self::SCHEMA_THREE_WAY_MATCH,
-				'objectId' => $matchId,
-				'details' => [
-					'resolutionAction' => (string)($match['resolutionAction'] ?? ''),
-					'resolutionNotes' => (string)($match['resolutionNotes'] ?? ''),
-				],
-			];
-		}
+				'objectId' => self::recordId(record: $match),
+			],
+			details: [
+				'resolutionAction' => (string)($match['resolutionAction'] ?? ''),
+				'resolutionNotes' => (string)($match['resolutionNotes'] ?? ''),
+			]
+		);
 
-		return $events;
-	}//end threeWayMatchEvents()
+	}//end matchResolvedEvent()
 
 	/**
 	 * Collect every record linked to the invoice through its three-way
