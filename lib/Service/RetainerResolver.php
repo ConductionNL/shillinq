@@ -27,7 +27,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -107,7 +106,7 @@ class RetainerResolver {
 	 * @return array{monthlyAmountCents:int,overageHoursThreshold:?float,overageHourlyRateCents:?int,effectiveDate:string,label:string}
 	 */
 	private function retainerAmounts(array $schedule, string $invoiceMonth): array {
-		return ['monthlyAmountCents' => $this->toCents(value: $schedule['monthlyAmount'] ?? 0)]
+		return ['monthlyAmountCents' => (new StoredMoney())->cents(value: $schedule['monthlyAmount'] ?? 0)]
 			+ $this->overageTerms(schedule: $schedule)
 			+ ['effectiveDate' => (string)($schedule['effectiveDate'] ?? $invoiceMonth), 'label' => (string)($schedule['label'] ?? 'Retainer')];
 
@@ -127,7 +126,7 @@ class RetainerResolver {
 		}
 
 		if (isset($schedule['overageHourlyRate']) === true) {
-			$terms['overageHourlyRateCents'] = $this->toCents(value: $schedule['overageHourlyRate']);
+			$terms['overageHourlyRateCents'] = (new StoredMoney())->cents(value: $schedule['overageHourlyRate']);
 		}
 
 		return $terms;
@@ -156,21 +155,6 @@ class RetainerResolver {
 	}//end zeroSchedule()
 
 	/**
-	 * Convert a stored money value to integer cents.
-	 *
-	 * @param mixed $value Stored value.
-	 *
-	 * @return int Cents.
-	 */
-	private function toCents(mixed $value): int {
-		if (is_int($value) === true) {
-			return $value;
-		}
-
-		return (int)round((float)$value * 100);
-	}//end toCents()
-
-	/**
 	 * Find all matching records via the real OR ObjectService API.
 	 *
 	 * @param string $schema Schema slug.
@@ -180,32 +164,11 @@ class RetainerResolver {
 	 */
 	private function findAll(string $schema, array $filters): array {
 		try {
-			$svc = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rs = $svc->setRegister($this->register())->setSchema($schema)->findAll(['filters' => $filters]);
-
-			if (is_array($rs) === true) {
-				return $rs;
-			}
-
-			return [];
+			return (new RegisterRecordFinder(container: $this->container, appConfig: $this->appConfig))->find(schema: $schema, filters: $filters);
 		} catch (\Throwable $e) {
 			$this->logger->error('RetainerResolver findAll failed: ' . $e->getMessage());
 			return [];
 		}
 
 	}//end findAll()
-
-	/**
-	 * Resolve the OpenRegister register slug.
-	 *
-	 * @return string
-	 */
-	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
-	}//end register()
 }//end class

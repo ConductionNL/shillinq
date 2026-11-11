@@ -58,7 +58,7 @@ class EffectiveVersionPicker {
 	 *
 	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 */
-	public function pick(array $records, string $date): ?array {
+	public function pick(array $records, string $date): array|null {
 		$best = null;
 		foreach ($records as $record) {
 			if ($this->applies(record: $record, date: $date) === true

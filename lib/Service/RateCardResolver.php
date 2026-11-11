@@ -27,7 +27,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -134,7 +133,7 @@ class RateCardResolver {
 	 */
 	private function recordRate(array $record, string $date): array {
 		return [
-			'rateCents' => $this->toCents(value: $record['rateCents'] ?? $record['hourlyRate'] ?? 0),
+			'rateCents' => (new StoredMoney())->cents(value: $record['rateCents'] ?? $record['hourlyRate'] ?? 0),
 			'currency' => (string)($record['currency'] ?? 'EUR'),
 			'rateCardVersion' => (string)($record['rateCardVersion'] ?? ($record['version'] ?? 'v1')),
 			'effectiveDate' => (string)($record['effectiveDate'] ?? $date),
@@ -152,7 +151,7 @@ class RateCardResolver {
 	 */
 	private function cardRate(array $card, string $date): array {
 		return [
-			'rateCents' => $this->toCents(value: $card['defaultHourlyRate'] ?? $card['hourlyRate'] ?? 10000),
+			'rateCents' => (new StoredMoney())->cents(value: $card['defaultHourlyRate'] ?? $card['hourlyRate'] ?? 10000),
 			'currency' => (string)($card['currency'] ?? 'EUR'),
 			'rateCardVersion' => (string)($card['version'] ?? 'v1'),
 			'effectiveDate' => $date,
@@ -215,23 +214,6 @@ class RateCardResolver {
 	}//end fallbackRate()
 
 	/**
-	 * Convert a stored money value to integer cents.
-	 *
-	 * Accepts a stored number-of-euros (multipleOf 0.01) or already-integer cents.
-	 *
-	 * @param mixed $value Stored value.
-	 *
-	 * @return int Cents.
-	 */
-	private function toCents(mixed $value): int {
-		if (is_int($value) === true) {
-			return $value;
-		}
-
-		return (int)round((float)$value * 100);
-	}//end toCents()
-
-	/**
 	 * Find all matching records via the real OR ObjectService API (findAll).
 	 *
 	 * @param string $schema Schema slug.
@@ -241,32 +223,11 @@ class RateCardResolver {
 	 */
 	private function findAll(string $schema, array $filters): array {
 		try {
-			$svc = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$rs = $svc->setRegister($this->register())->setSchema($schema)->findAll(['filters' => $filters]);
-
-			if (is_array($rs) === true) {
-				return $rs;
-			}
-
-			return [];
+			return (new RegisterRecordFinder(container: $this->container, appConfig: $this->appConfig))->find(schema: $schema, filters: $filters);
 		} catch (\Throwable $e) {
 			$this->logger->error('RateCardResolver findAll failed: ' . $e->getMessage());
 			return [];
 		}
 
 	}//end findAll()
-
-	/**
-	 * Resolve the OpenRegister register slug, defaulting to 'shillinq'.
-	 *
-	 * @return string
-	 */
-	private function register(): string {
-		$register = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
-	}//end register()
 }//end class
