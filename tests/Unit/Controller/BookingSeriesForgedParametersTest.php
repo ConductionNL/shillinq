@@ -30,7 +30,7 @@ use OCA\Shillinq\Controller\BookingDepthController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\NoShowFeeCaptureService;
 use OCA\Shillinq\Service\RecurringSeriesService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Http;
 use OCP\IL10N;
 use OCP\IRequest;
@@ -113,7 +113,7 @@ final class BookingSeriesForgedParametersTest extends TestCase {
 			static fn (string $administrationId): bool => $user === 'alice' && $administrationId === 'adm-1'
 		);
 
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('isOpenRegisterAvailable')->willReturn(true);
 		$settings->method('getRegisterSlug')->willReturn('books');
 

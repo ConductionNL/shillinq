@@ -322,7 +322,7 @@ class SalesUsageBillingTest extends TestCase {
 			new VATCalculationService(),
 			new UsageRatingCalculator(),
 			objectService: $this->store,
-			billedReadings: new BilledReadings($this->store, new ObjectTransitionRunner(container: $container), $this->settings()),
+			billedReadings: new BilledReadings($this->store, new ObjectTransitionRunner(container: $container), $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq'])),
 		);
 
 	}//end generator()

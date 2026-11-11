@@ -38,7 +38,7 @@ use DateTimeZone;
 use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
 use OCA\Shillinq\Service\Pipelinq\PersistentTimelineRetryQueue;
 use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;
 use PHPUnit\Framework\TestCase;
@@ -255,15 +255,15 @@ final class PersistentTimelineRetryQueueTest extends TestCase {
 	}//end timeAt()
 
 	/**
-	 * Build the SettingsService mock with the supplied availability + slug.
+	 * Build the RegisterLocation mock with the supplied availability + slug.
 	 *
 	 * @param bool $available isOpenRegisterAvailable() result.
 	 * @param string $slug getRegisterSlug() result.
 	 *
-	 * @return SettingsService
+	 * @return RegisterLocation
 	 */
-	private function settings(bool $available, string $slug = 'shillinq'): SettingsService {
-		$settings = $this->createMock(SettingsService::class);
+	private function settings(bool $available, string $slug = 'shillinq'): RegisterLocation {
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('isOpenRegisterAvailable')->willReturn($available);
 		$settings->method('getRegisterSlug')->willReturn($slug);
 

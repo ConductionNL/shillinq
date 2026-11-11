@@ -23,7 +23,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Seed;
 use OCA\Shillinq\Service\Seed\SeedImport;
 use OCA\Shillinq\Service\Seed\SeedImporter;
 use OCA\Shillinq\Service\Seed\SeedMessages;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -49,7 +49,7 @@ final class SeedImporterTest extends TestCase {
 	 * @return SeedImporter
 	 */
 	private function importer(object $objectService): SeedImporter {
-		$settings = $this->createStub(SettingsService::class);
+		$settings = $this->createStub(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('books');
 		$container = $this->createStub(ContainerInterface::class);
 		$container->method('get')->willReturn($objectService);

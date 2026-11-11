@@ -33,6 +33,7 @@ use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\External\DepositPayment\LogDepositPaymentAdapter;
 use OCA\Shillinq\Service\NoShowFeeCaptureService;
 use OCA\Shillinq\Service\RecurringSeriesService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\SlotService;
 use OCP\AppFramework\Http;
@@ -62,9 +63,9 @@ final class BookingDepthControllerTest extends TestCase {
 	/**
 	 * Settings mock.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settings;
+	private RegisterLocation&MockObject $settings;
 
 	/**
 	 * Auth/context mock.
@@ -88,7 +89,7 @@ final class BookingDepthControllerTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		$this->container = $this->createMock(ContainerInterface::class);
-		$this->settings = $this->createMock(SettingsService::class);
+		$this->settings = $this->createMock(RegisterLocation::class);
 		$this->context = $this->createMock(AdministrationContextService::class);
 		$this->request = $this->createMock(IRequest::class);
 

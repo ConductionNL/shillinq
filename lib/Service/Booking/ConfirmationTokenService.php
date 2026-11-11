@@ -40,7 +40,7 @@ namespace OCA\Shillinq\Service\Booking;
 
 use DateTimeZone;
 use OCA\Shillinq\Service\IcsService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Support\FleetAppId;
 use OCA\Shillinq\Util\TokenValidator;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -75,7 +75,7 @@ class ConfirmationTokenService {
 	 *
 	 * @param ContainerInterface $container DI container for lazy OR /
 	 *                                      openconnector resolution.
-	 * @param SettingsService $settings Shillinq settings (register slug,
+	 * @param RegisterLocation $settings Where the register lives (slug + OpenRegister availability).
 	 *                                  OR availability).
 	 * @param IcsService $ics ICS generator for the email
 	 *                        attachment.
@@ -86,7 +86,7 @@ class ConfirmationTokenService {
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $settings,
 		private readonly IcsService $ics,
 		private readonly ITimeFactory $time,
 		private readonly IURLGenerator $urls,
