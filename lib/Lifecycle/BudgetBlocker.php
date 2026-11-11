@@ -37,7 +37,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Lifecycle;
 
-use OCA\Shillinq\AppInfo\AppIdentity;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -272,20 +271,6 @@ class BudgetBlocker {
 	}//end resolveRegels()
 
 	/**
-	 * Return the configured register slug, falling back to 'shillinq'.
-	 *
-	 * @return string
-	 */
-	private function getRegisterSlug(): string {
-		$slug = $this->appConfig->getValueString(AppIdentity::APP_ID, 'register', 'shillinq');
-		if ($slug === '') {
-			return 'shillinq';
-		}
-
-		return $slug;
-	}//end getRegisterSlug()
-
-	/**
 	 * Find a single record by exact-match filters in the configured register.
 	 *
 	 * @param string $schema Schema name.
@@ -294,12 +279,7 @@ class BudgetBlocker {
 	 * @return array<string, mixed>|null First matching record, or null.
 	 */
 	private function findOne(string $schema, array $filters): ?array {
-		$result = $this->findMany(schema: $schema, filters: $filters, limit: 1);
-		if (count($result) === 0) {
-			return null;
-		}
-
-		return reset($result);
+		return $this->records()->first(records: $this->findMany(schema: $schema, filters: $filters, limit: 1));
 	}//end findOne()
 
 	/**
@@ -316,22 +296,7 @@ class BudgetBlocker {
 	 */
 	private function findMany(string $schema, array $filters, int $limit = 0): array {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$query = ['filters' => $filters];
-			if ($limit > 0) {
-				$query['limit'] = $limit;
-			}
-
-			$result = $objectService
-				->setRegister(register: $this->getRegisterSlug())
-				->setSchema(schema: $schema)
-				->findAll($query);
-
-			if (is_array($result) === false) {
-				return [];
-			}
-
-			return array_values($result);
+			return $this->records()->records(schema: $schema, query: new RecordQuery(filters: $filters, limit: $limit));
 		} catch (\Throwable $e) {
 			$this->logger->debug(
 				'BudgetBlocker: schema lookup unavailable — treating as absent',
@@ -341,4 +306,13 @@ class BudgetBlocker {
 		}//end try
 
 	}//end findMany()
+
+	/**
+	 * The register lookups of this guard.
+	 *
+	 * @return RegisterRecordFinder The finder.
+	 */
+	private function records(): RegisterRecordFinder {
+		return new RegisterRecordFinder(container: $this->container, appConfig: $this->appConfig);
+	}//end records()
 }//end class
