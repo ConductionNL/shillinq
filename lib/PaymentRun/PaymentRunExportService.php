@@ -41,8 +41,10 @@ declare(strict_types=1);
 namespace OCA\Shillinq\PaymentRun;
 
 use OCA\Shillinq\PaymentRun\Generator\PaymentRunGeneratorInterface;
+use OCA\Shillinq\Reporting\SystemTagAssigner;
 use OCA\Shillinq\Reporting\TaggedFileStore;
 use OCA\Shillinq\Reporting\TaggedFileStoreLog;
+use OCA\Shillinq\Reporting\TaggedFileStoreMessages;
 use OCP\Files\IRootFolder;
 use OCP\IUserSession;
 use OCP\SystemTag\ISystemTagManager;
@@ -451,12 +453,12 @@ class PaymentRunExportService {
 	 * @return TaggedFileStore
 	 */
 	private function fileStore(): TaggedFileStore {
-		$log = new TaggedFileStoreLog(
-			logger: $this->logger,
+		$messages = new TaggedFileStoreMessages(
 			notFolder: 'PaymentRunExportService: path segment is not a folder',
 			tagFailed: 'PaymentRunExportService: failed to apply system tag',
 		);
-		return new TaggedFileStore(tagManager: $this->tagManager, tagMapper: $this->tagMapper, log: $log);
+		$tags = new SystemTagAssigner(tagManager: $this->tagManager, tagMapper: $this->tagMapper);
+		return new TaggedFileStore(tags: $tags, log: new TaggedFileStoreLog(logger: $this->logger, messages: $messages));
 	}//end fileStore()
 
 	/**

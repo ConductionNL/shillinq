@@ -26,34 +26,21 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Reporting;
 
 use OCP\Files\Folder;
-use OCP\SystemTag\ISystemTag;
-use OCP\SystemTag\ISystemTagManager;
-use OCP\SystemTag\ISystemTagObjectMapper;
-use OCP\SystemTag\TagNotFoundException;
 
 /**
  * Stores files in a folder path and tags them.
  */
 final class TaggedFileStore {
 	/**
-	 * Object type stored files are tagged under.
-	 *
-	 * @var string
-	 */
-	private const TAG_OBJECT_TYPE = 'files';
-
-	/**
 	 * Constructor.
 	 *
-	 * @param ISystemTagManager      $tagManager Resolves/creates the system tags.
-	 * @param ISystemTagObjectMapper $tagMapper  Maps tags onto the stored file id.
-	 * @param TaggedFileStoreLog     $log        The owner's logger and messages.
+	 * @param SystemTagAssigner  $tags Assigns the system tags.
+	 * @param TaggedFileStoreLog $log  The owner's logger and messages.
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private readonly ISystemTagManager $tagManager,
-		private readonly ISystemTagObjectMapper $tagMapper,
+		private readonly SystemTagAssigner $tags,
 		private readonly TaggedFileStoreLog $log,
 	) {
 
@@ -144,7 +131,7 @@ final class TaggedFileStore {
 			return $node;
 		}
 
-		$this->log->logger->warning($this->log->notFolder, ['segment' => $name]);
+		$this->log->logger->warning($this->log->messages->notFolder, ['segment' => $name]);
 		return null;
 	}//end childFolder()
 
@@ -175,30 +162,13 @@ final class TaggedFileStore {
 	 */
 	private function applyTag(int $fileId, string $tagName): void {
 		try {
-			$tag = $this->resolveTag(tagName: $tagName);
-			$this->tagMapper->assignTags((string)$fileId, self::TAG_OBJECT_TYPE, [$tag->getId()]);
+			$this->tags->assign(fileId: $fileId, tagName: $tagName);
 		} catch (\Throwable $e) {
 			$this->log->logger->warning(
-				$this->log->tagFailed,
+				$this->log->messages->tagFailed,
 				['tag' => $tagName, 'fileId' => $fileId, 'exception' => $e->getMessage()]
 			);
 		}
 
 	}//end applyTag()
-
-	/**
-	 * Resolve a user-visible, assignable system tag by name, creating it on miss.
-	 *
-	 * @param string $tagName The tag name.
-	 *
-	 * @return ISystemTag The resolved (or newly created) tag.
-	 */
-	private function resolveTag(string $tagName): ISystemTag {
-		try {
-			return $this->tagManager->getTag($tagName, true, true);
-		} catch (TagNotFoundException $e) {
-			return $this->tagManager->createTag($tagName, true, true);
-		}
-
-	}//end resolveTag()
 }//end class

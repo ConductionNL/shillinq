@@ -517,12 +517,12 @@ class ReportGenerationService {
 	 * @return TaggedFileStore
 	 */
 	private function fileStore(): TaggedFileStore {
-		$log = new TaggedFileStoreLog(
-			logger: $this->logger,
+		$messages = new TaggedFileStoreMessages(
 			notFolder: 'ReportGenerationService: report path segment is not a folder',
 			tagFailed: 'ReportGenerationService: failed to apply system tag',
 		);
-		return new TaggedFileStore(tagManager: $this->tagManager, tagMapper: $this->tagMapper, log: $log);
+		$tags = new SystemTagAssigner(tagManager: $this->tagManager, tagMapper: $this->tagMapper);
+		return new TaggedFileStore(tags: $tags, log: new TaggedFileStoreLog(logger: $this->logger, messages: $messages));
 	}//end fileStore()
 
 	/**

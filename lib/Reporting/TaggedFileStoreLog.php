@@ -4,8 +4,7 @@
  * Tagged file store log
  *
  * Where a TaggedFileStore reports a failure, and in whose words: the owner's
- * logger and the two warning messages it has always written, so moving the
- * storage steps into one place leaves every owner's log line as it was.
+ * logger and its messages.
  *
  * @category Reporting
  * @package  OCA\Shillinq\Reporting
@@ -32,16 +31,14 @@ final class TaggedFileStoreLog {
 	/**
 	 * Constructor.
 	 *
-	 * @param LoggerInterface $logger    The owner's logger.
-	 * @param string          $notFolder Warning when a path segment exists but is not a folder.
-	 * @param string          $tagFailed Warning when a system tag cannot be applied.
+	 * @param LoggerInterface         $logger   The owner's logger.
+	 * @param TaggedFileStoreMessages $messages The owner's warning messages.
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		public readonly LoggerInterface $logger,
-		public readonly string $notFolder,
-		public readonly string $tagFailed,
+		public readonly TaggedFileStoreMessages $messages,
 	) {
 
 	}//end __construct()
