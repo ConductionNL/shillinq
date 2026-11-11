@@ -1,0 +1,237 @@
+{
+    "oneSidedA": {
+        "result": false,
+        "logs": [],
+        "calls": []
+    },
+    "oneSidedB": {
+        "result": false,
+        "logs": [],
+        "calls": []
+    },
+    "perfect": {
+        "result": true,
+        "logs": [],
+        "calls": []
+    },
+    "noAdministrationDefaults": {
+        "result": true,
+        "logs": [],
+        "calls": []
+    },
+    "defaultsOverAbsolute": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:IntercompanyRelation",
+            {
+                "findAll": {
+                    "filters": {
+                        "relationId": "r1",
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:ToleranceRule",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "defaultsRelativeOnly": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:IntercompanyRelation",
+            {
+                "findAll": {
+                    "filters": {
+                        "relationId": "r1",
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:ToleranceRule",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "givenPercentage": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:IntercompanyRelation",
+            {
+                "findAll": {
+                    "filters": {
+                        "relationId": "r1",
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:ToleranceRule",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "typedRuleAbsoluteOnly": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:IntercompanyRelation",
+            {
+                "findAll": {
+                    "filters": {
+                        "relationId": "r1",
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:ToleranceRule",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "typedRuleAbsoluteOnlyFails": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:IntercompanyRelation",
+            {
+                "findAll": {
+                    "filters": {
+                        "relationId": "r1",
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:ToleranceRule",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "allTypesMinOf": {
+        "result": false,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:IntercompanyRelation",
+            {
+                "findAll": {
+                    "filters": {
+                        "relationId": "r1",
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:ToleranceRule",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "noRelation": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:ToleranceRule",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "zeroSides": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:IntercompanyRelation",
+            {
+                "findAll": {
+                    "filters": {
+                        "relationId": "r1",
+                        "administrationId": "adm-1"
+                    }
+                }
+            },
+            "register:shillinq",
+            "schema:ToleranceRule",
+            {
+                "findAll": {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    },
+    "storeDown": {
+        "result": false,
+        "logs": [
+            [
+                "error",
+                "IntercompanyToleranceGuard: tolerance evaluation failed — denying within-tolerance (fail-closed)",
+                {
+                    "matchId": "m1",
+                    "exception": "store down"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:IntercompanyRelation",
+            {
+                "findAll": {
+                    "filters": {
+                        "relationId": "r1",
+                        "administrationId": "adm-1"
+                    }
+                }
+            }
+        ]
+    }
+}
