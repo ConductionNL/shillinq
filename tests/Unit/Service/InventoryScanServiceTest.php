@@ -366,6 +366,212 @@ class InventoryScanServiceTest extends TestCase {
 	}//end testDuplicateTransactionIdIsIdempotent()
 
 	/**
+	 * Pins every record a receive, transfer, pick and count writes, field for
+	 * field and in write order, including the raw payload fields on the
+	 * MobileScanOperation audit record.
+	 *
+	 * @return void
+	 */
+	public function testEachOperationWritesItsRecordsFieldForField(): void {
+		$this->seedStock('W-1', 'A', 10);
+		$this->seedStock('W-1', 'B', 2);
+
+		$receive = $this->service->applyOperation(
+			operation: [
+				'type' => 'receive',
+				'transactionId' => ' tx-r ',
+				'sku' => ' W-1 ',
+				'location' => ' A ',
+				'quantity' => '5',
+				'role' => 'clerk',
+				'clientTimestamp' => 'c1',
+			],
+			userId: 'u1',
+			administrationId: 'adm-1',
+		);
+		$now = $receive['syncedAt'];
+		$this->assertSame(['status' => 'applied', 'resultingQuantity' => 15.0, 'transactionId' => 'tx-r', 'syncedAt' => $now], $receive);
+		$this->assertSame(
+			[
+				[
+					'administrationId' => 'adm-1',
+					'sku' => 'W-1',
+					'location' => 'A',
+					'quantity' => 5.0,
+					'resultingQuantity' => 15.0,
+					'receivedBy' => 'u1',
+					'receivedAt' => $now,
+					'transactionId' => 'tx-r',
+				],
+			],
+			$this->store->records['GoodsReceipt']
+		);
+		$this->assertSame(
+			[
+				'administrationId' => 'adm-1',
+				'type' => 'receive',
+				'transactionId' => ' tx-r ',
+				'sku' => ' W-1 ',
+				'location' => ' A ',
+				'toLocation' => '',
+				'quantity' => 5.0,
+				'role' => 'clerk',
+				'performedBy' => 'u1',
+				'clientTimestamp' => 'c1',
+				'syncedAt' => $now,
+				'state' => 'applied',
+				'rejectionReason' => '',
+			],
+			$this->store->records['MobileScanOperation'][0]
+		);
+
+		$transfer = $this->service->applyOperation(
+			operation: ['type' => 'transfer', 'transactionId' => 'tx-t', 'sku' => 'W-1', 'location' => 'A', 'toLocation' => ' C ', 'quantity' => 20],
+			userId: 'u2',
+			administrationId: 'adm-1',
+		);
+		$now = $transfer['syncedAt'];
+		$this->assertSame(['status' => 'applied', 'resultingQuantity' => 0.0, 'transactionId' => 'tx-t', 'syncedAt' => $now], $transfer);
+		$this->assertSame(
+			[
+				[
+					'administrationId' => 'adm-1',
+					'sku' => 'W-1',
+					'fromLocation' => 'A',
+					'toLocation' => 'C',
+					'quantity' => 20.0,
+					'transferredBy' => 'u2',
+					'transferredAt' => $now,
+					'transactionId' => 'tx-t',
+				],
+			],
+			$this->store->records['InventoryTransfer']
+		);
+		$this->assertSame(
+			['administrationId' => 'adm-1', 'sku' => 'W-1', 'location' => 'C', 'quantity' => 20.0, 'lastModified' => $now, 'status' => 'active'],
+			$this->store->records['InventoryStock'][2]
+		);
+		$this->assertSame(
+			['administrationId' => 'adm-1', 'sku' => 'W-1', 'location' => 'A', 'quantity' => 0.0, 'lastModified' => $now, 'status' => 'active'],
+			$this->store->records['InventoryStock'][0]
+		);
+
+		$pick = $this->service->applyOperation(
+			operation: ['type' => 'pick', 'transactionId' => 'tx-p', 'sku' => 'W-1', 'location' => 'B', 'quantity' => 1.5],
+			userId: 'u3',
+			administrationId: 'adm-1',
+		);
+		$this->assertSame(['status' => 'applied', 'resultingQuantity' => 0.5, 'transactionId' => 'tx-p', 'syncedAt' => $pick['syncedAt']], $pick);
+
+		$count = $this->service->applyOperation(
+			operation: ['type' => 'count', 'transactionId' => 'tx-c', 'sku' => 'W-1', 'location' => 'B', 'quantity' => 4],
+			userId: 'u4',
+			administrationId: 'adm-1',
+		);
+		$now = $count['syncedAt'];
+		$this->assertSame(['status' => 'applied', 'variance' => 3.5, 'transactionId' => 'tx-c', 'syncedAt' => $now], $count);
+		$this->assertSame(
+			[
+				[
+					'administrationId' => 'adm-1',
+					'sku' => 'W-1',
+					'location' => 'B',
+					'systemQuantity' => 0.5,
+					'physicalQuantity' => 4.0,
+					'variance' => 3.5,
+					'countedBy' => 'u4',
+					'countedAt' => $now,
+					'applied' => false,
+					'transactionId' => 'tx-c',
+				],
+			],
+			$this->store->records['InventoryCount']
+		);
+		$this->assertSame(
+			['receive', 'transfer', 'pick', 'count'],
+			array_column($this->store->records['MobileScanOperation'], 'type')
+		);
+
+	}//end testEachOperationWritesItsRecordsFieldForField()
+
+	/**
+	 * An unknown type is rejected and recorded as rejected; a duplicate returns
+	 * the recorded syncedAt and writes nothing more.
+	 *
+	 * @return void
+	 */
+	public function testAnUnknownTypeIsRejectedAndADuplicateKeepsTheRecordedSyncTime(): void {
+		$rejected = $this->service->applyOperation(
+			operation: ['type' => 'shred', 'transactionId' => 'tx-x', 'sku' => 'W-1'],
+			userId: 'u1',
+			administrationId: 'adm-1',
+		);
+		$this->assertSame(
+			[
+				'status' => 'rejected',
+				'message' => 'Unknown operation type.',
+				'transactionId' => 'tx-x',
+				'syncedAt' => $rejected['syncedAt'],
+			],
+			$rejected
+		);
+		$this->assertSame('rejected', $this->store->records['MobileScanOperation'][0]['state']);
+		$this->assertSame('Unknown operation type.', $this->store->records['MobileScanOperation'][0]['rejectionReason']);
+
+		$this->store->records['MobileScanOperation'][0]['syncedAt'] = '2026-01-02T03:04:05Z';
+		$duplicate = $this->service->applyOperation(
+			operation: ['type' => 'receive', 'transactionId' => ' tx-x ', 'sku' => 'W-1', 'location' => 'A', 'quantity' => 1],
+			userId: 'u1',
+			administrationId: 'adm-1',
+		);
+		$this->assertSame(
+			[
+				'status' => 'duplicate',
+				'transactionId' => 'tx-x',
+				'syncedAt' => '2026-01-02T03:04:05Z',
+				'message' => 'Operation already processed (idempotent).',
+			],
+			$duplicate
+		);
+		$this->assertCount(1, $this->store->records['MobileScanOperation']);
+		$this->assertArrayNotHasKey('GoodsReceipt', $this->store->records);
+
+	}//end testAnUnknownTypeIsRejectedAndADuplicateKeepsTheRecordedSyncTime()
+
+	/**
+	 * The dedupe lookup and the stock lookup are scoped to the administration:
+	 * the same transactionId in another administration is applied (not a
+	 * duplicate), and it creates that administration's own stock row instead of
+	 * moving the other administration's stock.
+	 *
+	 * @return void
+	 */
+	public function testLookupsAreScopedToTheAdministration(): void {
+		$this->seedStock('W-1', 'A', 10);
+		$this->service->applyOperation(
+			operation: ['type' => 'receive', 'transactionId' => 'tx-s', 'sku' => 'W-1', 'location' => 'A', 'quantity' => 1],
+			userId: 'u1',
+			administrationId: 'adm-1',
+		);
+
+		$other = $this->service->applyOperation(
+			operation: ['type' => 'receive', 'transactionId' => 'tx-s', 'sku' => 'W-1', 'location' => 'A', 'quantity' => 2],
+			userId: 'u1',
+			administrationId: 'adm-2',
+		);
+		$this->assertSame('applied', $other['status']);
+		$this->assertSame(2.0, $other['resultingQuantity']);
+
+		$repeat = $this->service->applyOperation(
+			operation: ['type' => 'receive', 'transactionId' => 'tx-s', 'sku' => 'W-1', 'location' => 'A', 'quantity' => 2],
+			userId: 'u1',
+			administrationId: 'adm-2',
+		);
+		$this->assertSame('duplicate', $repeat['status']);
+
+	}//end testLookupsAreScopedToTheAdministration()
+
+	/**
 	 * Barcode resolution matches by barcode, then falls back to SKU (REQ-SKU-001).
 	 *
 	 * @return void
