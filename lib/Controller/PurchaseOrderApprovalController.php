@@ -60,13 +60,6 @@ use Psr\Log\LoggerInterface;
 class PurchaseOrderApprovalController extends Controller {
 
 	/**
-	 * Short-slug identifier pattern shared by every scope/path parameter.
-	 *
-	 * @var string
-	 */
-	private const ID_PATTERN = '/^[A-Za-z0-9_.\\-]{1,64}$/';
-
-	/**
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object.
@@ -108,70 +101,101 @@ class PurchaseOrderApprovalController extends Controller {
 			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		$administrationId = $this->scopeParam(name: 'administrationId');
-		if ($administrationId === '') {
+		$approval = new ApprovalDecision(request: $this->request, id: (string)$id);
+		$refusal = $this->administrationRefusal(approval: $approval) ?? $this->decisionRefusal(approval: $approval);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		return $this->recorded(approval: $approval);
+	}//end decide()
+
+	/**
+	 * The 400 without a well-formed administration, or the masked 404 when the
+	 * caller may not access it.
+	 *
+	 * @param ApprovalDecision $approval The decision.
+	 *
+	 * @return JSONResponse|null The refusal, or null.
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 */
+	private function administrationRefusal(ApprovalDecision $approval): ?JSONResponse {
+		if ($approval->administrationId === '') {
 			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
 		}
 
-		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+		if ($this->administrationContext->canAccess(administrationId: $approval->administrationId) === false) {
 			return new JSONResponse(['error' => 'Purchase order not found'], Http::STATUS_NOT_FOUND);
 		}
 
-		$purchaseOrderId = trim((string)$id);
-		if ($purchaseOrderId === '' || preg_match(self::ID_PATTERN, $purchaseOrderId) !== 1) {
+		return null;
+	}//end administrationRefusal()
+
+	/**
+	 * The 400 for a malformed purchase order id, then for a missing decision.
+	 *
+	 * @param ApprovalDecision $approval The decision.
+	 *
+	 * @return JSONResponse|null The refusal, or null.
+	 */
+	private function decisionRefusal(ApprovalDecision $approval): ?JSONResponse {
+		if ($approval->wellFormedOrder() === false) {
 			return new JSONResponse(['error' => 'Purchase order id is required'], Http::STATUS_BAD_REQUEST);
 		}
 
-		$decision = trim((string)$this->request->getParam('decision', ''));
-		if ($decision === '') {
+		if ($approval->decision === '') {
 			return new JSONResponse(['error' => 'decision is required'], Http::STATUS_BAD_REQUEST);
 		}
 
-		$commentParam = $this->request->getParam('comment', null);
-		$comment = null;
-		if (is_string($commentParam) === true) {
-			$comment = $commentParam;
-		}
+		return null;
+	}//end decisionRefusal()
 
+	/**
+	 * Record the decision: 200 with the purchase order, the mapped refusal, or a logged 500.
+	 *
+	 * @param ApprovalDecision $approval The validated decision.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
+	 */
+	private function recorded(ApprovalDecision $approval): JSONResponse {
 		try {
 			$purchaseOrder = $this->approvalService->recordApprovalDecision(
-				administrationId: $administrationId,
-				purchaseOrderId:  $purchaseOrderId,
-				decision:         $decision,
-				comment:          $comment
+				administrationId: $approval->administrationId,
+				purchaseOrderId:  $approval->purchaseOrderId,
+				decision:         $approval->decision,
+				comment:          $approval->comment
 			);
 		} catch (\RuntimeException $e) {
 			return $this->mapRuntimeException(exception: $e);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'PurchaseOrderApprovalController: failed to record approval decision',
-				[
-					'administrationId' => $administrationId,
-					'purchaseOrderId' => $purchaseOrderId,
-					'exception' => $e->getMessage(),
-				]
-			);
-			return new JSONResponse(['error' => 'Could not record approval decision'], Http::STATUS_INTERNAL_SERVER_ERROR);
+			return $this->recordFailed(approval: $approval, e: $e);
 		}
 
 		return new JSONResponse($purchaseOrder, Http::STATUS_OK);
-	}//end decide()
+	}//end recorded()
 
 	/**
-	 * Read + validate a scope parameter; '' when blank/malformed.
+	 * Log a failed decision and answer 500 without a stack trace.
 	 *
-	 * @param string $name Parameter name.
+	 * @param ApprovalDecision $approval The decision.
+	 * @param \Throwable       $e        The failure.
 	 *
-	 * @return string
+	 * @return JSONResponse
 	 */
-	private function scopeParam(string $name): string {
-		$value = trim((string)$this->request->getParam($name, ''));
-		if ($value === '' || preg_match(self::ID_PATTERN, $value) !== 1) {
-			return '';
-		}
-
-		return $value;
-	}//end scopeParam()
+	private function recordFailed(ApprovalDecision $approval, \Throwable $e): JSONResponse {
+		$this->logger->error(
+			'PurchaseOrderApprovalController: failed to record approval decision',
+			[
+				'administrationId' => $approval->administrationId,
+				'purchaseOrderId' => $approval->purchaseOrderId,
+				'exception' => $e->getMessage(),
+			]
+		);
+		return new JSONResponse(['error' => 'Could not record approval decision'], Http::STATUS_INTERNAL_SERVER_ERROR);
+	}//end recordFailed()
 
 	/**
 	 * Map a service-level RuntimeException to a JSONResponse.
