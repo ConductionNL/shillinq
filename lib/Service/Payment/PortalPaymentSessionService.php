@@ -162,15 +162,7 @@ class PortalPaymentSessionService {
 	 * @spec openspec/changes/extracurricular-fee-to-shillinq/specs/school-contributions/spec.md (REQ-SCON-010)
 	 */
 	public function initiate(array $claims, string $target): PortalPaymentSessionResult {
-		return $this->openSession(
-			claims: $claims,
-			target: $target,
-			prepare: fn (object $objectService, string $id, string $customerMasterId): ?array => $this->prepareInvoice(
-				objectService: $objectService,
-				target: $id,
-				customerMasterId: $customerMasterId,
-			),
-		);
+		return $this->openSession(claims: $claims, target: new PortalPaymentTarget(id: $target, kind: PortalPaymentTarget::INVOICE));
 	}//end initiate()
 
 	/**
@@ -186,15 +178,7 @@ class PortalPaymentSessionService {
 	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
 	 */
 	public function initiateForRequest(array $claims, string $target): PortalPaymentSessionResult {
-		return $this->openSession(
-			claims: $claims,
-			target: $target,
-			prepare: fn (object $objectService, string $id, string $customerMasterId): ?array => $this->prepareRequest(
-				objectService: $objectService,
-				target: $id,
-				customerMasterId: $customerMasterId,
-			),
-		);
+		return $this->openSession(claims: $claims, target: new PortalPaymentTarget(id: $target, kind: PortalPaymentTarget::REQUEST));
 	}//end initiateForRequest()
 
 	/**
@@ -203,17 +187,15 @@ class PortalPaymentSessionService {
 	 * and the saved intent id.
 	 *
 	 * @param array<string, mixed> $claims The VERIFIED assertion claims.
-	 * @param string $target The client-supplied opaque id.
-	 * @param callable $prepare Resolves the owned, payable target from (object service, id,
-	 *                          customer): ['request' => row, 'session' => PaymentSessionRequest] or null.
+	 * @param PortalPaymentTarget $target The client-supplied target and its kind.
 	 *
 	 * @return PortalPaymentSessionResult
 	 *
 	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-002, REQ-SPPI-003)
 	 */
-	private function openSession(array $claims, string $target, callable $prepare): PortalPaymentSessionResult {
-		$target = trim($target);
-		if ($this->subjects->isOpaqueId(target: $target) === false) {
+	private function openSession(array $claims, PortalPaymentTarget $target): PortalPaymentSessionResult {
+		$targetId = trim($target->id);
+		if ($this->subjects->isOpaqueId(target: $targetId) === false) {
 			return PortalPaymentSessionResult::forbidden();
 		}
 
@@ -221,67 +203,134 @@ class PortalPaymentSessionService {
 			return PortalPaymentSessionResult::forbidden();
 		}
 
-		try {
-			$objectService = $this->container->get(self::OBJECT_SERVICE);
-		} catch (Throwable $e) {
-			$this->logDownstreamFailure(step: 'object-service-unavailable', exception: $e);
+		$objectService = $this->objectServiceOrNull();
+		if ($objectService === null) {
 			return PortalPaymentSessionResult::downstreamError();
 		}
 
-		$session = null;
+		$lookup = new PaymentTargetLookup(objectService: $objectService, targetId: $targetId, kind: $target->kind);
+		return $this->initiationChain(claims: $claims, lookup: $lookup);
+	}//end openSession()
+
+	/**
+	 * OpenRegister's object service; null (logged) when it cannot be resolved.
+	 *
+	 * @return object|null
+	 */
+	private function objectServiceOrNull(): ?object {
 		try {
-			$customerMasterId = $this->subjects->customerMasterId(
-				objectService: $objectService,
-				subjectRef: (string)($claims['sub'] ?? ''),
-				audience: (string)($claims['audience'] ?? ''),
-			);
-			if ($customerMasterId === null) {
-				return PortalPaymentSessionResult::forbidden();
-			}
+			return $this->container->get(self::OBJECT_SERVICE);
+		} catch (Throwable $e) {
+			$this->logDownstreamFailure(step: 'object-service-unavailable', exception: $e);
+			return null;
+		}
+	}//end objectServiceOrNull()
 
-			$prepared = $prepare($objectService, $target, $customerMasterId);
-			if ($prepared === null) {
-				return PortalPaymentSessionResult::forbidden();
-			}
-
-			$session = $this->provider->createSession($prepared['session']);
-
-			$this->persistPaymentIntentId(
-				objectService: $objectService,
-				paymentRequest: $prepared['request'],
-				paymentIntentId: $session->paymentIntentId,
-			);
+	/**
+	 * Run the ownership chain and the provider call, and map the outcome to a result.
+	 *
+	 * @param array<string, mixed> $claims The VERIFIED assertion claims.
+	 * @param PaymentTargetLookup $lookup The target lookup.
+	 *
+	 * @return PortalPaymentSessionResult
+	 */
+	private function initiationChain(array $claims, PaymentTargetLookup $lookup): PortalPaymentSessionResult {
+		try {
+			$session = $this->openProviderSession(claims: $claims, lookup: $lookup);
 		} catch (Throwable $e) {
 			$this->logDownstreamFailure(step: 'initiation-chain-failed', exception: $e);
 			return PortalPaymentSessionResult::downstreamError();
-		}//end try
+		}
+
+		if ($session === null) {
+			return PortalPaymentSessionResult::forbidden();
+		}
 
 		if ($session->dormant === true) {
 			return PortalPaymentSessionResult::deferred();
 		}
 
 		return PortalPaymentSessionResult::success(checkoutUrl: $session->checkoutUrl);
-	}//end openSession()
+	}//end initiationChain()
+
+	/**
+	 * Prepare the subject's owned, payable target, open the provider session and save its intent id.
+	 *
+	 * @param array<string, mixed> $claims The VERIFIED assertion claims.
+	 * @param PaymentTargetLookup $lookup The target lookup.
+	 *
+	 * @return PaymentSessionResult|null Null when the subject may not pay this target.
+	 */
+	private function openProviderSession(array $claims, PaymentTargetLookup $lookup): ?PaymentSessionResult {
+		$prepared = $this->preparedFor(claims: $claims, lookup: $lookup);
+		if ($prepared === null) {
+			return null;
+		}
+
+		$session = $this->provider->createSession($prepared['session']);
+		$this->persistPaymentIntentId(
+			objectService: $lookup->objectService,
+			paymentRequest: $prepared['request'],
+			paymentIntentId: $session->paymentIntentId,
+		);
+		return $session;
+	}//end openProviderSession()
+
+	/**
+	 * The subject's customer and, for it, the owned payable target.
+	 *
+	 * @param array<string, mixed> $claims The VERIFIED assertion claims.
+	 * @param PaymentTargetLookup $lookup The target lookup.
+	 *
+	 * @return array{request: array<string, mixed>, session: PaymentSessionRequest}|null Null when not payable by this subject.
+	 */
+	private function preparedFor(array $claims, PaymentTargetLookup $lookup): ?array {
+		$customerMasterId = $this->subjects->customerMasterId(
+			objectService: $lookup->objectService,
+			subjectRef: (string)($claims['sub'] ?? ''),
+			audience: (string)($claims['audience'] ?? ''),
+		);
+		if ($customerMasterId === null) {
+			return null;
+		}
+
+		return $this->prepareTarget(lookup: $lookup, customerMasterId: $customerMasterId);
+	}//end preparedFor()
+
+	/**
+	 * The target-specific preparation: a payment request without an invoice, or an invoice.
+	 *
+	 * @param PaymentTargetLookup $lookup The target lookup.
+	 * @param string $customerMasterId The verified owner.
+	 *
+	 * @return array{request: array<string, mixed>, session: PaymentSessionRequest}|null Null when not payable by this subject.
+	 */
+	private function prepareTarget(PaymentTargetLookup $lookup, string $customerMasterId): ?array {
+		if ($lookup->kind === PortalPaymentTarget::REQUEST) {
+			return $this->prepareRequest(lookup: $lookup, customerMasterId: $customerMasterId);
+		}
+
+		return $this->prepareInvoice(lookup: $lookup, customerMasterId: $customerMasterId);
+	}//end prepareTarget()
 
 	/**
 	 * The invoice target: the owned payable invoice, its minted or reused
 	 * request, and the session for the invoice amount.
 	 *
-	 * @param object $objectService OpenRegister's ObjectService.
-	 * @param string $target The opaque invoice id or slug.
+	 * @param PaymentTargetLookup $lookup The target lookup (the opaque invoice id or slug).
 	 * @param string $customerMasterId The verified owner.
 	 *
 	 * @return array{request: array<string, mixed>, session: PaymentSessionRequest}|null Null when not payable by this subject.
 	 *
 	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-003, REQ-SPPI-004)
 	 */
-	private function prepareInvoice(object $objectService, string $target, string $customerMasterId): ?array {
-		$invoice = $this->findOwnedPayableInvoice(objectService: $objectService, target: $target, customerMasterId: $customerMasterId);
+	private function prepareInvoice(PaymentTargetLookup $lookup, string $customerMasterId): ?array {
+		$invoice = $this->findOwnedPayableInvoice(lookup: $lookup, customerMasterId: $customerMasterId);
 		if ($invoice === null) {
 			return null;
 		}
 
-		$paymentRequest = $this->mintOrReusePaymentRequest(objectService: $objectService, invoice: $invoice);
+		$paymentRequest = $this->mintOrReusePaymentRequest(objectService: $lookup->objectService, invoice: $invoice);
 
 		return [
 			'request' => $paymentRequest,
@@ -293,12 +342,10 @@ class PortalPaymentSessionService {
 	 * The request target: the subject's own pending request without an
 	 * invoice, and the session for its own amount (REQ-SOPR-005).
 	 *
-	 * Read with `find()` by uuid: a `findAll()` filter on `id` addresses a JSON
-	 * property and matches nothing. A foreign, invoice-backed, settled or
-	 * missing request collapses to the same null (no existence oracle).
+	 * A foreign, invoice-backed, settled or missing request collapses to the
+	 * same null (no existence oracle).
 	 *
-	 * @param object $objectService OpenRegister's ObjectService.
-	 * @param string $target The opaque payment request id.
+	 * @param PaymentTargetLookup $lookup The target lookup (the opaque payment request id).
 	 * @param string $customerMasterId The verified owner.
 	 *
 	 * @return array{request: array<string, mixed>, session: PaymentSessionRequest}|null Null when not payable by this subject.
@@ -307,61 +354,159 @@ class PortalPaymentSessionService {
 	 *
 	 * @spec openspec/changes/arinvoice-lines-and-portal-amounts/specs/portal-payment-initiation/spec.md (REQ-SPPI-008)
 	 */
-	private function prepareRequest(object $objectService, string $target, string $customerMasterId): ?array {
+	private function prepareRequest(PaymentTargetLookup $lookup, string $customerMasterId): ?array {
+		$request = $this->loadPaymentRequest(lookup: $lookup);
+		if ($request === null || $this->isPayableRequestOf(request: $request, customerMasterId: $customerMasterId) === false) {
+			return null;
+		}
+
+		return [
+			'request' => $request,
+			'session' => $this->requestSession(request: $request),
+		];
+	}//end prepareRequest()
+
+	/**
+	 * Load the target payment request, with its id.
+	 *
+	 * @param PaymentTargetLookup $lookup The target lookup.
+	 *
+	 * @return array<string, mixed>|null Null when missing.
+	 */
+	private function loadPaymentRequest(PaymentTargetLookup $lookup): ?array {
+		$request = ObjectIdentifier::recordWithId(candidate: $this->findPaymentRequest(lookup: $lookup));
+		if ($request === null) {
+			return null;
+		}
+
+		return $this->withTargetId(record: $request, targetId: $lookup->targetId);
+	}//end loadPaymentRequest()
+
+	/**
+	 * Read the target payment request with `find()` by uuid: a `findAll()`
+	 * filter on `id` addresses a JSON property and matches nothing.
+	 *
+	 * @param PaymentTargetLookup $lookup The target lookup.
+	 *
+	 * @return mixed The found object, or null when the read fails.
+	 */
+	private function findPaymentRequest(PaymentTargetLookup $lookup): mixed {
 		try {
-			$found = ObjectIdentifier::findScoped(
-				scoped: $objectService->setRegister(self::REGISTER)->setSchema(self::SCHEMA_PAYMENT_REQUEST),
-				id: $target,
+			return ObjectIdentifier::findScoped(
+				scoped: $lookup->objectService->setRegister(self::REGISTER)->setSchema(self::SCHEMA_PAYMENT_REQUEST),
+				id: $lookup->targetId,
 				named: ['_rbac' => false, '_multitenancy' => false]
 			);
 		} catch (Throwable $notFound) {
 			return null;
 		}
+	}//end findPaymentRequest()
 
-		$request = ObjectIdentifier::recordWithId(candidate: $found);
-		if ($request === null) {
-			return null;
+	/**
+	 * A record read by the target id, given that id when it carries none.
+	 *
+	 * @param array<string, mixed> $record The record.
+	 * @param string $targetId The target id.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function withTargetId(array $record, string $targetId): array {
+		if ((string)($record['id'] ?? '') === '') {
+			$record['id'] = $targetId;
 		}
 
-		if ((string)($request['id'] ?? '') === '') {
-			$request['id'] = $target;
-		}
+		return $record;
+	}//end withTargetId()
 
+	/**
+	 * Whether the request is the subject's own pending request without an invoice.
+	 *
+	 * @param array<string, mixed> $request The PaymentRequest.
+	 * @param string $customerMasterId The verified owner.
+	 *
+	 * @return bool
+	 */
+	private function isPayableRequestOf(array $request, string $customerMasterId): bool {
 		$owner = (string)($request['customerId'] ?? ($request['debtor']['customerMasterId'] ?? ''));
 		if ($owner !== $customerMasterId
 			|| (string)($request['invoiceReference'] ?? '') !== ''
 			|| (string)($request['state'] ?? '') !== 'pending'
 		) {
-			return null;
+			return false;
 		}
 
+		return true;
+	}//end isPayableRequestOf()
+
+	/**
+	 * The provider session for a request without an invoice: its own amount.
+	 *
+	 * @param array<string, mixed> $request The payable PaymentRequest.
+	 *
+	 * @return PaymentSessionRequest
+	 *
+	 * @throws RuntimeException When the request carries no chargeable amount.
+	 */
+	private function requestSession(array $request): PaymentSessionRequest {
+		return new PaymentSessionRequest(
+			amount: $this->chargeableAmount(request: $request),
+			currency: (string)($request['currency'] ?? 'EUR'),
+			description: $this->requestDescription(request: $request),
+			redirectUrl: $this->resolveRedirectUrl(),
+			webhookUrl: $this->urlGenerator->linkToRouteAbsolute(self::WEBHOOK_ROUTE, ['gateway' => self::GATEWAY]),
+			method: 'ideal',
+			metadata: $this->requestMetadata(request: $request),
+		);
+	}//end requestSession()
+
+	/**
+	 * The request's amount, refused when it is not a positive number.
+	 *
+	 * @param array<string, mixed> $request The PaymentRequest.
+	 *
+	 * @return float
+	 *
+	 * @throws RuntimeException When the request carries no chargeable amount.
+	 */
+	private function chargeableAmount(array $request): float {
 		$amount = ($request['amount'] ?? null);
 		if (is_bool($amount) === true || is_numeric($amount) === false || (float)$amount <= 0.0) {
 			throw new RuntimeException('This payment request carries no amount that can be charged, so no payment session was opened.');
 		}
 
+		return (float)$amount;
+	}//end chargeableAmount()
+
+	/**
+	 * The request's description, or "Payment request" when it has none.
+	 *
+	 * @param array<string, mixed> $request The PaymentRequest.
+	 *
+	 * @return string
+	 */
+	private function requestDescription(array $request): string {
 		$description = trim((string)($request['description'] ?? ''));
 		if ($description === '') {
 			$description = 'Payment request';
 		}
 
+		return $description;
+	}//end requestDescription()
+
+	/**
+	 * The session metadata of a request without an invoice.
+	 *
+	 * @param array<string, mixed> $request The PaymentRequest, with its id.
+	 *
+	 * @return array<string, string>
+	 */
+	private function requestMetadata(array $request): array {
 		return [
-			'request' => $request,
-			'session' => new PaymentSessionRequest(
-				amount: (float)$amount,
-				currency: (string)($request['currency'] ?? 'EUR'),
-				description: $description,
-				redirectUrl: $this->resolveRedirectUrl(),
-				webhookUrl: $this->urlGenerator->linkToRouteAbsolute(self::WEBHOOK_ROUTE, ['gateway' => self::GATEWAY]),
-				method: 'ideal',
-				metadata: [
-					'paymentRequestId' => (string)$request['id'],
-					'administrationId' => (string)($request['administrationId'] ?? ''),
-					'correlationId' => (string)$request['id'],
-				],
-			),
+			'paymentRequestId' => (string)$request['id'],
+			'administrationId' => (string)($request['administrationId'] ?? ''),
+			'correlationId' => (string)$request['id'],
 		];
-	}//end prepareRequest()
+	}//end requestMetadata()
 
 	/**
 	 * Resolve the target ARInvoice: id/slug match AND owned by the verified
@@ -369,14 +514,7 @@ class PortalPaymentSessionService {
 	 * state and a non-existent id all collapse to the SAME null (no existence
 	 * oracle, REQ-SPPI-003).
 	 *
-	 * The id is read with `find()`: a `findAll()` filter on `id` addresses a
-	 * JSON property, matches nothing in OpenRegister, and made every invoice
-	 * addressed by its uuid unpayable. A miss (DoesNotExistException) falls
-	 * through to the `slug` property; any other read failure propagates as a
-	 * downstream error.
-	 *
-	 * @param object $objectService OpenRegister's ObjectService.
-	 * @param string $target The client-supplied opaque id/slug.
+	 * @param PaymentTargetLookup $lookup The target lookup (the client-supplied opaque id/slug).
 	 * @param string $customerMasterId The verified owner (never from the request).
 	 *
 	 * @return array<string, mixed>|null
@@ -384,62 +522,119 @@ class PortalPaymentSessionService {
 	 * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-003)
 	 * @spec openspec/changes/billing-inherited-defects/specs/portal-payment-initiation/spec.md (REQ-SPPI-011)
 	 */
-	private function findOwnedPayableInvoice(object $objectService, string $target, string $customerMasterId): ?array {
-		$invoice = null;
+	private function findOwnedPayableInvoice(PaymentTargetLookup $lookup, string $customerMasterId): ?array {
+		$invoice = $this->invoiceById(lookup: $lookup) ?? $this->invoiceBySlug(lookup: $lookup, customerMasterId: $customerMasterId);
+		if ($invoice === null) {
+			return null;
+		}
+
+		$invoice = $this->withTargetId(record: $invoice, targetId: $lookup->targetId);
+		if ($this->isPayableInvoiceOf(invoice: $invoice, customerMasterId: $customerMasterId) === false) {
+			return null;
+		}
+
+		return $invoice;
+	}//end findOwnedPayableInvoice()
+
+	/**
+	 * Read the target invoice by id with `find()`: a `findAll()` filter on
+	 * `id` addresses a JSON property, matches nothing in OpenRegister, and made
+	 * every invoice addressed by its uuid unpayable. A miss
+	 * (DoesNotExistException) is null; any other read failure propagates as a
+	 * downstream error.
+	 *
+	 * @param PaymentTargetLookup $lookup The target lookup.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function invoiceById(PaymentTargetLookup $lookup): ?array {
 		try {
-			$invoice = ObjectIdentifier::recordWithId(
+			return ObjectIdentifier::recordWithId(
 				candidate: ObjectIdentifier::findScoped(
-					scoped: $objectService->setRegister(self::REGISTER)->setSchema(self::SCHEMA_AR_INVOICE),
-					id: $target,
+					scoped: $lookup->objectService->setRegister(self::REGISTER)->setSchema(self::SCHEMA_AR_INVOICE),
+					id: $lookup->targetId,
 					named: ['_rbac' => false, '_multitenancy' => false]
 				)
 			);
 		} catch (DoesNotExistException $notFound) {
-			$invoice = null;
-		}
-
-		if ($invoice === null) {
-			$rows = $objectService
-				->setRegister(self::REGISTER)
-				->setSchema(self::SCHEMA_AR_INVOICE)
-				->findAll(
-					config: [
-						'filters' => [
-							'slug' => $target,
-							'customerId' => $customerMasterId,
-						],
-						'limit' => 1,
-					],
-					_rbac: false,
-					_multitenancy: false,
-				);
-			if (is_array($rows) === true && empty($rows) === false) {
-				$invoice = ObjectIdentifier::recordWithId(candidate: $rows[0]);
-			}
-		}
-
-		if ($invoice === null) {
 			return null;
 		}
+	}//end invoiceById()
 
-		if ((string)($invoice['id'] ?? '') === '') {
-			$invoice['id'] = $target;
-		}
-
-		if ((string)($invoice['customerId'] ?? '') !== $customerMasterId) {
-			return null;
-		}
-
-		// ARInvoice's lifecycle field is `lifecycleState`; `state` is not a
-		// property it declares, so reading only `state` found no invoice
-		// payable at all (REQ-SCON-010).
-		$state = (string)($invoice['lifecycleState'] ?? ($invoice['state'] ?? ''));
-		if (in_array($state, self::PAYABLE_STATES, true) === true) {
-			return $invoice;
+	/**
+	 * Fall through to the invoice's `slug` property, restricted to the verified owner.
+	 *
+	 * @param PaymentTargetLookup $lookup The target lookup.
+	 * @param string $customerMasterId The verified owner.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function invoiceBySlug(PaymentTargetLookup $lookup, string $customerMasterId): ?array {
+		$rows = $this->invoiceSlugRows(lookup: $lookup, customerMasterId: $customerMasterId);
+		if (is_array($rows) === true && empty($rows) === false) {
+			return ObjectIdentifier::recordWithId(candidate: $rows[0]);
 		}
 
 		return null;
-	}//end findOwnedPayableInvoice()
+	}//end invoiceBySlug()
+
+	/**
+	 * Query the owner's invoices by slug (at most one).
+	 *
+	 * @param PaymentTargetLookup $lookup The target lookup.
+	 * @param string $customerMasterId The verified owner.
+	 *
+	 * @return mixed The ObjectService result.
+	 */
+	private function invoiceSlugRows(PaymentTargetLookup $lookup, string $customerMasterId): mixed {
+		return $lookup->objectService
+			->setRegister(self::REGISTER)
+			->setSchema(self::SCHEMA_AR_INVOICE)
+			->findAll(
+				config: $this->invoiceSlugQuery(targetId: $lookup->targetId, customerMasterId: $customerMasterId),
+				_rbac: false,
+				_multitenancy: false,
+			);
+	}//end invoiceSlugRows()
+
+	/**
+	 * The slug query of an owner's invoice.
+	 *
+	 * @param string $targetId The opaque slug.
+	 * @param string $customerMasterId The verified owner.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function invoiceSlugQuery(string $targetId, string $customerMasterId): array {
+		return [
+			'filters' => [
+				'slug' => $targetId,
+				'customerId' => $customerMasterId,
+			],
+			'limit' => 1,
+		];
+	}//end invoiceSlugQuery()
+
+	/**
+	 * Whether the invoice is owned by the verified customer and in a payable state.
+	 *
+	 * ARInvoice's lifecycle field is `lifecycleState`; `state` is not a
+	 * property it declares, so reading only `state` found no invoice
+	 * payable at all (REQ-SCON-010).
+	 *
+	 * @param array<string, mixed> $invoice The ARInvoice.
+	 * @param string $customerMasterId The verified owner.
+	 *
+	 * @return bool
+	 */
+	private function isPayableInvoiceOf(array $invoice, string $customerMasterId): bool {
+		if ((string)($invoice['customerId'] ?? '') !== $customerMasterId) {
+			return false;
+		}
+
+		$state = (string)($invoice['lifecycleState'] ?? ($invoice['state'] ?? ''));
+		return in_array($state, self::PAYABLE_STATES, true);
+	}//end isPayableInvoiceOf()
 
 	/**
 	 * Mint a new PaymentRequest for the invoice, or reuse an existing pending
