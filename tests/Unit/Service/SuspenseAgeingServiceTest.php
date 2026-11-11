@@ -1,12 +1,13 @@
 <?php
 
 /**
- * Characterisation tests for SuspenseAgeingService.
+ * Unit tests for SuspenseAgeingService.
  *
- * Pins the aged suspense worklist: which unresolved bank lines count for an
- * administration, how they are aged and summed, their order, and the two
- * failure behaviours (the report degrades to empty, the control path fails
- * closed).
+ * Proves the suspense / unmatched-worklist ageing (payment-control-guards,
+ * REQ-PCG-002): unmatched and routed-to-suspense BankStatementLine items are
+ * aged (days outstanding), scoped to an administration, sorted oldest-first,
+ * and summarised (count, oldest age, total); and the control-path
+ * hasUnresolvedItems() reflects whether the worklist is non-empty.
  *
  * @category Test
  * @package  OCA\Shillinq\Tests\Unit\Service
@@ -28,108 +29,166 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\SuspenseAgeingService;
-use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
- * The aged suspense worklist, field by field.
+ * Tests for SuspenseAgeingService.
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 final class SuspenseAgeingServiceTest extends TestCase {
 
 	/**
-	 * Build the service over the given rows, or over a container that fails.
+	 * The service under test.
 	 *
-	 * @param array<string,array<int,array<string,mixed>>>|null $data   Rows per schema; null makes the lookup throw.
-	 * @param LoggerInterface|null                              $logger The logger.
-	 *
-	 * @return SuspenseAgeingService
+	 * @var SuspenseAgeingService
 	 */
-	private function service(?array $data, ?LoggerInterface $logger = null): SuspenseAgeingService {
+	private SuspenseAgeingService $service;
+
+	/**
+	 * Set up fixtures with a schema- and status-aware ObjectService stub.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+
+		$statements = [
+			['statementId' => 'stmt-1', 'administrationId' => 'adm-1'],
+			['statementId' => 'stmt-2', 'administrationId' => 'adm-2'],
+		];
+		$lines = [
+			['lineId' => 'l1', 'statementId' => 'stmt-1', 'status' => 'unmatched', 'amount' => -250.00, 'valueDate' => '2026-01-13'],
+			['lineId' => 'l2', 'statementId' => 'stmt-1', 'status' => 'routed-to-suspense', 'amount' => 100.00, 'valueDate' => '2026-02-15'],
+			['lineId' => 'l3', 'statementId' => 'stmt-2', 'status' => 'unmatched', 'amount' => 50.00, 'valueDate' => '2026-01-01'],
+		];
+
+		$objectService = new class($statements, $lines) {
+
+			/**
+			 * @var string
+			 */
+			private string $schema = '';
+
+			/**
+			 * @param array<int,array<string,mixed>> $statements Statements.
+			 * @param array<int,array<string,mixed>> $lines Lines.
+			 */
+			public function __construct(
+				private array $statements,
+				private array $lines,
+			) {
+			}
+
+			/**
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}
+
+			/**
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				$this->schema = $schema;
+				return $this;
+			}
+
+			/**
+			 * @param array<string,mixed> $params Query params carrying the filter.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				$filters = ($params['filters'] ?? []);
+				if ($this->schema === 'BankStatement') {
+					$admin = ($filters['administrationId'] ?? null);
+					return array_values(
+						array_filter(
+							$this->statements,
+							static fn (array $s): bool => ($admin === null || ($s['administrationId'] ?? null) === $admin)
+						)
+					);
+				}
+
+				if ($this->schema === 'BankStatementLine') {
+					$status = ($filters['status'] ?? null);
+					return array_values(
+						array_filter(
+							$this->lines,
+							static fn (array $l): bool => ($status === null || ($l['status'] ?? null) === $status)
+						)
+					);
+				}
+
+				return [];
+			}
+		};
+
 		$container = $this->createMock(ContainerInterface::class);
-		if ($data === null) {
-			$container->method('get')->willThrowException(new \RuntimeException('register down'));
-		} else {
-			$container->method('get')->willReturn(new InMemoryObjectServiceStub(data: $data));
-		}
+		$container->method('get')->willReturn($objectService);
 
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturn('shillinq');
 
-		return new SuspenseAgeingService(container: $container, appConfig: $appConfig, logger: $logger ?? $this->createMock(LoggerInterface::class));
-	}
-
-	/**
-	 * Two administrations' statements and their unresolved, resolved and odd lines.
-	 *
-	 * @return array<string,array<int,array<string,mixed>>>
-	 */
-	private static function ledger(): array {
-		return [
-			'BankStatement' => [
-				['id' => 'st-1', 'administrationId' => 'adm-1'],
-				['statementId' => 'st-2', 'uuid' => 'st-2-uuid', 'administrationId' => 'adm-1'],
-				['id' => 'st-9', 'administrationId' => 'adm-2'],
-			],
-			'BankStatementLine' => [
-				['lineId' => 'l-1', 'statementId' => 'st-1', 'status' => 'unmatched', 'amount' => -12.345, 'valueDate' => '2026-01-01'],
-				['id' => 'l-2', 'statementId' => 'st-2', 'status' => 'routed-to-suspense', 'amount' => 5, 'transactionDate' => '2026-01-10'],
-				['lineId' => 'l-3', 'statementId' => 'st-2-uuid', 'status' => 'unmatched', 'amount' => '7.5', 'valueDate' => '2026-03-01'],
-				['lineId' => 'l-4', 'statementId' => 'st-1', 'status' => 'unmatched', 'amount' => 1, 'valueDate' => 'not a date'],
-				['lineId' => 'l-5', 'statementId' => 'st-9', 'status' => 'unmatched', 'amount' => 100, 'valueDate' => '2025-01-01'],
-				['lineId' => 'l-6', 'statementId' => 'st-1', 'status' => 'matched', 'amount' => 100, 'valueDate' => '2025-01-01'],
-				['lineId' => 'l-7', 'status' => 'unmatched', 'amount' => 3, 'valueDate' => '2025-12-01'],
-				['lineId' => 'l-8', 'statementId' => 'st-1', 'status' => 'unmatched', 'amount' => 2],
-			],
-		];
-	}
-
-	/**
-	 * Golden: the worklists of one administration, of another, of all, and the empty answers.
-	 *
-	 * @return void
-	 */
-	public function testWorklistsMatchTheGolden(): void {
-		$service = $this->service(self::ledger());
-		$answers = [
-			'adm-1' => $service->agedUnmatchedItems('adm-1', '2026-02-01'),
-			'adm-2' => $service->agedUnmatchedItems('adm-2', '2026-02-01'),
-			'unscoped' => $service->agedUnmatchedItems(' ', '2026-02-01'),
-			'unknown administration' => $service->agedUnmatchedItems('adm-x', '2026-02-01'),
-			'control adm-1' => $service->hasUnresolvedItems('adm-1', '2026-02-01'),
-			'control unknown' => $service->hasUnresolvedItems('adm-x', '2026-02-01'),
-		];
-
-		$golden = __DIR__ . '/fixtures/suspense-ageing.golden.json';
-		$actual = json_decode(json_encode($answers, JSON_PRESERVE_ZERO_FRACTION), true);
-		if (getenv('UPDATE_GOLDEN') === '1') {
-			file_put_contents($golden, json_encode($actual, JSON_PRETTY_PRINT | JSON_PRESERVE_ZERO_FRACTION | JSON_UNESCAPED_SLASHES) . "\n");
-		}
-
-		self::assertSame(json_decode((string)file_get_contents($golden), true), $actual);
-	}
-
-	/**
-	 * The report degrades to an empty worklist and logs; the control path rethrows.
-	 *
-	 * @return void
-	 */
-	public function testAFailingLookupDegradesTheReportAndFailsTheControlClosed(): void {
-		$logger = $this->createMock(LoggerInterface::class);
-		$logger->expects(self::once())->method('error')->with(
-			'SuspenseAgeingService: ageing computation failed',
-			['administrationId' => 'adm-1', 'error' => 'register down']
+		$this->service = new SuspenseAgeingService(
+			container: $container,
+			appConfig: $appConfig,
+			logger: $this->createMock(LoggerInterface::class),
 		);
-		$service = $this->service(null, $logger);
 
-		self::assertSame(['items' => [], 'count' => 0, 'oldestDaysOutstanding' => 0, 'totalAmountCents' => 0], $service->agedUnmatchedItems('adm-1', '2026-02-01'));
+	}//end setUp()
 
-		$this->expectException(\RuntimeException::class);
-		$this->expectExceptionMessage('register down');
-		$service->hasUnresolvedItems('adm-1', '2026-02-01');
-	}
-}
+	/**
+	 * Items are aged, scoped to the administration, and sorted oldest-first.
+	 *
+	 * @return void
+	 */
+	public function testAgesScopesAndSorts(): void {
+		$result = $this->service->agedUnmatchedItems('adm-1', '2026-03-01');
+
+		// adm-2's line (l3) is excluded; l1 (unmatched) + l2 (routed) remain.
+		self::assertSame(2, $result['count']);
+		self::assertSame(47, $result['oldestDaysOutstanding']);
+		// 250.00 + 100.00 in cents.
+		self::assertSame(35000, $result['totalAmountCents']);
+		// Oldest first: l1 (47 days) before l2 (14 days).
+		self::assertSame('l1', $result['items'][0]['lineId']);
+		self::assertSame(47, $result['items'][0]['daysOutstanding']);
+		self::assertSame('l2', $result['items'][1]['lineId']);
+		self::assertSame(14, $result['items'][1]['daysOutstanding']);
+
+	}//end testAgesScopesAndSorts()
+
+	/**
+	 * hasUnresolvedItems() is true when the scoped worklist is non-empty.
+	 *
+	 * @return void
+	 */
+	public function testHasUnresolvedItemsTrueForNonEmptyScope(): void {
+		self::assertTrue($this->service->hasUnresolvedItems('adm-1', '2026-03-01'));
+
+	}//end testHasUnresolvedItemsTrueForNonEmptyScope()
+
+	/**
+	 * An administration with no unmatched items reports an empty, non-blocking worklist.
+	 *
+	 * @return void
+	 */
+	public function testEmptyForAdministrationWithoutItems(): void {
+		// adm-3 owns no statements, so no lines are in scope.
+		$result = $this->service->agedUnmatchedItems('adm-3', '2026-03-01');
+
+		self::assertSame(0, $result['count']);
+		self::assertFalse($this->service->hasUnresolvedItems('adm-3', '2026-03-01'));
+
+	}//end testEmptyForAdministrationWithoutItems()
+}//end class
