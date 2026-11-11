@@ -143,15 +143,7 @@ class LeaseDecideskWebhookService {
 	 * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
 	 */
 	public function getWebhookToken(): string {
-		$secret = $this->credentialsManager->retrieve(
-			userId: '',
-			identifier: self::CREDENTIAL_ID_TOKEN
-		);
-		if (is_string($secret) === false || $secret === '') {
-			return '';
-		}
-
-		return $secret;
+		return $this->token()->read();
 	}//end getWebhookToken()
 
 	/**
@@ -167,22 +159,18 @@ class LeaseDecideskWebhookService {
 	 * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
 	 */
 	public function setWebhookToken(string $token): void {
-		$trimmed = trim($token);
-		if ($trimmed === '') {
-			$this->credentialsManager->delete(
-				userId: '',
-				identifier: self::CREDENTIAL_ID_TOKEN
-			);
-			return;
-		}
-
-		$this->credentialsManager->store(
-			userId: '',
-			identifier: self::CREDENTIAL_ID_TOKEN,
-			credentials: $trimmed
-		);
+		$this->token()->write(value: $token);
 
 	}//end setWebhookToken()
+
+	/**
+	 * The token in the secrets store.
+	 *
+	 * @return StoredSecret
+	 */
+	private function token(): StoredSecret {
+		return new StoredSecret(credentialsManager: $this->credentialsManager, identifier: self::CREDENTIAL_ID_TOKEN);
+	}//end token()
 
 	/**
 	 * Build the JSON payload for the decidesk approval webhook.
