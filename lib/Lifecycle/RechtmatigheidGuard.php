@@ -104,29 +104,7 @@ class RechtmatigheidGuard {
 				return true;
 			}
 
-			$substantiation = trim((string)($toets['substantiation'] ?? ''));
-			if (mb_strlen($substantiation) < self::MIN_ONDERBOUWING_LENGTH) {
-				$this->logger->info(
-					'RechtmatigheidGuard: onderbouwing too short for negative uitkomst — denying afronden',
-					[
-						'toetsId' => ($toets['id'] ?? 'unknown'),
-						'outcome' => $outcome,
-						'length' => mb_strlen($substantiation),
-					]
-				);
-				return false;
-			}
-
-			$bevinding = trim((string)($toets['lawfulnessFinding'] ?? ''));
-			if ($bevinding === '') {
-				$this->logger->info(
-					'RechtmatigheidGuard: negative uitkomst without linked bevinding — denying afronden',
-					['toetsId' => ($toets['id'] ?? 'unknown'), 'outcome' => $outcome]
-				);
-				return false;
-			}
-
-			return true;
+			return $this->substantiated(toets: $toets) && $this->linkedToBevinding(toets: $toets);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'RechtmatigheidGuard: canFinaliseToets failed — denying afronden (fail-closed)',
@@ -136,6 +114,51 @@ class RechtmatigheidGuard {
 		}//end try
 
 	}//end canFinaliseToets()
+
+	/**
+	 * Whether a negative uitkomst carries a long enough onderbouwing; a short one is logged.
+	 *
+	 * @param array<string, mixed> $toets The Rechtmatigheidstoets.
+	 *
+	 * @return bool True when the substantiation is long enough.
+	 */
+	private function substantiated(array $toets): bool {
+		$substantiation = trim((string)($toets['substantiation'] ?? ''));
+		if (mb_strlen($substantiation) >= self::MIN_ONDERBOUWING_LENGTH) {
+			return true;
+		}
+
+		$this->logger->info(
+			'RechtmatigheidGuard: onderbouwing too short for negative uitkomst — denying afronden',
+			[
+				'toetsId' => ($toets['id'] ?? 'unknown'),
+				'outcome' => (string)($toets['outcome'] ?? ''),
+				'length' => mb_strlen($substantiation),
+			]
+		);
+		return false;
+
+	}//end substantiated()
+
+	/**
+	 * Whether a negative uitkomst links its bevinding; a missing link is logged.
+	 *
+	 * @param array<string, mixed> $toets The Rechtmatigheidstoets.
+	 *
+	 * @return bool True when a lawfulnessFinding is set.
+	 */
+	private function linkedToBevinding(array $toets): bool {
+		if (trim((string)($toets['lawfulnessFinding'] ?? '')) !== '') {
+			return true;
+		}
+
+		$this->logger->info(
+			'RechtmatigheidGuard: negative uitkomst without linked bevinding — denying afronden',
+			['toetsId' => ($toets['id'] ?? 'unknown'), 'outcome' => (string)($toets['outcome'] ?? '')]
+		);
+		return false;
+
+	}//end linkedToBevinding()
 
 	/**
 	 * Precondition for the Rechtmatigheidsbevinding oplossen transition (REQ-RV-010).
