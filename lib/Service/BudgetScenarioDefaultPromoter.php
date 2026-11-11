@@ -126,19 +126,54 @@ class BudgetScenarioDefaultPromoter {
 		}
 
 		$administrationId = (string)($target['administrationId'] ?? '');
+		$demotedScenarioId = $this->demoteOtherDefault(administrationId: $administrationId, scenarioId: $scenarioId);
+		$this->saveAsDefault(target: $target);
+		$defaultCount = $this->verifiedDefaultCount(administrationId: $administrationId, scenarioId: $scenarioId);
 
-		$demotedScenarioId = null;
+		return [
+			'scenarioId' => $scenarioId,
+			'administrationId' => $administrationId,
+			'demotedScenarioId' => $demotedScenarioId,
+			'verified' => ($defaultCount === 1),
+			'defaultCount' => $defaultCount,
+		];
+
+	}//end promote()
+
+	/**
+	 * Demote the administration's current default when it is another scenario.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $scenarioId The scenario being promoted.
+	 *
+	 * @return string|null The demoted scenario's id, or null when none was demoted.
+	 */
+	private function demoteOtherDefault(string $administrationId, string $scenarioId): string|null {
 		$currentDefault = $this->findCurrentDefault(administrationId: $administrationId, excludingId: null);
-		if ($currentDefault !== null) {
-			$currentDefaultId = (string)($currentDefault['id'] ?? $currentDefault['@self']['id'] ?? '');
-			if ($currentDefaultId !== '' && $currentDefaultId !== $scenarioId) {
-				$this->save(
-					object: array_merge($currentDefault, ['isDefault' => false])
-				);
-				$demotedScenarioId = $currentDefaultId;
-			}
+		if ($currentDefault === null) {
+			return null;
 		}
 
+		$currentDefaultId = (string)($currentDefault['id'] ?? $currentDefault['@self']['id'] ?? '');
+		if ($currentDefaultId === '' || $currentDefaultId === $scenarioId) {
+			return null;
+		}
+
+		$this->save(
+			object: array_merge($currentDefault, ['isDefault' => false])
+		);
+		return $currentDefaultId;
+
+	}//end demoteOtherDefault()
+
+	/**
+	 * Save the target as the default, activating it when it is still a draft.
+	 *
+	 * @param array<string,mixed> $target The scenario being promoted.
+	 *
+	 * @return void
+	 */
+	private function saveAsDefault(array $target): void {
 		$status = (string)($target['status'] ?? 'draft');
 		if ($status === 'draft') {
 			$status = 'active';
@@ -148,9 +183,19 @@ class BudgetScenarioDefaultPromoter {
 			object: array_merge($target, ['isDefault' => true, 'status' => $status])
 		);
 
+	}//end saveAsDefault()
+
+	/**
+	 * Re-read the defaults and log when there is not exactly one.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $scenarioId The scenario just promoted.
+	 *
+	 * @return integer The number of default scenarios found.
+	 */
+	private function verifiedDefaultCount(string $administrationId, string $scenarioId): int {
 		$defaultCount = count($this->findAllDefaults(administrationId: $administrationId));
-		$verified = ($defaultCount === 1);
-		if ($verified === false) {
+		if ($defaultCount !== 1) {
 			$this->logger->error(
 				'BudgetScenarioDefaultPromoter: post-promotion verification found '
 				. $defaultCount . ' default BudgetScenario(s) for administration '
@@ -160,15 +205,9 @@ class BudgetScenarioDefaultPromoter {
 			);
 		}
 
-		return [
-			'scenarioId' => $scenarioId,
-			'administrationId' => $administrationId,
-			'demotedScenarioId' => $demotedScenarioId,
-			'verified' => $verified,
-			'defaultCount' => $defaultCount,
-		];
+		return $defaultCount;
 
-	}//end promote()
+	}//end verifiedDefaultCount()
 
 	/**
 	 * Find the current default BudgetScenario for an administration, if any.
