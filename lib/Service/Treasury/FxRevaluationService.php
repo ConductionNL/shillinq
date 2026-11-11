@@ -128,145 +128,173 @@ class FxRevaluationService {
 	 * @spec openspec/specs/bookkeeping-multi-currency/spec.md
 	 */
 	public function reval(string $administrationId, string $periodId): array {
-		$result = [
+		$periodEnd = $this->periodEndDate(periodId: $periodId);
+		if ($periodEnd === null) {
+			return $this->skipInvalidPeriod(periodId: $periodId);
+		}
+
+		$run = new FxRevaluationRun(
+			administrationId: $administrationId,
+			periodId: $periodId,
+			functionalCurrency: $this->functionalCurrencyFor(administrationId: $administrationId),
+			periodEndDate: $periodEnd,
+			asOf: new DateTimeImmutable()
+		);
+
+		return $this->revalueOpenPositions(run: $run);
+	}//end reval()
+
+	/**
+	 * Log an invalid periodId and report that nothing was revalued.
+	 *
+	 * @param string $periodId The rejected period identifier.
+	 *
+	 * @return array{postingCount:int,positionsEvaluated:int,functionalCurrency:string,periodId:string}
+	 */
+	private function skipInvalidPeriod(string $periodId): array {
+		$this->logger->warning(
+			'FxRevaluationService: invalid periodId — skipping revaluation',
+			['periodId' => $periodId]
+		);
+
+		return [
 			'postingCount' => 0,
 			'positionsEvaluated' => 0,
 			'functionalCurrency' => '',
 			'periodId' => $periodId,
 		];
+	}//end skipInvalidPeriod()
 
-		$periodEnd = $this->periodEndDate(periodId: $periodId);
-		if ($periodEnd === null) {
-			$this->logger->warning(
-				'FxRevaluationService: invalid periodId — skipping revaluation',
-				['periodId' => $periodId]
-			);
-			return $result;
-		}
+	/**
+	 * Revalue every open FXPosition of the run's administration and count the evaluations and postings.
+	 *
+	 * @param FxRevaluationRun $run The revaluation run.
+	 *
+	 * @return array{postingCount:int,positionsEvaluated:int,functionalCurrency:string,periodId:string}
+	 */
+	private function revalueOpenPositions(FxRevaluationRun $run): array {
+		$result = [
+			'postingCount' => 0,
+			'positionsEvaluated' => 0,
+			'functionalCurrency' => $run->functionalCurrency,
+			'periodId' => $run->periodId,
+		];
 
-		$functionalCurrency = $this->functionalCurrencyFor(administrationId: $administrationId);
-		$result['functionalCurrency'] = $functionalCurrency;
-
-		$asOf = new DateTimeImmutable();
-		$positions = $this->findOpenPositions(administrationId: $administrationId);
-
-		foreach ($positions as $position) {
+		foreach ($this->findOpenPositions(administrationId: $run->administrationId) as $position) {
 			$result['positionsEvaluated']++;
-			$posted = $this->revaluatePosition(
-				position: $position,
-				administrationId: $administrationId,
-				periodId: $periodId,
-				functionalCurrency: $functionalCurrency,
-				periodEndDate: $periodEnd,
-				asOf: $asOf
-			);
-			if ($posted === true) {
+			if ($this->revaluatePosition(position: $position, run: $run) === true) {
 				$result['postingCount']++;
 			}
 		}
 
 		return $result;
-	}//end reval()
+	}//end revalueOpenPositions()
 
 	/**
 	 * Revalue one FXPosition; update its mark and, when the movement is
 	 * material, persist an FxRevaluationPosting audit record.
 	 *
 	 * @param array<string,mixed> $position The FXPosition record.
-	 * @param string $administrationId The administration scope.
-	 * @param string $periodId The yyyy-mm period.
-	 * @param string $functionalCurrency Administration's functional currency.
-	 * @param DateTimeImmutable $periodEndDate Period-end date used for the rate lookup.
-	 * @param DateTimeImmutable $asOf Run timestamp used for postedAt/lastUpdated.
+	 * @param FxRevaluationRun $run The revaluation run.
 	 *
 	 * @return bool True when an FxRevaluationPosting was created.
 	 */
-	private function revaluatePosition(
-		array $position,
-		string $administrationId,
-		string $periodId,
-		string $functionalCurrency,
-		DateTimeImmutable $periodEndDate,
-		DateTimeImmutable $asOf,
-	): bool {
-		$foreignCurrency = (string)($position['foreignCurrency'] ?? '');
-		$netPosition = (float)($position['position'] ?? 0.0);
-
-		if ($foreignCurrency === '' || $foreignCurrency === $functionalCurrency || $netPosition === 0.0) {
+	private function revaluatePosition(array $position, FxRevaluationRun $run): bool {
+		if ($this->isRevaluable(position: $position, functionalCurrency: $run->functionalCurrency) === false) {
 			return false;
 		}
 
-		$resolved = $this->resolveClosingRate(
-			position: $position,
-			functionalCurrency: $functionalCurrency,
-			periodEndDate: $periodEndDate
-		);
+		$resolved = $this->resolveClosingRate(position: $position, run: $run);
 		if ($resolved === null) {
-			$this->logger->info(
-				'FxRevaluationService: no live or manual closing rate available — skipping position',
-				['administrationId' => $administrationId, 'foreignCurrency' => $foreignCurrency]
-			);
+			return $this->skipWithoutClosingRate(position: $position, run: $run);
+		}
+
+		$mark = new FxPositionMark(position: $position, closingRate: $resolved['rate'], rateSource: $resolved['source']);
+		return $this->markPosition(mark: $mark, run: $run);
+	}//end revaluatePosition()
+
+	/**
+	 * Whether a position is revalued: it holds a foreign currency other than the functional one, and a non-zero amount.
+	 *
+	 * @param array<string,mixed> $position The FXPosition record.
+	 * @param string $functionalCurrency Administration's functional currency.
+	 *
+	 * @return bool
+	 */
+	private function isRevaluable(array $position, string $functionalCurrency): bool {
+		$foreignCurrency = (string)($position['foreignCurrency'] ?? '');
+		if ($foreignCurrency === '' || $foreignCurrency === $functionalCurrency) {
 			return false;
 		}
 
-		$closingRate = $resolved['rate'];
-		$rateSource = $resolved['source'];
+		return ((float)($position['position'] ?? 0.0) === 0.0) === false;
+	}//end isRevaluable()
 
-		$priorSpotRateRaw = $position['spotRate'] ?? null;
-		$priorSpotRate = null;
-		if ($priorSpotRateRaw !== null) {
-			$priorSpotRate = (float)$priorSpotRateRaw;
-		}
+	/**
+	 * Log a position that has no live or manual closing rate; it is skipped.
+	 *
+	 * @param array<string,mixed> $position The FXPosition record.
+	 * @param FxRevaluationRun $run The revaluation run.
+	 *
+	 * @return bool Always false: nothing was posted.
+	 */
+	private function skipWithoutClosingRate(array $position, FxRevaluationRun $run): bool {
+		$this->logger->info(
+			'FxRevaluationService: no live or manual closing rate available — skipping position',
+			['administrationId' => $run->administrationId, 'foreignCurrency' => (string)($position['foreignCurrency'] ?? '')]
+		);
+		return false;
+	}//end skipWithoutClosingRate()
 
-		$priorFairValue = (float)($position['fairValue'] ?? 0.0);
-		$priorUnrealisedPL = (float)($position['unrealisedPL'] ?? 0.0);
-
-		$newFairValue = $netPosition * $closingRate;
+	/**
+	 * Store the position's new mark and, when it moved materially since a prior mark, post the revaluation.
+	 *
+	 * @param FxPositionMark $mark The new mark.
+	 * @param FxRevaluationRun $run The revaluation run.
+	 *
+	 * @return bool True when an FxRevaluationPosting was created.
+	 */
+	private function markPosition(FxPositionMark $mark, FxRevaluationRun $run): bool {
+		$this->persistPosition(
+			position: $mark->position,
+			spotRate: $mark->closingRate,
+			fairValue: $mark->newFairValue(),
+			unrealisedPL: $mark->newUnrealisedPL(),
+			asOf: $run->asOf
+		);
 
 		// First-ever mark: establish the baseline only, post nothing
 		// (REQ-MC-006 scenario 2 — no prior mark means no delta to report).
-		if ($priorSpotRate === null) {
-			$this->persistPosition(
-				position: $position,
-				spotRate: $closingRate,
-				fairValue: $newFairValue,
-				unrealisedPL: $priorUnrealisedPL,
-				asOf: $asOf
-			);
+		if ($mark->priorSpotRate() === null || abs($mark->deltaCents()) < self::MATERIALITY_CENTS) {
 			return false;
 		}
 
-		$delta = $newFairValue - $priorFairValue;
-		$deltaCents = (int)round($delta * 100);
-		$newUnrealisedPL = $priorUnrealisedPL + $delta;
-
-		$this->persistPosition(
-			position: $position,
-			spotRate: $closingRate,
-			fairValue: $newFairValue,
-			unrealisedPL: $newUnrealisedPL,
-			asOf: $asOf
-		);
-
-		if (abs($deltaCents) < self::MATERIALITY_CENTS) {
-			return false;
-		}
-
-		$this->persistRevaluationPosting(
-			position: $position,
-			administrationId: $administrationId,
-			periodId: $periodId,
-			functionalCurrency: $functionalCurrency,
-			netPosition: $netPosition,
-			priorRate: $priorSpotRate,
-			closingRate: $closingRate,
-			rateSource: $rateSource,
-			deltaCents: $deltaCents,
-			asOf: $asOf
-		);
-
+		$this->postRevaluation(mark: $mark, run: $run);
 		return true;
-	}//end revaluatePosition()
+	}//end markPosition()
+
+	/**
+	 * Persist the FxRevaluationPosting of a material movement.
+	 *
+	 * @param FxPositionMark $mark The new mark (with a prior mark).
+	 * @param FxRevaluationRun $run The revaluation run.
+	 *
+	 * @return void
+	 */
+	private function postRevaluation(FxPositionMark $mark, FxRevaluationRun $run): void {
+		$this->persistRevaluationPosting(
+			position: $mark->position,
+			administrationId: $run->administrationId,
+			periodId: $run->periodId,
+			functionalCurrency: $run->functionalCurrency,
+			netPosition: $mark->netPosition(),
+			priorRate: (float)$mark->priorSpotRate(),
+			closingRate: $mark->closingRate,
+			rateSource: $mark->rateSource,
+			deltaCents: $mark->deltaCents(),
+			asOf: $run->asOf
+		);
+	}//end postRevaluation()
 
 	/**
 	 * Resolve the closing rate for one FXPosition (REQ-MC-007): prefer a
@@ -274,32 +302,12 @@ class FxRevaluationService {
 	 * manually-maintained spotRate, otherwise return null.
 	 *
 	 * @param array<string,mixed> $position The FXPosition record.
-	 * @param string $functionalCurrency Administration's functional currency.
-	 * @param DateTimeImmutable $periodEndDate Period-end date for the rate lookup.
+	 * @param FxRevaluationRun $run The revaluation run (functional currency and period-end date).
 	 *
 	 * @return array{rate:float,source:string}|null
 	 */
-	private function resolveClosingRate(
-		array $position,
-		string $functionalCurrency,
-		DateTimeImmutable $periodEndDate,
-	): ?array {
-		$foreignCurrency = (string)($position['foreignCurrency'] ?? '');
-
-		try {
-			$snapshot = $this->treasuryRateService->getFxSpot(
-				$foreignCurrency,
-				$functionalCurrency,
-				$periodEndDate->format('Y-m-d')
-			);
-		} catch (Throwable $e) {
-			$this->logger->warning(
-				'FxRevaluationService: TreasuryRateService::getFxSpot threw — falling back to manual rate',
-				['foreignCurrency' => $foreignCurrency, 'exception' => $e->getMessage()]
-			);
-			$snapshot = null;
-		}
-
+	private function resolveClosingRate(array $position, FxRevaluationRun $run): ?array {
+		$snapshot = $this->liveSnapshot(foreignCurrency: (string)($position['foreignCurrency'] ?? ''), run: $run);
 		if ($snapshot !== null && $snapshot->isLive() === true) {
 			return ['rate' => $snapshot->asFloat(), 'source' => 'live'];
 		}
@@ -311,6 +319,30 @@ class FxRevaluationService {
 
 		return null;
 	}//end resolveClosingRate()
+
+	/**
+	 * Look up the period-end spot rate of a foreign currency; null when the lookup throws.
+	 *
+	 * @param string $foreignCurrency The position's foreign currency.
+	 * @param FxRevaluationRun $run The revaluation run (functional currency and period-end date).
+	 *
+	 * @return TreasuryRateSnapshot|null
+	 */
+	private function liveSnapshot(string $foreignCurrency, FxRevaluationRun $run): ?TreasuryRateSnapshot {
+		try {
+			return $this->treasuryRateService->getFxSpot(
+				$foreignCurrency,
+				$run->functionalCurrency,
+				$run->periodEndDate->format('Y-m-d')
+			);
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'FxRevaluationService: TreasuryRateService::getFxSpot threw — falling back to manual rate',
+				['foreignCurrency' => $foreignCurrency, 'exception' => $e->getMessage()]
+			);
+			return null;
+		}
+	}//end liveSnapshot()
 
 	/**
 	 * Persist the updated FXPosition mark (spotRate, fairValue,
