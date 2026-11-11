@@ -137,7 +137,7 @@
   },
   "src/modals/BillImportModal.vue": {
     "@typescript-eslint/no-unused-vars": {
-      "count": 2
+      "count": 1
     },
     "jsdoc/require-param-type": {
       "count": 6
@@ -195,9 +195,6 @@
     }
   },
   "src/views/ReceiptCapture.vue": {
-    "@typescript-eslint/no-unused-vars": {
-      "count": 1
-    },
     "jsdoc/require-param-type": {
       "count": 2
     }
