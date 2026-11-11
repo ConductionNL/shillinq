@@ -1,0 +1,166 @@
+{
+    "march": {
+        "result": {
+            "monthlyAmountCents": 2000,
+            "overageHoursThreshold": 10.0,
+            "overageHourlyRateCents": 8525,
+            "effectiveDate": "2026-03-01",
+            "label": "Retainer"
+        },
+        "events": [
+            [
+                "find",
+                "RetainerSchedule",
+                {
+                    "scheduleId": "s",
+                    "administrationId": "a1"
+                }
+            ]
+        ]
+    },
+    "april": {
+        "result": {
+            "monthlyAmountCents": 1,
+            "overageHoursThreshold": null,
+            "overageHourlyRateCents": null,
+            "effectiveDate": "2026-03-01",
+            "label": "Retainer"
+        },
+        "events": [
+            [
+                "find",
+                "RetainerSchedule",
+                {
+                    "scheduleId": "s",
+                    "administrationId": "a1"
+                }
+            ]
+        ]
+    },
+    "february": {
+        "result": {
+            "monthlyAmountCents": 150050,
+            "overageHoursThreshold": null,
+            "overageHourlyRateCents": null,
+            "effectiveDate": "2026-01-01",
+            "label": "Basis"
+        },
+        "events": [
+            [
+                "find",
+                "RetainerSchedule",
+                {
+                    "scheduleId": "s",
+                    "administrationId": "a1"
+                }
+            ]
+        ]
+    },
+    "before": {
+        "result": {
+            "monthlyAmountCents": 0,
+            "overageHoursThreshold": null,
+            "overageHourlyRateCents": null,
+            "effectiveDate": "2025-12-01",
+            "label": "Retainer"
+        },
+        "events": [
+            [
+                "find",
+                "RetainerSchedule",
+                {
+                    "scheduleId": "s",
+                    "administrationId": "a1"
+                }
+            ],
+            [
+                "warning",
+                "RetainerResolver: no active schedule for s on 2025-12-01"
+            ]
+        ]
+    },
+    "undated": {
+        "result": {
+            "monthlyAmountCents": 0,
+            "overageHoursThreshold": null,
+            "overageHourlyRateCents": null,
+            "effectiveDate": "2026-02-01",
+            "label": "Retainer"
+        },
+        "events": [
+            [
+                "find",
+                "RetainerSchedule",
+                {
+                    "scheduleId": "u",
+                    "administrationId": "a1"
+                }
+            ]
+        ]
+    },
+    "foreign": {
+        "result": {
+            "monthlyAmountCents": 0,
+            "overageHoursThreshold": null,
+            "overageHourlyRateCents": null,
+            "effectiveDate": "2026-02-01",
+            "label": "Retainer"
+        },
+        "events": [
+            [
+                "find",
+                "RetainerSchedule",
+                {
+                    "scheduleId": "s",
+                    "administrationId": "a3"
+                }
+            ],
+            [
+                "warning",
+                "RetainerResolver: no active schedule for s on 2026-02-01"
+            ]
+        ]
+    },
+    "unscoped": {
+        "result": {
+            "monthlyAmountCents": 0,
+            "overageHoursThreshold": null,
+            "overageHourlyRateCents": null,
+            "effectiveDate": "2026-02-01",
+            "label": "Retainer"
+        },
+        "events": [
+            [
+                "warning",
+                "RetainerResolver: refusing unscoped lookup for s on 2026-02-01 (no administrationId)"
+            ]
+        ]
+    },
+    "failing": {
+        "result": {
+            "monthlyAmountCents": 0,
+            "overageHoursThreshold": null,
+            "overageHourlyRateCents": null,
+            "effectiveDate": "2026-02-01",
+            "label": "Retainer"
+        },
+        "events": [
+            [
+                "find",
+                "RetainerSchedule",
+                {
+                    "scheduleId": "s",
+                    "administrationId": "a1"
+                }
+            ],
+            [
+                "error",
+                "RetainerResolver findAll failed: down"
+            ],
+            [
+                "warning",
+                "RetainerResolver: no active schedule for s on 2026-02-01"
+            ]
+        ]
+    }
+}
