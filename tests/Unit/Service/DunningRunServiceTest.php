@@ -1110,6 +1110,133 @@ final class DunningRunServiceTest extends TestCase {
 	}//end testWriteOffHonorsCallerProvidedBoekingId()
 
 	/**
+	 * Pins the write-off, its GL journal and its art. 29 OB VAT line field for
+	 * field and in write order (GL first, then the write-off, then the line).
+	 *
+	 * @return void
+	 */
+	public function testWriteOffWritesItsRecordsFieldForField(): void {
+		$os = new OpenRegisterFaithfulObjectService();
+		$service = $this->makeService(os: $os);
+
+		$persisted = $service->writeOff(
+			administrationId: 'adm-1',
+			params: [
+				'invoiceId' => 'inv-1',
+				'principalDepreciated' => 4200.00,
+				'vatAmount' => 882.00,
+				'art29OBDeclaration' => 'Faillissement',
+				'evidenceRef' => 'docudesk:files/a.pdf',
+				'vatTaxReturnPeriod' => '2026-Q2',
+			]
+		);
+
+		$journal = $os->dump(schema: 'GLTransaction')[0];
+		self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}$/', (string)$journal['postingDate']);
+		unset($journal['postingDate']);
+		self::assertSame(
+			[
+				'administrationId' => 'adm-1',
+				'description' => 'Write-off invoice inv-1 (oninbaar)',
+				'periodId' => '2026-Q2',
+				'currency' => 'EUR',
+				'sourceReference' => 'inv-1',
+				'state' => 'posted',
+				'isBalanced' => true,
+				'postings' => [
+					['accountNumber' => '7220', 'debitCents' => 420000, 'creditCents' => 0, 'description' => 'Bad debt expense (art. 6:96 BW write-off)'],
+					['accountNumber' => '1500', 'debitCents' => 88200, 'creditCents' => 0, 'description' => 'Output VAT recoverable (art. 29 OB)'],
+					['accountNumber' => '1300', 'debitCents' => 0, 'creditCents' => 508200, 'description' => 'Accounts Receivable control'],
+				],
+				'id' => 'auto-1',
+			],
+			$journal
+		);
+
+		$record = [
+			'invoiceId' => 'inv-1',
+			'principalDepreciated' => 4200.0,
+			'vatAmount' => 882.0,
+			'art29OBDeclaration' => 'Faillissement',
+			'evidenceRef' => 'docudesk:files/a.pdf',
+			'entryId' => 'auto-1',
+			'vatTaxReturnPeriod' => '2026-Q2',
+			'administrationId' => 'adm-1',
+			'lifecycleState' => 'posted',
+			'id' => 'auto-2',
+		];
+		self::assertSame($record, $persisted);
+		self::assertSame([$record], $os->dump(schema: 'OninbaarAfschrijving'));
+
+		self::assertSame(
+			[
+				[
+					'administrationId' => 'adm-1',
+					'returnId' => '2026-Q2',
+					'glTransactionId' => 'auto-1',
+					'type' => 'CORRECTION_ART_29_OB',
+					'taxableAmount' => 0.0,
+					'taxRate' => 0.0,
+					'vatAmount' => -882.0,
+					'glAccountNumber' => '1500',
+					'glAccountName' => 'Output VAT recoverable (art. 29 OB)',
+					'description' => 'Oninbaar art. 29 OB — invoice inv-1',
+					'sourceOninbaarRef' => 'auto-2',
+					'sourceInvoiceRef' => 'inv-1',
+					'id' => 'auto-3',
+				],
+			],
+			$os->dump(schema: 'VATLine')
+		);
+
+	}//end testWriteOffWritesItsRecordsFieldForField()
+
+	/**
+	 * Without VAT the journal has two postings and no VAT line is queued; with
+	 * no principal no journal is posted and the entryId stays null; a caller
+	 * entryId reaches the VAT line as its GL link.
+	 *
+	 * @return void
+	 */
+	public function testWriteOffWithoutVatOrPrincipalSkipsThoseWrites(): void {
+		$os = new OpenRegisterFaithfulObjectService();
+		$service = $this->makeService(os: $os);
+
+		$noVat = $service->writeOff(
+			administrationId: 'adm-1',
+			params: ['invoiceId' => 'inv-2', 'principalDepreciated' => 10.5, 'vatTaxReturnPeriod' => '2026-Q3']
+		);
+		self::assertNull($noVat['vatAmount']);
+		self::assertNull($noVat['evidenceRef']);
+		self::assertSame('', $noVat['art29OBDeclaration']);
+		self::assertSame(
+			[
+				['accountNumber' => '7220', 'debitCents' => 1050, 'creditCents' => 0, 'description' => 'Bad debt expense (art. 6:96 BW write-off)'],
+				['accountNumber' => '1300', 'debitCents' => 0, 'creditCents' => 1050, 'description' => 'Accounts Receivable control'],
+			],
+			$os->dump(schema: 'GLTransaction')[0]['postings']
+		);
+		self::assertSame([], $os->dump(schema: 'VATLine'));
+
+		$noPrincipal = $service->writeOff(administrationId: 'adm-1', params: ['invoiceId' => 'inv-3', 'vatAmount' => 0, 'vatTaxReturnPeriod' => '2026-Q3']);
+		self::assertNull($noPrincipal['entryId']);
+		self::assertSame(0.0, $noPrincipal['principalDepreciated']);
+		self::assertSame(0, $noPrincipal['vatAmount']);
+		self::assertCount(1, $os->dump(schema: 'GLTransaction'));
+		self::assertSame([], $os->dump(schema: 'VATLine'));
+
+		$service->writeOff(
+			administrationId: 'adm-1',
+			params: ['invoiceId' => 'inv-4', 'principalDepreciated' => 5, 'vatAmount' => '1.05', 'entryId' => 'gl-9', 'vatTaxReturnPeriod' => '2026-Q3']
+		);
+		$line = $os->dump(schema: 'VATLine')[0];
+		self::assertSame('gl-9', $line['glTransactionId']);
+		self::assertSame(-1.05, $line['vatAmount']);
+		self::assertCount(1, $os->dump(schema: 'GLTransaction'));
+
+	}//end testWriteOffWithoutVatOrPrincipalSkipsThoseWrites()
+
+	/**
 	 * REQ-CCD-011: detectAdminError flags good customers + admin-error trigger.
 	 *
 	 * @return void
