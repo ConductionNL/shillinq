@@ -647,14 +647,17 @@ class TimeIntakeService {
 	 * @return array{0:string,1:string,2:?string,3:?string,4:?string}
 	 */
 	private function optionalBatchFields(array $body): array {
+		// Read in this order so a body with several non-string fields names the first of them.
+		$billingModel = (string)$this->stringField(source: $body, key: 'billingModel');
+		$currency = ($this->stringField(source: $body, key: 'currency') ?? 'EUR');
 		$requestRateCardId = $this->stringField(source: $body, key: 'rateCardId');
 		if ($requestRateCardId === '') {
 			$requestRateCardId = null;
 		}
 
 		return [
-			(string)$this->stringField(source: $body, key: 'billingModel'),
-			($this->stringField(source: $body, key: 'currency') ?? 'EUR'),
+			$billingModel,
+			$currency,
 			$requestRateCardId,
 			$this->stringField(source: $body, key: 'projectRef'),
 			$this->stringField(source: $body, key: 'notes'),
