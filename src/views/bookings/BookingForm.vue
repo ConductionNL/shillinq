@@ -259,7 +259,7 @@ export default {
 		 * The booking to create from the form; a conflict is overridden only
 		 * when explicitly forced.
 		 *
-		 * @param {*} force True to override a conflict.
+		 * @param {boolean} force True to override a conflict.
 		 * @return {object}
 		 */
 		bookingPayload(force) {
