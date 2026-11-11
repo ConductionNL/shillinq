@@ -27,6 +27,8 @@ namespace OCA\Shillinq\Service\Purchasing;
 
 /**
  * The payee and ignored ids a duplicate lookup compares records against.
+ *
+ * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-2.1
  */
 final class DuplicateCandidate {
 
@@ -63,6 +65,8 @@ final class DuplicateCandidate {
 	 * @param string               $supplierField The record's supplier field.
 	 *
 	 * @return bool True for a duplicate.
+	 *
+	 * @spec openspec/changes/archive/2026-09-29-purchasing-supplier-invoice-intake/tasks.md#task-2.1
 	 */
 	public function matches(array $record, string $supplierField): bool {
 		return (string)($record[$supplierField] ?? '') === $this->supplierId
