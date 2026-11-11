@@ -266,41 +266,63 @@ export default {
 			this.accumulatedTransactions = []
 			this._lastBatchSize = null
 			try {
-				const response = await axios.get(
-					generateUrl(
-						`/apps/shillinq/api/v1/bookings/${encodeURIComponent(this.id)}`,
-					),
-				)
-				this.payload = response?.data || null
-				const initial = this.payload?.klantbeeld?.transactions
-				if (Array.isArray(initial)) {
-					this.accumulatedTransactions = initial.slice()
-					this._lastBatchSize = initial.length
-				} else {
-					this.accumulatedTransactions = []
-					this._lastBatchSize = 0
-				}
+				const response = await axios.get(this.bookingUrl())
+				this.applyBooking(response?.data || null)
 			} catch (e) {
-				const status = e?.response?.status
-				if (status === 404) {
-					this.loadError = this.label('Booking not found')
-				} else if (status === 503) {
-					this.loadError = this.label(
-						'OpenRegister is temporarily unavailable',
-					)
-				} else if (status === 401) {
-					this.loadError = this.label(
-						'Please sign in to view this booking',
-					)
-				} else {
-					this.loadError =
-						e?.response?.data?.error
-						|| this.label('Failed to load booking')
-				}
+				this.loadError = this.bookingLoadError(e)
 				this.payload = null
 			} finally {
 				this.loading = false
 			}
+		},
+
+		/**
+		 * The booking detail endpoint of this booking.
+		 *
+		 * @return {string}
+		 */
+		bookingUrl() {
+			return generateUrl(
+				`/apps/shillinq/api/v1/bookings/${encodeURIComponent(this.id)}`,
+			)
+		},
+
+		/**
+		 * Show a loaded booking and seed the transactions from its klantbeeld.
+		 *
+		 * @param {object|null} payload The booking detail envelope.
+		 */
+		applyBooking(payload) {
+			this.payload = payload
+			const initial = this.payload?.klantbeeld?.transactions
+			if (Array.isArray(initial)) {
+				this.accumulatedTransactions = initial.slice()
+				this._lastBatchSize = initial.length
+			} else {
+				this.accumulatedTransactions = []
+				this._lastBatchSize = 0
+			}
+		},
+
+		/**
+		 * The message of a failed booking load, by HTTP status, else the
+		 * server's own error.
+		 *
+		 * @param {object} e The request error.
+		 * @return {string}
+		 */
+		bookingLoadError(e) {
+			const status = e?.response?.status
+			if (status === 404) {
+				return this.label('Booking not found')
+			}
+			if (status === 503) {
+				return this.label('OpenRegister is temporarily unavailable')
+			}
+			if (status === 401) {
+				return this.label('Please sign in to view this booking')
+			}
+			return e?.response?.data?.error || this.label('Failed to load booking')
 		},
 
 		async onLoadMore({ limit, offset }) {
@@ -310,28 +332,12 @@ export default {
 			this.pagingLoading = true
 			this.pagingError = ''
 			try {
-				const response = await axios.get(
-					generateUrl(
-						`/apps/shillinq/api/v1/bookings/${encodeURIComponent(this.id)}`,
-					),
-					{ params: { limit, offset } },
-				)
+				const response = await axios.get(this.bookingUrl(), {
+					params: { limit, offset },
+				})
 				const next = response?.data?.klantbeeld
 				if (next && Array.isArray(next.transactions)) {
-					this.accumulatedTransactions =
-						this.accumulatedTransactions.concat(next.transactions)
-					this._lastBatchSize = next.transactions.length
-					// Mirror the new offset / limit back to the envelope so a
-					// subsequent Load-more computes the right next page.
-					this.payload = {
-						...this.payload,
-						klantbeeld: {
-							...(this.payload?.klantbeeld || {}),
-							limit: next.limit ?? limit,
-							offset: next.offset ?? offset,
-							unavailable: next.unavailable === true,
-						},
-					}
+					this.appendPage(next, { limit, offset })
 				}
 			} catch (e) {
 				this.pagingError =
@@ -339,6 +345,28 @@ export default {
 					|| this.label('Failed to load more transactions')
 			} finally {
 				this.pagingLoading = false
+			}
+		},
+
+		/**
+		 * Append a klantbeeld page and mirror its window back to the envelope,
+		 * so a subsequent Load-more computes the right next page.
+		 *
+		 * @param {object} next The klantbeeld page.
+		 * @param {{limit: number, offset: number}} requested The window asked for.
+		 */
+		appendPage(next, requested) {
+			this.accumulatedTransactions =
+				this.accumulatedTransactions.concat(next.transactions)
+			this._lastBatchSize = next.transactions.length
+			this.payload = {
+				...this.payload,
+				klantbeeld: {
+					...(this.payload?.klantbeeld || {}),
+					limit: next.limit ?? requested.limit,
+					offset: next.offset ?? requested.offset,
+					unavailable: next.unavailable === true,
+				},
 			}
 		},
 	},
