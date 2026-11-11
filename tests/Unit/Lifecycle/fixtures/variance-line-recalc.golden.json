@@ -1,0 +1,339 @@
+{
+    "exact": {
+        "defaults": {
+            "expectedQuantity": 10,
+            "countedQuantity": 10,
+            "unitCost": 12.5,
+            "expectedValue": 125.0,
+            "countedValue": 125.0,
+            "quantityVariance": 0.0,
+            "valueVariance": 0.0,
+            "requiresReason": false
+        },
+        "tight": {
+            "expectedQuantity": 10,
+            "countedQuantity": 10,
+            "unitCost": 12.5,
+            "expectedValue": 125.0,
+            "countedValue": 125.0,
+            "quantityVariance": 0.0,
+            "valueVariance": 0.0,
+            "requiresReason": false
+        },
+        "loose": {
+            "expectedQuantity": 10,
+            "countedQuantity": 10,
+            "unitCost": 12.5,
+            "expectedValue": 125.0,
+            "countedValue": 125.0,
+            "quantityVariance": 0.0,
+            "valueVariance": 0.0,
+            "requiresReason": false
+        }
+    },
+    "smallShort": {
+        "defaults": {
+            "expectedQuantity": 100,
+            "countedQuantity": 96,
+            "unitCost": 1.0,
+            "expectedValue": 100.0,
+            "countedValue": 96.0,
+            "quantityVariance": -4.0,
+            "valueVariance": -4.0,
+            "requiresReason": false
+        },
+        "tight": {
+            "expectedQuantity": 100,
+            "countedQuantity": 96,
+            "unitCost": 1.0,
+            "expectedValue": 100.0,
+            "countedValue": 96.0,
+            "quantityVariance": -4.0,
+            "valueVariance": -4.0,
+            "requiresReason": true
+        },
+        "loose": {
+            "expectedQuantity": 100,
+            "countedQuantity": 96,
+            "unitCost": 1.0,
+            "expectedValue": 100.0,
+            "countedValue": 96.0,
+            "quantityVariance": -4.0,
+            "valueVariance": -4.0,
+            "requiresReason": false
+        }
+    },
+    "qtyOver": {
+        "defaults": {
+            "expectedQuantity": 100,
+            "countedQuantity": 94,
+            "unitCost": 1.0,
+            "expectedValue": 100.0,
+            "countedValue": 94.0,
+            "quantityVariance": -6.0,
+            "valueVariance": -6.0,
+            "requiresReason": true
+        },
+        "tight": {
+            "expectedQuantity": 100,
+            "countedQuantity": 94,
+            "unitCost": 1.0,
+            "expectedValue": 100.0,
+            "countedValue": 94.0,
+            "quantityVariance": -6.0,
+            "valueVariance": -6.0,
+            "requiresReason": true
+        },
+        "loose": {
+            "expectedQuantity": 100,
+            "countedQuantity": 94,
+            "unitCost": 1.0,
+            "expectedValue": 100.0,
+            "countedValue": 94.0,
+            "quantityVariance": -6.0,
+            "valueVariance": -6.0,
+            "requiresReason": false
+        }
+    },
+    "valueOver": {
+        "defaults": {
+            "expectedQuantity": 1000,
+            "countedQuantity": 990,
+            "unitCost": 60.0,
+            "expectedValue": 60000.0,
+            "countedValue": 59400.0,
+            "quantityVariance": -10.0,
+            "valueVariance": -600.0,
+            "requiresReason": true
+        },
+        "tight": {
+            "expectedQuantity": 1000,
+            "countedQuantity": 990,
+            "unitCost": 60.0,
+            "expectedValue": 60000.0,
+            "countedValue": 59400.0,
+            "quantityVariance": -10.0,
+            "valueVariance": -600.0,
+            "requiresReason": true
+        },
+        "loose": {
+            "expectedQuantity": 1000,
+            "countedQuantity": 990,
+            "unitCost": 60.0,
+            "expectedValue": 60000.0,
+            "countedValue": 59400.0,
+            "quantityVariance": -10.0,
+            "valueVariance": -600.0,
+            "requiresReason": true
+        }
+    },
+    "fractional": {
+        "defaults": {
+            "expectedQuantity": "2.333",
+            "countedQuantity": "2.335",
+            "unitCost": "0.335",
+            "expectedValue": 0.79,
+            "countedValue": 0.8,
+            "quantityVariance": 0.01,
+            "valueVariance": 0.01,
+            "requiresReason": false
+        },
+        "tight": {
+            "expectedQuantity": "2.333",
+            "countedQuantity": "2.335",
+            "unitCost": "0.335",
+            "expectedValue": 0.79,
+            "countedValue": 0.8,
+            "quantityVariance": 0.01,
+            "valueVariance": 0.01,
+            "requiresReason": false
+        },
+        "loose": {
+            "expectedQuantity": "2.333",
+            "countedQuantity": "2.335",
+            "unitCost": "0.335",
+            "expectedValue": 0.79,
+            "countedValue": 0.8,
+            "quantityVariance": 0.01,
+            "valueVariance": 0.01,
+            "requiresReason": false
+        }
+    },
+    "surplus": {
+        "defaults": {
+            "expectedQuantity": 0,
+            "countedQuantity": 3,
+            "unitCost": 7.77,
+            "expectedValue": 0.0,
+            "countedValue": 23.31,
+            "quantityVariance": 3.0,
+            "valueVariance": 23.31,
+            "requiresReason": true
+        },
+        "tight": {
+            "expectedQuantity": 0,
+            "countedQuantity": 3,
+            "unitCost": 7.77,
+            "expectedValue": 0.0,
+            "countedValue": 23.31,
+            "quantityVariance": 3.0,
+            "valueVariance": 23.31,
+            "requiresReason": true
+        },
+        "loose": {
+            "expectedQuantity": 0,
+            "countedQuantity": 3,
+            "unitCost": 7.77,
+            "expectedValue": 0.0,
+            "countedValue": 23.31,
+            "quantityVariance": 3.0,
+            "valueVariance": 23.31,
+            "requiresReason": true
+        }
+    },
+    "notCounted": {
+        "defaults": {
+            "expectedQuantity": 5,
+            "unitCost": 2.0,
+            "countedValue": null,
+            "requiresReason": false,
+            "expectedValue": 10.0,
+            "quantityVariance": null,
+            "valueVariance": null
+        },
+        "tight": {
+            "expectedQuantity": 5,
+            "unitCost": 2.0,
+            "countedValue": null,
+            "requiresReason": false,
+            "expectedValue": 10.0,
+            "quantityVariance": null,
+            "valueVariance": null
+        },
+        "loose": {
+            "expectedQuantity": 5,
+            "unitCost": 2.0,
+            "countedValue": null,
+            "requiresReason": false,
+            "expectedValue": 10.0,
+            "quantityVariance": null,
+            "valueVariance": null
+        }
+    },
+    "noCost": {
+        "defaults": {
+            "expectedQuantity": 5,
+            "countedQuantity": 4,
+            "countedValue": null,
+            "quantityVariance": null,
+            "valueVariance": null,
+            "requiresReason": false
+        },
+        "tight": {
+            "expectedQuantity": 5,
+            "countedQuantity": 4,
+            "countedValue": null,
+            "quantityVariance": null,
+            "valueVariance": null,
+            "requiresReason": false
+        },
+        "loose": {
+            "expectedQuantity": 5,
+            "countedQuantity": 4,
+            "countedValue": null,
+            "quantityVariance": null,
+            "valueVariance": null,
+            "requiresReason": false
+        }
+    },
+    "noExpected": {
+        "defaults": {
+            "countedQuantity": 4,
+            "unitCost": 2.0,
+            "expectedValue": 1,
+            "countedValue": null,
+            "quantityVariance": null,
+            "valueVariance": null,
+            "requiresReason": false
+        },
+        "tight": {
+            "countedQuantity": 4,
+            "unitCost": 2.0,
+            "expectedValue": 1,
+            "countedValue": null,
+            "quantityVariance": null,
+            "valueVariance": null,
+            "requiresReason": false
+        },
+        "loose": {
+            "countedQuantity": 4,
+            "unitCost": 2.0,
+            "expectedValue": 1,
+            "countedValue": null,
+            "quantityVariance": null,
+            "valueVariance": null,
+            "requiresReason": false
+        }
+    },
+    "textQuantity": {
+        "defaults": {
+            "expectedQuantity": "abc",
+            "countedQuantity": 4,
+            "unitCost": 2.0,
+            "countedValue": null,
+            "quantityVariance": null,
+            "valueVariance": null,
+            "requiresReason": false
+        },
+        "tight": {
+            "expectedQuantity": "abc",
+            "countedQuantity": 4,
+            "unitCost": 2.0,
+            "countedValue": null,
+            "quantityVariance": null,
+            "valueVariance": null,
+            "requiresReason": false
+        },
+        "loose": {
+            "expectedQuantity": "abc",
+            "countedQuantity": 4,
+            "unitCost": 2.0,
+            "countedValue": null,
+            "quantityVariance": null,
+            "valueVariance": null,
+            "requiresReason": false
+        }
+    },
+    "stale": {
+        "defaults": {
+            "expectedQuantity": 10,
+            "countedQuantity": 20,
+            "unitCost": 1.0,
+            "quantityVariance": 10.0,
+            "requiresReason": true,
+            "expectedValue": 10.0,
+            "countedValue": 20.0,
+            "valueVariance": 10.0
+        },
+        "tight": {
+            "expectedQuantity": 10,
+            "countedQuantity": 20,
+            "unitCost": 1.0,
+            "quantityVariance": 10.0,
+            "requiresReason": true,
+            "expectedValue": 10.0,
+            "countedValue": 20.0,
+            "valueVariance": 10.0
+        },
+        "loose": {
+            "expectedQuantity": 10,
+            "countedQuantity": 20,
+            "unitCost": 1.0,
+            "quantityVariance": 10.0,
+            "requiresReason": true,
+            "expectedValue": 10.0,
+            "countedValue": 20.0,
+            "valueVariance": 10.0
+        }
+    }
+}
