@@ -176,54 +176,108 @@ class BudgetProjectionCalculator {
 	 * @spec openspec/specs/budget-projection-engine/spec.md#req-bpe-004
 	 */
 	public function growthRate(array $values): array {
-		$steps = [];
-		$count = count($values);
-		for ($i = 1; $i < $count; $i++) {
-			$previous = $values[$i - 1];
-			$current = $values[$i];
-
-			if ($previous === 0 && $current === 0) {
-				// Flat at zero is a real, computable rate.
-				$steps[] = 0.0;
-				continue;
-			}
-
-			if ($previous === 0) {
-				// $current !== 0 here: growing "from nothing" has no
-				// percentage — division by zero, excluded.
-				continue;
-			}
-
-			$previousIsPositive = ($previous > 0);
-			$currentIsPositive = ($current > 0);
-			if ($current !== 0 && $currentIsPositive !== $previousIsPositive) {
-				// Opposite non-zero signs: a mathematically defined but
-				// meaningless ratio (REQ-BPE-002's sign-flip exclusion).
-				continue;
-			}
-
-			// Either same-sign non-zero pair, or a non-zero base going to
-			// zero (a fully computable -100% rate) — both included.
-			$steps[] = (($current / $previous) - 1.0);
-		}//end for
-
+		$steps = $this->growthSteps(values: $values);
 		$validSteps = count($steps);
 		if ($validSteps < self::MIN_VALID_STEPS) {
 			return ['reason' => 'insufficient-data', 'validSteps' => $validSteps];
 		}
 
-		$forAveraging = $steps;
-		if ($validSteps >= self::OUTLIER_TRIM_MIN_STEPS) {
-			sort($forAveraging);
-			array_shift($forAveraging);
-			array_pop($forAveraging);
-		}
-
-		$rate = (array_sum($forAveraging) / count($forAveraging));
-
-		return ['rate' => $rate, 'validSteps' => $validSteps];
+		return ['rate' => $this->trimmedMean(steps: $steps), 'validSteps' => $validSteps];
 
 	}//end growthRate()
+
+	/**
+	 * The included month-over-month steps of a series, in series order.
+	 *
+	 * @param list<int> $values The metric series, oldest to newest.
+	 *
+	 * @return list<float> One rate per included step.
+	 */
+	private function growthSteps(array $values): array {
+		$steps = [];
+		$count = count($values);
+		for ($i = 1; $i < $count; $i++) {
+			$step = $this->stepRate(previous: $values[$i - 1], current: $values[$i]);
+			if ($step !== null) {
+				$steps[] = $step;
+			}
+		}
+
+		return $steps;
+
+	}//end growthSteps()
+
+	/**
+	 * The rate of one step, or null when the step is excluded.
+	 *
+	 * Flat at zero is a real, computable rate (0.0). Growing "from nothing"
+	 * has no percentage (division by zero) and opposite non-zero signs are a
+	 * meaningless ratio (REQ-BPE-002's sign-flip exclusion): both excluded.
+	 * A same-sign pair, or a non-zero base going to zero (-100%), is included.
+	 *
+	 * @param int|float $previous The earlier value.
+	 * @param int|float $current  The later value.
+	 *
+	 * @return float|null The step rate, or null when excluded.
+	 */
+	private function stepRate(int|float $previous, int|float $current): ?float {
+		if ($previous === 0 && $current === 0) {
+			return 0.0;
+		}
+
+		if ($this->excluded(previous: $previous, current: $current) === true) {
+			return null;
+		}
+
+		return (($current / $previous) - 1.0);
+
+	}//end stepRate()
+
+	/**
+	 * Whether a step (other than flat at zero) is excluded: growth from
+	 * nothing, or a sign flip.
+	 *
+	 * @param int|float $previous The earlier value.
+	 * @param int|float $current  The later value.
+	 *
+	 * @return bool True when excluded.
+	 */
+	private function excluded(int|float $previous, int|float $current): bool {
+		return $previous === 0 || $this->signFlipped(previous: $previous, current: $current) === true;
+
+	}//end excluded()
+
+	/**
+	 * Whether a step goes between opposite non-zero signs.
+	 *
+	 * @param int|float $previous The earlier (non-zero) value.
+	 * @param int|float $current  The later value.
+	 *
+	 * @return bool True for a sign flip.
+	 */
+	private function signFlipped(int|float $previous, int|float $current): bool {
+		return $current !== 0 && ($current > 0) !== ($previous > 0);
+
+	}//end signFlipped()
+
+	/**
+	 * The mean of the steps, dropping the single highest and lowest once
+	 * there are `OUTLIER_TRIM_MIN_STEPS` or more (REQ-BPE-002).
+	 *
+	 * @param list<float> $steps The included steps (at least one).
+	 *
+	 * @return float The (trimmed) mean.
+	 */
+	private function trimmedMean(array $steps): float {
+		if (count($steps) >= self::OUTLIER_TRIM_MIN_STEPS) {
+			sort($steps);
+			array_shift($steps);
+			array_pop($steps);
+		}
+
+		return (array_sum($steps) / count($steps));
+
+	}//end trimmedMean()
 
 	/**
 	 * Compound a single mean growth rate forward from the last actual value
