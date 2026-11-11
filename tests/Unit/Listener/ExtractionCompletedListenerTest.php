@@ -117,6 +117,13 @@ final class ExtractionCompletedListenerTest extends TestCase {
 	private array $notificationState = [];
 
 	/**
+	 * Logger handed to the listener; null means a NullLogger.
+	 *
+	 * @var \Psr\Log\LoggerInterface|null
+	 */
+	private ?\Psr\Log\LoggerInterface $listenerLogger = null;
+
+	/**
 	 * REQ-RXC-001 scenario 1: a supplier-invoice extraction becomes a
 	 * confidence-scored draft.
 	 *
@@ -556,7 +563,7 @@ final class ExtractionCompletedListenerTest extends TestCase {
 			appConfig: $appConfig,
 			prefillService: new ExtractionPrefillService(),
 			notificationManager: $manager,
-			logger: new NullLogger(),
+			logger: ($this->listenerLogger ?? new NullLogger()),
 			administrationContext: new AdministrationContextService(
 				container: $container,
 				userSession: $this->createMock(IUserSession::class),
@@ -566,4 +573,79 @@ final class ExtractionCompletedListenerTest extends TestCase {
 		);
 
 	}//end buildListener()
+
+	/**
+	 * Characterisation: the info records for an unknown docType, a new draft
+	 * and a refreshed draft, in order.
+	 *
+	 * @return void
+	 */
+	public function testLogRecordsPerOutcome(): void {
+		$logger = new class extends \Psr\Log\AbstractLogger {
+
+			/**
+			 * Captured records.
+			 *
+			 * @var array<int,array<int,mixed>>
+			 */
+			public array $records = [];
+
+			/**
+			 * Record a log call.
+			 *
+			 * @param mixed $level Level.
+			 * @param \Stringable|string $message Message.
+			 * @param array<string,mixed> $context Context.
+			 *
+			 * @return void
+			 */
+			public function log($level, \Stringable|string $message, array $context = []): void {
+				$this->records[] = [(string)$level, (string)$message, $context];
+			}
+		};
+		$this->listenerLogger = $logger;
+
+		$saved = [];
+		$this->buildListener(existing: [], saved: $saved, notifications: $notifications)->handle(
+			$this->makeEvent(docType: 'unknown-type', fields: [], fieldConfidence: [], overallConfidence: 0.5)
+		);
+		$this->buildListener(existing: [], saved: $saved, notifications: $notifications)->handle(
+			$this->makeEvent(docType: ' receipt ', fields: ['totalIncl' => 1.0], fieldConfidence: [], overallConfidence: 0.5, requestedBy: '')
+		);
+		$existing = [['id' => 'draft-1', 'sourceDocumentUri' => 'docudesk://attachments/x/invoice.pdf', 'administrationId' => 'adm-1']];
+		$this->buildListener(existing: $existing, saved: $saved, notifications: $notifications)->handle(
+			$this->makeEvent(docType: 'supplier-invoice', fields: [], fieldConfidence: [], overallConfidence: 0.9)
+		);
+
+		self::assertSame(
+			[
+				['info', 'ExtractionCompletedListener: unknown docType — skipping', ['docType' => 'unknown-type']],
+				[
+					'info',
+					'ExtractionCompletedListener: extraction draft persisted',
+					[
+						'schema' => 'Receipt',
+						'documentUri' => 'docudesk://attachments/x/invoice.pdf',
+						'created' => true,
+						'requestedBy' => '',
+					],
+				],
+				[
+					'info',
+					'ExtractionCompletedListener: extraction draft persisted',
+					[
+						'schema' => 'SupplierInvoice',
+						'documentUri' => 'docudesk://attachments/x/invoice.pdf',
+						'created' => false,
+						'requestedBy' => 'alice',
+					],
+				],
+			],
+			$logger->records
+		);
+		self::assertSame('default', $saved[0]['object']['administrationId']);
+		self::assertSame('adm-1', $saved[1]['object']['administrationId']);
+		self::assertCount(0, $notifications);
+
+	}//end testLogRecordsPerOutcome()
 }//end class
