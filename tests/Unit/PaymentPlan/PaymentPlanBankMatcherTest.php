@@ -113,7 +113,7 @@ final class PaymentPlanBankMatcherTest extends TestCase {
 		$plan = $this->activeZwaanPlan();
 		$line = $this->line('line-feed', 403.33, 'RGL-2026-0007 termijn 1');
 		$logger = $this->createMock(LoggerInterface::class);
-		$matches = new ManualMatchService($this->store, $this->runner(), $this->settings(), $logger);
+		$matches = new ManualMatchService($this->store, $this->runner(), $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), $logger);
 		$booker = new ExactMatchBooker($this->store, $matches, $this->createConfiguredMock(RegisterLocation::class, ['getRegisterSlug' => 'shillinq']), $logger, $this->matcher());
 
 		$match = $booker->book($line);

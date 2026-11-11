@@ -33,7 +33,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Sales;
 
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IL10N;
 use OutOfBoundsException;
@@ -65,13 +65,13 @@ class DownPaymentService {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object surface.
-	 * @param SettingsService        $settings      Register slug.
+	 * @param RegisterLocation        $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param IL10N                  $l10n          Line texts on the invoice.
 	 * @param LoggerInterface        $logger        Logger.
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
 	) {
@@ -878,7 +878,7 @@ class DownPaymentService {
 	 * @return ObjectServiceInterface
 	 */
 	private function scoped(string $schema): ObjectServiceInterface {
-		return $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema($schema);
+		return $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema($schema);
 
 	}//end scoped()
 }//end class

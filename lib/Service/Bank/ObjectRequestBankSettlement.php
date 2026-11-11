@@ -34,7 +34,7 @@ namespace OCA\Shillinq\Service\Bank;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\PaymentRevenueAccountResolver;
 use OCA\Shillinq\Service\PaymentSettlementService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Util\ObjectIdentifier;
 use Psr\Log\LoggerInterface;
 
@@ -55,7 +55,7 @@ class ObjectRequestBankSettlement {
 	 * Constructor.
 	 *
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service (ADR-083).
-	 * @param SettingsService $settings The register slug.
+	 * @param RegisterLocation $registerLocation Where the register lives (slug + OpenRegister availability).
 	 * @param PaymentSettlementService $settlements Builds, appends and stamps settlements.
 	 * @param PaymentRevenueAccountResolver $revenueAccounts The revenue account per request type.
 	 * @param InvoiceSettlementService $invoices Settles an invoice behind a request.
@@ -64,7 +64,7 @@ class ObjectRequestBankSettlement {
 	 */
 	public function __construct(
 		private readonly ObjectServiceInterface $objectService,
-		private readonly SettingsService $settings,
+		private readonly RegisterLocation $registerLocation,
 		private readonly PaymentSettlementService $settlements,
 		private readonly PaymentRevenueAccountResolver $revenueAccounts,
 		private readonly InvoiceSettlementService $invoices,
@@ -199,6 +199,6 @@ class ObjectRequestBankSettlement {
 	 * @return ObjectServiceInterface
 	 */
 	private function scoped(string $schema): ObjectServiceInterface {
-		return $this->objectService->setRegister($this->settings->getRegisterSlug())->setSchema($schema);
+		return $this->objectService->setRegister($this->registerLocation->getRegisterSlug())->setSchema($schema);
 	}//end scoped()
 }//end class

@@ -28,7 +28,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Repair;
 
 use OCA\Shillinq\Repair\RetireCostProjectStep;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -47,9 +47,9 @@ class RetireCostProjectStepTest extends TestCase {
 	/**
 	 * Settings service mock.
 	 *
-	 * @var SettingsService&MockObject
+	 * @var RegisterLocation&MockObject
 	 */
-	private SettingsService&MockObject $settingsService;
+	private RegisterLocation&MockObject $settingsService;
 
 	/**
 	 * Container mock.
@@ -85,7 +85,7 @@ class RetireCostProjectStepTest extends TestCase {
 	 * @return void
 	 */
 	protected function setUp(): void {
-		$this->settingsService = $this->createMock(SettingsService::class);
+		$this->settingsService = $this->createMock(RegisterLocation::class);
 		$this->container = $this->createMock(ContainerInterface::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
 		$this->output = $this->createMock(IOutput::class);
@@ -509,7 +509,7 @@ class RetireCostProjectStepTest extends TestCase {
 			->willReturn($this->fakeObjectService);
 
 		return new RetireCostProjectStep(
-			settingsService: $this->settingsService,
+			registerLocation: $this->settingsService,
 			logger: $this->logger,
 			container: $this->container,
 		);

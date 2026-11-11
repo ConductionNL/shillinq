@@ -24,7 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Sales;
 
 use OCA\Shillinq\Service\Sales\DownPaymentRefusedException;
 use OCA\Shillinq\Service\Sales\DownPaymentService;
-use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\RegisterLocation;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RegisterSchema;
 use OCP\IL10N;
@@ -108,7 +108,7 @@ final class DownPaymentServiceTest extends TestCase {
 	 * @return DownPaymentService
 	 */
 	private function service(): DownPaymentService {
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(RegisterLocation::class);
 		$settings->method('getRegisterSlug')->willReturn('shillinq');
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnCallback(static fn (string $text, array $parameters = []): string => vsprintf($text, $parameters));
