@@ -1,0 +1,551 @@
+{
+    "vatDrift": {
+        "result": {
+            "reconciliationId": "aansl",
+            "periodId": "2026-Q2",
+            "computedAt": "<now>",
+            "sourceATotal": 4200.0,
+            "sourceBTotal": 4570.0,
+            "differenceCents": -37000,
+            "withinTolerance": false,
+            "status": "open",
+            "lineDeltas": [
+                {
+                    "bucketKey": "TOTAL",
+                    "sourceAAmount": 4200.0,
+                    "sourceBAmount": 4570.0,
+                    "deltaAmount": -370.0
+                },
+                {
+                    "bucketKey": "1a",
+                    "sourceAAmount": 4200.0,
+                    "sourceBAmount": 4450.0,
+                    "deltaAmount": -250.0
+                },
+                {
+                    "bucketKey": "5b",
+                    "sourceAAmount": null,
+                    "sourceBAmount": 120.0,
+                    "deltaAmount": -120.0
+                }
+            ],
+            "explainedBy": null,
+            "explainedAt": null,
+            "explanationReasonCode": null,
+            "explanationReasonText": null,
+            "resolvedBy": null,
+            "resolvedAt": null,
+            "relatedVatCorrectionId": null,
+            "administrationId": "adm-1",
+            "id": "AansluitingResult-new"
+        },
+        "reads": [
+            [
+                "AansluitingResult",
+                {
+                    "filters": {
+                        "reconciliationId": "aansl",
+                        "periodId": "2026-Q2"
+                    }
+                }
+            ],
+            [
+                "BtwAangifte",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "GLTransaction",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "GLLine",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "VatTariff",
+                {
+                    "limit": 500
+                }
+            ],
+            [
+                "VATDeclaration",
+                {
+                    "filters": {
+                        "returnId": "vatret-1"
+                    }
+                }
+            ],
+            [
+                "VatCorrection",
+                {
+                    "filters": {
+                        "originalVatReturnId": "vatret-1"
+                    }
+                }
+            ]
+        ]
+    },
+    "vatWithCorrection": {
+        "result": {
+            "reconciliationId": "aansl",
+            "periodId": "2026-Q2",
+            "computedAt": "<now>",
+            "sourceATotal": 4200.0,
+            "sourceBTotal": 4570.0,
+            "differenceCents": -37000,
+            "withinTolerance": false,
+            "status": "open",
+            "lineDeltas": [
+                {
+                    "bucketKey": "TOTAL",
+                    "sourceAAmount": 4200.0,
+                    "sourceBAmount": 4570.0,
+                    "deltaAmount": -370.0
+                },
+                {
+                    "bucketKey": "1a",
+                    "sourceAAmount": 4200.0,
+                    "sourceBAmount": 4450.0,
+                    "deltaAmount": -250.0
+                },
+                {
+                    "bucketKey": "5b",
+                    "sourceAAmount": null,
+                    "sourceBAmount": 120.0,
+                    "deltaAmount": -120.0
+                }
+            ],
+            "explainedBy": null,
+            "explainedAt": null,
+            "explanationReasonCode": null,
+            "explanationReasonText": null,
+            "resolvedBy": null,
+            "resolvedAt": null,
+            "relatedVatCorrectionId": "vc-1",
+            "administrationId": "adm-1",
+            "id": "AansluitingResult-new"
+        },
+        "reads": [
+            [
+                "AansluitingResult",
+                {
+                    "filters": {
+                        "reconciliationId": "aansl",
+                        "periodId": "2026-Q2"
+                    }
+                }
+            ],
+            [
+                "BtwAangifte",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "GLTransaction",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "GLLine",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "VatTariff",
+                {
+                    "limit": 500
+                }
+            ],
+            [
+                "VATDeclaration",
+                {
+                    "filters": {
+                        "returnId": "vatret-1"
+                    }
+                }
+            ],
+            [
+                "VatCorrection",
+                {
+                    "filters": {
+                        "originalVatReturnId": "vatret-1"
+                    }
+                }
+            ]
+        ]
+    },
+    "vatNoReturn": {
+        "result": {
+            "exception": [
+                "RuntimeException",
+                "No filed VATReturn found for administration adm-9, period 2026-Q2."
+            ]
+        },
+        "reads": [
+            [
+                "AansluitingResult",
+                {
+                    "filters": {
+                        "reconciliationId": "aansl",
+                        "periodId": "2026-Q2"
+                    }
+                }
+            ],
+            [
+                "BtwAangifte",
+                {
+                    "filters": {
+                        "administrationId": "adm-9"
+                    }
+                }
+            ]
+        ]
+    },
+    "arControl": {
+        "result": {
+            "reconciliationId": "aansl",
+            "periodId": "2026-Q2",
+            "computedAt": "<now>",
+            "sourceATotal": 17999.75,
+            "sourceBTotal": 18000.0,
+            "differenceCents": -25,
+            "withinTolerance": true,
+            "status": "resolved",
+            "lineDeltas": [
+                {
+                    "bucketKey": "TOTAL",
+                    "sourceAAmount": 17999.75,
+                    "sourceBAmount": 18000.0,
+                    "deltaAmount": -0.25
+                },
+                {
+                    "bucketKey": "inv-1",
+                    "sourceAAmount": null,
+                    "sourceBAmount": 10000.0,
+                    "deltaAmount": -10000.0
+                },
+                {
+                    "bucketKey": "inv-2",
+                    "sourceAAmount": null,
+                    "sourceBAmount": 8000.0,
+                    "deltaAmount": -8000.0
+                }
+            ],
+            "explainedBy": null,
+            "explainedAt": null,
+            "explanationReasonCode": null,
+            "explanationReasonText": null,
+            "resolvedBy": "system",
+            "resolvedAt": "<now>",
+            "relatedVatCorrectionId": null,
+            "administrationId": "adm-1",
+            "id": "AansluitingResult-new"
+        },
+        "reads": [
+            [
+                "AansluitingResult",
+                {
+                    "filters": {
+                        "reconciliationId": "aansl",
+                        "periodId": "2026-Q2"
+                    }
+                }
+            ],
+            [
+                "GLTransaction",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "GLLine",
+                {
+                    "filters": {
+                        "accountNumber": "1300"
+                    }
+                }
+            ],
+            [
+                "ARInvoice",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ]
+        ]
+    },
+    "apControl": {
+        "result": {
+            "reconciliationId": "aansl",
+            "periodId": "2026-Q2",
+            "computedAt": "<now>",
+            "sourceATotal": -9199.9,
+            "sourceBTotal": 9350.0,
+            "differenceCents": 15010,
+            "withinTolerance": false,
+            "status": "open",
+            "lineDeltas": [
+                {
+                    "bucketKey": "TOTAL",
+                    "sourceAAmount": -9199.9,
+                    "sourceBAmount": 9350.0,
+                    "deltaAmount": 150.1
+                },
+                {
+                    "bucketKey": "ap-1",
+                    "sourceAAmount": null,
+                    "sourceBAmount": 9350.0,
+                    "deltaAmount": 9350.0
+                }
+            ],
+            "explainedBy": null,
+            "explainedAt": null,
+            "explanationReasonCode": null,
+            "explanationReasonText": null,
+            "resolvedBy": null,
+            "resolvedAt": null,
+            "relatedVatCorrectionId": null,
+            "administrationId": "adm-1",
+            "id": "AansluitingResult-new"
+        },
+        "reads": [
+            [
+                "AansluitingResult",
+                {
+                    "filters": {
+                        "reconciliationId": "aansl",
+                        "periodId": "2026-Q2"
+                    }
+                }
+            ],
+            [
+                "GLTransaction",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "GLLine",
+                {
+                    "filters": {
+                        "accountNumber": "1600"
+                    }
+                }
+            ],
+            [
+                "APTransaction",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ]
+        ]
+    },
+    "unknownSubledger": {
+        "result": {
+            "reconciliationId": "aansl",
+            "periodId": "2026-Q2",
+            "computedAt": "<now>",
+            "sourceATotal": 17999.75,
+            "sourceBTotal": 0.0,
+            "differenceCents": 1799975,
+            "withinTolerance": false,
+            "status": "open",
+            "lineDeltas": [
+                {
+                    "bucketKey": "TOTAL",
+                    "sourceAAmount": 17999.75,
+                    "sourceBAmount": 0.0,
+                    "deltaAmount": 17999.75
+                }
+            ],
+            "explainedBy": null,
+            "explainedAt": null,
+            "explanationReasonCode": null,
+            "explanationReasonText": null,
+            "resolvedBy": null,
+            "resolvedAt": null,
+            "relatedVatCorrectionId": null,
+            "administrationId": "adm-1",
+            "id": "AansluitingResult-new"
+        },
+        "reads": [
+            [
+                "AansluitingResult",
+                {
+                    "filters": {
+                        "reconciliationId": "aansl",
+                        "periodId": "2026-Q2"
+                    }
+                }
+            ],
+            [
+                "GLTransaction",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ],
+            [
+                "GLLine",
+                {
+                    "filters": {
+                        "accountNumber": "1300"
+                    }
+                }
+            ]
+        ]
+    },
+    "noControlAccount": {
+        "result": {
+            "reconciliationId": "aansl",
+            "periodId": "2026-Q2",
+            "computedAt": "<now>",
+            "sourceATotal": 0.0,
+            "sourceBTotal": 18000.0,
+            "differenceCents": -1800000,
+            "withinTolerance": false,
+            "status": "open",
+            "lineDeltas": [
+                {
+                    "bucketKey": "TOTAL",
+                    "sourceAAmount": 0.0,
+                    "sourceBAmount": 18000.0,
+                    "deltaAmount": -18000.0
+                },
+                {
+                    "bucketKey": "inv-1",
+                    "sourceAAmount": null,
+                    "sourceBAmount": 10000.0,
+                    "deltaAmount": -10000.0
+                },
+                {
+                    "bucketKey": "inv-2",
+                    "sourceAAmount": null,
+                    "sourceBAmount": 8000.0,
+                    "deltaAmount": -8000.0
+                }
+            ],
+            "explainedBy": null,
+            "explainedAt": null,
+            "explanationReasonCode": null,
+            "explanationReasonText": null,
+            "resolvedBy": null,
+            "resolvedAt": null,
+            "relatedVatCorrectionId": null,
+            "administrationId": "adm-1",
+            "id": "AansluitingResult-new"
+        },
+        "reads": [
+            [
+                "AansluitingResult",
+                {
+                    "filters": {
+                        "reconciliationId": "aansl",
+                        "periodId": "2026-Q2"
+                    }
+                }
+            ],
+            [
+                "ARInvoice",
+                {
+                    "filters": {
+                        "administrationId": "adm-1"
+                    }
+                }
+            ]
+        ]
+    },
+    "noTransactionsForAdmin": {
+        "result": {
+            "reconciliationId": "aansl",
+            "periodId": "2026-Q2",
+            "computedAt": "<now>",
+            "sourceATotal": 18076.75,
+            "sourceBTotal": 0.0,
+            "differenceCents": 1807675,
+            "withinTolerance": false,
+            "status": "open",
+            "lineDeltas": [
+                {
+                    "bucketKey": "TOTAL",
+                    "sourceAAmount": 18076.75,
+                    "sourceBAmount": 0.0,
+                    "deltaAmount": 18076.75
+                }
+            ],
+            "explainedBy": null,
+            "explainedAt": null,
+            "explanationReasonCode": null,
+            "explanationReasonText": null,
+            "resolvedBy": null,
+            "resolvedAt": null,
+            "relatedVatCorrectionId": null,
+            "administrationId": "adm-empty",
+            "id": "AansluitingResult-new"
+        },
+        "reads": [
+            [
+                "AansluitingResult",
+                {
+                    "filters": {
+                        "reconciliationId": "aansl",
+                        "periodId": "2026-Q2"
+                    }
+                }
+            ],
+            [
+                "GLTransaction",
+                {
+                    "filters": {
+                        "administrationId": "adm-empty"
+                    }
+                }
+            ],
+            [
+                "GLLine",
+                {
+                    "filters": {
+                        "accountNumber": "1300"
+                    }
+                }
+            ],
+            [
+                "ARInvoice",
+                {
+                    "filters": {
+                        "administrationId": "adm-empty"
+                    }
+                }
+            ]
+        ]
+    }
+}
