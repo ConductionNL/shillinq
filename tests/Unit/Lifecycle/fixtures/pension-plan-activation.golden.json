@@ -1,0 +1,130 @@
+{
+    "storedPlan": {
+        "allowed": true,
+        "calls": [
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "id": "plan-1"
+                    }
+                }
+            ]
+        ]
+    },
+    "missingPlan": {
+        "allowed": false,
+        "calls": [
+            [
+                "findAll",
+                {
+                    "filters": {
+                        "id": "plan-404"
+                    }
+                }
+            ]
+        ]
+    },
+    "emptyId": {
+        "allowed": false,
+        "calls": []
+    },
+    "complete": {
+        "allowed": true,
+        "calls": []
+    },
+    "unknownType": {
+        "allowed": false,
+        "calls": []
+    },
+    "noType": {
+        "allowed": false,
+        "calls": []
+    },
+    "noFramework": {
+        "allowed": false,
+        "calls": []
+    },
+    "blankSalary": {
+        "allowed": false,
+        "calls": []
+    },
+    "dcNoAccrual": {
+        "allowed": true,
+        "calls": []
+    },
+    "throws": {
+        "allowed": false,
+        "calls": [
+            [
+                "log",
+                "error",
+                "PensionIas19Guard: plan activation check failed \u2014 denying transition (fail-closed)",
+                {
+                    "planId": "p",
+                    "exception": "Object of class stdClass could not be converted to string"
+                }
+            ]
+        ]
+    },
+    "DB-zero": {
+        "allowed": false,
+        "calls": []
+    },
+    "DB-negative": {
+        "allowed": false,
+        "calls": []
+    },
+    "DB-text": {
+        "allowed": false,
+        "calls": []
+    },
+    "DB-numericString": {
+        "allowed": true,
+        "calls": []
+    },
+    "DB-missing": {
+        "allowed": false,
+        "calls": []
+    },
+    "CDC-zero": {
+        "allowed": false,
+        "calls": []
+    },
+    "CDC-negative": {
+        "allowed": false,
+        "calls": []
+    },
+    "CDC-text": {
+        "allowed": false,
+        "calls": []
+    },
+    "CDC-numericString": {
+        "allowed": true,
+        "calls": []
+    },
+    "CDC-missing": {
+        "allowed": false,
+        "calls": []
+    },
+    "hybrid-zero": {
+        "allowed": false,
+        "calls": []
+    },
+    "hybrid-negative": {
+        "allowed": false,
+        "calls": []
+    },
+    "hybrid-text": {
+        "allowed": false,
+        "calls": []
+    },
+    "hybrid-numericString": {
+        "allowed": true,
+        "calls": []
+    },
+    "hybrid-missing": {
+        "allowed": false,
+        "calls": []
+    }
+}
