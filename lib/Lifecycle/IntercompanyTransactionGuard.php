@@ -198,21 +198,7 @@ class IntercompanyTransactionGuard {
 	 */
 	private function isPeriodOpen(string $administrationId, string $postingDate): bool {
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$register = $this->getRegisterSlug();
-
-			$years = $objectService
-				->setRegister(register: $register)
-				->setSchema(schema: 'FiscalYear')
-				->findAll(
-					[
-						'filters' => [
-							'administrationId' => $administrationId,
-							'startDate' => ['lte' => $postingDate],
-							'endDate' => ['gte' => $postingDate],
-						],
-					]
-				);
+			$years = $this->fiscalYearsCovering(administrationId: $administrationId, date: $postingDate);
 		} catch (\Throwable) {
 			// FiscalYear register not yet available (T1 state) — permit posting.
 			$this->logger->debug(
@@ -234,6 +220,31 @@ class IntercompanyTransactionGuard {
 		$year = reset($years);
 		return is_array($year) === true && ($year['state'] ?? '') === 'open';
 	}//end isPeriodOpen()
+
+	/**
+	 * The administration's FiscalYears whose period covers the date.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param string $date The ISO date.
+	 *
+	 * @return array<int|string, mixed> The fiscal years.
+	 */
+	private function fiscalYearsCovering(string $administrationId, string $date): array {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		return $objectService
+			->setRegister(register: $this->getRegisterSlug())
+			->setSchema(schema: 'FiscalYear')
+			->findAll(
+				[
+					'filters' => [
+						'administrationId' => $administrationId,
+						'startDate' => ['lte' => $date],
+						'endDate' => ['gte' => $date],
+					],
+				]
+			);
+
+	}//end fiscalYearsCovering()
 
 	/**
 	 * Resolve an IntercompanyTransaction object by id via the ObjectService.
