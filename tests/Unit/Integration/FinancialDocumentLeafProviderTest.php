@@ -182,6 +182,13 @@ final class FinancialDocumentLeafProviderTest extends TestCase {
 		self::assertSame('Finance', $provider->getGroup());
 		self::assertSame('shillinq', $provider->getRequiredApp());
 		self::assertSame('app-local', $provider->getStorageStrategy());
+		self::assertSame('Financial documents', $provider->getLabel());
+		self::assertSame('FileDocumentMultipleOutline', $provider->getIcon());
+		self::assertNull($provider->getOpenConnectorSource());
+		self::assertTrue($provider->isEnabled());
+		self::assertNull($provider->requiresPermission());
+		self::assertSame([], $provider->authRequirements());
+		self::assertSame(['status' => 'ok', 'leaf' => 'shillinq-financial-documents'], $provider->health());
 	}//end testTheLeafNamesItself()
 
 	public function testEveryKindOnTheObjectIsListedAndNothingElse(): void {

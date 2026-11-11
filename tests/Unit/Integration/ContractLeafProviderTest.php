@@ -262,4 +262,49 @@ final class ContractLeafProviderTest extends TestCase {
 		self::assertFalse($contract['incurredCostComplete']);
 		self::assertSame(2, $contract['incurredCostUnreadableLinks']);
 	}//end testAnIncompleteRollUpIsReportedAsIncomplete()
+
+	/**
+	 * Pins the metadata every read-only finance leaf answers.
+	 *
+	 * @return void
+	 */
+	public function testTheLeafAnswersTheSharedFinanceMetadata(): void {
+		$provider = $this->makeProvider([]);
+
+		self::assertSame('Contract', $provider->getLabel());
+		self::assertSame('FileDocumentOutline', $provider->getIcon());
+		self::assertSame('Finance', $provider->getGroup());
+		self::assertSame('shillinq', $provider->getRequiredApp());
+		self::assertNull($provider->getOpenConnectorSource());
+		self::assertTrue($provider->isEnabled());
+		self::assertNull($provider->requiresPermission());
+		self::assertSame([], $provider->authRequirements());
+		self::assertSame(['status' => 'ok', 'leaf' => 'shillinq-contracts'], $provider->health());
+	}//end testTheLeafAnswersTheSharedFinanceMetadata()
+
+	/**
+	 * Rows that are not records, rows without links, and links that are not
+	 * records are skipped; a match on a later link counts once.
+	 *
+	 * @return void
+	 */
+	public function testMalformedRowsAndLinksAreSkippedAndALaterLinkMatchesOnce(): void {
+		$later = $this->contract(['id' => 'c-2']);
+		$later['linkedObjects'] = [
+			'not-a-link',
+			['register' => 'dossiq', 'schema' => 'Zaak', 'id' => 'zaak-8'],
+			['register' => 'dossiq', 'schema' => 'Zaak', 'id' => 'zaak-7'],
+			['register' => 'dossiq', 'schema' => 'Zaak', 'id' => 'zaak-7'],
+		];
+		$noLinks = $this->contract(['id' => 'c-3']);
+		unset($noLinks['linkedObjects']);
+		$stringLinks = $this->contract(['id' => 'c-4', 'linkedObjects' => 'dossiq|Zaak|zaak-7']);
+		$partial = $this->contract(['id' => 'c-5', 'linkedObjects' => [['register' => 'dossiq', 'id' => 'zaak-7']]]);
+		$provider = $this->makeProvider(['not-a-row', $noLinks, $stringLinks, $partial, $later]);
+
+		$items = $provider->list('dossiq', 'Zaak', 'zaak-7')['items'];
+
+		self::assertSame(['c-2'], array_column($items, 'id'));
+		self::assertSame(1, $provider->list('dossiq', '', 'zaak-7')['total']);
+	}//end testMalformedRowsAndLinksAreSkippedAndALaterLinkMatchesOnce()
 }//end class
