@@ -1,0 +1,71 @@
+{
+    "balanced": [
+        false,
+        [
+            [
+                "info",
+                "RuleComplianceGuard: GLTransaction gl-1 violates gl-period-locking (Period-close integrity) — Once an accounting period is closed, no further postings shall be made to it without a controlled, logged reopening.",
+                []
+            ],
+            [
+                "info",
+                "RuleComplianceGuard: GLTransaction gl-1 violates eu-vat-2006112-art248a-access (VAT Directive 2006\/112\/EC art. 248a) — Tax authorities may require, for control purposes, that invoices stored by electronic means be made available without undue delay.",
+                []
+            ],
+            [
+                "info",
+                "RuleComplianceGuard: GLTransaction gl-1 violates eu-saft-oecd-audit-file (OECD SAF-T standard) — Where a Member State mandates SAF-T, taxpayers shall be able to export accounting data (general ledger, AR\/AP, invoices, payments, master files) in the standardised OECD Standard Audit File for Tax format on request.",
+                []
+            ],
+            [
+                "warning",
+                "RuleComplianceGuard: GLTransaction gl-1 violates gl-double-entry-balanced (Double-entry bookkeeping principle) — Every transaction shall be recorded with equal total debits and credits so that the ledger remains in balance.",
+                []
+            ]
+        ]
+    ],
+    "unbalanced": [
+        false,
+        [
+            [
+                "warning",
+                "RuleComplianceGuard: GLTransaction gl-1 violates ledger-double-entry-balance (Double-entry bookkeeping principle (general)) — Every journal entry must balance: total debits must equal total credits.",
+                []
+            ],
+            [
+                "warning",
+                "RuleComplianceGuard: GLTransaction gl-1 violates gl-double-entry-balanced (Double-entry bookkeeping principle) — Every transaction shall be recorded with equal total debits and credits so that the ledger remains in balance.",
+                []
+            ],
+            [
+                "warning",
+                "RuleComplianceGuard: GLTransaction gl-1 violates gl-trial-balance-reconciles (Trial-balance integrity) — The sum of all account balances in the general ledger shall reconcile to zero (debits equal credits) at any reporting date.",
+                []
+            ],
+            [
+                "info",
+                "RuleComplianceGuard: GLTransaction gl-1 violates gl-period-locking (Period-close integrity) — Once an accounting period is closed, no further postings shall be made to it without a controlled, logged reopening.",
+                []
+            ],
+            [
+                "info",
+                "RuleComplianceGuard: GLTransaction gl-1 violates eu-vat-2006112-art248a-access (VAT Directive 2006\/112\/EC art. 248a) — Tax authorities may require, for control purposes, that invoices stored by electronic means be made available without undue delay.",
+                []
+            ],
+            [
+                "info",
+                "RuleComplianceGuard: GLTransaction gl-1 violates eu-saft-oecd-audit-file (OECD SAF-T standard) — Where a Member State mandates SAF-T, taxpayers shall be able to export accounting data (general ledger, AR\/AP, invoices, payments, master files) in the standardised OECD Standard Audit File for Tax format on request.",
+                []
+            ],
+            [
+                "warning",
+                "RuleComplianceGuard: GLTransaction gl-1 violates gl-double-entry-balanced (Double-entry bookkeeping principle) — Every transaction shall be recorded with equal total debits and credits so that the ledger remains in balance.",
+                []
+            ]
+        ]
+    ],
+    "noId": [
+        false,
+        []
+    ]
+}
