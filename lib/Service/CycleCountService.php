@@ -86,22 +86,6 @@ class CycleCountService {
 	public const VARIANCE_REASON = 'cycle-count-variance';
 
 	/**
-	 * The counted-side fields of a freshly snapshotted line, all still empty,
-	 * in payload order.
-	 *
-	 * @var array<string,mixed>
-	 */
-	private const UNCOUNTED_LINE_FIELDS = [
-		'countedValue' => null,
-		'quantityVariance' => null,
-		'valueVariance' => null,
-		'requiresReason' => false,
-		'reasonCode' => null,
-		'notes' => null,
-		'adjustmentStockMoveId' => null,
-	];
-
-	/**
 	 * Construct the service.
 	 *
 	 * @param IAppConfig $appConfig App config — used to read register
@@ -162,7 +146,7 @@ class CycleCountService {
 	 * @return bool False only when required fields are missing.
 	 */
 	private function snapshotCount(array $count): bool {
-		$scope = CycleCountScope::fromCount(count: $count);
+		$scope = new CycleCountScope(count: $count);
 		if ($scope->isComplete() === false) {
 			$this->logSnapshot(message: 'CycleCountService: snapshot denied — required fields missing', countId: ($count['countId'] ?? null));
 			return false;
@@ -193,11 +177,11 @@ class CycleCountService {
 		}
 
 		$sequence = 0;
-		foreach ($this->countableStock(stockRows: $stockRows) as $stock) {
+		foreach ($this->lines()->countable(stockRows: $stockRows) as $stock) {
 			$sequence++;
 			// The line id leads the payload, ahead of the fields read from the stock row.
 			$lineId = sprintf('%s-%03d', $scope->countId, $sequence);
-			$this->saveRow(schema: 'InventoryCycleCountLine', payload: (['lineId' => $lineId] + $this->lineFromStock(stock: $stock, scope: $scope)));
+			$this->saveRow(schema: 'InventoryCycleCountLine', payload: (['lineId' => $lineId] + $this->lines()->forStock(stock: $stock, scope: $scope)));
 		}
 	}//end snapshotStock()
 
@@ -212,89 +196,6 @@ class CycleCountService {
 	private function logSnapshot(string $message, mixed $countId): void {
 		$this->logger->info($message, ['countId' => $countId]);
 	}//end logSnapshot()
-
-	/**
-	 * The stock rows a line can be made for: arrays with a sku and a location.
-	 *
-	 * @param array<int,mixed> $stockRows In-scope stock rows.
-	 *
-	 * @return list<array<string,mixed>>
-	 */
-	private function countableStock(array $stockRows): array {
-		$countable = [];
-		foreach ($stockRows as $stock) {
-			if ($this->isCountable(stock: $stock) === true) {
-				$countable[] = $stock;
-			}
-		}
-
-		return $countable;
-	}//end countableStock()
-
-	/**
-	 * Whether a stock row is an array carrying a non-empty sku and location.
-	 *
-	 * @param mixed $stock One stock row.
-	 *
-	 * @return bool
-	 */
-	private function isCountable(mixed $stock): bool {
-		return is_array($stock) === true
-			&& (string)($stock['sku'] ?? '') !== ''
-			&& (string)($stock['locationId'] ?? '') !== '';
-	}//end isCountable()
-
-	/**
-	 * The line payload for one stock row (without its line id): the expected
-	 * quantity and value from the snapshot, every counted field still empty.
-	 *
-	 * @param array<string,mixed> $stock A countable stock row.
-	 * @param CycleCountScope     $scope The count being snapshotted.
-	 *
-	 * @return array<string,mixed>
-	 */
-	private function lineFromStock(array $stock, CycleCountScope $scope): array {
-		$unitCost = $this->numericOrZero(value: $stock['unitCost'] ?? null);
-		$expectedQ = $this->numericOrZero(value: $stock['quantity'] ?? null);
-		return [
-			'countId' => $scope->countId,
-			'sku' => (string)$stock['sku'],
-			'productName' => $this->productName(stock: $stock),
-			'locationId' => (string)$stock['locationId'],
-			'expectedQuantity' => $expectedQ,
-			'countedQuantity' => null,
-			'unitCost' => $unitCost,
-			'expectedValue' => $this->expectedValue(quantity: $expectedQ, unitCost: $unitCost),
-		] + self::UNCOUNTED_LINE_FIELDS + ['administrationId' => $scope->administrationId];
-	}//end lineFromStock()
-
-	/**
-	 * The stock row's product name as a string, or null when it has none.
-	 *
-	 * @param array<string,mixed> $stock A stock row.
-	 *
-	 * @return string|null
-	 */
-	private function productName(array $stock): ?string {
-		if (isset($stock['productName']) === true) {
-			return (string)$stock['productName'];
-		}
-
-		return null;
-	}//end productName()
-
-	/**
-	 * Expected value of a snapshot line: quantity x unit cost in integer cents.
-	 *
-	 * @param float $quantity The expected quantity.
-	 * @param float $unitCost The unit cost.
-	 *
-	 * @return float
-	 */
-	private function expectedValue(float $quantity, float $unitCost): float {
-		$expectedValCts = (int)round(($this->cents(value: $quantity) * $this->cents(value: $unitCost)) / 100);
-		return $this->fromCents(cents: $expectedValCts);
-	}//end expectedValue()
 
 	/**
 	 * Save one object in a schema of the register.
@@ -484,13 +385,13 @@ class CycleCountService {
 	 * @return int|null The variance in cents, or null when un-entered.
 	 */
 	private function lineVarianceCents(array $line): ?int {
-		$countedQ = $this->numericOrNull(value: $line['countedQuantity'] ?? null);
-		$expectedQ = $this->numericOrNull(value: $line['expectedQuantity'] ?? null);
+		$countedQ = $this->lines()->numericOrNull(value: $line['countedQuantity'] ?? null);
+		$expectedQ = $this->lines()->numericOrNull(value: $line['expectedQuantity'] ?? null);
 		if ($countedQ === null || $expectedQ === null) {
 			return null;
 		}
 
-		return ($this->cents(value: $countedQ) - $this->cents(value: $expectedQ));
+		return ($this->lines()->cents(value: $countedQ) - $this->lines()->cents(value: $expectedQ));
 	}//end lineVarianceCents()
 
 	/**
@@ -546,8 +447,8 @@ class CycleCountService {
 		$quantities = [
 			'movementNumber' => sprintf('SM-CC-%s-%03d', $run->countId, $run->sequence),
 			'itemId' => (string)($line['sku'] ?? ''),
-			'quantity' => abs($this->fromCents(cents: $run->varianceCents)),
-			'unitCost' => $this->numericOrZero(value: $line['unitCost'] ?? null),
+			'quantity' => abs($this->lines()->fromCents(cents: $run->varianceCents)),
+			'unitCost' => $this->lines()->numericOrZero(value: $line['unitCost'] ?? null),
 		];
 
 		return $quantities
@@ -944,6 +845,15 @@ class CycleCountService {
 	}//end rowAsArray()
 
 	/**
+	 * The stateless helper that builds snapshot lines and does the cent arithmetic.
+	 *
+	 * @return CycleCountLines
+	 */
+	private function lines(): CycleCountLines {
+		return new CycleCountLines();
+	}//end lines()
+
+	/**
 	 * Resolve the OpenRegister register slug, defaulting to 'shillinq'.
 	 *
 	 * @return string
@@ -966,61 +876,4 @@ class CycleCountService {
 		return gmdate('Y-m-d\TH:i:s\Z');
 	}//end now()
 
-	/**
-	 * Convert a money/quantity value to integer cents (multipleOf 0.01).
-	 *
-	 * @param mixed $value Schema number (float or int).
-	 *
-	 * @return int
-	 */
-	private function cents(mixed $value): int {
-		if (is_int($value) === true) {
-			return ($value * 100);
-		}
-
-		return (int)round(((float)$value) * 100);
-	}//end cents()
-
-	/**
-	 * Convert integer cents back to a 2-decimal float.
-	 *
-	 * @param int $cents Integer cents.
-	 *
-	 * @return float
-	 */
-	private function fromCents(int $cents): float {
-		return ((float)$cents / 100.0);
-	}//end fromCents()
-
-	/**
-	 * Coerce a schema value to a float or return null when missing / non-numeric.
-	 *
-	 * @param mixed $value Schema value.
-	 *
-	 * @return float|null
-	 */
-	private function numericOrNull(mixed $value): ?float {
-		// Ints, floats and numeric strings are exactly what is_numeric() accepts.
-		if (is_numeric($value) === false) {
-			return null;
-		}
-
-		return (float)$value;
-	}//end numericOrNull()
-
-	/**
-	 * Coerce a schema value to a float, returning 0.0 when missing.
-	 *
-	 * @param mixed $value Schema value.
-	 *
-	 * @return float
-	 */
-	private function numericOrZero(mixed $value): float {
-		$coerced = $this->numericOrNull(value: $value);
-		if ($coerced === null) {
-			return 0.0;
-		}
-
-		return $coerced;
-	}//end numericOrZero()
 }//end class

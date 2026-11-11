@@ -69,26 +69,13 @@ final class CycleCountScope {
 	 *
 	 * @param array<string,mixed> $count The InventoryCycleCount payload.
 	 */
-	private function __construct(array $count) {
+	public function __construct(array $count) {
 		$this->countId = (string)($count['countId'] ?? '');
 		$this->administrationId = (string)($count['administrationId'] ?? '');
 		$this->countType = (string)($count['countType'] ?? '');
 		$this->locationFilter = (string)($count['locationFilter'] ?? '');
 		$this->categoryFilter = (string)($count['categoryFilter'] ?? '');
 	}//end __construct()
-
-	/**
-	 * Read the scope from an InventoryCycleCount payload.
-	 *
-	 * @param array<string,mixed> $count The InventoryCycleCount payload.
-	 *
-	 * @return self
-	 *
-	 * @spec openspec/changes/inventory-cycle-count/tasks.md#task-10
-	 */
-	public static function fromCount(array $count): self {
-		return new self(count: $count);
-	}//end fromCount()
 
 	/**
 	 * Whether the count id, administration and count type are all present.
