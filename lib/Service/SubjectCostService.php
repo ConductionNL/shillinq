@@ -123,7 +123,32 @@ class SubjectCostService {
 		string $period = '',
 	): array {
 		$rows = $this->hourRows(subjectApp: $subjectApp, subjectId: $subjectId);
+		$scoped = $this->scopedRows(rows: $rows, administrationIds: $administrationIds);
 
+		$aggregate = $this->aggregator->aggregate(
+			hourRows: $scoped['inScope'],
+			rates: $this->rates->ratesFor(personIds: self::personIds(rows: $scoped['inScope']), period: $period)
+		);
+
+		return array_merge(
+			[
+				'subjectApp' => $subjectApp,
+				'subjectId' => $subjectId,
+				'unscopedRowsExcluded' => $scoped['unscoped'],
+			],
+			$aggregate
+		);
+	}//end costFor()
+
+	/**
+	 * The rows the caller may see, and the count of rows without an administration.
+	 *
+	 * @param array<int, array<string, mixed>> $rows              The subject's hour rows.
+	 * @param array<int, string>|null          $administrationIds Readable administrations, or null for all.
+	 *
+	 * @return array{inScope: array<int, array<string, mixed>>, unscoped: int}
+	 */
+	private function scopedRows(array $rows, ?array $administrationIds): array {
 		$inScope = [];
 		$unscoped = 0;
 		foreach ($rows as $row) {
@@ -136,37 +161,47 @@ class SubjectCostService {
 				continue;
 			}
 
-			if ($administrationIds !== null
-				&& in_array($administrationId, $administrationIds, true) === false
-			) {
-				continue;
+			if (self::isReadable(administrationId: $administrationId, administrationIds: $administrationIds) === true) {
+				$inScope[] = $row;
 			}
-
-			$inScope[] = $row;
 		}//end foreach
 
+		return ['inScope' => $inScope, 'unscoped' => $unscoped];
+
+	}//end scopedRows()
+
+	/**
+	 * Whether the caller may read an administration: always for an unrestricted read.
+	 *
+	 * @param string                  $administrationId  The row's administration.
+	 * @param array<int, string>|null $administrationIds Readable administrations, or null for all.
+	 *
+	 * @return bool
+	 */
+	private static function isReadable(string $administrationId, ?array $administrationIds): bool {
+		return $administrationIds === null || in_array($administrationId, $administrationIds, true) === true;
+
+	}//end isReadable()
+
+	/**
+	 * The non-blank person ids of the rows, in order.
+	 *
+	 * @param array<int, array<string, mixed>> $rows The in-scope rows.
+	 *
+	 * @return array<int, string>
+	 */
+	private static function personIds(array $rows): array {
 		$personIds = [];
-		foreach ($inScope as $row) {
+		foreach ($rows as $row) {
 			$personId = trim((string)($row['personId'] ?? ''));
 			if ($personId !== '') {
 				$personIds[] = $personId;
 			}
 		}
 
-		$aggregate = $this->aggregator->aggregate(
-			hourRows: $inScope,
-			rates: $this->rates->ratesFor(personIds: $personIds, period: $period)
-		);
+		return $personIds;
 
-		return array_merge(
-			[
-				'subjectApp' => $subjectApp,
-				'subjectId' => $subjectId,
-				'unscopedRowsExcluded' => $unscoped,
-			],
-			$aggregate
-		);
-	}//end costFor()
+	}//end personIds()
 
 	/**
 	 * The hour rows booked against one subject, or [] when unreadable.
@@ -209,26 +244,33 @@ class SubjectCostService {
 			return [];
 		}
 
+		return $this->appHourRows(rows: $rows, subjectApp: $subjectApp);
+	}//end hourRows()
+
+	/**
+	 * The rows of the asked app, normalised to person, hours and administration.
+	 *
+	 * @param array<int, mixed> $rows       The rows the register returned.
+	 * @param string            $subjectApp The app the caller asked about.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function appHourRows(array $rows, string $subjectApp): array {
 		$normalised = [];
 		foreach ($rows as $row) {
 			$row = $this->toArray(row: $row);
-			if ($row === null) {
-				continue;
+			if ($row !== null && $this->belongsToApp(row: $row, subjectApp: $subjectApp) === true) {
+				$normalised[] = [
+					'personId' => trim((string)($row['employeeId'] ?? '')),
+					'hours' => ($row['hours'] ?? null),
+					'administrationId' => ($row['administrationId'] ?? null),
+				];
 			}
-
-			if ($this->belongsToApp(row: $row, subjectApp: $subjectApp) === false) {
-				continue;
-			}
-
-			$normalised[] = [
-				'personId' => trim((string)($row['employeeId'] ?? '')),
-				'hours' => ($row['hours'] ?? null),
-				'administrationId' => ($row['administrationId'] ?? null),
-			];
 		}
 
 		return $normalised;
-	}//end hourRows()
+
+	}//end appHourRows()
 
 	/**
 	 * Whether an hour row belongs to the app the caller asked about.

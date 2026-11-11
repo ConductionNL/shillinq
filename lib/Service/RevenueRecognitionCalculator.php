@@ -148,49 +148,59 @@ class RevenueRecognitionCalculator {
 	 */
 	public function allocateRelativeSsp(array $pos, float $totalPrice): array {
 		$totalCents = $this->toCents(amount: $totalPrice);
-		$sspCents = [];
-		$sumSsp = 0;
-		foreach ($pos as $po) {
-			$cents = $this->toCents(amount: $po['ssp']);
-			$sspCents[$po['poId']] = $cents;
-			$sumSsp += $cents;
-		}
-
+		$sumSsp = array_sum(array_map(fn (array $po): int => $this->toCents(amount: $po['ssp']), $pos));
 		if ($sumSsp === 0) {
-			$zero = [];
-			foreach ($pos as $po) {
-				$zero[$po['poId']] = 0.0;
-			}
-
-			return $zero;
+			return array_fill_keys(array_column($pos, 'poId'), 0.0);
 		}
 
-		$allocated = [];
-		$assigned = 0;
+		$sspCents = $this->sspCentsByPo(pos: $pos);
+		$allocated = array_map(static fn (int $cents): int => (int)round($cents / $sumSsp * $totalCents), $sspCents);
+
+		// Assign the rounding remainder to the largest-SSP PO so the sum ties back.
+		$largestPo = $this->largestSspPo(sspCents: $sspCents);
+		if ($largestPo !== '') {
+			$allocated[$largestPo] += ($totalCents - array_sum($allocated));
+		}
+
+		return array_map(fn (int $cents): float => $this->fromCents(cents: $cents), $allocated);
+	}//end allocateRelativeSsp()
+
+	/**
+	 * Each PO's SSP in cents, keyed by poId (a repeated poId keeps its last SSP;
+	 * a numeric poId becomes an int key).
+	 *
+	 * @param array<int,array{poId:string,ssp:float}> $pos POs with their SSPs.
+	 *
+	 * @return array<int|string,int>
+	 */
+	private function sspCentsByPo(array $pos): array {
+		$sspCents = [];
+		foreach ($pos as $po) {
+			$sspCents[$po['poId']] = $this->toCents(amount: $po['ssp']);
+		}
+
+		return $sspCents;
+	}//end sspCentsByPo()
+
+	/**
+	 * The poId with the largest SSP, the first one on a tie; '' when none.
+	 *
+	 * @param array<int|string,int> $sspCents poId => SSP in cents.
+	 *
+	 * @return int|string
+	 */
+	private function largestSspPo(array $sspCents): int|string {
 		$largestPo = '';
 		$largestSsp = -1;
 		foreach ($sspCents as $poId => $cents) {
-			$share = (int)round($cents / $sumSsp * $totalCents);
-			$allocated[$poId] = $share;
-			$assigned += $share;
 			if ($cents > $largestSsp) {
 				$largestSsp = $cents;
 				$largestPo = $poId;
 			}
 		}
 
-		// Assign the rounding remainder to the largest-SSP PO so the sum ties back.
-		if ($largestPo !== '') {
-			$allocated[$largestPo] += ($totalCents - $assigned);
-		}
-
-		$result = [];
-		foreach ($allocated as $poId => $cents) {
-			$result[$poId] = $this->fromCents(cents: $cents);
-		}
-
-		return $result;
-	}//end allocateRelativeSsp()
+		return $largestPo;
+	}//end largestSspPo()
 
 	/**
 	 * Allocate by the residual method when one PO's SSP is uncertain (REQ-IFRS15-004).

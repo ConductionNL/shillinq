@@ -260,4 +260,87 @@ class DeadlineCalendarSettingsControllerTest extends TestCase {
 		self::assertSame('failed', $response->getData()['publication']);
 
 	}//end testUpdateFailSoftWhenPublicationDegrades()
+	/**
+	 * update() skips malformed and unknown entries, casts the values, writes
+	 * before it publishes and reads the saved settings after; a degraded
+	 * publication is logged once. Refusal bodies are pinned too.
+	 *
+	 * @return void
+	 */
+	public function testUpdateOrderCastsAndLog(): void {
+		$this->actAs(uid: 'alice');
+		$this->request->method('getParam')->willReturn(
+			[
+				0 => ['enabled' => true],
+				'filing' => 'not-an-array',
+				'bogus' => ['enabled' => true],
+				'payment-run' => ['enabled' => null, 'leadDays' => '9'],
+				'ar-due' => ['leadDays' => 3],
+			]
+		);
+		$calls = [];
+		$this->calendarService->method('setCategoryEnabled')->willReturnCallback(
+			function (string $userId, string $category, bool $enabled) use (&$calls): void {
+				$calls[] = 'enabled:' . $category . ':' . var_export($enabled, true);
+			}
+		);
+		$this->calendarService->method('setLeadTimeDays')->willReturnCallback(
+			function (string $userId, string $category, int $days) use (&$calls): void {
+				$calls[] = 'lead:' . $category . ':' . $days;
+			}
+		);
+		$this->calendarService->method('publishForUser')->willReturnCallback(
+			function (string $userId) use (&$calls): array {
+				$calls[] = 'publish:' . $userId;
+				return ['status' => 'failed', 'published' => 0, 'removed' => 0];
+			}
+		);
+		$this->calendarService->method('isCategoryEnabled')->willReturnCallback(
+			function (string $userId, string $category) use (&$calls): bool {
+				$calls[] = 'read:' . $category;
+				return true;
+			}
+		);
+		$this->calendarService->method('leadTimeDays')->willReturn(4);
+		// phpcs:disable CustomSniffs.Functions.NamedParameters
+		$logger = $this->createMock(LoggerInterface::class);
+		// phpcs:enable CustomSniffs.Functions.NamedParameters
+		$logger->expects(self::once())->method('info')->with(
+			'DeadlineCalendarSettingsController: post-save publication degraded',
+			['userId' => 'alice']
+		);
+		$controller = new DeadlineCalendarSettingsController(
+			request: $this->request,
+			userSession: $this->userSession,
+			calendarService: $this->calendarService,
+			logger: $logger,
+		);
+
+		$data = $controller->update()->getData();
+
+		$reads = array_map(static fn (string $c): string => 'read:' . $c, ComplianceDeadlineCalendarService::CATEGORIES);
+		self::assertSame(
+			array_merge(['enabled:payment-run:false', 'lead:payment-run:9', 'lead:ar-due:3', 'publish:alice'], $reads),
+			$calls
+		);
+		self::assertSame(ComplianceDeadlineCalendarService::CATEGORIES, array_keys($data['categories']));
+		self::assertSame(['enabled' => true, 'leadDays' => 4], $data['categories']['filing']);
+		self::assertSame('failed', $data['publication']);
+
+	}//end testUpdateOrderCastsAndLog()
+
+	/**
+	 * The 401 and 400 bodies.
+	 *
+	 * @return void
+	 */
+	public function testRefusalBodies(): void {
+		$this->userSession->method('getUser')->willReturnOnConsecutiveCalls(null, null, $this->createMock(IUser::class));
+		$this->request->method('getParam')->willReturn(null);
+
+		self::assertSame(['message' => 'Not logged in'], $this->controller->index()->getData());
+		self::assertSame(['message' => 'Not logged in'], $this->controller->update()->getData());
+		self::assertSame(['message' => 'categories must be an object'], $this->controller->update()->getData());
+
+	}//end testRefusalBodies()
 }//end class

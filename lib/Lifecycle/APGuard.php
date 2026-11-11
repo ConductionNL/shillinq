@@ -78,8 +78,6 @@ class APGuard {
 	 */
 	public function isInvoiceNumberUnique(array $transaction): bool {
 		$invoiceNumber = trim((string)($transaction['invoiceNumber'] ?? ''));
-		$vendorId = (string)($transaction['vendorId'] ?? '');
-		$administrationId = (string)($transaction['administrationId'] ?? '');
 		if ($invoiceNumber === '') {
 			// No invoice number recorded yet — nothing to dedupe against;
 			// the schema's own `required` validation gates emptiness.
@@ -87,38 +85,7 @@ class APGuard {
 		}
 
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$existing = $objectService
-				->setRegister($this->register())
-				->setSchema('APTransaction')
-				->findAll(
-					[
-						'filters' => [
-							'invoiceNumber' => $invoiceNumber,
-							'vendorId' => $vendorId,
-							'administrationId' => $administrationId,
-						],
-					]
-				);
-
-			if (is_array($existing) === false || $existing === []) {
-				return true;
-			}
-
-			$currentId = ($transaction['id'] ?? null);
-			foreach ($existing as $candidate) {
-				if ($currentId !== null && ($candidate['id'] ?? null) === $currentId) {
-					continue;
-				}
-
-				$this->logger->info(
-					'APGuard: duplicate vendor invoice number rejected',
-					['vendorId' => $vendorId, 'administrationId' => $administrationId, 'invoiceNumber' => $invoiceNumber]
-				);
-				return false;
-			}
-
-			return true;
+			return $this->noDuplicateNumber(transaction: $transaction);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'APGuard: isInvoiceNumberUnique check failed — denying receive (fail-closed)',
@@ -128,6 +95,74 @@ class APGuard {
 		}//end try
 
 	}//end isInvoiceNumberUnique()
+
+	/**
+	 * Whether no other APTransaction carries the vendor's invoice number.
+	 *
+	 * @param array<string, mixed> $transaction The APTransaction being received.
+	 *
+	 * @return bool False, with the duplicate logged, when another one does.
+	 */
+	private function noDuplicateNumber(array $transaction): bool {
+		$filters = [
+			'invoiceNumber' => trim((string)($transaction['invoiceNumber'] ?? '')),
+			'vendorId' => (string)($transaction['vendorId'] ?? ''),
+			'administrationId' => (string)($transaction['administrationId'] ?? ''),
+		];
+		$existing = $this->sameNumbered(filters: $filters);
+		if ($this->anyOtherRecord(transaction: $transaction, existing: $existing) === false) {
+			return true;
+		}
+
+		$this->logger->info(
+			'APGuard: duplicate vendor invoice number rejected',
+			['vendorId' => $filters['vendorId'], 'administrationId' => $filters['administrationId'], 'invoiceNumber' => $filters['invoiceNumber']]
+		);
+		return false;
+
+	}//end noDuplicateNumber()
+
+	/**
+	 * The APTransactions matching the invoice-number filters; empty on a non-array answer.
+	 *
+	 * @param array<string, string> $filters Invoice number, vendor and administration.
+	 *
+	 * @return array<int|string, mixed> The matching transactions.
+	 */
+	private function sameNumbered(array $filters): array {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$existing = $objectService
+			->setRegister($this->register())
+			->setSchema('APTransaction')
+			->findAll(['filters' => $filters]);
+
+		if (is_array($existing) === false) {
+			return [];
+		}
+
+		return $existing;
+
+	}//end sameNumbered()
+
+	/**
+	 * Whether any matching record is not the transaction itself.
+	 *
+	 * @param array<string, mixed> $transaction The APTransaction being received.
+	 * @param array<int|string, mixed> $existing The matching transactions.
+	 *
+	 * @return bool True when another record carries the number.
+	 */
+	private function anyOtherRecord(array $transaction, array $existing): bool {
+		$currentId = ($transaction['id'] ?? null);
+		foreach ($existing as $candidate) {
+			if ($currentId === null || ($candidate['id'] ?? null) !== $currentId) {
+				return true;
+			}
+		}
+
+		return false;
+
+	}//end anyOtherRecord()
 
 	/**
 	 * Precondition for `writeOff`: `writeOffReason` must be set.

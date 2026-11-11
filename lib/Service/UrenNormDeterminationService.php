@@ -77,21 +77,12 @@ final class UrenNormDeterminationService {
 	 */
 	public function bouwSeedRecord(array $profiel): array {
 		$norm = $this->guard->bepaalDoelNorm(profiel: $profiel);
-		$basis = $this->guard->bepaalNormGrondslag(purposeNorm: $norm);
-		$grotendeels = $this->guard->bepaalGrotendeelsCriterium(
-			enterpriseHours: (float)($profiel['ondernemingsUrenJTD'] ?? 0.0),
-			employmentHours: (float)($profiel['loondienstUrenJTD'] ?? 0.0)
-		);
-
-		$seed = [
-			'administrationId' => (string)($profiel['administrationId'] ?? ''),
-			'enterpriseId' => (string)($profiel['enterpriseId'] ?? ''),
-			'calendarYear' => (int)($profiel['calendarYear'] ?? (int)gmdate('Y')),
+		$seed = $this->seedIdentity(profiel: $profiel) + [
 			'purposeNorm' => $norm,
-			'normBasis' => $basis,
+			'normBasis' => $this->guard->bepaalNormGrondslag(purposeNorm: $norm),
 			'currentHours' => 0.0,
 			'thresholdStatus' => 'ON_RATE',
-			'largelyCriterium' => $grotendeels,
+			'largelyCriterium' => $this->grotendeels(profiel: $profiel),
 		];
 
 		$this->logger->info(
@@ -100,10 +91,39 @@ final class UrenNormDeterminationService {
 				'enterpriseId' => $seed['enterpriseId'],
 				'calendarYear' => $seed['calendarYear'],
 				'purposeNorm' => $norm,
-				'grotendeels' => $grotendeels,
+				'grotendeels' => $seed['largelyCriterium'],
 			]
 		);
 
 		return $seed;
 	}//end bouwSeedRecord()
+
+	/**
+	 * The administration, onderneming and year a seed is for; the year defaults to this year.
+	 *
+	 * @param array<string, mixed> $profiel Entrepreneur profile.
+	 *
+	 * @return array{administrationId: string, enterpriseId: string, calendarYear: int}
+	 */
+	private function seedIdentity(array $profiel): array {
+		return [
+			'administrationId' => (string)($profiel['administrationId'] ?? ''),
+			'enterpriseId' => (string)($profiel['enterpriseId'] ?? ''),
+			'calendarYear' => (int)($profiel['calendarYear'] ?? (int)gmdate('Y')),
+		];
+	}//end seedIdentity()
+
+	/**
+	 * The grotendeels criterium from the year-to-date onderneming and loondienst hours.
+	 *
+	 * @param array<string, mixed> $profiel Entrepreneur profile.
+	 *
+	 * @return string The criterium as the guard determines it.
+	 */
+	private function grotendeels(array $profiel): string {
+		return $this->guard->bepaalGrotendeelsCriterium(
+			enterpriseHours: (float)($profiel['ondernemingsUrenJTD'] ?? 0.0),
+			employmentHours: (float)($profiel['loondienstUrenJTD'] ?? 0.0)
+		);
+	}//end grotendeels()
 }//end class

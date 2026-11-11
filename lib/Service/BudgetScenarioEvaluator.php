@@ -154,71 +154,112 @@ class BudgetScenarioEvaluator {
 		int $fiscalYear
 	): array {
 		$index = $this->buildLedgerGroupIndex(ledgerGroups: $ledgerGroups);
-		$recurringByRecurId = $this->indexByRecurId(rows: $cashflowRecurringRows);
+		$run = new BudgetScenarioRun(
+			index: $index,
+			recurringByRecurId: $this->indexByRecurId(rows: $cashflowRecurringRows),
+			fiscalYear: $fiscalYear
+		);
 
 		// "Own" monthly sums per group, straight from the real BudgetLines
 		// (step 1: sum every BudgetLine targeting a node, regardless of
 		// source — design.md §6a step 1). Also tracks which groups have at
 		// least one own BudgetLine, so a group with an explicit (possibly
 		// zero) own value is not silently overridden by a children rollup.
-		[$ownBase, $hasOwnLine] = $this->ownMonthlySums(budgetLines: $baseBudgetLines, index: $index);
+		$base = $this->ownMonthlySums(budgetLines: $baseBudgetLines, index: $index);
 
-		// Modifier deltas, per group per month — added on top of $ownBase to
-		// form each group's own scenario contribution before rollup.
-		$modifierDeltas = $this->modifierDeltasByGroup(
-			modifiers: $modifiers,
-			recurringByRecurId: $recurringByRecurId,
-			index: $index,
-			fiscalYear: $fiscalYear
-		);
+		// Modifier deltas, per group per month — added on top of the base
+		// own sums to form each group's own scenario contribution before rollup.
+		$modifierDeltas = $this->modifierDeltasByGroup(modifiers: $modifiers, run: $run);
+		$scenario = self::withDeltas(own: $base, deltas: $modifierDeltas);
 
-		$ownScenario = $ownBase;
-		$hasScenarioOwn = $hasOwnLine;
-		foreach ($modifierDeltas as $groupIndex => $monthly) {
+		return $this->scenarioCells(sums: ['base' => $base, 'scenario' => $scenario, 'index' => $index], run: $run);
+
+	}//end evaluate()
+
+	/**
+	 * Own monthly sums with the modifier deltas added; every group a delta
+	 * touches counts as having an own value.
+	 *
+	 * @param array{0: array<int,array<string,int>>, 1: array<int,bool>} $own    Own sums and has-own flags.
+	 * @param array<int,array<string,int>>                               $deltas Deltas per group per month.
+	 *
+	 * @return array{0: array<int,array<string,int>>, 1: array<int,bool>}
+	 */
+	private static function withDeltas(array $own, array $deltas): array {
+		[$sums, $hasOwn] = $own;
+		foreach ($deltas as $groupIndex => $monthly) {
 			foreach ($monthly as $month => $cents) {
-				$ownScenario[$groupIndex][$month] = (($ownScenario[$groupIndex][$month] ?? 0) + $cents);
-				$hasScenarioOwn[$groupIndex] = true;
+				$sums[$groupIndex][$month] = (($sums[$groupIndex][$month] ?? 0) + $cents);
+				$hasOwn[$groupIndex] = true;
 			}
 		}
 
+		return [$sums, $hasOwn];
+
+	}//end withDeltas()
+
+	/**
+	 * One base/scenario/delta cell per keyed group per month.
+	 *
+	 * @param array<string,mixed> $sums Base and scenario own sums, and the index.
+	 * @param BudgetScenarioRun   $run  The run.
+	 *
+	 * @return array<string,array<string,mixed>> Cells keyed `<group>:<yyyy-mm>`.
+	 */
+	private function scenarioCells(array $sums, BudgetScenarioRun $run): array {
 		$result = [];
-		foreach (array_keys($index['entries']) as $groupIndex) {
-			$groupKey = $this->keyForIndex(index: $groupIndex, entries: $index['entries']);
+		foreach (array_keys($run->index['entries']) as $groupIndex) {
+			$groupKey = $this->keyForIndex(index: $groupIndex, entries: $run->index['entries']);
 			if ($groupKey === null) {
 				continue;
 			}
 
 			foreach (self::MONTH_FIELDS as $month) {
-				$base = $this->resolveNodeAmount(
-					groupIndex: $groupIndex,
-					month: $month,
-					own: $ownBase,
-					hasOwn: $hasOwnLine,
-					index: $index
+				$cell = $this->scenarioCell(
+					cellAt: ['groupIndex' => $groupIndex, 'groupKey' => $groupKey, 'month' => $month, 'fiscalYear' => $run->fiscalYear],
+					sums: $sums
 				);
-				$scenario = $this->resolveNodeAmount(
-					groupIndex: $groupIndex,
-					month: $month,
-					own: $ownScenario,
-					hasOwn: $hasScenarioOwn,
-					index: $index
-				);
-
-				$monthKey = $fiscalYear . '-' . substr($month, 5, 2);
-				$resultKey = $groupKey . ':' . $monthKey;
-				$result[$resultKey] = [
-					'month' => $monthKey,
-					'ledgerGroupId' => $groupKey,
-					'base' => $base,
-					'scenario' => $scenario,
-					'delta' => ($scenario - $base),
-				];
+				$result[$groupKey . ':' . $cell['month']] = $cell;
 			}
 		}
 
 		return $result;
 
-	}//end evaluate()
+	}//end scenarioCells()
+
+	/**
+	 * The cell of one group in one month.
+	 *
+	 * @param array<string,mixed> $cellAt groupIndex, groupKey, month field and fiscal year.
+	 * @param array<string,mixed> $sums Base and scenario own sums, and the index.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function scenarioCell(array $cellAt, array $sums): array {
+		$base = $this->resolveNodeAmount(
+			groupIndex: $cellAt['groupIndex'],
+			month: $cellAt['month'],
+			own: $sums['base'][0],
+			hasOwn: $sums['base'][1],
+			index: $sums['index']
+		);
+		$scenario = $this->resolveNodeAmount(
+			groupIndex: $cellAt['groupIndex'],
+			month: $cellAt['month'],
+			own: $sums['scenario'][0],
+			hasOwn: $sums['scenario'][1],
+			index: $sums['index']
+		);
+
+		return [
+			'month' => $cellAt['fiscalYear'] . '-' . substr($cellAt['month'], 5, 2),
+			'ledgerGroupId' => $cellAt['groupKey'],
+			'base' => $base,
+			'scenario' => $scenario,
+			'delta' => ($scenario - $base),
+		];
+
+	}//end scenarioCell()
 
 	/**
 	 * Own (directly-targeted) monthly sums per LedgerGroup index, keyed by
@@ -285,41 +326,26 @@ class BudgetScenarioEvaluator {
 	}//end resolveNodeAmount()
 
 	/**
-	 * Compute every modifier's monthly cent delta, bucketed by the
-	 * LedgerGroup index it targets (REQ-BSC-003, REQ-BSC-006).
+	 * Modifier deltas per LedgerGroup index per month field, in modifier order.
 	 *
-	 * @param list<array<string,mixed>> $modifiers This scenario's modifiers.
-	 * @param array<string,array<string,mixed>> $recurringByRecurId CashflowRecurring rows keyed by recurId.
-	 * @param array{entries:list<array<string,mixed>>,keyToIndex:array<string,int>,childrenByIndex:array<int,list<int>>} $index The LedgerGroup index.
-	 * @param int $fiscalYear The fiscal year being evaluated.
+	 * @param array<int,array<string,mixed>> $modifiers The scenario's modifiers.
+	 * @param BudgetScenarioRun              $run       The run.
 	 *
-	 * @return array<int,array<string,int>> groupIndex (into `$index['entries']`) => monthNNAmount field => signed cents.
+	 * @return array<int,array<string,int>>
 	 */
-	private function modifierDeltasByGroup(
-		array $modifiers,
-		array $recurringByRecurId,
-		array $index,
-		int $fiscalYear
-	): array {
+	private function modifierDeltasByGroup(array $modifiers, BudgetScenarioRun $run): array {
 		$deltas = [];
 
 		foreach ($modifiers as $modifier) {
 			$type = (string)($modifier['modifierType'] ?? '');
 
 			if ($type === 'RECURRING_END' || $type === 'RECURRING_AMOUNT_CHANGE') {
-				$this->applyRecurringModifier(
-					modifier: $modifier,
-					type: $type,
-					recurringByRecurId: $recurringByRecurId,
-					index: $index,
-					fiscalYear: $fiscalYear,
-					deltas: $deltas
-				);
+				$deltas = self::addDeltas(deltas: $deltas, more: $this->recurringModifierDeltas(modifier: $modifier, run: $run));
 				continue;
 			}
 
 			if ($type === 'LEDGER_AMOUNT_DELTA') {
-				$this->applyLedgerAmountDelta(modifier: $modifier, index: $index, fiscalYear: $fiscalYear, deltas: $deltas);
+				$this->applyLedgerAmountDelta(modifier: $modifier, index: $run->index, fiscalYear: $run->fiscalYear, deltas: $deltas);
 			}
 		}
 
@@ -328,86 +354,134 @@ class BudgetScenarioEvaluator {
 	}//end modifierDeltasByGroup()
 
 	/**
-	 * Apply one `RECURRING_END`/`RECURRING_AMOUNT_CHANGE` modifier's delta
-	 * into `$deltas` (passed by reference).
+	 * Add one modifier's deltas onto the running deltas.
 	 *
-	 * @param array<string,mixed> $modifier The modifier row.
-	 * @param string $type `RECURRING_END` or `RECURRING_AMOUNT_CHANGE`.
-	 * @param array<string,array<string,mixed>> $recurringByRecurId CashflowRecurring rows keyed by recurId.
-	 * @param array{entries:list<array<string,mixed>>,keyToIndex:array<string,int>,childrenByIndex:array<int,list<int>>} $index The LedgerGroup index.
-	 * @param int $fiscalYear The fiscal year being evaluated.
-	 * @param array<int,array<string,int>> $deltas The accumulating delta map (mutated in place).
+	 * @param array<int,array<string,int>> $deltas The running deltas.
+	 * @param array<int,array<string,int>> $more   One modifier's deltas.
 	 *
-	 * @return void
+	 * @return array<int,array<string,int>>
 	 */
-	private function applyRecurringModifier(
-		array $modifier,
-		string $type,
-		array $recurringByRecurId,
-		array $index,
-		int $fiscalYear,
-		array &$deltas
-	): void {
+	private static function addDeltas(array $deltas, array $more): array {
+		foreach ($more as $groupIndex => $monthly) {
+			foreach ($monthly as $monthField => $delta) {
+				$deltas[$groupIndex][$monthField] = (($deltas[$groupIndex][$monthField] ?? 0) + $delta);
+			}
+		}
+
+		return $deltas;
+
+	}//end addDeltas()
+
+	/**
+	 * The deltas of one `RECURRING_*` modifier (hypothetical minus real
+	 * schedule) on the LedgerGroup its row's expense account resolves to;
+	 * none when the target cannot be resolved or expanded (each logged).
+	 *
+	 * @param array<string,mixed> $modifier The modifier.
+	 * @param BudgetScenarioRun   $run      The run.
+	 *
+	 * @return array<int,array<string,int>>
+	 */
+	private function recurringModifierDeltas(array $modifier, BudgetScenarioRun $run): array {
+		$groupIndex = $this->recurringTargetGroup(modifier: $modifier, run: $run);
+		if ($groupIndex === null) {
+			return [];
+		}
+
+		$monthlyDeltas = $this->expandRecurringModifier(modifier: $modifier, run: $run);
+		if ($monthlyDeltas === null) {
+			return [];
+		}
+
+		$deltas = [];
+		foreach (self::MONTH_FIELDS as $index2 => $monthField) {
+			$delta = ($monthlyDeltas[str_pad((string)($index2 + 1), 2, '0', STR_PAD_LEFT)] ?? 0);
+			if ($delta !== 0) {
+				$deltas[$groupIndex][$monthField] = $delta;
+			}
+		}
+
+		return $deltas;
+
+	}//end recurringModifierDeltas()
+
+	/**
+	 * The LedgerGroup index a `RECURRING_*` modifier's real row resolves to,
+	 * or null (logged) for an unknown recurId or an unresolved account.
+	 *
+	 * @param array<string,mixed> $modifier The modifier.
+	 * @param BudgetScenarioRun   $run      The run.
+	 *
+	 * @return int|null
+	 */
+	private function recurringTargetGroup(array $modifier, BudgetScenarioRun $run): ?int {
 		$recurId = (string)($modifier['targetRecurId'] ?? '');
-		$real = ($recurringByRecurId[$recurId] ?? null);
+		$real = ($run->recurringByRecurId[$recurId] ?? null);
 		if ($real === null) {
 			$this->logger->info(
 				'BudgetScenarioEvaluator: modifier targets an unknown CashflowRecurring recurId — skipping',
-				['targetRecurId' => $recurId, 'modifierType' => $type]
+				['targetRecurId' => $recurId, 'modifierType' => (string)($modifier['modifierType'] ?? '')]
 			);
-			return;
+			return null;
 		}
 
 		$accountNumber = (string)($real['accountNumberExpense'] ?? '');
-		$groupIndex = $this->resolveLedgerGroupIndexForAccount(accountNumber: $accountNumber, index: $index);
+		$groupIndex = $this->resolveLedgerGroupIndexForAccount(accountNumber: $accountNumber, index: $run->index);
 		if ($groupIndex === null) {
 			$this->logger->info(
 				'BudgetScenarioEvaluator: modifier targets a CashflowRecurring row whose '
 				. 'accountNumberExpense resolves to no LedgerGroup — skipping',
 				['targetRecurId' => $recurId, 'accountNumberExpense' => $accountNumber]
 			);
-			return;
 		}
 
+		return $groupIndex;
+
+	}//end recurringTargetGroup()
+
+	/**
+	 * The expander's monthly deltas for a resolved `RECURRING_*` modifier, or
+	 * null (logged) when the expander fails or needs operator input.
+	 *
+	 * REQ-BKC-003: the expander answers `needsOperatorInput` when the row is
+	 * CPI-indexed and no rate has been supplied. There is no schedule to
+	 * difference against in that case, and inventing one (treating it as all
+	 * zeros) would post a delta equal to the whole hypothetical amount.
+	 *
+	 * @param array<string,mixed> $modifier The modifier (its recurId is known).
+	 * @param BudgetScenarioRun   $run      The run.
+	 *
+	 * @return array<string,int>|null Deltas by two-digit month, or null.
+	 */
+	private function expandRecurringModifier(array $modifier, BudgetScenarioRun $run): ?array {
+		$recurId = (string)($modifier['targetRecurId'] ?? '');
+		$type = (string)($modifier['modifierType'] ?? '');
 		try {
 			$monthlyDeltas = $this->recurringExpander->monthlyDeltas(
-				real: $real,
+				real: $run->recurringByRecurId[$recurId],
 				modifier: $modifier,
 				type: $type,
-				fiscalYear: $fiscalYear
+				fiscalYear: $run->fiscalYear
 			);
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'BudgetScenarioEvaluator: KnownCostScheduleExpander::expand() failed — skipping this modifier',
 				['targetRecurId' => $recurId, 'exception' => $e->getMessage()]
 			);
-			return;
+			return null;
 		}
 
-		// REQ-BKC-003: the expander answers `needsOperatorInput` when the row is
-		// CPI-indexed and no rate has been supplied. There is no schedule to
-		// difference against in that case, and inventing one (treating it as all
-		// zeros) would post a delta equal to the whole hypothetical amount.
 		if ($monthlyDeltas === null) {
 			$this->logger->info(
 				'BudgetScenarioEvaluator: the expander needs operator input (missing CPI rate) '
 				. 'for this CashflowRecurring row — skipping this modifier',
 				['targetRecurId' => $recurId, 'modifierType' => $type]
 			);
-			return;
 		}
 
-		foreach (self::MONTH_FIELDS as $index2 => $monthField) {
-			$monthKey = str_pad((string)($index2 + 1), 2, '0', STR_PAD_LEFT);
-			$delta = ($monthlyDeltas[$monthKey] ?? 0);
-			if ($delta === 0) {
-				continue;
-			}
+		return $monthlyDeltas;
 
-			$deltas[$groupIndex][$monthField] = (($deltas[$groupIndex][$monthField] ?? 0) + $delta);
-		}
-
-	}//end applyRecurringModifier()
+	}//end expandRecurringModifier()
 
 	/**
 	 * Apply one `LEDGER_AMOUNT_DELTA` modifier into `$deltas` (passed by
@@ -542,70 +616,105 @@ class BudgetScenarioEvaluator {
 	 * @return array{entries:list<array<string,mixed>>,keyToIndex:array<string,int>,childrenByIndex:array<int,list<int>>}
 	 */
 	private function buildLedgerGroupIndex(array $ledgerGroups): array {
-		$entries = [];
-		$keyToIndex = [];
+		$entries = array_map(
+			fn (array $row): array => $this->ledgerGroupEntry(row: $row),
+			array_values($ledgerGroups)
+		);
+		$keyToIndex = $this->ledgerGroupKeys(entries: $entries);
 
-		foreach ($ledgerGroups as $row) {
-			$id = (string)($row['@self']['id'] ?? $row['id'] ?? '');
-			$slug = (string)($row['@self']['slug'] ?? $row['slug'] ?? '');
-			$index = count($entries);
-
-			$parentRef = null;
-			if (($row['parentLedgerGroupId'] ?? null) !== null) {
-				$parentRef = (string)$row['parentLedgerGroupId'];
-			}
-
-			$accountRanges = [];
-			if (is_array($row['accountRanges'] ?? null) === true) {
-				$accountRanges = $row['accountRanges'];
-			}
-
-			$includedAccountNumbers = [];
-			if (is_array($row['includedAccountNumbers'] ?? null) === true) {
-				$includedAccountNumbers = $row['includedAccountNumbers'];
-			}
-
-			$excludedAccountNumbers = [];
-			if (is_array($row['excludedAccountNumbers'] ?? null) === true) {
-				$excludedAccountNumbers = $row['excludedAccountNumbers'];
-			}
-
-			$entries[] = [
-				'id' => $id,
-				'slug' => $slug,
-				'parentRef' => $parentRef,
-				'accountRanges' => $accountRanges,
-				'includedAccountNumbers' => $includedAccountNumbers,
-				'excludedAccountNumbers' => $excludedAccountNumbers,
-			];
-
-			if ($id !== '') {
-				$keyToIndex[$id] = $index;
-			}
-
-			if ($slug !== '' && $slug !== $id) {
-				$keyToIndex[$slug] = $index;
-			}
-		}
-
-		$childrenByIndex = [];
-		foreach ($entries as $index => $entry) {
-			$parentRef = $entry['parentRef'];
-			if ($parentRef === null || $parentRef === '') {
-				continue;
-			}
-
-			$parentIndex = ($keyToIndex[$parentRef] ?? null);
-			if ($parentIndex === null) {
-				continue;
-			}
-
-			$childrenByIndex[$parentIndex][] = $index;
-		}
-
-		return ['entries' => $entries, 'keyToIndex' => $keyToIndex, 'childrenByIndex' => $childrenByIndex];
+		return [
+			'entries' => $entries,
+			'keyToIndex' => $keyToIndex,
+			'childrenByIndex' => $this->childrenByIndex(entries: $entries, keyToIndex: $keyToIndex),
+		];
 
 	}//end buildLedgerGroupIndex()
+
+	/**
+	 * Normalise one LedgerGroup row to its index entry.
+	 *
+	 * @param array<string,mixed> $row The LedgerGroup row.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function ledgerGroupEntry(array $row): array {
+		$parentRef = ($row['parentLedgerGroupId'] ?? null);
+		if ($parentRef !== null) {
+			$parentRef = (string)$parentRef;
+		}
+
+		return [
+			'id' => (string)($row['@self']['id'] ?? $row['id'] ?? ''),
+			'slug' => (string)($row['@self']['slug'] ?? $row['slug'] ?? ''),
+			'parentRef' => $parentRef,
+			'accountRanges' => $this->listOrEmpty(value: ($row['accountRanges'] ?? null)),
+			'includedAccountNumbers' => $this->listOrEmpty(value: ($row['includedAccountNumbers'] ?? null)),
+			'excludedAccountNumbers' => $this->listOrEmpty(value: ($row['excludedAccountNumbers'] ?? null)),
+		];
+
+	}//end ledgerGroupEntry()
+
+	/**
+	 * An array value as-is, anything else as an empty list.
+	 *
+	 * @param mixed $value The raw row value.
+	 *
+	 * @return array<mixed>
+	 */
+	private function listOrEmpty(mixed $value): array {
+		if (is_array($value) === true) {
+			return $value;
+		}
+
+		return [];
+
+	}//end listOrEmpty()
+
+	/**
+	 * Key every entry by its id and, when different, its slug; a later entry
+	 * claiming the same key wins.
+	 *
+	 * @param list<array<string,mixed>> $entries The LedgerGroup entries.
+	 *
+	 * @return array<string,int>
+	 */
+	private function ledgerGroupKeys(array $entries): array {
+		$keyToIndex = [];
+		foreach ($entries as $index => $entry) {
+			if ($entry['id'] !== '') {
+				$keyToIndex[$entry['id']] = $index;
+			}
+
+			if ($entry['slug'] !== '' && $entry['slug'] !== $entry['id']) {
+				$keyToIndex[$entry['slug']] = $index;
+			}
+		}
+
+		return $keyToIndex;
+
+	}//end ledgerGroupKeys()
+
+	/**
+	 * Map each parent's index to its children's indexes; a parent reference
+	 * that resolves to no entry (or is empty) is ignored.
+	 *
+	 * @param list<array<string,mixed>> $entries    The LedgerGroup entries.
+	 * @param array<string,int>         $keyToIndex Key to entry index.
+	 *
+	 * @return array<int,list<int>>
+	 */
+	private function childrenByIndex(array $entries, array $keyToIndex): array {
+		$childrenByIndex = [];
+		foreach ($entries as $index => $entry) {
+			$parentIndex = ($keyToIndex[(string)$entry['parentRef']] ?? null);
+			if ($parentIndex !== null) {
+				$childrenByIndex[$parentIndex][] = $index;
+			}
+		}
+
+		return $childrenByIndex;
+
+	}//end childrenByIndex()
 
 	/**
 	 * Resolve a stable lookup key (preferring id, falling back to slug) for

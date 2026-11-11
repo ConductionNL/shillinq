@@ -55,19 +55,8 @@ use Psr\Log\LoggerInterface;
  * HTTP API for importing a bank statement file into BankStatement + lines.
  *
  * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
- *
- * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
- *     #506): early-return refactor deferred pending full behavioral
- *     verification of each branch.
  */
 class BankStatementImportController extends Controller {
-
-	/**
-	 * Allowed statement formats accepted by the import endpoint.
-	 *
-	 * @var array<int,string>
-	 */
-	private const ALLOWED_FORMATS = ['camt053', 'mt940', 'csv'];
 
 	/**
 	 * Construct the controller.
@@ -118,79 +107,92 @@ class BankStatementImportController extends Controller {
 		}
 
 		try {
-			$admin = $this->resolveAdministrationId();
-			$payload = $this->readPayload();
-
-			$format = strtolower(trim((string)($payload['format'] ?? '')));
-			if (in_array($format, self::ALLOWED_FORMATS, true) === false) {
-				return new JSONResponse(
-					['error' => 'Unsupported or missing format (expected camt053, mt940 or csv)'],
-					Http::STATUS_BAD_REQUEST
-				);
-			}
-
-			$contents = (string)($payload['contents'] ?? '');
-			if (trim($contents) === '') {
-				return new JSONResponse(['error' => 'Empty file — nothing to import'], Http::STATUS_BAD_REQUEST);
-			}
-
-			$glAccountId = trim((string)($payload['glAccountId'] ?? ''));
-
-			$parsed = $this->parser->parse(contents: $contents, format: $format);
-			if (empty($parsed) === true) {
-				return new JSONResponse(
-					['error' => 'Could not parse any transactions from the supplied file'],
-					Http::STATUS_UNPROCESSABLE_ENTITY
-				);
-			}
-
-
-			// One intake for files and the bank feed (banking-connected-accounts
-			// REQ-BCON-002): it writes every field the merged register requires,
-			// which the old inline loop did not (lineId, status, a date-time
-			// statementDate), and skips lines already on file for the account.
-			$iban = trim((string)$this->request->getParam('bankAccountIban', ''));
-			$result = $this->intake->ingest(
-				administrationId: $admin,
-				iban: $iban,
-				lines: $parsed,
-				meta: ['source' => 'file', 'format' => $format, 'glAccountId' => $glAccountId]
-			);
-			$statementId = $result['statementId'];
-			$transactionCount = count($result['written']);
-
-			// Honest counts: auto-matching runs later on the reconciliation
-			// page, so every freshly-imported line is unmatched.
-			$matchedCount = 0;
-			$unmatchedCount = $transactionCount;
-
-			return new JSONResponse(
-				[
-					'statementId' => $statementId,
-					'transactionCount' => $transactionCount,
-					'matchedCount' => $matchedCount,
-					'unmatchedCount' => $unmatchedCount,
-				],
-				Http::STATUS_OK
-			);
-		} catch (\InvalidArgumentException $e) {
-			$this->logger->error('BankStatementImportController.import failed', ['exception' => $e]);
-			return new JSONResponse(
-				[
-					'message' => $this->l10n->t('Invalid bank statement import request'),
-					'error' => 'bank-statement-import-invalid-input',
-				],
-				Http::STATUS_BAD_REQUEST
-			);
+			$import = new StatementImport(administrationId: $this->resolveAdministrationId(), payload: $this->readPayload());
+			return $this->importStatement(import: $import);
 		} catch (\Throwable $e) {
-			$this->logger->error('BankStatementImportController.import failed', ['exception' => $e]);
-			return new JSONResponse(
-				['message' => $this->l10n->t('Unable to import bank statement'), 'error' => 'bank-statement-import-failed'],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
-		}//end try
+			return $this->importFailed(e: $e);
+		}
 
 	}//end import()
+
+	/**
+	 * Check, parse and ingest one statement.
+	 *
+	 * @param StatementImport $import The normalised import.
+	 *
+	 * @return JSONResponse 200 with the counts; 400 on format/contents; 422 when nothing parsed.
+	 *
+	 * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
+	 */
+	private function importStatement(StatementImport $import): JSONResponse {
+		if ($import->supportedFormat() === false) {
+			return new JSONResponse(['error' => 'Unsupported or missing format (expected camt053, mt940 or csv)'], Http::STATUS_BAD_REQUEST);
+		}
+
+		if ($import->isEmpty() === true) {
+			return new JSONResponse(['error' => 'Empty file — nothing to import'], Http::STATUS_BAD_REQUEST);
+		}
+
+		$parsed = $this->parser->parse(contents: $import->contents, format: $import->format);
+		if (empty($parsed) === true) {
+			return new JSONResponse(['error' => 'Could not parse any transactions from the supplied file'], Http::STATUS_UNPROCESSABLE_ENTITY);
+		}
+
+		return $this->ingested(import: $import, parsed: $parsed);
+	}//end importStatement()
+
+	/**
+	 * Write the parsed lines and answer the counts.
+	 *
+	 * @param StatementImport                 $import The normalised import.
+	 * @param array<int, array<string,mixed>> $parsed The parsed lines.
+	 *
+	 * @return JSONResponse 200 with statementId and the transaction / match counts.
+	 *
+	 * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
+	 */
+	private function ingested(StatementImport $import, array $parsed): JSONResponse {
+		// One intake for files and the bank feed (banking-connected-accounts
+		// REQ-BCON-002): it writes every field the merged register requires,
+		// which the old inline loop did not (lineId, status, a date-time
+		// statementDate), and skips lines already on file for the account.
+		$result = $this->intake->ingest(
+			administrationId: $import->administrationId,
+			iban: trim((string)$this->request->getParam('bankAccountIban', '')),
+			lines: $parsed,
+			meta: ['source' => 'file', 'format' => $import->format, 'glAccountId' => $import->glAccountId]
+		);
+		$transactionCount = count($result['written']);
+
+		// Honest counts: auto-matching runs later on the reconciliation
+		// page, so every freshly-imported line is unmatched.
+		$counts = ['transactionCount' => $transactionCount, 'matchedCount' => 0, 'unmatchedCount' => $transactionCount];
+		return new JSONResponse(['statementId' => $result['statementId']] + $counts, Http::STATUS_OK);
+	}//end ingested()
+
+	/**
+	 * Log a failed import and answer it: invalid input is a 400, anything else a 500.
+	 *
+	 * @param \Throwable $e The failure.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
+	 */
+	private function importFailed(\Throwable $e): JSONResponse {
+		$this->logger->error('BankStatementImportController.import failed', ['exception' => $e]);
+		if ($e instanceof \InvalidArgumentException) {
+			return new JSONResponse(
+				['message' => $this->l10n->t('Invalid bank statement import request'), 'error' => 'bank-statement-import-invalid-input'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
+
+		return new JSONResponse(
+			['message' => $this->l10n->t('Unable to import bank statement'), 'error' => 'bank-statement-import-failed'],
+			Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+	}//end importFailed()
 
 	/**
 	 * Read the import payload from a multipart upload or a JSON/raw body.
@@ -205,59 +207,41 @@ class BankStatementImportController extends Controller {
 	 * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
 	 */
 	private function readPayload(): array {
-		$format = (string)$this->request->getParam('format', '');
-		$glAccountId = (string)$this->request->getParam('glAccountId', '');
+		$reader = new StatementBodyReader(request: $this->request);
 
 		// 1) Multipart file upload.
-		$uploaded = $this->request->getUploadedFile('file');
-		if (is_array($uploaded) === true
-			&& isset($uploaded['tmp_name']) === true
-			&& is_uploaded_file((string)$uploaded['tmp_name']) === true
-		) {
-			$raw = file_get_contents((string)$uploaded['tmp_name']);
-			if ($raw !== false) {
-				$rawContents = $raw;
-			} else {
-				$rawContents = '';
-			}
-
-			return [
-				'contents' => $rawContents,
-				'format' => $format,
-				'glAccountId' => $glAccountId,
-			];
+		$uploaded = $reader->uploadedContents();
+		if ($uploaded !== null) {
+			return $this->payload(contents: $uploaded, body: []);
 		}
 
 		// 2) JSON body with raw/base64 contents.
-		$rawBody = file_get_contents('php://input');
-		if ($rawBody !== false && $rawBody !== '') {
-			$decoded = json_decode($rawBody, true);
-			if (is_array($decoded) === true) {
-				$contents = (string)($decoded['contents'] ?? '');
-				// Tolerate base64-wrapped payloads from the browser.
-				if ($contents !== '' && ($decoded['encoding'] ?? '') === 'base64') {
-					$maybe = base64_decode($contents, true);
-					if ($maybe !== false) {
-						$contents = $maybe;
-					}
-				}
-
-				return [
-					'contents' => $contents,
-					'format' => (string)($decoded['format'] ?? $format),
-					'glAccountId' => (string)($decoded['glAccountId'] ?? $glAccountId),
-				];
-			}
+		$decoded = $reader->jsonBody();
+		if ($decoded !== null) {
+			return $this->payload(contents: $reader->bodyContents(decoded: $decoded), body: $decoded);
 		}
 
 		// 3) Plain request params fallback.
-		return [
-			'contents' => (string)$this->request->getParam('contents', ''),
-			'format' => $format,
-			'glAccountId' => $glAccountId,
-		];
+		return $this->payload(contents: (string)$this->request->getParam('contents', ''), body: []);
 
 	}//end readPayload()
+
+	/**
+	 * The normalised payload map: format and glAccountId from the JSON body
+	 * when it carries them, else from the request params.
+	 *
+	 * @param string              $contents The file contents.
+	 * @param array<string,mixed> $body     The decoded JSON body ([] when none).
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function payload(string $contents, array $body): array {
+		return [
+			'contents' => $contents,
+			'format' => (string)($body['format'] ?? $this->request->getParam('format', '')),
+			'glAccountId' => (string)($body['glAccountId'] ?? $this->request->getParam('glAccountId', '')),
+		];
+	}//end payload()
 
 	/**
 	 * Resolve the administration id server-side (never from the client).

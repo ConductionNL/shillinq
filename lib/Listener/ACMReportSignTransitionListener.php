@@ -130,62 +130,7 @@ class ACMReportSignTransitionListener implements IEventListener {
 		}
 
 		try {
-			if ($event->getAction() !== self::ACTION) {
-				return;
-			}
-
-			$entity = $event->getObject();
-			if ($entity === null) {
-				return;
-			}
-
-			$schema = $this->schemaResolver->schemaSlug(entity: $entity);
-			if ($this->isAcmReportSchema(schema: $schema) === false) {
-				return;
-			}
-
-			$financeObject = $entity->getObject();
-			if (is_array($financeObject) === false) {
-				return;
-			}
-
-			$subjectId = (string)($financeObject['id'] ?? $entity->getId() ?? '');
-			if ($subjectId === '') {
-				$this->logger->info(
-					'ACMReportSignTransitionListener: no subject id on sign transition (skipping)'
-				);
-				return;
-			}
-
-			// Guarantee requestSignature() derives the same subjectId this
-			// listener will use to persist the result back.
-			$financeObject['id'] = $subjectId;
-
-			$currentStatus = (string)($financeObject['signingStatus'] ?? '');
-			if (in_array($currentStatus, self::ALREADY_REQUESTED_STATUSES, true) === true) {
-				return;
-			}
-
-			$updated = $this->signingService->requestSignature(
-				financeObject: $financeObject,
-				subjectSchema: self::SCHEMA,
-				documentClass: 'acm-report'
-			);
-
-			$updates = ['signingStatus' => (string)($updated['signingStatus'] ?? 'requested')];
-			if (array_key_exists('signingRequestRef', $updated) === true) {
-				$updates['signingRequestRef'] = $updated['signingRequestRef'];
-			}
-
-			$this->persist(id: $subjectId, updates: $updates);
-
-			$this->logger->info(
-				'ACMReportSignTransitionListener: signing request raised on sign transition',
-				[
-					'subjectId' => $subjectId,
-					'signingRequestRef' => ($updates['signingRequestRef'] ?? null),
-				]
-			);
+			$this->requestOnSign(event: $event);
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'ACMReportSignTransitionListener: signing request failed (fail-soft)',
@@ -194,6 +139,111 @@ class ACMReportSignTransitionListener implements IEventListener {
 		}//end try
 
 	}//end handle()
+
+	/**
+	 * Raise the signing request for an ACMReport that has an id and has not
+	 * been sent for signing yet, and mirror the outcome onto it.
+	 *
+	 * @param ObjectTransitionedEvent $event The transition.
+	 *
+	 * @return void
+	 */
+	private function requestOnSign(ObjectTransitionedEvent $event): void {
+		$financeObject = $this->signedReport(event: $event);
+		if ($financeObject === null) {
+			return;
+		}
+
+		if ($financeObject['id'] === '') {
+			$this->logger->info(
+				'ACMReportSignTransitionListener: no subject id on sign transition (skipping)'
+			);
+			return;
+		}
+
+		if (in_array((string)($financeObject['signingStatus'] ?? ''), self::ALREADY_REQUESTED_STATUSES, true) === true) {
+			return;
+		}
+
+		$this->raiseRequest(financeObject: $financeObject);
+
+	}//end requestOnSign()
+
+	/**
+	 * Request the signature, mirror its status and reference onto the
+	 * report, and log it.
+	 *
+	 * @param array<string,mixed> $financeObject The report, with its subject id.
+	 *
+	 * @return void
+	 */
+	private function raiseRequest(array $financeObject): void {
+		$updated = $this->signingService->requestSignature(
+			financeObject: $financeObject,
+			subjectSchema: self::SCHEMA,
+			documentClass: 'acm-report'
+		);
+
+		$updates = $this->signingUpdates(updated: $updated);
+		$this->persist(id: $financeObject['id'], updates: $updates);
+
+		$this->logger->info(
+			'ACMReportSignTransitionListener: signing request raised on sign transition',
+			[
+				'subjectId' => $financeObject['id'],
+				'signingRequestRef' => ($updates['signingRequestRef'] ?? null),
+			]
+		);
+
+	}//end raiseRequest()
+
+	/**
+	 * The ACMReport a `sign` transition is about, with its subject id (the
+	 * payload id, else the entity id, '' when neither) stamped as `id` so
+	 * requestSignature() derives the same subjectId this listener persists
+	 * the result back to; null for other actions, schemas or payloads.
+	 *
+	 * @param ObjectTransitionedEvent $event The transition.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function signedReport(ObjectTransitionedEvent $event): array|null {
+		$entity = $event->getObject();
+		if ($event->getAction() !== self::ACTION || $entity === null) {
+			return null;
+		}
+
+		if ($this->isAcmReportSchema(schema: $this->schemaResolver->schemaSlug(entity: $entity)) === false) {
+			return null;
+		}
+
+		$financeObject = $entity->getObject();
+		if (is_array($financeObject) === false) {
+			return null;
+		}
+
+		$financeObject['id'] = (string)($financeObject['id'] ?? $entity->getId() ?? '');
+		return $financeObject;
+
+	}//end signedReport()
+
+	/**
+	 * The signing status (default `requested`) and, when returned, the
+	 * request reference to mirror onto the report.
+	 *
+	 * @param array<string,mixed> $updated The requestSignature() result.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function signingUpdates(array $updated): array {
+		$updates = ['signingStatus' => (string)($updated['signingStatus'] ?? 'requested')];
+		if (array_key_exists('signingRequestRef', $updated) === true) {
+			$updates['signingRequestRef'] = $updated['signingRequestRef'];
+		}
+
+		return $updates;
+
+	}//end signingUpdates()
 
 	/**
 	 * Check whether the schema slug is ACMReport.

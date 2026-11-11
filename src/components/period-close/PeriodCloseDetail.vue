@@ -430,32 +430,67 @@ export default {
 
 	methods: {
 		async load() {
-			if (!this.recordId) {
-				this.loading = false
-				this.loadError = t('shillinq', 'No period id supplied.')
-				return
-			}
+			if (this.refuseWithoutRecord()) return
 			this.loading = true
 			this.loadError = ''
 			try {
-				const url = generateUrl(
-					`/apps/shillinq/api/period-close/${encodeURIComponent(this.recordId)}`,
-				)
-				const response = await axios.get(url)
-				const data = response?.data?.data
-				if (!data || typeof data !== 'object') {
-					this.loadError = t('shillinq', 'Period not found.')
-					this.period = null
-				} else {
-					this.period = data
-				}
+				this.applyLoaded((await axios.get(this.periodUrl('')))?.data?.data)
 			} catch (err) {
-				this.loadError = this.extractErrorMessage(
-					err,
-					t('shillinq', 'Failed to load period.'),
-				)
+				this.loadError = this.extractErrorMessage(err, t('shillinq', 'Failed to load period.'))
 			} finally {
 				this.loading = false
+			}
+		},
+
+		/**
+		 * Report a missing period id.
+		 *
+		 * @return {boolean} True when there is no id and loading stops.
+		 */
+		refuseWithoutRecord() {
+			if (this.recordId) {
+				return false
+			}
+			this.loading = false
+			this.loadError = t('shillinq', 'No period id supplied.')
+			return true
+		},
+
+		/**
+		 * Take the loaded period, or report it missing.
+		 *
+		 * @param {object|string|null} data The response's data.
+		 */
+		applyLoaded(data) {
+			if (!data || typeof data !== 'object') {
+				this.loadError = t('shillinq', 'Period not found.')
+				this.period = null
+			} else {
+				this.period = data
+			}
+		},
+
+		/**
+		 * The period's endpoint, with an optional action path.
+		 *
+		 * @param {string} suffix The action path, such as `/close`, or empty.
+		 * @return {string} The URL.
+		 */
+		periodUrl(suffix) {
+			return generateUrl(`/apps/shillinq/api/period-close/${encodeURIComponent(this.recordId)}${suffix}`)
+		},
+
+		/**
+		 * Merge the period the server returned, or reload it when none came back.
+		 *
+		 * @param {object|string|null} next The returned period.
+		 * @return {Promise<void>}
+		 */
+		async takePeriod(next) {
+			if (next && typeof next === 'object') {
+				this.period = { ...this.period, ...next }
+			} else {
+				await this.load()
 			}
 		},
 
@@ -523,29 +558,16 @@ export default {
 		},
 
 		async transition(action, successMessage, body = {}) {
-			if (!this.recordId) {
-				return
-			}
+			if (!this.recordId) return
 			this.transitioning = true
 			this.transitionError = ''
 			this.transitionNotice = ''
 			try {
-				const url = generateUrl(
-					`/apps/shillinq/api/period-close/${encodeURIComponent(this.recordId)}/${action}`,
-				)
-				const response = await axios.post(url, body || {})
-				const next = response?.data?.data
-				if (next && typeof next === 'object') {
-					this.period = { ...this.period, ...next }
-				} else {
-					await this.load()
-				}
+				const response = await axios.post(this.periodUrl(`/${action}`), body || {})
+				await this.takePeriod(response?.data?.data)
 				this.transitionNotice = successMessage
 			} catch (err) {
-				this.transitionError = this.extractErrorMessage(
-					err,
-					t('shillinq', 'Transition failed.'),
-				)
+				this.transitionError = this.extractErrorMessage(err, t('shillinq', 'Transition failed.'))
 			} finally {
 				this.transitioning = false
 			}
@@ -565,37 +587,46 @@ export default {
 		},
 
 		async onReopenConfirmed(closeReason) {
-			if (!this.recordId) {
-				return
-			}
-			const trimmed = (closeReason || '').trim()
-			if (trimmed === '') {
-				this.reopenError = t('shillinq', 'Close reason is required.')
-				return
-			}
+			if (!this.recordId) return
+			const trimmed = this.reopenReason(closeReason)
+			if (trimmed === null) return
 			this.reopenSubmitting = true
 			this.reopenError = ''
 			try {
-				const url = generateUrl(
-					`/apps/shillinq/api/period-close/${encodeURIComponent(this.recordId)}/reopen`,
-				)
-				const response = await axios.post(url, { closeReason: trimmed })
-				const next = response?.data?.data
-				if (next && typeof next === 'object') {
-					this.period = { ...this.period, ...next }
-				} else {
-					await this.load()
-				}
-				this.reopenDialogOpen = false
-				this.transitionNotice = t('shillinq', 'Period reopened.')
+				await this.postReopen(trimmed)
 			} catch (err) {
-				this.reopenError = this.extractErrorMessage(
-					err,
-					t('shillinq', 'Reopen failed.'),
-				)
+				this.reopenError = this.extractErrorMessage(err, t('shillinq', 'Reopen failed.'))
 			} finally {
 				this.reopenSubmitting = false
 			}
+		},
+
+		/**
+		 * The trimmed close reason, or null with an error when it is empty.
+		 *
+		 * @param {string|null} closeReason The reason typed in the dialog.
+		 * @return {string|null} The reason.
+		 */
+		reopenReason(closeReason) {
+			const trimmed = (closeReason || '').trim()
+			if (trimmed === '') {
+				this.reopenError = t('shillinq', 'Close reason is required.')
+				return null
+			}
+			return trimmed
+		},
+
+		/**
+		 * Reopen the period, close the dialog and announce it.
+		 *
+		 * @param {string} closeReason The trimmed reason.
+		 * @return {Promise<void>}
+		 */
+		async postReopen(closeReason) {
+			const response = await axios.post(this.periodUrl('/reopen'), { closeReason })
+			await this.takePeriod(response?.data?.data)
+			this.reopenDialogOpen = false
+			this.transitionNotice = t('shillinq', 'Period reopened.')
 		},
 
 		extractErrorMessage(err, fallback) {

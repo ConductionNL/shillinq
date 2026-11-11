@@ -93,37 +93,15 @@ class StockLedgerService {
 		string $sku,
 		float $initialStock = 0.0,
 	): float {
+		$key = new StockLocationKey(administrationId: $administrationId, locationId: $locationId);
+		$key->sku = $sku;
+
 		try {
-			$moves = $this->postedMovesForLocation(
-				administrationId: $administrationId,
-				locationId: $locationId,
-				sku: $sku
-			);
-			$netCents = $this->cents(value: $initialStock);
-			foreach ($moves as $move) {
-				$cents = $this->cents(value: ($move['quantity'] ?? 0));
-				if (((string)($move['destinationLocationId'] ?? '')) === $locationId) {
-					$netCents += $cents;
-				}
-
-				if (((string)($move['sourceLocationId'] ?? '')) === $locationId) {
-					$netCents -= $cents;
-				}
-			}
-
-			return $this->fromCents(cents: $netCents);
+			return $this->fromCents(cents: $this->onHandCents(key: $key, initialStock: $initialStock));
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'StockLedgerService: quantityForLocation failed',
-				[
-					'administrationId' => $administrationId,
-					'locationId' => $locationId,
-					'sku' => $sku,
-					'exception' => $e->getMessage(),
-				]
-			);
+			$this->logger->error('StockLedgerService: quantityForLocation failed', $key->failureContext(error: $e));
 			return 0.0;
-		}//end try
+		}
 
 	}//end quantityForLocation()
 
@@ -140,30 +118,20 @@ class StockLedgerService {
 	 * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-9
 	 */
 	public function reservedForLocation(string $administrationId, string $locationId, string $sku): float {
+		$key = new StockLocationKey(administrationId: $administrationId, locationId: $locationId);
+		$key->sku = $sku;
+
 		try {
-			$moves = $this->draftMovesForSource(
-				administrationId: $administrationId,
-				locationId: $locationId,
-				sku: $sku
-			);
 			$reservedCents = 0;
-			foreach ($moves as $move) {
+			foreach ($this->draftMovesForSource(key: $key) as $move) {
 				$reservedCents += $this->cents(value: ($move['quantity'] ?? 0));
 			}
 
 			return $this->fromCents(cents: $reservedCents);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'StockLedgerService: reservedForLocation failed',
-				[
-					'administrationId' => $administrationId,
-					'locationId' => $locationId,
-					'sku' => $sku,
-					'exception' => $e->getMessage(),
-				]
-			);
+			$this->logger->error('StockLedgerService: reservedForLocation failed', $key->failureContext(error: $e));
 			return 0.0;
-		}//end try
+		}
 
 	}//end reservedForLocation()
 
@@ -182,120 +150,218 @@ class StockLedgerService {
 	 * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-9
 	 */
 	public function traceLocation(string $administrationId, string $locationId, string $sku): array {
+		$key = new StockLocationKey(administrationId: $administrationId, locationId: $locationId);
+		$key->sku = $sku;
+
 		try {
-			$moves = $this->postedMovesForLocation(
-				administrationId: $administrationId,
-				locationId: $locationId,
-				sku: $sku
-			);
-
-			usort(
-				$moves,
-				static fn (array $left, array $right): int => strcmp(
-					(string)($left['postedAt'] ?? ''),
-					(string)($right['postedAt'] ?? '')
-				)
-			);
-
-			$trace = [];
-			$runningCents = 0;
-			foreach ($moves as $move) {
-				$cents = $this->cents(value: ($move['quantity'] ?? 0));
-				$sign = '+';
-				$signCents = $cents;
-				if (((string)($move['sourceLocationId'] ?? '')) === $locationId) {
-					$sign = '-';
-					$signCents = -$cents;
-				}
-
-				$runningCents += $signCents;
-				$trace[] = [
-					'id' => ($move['id'] ?? null),
-					'movementNumber' => ($move['movementNumber'] ?? null),
-					'postedAt' => ($move['postedAt'] ?? null),
-					'movementType' => ($move['movementType'] ?? null),
-					'sign' => $sign,
-					'quantity' => $this->fromCents(cents: $cents),
-					'runningTotal' => $this->fromCents(cents: $runningCents),
-				];
-			}
-
-			return $trace;
+			$moves = $this->chronological(moves: $this->postedMovesForLocation(key: $key));
+			return $this->traceRows(moves: $moves, locationId: $locationId);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'StockLedgerService: traceLocation failed',
-				[
-					'administrationId' => $administrationId,
-					'locationId' => $locationId,
-					'sku' => $sku,
-					'exception' => $e->getMessage(),
-				]
-			);
+			$this->logger->error('StockLedgerService: traceLocation failed', $key->failureContext(error: $e));
 			return [];
-		}//end try
+		}
 
 	}//end traceLocation()
+
+	/**
+	 * On-hand cents: the seed, plus moves into the location, minus moves out of it.
+	 *
+	 * @param StockLocationKey $key          The SKU at its location.
+	 * @param float            $initialStock The initial-stock seed.
+	 *
+	 * @return int
+	 */
+	private function onHandCents(StockLocationKey $key, float $initialStock): int {
+		$netCents = $this->cents(value: $initialStock);
+		foreach ($this->postedMovesForLocation(key: $key) as $move) {
+			$cents = $this->cents(value: ($move['quantity'] ?? 0));
+			if (((string)($move['destinationLocationId'] ?? '')) === $key->locationId) {
+				$netCents += $cents;
+			}
+
+			if (((string)($move['sourceLocationId'] ?? '')) === $key->locationId) {
+				$netCents -= $cents;
+			}
+		}
+
+		return $netCents;
+
+	}//end onHandCents()
+
+	/**
+	 * The moves ordered by postedAt, oldest first.
+	 *
+	 * @param array<int,array<string,mixed>> $moves StockMoves.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function chronological(array $moves): array {
+		usort(
+			$moves,
+			static fn (array $left, array $right): int => strcmp(
+				(string)($left['postedAt'] ?? ''),
+				(string)($right['postedAt'] ?? '')
+			)
+		);
+
+		return $moves;
+
+	}//end chronological()
+
+	/**
+	 * Trace rows with the location-side sign and a running cumulative total.
+	 *
+	 * @param array<int,array<string,mixed>> $moves      Chronological StockMoves.
+	 * @param string                         $locationId The traced bin location.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function traceRows(array $moves, string $locationId): array {
+		$trace = [];
+		$runningCents = 0;
+		foreach ($moves as $move) {
+			$cents = $this->cents(value: ($move['quantity'] ?? 0));
+			$sign = $this->moveSign(move: $move, locationId: $locationId);
+			$runningCents += $this->signedCents(sign: $sign, cents: $cents);
+			$trace[] = $this->traceIdentity(move: $move, sign: $sign) + [
+				'quantity' => $this->fromCents(cents: $cents),
+				'runningTotal' => $this->fromCents(cents: $runningCents),
+			];
+		}
+
+		return $trace;
+
+	}//end traceRows()
+
+	/**
+	 * '-' for a move out of the location, '+' otherwise.
+	 *
+	 * @param array<string,mixed> $move       A StockMove.
+	 * @param string              $locationId The traced bin location.
+	 *
+	 * @return string
+	 */
+	private function moveSign(array $move, string $locationId): string {
+		if (((string)($move['sourceLocationId'] ?? '')) === $locationId) {
+			return '-';
+		}
+
+		return '+';
+
+	}//end moveSign()
+
+	/**
+	 * The cents a move adds to the running total under its sign.
+	 *
+	 * @param string $sign  '+' or '-'.
+	 * @param int    $cents The move's absolute cents.
+	 *
+	 * @return int
+	 */
+	private function signedCents(string $sign, int $cents): int {
+		if ($sign === '-') {
+			return -$cents;
+		}
+
+		return $cents;
+
+	}//end signedCents()
+
+	/**
+	 * The identifying fields of a trace row, with its sign.
+	 *
+	 * @param array<string,mixed> $move A StockMove.
+	 * @param string              $sign '+' or '-'.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function traceIdentity(array $move, string $sign): array {
+		return [
+			'id' => ($move['id'] ?? null),
+			'movementNumber' => ($move['movementNumber'] ?? null),
+			'postedAt' => ($move['postedAt'] ?? null),
+			'movementType' => ($move['movementType'] ?? null),
+			'sign' => $sign,
+		];
+
+	}//end traceIdentity()
 
 	/**
 	 * Fetch all posted, non-cancelled StockMoves touching the (sku, location)
 	 * pair on either side. Combines two findAll() queries (source + destination)
 	 * and de-duplicates by id.
 	 *
-	 * @param string $administrationId Tenant scope.
-	 * @param string $locationId Bin location id.
-	 * @param string $sku Product SKU.
+	 * @param StockLocationKey $key The SKU at its location.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
-	private function postedMovesForLocation(string $administrationId, string $locationId, string $sku): array {
-		if ($administrationId === '' || $locationId === '' || $sku === '') {
+	private function postedMovesForLocation(StockLocationKey $key): array {
+		if ($key->isIncomplete() === true) {
 			return [];
 		}
 
+		$sourceSide = $this->postedMovesOnSide(key: $key, sideField: 'sourceLocationId');
+		$destinationSide = $this->postedMovesOnSide(key: $key, sideField: 'destinationLocationId');
+
+		return $this->uniqueById(moves: array_merge($sourceSide, $destinationSide));
+	}//end postedMovesForLocation()
+
+	/**
+	 * The posted StockMoves of the SKU with the location on one side.
+	 *
+	 * @param StockLocationKey $key       The SKU at its location.
+	 * @param string           $sideField 'sourceLocationId' or 'destinationLocationId'.
+	 *
+	 * @return array<int,mixed>
+	 */
+	private function postedMovesOnSide(StockLocationKey $key, string $sideField): array {
 		$base = [
-			'administrationId' => $administrationId,
-			'itemId' => $sku,
+			'administrationId' => $key->administrationId,
+			'itemId' => $key->sku,
 			'lifecycleState' => 'posted',
 		];
 
 		// ADR-084: findAll() is declared `: array` — never null, always an array.
-		$sourceSide = $this->objectService
+		return $this->objectService
 			->setRegister($this->register())
 			->setSchema('StockMove')
-			->findAll(['filters' => array_merge($base, ['sourceLocationId' => $locationId])]);
-		$destinationSide = $this->objectService
-			->setRegister($this->register())
-			->setSchema('StockMove')
-			->findAll(['filters' => array_merge($base, ['destinationLocationId' => $locationId])]);
+			->findAll(['filters' => array_merge($base, [$sideField => $key->locationId])]);
 
+	}//end postedMovesOnSide()
+
+	/**
+	 * The array moves with an id, de-duplicated by id (the last one wins).
+	 *
+	 * @param array<int,mixed> $moves Moves from both sides.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function uniqueById(array $moves): array {
 		$byId = [];
-		foreach (array_merge($sourceSide, $destinationSide) as $move) {
+		foreach ($moves as $move) {
 			if (is_array($move) === false) {
 				continue;
 			}
 
 			$id = (string)($move['id'] ?? ($move['@self']['id'] ?? ''));
-			if ($id === '') {
-				continue;
+			if ($id !== '') {
+				$byId[$id] = $move;
 			}
-
-			$byId[$id] = $move;
 		}
 
 		return array_values($byId);
-	}//end postedMovesForLocation()
+
+	}//end uniqueById()
 
 	/**
 	 * Fetch all draft StockMoves whose source is this (sku, location).
 	 *
-	 * @param string $administrationId Tenant scope.
-	 * @param string $locationId Bin location id.
-	 * @param string $sku Product SKU.
+	 * @param StockLocationKey $key The SKU at its location.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
-	private function draftMovesForSource(string $administrationId, string $locationId, string $sku): array {
-		if ($administrationId === '' || $locationId === '' || $sku === '') {
+	private function draftMovesForSource(StockLocationKey $key): array {
+		if ($key->isIncomplete() === true) {
 			return [];
 		}
 
@@ -306,9 +372,9 @@ class StockLedgerService {
 			->findAll(
 				[
 					'filters' => [
-						'administrationId' => $administrationId,
-						'sourceLocationId' => $locationId,
-						'itemId' => $sku,
+						'administrationId' => $key->administrationId,
+						'sourceLocationId' => $key->locationId,
+						'itemId' => $key->sku,
 						'lifecycleState' => 'draft',
 					],
 				]

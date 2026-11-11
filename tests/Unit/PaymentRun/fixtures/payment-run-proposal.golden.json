@@ -1,0 +1,211 @@
+{
+    "2026-10-01|2026-09-30|run": {
+        "result": {
+            "paymentRun": {
+                "runNumber": "PR-2026-003",
+                "administrationId": "adm-voorbeeld",
+                "executionDate": "2026-09-30",
+                "debtorAccountIban": "NL91ABNA0417164300",
+                "status": "draft",
+                "lifecycleState": "draft",
+                "totalAmount": 2415.0,
+                "currency": "EUR",
+                "paymentLines": [
+                    {
+                        "payeeId": "payee-drukkerij",
+                        "payeeName": "Drukkerij Van der Meer B.V.",
+                        "creditorIban": "NL20INGB0001234567",
+                        "amount": 600.0,
+                        "remittanceInfo": "2026-0450",
+                        "apTransactionRef": "ap-part"
+                    },
+                    {
+                        "payeeId": "payee-drukkerij",
+                        "payeeName": "Drukkerij Van der Meer B.V.",
+                        "creditorIban": "NL20INGB0001234567",
+                        "amount": 1815.0,
+                        "remittanceInfo": "2026-0412",
+                        "apTransactionRef": "ap-0412"
+                    }
+                ],
+                "id": "obj-1"
+            },
+            "skipped": [
+                {
+                    "reason": "invoice-disputed",
+                    "detail": "",
+                    "apTransactionRef": "ap-0377",
+                    "invoiceNumber": "2026-0377"
+                },
+                {
+                    "reason": "already-on-run",
+                    "apTransactionRef": "ap-0398",
+                    "invoiceNumber": "2026-0398",
+                    "detail": ""
+                },
+                {
+                    "reason": "no-iban",
+                    "apTransactionRef": "ap-glas",
+                    "invoiceNumber": "GL-12",
+                    "detail": ""
+                },
+                {
+                    "reason": "invoice-blocked",
+                    "detail": "Wacht op creditnota",
+                    "apTransactionRef": "ap-0419",
+                    "invoiceNumber": "2026-0419"
+                },
+                {
+                    "reason": "payee-blocked",
+                    "detail": "IBAN change under verification",
+                    "apTransactionRef": "ap-dv7781",
+                    "invoiceNumber": "DV-7781"
+                }
+            ]
+        },
+        "saved": [
+            {
+                "schema": "PaymentRun",
+                "object": {
+                    "runNumber": "PR-2026-003",
+                    "administrationId": "adm-voorbeeld",
+                    "executionDate": "2026-09-30",
+                    "debtorAccountIban": "NL91ABNA0417164300",
+                    "status": "draft",
+                    "lifecycleState": "draft",
+                    "totalAmount": 2415.0,
+                    "currency": "EUR",
+                    "paymentLines": [
+                        {
+                            "payeeId": "payee-drukkerij",
+                            "payeeName": "Drukkerij Van der Meer B.V.",
+                            "creditorIban": "NL20INGB0001234567",
+                            "amount": 600.0,
+                            "remittanceInfo": "2026-0450",
+                            "apTransactionRef": "ap-part"
+                        },
+                        {
+                            "payeeId": "payee-drukkerij",
+                            "payeeName": "Drukkerij Van der Meer B.V.",
+                            "creditorIban": "NL20INGB0001234567",
+                            "amount": 1815.0,
+                            "remittanceInfo": "2026-0412",
+                            "apTransactionRef": "ap-0412"
+                        }
+                    ],
+                    "id": "obj-1"
+                }
+            }
+        ]
+    },
+    "2026-10-01|2026-09-29|due": {
+        "result": {
+            "paymentRun": {
+                "runNumber": "PR-2026-003",
+                "administrationId": "adm-voorbeeld",
+                "executionDate": "2026-09-29",
+                "debtorAccountIban": "NL91ABNA0417164300",
+                "status": "draft",
+                "lifecycleState": "draft",
+                "totalAmount": 2415.0,
+                "currency": "EUR",
+                "paymentLines": [
+                    {
+                        "payeeId": "payee-drukkerij",
+                        "payeeName": "Drukkerij Van der Meer B.V.",
+                        "creditorIban": "NL20INGB0001234567",
+                        "amount": 600.0,
+                        "remittanceInfo": "2026-0450",
+                        "apTransactionRef": "ap-part",
+                        "requestedExecutionDate": "2026-09-29"
+                    },
+                    {
+                        "payeeId": "payee-drukkerij",
+                        "payeeName": "Drukkerij Van der Meer B.V.",
+                        "creditorIban": "NL20INGB0001234567",
+                        "amount": 1815.0,
+                        "remittanceInfo": "2026-0412",
+                        "apTransactionRef": "ap-0412",
+                        "requestedExecutionDate": "2026-10-01"
+                    }
+                ],
+                "id": "obj-1"
+            },
+            "skipped": [
+                {
+                    "reason": "invoice-disputed",
+                    "detail": "",
+                    "apTransactionRef": "ap-0377",
+                    "invoiceNumber": "2026-0377"
+                },
+                {
+                    "reason": "already-on-run",
+                    "apTransactionRef": "ap-0398",
+                    "invoiceNumber": "2026-0398",
+                    "detail": ""
+                },
+                {
+                    "reason": "no-iban",
+                    "apTransactionRef": "ap-glas",
+                    "invoiceNumber": "GL-12",
+                    "detail": ""
+                },
+                {
+                    "reason": "invoice-blocked",
+                    "detail": "Wacht op creditnota",
+                    "apTransactionRef": "ap-0419",
+                    "invoiceNumber": "2026-0419"
+                },
+                {
+                    "reason": "payee-blocked",
+                    "detail": "IBAN change under verification",
+                    "apTransactionRef": "ap-dv7781",
+                    "invoiceNumber": "DV-7781"
+                }
+            ]
+        },
+        "saved": [
+            {
+                "schema": "PaymentRun",
+                "object": {
+                    "runNumber": "PR-2026-003",
+                    "administrationId": "adm-voorbeeld",
+                    "executionDate": "2026-09-29",
+                    "debtorAccountIban": "NL91ABNA0417164300",
+                    "status": "draft",
+                    "lifecycleState": "draft",
+                    "totalAmount": 2415.0,
+                    "currency": "EUR",
+                    "paymentLines": [
+                        {
+                            "payeeId": "payee-drukkerij",
+                            "payeeName": "Drukkerij Van der Meer B.V.",
+                            "creditorIban": "NL20INGB0001234567",
+                            "amount": 600.0,
+                            "remittanceInfo": "2026-0450",
+                            "apTransactionRef": "ap-part",
+                            "requestedExecutionDate": "2026-09-29"
+                        },
+                        {
+                            "payeeId": "payee-drukkerij",
+                            "payeeName": "Drukkerij Van der Meer B.V.",
+                            "creditorIban": "NL20INGB0001234567",
+                            "amount": 1815.0,
+                            "remittanceInfo": "2026-0412",
+                            "apTransactionRef": "ap-0412",
+                            "requestedExecutionDate": "2026-10-01"
+                        }
+                    ],
+                    "id": "obj-1"
+                }
+            }
+        ]
+    },
+    "2026-08-01|2026-08-01|due": {
+        "result": {
+            "paymentRun": null,
+            "skipped": []
+        },
+        "saved": []
+    }
+}

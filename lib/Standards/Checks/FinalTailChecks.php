@@ -42,45 +42,113 @@ namespace OCA\Shillinq\Standards\Checks;
  */
 final class FinalTailChecks implements CheckProvider, SeedsObjects {
 	/**
+	 * The compliant samples seedObjects() returns.
+	 *
+	 * @var array<string, array<int, array<string, mixed>>>
+	 */
+	private const SEED_OBJECTS = [
+		'IossImport' => [
+			[
+				'administrationId' => 'adm-shillinq-1',
+				'consignmentValue' => 120.00,
+				'currency' => 'EUR',
+				'vatAmount' => 25.20,
+				'vatRate' => 21,
+				'destinationCountry' => 'NL',
+			],
+		],
+		'TravelAgentMargin' => [
+			[
+				'administrationId' => 'adm-shillinq-1',
+				'sellingPrice' => 1000.00,
+				'cost' => 800.00,
+				'margin' => 200.00,
+				'inputVatDeducted' => false,
+				'currency' => 'EUR',
+			],
+		],
+	];
+
+	/**
 	 * The final-tail predicates keyed by object type then rule id.
 	 *
 	 * @return array<string, array<string, callable>>
 	 */
 	public static function checks(): array {
 		return [
-			'ARInvoice' => [
-				// BR-CO-19: if the document-level invoicing period is used, a start or
-				// end date is present (the flag is independent of the dates).
-				'en16931-br-co-19' => static fn (array $o): bool => (self::truthy($o, 'invoicingPeriodPresent') === false
-					|| self::present($o, 'invoicingPeriodStart') || self::present($o, 'invoicingPeriodEnd')),
-				// BR-CO-20: each invoice line whose period is used has a start or end date.
-				'en16931-br-co-20' => static fn (array $o): bool => self::allLinePeriodsFilled($o),
-			],
-			'Account' => [
-				// pcg-class-8-special (FR): a class-8 'comptes spéciaux' account must be an
-				// off-balance/commitment/special type (not a normal P&L/balance account).
-				'pcg-class-8-special' => static fn (array $o): bool => (self::accountClass($o) !== '8'
-					|| in_array((string)($o['accountType'] ?? ''), ['off-balance', 'commitment', 'memo', 'special', 'order'], true)),
-			],
-			'IossImport' => [
-				// IOSS covers import consignments of intrinsic value up to EUR 150.
-				'ioss-import-scheme-150-eur' => static fn (array $o): bool => (is_numeric(($o['consignmentValue'] ?? null)) === true
-					&& (float)($o['consignmentValue'] ?? 0) <= 150.0),
-				// The <=EUR 22 negligible-value exemption is abolished: every import line carries VAT.
-				'ioss-low-value-import-exemption-abolished' => static fn (array $o): bool => (is_numeric(($o['vatAmount'] ?? null)) === true
-					&& (float)($o['vatAmount'] ?? 0) > 0.0),
-			],
-			'TravelAgentMargin' => [
-				// Art. 306: the taxable amount under the travel-agent margin scheme is the
-				// margin (selling - cost), with no deduction of input VAT on the supplies.
-				'vatdir-art306-margin-travel-agents' => static fn (array $o): bool => (self::centsEqual(
-					(float)($o['margin'] ?? 0),
-					((float)($o['sellingPrice'] ?? 0) - (float)($o['cost'] ?? 0))
-				) && ($o['inputVatDeducted'] ?? true) === false),
-			],
+			'ARInvoice' => self::arInvoiceChecks(),
+			'Account' => self::accountChecks(),
+			'IossImport' => self::iossImportChecks(),
+			'TravelAgentMargin' => self::travelAgentMarginChecks(),
 		];
 
 	}//end checks()
+
+	/**
+	 * The ARInvoice invoicing-period rules.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function arInvoiceChecks(): array {
+		return [
+			// BR-CO-19: if the document-level invoicing period is used, a start or
+			// end date is present (the flag is independent of the dates).
+			'en16931-br-co-19' => static fn (array $o): bool => (self::truthy($o, 'invoicingPeriodPresent') === false
+				|| self::present($o, 'invoicingPeriodStart') || self::present($o, 'invoicingPeriodEnd')),
+			// BR-CO-20: each invoice line whose period is used has a start or end date.
+			'en16931-br-co-20' => static fn (array $o): bool => self::allLinePeriodsFilled($o),
+		];
+
+	}//end arInvoiceChecks()
+
+	/**
+	 * The PCG class-8 account rule.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function accountChecks(): array {
+		return [
+			// pcg-class-8-special (FR): a class-8 'comptes spéciaux' account must be an
+			// off-balance/commitment/special type (not a normal P&L/balance account).
+			'pcg-class-8-special' => static fn (array $o): bool => (self::accountClass($o) !== '8'
+				|| in_array((string)($o['accountType'] ?? ''), ['off-balance', 'commitment', 'memo', 'special', 'order'], true)),
+		];
+
+	}//end accountChecks()
+
+	/**
+	 * The IOSS import rules.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function iossImportChecks(): array {
+		return [
+			// IOSS covers import consignments of intrinsic value up to EUR 150.
+			'ioss-import-scheme-150-eur' => static fn (array $o): bool => (is_numeric(($o['consignmentValue'] ?? null)) === true
+				&& (float)($o['consignmentValue'] ?? 0) <= 150.0),
+			// The <=EUR 22 negligible-value exemption is abolished: every import line carries VAT.
+			'ioss-low-value-import-exemption-abolished' => static fn (array $o): bool => (is_numeric(($o['vatAmount'] ?? null)) === true
+				&& (float)($o['vatAmount'] ?? 0) > 0.0),
+		];
+
+	}//end iossImportChecks()
+
+	/**
+	 * The travel-agent margin rule.
+	 *
+	 * @return array<string, callable>
+	 */
+	private static function travelAgentMarginChecks(): array {
+		return [
+			// Art. 306: the taxable amount under the travel-agent margin scheme is the
+			// margin (selling - cost), with no deduction of input VAT on the supplies.
+			'vatdir-art306-margin-travel-agents' => static fn (array $o): bool => (self::centsEqual(
+				(float)($o['margin'] ?? 0),
+				((float)($o['sellingPrice'] ?? 0) - (float)($o['cost'] ?? 0))
+			) && ($o['inputVatDeducted'] ?? true) === false),
+		];
+
+	}//end travelAgentMarginChecks()
 
 	/**
 	 * Backfill the document-level invoicing-period marker onto the seeded ARInvoices
@@ -105,28 +173,7 @@ final class FinalTailChecks implements CheckProvider, SeedsObjects {
 	 * @return array<string, array<int, array<string, mixed>>>
 	 */
 	public static function seedObjects(): array {
-		return [
-			'IossImport' => [
-				[
-					'administrationId' => 'adm-shillinq-1',
-					'consignmentValue' => 120.00,
-					'currency' => 'EUR',
-					'vatAmount' => 25.20,
-					'vatRate' => 21,
-					'destinationCountry' => 'NL',
-				],
-			],
-			'TravelAgentMargin' => [
-				[
-					'administrationId' => 'adm-shillinq-1',
-					'sellingPrice' => 1000.00,
-					'cost' => 800.00,
-					'margin' => 200.00,
-					'inputVatDeducted' => false,
-					'currency' => 'EUR',
-				],
-			],
-		];
+		return self::SEED_OBJECTS;
 
 	}//end seedObjects()
 

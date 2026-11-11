@@ -63,12 +63,6 @@ use Psr\Log\LoggerInterface;
  * Dunning API surface.
  *
  * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
- *
- * @SuppressWarnings(PHPMD.ElseExpression)
- * @SuppressWarnings(PHPMD.NPathComplexity)
- * Pre-existing debt (issue #506): inherent branch complexity in this
- * domain logic; early-return refactor deferred pending full behavioral
- * verification of each branch.
  */
 class DunningController extends Controller {
 	/**
@@ -114,95 +108,18 @@ class DunningController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function bik(): JSONResponse {
-		if ($this->context->currentUserId() === null) {
-			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
+		$administrationId = $this->requireAdministration();
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
 		}
 
-		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
-		if ($administrationId === '') {
-			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
+		$query = new BikCalculationRequest(request: $this->request, administrationId: $administrationId);
+		$refusal = $this->bikRefusal(query: $query);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
-		if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
-			return new JSONResponse(['error' => 'administration_id must be a valid identifier'], Http::STATUS_BAD_REQUEST);
-		}
-
-		try {
-			$allowed = $this->context->canAccess(administrationId: $administrationId);
-		} catch (\Throwable $e) {
-			$this->logger->error('DunningController: admin access check failed: ' . $e->getMessage());
-			return new JSONResponse(['error' => 'Authorization failure'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}
-
-		if ($allowed === false) {
-			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
-		}
-
-		$principal = (float)$this->request->getParam('principal', 0.0);
-		$partyType = (string)$this->request->getParam('partyType', 'B2B');
-		$daysInArrears = (int)$this->request->getParam('dagenVerzuim', 0);
-		$invoiceId = (string)$this->request->getParam('invoiceId', '');
-		$ingangsRaw = (string)$this->request->getParam('effectiveDate', '');
-		$calculatedRaw = (string)$this->request->getParam('calculatedOn', '');
-		$rateB2B = $this->request->getParam('tariefB2B');
-		$rateB2C = $this->request->getParam('tariefB2C');
-
-		if ($principal < 0) {
-			return new JSONResponse(['error' => 'hoofdsom must be non-negative'], Http::STATUS_BAD_REQUEST);
-		}
-
-		if (in_array($partyType, ['B2B', 'B2C', 'GOVERNMENT'], true) === false) {
-			return new JSONResponse(['error' => 'partyType must be one of B2B/B2C/GOVERNMENT'], Http::STATUS_BAD_REQUEST);
-		}
-
-		if ($this->bik->isCalculationPermitted(partyType: $partyType, daysInArrears: $daysInArrears) === false) {
-			return new JSONResponse(
-				[
-					'error' => 'B2C incassokostenberekening niet toegestaan voor dag 44 (14-dagenperiode per art. 6:96 BW)',
-					'code' => 'B2C_GRACE_PERIOD',
-				],
-				Http::STATUS_UNPROCESSABLE_ENTITY
-			);
-		}
-
-		try {
-			if ($ingangsRaw === '') {
-				$effectiveDate = new DateTimeImmutable();
-			} else {
-				$effectiveDate = new DateTimeImmutable($ingangsRaw);
-			}
-
-			if ($calculatedRaw === '') {
-				$calculatedOn = new DateTimeImmutable();
-			} else {
-				$calculatedOn = new DateTimeImmutable($calculatedRaw);
-			}
-		} catch (\Throwable $e) {
-			return new JSONResponse(['error' => 'Invalid ingangsdatum / berekendOp'], Http::STATUS_BAD_REQUEST);
-		}
-
-		$rateB2BValue = null;
-		if ($rateB2B !== null) {
-			$rateB2BValue = (float)$rateB2B;
-		}
-
-		$rateB2CValue = null;
-		if ($rateB2C !== null) {
-			$rateB2CValue = (float)$rateB2C;
-		}
-
-		$body = $this->bik->compose(
-			invoiceId: $invoiceId,
-			administrationId: $administrationId,
-			partyType: $partyType,
-			principal: $principal,
-			effectiveDate: $effectiveDate,
-			calculatedOn: $calculatedOn,
-			rateB2B: $rateB2BValue,
-			rateB2C: $rateB2CValue,
-		);
-
-		return new JSONResponse($body, Http::STATUS_OK);
+		return $this->composeBik(query: $query);
 	}//end bik()
 
 	/**
@@ -219,28 +136,9 @@ class DunningController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function executeRun(): JSONResponse {
-		if ($this->context->currentUserId() === null) {
-			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
-		}
-
-		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
-		if ($administrationId === '') {
-			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
-		}
-
-		if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
-			return new JSONResponse(['error' => 'administration_id must be a valid identifier'], Http::STATUS_BAD_REQUEST);
-		}
-
-		try {
-			$allowed = $this->context->canAccess(administrationId: $administrationId);
-		} catch (\Throwable $e) {
-			$this->logger->error('DunningController: admin access check failed: ' . $e->getMessage());
-			return new JSONResponse(['error' => 'Authorization failure'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}
-
-		if ($allowed === false) {
-			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+		$administrationId = $this->requireAdministration();
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
 		}
 
 		$params = $this->request->getParams();
@@ -248,20 +146,7 @@ class DunningController extends Controller {
 			return new JSONResponse(['error' => 'factuurId is required'], Http::STATUS_BAD_REQUEST);
 		}
 
-		try {
-			$persisted = $this->runs->executeStage(administrationId: $administrationId, params: $params);
-		} catch (\Throwable $e) {
-			$this->logger->error('DunningController.executeRun failed', ['exception' => $e]);
-			return new JSONResponse(
-				[
-					'message' => $this->l10n->t('Unable to execute the dunning run'),
-					'error' => 'dunning-run-execution-failed',
-				],
-				Http::STATUS_CONFLICT,
-			);
-		}
-
-		return new JSONResponse($persisted, Http::STATUS_CREATED);
+		return $this->executeStage(administrationId: $administrationId, params: $params);
 	}//end executeRun()
 
 	/**
@@ -273,60 +158,17 @@ class DunningController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function pause(): JSONResponse {
-		if ($this->context->currentUserId() === null) {
-			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
+		$administrationId = $this->requireAdministration();
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
 		}
 
-		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
-		if ($administrationId === '') {
-			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
-		}
-
-		if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
-			return new JSONResponse(['error' => 'administration_id must be a valid identifier'], Http::STATUS_BAD_REQUEST);
-		}
-
-		try {
-			$allowed = $this->context->canAccess(administrationId: $administrationId);
-		} catch (\Throwable $e) {
-			$this->logger->error('DunningController: admin access check failed: ' . $e->getMessage());
-			return new JSONResponse(['error' => 'Authorization failure'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}
-
-		if ($allowed === false) {
-			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
-		}
-
-		$invoiceId = (string)$this->request->getParam('invoiceId', '');
-		$reason = (string)$this->request->getParam('reason', '');
-		$details = (string)$this->request->getParam('details', '');
-		$byUser = (string)$this->context->currentUserId();
-		$evidenceRefs = $this->request->getParam('evidenceRefs');
-
-		if ($invoiceId === '' || in_array($reason, ['DISPUTED', 'PAYMENT_PLAN', 'OTHER'], true) === false) {
+		$pause = new DunningPauseRequest(request: $this->request, pausedBy: (string)$this->context->currentUserId());
+		if ($pause->isComplete() === false) {
 			return new JSONResponse(['error' => 'factuurId + valid reden are required'], Http::STATUS_BAD_REQUEST);
 		}
 
-		$evidenceRefsValue = null;
-		if (is_array($evidenceRefs) === true) {
-			$evidenceRefsValue = $evidenceRefs;
-		}
-
-		try {
-			$persisted = $this->runs->pause(
-				administrationId: $administrationId,
-				invoiceId: $invoiceId,
-				reason: $reason,
-				details: $details,
-				pausedBy: $byUser,
-				evidenceRefs: $evidenceRefsValue,
-			);
-		} catch (\Throwable $e) {
-			$this->logger->error('Shillinq: pause failed: ' . $e->getMessage());
-			return new JSONResponse(['error' => 'Failed to create dunning pause'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}
-
-		return new JSONResponse($persisted, Http::STATUS_CREATED);
+		return $this->createPause(administrationId: $administrationId, pause: $pause);
 	}//end pause()
 
 	/**
@@ -344,28 +186,9 @@ class DunningController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function resumePause(string $pauseId): JSONResponse {
-		if ($this->context->currentUserId() === null) {
-			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
-		}
-
-		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
-		if ($administrationId === '') {
-			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
-		}
-
-		if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
-			return new JSONResponse(['error' => 'administration_id must be a valid identifier'], Http::STATUS_BAD_REQUEST);
-		}
-
-		try {
-			$allowed = $this->context->canAccess(administrationId: $administrationId);
-		} catch (\Throwable $e) {
-			$this->logger->error('DunningController: admin access check failed: ' . $e->getMessage());
-			return new JSONResponse(['error' => 'Authorization failure'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}
-
-		if ($allowed === false) {
-			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+		$administrationId = $this->requireAdministration();
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
 		}
 
 		// GUARD (ownership/tenant) — security-endpoint-guards REQ-001. The
@@ -379,44 +202,18 @@ class DunningController extends Controller {
 		// this check, a member of ANY administration could resume/expire
 		// another organisation's dunning pause, and read its details
 		// (reason, evidenceRefs), by guessing/enumerating its id.
-		$existingPause = $this->fetchDunningPauseDispute(pauseId: $pauseId);
-		$pauseAdministrationId = (string)($existingPause['administrationId'] ?? '');
-		if ($existingPause === null || $this->context->canAccess(administrationId: $pauseAdministrationId) === false) {
+		if ($this->canAccessPause(pauseId: $pauseId) === false) {
 			// Masked 404 — matches the sibling not-found response above so
 			// the existence of another tenant's pause is never disclosed.
 			return new JSONResponse(['error' => 'Dunning pause not found'], Http::STATUS_NOT_FOUND);
 		}
 
-		$resolution = (string)$this->request->getParam('resolution', 'resolve');
-		$partial = $this->request->getParam('partialSettlement');
-		if (in_array($resolution, ['resolve', 'expire'], true) === false) {
+		$resumption = new PauseResumptionRequest(request: $this->request, pauseId: $pauseId);
+		if ($resumption->hasKnownResolution() === false) {
 			return new JSONResponse(['error' => 'resolution must be resolve or expire'], Http::STATUS_BAD_REQUEST);
 		}
 
-		$partialSettlement = null;
-		if ($partial !== null) {
-			$partialSettlement = (float)$partial;
-		}
-
-		try {
-			$persisted = $this->runs->resumePause(
-				administrationId: $administrationId,
-				pauseId: $pauseId,
-				resolution: $resolution,
-				partialSettlement: $partialSettlement,
-			);
-		} catch (\Throwable $e) {
-			$this->logger->error('DunningController.resumePause failed', ['exception' => $e]);
-			return new JSONResponse(
-				[
-					'message' => $this->l10n->t('Unable to resume the dunning pause'),
-					'error' => 'dunning-pause-not-found',
-				],
-				Http::STATUS_NOT_FOUND,
-			);
-		}
-
-		return new JSONResponse($persisted, Http::STATUS_OK);
+		return $this->resume(administrationId: $administrationId, resumption: $resumption);
 	}//end resumePause()
 
 	/**
@@ -428,49 +225,20 @@ class DunningController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function writeOff(): JSONResponse {
-		if ($this->context->currentUserId() === null) {
-			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
-		}
-
-		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
-		if ($administrationId === '') {
-			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
-		}
-
-		if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
-			return new JSONResponse(['error' => 'administration_id must be a valid identifier'], Http::STATUS_BAD_REQUEST);
-		}
-
-		try {
-			$allowed = $this->context->canAccess(administrationId: $administrationId);
-		} catch (\Throwable $e) {
-			$this->logger->error('DunningController: admin access check failed: ' . $e->getMessage());
-			return new JSONResponse(['error' => 'Authorization failure'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}
-
-		if ($allowed === false) {
-			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+		$administrationId = $this->requireAdministration();
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
 		}
 
 		$params = $this->request->getParams();
-		if (($params['invoiceId'] ?? '') === ''
-			|| ($params['art29OBDeclaration'] ?? '') === ''
-			|| ((float)($params['principalDepreciated'] ?? 0)) <= 0
-		) {
+		if ($this->isCompleteWriteOff(params: $params) === false) {
 			return new JSONResponse(
 				['error' => 'factuurId, hoofdsomAfgeschreven (>0) and art29OBVerklaring are required'],
 				Http::STATUS_BAD_REQUEST
 			);
 		}
 
-		try {
-			$persisted = $this->runs->writeOff(administrationId: $administrationId, params: $params);
-		} catch (\Throwable $e) {
-			$this->logger->error('Shillinq: writeOff failed: ' . $e->getMessage());
-			return new JSONResponse(['error' => 'Failed to record write-off'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}
-
-		return new JSONResponse($persisted, Http::STATUS_CREATED);
+		return $this->recordWriteOff(administrationId: $administrationId, params: $params);
 	}//end writeOff()
 
 	/**
@@ -482,48 +250,17 @@ class DunningController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function dossier(): JSONResponse {
-		if ($this->context->currentUserId() === null) {
-			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
+		$administrationId = $this->requireAdministration();
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
 		}
 
-		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
-		if ($administrationId === '') {
-			return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
-		}
-
-		if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
-			return new JSONResponse(['error' => 'administration_id must be a valid identifier'], Http::STATUS_BAD_REQUEST);
-		}
-
-		try {
-			$allowed = $this->context->canAccess(administrationId: $administrationId);
-		} catch (\Throwable $e) {
-			$this->logger->error('DunningController: admin access check failed: ' . $e->getMessage());
-			return new JSONResponse(['error' => 'Authorization failure'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}
-
-		if ($allowed === false) {
-			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
-		}
-
-		$invoiceId = (string)$this->request->getParam('invoiceId', '');
-		$customerId = (string)$this->request->getParam('customerId', '');
-		if ($invoiceId === '' || $customerId === '') {
+		$incasso = new IncassoTransferRequest(request: $this->request);
+		if ($incasso->invoiceId === '' || $incasso->customerId === '') {
 			return new JSONResponse(['error' => 'factuurId + klantId required'], Http::STATUS_BAD_REQUEST);
 		}
 
-		try {
-			$bundle = $this->dossier->compose(
-				administrationId: $administrationId,
-				invoiceId: $invoiceId,
-				customerId: $customerId,
-			);
-		} catch (\Throwable $e) {
-			$this->logger->error('Shillinq: dossier compose failed: ' . $e->getMessage());
-			return new JSONResponse(['error' => 'Failed to compose dossier'], Http::STATUS_INTERNAL_SERVER_ERROR);
-		}
-
-		return new JSONResponse($bundle, Http::STATUS_OK);
+		return $this->composeDossier(administrationId: $administrationId, incasso: $incasso);
 	}//end dossier()
 
 	/**
@@ -550,6 +287,29 @@ class DunningController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function transfer(): JSONResponse {
+		$administrationId = $this->requireAdministration();
+		if ($administrationId instanceof JSONResponse) {
+			return $administrationId;
+		}
+
+		$incasso = new IncassoTransferRequest(request: $this->request);
+		if ($incasso->invoiceId === '' || $incasso->customerId === '' || $incasso->dunningRunId === '') {
+			return new JSONResponse(
+				['error' => 'factuurId + klantId + dunningRunId required'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
+
+		return $this->transferDossier(administrationId: $administrationId, incasso: $incasso);
+	}//end transfer()
+
+	/**
+	 * The access prelude of every action: an authenticated caller, a valid
+	 * administration_id and access to that administration.
+	 *
+	 * @return string|JSONResponse The trimmed administration id, or the refusal.
+	 */
+	private function requireAdministration(): string|JSONResponse {
 		if ($this->context->currentUserId() === null) {
 			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
 		}
@@ -563,6 +323,18 @@ class DunningController extends Controller {
 			return new JSONResponse(['error' => 'administration_id must be a valid identifier'], Http::STATUS_BAD_REQUEST);
 		}
 
+		return $this->requireAccess(administrationId: $administrationId);
+
+	}//end requireAdministration()
+
+	/**
+	 * Check that the caller may act on the administration.
+	 *
+	 * @param string $administrationId The validated administration id.
+	 *
+	 * @return string|JSONResponse The administration id, or the refusal.
+	 */
+	private function requireAccess(string $administrationId): string|JSONResponse {
 		try {
 			$allowed = $this->context->canAccess(administrationId: $administrationId);
 		} catch (\Throwable $e) {
@@ -576,29 +348,304 @@ class DunningController extends Controller {
 			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
 		}
 
-		$invoiceId = (string)$this->request->getParam('invoiceId', '');
-		$customerId = (string)$this->request->getParam('customerId', '');
-		$dunningRunId = (string)$this->request->getParam('dunningRunId', '');
-		if ($invoiceId === '' || $customerId === '' || $dunningRunId === '') {
+		return $administrationId;
+
+	}//end requireAccess()
+
+	/**
+	 * Refuse a BIK calculation the input does not allow.
+	 *
+	 * @param BikCalculationRequest $query The calculation input.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function bikRefusal(BikCalculationRequest $query): ?JSONResponse {
+		if ($query->principal < 0) {
+			return new JSONResponse(['error' => 'hoofdsom must be non-negative'], Http::STATUS_BAD_REQUEST);
+		}
+
+		if (in_array($query->partyType, ['B2B', 'B2C', 'GOVERNMENT'], true) === false) {
+			return new JSONResponse(['error' => 'partyType must be one of B2B/B2C/GOVERNMENT'], Http::STATUS_BAD_REQUEST);
+		}
+
+		return $this->gracePeriodRefusal(query: $query);
+
+	}//end bikRefusal()
+
+	/**
+	 * Refuse a B2C calculation inside the 14-day grace period (art. 6:96 BW).
+	 *
+	 * @param BikCalculationRequest $query The calculation input.
+	 *
+	 * @return JSONResponse|null
+	 */
+	private function gracePeriodRefusal(BikCalculationRequest $query): ?JSONResponse {
+		if ($this->bik->isCalculationPermitted(partyType: $query->partyType, daysInArrears: $query->daysInArrears) === false) {
 			return new JSONResponse(
-				['error' => 'factuurId + klantId + dunningRunId required'],
-				Http::STATUS_BAD_REQUEST
+				[
+					'error' => 'B2C incassokostenberekening niet toegestaan voor dag 44 (14-dagenperiode per art. 6:96 BW)',
+					'code' => 'B2C_GRACE_PERIOD',
+				],
+				Http::STATUS_UNPROCESSABLE_ENTITY
 			);
 		}
 
-		try {
-			$bundle = $this->dossier->compose(
-				administrationId: $administrationId,
-				invoiceId: $invoiceId,
-				customerId: $customerId,
-			);
+		return null;
 
-			$outcome = $this->runs->transferToIncasso(
-				administrationId: $administrationId,
-				invoiceId: $invoiceId,
-				dossier: $bundle,
-				dunningRunId: $dunningRunId,
+	}//end gracePeriodRefusal()
+
+	/**
+	 * Compose the BIK calculation; a malformed date is a 400.
+	 *
+	 * @param BikCalculationRequest $query The calculation input.
+	 *
+	 * @return JSONResponse
+	 */
+	private function composeBik(BikCalculationRequest $query): JSONResponse {
+		try {
+			$dates = $query->dates();
+		} catch (\Throwable $e) {
+			return new JSONResponse(['error' => 'Invalid ingangsdatum / berekendOp'], Http::STATUS_BAD_REQUEST);
+		}
+
+		return new JSONResponse($this->bikBody(query: $query, dates: $dates), Http::STATUS_OK);
+
+	}//end composeBik()
+
+	/**
+	 * Run the BIK calculator for the input.
+	 *
+	 * @param BikCalculationRequest $query The calculation input.
+	 * @param array{0: DateTimeImmutable, 1: DateTimeImmutable} $dates Effective date and calculation date.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function bikBody(BikCalculationRequest $query, array $dates): array {
+		return $this->bik->compose(
+			invoiceId: $query->invoiceId,
+			administrationId: $query->administrationId,
+			partyType: $query->partyType,
+			principal: $query->principal,
+			effectiveDate: $dates[0],
+			calculatedOn: $dates[1],
+			rateB2B: $query->rateB2B,
+			rateB2C: $query->rateB2C,
+		);
+
+	}//end bikBody()
+
+	/**
+	 * Execute one dunning run stage; a refusal (e.g. an active pause) is a 409.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param array<string,mixed> $params The request parameters.
+	 *
+	 * @return JSONResponse
+	 */
+	private function executeStage(string $administrationId, array $params): JSONResponse {
+		try {
+			$persisted = $this->runs->executeStage(administrationId: $administrationId, params: $params);
+		} catch (\Throwable $e) {
+			$this->logger->error('DunningController.executeRun failed', ['exception' => $e]);
+			return new JSONResponse(
+				[
+					'message' => $this->l10n->t('Unable to execute the dunning run'),
+					'error' => 'dunning-run-execution-failed',
+				],
+				Http::STATUS_CONFLICT,
 			);
+		}
+
+		return new JSONResponse($persisted, Http::STATUS_CREATED);
+
+	}//end executeStage()
+
+	/**
+	 * Create the dunning pause; a failure is a logged 500.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param DunningPauseRequest $pause The pause to create.
+	 *
+	 * @return JSONResponse
+	 */
+	private function createPause(string $administrationId, DunningPauseRequest $pause): JSONResponse {
+		try {
+			$persisted = $this->persistPause(administrationId: $administrationId, pause: $pause);
+		} catch (\Throwable $e) {
+			$this->logger->error('Shillinq: pause failed: ' . $e->getMessage());
+			return new JSONResponse(['error' => 'Failed to create dunning pause'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+
+		return new JSONResponse($persisted, Http::STATUS_CREATED);
+
+	}//end createPause()
+
+	/**
+	 * Hand the pause to the run orchestrator.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param DunningPauseRequest $pause The pause to create.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function persistPause(string $administrationId, DunningPauseRequest $pause): array {
+		return $this->runs->pause(
+			administrationId: $administrationId,
+			invoiceId: $pause->invoiceId,
+			reason: $pause->reason,
+			details: $pause->details,
+			pausedBy: $pause->pausedBy,
+			evidenceRefs: $pause->evidenceRefs,
+		);
+
+	}//end persistPause()
+
+	/**
+	 * Whether the pause exists and belongs to an administration the caller may access.
+	 *
+	 * @param string $pauseId The DunningPauseDispute id.
+	 *
+	 * @return bool
+	 */
+	private function canAccessPause(string $pauseId): bool {
+		$existingPause = $this->fetchDunningPauseDispute(pauseId: $pauseId);
+		$pauseAdministrationId = (string)($existingPause['administrationId'] ?? '');
+		if ($existingPause === null || $this->context->canAccess(administrationId: $pauseAdministrationId) === false) {
+			return false;
+		}
+
+		return true;
+
+	}//end canAccessPause()
+
+	/**
+	 * Resolve or expire the pause; a failure is reported as a stable slug.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param PauseResumptionRequest $resumption The resumption.
+	 *
+	 * @return JSONResponse
+	 */
+	private function resume(string $administrationId, PauseResumptionRequest $resumption): JSONResponse {
+		try {
+			$persisted = $this->persistResumption(administrationId: $administrationId, resumption: $resumption);
+		} catch (\Throwable $e) {
+			$this->logger->error('DunningController.resumePause failed', ['exception' => $e]);
+			return new JSONResponse(
+				[
+					'message' => $this->l10n->t('Unable to resume the dunning pause'),
+					'error' => 'dunning-pause-not-found',
+				],
+				Http::STATUS_NOT_FOUND,
+			);
+		}
+
+		return new JSONResponse($persisted, Http::STATUS_OK);
+
+	}//end resume()
+
+	/**
+	 * Hand the resumption to the run orchestrator.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param PauseResumptionRequest $resumption The resumption.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function persistResumption(string $administrationId, PauseResumptionRequest $resumption): array {
+		return $this->runs->resumePause(
+			administrationId: $administrationId,
+			pauseId: $resumption->pauseId,
+			resolution: $resumption->resolution,
+			partialSettlement: $resumption->partialSettlement,
+		);
+
+	}//end persistResumption()
+
+	/**
+	 * Whether a write-off names the invoice, the art. 29 OB declaration and a
+	 * positive written-off principal.
+	 *
+	 * @param array<string,mixed> $params The request parameters.
+	 *
+	 * @return bool
+	 */
+	private function isCompleteWriteOff(array $params): bool {
+		return ($params['invoiceId'] ?? '') !== ''
+			&& ($params['art29OBDeclaration'] ?? '') !== ''
+			&& ((float)($params['principalDepreciated'] ?? 0)) > 0;
+
+	}//end isCompleteWriteOff()
+
+	/**
+	 * Record the write-off; a failure is a logged 500.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param array<string,mixed> $params The request parameters.
+	 *
+	 * @return JSONResponse
+	 */
+	private function recordWriteOff(string $administrationId, array $params): JSONResponse {
+		try {
+			$persisted = $this->runs->writeOff(administrationId: $administrationId, params: $params);
+		} catch (\Throwable $e) {
+			$this->logger->error('Shillinq: writeOff failed: ' . $e->getMessage());
+			return new JSONResponse(['error' => 'Failed to record write-off'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+
+		return new JSONResponse($persisted, Http::STATUS_CREATED);
+
+	}//end recordWriteOff()
+
+	/**
+	 * Compose the stage-5 dossier; a failure is a logged 500.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param IncassoTransferRequest $incasso The invoice and customer.
+	 *
+	 * @return JSONResponse
+	 */
+	private function composeDossier(string $administrationId, IncassoTransferRequest $incasso): JSONResponse {
+		try {
+			$bundle = $this->dossierFor(administrationId: $administrationId, incasso: $incasso);
+		} catch (\Throwable $e) {
+			$this->logger->error('Shillinq: dossier compose failed: ' . $e->getMessage());
+			return new JSONResponse(['error' => 'Failed to compose dossier'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
+
+		return new JSONResponse($bundle, Http::STATUS_OK);
+
+	}//end composeDossier()
+
+	/**
+	 * Compose the dossier server-side from the invoice and customer.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param IncassoTransferRequest $incasso The invoice and customer.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function dossierFor(string $administrationId, IncassoTransferRequest $incasso): array {
+		return $this->dossier->compose(
+			administrationId: $administrationId,
+			invoiceId: $incasso->invoiceId,
+			customerId: $incasso->customerId,
+		);
+
+	}//end dossierFor()
+
+	/**
+	 * Compose the dossier and transfer it to the incasso provider; a failure is
+	 * a logged 500.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param IncassoTransferRequest $incasso The invoice, customer and run.
+	 *
+	 * @return JSONResponse
+	 */
+	private function transferDossier(string $administrationId, IncassoTransferRequest $incasso): JSONResponse {
+		try {
+			$verdict = $this->sendToIncasso(administrationId: $administrationId, incasso: $incasso);
 		} catch (\Throwable $e) {
 			$this->logger->error('Shillinq: incasso transfer failed: ' . $e->getMessage());
 			return new JSONResponse(['error' => 'Failed to transfer dossier'], Http::STATUS_INTERNAL_SERVER_ERROR);
@@ -608,16 +655,34 @@ class DunningController extends Controller {
 		// as an HTTP error: the dispatch attempt itself succeeded and the
 		// operator needs the provider's own verdict (and errorMessage) to
 		// decide between a retry and a manual escalation.
-		return new JSONResponse(
-			[
-				'channel' => $outcome->channel,
-				'deliveryStatus' => $outcome->deliveryStatus,
-				'extras' => $outcome->extras,
-				'errorMessage' => $outcome->errorMessage,
-			],
-			Http::STATUS_OK
+		return new JSONResponse($verdict, Http::STATUS_OK);
+
+	}//end transferDossier()
+
+	/**
+	 * Compose the dossier server-side, transfer it and report the provider's verdict.
+	 *
+	 * @param string $administrationId The administration.
+	 * @param IncassoTransferRequest $incasso The invoice, customer and run.
+	 *
+	 * @return array{channel: mixed, deliveryStatus: mixed, extras: mixed, errorMessage: mixed}
+	 */
+	private function sendToIncasso(string $administrationId, IncassoTransferRequest $incasso): array {
+		$outcome = $this->runs->transferToIncasso(
+			administrationId: $administrationId,
+			invoiceId: $incasso->invoiceId,
+			dossier: $this->dossierFor(administrationId: $administrationId, incasso: $incasso),
+			dunningRunId: $incasso->dunningRunId,
 		);
-	}//end transfer()
+
+		return [
+			'channel' => $outcome->channel,
+			'deliveryStatus' => $outcome->deliveryStatus,
+			'extras' => $outcome->extras,
+			'errorMessage' => $outcome->errorMessage,
+		];
+
+	}//end sendToIncasso()
 
 	/**
 	 * Fetch a DunningPauseDispute by id via the real ObjectService API, so

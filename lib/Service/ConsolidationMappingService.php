@@ -89,44 +89,39 @@ class ConsolidationMappingService {
 	 *
 	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-19
 	 */
-	public function findActiveMapping(
-		string $sourceAdministrationId,
-		string $destinationAdministrationId,
-		?DateTimeImmutable $asOf = null,
-	): ?array {
-		if ($sourceAdministrationId === '' || $destinationAdministrationId === '') {
+	public function findActiveMapping(string $sourceAdministrationId, string $destinationAdministrationId, ?DateTimeImmutable $asOf = null): ?array {
+		if (in_array('', [$sourceAdministrationId, $destinationAdministrationId], true) === true) {
 			return null;
 		}
 
 		$asOf ??= new DateTimeImmutable();
-
 		try {
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$candidates = $objectService
-				->setRegister($this->resolveRegister())
-				->setSchema('ConsolidationMapping')
-				->findAll(
-					[
-						'filters' => [
-							'sourceAdministrationId' => $sourceAdministrationId,
-							'destinationAdministrationId' => $destinationAdministrationId,
-						],
-					]
-				);
+			$candidates = $this->candidates(sourceAdministrationId: $sourceAdministrationId, destinationAdministrationId: $destinationAdministrationId);
 		} catch (Throwable $e) {
-			$this->logger->error(
-				'ConsolidationMappingService: failed to lookup mappings',
-				[
-					'sourceAdministrationId' => $sourceAdministrationId,
-					'destinationAdministrationId' => $destinationAdministrationId,
-					'exception' => $e->getMessage(),
-				]
-			);
+			$context = ['sourceAdministrationId' => $sourceAdministrationId, 'destinationAdministrationId' => $destinationAdministrationId];
+			$this->logger->error('ConsolidationMappingService: failed to lookup mappings', $context + ['exception' => $e->getMessage()]);
 			return null;
-		}//end try
+		}
 
 		return $this->pickMostRecent(candidates: $candidates, asOf: $asOf);
 	}//end findActiveMapping()
+
+	/**
+	 * The ConsolidationMappings stored for one source/destination pair.
+	 *
+	 * @param string $sourceAdministrationId      The dochter administration.
+	 * @param string $destinationAdministrationId The moeder administration.
+	 *
+	 * @return mixed The findAll() result.
+	 */
+	private function candidates(string $sourceAdministrationId, string $destinationAdministrationId): mixed {
+		$filters = ['sourceAdministrationId' => $sourceAdministrationId, 'destinationAdministrationId' => $destinationAdministrationId];
+
+		return $this->container->get('OCA\OpenRegister\Service\ObjectService')
+			->setRegister($this->resolveRegister())
+			->setSchema('ConsolidationMapping')
+			->findAll(['filters' => $filters]);
+	}//end candidates()
 
 	/**
 	 * Apply a mapping's rules to a single source GL account (REQ-MA-005).
@@ -152,23 +147,32 @@ class ConsolidationMappingService {
 			return $sourceAccount;
 		}
 
+		$destination = $this->ruleDestination(rules: $rules, sourceAccount: $sourceAccount);
+		if ($destination === null || $destination === '') {
+			return $sourceAccount;
+		}
+
+		return $destination;
+	}//end applyAccountRule()
+
+	/**
+	 * The destination of the first rule for a source account, or null when no
+	 * rule names it.
+	 *
+	 * @param array<mixed> $rules         The mapping's rules.
+	 * @param string       $sourceAccount The source GL account number.
+	 *
+	 * @return string|null
+	 */
+	private function ruleDestination(array $rules, string $sourceAccount): ?string {
 		foreach ($rules as $rule) {
-			if (is_array($rule) === false) {
-				continue;
-			}
-
-			if ((string)($rule['sourceAccount'] ?? '') === $sourceAccount) {
-				$destination = (string)($rule['destinationAccount'] ?? '');
-				if ($destination === '') {
-					return $sourceAccount;
-				}
-
-				return $destination;
+			if (is_array($rule) === true && (string)($rule['sourceAccount'] ?? '') === $sourceAccount) {
+				return (string)($rule['destinationAccount'] ?? '');
 			}
 		}
 
-		return $sourceAccount;
-	}//end applyAccountRule()
+		return null;
+	}//end ruleDestination()
 
 	/**
 	 * Apply a mapping to a list of source GL accounts and report unmapped ones (REQ-MA-005).
@@ -187,27 +191,16 @@ class ConsolidationMappingService {
 	 */
 	public function applyMapping(array $mapping, array $sourceAccounts): array {
 		$mapped = [];
-		$unmapped = [];
-
 		foreach ($sourceAccounts as $sourceAccount) {
 			$sourceAccount = (string)$sourceAccount;
-			if ($sourceAccount === '') {
-				continue;
-			}
-
-			$destination = $this->applyAccountRule(
-				mapping: $mapping,
-				sourceAccount: $sourceAccount
-			);
-
-			$mapped[] = ['source' => $sourceAccount, 'destination' => $destination];
-
-			if ($destination === $sourceAccount) {
-				$unmapped[] = $sourceAccount;
+			if ($sourceAccount !== '') {
+				$mapped[] = ['source' => $sourceAccount, 'destination' => $this->applyAccountRule(mapping: $mapping, sourceAccount: $sourceAccount)];
 			}
 		}
 
-		return ['mapped' => $mapped, 'unmapped' => $unmapped];
+		$passedThrough = array_filter($mapped, static fn (array $pair): bool => $pair['destination'] === $pair['source']);
+
+		return ['mapped' => $mapped, 'unmapped' => array_column($passedThrough, 'source')];
 	}//end applyMapping()
 
 	/**
@@ -259,10 +252,6 @@ class ConsolidationMappingService {
 			return $explicit;
 		}
 
-		if ($mapping === null) {
-			return null;
-		}
-
 		$fromMapping = (string)($mapping['intercompanyEliminationAccount'] ?? '');
 		if ($fromMapping === '') {
 			return null;
@@ -287,42 +276,63 @@ class ConsolidationMappingService {
 	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-19
 	 */
 	public function pickMostRecent(iterable $candidates, DateTimeImmutable $asOf): ?array {
-		$best = null;
-		$bestStamp = null;
-
+		$pick = new MappingPick();
+		$pick->asOf = $asOf;
 		foreach ($candidates as $candidate) {
 			$record = $this->extractArray(candidate: $candidate);
-			if ($record === null) {
-				continue;
+			if ($record !== null) {
+				$this->consider(pick: $pick, record: $record);
 			}
+		}
 
-			$validFrom = trim((string)($record['validFrom'] ?? ''));
-			if ($validFrom === '') {
-				if ($best === null) {
-					$best = $record;
-				}
-
-				continue;
-			}
-
-			try {
-				$stamp = new DateTimeImmutable($validFrom);
-			} catch (Throwable) {
-				continue;
-			}
-
-			if ($stamp > $asOf) {
-				continue;
-			}
-
-			if ($bestStamp === null || $stamp > $bestStamp) {
-				$best = $record;
-				$bestStamp = $stamp;
-			}
-		}//end foreach
-
-		return $best;
+		return $pick->best;
 	}//end pickMostRecent()
+
+	/**
+	 * Let one mapping take the pick: an undated mapping only when nothing is
+	 * picked yet, a dated one when it applies and is strictly more recent.
+	 *
+	 * @param MappingPick         $pick   The running choice.
+	 * @param array<string,mixed> $record One candidate mapping.
+	 *
+	 * @return void
+	 */
+	private function consider(MappingPick $pick, array $record): void {
+		$validFrom = trim((string)($record['validFrom'] ?? ''));
+		if ($validFrom === '') {
+			$pick->best ??= $record;
+			return;
+		}
+
+		$stamp = $this->applicableStamp(validFrom: $validFrom, asOf: $pick->asOf);
+		if ($stamp !== null && ($pick->bestStamp === null || $stamp > $pick->bestStamp)) {
+			$pick->best = $record;
+			$pick->bestStamp = $stamp;
+		}
+	}//end consider()
+
+	/**
+	 * A mapping's validFrom when it parses and is on or before the reference
+	 * date, otherwise null.
+	 *
+	 * @param string            $validFrom The trimmed, non-empty validFrom.
+	 * @param DateTimeImmutable $asOf      Reference date.
+	 *
+	 * @return DateTimeImmutable|null
+	 */
+	private function applicableStamp(string $validFrom, DateTimeImmutable $asOf): ?DateTimeImmutable {
+		try {
+			$stamp = new DateTimeImmutable($validFrom);
+		} catch (Throwable) {
+			return null;
+		}
+
+		if ($stamp > $asOf) {
+			return null;
+		}
+
+		return $stamp;
+	}//end applicableStamp()
 
 	/**
 	 * Coerce a candidate (array or object exposing getObject()) to an array.
@@ -336,15 +346,28 @@ class ConsolidationMappingService {
 			return $candidate;
 		}
 
-		if (is_object($candidate) === true && method_exists($candidate, 'getObject') === true) {
-			$data = $candidate->getObject();
-			if (is_array($data) === true) {
-				return $data;
-			}
+		$data = $this->payloadOf(candidate: $candidate);
+		if (is_array($data) === true) {
+			return $data;
 		}
 
 		return null;
 	}//end extractArray()
+
+	/**
+	 * The payload of a wrapped record, or null when it wraps nothing.
+	 *
+	 * @param mixed $candidate The candidate.
+	 *
+	 * @return mixed
+	 */
+	private function payloadOf(mixed $candidate): mixed {
+		if (is_object($candidate) === true && method_exists($candidate, 'getObject') === true) {
+			return $candidate->getObject();
+		}
+
+		return null;
+	}//end payloadOf()
 
 	/**
 	 * Resolve the configured register slug, defaulting to `shillinq`.

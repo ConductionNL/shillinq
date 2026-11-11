@@ -70,6 +70,13 @@ class EmuQuarterlyDraftJob extends TimedJob {
 	private const QUARTER_END_FALLBACK_DAYS = 7;
 
 	/**
+	 * The month and day each quarter ends on.
+	 *
+	 * @var array<int,string>
+	 */
+	private const QUARTER_ENDS = [1 => '-03-31', 2 => '-06-30', 3 => '-09-30', 4 => '-12-31'];
+
+	/**
 	 * Construct the job with a daily interval.
 	 *
 	 * @param ITimeFactory $time The Nextcloud time factory.
@@ -102,36 +109,33 @@ class EmuQuarterlyDraftJob extends TimedJob {
 	 * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
 	 */
 	public function isDueForQuarter(DateTimeImmutable $today): ?array {
-		$month = (int)$today->format('n');
-		$year = (int)$today->format('Y');
+		[$closedYear, $closedQuarter] = self::closedQuarter(today: $today);
+		$quarterEnd = new DateTimeImmutable($closedYear . self::QUARTER_ENDS[$closedQuarter]);
 
-		// Map current month to the quarter that just closed.
-		$closedQuarterStart = null;
-		$closedQuarter = null;
-		$closedYear = $year;
-		if ($month <= 3) {
-			// Q4 of the previous year just closed (Oct-Dec).
-			$closedQuarter = 4;
-			$closedYear = ($year - 1);
-			$closedQuarterStart = new DateTimeImmutable($closedYear . '-12-31');
-		} elseif ($month <= 6) {
-			$closedQuarter = 1;
-			$closedQuarterStart = new DateTimeImmutable($year . '-03-31');
-		} elseif ($month <= 9) {
-			$closedQuarter = 2;
-			$closedQuarterStart = new DateTimeImmutable($year . '-06-30');
-		} else {
-			$closedQuarter = 3;
-			$closedQuarterStart = new DateTimeImmutable($year . '-09-30');
-		}
-
-		$days = (int)$today->diff($closedQuarterStart)->days;
+		$days = (int)$today->diff($quarterEnd)->days;
 		if ($days < self::QUARTER_END_DELAY_DAYS || $days > self::QUARTER_END_FALLBACK_DAYS) {
 			return null;
 		}
 
 		return [$closedYear, $closedQuarter];
 	}//end isDueForQuarter()
+
+	/**
+	 * The quarter that closed most recently before today's quarter: Q4 of the previous year in January to March.
+	 *
+	 * @param DateTimeImmutable $today Today's date (UTC).
+	 *
+	 * @return array{0:int,1:int} Year + quarter.
+	 */
+	private static function closedQuarter(DateTimeImmutable $today): array {
+		$year          = (int)$today->format('Y');
+		$closedQuarter = intdiv(((int)$today->format('n') - 1), 3);
+		if ($closedQuarter === 0) {
+			return [($year - 1), 4];
+		}
+
+		return [$year, $closedQuarter];
+	}//end closedQuarter()
 
 	/**
 	 * Decide whether to run; delegate generation; never throw.
@@ -146,34 +150,37 @@ class EmuQuarterlyDraftJob extends TimedJob {
 	 */
 	protected function run($argument): void {
 		try {
-			$today = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-			$due = $this->isDueForQuarter(today: $today);
-			if ($due === null) {
-				$this->logger->debug('EmuQuarterlyDraftJob: not within quarter-close window, skipping');
-				return;
-			}
-
-			[$year, $quarter] = $due;
-			$this->logger->info(
-				'EmuQuarterlyDraftJob: due window reached',
-				['year' => $year, 'quarter' => $quarter]
-			);
-
-			// Pipeline orchestration is intentionally not wired here yet — the
-			// live GL surface + administration enumeration require the cross-app
-			// OpenRegister bridge to be in place. Logging this lets ops see the
-			// job is correctly timed; the classifier itself is unit-tested in
-			// EmuReportingServiceTest::testClassify*.
-			$this->logger->debug(
-				'EmuQuarterlyDraftJob: classifier available, awaiting GL bridge for full pipeline',
-				['classifier' => $this->emuReportingService::class]
-			);
+			$this->logQuarterWindow();
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'EmuQuarterlyDraftJob: failed to evaluate quarterly EMU draft',
 				['exception' => $e->getMessage()]
 			);
-		}//end try
-
+		}
 	}//end run()
+
+	/**
+	 * Log whether today is in the quarter-close window and, when it is, that the pipeline awaits the GL bridge.
+	 *
+	 * Pipeline orchestration is intentionally not wired here yet: the live GL
+	 * surface and administration enumeration require the cross-app
+	 * OpenRegister bridge to be in place. Logging this lets ops see the job is
+	 * correctly timed; the classifier itself is unit-tested in
+	 * EmuReportingServiceTest::testClassify*.
+	 *
+	 * @return void
+	 */
+	private function logQuarterWindow(): void {
+		$due = $this->isDueForQuarter(today: new DateTimeImmutable('now', new DateTimeZone('UTC')));
+		if ($due === null) {
+			$this->logger->debug('EmuQuarterlyDraftJob: not within quarter-close window, skipping');
+			return;
+		}
+
+		$this->logger->info('EmuQuarterlyDraftJob: due window reached', ['year' => $due[0], 'quarter' => $due[1]]);
+		$this->logger->debug(
+			'EmuQuarterlyDraftJob: classifier available, awaiting GL bridge for full pipeline',
+			['classifier' => $this->emuReportingService::class]
+		);
+	}//end logQuarterWindow()
 }//end class

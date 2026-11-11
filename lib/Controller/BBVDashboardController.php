@@ -57,6 +57,30 @@ use OCP\IUserSession;
  */
 class BBVDashboardController extends Controller {
 	/**
+	 * The data part of an empty envelope (before its scope and timestamp).
+	 *
+	 * @var array<string,mixed>
+	 */
+	private const EMPTY_ENVELOPE = [
+		'widgets' => [],
+		'programmes' => [],
+		'mappings' => [],
+		'counts' => [
+			'unconfigured' => 0,
+			'on-track' => 0,
+			'at-risk' => 0,
+			'non-compliant' => 0,
+		],
+		'summary' => [
+			'programmeCount' => 0,
+			'mappingCount' => 0,
+			'totalBudget' => 0,
+			'totalYtdSpend' => 0,
+			'utilization' => 0.0,
+		],
+	];
+
+	/**
 	 * Constructor for BBVDashboardController.
 	 *
 	 * @param IRequest $request The current request.
@@ -165,28 +189,11 @@ class BBVDashboardController extends Controller {
 			return new JSONResponse(['error' => $this->l10n->t('Not logged in')], Http::STATUS_UNAUTHORIZED);
 		}
 
-		$administrationIdRaw = $this->request->getParam('administrationId');
-		$administrationId = null;
-		if (is_string($administrationIdRaw) === true && trim($administrationIdRaw) !== '') {
-			$administrationId = trim($administrationIdRaw);
-		}
-
-		// Server-derived default: when the client omits administrationId, fall
-		// back to the active administration from the session (REQ-MA-001).
-		if ($administrationId === null) {
-			$context = $this->administrationContext->buildContext();
-			$sessionDefault = ($context['activeAdministrationId'] ?? null);
-			if (is_string($sessionDefault) === true && $sessionDefault !== '') {
-				$administrationId = $sessionDefault;
-			}
-		}
-
 		// IDOR mask (ADR-005) — when the user lacks a valid membership we
 		// return an empty envelope rather than 403 / 404 so the dashboard
 		// never discloses the existence of other tenants.
-		if ($administrationId === null
-			|| $this->administrationContext->canAccess(administrationId: $administrationId) === false
-		) {
+		$administrationId = $this->requestedAdministration();
+		if ($administrationId === null || $this->administrationContext->canAccess(administrationId: $administrationId) === false) {
 			return new JSONResponse($this->emptyEnvelope());
 		}
 
@@ -195,10 +202,48 @@ class BBVDashboardController extends Controller {
 			return new JSONResponse($this->emptyEnvelope(administrationId: $administrationId));
 		}
 
-		$envelope = $this->widget->buildEnvelope(
-			fiscalYear: $window['fiscalYear'],
-			administrationId: $administrationId,
-		);
+		return new JSONResponse($this->scopedEnvelope(administrationId: $administrationId, window: $window));
+	}//end index()
+
+	/**
+	 * The asked-for administration (trimmed); when the client omits it, the
+	 * server-derived active administration from the session (REQ-MA-001).
+	 *
+	 * @return string|null
+	 */
+	private function requestedAdministration(): ?string {
+		$administrationIdRaw = $this->request->getParam('administrationId');
+		if (is_string($administrationIdRaw) === true && trim($administrationIdRaw) !== '') {
+			return trim($administrationIdRaw);
+		}
+
+		return $this->sessionAdministration();
+	}//end requestedAdministration()
+
+	/**
+	 * The session's active administration, when it is a non-empty string.
+	 *
+	 * @return string|null
+	 */
+	private function sessionAdministration(): ?string {
+		$sessionDefault = ($this->administrationContext->buildContext()['activeAdministrationId'] ?? null);
+		if (is_string($sessionDefault) === true && $sessionDefault !== '') {
+			return $sessionDefault;
+		}
+
+		return null;
+	}//end sessionAdministration()
+
+	/**
+	 * The widget envelope for the administration's active fiscal year, with its scope.
+	 *
+	 * @param string              $administrationId The authorised administration.
+	 * @param array<string,mixed> $window           The active fiscal-year window.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function scopedEnvelope(string $administrationId, array $window): array {
+		$envelope = $this->widget->buildEnvelope(fiscalYear: $window['fiscalYear'], administrationId: $administrationId);
 		$envelope['scope'] = [
 			'administrationId' => $administrationId,
 			'fiscalYear' => $window['fiscalYear'],
@@ -206,8 +251,8 @@ class BBVDashboardController extends Controller {
 			'endDate' => $window['endDate'],
 		];
 
-		return new JSONResponse($envelope);
-	}//end index()
+		return $envelope;
+	}//end scopedEnvelope()
 
 	/**
 	 * Empty envelope for unauthorised / cross-tenant probes.
@@ -222,23 +267,7 @@ class BBVDashboardController extends Controller {
 	 * @return array<string,mixed>
 	 */
 	private function emptyEnvelope(?string $administrationId = null): array {
-		return [
-			'widgets' => [],
-			'programmes' => [],
-			'mappings' => [],
-			'counts' => [
-				'unconfigured' => 0,
-				'on-track' => 0,
-				'at-risk' => 0,
-				'non-compliant' => 0,
-			],
-			'summary' => [
-				'programmeCount' => 0,
-				'mappingCount' => 0,
-				'totalBudget' => 0,
-				'totalYtdSpend' => 0,
-				'utilization' => 0.0,
-			],
+		return self::EMPTY_ENVELOPE + [
 			'scope' => [
 				'administrationId' => $administrationId,
 				'fiscalYear' => null,

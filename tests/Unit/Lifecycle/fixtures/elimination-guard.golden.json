@@ -1,0 +1,167 @@
+{
+    "noObject": {
+        "result": true,
+        "logs": [],
+        "calls": []
+    },
+    "noReport": {
+        "result": true,
+        "logs": [],
+        "calls": []
+    },
+    "emptyReport": {
+        "result": true,
+        "logs": [],
+        "calls": []
+    },
+    "reportNotFound": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:ConsolidatedReport",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "cr-1"
+                    }
+                }
+            }
+        ]
+    },
+    "draft": {
+        "result": true,
+        "logs": [],
+        "calls": [
+            "register:shillinq",
+            "schema:ConsolidatedReport",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "cr-1"
+                    }
+                }
+            }
+        ]
+    },
+    "final": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "EliminationGuard: elimination status frozen — owning ConsolidatedReport is final",
+                {
+                    "intercompanyTransactionId": "ict-1",
+                    "consolidatedReportId": "cr-1"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:ConsolidatedReport",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "cr-1"
+                    }
+                }
+            }
+        ]
+    },
+    "finalized": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "EliminationGuard: elimination status frozen — owning ConsolidatedReport is finalized",
+                {
+                    "intercompanyTransactionId": "ict-1",
+                    "consolidatedReportId": "cr-1"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:ConsolidatedReport",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "cr-1"
+                    }
+                }
+            }
+        ]
+    },
+    "published": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "EliminationGuard: elimination status frozen — owning ConsolidatedReport is published",
+                {
+                    "intercompanyTransactionId": "ict-1",
+                    "consolidatedReportId": "cr-1"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:ConsolidatedReport",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "cr-1"
+                    }
+                }
+            }
+        ]
+    },
+    "archived": {
+        "result": false,
+        "logs": [
+            [
+                "info",
+                "EliminationGuard: elimination status frozen — owning ConsolidatedReport is archived",
+                {
+                    "intercompanyTransactionId": "ict-1",
+                    "consolidatedReportId": "42"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:ConsolidatedReport",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "42"
+                    }
+                }
+            }
+        ]
+    },
+    "storeDown": {
+        "result": false,
+        "logs": [
+            [
+                "error",
+                "EliminationGuard: immutability check failed — denying status change (fail-closed)",
+                {
+                    "intercompanyTransactionId": "ict-1",
+                    "exception": "store down"
+                }
+            ]
+        ],
+        "calls": [
+            "register:shillinq",
+            "schema:ConsolidatedReport",
+            {
+                "findAll": {
+                    "filters": {
+                        "id": "cr-1"
+                    }
+                }
+            }
+        ]
+    }
+}

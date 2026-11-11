@@ -80,7 +80,7 @@ class BudgetProjectionService {
 	public function projectAccount(string $administrationId, string $accountNumber, array $months): array {
 		$context = $this->reader->loadContext(administrationId: $administrationId, includeLedgerGroups: false);
 
-		return $this->projectAccountFromContext(accountNumber: $accountNumber, months: $months, context: $context);
+		return $this->projectAccountFromContext(run: new BudgetProjectionRun(months: $months, context: $context), accountNumber: $accountNumber);
 
 	}//end projectAccount()
 
@@ -111,44 +111,61 @@ class BudgetProjectionService {
 			throw new InvalidArgumentException('BudgetProjectionService: unknown LedgerGroup "' . $ledgerGroupKey . '".');
 		}
 
-		$entry = $context['ledgerGroupEntries'][$index];
-		$memberAccountNumbers = $entry['memberAccountNumbers'];
-
-		$memberEnvelopes = [];
-		foreach ($memberAccountNumbers as $memberAccountNumber) {
-			if (isset($context['accounts'][$memberAccountNumber]) === false) {
-				continue;
-			}
-
-			$memberEnvelopes[] = $this->projectAccountFromContext(
-				accountNumber: $memberAccountNumber,
-				months: $months,
-				context: $context
-			);
-		}
-
-		$trend = [];
+		$run = new BudgetProjectionRun(months: $months, context: $context);
+		$memberAccountNumbers = $context['ledgerGroupEntries'][$index]['memberAccountNumbers'];
+		$memberEnvelopes = $this->memberEnvelopes(run: $run, memberAccountNumbers: $memberAccountNumbers);
+		$trend = $this->groupTrend(run: $run, memberEnvelopes: $memberEnvelopes);
 		$accountType = ($memberEnvelopes[0]['accountType'] ?? 'expenses');
-		foreach ($months as $month) {
-			$membersForMonth = [];
-			foreach ($memberEnvelopes as $envelope) {
-				$membersForMonth[] = $envelope['trend'][$month];
-			}
-
-			$trend[$month] = $this->calculator->groupProjected(members: $membersForMonth);
-		}
-
-		$cumulativeSeries = $this->calculator->cumulative(trend: array_values($trend), accountType: $accountType);
-		$cumulative = array_combine($months, $cumulativeSeries);
 
 		return [
 			'ledgerGroupKey' => $ledgerGroupKey,
 			'memberAccountNumbers' => $memberAccountNumbers,
 			'trend' => $trend,
-			'cumulative' => $cumulative,
+			'cumulative' => array_combine($months, $this->calculator->cumulative(trend: array_values($trend), accountType: $accountType)),
 		];
 
 	}//end projectGroup()
+
+	/**
+	 * The envelope of every member account present in the context, in
+	 * member order, from the one loaded context.
+	 *
+	 * @param BudgetProjectionRun $run                  The request.
+	 * @param list<string>        $memberAccountNumbers The group's member accounts.
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private function memberEnvelopes(BudgetProjectionRun $run, array $memberAccountNumbers): array {
+		$memberEnvelopes = [];
+		foreach ($memberAccountNumbers as $memberAccountNumber) {
+			if (isset($run->context['accounts'][$memberAccountNumber]) === true) {
+				$memberEnvelopes[] = $this->projectAccountFromContext(run: $run, accountNumber: $memberAccountNumber);
+			}
+		}
+
+		return $memberEnvelopes;
+
+	}//end memberEnvelopes()
+
+	/**
+	 * The group's projected value per month, rolled up from its members'.
+	 *
+	 * @param BudgetProjectionRun       $run             The request.
+	 * @param list<array<string,mixed>> $memberEnvelopes The members' envelopes.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	private function groupTrend(BudgetProjectionRun $run, array $memberEnvelopes): array {
+		$trend = [];
+		foreach ($run->months as $month) {
+			$trend[$month] = $this->calculator->groupProjected(
+				members: array_map(static fn (array $envelope): array => $envelope['trend'][$month], $memberEnvelopes)
+			);
+		}
+
+		return $trend;
+
+	}//end groupTrend()
 
 	/**
 	 * Build one account's envelope from an already-loaded reader context —
@@ -158,23 +175,51 @@ class BudgetProjectionService {
 	 * (which would reintroduce the per-account query cost REQ-BPE-009
 	 * forbids).
 	 *
-	 * @param string $accountNumber The account to project.
-	 * @param list<string> $months The `YYYY-MM` months to resolve.
-	 * @param array<string,mixed> $context The {@see BudgetProjectionReader::loadContext()} bundle.
+	 * @param BudgetProjectionRun $run           The request: months and loaded context.
+	 * @param string              $accountNumber The account to project.
 	 *
 	 * @return array{accountNumber:string,accountType:string,metric:string,rate:?float,validSteps:int,trend:array<string,array<string,mixed>>,cumulative:array<string,int>}
 	 *
 	 * @throws InvalidArgumentException When the account is not found in the context.
 	 */
-	private function projectAccountFromContext(string $accountNumber, array $months, array $context): array {
-		$account = ($context['accounts'][$accountNumber] ?? null);
-		if ($account === null) {
-			throw new InvalidArgumentException('BudgetProjectionService: unknown account "' . $accountNumber . '".');
+	private function projectAccountFromContext(BudgetProjectionRun $run, string $accountNumber): array {
+		$basis = $this->projectionBasis(context: $run->context, accountNumber: $accountNumber);
+		$trend = [];
+		foreach ($run->months as $month) {
+			$trend[$month] = $this->monthTrend(basis: $basis, month: $month);
 		}
 
-		$accountType = (string)$account['accountType'];
-		$metric = $this->calculator->projectionMetric(accountType: $accountType);
+		// `cumulative()` always returns one value per trend entry, and
+		// `$trend` has exactly one entry per element of `$months`, so this
+		// combine cannot mismatch either.
+		$cumulativeSeries = $this->calculator->cumulative(trend: array_values($trend), accountType: $basis->accountType);
 
+		return [
+			'accountNumber' => $accountNumber,
+			'accountType' => $basis->accountType,
+			'metric' => $basis->metric,
+			'rate' => ($basis->growth['rate'] ?? null),
+			'validSteps' => (int)($basis->growth['validSteps'] ?? 0),
+			'trend' => $trend,
+			'cumulative' => array_combine($run->months, $cumulativeSeries),
+		];
+
+	}//end projectAccountFromContext()
+
+	/**
+	 * What the account's projection is computed from: its metric series over
+	 * the actuals window, its growth rate and its last value.
+	 *
+	 * @param array<string,mixed> $context       The loaded reader context.
+	 * @param string              $accountNumber The account to project.
+	 *
+	 * @return AccountProjectionBasis
+	 *
+	 * @throws InvalidArgumentException When the account is not found in the context.
+	 */
+	private function projectionBasis(array $context, string $accountNumber): AccountProjectionBasis {
+		$accountType = $this->accountTypeOf(context: $context, accountNumber: $accountNumber);
+		$metric = $this->calculator->projectionMetric(accountType: $accountType);
 		$window = ($context['windowByAccount'][$accountNumber] ?? ['months' => [], 'values' => []]);
 		$lastActualMonth = ($context['lastActualMonthByAccount'][$accountNumber] ?? null);
 
@@ -184,69 +229,130 @@ class BudgetProjectionService {
 		// throws `ValueError` rather than returning false on a real
 		// mismatch, so no `false` guard is reachable here).
 		$series = $this->calculator->metricSeries(orderedNetMovementCents: $window['values'], metric: $metric);
-		$actualMetricByMonth = array_combine($window['months'], $series);
 
-		$growth = null;
-		if (count($series) > 0) {
-			$growth = $this->calculator->growthRate(values: $series);
+		return new AccountProjectionBasis(
+			accountNumber: $accountNumber,
+			accountType: $accountType,
+			metric: $metric,
+			actualMetricByMonth: array_combine($window['months'], $series),
+			lastActualMonth: $lastActualMonth,
+			growth: $this->growthOf(series: $series),
+			baseValue: ($series[count($series) - 1] ?? null),
+		);
+
+	}//end projectionBasis()
+
+	/**
+	 * The account's type from the loaded context.
+	 *
+	 * @param array<string,mixed> $context       The loaded reader context.
+	 * @param string              $accountNumber The account.
+	 *
+	 * @return string
+	 *
+	 * @throws InvalidArgumentException When the account is not found in the context.
+	 */
+	private function accountTypeOf(array $context, string $accountNumber): string {
+		$account = ($context['accounts'][$accountNumber] ?? null);
+		if ($account === null) {
+			throw new InvalidArgumentException('BudgetProjectionService: unknown account "' . $accountNumber . '".');
 		}
 
-		$baseValue = ($series[count($series) - 1] ?? null);
+		return (string)$account['accountType'];
 
-		$trend = [];
-		foreach ($months as $month) {
-			$hasActual = array_key_exists($month, $actualMetricByMonth);
-			$kind = $this->calculator->seam(hasActual: $hasActual, month: $month, lastActualMonth: $lastActualMonth);
+	}//end accountTypeOf()
 
-			if ($kind === 'actual') {
-				$trend[$month] = ['kind' => 'actual', 'amount' => $actualMetricByMonth[$month]];
-				continue;
-			}
+	/**
+	 * The calculator's growth rate over a metric series, or null for an empty one.
+	 *
+	 * @param list<int|float> $series The metric series.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function growthOf(array $series): array|null {
+		if (count($series) > 0) {
+			return $this->calculator->growthRate(values: $series);
+		}
 
-			if ($kind === 'unprojectable') {
-				$trend[$month] = ['kind' => 'unprojectable', 'reason' => 'no-history', 'validSteps' => 0];
-				continue;
-			}
+		return null;
 
-			// $kind === 'projected'.
-			if ($growth === null || isset($growth['reason']) === true || $baseValue === null) {
-				$trend[$month] = [
-					'kind' => 'unprojectable',
-					'reason' => ($growth['reason'] ?? 'no-history'),
-					'validSteps' => (int)($growth['validSteps'] ?? 0),
-				];
-				continue;
-			}
+	}//end growthOf()
 
-			$k = $this->calculator->monthOffset(fromMonth: (string)$lastActualMonth, toMonth: $month);
-			if ($k < 1 || $k > BudgetProjectionCalculator::PROJECTION_HORIZON_MONTHS) {
-				$trend[$month] = ['kind' => 'unprojectable', 'reason' => 'no-history', 'validSteps' => $growth['validSteps']];
-				continue;
-			}
+	/**
+	 * One month of the account's trend: its actual, an unprojectable month
+	 * before the seam, or a projection.
+	 *
+	 * @param AccountProjectionBasis $basis The account's basis.
+	 * @param string                 $month The `YYYY-MM` month.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function monthTrend(AccountProjectionBasis $basis, string $month): array {
+		$hasActual = array_key_exists($month, $basis->actualMetricByMonth);
+		$kind = $this->calculator->seam(hasActual: $hasActual, month: $month, lastActualMonth: $basis->lastActualMonth);
 
-			$trend[$month] = [
-				'kind' => 'projected',
-				'amount' => $this->calculator->extrapolate(v0: (int)$baseValue, rate: $growth['rate'], k: $k),
-				'rate' => $growth['rate'],
-				'validSteps' => $growth['validSteps'],
-			];
-		}//end foreach
+		if ($kind === 'actual') {
+			return ['kind' => 'actual', 'amount' => $basis->actualMetricByMonth[$month]];
+		}
 
-		// `cumulative()` always returns one value per trend entry, and
-		// `$trend` has exactly one entry per element of `$months`, so this
-		// combine cannot mismatch either.
-		$cumulativeSeries = $this->calculator->cumulative(trend: array_values($trend), accountType: $accountType);
-		$cumulative = array_combine($months, $cumulativeSeries);
+		if ($kind === 'unprojectable') {
+			return ['kind' => 'unprojectable', 'reason' => 'no-history', 'validSteps' => 0];
+		}
+
+		return $this->projectedMonth(basis: $basis, month: $month);
+
+	}//end monthTrend()
+
+	/**
+	 * A month after the seam: extrapolated within the horizon from a usable
+	 * growth rate, else unprojectable with the reason.
+	 *
+	 * @param AccountProjectionBasis $basis The account's basis.
+	 * @param string                 $month The `YYYY-MM` month.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function projectedMonth(AccountProjectionBasis $basis, string $month): array {
+		$unusable = $this->unusableGrowth(basis: $basis);
+		if ($unusable !== null) {
+			return $unusable;
+		}
+
+		$growth = $basis->growth;
+		$k = $this->calculator->monthOffset(fromMonth: (string)$basis->lastActualMonth, toMonth: $month);
+		if ($k < 1 || $k > BudgetProjectionCalculator::PROJECTION_HORIZON_MONTHS) {
+			return ['kind' => 'unprojectable', 'reason' => 'no-history', 'validSteps' => $growth['validSteps']];
+		}
 
 		return [
-			'accountNumber' => $accountNumber,
-			'accountType' => $accountType,
-			'metric' => $metric,
-			'rate' => ($growth['rate'] ?? null),
-			'validSteps' => (int)($growth['validSteps'] ?? 0),
-			'trend' => $trend,
-			'cumulative' => $cumulative,
+			'kind' => 'projected',
+			'amount' => $this->calculator->extrapolate(v0: (int)$basis->baseValue, rate: $growth['rate'], k: $k),
+			'rate' => $growth['rate'],
+			'validSteps' => $growth['validSteps'],
 		];
 
-	}//end projectAccountFromContext()
+	}//end projectedMonth()
+
+	/**
+	 * The unprojectable entry when there is no usable growth rate or base
+	 * value, with the calculator's reason; null when the account can be
+	 * extrapolated.
+	 *
+	 * @param AccountProjectionBasis $basis The account's basis.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function unusableGrowth(AccountProjectionBasis $basis): array|null {
+		$growth = $basis->growth;
+		if ($growth !== null && isset($growth['reason']) === false && $basis->baseValue !== null) {
+			return null;
+		}
+
+		return [
+			'kind' => 'unprojectable',
+			'reason' => ($growth['reason'] ?? 'no-history'),
+			'validSteps' => (int)($growth['validSteps'] ?? 0),
+		];
+
+	}//end unusableGrowth()
 }//end class

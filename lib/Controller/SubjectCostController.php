@@ -51,13 +51,6 @@ use Psr\Log\LoggerInterface;
  */
 class SubjectCostController extends Controller {
 	/**
-	 * Accepted shape for the costing period: `YYYY-MM`.
-	 *
-	 * @var string
-	 */
-	private const PERIOD_PATTERN = '/^\d{4}-\d{2}$/';
-
-	/**
 	 * Constructor for the SubjectCostController.
 	 *
 	 * @param IRequest $request The request object.
@@ -121,27 +114,72 @@ class SubjectCostController extends Controller {
 			);
 		}
 
-		$subjectApp = trim((string)$this->request->getParam('subjectApp', ''));
-		$subjectId = trim((string)$this->request->getParam('subjectId', ''));
+		$query = new SubjectCostQuery(request: $this->request);
+		$refusal = $this->queryRefusal(query: $query);
+		if ($refusal !== null) {
+			return $refusal;
+		}
 
-		if ($subjectApp === '' || $subjectId === '') {
+		return $this->scopedCost(query: $query);
+	}//end index()
+
+	/**
+	 * The 400 for a missing subject or a malformed period.
+	 *
+	 * @param SubjectCostQuery $query The query.
+	 *
+	 * @return JSONResponse|null The refusal, or null when the query is well-formed.
+	 */
+	private function queryRefusal(SubjectCostQuery $query): ?JSONResponse {
+		if ($query->hasSubject() === false) {
 			return new JSONResponse(
 				['error' => 'subjectApp and subjectId are required'],
 				Http::STATUS_BAD_REQUEST
 			);
 		}
 
-		$period = trim((string)$this->request->getParam('period', ''));
-		if ($period !== '' && preg_match(self::PERIOD_PATTERN, $period) !== 1) {
+		if ($query->periodWellFormed() === false) {
 			return new JSONResponse(
 				['error' => 'period must be YYYY-MM'],
 				Http::STATUS_BAD_REQUEST
 			);
 		}
 
+		return null;
+	}//end queryRefusal()
+
+	/**
+	 * Check the named administration, resolve the readable scope and cost the subject in it.
+	 *
+	 * @param SubjectCostQuery $query The well-formed query.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/subject-cost-aggregation/spec.md#requirement-a-subject-cost-is-reachable-over-http
+	 */
+	private function scopedCost(SubjectCostQuery $query): JSONResponse {
 		$isAdmin = $this->isNextcloudAdmin();
 
-		$named = trim((string)$this->request->getParam('administrationId', ''));
+		$refusal = $this->administrationRefusal(query: $query, isAdmin: $isAdmin);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		return $this->costWithin(query: $query, scope: $this->scope(named: $query->administrationId, isAdmin: $isAdmin));
+	}//end scopedCost()
+
+	/**
+	 * The masked 404 when a non-admin names an administration they cannot reach.
+	 *
+	 * @param SubjectCostQuery $query   The query.
+	 * @param bool             $isAdmin Whether the caller is a Nextcloud admin.
+	 *
+	 * @return JSONResponse|null The refusal, or null.
+	 *
+	 * @spec openspec/specs/subject-cost-aggregation/spec.md#requirement-a-subject-cost-is-reachable-over-http
+	 */
+	private function administrationRefusal(SubjectCostQuery $query, bool $isAdmin): ?JSONResponse {
+		$named = $query->administrationId;
 		if ($named !== '' && $isAdmin === false && $this->context->canAccess($named) === false) {
 			// Masked as 404, not 403. AdministrationContextService::canAccess()
 			// states the house IDOR rule (REQ-MA-001): a resource the caller
@@ -152,7 +190,18 @@ class SubjectCostController extends Controller {
 			);
 		}
 
-		$scope = $this->scope(named: $named, isAdmin: $isAdmin);
+		return null;
+	}//end administrationRefusal()
+
+	/**
+	 * The 403 when the caller may read no administration, else the cost.
+	 *
+	 * @param SubjectCostQuery       $query The query.
+	 * @param array<int,string>|null $scope The readable administrations (null for unrestricted).
+	 *
+	 * @return JSONResponse
+	 */
+	private function costWithin(SubjectCostQuery $query, ?array $scope): JSONResponse {
 		if ($scope === []) {
 			return new JSONResponse(
 				['error' => 'No accessible administration'],
@@ -160,31 +209,57 @@ class SubjectCostController extends Controller {
 			);
 		}
 
+		return $this->computedCost(query: $query, scope: $scope);
+	}//end costWithin()
+
+	/**
+	 * Cost the subject within the readable administrations.
+	 *
+	 * @param SubjectCostQuery       $query The query.
+	 * @param array<int,string>|null $scope The readable administrations (null for unrestricted).
+	 *
+	 * @return JSONResponse 200 with the cost payload, or a logged 500.
+	 *
+	 * @spec openspec/specs/subject-cost-aggregation/spec.md#requirement-a-subject-cost-is-reachable-over-http
+	 */
+	private function computedCost(SubjectCostQuery $query, ?array $scope): JSONResponse {
 		try {
 			$result = $this->costs->costFor(
-				subjectApp: $subjectApp,
-				subjectId: $subjectId,
+				subjectApp: $query->subjectApp,
+				subjectId: $query->subjectId,
 				administrationIds: $scope,
-				period: $period
+				period: $query->period
 			);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'SubjectCostController: failed to compute a subject cost',
-				[
-					'subjectApp' => $subjectApp,
-					'subjectId' => $subjectId,
-					'exception' => $e->getMessage(),
-				]
-			);
-
-			return new JSONResponse(
-				['error' => 'Failed to compute the subject cost'],
-				Http::STATUS_INTERNAL_SERVER_ERROR
-			);
-		}//end try
+			return $this->costFailed(query: $query, e: $e);
+		}
 
 		return new JSONResponse($result, Http::STATUS_OK);
-	}//end index()
+	}//end computedCost()
+
+	/**
+	 * Log a failed cost computation and answer 500 without a stack trace.
+	 *
+	 * @param SubjectCostQuery $query The query.
+	 * @param \Throwable       $e     The failure.
+	 *
+	 * @return JSONResponse
+	 */
+	private function costFailed(SubjectCostQuery $query, \Throwable $e): JSONResponse {
+		$this->logger->error(
+			'SubjectCostController: failed to compute a subject cost',
+			[
+				'subjectApp' => $query->subjectApp,
+				'subjectId' => $query->subjectId,
+				'exception' => $e->getMessage(),
+			]
+		);
+
+		return new JSONResponse(
+			['error' => 'Failed to compute the subject cost'],
+			Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+	}//end costFailed()
 
 	/**
 	 * The administrations this request may read.

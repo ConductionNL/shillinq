@@ -25,6 +25,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\GlAdjustmentPosting;
 use OCA\Shillinq\Service\InventoryGlAdjustmentPoster;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
@@ -65,6 +66,28 @@ final class InventoryGlAdjustmentPosterTest extends TestCase {
 	}//end makePoster()
 
 	/**
+	 * Post through postAdjustment() with the fields of the former post() call.
+	 *
+	 * @param InventoryGlAdjustmentPoster $poster The poster.
+	 * @param array<string,mixed>         $fields administrationId, debitAccount, creditAccount, amountCents,
+	 *                                            journalCode, description, sourceReference, postingDate, periodId.
+	 *
+	 * @return array<string,mixed> The result envelope.
+	 */
+	private function postFields(InventoryGlAdjustmentPoster $poster, array $fields): array {
+		$posting = new GlAdjustmentPosting(administrationId: $fields['administrationId'], journalCode: $fields['journalCode']);
+		$posting->debitAccount = $fields['debitAccount'];
+		$posting->creditAccount = $fields['creditAccount'];
+		$posting->amountCents = $fields['amountCents'];
+		$posting->description = $fields['description'];
+		$posting->sourceReference = $fields['sourceReference'];
+		$posting->postingDate = $fields['postingDate'];
+		$posting->periodId = $fields['periodId'];
+		return $poster->postAdjustment(posting: $posting);
+
+	}//end postFields()
+
+	/**
 	 * A well-formed request writes one GLTransaction + a balanced debit/credit
 	 * pair of GLLines.
 	 *
@@ -74,16 +97,19 @@ final class InventoryGlAdjustmentPosterTest extends TestCase {
 		$os = new InMemoryObjectService();
 		$poster = $this->makePoster(os: $os);
 
-		$result = $poster->post(
-			administrationId: 'adm-1',
-			debitAccount: '1300',
-			creditAccount: '1305',
-			amountCents: 12345,
-			journalCode: 'LAND',
-			description: 'Test landed cost',
-			sourceReference: 'PO-1',
-			postingDate: '2026-04-01',
-			periodId: '2026-Q2'
+		$result = $this->postFields(
+			poster: $poster,
+			fields: [
+				'administrationId' => 'adm-1',
+				'debitAccount' => '1300',
+				'creditAccount' => '1305',
+				'amountCents' => 12345,
+				'journalCode' => 'LAND',
+				'description' => 'Test landed cost',
+				'sourceReference' => 'PO-1',
+				'postingDate' => '2026-04-01',
+				'periodId' => '2026-Q2',
+			]
 		);
 
 		self::assertTrue($result['posted']);
@@ -113,16 +139,19 @@ final class InventoryGlAdjustmentPosterTest extends TestCase {
 		$os = new InMemoryObjectService();
 		$poster = $this->makePoster(os: $os);
 
-		$result = $poster->post(
-			administrationId: 'adm-1',
-			debitAccount: '1300',
-			creditAccount: '',
-			amountCents: 500,
-			journalCode: 'NRV',
-			description: 'x',
-			sourceReference: 'r',
-			postingDate: '2026-04-01',
-			periodId: '2026-Q2'
+		$result = $this->postFields(
+			poster: $poster,
+			fields: [
+				'administrationId' => 'adm-1',
+				'debitAccount' => '1300',
+				'creditAccount' => '',
+				'amountCents' => 500,
+				'journalCode' => 'NRV',
+				'description' => 'x',
+				'sourceReference' => 'r',
+				'postingDate' => '2026-04-01',
+				'periodId' => '2026-Q2',
+			]
 		);
 
 		self::assertFalse($result['posted']);
@@ -139,16 +168,19 @@ final class InventoryGlAdjustmentPosterTest extends TestCase {
 		$os = new InMemoryObjectService();
 		$poster = $this->makePoster(os: $os);
 
-		$result = $poster->post(
-			administrationId: 'adm-1',
-			debitAccount: '1300',
-			creditAccount: '1305',
-			amountCents: 0,
-			journalCode: 'NRV',
-			description: 'x',
-			sourceReference: 'r',
-			postingDate: '2026-04-01',
-			periodId: '2026-Q2'
+		$result = $this->postFields(
+			poster: $poster,
+			fields: [
+				'administrationId' => 'adm-1',
+				'debitAccount' => '1300',
+				'creditAccount' => '1305',
+				'amountCents' => 0,
+				'journalCode' => 'NRV',
+				'description' => 'x',
+				'sourceReference' => 'r',
+				'postingDate' => '2026-04-01',
+				'periodId' => '2026-Q2',
+			]
 		);
 
 		self::assertFalse($result['posted']);

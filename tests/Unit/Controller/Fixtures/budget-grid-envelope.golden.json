@@ -1,0 +1,970 @@
+{
+    "columns": [
+        {
+            "key": "2027-01",
+            "label": "col 2027-01",
+            "granularity": "month",
+            "isPast": true,
+            "isTotal": false
+        },
+        {
+            "key": "2027-02",
+            "label": "col 2027-02",
+            "granularity": "month",
+            "isPast": false,
+            "isTotal": false
+        },
+        {
+            "key": "Q1",
+            "label": "col Q1",
+            "granularity": "month",
+            "isPast": true,
+            "isTotal": false
+        },
+        {
+            "key": "TOTAAL",
+            "label": "TOTAAL",
+            "granularity": "total",
+            "isPast": false,
+            "isTotal": true
+        }
+    ],
+    "rows": [
+        {
+            "id": "lg-omzet",
+            "code": "omzet",
+            "label": "Omzet",
+            "kind": "ledgerGroup",
+            "hasChildren": true,
+            "cells": {
+                "2027-01": {
+                    "budget": 5000000,
+                    "actual": 6000000,
+                    "deviation": 1000000,
+                    "favorable": true,
+                    "hasBudget": true
+                },
+                "2027-02": {
+                    "budget": 0,
+                    "actual": null,
+                    "deviation": null,
+                    "favorable": null,
+                    "hasBudget": true
+                },
+                "Q1": {
+                    "budget": 5000011,
+                    "actual": 6000007,
+                    "deviation": 999996,
+                    "favorable": true,
+                    "hasBudget": true
+                },
+                "TOTAAL": {
+                    "budget": 10000011,
+                    "actual": 12000007,
+                    "deviation": 1999996,
+                    "favorable": true
+                }
+            },
+            "children": [
+                {
+                    "id": "self-8000",
+                    "accountNumber": "8000",
+                    "label": "Account 8000",
+                    "kind": "account",
+                    "route": "\/chart-of-accounts\/self-8000",
+                    "cells": {
+                        "2027-01": {
+                            "actual": 6000000
+                        },
+                        "2027-02": {
+                            "actual": null
+                        },
+                        "Q1": {
+                            "actual": 6000007
+                        },
+                        "TOTAAL": {
+                            "actual": 12000007
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "id": "lg-kostprijs",
+            "code": "kostprijs-van-de-omzet",
+            "label": "Kostprijs-van-de-omzet",
+            "kind": "ledgerGroup",
+            "hasChildren": true,
+            "cells": {
+                "2027-01": {
+                    "budget": 1500000,
+                    "actual": 2000000,
+                    "deviation": -500000,
+                    "favorable": false,
+                    "hasBudget": true
+                },
+                "2027-02": {
+                    "budget": 0,
+                    "actual": null,
+                    "deviation": null,
+                    "favorable": null,
+                    "hasBudget": true
+                },
+                "Q1": {
+                    "budget": 1500011,
+                    "actual": 2000007,
+                    "deviation": -499996,
+                    "favorable": false,
+                    "hasBudget": true
+                },
+                "TOTAAL": {
+                    "budget": 3000011,
+                    "actual": 4000007,
+                    "deviation": -999996,
+                    "favorable": false
+                }
+            },
+            "children": [
+                {
+                    "id": "self-7000",
+                    "accountNumber": "7000",
+                    "label": "Account 7000",
+                    "kind": "account",
+                    "route": "\/chart-of-accounts\/self-7000",
+                    "cells": {
+                        "2027-01": {
+                            "actual": 2000000
+                        },
+                        "2027-02": {
+                            "actual": null
+                        },
+                        "Q1": {
+                            "actual": 2000007
+                        },
+                        "TOTAAL": {
+                            "actual": 4000007
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "id": "lg-personeel",
+            "code": "personeel",
+            "label": "Personeel",
+            "kind": "ledgerGroup",
+            "hasChildren": true,
+            "cells": {
+                "2027-01": {
+                    "budget": 800000,
+                    "actual": 900003,
+                    "deviation": -100003,
+                    "favorable": false,
+                    "hasBudget": true
+                },
+                "2027-02": {
+                    "budget": 0,
+                    "actual": null,
+                    "deviation": null,
+                    "favorable": null,
+                    "hasBudget": true
+                },
+                "Q1": {
+                    "budget": 800011,
+                    "actual": 900010,
+                    "deviation": -99999,
+                    "favorable": false,
+                    "hasBudget": true
+                },
+                "TOTAAL": {
+                    "budget": 1600011,
+                    "actual": 1800013,
+                    "deviation": -200002,
+                    "favorable": false
+                }
+            },
+            "children": [
+                {
+                    "id": "lg-child",
+                    "code": "",
+                    "label": "Child without code",
+                    "kind": "ledgerGroup",
+                    "hasChildren": true,
+                    "cells": {
+                        "2027-01": {
+                            "budget": 0,
+                            "actual": 3,
+                            "deviation": -3,
+                            "favorable": false,
+                            "hasBudget": true
+                        },
+                        "2027-02": {
+                            "budget": 0,
+                            "actual": null,
+                            "deviation": null,
+                            "favorable": null,
+                            "hasBudget": true
+                        },
+                        "Q1": {
+                            "budget": 0,
+                            "actual": 3,
+                            "deviation": -3,
+                            "favorable": false,
+                            "hasBudget": true
+                        },
+                        "TOTAAL": {
+                            "budget": 0,
+                            "actual": 6,
+                            "deviation": -6,
+                            "favorable": false
+                        }
+                    },
+                    "children": [
+                        {
+                            "id": "acc-4001",
+                            "accountNumber": "4001",
+                            "label": "4001",
+                            "kind": "account",
+                            "route": "\/chart-of-accounts\/acc-4001",
+                            "cells": {
+                                "2027-01": {
+                                    "actual": 3
+                                },
+                                "2027-02": {
+                                    "actual": null
+                                },
+                                "Q1": {
+                                    "actual": 3
+                                },
+                                "TOTAAL": {
+                                    "actual": 6
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "huisvesting",
+            "code": "huisvesting",
+            "label": "Huisvesting",
+            "kind": "ledgerGroup",
+            "hasChildren": true,
+            "cells": {
+                "2027-01": {
+                    "budget": 200000,
+                    "actual": 150000,
+                    "deviation": 50000,
+                    "favorable": true,
+                    "hasBudget": true
+                },
+                "2027-02": {
+                    "budget": 0,
+                    "actual": null,
+                    "deviation": null,
+                    "favorable": null,
+                    "hasBudget": true
+                },
+                "Q1": {
+                    "budget": 200011,
+                    "actual": 150007,
+                    "deviation": 50004,
+                    "favorable": true,
+                    "hasBudget": true
+                },
+                "TOTAAL": {
+                    "budget": 400011,
+                    "actual": 300007,
+                    "deviation": 100004,
+                    "favorable": true
+                }
+            },
+            "children": [
+                {
+                    "id": "self-4100",
+                    "accountNumber": "4100",
+                    "label": "Account 4100",
+                    "kind": "account",
+                    "route": "\/chart-of-accounts\/self-4100",
+                    "cells": {
+                        "2027-01": {
+                            "actual": 150000
+                        },
+                        "2027-02": {
+                            "actual": null
+                        },
+                        "Q1": {
+                            "actual": 150007
+                        },
+                        "TOTAAL": {
+                            "actual": 300007
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "id": "lg-afschr",
+            "code": "afschrijvingen-op-vaste-activa",
+            "label": "Afschrijvingen-op-vaste-activa",
+            "kind": "ledgerGroup",
+            "hasChildren": true,
+            "cells": {
+                "2027-01": {
+                    "budget": 100000,
+                    "actual": 100000,
+                    "deviation": 0,
+                    "favorable": true,
+                    "hasBudget": true
+                },
+                "2027-02": {
+                    "budget": 0,
+                    "actual": null,
+                    "deviation": null,
+                    "favorable": null,
+                    "hasBudget": true
+                },
+                "Q1": {
+                    "budget": 100011,
+                    "actual": 100007,
+                    "deviation": 4,
+                    "favorable": true,
+                    "hasBudget": true
+                },
+                "TOTAAL": {
+                    "budget": 200011,
+                    "actual": 200007,
+                    "deviation": 4,
+                    "favorable": true
+                }
+            },
+            "children": [
+                {
+                    "id": "self-4200",
+                    "accountNumber": "4200",
+                    "label": "Account 4200",
+                    "kind": "account",
+                    "route": "\/chart-of-accounts\/self-4200",
+                    "cells": {
+                        "2027-01": {
+                            "actual": 100000
+                        },
+                        "2027-02": {
+                            "actual": null
+                        },
+                        "Q1": {
+                            "actual": 100007
+                        },
+                        "TOTAAL": {
+                            "actual": 200007
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "id": "lg-expl",
+            "code": "exploitatie-en-machinekosten",
+            "label": "Exploitatie-en-machinekosten",
+            "kind": "ledgerGroup",
+            "hasChildren": true,
+            "cells": {
+                "2027-01": {
+                    "budget": 50000,
+                    "actual": 70000,
+                    "deviation": -20000,
+                    "favorable": false,
+                    "hasBudget": true
+                },
+                "2027-02": {
+                    "budget": 0,
+                    "actual": null,
+                    "deviation": null,
+                    "favorable": null,
+                    "hasBudget": true
+                },
+                "Q1": {
+                    "budget": 50011,
+                    "actual": 70007,
+                    "deviation": -19996,
+                    "favorable": false,
+                    "hasBudget": true
+                },
+                "TOTAAL": {
+                    "budget": 100011,
+                    "actual": 140007,
+                    "deviation": -39996,
+                    "favorable": false
+                }
+            },
+            "children": [
+                {
+                    "id": "self-4300",
+                    "accountNumber": "4300",
+                    "label": "Account 4300",
+                    "kind": "account",
+                    "route": "\/chart-of-accounts\/self-4300",
+                    "cells": {
+                        "2027-01": {
+                            "actual": 70000
+                        },
+                        "2027-02": {
+                            "actual": null
+                        },
+                        "Q1": {
+                            "actual": 70007
+                        },
+                        "TOTAAL": {
+                            "actual": 140007
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "id": "lg-verkoop",
+            "code": "verkoopkosten",
+            "label": "Verkoopkosten",
+            "kind": "ledgerGroup",
+            "hasChildren": true,
+            "cells": {
+                "2027-01": {
+                    "budget": 30000,
+                    "actual": 10000,
+                    "deviation": 20000,
+                    "favorable": true,
+                    "hasBudget": true
+                },
+                "2027-02": {
+                    "budget": 0,
+                    "actual": null,
+                    "deviation": null,
+                    "favorable": null,
+                    "hasBudget": true
+                },
+                "Q1": {
+                    "budget": 30011,
+                    "actual": 10007,
+                    "deviation": 20004,
+                    "favorable": true,
+                    "hasBudget": true
+                },
+                "TOTAAL": {
+                    "budget": 60011,
+                    "actual": 20007,
+                    "deviation": 40004,
+                    "favorable": true
+                }
+            },
+            "children": [
+                {
+                    "id": "self-4400",
+                    "accountNumber": "4400",
+                    "label": "Account 4400",
+                    "kind": "account",
+                    "route": "\/chart-of-accounts\/self-4400",
+                    "cells": {
+                        "2027-01": {
+                            "actual": 10000
+                        },
+                        "2027-02": {
+                            "actual": null
+                        },
+                        "Q1": {
+                            "actual": 10007
+                        },
+                        "TOTAAL": {
+                            "actual": 20007
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "id": "lg-alg",
+            "code": "algemene-kosten",
+            "label": "Algemene-kosten",
+            "kind": "ledgerGroup",
+            "hasChildren": true,
+            "cells": {
+                "2027-01": {
+                    "budget": 20000,
+                    "actual": 25000,
+                    "deviation": -5000,
+                    "favorable": false,
+                    "hasBudget": true
+                },
+                "2027-02": {
+                    "budget": 0,
+                    "actual": null,
+                    "deviation": null,
+                    "favorable": null,
+                    "hasBudget": true
+                },
+                "Q1": {
+                    "budget": 20011,
+                    "actual": 25007,
+                    "deviation": -4996,
+                    "favorable": false,
+                    "hasBudget": true
+                },
+                "TOTAAL": {
+                    "budget": 40011,
+                    "actual": 50007,
+                    "deviation": -9996,
+                    "favorable": false
+                }
+            },
+            "children": [
+                {
+                    "id": "self-4500",
+                    "accountNumber": "4500",
+                    "label": "Account 4500",
+                    "kind": "account",
+                    "route": "\/chart-of-accounts\/self-4500",
+                    "cells": {
+                        "2027-01": {
+                            "actual": 25000
+                        },
+                        "2027-02": {
+                            "actual": null
+                        },
+                        "Q1": {
+                            "actual": 25007
+                        },
+                        "TOTAAL": {
+                            "actual": 50007
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "id": "lg-rb",
+            "code": "rentebaten",
+            "label": "Rentebaten",
+            "kind": "ledgerGroup",
+            "hasChildren": true,
+            "cells": {
+                "2027-01": {
+                    "budget": 1000,
+                    "actual": 2000,
+                    "deviation": 1000,
+                    "favorable": true,
+                    "hasBudget": true
+                },
+                "2027-02": {
+                    "budget": 0,
+                    "actual": null,
+                    "deviation": null,
+                    "favorable": null,
+                    "hasBudget": true
+                },
+                "Q1": {
+                    "budget": 1011,
+                    "actual": 2007,
+                    "deviation": 996,
+                    "favorable": true,
+                    "hasBudget": true
+                },
+                "TOTAAL": {
+                    "budget": 2011,
+                    "actual": 4007,
+                    "deviation": 1996,
+                    "favorable": true
+                }
+            },
+            "children": [
+                {
+                    "id": "self-8500",
+                    "accountNumber": "8500",
+                    "label": "Account 8500",
+                    "kind": "account",
+                    "route": "\/chart-of-accounts\/self-8500",
+                    "cells": {
+                        "2027-01": {
+                            "actual": 2000
+                        },
+                        "2027-02": {
+                            "actual": null
+                        },
+                        "Q1": {
+                            "actual": 2007
+                        },
+                        "TOTAAL": {
+                            "actual": 4007
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "id": "lg-rl",
+            "code": "rentelasten",
+            "label": "Rentelasten",
+            "kind": "ledgerGroup",
+            "hasChildren": true,
+            "cells": {
+                "2027-01": {
+                    "budget": 5000,
+                    "actual": 4000,
+                    "deviation": 1000,
+                    "favorable": true,
+                    "hasBudget": true
+                },
+                "2027-02": {
+                    "budget": 0,
+                    "actual": null,
+                    "deviation": null,
+                    "favorable": null,
+                    "hasBudget": true
+                },
+                "Q1": {
+                    "budget": 5011,
+                    "actual": 4007,
+                    "deviation": 1004,
+                    "favorable": true,
+                    "hasBudget": true
+                },
+                "TOTAAL": {
+                    "budget": 10011,
+                    "actual": 8007,
+                    "deviation": 2004,
+                    "favorable": true
+                }
+            },
+            "children": [
+                {
+                    "id": "self-4600",
+                    "accountNumber": "4600",
+                    "label": "Account 4600",
+                    "kind": "account",
+                    "route": "\/chart-of-accounts\/self-4600",
+                    "cells": {
+                        "2027-01": {
+                            "actual": 4000
+                        },
+                        "2027-02": {
+                            "actual": null
+                        },
+                        "Q1": {
+                            "actual": 4007
+                        },
+                        "TOTAAL": {
+                            "actual": 8007
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "id": "lg-vpb",
+            "code": "vennootschapsbelasting",
+            "label": "Vennootschapsbelasting",
+            "kind": "ledgerGroup",
+            "hasChildren": true,
+            "cells": {
+                "2027-01": {
+                    "budget": 300000,
+                    "actual": 350000,
+                    "deviation": -50000,
+                    "favorable": false,
+                    "hasBudget": true
+                },
+                "2027-02": {
+                    "budget": 0,
+                    "actual": null,
+                    "deviation": null,
+                    "favorable": null,
+                    "hasBudget": true
+                },
+                "Q1": {
+                    "budget": 300011,
+                    "actual": 350007,
+                    "deviation": -49996,
+                    "favorable": false,
+                    "hasBudget": true
+                },
+                "TOTAAL": {
+                    "budget": 600011,
+                    "actual": 700007,
+                    "deviation": -99996,
+                    "favorable": false
+                }
+            },
+            "children": [
+                {
+                    "id": "self-9000",
+                    "accountNumber": "9000",
+                    "label": "Account 9000",
+                    "kind": "account",
+                    "route": "\/chart-of-accounts\/self-9000",
+                    "cells": {
+                        "2027-01": {
+                            "actual": 350000
+                        },
+                        "2027-02": {
+                            "actual": null
+                        },
+                        "Q1": {
+                            "actual": 350007
+                        },
+                        "TOTAAL": {
+                            "actual": 700007
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "id": "lg-nocode",
+            "code": "",
+            "label": "No code",
+            "kind": "ledgerGroup",
+            "hasChildren": false,
+            "cells": {
+                "2027-01": {
+                    "budget": 0,
+                    "actual": 0,
+                    "deviation": 0,
+                    "favorable": null,
+                    "hasBudget": true
+                },
+                "2027-02": {
+                    "budget": 0,
+                    "actual": null,
+                    "deviation": null,
+                    "favorable": null,
+                    "hasBudget": true
+                },
+                "Q1": {
+                    "budget": 0,
+                    "actual": 0,
+                    "deviation": 0,
+                    "favorable": null,
+                    "hasBudget": true
+                },
+                "TOTAAL": {
+                    "budget": 0,
+                    "actual": 0,
+                    "deviation": 0,
+                    "favorable": null
+                }
+            },
+            "children": []
+        }
+    ],
+    "computedRows": [
+        {
+            "code": "bruto-marge",
+            "label": "Bruto Marge",
+            "cells": {
+                "2027-01": {
+                    "budget": 3500000,
+                    "actual": 4000000,
+                    "deviation": 500000,
+                    "favorable": true
+                },
+                "2027-02": {
+                    "budget": 0,
+                    "actual": null,
+                    "deviation": null,
+                    "favorable": null
+                },
+                "Q1": {
+                    "budget": 3500000,
+                    "actual": 4000000,
+                    "deviation": 500000,
+                    "favorable": true
+                },
+                "TOTAAL": {
+                    "budget": 7000000,
+                    "actual": 8000000,
+                    "deviation": 1000000,
+                    "favorable": true
+                }
+            }
+        },
+        {
+            "code": "kosten",
+            "label": "Kosten",
+            "cells": {
+                "2027-01": {
+                    "budget": 1200000,
+                    "actual": 1255003,
+                    "deviation": -55003,
+                    "favorable": false
+                },
+                "2027-02": {
+                    "budget": 0,
+                    "actual": null,
+                    "deviation": null,
+                    "favorable": null
+                },
+                "Q1": {
+                    "budget": 1200066,
+                    "actual": 1255045,
+                    "deviation": -54979,
+                    "favorable": false
+                },
+                "TOTAAL": {
+                    "budget": 2400066,
+                    "actual": 2510048,
+                    "deviation": -109982,
+                    "favorable": false
+                }
+            }
+        },
+        {
+            "code": "bedrijfsresultaat",
+            "label": "Bedrijfsresultaat",
+            "cells": {
+                "2027-01": {
+                    "budget": 2300000,
+                    "actual": 2744997,
+                    "deviation": 444997,
+                    "favorable": true
+                },
+                "2027-02": {
+                    "budget": 0,
+                    "actual": null,
+                    "deviation": null,
+                    "favorable": null
+                },
+                "Q1": {
+                    "budget": 2299934,
+                    "actual": 2744955,
+                    "deviation": 445021,
+                    "favorable": true
+                },
+                "TOTAAL": {
+                    "budget": 4599934,
+                    "actual": 5489952,
+                    "deviation": 890018,
+                    "favorable": true
+                }
+            }
+        },
+        {
+            "code": "financieel-resultaat",
+            "label": "Financieel resultaat",
+            "cells": {
+                "2027-01": {
+                    "budget": -4000,
+                    "actual": -2000,
+                    "deviation": 2000,
+                    "favorable": true
+                },
+                "2027-02": {
+                    "budget": 0,
+                    "actual": null,
+                    "deviation": null,
+                    "favorable": null
+                },
+                "Q1": {
+                    "budget": -4000,
+                    "actual": -2000,
+                    "deviation": 2000,
+                    "favorable": true
+                },
+                "TOTAAL": {
+                    "budget": -8000,
+                    "actual": -4000,
+                    "deviation": 4000,
+                    "favorable": true
+                }
+            }
+        },
+        {
+            "code": "resultaat-voor-belastingen",
+            "label": "Resultaat voor belastingen",
+            "cells": {
+                "2027-01": {
+                    "budget": 2296000,
+                    "actual": 2742997,
+                    "deviation": 446997,
+                    "favorable": true
+                },
+                "2027-02": {
+                    "budget": 0,
+                    "actual": null,
+                    "deviation": null,
+                    "favorable": null
+                },
+                "Q1": {
+                    "budget": 2295934,
+                    "actual": 2742955,
+                    "deviation": 447021,
+                    "favorable": true
+                },
+                "TOTAAL": {
+                    "budget": 4591934,
+                    "actual": 5485952,
+                    "deviation": 894018,
+                    "favorable": true
+                }
+            }
+        },
+        {
+            "code": "nettoresultaat",
+            "label": "Nettoresultaat",
+            "cells": {
+                "2027-01": {
+                    "budget": 1996000,
+                    "actual": 2392997,
+                    "deviation": 396997,
+                    "favorable": true
+                },
+                "2027-02": {
+                    "budget": 0,
+                    "actual": null,
+                    "deviation": null,
+                    "favorable": null
+                },
+                "Q1": {
+                    "budget": 1995923,
+                    "actual": 2392948,
+                    "deviation": 397025,
+                    "favorable": true
+                },
+                "TOTAAL": {
+                    "budget": 3991923,
+                    "actual": 4785945,
+                    "deviation": 794022,
+                    "favorable": true
+                }
+            }
+        },
+        {
+            "code": "nettoresultaat-pct",
+            "label": "% van omzet",
+            "cells": {
+                "2027-01": {
+                    "budget": 0.3992,
+                    "actual": 0.39883283333333336,
+                    "deviation": -0.00036716666666664066,
+                    "favorable": false
+                },
+                "2027-02": {
+                    "budget": null,
+                    "actual": null,
+                    "deviation": null,
+                    "favorable": null
+                },
+                "Q1": {
+                    "budget": 0.3991837217958121,
+                    "actual": 0.39882420137176505,
+                    "deviation": -0.0003595204240470218,
+                    "favorable": false
+                },
+                "TOTAAL": {
+                    "budget": 0.39919186088895303,
+                    "actual": 0.39882851735003155,
+                    "deviation": -0.00036334353892147897,
+                    "favorable": false
+                }
+            }
+        }
+    ]
+}

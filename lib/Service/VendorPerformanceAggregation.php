@@ -196,6 +196,16 @@ class VendorPerformanceAggregation {
 	private const SCHEMA_VENDOR_PERFORMANCE = 'VendorPerformance';
 
 	/**
+	 * The timestamp that places a GRN or a three-way match in a period.
+	 *
+	 * @var array<string,string>
+	 */
+	private const PERIOD_DATE_FIELD = [
+		self::SCHEMA_GRN => 'receivedAt',
+		self::SCHEMA_THREE_WAY_MATCH => 'createdAt',
+	];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param IAppConfig $appConfig App config for the OR register slug.
@@ -235,6 +245,33 @@ class VendorPerformanceAggregation {
 	 * @spec openspec/changes/bookkeeping-purchase-order-3way-10-vendor-performance/tasks.md
 	 */
 	public function calculateMonthlyScore(string $administrationId, string $supplierId, string $period): array {
+		$run = $this->startRun(administrationId: $administrationId, supplierId: $supplierId);
+		$this->openPeriod(run: $run, period: $period);
+		$this->collectPeriodFacts(run: $run);
+
+		$scorecard = $this->scoreRun(run: $run);
+		$scorecard = $this->withExistingScorecardId(run: $run, scorecard: $scorecard);
+		$scorecard = $this->withReviewEligibility(run: $run, scorecard: $scorecard);
+
+		$saved = $this->saveObject(schema: self::SCHEMA_VENDOR_PERFORMANCE, object: $scorecard);
+		if ($scorecard['automatedReviewEligible'] === true) {
+			$this->relaxSupplierTolerance(run: $run);
+		}
+
+		return $saved;
+	}//end calculateMonthlyScore()
+
+	/**
+	 * Refuse a missing administration or supplier and start the run.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $supplierId       Supplier (vendor) id.
+	 *
+	 * @return VendorScorecardRun
+	 *
+	 * @throws \RuntimeException When either id is empty.
+	 */
+	private function startRun(string $administrationId, string $supplierId): VendorScorecardRun {
 		if ($administrationId === '') {
 			throw new RuntimeException('administrationId is required');
 		}
@@ -243,12 +280,58 @@ class VendorPerformanceAggregation {
 			throw new RuntimeException('supplierId is required');
 		}
 
+		return new VendorScorecardRun(administrationId: $administrationId, supplierId: $supplierId);
+	}//end startRun()
+
+	/**
+	 * Resolve the period's date window onto the run.
+	 *
+	 * @param VendorScorecardRun $run    The run.
+	 * @param string             $period Period code (YYYY-MM or YYYY-Qn).
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException When the period is malformed.
+	 */
+	private function openPeriod(VendorScorecardRun $run, string $period): void {
 		$window = $this->resolvePeriodWindow(period: $period);
 
-		// Pull supplier-scoped fact tables for the period window.
+		$run->period = $period;
+		$run->from = $window['from'];
+		$run->to = $window['to'];
+	}//end openPeriod()
+
+	/**
+	 * Read the supplier-scoped fact tables for the period window: the
+	 * supplier's POs and invoices, then the GRNs against those POs and the
+	 * three-way matches against those invoices.
+	 *
+	 * @param VendorScorecardRun $run The run.
+	 *
+	 * @return void
+	 */
+	private function collectPeriodFacts(VendorScorecardRun $run): void {
+		$run->poIds = $this->supplierPurchaseOrdersById(run: $run);
+		$supplierInvoices = $this->findAll(
+			schema: self::SCHEMA_SUPPLIER_INVOICE,
+			filters: ['supplierId' => $run->supplierId, 'administrationId' => $run->administrationId]
+		);
+		$run->grns = $this->periodGrnsForSupplier(run: $run);
+		$run->invoiceIds = $this->periodInvoiceIds(run: $run, supplierInvoices: $supplierInvoices);
+		$run->matches = $this->periodMatchesForSupplier(run: $run);
+	}//end collectPeriodFacts()
+
+	/**
+	 * The supplier's purchase orders, keyed by id.
+	 *
+	 * @param VendorScorecardRun $run The run.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	private function supplierPurchaseOrdersById(VendorScorecardRun $run): array {
 		$purchaseOrders = $this->findAll(
 			schema: self::SCHEMA_PURCHASE_ORDER,
-			filters: ['supplierId' => $supplierId, 'administrationId' => $administrationId]
+			filters: ['supplierId' => $run->supplierId, 'administrationId' => $run->administrationId]
 		);
 		$poIds = [];
 		foreach ($purchaseOrders as $po) {
@@ -258,160 +341,298 @@ class VendorPerformanceAggregation {
 			}
 		}
 
-		$supplierInvoices = $this->findAll(
-			schema: self::SCHEMA_SUPPLIER_INVOICE,
-			filters: ['supplierId' => $supplierId, 'administrationId' => $administrationId]
-		);
+		return $poIds;
+	}//end supplierPurchaseOrdersById()
 
-		// Filter the GRN + Match + Invoice rows to the period window using
-		// the receivedAt / createdAt / invoiceDate timestamps respectively.
-		$periodGrns = $this->filterByDate(
-			rows: $this->findAll(
-				schema: self::SCHEMA_GRN,
-				filters: ['administrationId' => $administrationId]
-			),
-			field: 'receivedAt',
-			from:  $window['from'],
-			to:    $window['to']
-		);
-		// Constrain GRNs to the supplier's POs.
-		$periodGrns = array_values(
+	/**
+	 * The period's GRNs (by receivedAt), constrained to the supplier's POs.
+	 *
+	 * @param VendorScorecardRun $run The run, with its POs read.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function periodGrnsForSupplier(VendorScorecardRun $run): array {
+		$periodGrns = $this->administrationRowsInPeriod(run: $run, schema: self::SCHEMA_GRN);
+		$poIds = $run->poIds;
+
+		return array_values(
 			array_filter(
 				$periodGrns,
-				static function (array $grn) use ($poIds): bool {
-					foreach ((array)($grn['poIds'] ?? []) as $poId) {
-						if (isset($poIds[(string)$poId]) === true) {
-							return true;
-						}
-					}
-
-					return false;
-				}
+				static fn (array $grn): bool => self::grnReferencesAnyPo(grn: $grn, poIds: $poIds)
 			)
 		);
+	}//end periodGrnsForSupplier()
 
-		$periodInvoices = $this->filterByDate(
-			rows:  $supplierInvoices,
-			field: 'invoiceDate',
-			from:  $window['from'],
-			to:    $window['to']
-		);
-
-		$invoiceIds = [];
-		foreach ($periodInvoices as $invoice) {
-			$id = $this->idOf(row: $invoice);
-			if ($id !== '') {
-				$invoiceIds[$id] = true;
+	/**
+	 * Whether the GRN references one of the supplier's POs.
+	 *
+	 * @param array<string,mixed>               $grn   The GRN.
+	 * @param array<string,array<string,mixed>> $poIds Supplier POs keyed by id.
+	 *
+	 * @return bool
+	 */
+	private static function grnReferencesAnyPo(array $grn, array $poIds): bool {
+		foreach ((array)($grn['poIds'] ?? []) as $poId) {
+			if (isset($poIds[(string)$poId]) === true) {
+				return true;
 			}
 		}
 
-		$allMatches = $this->findAll(
-			schema: self::SCHEMA_THREE_WAY_MATCH,
-			filters: ['administrationId' => $administrationId]
+		return false;
+	}//end grnReferencesAnyPo()
+
+	/**
+	 * The administration's rows of $schema dated inside the run's period
+	 * window, by the schema's PERIOD_DATE_FIELD.
+	 *
+	 * @param VendorScorecardRun $run    The run.
+	 * @param string             $schema GRN or three-way-match schema slug.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function administrationRowsInPeriod(VendorScorecardRun $run, string $schema): array {
+		return $this->filterByDate(
+			rows:  $this->findAll(
+				schema: $schema,
+				filters: ['administrationId' => $run->administrationId]
+			),
+			field: self::PERIOD_DATE_FIELD[$schema],
+			from:  $run->from,
+			to:    $run->to
 		);
-		$periodMatches = $this->filterByDate(
-			rows:  $allMatches,
-			field: 'createdAt',
-			from:  $window['from'],
-			to:    $window['to']
+	}//end administrationRowsInPeriod()
+
+	/**
+	 * The ids of the supplier's invoices dated in the period (by invoiceDate).
+	 *
+	 * @param VendorScorecardRun             $run              The run.
+	 * @param array<int,array<string,mixed>> $supplierInvoices The supplier's invoices.
+	 *
+	 * @return array<string,true>
+	 */
+	private function periodInvoiceIds(VendorScorecardRun $run, array $supplierInvoices): array {
+		$periodInvoices = $this->filterByDate(
+			rows:  $supplierInvoices,
+			field: 'invoiceDate',
+			from:  $run->from,
+			to:    $run->to
 		);
-		// Constrain matches to the supplier's invoices.
-		$periodMatches = array_values(
+
+		return $this->idSetOf(rows: $periodInvoices);
+	}//end periodInvoiceIds()
+
+	/**
+	 * The non-empty ids of $rows as a set (id => true).
+	 *
+	 * @param array<int,array<string,mixed>> $rows OR rows.
+	 *
+	 * @return array<string,true>
+	 */
+	private function idSetOf(array $rows): array {
+		$ids = [];
+		foreach ($rows as $row) {
+			$id = $this->idOf(row: $row);
+			if ($id !== '') {
+				$ids[$id] = true;
+			}
+		}
+
+		return $ids;
+	}//end idSetOf()
+
+	/**
+	 * The period's three-way matches (by createdAt), constrained to the
+	 * supplier's period invoices.
+	 *
+	 * @param VendorScorecardRun $run The run, with its invoice ids read.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function periodMatchesForSupplier(VendorScorecardRun $run): array {
+		$periodMatches = $this->administrationRowsInPeriod(run: $run, schema: self::SCHEMA_THREE_WAY_MATCH);
+		$invoiceIds = $run->invoiceIds;
+
+		return array_values(
 			array_filter(
 				$periodMatches,
-				static function (array $match) use ($invoiceIds): bool {
-					$invoiceId = (string)($match['invoiceId'] ?? '');
-					if ($invoiceId === '') {
-						return false;
-					}
-
-					return isset($invoiceIds[$invoiceId]);
-				}
+				static fn (array $match): bool => self::matchOfAnyInvoice(match: $match, invoiceIds: $invoiceIds)
 			)
 		);
+	}//end periodMatchesForSupplier()
 
-		// Sub-aggregations.
-		$onTimeRateBp = $this->computeOnTimeDeliveryRate(grns: $periodGrns, poIds: $poIds);
-		$qtyRateBp = $this->computeQuantityAccuracyRate(grns: $periodGrns, administrationId: $administrationId);
-		$priceRateBp = $this->computePriceAccuracyRate(matches: $periodMatches);
-		$invoiceRateBp = $this->computeInvoiceAccuracyRate(matches: $periodMatches, invoiceIds: $invoiceIds);
+	/**
+	 * Whether the three-way match belongs to one of the supplier's period
+	 * invoices.
+	 *
+	 * @param array<string,mixed> $match      The three-way match.
+	 * @param array<string,true>  $invoiceIds The supplier's period invoice ids.
+	 *
+	 * @return bool
+	 */
+	private static function matchOfAnyInvoice(array $match, array $invoiceIds): bool {
+		$invoiceId = (string)($match['invoiceId'] ?? '');
+		if ($invoiceId === '') {
+			return false;
+		}
 
-		$overallBp = $this->weightedOverall(
-			onTimeBp:  $onTimeRateBp,
-			qtyBp:     $qtyRateBp,
-			priceBp:   $priceRateBp,
-			invoiceBp: $invoiceRateBp
+		return isset($invoiceIds[$invoiceId]);
+	}//end matchOfAnyInvoice()
+
+	/**
+	 * The unsaved scorecard: the four rates, disputes, overall score and the
+	 * trend against the prior period.
+	 *
+	 * @param VendorScorecardRun $run The run, with its period facts read.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function scoreRun(VendorScorecardRun $run): array {
+		$rates = $this->accuracyRates(run: $run);
+		$overallBp = $this->overallOf(rates: $rates);
+
+		return [
+			'supplierId' => $run->supplierId,
+			'period' => $run->period,
+			...$rates,
+			...$this->disputeFigures(matches: $run->matches),
+			'overallScore' => $overallBp,
+			'scoreTrend' => $this->trendAgainstPriorPeriod(run: $run, overallBp: $overallBp),
+			'automatedReviewEligible' => false,
+			'administrationId' => $run->administrationId,
+		];
+	}//end scoreRun()
+
+	/**
+	 * The four accuracy rates in basis points, in scorecard order.
+	 *
+	 * @param VendorScorecardRun $run The run, with its period facts read.
+	 *
+	 * @return array{onTimeDeliveryRate: int, quantityAccuracyRate: int, priceAccuracyRate: int, invoiceAccuracyRate: int}
+	 */
+	private function accuracyRates(VendorScorecardRun $run): array {
+		return [
+			'onTimeDeliveryRate' => $this->computeOnTimeDeliveryRate(grns: $run->grns, poIds: $run->poIds),
+			'quantityAccuracyRate' => $this->computeQuantityAccuracyRate(grns: $run->grns, administrationId: $run->administrationId),
+			'priceAccuracyRate' => $this->computePriceAccuracyRate(matches: $run->matches),
+			'invoiceAccuracyRate' => $this->computeInvoiceAccuracyRate(matches: $run->matches, invoiceIds: $run->invoiceIds),
+		];
+	}//end accuracyRates()
+
+	/**
+	 * The weighted overall score of the four rates.
+	 *
+	 * @param array{onTimeDeliveryRate: int, quantityAccuracyRate: int, priceAccuracyRate: int, invoiceAccuracyRate: int} $rates The rates.
+	 *
+	 * @return int Basis points.
+	 */
+	private function overallOf(array $rates): int {
+		return $this->weightedOverall(
+			onTimeBp:  $rates['onTimeDeliveryRate'],
+			qtyBp:     $rates['quantityAccuracyRate'],
+			priceBp:   $rates['priceAccuracyRate'],
+			invoiceBp: $rates['invoiceAccuracyRate']
 		);
+	}//end overallOf()
 
-		// Disputes (REQ-VP-001) + average resolution days.
-		$disputeCount = $this->countDisputes(matches: $periodMatches);
-		$avgResolutionDays = $this->averageResolutionDays(matches: $periodMatches);
+	/**
+	 * Disputes (REQ-VP-001) and their average resolution days.
+	 *
+	 * @param array<int,array<string,mixed>> $matches The period matches.
+	 *
+	 * @return array{disputeCount: int, averageResolutionDays: int}
+	 */
+	private function disputeFigures(array $matches): array {
+		return [
+			'disputeCount' => $this->countDisputes(matches: $matches),
+			'averageResolutionDays' => $this->averageResolutionDays(matches: $matches),
+		];
+	}//end disputeFigures()
 
-		// Trend vs the prior period.
-		$priorPeriod = $this->priorPeriodOf(period: $period);
+	/**
+	 * The trend of $overallBp against the immediately-preceding period's
+	 * scorecard for the same supplier and administration.
+	 *
+	 * @param VendorScorecardRun $run       The run.
+	 * @param int                $overallBp This period's overall score.
+	 *
+	 * @return string
+	 */
+	private function trendAgainstPriorPeriod(VendorScorecardRun $run, int $overallBp): string {
 		$priorCard = $this->findOne(
 			schema:  self::SCHEMA_VENDOR_PERFORMANCE,
 			filters: [
-				'supplierId' => $supplierId,
-				'period' => $priorPeriod,
-				'administrationId' => $administrationId,
+				'supplierId' => $run->supplierId,
+				'period' => $this->priorPeriodOf(period: $run->period),
+				'administrationId' => $run->administrationId,
 			]
 		);
-		$scoreTrend = $this->computeScoreTrend(currentBp: $overallBp, priorCard: $priorCard);
 
-		$scorecard = [
-			'supplierId' => $supplierId,
-			'period' => $period,
-			'onTimeDeliveryRate' => $onTimeRateBp,
-			'quantityAccuracyRate' => $qtyRateBp,
-			'priceAccuracyRate' => $priceRateBp,
-			'invoiceAccuracyRate' => $invoiceRateBp,
-			'disputeCount' => $disputeCount,
-			'averageResolutionDays' => $avgResolutionDays,
-			'overallScore' => $overallBp,
-			'scoreTrend' => $scoreTrend,
-			'automatedReviewEligible' => false,
-			'administrationId' => $administrationId,
-		];
+		return $this->computeScoreTrend(currentBp: $overallBp, priorCard: $priorCard);
+	}//end trendAgainstPriorPeriod()
 
-		// Reuse the prior period-specific scorecard's id when re-running.
+	/**
+	 * Reuse the period-specific scorecard's id when re-running.
+	 *
+	 * @param VendorScorecardRun  $run       The run.
+	 * @param array<string,mixed> $scorecard The unsaved scorecard.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function withExistingScorecardId(VendorScorecardRun $run, array $scorecard): array {
 		$existing = $this->findOne(
 			schema:  self::SCHEMA_VENDOR_PERFORMANCE,
 			filters: [
-				'supplierId' => $supplierId,
-				'period' => $period,
-				'administrationId' => $administrationId,
+				'supplierId' => $run->supplierId,
+				'period' => $run->period,
+				'administrationId' => $run->administrationId,
 			]
 		);
 		if ($existing !== null && isset($existing['id']) === true) {
 			$scorecard['id'] = (string)$existing['id'];
 		}
 
-		// Eligibility — server-authoritative.
+		return $scorecard;
+	}//end withExistingScorecardId()
+
+	/**
+	 * Set the server-authoritative auto-review eligibility on the scorecard.
+	 *
+	 * @param VendorScorecardRun  $run       The run.
+	 * @param array<string,mixed> $scorecard The unsaved scorecard.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function withReviewEligibility(VendorScorecardRun $run, array $scorecard): array {
 		$scorecard['automatedReviewEligible'] = $this->setAutoReviewEligible(
-			overallScoreBp:   $overallBp,
-			administrationId: $administrationId,
-			supplierId:       $supplierId
+			overallScoreBp:   $scorecard['overallScore'],
+			administrationId: $run->administrationId,
+			supplierId:       $run->supplierId
 		);
 
-		$saved = $this->saveObject(schema: self::SCHEMA_VENDOR_PERFORMANCE, object: $scorecard);
+		return $scorecard;
+	}//end withReviewEligibility()
 
-		if ($scorecard['automatedReviewEligible'] === true) {
-			try {
-				$this->autoRelaxToleranceProfile(
-					administrationId: $administrationId,
-					supplierId:       $supplierId
-				);
-			} catch (Throwable $e) {
-				$this->logger->info(
-					'VendorPerformanceAggregation: tolerance relaxation skipped',
-					['supplierId' => $supplierId, 'exception' => $e->getMessage()]
-				);
-			}
+	/**
+	 * Relax the supplier's tolerance profile after an eligible scorecard is
+	 * saved; a failure is logged and does not undo the save.
+	 *
+	 * @param VendorScorecardRun $run The run.
+	 *
+	 * @return void
+	 */
+	private function relaxSupplierTolerance(VendorScorecardRun $run): void {
+		try {
+			$this->autoRelaxToleranceProfile(
+				administrationId: $run->administrationId,
+				supplierId:       $run->supplierId
+			);
+		} catch (Throwable $e) {
+			$this->logger->info(
+				'VendorPerformanceAggregation: tolerance relaxation skipped',
+				['supplierId' => $run->supplierId, 'exception' => $e->getMessage()]
+			);
 		}
-
-		return $saved;
-	}//end calculateMonthlyScore()
+	}//end relaxSupplierTolerance()
 
 	/**
 	 * Compute the on-time-delivery rate for the period in basis points.

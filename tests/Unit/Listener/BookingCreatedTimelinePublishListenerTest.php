@@ -343,4 +343,39 @@ final class BookingCreatedTimelinePublishListenerTest extends TestCase {
 
 	}//end testNonAppointmentSchemaIsIgnored()
 
+	/**
+	 * The log lines: a missing appointmentId is warned about, an unparseable
+	 * createdAt falls back to now with a debug line, a publish logs at debug,
+	 * and an entity without schema or payload is ignored.
+	 *
+	 * @return void
+	 */
+	public function testTheLogLinesAndSkippedEntities(): void {
+		$publishCalls = [];
+		$enqueueCalls = [];
+		[$adapter, $queue] = $this->deps(publishOk: true, publishCalls: $publishCalls, enqueueCalls: $enqueueCalls);
+		$logger = $this->recordingLogger();
+		$listener = new BookingCreatedTimelinePublishListener(pipelinq: $adapter, retryQueue: $queue, schemaResolver: $this->resolver(' Shillinq/Appointment '), logger: $logger);
+
+		$listener->handle(new ObjectCreatedEvent($this->appointmentEntity(['pipelinqContactId' => 'pl-1', 'appointmentId' => '  '])));
+		$listener->handle(new ObjectCreatedEvent($this->appointmentEntity(['pipelinqContactId' => ' pl-1 ', 'appointmentId' => ' b-1 ', 'createdAt' => 'not a date'])));
+		$noSchema = new ObjectEntity();
+		$noSchema->setObject(['pipelinqContactId' => 'pl-1', 'appointmentId' => 'b-2']);
+		$listener->handle(new ObjectCreatedEvent($noSchema));
+
+		self::assertCount(1, $publishCalls);
+		self::assertSame(['b-1', 'pl-1'], [$publishCalls[0]->externalId(), $publishCalls[0]->contactId()]);
+		self::assertSame(
+			[
+				['warning', 'BookingCreatedTimelinePublishListener: missing appointmentId — skipping publish', ['app' => 'shillinq']],
+				['debug', 'BookingCreatedTimelinePublishListener: createdAt unparseable, falling back to now'],
+				['debug', 'BookingCreatedTimelinePublishListener: published', ['app' => 'shillinq', 'externalId' => 'b-1', 'contactId' => 'pl-1']],
+			],
+			array_map(
+				static fn (array $r): array => ($r['message'] === 'BookingCreatedTimelinePublishListener: createdAt unparseable, falling back to now') ? [$r['level'], $r['message']] : [$r['level'], $r['message'], $r['context']],
+				$logger->records
+			)
+		);
+
+	}//end testTheLogLinesAndSkippedEntities()
 }//end class

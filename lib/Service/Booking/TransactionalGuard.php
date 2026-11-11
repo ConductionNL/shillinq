@@ -170,14 +170,26 @@ class TransactionalGuard {
 			$stmt->closeCursor();
 			return ($row !== false);
 		} catch (\Throwable $e) {
-			$this->logger->info(
-				'Shillinq: resource row-lock unavailable, falling back to advisory check',
-				[
-					'resourceId' => $resourceId,
-					'reason' => $e->getMessage(),
-				]
-			);
+			$this->logLockUnavailable(resourceId: $resourceId, reason: $e);
 			return false;
 		}//end try
 	}//end lockResourceRow()
+
+	/**
+	 * Log that the row lock is unavailable and the advisory check applies.
+	 *
+	 * @param string     $resourceId The resource whose row could not be locked.
+	 * @param \Throwable $reason     Why.
+	 *
+	 * @return void
+	 */
+	private function logLockUnavailable(string $resourceId, \Throwable $reason): void {
+		$this->logger->info(
+			'Shillinq: resource row-lock unavailable, falling back to advisory check',
+			[
+				'resourceId' => $resourceId,
+				'reason' => $reason->getMessage(),
+			]
+		);
+	}//end logLockUnavailable()
 }//end class

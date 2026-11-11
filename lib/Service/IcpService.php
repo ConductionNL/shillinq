@@ -211,23 +211,31 @@ class IcpService {
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
 
 		foreach ($returns as $return) {
-			if ($this->vatReturnPeriod(return: $return) !== $period) {
-				continue;
+			if ($this->vatReturnPeriod(return: $return) === $period) {
+				return $this->rubriek3bOf(return: $return);
 			}
-
-			if (array_key_exists('rubriek3b', $return) === true && $return['rubriek3b'] !== null) {
-				return (float)$return['rubriek3b'];
-			}
-
-			if (array_key_exists('amount', $return) === true && $return['amount'] !== null) {
-				return (float)$return['amount'];
-			}
-
-			return 0.0;
-		}//end foreach
+		}
 
 		return null;
 	}//end rubriek3bForPeriod()
+
+	/**
+	 * A VatReturn's rubriek 3b: the explicit field, else the `amount` proxy,
+	 * else 0.
+	 *
+	 * @param array<string,mixed> $return The VatReturn record.
+	 *
+	 * @return float
+	 */
+	private function rubriek3bOf(array $return): float {
+		foreach (['rubriek3b', 'amount'] as $field) {
+			if (isset($return[$field]) === true) {
+				return (float)$return[$field];
+			}
+		}
+
+		return 0.0;
+	}//end rubriek3bOf()
 
 	/**
 	 * Derive a VatReturn's period string from its period fields.
@@ -238,27 +246,41 @@ class IcpService {
 	 */
 	private function vatReturnPeriod(array $return): string {
 		$year = (string)($return['periodYear'] ?? '');
-		if ($year === '') {
-			return (string)($return['period'] ?? '');
+		$typed = '';
+		if ($year !== '') {
+			$typed = $this->typedPeriod(return: $return, year: $year);
 		}
 
-		$type = (string)($return['periodType'] ?? '');
-		if ($type === 'quarter' || $type === 'quarterly') {
-			$quarter = (string)($return['periodQuarter'] ?? '');
-			if ($quarter !== '') {
-				return $year . '-Q' . ltrim($quarter, 'Q');
-			}
-		}
-
-		if ($type === 'month' || $type === 'monthly') {
-			$month = (string)($return['periodMonth'] ?? '');
-			if ($month !== '') {
-				return $year . '-' . str_pad($month, 2, '0', STR_PAD_LEFT);
-			}
+		if ($typed !== '') {
+			return $typed;
 		}
 
 		return (string)($return['period'] ?? '');
 	}//end vatReturnPeriod()
+
+	/**
+	 * The period string from a return's quarter or month fields, or '' when
+	 * its type or index is missing.
+	 *
+	 * @param array<string,mixed> $return The VatReturn record.
+	 * @param string              $year   Its periodYear.
+	 *
+	 * @return string
+	 */
+	private function typedPeriod(array $return, string $year): string {
+		$type = (string)($return['periodType'] ?? '');
+		$quarter = (string)($return['periodQuarter'] ?? '');
+		if (in_array($type, ['quarter', 'quarterly'], true) === true && $quarter !== '') {
+			return $year . '-Q' . ltrim($quarter, 'Q');
+		}
+
+		$month = (string)($return['periodMonth'] ?? '');
+		if (in_array($type, ['month', 'monthly'], true) === true && $month !== '') {
+			return $year . '-' . str_pad($month, 2, '0', STR_PAD_LEFT);
+		}
+
+		return '';
+	}//end typedPeriod()
 
 	/**
 	 * Decide whether a supply date falls within a filing period (YYYY-Qn or YYYY-MM).
@@ -273,25 +295,27 @@ class IcpService {
 			return false;
 		}
 
-		$year = $dateParts[1];
-		$month = (int)$dateParts[2];
-
-		if (preg_match('/^(\d{4})-Q([1-4])$/', $period, $periodParts) === 1) {
-			if ($periodParts[1] !== $year) {
-				return false;
-			}
-
-			$quarter = (int)$periodParts[2];
-
-			return ((int)ceil($month / 3)) === $quarter;
-		}
-
-		if (preg_match('/^(\d{4})-(\d{2})$/', $period, $periodParts) === 1) {
-			return ($periodParts[1] === $year && (int)$periodParts[2] === $month);
-		}
-
-		return false;
+		return in_array($period, $this->periodLabels(year: $dateParts[1], month: (int)$dateParts[2]), true);
 	}//end supplyDateInPeriod()
+
+	/**
+	 * The filing periods a supply month belongs to: its month (YYYY-MM) and,
+	 * for months 1-12, its quarter (YYYY-Qn).
+	 *
+	 * @param string  $year  Four-digit year.
+	 * @param integer $month Two-digit month as read from the date.
+	 *
+	 * @return array<int,string>
+	 */
+	private function periodLabels(string $year, int $month): array {
+		$labels = [sprintf('%s-%02d', $year, $month)];
+		$quarter = (int)ceil($month / 3);
+		if ($quarter >= 1 && $quarter <= 4) {
+			$labels[] = $year . '-Q' . $quarter;
+		}
+
+		return $labels;
+	}//end periodLabels()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.

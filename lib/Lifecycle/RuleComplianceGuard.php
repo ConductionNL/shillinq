@@ -125,29 +125,8 @@ class RuleComplianceGuard {
 	public function validateTransaction(string|array $transactionOrId): bool {
 		$id = $this->idOf(objectOrId: $transactionOrId);
 		try {
-			$transaction = $transactionOrId;
-			if (is_array($transaction) === false) {
-				$transaction = $this->loadObject('GLTransaction', $id);
-			}
-
-			if ($transaction === null || $id === '') {
-				return false;
-			}
-
-			// The page sends the draft with its state moved to posted. The lock,
-			// retention, integrity and audit-trail fields are what the post
-			// itself gives the entry (StampPostingAction persists them), so the
-			// entry is judged as the post leaves it (REQ-LPP-001, #516).
-			$transaction = (new PostingStamps())->apply(transaction: $transaction, user: 'system', now: new DateTimeImmutable());
-			$transaction['lines'] = $this->loadLines($transaction);
-
-			$violations = RuleEngine::evaluate('GLTransaction', $transaction, $this->context($transaction));
-			if ($this->balanceGuard->isBalanced($id) === false) {
-				$violations[] = RuleEngine::violationFor('gl-double-entry-balanced');
-			}
-
-			$this->logViolations('GLTransaction', $id, $violations);
-			if (RuleEngine::hasMandatory($violations) === true) {
+			$transaction = $this->transactionAsPosted(transactionOrId: $transactionOrId, id: $id);
+			if ($transaction === null || $this->violatesMandatoryRule(id: $id, transaction: $transaction) === true) {
 				return false;
 			}
 
@@ -175,6 +154,55 @@ class RuleComplianceGuard {
 		}//end try
 
 	}//end validateTransaction()
+
+	/**
+	 * The transaction as the post leaves it, with its stored lines; null when
+	 * it cannot be found or carries no id.
+	 *
+	 * The page sends the draft with its state moved to posted. The lock,
+	 * retention, integrity and audit-trail fields are what the post itself
+	 * gives the entry (StampPostingAction persists them), so the entry is
+	 * judged as the post leaves it (REQ-LPP-001, #516).
+	 *
+	 * @param string|array<string,mixed> $transactionOrId The GLTransaction id, or the GLTransaction.
+	 * @param string $id The transaction's id.
+	 *
+	 * @return array<string,mixed>|null The stamped transaction with `lines`.
+	 */
+	private function transactionAsPosted(string|array $transactionOrId, string $id): array|null {
+		$transaction = $transactionOrId;
+		if (is_array($transaction) === false) {
+			$transaction = $this->loadObject('GLTransaction', $id);
+		}
+
+		if ($transaction === null || $id === '') {
+			return null;
+		}
+
+		$transaction = (new PostingStamps())->apply(transaction: $transaction, user: 'system', now: new DateTimeImmutable());
+		$transaction['lines'] = $this->loadLines($transaction);
+		return $transaction;
+
+	}//end transactionAsPosted()
+
+	/**
+	 * Evaluate the ledger rules plus the double-entry balance, logging every violation.
+	 *
+	 * @param string $id The transaction's id.
+	 * @param array<string,mixed> $transaction The stamped transaction with its lines.
+	 *
+	 * @return bool True when a mandatory rule is violated.
+	 */
+	private function violatesMandatoryRule(string $id, array $transaction): bool {
+		$violations = RuleEngine::evaluate('GLTransaction', $transaction, $this->context($transaction));
+		if ($this->balanceGuard->isBalanced($id) === false) {
+			$violations[] = RuleEngine::violationFor('gl-double-entry-balanced');
+		}
+
+		$this->logViolations('GLTransaction', $id, $violations);
+		return RuleEngine::hasMandatory($violations) === true;
+
+	}//end violatesMandatoryRule()
 
 	/**
 	 * Whether a transaction was prepared by a sub-ledger rather than a person.

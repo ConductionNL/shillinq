@@ -79,28 +79,12 @@ final class LogCreditNoteRequestAdapter implements CreditNoteRequestAdapterInter
 	 * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-005
 	 */
 	public function submitDisputeCreditNote(array $payload): array {
-		$matchId = (string)($payload['matchId'] ?? '');
-		$invoiceId = (string)($payload['invoiceId'] ?? '');
-		$invoiceNumber = (string)($payload['invoiceNumber'] ?? '');
-		$supplierId = (string)($payload['supplierId'] ?? '');
-		$administrationId = (string)($payload['administrationId'] ?? '');
-		$currency = (string)($payload['currency'] ?? 'EUR');
-		$totalInclVat = (int)($payload['totalInclVat'] ?? 0);
-
+		$envelope   = $this->envelope(payload: $payload);
 		$dispatchId = 'urn:uuid:cn-' . bin2hex(random_bytes(8));
 
 		$this->logger->info(
 			'LogCreditNoteRequestAdapter: dispute UBL CreditNote queued',
-			[
-				'matchId' => $matchId,
-				'invoiceId' => $invoiceId,
-				'invoiceNumber' => $invoiceNumber,
-				'supplierId' => $supplierId,
-				'administrationId' => $administrationId,
-				'currency' => $currency,
-				'totalInclVat' => $totalInclVat,
-				'dispatchId' => $dispatchId,
-			]
+			$envelope + ['dispatchId' => $dispatchId]
 		);
 
 		return [
@@ -110,4 +94,24 @@ final class LogCreditNoteRequestAdapter implements CreditNoteRequestAdapterInter
 		];
 
 	}//end submitDisputeCreditNote()
+
+	/**
+	 * The dispute envelope's fields as they are logged.
+	 *
+	 * @param array<string,mixed> $payload Dispute envelope (see interface).
+	 *
+	 * @return array{matchId:string,invoiceId:string,invoiceNumber:string,supplierId:string,administrationId:string,currency:string,totalInclVat:int}
+	 */
+	private function envelope(array $payload): array {
+		return [
+			'matchId' => (string)($payload['matchId'] ?? ''),
+			'invoiceId' => (string)($payload['invoiceId'] ?? ''),
+			'invoiceNumber' => (string)($payload['invoiceNumber'] ?? ''),
+			'supplierId' => (string)($payload['supplierId'] ?? ''),
+			'administrationId' => (string)($payload['administrationId'] ?? ''),
+			'currency' => (string)($payload['currency'] ?? 'EUR'),
+			'totalInclVat' => (int)($payload['totalInclVat'] ?? 0),
+		];
+
+	}//end envelope()
 }//end class

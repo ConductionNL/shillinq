@@ -356,3 +356,36 @@ describe('BbvLinkerFilterBar — loading the live facet values', () => {
 		axios.get = original
 	})
 })
+
+describe('BbvLinkerFilterBar — onSelect edge cases', () => {
+	/**
+	 * The query onSelect writes for one selection on a fresh context.
+	 *
+	 * @param {object} query The current route query.
+	 * @param {string} key The facet key.
+	 * @param {*} option The chosen option.
+	 * @return {object} The written query.
+	 */
+	function written(query, key, option) {
+		const ctx = context(query)
+		const pushes = []
+		ctx.$router = { replace: (to) => { pushes.push(to); return Promise.resolve() } }
+		ctx.onSelect({ key }, option)
+		expect(pushes).toHaveLength(1)
+		return pushes[0].query
+	}
+
+	it.each([
+		['a primitive option', {}, 'accountType', 'assets', { accountNumber: ['0100', '0200'] }],
+		['a null option clears the facet', { accountNumber: ['0100', '0200'] }, 'accountType', null, {}],
+		['an option without a value clears it', { programmeStructure: 'water' }, 'programmeStructure', { value: null }, {}],
+		['an account type without numbers', {}, 'accountType', { value: 'revenue' }, {}],
+		['other query keys are kept, in order', { page: 2, programmeStructure: 'water', sort: 'asc' }, 'accountType', { value: 'expenses' }, { page: 2, sort: 'asc', accountNumber: ['4100', '4110'], programmeStructure: 'water' }],
+		['an unknown facet keeps the owned ones', { programmeStructure: 'water', accountNumber: ['4100', '4110'] }, 'somethingElse', { value: 'x' }, { accountNumber: ['4100', '4110'], programmeStructure: 'water' }],
+		['clearing the assignment status keeps the programme', { programmeStructure: 'water' }, 'assignmentStatus', { value: '' }, { programmeStructure: 'water' }],
+	])('%s', (name, query, key, option, expected) => {
+		const result = written(query, key, option)
+		expect(result).toEqual(expected)
+		expect(Object.keys(result)).toEqual(Object.keys(expected))
+	})
+})

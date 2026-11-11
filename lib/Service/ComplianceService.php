@@ -147,35 +147,62 @@ final class ComplianceService {
 		// callers that pass programme arrays without expecting per-FY
 		// partitioning — the dashboard envelope builder is the only
 		// caller that knows the active FY and passes it explicitly.
-		$scopeYear = $fiscalYear;
-		$cacheKey = $this->buildCacheKey(programmeCode: $programmeCode, fiscalYear: $scopeYear);
+		$cacheKey = $this->buildCacheKey(programmeCode: $programmeCode, fiscalYear: $fiscalYear);
 		$cache = $this->getCache();
-
-		if ($cache !== null) {
-			$cached = $cache->get($cacheKey);
-			if (is_array($cached) === true && isset($cached['status']) === true) {
-				return $cached;
-			}
+		$cached = $this->cachedEnvelope(cache: $cache, cacheKey: $cacheKey);
+		if ($cached !== null) {
+			return $cached;
 		}
 
-		$record = null;
-		if (is_array($programme) === true) {
-			$record = $programme;
-		}
-
-		if ($record === null) {
-			$record = $this->loadProgrammeRecord(programmeCode: $programmeCode, fiscalYear: $scopeYear);
-		}
-
-		$envelope = $this->emptyEnvelope(programmeCode: $programmeCode);
-		if ($record !== null) {
-			$envelope = $this->envelopeFromRecord(record: $record, programmeCode: $programmeCode);
-		}
-
+		$envelope = $this->freshEnvelope(programme: $programme, fiscalYear: $fiscalYear);
 		$this->writeCached(cache: $cache, cacheKey: $cacheKey, envelope: $envelope);
 
 		return $envelope;
 	}//end computeComplianceStatus()
+
+	/**
+	 * A cached envelope, or null when there is no cache or no usable entry.
+	 *
+	 * @param ICache|null $cache    Cache handle.
+	 * @param string      $cacheKey Cache key.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function cachedEnvelope(ICache|null $cache, string $cacheKey): array|null {
+		if ($cache === null) {
+			return null;
+		}
+
+		$cached = $cache->get($cacheKey);
+		if (is_array($cached) === true && isset($cached['status']) === true) {
+			return $cached;
+		}
+
+		return null;
+	}//end cachedEnvelope()
+
+	/**
+	 * The envelope computed from the programme record: the record given, or
+	 * the one loaded by programmeCode (within the fiscal year when given).
+	 *
+	 * @param array<string,mixed>|string $programme  Programme record or programmeCode.
+	 * @param integer|null               $fiscalYear Optional fiscal-year scope.
+	 *
+	 * @return array{utilization: float, status: string, budget: int, ytdSpend: int, programmeCode: string}
+	 */
+	private function freshEnvelope(array|string $programme, int|null $fiscalYear): array {
+		$programmeCode = $this->resolveProgrammeCode(programme: $programme);
+		$record = $programme;
+		if (is_array($programme) === false) {
+			$record = $this->loadProgrammeRecord(programmeCode: $programmeCode, fiscalYear: $fiscalYear);
+		}
+
+		if ($record === null) {
+			return $this->emptyEnvelope(programmeCode: $programmeCode);
+		}
+
+		return $this->envelopeFromRecord(record: $record, programmeCode: $programmeCode);
+	}//end freshEnvelope()
 
 	/**
 	 * Write a cached envelope, fail-soft on cache write error.
@@ -222,27 +249,16 @@ final class ComplianceService {
 			return;
 		}
 
+		// With a fiscal year this drops that year's entry; without one it drops
+		// the legacy (no-FY) entry, and ::clear() / invalidateAll() handle the
+		// broader sweep when callers want it. Removing one programme across
+		// every FY would require iterating cache keys we don't track here.
 		try {
-			if ($fiscalYear !== null) {
-				$cache->remove($this->buildCacheKey(programmeCode: $programmeCode, fiscalYear: $fiscalYear));
-				return;
-			}
-
-			// No FY specified — drop the legacy (no-FY) entry, and let
-			// ::clear() / invalidateAll() handle the broader sweep when
-			// callers want it. Removing one programme across every FY
-			// would require iterating cache keys we don't track here.
-			$cache->remove($this->buildCacheKey(programmeCode: $programmeCode, fiscalYear: null));
+			$cache->remove($this->buildCacheKey(programmeCode: $programmeCode, fiscalYear: $fiscalYear));
 		} catch (Throwable $e) {
-			$this->logger->warning(
-				'Shillinq compliance service: cache remove failed',
-				[
-					'programmeCode' => $programmeCode,
-					'fiscalYear' => $fiscalYear,
-					'exception' => $e->getMessage(),
-				]
-			);
-		}//end try
+			$context = ['programmeCode' => $programmeCode, 'fiscalYear' => $fiscalYear, 'exception' => $e->getMessage()];
+			$this->logger->warning('Shillinq compliance service: cache remove failed', $context);
+		}
 
 	}//end invalidate()
 
@@ -315,39 +331,38 @@ final class ComplianceService {
 		}
 
 		try {
-			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-			$registerSlug = $this->settings->getRegisterSlug();
-
-			$filters = ['programmeCode' => $programmeCode];
-			if ($fiscalYear !== null) {
-				$filters['fiscalYear'] = $fiscalYear;
-			}
-
-			$records = $objectService
-				->setRegister($registerSlug)
-				->setSchema('BBVProgramme')
-				->findAll(
-					[
-						'filters' => $filters,
-						'limit' => 1,
-					]
-				);
-			foreach ($records as $candidate) {
-				return $this->toArray(object: $candidate);
-			}
+			return $this->firstProgramme(programmeCode: $programmeCode, fiscalYear: $fiscalYear);
 		} catch (Throwable $e) {
-			$this->logger->error(
-				'Shillinq compliance service: programme lookup failed',
-				[
-					'programmeCode' => $programmeCode,
-					'fiscalYear' => $fiscalYear,
-					'exception' => $e->getMessage(),
-				]
-			);
-		}//end try
+			$context = ['programmeCode' => $programmeCode, 'fiscalYear' => $fiscalYear, 'exception' => $e->getMessage()];
+			$this->logger->error('Shillinq compliance service: programme lookup failed', $context);
+		}
 
 		return null;
 	}//end loadProgrammeRecord()
+
+	/**
+	 * The first BBVProgramme matching the code (and fiscal year), as an array.
+	 *
+	 * @param string       $programmeCode Programme code (e.g. "2.3.2").
+	 * @param integer|null $fiscalYear    Optional fiscal-year scope.
+	 *
+	 * @return array<string,mixed>|null Record, or null when none matches.
+	 */
+	private function firstProgramme(string $programmeCode, int|null $fiscalYear): array|null {
+		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
+		$filters = ['programmeCode' => $programmeCode];
+		if ($fiscalYear !== null) {
+			$filters['fiscalYear'] = $fiscalYear;
+		}
+
+		$query = ['filters' => $filters, 'limit' => 1];
+		$records = $objectService->setRegister($this->settings->getRegisterSlug())->setSchema('BBVProgramme')->findAll($query);
+		foreach ($records as $candidate) {
+			return $this->toArray(object: $candidate);
+		}
+
+		return null;
+	}//end firstProgramme()
 
 	/**
 	 * Shape an envelope from a programme record's materialised values.
@@ -368,36 +383,56 @@ final class ComplianceService {
 	 * @return array{utilization: float, status: string, budget: int, ytdSpend: int, programmeCode: string}
 	 */
 	private function envelopeFromRecord(array $record, string $programmeCode): array {
-		$budget = $this->coerceCents(value: $record['totalBudget'] ?? null);
-		$ytdSpend = $this->coerceCents(value: $record['ytdSpend'] ?? null);
-
-		$utilization = $record['utilization'] ?? null;
-		if (is_numeric($utilization) === true) {
-			$utilization = (float)$utilization;
-		} elseif ($budget > 0) {
-			$utilization = ((float)$ytdSpend / (float)$budget);
-		} else {
-			$utilization = 0.0;
-		}
-
-		$status = $record['complianceStatus'] ?? null;
-		if (is_string($status) === false || $status === '') {
-			// Engine bucketing absent: only `unconfigured` is a safe
-			// imperative fallback — the threshold semantics are
-			// declarative on the schema and MUST NOT be re-encoded here
-			// (ADR-031 / giant D3).
-			$status = 'unconfigured';
-		}
-
 		return [
 			'programmeCode' => $programmeCode,
-			'utilization' => $utilization,
-			'status' => $status,
-			'budget' => $budget,
-			'ytdSpend' => $ytdSpend,
+			'utilization' => $this->utilizationOf(record: $record),
+			'status' => $this->statusOf(record: $record),
+			'budget' => $this->coerceCents(value: $record['totalBudget'] ?? null),
+			'ytdSpend' => $this->coerceCents(value: $record['ytdSpend'] ?? null),
 		];
 
 	}//end envelopeFromRecord()
+
+	/**
+	 * The materialised utilization, else ytdSpend ÷ budget, else 0.
+	 *
+	 * @param array<string,mixed> $record Programme record.
+	 *
+	 * @return float
+	 */
+	private function utilizationOf(array $record): float {
+		$utilization = $record['utilization'] ?? null;
+		if (is_numeric($utilization) === true) {
+			return (float)$utilization;
+		}
+
+		$budget = $this->coerceCents(value: $record['totalBudget'] ?? null);
+		if ($budget > 0) {
+			return ((float)$this->coerceCents(value: $record['ytdSpend'] ?? null) / (float)$budget);
+		}
+
+		return 0.0;
+	}//end utilizationOf()
+
+	/**
+	 * The engine's compliance bucket, or `unconfigured` when absent.
+	 *
+	 * Engine bucketing absent: only `unconfigured` is a safe imperative
+	 * fallback — the threshold semantics are declarative on the schema and
+	 * MUST NOT be re-encoded here (ADR-031 / giant D3).
+	 *
+	 * @param array<string,mixed> $record Programme record.
+	 *
+	 * @return string
+	 */
+	private function statusOf(array $record): string {
+		$status = $record['complianceStatus'] ?? null;
+		if (is_string($status) === false || $status === '') {
+			return 'unconfigured';
+		}
+
+		return $status;
+	}//end statusOf()
 
 	/**
 	 * Empty envelope for unresolvable or unconfigured programmes.
@@ -429,11 +464,11 @@ final class ComplianceService {
 			return $value;
 		}
 
-		if (is_string($value) === true && ctype_digit(ltrim($value, '-')) === true) {
+		if ($this->isDigitString(value: $value) === true) {
 			return (int)$value;
 		}
 
-		if (is_float($value) === true && is_finite($value) === true) {
+		if ($this->isFiniteFloat(value: $value) === true) {
 			// Float-from-engine is unexpected (the aggregation declares
 			// `unit: cents` integer), but if a downstream serialiser
 			// turned it into a float we round half-up to the nearest
@@ -443,6 +478,30 @@ final class ComplianceService {
 
 		return 0;
 	}//end coerceCents()
+
+	/**
+	 * Whether a value is a string of digits, optionally led by minus signs.
+	 *
+	 * @param mixed $value The value.
+	 *
+	 * @return boolean
+	 */
+	private function isDigitString(mixed $value): bool {
+		return is_string($value) === true && ctype_digit(ltrim($value, '-')) === true;
+	}//end isDigitString()
+
+	/**
+	 * Whether a value is a finite float.
+	 *
+	 * @param mixed $value The value.
+	 *
+	 * @return boolean
+	 *
+	 * @psalm-assert-if-true float $value
+	 */
+	private function isFiniteFloat(mixed $value): bool {
+		return is_float($value) === true && is_finite($value) === true;
+	}//end isFiniteFloat()
 
 	/**
 	 * Compose the cache key for a programme.
@@ -499,20 +558,46 @@ final class ComplianceService {
 			return $object;
 		}
 
-		if (is_object($object) === true && method_exists($object, 'getObject') === true) {
-			$payload = $object->getObject();
-			if (is_array($payload) === true) {
-				return $payload;
-			}
-		}
-
-		if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
-			$payload = $object->jsonSerialize();
-			if (is_array($payload) === true) {
-				return $payload;
-			}
+		$payload = ($this->entityPayload(object: $object) ?? $this->serialisedPayload(object: $object));
+		if (is_array($payload) === true) {
+			return $payload;
 		}
 
 		return [];
 	}//end toArray()
+
+	/**
+	 * An entity's getObject() payload when it is an array, otherwise null.
+	 *
+	 * @param mixed $object An OR entity, or anything else.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function entityPayload(mixed $object): array|null {
+		if (is_object($object) === false || method_exists($object, 'getObject') === false) {
+			return null;
+		}
+
+		$payload = $object->getObject();
+		if (is_array($payload) === true) {
+			return $payload;
+		}
+
+		return null;
+	}//end entityPayload()
+
+	/**
+	 * An entity's jsonSerialize() result, or null when it has none.
+	 *
+	 * @param mixed $object An OR entity, or anything else.
+	 *
+	 * @return mixed
+	 */
+	private function serialisedPayload(mixed $object): mixed {
+		if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
+			return $object->jsonSerialize();
+		}
+
+		return null;
+	}//end serialisedPayload()
 }//end class

@@ -171,17 +171,15 @@ class LandedCostAllocationService {
 			];
 		}
 
-		$posting = $this->poster->post(
-			administrationId: $administrationId,
-			debitAccount: $this->inventoryAccount(),
-			creditAccount: $this->landedCostClearingAccount(),
-			amountCents: $landedCostCents,
-			journalCode: 'LAND',
-			description: $this->describe(receiptReference: $receiptReference, landedCostCents: $landedCostCents),
-			sourceReference: $receiptReference,
-			postingDate: $this->postingDate(postingDate: $postingDate, moves: $moves),
-			periodId: $this->periodId(postingDate: $this->postingDate(postingDate: $postingDate, moves: $moves))
-		);
+		$adjustment = new GlAdjustmentPosting(administrationId: $administrationId, journalCode: 'LAND');
+		$adjustment->debitAccount = $this->inventoryAccount();
+		$adjustment->creditAccount = $this->landedCostClearingAccount();
+		$adjustment->amountCents = $landedCostCents;
+		$adjustment->description = $this->describe(receiptReference: $receiptReference, landedCostCents: $landedCostCents);
+		$adjustment->sourceReference = $receiptReference;
+		$adjustment->postingDate = $this->postingDate(postingDate: $postingDate, moves: $moves);
+		$adjustment->periodId = $this->periodId(postingDate: $this->postingDate(postingDate: $postingDate, moves: $moves));
+		$posting = $this->poster->postAdjustment(posting: $adjustment);
 
 		$this->bumpValuations(administrationId: $administrationId, lines: $lines);
 

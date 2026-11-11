@@ -171,4 +171,40 @@ final class TaxReportCalculatorTest extends TestCase {
 		self::assertSame(0.0, $this->calc->estimateLiability(-5000.0));
 
 	}//end testEstimateLiabilityTwoBrackets()
+	/**
+	 * Golden: the whole statement, with every bucket, untagged postings and the sorted breakdown.
+	 *
+	 * @return void
+	 */
+	public function testAggregateStatementGolden(): void {
+		$statement = $this->calc->aggregate([
+			['accountNumber' => '8000', 'accountName' => 'Omzet', 'accountType' => 'revenue', 'taxTreatment' => '', 'amount' => 1000.10],
+			['accountNumber' => '4000', 'accountName' => 'Kosten', 'accountType' => 'expenses', 'taxTreatment' => 'deductible', 'amount' => -200.05],
+			['accountNumber' => '4500', 'accountType' => 'expenses', 'taxTreatment' => 'nonDeductible', 'amount' => 50],
+			['accountNumber' => '0100', 'accountType' => 'assets', 'taxTreatment' => 'special', 'amount' => 25.5],
+			['accountNumber' => '8000', 'accountName' => 'Omzet 2', 'accountType' => 'revenue', 'taxTreatment' => 'normal', 'amount' => '10'],
+			['accountType' => 'equity', 'amount' => 999],
+			['accountNumber' => '4000', 'accountType' => 'expenses', 'amount' => 0.95],
+		]);
+
+		self::assertSame(
+			[
+				'revenue' => 1010.1,
+				'operatingExpenses' => 201.0,
+				'nonOperating' => 50.0,
+				'specialDeductions' => 25.5,
+				'netTaxableIncome' => 833.6,
+				'untaggedCount' => 2,
+				'breakdown' => [
+					['accountNumber' => '0100', 'accountName' => null, 'accountType' => 'assets', 'taxTreatment' => 'special', 'amount' => 25.5],
+					['accountNumber' => '4000', 'accountName' => 'Kosten', 'accountType' => 'expenses', 'taxTreatment' => 'deductible', 'amount' => 201.0],
+					['accountNumber' => '4500', 'accountName' => null, 'accountType' => 'expenses', 'taxTreatment' => 'nonDeductible', 'amount' => 50.0],
+					['accountNumber' => '8000', 'accountName' => 'Omzet', 'accountType' => 'revenue', 'taxTreatment' => 'normal', 'amount' => 1010.1],
+				],
+			],
+			$statement
+		);
+
+	}//end testAggregateStatementGolden()
+
 }//end class

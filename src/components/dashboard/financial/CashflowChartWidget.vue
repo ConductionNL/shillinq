@@ -38,6 +38,53 @@ import { NcLoadingIcon } from '@nextcloud/vue'
 import chartWidgetMixin from './chartWidgetMixin.js'
 import { forecastByMonth, formatEur, monthLabel } from './financialSeries.js'
 
+/**
+ * A column series.
+ *
+ * @param {string} name The series name.
+ * @param {Array<number|null>} data The values.
+ * @return {object} The series.
+ */
+function columnSeries(name, data) {
+	return { name, type: 'column', data }
+}
+
+/**
+ * The values followed by empty points.
+ *
+ * @param {Array<number|null>} data The values.
+ * @param {number} count How many empty points follow.
+ * @return {Array<number|null>} The padded values.
+ */
+function padTail(data, count) {
+	return [...data, ...Array(count).fill(null)]
+}
+
+/**
+ * Empty points followed by the values.
+ *
+ * @param {number} count How many empty points come first.
+ * @param {Array<number|null>} data The values.
+ * @return {Array<number|null>} The padded values.
+ */
+function padHead(count, data) {
+	return [...Array(count).fill(null), ...data]
+}
+
+/**
+ * The forecast column series, padded past the realised months.
+ *
+ * @param {object} forecast The forecast with its cashIn and cashOut.
+ * @param {number} realizedCount How many realised months come first.
+ * @return {object[]} The money-in and money-out forecast series.
+ */
+function forecastSeries(forecast, realizedCount) {
+	return [
+		columnSeries(t('shillinq', 'Forecast in'), padHead(realizedCount, forecast.cashIn)),
+		columnSeries(t('shillinq', 'Forecast out'), padHead(realizedCount, forecast.cashOut)),
+	]
+}
+
 export default {
 	name: 'CashflowChartWidget',
 
@@ -59,27 +106,10 @@ export default {
 
 		series() {
 			if (!this.glSeries) return []
-			const realizedCount = this.months.length
 			const forecastCount = this.forecast.months.length
-			const padRealized = (data) => [
-				...data,
-				...Array(forecastCount).fill(null),
-			]
-			const padForecast = (data) => [
-				...Array(realizedCount).fill(null),
-				...data,
-			]
 			const series = [
-				{
-					name: t('shillinq', 'Money in'),
-					type: 'column',
-					data: padRealized(this.glSeries.cashIn),
-				},
-				{
-					name: t('shillinq', 'Money out'),
-					type: 'column',
-					data: padRealized(this.glSeries.cashOut),
-				},
+				columnSeries(t('shillinq', 'Money in'), padTail(this.glSeries.cashIn, forecastCount)),
+				columnSeries(t('shillinq', 'Money out'), padTail(this.glSeries.cashOut, forecastCount)),
 				{
 					name: t('shillinq', 'Net'),
 					type: 'line',
@@ -87,20 +117,7 @@ export default {
 				},
 			]
 			if (forecastCount > 0) {
-				series.splice(
-					2,
-					0,
-					{
-						name: t('shillinq', 'Forecast in'),
-						type: 'column',
-						data: padForecast(this.forecast.cashIn),
-					},
-					{
-						name: t('shillinq', 'Forecast out'),
-						type: 'column',
-						data: padForecast(this.forecast.cashOut),
-					},
-				)
+				series.splice(2, 0, ...forecastSeries(this.forecast, this.months.length))
 			}
 			return series
 		},

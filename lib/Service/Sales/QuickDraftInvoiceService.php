@@ -202,30 +202,12 @@ class QuickDraftInvoiceService {
 	 */
 	private static function line(array $line, string $lineId, string $glAccount): ?array {
 		$description = trim((string)($line['description'] ?? ''));
-		$quantity = $line['quantity'] ?? 1;
-		$price = $line['unitPrice'] ?? 0;
-		$rate = $line['vatRate'] ?? 0;
-		if (is_numeric($quantity) === false || is_numeric($price) === false || is_numeric($rate) === false) {
-			throw new QuickDraftRefusedException('Every line needs a number for quantity, price and VAT rate.');
-		}
-
+		[$quantity, $price, $rate] = self::lineFigures(line: $line);
 		if ($description === '' && (float)$price <= 0) {
 			return null;
 		}
 
-		if ((float)$rate < 0 || (float)$rate > 100) {
-			throw new QuickDraftRefusedException('A VAT rate lies between 0 and 100 percent.');
-		}
-
-		$lineGlAccount = trim((string)($line['glAccount'] ?? ''));
-		if ($lineGlAccount === '') {
-			$lineGlAccount = $glAccount;
-		}
-
-		$category = 'Z';
-		if ((float)$rate > 0) {
-			$category = 'S';
-		}
+		self::assertVatRate(rate: (float)$rate);
 
 		return [
 			'lineId' => $lineId,
@@ -235,10 +217,78 @@ class QuickDraftInvoiceService {
 			'netPrice' => (float)$price,
 			'netAmount' => round((float)$quantity * (float)$price, 2),
 			'vatRate' => (float)$rate,
-			'vatCategory' => $category,
-			'glAccount' => self::nullIfEmpty(value: $lineGlAccount),
+			'vatCategory' => self::vatCategory(rate: (float)$rate),
+			'glAccount' => self::nullIfEmpty(value: self::lineGlAccount(line: $line, fallback: $glAccount)),
 		];
 	}//end line()
+
+	/**
+	 * The line's quantity (1 by default), unit price and VAT rate (0 by
+	 * default), as sent.
+	 *
+	 * @param array<string,mixed> $line The line the browser sent.
+	 *
+	 * @return array{0:mixed,1:mixed,2:mixed}
+	 *
+	 * @throws QuickDraftRefusedException When one of them is not a number.
+	 */
+	private static function lineFigures(array $line): array {
+		$quantity = $line['quantity'] ?? 1;
+		$price = $line['unitPrice'] ?? 0;
+		$rate = $line['vatRate'] ?? 0;
+		if (is_numeric($quantity) === false || is_numeric($price) === false || is_numeric($rate) === false) {
+			throw new QuickDraftRefusedException('Every line needs a number for quantity, price and VAT rate.');
+		}
+
+		return [$quantity, $price, $rate];
+	}//end lineFigures()
+
+	/**
+	 * Refuse a VAT rate outside 0..100 percent.
+	 *
+	 * @param float $rate The VAT rate.
+	 *
+	 * @return void
+	 *
+	 * @throws QuickDraftRefusedException When the rate is out of range.
+	 */
+	private static function assertVatRate(float $rate): void {
+		if ($rate < 0 || $rate > 100) {
+			throw new QuickDraftRefusedException('A VAT rate lies between 0 and 100 percent.');
+		}
+	}//end assertVatRate()
+
+	/**
+	 * The line's own ledger account, else the draft's.
+	 *
+	 * @param array<string,mixed> $line     The line the browser sent.
+	 * @param string              $fallback The draft's default ledger account.
+	 *
+	 * @return string
+	 */
+	private static function lineGlAccount(array $line, string $fallback): string {
+		$lineGlAccount = trim((string)($line['glAccount'] ?? ''));
+		if ($lineGlAccount === '') {
+			return $fallback;
+		}
+
+		return $lineGlAccount;
+	}//end lineGlAccount()
+
+	/**
+	 * The VAT category of a rate: standard (S) above 0, zero-rated (Z) at 0.
+	 *
+	 * @param float $rate The VAT rate.
+	 *
+	 * @return string
+	 */
+	private static function vatCategory(float $rate): string {
+		if ($rate > 0) {
+			return 'S';
+		}
+
+		return 'Z';
+	}//end vatCategory()
 
 	/**
 	 * Null for an empty string, else the string.

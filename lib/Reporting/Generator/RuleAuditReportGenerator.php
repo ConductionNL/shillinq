@@ -100,8 +100,32 @@ final class RuleAuditReportGenerator implements ReportGeneratorInterface {
 		$report = $this->runAudit($context);
 
 		$handle = fopen('php://temp', 'r+');
+		$this->writeSummary(handle: $handle, report: $report);
+		$this->writeTypeStats(handle: $handle, report: $report);
+		$this->writeTopRules(handle: $handle, report: $report);
 
-		// --- Summary block ---.
+		rewind($handle);
+		$content = (string)stream_get_contents($handle);
+		fclose($handle);
+
+		return new GeneratedFile(
+			fileName: $this->fileName('rule-audit', $context, 'csv'),
+			mimeType: 'text/csv',
+			format: 'csv',
+			content: $content,
+		);
+
+	}//end generate()
+
+	/**
+	 * Write the summary and per-severity rows.
+	 *
+	 * @param resource $handle The CSV stream.
+	 * @param array<string,mixed> $report The audit report.
+	 *
+	 * @return void
+	 */
+	private function writeSummary($handle, array $report): void {
 		fputcsv($handle, ['section', 'metric', 'value']);
 		fputcsv($handle, ['summary', 'catalogueVersion', (string)($report['catalogueVersion'] ?? '')]);
 		fputcsv($handle, ['summary', 'corpusTotal', (string)($report['corpusTotal'] ?? 0)]);
@@ -117,7 +141,17 @@ final class RuleAuditReportGenerator implements ReportGeneratorInterface {
 			fputcsv($handle, ['severity', $level, (string)($severity[$level] ?? 0)]);
 		}
 
-		// --- Per object type ---.
+	}//end writeSummary()
+
+	/**
+	 * Write the per-object-type block after a blank separator row.
+	 *
+	 * @param resource $handle The CSV stream.
+	 * @param array<string,mixed> $report The audit report.
+	 *
+	 * @return void
+	 */
+	private function writeTypeStats($handle, array $report): void {
 		fputcsv($handle, []);
 		fputcsv($handle, ['objectType', 'checked', 'compliant', 'withViolations', 'violations', 'compliancePct']);
 		foreach (($report['types'] ?? []) as $type => $stat) {
@@ -125,23 +159,44 @@ final class RuleAuditReportGenerator implements ReportGeneratorInterface {
 				continue;
 			}
 
-			$checked = (int)($stat['checked'] ?? 0);
-			$compliant = (int)($stat['compliant'] ?? 0);
-			$compliance = ($checked > 0) ? round((($compliant / $checked) * 100), 1) : 0.0;
-			fputcsv(
-				$handle,
-				[
-					(string)$type,
-					(string)$checked,
-					(string)$compliant,
-					(string)($stat['withViolations'] ?? 0),
-					(string)($stat['violations'] ?? 0),
-					$this->money((float)$compliance),
-				]
-			);
-		}//end foreach
+			fputcsv($handle, $this->typeRow(type: (string)$type, stat: $stat));
+		}
 
-		// --- Top violated rules ---.
+	}//end writeTypeStats()
+
+	/**
+	 * One per-object-type row, with compliance as a percentage of checked.
+	 *
+	 * @param string $type The object type.
+	 * @param array<string,mixed> $stat The type's audit stats.
+	 *
+	 * @return array<int,string> The CSV row.
+	 */
+	private function typeRow(string $type, array $stat): array {
+		$checked = (int)($stat['checked'] ?? 0);
+		$compliant = (int)($stat['compliant'] ?? 0);
+		$compliance = ($checked > 0) ? round((($compliant / $checked) * 100), 1) : 0.0;
+
+		return [
+			$type,
+			(string)$checked,
+			(string)$compliant,
+			(string)($stat['withViolations'] ?? 0),
+			(string)($stat['violations'] ?? 0),
+			$this->money((float)$compliance),
+		];
+
+	}//end typeRow()
+
+	/**
+	 * Write the top-violated-rules block after a blank separator row.
+	 *
+	 * @param resource $handle The CSV stream.
+	 * @param array<string,mixed> $report The audit report.
+	 *
+	 * @return void
+	 */
+	private function writeTopRules($handle, array $report): void {
 		fputcsv($handle, []);
 		fputcsv($handle, ['topViolatedRule', 'count']);
 		foreach (($report['topViolatedRules'] ?? []) as $entry) {
@@ -152,18 +207,7 @@ final class RuleAuditReportGenerator implements ReportGeneratorInterface {
 			fputcsv($handle, [(string)($entry['ruleId'] ?? ''), (string)($entry['count'] ?? 0)]);
 		}
 
-		rewind($handle);
-		$content = (string)stream_get_contents($handle);
-		fclose($handle);
-
-		return new GeneratedFile(
-			fileName: $this->fileName('rule-audit', $context, 'csv'),
-			mimeType: 'text/csv',
-			format: 'csv',
-			content: $content,
-		);
-
-	}//end generate()
+	}//end writeTopRules()
 
 	/**
 	 * Resolve RuleAuditService from the container and run its audit.
