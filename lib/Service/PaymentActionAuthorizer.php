@@ -98,24 +98,49 @@ final class PaymentActionAuthorizer {
 			return true;
 		}
 
+		return $this->inAnyGroup(userId: $user->getUID(), groups: $this->groupsCarrying(action: $action));
+	}//end may()
+
+	/**
+	 * The groups the configured action matrix grants an action to; none when
+	 * the matrix or the action's entry is not a list.
+	 *
+	 * @param string $action The action, one of the ACTION_* constants.
+	 *
+	 * @return array<mixed>
+	 */
+	private function groupsCarrying(string $action): array {
 		$decoded = json_decode($this->appConfig->getValueString('shillinq', self::CONFIG_ACTION_GROUPS, ''), true);
 		if (is_array($decoded) === false) {
-			return false;
+			return [];
 		}
 
 		$allowed = ($decoded[$action] ?? []);
-		if (is_array($allowed) === false || $allowed === []) {
-			return false;
+		if (is_array($allowed) === false) {
+			return [];
 		}
 
-		foreach ($allowed as $group) {
-			if (is_string($group) === true && $this->groupManager->isInGroup($user->getUID(), $group) === true) {
+		return $allowed;
+	}//end groupsCarrying()
+
+	/**
+	 * Whether the user belongs to one of the named groups, checked in order
+	 * and stopping at the first match.
+	 *
+	 * @param string       $userId The calling user's id.
+	 * @param array<mixed> $groups Group ids from the matrix (non-strings are skipped).
+	 *
+	 * @return boolean
+	 */
+	private function inAnyGroup(string $userId, array $groups): bool {
+		foreach ($groups as $group) {
+			if (is_string($group) === true && $this->groupManager->isInGroup($userId, $group) === true) {
 				return true;
 			}
 		}
 
 		return false;
-	}//end may()
+	}//end inAnyGroup()
 
 	/**
 	 * The calling user's id, or an empty string when there is no session.
