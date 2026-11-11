@@ -107,42 +107,47 @@ class ArInvoiceIcpPdfRenderer {
 			);
 		}
 
-		$supplyType = (string)($icpContext['supplyType'] ?? '');
-		$sellerVatId = (string)($seller['vatId'] ?? ($seller['vatNumber'] ?? ''));
-		$sellerName = (string)($seller['legalName'] ?? ($seller['name'] ?? 'Shillinq Operator'));
-		$customerName = (string)($customer['name'] ?? ($invoice['customerId'] ?? ''));
-
-		$invoiceNumber = (string)($invoice['invoiceNumber'] ?? 'AR-INVOICE');
-		$filename = sprintf('arinvoice-%s.pdf', $invoiceNumber);
-
-		$html = $this->renderHtml(
+		$view = new IcpInvoiceView(
 			invoice: $invoice,
-			customerName: $customerName,
-			sellerName: $sellerName,
-			sellerVatId: $sellerVatId,
+			customerName: (string)($customer['name'] ?? ($invoice['customerId'] ?? '')),
+			sellerName: (string)($seller['legalName'] ?? ($seller['name'] ?? 'Shillinq Operator')),
+			sellerVatId: (string)($seller['vatId'] ?? ($seller['vatNumber'] ?? '')),
 			buyerVatId: $buyerVatId,
 			treatAsIcp: $treatAsIcp,
-			supplyType: $supplyType,
+			supplyType: (string)($icpContext['supplyType'] ?? ''),
 			triangulation: (bool)($icpContext['triangulation'] ?? false)
 		);
 
 		return [
-			'filename' => $filename,
-			'html' => $html,
+			'filename' => sprintf('arinvoice-%s.pdf', (string)($invoice['invoiceNumber'] ?? 'AR-INVOICE')),
+			'html' => $this->renderHtml(view: $view),
 			'mimeType' => 'application/pdf',
-			'icp' => [
-				'treatAsIcp' => $treatAsIcp,
-				'supplyType' => $supplyType,
-				'buyerVatId' => $buyerVatId,
-				'sellerVatId' => $sellerVatId,
-				'reverseChargeKey' => 'shillinq.icp.invoice.reverseChargeNotice',
-				'supplyLabelKey' => $this->supplyTypeLabelKey(supplyType: $supplyType),
-				'viesValidationId' => (string)($icpContext['viesValidationId'] ?? ''),
-				'triangulation' => (bool)($icpContext['triangulation'] ?? false),
-			],
+			'icp' => $this->icpMetadata(view: $view, icpContext: $icpContext),
 		];
 
 	}//end render()
+
+	/**
+	 * The ICP-overlay metadata callers can persist or inspect.
+	 *
+	 * @param IcpInvoiceView      $view       What the document shows.
+	 * @param array<string,mixed> $icpContext The invoice's icpContext.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function icpMetadata(IcpInvoiceView $view, array $icpContext): array {
+		return [
+			'treatAsIcp' => $view->treatAsIcp,
+			'supplyType' => $view->supplyType,
+			'buyerVatId' => $view->buyerVatId,
+			'sellerVatId' => $view->sellerVatId,
+			'reverseChargeKey' => 'shillinq.icp.invoice.reverseChargeNotice',
+			'supplyLabelKey' => $this->supplyTypeLabelKey(supplyType: $view->supplyType),
+			'viesValidationId' => (string)($icpContext['viesValidationId'] ?? ''),
+			'triangulation' => (bool)($icpContext['triangulation'] ?? false),
+		];
+
+	}//end icpMetadata()
 
 	/**
 	 * Read the icpContext sub-object off the invoice record defensively.
@@ -195,96 +200,168 @@ class ArInvoiceIcpPdfRenderer {
 	/**
 	 * Build the HTML body of the ICP overlay (header + reverse-charge notice).
 	 *
-	 * @param array<string,mixed> $invoice ARInvoice record (header).
-	 * @param string $customerName Customer legal / display name.
-	 * @param string $sellerName Seller legal / display name.
-	 * @param string $sellerVatId Seller NL VAT-ID.
-	 * @param string $buyerVatId Buyer VAT-ID (or C-party for T).
-	 * @param bool $treatAsIcp Whether the ICP overlay applies.
-	 * @param string $supplyType Supply type (L / S / T).
-	 * @param bool $triangulation Whether this is a triangulation supply.
+	 * @param IcpInvoiceView $view What the document shows.
 	 *
 	 * @return string Rendered HTML (UTF-8, no external resources).
 	 */
-	private function renderHtml(
-		array $invoice,
-		string $customerName,
-		string $sellerName,
-		string $sellerVatId,
-		string $buyerVatId,
-		bool $treatAsIcp,
-		string $supplyType,
-		bool $triangulation,
-	): string {
-		$reverseChargeNotice = $this->reverseChargeNotice();
-		$supplyTypeLabel = $this->supplyTypeLabel(supplyType: $supplyType);
-		$triangulationNote = '';
-		if ($triangulation === true) {
-			$triangulationNote = '<p class="icp-note"><em>' . htmlspecialchars(
-				$this->l10n->t('Triangulation supply per Article 141 of VAT Directive 2006/112/EC.'),
-				ENT_QUOTES
-			) . '</em></p>';
-		}
-
-		$bodyParts = [];
-
-		// Title.
-		$bodyParts[] = sprintf(
-			'<h1>%s %s</h1>',
-			htmlspecialchars($this->l10n->t('Invoice'), ENT_QUOTES),
-			htmlspecialchars((string)($invoice['invoiceNumber'] ?? ''), ENT_QUOTES)
-		);
-
-		// Seller / buyer block.
-		$bodyParts[] = sprintf(
-			'<div class="party"><strong>%s</strong><br>%s<br>%s: %s</div>',
-			htmlspecialchars($sellerName, ENT_QUOTES),
-			htmlspecialchars($this->l10n->t('Seller'), ENT_QUOTES),
-			htmlspecialchars($this->l10n->t('Seller VAT-ID'), ENT_QUOTES),
-			htmlspecialchars($sellerVatId, ENT_QUOTES)
-		);
-		$bodyParts[] = sprintf(
-			'<div class="party"><strong>%s:</strong> %s<br>%s: %s</div>',
-			htmlspecialchars($this->l10n->t('Buyer'), ENT_QUOTES),
-			htmlspecialchars($customerName, ENT_QUOTES),
-			htmlspecialchars($this->l10n->t('Buyer VAT-ID'), ENT_QUOTES),
-			htmlspecialchars($buyerVatId, ENT_QUOTES)
-		);
-
-		// Header dates.
-		$bodyParts[] = sprintf(
-			'<p>%s: %s &nbsp; %s: %s</p>',
-			htmlspecialchars($this->l10n->t('Invoice date'), ENT_QUOTES),
-			htmlspecialchars((string)($invoice['invoiceDate'] ?? ''), ENT_QUOTES),
-			htmlspecialchars($this->l10n->t('Due date'), ENT_QUOTES),
-			htmlspecialchars((string)($invoice['dueDate'] ?? ''), ENT_QUOTES)
-		);
+	private function renderHtml(IcpInvoiceView $view): string {
+		$bodyParts = [
+			$this->titleHtml(view: $view),
+			$this->sellerHtml(view: $view),
+			$this->buyerHtml(view: $view),
+			$this->datesHtml(view: $view),
+		];
 
 		// ICP overlay (only when treatAsIcp).
-		if ($treatAsIcp === true) {
-			$bodyParts[] = sprintf(
-				'<section class="icp-overlay"><h2>%s</h2>'
-				. '<p class="icp-notice"><strong>%s</strong></p>'
-				. '<p>%s: <strong>%s</strong></p>'
-				. '%s</section>',
-				htmlspecialchars($this->l10n->t('Intra-Community Supply'), ENT_QUOTES),
-				htmlspecialchars($reverseChargeNotice, ENT_QUOTES),
-				htmlspecialchars($this->l10n->t('Supply type'), ENT_QUOTES),
-				htmlspecialchars($supplyTypeLabel, ENT_QUOTES),
-				$triangulationNote
-			);
+		if ($view->treatAsIcp === true) {
+			$bodyParts[] = $this->icpOverlayHtml(view: $view);
 		}
 
 		// Totals (minimal — line table is the AR-core renderer's job, this overlay
 		// focuses on the ICP-mandated fields per REQ-ICP-007).
-		$bodyParts[] = sprintf(
-			'<p><strong>%s:</strong> &euro; %s</p>',
-			htmlspecialchars($this->l10n->t('Total amount'), ENT_QUOTES),
-			$this->formatMoney(value: (float)($invoice['totalAmount'] ?? 0))
+		$bodyParts[] = $this->totalHtml(view: $view);
+
+		return $this->documentHtml(view: $view, body: implode('', $bodyParts));
+
+	}//end renderHtml()
+
+	/**
+	 * The title: "Invoice <number>".
+	 *
+	 * @param IcpInvoiceView $view What the document shows.
+	 *
+	 * @return string
+	 */
+	private function titleHtml(IcpInvoiceView $view): string {
+		return sprintf(
+			'<h1>%s %s</h1>',
+			htmlspecialchars($this->l10n->t('Invoice'), ENT_QUOTES),
+			htmlspecialchars((string)($view->invoice['invoiceNumber'] ?? ''), ENT_QUOTES)
 		);
 
-		$body = implode('', $bodyParts);
+	}//end titleHtml()
 
+	/**
+	 * The seller block with its VAT-ID.
+	 *
+	 * @param IcpInvoiceView $view What the document shows.
+	 *
+	 * @return string
+	 */
+	private function sellerHtml(IcpInvoiceView $view): string {
+		return sprintf(
+			'<div class="party"><strong>%s</strong><br>%s<br>%s: %s</div>',
+			htmlspecialchars($view->sellerName, ENT_QUOTES),
+			htmlspecialchars($this->l10n->t('Seller'), ENT_QUOTES),
+			htmlspecialchars($this->l10n->t('Seller VAT-ID'), ENT_QUOTES),
+			htmlspecialchars($view->sellerVatId, ENT_QUOTES)
+		);
+
+	}//end sellerHtml()
+
+	/**
+	 * The buyer block with its VAT-ID.
+	 *
+	 * @param IcpInvoiceView $view What the document shows.
+	 *
+	 * @return string
+	 */
+	private function buyerHtml(IcpInvoiceView $view): string {
+		return sprintf(
+			'<div class="party"><strong>%s:</strong> %s<br>%s: %s</div>',
+			htmlspecialchars($this->l10n->t('Buyer'), ENT_QUOTES),
+			htmlspecialchars($view->customerName, ENT_QUOTES),
+			htmlspecialchars($this->l10n->t('Buyer VAT-ID'), ENT_QUOTES),
+			htmlspecialchars($view->buyerVatId, ENT_QUOTES)
+		);
+
+	}//end buyerHtml()
+
+	/**
+	 * The invoice and due dates.
+	 *
+	 * @param IcpInvoiceView $view What the document shows.
+	 *
+	 * @return string
+	 */
+	private function datesHtml(IcpInvoiceView $view): string {
+		return sprintf(
+			'<p>%s: %s &nbsp; %s: %s</p>',
+			htmlspecialchars($this->l10n->t('Invoice date'), ENT_QUOTES),
+			htmlspecialchars((string)($view->invoice['invoiceDate'] ?? ''), ENT_QUOTES),
+			htmlspecialchars($this->l10n->t('Due date'), ENT_QUOTES),
+			htmlspecialchars((string)($view->invoice['dueDate'] ?? ''), ENT_QUOTES)
+		);
+
+	}//end datesHtml()
+
+	/**
+	 * The intra-Community overlay: reverse-charge notice, supply type and,
+	 * for a triangulation supply, the Article 141 note.
+	 *
+	 * @param IcpInvoiceView $view What the document shows.
+	 *
+	 * @return string
+	 */
+	private function icpOverlayHtml(IcpInvoiceView $view): string {
+		return sprintf(
+			'<section class="icp-overlay"><h2>%s</h2>'
+			. '<p class="icp-notice"><strong>%s</strong></p>'
+			. '<p>%s: <strong>%s</strong></p>'
+			. '%s</section>',
+			htmlspecialchars($this->l10n->t('Intra-Community Supply'), ENT_QUOTES),
+			htmlspecialchars($this->reverseChargeNotice(), ENT_QUOTES),
+			htmlspecialchars($this->l10n->t('Supply type'), ENT_QUOTES),
+			htmlspecialchars($this->supplyTypeLabel(supplyType: $view->supplyType), ENT_QUOTES),
+			$this->triangulationNote(view: $view)
+		);
+
+	}//end icpOverlayHtml()
+
+	/**
+	 * The Article 141 note of a triangulation supply, or ''.
+	 *
+	 * @param IcpInvoiceView $view What the document shows.
+	 *
+	 * @return string
+	 */
+	private function triangulationNote(IcpInvoiceView $view): string {
+		if ($view->triangulation === false) {
+			return '';
+		}
+
+		return '<p class="icp-note"><em>' . htmlspecialchars(
+			$this->l10n->t('Triangulation supply per Article 141 of VAT Directive 2006/112/EC.'),
+			ENT_QUOTES
+		) . '</em></p>';
+
+	}//end triangulationNote()
+
+	/**
+	 * The total amount line.
+	 *
+	 * @param IcpInvoiceView $view What the document shows.
+	 *
+	 * @return string
+	 */
+	private function totalHtml(IcpInvoiceView $view): string {
+		return sprintf(
+			'<p><strong>%s:</strong> &euro; %s</p>',
+			htmlspecialchars($this->l10n->t('Total amount'), ENT_QUOTES),
+			$this->formatMoney(value: (float)($view->invoice['totalAmount'] ?? 0))
+		);
+
+	}//end totalHtml()
+
+	/**
+	 * The complete HTML document around the body.
+	 *
+	 * @param IcpInvoiceView $view What the document shows.
+	 * @param string         $body The rendered body.
+	 *
+	 * @return string
+	 */
+	private function documentHtml(IcpInvoiceView $view, string $body): string {
 		return sprintf(
 			'<!doctype html><html lang="%s"><head><meta charset="utf-8">'
 			. '<title>%s</title>'
@@ -298,11 +375,11 @@ class ArInvoiceIcpPdfRenderer {
 			. '</style></head><body>%s</body></html>',
 			htmlspecialchars($this->l10n->getLanguageCode(), ENT_QUOTES),
 			htmlspecialchars($this->l10n->t('Invoice'), ENT_QUOTES) . ' '
-				. htmlspecialchars((string)($invoice['invoiceNumber'] ?? ''), ENT_QUOTES),
+				. htmlspecialchars((string)($view->invoice['invoiceNumber'] ?? ''), ENT_QUOTES),
 			$body
 		);
 
-	}//end renderHtml()
+	}//end documentHtml()
 
 	/**
 	 * Translate the reverse-charge notice. Source key is English (ADR-005 i18n rule);
