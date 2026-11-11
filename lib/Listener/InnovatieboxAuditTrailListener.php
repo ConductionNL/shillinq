@@ -353,21 +353,11 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 		}
 
 		// NexusCalculation is x-openregister.immutable, so an update event
-		// here means OR allowed an amendment that should not have happened —
-		// record it as a blocked-attempt-style audit event for the defence.
+		// here means OR allowed an amendment that should not have happened.
 		if ($schema === self::SCHEMA_NEXUS) {
-			$this->append(
+			$this->recordAmendmentBlocked(
 				entity: $entity,
-				options: [
-					'event_type' => InnovatieboxAuditEventLogger::EVENT_PROFIT_AMENDMENT_BLOCKED,
-					'administrationId' => (string)($next['administrationId'] ?? ''),
-					'financialYear' => $this->intOrNull(value: $next['financialYear'] ?? null),
-					'qualifying_asset_id' => $this->stringOrNull(value: $next['qualifying_asset_id'] ?? null),
-					'subject_schema' => 'NexusCalculation',
-					'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
-					'reason' => 'immutable_schema_violation',
-					'details' => ['changed_keys' => $this->changedKeys(prior: $prior, next: $next)],
-				]
+				states: ['next' => $next, 'prior' => $prior, 'schema' => 'NexusCalculation', 'reason' => 'immutable_schema_violation']
 			);
 		}
 
@@ -387,50 +377,95 @@ final class InnovatieboxAuditTrailListener implements IEventListener {
 		$nextLocked = (bool)($next['vso_locked'] ?? false);
 
 		if ($priorLocked === false && $nextLocked === true) {
-			$this->append(
-				entity: $entity,
-				options: [
-					'event_type' => InnovatieboxAuditEventLogger::EVENT_PROFIT_FINALIZED,
-					'administrationId' => (string)($next['administrationId'] ?? ''),
-					'financialYear' => $this->intOrNull(value: $next['financialYear'] ?? null),
-					'qualifying_asset_id' => $this->stringOrNull(value: $next['qualifying_asset_id'] ?? null),
-					'subject_schema' => 'IBProfitAttribution',
-					'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
-					'reason' => 'vso_signed',
-				]
-			);
+			$this->recordProfitFinalized(entity: $entity, next: $next);
 			return;
 		}
 
-		$administrationId = (string)($next['administrationId'] ?? '');
-		$financialYear = $this->intOrNull(value: $next['financialYear'] ?? null);
-		$alreadyLocked = ($priorLocked === true);
-		if ($alreadyLocked === false && $financialYear !== null && $administrationId !== '') {
-			// Cross-check: even if THIS record is not locked, the year may be
-			// locked by another row in the same administration + boekjaar.
-			$alreadyLocked = $this->vsoValidator->isYearLocked(
-				administrationId: $administrationId,
-				financialYear: $financialYear
-			);
-		}
-
-		if ($alreadyLocked === true) {
-			$this->append(
+		if ($this->profitYearLocked(next: $next, priorLocked: $priorLocked) === true) {
+			$this->recordAmendmentBlocked(
 				entity: $entity,
-				options: [
-					'event_type' => InnovatieboxAuditEventLogger::EVENT_PROFIT_AMENDMENT_BLOCKED,
-					'administrationId' => $administrationId,
-					'financialYear' => $financialYear,
-					'qualifying_asset_id' => $this->stringOrNull(value: $next['qualifying_asset_id'] ?? null),
-					'subject_schema' => 'IBProfitAttribution',
-					'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
-					'reason' => 'vso_locked',
-					'details' => ['changed_keys' => $this->changedKeys(prior: $prior, next: $next)],
-				]
+				states: ['next' => $next, 'prior' => $prior, 'schema' => 'IBProfitAttribution', 'reason' => 'vso_locked']
 			);
 		}
 
 	}//end handleProfitUpdated()
+
+	/**
+	 * Whether a profit attribution's year is locked: the prior state was
+	 * VSO-locked, or — even if THIS record is not locked — the year is locked
+	 * by another row in the same administration + boekjaar.
+	 *
+	 * @param array<string,mixed> $next        Next-state payload.
+	 * @param bool                $priorLocked Whether the prior state was VSO-locked.
+	 *
+	 * @return bool
+	 */
+	private function profitYearLocked(array $next, bool $priorLocked): bool {
+		if ($priorLocked === true) {
+			return true;
+		}
+
+		$administrationId = (string)($next['administrationId'] ?? '');
+		$financialYear = $this->intOrNull(value: $next['financialYear'] ?? null);
+		if ($financialYear === null || $administrationId === '') {
+			return false;
+		}
+
+		return $this->vsoValidator->isYearLocked(administrationId: $administrationId, financialYear: $financialYear);
+
+	}//end profitYearLocked()
+
+	/**
+	 * Record the finalisation (VSO signed) of a profit attribution.
+	 *
+	 * @param ObjectEntity        $entity The subject object (its own audit trail gets the row).
+	 * @param array<string,mixed> $next   Next-state payload.
+	 *
+	 * @return void
+	 */
+	private function recordProfitFinalized(ObjectEntity $entity, array $next): void {
+		$this->append(
+			entity: $entity,
+			options: [
+				'event_type' => InnovatieboxAuditEventLogger::EVENT_PROFIT_FINALIZED,
+				'administrationId' => (string)($next['administrationId'] ?? ''),
+				'financialYear' => $this->intOrNull(value: $next['financialYear'] ?? null),
+				'qualifying_asset_id' => $this->stringOrNull(value: $next['qualifying_asset_id'] ?? null),
+				'subject_schema' => 'IBProfitAttribution',
+				'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
+				'reason' => 'vso_signed',
+			]
+		);
+
+	}//end recordProfitFinalized()
+
+	/**
+	 * Record a blocked amendment: a profit attribution in a locked year
+	 * (`vso_locked`), or an immutable NexusCalculation that OR let through
+	 * (`immutable_schema_violation`).
+	 *
+	 * @param ObjectEntity        $entity The subject object (its own audit trail gets the row).
+	 * @param array<string,mixed> $states Next- and prior-state payloads, the subject schema and the reason.
+	 *
+	 * @return void
+	 */
+	private function recordAmendmentBlocked(ObjectEntity $entity, array $states): void {
+		$next = $states['next'];
+		$this->append(
+			entity: $entity,
+			options: [
+				'event_type' => InnovatieboxAuditEventLogger::EVENT_PROFIT_AMENDMENT_BLOCKED,
+				'administrationId' => (string)($next['administrationId'] ?? ''),
+				'financialYear' => $this->intOrNull(value: $next['financialYear'] ?? null),
+				'qualifying_asset_id' => $this->stringOrNull(value: $next['qualifying_asset_id'] ?? null),
+				'subject_schema' => $states['schema'],
+				'subject_id' => $this->stringOrNull(value: $entity->getUuid() ?? null),
+				'reason' => $states['reason'],
+				'details' => ['changed_keys' => $this->changedKeys(prior: $states['prior'], next: $next)],
+			]
+		);
+
+	}//end recordAmendmentBlocked()
 
 	/**
 	 * Handle a CarryForwardLoss update — emit an offset-applied event when
