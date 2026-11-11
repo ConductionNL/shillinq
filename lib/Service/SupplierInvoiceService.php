@@ -468,6 +468,40 @@ class SupplierInvoiceService {
 		?string $linkedGrnLineId,
 		?string $linkedMatchId,
 	): array {
+		$this->assertAccessibleAdministration(administrationId: $administrationId);
+		$this->assertLinkTarget(invoiceId: $invoiceId, invoiceLineNumber: $invoiceLineNumber);
+
+		$invoice = $this->loadInvoiceToLink(administrationId: $administrationId, invoiceId: $invoiceId);
+		$link = new InvoiceLineLink(
+			lineNumber: $invoiceLineNumber,
+			fields: self::blankLinkIdsAsNull(
+				fields: [
+					'linkedPoLineId' => $linkedPoLineId,
+					'linkedPoId' => $linkedPoId,
+					'linkedGrnLineId' => $linkedGrnLineId,
+					'linkedMatchId' => $linkedMatchId,
+				]
+			)
+		);
+
+		$invoice['lines'] = self::linesWithLink(invoice: $invoice, link: $link);
+		$invoice['matchedPoIds'] = self::matchedPoIdsWith(invoice: $invoice, linkedPoId: $linkedPoId);
+		$invoice['consolidatedAt'] = $this->nowIso();
+
+		return $this->saveObject(schema: 'SupplierInvoice', object: $invoice);
+	}//end linkInvoiceLineToPo()
+
+	/**
+	 * Refuse a missing administration, and one the caller cannot access as if
+	 * the invoice did not exist (ADR-005).
+	 *
+	 * @param string $administrationId Tenant scope (server-resolved).
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException When the administration is missing or not accessible.
+	 */
+	private function assertAccessibleAdministration(string $administrationId): void {
 		if ($administrationId === '') {
 			throw new RuntimeException('administrationId is required');
 		}
@@ -475,7 +509,19 @@ class SupplierInvoiceService {
 		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
 			throw new RuntimeException('Supplier invoice not found');
 		}
+	}//end assertAccessibleAdministration()
 
+	/**
+	 * Refuse a missing invoice id or a line number below 1.
+	 *
+	 * @param string $invoiceId         SupplierInvoice id.
+	 * @param int    $invoiceLineNumber 1-based line position.
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException When the target cannot be a line.
+	 */
+	private function assertLinkTarget(string $invoiceId, int $invoiceLineNumber): void {
 		if ($invoiceId === '') {
 			throw new RuntimeException('Supplier invoice not found');
 		}
@@ -483,7 +529,19 @@ class SupplierInvoiceService {
 		if ($invoiceLineNumber < 1) {
 			throw new RuntimeException('Invalid invoiceLineNumber');
 		}
+	}//end assertLinkTarget()
 
+	/**
+	 * The administration's SupplierInvoice with this id.
+	 *
+	 * @param string $administrationId Tenant scope (server-resolved).
+	 * @param string $invoiceId        SupplierInvoice id.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @throws \RuntimeException When the invoice is not found in the administration.
+	 */
+	private function loadInvoiceToLink(string $administrationId, string $invoiceId): array {
 		$invoice = $this->findOne(
 			schema: 'SupplierInvoice',
 			filters: [
@@ -495,85 +553,106 @@ class SupplierInvoiceService {
 			throw new RuntimeException('Supplier invoice not found');
 		}
 
+		return $invoice;
+	}//end loadInvoiceToLink()
+
+	/**
+	 * The link fields with every empty-string id stored as NULL, so the JSON
+	 * document matches the slice-07 schema fragment exactly.
+	 *
+	 * @param array<string,string|null> $fields The link fields.
+	 *
+	 * @return array<string,string|null>
+	 */
+	private static function blankLinkIdsAsNull(array $fields): array {
+		return array_map(
+			static function (?string $id): ?string {
+				if ($id === '') {
+					return null;
+				}
+
+				return $id;
+			},
+			$fields
+		);
+	}//end blankLinkIdsAsNull()
+
+	/**
+	 * The invoice's lines with the link fields stamped on the line it targets
+	 * (by its lineNumber, or its 1-based position when it has none).
+	 *
+	 * @param array<string,mixed> $invoice The SupplierInvoice.
+	 * @param InvoiceLineLink     $link    The link to stamp.
+	 *
+	 * @return array<int|string,mixed>
+	 *
+	 * @throws \RuntimeException When no line has that number.
+	 */
+	private static function linesWithLink(array $invoice, InvoiceLineLink $link): array {
 		$lines = ($invoice['lines'] ?? []);
 		if (is_array($lines) === false) {
 			$lines = [];
 		}
 
-		$located = false;
 		foreach ($lines as $index => $line) {
 			if (is_array($line) === false) {
 				continue;
 			}
 
-			$candidateNumber = (int)($line['lineNumber'] ?? ((int)$index + 1));
-			if ($candidateNumber !== $invoiceLineNumber) {
-				continue;
+			if ((int)($line['lineNumber'] ?? ((int)$index + 1)) === $link->lineNumber) {
+				$lines[$index] = array_replace($line, $link->fields);
+				return $lines;
 			}
-
-			$normalisedPoLineId = $linkedPoLineId;
-			$normalisedPoId = $linkedPoId;
-			$normalisedGrnLineId = $linkedGrnLineId;
-			$normalisedMatchId = $linkedMatchId;
-			if ($normalisedPoLineId === '') {
-				$normalisedPoLineId = null;
-			}
-
-			if ($normalisedPoId === '') {
-				$normalisedPoId = null;
-			}
-
-			if ($normalisedGrnLineId === '') {
-				$normalisedGrnLineId = null;
-			}
-
-			if ($normalisedMatchId === '') {
-				$normalisedMatchId = null;
-			}
-
-			$line['linkedPoLineId'] = $normalisedPoLineId;
-			$line['linkedPoId'] = $normalisedPoId;
-			$line['linkedGrnLineId'] = $normalisedGrnLineId;
-			$line['linkedMatchId'] = $normalisedMatchId;
-			$lines[$index] = $line;
-			$located = true;
-			break;
-		}//end foreach
-
-		if ($located === false) {
-			throw new RuntimeException('Invoice line not found');
 		}
 
-		$invoice['lines'] = $lines;
+		throw new RuntimeException('Invoice line not found');
+	}//end linesWithLink()
 
-		// De-duplicated, insertion-order-preserving matchedPoIds.
-		$existingMatchedPoIds = ($invoice['matchedPoIds'] ?? []);
-		if (is_array($existingMatchedPoIds) === false) {
-			$existingMatchedPoIds = [];
+	/**
+	 * The invoice's matchedPoIds, de-duplicated with insertion order kept, and
+	 * the linked PO appended when it is new.
+	 *
+	 * @param array<string,mixed> $invoice    The SupplierInvoice.
+	 * @param string|null         $linkedPoId PurchaseOrder id (NULL on exception path).
+	 *
+	 * @return array<int,string>
+	 */
+	private static function matchedPoIdsWith(array $invoice, ?string $linkedPoId): array {
+		$matchedPoIds = self::distinctPoIds(poIds: ($invoice['matchedPoIds'] ?? []));
+		if ($linkedPoId !== null && $linkedPoId !== '' && in_array($linkedPoId, $matchedPoIds, true) === false) {
+			$matchedPoIds[] = $linkedPoId;
 		}
 
-		$matchedPoIds = [];
+		return $matchedPoIds;
+	}//end matchedPoIdsWith()
+
+	/**
+	 * The trimmed, non-empty, distinct PO ids of a stored matchedPoIds value,
+	 * in first-seen order; a value that is not a list yields none.
+	 *
+	 * @param mixed $poIds The stored matchedPoIds.
+	 *
+	 * @return array<int,string>
+	 */
+	private static function distinctPoIds(mixed $poIds): array {
+		if (is_array($poIds) === false) {
+			return [];
+		}
+
+		$distinct = [];
 		$seen = [];
-		foreach ($existingMatchedPoIds as $existing) {
+		foreach ($poIds as $existing) {
 			$existingPoId = trim((string)$existing);
 			if ($existingPoId === '' || isset($seen[$existingPoId]) === true) {
 				continue;
 			}
 
-			$matchedPoIds[] = $existingPoId;
+			$distinct[] = $existingPoId;
 			$seen[$existingPoId] = true;
 		}
 
-		if ($linkedPoId !== null && $linkedPoId !== '' && isset($seen[$linkedPoId]) === false) {
-			$matchedPoIds[] = $linkedPoId;
-			$seen[$linkedPoId] = true;
-		}
-
-		$invoice['matchedPoIds'] = $matchedPoIds;
-		$invoice['consolidatedAt'] = $this->nowIso();
-
-		return $this->saveObject(schema: 'SupplierInvoice', object: $invoice);
-	}//end linkInvoiceLineToPo()
+		return $distinct;
+	}//end distinctPoIds()
 
 	/**
 	 * Server-authoritative lifecycle transition for a persisted
