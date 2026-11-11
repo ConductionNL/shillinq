@@ -42,7 +42,6 @@ namespace OCA\Shillinq\Service;
 
 use InvalidArgumentException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
-use OCA\Shillinq\Support\DateWindow;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 
@@ -112,37 +111,11 @@ final class FeeScheduleService {
 	 * @spec openspec/changes/leges-at-intake/specs/object-payment-requests/spec.md (REQ-SOPR-006)
 	 */
 	public function resolve(array $tuple, string $intakeChannel = '', string $onDate = ''): ?array {
-		$day = $onDate;
-		if ($day === '') {
-			$day = gmdate('Y-m-d');
-		}
-
-
-		$valid = [];
-		// A refund is paid back after the fact, never charged at intake.
-		foreach ((new FeeCalculation())->ofKind(schedules: $this->schedulesFor(tuple: $tuple), refund: false) as $schedule) {
-			if ($this->isValidOn(schedule: $schedule, day: $day) === true) {
-				$valid[] = $schedule;
-			}
-		}
-
-		if ($valid === []) {
-			return null;
-		}
-
-		$match = null;
-		foreach ($valid as $schedule) {
-			$channel = (string)($schedule['intakeChannel'] ?? '');
-			if ($intakeChannel !== '' && $channel === $intakeChannel) {
-				$match = $schedule;
-				break;
-			}
-
-			if ($channel === '' && $match === null) {
-				$match = $schedule;
-			}
-		}
-
+		$day   = $this->dayOrToday(onDate: $onDate);
+		$match = (new FeeScheduleMatcher())->channelEntry(
+			entries: $this->intakeSchedulesOn(tuple: $tuple, day: $day),
+			intakeChannel: $intakeChannel
+		);
 		if ($match === null) {
 			return null;
 		}
@@ -151,6 +124,42 @@ final class FeeScheduleService {
 			schedule: $this->applyChannelAmount(schedule: $match, intakeChannel: $intakeChannel)
 		);
 	}//end resolve()
+
+	/**
+	 * The given day, or today (UTC) when it is empty.
+	 *
+	 * @param string $onDate The day as Y-m-d, or an empty string.
+	 *
+	 * @return string The day as Y-m-d.
+	 */
+	private function dayOrToday(string $onDate): string {
+		if ($onDate === '') {
+			return gmdate('Y-m-d');
+		}
+
+		return $onDate;
+	}//end dayOrToday()
+
+	/**
+	 * The tuple's charge schedules valid on a day, in stored order.
+	 *
+	 * A refund is paid back after the fact, never charged at intake.
+	 *
+	 * @param array<string, mixed> $tuple The tuple parts.
+	 * @param string $day The day as Y-m-d.
+	 *
+	 * @return array<int, array<string, mixed>> The valid schedules.
+	 */
+	private function intakeSchedulesOn(array $tuple, string $day): array {
+		$valid = [];
+		foreach ((new FeeCalculation())->ofKind(schedules: $this->schedulesFor(tuple: $tuple), refund: false) as $schedule) {
+			if ($this->isValidOn(schedule: $schedule, day: $day) === true) {
+				$valid[] = $schedule;
+			}
+		}
+
+		return $valid;
+	}//end intakeSchedulesOn()
 
 	/**
 	 * Take the amount for the intake channel out of the schedule's `amounts`
@@ -175,26 +184,7 @@ final class FeeScheduleService {
 			return $schedule;
 		}
 
-		$default = null;
-		$match = null;
-		foreach ($amounts as $entry) {
-			if (is_array($entry) === false) {
-				continue;
-			}
-
-			$channel = (string)($entry['intakeChannel'] ?? '');
-			if ($channel === '') {
-				$default = ($default ?? $entry);
-				continue;
-			}
-
-			if ($intakeChannel !== '' && $channel === $intakeChannel) {
-				$match = $entry;
-				break;
-			}
-		}
-
-		$chosen = ($match ?? $default);
+		$chosen = (new FeeScheduleMatcher())->channelEntry(entries: array_values(array_filter($amounts, 'is_array')), intakeChannel: $intakeChannel);
 		if ($chosen === null) {
 			// No default and no matching channel. assertNoOverlap refuses this at
 			// save, so reaching it means a schedule was written another way;
@@ -206,8 +196,8 @@ final class FeeScheduleService {
 			return $schedule;
 		}
 
-		$schedule['amount'] = (float)($chosen['amount'] ?? 0);
-		$schedule['currency'] = (string)($chosen['currency'] ?? ($schedule['currency'] ?? 'EUR'));
+		$schedule['amount']        = (float)($chosen['amount'] ?? 0);
+		$schedule['currency']      = (string)($chosen['currency'] ?? ($schedule['currency'] ?? 'EUR'));
 		$schedule['amountChannel'] = (string)($chosen['intakeChannel'] ?? '');
 
 		return $schedule;
@@ -239,52 +229,136 @@ final class FeeScheduleService {
 		string $intakeChannel = '',
 		string $onDate = '',
 	): ?array {
+		$lookup = new FeeObjectLookup();
+		$lookup->register      = $register;
+		$lookup->schema        = $schema;
+		$lookup->object        = $object;
+		$lookup->intakeChannel = $intakeChannel;
+		$lookup->onDate        = $onDate;
+
+		return $this->resolveLookup(lookup: $lookup);
+	}//end resolveForObject()
+
+	/**
+	 * Walk the register's schedules for the first one that applies to the
+	 * looked-up object, and price it for that object.
+	 *
+	 * @param FeeObjectLookup $lookup The object and what is asked of it.
+	 *
+	 * @return array<string, mixed>|null The schedule with its amount resolved, or null.
+	 */
+	private function resolveLookup(FeeObjectLookup $lookup): ?array {
 		$rows = $this->objectService
 			->setRegister($this->registerSlug())
 			->setSchema(self::SCHEMA)
-			->findAll(['filters' => ['register' => $register], 'limit' => 500]);
+			->findAll(['filters' => ['register' => $lookup->register], 'limit' => 500]);
 
-		$seen = [];
 		foreach ($rows as $row) {
-			if (is_array($row) === false
-				|| (string)($row['register'] ?? '') !== $register
-				|| (string)($row['schema'] ?? '') !== $schema
-			) {
+			$tuple = $this->objectTuple(row: $row, lookup: $lookup);
+			if ($tuple === null) {
 				continue;
 			}
 
-			$typeProperty = (string)($row['typeProperty'] ?? '');
-			if ($typeProperty === '' || isset($seen[$typeProperty]) === true) {
-				continue;
+			$lookup->variant = (string)($lookup->object[(string)($row['variantProperty'] ?? 'variant')] ?? '');
+			$resolved        = $this->resolveVariantFirst(tuple: $tuple, lookup: $lookup);
+			if ($resolved !== null) {
+				return (new FeeCalculation())->applyTo(schedule: $resolved, object: $lookup->object);
 			}
-
-			$seen[$typeProperty] = true;
-
-			$typeValue = (string)($object[$typeProperty] ?? '');
-			if ($typeValue === '') {
-				continue;
-			}
-
-			$tuple = [
-				'targetApp' => (string)($row['targetApp'] ?? $register),
-				'register' => $register,
-				'schema' => $schema,
-				'typeProperty' => $typeProperty,
-				'typeValue' => $typeValue,
-			];
-
-			// The fee for the object's own variant first, then the type's.
-			$variant = (string)($object[(string)($row['variantProperty'] ?? 'variant')] ?? '');
-			foreach (array_unique([$variant, '']) as $variantValue) {
-				$resolved = $this->resolve(tuple: ($tuple + ['variantValue' => $variantValue]), intakeChannel: $intakeChannel, onDate: $onDate);
-				if ($resolved !== null) {
-					return (new FeeCalculation())->applyTo(schedule: $resolved, object: $object);
-				}
-			}
-		}//end foreach
+		}
 
 		return null;
-	}//end resolveForObject()
+	}//end resolveLookup()
+
+	/**
+	 * The tuple a stored row asks the object for, or null when the row is for
+	 * another register or schema, names no type property, names one already
+	 * tried, or the object carries no value for it.
+	 *
+	 * @param mixed $row A stored FeeSchedule row.
+	 * @param FeeObjectLookup $lookup The walk; records the type property as tried.
+	 *
+	 * @return array<string, string>|null The tuple, or null.
+	 */
+	private function objectTuple(mixed $row, FeeObjectLookup $lookup): ?array {
+		if ($this->rowInScope(row: $row, lookup: $lookup) === false) {
+			return null;
+		}
+
+		$typeProperty = $this->untriedTypeProperty(row: $row, lookup: $lookup);
+		if ($typeProperty === '') {
+			return null;
+		}
+
+		$typeValue = (string)($lookup->object[$typeProperty] ?? '');
+		if ($typeValue === '') {
+			return null;
+		}
+
+		return [
+			'targetApp' => (string)($row['targetApp'] ?? $lookup->register),
+			'register' => $lookup->register,
+			'schema' => $lookup->schema,
+			'typeProperty' => $typeProperty,
+			'typeValue' => $typeValue,
+		];
+	}//end objectTuple()
+
+	/**
+	 * Whether a stored row is a schedule for the lookup's register and schema.
+	 *
+	 * @param mixed $row A stored FeeSchedule row.
+	 * @param FeeObjectLookup $lookup The walk.
+	 *
+	 * @return bool True when the row applies.
+	 */
+	private function rowInScope(mixed $row, FeeObjectLookup $lookup): bool {
+		return is_array($row) === true
+			&& (string)($row['register'] ?? '') === $lookup->register
+			&& (string)($row['schema'] ?? '') === $lookup->schema;
+	}//end rowInScope()
+
+	/**
+	 * The row's type property, marked as tried; '' when it has none or it was
+	 * tried before.
+	 *
+	 * @param array<string, mixed> $row A stored FeeSchedule row.
+	 * @param FeeObjectLookup $lookup The walk.
+	 *
+	 * @return string The type property, or ''.
+	 */
+	private function untriedTypeProperty(array $row, FeeObjectLookup $lookup): string {
+		$typeProperty = (string)($row['typeProperty'] ?? '');
+		if ($typeProperty === '' || isset($lookup->seen[$typeProperty]) === true) {
+			return '';
+		}
+
+		$lookup->seen[$typeProperty] = true;
+
+		return $typeProperty;
+	}//end untriedTypeProperty()
+
+	/**
+	 * The fee for the object's own variant first, then the type's.
+	 *
+	 * @param array<string, string> $tuple The tuple without a variant.
+	 * @param FeeObjectLookup $lookup The walk, carrying the row's variant value.
+	 *
+	 * @return array<string, mixed>|null The resolved schedule, or null.
+	 */
+	private function resolveVariantFirst(array $tuple, FeeObjectLookup $lookup): ?array {
+		foreach (array_unique([$lookup->variant, '']) as $variantValue) {
+			$resolved = $this->resolve(
+				tuple: ($tuple + ['variantValue' => $variantValue]),
+				intakeChannel: $lookup->intakeChannel,
+				onDate: $lookup->onDate
+			);
+			if ($resolved !== null) {
+				return $resolved;
+			}
+		}
+
+		return null;
+	}//end resolveVariantFirst()
 
 	/**
 	 * Refuse a schedule whose validity window overlaps an existing one for the
@@ -309,10 +383,6 @@ final class FeeScheduleService {
 			throw new InvalidArgumentException('A fee schedule needs a validFrom; a fee without a start date cannot be applied to a day.');
 		}
 
-		$to = (string)($schedule['validTo'] ?? '');
-		$channel = (string)($schedule['intakeChannel'] ?? '');
-		$selfId = (string)($schedule['id'] ?? '');
-
 		// A refund rule and a charge for the same type are two rules, not an overlap.
 		$calculation = new FeeCalculation();
 		$candidates  = $calculation->ofKind(
@@ -320,44 +390,11 @@ final class FeeScheduleService {
 			refund: $calculation->isRefund(schedule: $schedule)
 		);
 
+		$matcher = new FeeScheduleMatcher();
 		foreach ($candidates as $candidate) {
-			$candidateId = (string)($candidate['id'] ?? '');
-			if ($selfId !== '' && $candidateId === $selfId) {
-				continue;
+			if ($matcher->overlapsWith(schedule: $schedule, candidate: $candidate) === true) {
+				throw new InvalidArgumentException($matcher->overlapMessage(candidate: $candidate));
 			}
-
-			if ((string)($candidate['intakeChannel'] ?? '') !== $channel) {
-				continue;
-			}
-
-			$overlaps = DateWindow::overlaps(
-				aFrom: $from,
-				aTo: $to,
-				bFrom: (string)($candidate['validFrom'] ?? ''),
-				bTo: (string)($candidate['validTo'] ?? '')
-			);
-			if ($overlaps === false) {
-				continue;
-			}
-
-			$until = '';
-			if ((string)($candidate['validTo'] ?? '') !== '') {
-				$until = ' to ' . (string)$candidate['validTo'];
-			}
-
-			$named = '';
-			if ($candidateId !== '') {
-				$named = sprintf(' (%s)', $candidateId);
-			}
-
-			throw new InvalidArgumentException(
-				sprintf(
-					'This fee overlaps the schedule valid from %s%s%s; close that one before opening this.',
-					(string)($candidate['validFrom'] ?? '?'),
-					$until,
-					$named
-				)
-			);
 		}
 	}//end assertNoOverlap()
 
@@ -421,21 +458,8 @@ final class FeeScheduleService {
 			return;
 		}
 
-		$defaults = 0;
-		$channels = [];
-		foreach ($amounts as $entry) {
-			if (is_array($entry) === false) {
-				continue;
-			}
-
-			$channel = (string)($entry['intakeChannel'] ?? '');
-			if ($channel === '') {
-				$defaults++;
-				continue;
-			}
-
-			$channels[] = $channel;
-		}
+		$channels = $this->entryChannels(amounts: $amounts);
+		$defaults = count(array_keys($channels, '', true));
 
 		if ($defaults === 0) {
 			throw new InvalidArgumentException(
@@ -450,6 +474,25 @@ final class FeeScheduleService {
 			throw new InvalidArgumentException('This fee names more than one default amount; only one entry may omit its intakeChannel.');
 		}
 	}//end assertAmountsHaveADefault()
+
+	/**
+	 * The intake channel of every entry of an `amounts` list, in order; a
+	 * default entry is an empty string and a malformed entry is skipped.
+	 *
+	 * @param array<mixed> $amounts The amounts list.
+	 *
+	 * @return list<string> One channel per well-formed entry.
+	 */
+	private function entryChannels(array $amounts): array {
+		$channels = [];
+		foreach ($amounts as $entry) {
+			if (is_array($entry) === true) {
+				$channels[] = (string)($entry['intakeChannel'] ?? '');
+			}
+		}
+
+		return $channels;
+	}//end entryChannels()
 
 	/**
 	 * The citation as an administrator reads it beside the amount
