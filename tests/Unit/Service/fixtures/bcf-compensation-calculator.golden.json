@@ -1,0 +1,33 @@
+{
+    "mixed": {
+        "totalCompensableAmount": 145.01,
+        "breakdown": [
+            {
+                "accountNumber": "3610",
+                "amount": 100.0,
+                "compensablePercentage": 100,
+                "compensableAmount": 100.0
+            },
+            {
+                "accountNumber": "3900",
+                "amount": 25.0,
+                "compensablePercentage": 100,
+                "compensableAmount": 25.0
+            },
+            {
+                "accountNumber": "4100",
+                "amount": 40.01,
+                "compensablePercentage": 50,
+                "compensableAmount": 20.01
+            }
+        ]
+    },
+    "noMappings": {
+        "totalCompensableAmount": 0.0,
+        "breakdown": []
+    },
+    "empty": {
+        "totalCompensableAmount": 0.0,
+        "breakdown": []
+    }
+}
