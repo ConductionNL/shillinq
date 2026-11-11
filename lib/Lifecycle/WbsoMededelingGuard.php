@@ -112,23 +112,7 @@ class WbsoMededelingGuard {
 				return false;
 			}
 
-			$decision = $this->resolveDecision(
-				administrationId: $administrationId,
-				decisionNumber: $decisionNumber
-			);
-			if ($decision === null) {
-				return false;
-			}
-
-			// The beschikking must still be granted; an expired or withdrawn
-			// beschikking may not receive a new realisatie filing.
-			if (($decision['state'] ?? '') !== 'granted') {
-				return false;
-			}
-
-			$grantedCenti = (int)round((float)($decision['grantedSoHours'] ?? 0) * 100);
-
-			return $realisedCenti <= $grantedCenti;
+			return $this->withinGrantedHours(mededeling: $object, realisedCenti: $realisedCenti);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'WbsoMededelingGuard: submit check failed — denying submit transition (fail-closed)',
@@ -137,6 +121,30 @@ class WbsoMededelingGuard {
 			return false;
 		}//end try
 	}//end canSubmit()
+
+	/**
+	 * Whether the mededeling's beschikking is still granted and covers the realised hours.
+	 *
+	 * An expired or withdrawn beschikking may not receive a new realisatie filing.
+	 * Hours are compared in integer centi-hours (realised == granted passes).
+	 *
+	 * @param array<string,mixed> $mededeling The WbsoMededeling.
+	 * @param int $realisedCenti The realised S&O hours in centi-hours.
+	 *
+	 * @return bool True when the filing stays within the granted hours.
+	 */
+	private function withinGrantedHours(array $mededeling, int $realisedCenti): bool {
+		$decision = $this->resolveDecision(
+			administrationId: (string)($mededeling['administrationId'] ?? ''),
+			decisionNumber: (string)($mededeling['decisionNumber'] ?? '')
+		);
+		if ($decision === null || ($decision['state'] ?? '') !== 'granted') {
+			return false;
+		}
+
+		return $realisedCenti <= (int)round((float)($decision['grantedSoHours'] ?? 0) * 100);
+
+	}//end withinGrantedHours()
 
 	/**
 	 * Resolve the covering WbsoBeschikking by its unique beschikkingNumber,
