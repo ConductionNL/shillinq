@@ -228,22 +228,22 @@
             "periodId": "2026-Q2",
             "computedAt": "<now>",
             "sourceATotal": 17999.75,
-            "sourceBTotal": 18000.0,
-            "differenceCents": -25,
-            "withinTolerance": true,
-            "status": "resolved",
+            "sourceBTotal": 18250.5,
+            "differenceCents": -25075,
+            "withinTolerance": false,
+            "status": "open",
             "lineDeltas": [
                 {
                     "bucketKey": "TOTAL",
                     "sourceAAmount": 17999.75,
-                    "sourceBAmount": 18000.0,
-                    "deltaAmount": -0.25
+                    "sourceBAmount": 18250.5,
+                    "deltaAmount": -250.75
                 },
                 {
                     "bucketKey": "inv-1",
                     "sourceAAmount": null,
-                    "sourceBAmount": 10000.0,
-                    "deltaAmount": -10000.0
+                    "sourceBAmount": 250.5,
+                    "deltaAmount": -250.5
                 },
                 {
                     "bucketKey": "inv-2",
@@ -256,8 +256,8 @@
             "explainedAt": null,
             "explanationReasonCode": null,
             "explanationReasonText": null,
-            "resolvedBy": "system",
-            "resolvedAt": "<now>",
+            "resolvedBy": null,
+            "resolvedAt": null,
             "relatedVatCorrectionId": null,
             "administrationId": "adm-1",
             "id": "AansluitingResult-new"
@@ -430,22 +430,22 @@
             "periodId": "2026-Q2",
             "computedAt": "<now>",
             "sourceATotal": 0.0,
-            "sourceBTotal": 18000.0,
-            "differenceCents": -1800000,
+            "sourceBTotal": 18250.5,
+            "differenceCents": -1825050,
             "withinTolerance": false,
             "status": "open",
             "lineDeltas": [
                 {
                     "bucketKey": "TOTAL",
                     "sourceAAmount": 0.0,
-                    "sourceBAmount": 18000.0,
-                    "deltaAmount": -18000.0
+                    "sourceBAmount": 18250.5,
+                    "deltaAmount": -18250.5
                 },
                 {
                     "bucketKey": "inv-1",
                     "sourceAAmount": null,
-                    "sourceBAmount": 10000.0,
-                    "deltaAmount": -10000.0
+                    "sourceBAmount": 250.5,
+                    "deltaAmount": -250.5
                 },
                 {
                     "bucketKey": "inv-2",
