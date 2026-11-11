@@ -248,8 +248,10 @@ final class CBSExportServiceTest extends TestCase {
 
 	/**
 	 * Pins a whole generation: the log line, the reads in order, only the
-	 * period's posted lines aggregated, the submission, its lines and the IV3
-	 * reference and checksum written back, field for field.
+	 * period's posted lines of the administration aggregated (another
+	 * administration's posted transaction in the period is left out), the
+	 * submission, its lines and the IV3 reference and checksum written back,
+	 * field for field.
 	 *
 	 * @return void
 	 */
@@ -346,6 +348,7 @@ final class CBSExportServiceTest extends TestCase {
 				['id' => 'tx-2', 'administrationId' => 'adm-1', 'state' => 'posted', 'postingDate' => '2026-04-01'],
 				['uuid' => 'tx-3', 'administrationId' => 'adm-1', 'state' => 'posted', 'postingDate' => '2026-03-31'],
 				['id' => 'tx-4', 'administrationId' => 'adm-1', 'state' => 'draft', 'postingDate' => '2026-02-11'],
+				['id' => 'tx-5', 'administrationId' => 'adm-2', 'state' => 'posted', 'postingDate' => '2026-02-12'],
 			],
 			'GLLine' => [
 				['transactionId' => 'tx-1', 'accountNumber' => '4100', 'amount' => 10.5],
@@ -353,6 +356,7 @@ final class CBSExportServiceTest extends TestCase {
 				['transactionId' => 'tx-2', 'accountNumber' => '4100', 'amount' => 99],
 				['transactionId' => 'tx-3', 'accountNumber' => '4999', 'amount' => 1.25],
 				['transactionId' => 'tx-4', 'accountNumber' => '4100', 'amount' => 7],
+				['transactionId' => 'tx-5', 'accountNumber' => '4100', 'amount' => 500],
 			],
 		];
 		$this->appConfig->method('getValueString')->willReturnCallback(
