@@ -266,18 +266,7 @@ final class UrenPrognoseService {
 		}
 
 		$startMonth = (int)gmdate('n', $startTs);
-		$overridesByMonth = [];
-		foreach ($plannedAssignments as $assignment) {
-			if (is_array($assignment) === false) {
-				continue;
-			}
-
-			$month = (string)($assignment['month'] ?? '');
-			$hours = (float)($assignment['hours'] ?? 0);
-			if ($month !== '') {
-				$overridesByMonth[$month] = $hours;
-			}
-		}
+		$overridesByMonth = self::plannedHoursByMonth(plannedAssignments: $plannedAssignments);
 
 		$holidayMonths = $this->holidayMonths(vakanties: $vakanties);
 
@@ -306,6 +295,30 @@ final class UrenPrognoseService {
 
 		return $forecast;
 	}//end perMaandPrognose()
+
+	/**
+	 * The planned hours per month (YYYY-MM); a later plan for a month replaces
+	 * an earlier one, plans without a month are left out.
+	 *
+	 * @param array<int, mixed> $plannedAssignments The planned assignments.
+	 *
+	 * @return array<string, float>
+	 */
+	private static function plannedHoursByMonth(array $plannedAssignments): array {
+		$overridesByMonth = [];
+		foreach ($plannedAssignments as $assignment) {
+			if (is_array($assignment) === false) {
+				continue;
+			}
+
+			$month = (string)($assignment['month'] ?? '');
+			if ($month !== '') {
+				$overridesByMonth[$month] = (float)($assignment['hours'] ?? 0);
+			}
+		}
+
+		return $overridesByMonth;
+	}//end plannedHoursByMonth()
 
 	/**
 	 * Resolve which months (YYYY-MM) are fully or partially blocked by vakantie ranges.
