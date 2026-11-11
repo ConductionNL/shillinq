@@ -246,18 +246,7 @@ class ActivityCostAllocationSplitter {
 	 * @throws InvalidArgumentException When approvedBy is not exactly 2 user-ids.
 	 */
 	public function composeOverride(array $input): array {
-		$approvedBy = (array)($input['approvedBy'] ?? []);
-		$unique = array_values(array_unique(array_map('strval', $approvedBy)));
-
-		if (count($unique) !== 2) {
-			throw new InvalidArgumentException('Handmatige override requires exactly 2 distinct approver user-ids');
-		}
-
-		$reason = (string)($input['reason'] ?? '');
-		if ($reason === '') {
-			throw new InvalidArgumentException('Handmatige override requires a non-empty reason');
-		}
-
+		$approval = self::overrideApproval(input: $input);
 		$original = (array)$input['originalAllocation'];
 		$now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM);
 		$originalId = (string)($original['id'] ?? $original['_id'] ?? '');
@@ -270,9 +259,7 @@ class ActivityCostAllocationSplitter {
 			'splits' => (array)($input['newSplits'] ?? []),
 			'allocationKey' => (string)($original['allocationKey'] ?? ''),
 			'automaticApplied' => false,
-			'handmatigeOverride' => [
-				'approvedBy' => $unique,
-				'reason' => $reason,
+			'handmatigeOverride' => $approval + [
 				'timestamp' => $now,
 				'replacesId' => $originalId,
 			],
@@ -283,6 +270,33 @@ class ActivityCostAllocationSplitter {
 		];
 
 	}//end composeOverride()
+
+	/**
+	 * The 4-eyes approval of an override: exactly 2 distinct approver user-ids
+	 * and a non-empty motivation.
+	 *
+	 * @param array<string,mixed> $input Override inputs.
+	 *
+	 * @return array{approvedBy: list<string>, reason: string}
+	 *
+	 * @throws InvalidArgumentException When approvedBy is not exactly 2 distinct user-ids, or the reason is empty.
+	 */
+	private static function overrideApproval(array $input): array {
+		$approvedBy = (array)($input['approvedBy'] ?? []);
+		$unique = array_values(array_unique(array_map('strval', $approvedBy)));
+
+		if (count($unique) !== 2) {
+			throw new InvalidArgumentException('Handmatige override requires exactly 2 distinct approver user-ids');
+		}
+
+		$reason = (string)($input['reason'] ?? '');
+		if ($reason === '') {
+			throw new InvalidArgumentException('Handmatige override requires a non-empty reason');
+		}
+
+		return ['approvedBy' => $unique, 'reason' => $reason];
+
+	}//end overrideApproval()
 
 	/**
 	 * Materialise splits as balanced GL lines (REQ-WMO-003 §materialise mode).
