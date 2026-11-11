@@ -695,4 +695,108 @@ final class SetupControllerTest extends TestCase {
 		self::assertSame([], $written->getArrayCopy());
 
 	}//end testAFailedCardLoadStoresNothing()
+	/**
+	 * The runAction answers' bodies and the order of the seeding calls.
+	 *
+	 * @return void
+	 */
+	public function testRunActionBodiesAndSeedOrder(): void {
+		$this->settingsService->method('seedDefaultAdministration')->willReturnOnConsecutiveCalls(
+			['success' => false, 'message' => 'OpenRegister down'],
+			['success' => false],
+			['success' => true],
+			['success' => true, 'administrationCode' => 'ADM-7']
+		);
+		$written = $this->recordWrites();
+		$this->stubConfig(['legal_region' => 'mkb', 'rgs_template' => 'mkb-basis', 'administration_id' => 'ADM-7']);
+		$calls = [];
+		foreach (['loadConfigurationForced', 'seedBtwTariffs', 'seedBbvTaakvelden', 'seedSelectielijst'] as $method) {
+			$this->settingsService->method($method)->willReturnCallback(
+				static function () use (&$calls, $method): array {
+					$calls[] = $method;
+					return [];
+				}
+			);
+		}
+
+		$this->settingsService->method('seedRgsTemplate')->willReturnCallback(
+			static function (string $templateVariant, string $administrationId) use (&$calls): array {
+				$calls[] = 'seedRgsTemplate:' . $templateVariant . ':' . $administrationId;
+				return [];
+			}
+		);
+
+		self::assertSame(['success' => false, 'message' => 'OpenRegister down'], $this->controller->runAction('init-administration')->getData());
+		self::assertSame(
+			['success' => false, 'message' => 'Failed to create default administration.'],
+			$this->controller->runAction('init-administration')->getData()
+		);
+		self::assertSame(
+			['success' => false, 'message' => 'Default administration seed did not report an administrationCode.'],
+			$this->controller->runAction('init-administration')->getData()
+		);
+		self::assertSame(
+			['success' => true, 'message' => 'Default administration created.', 'detail' => ['success' => true, 'administrationCode' => 'ADM-7']],
+			$this->controller->runAction('init-administration')->getData()
+		);
+
+		$calls = [];
+		$seed = $this->controller->runAction('seed');
+		self::assertSame(['success' => true, 'message' => 'Chart of accounts and reference data seeded.'], $seed->getData());
+		self::assertSame(['seedRgsTemplate:mkb-basis:ADM-7', 'seedBtwTariffs', 'seedBbvTaakvelden', 'seedSelectielijst'], $calls);
+		self::assertSame(['administration_id' => 'ADM-7', 'setup_seed_done' => '1'], $written->getArrayCopy());
+
+		$unknown = $this->controller->runAction('bogus');
+		self::assertSame(['success' => false, 'message' => 'Unknown setup action: bogus'], $unknown->getData());
+
+	}//end testRunActionBodiesAndSeedOrder()
+
+	/**
+	 * The seed refusal body, and the status document's step order.
+	 *
+	 * @return void
+	 */
+	public function testSeedRefusalBodyAndStatusShape(): void {
+		$this->stubConfig(['legal_country' => 'NL', 'demo_dataset' => 'demo']);
+		$this->demoDataService->method('listChoices')->willReturn([['id' => 'demo']]);
+
+		self::assertSame(
+			['success' => false, 'message' => 'Choose region, RGS template and administration before seeding.'],
+			$this->controller->runAction('seed')->getData()
+		);
+
+		$this->appConfig->expects($this->never())->method('setValueString');
+		$data = $this->controller->status()->getData();
+		self::assertSame(['version', 'completed', 'datasets', 'steps'], array_keys($data));
+		self::assertSame(
+			[
+				'welcome' => ['done' => true],
+				'demo-data' => ['done' => true],
+				'country' => ['done' => true],
+				'organisation' => ['done' => false],
+				'rgs-template' => ['done' => false],
+				'administration' => ['done' => false],
+				'seed' => ['done' => false],
+				'done' => ['done' => false],
+			],
+			$data['steps']
+		);
+		self::assertSame([['id' => 'demo']], $data['datasets']);
+
+	}//end testSeedRefusalBodyAndStatusShape()
+
+	/**
+	 * saveConfig refuses a non-scalar dataset by the name "that" and stores nothing.
+	 *
+	 * @return void
+	 */
+	public function testSaveConfigRefusesANonScalarDataset(): void {
+		$this->demoDataService->method('listChoices')->willReturn([['id' => 'demo']]);
+		$this->appConfig->expects($this->never())->method('setValueString');
+
+		$data = $this->controllerPosting(['demo_dataset' => ['x']])->saveConfig()->getData();
+
+		self::assertSame(['success' => false, 'message' => 'No dataset is called "that".'], $data);
+
+	}//end testSaveConfigRefusesANonScalarDataset()
 }//end class
