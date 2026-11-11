@@ -97,7 +97,7 @@ class JournalEntryGuard {
 	 *
 	 * @spec openspec/specs/bookkeeping-journal-entries/spec.md
 	 */
-	public function canPost(string|array $journalEntryId, ?array $object = null): bool {
+	public function canPost(string|array $journalEntryId, array|null $object = null): bool {
 		if (is_array($journalEntryId) === true) {
 			$object = $journalEntryId;
 			$journalEntryId = (string)($journalEntryId['id'] ?? ($journalEntryId['@self']['id'] ?? ''));
@@ -105,59 +105,96 @@ class JournalEntryGuard {
 
 		try {
 			$lines = $this->resolveLines(journalEntryId: $journalEntryId, object: $object);
-			if (count($lines) < 2) {
-				return false;
-			}
-
-			$debitCents = 0;
-			$creditCents = 0;
-			foreach ($lines as $line) {
-				if (is_array($line) === false) {
-					return false;
-				}
-
-				$cents = (int)round((float)($line['amount'] ?? 0) * 100);
-				if ($cents < 0) {
-					return false;
-				}
-
-				if (($line['side'] ?? '') === 'debit') {
-					$debitCents += $cents;
-					continue;
-				}
-
-				if (($line['side'] ?? '') === 'credit') {
-					$creditCents += $cents;
-					continue;
-				}
-
-				// Unknown side value — fail closed.
-				return false;
-			}//end foreach
-
-			if ($debitCents <= 0 || $debitCents !== $creditCents) {
-				return false;
-			}
-
-			// A person may not post on a control account or a blocked
-			// combination; the refusal names which (ledger-booking-rules).
-			$this->restrictions->assertAllowed(
-				lines: array_values($lines),
-				administrationId: (string)($object['administrationId'] ?? ''),
-				postingDate: (string)($object['entryDate'] ?? ''),
-				sourceApp: (string)($object['sourceApp'] ?? '')
-			);
-			return true;
+			return $this->linesBalance(lines: $lines) && $this->bookable(lines: $lines, object: $object);
 		} catch (PostingRefusedException $e) {
 			throw $e;
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'JournalEntryGuard: post balance check failed — denying post transition (fail-closed)',
-				['journalEntryId' => $journalEntryId, 'exception' => $e->getMessage()]
-			);
-			return false;
-		}//end try
+			return $this->denyPost(journalEntryId: $journalEntryId, error: $e);
+		}
 	}//end canPost()
+
+	/**
+	 * True when there are at least two lines, every one valid, and the
+	 * debit and credit cents are equal and positive (REQ-JE-007).
+	 *
+	 * @param array<int,mixed> $lines The embedded line rows.
+	 *
+	 * @return bool
+	 */
+	private function linesBalance(array $lines): bool {
+		if (count($lines) < 2) {
+			return false;
+		}
+
+		$cents = ['debit' => 0, 'credit' => 0];
+		foreach ($lines as $line) {
+			$amount = $this->lineCents(line: $line);
+			if ($amount === null) {
+				return false;
+			}
+
+			$cents[$line['side']] += $amount;
+		}
+
+		return $cents['debit'] > 0 && $cents['debit'] === $cents['credit'];
+	}//end linesBalance()
+
+	/**
+	 * A line's amount in integer cents, or null when the line is not an
+	 * array, is negative, or has a side other than debit or credit (fail closed).
+	 *
+	 * @param mixed $line One embedded line row.
+	 *
+	 * @return int|null
+	 */
+	private function lineCents(mixed $line): int|null {
+		if (is_array($line) === false) {
+			return null;
+		}
+
+		$cents = (int)round((float)($line['amount'] ?? 0) * 100);
+		if ($cents < 0 || in_array(($line['side'] ?? ''), ['debit', 'credit'], true) === false) {
+			return null;
+		}
+
+		return $cents;
+	}//end lineCents()
+
+	/**
+	 * A person may not post on a control account or a blocked combination;
+	 * the refusal names which (ledger-booking-rules).
+	 *
+	 * @param array<int,mixed>         $lines  The balanced line rows.
+	 * @param array<string,mixed>|null $object The JournalEntry being posted.
+	 *
+	 * @return true
+	 * @throws PostingRefusedException When a line breaks a booking rule.
+	 */
+	private function bookable(array $lines, array|null $object): bool {
+		$this->restrictions->assertAllowed(
+			lines: array_values($lines),
+			administrationId: (string)($object['administrationId'] ?? ''),
+			postingDate: (string)($object['entryDate'] ?? ''),
+			sourceApp: (string)($object['sourceApp'] ?? '')
+		);
+		return true;
+	}//end bookable()
+
+	/**
+	 * Log a failed post check and deny the transition (fail-closed).
+	 *
+	 * @param string     $journalEntryId The JournalEntry.id.
+	 * @param \Throwable $error          What went wrong.
+	 *
+	 * @return false
+	 */
+	private function denyPost(string $journalEntryId, \Throwable $error): bool {
+		$this->logger->error(
+			'JournalEntryGuard: post balance check failed — denying post transition (fail-closed)',
+			['journalEntryId' => $journalEntryId, 'exception' => $error->getMessage()]
+		);
+		return false;
+	}//end denyPost()
 
 	/**
 	 * Returns true iff the journal's materialised GLTransaction is already reversed.
