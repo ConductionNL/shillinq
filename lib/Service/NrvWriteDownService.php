@@ -150,17 +150,15 @@ class NrvWriteDownService {
 			$sourceReference = $itemId;
 		}
 
-		$posting = $this->poster->post(
-			administrationId: $administrationId,
-			debitAccount: $this->writeDownAccount(),
-			creditAccount: $this->inventoryAccount(),
-			amountCents: $writeDownCents,
-			journalCode: 'NRV',
-			description: $this->describe(itemId: $itemId, writeDownCents: $writeDownCents, nrvPerUnit: $nrvPerUnit),
-			sourceReference: $sourceReference,
-			postingDate: $effectiveDate,
-			periodId: $periodId
-		);
+		$adjustment = new GlAdjustmentPosting(administrationId: $administrationId, journalCode: 'NRV');
+		$adjustment->debitAccount = $this->writeDownAccount();
+		$adjustment->creditAccount = $this->inventoryAccount();
+		$adjustment->amountCents = $writeDownCents;
+		$adjustment->description = $this->describe(itemId: $itemId, writeDownCents: $writeDownCents, nrvPerUnit: $nrvPerUnit);
+		$adjustment->sourceReference = $sourceReference;
+		$adjustment->postingDate = $effectiveDate;
+		$adjustment->periodId = $periodId;
+		$posting = $this->poster->postAdjustment(posting: $adjustment);
 
 		if (((bool)($posting['posted'] ?? false)) !== true) {
 			$this->logger->warning(
