@@ -245,24 +245,7 @@ class ReinvestmentReserves {
 			$left = (self::cents(amount: ($reserve['amount'] ?? 0)) - self::cents(amount: ($reserve['appliedAmount'] ?? 0)));
 			$fields = ['lifecycleState' => 'released'];
 			if ($left > 0) {
-				$text = sprintf('Vrijval herinvesteringsreserve %s', (string)($reserve['disposedAssetNumber'] ?? ''));
-				$fields['releaseJournalEntryId'] = $this->records->postJournal(
-					journal: $this->journal(
-						administrationId: (string)($reserve['administrationId'] ?? ''),
-						number: sprintf('HIR-VRIJ-%s', substr(hash('sha256', (string)$reserve['id']), 0, 8)),
-						date: (string)$reserve['expiresOn'],
-						description: $text,
-						lines: [
-							[
-								'accountNumber' => (string)($reserve['reserveAccountNumber'] ?? $this->reserveAccount()),
-								'side' => 'debit',
-								'amount' => ($left / 100),
-								'description' => $text,
-							],
-							['accountNumber' => $this->releaseAccount(), 'side' => 'credit', 'amount' => ($left / 100), 'description' => $text],
-						]
-					)
-				);
+				$fields['releaseJournalEntryId'] = $this->postRelease(reserve: $reserve, leftCents: $left);
 			}
 
 			$this->records->patch(schema: self::SCHEMA, id: (string)$reserve['id'], fields: $fields);
@@ -272,6 +255,37 @@ class ReinvestmentReserves {
 		return $released;
 
 	}//end releaseExpired()
+
+	/**
+	 * Post the release of an expired reserve's unapplied balance: debit the
+	 * reserve account, credit the release account.
+	 *
+	 * @param array<string,mixed> $reserve   The expired reserve.
+	 * @param int                 $leftCents The unapplied balance, in cents (> 0).
+	 *
+	 * @return string The journal entry id.
+	 */
+	private function postRelease(array $reserve, int $leftCents): string {
+		$text = sprintf('Vrijval herinvesteringsreserve %s', (string)($reserve['disposedAssetNumber'] ?? ''));
+		return $this->records->postJournal(
+			journal: $this->journal(
+				administrationId: (string)($reserve['administrationId'] ?? ''),
+				number: sprintf('HIR-VRIJ-%s', substr(hash('sha256', (string)$reserve['id']), 0, 8)),
+				date: (string)$reserve['expiresOn'],
+				description: $text,
+				lines: [
+					[
+						'accountNumber' => (string)($reserve['reserveAccountNumber'] ?? $this->reserveAccount()),
+						'side' => 'debit',
+						'amount' => ($leftCents / 100),
+						'description' => $text,
+					],
+					['accountNumber' => $this->releaseAccount(), 'side' => 'credit', 'amount' => ($leftCents / 100), 'description' => $text],
+				]
+			)
+		);
+
+	}//end postRelease()
 
 	/**
 	 * The account an expired remainder goes to: the configured release account, else the disposal gain account.
