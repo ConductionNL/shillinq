@@ -119,21 +119,9 @@ class InvoiceFromBookingGuard {
 				return false;
 			}
 
-			// REQ-DI-002: completedAt must be set before invoicing.
-			if (($order['completedAt'] ?? null) === null || (string)$order['completedAt'] === '') {
-				$this->logger->info(
-					'InvoiceFromBookingGuard: completedAt not set — denying completion',
-					['orderId' => $orderId]
-				);
-				return false;
-			}
-
-			// REQ-DI-002: idempotency — never invoice an order twice.
-			if (($order['invoiceId'] ?? null) !== null && (string)$order['invoiceId'] !== '') {
-				$this->logger->info(
-					'InvoiceFromBookingGuard: order already invoiced — denying duplicate completion',
-					['orderId' => $orderId, 'invoiceId' => $order['invoiceId']]
-				);
+			$refusal = self::orderRefusal(order: $order, orderId: $orderId);
+			if ($refusal !== null) {
+				$this->logger->info($refusal['message'], $refusal['context']);
 				return false;
 			}
 
@@ -148,6 +136,34 @@ class InvoiceFromBookingGuard {
 		}//end try
 
 	}//end canComplete()
+
+	/**
+	 * Why a found order may not be invoiced yet (REQ-DI-002), or null: it must
+	 * be completed (completedAt set), and — idempotency — never invoiced twice.
+	 *
+	 * @param array<string,mixed> $order   The BookingOrder.
+	 * @param string              $orderId The order id the check was asked for.
+	 *
+	 * @return array{message: string, context: array<string,mixed>}|null
+	 */
+	private static function orderRefusal(array $order, string $orderId): ?array {
+		if (($order['completedAt'] ?? null) === null || (string)$order['completedAt'] === '') {
+			return [
+				'message' => 'InvoiceFromBookingGuard: completedAt not set — denying completion',
+				'context' => ['orderId' => $orderId],
+			];
+		}
+
+		if (($order['invoiceId'] ?? null) !== null && (string)$order['invoiceId'] !== '') {
+			return [
+				'message' => 'InvoiceFromBookingGuard: order already invoiced — denying duplicate completion',
+				'context' => ['orderId' => $orderId, 'invoiceId' => $order['invoiceId']],
+			];
+		}
+
+		return null;
+
+	}//end orderRefusal()
 
 	/**
 	 * Verify that any required deposit is present and authorised (REQ-DI-002).
@@ -172,13 +188,7 @@ class InvoiceFromBookingGuard {
 			return false;
 		}
 
-		$deposit = $this->findOne(
-			schema: 'DepositPayment',
-			filters: [
-				'depositPaymentId' => $depositPaymentId,
-				'administrationId' => (string)($order['administrationId'] ?? ''),
-			]
-		);
+		$deposit = $this->depositPayment(order: $order, depositPaymentId: $depositPaymentId);
 
 		if ($deposit === null || (string)($deposit['state'] ?? '') !== 'authorized') {
 			$this->logger->info(
@@ -194,6 +204,25 @@ class InvoiceFromBookingGuard {
 
 		return true;
 	}//end depositIsSatisfied()
+
+	/**
+	 * The order's DepositPayment within its administration, or null.
+	 *
+	 * @param array<string,mixed> $order            The BookingOrder.
+	 * @param string              $depositPaymentId The deposit payment id.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function depositPayment(array $order, string $depositPaymentId): ?array {
+		return $this->findOne(
+			schema: 'DepositPayment',
+			filters: [
+				'depositPaymentId' => $depositPaymentId,
+				'administrationId' => (string)($order['administrationId'] ?? ''),
+			]
+		);
+
+	}//end depositPayment()
 
 	/**
 	 * Resolve the deposit credit amount, in minor units, to apply to the final
@@ -224,13 +253,7 @@ class InvoiceFromBookingGuard {
 			return 0;
 		}
 
-		$deposit = $this->findOne(
-			schema: 'DepositPayment',
-			filters: [
-				'depositPaymentId' => $depositPaymentId,
-				'administrationId' => (string)($order['administrationId'] ?? ''),
-			]
-		);
+		$deposit = $this->depositPayment(order: $order, depositPaymentId: $depositPaymentId);
 
 		if ($deposit === null || (string)($deposit['state'] ?? '') !== 'authorized') {
 			return 0;
